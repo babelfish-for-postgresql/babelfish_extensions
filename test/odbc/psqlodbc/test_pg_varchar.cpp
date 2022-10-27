@@ -1,19 +1,11 @@
-#include <gtest/gtest.h>
-#include <sqlext.h>
-#include "../src/drivers.h"
-#include "../src/odbc_handler.h"
-#include "../src/query_generator.h"
 #include "psqlodbc_tests_common.h"
-#include <string.h>
-#include <iostream>
+
 using std::pair;
 
 const string TABLE_NAME = "master_dbo.varchar_table_odbc_test";
 const string VIEW_NAME = "master_dbo.varchar_view_odbc_test";
 const string COL1_NAME = "pk";
-const string COL2_NAME = "varchar_1";
-const string COL3_NAME = "varchar_8000";
-const string COL4_NAME = "varchar_20";
+const string COL2_NAME = "data";
 
 const string DATATYPE = "sys.varchar";
 
@@ -24,12 +16,12 @@ vector<pair<string, string>> TABLE_COLUMNS_1 = {
 
 vector<pair<string, string>> TABLE_COLUMNS_8000 = {
   {COL1_NAME, " int PRIMARY KEY"},
-  {COL3_NAME, DATATYPE + "(8000)"}
+  {COL2_NAME, DATATYPE + "(8000)"}
 };
 
 vector<pair<string, string>> TABLE_COLUMNS_20 = {
   {COL1_NAME, " int PRIMARY KEY"},
-  {COL4_NAME, DATATYPE + "(20)"}
+  {COL2_NAME, DATATYPE + "(20)"}
 };
 
 const string STRING_8000 = "TQR6vCl9UH5qg2UEJMleJaa3yToVaUbhhxQ7e0SgHjrKg1TYvyUzTrLlO64uPEj572WjgLK6X5muDjK64tcWBr4bBp8hjnV"
@@ -98,6 +90,7 @@ const string STRING_8000 = "TQR6vCl9UH5qg2UEJMleJaa3yToVaUbhhxQ7e0SgHjrKg1TYvyUz
 
 const string STRING_1 = "a";
 const string STRING_20 = "0123456789abcdefghij";
+const string STRING_2704 = "nnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr";
 
 class PSQL_DataTypes_Varchar : public testing::Test{
 
@@ -165,31 +158,17 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Create_Fail) {
 }
 
 TEST_F(PSQL_DataTypes_Varchar, Insertion_Success) {
-  const vector<string> inserted_values = {
-    "NULL", 
-    STRING_1,
-    "" 
-  };
-
-  const vector<string> expected = {
+  const vector<string> INSERTED_VALUES_1 = {
     "NULL", 
     STRING_1,
     "" 
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_1, INSERTED_VALUES_1);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_8000 = {
-    "NULL", // NULL values
-    "",
-    STRING_1,
-    STRING_8000,
-    STRING_20
-  };
-
-  const vector<string> expected_8000 = {
+  const vector<string> INSERTED_VALUES_8000 = {
     "NULL", // NULL values
     "",
     STRING_1,
@@ -198,17 +177,10 @@ TEST_F(PSQL_DataTypes_Varchar, Insertion_Success) {
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_8000, expected_8000);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_20 = {
-    "NULL", // NULL values
-    "",
-    STRING_1,
-    STRING_20
-  };
-
-  const vector<string> expected_20 = {
+  const vector<string> INSERTED_VALUES_20 = {
     "NULL", // NULL values
     "",
     STRING_1,
@@ -216,205 +188,170 @@ TEST_F(PSQL_DataTypes_Varchar, Insertion_Success) {
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, expected_20);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
  
 }
 
 TEST_F(PSQL_DataTypes_Varchar, Insertion_Failure) {
-  const vector<string> inserted_values = {
-    STRING_1+"1"
+  const vector<string> INSERTED_VALUES_1 = {
+    STRING_1 + "1"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_1, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_8000 = {
-    STRING_8000+"1"
+  const vector<string> INSERTED_VALUES_8000 = {
+    STRING_8000 + "1"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_8000, false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_20 = {
-    STRING_20+"1"
+  const vector<string> INSERTED_VALUES_20 = {
+    STRING_20 + "1"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
   
 }
 
 TEST_F(PSQL_DataTypes_Varchar, Update_Success) {
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     "1"
   };
 
-  const vector<string> updated_values = {
-    "a",
-    " ",
-    STRING_1
-  };
-
-  const vector<string> expected_updated_values = {
+  const vector<string> UPDATED_VALUES = {
     "a",
     " ",
     STRING_1
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
-  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, updated_values, expected_updated_values);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES, UPDATED_VALUES);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_8000 = {
+  const vector<string> INSERTED_VALUES_8000 = {
     STRING_1
   };
 
-  const vector<string> updated_values_8000 = {
-    STRING_20,
-    " ",
-    STRING_8000
-  };
-
-  const vector<string> expected_updated_values_8000 = {
+  const vector<string> UPDATED_VALUES_8000 = {
     STRING_20,
     " ",
     STRING_8000
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_8000, inserted_values_8000);
-  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL3_NAME, updated_values_8000, expected_updated_values_8000);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
+  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES_8000, UPDATED_VALUES_8000);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_20 = {
+  const vector<string> INSERTED_VALUES_20 = {
     "1"
   };
 
-  const vector<string> updated_values_20 = {
-    STRING_20,
-    " "
-  };
-
-  const vector<string> expected_updated_values_20 = {
+  const vector<string> UPDATED_VALUES_20 = {
     STRING_20,
     " "
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, inserted_values_20);
-  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL4_NAME, updated_values_20, expected_updated_values_20);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
+  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES_20, UPDATED_VALUES_20);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 
 TEST_F(PSQL_DataTypes_Varchar, Update_Fail) {
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     STRING_1
   };
 
-  const vector<string> updated_values = {
-    STRING_1+"1"
+  const vector<string> UPDATED_VALUES = {
+    STRING_1 + "1"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
-  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, inserted_values, updated_values);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_VALUES, UPDATED_VALUES);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_8000 = {
+  const vector<string> INSERTED_VALUES_8000 = {
     STRING_8000
   };
 
-  const vector<string> updated_values_8000 = {
-    STRING_8000+"1"
+  const vector<string> UPDATED_VALUES_8000 = {
+    STRING_8000 + "1"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_8000, inserted_values_8000);
-  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL3_NAME, inserted_values_8000, updated_values_8000);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
+  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_VALUES_8000, UPDATED_VALUES_8000);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_20 = {
+  const vector<string> INSERTED_VALUES_20 = {
     STRING_20
   };
 
-  const vector<string> updated_values_20 = {
-    STRING_20+"1"
+  const vector<string> UPDATED_VALUES_20 = {
+    STRING_20 + "1"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, inserted_values_20);
-  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL4_NAME, inserted_values_20, updated_values_20);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
+  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_VALUES_20, UPDATED_VALUES_20);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_DataTypes_Varchar, View_creation) {
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     "NULL", // NULL values
     STRING_1,
     "" // blank value
-  };
-
-  const vector<string> expected = {
-    "NULL", // NULL values
-    STRING_1,
-    ""
   };
 
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
 
   createView(ServerType::PSQL, VIEW_NAME, VIEW_QUERY);
-  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, inserted_values, expected);
+  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
 
   dropObject(ServerType::PSQL, "VIEW", VIEW_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_8000 = {
+  const vector<string> INSERTED_VALUES_8000 = {
     "NULL", // NULL values
     STRING_8000,
     "" // blank value
-  };
-
-  const vector<string> expected_8000 = {
-    "NULL", // NULL values
-    STRING_8000,
-    ""
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_8000, expected_8000);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
 
   createView(ServerType::PSQL, VIEW_NAME, VIEW_QUERY);
-  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, inserted_values_8000, expected_8000);
+  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
 
   dropObject(ServerType::PSQL, "VIEW", VIEW_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<string> inserted_values_20 = {
+  const vector<string> INSERTED_VALUES_20 = {
     "NULL", // NULL values
     STRING_20,
     "" // blank value
   };
 
-  const vector<string> expected_20 = {
-    "NULL", // NULL values
-    STRING_20,
-    ""
-  };
-
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, expected_20);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
 
   createView(ServerType::PSQL, VIEW_NAME, VIEW_QUERY);
-  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, inserted_values_20, expected_20);
+  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
 
   dropObject(ServerType::PSQL, "VIEW", VIEW_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
@@ -422,9 +359,9 @@ TEST_F(PSQL_DataTypes_Varchar, View_creation) {
 
 TEST_F(PSQL_DataTypes_Varchar, Table_Single_Primary_Keys) {
 
-  const vector<pair<string, string>> TABLE_COLUMNS = {
+  const vector<pair<string, string>> TABLE_COLUMNS_1 = {
     {COL1_NAME, "INT"},
-    {COL2_NAME, DATATYPE}
+    {COL2_NAME, DATATYPE + "(1)"}
   };
 
   const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
@@ -436,70 +373,67 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Single_Primary_Keys) {
 
   string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
 
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     STRING_1
   };
 
-  const vector<string> expected = {
-    STRING_1
-  };
-
-  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, INSERTED_VALUES.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<pair<string, string>> TABLE_COLUMNS_8000 = {
     {COL1_NAME, "INT"},
-    {COL3_NAME, DATATYPE + "(2704)"} // Maximum byte passed by PG endpoint is limited by 2704 byte, for SQL it's 900, 
-                                    //so 2704 should perfectly handle this case
+    {COL2_NAME, DATATYPE + "(8000)"}
   };
 
   const vector<string> PK_COLUMNS_8000 = {
-    COL3_NAME
+    COL2_NAME
   };
 
   tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS_8000);
 
-  const vector<string> inserted_values_8000 = {
-    "nnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfddddd"
-  };
+  const vector<string> INSERTED_VALUES_8000 = {
+    STRING_2704
+  }; // Maximum byte passed by PG endpoint is limited by 2704 byte, for SQL it's 900, 
+     //so 2704 should perfectly handle this case
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS_8000);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_8000, inserted_values_8000);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, false, INSERTED_VALUES_8000.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<pair<string, string>> TABLE_COLUMNS_20 = {
     {COL1_NAME, "INT"},
-    {COL4_NAME, DATATYPE}
+    {COL2_NAME, DATATYPE + "(20)"}
   };
 
   const vector<string> PK_COLUMNS_20 = {
-    COL4_NAME
+    COL2_NAME
   };
 
   tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS_20);
 
-  const vector<string> inserted_values_20 = {
-    STRING_20
-  };
-
-  const vector<string> expected_20 = {
+  const vector<string> INSERTED_VALUES_20 = {
     STRING_20
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS_20);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, expected_20);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, INSERTED_VALUES_20.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_DataTypes_Varchar, Table_Composite_Primary_Keys){
-  const vector<pair<string, string>> TABLE_COLUMNS = {
+
+  const vector<pair<string, string>> TABLE_COLUMNS_1 = {
     {COL1_NAME, "INT"},
-    {COL2_NAME, DATATYPE}
+    {COL2_NAME, DATATYPE + "(1)"}
   };
+
   const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
   const string SCHEMA_NAME = TABLE_NAME.substr(0, TABLE_NAME.find('.'));
 
@@ -510,51 +444,63 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Composite_Primary_Keys){
 
   string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
 
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     STRING_1
   };
 
-  const vector<string> expected = {
-    STRING_1
-  };
-
-  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  // testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, INSERTED_VALUES.size(), false);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+
+  const vector<pair<string, string>> TABLE_COLUMNS_8000 = {
+    {COL1_NAME, "INT"},
+    {COL2_NAME, DATATYPE + "(8000)"}
+  };
+
+  const vector<string> PK_COLUMNS_8000 = {
+    COL1_NAME, 
+    COL2_NAME
+  };
+
+  tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS_8000);
+
+  const vector<string> INSERTED_VALUES_8000 = {
+    STRING_2704
+  };// Maximum byte passed by PG endpoint is limited by 2704 byte, for SQL it's 900, 
+     //so 2704 should perfectly handle this case
+
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000, tableConstraints);
+  testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS_8000);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
+  // testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, INSERTED_VALUES_20.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<pair<string, string>> TABLE_COLUMNS_20 = {
     {COL1_NAME, "INT"},
-    {COL4_NAME, DATATYPE}
+    {COL2_NAME, DATATYPE + "(20)"}
   };
 
   const vector<string> PK_COLUMNS_20 = {
     COL1_NAME, 
-    COL4_NAME
+    COL2_NAME
   };
 
   tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS_20);
 
-  const vector<string> inserted_values_20 = {
-    STRING_20
-  };
-
-  const vector<string> expected_20 = {
+  const vector<string> INSERTED_VALUES_20 = {
     STRING_20
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS_20);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, expected_20);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
+  // testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, INSERTED_VALUES_20.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_DataTypes_Varchar, Table_Unique_Constraint) {
-
-  const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, "INT"},
-    {COL2_NAME, DATATYPE}
-  };
 
   const vector<string> UNIQUE_COLUMNS = {
     COL2_NAME
@@ -563,63 +509,124 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Unique_Constraint) {
   string tableConstraints = createTableConstraint("UNIQUE", UNIQUE_COLUMNS);
 
   // Insert valid values into the table and assert affected rows
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     STRING_1,
     "" // blank value
-  };
-
-  const vector<string> expected = {
-    STRING_1,
-    ""
   };
 
   // table name without the schema
   const string tableName = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
 
-  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1, tableConstraints);
   testUniqueConstraint(ServerType::PSQL, tableName, UNIQUE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, false, inserted_values.size(), false);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, INSERTED_VALUES.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
-  const vector<pair<string, string>> TABLE_COLUMNS_20 = {
-    {COL1_NAME, "INT"},
-    {COL4_NAME, DATATYPE}
-  };
-
   const vector<string> UNIQUE_COLUMNS_20 = {
-    COL4_NAME
+    COL2_NAME
   };
 
   tableConstraints = createTableConstraint("UNIQUE", UNIQUE_COLUMNS_20);
 
   // Insert valid values into the table and assert affected rows
-  const vector<string> inserted_values_20 = {
+  const vector<string> INSERTED_VALUES_20 = {
     STRING_20,
     "" // blank value
   };
 
-  const vector<string> expected_20 = {
-    STRING_20,
-    ""
-  };
-
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20, tableConstraints);
   testUniqueConstraint(ServerType::PSQL, tableName, UNIQUE_COLUMNS_20);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, expected_20);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values_20, false, inserted_values_20.size(), false);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, INSERTED_VALUES_20.size(), false);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+
+  const vector<string> UNIQUE_COLUMNS_8000 = {
+    COL2_NAME
+  };
+
+  tableConstraints = createTableConstraint("UNIQUE", UNIQUE_COLUMNS_20);
+
+  // Insert valid values into the table and assert affected rows
+  const vector<string> INSERTED_VALUES_8000 = {
+    STRING_2704,
+    "" // blank value
+  }; // Maximum byte passed by PG endpoint is limited by 2704 byte, for SQL it's 900, 
+     //so 2704 should perfectly handle this case
+
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000, tableConstraints);
+  testUniqueConstraint(ServerType::PSQL, tableName, UNIQUE_COLUMNS_8000);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, false, INSERTED_VALUES_8000.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
   
 }
 
-TEST_F(PSQL_DataTypes_Varchar, Comparison_Functions) {
-  const vector<string> INSERTED_DATA = {
-    "One Two",
-    "Three Four"
+TEST_F(PSQL_DataTypes_Varchar, Comparison_Operators) {
+
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE + "(8000)" + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE + "(8000)"}
   };
+
   const vector<string> INSERTED_PK = {
-    "1",
-    "2"
+    "pk one",
+    "pk two"
+  };
+
+  const vector<string> INSERTED_DATA = {
+    "data one",
+    "data two"
+  };
+  const int NUM_OF_DATA = INSERTED_DATA.size();
+
+  // insertString initialization
+  string insertString{};
+  string comma{};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(\'" + INSERTED_PK[i] + "\',\'" + INSERTED_DATA[i] + "\')";
+    comma = ",";
+  }
+
+  const vector<string> OPERATIONS_QUERY = {
+    COL1_NAME + "=" + COL2_NAME,
+    COL1_NAME + "<>" + COL2_NAME,
+    COL1_NAME + "<" + COL2_NAME,
+    COL1_NAME + "<=" + COL2_NAME,
+    COL1_NAME + ">" + COL2_NAME,
+    COL1_NAME + ">=" + COL2_NAME
+  };
+
+  // initialization of expected_results
+  vector<vector<char>> expectedResults = {};
+
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    expectedResults.push_back({});
+    const char *date_1 = INSERTED_PK[i].data();
+    const char *date_2 = INSERTED_DATA[i].data();
+    expectedResults[i].push_back(strcmp(date_1, date_2) == 0 ? '1' : '0');
+    expectedResults[i].push_back(strcmp(date_1, date_2) != 0 ? '1' : '0');
+    expectedResults[i].push_back(strcmp(date_1, date_2) < 0 ? '1' : '0');
+    expectedResults[i].push_back(strcmp(date_1, date_2) <= 0 ? '1' : '0');
+    expectedResults[i].push_back(strcmp(date_1, date_2) > 0 ? '1' : '0');
+    expectedResults[i].push_back(strcmp(date_1, date_2) >= 0 ? '1' : '0');
+  }
+
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+  testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
+    OPERATIONS_QUERY, expectedResults);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+}
+
+TEST_F(PSQL_DataTypes_Varchar, String_Operators) {
+
+  const vector<string> INSERTED_DATA = {
+    "  One Two!"
+  };
+
+  const vector<string> INSERTED_PK = {
+    "1"
   };
 
   const int NUM_OF_DATA = INSERTED_DATA.size();
@@ -633,23 +640,28 @@ TEST_F(PSQL_DataTypes_Varchar, Comparison_Functions) {
   }
 
   const vector<string> OPERATIONS_QUERY = {
-    "lower(" + COL4_NAME + ")",
-    COL1_NAME +"||" + COL4_NAME
+    "lower(" + COL2_NAME + ")",
+    "upper(" + COL2_NAME + ")",
+    COL1_NAME +"||" + COL2_NAME,
+    "Trim(" + COL2_NAME + ")",
+    "Trim(TRAILING '!' from " + COL2_NAME + ")"
+
   };
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
-  // initialization of expected_results
-  vector<vector<string>> expected_results = {{},{}};
-
-  for(int i = 0; i < INSERTED_PK.size(); i++){
-    string current = INSERTED_DATA[i];
-    transform(current.begin(), current.end(), current.begin(), ::tolower);
-    expected_results[i].push_back(current);
-    expected_results[i].push_back(INSERTED_PK[i] + INSERTED_DATA[i]);
-  }
-
-  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20);
+  // initialization of EXPECTED_RESULTS
+  vector<vector<string>> EXPECTED_RESULTS = {{}};
+  
+  string current = INSERTED_DATA[0];
+  transform(current.begin(), current.end(), current.begin(), ::tolower);
+  EXPECTED_RESULTS[0].push_back(current);
+  EXPECTED_RESULTS[0].push_back("  ONE TWO!");
+  EXPECTED_RESULTS[0].push_back(INSERTED_PK[0] + INSERTED_DATA[0]);
+  EXPECTED_RESULTS[0].push_back("One Two!");
+  EXPECTED_RESULTS[0].push_back("  One Two");
+  
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
-  testStringFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, expected_results, INSERTED_PK, COL1_NAME);
+  testStringFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_PK, COL1_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }

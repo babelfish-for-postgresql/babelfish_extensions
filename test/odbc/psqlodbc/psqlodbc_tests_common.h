@@ -95,6 +95,19 @@ void createView(ServerType serverType, const string &viewName, const string &vie
 void dropObject(ServerType serverType, const string &objectType, const string &objectName);
 
 /**
+ * Verify if the operators in query could work for the data in table
+ * 
+ * @param serverType The ODBC driver type to create the connection against. 
+ * @param tableName The table with the primary key to test.
+ * @param operationQuery The query that stored all the operators need to be tested
+ * @param expectResults The expect result after passing the column value with given primary key to string operators
+ * @param pk  The primary key value of the column to be test string operators
+ * @param colName  The column name of the table's primary key.
+ */
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, 
+vector<vector<string>> &expectedResults, const vector<string> &pk, const string &colName);
+
+/**
  * Insert values in a table given a vector of values to insert.
  * 
  * @param serverType The ODBC driver type to create the connection against. 
@@ -151,20 +164,6 @@ void verifyValuesInObject(ServerType serverType, const string &objectName, const
  * @param expectedLen A vector containing the expected length of all data in the object. 
  * @param pkStartingValue Optional. The primary key value the object starts incrementing at. The default value is 0.
 */
-
-void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, 
-vector<vector<string>> &expectedResults, const vector<string> &pk, const string &colName);
-/**
- * Verify if the operators in query could work for the data in table
- * 
- * @param serverType The ODBC driver type to create the connection against. 
- * @param tableName The table stored the data
- * @param operationQuery the query that stored all the operators need to be tested
- * @param expectResults the expect result after applied the string operators
- * @param pk  the primary key of the table
- * @param colName  the column name of the table
- */
-
 template <typename T>
 void verifyValuesInObject(ServerType serverType, string objectName, string orderByColumnName, int type, T data, 
   int bufferLen, vector<string> insertedValues, vector<T> expectedInsertedValues, vector<long> expectedLen, int pkStartingValue = 0);

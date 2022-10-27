@@ -708,7 +708,7 @@ void testStringFunctions(ServerType serverType, const string &tableName, const v
   for (int i = 0; i < pk.size(); i++)
   {
     odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, colName + "=" + "'" + pk[i] + "'"));
+    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, colName + "=\'" + pk[i] + "\'"));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
