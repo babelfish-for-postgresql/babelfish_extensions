@@ -6,19 +6,9 @@ go
 
 select set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
-~~START~~
-text
-off
-~~END~~
-
 
 select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
-~~START~~
-text
-on
-~~END~~
-
 
 set babelfish_showplan_all on
 go
@@ -31,13 +21,6 @@ go
  */
 select * from babel_3291_t1 where a1 = 1
 go
-~~START~~
-text
-Query Text: select * from babel_3291_t1 where a1 = 1
-Index Scan using babel_3291_t1_pkey on babel_3291_t1
-  Index Cond: (a1 = 1)
-~~END~~
-
 
 /*
  * Run a SELECT query and give the hint to follow a sequential scan. 
@@ -45,13 +28,6 @@ Index Scan using babel_3291_t1_pkey on babel_3291_t1
  */
 select /*+SeqScan(babel_3291_t1)*/ * from babel_3291_t1 where a1 = 1
 go
-~~START~~
-text
-Query Text: select /*+SeqScan(babel_3291_t1)*/ * from babel_3291_t1 where a1 = 1
-Seq Scan on babel_3291_t1
-  Filter: (a1 = 1)
-~~END~~
-
 
 set babelfish_showplan_all off
 go
