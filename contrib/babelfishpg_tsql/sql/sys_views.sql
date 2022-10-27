@@ -1222,6 +1222,7 @@ from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
 where t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
 and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and not sys.is_table_type(t.oid)
 and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
