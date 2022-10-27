@@ -40,6 +40,13 @@ runs:
         make install
         make check
         cd contrib && make && sudo make install
+
+        cd ../..
+        $GITHUB_WORKSPACE/.github/scripts/clone_pg_hint_plan_repo
+        cd pg_hint_plan
+        export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
+        make
+        make install
       env:
         HEAD_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
       shell: bash
