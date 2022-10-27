@@ -46,8 +46,16 @@ string getTimeZone(const string& date_time) {
   time_t* time_ptr = &time_obj;
   tm* offset_epoch = std::localtime(time_ptr);
   std::string ret = std::to_string(offset_epoch->tm_gmtoff / 3600);
-  if (ret.length() == 2) {
-    ret.insert(1, "0");
+
+  switch (ret.length()) {
+    case 0:
+      ret.insert(0, "+00");
+      break;
+    case 1:
+      ret.insert(0, "+0");
+      break;
+    case 2:
+      ret.insert(1, "0");
   }
   return " " + ret + ":00";
 }
