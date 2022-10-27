@@ -133,11 +133,7 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Table_Creation) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// Disabled as GitHub Actions are failing while local is not
-// The returned value is longer than expected value on GitHub Actions
-// Returned values match expected when tested locally on Ubuntu 20.04.5 and Ubuntu 22.04.1
 TEST_F(PSQL_DataTypes_DateTimeOffset, Insertion_Success) {
-
   // NOTE: Inserted Values depend on server's timezone if not specified in insert
   //       Expected Values generated based on localtime's timezone
   //       Make sure server & client are in the same timezone
@@ -198,11 +194,8 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Insertion_Fail) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// Disabled as GitHub Actions are failing while local is not
-// The returned value is longer than expected value on GitHub Actions
-// Returned values match expected when tested locally on Ubuntu 20.04.5 and Ubuntu 22.04.1
 TEST_F(PSQL_DataTypes_DateTimeOffset, Update_Success) {
-    const vector<string> DATA_INSERTED = {
+  const vector<string> DATA_INSERTED = {
     "1900-01-01 00:00:00 +00:00"
   };
 
@@ -319,9 +312,6 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Operators) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// Disabled as GitHub Actions are failing while local is not
-// The returned value is longer than expected value on GitHub Actions
-// Returned values match expected when tested locally on Ubuntu 20.04.5 and Ubuntu 22.04.1
 // Explicit casting is used, ie sys.MAX()
 TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Functions) {
   const vector<string> INSERTED_DATA = {
@@ -368,9 +358,6 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Functions) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// Disabled as GitHub Actions are failing while local is not
-// The returned value is longer than expected value on GitHub Actions
-// Returned values match expected when tested locally on Ubuntu 20.04.5 and Ubuntu 22.04.1
 TEST_F(PSQL_DataTypes_DateTimeOffset, View_Creation) {
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
