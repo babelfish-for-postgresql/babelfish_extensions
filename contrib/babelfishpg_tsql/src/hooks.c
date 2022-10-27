@@ -2966,5 +2966,19 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 static Node* 
 transform_like_in_add_constraint (Node* node)
 {
+	bool create_tbl_stmt_is_invalid = false;
+
+	if (current_query_is_create_tbl_check_constraint)
+		create_tbl_stmt_is_invalid = expr_contains_ilike_and_ci_collation_wrapper(node);
+
+	if (current_query_is_create_tbl_check_constraint && create_tbl_stmt_is_invalid)
+	{
+		current_query_is_create_tbl_check_constraint = false;
+		ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("nondeterministic collations are not supported for ILIKE")));
+	}
+	
+	current_query_is_create_tbl_check_constraint = false;
 	return pltsql_predicate_transformer(node);
 }
