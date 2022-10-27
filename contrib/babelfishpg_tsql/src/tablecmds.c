@@ -37,6 +37,9 @@
 #include "../src/multidb.h"
 #include "../src/session.h"
 
+#include "catalog.h"
+#include "hooks.h"
+
 const char* ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
 const char* ATTOPTION_BBF_ORIGINAL_TABLE_NAME = "bbf_original_rel_name";
 const char* ATTOPTION_BBF_TABLE_CREATE_DATE = "bbf_rel_create_date";
@@ -58,7 +61,6 @@ void assign_tablecmds_hook(void);
 static void pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum);
 static void pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefaults);
 static bool checkAllowedTsqlAttoptions(Node *options);
-
 /* Hook to tablecmds.c in the engine */
 static object_access_hook_type prev_object_access_hook = NULL;
 static InvokePreDropColumnHook_type prev_InvokePreDropColumnHook = NULL;
@@ -67,81 +69,32 @@ static InvokePreAddConstraintsHook_type prev_InvokePreAddConstraintsHook = NULL;
 void pre_check_trigger_schema(List *object, bool missing_ok);
 
 void pre_check_trigger_schema(List *object, bool missing_ok){
-	Relation	relation = NULL;
-	const char *depname;
-	Relation	tgrel;
-	ScanKeyData		key;
-	SysScanDesc tgscan;
-	HeapTuple	tuple;
-	Oid schema_oid;
-	char *schema_name = NULL;
-	char *trigger_schema = NULL;
-	Oid reloid = InvalidOid;
+	const char 		*depname;
+	Oid 			trigger_rel_oid = InvalidOid;
+	const char 		*tsql_trigger_logical_schema = NULL;
 
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
 	if (list_length(object) > 1){
-		trigger_schema = ((Value *)list_nth(object,0))->val.str;
+		tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
 	}
-	/* 
-	* Get the table name of the trigger from pg_trigger. We know that
-	* trigger names are forced to be unique in the tsql dialect, so we
-	* can rely on searching for trigger name to find the corresponding
-	* relation name.
-	*/
-	tgrel = table_open(TriggerRelationId, AccessShareLock);
-	ScanKeyInit(&key,
-					Anum_pg_trigger_tgname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(depname));
 
-	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
-									NULL, 1, &key);
-
-	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	trigger_rel_oid = get_tsql_trigger_oid(object,depname,true);
+	
+	if (!missing_ok && !OidIsValid(trigger_rel_oid))
 	{
-		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		
-		if (namestrcmp(&(pg_trigger->tgname), depname) == 0)
-		{
-			reloid = OidIsValid(pg_trigger->tgrelid) ? pg_trigger->tgrelid :
-						InvalidOid;
-			relation = RelationIdGetRelation(reloid); 
-			schema_oid = get_rel_namespace(reloid);
-            schema_name = get_namespace_name(schema_oid);
-			if ((list_length(object) > 1 && 
-			strcasecmp(schema_name , get_physical_schema_name(get_cur_db_name(),trigger_schema)) != 0 && !missing_ok)){
-				ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("trigger \"%s.%s\" does not exist",
-						trigger_schema ,depname)));
-			} else if (list_length(object) == 1 && strcasecmp(schema_name, get_dbo_schema_name(get_cur_db_name())) != 0
-			&& !missing_ok){
-				ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("trigger \"%s\" does not exist",
-						depname)));
-			}
-			RelationClose(relation);
-		}
-	}
-	systable_endscan(tgscan);
-	table_close(tgrel, AccessShareLock);
-	if (!relation && !missing_ok)
-	{
-		ereport(ERROR,
+		if(list_length(object) == 1){
+			ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
 			errmsg("trigger \"%s\" does not exist",
-				depname)));
-	}	
-	if (!OidIsValid(reloid))
-	{
-		if (relation != NULL)
-			table_close(relation, AccessShareLock);
-
-		relation = NULL;		/* department of accident prevention */
+						depname)));
+		}else{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("trigger \"%s.%s\" does not exist",
+							tsql_trigger_logical_schema ,depname)));	
+		}		
 	}
-
 }
 
 static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId, 
@@ -155,6 +108,7 @@ static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
 	ObjectAddress 	trigAddress;
 	Relation 	trigRelation;
 	List 		*trigobjlist;
+	char * trig_physical_schema;
 
     /* Call previous hook if exists */
     if (prev_object_access_hook)
@@ -191,13 +145,14 @@ static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
         if (pg_trigger->tgrelid == relOid && !pg_trigger->tgisinternal)
         {
             trigRelation = RelationIdGetRelation(relOid);
-            trigobjlist = list_make1(makeString(NameStr(pg_trigger->tgname)));
-            trigAddress = get_object_address_trigger_tsql(trigobjlist, 
-                            &trigRelation, true);
+			trig_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+            trigobjlist = list_make2(makeString(trig_physical_schema),makeString(NameStr(pg_trigger->tgname)));
+			trigAddress = (*get_trigger_object_address_hook)(trigobjlist, &trigRelation, true, false);
             performDeletion(&trigAddress, behavior, PERFORM_DELETION_INTERNAL);
             RelationClose(trigRelation);
         }
     }
+	
     systable_endscan(tgscan);
     table_close(tgrel, AccessShareLock); 
 }
