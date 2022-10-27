@@ -74,9 +74,8 @@ PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
-
-/* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
+PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
@@ -99,6 +98,8 @@ extern bool pltsql_concat_null_yields_null;
 extern bool pltsql_numeric_roundabort;
 extern bool pltsql_xact_abort;
 extern bool pltsql_case_insensitive_identifiers;
+extern bool inited_ht_tsql_cast_info;
+extern bool inited_ht_tsql_datatype_precedence_info;
 
 char *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
@@ -1161,4 +1162,28 @@ host_name(PG_FUNCTION_ARGS)
 		PG_RETURN_VARCHAR_P(string_to_tsql_varchar((*pltsql_protocol_plugin_ptr)->get_host_name()));
 	else
 		PG_RETURN_NULL();
+}
+
+/*
+ * Execute various integrity checks.
+ * Returns true if all the checks pass otherwise
+ * raises an appropriate error message.
+ */
+Datum
+babelfish_integrity_checker(PG_FUNCTION_ARGS)
+{
+	if (!inited_ht_tsql_cast_info)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+				 errmsg("T-SQL cast info hash table is not properly initialized.")));
+	}
+	else if (!inited_ht_tsql_datatype_precedence_info)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_CHECK_VIOLATION),
+				 errmsg("T-SQL datatype precedence hash table is not properly initialized.")));
+	}
+
+	PG_RETURN_BOOL(true);
 }
