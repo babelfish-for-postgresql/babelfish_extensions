@@ -2978,7 +2978,6 @@ transform_like_in_add_constraint (Node* node)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("nondeterministic collations are not supported for ILIKE")));
 	}
-	
 	current_query_is_create_tbl_check_constraint = false;
 	return pltsql_predicate_transformer(node);
 }
