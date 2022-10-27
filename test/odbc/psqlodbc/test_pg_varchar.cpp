@@ -597,7 +597,6 @@ TEST_F(PSQL_DataTypes_Varchar, Comparison_Operators) {
     COL1_NAME + ">=" + COL2_NAME
   };
 
-
   // initialization of expected_results
   vector<vector<char>> expectedResults = {};
 
