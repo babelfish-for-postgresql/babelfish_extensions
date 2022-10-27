@@ -230,11 +230,13 @@ TEST_F(PSQL_DataTypes_Float, Comparison_Operators) {
   };
 
   const vector<string> INSERTED_PK = {
-    "0.8"
+    "0.8",
+    "1.0"
   };
 
   const vector<string> INSERTED_DATA = {
-    "22.2"
+    "22.2",
+    "4.65"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
@@ -242,7 +244,7 @@ TEST_F(PSQL_DataTypes_Float, Comparison_Operators) {
   string insertString{};
   string comma{};
   for (int i = 0; i < NUM_OF_DATA; i++) {
-    insertString += comma + "(\'" + INSERTED_PK[i] + "\',\'" + INSERTED_DATA[i] + "\')";
+    insertString += comma + "(" + INSERTED_PK[i] + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
@@ -260,12 +262,15 @@ TEST_F(PSQL_DataTypes_Float, Comparison_Operators) {
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    expected_results[i].push_back(INSERTED_PK[i] == INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] != INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] < INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] <= INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] > INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] >= INSERTED_DATA[i] ? '1' : '0');
+    long long int data_1 = StringToFloat(INSERTED_PK[i]);
+    long long int data_2 = StringToFloat(INSERTED_DATA[i]);
+
+    expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 < data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 <= data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 > data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 >= data_2 ? '1' : '0');
   }
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);

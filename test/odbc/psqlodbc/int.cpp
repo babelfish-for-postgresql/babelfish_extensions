@@ -215,7 +215,7 @@ TEST_F(PSQL_DataTypes_Int, Comparison_Operators) {
   string insertString{};
   string comma{};
   for (int i = 0; i < NUM_OF_DATA; i++) {
-    insertString += comma + "(\'" + INSERTED_PK[i] + "\',\'" + INSERTED_DATA[i] + "\')";
+    insertString += comma + "(" + INSERTED_PK[i] + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
@@ -233,12 +233,15 @@ TEST_F(PSQL_DataTypes_Int, Comparison_Operators) {
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    expected_results[i].push_back(INSERTED_PK[i] == INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] != INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] < INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] <= INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] > INSERTED_DATA[i] ? '1' : '0');
-    expected_results[i].push_back(INSERTED_PK[i] >= INSERTED_DATA[i] ? '1' : '0');
+    int data_1 = StringToInt4(INSERTED_PK[i]);
+    int data_2 = StringToInt4(INSERTED_DATA[i]);
+
+    expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 < data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 <= data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 > data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 >= data_2 ? '1' : '0');
   }
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);

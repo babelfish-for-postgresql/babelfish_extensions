@@ -290,6 +290,55 @@ TEST_F(PSQL_DataTypes_Real, Arithmetic_Functions) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
+TEST_F(PSQL_DataTypes_Real, Comparison_Operators) {
+  const vector<string> INSERTED_PK = {
+    "8"
+  };
+
+  const vector<string> INSERTED_DATA = {
+    "2"
+  };
+  const int NUM_OF_DATA = INSERTED_DATA.size();
+
+  // insertString initialization
+  string insertString{};
+  string comma{};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(" + INSERTED_PK[i] + "," + INSERTED_DATA[i] + ")";
+    comma = ",";
+  }
+
+  const vector<string> OPERATIONS_QUERY = {
+    COL1_NAME + "=" + COL2_NAME,
+    COL1_NAME + "<>" + COL2_NAME,
+    COL1_NAME + "<" + COL2_NAME,
+    COL1_NAME + "<=" + COL2_NAME,
+    COL1_NAME + ">" + COL2_NAME,
+    COL1_NAME + ">=" + COL2_NAME
+  };
+
+  // initialization of expected_results
+  vector<vector<char>> expected_results = {};
+
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    expected_results.push_back({});
+    float data_1 = StringToReal(INSERTED_PK[i]);    
+    float data_2 = StringToReal(INSERTED_DATA[i]);  
+
+    expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 < data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 <= data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 > data_2 ? '1' : '0');
+    expected_results[i].push_back(data_1 >= data_2 ? '1' : '0');
+  }
+
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+  testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, OPERATIONS_QUERY, expected_results);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+}
+
 TEST_F(PSQL_DataTypes_Real, View_Creation) {
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
