@@ -3,7 +3,7 @@
 use isc_sequences_dbone;
 go
 
-select * from isc_sequences_view1 order by sequence_name;
+select * from isc_sequences_view1 order by sequence_schema,sequence_name;
 go
 
 use master;
