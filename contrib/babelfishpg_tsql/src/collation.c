@@ -25,6 +25,7 @@
 
 Oid server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
+extern bool babelfish_dump_restore;
 
 static Node * pgtsql_expression_tree_mutator(Node *node, void* context);
 
@@ -249,13 +250,33 @@ transform_funcexpr(Node* node)
  *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
 static Node*
-transform_likenode(Node* node)
+transform_likenode(Node* node, Oid opno)
 {
 	if (node && IsA(node, OpExpr))
 	{
 		OpExpr	 *op = (OpExpr *) node;
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
+
+		if (opno == 1627 && babelfish_dump_restore)
+		{
+			int		 collidx_of_cs_as;
+			
+			if (coll_info_of_inputcollid.collname)
+			{
+				collidx_of_cs_as =
+					tsql_find_cs_as_collation_internal(
+						tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+			}
+			else
+			{
+				op->inputcollid = DEFAULT_COLLATION_OID;
+			}
+
+			if (NOT_FOUND == collidx_of_cs_as)
+				return node;
+		}
 
 		/* check if this is LIKE expr, and collation is CI_AS */
 		if (OidIsValid(like_entry.like_oid) &&
@@ -400,7 +421,7 @@ Node* pltsql_predicate_transformer(Node *expr)
 	if(IsA(expr, OpExpr))
 	{
 		/* Singleton predicate */
-		return transform_likenode(expr);
+		return transform_likenode(expr, ((OpExpr*) expr)->opno);
 	}
 	else
 	{
@@ -454,7 +475,7 @@ Node* pltsql_predicate_transformer(Node *expr)
 			else if (IsA(qual, OpExpr))
 			{
 				new_predicates = lappend(new_predicates,
-									transform_likenode(qual));
+									transform_likenode(qual, ((OpExpr*) qual)->opno));
 			}
 			else
 				new_predicates = lappend(new_predicates, qual);
@@ -508,7 +529,7 @@ pgtsql_expression_tree_mutator(Node *node, void* context)
 		 * Possibly a singleton LIKE predicate:  SELECT 'abc' LIKE 'ABC'; 
 		 * This is done even in the postgres dialect.
 		 */
-		node = transform_likenode(node);
+		node = transform_likenode(node,((OpExpr*) node)->opno);
 	}
 
 	return node;
@@ -675,3 +696,34 @@ tsql_find_collation_internal(const char *collation_name)
 	return (*collation_callbacks_ptr->find_collation_internal)(collation_name);
 }
 
+bool
+expr_contains_ilike_and_ci_collation_wrapper(Node *expr)
+{
+	List 		*queue;
+	ListCell 	*lc = NULL;
+	
+	if(expr == NULL)
+		return false;
+	queue = NIL;
+	queue = list_make1(expr);
+
+	while(list_length(queue) > 0)
+	{
+		Node *predicate = (Node *) linitial(queue);
+
+		if(IsA(predicate, OpExpr))
+		{
+			/* Initialise collation callbacks */
+			init_and_check_collation_callbacks();
+			return (*collation_callbacks_ptr->expr_contains_ilike_and_ci_as_coll)(predicate);
+		}
+		else if (IsA(predicate, BoolExpr))
+		{
+			BoolExpr   *boolexpr = (BoolExpr *) predicate;
+			
+			queue = list_concat(queue, boolexpr->args);
+			queue = list_delete_first(queue);
+		}
+	}
+	return false;
+}
