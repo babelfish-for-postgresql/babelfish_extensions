@@ -3729,7 +3729,7 @@ function_call
 partition_function_call
     : (db_name=id DOT)? DOLLAR_PARTITION DOT func_name=id LR_BRACKET function_arg_list RR_BRACKET
     ;
-    
+
 freetext_function
     : (CONTAINSTABLE | FREETEXTTABLE) LR_BRACKET table_name COMMA (full_column_name | LR_BRACKET full_column_name (COMMA full_column_name)* RR_BRACKET | (table_name DOT)? STAR  ) COMMA expression  (COMMA LANGUAGE expression)? (COMMA expression)? RR_BRACKET
     | (SEMANTICSIMILARITYTABLE | SEMANTICKEYPHRASETABLE) LR_BRACKET table_name COMMA (full_column_name | LR_BRACKET full_column_name (COMMA full_column_name)* RR_BRACKET | (table_name DOT)? STAR  ) COMMA expression RR_BRACKET
@@ -4898,6 +4898,7 @@ keyword
     | SUBJECT
     | SUBSCRIBE
     | SUBSCRIPTION
+    | SUBSTRING
     | SUM
     | SUPPORTED
     | SUSPEND
