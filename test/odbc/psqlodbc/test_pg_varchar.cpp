@@ -573,13 +573,15 @@ TEST_F(PSQL_DataTypes_Varchar, Comparison_Operators) {
   };
 
   const vector<string> INSERTED_PK = {
-    "pk one",
-    "pk two"
+    "One",
+    "BBB",
+    "MMM"
   };
 
   const vector<string> INSERTED_DATA = {
-    "data one",
-    "data two"
+    "One",
+    "AAA",
+    "NNN"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
@@ -647,24 +649,28 @@ TEST_F(PSQL_DataTypes_Varchar, String_Operators) {
     "upper(" + COL2_NAME + ")",
     COL1_NAME +"||" + COL2_NAME,
     "Trim(" + COL2_NAME + ")",
-    "Trim(TRAILING '!' from " + COL2_NAME + ")"
-
+    "Trim(TRAILING '!' from " + COL2_NAME + ")",
+    "Trim(TRAILING ' ' from " + COL2_NAME + ")"
   };
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
   // initialization of EXPECTED_RESULTS
-  vector<vector<string>> EXPECTED_RESULTS = {{}};
+  vector<vector<string>> EXPECTED_RESULTS = {};
+  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
+    EXPECTED_RESULTS.push_back({});
+  }
   
   string current = INSERTED_DATA[0];
   transform(current.begin(), current.end(), current.begin(), ::tolower);
   EXPECTED_RESULTS[0].push_back(current);
-  EXPECTED_RESULTS[0].push_back("  ONE TWO!");
-  EXPECTED_RESULTS[0].push_back(INSERTED_PK[0] + INSERTED_DATA[0]);
-  EXPECTED_RESULTS[0].push_back("One Two!");
-  EXPECTED_RESULTS[0].push_back("  One Two");
+  EXPECTED_RESULTS[1].push_back("  ONE TWO!");
+  EXPECTED_RESULTS[2].push_back(INSERTED_PK[0] + INSERTED_DATA[0]);
+  EXPECTED_RESULTS[3].push_back("One Two!");
+  EXPECTED_RESULTS[4].push_back("  One Two");
+  EXPECTED_RESULTS[5].push_back("  One Two!");
   
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
-  testStringFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_PK, COL1_NAME);
+  testStringFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, NUM_OF_DATA, COL1_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }

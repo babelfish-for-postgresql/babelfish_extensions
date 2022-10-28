@@ -95,19 +95,6 @@ void createView(ServerType serverType, const string &viewName, const string &vie
 void dropObject(ServerType serverType, const string &objectType, const string &objectName);
 
 /**
- * Verify if the operators in query could work for the data in table
- * 
- * @param serverType The ODBC driver type to create the connection against. 
- * @param tableName The table with the primary key to test.
- * @param operationQuery The query that stored all the operators need to be tested
- * @param expectResults The expect result after passing the column value with given primary key to string operators
- * @param pk  The primary key value of the column to be test string operators
- * @param colName  The column name of the table's primary key.
- */
-void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, 
-vector<vector<string>> &expectedResults, const vector<string> &pk, const string &colName);
-
-/**
  * Insert values in a table given a vector of values to insert.
  * 
  * @param serverType The ODBC driver type to create the connection against. 
@@ -485,7 +472,6 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, int
  * @param expectedResults 2D vector containing the expected results for each operation.
  * @param expectedLen A vector containing the expected length of all results from each operation. 
 */
-
 template <typename T>
 void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData, int type, 
   const vector<T> &colResults, int bufferLen, const vector<string> &operationsQuery, const vector<vector<T>> &expectedResults, const vector<long> &expectedLen);
