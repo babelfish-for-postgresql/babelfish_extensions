@@ -180,8 +180,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Insertion_Success) {
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, EXPECTED_VALUES_20);
-  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
- 
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME); 
 }
 
 TEST_F(PSQL_DataTypes_Bpchar, Insertion_Failure) {
@@ -703,7 +702,6 @@ TEST_F(PSQL_DataTypes_Bpchar, String_Operators) {
     "Trim(" + COL2_NAME + ")",
     "Trim(TRAILING '!' from " + COL2_NAME + ")",
     "Trim(TRAILING ' ' from " + COL2_NAME + ")"
-
   };
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
