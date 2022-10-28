@@ -676,49 +676,51 @@ TEST_F(PSQL_DataTypes_Nchar, Comparison_Operators) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// TEST_F(PSQL_DataTypes_Nchar, DiSABLED_String_Operators) {
+TEST_F(PSQL_DataTypes_Nchar, String_Operators) {
 
-//   const vector<string> INSERTED_DATA = {
-//     "  One Two!"
-//   };
+  const vector<string> INSERTED_DATA = {
+    "  One Two!"
+  };
 
-//   const vector<string> INSERTED_PK = {
-//     "1"
-//   };
+  const vector<string> INSERTED_PK = {
+    "1"
+  };
 
-//   const int NUM_OF_DATA = INSERTED_DATA.size();
+  const int NUM_OF_DATA = INSERTED_DATA.size();
   
-//   // insertString initialization
-//   string insertString{};
-//   string comma{};
-//   for (int i = 0; i < NUM_OF_DATA; i++) {
-//     insertString += comma + "(" + INSERTED_PK[i] + ",\'" + INSERTED_DATA[i] + "\')";
-//     comma = ",";
-//   }
+  // insertString initialization
+  string insertString{};
+  string comma{};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(" + INSERTED_PK[i] + ",\'" + INSERTED_DATA[i] + "\')";
+    comma = ",";
+  }
 
-//   const vector<string> OPERATIONS_QUERY = {
-//     "lower(" + COL2_NAME + ")",
-//     "upper(" + COL2_NAME + ")",
-//     COL1_NAME +"||" + COL2_NAME,
-//     "Trim(" + COL2_NAME + ")",
-//     "Trim(TRAILING '!' from " + COL2_NAME + ")"
+  const vector<string> OPERATIONS_QUERY = {
+    "lower(" + COL2_NAME + ")",
+    "upper(" + COL2_NAME + ")",
+    COL1_NAME +"||" + COL2_NAME,
+    "Trim(" + COL2_NAME + ")",
+    "Trim(TRAILING '!' from " + COL2_NAME + ")",
+    "Trim(TRAILING ' ' from " + COL2_NAME + ")"
 
-//   };
-//   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
+  };
+  const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
-//   // initialization of EXPECTED_RESULTS
-//   vector<vector<string>> EXPECTED_RESULTS = {{}};
+  // initialization of EXPECTED_RESULTS
+  vector<vector<string>> EXPECTED_RESULTS = {{}};
   
-//   string current = INSERTED_DATA[0];
-//   transform(current.begin(), current.end(), current.begin(), ::tolower);
-//   EXPECTED_RESULTS[0].push_back(current);
-//   EXPECTED_RESULTS[0].push_back("  ONE TWO!");
-//   EXPECTED_RESULTS[0].push_back(INSERTED_PK[0] + INSERTED_DATA[0]);
-//   EXPECTED_RESULTS[0].push_back("One Two!");
-//   EXPECTED_RESULTS[0].push_back("  One Two");
+  string current = INSERTED_DATA[0];
+  transform(current.begin(), current.end(), current.begin(), ::tolower);
+  EXPECTED_RESULTS[0].push_back(current + std::string(4000 - current.size(), ' '));
+  EXPECTED_RESULTS[0].push_back("  ONE TWO!" + std::string(3990, ' '));
+  EXPECTED_RESULTS[0].push_back(INSERTED_PK[0] + INSERTED_DATA[0] + std::string(3990, ' '));
+  EXPECTED_RESULTS[0].push_back("One Two!");
+  EXPECTED_RESULTS[0].push_back("  One Two!" + std::string(3990, ' ')); // TRIM (trailing !) did not remove '!' on PG
+  EXPECTED_RESULTS[0].push_back("  One Two!");
   
-//   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_4000);
-//   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
-//   testStringFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_PK, COL1_NAME);
-//   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
-// }
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_4000);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+  testStringFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, NUM_OF_DATA, COL1_NAME);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+}

@@ -714,8 +714,8 @@ void testStringFunctions(ServerType serverType, const string &tableName, const v
     EXPECT_EQ(rcode, SQL_SUCCESS);
 
     for (int j = 0; j < NUM_OF_OPERATIONS; j++) { // retrieve column-by-column
-      EXPECT_EQ(colLen[j], expectedResults[j][i].size());
-      EXPECT_EQ(string(colResults[j]), expectedResults[j][i]);
+      EXPECT_EQ(colLen[j], expectedResults[i][j].size());
+      EXPECT_EQ(string(colResults[j]), expectedResults[i][j]);
     }
   }
 
