@@ -710,8 +710,6 @@ void testStringFunctions(ServerType serverType, const string &tableName, const v
   }
   odbcHandler.CloseStmt();
 
-  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
-
   odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}));
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
