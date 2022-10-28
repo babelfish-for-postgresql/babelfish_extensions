@@ -311,8 +311,8 @@ TEST_F(PSQL_DataTypes_Char, Insertion_Fail) {
   const vector<string> INVALID_INSERTED_VALUES_1 = {STRING_1 + "1"};
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS_1);
 
-  testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_1, false);
-  testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_1, false);
+  testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_1, true);
+  testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_1, true);
 
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
@@ -320,8 +320,8 @@ TEST_F(PSQL_DataTypes_Char, Insertion_Fail) {
   const vector<string> INVALID_INSERTED_VALUES_20 = {STRING_20 + "1"};
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS_20);
 
-  testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_20, false);
-  testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_20, false);
+  testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_20, true);
+  testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_20, true);
 
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
@@ -329,8 +329,8 @@ TEST_F(PSQL_DataTypes_Char, Insertion_Fail) {
   const vector<string> INVALID_INSERTED_VALUES_8000 = {STRING_8000 + "1"};
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS_8000);
 
-  testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_8000, false);
-  testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_8000, false);
+  testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_8000, true);
+  testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES_8000, true);
 
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
