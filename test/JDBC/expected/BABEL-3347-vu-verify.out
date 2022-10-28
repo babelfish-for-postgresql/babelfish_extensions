@@ -1,0 +1,94 @@
+-- table variable
+SELECT * FROM babel_3347_vu1
+GO
+~~START~~
+varchar
+ell
+<NULL>
+ore
+~~END~~
+
+
+-- null constant
+SELECT * FROM babel_3347_vu2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_3347_vu2" does not exist)~~
+
+
+-- function that returns null
+SELECT * FROM babel_3347_vu3
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- table for substring start index
+SELECT * FROM babel_3347_vu4
+GO
+~~START~~
+varchar
+34567890
+<NULL>
+567890
+~~END~~
+
+
+-- table for substring end index
+SELECT * FROM babel_3347_vu5
+GO
+~~START~~
+varchar
+234
+<NULL>
+23456
+~~END~~
+
+
+-- cast
+SELECT * FROM babel_3347_vu6
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- null constant function qualified with 'sys'
+SELECT * FROM babel_3347_vu7
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- variables
+DECLARE @babel_3347_vu7_var NVARCHAR(MAX) = NULL
+SELECT SUBSTRING(@babel_3347_vu7_var, 2,3)
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- ensure null literal aborts batch statements
+CREATE table babel_3347_vu_tbl (a INT)
+SELECT substring(null, 2,3)
+PRINT 'this should not print'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+SELECT * FROM babel_3347_vu_tbl
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_3347_vu_tbl" does not exist)~~
+

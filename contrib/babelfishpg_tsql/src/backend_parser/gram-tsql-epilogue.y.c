@@ -487,7 +487,7 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_
 		appendStringInfoString(format_query, end_param);
 		format_func_args = list_concat(list_make1(makeStringConst(format_query->data, -1)),
 									   params);
-		format_fc = makeFuncCall(list_make1(makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
+		format_fc = makeFuncCall(list_make2(makeString("pg_catalog"), makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
 		arg1 = (Node *) format_fc;
 	}
 	else

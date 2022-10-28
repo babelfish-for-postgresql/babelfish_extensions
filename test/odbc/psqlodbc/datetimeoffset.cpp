@@ -46,10 +46,18 @@ string getTimeZone(const string& date_time) {
   time_t* time_ptr = &time_obj;
   tm* offset_epoch = std::localtime(time_ptr);
   std::string ret = std::to_string(offset_epoch->tm_gmtoff / 3600);
-  if (ret.length() == 2) {
-    ret.insert(1, "0");
+
+  switch (ret.length()) {
+    case 0:
+      ret.insert(0, "+00");
+      break;
+    case 1:
+      ret.insert(0, "+0");
+      break;
+    case 2:
+      ret.insert(1, "0");
   }
-  return " +0" + ret + ":00";
+  return " " + ret + ":00";
 }
 
 // Helper to generate the expected fully qualified datetimeoffset
@@ -125,11 +133,7 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Table_Creation) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// Disabled as GitHub Actions are failing while local is not
-// The returned value is longer than expected value on GitHub Actions
-// Returned values match expected when tested locally on Ubuntu 20.04.5 and Ubuntu 22.04.1
 TEST_F(PSQL_DataTypes_DateTimeOffset, Insertion_Success) {
-
   // NOTE: Inserted Values depend on server's timezone if not specified in insert
   //       Expected Values generated based on localtime's timezone
   //       Make sure server & client are in the same timezone
@@ -190,11 +194,8 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Insertion_Fail) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// Disabled as GitHub Actions are failing while local is not
-// The returned value is longer than expected value on GitHub Actions
-// Returned values match expected when tested locally on Ubuntu 20.04.5 and Ubuntu 22.04.1
 TEST_F(PSQL_DataTypes_DateTimeOffset, Update_Success) {
-    const vector<string> DATA_INSERTED = {
+  const vector<string> DATA_INSERTED = {
     "1900-01-01 00:00:00 +00:00"
   };
 
@@ -250,7 +251,7 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Operators) {
     {COL2_NAME, DATATYPE_NAME}
   };
 
-  vector<string> INSERTED_PK = {
+  const vector<string> INSERTED_PK = {
     "1900-01-01 00:00:00 +01:00",
     "1900-01-01 00:00:00 +00:01",
     "1900-01-01 00:00:00",
@@ -260,7 +261,7 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Operators) {
     "2000-01-01 00:00:00.123456 +10:00"
   };
 
-  vector<string> INSERTED_DATA = {
+  const vector<string> INSERTED_DATA = {
     "1900-01-01 00:00:00 -01:00",
     "1900-01-01 00:00:00 +00:02",
     "1900-12-31 23:59:00",
@@ -270,7 +271,7 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Operators) {
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
-  vector<string> OPERATIONS_QUERY = {
+  const vector<string> OPERATIONS_QUERY = {
     COL1_NAME + " OPERATOR(sys.=) " + COL2_NAME,
     COL1_NAME + " OPERATOR(sys.<>) " + COL2_NAME,
     COL1_NAME + " OPERATOR(sys.<) " + COL2_NAME,
@@ -311,9 +312,6 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Operators) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// Disabled as GitHub Actions are failing while local is not
-// The returned value is longer than expected value on GitHub Actions
-// Returned values match expected when tested locally on Ubuntu 20.04.5 and Ubuntu 22.04.1
 // Explicit casting is used, ie sys.MAX()
 TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Functions) {
   const vector<string> INSERTED_DATA = {
@@ -360,9 +358,6 @@ TEST_F(PSQL_DataTypes_DateTimeOffset, Comparison_Functions) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// Disabled as GitHub Actions are failing while local is not
-// The returned value is longer than expected value on GitHub Actions
-// Returned values match expected when tested locally on Ubuntu 20.04.5 and Ubuntu 22.04.1
 TEST_F(PSQL_DataTypes_DateTimeOffset, View_Creation) {
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
