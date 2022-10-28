@@ -1,12 +1,12 @@
 #include "psqlodbc_tests_common.h"
 
-const string PG_TABLE_NAME = "master_dbo.numeric_table_odbc_test";
-const string BBF_TABLE_NAME = "master.dbo.numeric_table_odbc_test";
-const string PG_VIEW_NAME = "master_dbo.numeric_view_odbc_test";
-const string BBF_VIEW_NAME = "numeric_view_odbc_test";
-const string DATATYPE = "numeric";
+const string PG_TABLE_NAME = "master_dbo.decimal_table_odbc_test";
+const string BBF_TABLE_NAME = "master.dbo.decimal_table_odbc_test";
+const string PG_VIEW_NAME = "master_dbo.decimal_view_odbc_test";
+const string BBF_VIEW_NAME = "decimal_view_odbc_test";
+const string DATATYPE = "decimal";
 
-const vector<string> COL_NAMES = {"pk_1_0", "num_5_5", "num_38_38", "num_38_0", "num_4_2"};
+const vector<string> COL_NAMES = {"pk_1_0", "dec_5_5", "dec_38_38", "dec_38_0", "decm_4_2"};
 const vector<int> COL_PRECISION = {1, 5, 38, 38, 4};
 const vector<int> COL_SCALE = {0, 5, 38, 0, 2};
 
@@ -30,13 +30,13 @@ static const vector<pair<string, string>> TABLE_COLUMNS = {
 };
 static const int PK_INDEX = 0;
 
-const string MAX_NUM_5_5 = "0.99999";
-const string MAX_NUM_38_38 = "0.99999999999999999999999999999999999999";
-const string MAX_NUM_38_0 = "99999999999999999999999999999999999999";
-const string MAX_NUM_4_2 = "99.99";
+const string MAX_DEC_5_5 = "0.99999";
+const string MAX_DEC_38_38 = "0.99999999999999999999999999999999999999";
+const string MAX_DEC_38_0 = "99999999999999999999999999999999999999";
+const string MAX_DEC_4_2 = "99.99";
 
 
-class PSQL_DataTypes_Numeric : public testing::Test {
+class PSQL_DataTypes_Decimal : public testing::Test {
   void SetUp() override {
     if (!Drivers::DriverExists(ServerType::PSQL)) {
       GTEST_SKIP() << "PSQL Driver not present: skipping all tests for this fixture.";
@@ -60,19 +60,19 @@ class PSQL_DataTypes_Numeric : public testing::Test {
       GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
     }
 
-    // OdbcHandler bbf_test_setup(Drivers::GetDriver(ServerType::MSSQL));
-    // bbf_test_setup.ConnectAndExecQuery(DropObjectStatement("VIEW", BBF_VIEW_NAME));
-    // bbf_test_setup.CloseStmt();
-    // bbf_test_setup.ExecQuery(DropObjectStatement("TABLE", BBF_TABLE_NAME));
+    OdbcHandler bbf_test_setup(Drivers::GetDriver(ServerType::MSSQL));
+    bbf_test_setup.ConnectAndExecQuery(DropObjectStatement("VIEW", BBF_VIEW_NAME));
+    bbf_test_setup.CloseStmt();
+    bbf_test_setup.ExecQuery(DropObjectStatement("TABLE", BBF_TABLE_NAME));
     
-    // OdbcHandler pg_test_setup(Drivers::GetDriver(ServerType::PSQL));
-    // pg_test_setup.ConnectAndExecQuery(DropObjectStatement("VIEW", PG_VIEW_NAME));
-    // pg_test_setup.CloseStmt();
-    // pg_test_setup.ExecQuery(DropObjectStatement("TABLE", PG_TABLE_NAME));
+    OdbcHandler pg_test_setup(Drivers::GetDriver(ServerType::PSQL));
+    pg_test_setup.ConnectAndExecQuery(DropObjectStatement("VIEW", PG_VIEW_NAME));
+    pg_test_setup.CloseStmt();
+    pg_test_setup.ExecQuery(DropObjectStatement("TABLE", PG_TABLE_NAME));
   }
 };
 
-TEST_F(PSQL_DataTypes_Numeric, Table_Creation) {
+TEST_F(PSQL_DataTypes_Decimal, Table_Creation) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
   vector<string> name_expected;
 
@@ -94,7 +94,7 @@ TEST_F(PSQL_DataTypes_Numeric, Table_Creation) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Table_Creation_Fail) {
+TEST_F(PSQL_DataTypes_Decimal, Table_Creation_Fail) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
   vector<string> name_expected;
 
@@ -110,10 +110,10 @@ TEST_F(PSQL_DataTypes_Numeric, Table_Creation_Fail) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Insertion_Success) {
+TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
   const vector<vector<string>> LIST_OF_INSERTED_VALUES = {
     {"0", "0", "0", "0"}, // smallest numbers
-    {MAX_NUM_5_5, MAX_NUM_38_38, MAX_NUM_38_0, MAX_NUM_4_2}, // max values
+    {MAX_DEC_5_5, MAX_DEC_38_38, MAX_DEC_38_0, MAX_DEC_4_2}, // max values
     {"-0.694", "0.4347509234", "-8532", "42.8"}, // random regular values
     {"NULL", "NULL", "NULL", "NULL"} // NULL values
   };
@@ -147,12 +147,12 @@ TEST_F(PSQL_DataTypes_Numeric, Insertion_Success) {
   }
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Insertion_Failure) {
+TEST_F(PSQL_DataTypes_Decimal, Insertion_Failure) {
   const vector<string> LIST_OF_FAIL_INSERTED_VALUES = {
-    MAX_NUM_5_5 + "9", // first col exceeds by 1 digit
-    MAX_NUM_38_38 + "9", // second col exceeds by 1 digit
-    MAX_NUM_38_0 + ".5", // third col exceeds by 1 digit (extra decimal)
-    "9" + MAX_NUM_4_2 // fourth col exceeds by adding a digit in the front
+    MAX_DEC_5_5 + "9", // first col exceeds by 1 digit
+    MAX_DEC_38_38 + "9", // second col exceeds by 1 digit
+    MAX_DEC_38_0 + ".5", // third col exceeds by 1 digit (extra decimal)
+    "9" + MAX_DEC_4_2 // fourth col exceeds by adding a digit in the front
   };
   
   for (int i = 0; i < LIST_OF_FAIL_INSERTED_VALUES.size(); i++) {
@@ -172,11 +172,11 @@ TEST_F(PSQL_DataTypes_Numeric, Insertion_Failure) {
   }
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Update_Success) {
+TEST_F(PSQL_DataTypes_Decimal, Update_Success) {
   const vector<vector<string>> LIST_OF_INSERTED_VALUES = {
     {"0.1", "0.2", "3", "4.4"}, // regular values for insertion (but will update to the same values during the test)
     {"0", "0", "0", "0" }, // update to smallest numbers
-    {MAX_NUM_5_5, MAX_NUM_38_38, MAX_NUM_38_0, MAX_NUM_4_2}, // update to max values
+    {MAX_DEC_5_5, MAX_DEC_38_38, MAX_DEC_38_0, MAX_DEC_4_2}, // update to max values
     {"-0.694", "0.4347509234", "-8532", "42.8"}, // update to random regular values
     {"NULL", "NULL", "NULL", "NULL"} // update to NULL values
   };
@@ -210,10 +210,10 @@ TEST_F(PSQL_DataTypes_Numeric, Update_Success) {
   }
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Update_Fail) {
+TEST_F(PSQL_DataTypes_Decimal, Update_Fail) {
   const vector<vector<string>> LIST_OF_INSERTED_VALUES = {
     {"0.1", "0.2", "3", "4.4"}, // regular values for insertion
-    {MAX_NUM_5_5 + "9", MAX_NUM_38_38 + "9", MAX_NUM_38_0 + ".5", "9" + MAX_NUM_4_2}, // failed updates
+    {MAX_DEC_5_5 + "9", MAX_DEC_38_38 + "9", MAX_DEC_38_0 + ".5", "9" + MAX_DEC_4_2}, // failed updates
   };
   const int INSERT_INDEX = 0;
 
@@ -246,10 +246,10 @@ TEST_F(PSQL_DataTypes_Numeric, Update_Fail) {
   }
 }
 
-TEST_F(PSQL_DataTypes_Numeric, View_creation) {
+TEST_F(PSQL_DataTypes_Decimal, View_creation) {
   const vector<vector<string>> LIST_OF_INSERTED_VALUES = {
     {"0", "0", "0", "0"}, // smallest numbers
-    {MAX_NUM_5_5, MAX_NUM_38_38, MAX_NUM_38_0, MAX_NUM_4_2}, // max values
+    {MAX_DEC_5_5, MAX_DEC_38_38, MAX_DEC_38_0, MAX_DEC_4_2}, // max values
     {"-0.694", "0.4347509234", "-8532", "42.8"}, // random regular values
     {"NULL", "NULL", "NULL", "NULL"} // NULL values
   };
@@ -287,7 +287,7 @@ TEST_F(PSQL_DataTypes_Numeric, View_creation) {
   }
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Table_Single_Primary_Keys) {
+TEST_F(PSQL_DataTypes_Decimal, Table_Single_Primary_Keys) {
   const string COL1_NAME = "col1";
   const string COL2_NAME = COL_NAMES[PK_INDEX];
   const vector<pair<string, string>> TABLE_COLUMNS = {
@@ -333,7 +333,7 @@ TEST_F(PSQL_DataTypes_Numeric, Table_Single_Primary_Keys) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Table_Composite_Keys) {
+TEST_F(PSQL_DataTypes_Decimal, Table_Composite_Keys) {
   const string COL1_NAME = "col1";
   const string COL2_NAME = COL_NAMES[PK_INDEX];
   const vector<pair<string, string>> TABLE_COLUMNS = {
@@ -380,7 +380,7 @@ TEST_F(PSQL_DataTypes_Numeric, Table_Composite_Keys) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Table_Unique_Constraints) {
+TEST_F(PSQL_DataTypes_Decimal, Table_Unique_Constraints) {
   const string COL1_NAME = "col1";
   const string COL2_NAME = COL_NAMES[PK_INDEX];
   const vector<pair<string, string>> TABLE_COLUMNS = {
@@ -426,7 +426,7 @@ TEST_F(PSQL_DataTypes_Numeric, Table_Unique_Constraints) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Comparison_Operators) {
+TEST_F(PSQL_DataTypes_Decimal, Comparison_Operators) {
 
   const string COMPARISON_DATATYPE = DATATYPE + "(6,5)";
   const string COL1_NAME = "col1";
@@ -507,7 +507,7 @@ TEST_F(PSQL_DataTypes_Numeric, Comparison_Operators) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Numeric, Arithmetic_Operators) {
+TEST_F(PSQL_DataTypes_Decimal, Arithmetic_Operators) {
 
   const string COL1_DATATYPE = DATATYPE + "(1,0)";
   const string COL2_DATATYPE = DATATYPE + "(5,5)";
