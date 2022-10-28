@@ -391,6 +391,20 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
 void testComparisonFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<string> &expectedResults);
 
 /**
+ * Verify the expected results for various string functions (LOWER, UPPER, TRIM, etc.).
+ * 
+ * @param serverType The ODBC driver type to create the connection against. 
+ * @param tableName The name of the table to test string functions with. Can include the database and/or schema name. e.g. "master_dbo.SampleTable"
+ * @param operationsQuery Vector containing the function operators to test.
+ * @param expectedResults 2D vector containing the expected results for each string function.
+ * @param insertionSize Number of elements that was inserted into the table.
+ * @param orderByColumnName The column to order by when selecting all from the object. Useful for when there is a primary key
+ *  column in the object to order by.
+*/
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults, 
+  const int insertionSize, const string &orderByColumnName);
+
+/**
  * Verify the expected results for various comparison functions (MIN, MAX, SUM, etc.).
  * Only a single column in the table is used by these comparison functions. E.g. MIN(COL1)
  * 
