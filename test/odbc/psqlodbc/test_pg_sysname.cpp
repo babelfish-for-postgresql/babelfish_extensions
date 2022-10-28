@@ -237,12 +237,14 @@ TEST_F(PSQL_Datatypes_Sysname, Comparison_Operators) {
 
   const vector<string> INSERTED_PK = {
     "Name One",
-    "Name Two"
+    "NNN",
+    "BBB"
   };
 
   const vector<string> INSERTED_DATA = {
-    "Name Three",
-    "Name Four"
+    "Name One",
+    "MMM",
+    "AAA"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
