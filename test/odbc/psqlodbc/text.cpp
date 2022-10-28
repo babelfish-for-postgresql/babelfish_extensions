@@ -429,8 +429,7 @@ TEST_F(PSQL_DataTypes_Text, Comparison_Operators) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-// Waiting on different PR for common functions
-TEST_F(PSQL_DataTypes_Text, DISABLED_String_Functions) {
+TEST_F(PSQL_DataTypes_Text, String_Functions) {
   const vector<string> INSERTED_DATA = {
     "aBcDeFg",
     "   test",
@@ -465,8 +464,10 @@ TEST_F(PSQL_DataTypes_Text, DISABLED_String_Functions) {
 
   insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insertString, NUM_OF_DATA);
 
-  // testStringFunctions(ServerType::MSSQL, BBF_TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_DATA.size());
-  // testStringFunctions(ServerType::PSQL, PG_TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_DATA.size());
+  testStringFunctions(ServerType::MSSQL, BBF_TABLE_NAME, OPERATIONS_QUERY, 
+                      EXPECTED_RESULTS, INSERTED_DATA.size(), COL1_NAME);
+  testStringFunctions(ServerType::PSQL, PG_TABLE_NAME, OPERATIONS_QUERY, 
+                      EXPECTED_RESULTS, INSERTED_DATA.size(), COL1_NAME);
   
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
