@@ -116,16 +116,6 @@ TEST_F(PSQL_DataTypes_Ntext, Insertion_Success) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Ntext, DISABLED_Insertion_Failure) {
-  const vector<string> INSERTED_VALUES = {
-    STRING_4000 + "t"
-  };
-
-  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false);
-  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
-}
-
 TEST_F(PSQL_DataTypes_Ntext, Updata_Success) {
   const vector<string> INSERTED_VALUES = {
     "a"
@@ -150,21 +140,6 @@ TEST_F(PSQL_DataTypes_Ntext, Updata_Success) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
   testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES, expected_UPDATED_VALUES);
-  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
-}
-
-TEST_F(PSQL_DataTypes_Ntext, DISABLED_Updata_Fail) {
-  const vector<string> INSERTED_VALUES = {
-    STRING_1
-  };
-
-  const vector<string> UPDATED_VALUES = {
-    STRING_4000 + "t"
-  };
-
-  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
-  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_VALUES, UPDATED_VALUES);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
