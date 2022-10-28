@@ -2217,6 +2217,29 @@ public:
 	    stream.setText(name->start->getStartIndex(), str.c_str());
 	}
     }
+
+	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
+	{
+		if (ctx->func_proc_name_server_database_schema())
+		{
+			auto fpnsds = ctx->func_proc_name_server_database_schema();
+
+			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
+			{
+				auto id = fpnsds->id().back();
+
+				if (id->keyword()->SUBSTRING()) /* SUBSTRING */
+				{
+					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+					{
+						auto first_arg = ctx->function_arg_list()->expression().front();
+						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
+							ereport(ERROR, (errcode(ERRCODE_SUBSTRING_ERROR), errmsg("Argument data type NULL is invalid for argument 1 of substring function")));
+					}
+				}
+			}
+		}
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////

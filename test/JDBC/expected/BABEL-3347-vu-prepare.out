@@ -1,0 +1,58 @@
+CREATE TABLE babel_3347_table_1(text_test VARCHAR(100));
+INSERT INTO babel_3347_table_1 VALUES ('hello world');
+INSERT INTO babel_3347_table_1 VALUES (NULL);
+INSERT INTO babel_3347_table_1 VALUES ('more txt');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE babel_3347_table_2(int_test INT);
+INSERT INTO babel_3347_table_2 VALUES (3);
+INSERT INTO babel_3347_table_2 VALUES (NULL);
+INSERT INTO babel_3347_table_2 VALUES (5);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE FUNCTION dbo.babel_3347_func () RETURNS NVARCHAR(100) AS BEGIN RETURN NULL END;
+GO
+
+CREATE VIEW babel_3347_vu1 AS
+SELECT SUBSTRING(text_test, 2,3) FROM babel_3347_table_1
+GO
+
+CREATE VIEW babel_3347_vu2 AS
+SELECT SUBSTRING(NULL, 2,3)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+CREATE VIEW babel_3347_vu3 AS
+SELECT SUBSTRING(dbo.babel_3347_func(), 1, 2)
+GO
+
+CREATE VIEW babel_3347_vu4 AS
+SELECT SUBSTRING('1234567890', int_test,8) FROM babel_3347_table_2
+GO
+
+CREATE VIEW babel_3347_vu5 AS
+SELECT SUBSTRING('1234567890', 2,int_test) FROM babel_3347_table_2
+GO
+
+CREATE VIEW babel_3347_vu6 AS
+SELECT SUBSTRING(CAST(NULL as VARCHAR), 1,2)
+GO
+
+CREATE VIEW babel_3347_vu7 AS
+SELECT sys.SUBSTRING(NULL, 1,2)
+GO

@@ -481,15 +481,8 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
  */
 Datum
 tsql_varchar_substr(PG_FUNCTION_ARGS)
-{	
-	if (PG_ARGISNULL(0))
-	{
-		/* Raise error if first arg is null */
-		ereport(ERROR,
-				(errcode(ERRCODE_SUBSTRING_ERROR),
-					errmsg("Argument data type NULL is invalid for argument 1 of substring function")));
-	}
-	if (PG_ARGISNULL(1) || PG_ARGISNULL(2))
+{
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
 		PG_RETURN_NULL();
 	
 	PG_RETURN_VARCHAR_P(DirectFunctionCall3(text_substr,PG_GETARG_DATUM(0),

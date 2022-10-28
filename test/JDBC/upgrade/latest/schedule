@@ -311,6 +311,7 @@ BABEL-889
 babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
+BABEL-3347
 BABEL-3144
 sys-all_parameters-dep
 BABEL-3556
