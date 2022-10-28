@@ -1,20 +1,15 @@
-#include <gtest/gtest.h>
-#include <sqlext.h>
-#include "../src/drivers.h"
-#include "../src/odbc_handler.h"
-#include "../src/query_generator.h"
 #include "psqlodbc_tests_common.h"
 
 using std::pair;
 
 const string TABLE_NAME = "master_dbo.sysname_table_odbc_test";
 const string COL1_NAME = "pk";
-const string COL2_NAME = "sysname_data";
+const string COL2_NAME = "data";
 const string DATATYPE = "sys.sysname";
 const string VIEW_NAME = "master_dbo.sysname_view_odbc_test";
+
 const string STRING_128 = "TQR6vCl9UH5qg2UEJMleJaa3yToVaUbhhxQ7e0SgHjrKg1TYvyUzTrLlO64uPEj572WjgLK6X5muDjK64tcWBr4bBp8hjnV"
   "ftzfLIYFEFCK0nAIuGhnjHIiB8Qc3ywbK";
-
 const string STRING_1 = "a";
 const string STRING_20 = "0123456789abcdefghij";
 
@@ -49,10 +44,13 @@ TEST_F(PSQL_Datatypes_Sysname, Table_Creation) {
   const vector<int> PRECISION_EXPECTED = {0, 0};
   const vector<int> SCALE_EXPECTED = {0, 0};
   const vector<string> NAME_EXPECTED = {"int4", "unknown"};
+  const vector<string> PREFIX_EXPECTED = {"int4", "'"};
+  const vector<string> SUFFIX_EXPECTED = {"int4", "'"};
+  const vector<int> IS_CASE_SENSITIVE = {0, 0};
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testCommonColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS.size(), COL1_NAME, LENGTH_EXPECTED, 
-    PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED);
+  testCommonCharColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS.size(), COL1_NAME, LENGTH_EXPECTED, 
+    PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED, IS_CASE_SENSITIVE, PREFIX_EXPECTED, SUFFIX_EXPECTED);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
@@ -68,15 +66,7 @@ TEST_F(PSQL_Datatypes_Sysname, Table_Create_Fail) {
 
 // inserted values differ that of expected?
 TEST_F(PSQL_Datatypes_Sysname, Insertion_Success) {
-  const vector<string> inserted_values = {
-    "NULL", // NULL value
-    STRING_1,
-    STRING_128,
-    STRING_20,
-    "" // blank value
-  };
-
-  const vector<string> expected = {
+  const vector<string> INSERTED_VALUES = {
     "NULL", // NULL value
     STRING_1,
     STRING_128,
@@ -85,33 +75,26 @@ TEST_F(PSQL_Datatypes_Sysname, Insertion_Success) {
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Sysname, Insertion_Failure) {
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     STRING_128 + "t"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Sysname, Updata_Success) {
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     "a"
   };
 
-  const vector<string> updatad_values = {
-    STRING_1,
-    STRING_20,
-    STRING_128,
-    "" // blank value
-  };
-
-  const vector<string> expected_updatad_values = {
+  const vector<string> UPDATED_VALUES = {
     STRING_1,
     STRING_20,
     STRING_128,
@@ -119,36 +102,28 @@ TEST_F(PSQL_Datatypes_Sysname, Updata_Success) {
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
-  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, updatad_values, expected_updatad_values);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES, UPDATED_VALUES);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Sysname, Updata_Fail) {
-  const vector<string> inserted_values = {
+  const vector<string> INSERTED_VALUES = {
     STRING_1
   };
 
-  const vector<string> updatad_values = {
+  const vector<string> UPDATED_VALUES = {
     STRING_128 + "t"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
-  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, inserted_values, updatad_values);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_VALUES, UPDATED_VALUES);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Sysname, View_creation) {
-  const vector<string> inserted_values = {
-    "NULL", // NULL values
-    STRING_1,
-    STRING_20,
-    STRING_128,
-    "" // blank value
-  };
-
-  const vector<string> expected = {
+  const vector<string> INSERTED_VALUES = {
     "NULL", // NULL values
     STRING_1,
     STRING_20,
@@ -159,10 +134,10 @@ TEST_F(PSQL_Datatypes_Sysname, View_creation) {
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
 
   createView(ServerType::PSQL, VIEW_NAME, VIEW_QUERY);
-  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, inserted_values, expected);
+  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
 
   dropObject(ServerType::PSQL, "VIEW", VIEW_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
@@ -183,14 +158,7 @@ TEST_F(PSQL_Datatypes_Sysname, Table_Single_Primary_Keys) {
 
   string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
 
-  const vector<string> inserted_values = {
-    STRING_1,
-    STRING_20,
-    STRING_128,
-    "" // blank value
-  };
-
-  const vector<string> expected = {
+  const vector<string> INSERTED_VALUES = {
     STRING_1,
     STRING_20,
     STRING_128,
@@ -199,7 +167,8 @@ TEST_F(PSQL_Datatypes_Sysname, Table_Single_Primary_Keys) {
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
@@ -218,14 +187,7 @@ TEST_F(PSQL_Datatypes_Sysname, Table_Composite_Primary_Keys) {
 
   string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
 
-  const vector<string> inserted_values = {
-    STRING_1,
-    STRING_20,
-    STRING_128,
-    "" // blank value
-  };
-
-  const vector<string> expected = {
+  const vector<string> INSERTED_VALUES = {
     STRING_1,
     STRING_20,
     STRING_128,
@@ -234,12 +196,12 @@ TEST_F(PSQL_Datatypes_Sysname, Table_Composite_Primary_Keys) {
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Sysname, Table_Unique_Constraint) {
-
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
     {COL2_NAME, DATATYPE}
@@ -252,14 +214,7 @@ TEST_F(PSQL_Datatypes_Sysname, Table_Unique_Constraint) {
   string tableConstraints = createTableConstraint("UNIQUE", UNIQUE_COLUMNS);
 
   // Insert valid values into the table and assert affected rows
-  const vector<string> inserted_values = {
-    STRING_1,
-    STRING_20,
-    STRING_128,
-    "" // blank value
-  };
-
-  const vector<string> expected = {
+  const vector<string> INSERTED_VALUES = {
     STRING_1,
     STRING_20,
     STRING_128,
@@ -271,128 +226,110 @@ TEST_F(PSQL_Datatypes_Sysname, Table_Unique_Constraint) {
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testUniqueConstraint(ServerType::PSQL, tableName, UNIQUE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, false, inserted_values.size(), false);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, INSERTED_VALUES.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Sysname, String_Operators) {
-
-  const int BUFFER_LENGTH = 256;
-  const int BYTES_EXPECTED = 4;
-  const int DOUBLE_BYTES_EXPECTE = 8;
-  int pk;
-  char data[BUFFER_LENGTH];
-  SQLLEN pk_len;
-  SQLLEN data_len;
-  SQLLEN affected_rows;
-
-  RETCODE rcode;
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-const int NUM_COLS = 2;
-const string COL_NAMES[NUM_COLS] = {"pk", "data"};
-const int COL_LENGTH[NUM_COLS] = {128, 128};
-
-const string COL_TYPES[NUM_COLS] = {
-  DATATYPE,
-  DATATYPE
-};
-
-vector<pair<string, string>> TABLE_COLUMNS_NTEXT = {
-  {COL_NAMES[0], COL_TYPES[0] + " PRIMARY KEY"},
-  {COL_NAMES[1], COL_TYPES[1]}
-};
-
-
-  vector <string> inserted_pk = {
-    "123",
-    "456"
+TEST_F(PSQL_Datatypes_Sysname, Comparison_Operators) {
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE}
   };
 
-  vector <string> inserted_data = {
-    "One Two Three",
-    "Four Five Six"
+  const vector<string> INSERTED_PK = {
+    "Name One",
+    "Name Two"
   };
 
-  vector <string> operations_query = {
-    COL_NAMES[0]+ "||" + COL_NAMES[1],
-    "lower("+COL_NAMES[1]+")",
-    COL_NAMES[0] + ">" + COL_NAMES[1],
-    COL_NAMES[0] + ">=" + COL_NAMES[1],
-    COL_NAMES[0] + "<=" + COL_NAMES[1],
-    COL_NAMES[0] + "<" + COL_NAMES[1],
-    COL_NAMES[0] + "<>" + COL_NAMES[1]
+  const vector<string> INSERTED_DATA = {
+    "Name Three",
+    "Name Four"
   };
+  const int NUM_OF_DATA = INSERTED_DATA.size();
 
-  vector<vector<string>>expected_results = {{},{}};
-
-  // initialization of expected_results
-  for (int i = 0; i < inserted_pk.size(); i++) {
-    expected_results[i].push_back(inserted_pk[i] + inserted_data[i]);
-    string current=inserted_data[i];
-    transform(current.begin(), current.end(), current.begin(), ::tolower);
-    expected_results[i].push_back(current);
-    expected_results[i].push_back(std::to_string(inserted_pk[i] > inserted_data[i]));
-    expected_results[i].push_back(std::to_string(inserted_pk[i] >= inserted_data[i]));
-    expected_results[i].push_back(std::to_string(inserted_pk[i] <= inserted_data[i]));
-    expected_results[i].push_back(std::to_string(inserted_pk[i] < inserted_data[i]));
-    expected_results[i].push_back(std::to_string(inserted_pk[i] != inserted_data[i]));
-  }
-
-  char col_results[operations_query.size()][BUFFER_LENGTH];
-  SQLLEN col_len[operations_query.size()];
-  vector<tuple<int, int, SQLPOINTER, int, SQLLEN* >> bind_columns = {};
-
-  // initialization for bind_columns
-  for (int i = 0; i < operations_query.size(); i++) {
-    tuple<int, int, SQLPOINTER, int, SQLLEN*> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER) &col_results[i], BUFFER_LENGTH, &col_len[i]);
-    bind_columns.push_back(tuple_to_insert);
-  }
-
-  string insert_string{}; 
+  // insertString initialization
+  string insertString{};
   string comma{};
-  
-  // insert_string initialization
-  for (int i = 0; i< inserted_pk.size() ; ++i) {
-    insert_string += comma + "(" +"'"+ inserted_pk[i] + "'"+","+"'" + inserted_data[i] + "'"+")";
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(\'" + INSERTED_PK[i] + "\',\'" + INSERTED_DATA[i] + "\')";
     comma = ",";
   }
 
-  // Create table
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS_NTEXT));
-  odbcHandler.CloseStmt();
+  const vector<string> OPERATIONS_QUERY = {
+    COL1_NAME + "=" + COL2_NAME,
+    COL1_NAME + "<>" + COL2_NAME,
+    COL1_NAME + "<" + COL2_NAME,
+    COL1_NAME + "<=" + COL2_NAME,
+    COL1_NAME + ">" + COL2_NAME,
+    COL1_NAME + ">=" + COL2_NAME
+  };
 
-  // Insert valid values into the table and assert affected rows
-  odbcHandler.ExecQuery(InsertStatement(TABLE_NAME, insert_string));
-  rcode = SQLRowCount(odbcHandler.GetStatementHandle(), &affected_rows);
-  ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(affected_rows, inserted_data.size());
-  
+  // initialization of expected_results
+  vector<vector<char>> expected_results = {};
 
-  // Make sure inserted values are correct and operations
-  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
-
-  for (int i = 0; i < inserted_data.size(); ++i) {
-    
-    odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, operations_query, vector<string> {}, COL_NAMES[0] + "=" + "'"+inserted_pk[i]+"'"));
-    ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
-
-    rcode = SQLFetch(odbcHandler.GetStatementHandle());
-    ASSERT_EQ(rcode, SQL_SUCCESS);
-
-    for (int j = 0; j < operations_query.size(); j++) {
-
-      ASSERT_EQ(col_len[j], expected_results[i][j].size());
-      ASSERT_EQ(col_results[j], expected_results[i][j]);
-    }
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    expected_results.push_back({});
+    const char *date_1 = INSERTED_PK[i].data();
+    const char *date_2 = INSERTED_DATA[i].data();
+    expected_results[i].push_back(strcmp(date_1, date_2) == 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) != 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) < 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) <= 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) > 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) >= 0 ? '1' : '0');
   }
 
-  // Assert that there is no more data
-  rcode = SQLFetch(odbcHandler.GetStatementHandle());
-  ASSERT_EQ(rcode, SQL_NO_DATA);
-
-  odbcHandler.CloseStmt();
-  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+  testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
+    OPERATIONS_QUERY, expected_results, false, true);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
+
+// TEST_F(PSQL_Datatypes_Sysname, DISABLED_String_Operators) {
+
+//   const vector<string> INSERTED_DATA = {
+//     "  One Two!"
+//   };
+
+//   const vector<string> INSERTED_PK = {
+//     "1"
+//   };
+
+//   const int NUM_OF_DATA = INSERTED_DATA.size();
+  
+//   // insertString initialization
+//   string insertString{};
+//   string comma{};
+//   for (int i = 0; i < NUM_OF_DATA; i++) {
+//     insertString += comma + "(" + INSERTED_PK[i] + ",\'" + INSERTED_DATA[i] + "\')";
+//     comma = ",";
+//   }
+
+//   const vector<string> OPERATIONS_QUERY = {
+//     "lower(" + COL2_NAME + ")",
+//     "upper(" + COL2_NAME + ")",
+//     COL1_NAME +"||" + COL2_NAME,
+//     "Trim(" + COL2_NAME + ")",
+//     "Trim(TRAILING '!' from " + COL2_NAME + ")"
+
+//   };
+//   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
+
+//   // initialization of EXPECTED_RESULTS
+//   vector<vector<string>> EXPECTED_RESULTS = {{}};
+  
+//   string current = INSERTED_DATA[0];
+//   transform(current.begin(), current.end(), current.begin(), ::tolower);
+//   EXPECTED_RESULTS[0].push_back(current);
+//   EXPECTED_RESULTS[0].push_back("  ONE TWO!");
+//   EXPECTED_RESULTS[0].push_back(INSERTED_PK[0] + INSERTED_DATA[0]);
+//   EXPECTED_RESULTS[0].push_back("One Two!");
+//   EXPECTED_RESULTS[0].push_back("  One Two");
+  
+//   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+//   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+//   testStringFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_PK, COL1_NAME);
+//   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+// }
