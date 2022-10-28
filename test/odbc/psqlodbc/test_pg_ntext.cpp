@@ -93,7 +93,6 @@ TEST_F(PSQL_DataTypes_Ntext, Table_Create_Fail) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// // inserted values differ that of expected?
 TEST_F(PSQL_DataTypes_Ntext, Insertion_Success) {
   const vector<string> INSERTED_VALUES = {
     "NULL", // NULL value
@@ -116,7 +115,7 @@ TEST_F(PSQL_DataTypes_Ntext, Insertion_Success) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Ntext, Updata_Success) {
+TEST_F(PSQL_DataTypes_Ntext, Update_Success) {
   const vector<string> INSERTED_VALUES = {
     "a"
   };
