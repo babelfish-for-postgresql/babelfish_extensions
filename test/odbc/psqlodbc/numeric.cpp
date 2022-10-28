@@ -14,7 +14,7 @@ const vector<int> PG_LENGTH_EXPECTED = {3, 7, 40, 40, 6};
 const vector<int> BBF_LENGTH_EXPECTED = {1, 5, 38, 38, 4}; 
 
 const vector<string> COL_TYPES = {
-  DATATYPE + "(" + std::to_string(COL_PRECISION[0]) + "," + std::to_string(COL_SCALE[0]) +  ")",
+  DATATYPE + "(" + std::to_string(COL_PRECISION[0]) + "," + std::to_string(COL_SCALE[0]) + ")",
   DATATYPE + "(" + std::to_string(COL_PRECISION[1]) + "," + std::to_string(COL_SCALE[1]) + ")",
   DATATYPE + "(" + std::to_string(COL_PRECISION[2]) + "," + std::to_string(COL_SCALE[2]) + ")",
   DATATYPE + "(" + std::to_string(COL_PRECISION[3]) + "," + std::to_string(COL_SCALE[3]) + ")",
@@ -99,8 +99,8 @@ TEST_F(PSQL_DataTypes_Numeric, Table_Creation_Fail) {
   vector<string> name_expected;
 
   const vector<vector<pair<string, string>>> invalid_columns {
-    {{"invalid1", DATATYPE + "(0,0)"}}, // must have precision of 1 or greater
-    {{"invalid2", DATATYPE + "(10,11)"}}, // scale cannot be larger than precision
+    {{"invalid1", DATATYPE + "(0, 0)"}}, // must have precision of 1 or greater
+    {{"invalid2", DATATYPE + "(10, 11)"}}, // scale cannot be larger than precision
     {{"invalid3", DATATYPE + "(10, -1)"}} // precision must be 0 or greater
   };
 
@@ -514,20 +514,20 @@ TEST_F(PSQL_DataTypes_Numeric, Arithmetic_Operators) {
   const string COL1_NAME = "col1";
   const string COL2_NAME = "col2";
 
-  vector<pair<string, string>> TABLE_COLUMNS = {
+  const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, COL1_DATATYPE + " PRIMARY KEY"},
     {COL2_NAME, COL2_DATATYPE}
   };
 
-  vector <string> inserted_pk = {
+  const vector <string> INSERTED_PK = {
     "8"
   };
 
-  vector <string> inserted_data = {
+  const vector <string> INSERTED_DATA = {
     "0.55555"
   };
 
-  vector <string> pg_operations_query = {
+  const vector <string> PG_OPERATIONS_QUERY = {
     COL1_NAME + "+" + COL2_NAME,
     COL1_NAME + "-" + COL2_NAME,
     COL1_NAME + "*" + COL2_NAME,
@@ -538,37 +538,35 @@ TEST_F(PSQL_DataTypes_Numeric, Arithmetic_Operators) {
     "LOG(" + COL1_NAME + ")"    
   };
 
-  vector<vector<string>>pg_expected_results;
-  vector<vector<string>>bbf_expected_results;
-
   // initialization of expected_results
-  for (int i = 0; i < inserted_pk.size(); i++) {
-    pg_expected_results.push_back({});
-    pg_expected_results[i].push_back("8.55555");
-    pg_expected_results[i].push_back("7.44445");
-    pg_expected_results[i].push_back("4.44440");
-    pg_expected_results[i].push_back("14.4001440014400144");
-    pg_expected_results[i].push_back("8");
-    pg_expected_results[i].push_back("3.1747654273961317");
-    pg_expected_results[i].push_back("2");
-    pg_expected_results[i].push_back("0.9030899869919436");
-  }
+  const vector<vector<string>>PG_EXPECTED_RESULTS = {
+    {
+      "8.55555",
+      "7.44445",
+      "4.44440",
+      "14.4001440014400144",
+      "8",
+      "3.1747654273961317",
+      "2",
+      "0.9030899869919436"
+    }
+  };
   
   string insert_string{}; 
   string comma{};
   
   // insert_string initialization
-  for (int i = 0; i < inserted_pk.size(); ++i) {
-    insert_string += comma + "(" + inserted_pk[i] + "," + inserted_data[i] + ")";
+  for (int i = 0; i < INSERTED_PK.size(); ++i) {
+    insert_string += comma + "(" + INSERTED_PK[i] + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insert_string,    
-    inserted_pk.size());
+    INSERTED_PK.size());
 
   testArithmeticOperators(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME,        
-    inserted_pk.size(), pg_operations_query, pg_expected_results);
+    INSERTED_PK.size(), PG_OPERATIONS_QUERY, PG_EXPECTED_RESULTS);
 
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
