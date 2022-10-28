@@ -137,11 +137,9 @@ BEGIN
   SELECT COUNT(*) INTO cnt FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
   IF cnt = 0 THEN 
     RAISE EXCEPTION 'unknown configuration: %', normalized_name;
-  ELSIF cnt > 0 AND (lower("@option_value") != 'ignore' AND lower("@option_value") != 'strict' 
-                AND lower("@option_value") != 'default' AND lower("@option_value") != 'on' AND lower("@option_value") != 'off') THEN
+  ELSIF cnt > 1 AND (lower("@option_value") != 'ignore' AND lower("@option_value") != 'strict' 
+                AND lower("@option_value") != 'default') THEN
     RAISE EXCEPTION 'unvalid option: %', lower("@option_value");
-  ELSIF cnt = (SELECT COUNT(*) FROM sys.babelfish_configurations_view) AND (lower("@option_value") = 'on' OR lower("@option_value") = 'off') THEN 
-    RAISE EXCEPTION 'unvalid option : %, when trying to use wildcard patterns.',lower("@option_value");
   END IF;
 
   OPEN cur FOR SELECT name FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
