@@ -133,12 +133,6 @@ class PSQL_DataTypes_Char : public testing::Test {
   }
 };
 
-string padString(string input, size_t table_size) {
-  std::ostringstream result;
-  result << std::left << std::setw(table_size) << std::setfill(' ') << input;
-  return result.str();
-}
-
 vector<string> getExpectedResults_Char(const vector<string> &input, size_t table_size) {
   vector<string> ret = {};
 
@@ -857,7 +851,8 @@ TEST_F(PSQL_DataTypes_Char, Comparison_Operators) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Char, String_Functions) {
+// Waiting on different PR for common functions
+TEST_F(PSQL_DataTypes_Char, DISABLED_String_Functions) {
   const vector<string> INSERTED_DATA = {
     "aBcDeFg",
     "   test",
@@ -892,9 +887,9 @@ TEST_F(PSQL_DataTypes_Char, String_Functions) {
 
   insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insertString, NUM_OF_DATA);
 
-  testStringFunctions(ServerType::MSSQL, BBF_TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_DATA.size());
-  testStringFunctions(ServerType::PSQL, PG_TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_DATA.size());
-  
+  // testStringFunctions(ServerType::MSSQL, BBF_TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_DATA.size());
+  // testStringFunctions(ServerType::PSQL, PG_TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_DATA.size());
+
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
