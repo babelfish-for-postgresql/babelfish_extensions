@@ -1,5 +1,11 @@
 #include "psqlodbc_tests_common.h"
 
+string padString(string input, size_t table_size) {
+  std::ostringstream result;
+  result << std::left << std::setw(table_size) << std::setfill(' ') << input;
+  return result.str();
+}
+
 std::string GetHexRepresentation(std::string inserted_int, size_t table_size) {
   if (inserted_int == "NULL") {
     return "NULL";
