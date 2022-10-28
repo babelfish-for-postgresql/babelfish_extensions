@@ -25,7 +25,7 @@ go
 select set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
 
-select set_config('babelfishpg_tsql.enable_hint_mapping', 'on', false)
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
 
 set babelfish_showplan_all on
@@ -240,12 +240,6 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
-select set_config('babelfishpg_tsql.explain_costs', 'on', false)
-go
-
-select set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false)
-go
-
 drop table babel_3293_schema.t1 
 go
 

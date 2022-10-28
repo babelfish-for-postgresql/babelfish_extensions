@@ -23,6 +23,10 @@ class PSQL_DataTypes_Real : public testing::Test {
   }
 
   void TearDown() override {
+    if (!Drivers::DriverExists(ServerType::PSQL)) {
+      GTEST_SKIP() << "PSQL Driver not present: skipping all tests for this fixture.";
+    }
+
     OdbcHandler test_teardown(Drivers::GetDriver(ServerType::PSQL));
     test_teardown.ConnectAndExecQuery(DropObjectStatement("VIEW", VIEW_NAME));
     test_teardown.CloseStmt();
@@ -388,7 +392,7 @@ TEST_F(PSQL_DataTypes_Real, Table_Composite_Primary_Keys) {
 
   const int bufferLen = 0;
 
-  vector<string> VALID_INSERTED_VALUES = {
+  const vector<string> VALID_INSERTED_VALUES = {
     "0.1234",
     "1234"
   };
