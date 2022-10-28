@@ -301,7 +301,6 @@ SELECT pt.typrelid
     AND (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r'
     AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass)
 ;
-GRANT SELECT ON sys.table_types_internal TO PUBLIC;
 
 -- The view sys.type_info_internal corresponds to 
 -- type_info_t type_infos[TOTAL_TYPECODE_COUNT] in contrib/babelfishpg_common/src/typecode.c
@@ -343,7 +342,6 @@ select * from
     ('rowversion'      , 'timestamp' ),
     ('timestamp'       , 'timestamp')
 )  t(pg_type_name,tsql_type_name);
-GRANT SELECT ON sys.type_info_internal TO PUBLIC;
 
 -- re-creating objects to point to new tsql_type_max_length_helper
 

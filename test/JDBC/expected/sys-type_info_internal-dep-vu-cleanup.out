@@ -6,3 +6,10 @@ GO
 
 DROP FUNCTION sys_type_info_internal_test_dep_func
 GO
+
+-- psql 
+REVOKE SELECT ON sys.type_info_internal FROM PUBLIC;
+GO
+
+REVOKE SELECT ON sys.table_types_internal FROM PUBLIC;
+GO

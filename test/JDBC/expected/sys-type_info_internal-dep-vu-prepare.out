@@ -1,3 +1,13 @@
+-- psql 
+GRANT SELECT ON sys.type_info_internal TO PUBLIC;
+GO
+
+GRANT SELECT ON sys.table_types_internal TO PUBLIC;
+GO
+
+-- tsql
+GO
+
 CREATE PROCEDURE sys_type_info_internal_test_dep_proc 
 AS
     SELECT count(pg_type_name) as num_pg_types, count(tsql_type_name) as num_tsql_types

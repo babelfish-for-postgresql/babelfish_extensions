@@ -12,7 +12,6 @@ SELECT pt.typrelid
     AND (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r'
     AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass)
 ;
-GRANT SELECT ON sys.table_types_internal TO PUBLIC;
 
 create or replace view sys.tables as
 select
@@ -1081,7 +1080,6 @@ select * from
     ('rowversion'      , 'timestamp' ),
     ('timestamp'       , 'timestamp')
 )  t(pg_type_name,tsql_type_name);
-GRANT SELECT ON sys.type_info_internal TO PUBLIC;
 
 create or replace view sys.types As
 -- For System types
