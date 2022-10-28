@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.tinyint_table_odbc_test";
@@ -36,26 +37,6 @@ class PSQL_DataTypes_TinyInt : public testing::Test {
   }
 };
 
-// Helper function to convert string to equivalent C version of int.
-int StringToTinyInt(const string &value) {
-  return std::stoi(value.c_str(), NULL, 10);
-}
-
-vector<int> getExpectedTinyIntResults(vector<string> data) {
-  vector<int> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    if (data[i] != "NULL") {
-      expectedResults.push_back(StringToTinyInt(data[i]));
-    }
-    else {
-      // dummy value
-      expectedResults.push_back(StringToTinyInt("-1"));
-    }
-  }
-  return expectedResults;
-}
-
 TEST_F(PSQL_DataTypes_TinyInt, Table_Creation) {
   // SQL_DESC_LENGTH length reported as 2 for tinyint column instead of 1.
   const vector<int> LENGTH_EXPECTED = {4, 2};
@@ -80,7 +61,7 @@ TEST_F(PSQL_DataTypes_TinyInt, Insertion_Success) {
     "NULL"
   };
 
-  const vector<int> expected = getExpectedTinyIntResults(VALID_INSERTED_VALUES);
+  const vector<int> expected = getExpectedResults_Int(VALID_INSERTED_VALUES);
 
   const vector<long> expectedLen(expected.size(), TINYINT_BYTES_EXPECTED);
 
@@ -106,7 +87,7 @@ TEST_F(PSQL_DataTypes_TinyInt, Update_Success) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"1"};
-  const vector<int> data_expected = getExpectedTinyIntResults(DATA_INSERTED);
+  const vector<int> data_expected = getExpectedResults_Int(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), TINYINT_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUES = {
@@ -114,7 +95,7 @@ TEST_F(PSQL_DataTypes_TinyInt, Update_Success) {
     "0",
     "255"
   };
-  const vector<int> DATA_UPDATED_EXPECTED = getExpectedTinyIntResults(DATA_UPDATED_VALUES);
+  const vector<int> DATA_UPDATED_EXPECTED = getExpectedResults_Int(DATA_UPDATED_VALUES);
 
   const vector<long> expectedLen(DATA_UPDATED_EXPECTED.size(), TINYINT_BYTES_EXPECTED);
   
@@ -130,7 +111,7 @@ TEST_F(PSQL_DataTypes_TinyInt, Update_Fail) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"1"};
-  const vector<int> EXPECTED_DATA_INSERTED = getExpectedTinyIntResults(DATA_INSERTED);
+  const vector<int> EXPECTED_DATA_INSERTED = getExpectedResults_Int(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), TINYINT_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUE = {"256"};
@@ -185,8 +166,8 @@ TEST_F(PSQL_DataTypes_TinyInt, Arithmetic_Operators) {
   // initialization of expected_results
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    int data_1 = StringToTinyInt(INSERTED_PK[i]);
-    int data_2 = StringToTinyInt(INSERTED_DATA[i]);
+    int data_1 = stringToInt(INSERTED_PK[i]);
+    int data_2 = stringToInt(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 + data_2);
     expected_results[i].push_back(data_1 - data_2);
@@ -246,8 +227,8 @@ TEST_F(PSQL_DataTypes_TinyInt, Comparison_Operators) {
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    int data_1 = StringToTinyInt(INSERTED_PK[i]);
-    int data_2 = StringToTinyInt(INSERTED_DATA[i]);
+    int data_1 = stringToInt(INSERTED_PK[i]);
+    int data_2 = stringToInt(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
     expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
@@ -295,11 +276,11 @@ TEST_F(PSQL_DataTypes_TinyInt, Comparison_Functions) {
   // initialization of expected_results
   vector<int> expected_results = {};
 
-  int curr = StringToTinyInt(INSERTED_DATA[0]);
+  int curr = stringToInt(INSERTED_DATA[0]);
   int min_expected = curr, max_expected = curr, sum = curr;
 
   for (int i = 1; i < NUM_OF_DATA; i++) {
-    curr = StringToTinyInt(INSERTED_DATA[i]);
+    curr = stringToInt(INSERTED_DATA[i]);
     sum += curr;
 
     min_expected = std::min(curr, min_expected);
@@ -332,7 +313,7 @@ TEST_F(PSQL_DataTypes_TinyInt, View_Creation) {
     "NULL"
   };
   
-  const vector<int> EXPECTED_DATA = getExpectedTinyIntResults(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), TINYINT_BYTES_EXPECTED);
 
@@ -363,7 +344,7 @@ TEST_F(PSQL_DataTypes_TinyInt, Table_Unique_Constraints) {
     "0",
     "1"
   };
-  const vector<int> EXPECTED_DATA = getExpectedTinyIntResults(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), TINYINT_BYTES_EXPECTED);
 
@@ -400,7 +381,7 @@ TEST_F(PSQL_DataTypes_TinyInt, Table_Single_Primary_Keys) {
     "0",
     "1"
   };
-  const vector<int> EXPECTED_DATA = getExpectedTinyIntResults(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), TINYINT_BYTES_EXPECTED);
 
@@ -435,7 +416,7 @@ TEST_F(PSQL_DataTypes_TinyInt, Table_Composite_Primary_Keys) {
     "0",
     "1"
   };
-  const vector<int> EXPECTED_DATA = getExpectedTinyIntResults(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), TINYINT_BYTES_EXPECTED);
 

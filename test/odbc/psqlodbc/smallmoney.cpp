@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.smallmoney_table_odbc_test";
@@ -33,24 +34,6 @@ class PSQL_DataTypes_Smallmoney : public testing::Test {
   }
 };
 
-// Helper to convert string to double
-double stringToDouble(const string &value) {
-  if (value == "NULL") {
-    return 0;
-  }
-  return std::stod(value);
-}
-
-vector<double> getExpectedResults_Smallmoney(vector<string> data) {
-  vector<double> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    expectedResults.push_back(stringToDouble(data[i]));
-  }
-
-  return expectedResults;
-}
-
 TEST_F(PSQL_DataTypes_Smallmoney, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 255};
   const vector<int> PRECISION_EXPECTED = {0, 0};
@@ -75,7 +58,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Insertion_Success) {
     "-100000.01",
     "NULL"
   };
-  const vector<double> expected = getExpectedResults_Smallmoney(INSERTED_DATA);
+  const vector<double> expected = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(expected.size(), DOUBLE_BYTES_EXPECTED);
 
@@ -103,7 +86,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Update_Success) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"1"};
-  const vector<double> data_expected = getExpectedResults_Smallmoney(DATA_INSERTED);
+  const vector<double> data_expected = getExpectedResults_Double(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), DOUBLE_BYTES_EXPECTED);
 
   const vector <string> DATA_UPDATED_VALUES = {
@@ -112,7 +95,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Update_Success) {
     "214748.3647",
     "0"
   };
-  const vector<double> DATA_UPDATED_EXPECTED = getExpectedResults_Smallmoney(DATA_UPDATED_VALUES);
+  const vector<double> DATA_UPDATED_EXPECTED = getExpectedResults_Double(DATA_UPDATED_VALUES);
 
   const vector<long> expectedLen(DATA_UPDATED_EXPECTED.size(), DOUBLE_BYTES_EXPECTED);
   
@@ -128,7 +111,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Update_Fail) {
   const int bufferLen = 0;
   
   const vector<string> DATA_INSERTED = {"12345"};
-  const vector<double> EXPECTED_DATA_INSERTED = getExpectedResults_Smallmoney(DATA_INSERTED);
+  const vector<double> EXPECTED_DATA_INSERTED = getExpectedResults_Double(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), DOUBLE_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUE = {"999999999999999999999999999999"}; // Over max
@@ -337,7 +320,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, View_Creation) {
     "NULL"
   };
   
-  const vector<double> EXPECTED_DATA = getExpectedResults_Smallmoney(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
 
@@ -368,7 +351,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Table_Unique_Constraints) {
     "1000.0001",
     "-1000.0001"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Smallmoney(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
 
@@ -405,7 +388,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Table_Single_Primary_Keys) {
     "1000.01",
     "-100.0001"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Smallmoney(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
 
@@ -440,7 +423,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Table_Composite_Keys) {
     "1000.01",
     "-100.0001"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Smallmoney(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
 

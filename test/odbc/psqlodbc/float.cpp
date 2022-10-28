@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.float_table_odbc_test";
@@ -38,24 +39,6 @@ class PSQL_DataTypes_Float : public testing::Test {
   }
 };
 
-// Helper to convert string to double/float
-double StringToFloat(const string &value) {
-  if (value == "NULL") {
-    return 0;
-  }
-  return atof(value.c_str());
-}
-
-vector<double> getExpectedFloatResults(vector<string> data) {
-  vector<double> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    expectedResults.push_back(StringToFloat(data[i]));
-  }
-
-  return expectedResults;
-}
-
 TEST_F(PSQL_DataTypes_Float, ColAttributes) {
   const vector<int> LENGTH_EXPECTED = {4, 8};
   const vector<int> PRECISION_EXPECTED = {0, 0};
@@ -89,7 +72,7 @@ TEST_F(PSQL_DataTypes_Float, Insertion_Success) {
     "NULL"
   };
 
-  const vector<double> expected = getExpectedFloatResults(VALID_INSERTED_VALUES);
+  const vector<double> expected = getExpectedResults_Double(VALID_INSERTED_VALUES);
 
   const vector<long> expectedLen(expected.size(), FLOAT_BYTES_EXPECTED);
 
@@ -119,7 +102,7 @@ TEST_F(PSQL_DataTypes_Float, Update_Success) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"0.1"};
-  const vector<double> data_expected = getExpectedFloatResults(DATA_INSERTED);
+  const vector<double> data_expected = getExpectedResults_Double(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), FLOAT_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUES = {
@@ -127,7 +110,7 @@ TEST_F(PSQL_DataTypes_Float, Update_Success) {
     "0",
     FLOAT_15
   };
-  const vector<double> DATA_UPDATED_EXPECTED = getExpectedFloatResults(DATA_UPDATED_VALUES);
+  const vector<double> DATA_UPDATED_EXPECTED = getExpectedResults_Double(DATA_UPDATED_VALUES);
 
   const vector<long> expectedLen(DATA_UPDATED_EXPECTED.size(), FLOAT_BYTES_EXPECTED);
   
@@ -143,7 +126,7 @@ TEST_F(PSQL_DataTypes_Float, Update_Fail) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"0.1"};
-  const vector<double> EXPECTED_DATA_INSERTED = getExpectedFloatResults(DATA_INSERTED);
+  const vector<double> EXPECTED_DATA_INSERTED = getExpectedResults_Double(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), FLOAT_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUES = {
@@ -199,8 +182,8 @@ TEST_F(PSQL_DataTypes_Float, Arithmetic_Operators) {
   // initialization of expected_results
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    double data_1 = StringToFloat(INSERTED_PK[i]);
-    double data_2 = StringToFloat(INSERTED_DATA[i]);
+    double data_1 = stringToDouble(INSERTED_PK[i]);
+    double data_2 = stringToDouble(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 + data_2);
     expected_results[i].push_back(data_1 - data_2);
@@ -262,8 +245,8 @@ TEST_F(PSQL_DataTypes_Float, Comparison_Operators) {
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    long long int data_1 = StringToFloat(INSERTED_PK[i]);
-    long long int data_2 = StringToFloat(INSERTED_DATA[i]);
+    long long int data_1 = stringToDouble(INSERTED_PK[i]);
+    long long int data_2 = stringToDouble(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
     expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
@@ -310,11 +293,11 @@ TEST_F(PSQL_DataTypes_Float, Comparison_Functions) {
   // initialization of expected_results
   vector<double> expected_results = {};
 
-  double curr = StringToFloat(INSERTED_DATA[0]);
+  double curr = stringToDouble(INSERTED_DATA[0]);
   double min_expected = curr, max_expected = curr, sum = curr;
 
   for (int i = 1; i < NUM_OF_DATA; i++) {
-    curr = StringToFloat(INSERTED_DATA[i]);
+    curr = stringToDouble(INSERTED_DATA[i]);
     sum += curr;
 
     min_expected = std::min(curr, min_expected);
@@ -347,7 +330,7 @@ TEST_F(PSQL_DataTypes_Float, View_creation) {
     "NULL"
   };
   
-  const vector<double> EXPECTED_DATA = getExpectedFloatResults(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), FLOAT_BYTES_EXPECTED);
 
@@ -378,7 +361,7 @@ TEST_F(PSQL_DataTypes_Float, Table_Unique_Constraints) {
     "0.8",
     "22.2"
   };
-  const vector<double> EXPECTED_DATA = getExpectedFloatResults(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), FLOAT_BYTES_EXPECTED);
 
@@ -415,7 +398,7 @@ TEST_F(PSQL_DataTypes_Float, Table_Single_Primary_Keys) {
     "0.8",
     "22.2"
   };
-  const vector<double> EXPECTED_DATA = getExpectedFloatResults(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), FLOAT_BYTES_EXPECTED);
 
@@ -450,7 +433,7 @@ TEST_F(PSQL_DataTypes_Float, Table_Composite_Primary_Keys) {
     "0.8",
     "22.2"
   };
-  const vector<double> EXPECTED_DATA = getExpectedFloatResults(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), FLOAT_BYTES_EXPECTED);
 

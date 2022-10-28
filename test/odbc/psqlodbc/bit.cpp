@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.bit_table_odbc_test";
@@ -32,25 +33,6 @@ class PSQL_DataTypes_Bit : public testing::Test {
     test_teardown.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
   }
 };
-
-// Helper to convert string into a bit
-// Any non-zero values are converted to 1
-unsigned char StringToBit(const string &value) {
-  if (value == "NULL") {
-    return 0;
-  }
-  return strtol(value.c_str(), NULL, 10) != 0 ? 1 : 0;
-}
-
-vector<unsigned char> getExpectedResults_Bit(const vector<string> &data) {
-  vector<unsigned char> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    expectedResults.push_back(StringToBit(data[i]));
-  }
-
-  return expectedResults;
-}
 
 TEST_F(PSQL_DataTypes_Bit, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 255};
@@ -195,8 +177,8 @@ TEST_F(PSQL_DataTypes_Bit, Bitwise_Operators) {
   // initialization of expected_results
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    unsigned char data_1 = StringToBit(INSERTED_PK[i]);
-    unsigned char data_2 = StringToBit(INSERTED_DATA[i]);
+    unsigned char data_1 = stringToBit(INSERTED_PK[i]);
+    unsigned char data_2 = stringToBit(INSERTED_DATA[i]);
 
     // expected_results[i].push_back(data_1 & data_2);
     // expected_results[i].push_back(data_1 | data_2);

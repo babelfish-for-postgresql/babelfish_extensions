@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.money_table_odbc_test";
@@ -33,24 +34,6 @@ class PSQL_DataTypes_Money : public testing::Test {
   }
 };
 
-// Helper to convert string to double
-double StringToDouble(const string &value) {
-  if (value == "NULL") {
-    return 0;
-  }
-  return std::stod(value);
-}
-
-vector<double> getExpectedResults_Money(vector<string> data) {
-  vector<double> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    expectedResults.push_back(StringToDouble(data[i]));
-  }
-
-  return expectedResults;
-}
-
 TEST_F(PSQL_DataTypes_Money, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 255};
   const vector<int> PRECISION_EXPECTED = {0, 0};
@@ -75,7 +58,7 @@ TEST_F(PSQL_DataTypes_Money, Insertion_Success) {
     "-100000000.01",
     "NULL"
   };
-  const vector<double> expected = getExpectedResults_Money(INSERTED_DATA);
+  const vector<double> expected = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(expected.size(), DOUBLE_BYTES_EXPECTED);
 
@@ -103,7 +86,7 @@ TEST_F(PSQL_DataTypes_Money, Update_Success) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"1"};
-  const vector<double> data_expected = getExpectedResults_Money(DATA_INSERTED);
+  const vector<double> data_expected = getExpectedResults_Double(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), DOUBLE_BYTES_EXPECTED);
 
   const vector <string> DATA_UPDATED_VALUES = {
@@ -112,7 +95,7 @@ TEST_F(PSQL_DataTypes_Money, Update_Success) {
     "922337203685477.5807",
     "0"
   };
-  const vector<double> DATA_UPDATED_EXPECTED = getExpectedResults_Money(DATA_UPDATED_VALUES);
+  const vector<double> DATA_UPDATED_EXPECTED = getExpectedResults_Double(DATA_UPDATED_VALUES);
 
   const vector<long> expectedLen(DATA_UPDATED_EXPECTED.size(), DOUBLE_BYTES_EXPECTED);
   
@@ -128,7 +111,7 @@ TEST_F(PSQL_DataTypes_Money, Update_Fail) {
   const int bufferLen = 0;
   
   const vector<string> DATA_INSERTED = {"12345"};
-  const vector<double> EXPECTED_DATA_INSERTED = getExpectedResults_Money(DATA_INSERTED);
+  const vector<double> EXPECTED_DATA_INSERTED = getExpectedResults_Double(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), DOUBLE_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUE = {"999999999999999999999999999999"}; // Over max
@@ -183,8 +166,8 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Operators) {
   // initialization of expected_results
   for (int i = 0; i < INSERTED_DATA.size(); i++) {
     expected_results.push_back({});
-    const double data_1 = StringToDouble(INSERTED_PK[i]);
-    const double data_2 = StringToDouble(INSERTED_DATA[i]);
+    const double data_1 = stringToDouble(INSERTED_PK[i]);
+    const double data_2 = stringToDouble(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 + data_2);
     expected_results[i].push_back(data_1 - data_2);
@@ -244,8 +227,8 @@ TEST_F(PSQL_DataTypes_Money, Comparison_Operators) {
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    const double data_1 = StringToDouble(INSERTED_PK[i]);
-    const double data_2 = StringToDouble(INSERTED_DATA[i]);
+    const double data_1 = stringToDouble(INSERTED_PK[i]);
+    const double data_2 = stringToDouble(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
     expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
@@ -302,10 +285,10 @@ TEST_F(PSQL_DataTypes_Money, Comparison_Functions) {
 
   // initialization of expected_results
   vector<double> expected_results = {};
-  double curr = StringToDouble(INSERTED_PK[0]);
+  double curr = stringToDouble(INSERTED_PK[0]);
   double min_expected = curr, max_expected = curr, sum_expected = curr, avg_expected = 0;
   for (int i = 1; i < NUM_OF_DATA; i++) {
-    curr = StringToDouble(INSERTED_PK[i]);
+    curr = stringToDouble(INSERTED_PK[i]);
     sum_expected += curr;
     min_expected = std::min(min_expected, curr);
     max_expected = std::max(max_expected, curr);
@@ -337,7 +320,7 @@ TEST_F(PSQL_DataTypes_Money, View_Creation) {
     "NULL"
   };
   
-  const vector<double> EXPECTED_DATA = getExpectedResults_Money(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
 
@@ -368,7 +351,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
     "1000.0001",
     "-1000.0001"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Money(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
 
@@ -405,7 +388,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Single_Primary_Keys) {
     "1000.01",
     "-100.0001"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Money(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
 
@@ -440,7 +423,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
     "1000.01",
     "-100.0001"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Money(INSERTED_DATA);
+  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
 

@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.varbinary_table_odbc_test";
@@ -31,16 +32,6 @@ class PSQL_DataTypes_VarBinary : public testing::Test {
     test_teardown.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
   }
 };
-
-vector<string> getExpectedResults_VarBinary(vector<string> data) {
-  vector<string> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    expectedResults.push_back(GetHexRepresentation(data[i]));
-  }
-
-  return expectedResults;
-}
 
 TEST_F(PSQL_DataTypes_VarBinary, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 255};

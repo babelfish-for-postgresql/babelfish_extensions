@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.int_table_odbc_test";
@@ -34,26 +35,6 @@ class PSQL_DataTypes_Int : public testing::Test {
   }
 };
 
-// Helper function to convert string to equivalent C version of int.
-int StringToInt4(const string &value) {
-  return std::stoi(value.c_str(), NULL, 10);
-}
-
-vector<int> getExpectedInt4Results(vector<string> data) {
-  vector<int> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    if (data[i] != "NULL") {
-      expectedResults.push_back(StringToInt4(data[i]));
-    }
-    else {
-      // dummy value
-      expectedResults.push_back(StringToInt4("-1"));
-    }
-  }
-  return expectedResults;
-}
-
 TEST_F(PSQL_DataTypes_Int, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 4};
   const vector<int> PRECISION_EXPECTED = {0, 0};
@@ -77,7 +58,7 @@ TEST_F(PSQL_DataTypes_Int, Insertion_Success) {
     "NULL"
   };
 
-  const vector<int> expected = getExpectedInt4Results(VALID_INSERTED_VALUES);
+  const vector<int> expected = getExpectedResults_Int(VALID_INSERTED_VALUES);
 
   const vector<long> expectedLen(expected.size(), INT_BYTES_EXPECTED);
 
@@ -103,7 +84,7 @@ TEST_F(PSQL_DataTypes_Int, Update_Success) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"1"};
-  const vector<int> data_expected = getExpectedInt4Results(DATA_INSERTED);
+  const vector<int> data_expected = getExpectedResults_Int(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), INT_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUES = {
@@ -111,7 +92,7 @@ TEST_F(PSQL_DataTypes_Int, Update_Success) {
     "-2147483648",
     "2147483647"
   };
-  const vector<int> DATA_UPDATED_EXPECTED = getExpectedInt4Results(DATA_UPDATED_VALUES);
+  const vector<int> DATA_UPDATED_EXPECTED = getExpectedResults_Int(DATA_UPDATED_VALUES);
 
   const vector<long> expectedLen(DATA_UPDATED_EXPECTED.size(), INT_BYTES_EXPECTED);
   
@@ -127,7 +108,7 @@ TEST_F(PSQL_DataTypes_Int, Update_Fail) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"1"};
-  const vector<int> EXPECTED_DATA_INSERTED = getExpectedInt4Results(DATA_INSERTED);
+  const vector<int> EXPECTED_DATA_INSERTED = getExpectedResults_Int(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), INT_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUE = {"2147483648"};
@@ -177,8 +158,8 @@ TEST_F(PSQL_DataTypes_Int, Arithmetic_Operators) {
   // initialization of expected_results
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    int data_1 = StringToInt4(INSERTED_PK[i]);
-    int data_2 = StringToInt4(INSERTED_DATA[i]);
+    int data_1 = stringToInt(INSERTED_PK[i]);
+    int data_2 = stringToInt(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 + data_2);
     expected_results[i].push_back(data_1 - data_2);
@@ -233,8 +214,8 @@ TEST_F(PSQL_DataTypes_Int, Comparison_Operators) {
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    int data_1 = StringToInt4(INSERTED_PK[i]);
-    int data_2 = StringToInt4(INSERTED_DATA[i]);
+    int data_1 = stringToInt(INSERTED_PK[i]);
+    int data_2 = stringToInt(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
     expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
@@ -282,11 +263,11 @@ TEST_F(PSQL_DataTypes_Int, Comparison_Functions) {
   // initialization of expected_results
   vector<int> expected_results = {};
 
-  int curr = StringToInt4(INSERTED_DATA[0]);
+  int curr = stringToInt(INSERTED_DATA[0]);
   int min_expected = curr, max_expected = curr, sum = curr;
 
   for (int i = 1; i < NUM_OF_DATA; i++) {
-    curr = StringToInt4(INSERTED_DATA[i]);
+    curr = stringToInt(INSERTED_DATA[i]);
     sum += curr;
 
     min_expected = std::min(curr, min_expected);
@@ -319,7 +300,7 @@ TEST_F(PSQL_DataTypes_Int, View_Creation) {
     "2147483647"
   };
   
-  const vector<int> EXPECTED_DATA = getExpectedInt4Results(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), INT_BYTES_EXPECTED);
 
@@ -355,7 +336,7 @@ TEST_F(PSQL_DataTypes_Int, Table_Single_Primary_Keys) {
     "9453542",
     "-42"
   };
-  const vector<int> EXPECTED_DATA = getExpectedInt4Results(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), INT_BYTES_EXPECTED);
 
@@ -390,7 +371,7 @@ TEST_F(PSQL_DataTypes_Int, Table_Composite_Primary_Keys) {
     "9453542",
     "-42"
   };
-  const vector<int> EXPECTED_DATA = getExpectedInt4Results(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), INT_BYTES_EXPECTED);
 
@@ -419,7 +400,7 @@ TEST_F(PSQL_DataTypes_Int, Table_Unique_Constraints) {
     "9453542",
     "-42"
   };
-  const vector<int> EXPECTED_DATA = getExpectedInt4Results(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), INT_BYTES_EXPECTED);
 
