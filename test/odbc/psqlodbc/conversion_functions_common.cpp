@@ -193,3 +193,11 @@ vector<string> getExpectedResults_Time(const vector<string> &input, const int ti
 
   return ret;
 }
+
+string hexToIntStr(const string &input) {
+  int i;
+  std::istringstream iss(input);
+  iss >> std::hex >> i;
+
+  return std::to_string(i);
+}

@@ -155,4 +155,12 @@ string stringToTime(const string &input, const int timeBytesExpected);
 */
 vector<string> getExpectedResults_Time(const vector<string> &input, const int timeBytesExpected);
 
+/**
+ * Converts a hex value (withotu 0x) to it's associated integer string.
+ * 
+ * @param input The hex, as a string, to convert.
+ * @return The associated integer as a string of the hex.
+*/
+string hexToIntStr(const string &input);
+
 #endif
