@@ -194,7 +194,7 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	{
 		/*
 		 *	Handles null typmod case. typmod is set to 6 because that is the current max precision for datetime2 
-		 *	Update to 7 when BABEL-3651 is reolved
+		 *	Update to 7 when BABEL-2934 is reolved
 		 */
 		if(typmod < 0)
 			typmod = 6;
