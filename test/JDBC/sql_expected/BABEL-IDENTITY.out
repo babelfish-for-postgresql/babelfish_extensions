@@ -478,6 +478,28 @@ numeric
 ~~END~~
 
 
+-- Smaller value shouldn't update identity seed
+INSERT INTO dbo.t1_identity_1 (a,b) VALUES (100,3);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric
+100
+~~END~~
+
+~~START~~
+numeric
+300
+~~END~~
+
+~~START~~
+numeric
+100
+~~END~~
+
+
 SET IDENTITY_INSERT dbo.t1_identity_1 OFF;
 go
 
@@ -531,6 +553,28 @@ numeric
 ~~START~~
 numeric
 -300
+~~END~~
+
+
+-- Larger value shouldn't update identity seed
+INSERT INTO dbo.t1_identity_2 (a,b) VALUES (-100,3);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_2'); SELECT SCOPE_IDENTITY();
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric
+-100
+~~END~~
+
+~~START~~
+numeric
+-300
+~~END~~
+
+~~START~~
+numeric
+-100
 ~~END~~
 
 

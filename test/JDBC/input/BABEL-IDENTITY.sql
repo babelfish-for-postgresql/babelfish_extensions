@@ -264,6 +264,11 @@ BEGIN TRAN t1; INSERT INTO dbo.t1_identity_1 (a,b) VALUES (400,1); ROLLBACK TRAN
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
 go
 
+-- Smaller value shouldn't update identity seed
+INSERT INTO dbo.t1_identity_1 (a,b) VALUES (100,3);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+
 SET IDENTITY_INSERT dbo.t1_identity_1 OFF;
 go
 
@@ -279,6 +284,11 @@ go
 
 -- Check Statement error shouldn't decrease identity
 BEGIN TRAN t1; INSERT INTO dbo.t1_identity_2 (a,b) VALUES (-400,1); ROLLBACK TRAN t1;
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_2'); SELECT SCOPE_IDENTITY();
+go
+
+-- Larger value shouldn't update identity seed
+INSERT INTO dbo.t1_identity_2 (a,b) VALUES (-100,3);
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_2'); SELECT SCOPE_IDENTITY();
 go
 
