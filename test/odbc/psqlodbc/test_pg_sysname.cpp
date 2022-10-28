@@ -105,7 +105,7 @@ TEST_F(PSQL_Datatypes_Sysname, Updata_Success) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Sysname, Updata_Fail) {
+TEST_F(PSQL_Datatypes_Sysname, Update_Fail) {
   const vector<string> INSERTED_VALUES = {
     STRING_1
   };
