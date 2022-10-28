@@ -77,11 +77,11 @@ TEST_F(PSQL_DataTypes_Ntext, Table_Creation) {
   const vector<string> PREFIX_EXPECTED = {"int4", "'"};
   const vector<string> SUFFIX_EXPECTED = {"int4", "'"};
 
-  const vector<int> is_case_sensitive = {0, 1};
+  const vector<int> IS_CASE_SENSITIVE = {0, 1};
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   testCommonCharColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS.size(), COL1_NAME, LENGTH_EXPECTED, 
-    PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED, is_case_sensitive, PREFIX_EXPECTED, SUFFIX_EXPECTED);
+    PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED, IS_CASE_SENSITIVE, PREFIX_EXPECTED, SUFFIX_EXPECTED);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
