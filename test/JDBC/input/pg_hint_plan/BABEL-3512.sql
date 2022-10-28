@@ -76,8 +76,8 @@ GO
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
 
-SELECT set_config('babelfishpg_tsql.enable_hint_mapping', 'on', false);
-GO
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
+go
 
 -- Test one line stored procs WITH join hints
 CREATE PROCEDURE babel_3512_proc_1 AS SELECT babel_3512_t1.a1 FROM babel_3512_t1 inner hash join babel_3512_t2 ON a1 = b2
@@ -361,12 +361,6 @@ GO
 SET babelfish_showplan_all OFF
 GO
 
-SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
-GO
-
-SELECT set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false)
-GO
-
 DROP PROCEDURE  babel_3512_proc_1
 GO
 
@@ -417,4 +411,3 @@ GO
 
 DROP TABLE babel_3512_t3
 GO
-

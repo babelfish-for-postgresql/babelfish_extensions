@@ -81,8 +81,8 @@ off
 ~~END~~
 
 
-SELECT set_config('babelfishpg_tsql.enable_hint_mapping', 'on', false);
-GO
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
+go
 ~~START~~
 text
 on
@@ -782,22 +782,6 @@ Query Text: EXEC babel_3512_comment_test_2
 SET babelfish_showplan_all OFF
 GO
 
-SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
-GO
-~~START~~
-text
-on
-~~END~~
-
-
-SELECT set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false)
-GO
-~~START~~
-text
-off
-~~END~~
-
-
 DROP PROCEDURE  babel_3512_proc_1
 GO
 
@@ -848,4 +832,3 @@ GO
 
 DROP TABLE babel_3512_t3
 GO
-
