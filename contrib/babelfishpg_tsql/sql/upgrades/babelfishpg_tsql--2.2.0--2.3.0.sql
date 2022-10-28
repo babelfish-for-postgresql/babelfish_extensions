@@ -510,6 +510,7 @@ WHERE ( -- If it's a Table function, we only want the inputs
       (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
 GRANT SELECT ON sys.all_parameters TO PUBLIC;
 
+
 -- TODO: BABEL-3127
 CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
@@ -1956,6 +1957,7 @@ from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
 where t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
 and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and not sys.is_table_type(t.oid)
 and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
@@ -3303,12 +3305,21 @@ GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrole(IN sys.SYSNAME) TO PUBLIC;
 
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+CREATE OR REPLACE PROCEDURE sys.sp_droprole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_droprole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_droprole(IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addrolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrolemember' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
 /*
  * JSON MODIFY
@@ -3637,3 +3648,10 @@ BEGIN
   RETURN 0;
 END;
 $$;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

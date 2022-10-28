@@ -122,6 +122,7 @@ BABEL-2845
 BABEL-2884
 BABEL-2944
 BABEL-3116
+BABEL-3117
 BABEL-3118
 BABEL-3249
 BABEL-3486
@@ -137,6 +138,10 @@ insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_addrole
+Test-sp_addrolemember
+Test-sp_droprole
+Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
@@ -306,10 +311,13 @@ BABEL-889
 babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
+BABEL-3347
 BABEL-3144
 sys-all_parameters-dep
 BABEL-3556
 BABEL-3268
+BABEL-3513
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
+babelfish_integrity_checker

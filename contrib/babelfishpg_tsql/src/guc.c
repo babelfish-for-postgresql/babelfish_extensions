@@ -16,6 +16,8 @@
 static int migration_mode = SINGLE_DB;
 bool   enable_ownership_structure = false;
 
+bool enable_metadata_inconsistency_check = true;
+
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
@@ -78,7 +80,8 @@ bool restore_tsql_tabletype = false;
 char *babelfish_dump_restore_min_oid = NULL;
 
 /* T-SQL Hint Mapping */
-bool enable_hint_mapping = false;
+bool enable_hint_mapping = true;
+bool enable_pg_hint = false;
 
 static bool check_server_collation_name(char **newval, void **extra, GucSource source);
 static bool check_default_locale (char **newval, void **extra, GucSource source);
@@ -109,6 +112,7 @@ static void assign_language (const char *newval, void *extra);
 static void assign_lock_timeout (int newval, void *extra);
 static void assign_datefirst (int newval, void *extra);
 static bool check_no_browsetable (bool *newval, void **extra, GucSource source);
+static void assign_enable_pg_hint (bool newval, void *extra);
 int escape_hatch_session_settings; /* forward declaration */
 
 static const struct config_enum_entry migration_mode_options[] = {
@@ -388,6 +392,18 @@ static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
 		*newval = false; /* overwrite to a default value */
 	}
 	return true;
+}
+
+static void assign_enable_pg_hint (bool newval, void *extra)
+{
+	if (newval)
+	{
+		/* Will throw an error if pg_hint_plan is not installed */
+		load_libraries("pg_hint_plan", NULL, false);
+	}
+
+	if (GetConfigOption("pg_hint_plan.enable_hint", true, false))
+		SetConfigOption("pg_hint_plan.enable_hint", newval ? "on" : "off", PGC_USERSET, PGC_S_SESSION);
 }
 
 static void assign_transform_null_equals (bool newval, void *extra)
@@ -1059,13 +1075,21 @@ define_custom_variables(void)
 
 	/* T-SQL Hint Mapping */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_hint_mapping",
-				 gettext_noop("Enables T-SQL hint mapping"),
+				 gettext_noop("Enables T-SQL hint mapping in ANTLR parser"),
 				 NULL,
 				 &enable_hint_mapping,
-				 false,
+				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_pg_hint",
+				 gettext_noop("Loads and enables pg_hint_plan library"),
+				 NULL,
+				 &enable_pg_hint,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, assign_enable_pg_hint, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.insert_bulk_rows_per_batch",
 				gettext_noop("Sets the number of rows per batch to be processed for Insert Bulk"),
@@ -1084,6 +1108,16 @@ define_custom_variables(void)
 				PGC_USERSET,
 				GUC_NOT_IN_SAMPLE,
 				NULL, NULL, NULL);
+
+
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_metadata_inconsistency_check",
+				 gettext_noop("Enables babelfish_inconsistent_metadata"),
+				 NULL,
+				 &enable_metadata_inconsistency_check,
+				 true,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
 }
 
 int escape_hatch_storage_options = EH_IGNORE;
@@ -1481,3 +1515,8 @@ get_migration_mode(void)
 }
 
 
+bool
+metadata_inconsistency_check_enabled(void)
+{
+	return enable_metadata_inconsistency_check;
+}
