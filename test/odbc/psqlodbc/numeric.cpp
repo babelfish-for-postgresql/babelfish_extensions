@@ -60,15 +60,15 @@ class PSQL_DataTypes_Numeric : public testing::Test {
       GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
     }
 
-    // OdbcHandler bbf_test_setup(Drivers::GetDriver(ServerType::MSSQL));
-    // bbf_test_setup.ConnectAndExecQuery(DropObjectStatement("VIEW", BBF_VIEW_NAME));
-    // bbf_test_setup.CloseStmt();
-    // bbf_test_setup.ExecQuery(DropObjectStatement("TABLE", BBF_TABLE_NAME));
+    OdbcHandler bbf_test_setup(Drivers::GetDriver(ServerType::MSSQL));
+    bbf_test_setup.ConnectAndExecQuery(DropObjectStatement("VIEW", BBF_VIEW_NAME));
+    bbf_test_setup.CloseStmt();
+    bbf_test_setup.ExecQuery(DropObjectStatement("TABLE", BBF_TABLE_NAME));
     
-    // OdbcHandler pg_test_setup(Drivers::GetDriver(ServerType::PSQL));
-    // pg_test_setup.ConnectAndExecQuery(DropObjectStatement("VIEW", PG_VIEW_NAME));
-    // pg_test_setup.CloseStmt();
-    // pg_test_setup.ExecQuery(DropObjectStatement("TABLE", PG_TABLE_NAME));
+    OdbcHandler pg_test_setup(Drivers::GetDriver(ServerType::PSQL));
+    pg_test_setup.ConnectAndExecQuery(DropObjectStatement("VIEW", PG_VIEW_NAME));
+    pg_test_setup.CloseStmt();
+    pg_test_setup.ExecQuery(DropObjectStatement("TABLE", PG_TABLE_NAME));
   }
 };
 
