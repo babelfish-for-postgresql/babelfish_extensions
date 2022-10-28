@@ -87,7 +87,7 @@ class PSQL_DataTypes_Xml : public testing::Test {
 TEST_F(PSQL_DataTypes_Xml, Table_Creation) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
-  const vector<int> BBF_LENGTH_EXPECTED = {10, 0}; // TODO is this right?
+  const vector<int> BBF_LENGTH_EXPECTED = {10, 0};
   const vector<int> BBF_PRECISION_EXPECTED = {10, 0};
   const vector<int> BBF_SCALE_EXPECTED = {0, 0};
   const vector<string> BBF_NAME_EXPECTED = {"int", "xml"};
@@ -97,7 +97,7 @@ TEST_F(PSQL_DataTypes_Xml, Table_Creation) {
       BBF_LENGTH_EXPECTED, BBF_PRECISION_EXPECTED, 
       BBF_SCALE_EXPECTED, BBF_NAME_EXPECTED);
 
-  const vector<int> PG_LENGTH_EXPECTED = {4, 255}; // TODO is this right? Doesn't seem right...
+  const vector<int> PG_LENGTH_EXPECTED = {4, 255};
   const vector<int> PG_PRECISION_EXPECTED = {0, 0};
   const vector<int> PG_SCALE_EXPECTED = {0, 0};
   const vector<string> PG_NAME_EXPECTED = {"int4", "xml"};
