@@ -178,3 +178,28 @@ TEST_F(PSQL_DataTypes_Xml, Update_Success) {
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
+
+TEST_F(PSQL_DataTypes_Xml, View_Creation) {
+  const vector<string> INSERTED_VALUES = {
+    SIMPLE_XML,
+    NORMAL_XML
+  };
+  const int NUM_OF_INSERTS = INSERTED_VALUES.size();
+
+  const string BBF_VIEW_QUERY = "SELECT * FROM " + BBF_TABLE_NAME;
+  const string PG_VIEW_QUERY = "SELECT * FROM " + PG_TABLE_NAME;
+
+  createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
+
+  testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+
+  createView(ServerType::MSSQL, BBF_VIEW_NAME, BBF_VIEW_QUERY);
+
+  verifyValuesInObject(ServerType::MSSQL, BBF_VIEW_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  verifyValuesInObject(ServerType::PSQL, PG_VIEW_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+
+  dropObject(ServerType::MSSQL, "VIEW", BBF_VIEW_NAME);
+  dropObject(ServerType::PSQL, "VIEW", PG_VIEW_NAME);
+  dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
+  dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
+}
