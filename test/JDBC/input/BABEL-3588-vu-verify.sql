@@ -1,3 +1,7 @@
+-- Test for sys.babelfish_configurations_view
+SELECT COUNT(*) FROM sys.babelfish_configurations_view;
+GO
+
 -- Default value is on
 SELECT CURRENT_SETTING('babelfishpg_tsql.explain_costs')
 GO
