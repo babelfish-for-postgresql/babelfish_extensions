@@ -314,7 +314,6 @@ TEST_F(PSQL_Datatypes_Sysname, String_Operators) {
     "Trim(" + COL2_NAME + ")",
     "Trim(TRAILING '!' from " + COL2_NAME + ")",
     "Trim(TRAILING ' ' from " + COL2_NAME + ")"
-
   };
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
