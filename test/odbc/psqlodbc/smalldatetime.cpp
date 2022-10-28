@@ -152,12 +152,12 @@ TEST_F(PSQL_DataTypes_SmallDateTime, Comparison_Operators) {
     {COL2_NAME, DATATYPE_NAME}
   };
 
-  vector<string> INSERTED_PK = {
+  const vector<string> INSERTED_PK = {
     "1900-01-01 00:00:00",
     "2000-01-01 00:00:00"
   };
 
-  vector<string> INSERTED_DATA = {
+  const vector<string> INSERTED_DATA = {
     "1900-12-31 23:59:00",
     "2000-01-01 00:00:00"
   };
@@ -171,7 +171,7 @@ TEST_F(PSQL_DataTypes_SmallDateTime, Comparison_Operators) {
     comma = ",";
   }
 
-  vector<string> OPERATIONS_QUERY = {
+  const vector<string> OPERATIONS_QUERY = {
     COL1_NAME + "=" + COL2_NAME,
     COL1_NAME + "<>" + COL2_NAME,
     COL1_NAME + "<" + COL2_NAME,

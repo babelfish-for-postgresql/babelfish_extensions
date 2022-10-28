@@ -149,18 +149,18 @@ TEST_F(PSQL_DataTypes_DateTime2, Comparison_Operators) {
     {COL2_NAME, DATATYPE_NAME}
   };
 
-  vector<string> INSERTED_PK = {
+  const vector<string> INSERTED_PK = {
     "0001-01-01 00:00:00",
     "1000-01-01 00:00:00"
   };
 
-  vector<string> INSERTED_DATA = {
+  const vector<string> INSERTED_DATA = {
     "9999-12-31 23:59:59.999999",
     "1000-01-01 00:00:00"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
-  vector<string> OPERATIONS_QUERY = {
+  const vector<string> OPERATIONS_QUERY = {
     COL1_NAME + "=" + COL2_NAME,
     COL1_NAME + "<>" + COL2_NAME,
     COL1_NAME + "<" + COL2_NAME,

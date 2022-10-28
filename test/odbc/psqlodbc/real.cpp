@@ -392,7 +392,7 @@ TEST_F(PSQL_DataTypes_Real, Table_Composite_Primary_Keys) {
 
   const int bufferLen = 0;
 
-  vector<string> VALID_INSERTED_VALUES = {
+  const vector<string> VALID_INSERTED_VALUES = {
     "0.1234",
     "1234"
   };
