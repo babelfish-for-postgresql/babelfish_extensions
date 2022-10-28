@@ -93,7 +93,6 @@ public class batch_run {
                         jdbcPreparedStatement.testPreparedStatementWithFile(result, bw, strLine, logger);
 
                     } else if (!result[1].equals("exec")) {
-                        
                         jdbcPreparedStatement.closePreparedStatements(bw, logger);
 
                         SQL = result[1];
@@ -188,7 +187,6 @@ public class batch_run {
                     
                 // if line starts with keyword "cursor", it means it is a cursor operation
                 } else if (strLine.startsWith("cursor")) {
-                    
                     // Convert .NET input file format for prepared statement to JDBC
                     // Used if cursor opened on a result set from a prepared statement
                     if (strLine.contains("prepst")) {

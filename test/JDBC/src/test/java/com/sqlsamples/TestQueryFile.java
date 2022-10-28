@@ -424,10 +424,10 @@ public class TestQueryFile {
         else{
             timeout = true;
         }
-        if (!timeout && expectedFile.exists()) {
+        if (expectedFile.exists()) {
             // get the diff
             result = compareOutFiles(outputFile, expectedFile);
-        } else if (!timeout && sqlExpectedFile.exists()) {
+        } else if (sqlExpectedFile.exists()) {
             // get the diff
             result = compareOutFiles(outputFile, sqlExpectedFile);
         } else {
@@ -437,15 +437,20 @@ public class TestQueryFile {
         ArrayList<Long> tempSla = new ArrayList<>();
         tempSla.add(total_time/1000000L);
         tempSla.add(sla/1000000L);
-        summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result)); //add test name and result to map
+        summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result && timeout)); //add test name and result to map
         slaMap.add(new AbstractMap.SimpleEntry<>(inputFileName, tempSla)); //add execution time and SLA
         sla = 0L;
 
         try {
-            Assertions.assertTrue(result);
+            Assertions.assertTrue(result && timeout);
         } catch (AssertionError e) {
-            if(timeout){
+            if(timeout && result){
                 Throwable throwable = new Throwable(inputFileName + " FAILED! Execution timed out!!");
+                throwable.setStackTrace(new StackTraceElement[0]);
+                throw throwable;
+            }
+            else if(timeout && !result){
+                Throwable throwable = new Throwable(inputFileName + " FAILED! Execution timed out! Output diff can be found in '" + diffFile.getAbsolutePath() + "'");
                 throwable.setStackTrace(new StackTraceElement[0]);
                 throw throwable;
             }
