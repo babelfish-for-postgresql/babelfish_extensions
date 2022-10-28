@@ -57,6 +57,12 @@ go
 create type jira_babel_3504_varchar from varchar(10);
 go
 
+create type jira_babel_3504_int2 from int;
+go
+
+create sequence jira_babel_3504_seq43 as jira_babel_3504_int2 start with 1 minvalue 1;
+go
+
 create sequence jira_babel_3504_sch2.jira_babel_3504_udtseq1 as jira_babel_3504_sch2.jira_babel_3504_tinyint start with 2 minvalue 1 maxvalue 5 cycle;
 go
 
