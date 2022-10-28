@@ -215,7 +215,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Comparison_Operators) {
     "0"
   };
 
-  vector<string> INSERTED_DATA = {
+  const vector<string> INSERTED_DATA = {
     "2.01",
     "-100000.01",
     "92233.5807"
@@ -275,7 +275,7 @@ TEST_F(PSQL_DataTypes_Smallmoney, Comparison_Functions) {
     "0"
   };
 
-  vector<string> INSERTED_DATA = {
+  const vector<string> INSERTED_DATA = {
     "2.01",
     "-100000.01",
     "92233.5807"
