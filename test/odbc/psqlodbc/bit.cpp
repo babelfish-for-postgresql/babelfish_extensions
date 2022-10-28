@@ -5,7 +5,7 @@ const string COL1_NAME = "pk";
 const string COL2_NAME = "data";
 const string DATATYPE_NAME = "sys.bit";
 const string VIEW_NAME = "master_dbo.bit_view_odbc_test";
-vector<pair<string, string>> TABLE_COLUMNS = {
+const vector<pair<string, string>> TABLE_COLUMNS = {
   {COL1_NAME, "INT PRIMARY KEY"},
   {COL2_NAME, DATATYPE_NAME}
 };

@@ -1,5 +1,42 @@
 #include "psqlodbc_tests_common.h"
 
+std::string GetHexRepresentation(std::string inserted_int, size_t table_size) {
+  if (inserted_int == "NULL") {
+    return "NULL";
+  }
+
+  std::stringstream stream;
+  stream << std::hex << strtoul(inserted_int.c_str(), nullptr, 10);
+  string expected_hex = stream.str();
+
+  size_t expected_length = expected_hex.length();
+  if (table_size == -1 || table_size >= 8) {
+    if (((expected_length + 7) & (-8)) - expected_length == 0) {
+      // Pad with extra 8 characters
+      expected_length += 8;
+    }
+
+    // Round to nearest multiple of 8
+    expected_length = ((expected_length + 7) & (-8));
+  }
+  else {
+    expected_length = table_size * 2;
+  }
+
+  // Padding extra one `0` if not in multiple of 2s
+  expected_length = expected_length % 2 == 0 ? expected_length : expected_length + 1;
+
+  // Prepend string with '0x'
+  int extra_padding = expected_length - expected_hex.length();
+  if (extra_padding < 0) {
+    return "0x" + expected_hex.substr(expected_hex.length() - expected_length, expected_length);
+  } 
+  else if (extra_padding > 0){
+    return "0x" + string(extra_padding, '0') + expected_hex;
+  }
+  return "0x" + expected_hex;
+}
+
 vector<string> duplicateElements(vector<string> input) {
   typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
   std::vector<string> duplicated(input);
@@ -325,9 +362,10 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
 }
 
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, bool caseInsensitive) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, 
+  bool caseInsensitive, bool numericInsert) {
 
-  insertValuesInTable(serverType, tableName, insertedValues, false, pkStartingValue);
+  insertValuesInTable(serverType, tableName, insertedValues, numericInsert, pkStartingValue);
   verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue, caseInsensitive);
 }
 
@@ -363,7 +401,8 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
 }
 
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive) {
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, 
+  bool caseInsensitive, bool numericUpdate) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -390,7 +429,8 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
   
   vector<pair<string, string>> update_col{};
   for (int i = 0; i < updatedValues.size(); i++) {
-    string valueToUpdate = updatedValues[i] != "NULL" ? "\'" + updatedValues[i] + "\'" : updatedValues[i];
+    string valueToUpdate = (numericUpdate || updatedValues[i] == "NULL") ? 
+                            updatedValues[i] :  "\'" + updatedValues[i] + "\'";
     update_col.push_back(pair<string, string>(colNameToUpdate, valueToUpdate));
   }
 
@@ -634,6 +674,49 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, con
   for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
     EXPECT_EQ(colLen[i], expectedResults[i].length());
     EXPECT_EQ(string(colResults[i]), expectedResults[i]);
+  }
+
+  // Assert that there is no more data
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  EXPECT_EQ(rcode, SQL_NO_DATA);
+  odbcHandler.CloseStmt();
+}
+
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults, 
+  const int insertionSize, const string &orderByColumnName) {
+  
+  OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
+  odbcHandler.Connect(true);
+
+  RETCODE rcode;
+  SQLLEN affectedRows;
+
+  const int NUM_OF_OPERATIONS = operationsQuery.size();
+  char colResults[NUM_OF_OPERATIONS][BUFFER_SIZE];
+  SQLLEN colLen[NUM_OF_OPERATIONS];
+
+  vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {};
+
+  // initialization for bind_columns
+  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
+    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&colResults[i], BUFFER_SIZE, &colLen[i]);
+    bind_columns.push_back(tuple_to_insert);
+  }
+  odbcHandler.CloseStmt();
+
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}));
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  for (int i = 0; i < insertionSize; ++i) {
+    rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
+    EXPECT_EQ(rcode, SQL_SUCCESS);
+
+    for (int j = 0; j < NUM_OF_OPERATIONS; j++) { // retrieve column-by-column
+      EXPECT_EQ(colLen[j], expectedResults[j][i].size());
+      EXPECT_EQ(string(colResults[j]), expectedResults[j][i]);
+    }
   }
 
   // Assert that there is no more data
