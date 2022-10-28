@@ -57,3 +57,44 @@ GO
 
 CREATE VIEW babel_2877_vu_prepare_view3 AS SELECT babel_2877_vu_prepare_func1(20, 'def', $10, 1.8);
 GO
+
+-- CASE: Check for session properties like ANSI_NULLS and QUOTED_IDENTIFIER
+-- ANSI_NULLS - Last bit from left in flag_values
+-- QUOTED_IDENTIFIER - Second last bit from left in flag_values
+SET ANSI_NULLS ON;
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO
+
+CREATE FUNCTION babel_2877_vu_prepare_func_ansinullon_qidon (@a int)
+RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
+SET ANSI_NULLS OFF;
+GO
+
+CREATE FUNCTION babel_2877_vu_prepare_func_ansinulloff_qidon (@a int)
+RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
+SET QUOTED_IDENTIFIER OFF;
+GO
+
+CREATE FUNCTION babel_2877_vu_prepare_func_ansinulloff_qidoff (@a int)
+RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
+SET ANSI_NULLS ON;
+GO
+
+CREATE FUNCTION babel_2877_vu_prepare_func_ansinullon_qidoff (@a int)
+RETURNS INT AS BEGIN RETURN 1; END;
+GO
+
+-- reset session properties
+SET ANSI_NULLS ON;
+GO
+
+SET QUOTED_IDENTIFIER ON;
+GO

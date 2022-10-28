@@ -65,6 +65,7 @@
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
+extern bool pltsql_ansi_nulls;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
@@ -2075,6 +2076,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	List		*default_positions = NIL;
 	ListCell	*x;
 	int			idx;
+	uint64		flag_values = 0, flag_validity = 0;
 
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
@@ -2133,6 +2135,21 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
+	/*
+	 * To store certain flag, Set corresponding bit in flag_validity which
+	 * tracks currently supported flag bits and then set/unset flag_values bit
+	 * according to flag settings.
+	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
+	 * being inserted in catalog if it is used.
+	 * Currently, Only two flags are supported.
+	 */
+	flag_validity |= FLAG_IS_ANSI_NULLS_ON;
+	if (!Transform_null_equals)
+		flag_values |= FLAG_IS_ANSI_NULLS_ON;
+	flag_validity |= FLAG_USES_QUOTED_IDENTIFIER;
+	if (pltsql_quoted_identifier)
+		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
+
 	new_record[Anum_bbf_function_ext_nspname -1] = CStringGetDatum(physical_schemaname);
 	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
 	new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
@@ -2141,6 +2158,8 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
 	else
 		new_record_nulls[Anum_bbf_function_ext_default_positions - 1] = true;
+	new_record[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
+	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
