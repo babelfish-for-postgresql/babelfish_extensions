@@ -120,7 +120,7 @@ TEST_F(PSQL_Datatypes_Sysname, Updata_Fail) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Sysname, View_creation) {
+TEST_F(PSQL_Datatypes_Sysname, View_Creation) {
   const vector<string> INSERTED_VALUES = {
     "NULL", // NULL values
     STRING_1,
