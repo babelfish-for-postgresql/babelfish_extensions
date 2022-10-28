@@ -615,7 +615,7 @@ TEST_F(PSQL_DataTypes_Varchar, Comparison_Operators) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
   testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
-    OPERATIONS_QUERY, expectedResults);
+    OPERATIONS_QUERY, expectedResults, false, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
