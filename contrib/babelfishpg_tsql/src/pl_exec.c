@@ -4678,7 +4678,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		return ret;
 	}
 
-	if (expr->plan == NULL || pltsql_explain_analyze)
+	if (expr->plan == NULL)
     {
         /*
          * If the set_fmtonly guc is set, we need to rewrite any statements as exec
@@ -7233,7 +7233,7 @@ exec_run_select(PLtsql_execstate *estate,
 	 * portal, the caller might do cursor operations, which parallel query
 	 * can't support.
 	 */
-	if (expr->plan == NULL || pltsql_explain_analyze)
+	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr, portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
 	/*
 	 * If we started an implicit_transaction for this statement but
