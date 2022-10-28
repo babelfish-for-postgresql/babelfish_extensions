@@ -681,3 +681,46 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, con
   EXPECT_EQ(rcode, SQL_NO_DATA);
   odbcHandler.CloseStmt();
 }
+
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults, 
+  const int insertionSize, const string &orderByColumnName) {
+  
+  OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
+  odbcHandler.Connect(true);
+
+  RETCODE rcode;
+  SQLLEN affectedRows;
+
+  const int NUM_OF_OPERATIONS = operationsQuery.size();
+  char colResults[NUM_OF_OPERATIONS][BUFFER_SIZE];
+  SQLLEN colLen[NUM_OF_OPERATIONS];
+
+  vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {};
+
+  // initialization for bind_columns
+  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
+    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&colResults[i], BUFFER_SIZE, &colLen[i]);
+    bind_columns.push_back(tuple_to_insert);
+  }
+  odbcHandler.CloseStmt();
+
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}));
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  for (int i = 0; i < insertionSize; ++i) {
+    rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
+    EXPECT_EQ(rcode, SQL_SUCCESS);
+
+    for (int j = 0; j < NUM_OF_OPERATIONS; j++) { // retrieve column-by-column
+      EXPECT_EQ(colLen[j], expectedResults[j][i].size());
+      EXPECT_EQ(string(colResults[j]), expectedResults[j][i]);
+    }
+  }
+
+  // Assert that there is no more data
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  EXPECT_EQ(rcode, SQL_NO_DATA);
+  odbcHandler.CloseStmt();
+}
