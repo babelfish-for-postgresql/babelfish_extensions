@@ -1,0 +1,8 @@
+DROP PROCEDURE babel_2812_vu_p1;
+GO
+
+DROP PROCEDURE babel_2812_vu_p2;
+GO
+
+DROP PROCEDURE babel_2812_vu_p3;
+GO
