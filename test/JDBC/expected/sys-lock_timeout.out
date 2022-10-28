@@ -35,7 +35,7 @@ SET lock_timeout 2147483648; -- Shoud throw error
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot set "babelfishpg_tsql.lock_timeout" to "2147483648" - ignoring)~~
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.lock_timeout": "2147483648")~~
 
 
 -- SET guc to min value (INT_MIN)
@@ -54,7 +54,7 @@ SET lock_timeout -2147483649; -- Shoud throw error
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot set "babelfishpg_tsql.lock_timeout" to "-2147483649" - ignoring)~~
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.lock_timeout": "-2147483649")~~
 
 
 -- SET guc to 0

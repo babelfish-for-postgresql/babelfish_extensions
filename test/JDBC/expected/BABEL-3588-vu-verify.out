@@ -84,7 +84,7 @@ EXEC sp_babelfish_configure 'babelfishpg_tsql.explain_costs','eee'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot set "babelfishpg_tsql.explain_costs" to "eee" - ignoring)~~
+~~ERROR (Message: parameter "babelfishpg_tsql.explain_costs" requires a Boolean value)~~
 
 
 -- Set all escape hatch to strict
