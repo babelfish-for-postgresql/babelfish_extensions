@@ -456,7 +456,7 @@ void testArithmeticOperators(ServerType serverType, const string &tableName, con
  * 
  * @return vector which contains the elements of column 'col' in 'vec'
 */
-vector<string> GetVectorBasedOnColumn(const vector<vector<string>> &vec, const int &col);
+vector<string> getVectorBasedOnColumn(const vector<vector<string>> &vec, const int &col);
 
 /**
  * Formats a string to correspond to a numeric or decimal output
@@ -466,7 +466,7 @@ vector<string> GetVectorBasedOnColumn(const vector<vector<string>> &vec, const i
  * @param is_bbf True if we want it to correspond to Babelfish, false if we want the output to be formatted for postgres
  * @return string which is the formatted number
  */
-string FormatNumericWithScale(string decimal, const int &scale, const bool &is_bbf);
+string formatNumericWithScale(string decimal, const int &scale, const bool &is_bbf);
 
 /**
  * Formats a vector of strings to correspond to a numeric or decimal output 
@@ -476,7 +476,7 @@ string FormatNumericWithScale(string decimal, const int &scale, const bool &is_b
  * @param is_bbf True if the output is to correspond with Babelfish's result set,
  *    False for Postgres
  */
-void FormatNumericExpected(vector<string> &vec, const int &scale, const bool &is_bbf);
+void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is_bbf);
 
 /** Implementation of templated functions below **/
 

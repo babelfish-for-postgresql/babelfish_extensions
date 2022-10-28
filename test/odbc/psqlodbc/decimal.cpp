@@ -121,15 +121,15 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
   for (int i = 0; i < LIST_OF_INSERTED_VALUES.size(); i++) {
     vector<pair<string, string>> table_cols_for_insert = {
       TABLE_COLUMNS[PK_INDEX], 
-      TABLE_COLUMNS[i+1]
+      TABLE_COLUMNS[i + 1]
     };
 
-    vector<string> insert_values = GetVectorBasedOnColumn(LIST_OF_INSERTED_VALUES, i);
+    vector<string> insert_values = getVectorBasedOnColumn(LIST_OF_INSERTED_VALUES, i);
     vector<string> bbf_expected_values = insert_values;
     vector<string> pg_expected_values = insert_values;
 
-    FormatNumericExpected(bbf_expected_values, COL_SCALE[i+1], true);
-    FormatNumericExpected(pg_expected_values, COL_SCALE[i+1], false);
+    formatNumericExpected(bbf_expected_values, COL_SCALE[i + 1], true);
+    formatNumericExpected(pg_expected_values, COL_SCALE[i + 1], false);
     
     createTable(ServerType::MSSQL, BBF_TABLE_NAME, table_cols_for_insert);
     insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insert_values, true);
@@ -158,7 +158,7 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Failure) {
   for (int i = 0; i < LIST_OF_FAIL_INSERTED_VALUES.size(); i++) {
     vector<pair<string, string>> table_cols_for_insert = {
       TABLE_COLUMNS[PK_INDEX], 
-      TABLE_COLUMNS[i+1]
+      TABLE_COLUMNS[i + 1]
     };
     createTable(ServerType::MSSQL, BBF_TABLE_NAME, table_cols_for_insert);
 
@@ -185,17 +185,17 @@ TEST_F(PSQL_DataTypes_Decimal, Update_Success) {
   for (int i = 0; i < LIST_OF_INSERTED_VALUES[INSERT_INDEX].size(); i++) {
     vector<pair<string, string>> table_cols_for_insert = {
       TABLE_COLUMNS[PK_INDEX], 
-      TABLE_COLUMNS[i+1]
+      TABLE_COLUMNS[i + 1]
     };
 
     vector<string> insert_values = {LIST_OF_INSERTED_VALUES[INSERT_INDEX][i]};
-    vector<string> updated_values = GetVectorBasedOnColumn(LIST_OF_INSERTED_VALUES, i);
+    vector<string> updated_values = getVectorBasedOnColumn(LIST_OF_INSERTED_VALUES, i);
 
     vector<string> bbf_expected_values = updated_values;
     vector<string> pg_expected_values = updated_values;
 
-    FormatNumericExpected(bbf_expected_values, COL_SCALE[i+1], true);
-    FormatNumericExpected(pg_expected_values, COL_SCALE[i+1], false);
+    formatNumericExpected(bbf_expected_values, COL_SCALE[i + 1], true);
+    formatNumericExpected(pg_expected_values, COL_SCALE[i + 1], false);
     
     createTable(ServerType::MSSQL, BBF_TABLE_NAME, table_cols_for_insert);
     insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insert_values, true);
@@ -220,18 +220,18 @@ TEST_F(PSQL_DataTypes_Decimal, Update_Fail) {
   for (int i = 0; i < LIST_OF_INSERTED_VALUES[INSERT_INDEX].size(); i++) {
     vector<pair<string, string>> table_cols_for_insert = {
       TABLE_COLUMNS[PK_INDEX], 
-      TABLE_COLUMNS[i+1]
+      TABLE_COLUMNS[i + 1]
     };
 
     vector<string> insert_values = {LIST_OF_INSERTED_VALUES[INSERT_INDEX][i]};
-    vector<string> updated_values = GetVectorBasedOnColumn(LIST_OF_INSERTED_VALUES, i);
+    vector<string> updated_values = getVectorBasedOnColumn(LIST_OF_INSERTED_VALUES, i);
     updated_values.erase(updated_values.begin());
 
     vector<string> bbf_expected_values = insert_values;
     vector<string> pg_expected_values = insert_values;
 
-    FormatNumericExpected(bbf_expected_values, COL_SCALE[i+1], true);
-    FormatNumericExpected(pg_expected_values, COL_SCALE[i+1], false);
+    formatNumericExpected(bbf_expected_values, COL_SCALE[i + 1], true);
+    formatNumericExpected(pg_expected_values, COL_SCALE[i + 1], false);
     
     createTable(ServerType::MSSQL, BBF_TABLE_NAME, table_cols_for_insert);
     insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insert_values, true);
@@ -257,15 +257,15 @@ TEST_F(PSQL_DataTypes_Decimal, View_creation) {
   for (int i = 0; i < LIST_OF_INSERTED_VALUES.size(); i++) {
     vector<pair<string, string>> table_cols_for_insert = {
       TABLE_COLUMNS[PK_INDEX], 
-      TABLE_COLUMNS[i+1]
+      TABLE_COLUMNS[i + 1]
     };
 
-    vector<string> insert_values = GetVectorBasedOnColumn(LIST_OF_INSERTED_VALUES, i);
+    vector<string> insert_values = getVectorBasedOnColumn(LIST_OF_INSERTED_VALUES, i);
     vector<string> bbf_expected_values = insert_values;
     vector<string> pg_expected_values = insert_values;
 
-    FormatNumericExpected(bbf_expected_values, COL_SCALE[i+1], true);
-    FormatNumericExpected(pg_expected_values, COL_SCALE[i+1], false);
+    formatNumericExpected(bbf_expected_values, COL_SCALE[i + 1], true);
+    formatNumericExpected(pg_expected_values, COL_SCALE[i + 1], false);
     
     createTable(ServerType::MSSQL, BBF_TABLE_NAME, table_cols_for_insert);
     createView(ServerType::MSSQL, BBF_VIEW_NAME, "SELECT * FROM " + BBF_TABLE_NAME);
@@ -316,8 +316,8 @@ TEST_F(PSQL_DataTypes_Decimal, Table_Single_Primary_Keys) {
   vector<string> bbf_expected_values = INSERTED_VALUES;
   vector<string> pg_expected_values = INSERTED_VALUES;
 
-  FormatNumericExpected(bbf_expected_values, COL_SCALE[PK_INDEX], true);
-  FormatNumericExpected(pg_expected_values, COL_SCALE[PK_INDEX], true);
+  formatNumericExpected(bbf_expected_values, COL_SCALE[PK_INDEX], true);
+  formatNumericExpected(pg_expected_values, COL_SCALE[PK_INDEX], true);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -363,8 +363,8 @@ TEST_F(PSQL_DataTypes_Decimal, Table_Composite_Keys) {
   vector<string> bbf_expected_values = INSERTED_VALUES;
   vector<string> pg_expected_values = INSERTED_VALUES;
 
-  FormatNumericExpected(bbf_expected_values, COL_SCALE[PK_INDEX], true);
-  FormatNumericExpected(pg_expected_values, COL_SCALE[PK_INDEX], true);
+  formatNumericExpected(bbf_expected_values, COL_SCALE[PK_INDEX], true);
+  formatNumericExpected(pg_expected_values, COL_SCALE[PK_INDEX], true);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -409,8 +409,8 @@ TEST_F(PSQL_DataTypes_Decimal, Table_Unique_Constraints) {
   vector<string> bbf_expected_values = INSERTED_VALUES;
   vector<string> pg_expected_values = INSERTED_VALUES;
 
-  FormatNumericExpected(bbf_expected_values, COL_SCALE[PK_INDEX], true);
-  FormatNumericExpected(pg_expected_values, COL_SCALE[PK_INDEX], true);
+  formatNumericExpected(bbf_expected_values, COL_SCALE[PK_INDEX], true);
+  formatNumericExpected(pg_expected_values, COL_SCALE[PK_INDEX], true);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
