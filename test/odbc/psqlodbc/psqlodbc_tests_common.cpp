@@ -645,7 +645,6 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, con
 void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData,
   const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults) {
 
-  const int bufferLen = 256;
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
 
@@ -653,13 +652,13 @@ void testArithmeticOperators(ServerType serverType, const string &tableName, con
 
   const int NUM_OF_OPERATIONS = operationsQuery.size();
   SQLLEN col_len[NUM_OF_OPERATIONS];
-  char colResults[NUM_OF_OPERATIONS][bufferLen];
+  char colResults[NUM_OF_OPERATIONS][BUFFER_SIZE];
 
   vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {};
 
   // initialization for bind_columns
   for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
-    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&colResults[i], bufferLen, &col_len[i]);
+    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&colResults[i], BUFFER_SIZE, &col_len[i]);
     bind_columns.push_back(tuple_to_insert);
   }
 
@@ -697,8 +696,9 @@ string formatNumericWithScale(string decimal, const int &scale, const bool &is_b
   size_t dec_pos = decimal.find('.');
 
   if (dec_pos == std::string::npos) {
-    if (scale == 0) // if no decimal sign and scale is 0, no need to append
+    if (scale == 0) { // if no decimal sign and scale is 0, no need to append
       return decimal;
+    }
     dec_pos = decimal.size();
     decimal += ".";
   }
