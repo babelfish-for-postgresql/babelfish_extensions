@@ -311,10 +311,12 @@ BABEL-889
 babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
+BABEL-3347
 BABEL-3144
 sys-all_parameters-dep
 BABEL-3556
 BABEL-3268
+BABEL-3513
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 babelfish_integrity_checker

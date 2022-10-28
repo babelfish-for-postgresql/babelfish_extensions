@@ -251,7 +251,7 @@ TEST_F(PSQL_DataTypes_VarBinary, Comparison_Operators) {
     comma = ",";
   }
 
-  vector<string> OPERATIONS_QUERY = {
+  const vector<string> OPERATIONS_QUERY = {
     COL1_NAME + " OPERATOR(sys.=) " + COL2_NAME,
     COL1_NAME + " OPERATOR(sys.<>) " + COL2_NAME,
     COL1_NAME + " OPERATOR(sys.<) " + COL2_NAME,
