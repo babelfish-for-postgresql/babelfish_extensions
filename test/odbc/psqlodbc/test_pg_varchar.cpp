@@ -90,7 +90,7 @@ const string STRING_8000 = "TQR6vCl9UH5qg2UEJMleJaa3yToVaUbhhxQ7e0SgHjrKg1TYvyUz
 
 const string STRING_1 = "a";
 const string STRING_20 = "0123456789abcdefghij";
-const string STRING_2704 = "nnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr";
+const string STRING_2704 = "nnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfddddd";
 
 class PSQL_DataTypes_Varchar : public testing::Test{
 
@@ -120,10 +120,13 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Creation) {
   const vector<int> PRECISION_EXPECTED = {0, 0};
   const vector<int> SCALE_EXPECTED = {0, 0};
   const vector<string> NAME_EXPECTED = {"int4", "unknown"};
+  const vector<string> PREFIX_EXPECTED = {"int4", "'"};
+  const vector<string> SUFFIX_EXPECTED = {"int4", "'"};
+  const vector<int> IS_CASE_SENSITIVE = {0, 0};
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1);
-  testCommonColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1.size(), COL1_NAME, LENGTH_EXPECTED, 
-    PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED);
+  testCommonCharColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1.size(), COL1_NAME, LENGTH_EXPECTED, 
+    PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED, IS_CASE_SENSITIVE, PREFIX_EXPECTED, SUFFIX_EXPECTED);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<int> LENGTH_EXPECTED_8000 = {4, 8000};
@@ -132,8 +135,8 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Creation) {
   const vector<string> NAME_EXPECTED_8000 = {"int4", "unknown"};
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000);
-  testCommonColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000.size(), COL1_NAME, LENGTH_EXPECTED_8000, 
-    PRECISION_EXPECTED_8000, SCALE_EXPECTED_8000, NAME_EXPECTED_8000);
+  testCommonCharColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000.size(), COL1_NAME, LENGTH_EXPECTED_8000, 
+    PRECISION_EXPECTED_8000, SCALE_EXPECTED_8000, NAME_EXPECTED_8000, IS_CASE_SENSITIVE, PREFIX_EXPECTED, SUFFIX_EXPECTED);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<int> LENGTH_EXPECTED_20 = {4, 20};
@@ -142,8 +145,8 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Creation) {
   const vector<string> NAME_EXPECTED_20 = {"int4", "unknown"};
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20);
-  testCommonColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20.size(), COL1_NAME, LENGTH_EXPECTED_20, 
-    PRECISION_EXPECTED_20, SCALE_EXPECTED_20, NAME_EXPECTED_20);
+  testCommonCharColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20.size(), COL1_NAME, LENGTH_EXPECTED_20, 
+    PRECISION_EXPECTED_20, SCALE_EXPECTED_20, NAME_EXPECTED_20, IS_CASE_SENSITIVE, PREFIX_EXPECTED, SUFFIX_EXPECTED);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
