@@ -59,6 +59,9 @@ declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
+declare_escape_hatch(escape_hatch_hierarchyid);
+declare_escape_hatch(escape_hatch_geography);
+declare_escape_hatch(escape_hatch_geometry);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -1400,11 +1403,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 			else if (pg_strcasecmp("rowversion", name.c_str()) == 0)
 				handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
 			else if (pg_strcasecmp("hierarchyid", name.c_str()) == 0)
-				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
-			else if (pg_strcasecmp("georgraphy", name.c_str()) == 0)
-				handle(INSTR_TSQL_GEORGRAPHY_DATATYPE, "GEORGRAPHY datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", &st_escape_hatch_hierarchyid, getLineAndPos(ctx));
+			else if (pg_strcasecmp("geography", name.c_str()) == 0)
+				handle(INSTR_TSQL_GEOGRAPHY_DATATYPE, "GEOGRAPHY datatype", &st_escape_hatch_geography, getLineAndPos(ctx));
 			else if (pg_strcasecmp("geometry", name.c_str()) == 0)
-				handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+				handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", &st_escape_hatch_geometry, getLineAndPos(ctx));
 		}
 	}
 	if (ctx->NATIONAL())
