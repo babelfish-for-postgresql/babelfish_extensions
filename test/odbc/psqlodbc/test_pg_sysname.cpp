@@ -1,7 +1,5 @@
 #include "psqlodbc_tests_common.h"
 
-using std::pair;
-
 const string TABLE_NAME = "master_dbo.sysname_table_odbc_test";
 const string COL1_NAME = "pk";
 const string COL2_NAME = "data";
