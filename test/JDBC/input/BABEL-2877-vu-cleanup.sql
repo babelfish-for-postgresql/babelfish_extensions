@@ -25,16 +25,16 @@ GO
 DROP PROCEDURE IF EXISTS babel_2877_vu_prepare_proc3;
 GO
 
-DROP FUNCTION IF EXISTS babel_2877_vu_prepare_func_ansinullon_qidon;
+DROP FUNCTION IF EXISTS [BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDON];
 GO
 
-DROP FUNCTION IF EXISTS babel_2877_vu_prepare_func_ansinulloff_qidon;
+DROP FUNCTION IF EXISTS [BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDON];
 GO
 
-DROP FUNCTION IF EXISTS babel_2877_vu_prepare_func_ansinulloff_qidoff;
+DROP FUNCTION IF EXISTS [BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDOFF];
 GO
 
-DROP FUNCTION IF EXISTS babel_2877_vu_prepare_func_ansinullon_qidoff;
+DROP FUNCTION IF EXISTS [BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDOFF];
 GO
 
 -- babelfish_function_ext entry should have been removed after dropping all these functions/procedure

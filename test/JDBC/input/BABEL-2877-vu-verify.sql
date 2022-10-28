@@ -70,7 +70,6 @@ GO
 -- babelfish_function_ext table should have entry for all the above functions and procedures
 SELECT nspname,
 		funcname,
-		orig_name,
 		funcsignature,
 		default_positions
 FROM sys.babelfish_function_ext
@@ -78,7 +77,7 @@ FROM sys.babelfish_function_ext
 	AND funcname NOT LIKE '%ansi%' ORDER BY funcname;
 GO
 
-SELECT funcname,
+SELECT orig_name,
 	CASE flag_validity & 1
 		WHEN 0
 			THEN NULL
@@ -99,5 +98,5 @@ SELECT funcname,
 				ELSE 1
 			END
 	END AS quoted_identifier
-FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel_2877_vu_prepare_func_ansi%' ORDER BY funcname;
+FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORDER BY funcname;
 GO

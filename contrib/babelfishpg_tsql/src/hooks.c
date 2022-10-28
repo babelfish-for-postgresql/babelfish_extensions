@@ -2062,7 +2062,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
  * Stores argument positions of default values of a PL/tsql function to bbf_function_ext catalog
  */
 void
-pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
+pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location)
 {
 	Relation	bbf_function_ext_rel;
 	TupleDesc	bbf_function_ext_rel_dsc;
@@ -2073,6 +2073,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	Form_pg_proc	form_proctup;
 	char		*physical_schemaname;
 	char		*func_signature;
+	char		*original_name = NULL;
 	List		*default_positions = NIL;
 	ListCell	*x;
 	int			idx;
@@ -2135,6 +2136,38 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
+	if (origname_location != -1 && queryString)
+	{
+		/* To get original function name, utilize location of original name and query string. */
+		char *func_name_start, *temp;
+		const char *funcname = NameStr(form_proctup->proname);
+
+		func_name_start = queryString + origname_location;
+
+		/*
+		 * Could be the case that the fully qualified name is included,
+		 * so just find the text after '.' in the identifier.
+		 * We need to be careful as there can be '.' in the function name
+		 * itself, so we will break the loop if current string matches
+		 * with actual funcname.
+		 */
+		temp = strpbrk(func_name_start, ". ");
+		while (temp && temp[0] != ' ' &&
+			strncasecmp(funcname, func_name_start, strlen(funcname)) != 0 &&
+			strncasecmp(funcname, func_name_start + 1, strlen(funcname)) != 0) /* match after skipping delimiter */
+		{
+			temp += 1;
+			func_name_start = temp;
+			temp = strpbrk(func_name_start, ". ");
+		}
+
+		original_name = extract_identifier(func_name_start);
+		if (original_name == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("can't extract original function name.")));
+	}
+
 	/*
 	 * To store certain flag, Set corresponding bit in flag_validity which
 	 * tracks currently supported flag bits and then set/unset flag_values bit
@@ -2152,7 +2185,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 
 	new_record[Anum_bbf_function_ext_nspname -1] = CStringGetDatum(physical_schemaname);
 	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
-	new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
+	if (original_name)
+		new_record[Anum_bbf_function_ext_orig_name -1] = CStringGetTextDatum(original_name);
+	else
+		new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
 	new_record[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(func_signature);
 	if (default_positions != NIL)
 		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
