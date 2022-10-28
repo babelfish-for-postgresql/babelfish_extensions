@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 import static com.sqlsamples.Config.*;
 
 import static com.sqlsamples.Statistics.exec_times;
-import static com.sqlsamples.Statistics.num_lines;
+import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
 
 public class TestQueryFile {
@@ -404,21 +404,16 @@ public class TestQueryFile {
         // generate buffer reader associated with the file
         FileWriter fw = new FileWriter(outputFile);
         BufferedWriter bw = new BufferedWriter(fw);
+        curr_exec_time = 0L;
         batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
         bw.close();
         if(sla == 0){
             sla = defaultSLA*1000000L;
         }
-        int n = exec_times.size();
-        int index = n - num_lines;
-        long total_time = 0;
-        for(int i = index; i < n; i++){
-            total_time += exec_times.get(i);
-        }
         File expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
-        if(total_time <= sla){
+        if(curr_exec_time <= sla){
             timeout = false;
         }
         else{
@@ -435,9 +430,9 @@ public class TestQueryFile {
         }
 
         ArrayList<Long> tempSla = new ArrayList<>();
-        tempSla.add(total_time/1000000L);
+        tempSla.add(curr_exec_time/1000000L);
         tempSla.add(sla/1000000L);
-        summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result && timeout)); //add test name and result to map
+        summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result && !timeout)); //add test name and result to map
         slaMap.add(new AbstractMap.SimpleEntry<>(inputFileName, tempSla)); //add execution time and SLA
         sla = 0L;
 

@@ -10,7 +10,7 @@ import static java.util.Objects.isNull;
 
 import static com.sqlsamples.Config.*;
 import static com.sqlsamples.Statistics.exec_times;
-import static com.sqlsamples.Statistics.num_lines;
+import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
 
 public class batch_run {
@@ -283,9 +283,8 @@ public class batch_run {
                 long endTime = System.nanoTime();
                 long duration = (endTime - startTime);
                 exec_times.add(duration);
-                file_length++;
+                curr_exec_time += duration;
             }
-            num_lines = file_length;
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }
