@@ -1007,6 +1007,7 @@ View information_schema_tsql.views
 View sys.all_columns
 View sys.all_sql_modules_internal
 View sys.assembly_modules
+View sys.babelfish_configurations_view
 View sys.babelfish_has_perms_by_name_permissions
 View sys.change_tracking_databases
 View sys.change_tracking_tables
