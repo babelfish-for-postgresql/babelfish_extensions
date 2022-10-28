@@ -94,7 +94,7 @@ TEST_F(PSQL_DataTypes_Float, Insertion_Failure) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
-  }
+}
 
 
 TEST_F(PSQL_DataTypes_Float, Update_Success) {
@@ -179,7 +179,7 @@ TEST_F(PSQL_DataTypes_Float, Arithmetic_Operators) {
     "ABS(" + COL1_NAME + ")",
     "POWER(" + COL1_NAME + "," + COL2_NAME + ")",
     "||/ " + COL1_NAME,
-    "LOG(" + COL1_NAME+")"
+    "LOG(" + COL1_NAME + ")"
   };
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
