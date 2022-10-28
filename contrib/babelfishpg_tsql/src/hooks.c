@@ -181,7 +181,7 @@ static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NUL
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
-static planner_hook_type analyze_planner_hook = NULL;
+static planner_hook_type prev_planner_hook = NULL;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -286,7 +286,7 @@ InstallExtendedHooks(void)
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
 
-	analyze_planner_hook = planner_hook;
+	prev_planner_hook = planner_hook;
 	planner_hook = pltsql_planner_hook;
 }
 
@@ -329,7 +329,7 @@ UninstallExtendedHooks(void)
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
-	planner_hook = analyze_planner_hook;
+	planner_hook = prev_planner_hook;
 }
 
 /*****************************************
@@ -2978,7 +2978,10 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 		Assert(estate != NULL);
 		INSTR_TIME_SET_CURRENT(estate->planning_start);
 	}
-	plan = standard_planner(parse, query_string, cursorOptions, boundParams);
+	if (prev_planner_hook)
+		plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
+	else
+		plan = standard_planner(parse, query_string, cursorOptions, boundParams);
 	if (pltsql_explain_analyze) {
 		INSTR_TIME_SET_CURRENT(estate->planning_end);
 		INSTR_TIME_SUBTRACT(estate->planning_end, estate->planning_start);
