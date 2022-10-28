@@ -442,7 +442,7 @@ public class TestQueryFile {
         sla = 0L;
 
         try {
-            Assertions.assertTrue(result && timeout);
+            Assertions.assertTrue(result && !timeout);
         } catch (AssertionError e) {
             if(timeout && result){
                 Throwable throwable = new Throwable(inputFileName + " FAILED! Execution timed out!!");
