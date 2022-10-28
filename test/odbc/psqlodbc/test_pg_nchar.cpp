@@ -710,14 +710,19 @@ TEST_F(PSQL_DataTypes_Nchar, String_Operators) {
   // initialization of EXPECTED_RESULTS
   vector<vector<string>> EXPECTED_RESULTS = {{}};
   
-  string current = INSERTED_DATA[0];
+  for(int i = 0; i < NUM_OF_OPERATIONS; i++)
+  {
+    EXPECTED_RESULTS.push_back({});
+  }
+  
+  string current =  INSERTED_DATA[0];
   transform(current.begin(), current.end(), current.begin(), ::tolower);
   EXPECTED_RESULTS[0].push_back(current + std::string(4000 - current.size(), ' '));
-  EXPECTED_RESULTS[0].push_back("  ONE TWO!" + std::string(3990, ' '));
-  EXPECTED_RESULTS[0].push_back(INSERTED_PK[0] + INSERTED_DATA[0] + std::string(3990, ' '));
-  EXPECTED_RESULTS[0].push_back("One Two!");
-  EXPECTED_RESULTS[0].push_back("  One Two!" + std::string(3990, ' ')); // TRIM (trailing !) did not remove '!' on PG
-  EXPECTED_RESULTS[0].push_back("  One Two!");
+  EXPECTED_RESULTS[1].push_back("  ONE TWO!" + std::string(3990, ' '));
+  EXPECTED_RESULTS[2].push_back(INSERTED_PK[0] + INSERTED_DATA[0] + std::string(3990, ' '));
+  EXPECTED_RESULTS[3].push_back("One Two!");
+  EXPECTED_RESULTS[4].push_back("  One Two!" + std::string(3990, ' ')); // TRIM (trailing !) did not remove '!' on PG
+  EXPECTED_RESULTS[5].push_back("  One Two!");
   
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_4000);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
