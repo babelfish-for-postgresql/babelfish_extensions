@@ -15,6 +15,64 @@ const vector<pair<string, string>> TABLE_COLUMNS = {
   {COL2_NAME, DATATYPE_NAME}
 };
 
+// Tuple of vectors that contains the following values in the corresponding spots
+  //   1. Inserted_values (same as expected from bbf)
+  //   2. Expected values for pg (empty string if the same as bbf)
+  //   3. Datatype
+  //   4. Single-quote-wrapped (needs single quotes around the data inserted)
+  const vector<tuple<string, string, string, bool>> SQL_VARIANT_INSERTION_INFO = {
+    {"1",                                     "",                     "sys.int",              false},
+    {"25",                                    "",                     "smallint",             false},
+    {"24",                                    "",                     "sys.bigint",           false},
+    {"23",                                    "",                     "sys.tinyint",          false},
+    {"2011-04-15 16:44:09.000",               "2011-04-15 16:44:09",  "sys.datetime",         true},
+    {"2000-01-01 00:00:00.0000000",           "2000-01-01 00:00:00",  "sys.datetime2",        true},
+    {"2000-01-02 00:00:00",                   "",                     "sys.smalldatetime",    true},
+    {"2000-03-01",                            "",                     "date",                 true},
+    {"12:34:56.0000000",                      "12:34:56",             "time",                 true},
+    {"0.123456",                              "",                     "float(3)",             false}, 
+    {"0.65432101",                            "0.654321",             "sys.real",             false},
+    {"46279.10",                              "",                     "sys.decimal(8,2)",     false},
+    {"100000000.0100",                        "",                     "sys.money",            false},
+    {"1000.0100",                             "",                     "sys.smallmoney",       false},
+    {"1",                                     "",                     "sys.bit",              false},
+    {"Hello World nvchar",                    "",                     "sys.nvarchar(30)",     true},
+    {"Hello World vchar",                     "",                     "sys.varchar(30)",      true},
+    {"Hello World nchar             ",        "",                     "sys.nchar(30)",        true},
+    {"Hello World char              ",        "",                     "char(30)",             true},
+    {"2A",                                    "0x2a",                 "sys.binary(1)",        false},
+    {"2B",                                    "0x2b",                 "sys.varbinary(1)",     false},
+    {"0E984725-C51C-4BF4-9960-E1C80E27ABA0",  "",                     "sys.uniqueidentifier", true},
+    {"NULL",                                  "",                     "",                     false}
+  };
+
+// Similar tuple of vecots as above, but for constrain tests
+//  NOTE: binary type fails so it is commented out
+const vector<tuple<string, string, string, bool>> SQL_VARIANT_INSERTION_INFO_CONSTRAINT = {
+    {"1",                                     "",                     "sys.int",              false},
+    {"25",                                    "",                     "smallint",             false},
+    {"24",                                    "",                     "sys.bigint",           false},
+    {"23",                                    "",                     "sys.tinyint",          false},
+    {"2011-04-15 16:44:09.000",               "2011-04-15 16:44:09",  "sys.datetime",         true},
+    {"2000-01-01 00:00:00.0000000",           "2000-01-01 00:00:00",  "sys.datetime2",        true},
+    {"2000-01-02 00:00:00",                   "",                     "sys.smalldatetime",    true},
+    {"2000-03-01",                            "",                     "date",                 true},
+    {"12:34:56.0000000",                      "12:34:56",             "time",                 true},
+    {"0.123456",                              "",                     "float(3)",             false}, 
+    {"0.65432101",                            "0.654321",             "sys.real",             false},
+    {"46279.10",                              "",                     "sys.decimal(8,2)",     false},
+    {"100000000.0100",                        "",                     "sys.money",            false},
+    {"1000.0100",                             "",                     "sys.smallmoney",       false},
+    {"0",                                     "",                     "sys.bit",              false},
+    {"Hello World nvchar",                    "",                     "sys.nvarchar(30)",     true},
+    {"Hello World vchar",                     "",                     "sys.varchar(30)",      true},
+    {"Hello World nchar             ",        "",                     "sys.nchar(30)",        true},
+    {"Hello World char              ",        "",                     "char(30)",             true},
+    // {"2A",                                    "0x2a",                 "sys.binary(1)",        false}, // This is failing
+    {"2B",                                    "0x2b",                 "sys.varbinary(1)",     false},
+    {"0E984725-C51C-4BF4-9960-E1C80E27ABA0",  "",                     "sys.uniqueidentifier", true}
+  };
+
 class PSQL_DataTypes_Sql_Variant : public testing::Test {
   void SetUp() override {
     if (!Drivers::DriverExists(ServerType::PSQL)) {
@@ -121,18 +179,18 @@ void SqlVariant_InitOperationsQuery_True(const int &size, vector<string> &bbf_op
   pg_operations_query.clear();
 
   for (int i = 0; i < size; i++) {
-    if (i < size -1)
+    if (i < size - 1)
     {
       // > operator
-      SqlVariant_OperationsQueryBuilder(i, i+1, ">", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i, i + 1, ">", bbf_operations_query, pg_operations_query);
       // >= operator
-      SqlVariant_OperationsQueryBuilder(i, i+1, ">=", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i, i + 1, ">=", bbf_operations_query, pg_operations_query);
       // < operator
-      SqlVariant_OperationsQueryBuilder(i+1, i, "<", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i + 1, i, "<", bbf_operations_query, pg_operations_query);
       // <= operator (less than case)
-      SqlVariant_OperationsQueryBuilder(i+1, i, "<=", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i + 1, i, "<=", bbf_operations_query, pg_operations_query);
       // <> operator
-      SqlVariant_OperationsQueryBuilder(i+1, i, "<>", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i + 1, i, "<>", bbf_operations_query, pg_operations_query);
     }
     // = operator
     SqlVariant_OperationsQueryBuilder(i, i, "=", bbf_operations_query, pg_operations_query);
@@ -151,18 +209,18 @@ void SqlVariant_InitOperationsQuery_False(const int &size, vector<string> &bbf_o
   pg_operations_query.clear();
     
   for (int i = 0; i < size; i++) {
-    if (i < size -1)
+    if (i < size - 1)
     {
       // > operator
-      SqlVariant_OperationsQueryBuilder(i+1, i, ">", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i + 1, i, ">", bbf_operations_query, pg_operations_query);
       // >= operator
-      SqlVariant_OperationsQueryBuilder(i+1, i, ">=", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i + 1, i, ">=", bbf_operations_query, pg_operations_query);
       // < operator
-      SqlVariant_OperationsQueryBuilder(i, i+1, "<", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i, i + 1, "<", bbf_operations_query, pg_operations_query);
       // <= operator (less than case)
-      SqlVariant_OperationsQueryBuilder(i, i+1, "<=", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i, i + 1, "<=", bbf_operations_query, pg_operations_query);
       // = operator
-      SqlVariant_OperationsQueryBuilder(i, i+1, "=", bbf_operations_query, pg_operations_query);
+      SqlVariant_OperationsQueryBuilder(i, i + 1, "=", bbf_operations_query, pg_operations_query);
     }
     // <> operator
     SqlVariant_OperationsQueryBuilder(i, i, "<>", bbf_operations_query, pg_operations_query);
@@ -232,39 +290,9 @@ TEST_F(PSQL_DataTypes_Sql_Variant, Table_Creation) {
 }
 
 TEST_F(PSQL_DataTypes_Sql_Variant, Insertion_Success) {
-  // Tuple of vectors that contains the following values in the corresponding spots
-  //   1. Inserted_values (same as expected from bbf)
-  //   2. Expected values for pg (empty string if the same as bbf)
-  //   3. Datatype
-  //   4. Single-quote-wrapped (needs single quotes around the data inserted)
-  const vector<tuple<string, string, string, bool>> INSERTION_INFO = {
-    {"1",                                     "",                     "sys.int",              false},
-    {"25",                                    "",                     "smallint",             false},
-    {"24",                                    "",                     "sys.bigint",           false},
-    {"23",                                    "",                     "sys.tinyint",          false},
-    {"2011-04-15 16:44:09.000",               "2011-04-15 16:44:09",  "sys.datetime",         true},
-    {"2000-01-01 00:00:00.0000000",           "2000-01-01 00:00:00",  "sys.datetime2",        true},
-    {"2000-01-02 00:00:00",                   "",                     "sys.smalldatetime",    true},
-    {"2000-03-01",                            "",                     "date",                 true},
-    {"12:34:56.0000000",                      "12:34:56",             "time",                 true},
-    {"0.123456",                              "",                     "float(3)",             false}, 
-    {"0.65432101",                            "0.654321",             "sys.real",             false},
-    {"46279.10",                              "",                     "sys.decimal(8,2)",     false},
-    {"100000000.0100",                        "",                     "sys.money",            false},
-    {"1000.0100",                             "",                     "sys.smallmoney",       false},
-    {"1",                                     "",                     "sys.bit",              false},
-    {"Hello World nvchar",                    "",                     "sys.nvarchar(30)",     true},
-    {"Hello World vchar",                     "",                     "sys.varchar(30)",      true},
-    {"Hello World nchar             ",        "",                     "sys.nchar(30)",        true},
-    {"Hello World char              ",        "",                     "char(30)",             true},
-    {"2A",                                    "0x2a",                 "sys.binary(1)",        false},
-    {"2B",                                    "0x2b",                 "sys.varbinary(1)",     false},
-    {"0E984725-C51C-4BF4-9960-E1C80E27ABA0",  "",                     "sys.uniqueidentifier", true},
-    {"NULL",                                  "",                     "",                     false}
-  };
   vector<string> inserted_values, bbf_expected, pg_expected;
   
-  SplitInsertionInfo(INSERTION_INFO, inserted_values, bbf_expected, pg_expected);
+  SplitInsertionInfo(SQL_VARIANT_INSERTION_INFO, inserted_values, bbf_expected, pg_expected);
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
   // Inserting and verifying in BBF
@@ -324,42 +352,11 @@ TEST_F(PSQL_DataTypes_Sql_Variant, Update_Success) {
 }
 
 TEST_F(PSQL_DataTypes_Sql_Variant, View_creation) {
-  // Tuple of vectors that contains the following values in the corresponding spots
-  //   1. Inserted_values (same as expected from bbf)
-  //   2. Expected values for pg (empty string if the same as bbf)
-  //   3. Datatype
-  //   4. Single-quote-wrapped (needs single quotes around the data inserted)
-  const vector<tuple<string, string, string, bool>> INSERTION_INFO = {
-    {"1",                                     "",                     "sys.int",              false},
-    {"25",                                    "",                     "smallint",             false},
-    {"24",                                    "",                     "sys.bigint",           false},
-    {"23",                                    "",                     "sys.tinyint",          false},
-    {"2011-04-15 16:44:09.000",               "2011-04-15 16:44:09",  "sys.datetime",         true},
-    {"2000-01-01 00:00:00.0000000",           "2000-01-01 00:00:00",  "sys.datetime2",        true},
-    {"2000-01-02 00:00:00",                   "",                     "sys.smalldatetime",    true},
-    {"2000-03-01",                            "",                     "date",                 true},
-    {"12:34:56.0000000",                      "12:34:56",             "time",                 true},
-    {"0.123456",                              "",                     "float(3)",             false}, 
-    {"0.65432101",                            "0.654321",             "sys.real",             false},
-    {"46279.10",                              "",                     "sys.decimal(8,2)",     false},
-    {"100000000.0100",                        "",                     "sys.money",            false},
-    {"1000.0100",                             "",                     "sys.smallmoney",       false},
-    {"1",                                     "",                     "sys.bit",              false},
-    {"Hello World nvchar",                    "",                     "sys.nvarchar(30)",     true},
-    {"Hello World vchar",                     "",                     "sys.varchar(30)",      true},
-    {"Hello World nchar             ",        "",                     "sys.nchar(30)",        true},
-    {"Hello World char              ",        "",                     "char(30)",             true},
-    {"2A",                                    "0x2a",                 "sys.binary(1)",        false},
-    {"2B",                                    "0x2b",                 "sys.varbinary(1)",     false},
-    {"0E984725-C51C-4BF4-9960-E1C80E27ABA0",  "",                     "sys.uniqueidentifier", true},
-    {"NULL",                                  "",                     "",                     false}
-  };
-
   const string BBF_VIEW_QUERY = "SELECT * FROM " + BBF_TABLE_NAME;
   const string PG_VIEW_QUERY = "SELECT * FROM " + PG_TABLE_NAME;
   vector<string> inserted_values, bbf_expected, pg_expected;
   
-  SplitInsertionInfo(INSERTION_INFO, inserted_values, bbf_expected, pg_expected);
+  SplitInsertionInfo(SQL_VARIANT_INSERTION_INFO, inserted_values, bbf_expected, pg_expected);
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
   // Inserting and verifying in BBF
@@ -387,6 +384,7 @@ TEST_F(PSQL_DataTypes_Sql_Variant, View_creation) {
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
 }
 
+// NOTE: sys.binary type fails. This is commented out in SQL_VARIANT_INSERTION_INFO_CONSTRAINT
 TEST_F(PSQL_DataTypes_Sql_Variant, Table_Single_Primary_Keys) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
@@ -401,38 +399,9 @@ TEST_F(PSQL_DataTypes_Sql_Variant, Table_Single_Primary_Keys) {
     COL2_NAME
   };
 
-  // Tuple of vectors that contains the following values in the corresponding spots
-  //   1. Inserted_values (same as expected from bbf)
-  //   2. Expected values for pg (empty string if the same as bbf)
-  //   3. Datatype
-  //   4. Single-quote-wrapped (needs single quotes around the data inserted)
-  const vector<tuple<string, string, string, bool>> INSERTION_INFO = {
-    {"1",                                     "",                     "sys.int",              false},
-    {"25",                                    "",                     "smallint",             false},
-    {"24",                                    "",                     "sys.bigint",           false},
-    {"23",                                    "",                     "sys.tinyint",          false},
-    {"2011-04-15 16:44:09.000",               "2011-04-15 16:44:09",  "sys.datetime",         true},
-    {"2000-01-01 00:00:00.0000000",           "2000-01-01 00:00:00",  "sys.datetime2",        true},
-    {"2000-01-02 00:00:00",                   "",                     "sys.smalldatetime",    true},
-    {"2000-03-01",                            "",                     "date",                 true},
-    {"12:34:56.0000000",                      "12:34:56",             "time",                 true},
-    {"0.123456",                              "",                     "float(3)",             false}, 
-    {"0.65432101",                            "0.654321",             "sys.real",             false},
-    {"46279.10",                              "",                     "sys.decimal(8,2)",     false},
-    {"100000000.0100",                        "",                     "sys.money",            false},
-    {"1000.0100",                             "",                     "sys.smallmoney",       false},
-    {"0",                                     "",                     "sys.bit",              false},
-    {"Hello World nvchar",                    "",                     "sys.nvarchar(30)",     true},
-    {"Hello World vchar",                     "",                     "sys.varchar(30)",      true},
-    {"Hello World nchar             ",        "",                     "sys.nchar(30)",        true},
-    {"Hello World char              ",        "",                     "char(30)",             true},
-    // {"2A",                                    "0x2a",                 "sys.binary(1)",        false}, // This is failing
-    {"2B",                                    "0x2b",                 "sys.varbinary(1)",     false},
-    {"0E984725-C51C-4BF4-9960-E1C80E27ABA0",  "",                     "sys.uniqueidentifier", true}
-  };
   vector<string> inserted_values, bbf_expected, pg_expected;
   string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
-  SplitInsertionInfo(INSERTION_INFO, inserted_values, bbf_expected, pg_expected);
+  SplitInsertionInfo(SQL_VARIANT_INSERTION_INFO_CONSTRAINT, inserted_values, bbf_expected, pg_expected);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -450,6 +419,7 @@ TEST_F(PSQL_DataTypes_Sql_Variant, Table_Single_Primary_Keys) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
+// NOTE: sys.binary type fails. This is commented out in SQL_VARIANT_INSERTION_INFO_CONSTRAINT
 TEST_F(PSQL_DataTypes_Sql_Variant, Table_Composite_Keys) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
@@ -465,38 +435,9 @@ TEST_F(PSQL_DataTypes_Sql_Variant, Table_Composite_Keys) {
     COL2_NAME
   };
 
-  // Tuple of vectors that contains the following values in the corresponding spots
-  //   1. Inserted_values (same as expected from bbf)
-  //   2. Expected values for pg (empty string if the same as bbf)
-  //   3. Datatype
-  //   4. Single-quote-wrapped (needs single quotes around the data inserted)
-  const vector<tuple<string, string, string, bool>> INSERTION_INFO = {
-    {"1",                                     "",                     "sys.int",              false},
-    {"25",                                    "",                     "smallint",             false},
-    {"24",                                    "",                     "sys.bigint",           false},
-    {"23",                                    "",                     "sys.tinyint",          false},
-    {"2011-04-15 16:44:09.000",               "2011-04-15 16:44:09",  "sys.datetime",         true},
-    {"2000-01-01 00:00:00.0000000",           "2000-01-01 00:00:00",  "sys.datetime2",        true},
-    {"2000-01-02 00:00:00",                   "",                     "sys.smalldatetime",    true},
-    {"2000-03-01",                            "",                     "date",                 true},
-    {"12:34:56.0000000",                      "12:34:56",             "time",                 true},
-    {"0.123456",                              "",                     "float(3)",             false}, 
-    {"0.65432101",                            "0.654321",             "sys.real",             false},
-    {"46279.10",                              "",                     "sys.decimal(8,2)",     false},
-    {"100000000.0100",                        "",                     "sys.money",            false},
-    {"1000.0100",                             "",                     "sys.smallmoney",       false},
-    {"0",                                     "",                     "sys.bit",              false},
-    {"Hello World nvchar",                    "",                     "sys.nvarchar(30)",     true},
-    {"Hello World vchar",                     "",                     "sys.varchar(30)",      true},
-    {"Hello World nchar             ",        "",                     "sys.nchar(30)",        true},
-    {"Hello World char              ",        "",                     "char(30)",             true},
-    // {"2A",                                    "0x2a",                 "sys.binary(1)",        false}, // This is failing
-    {"2B",                                    "0x2b",                 "sys.varbinary(1)",     false},
-    {"0E984725-C51C-4BF4-9960-E1C80E27ABA0",  "",                     "sys.uniqueidentifier", true}
-  };
   vector<string> inserted_values, bbf_expected, pg_expected;
   string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
-  SplitInsertionInfo(INSERTION_INFO, inserted_values, bbf_expected, pg_expected);
+  SplitInsertionInfo(SQL_VARIANT_INSERTION_INFO_CONSTRAINT, inserted_values, bbf_expected, pg_expected);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -514,6 +455,7 @@ TEST_F(PSQL_DataTypes_Sql_Variant, Table_Composite_Keys) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
+// NOTE: sys.binary type fails. This is commented out in SQL_VARIANT_INSERTION_INFO_CONSTRAINT
 TEST_F(PSQL_DataTypes_Sql_Variant, Table_Unique_Constraint) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
@@ -528,39 +470,10 @@ TEST_F(PSQL_DataTypes_Sql_Variant, Table_Unique_Constraint) {
     COL2_NAME
   };
 
-  // Tuple of vectors that contains the following values in the corresponding spots
-  //   1. Inserted_values (same as expected from bbf)
-  //   2. Expected values for pg (empty string if the same as bbf)
-  //   3. Datatype
-  //   4. Single-quote-wrapped (needs single quotes around the data inserted)
-  const vector<tuple<string, string, string, bool>> INSERTION_INFO = {
-    {"1",                                     "",                     "sys.int",              false},
-    {"25",                                    "",                     "smallint",             false},
-    {"24",                                    "",                     "sys.bigint",           false},
-    {"23",                                    "",                     "sys.tinyint",          false},
-    {"2011-04-15 16:44:09.000",               "2011-04-15 16:44:09",  "sys.datetime",         true},
-    {"2000-01-01 00:00:00.0000000",           "2000-01-01 00:00:00",  "sys.datetime2",        true},
-    {"2000-01-02 00:00:00",                   "",                     "sys.smalldatetime",    true},
-    {"2000-03-01",                            "",                     "date",                 true},
-    {"12:34:56.0000000",                      "12:34:56",             "time",                 true},
-    {"0.123456",                              "",                     "float(3)",             false}, 
-    {"0.65432101",                            "0.654321",             "sys.real",             false},
-    {"46279.10",                              "",                     "sys.decimal(8,2)",     false},
-    {"100000000.0100",                        "",                     "sys.money",            false},
-    {"1000.0100",                             "",                     "sys.smallmoney",       false},
-    {"0",                                     "",                     "sys.bit",              false},
-    {"Hello World nvchar",                    "",                     "sys.nvarchar(30)",     true},
-    {"Hello World vchar",                     "",                     "sys.varchar(30)",      true},
-    {"Hello World nchar             ",        "",                     "sys.nchar(30)",        true},
-    {"Hello World char              ",        "",                     "char(30)",             true},
-    // {"2A",                                    "0x2a",                 "sys.binary(1)",        false}, // This is failing
-    {"2B",                                    "0x2b",                 "sys.varbinary(1)",     false},
-    {"0E984725-C51C-4BF4-9960-E1C80E27ABA0",  "",                     "sys.uniqueidentifier", true}
-  };
   vector<string> inserted_values, bbf_expected, pg_expected;
   string tableConstraints = createTableConstraint("UNIQUE", UNIQUE_COLUMNS);
 
-  SplitInsertionInfo(INSERTION_INFO, inserted_values, bbf_expected, pg_expected);
+  SplitInsertionInfo(SQL_VARIANT_INSERTION_INFO_CONSTRAINT, inserted_values, bbf_expected, pg_expected);
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
   testUniqueConstraint(ServerType::MSSQL, TABLE_NAME, UNIQUE_COLUMNS);
