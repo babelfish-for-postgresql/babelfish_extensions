@@ -4678,7 +4678,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		return ret;
 	}
 
-	INSTR_TIME_SET_CURRENT(estate->planning_start);
 	if (expr->plan == NULL || pltsql_explain_analyze)
     {
         /*
@@ -4706,9 +4705,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 * Check whether the statement is an INSERT/DELETE with RETURNING
 	 */
 	cp = SPI_plan_get_cached_plan(expr->plan);
-	INSTR_TIME_SET_CURRENT(estate->planning_end);
-	INSTR_TIME_SUBTRACT(estate->planning_end, estate->planning_start);
-
 	if (cp)
 	{
 		int i;

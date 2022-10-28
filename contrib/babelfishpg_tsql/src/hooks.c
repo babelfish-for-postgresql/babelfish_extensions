@@ -26,6 +26,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/planner.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -146,6 +147,11 @@ static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid obj
 static void revoke_func_permission_from_public(Oid objectId);
 static char *gen_func_arg_list(Oid objectId);
 
+/*****************************************
+ * 			Planner Hook
+ *****************************************/
+static PlannedStmt * pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
@@ -175,6 +181,7 @@ static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NUL
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
+static planner_hook_type analyze_planner_hook = NULL;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -278,6 +285,9 @@ InstallExtendedHooks(void)
 
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
+
+	analyze_planner_hook = planner_hook;
+	planner_hook = pltsql_planner_hook;
 }
 
 void
@@ -319,6 +329,7 @@ UninstallExtendedHooks(void)
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
+	planner_hook = analyze_planner_hook;
 }
 
 /*****************************************
@@ -2951,4 +2962,27 @@ pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode,
 
 	if (prev_pg_attribute_aclchk_all_hook)
 		prev_pg_attribute_aclchk_all_hook(table_oid, roleid, mode, how, has_access);
+}
+
+static PlannedStmt *
+pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
+{
+	PlannedStmt * plan;
+	PLtsql_execstate *estate;
+
+	if (pltsql_explain_analyze) {
+		PLExecStateCallStack * cur;
+		cur = exec_state_call_stack;
+		Assert(cur != NULL);
+		estate = cur->estate;
+		Assert(estate != NULL);
+		INSTR_TIME_SET_CURRENT(estate->planning_start);
+	}
+	plan = standard_planner(parse, query_string, cursorOptions, boundParams);
+	if (pltsql_explain_analyze) {
+		INSTR_TIME_SET_CURRENT(estate->planning_end);
+		INSTR_TIME_SUBTRACT(estate->planning_end, estate->planning_start);
+	}
+
+	return plan;
 }

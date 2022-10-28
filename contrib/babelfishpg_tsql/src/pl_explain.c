@@ -7,7 +7,7 @@
 
 
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
-
+extern PLtsql_execstate *get_current_tsql_estate();
 bool pltsql_explain_only = false;
 bool pltsql_explain_analyze = false;
 bool pltsql_explain_verbose = false;
@@ -144,11 +144,12 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 			ExplainPrintTriggers(es, queryDesc);
 		if (es->costs)
 			ExplainPrintJITSummary(es, queryDesc);
-		if (es->analyze) {
-			ExplainPropertyFloat("Planning Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(pltsql_estate->planning_end), 3, es);
-			INSTR_TIME_SET_CURRENT(pltsql_estate->execution_end);
-			INSTR_TIME_SUBTRACT(pltsql_estate->execution_end, pltsql_estate->execution_start);
-			ExplainPropertyFloat("Execution Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(pltsql_estate->execution_end), 3, es);
+		if (es->summary) {
+			PLtsql_execstate *time_state = get_current_tsql_estate();
+			ExplainPropertyFloat("Planning Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(time_state->planning_end), 3, es);
+			INSTR_TIME_SET_CURRENT(time_state->execution_end);
+			INSTR_TIME_SUBTRACT(time_state->execution_end, time_state->execution_start);
+			ExplainPropertyFloat("Execution Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(time_state->execution_end), 3, es);
 		}
 
 	}
