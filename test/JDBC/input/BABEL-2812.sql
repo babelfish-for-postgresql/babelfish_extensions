@@ -10,5 +10,11 @@ go
 
 declare @refreshTime datetime = '17:30:00'
 declare @yyyymmdd    datetime = '20211212'
+SELECT @yyyymmdd - @refreshTime
+go
+
+
+declare @refreshTime datetime = '17:30:00'
+declare @yyyymmdd    datetime = '20211212'
 SELECT DATEADD(day ,DATEDIFF(day, 0, @yyyymmdd) ,@refreshTime) as NextTime;
 go

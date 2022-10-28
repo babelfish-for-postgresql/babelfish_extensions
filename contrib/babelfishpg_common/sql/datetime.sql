@@ -213,25 +213,21 @@ RETURNS sys.DATETIME
 AS 'babelfishpg_common', 'datetime_pl_datetime'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.datetime_minus(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'babelfishpg_common', 'datetime_mi_datetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.+ (
     LEFTARG    = sys.DATETIME,
     RIGHTARG   = sys.DATETIME,
-    COMMUTATOR = +,
     PROCEDURE  = sys.datetime_add
 );
 
-CREATE FUNCTION sys.datetimeplvarchar(sys.DATETIME, sys.VARCHAR)
-RETURNS sys.DATETIME
-AS $$
-    SELECT $1 + CAST($2 AS sys.DATETIME);
-$$
-LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OPERATOR sys.+ (
-    LEFTARG     = sys.DATETIME,
-    RIGHTARG    = sys.varchar,
-    COMMUTATOR  = +,
-    PROCEDURE   = sys.datetimeplvarchar
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.DATETIME,
+    RIGHTARG   = sys.DATETIME,
+    PROCEDURE  = sys.datetime_minus
 );
 
 CREATE FUNCTION sys.datetimeplfloat8(sys.DATETIME, float8)

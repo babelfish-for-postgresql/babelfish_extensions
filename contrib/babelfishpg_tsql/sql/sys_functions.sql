@@ -1024,7 +1024,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate, enddate);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
