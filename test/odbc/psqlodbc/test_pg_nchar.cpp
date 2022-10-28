@@ -1,7 +1,5 @@
 #include "psqlodbc_tests_common.h"
 
-using std::pair;
-
 const string TABLE_NAME = "master_dbo.nchar_table_odbc_test";
 const string VIEW_NAME = "master_dbo.nchar_view_odbc_test";
 const string COL1_NAME = "pk";
@@ -627,13 +625,15 @@ TEST_F(PSQL_DataTypes_Nchar, Comparison_Operators) {
   };
 
   const vector<string> INSERTED_PK = {
-    "pk one",
-    "pk two"
+    "One",
+    "BBB",
+    "MMM"
   };
 
   const vector<string> INSERTED_DATA = {
-    "data one",
-    "data two"
+    "One",
+    "AAA",
+    "NNN"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
