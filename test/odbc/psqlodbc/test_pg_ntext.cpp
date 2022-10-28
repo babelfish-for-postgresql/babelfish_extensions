@@ -48,7 +48,7 @@ const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL2_NAME, DATATYPE}
 };
 
-class PSQL_Datatypes_Ntext: public testing::Test {
+class PSQL_DataTypes_Ntext: public testing::Test {
    void SetUp() override {
     if(!Drivers::DriverExists(ServerType::PSQL)) {
       GTEST_SKIP() << "PSQL Driver not present: skipping all tests for this fixture.";
@@ -69,7 +69,7 @@ class PSQL_Datatypes_Ntext: public testing::Test {
 
 };
 
-TEST_F(PSQL_Datatypes_Ntext, Table_Creation) {
+TEST_F(PSQL_DataTypes_Ntext, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 8190};
   const vector<int> PRECISION_EXPECTED = {0, 0};
   const vector<int> SCALE_EXPECTED = {0, 0};
@@ -85,7 +85,7 @@ TEST_F(PSQL_Datatypes_Ntext, Table_Creation) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, Table_Create_Fail) {
+TEST_F(PSQL_DataTypes_Ntext, Table_Create_Fail) {
   const vector<vector<pair<string, string>>> invalid_columns {
     {{"invalid1", DATATYPE + "(4)"}} // Cannot specify a column width on data type datatime.
   };
@@ -96,7 +96,7 @@ TEST_F(PSQL_Datatypes_Ntext, Table_Create_Fail) {
 }
 
 // // inserted values differ that of expected?
-TEST_F(PSQL_Datatypes_Ntext, Insertion_Success) {
+TEST_F(PSQL_DataTypes_Ntext, Insertion_Success) {
   const vector<string> INSERTED_VALUES = {
     "NULL", // NULL value
     STRING_1,
@@ -118,7 +118,7 @@ TEST_F(PSQL_Datatypes_Ntext, Insertion_Success) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, DISABLED_Insertion_Failure) {
+TEST_F(PSQL_DataTypes_Ntext, DISABLED_Insertion_Failure) {
   const vector<string> INSERTED_VALUES = {
     STRING_4000 + "t"
   };
@@ -128,7 +128,7 @@ TEST_F(PSQL_Datatypes_Ntext, DISABLED_Insertion_Failure) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, Updata_Success) {
+TEST_F(PSQL_DataTypes_Ntext, Updata_Success) {
   const vector<string> INSERTED_VALUES = {
     "a"
   };
@@ -155,7 +155,7 @@ TEST_F(PSQL_Datatypes_Ntext, Updata_Success) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, DISABLED_Updata_Fail) {
+TEST_F(PSQL_DataTypes_Ntext, DISABLED_Updata_Fail) {
   const vector<string> INSERTED_VALUES = {
     STRING_1
   };
@@ -170,7 +170,7 @@ TEST_F(PSQL_Datatypes_Ntext, DISABLED_Updata_Fail) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, View_creation) {
+TEST_F(PSQL_DataTypes_Ntext, View_creation) {
   const vector<string> INSERTED_VALUES = {
     "NULL", // NULL values
     STRING_1,
@@ -191,7 +191,7 @@ TEST_F(PSQL_Datatypes_Ntext, View_creation) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, Table_Single_Primary_Keys) {
+TEST_F(PSQL_DataTypes_Ntext, Table_Single_Primary_Keys) {
 
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
@@ -220,7 +220,7 @@ TEST_F(PSQL_Datatypes_Ntext, Table_Single_Primary_Keys) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, Table_Composite_Primary_Keys) {
+TEST_F(PSQL_DataTypes_Ntext, Table_Composite_Primary_Keys) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
     {COL2_NAME, DATATYPE}
@@ -248,7 +248,7 @@ TEST_F(PSQL_Datatypes_Ntext, Table_Composite_Primary_Keys) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, Table_Unique_Constraint) {
+TEST_F(PSQL_DataTypes_Ntext, Table_Unique_Constraint) {
 
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
@@ -278,7 +278,7 @@ TEST_F(PSQL_Datatypes_Ntext, Table_Unique_Constraint) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, Comparison_Operators) {
+TEST_F(PSQL_DataTypes_Ntext, Comparison_Operators) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, DATATYPE + " PRIMARY KEY"},
     {COL2_NAME, DATATYPE}
@@ -330,123 +330,53 @@ TEST_F(PSQL_Datatypes_Ntext, Comparison_Operators) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
   testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
-    OPERATIONS_QUERY, expected_results);
+    OPERATIONS_QUERY, expected_results, false, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_Datatypes_Ntext, String_Operators) {
-  const int BUFFER_LENGTH = 8192;
-  const int BYTES_EXPECTED = 4;
-  const int DOUBLE_BYTES_EXPECTE = 8;
-  int pk;
-  char data[BUFFER_LENGTH];
-  SQLLEN pk_len;
-  SQLLEN data_len;
-  SQLLEN affected_rows;
+// TEST_F(PSQL_DataTypes_Ntext, DISABLED_String_Operators) {
 
-  RETCODE rcode;
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
+//   const vector<string> INSERTED_DATA = {
+//     "  One Two!"
+//   };
 
-const int NUM_COLS = 2;
-const string COL_NAMES[NUM_COLS] = {"pk", "data"};
+//   const vector<string> INSERTED_PK = {
+//     "1"
+//   };
 
-const int COL_LENGTH[NUM_COLS] = {8190, 8190};
-
-vector<pair<string, string>> TABLE_COLUMNS_NTEXT = {
-  {COL_NAMES[0], DATATYPE + " PRIMARY KEY"},
-  {COL_NAMES[1], DATATYPE}
-};
-
-
-  vector <string> inserted_pk = {
-    "123",
-    "456"
-  };
-
-  vector <string> inserted_data = {
-    "One Two Three",
-    "Four Five Six"
-  };
-
-  vector <string> operations_query = {
-    COL_NAMES[0] + "||" + COL_NAMES[1],
-    "lower(" + COL_NAMES[1] + ")",
-    COL_NAMES[0] + ">" + COL_NAMES[1],
-    COL_NAMES[0] + ">=" + COL_NAMES[1],
-    COL_NAMES[0] + "<=" + COL_NAMES[1],
-    COL_NAMES[0] + "<" + COL_NAMES[1],
-    COL_NAMES[0] + "<>" + COL_NAMES[1]
-  };
-
-
-  vector<vector<string>>expected_results = {{},{}};
-
-  // initialization of expected_results
-  for (int i = 0; i < inserted_pk.size(); i++) {
-    expected_results[i].push_back(inserted_pk[i] + inserted_data[i]);
-    string current = inserted_data[i];
-    transform(current.begin(), current.end(), current.begin(), ::tolower);
-    expected_results[i].push_back(current);
-    expected_results[i].push_back(std::to_string(inserted_pk[i] > inserted_data[i]));
-    expected_results[i].push_back(std::to_string(inserted_pk[i] >= inserted_data[i]));
-    expected_results[i].push_back(std::to_string(inserted_pk[i] <= inserted_data[i]));
-    expected_results[i].push_back(std::to_string(inserted_pk[i] < inserted_data[i]));
-    expected_results[i].push_back(std::to_string(inserted_pk[i] != inserted_data[i]));
-  }
-
-  char col_results[operations_query.size()][BUFFER_LENGTH];
-  SQLLEN col_len[operations_query.size()];
-  vector<tuple<int, int, SQLPOINTER, int, SQLLEN* >> bind_columns = {};
-
-  // initialization for bind_columns
-  for (int i = 0; i < operations_query.size(); i++) {
-    tuple<int, int, SQLPOINTER, int, SQLLEN*> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER) &col_results[i], BUFFER_LENGTH, &col_len[i]);
-    bind_columns.push_back(tuple_to_insert);
-  }
-
-  string insert_string{}; 
-  string comma{};
+//   const int NUM_OF_DATA = INSERTED_DATA.size();
   
-  // insert_string initialization
-  for (int i = 0; i< inserted_pk.size() ; ++i) {
-    insert_string += comma + "(" +"'"+ inserted_pk[i] + "'"+","+"'" + inserted_data[i] + "'"+")";
-    comma = ",";
-  }
+//   // insertString initialization
+//   string insertString{};
+//   string comma{};
+//   for (int i = 0; i < NUM_OF_DATA; i++) {
+//     insertString += comma + "(" + INSERTED_PK[i] + ",\'" + INSERTED_DATA[i] + "\')";
+//     comma = ",";
+//   }
 
-  // Create table
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS_NTEXT));
-  odbcHandler.CloseStmt();
+//   const vector<string> OPERATIONS_QUERY = {
+//     "lower(" + COL2_NAME + ")",
+//     "upper(" + COL2_NAME + ")",
+//     COL1_NAME +"||" + COL2_NAME,
+//     "Trim(" + COL2_NAME + ")",
+//     "Trim(TRAILING '!' from " + COL2_NAME + ")"
 
-  // Insert valid values into the table and assert affected rows
-  odbcHandler.ExecQuery(InsertStatement(TABLE_NAME, insert_string));
-  rcode = SQLRowCount(odbcHandler.GetStatementHandle(), &affected_rows);
-  ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(affected_rows, inserted_data.size());
+//   };
+//   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
+
+//   // initialization of EXPECTED_RESULTS
+//   vector<vector<string>> EXPECTED_RESULTS = {{}};
   
-
-  // Make sure inserted values are correct and operations
-  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
-
-  for (int i = 0; i < inserted_data.size(); ++i) {
-    
-    odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, operations_query, vector<string> {}, COL_NAMES[0] + "=" + "'"+inserted_pk[i]+"'"));
-    ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
-
-    rcode = SQLFetch(odbcHandler.GetStatementHandle());
-    ASSERT_EQ(rcode, SQL_SUCCESS);
-
-    for (int j = 0; j < operations_query.size(); j++) {
-
-      ASSERT_EQ(col_len[j], expected_results[i][j].size());
-      ASSERT_EQ(col_results[j], expected_results[i][j]);
-    }
-  }
-
-  // Assert that there is no more data
-  rcode = SQLFetch(odbcHandler.GetStatementHandle());
-  ASSERT_EQ(rcode, SQL_NO_DATA);
-
-  odbcHandler.CloseStmt();
-  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
-}
+//   string current = INSERTED_DATA[0];
+//   transform(current.begin(), current.end(), current.begin(), ::tolower);
+//   EXPECTED_RESULTS[0].push_back(current);
+//   EXPECTED_RESULTS[0].push_back("  ONE TWO!");
+//   EXPECTED_RESULTS[0].push_back(INSERTED_PK[0] + INSERTED_DATA[0]);
+//   EXPECTED_RESULTS[0].push_back("One Two!");
+//   EXPECTED_RESULTS[0].push_back("  One Two");
+  
+//   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+//   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+//   testStringFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, EXPECTED_RESULTS, INSERTED_PK, COL1_NAME);
+//   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+// }
