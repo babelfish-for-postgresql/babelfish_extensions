@@ -201,3 +201,19 @@ string hexToIntStr(const string &input) {
 
   return std::to_string(i);
 }
+
+string padString(string input, size_t table_size) {
+  std::ostringstream result;
+  result << std::left << std::setw(table_size) << std::setfill(' ') << input;
+  return result.str();
+}
+
+vector<string> getExpectedResults_Char(const vector<string> &input, size_t table_size) {
+  vector<string> ret = {};
+
+  for (int i = 0; i < input.size(); i++) {
+    ret.push_back(padString(input[i], table_size));
+  }
+
+  return ret;
+}

@@ -163,4 +163,20 @@ vector<string> getExpectedResults_Time(const vector<string> &input, const int ti
 */
 string hexToIntStr(const string &input);
 
+/** 
+ * Left pads (adds spaces on the right side) the input string until a length of table_size
+ * 
+ * @param input The String to be padded.
+ * @param table_size The desired length.
+ */
+string padString(string input, size_t table_size);
+
+/**
+ * Convert a vector of strings to expected character results.
+ * 
+ * @param The vector of strings to convert.
+ * @param table_size The size of the table.
+*/
+vector<string> getExpectedResults_Char(const vector<string> &input, size_t table_size);
+
 #endif

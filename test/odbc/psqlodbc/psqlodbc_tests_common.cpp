@@ -1,11 +1,5 @@
 #include "psqlodbc_tests_common.h"
 
-string padString(string input, size_t table_size) {
-  std::ostringstream result;
-  result << std::left << std::setw(table_size) << std::setfill(' ') << input;
-  return result.str();
-}
-
 vector<string> duplicateElements(vector<string> input) {
   typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
   std::vector<string> duplicated(input);
