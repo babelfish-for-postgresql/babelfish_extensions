@@ -1511,81 +1511,81 @@ table_ref:	relation_expr tsql_table_hint_expr
 					n->relation = (Node *) $1;
 					$$ = (Node *) n;
 				}
-			| TSQL_APPLY func_table func_alias_clause
-				{
-					RangeFunction *n = (RangeFunction *) $2;
-					n->lateral = true;
-					n->alias = linitial($3);
-					n->coldeflist = lsecond($3);
-					$$ = (Node *) n;
-				}
-			| TSQL_APPLY xmltable opt_alias_clause
-				{
-					RangeTableFunc *n = (RangeTableFunc *) $2;
-					n->lateral = true;
-					n->alias = $3;
-					$$ = (Node *) n;
-				}
-			| TSQL_APPLY select_with_parens opt_alias_clause
-				{
-					RangeSubselect *n = makeNode(RangeSubselect);
-					n->lateral = true;
-					n->subquery = $2;
-					n->alias = $3;
-					/* same comment as above */
-					if ($3 == NULL)
-					{
-						if (IsA($2, SelectStmt) &&
-							((SelectStmt *) $2)->valuesLists)
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("VALUES in FROM must have an alias"),
-									 errhint("For example, FROM (VALUES ...) [AS] foo."),
-									 parser_errposition(@2)));
-						else
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("subquery in FROM must have an alias"),
-									 errhint("For example, FROM (SELECT ...) [AS] foo."),
-									 parser_errposition(@2)));
-					}
-					$$ = (Node *) n;
-				}
+            | TSQL_APPLY func_table func_alias_clause
+                {
+                    RangeFunction *n = (RangeFunction *) $2;
+                    n->lateral = true;
+                    n->alias = linitial($3);
+                    n->coldeflist = lsecond($3);
+                    $$ = (Node *) n;
+                }
+            | TSQL_APPLY xmltable opt_alias_clause
+                {
+                    RangeTableFunc *n = (RangeTableFunc *) $2;
+                    n->lateral = true;
+                    n->alias = $3;
+                    $$ = (Node *) n;
+                }
+            | TSQL_APPLY select_with_parens opt_alias_clause
+                {
+                    RangeSubselect *n = makeNode(RangeSubselect);
+                    n->lateral = true;
+                    n->subquery = $2;
+                    n->alias = $3;
+                    /* same comment as above */
+                    if ($3 == NULL)
+                    {
+                        if (IsA($2, SelectStmt) &&
+                            ((SelectStmt *) $2)->valuesLists)
+                            ereport(ERROR,
+                                    (errcode(ERRCODE_SYNTAX_ERROR),
+                                        errmsg("VALUES in FROM must have an alias"),
+                                        errhint("For example, FROM (VALUES ...) [AS] foo."),
+                                        parser_errposition(@2)));
+                        else
+                            ereport(ERROR,
+                                    (errcode(ERRCODE_SYNTAX_ERROR),
+                                        errmsg("subquery in FROM must have an alias"),
+                                        errhint("For example, FROM (SELECT ...) [AS] foo."),
+                                        parser_errposition(@2)));
+                    }
+                    $$ = (Node *) n;
+                }
             | TSQL_APPLY relation_expr opt_alias_clause
-				{
-					$2->alias = $3;
-					$$ = (Node *) $2;
-				}
+                {
+                    $2->alias = $3;
+                    $$ = (Node *) $2;
+                }
 		;
 
 joined_table:
-			table_ref TSQL_CROSS table_ref
-				{
-					/* CROSS APPLY is the same as CROSS JOIN LATERAL */
-					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = JOIN_INNER;
-					n->isNatural = false;
-					n->larg = $1;
-					n->rarg = $3;
-					n->usingClause = NIL;
-					n->join_using_alias = NULL;
-					n->quals = NULL;
-					$$ = n;
-				}
-			| table_ref TSQL_OUTER table_ref
-				{
-					/* OUTER APPLY is the same as LEFT JOIN LATERAL */
-					JoinExpr *n = makeNode(JoinExpr);
-					n->jointype = JOIN_LEFT;
-					n->isNatural = false;
-					n->larg = $1;
-					n->rarg = $3;
-					n->usingClause = NIL;
-					n->join_using_alias = NULL;
-					n->quals = NULL;
-					$$ = n;
-				}
-		;
+            table_ref TSQL_CROSS table_ref
+                {
+                    /* CROSS APPLY is the same as CROSS JOIN LATERAL */
+                    JoinExpr *n = makeNode(JoinExpr);
+                    n->jointype = JOIN_INNER;
+                    n->isNatural = false;
+                    n->larg = $1;
+                    n->rarg = $3;
+                    n->usingClause = NIL;
+                    n->join_using_alias = NULL;
+                    n->quals = NULL;
+                    $$ = n;
+                }
+            | table_ref TSQL_OUTER table_ref
+                {
+                    /* OUTER APPLY is the same as LEFT JOIN LATERAL */
+                    JoinExpr *n = makeNode(JoinExpr);
+                    n->jointype = JOIN_LEFT;
+                    n->isNatural = false;
+                    n->larg = $1;
+                    n->rarg = $3;
+                    n->usingClause = NIL;
+                    n->join_using_alias = NULL;
+                    n->quals = NULL;
+                    $$ = n;
+                }
+        ;
 
 func_expr_common_subexpr:
 			UPDATE_paren '(' NonReservedWord_or_Sconst ')'
