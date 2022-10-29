@@ -1551,10 +1551,15 @@ table_ref:	relation_expr tsql_table_hint_expr
 					}
 					$$ = (Node *) n;
 				}
+            | TSQL_APPLY relation_expr opt_alias_clause
+				{
+					$2->alias = $3;
+					$$ = (Node *) $2;
+				}
 		;
 
 joined_table:
-			table_ref CROSS table_ref
+			table_ref TSQL_CROSS table_ref
 				{
 					/* CROSS APPLY is the same as CROSS JOIN LATERAL */
 					JoinExpr *n = makeNode(JoinExpr);
@@ -1567,7 +1572,7 @@ joined_table:
 					n->quals = NULL;
 					$$ = n;
 				}
-			| table_ref OUTER_P table_ref
+			| table_ref TSQL_OUTER table_ref
 				{
 					/* OUTER APPLY is the same as LEFT JOIN LATERAL */
 					JoinExpr *n = makeNode(JoinExpr);
@@ -4141,12 +4146,14 @@ reserved_keyword:
 			  TSQL_APPLY
 			| TSQL_CHOOSE
 			| TSQL_CONVERT
+            | TSQL_CROSS
 			| TSQL_DATEADD
 			| TSQL_DATEDIFF
 			| TSQL_DATENAME
 			| TSQL_DATEPART
 			| TSQL_IIF
 			| TSQL_OUT
+            | TSQL_OUTER
 			| TSQL_OUTPUT
 			| TSQL_PARSE
 			| TSQL_PERCENT

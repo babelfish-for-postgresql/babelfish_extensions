@@ -71,7 +71,15 @@ RETURN
    WHERE E.DepartmentID = @DeptID 
    ) 
 GO
- 
+
+CREATE PROC p AS
+SELECT * FROM t
+CROSS APPLY dbo.fn_GetAllEmployeeOfADepartment(0)
+GO
+
+DROP PROC p
+GO
+
 SELECT * FROM Department D 
 CROSS APPLY dbo.fn_GetAllEmployeeOfADepartment(D.DepartmentID) 
 GO
@@ -96,4 +104,44 @@ GO
 DROP TABLE [Employee]
 GO
 DROP TABLE [Department]
+GO
+
+-- chaining apply calls
+create table t1 (a int, b int)
+create table t2 (c int, d int)
+insert into t1 values (1, 1),(2, 2)
+insert into t2 values (3, 3),(4, 4)
+go
+
+select * from t1 outer apply t2 outer apply (values (5,5),(6,6)) t3 (e, f)
+go
+
+select * from t1 cross apply t2 cross apply (values (5,5),(6,6)) t3 (e, f)
+go
+
+drop table t1
+go
+
+drop table t2
+go
+
+CREATE FUNCTION f2
+() RETURNS TABLE AS RETURN
+(
+    WITH RowNumbers AS
+    (
+        SELECT TOP (1)
+       ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS [Row]
+        FROM       sys.all_columns AS R1
+        CROSS JOIN sys.all_columns AS R2
+    )
+    SELECT getdate() AS [Date] FROM   RowNumbers
+    CROSS APPLY
+    (
+        SELECT [Direction] = 1
+    ) AS XS
+)
+GO
+
+DROP FUNCTION f2
 GO
