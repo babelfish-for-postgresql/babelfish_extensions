@@ -1544,33 +1544,125 @@ GO
 DROP TABLE t_unsupported_sp;
 GO
 
---HIERARCHYID, GEORGRAPHY, GEOMETRY
+--HIERARCHYID, GEOGRAPHY, GEOMETRY
 -- Should throw detailed error messages, same as TIMESTAMP and ROWVERSION cases
 CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
 GO
 DROP TABLE test_unsupported_hierarchyid;
 GO
-CREATE TABLE test_unsupported_georgraphy(a GEORGRAPHY);
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
 GO
-DROP TABLE test_unsupported_georgraphy;
+DROP TABLE test_unsupported_geography;
 GO
 CREATE TABLE test_unsupported_geometry(a GEOMETRY);
 GO
 DROP TABLE test_unsupported_geometry;
 GO
 
--- With escape_hatch to ignore
+-- With escape_hatch_rowversion to ignore
 -- Should throw a simple error message saying the datatype does not exist
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 GO
 
+CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
+GO
+DROP TABLE test_unsupported_rowversion;
+GO
+CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
+GO
+DROP TABLE test_unsupported_timestamp;
+GO
 CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
 GO
 DROP TABLE test_unsupported_hierarchyid;
 GO
-CREATE TABLE test_unsupported_georgraphy(a GEORGRAPHY);
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
 GO
-DROP TABLE test_unsupported_georgraphy;
+DROP TABLE test_unsupported_geography;
+GO
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+DROP TABLE test_unsupported_geometry;
+GO
+
+-- With escape_hatch_hierarchyid to ignore
+-- Should throw a simple error message saying the datatype does not exist
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+GO
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_hierarchyid', 'ignore';
+GO
+
+CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
+GO
+DROP TABLE test_unsupported_rowversion;
+GO
+CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
+GO
+DROP TABLE test_unsupported_timestamp;
+GO
+CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
+GO
+DROP TABLE test_unsupported_hierarchyid;
+GO
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
+GO
+DROP TABLE test_unsupported_geography;
+GO
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+DROP TABLE test_unsupported_geometry;
+GO
+
+-- With escape_hatch_geography to ignore
+-- Should throw a simple error message saying the datatype does not exist
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_hierarchyid', 'strict';
+GO
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geography', 'ignore';
+GO
+
+CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
+GO
+DROP TABLE test_unsupported_rowversion;
+GO
+CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
+GO
+DROP TABLE test_unsupported_timestamp;
+GO
+CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
+GO
+DROP TABLE test_unsupported_hierarchyid;
+GO
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
+GO
+DROP TABLE test_unsupported_geography;
+GO
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+DROP TABLE test_unsupported_geometry;
+GO
+
+-- With escape_hatch_geometry to ignore
+-- Should throw a simple error message saying the datatype does not exist
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geography', 'strict';
+GO
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geometry', 'ignore';
+GO
+
+CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
+GO
+DROP TABLE test_unsupported_rowversion;
+GO
+CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
+GO
+DROP TABLE test_unsupported_timestamp;
+GO
+CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
+GO
+DROP TABLE test_unsupported_hierarchyid;
+GO
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
+GO
+DROP TABLE test_unsupported_geography;
 GO
 CREATE TABLE test_unsupported_geometry(a GEOMETRY);
 GO
