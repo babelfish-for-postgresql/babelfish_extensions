@@ -1,11 +1,11 @@
 #include "psqlodbc_tests_common.h"
 
-const string TABLE_NAME = "master_dbo.bpchar_table_odbc_test";
-const string VIEW_NAME = "master_dbo.bpchar_view_odbc_test";
+const string TABLE_NAME = "master_dbo.nchar_table_odbc_test";
+const string VIEW_NAME = "master_dbo.nchar_view_odbc_test";
 const string COL1_NAME = "pk";
 const string COL2_NAME = "data";
 
-const string DATATYPE = "sys.bpchar";
+const string DATATYPE = "sys.nchar";
 
 const vector<pair<string, string>> TABLE_COLUMNS_1 = {
   {COL1_NAME, " int PRIMARY KEY"},
@@ -58,7 +58,7 @@ const string STRING_1 = "a";
 const string STRING_20 = "0123456789abcdefghij";
 const string STRING_2704 = "nnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfdnnd191209bnfe1b8h1389hcbsiac18he12he129basdbdiub912be912b9eb129ueb9asbdiuasbd198wb91wbdsabduibq9uhdasuidbewbdicciudsbuib29r9823h9vbs9df29chdufhuih23hr@#YGEGV#%TW$hduccW%$EHDYTfgs3489bdifbviubsfduvbsiudfbu3fbuibvisdfbiuvbdfsivbfdisubviufdsbvbdfiufnvdjkvbdkfbvkjdfbvksDTHEVEV%TTDYE%$VT$TERCW%$TERGFSGfddddd";
 
-class PSQL_DataTypes_Bpchar : public testing::Test{
+class PSQL_DataTypes_Nchar : public testing::Test{
 
   void SetUp() override {
     if (!Drivers::DriverExists(ServerType::PSQL)) {
@@ -81,7 +81,7 @@ class PSQL_DataTypes_Bpchar : public testing::Test{
   }
 };
 
-TEST_F(PSQL_DataTypes_Bpchar, Table_Creation) {
+TEST_F(PSQL_DataTypes_Nchar, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 1};
   const vector<int> PRECISION_EXPECTED = {0, 0};
   const vector<int> SCALE_EXPECTED = {0, 0};
@@ -117,7 +117,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Table_Creation) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, Table_Create_Fail) {
+TEST_F(PSQL_DataTypes_Nchar, Table_Create_Fail) {
   const vector<vector<pair<string, string>>> INVALID_COLUMNS {
     {{"invalid1", DATATYPE + "(-1)"}},
     {{"invalid1", DATATYPE + "(0)"}},
@@ -127,7 +127,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Table_Create_Fail) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, Insertion_Success) {
+TEST_F(PSQL_DataTypes_Nchar, Insertion_Success) {
   const vector<string> INSERTED_VALUES_1 = {
     "NULL", 
     STRING_1,
@@ -183,7 +183,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Insertion_Success) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME); 
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, Insertion_Failure) {
+TEST_F(PSQL_DataTypes_Nchar, Insertion_Failure) {
   const vector<string> INSERTED_VALUES_1 = {
     STRING_1 + "1"
   };
@@ -210,7 +210,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Insertion_Failure) {
   
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, Update_Success) {
+TEST_F(PSQL_DataTypes_Nchar, Update_Success) {
   const vector<string> INSERTED_VALUES = {
     "1"
   };
@@ -282,7 +282,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Update_Success) {
 }
 
 
-TEST_F(PSQL_DataTypes_Bpchar, Update_Fail) {
+TEST_F(PSQL_DataTypes_Nchar, Update_Fail) {
   const vector<string> INSERTED_VALUES = {
     STRING_1
   };
@@ -323,7 +323,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Update_Fail) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, View_creation) {
+TEST_F(PSQL_DataTypes_Nchar, View_creation) {
   const vector<string> INSERTED_VALUES = {
     "NULL", // NULL values
     STRING_1,
@@ -390,7 +390,7 @@ TEST_F(PSQL_DataTypes_Bpchar, View_creation) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, Table_Single_Primary_Keys) {
+TEST_F(PSQL_DataTypes_Nchar, Table_Single_Primary_Keys) {
 
   const vector<pair<string, string>> TABLE_COLUMNS_1 = {
     {COL1_NAME, "INT"},
@@ -463,7 +463,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Table_Single_Primary_Keys) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, Table_Composite_Primary_Keys){
+TEST_F(PSQL_DataTypes_Nchar, Table_Composite_Primary_Keys){
 
   const vector<pair<string, string>> TABLE_COLUMNS_1 = {
     {COL1_NAME, "INT"},
@@ -539,7 +539,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Table_Composite_Primary_Keys){
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, Table_Unique_Constraint) {
+TEST_F(PSQL_DataTypes_Nchar, Table_Unique_Constraint) {
 
   const vector<string> UNIQUE_COLUMNS = {
     COL2_NAME
@@ -616,7 +616,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Table_Unique_Constraint) {
   
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, Comparison_Operators) {
+TEST_F(PSQL_DataTypes_Nchar, Comparison_Operators) {
 
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, DATATYPE + "(4000)" + " PRIMARY KEY"},
@@ -625,14 +625,14 @@ TEST_F(PSQL_DataTypes_Bpchar, Comparison_Operators) {
 
   const vector<string> INSERTED_PK = {
     "One",
-    "BBBB",
-    "EEEE"
+    "BBB",
+    "MMM"
   };
 
   const vector<string> INSERTED_DATA = {
     "One",
-    "AAAA",
-    "FFFF"
+    "AAA",
+    "NNN"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
@@ -675,7 +675,7 @@ TEST_F(PSQL_DataTypes_Bpchar, Comparison_Operators) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Bpchar, String_Operators) {
+TEST_F(PSQL_DataTypes_Nchar, String_Operators) {
 
   const vector<string> INSERTED_DATA = {
     "  One Two!"
@@ -694,7 +694,7 @@ TEST_F(PSQL_DataTypes_Bpchar, String_Operators) {
     insertString += comma + "(" + INSERTED_PK[i] + ",\'" + INSERTED_DATA[i] + "\')";
     comma = ",";
   }
-  
+
   const vector<string> OPERATIONS_QUERY = {
     "lower(" + COL2_NAME + ")",
     "upper(" + COL2_NAME + ")",
@@ -708,8 +708,7 @@ TEST_F(PSQL_DataTypes_Bpchar, String_Operators) {
   // initialization of EXPECTED_RESULTS
   vector<vector<string>> EXPECTED_RESULTS = {{}};
   
-  for(int i = 0; i < NUM_OF_OPERATIONS; i++)
-  {
+  for(int i = 0; i < NUM_OF_OPERATIONS; i++) {
     EXPECTED_RESULTS.push_back({});
   }
   
