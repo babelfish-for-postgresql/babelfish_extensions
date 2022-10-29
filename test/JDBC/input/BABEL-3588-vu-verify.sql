@@ -1,5 +1,8 @@
 -- Test for sys.babelfish_configurations_view
-SELECT COUNT(*) FROM sys.babelfish_configurations_view;
+CREATE VIEW v1 AS SELECT * FROM sys.babelfish_configurations_view
+GO
+
+SELECT COUNT(*) FROM  v1
 GO
 
 -- Default value is on
