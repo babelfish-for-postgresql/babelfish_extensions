@@ -1,8 +1,8 @@
 -- Test for sys.babelfish_configurations_view
-CREATE VIEW v1 AS SELECT * FROM sys.babelfish_configurations_view
+CREATE VIEW BABEL_3588_VIEW AS SELECT * FROM sys.babelfish_configurations_view
 GO
 
-SELECT COUNT(*) FROM  v1
+SELECT COUNT(*) FROM  BABEL_3588_VIEW
 GO
 
 -- Default value is on
@@ -47,4 +47,7 @@ GO
 
 -- Set all GUCs back to default values
 EXEC sp_babelfish_configure '%', 'default', 'server'
+GO
+
+DROP VIEW BABEL_3588_VIEW
 GO
