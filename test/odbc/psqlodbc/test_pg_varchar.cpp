@@ -7,17 +7,17 @@ const string COL2_NAME = "data";
 
 const string DATATYPE = "sys.varchar";
 
-vector<pair<string, string>> TABLE_COLUMNS_1 = {
+const vector<pair<string, string>> TABLE_COLUMNS_1 = {
   {COL1_NAME, " int PRIMARY KEY"},
   {COL2_NAME, DATATYPE + "(1)"}
 };
 
-vector<pair<string, string>> TABLE_COLUMNS_8000 = {
+const vector<pair<string, string>> TABLE_COLUMNS_8000 = {
   {COL1_NAME, " int PRIMARY KEY"},
   {COL2_NAME, DATATYPE + "(8000)"}
 };
 
-vector<pair<string, string>> TABLE_COLUMNS_20 = {
+const vector<pair<string, string>> TABLE_COLUMNS_20 = {
   {COL1_NAME, " int PRIMARY KEY"},
   {COL2_NAME, DATATYPE + "(20)"}
 };
