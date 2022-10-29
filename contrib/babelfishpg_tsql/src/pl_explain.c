@@ -16,7 +16,7 @@ bool pltsql_explain_settings = false;
 bool pltsql_explain_buffers = false;
 bool pltsql_explain_wal = false;
 bool pltsql_explain_timing = true;
-bool pltsql_explain_summary = false;
+bool pltsql_explain_summary = true;
 int pltsql_explain_format = EXPLAIN_FORMAT_TEXT;
 
 static ExplainInfo *get_last_explain_info();

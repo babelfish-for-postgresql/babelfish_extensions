@@ -112,6 +112,7 @@ static void pltsql_drop_func_default_positions(Oid objectId);
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+extern PLtsql_execstate *get_current_tsql_estate();
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
 static void pltsql_drop_view_definition(Oid objectId);
 static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
@@ -356,11 +357,9 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
-	if (pltsql_explain_analyze) {
-		PLtsql_execstate *estate;
-		PLExecStateCallStack * cur;
-		cur = exec_state_call_stack;
-		estate = cur->estate;
+	if (pltsql_explain_analyze)
+	{
+		PLtsql_execstate *estate = get_current_tsql_estate();
 		Assert(estate != NULL);
 		INSTR_TIME_SET_CURRENT(estate->execution_start);
 	}
@@ -2970,11 +2969,9 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	PlannedStmt * plan;
 	PLtsql_execstate *estate;
 
-	if (pltsql_explain_analyze) {
-		PLExecStateCallStack * cur;
-		cur = exec_state_call_stack;
-		Assert(cur != NULL);
-		estate = cur->estate;
+	if (pltsql_explain_analyze)
+	{
+		estate = get_current_tsql_estate();
 		Assert(estate != NULL);
 		INSTR_TIME_SET_CURRENT(estate->planning_start);
 	}
@@ -2982,7 +2979,8 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 		plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
 	else
 		plan = standard_planner(parse, query_string, cursorOptions, boundParams);
-	if (pltsql_explain_analyze) {
+	if (pltsql_explain_analyze)
+	{
 		INSTR_TIME_SET_CURRENT(estate->planning_end);
 		INSTR_TIME_SUBTRACT(estate->planning_end, estate->planning_start);
 	}
