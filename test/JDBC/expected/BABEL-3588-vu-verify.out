@@ -6,7 +6,7 @@ SELECT COUNT(*) FROM  BABEL_3588_VIEW
 GO
 ~~START~~
 int
-39
+42
 ~~END~~
 
 
