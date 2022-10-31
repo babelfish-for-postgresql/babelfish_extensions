@@ -1,3 +1,4 @@
+-- sla 35000
 -- Setup
 CREATE DATABASE sys_sql_modules_vu_prepare_db
 GO
