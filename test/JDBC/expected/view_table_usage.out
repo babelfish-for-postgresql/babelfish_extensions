@@ -1,0 +1,97 @@
+use master;
+go
+
+select * from information_schema.view_table_usage where view_name like 'view_table_usage_v%' order by view_name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+~~END~~
+
+
+create table view_table_usage_tb1(view_table_usage_c1 int, 
+view_table_usage_c2 char, view_table_usage_c3 varchar);
+go
+
+create table view_table_usage_tb2(view_table_usage_c4 char, 
+view_table_usage_c5 char, view_table_usage_c6 int);
+go
+
+create view view_table_usage_v1 as select * from view_table_usage_tb1;
+go
+
+create view view_table_usage_v2 as select * from view_table_usage_tb2;
+go
+
+create database view_table_usage_test_db;
+go
+
+select * from information_schema.view_table_usage where view_name like 'view_table_usage_v%' order by view_name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+master#!#dbo#!#view_table_usage_v1#!#master#!#dbo#!#view_table_usage_tb1
+master#!#dbo#!#view_table_usage_v2#!#master#!#dbo#!#view_table_usage_tb2
+~~END~~
+
+
+create procedure view_table_usag_proc as select * from information_schema.view_table_usage where view_name like 'view_table_usage_v%' order by view_name;
+go
+
+create function view_table_usag_func() returns table as return(select * from information_schema.view_table_usage where view_name like 'view_table_usage_v%' order by view_name);
+go
+
+select * from information_schema.view_table_usage where view_name like 'view_table_usage_v%' order by view_name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+master#!#dbo#!#view_table_usage_v1#!#master#!#dbo#!#view_table_usage_tb1
+master#!#dbo#!#view_table_usage_v2#!#master#!#dbo#!#view_table_usage_tb2
+~~END~~
+
+
+create schema view_table_usage_test_sc;
+go
+
+create table view_table_usage_test_sc.view_table_usage_sc_tb(arg3 char(10));
+go
+
+create view view_table_usage_sc_v as select * from view_table_usage_test_sc.view_table_usage_sc_tb;
+go
+
+select * from information_schema.view_table_usage where view_name like 'view_table_usage_sc%' order by view_name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+master#!#dbo#!#view_table_usage_sc_v#!#master#!#view_table_usage_test_sc#!#view_table_usage_sc_tb
+~~END~~
+
+
+drop view view_table_usage_sc_v;
+go
+
+drop table view_table_usage_test_sc.view_table_usage_sc_tb;
+go
+
+drop schema view_table_usage_test_sc;
+go
+
+drop function view_table_usag_func;
+go
+
+drop procedure view_table_usag_proc;
+go
+
+drop view view_table_usage_v2;
+go
+
+drop view view_table_usage_v1;
+go
+
+drop table view_table_usage_tb2;
+go
+
+drop table view_table_usage_tb1;
+go
+
+drop database view_table_usage_test_db;
+go

@@ -979,7 +979,38 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 	    AND CAST(ao.is_ms_shipped as INT) = 0;      
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
-	
+
+/*
+* VIEW_TABLE_USAGE
+*/
+
+CREATE OR REPLACE VIEW information_schema_tsql.view_table_usage
+AS SELECT DISTINCT CAST(nv.dbname AS sys.nvarchar(128)) AS "VIEW_CATALOG",
+    CAST(extv.orig_name AS sys.nvarchar(128)) AS "VIEW_SCHEMA",
+    CAST(v.relname AS sys.sysname) AS "VIEW_NAME",
+    CAST(nt.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+    CAST(extt.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST(t.relname AS sys.sysname) AS "TABLE_NAME"
+   FROM sys.pg_namespace_ext nv LEFT OUTER JOIN sys.babelfish_namespace_ext extv ON nv.nspname = extv.nspname,
+    pg_catalog.pg_class v,
+    pg_catalog.pg_depend dv,
+    pg_catalog.pg_depend dt,
+    pg_catalog.pg_class t,
+    sys.pg_namespace_ext nt LEFT OUTER JOIN sys.babelfish_namespace_ext extt ON nt.nspname = extt.nspname
+  WHERE nv.oid = v.relnamespace AND v.relkind = 'v'::"char" 
+  AND v.oid = dv.refobjid AND dv.refclassid = 'pg_class'::regclass::oid 
+  AND dv.classid = 'pg_rewrite'::regclass::oid AND dv.deptype = 'i'::"char" 
+  AND dv.objid = dt.objid AND dv.refobjid <> dt.refobjid 
+  AND dt.classid = 'pg_rewrite'::regclass::oid AND dt.refclassid = 'pg_class'::regclass::oid 
+  AND dt.refobjid = t.oid AND t.relnamespace = nt.oid 
+  AND (t.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
+  AND (pg_catalog.pg_has_role(t.relowner, 'USAGE'::text)
+	OR has_table_privilege(t.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+	OR has_any_column_privilege(t.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
+  AND extv.dbid = CAST(sys.db_id() AS oid);
+  
+GRANT SELECT ON information_schema_tsql.view_table_usage TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.system_user()
 RETURNS sys.nvarchar(128) AS
 $BODY$
