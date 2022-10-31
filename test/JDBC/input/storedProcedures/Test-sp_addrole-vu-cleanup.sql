@@ -1,9 +1,18 @@
 -- tsql
-DROP ROLE sp_addrole_r3;
+DROP ROLE sp_addrole_r4;
 GO
 
--- Cannot drop the role which contains leading/trailing whitespaces, special characters from DROP ROLE cmd
-Exec sp_droprole '   @sp_addrole_r2   ';
+-- Cannot drop the role name contains leading/trailing whitespaces, special characters using DROP ROLE cmd
+Exec sp_droprole '   @sp_addrole_r3   ';
+GO
+
+DROP ROLE sp_addrole_r2;
+GO
+
+DROP USER sp_addrole_user;
+GO
+
+DROP LOGIN sp_addrole_login;
 GO
 
 DROP ROLE sp_addrole_r1;

@@ -1466,7 +1466,7 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 Datum sp_addrole(PG_FUNCTION_ARGS)
 {
-	char *rolname, *lowercase_rolname;
+	char *rolname, *lowercase_rolname, *rolname_arg1;
 	char *physical_role_name;
 	Oid role_oid;
 	List *parsetree_list;
@@ -1480,11 +1480,41 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		rolname_arg1= PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name is not NULL */
 		if (strlen(rolname) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
+
+		/*
+		 * If argument 1 exists and if it is empty throwing object or column missing
+		 * or empty and if that passed role does not exist then throw an error specifying
+		 * user, role or group does not exist
+		 */
+		if(rolname_arg1)
+		{
+			if(strlen(rolname_arg1)==0)
+				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("An object or column name is missing or empty."
+					" For SELECT INTO statements, verify each column has a name."
+					" For other statements, look for empty alias names."
+					" Aliases defined as \"\" or [] are not allowed."
+					" Change the alias to a valid name.")));
+
+			/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
+			lowercase_rolname = lowerstr(rolname_arg1);
+
+			/* Map the logical role name to its physical name in the database.*/
+			physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+			role_oid = get_role_oid(physical_role_name, true);
+
+			/* Check if the user, group or role already exists */
+			if (!role_oid)
+				ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("User, group, or role '%s' does not exists in the current database.", rolname_arg1)));
+		}
 
 		/* Role name cannot contain '\' */
 		if (strchr(rolname, '\\') != NULL)
