@@ -1,3 +1,4 @@
+-- sla 25000
 USE babel_sp_sproc_columns_vu_prepare_db1
 GO
 

@@ -9,6 +9,7 @@
 #include "commands/proclang.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
+#include "pltsql_bulkcopy.h"
 
 #include "catalog.h"
 #include "dbcmds.h"
@@ -90,6 +91,8 @@ extern SPIPlanPtr	prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *f
 
 extern int sp_prepare_count;
 
+BulkCopyStmt *cstmt = NULL;
+
 int insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
 bool insert_bulk_keep_nulls = false;
@@ -116,9 +119,6 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
  */
 
 int pltsql_proc_return_code;
-
-char *bulk_load_table_name = NULL;
-Oid bulk_load_table_oid = InvalidOid;
 
 PLtsql_execstate *get_current_tsql_estate()
 {
@@ -2767,17 +2767,27 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 
 int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 {
-	char *bulk_load_schema_name = NULL;
 	MemoryContext	oldContext;
 	Oid schema_oid = InvalidOid;
+
+	oldContext = MemoryContextSwitchTo(TopMemoryContext);
+
+	/*
+	 * We use a global variable so that we do not need to call BeginBulkCopy
+	 * in case of implicit batching, which saves time.
+	 */
+	cstmt = (BulkCopyStmt *) palloc0(sizeof(BulkCopyStmt));
+	cstmt->relation = makeNode(RangeVar);
+	cstmt->attlist = NIL;
+	cstmt->cur_batch_num = 1;
 
 	if (!stmt->db_name || stmt->db_name[0] == '\0')
 		stmt->db_name = get_cur_db_name();
 	if (stmt->schema_name && stmt->db_name)
 	{
-		bulk_load_schema_name = get_physical_schema_name(stmt->db_name,
+		cstmt->relation->schemaname = get_physical_schema_name(stmt->db_name,
 													   stmt->schema_name);
-		schema_oid = LookupExplicitNamespace(bulk_load_schema_name, true);
+		schema_oid = LookupExplicitNamespace(cstmt->relation->schemaname, true);
 		if (!OidIsValid(schema_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -2785,36 +2795,21 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 							stmt->schema_name)));
 	}
 
-
-	oldContext = MemoryContextSwitchTo(TopMemoryContext);
-
 	/* save the table name for the next Bulk load Request */
-	if (bulk_load_schema_name)
-	{
-		bulk_load_table_oid = get_relname_relid(stmt->table_name, schema_oid);
-		bulk_load_table_name = psprintf("\"%s\".\"%s\"", bulk_load_schema_name, stmt->table_name);
-		pfree(bulk_load_schema_name);
-	}
-	else
-	{
-		bulk_load_table_oid = RelnameGetRelid(stmt->table_name);
-		bulk_load_table_name = pstrdup(stmt->table_name);
-	}
+	cstmt->relation->relname = pstrdup(stmt->table_name);
 
 	/* if columns to be inserted into are explicitly mentioned then update the table name with them */
 	if (stmt->column_refs)
 	{
-		char *temp = bulk_load_table_name;
-		bulk_load_table_name = psprintf("%s (%s)", temp, stmt->column_refs);
-		pfree(temp);
+		ListCell *lc;
+		foreach (lc, stmt->column_refs)
+		{
+			char *temp = pstrdup((char *)lfirst(lc));
+			cstmt->attlist = lappend(cstmt->attlist, temp);
+		}
 	}
-	MemoryContextSwitchTo(oldContext);
 
-	if (!OidIsValid(bulk_load_table_oid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-						errmsg("relation \"%s\" does not exist",
-							stmt->table_name)));
+	MemoryContextSwitchTo(oldContext);
 
 	/* Set the Insert Bulk Options for the session. */
 	if (stmt->rows_per_batch)
@@ -2835,90 +2830,64 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 	return PLTSQL_RC_OK;
 }
 
-int
-execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
-				Datum *Values, const char *Nulls, bool *Defaults)
+uint64
+execute_bulk_load_insert(int ncol, int nrow,
+				Datum *Values, bool *Nulls)
 {
-	Relation rel;
-	int rc;
-	int retValue = -1;
-	StringInfo src;
-	StringInfo bindParams;
-	int count = 1;
+	uint64 retValue = -1;
 	Snapshot snap;
 
+	/*
+	 * Bulk Copy can be triggered with 0 rows. We can also use this
+	 * to cleanup after all rows are inserted.
+	 */
 	if (nrow == 0 && ncol == 0)
 	{
-		if (bulk_load_table_name)
-			pfree(bulk_load_table_name);
-		bulk_load_table_name = NULL;
-		bulk_load_table_oid = InvalidOid;
+		/* Cleanup all the pointers. */
+		if (cstmt)
+		{
+			EndBulkCopy(cstmt->cstate);
+			if (cstmt->attlist)
+				list_free_deep(cstmt->attlist);
+			if (cstmt->relation)
+			{
+				if (cstmt->relation->schemaname)
+					pfree(cstmt->relation->schemaname);
+				if (cstmt->relation->relname)
+					pfree(cstmt->relation->relname);
+				pfree(cstmt->relation);
+			}
+			pfree(cstmt);
+		}
+
+		/* Reset Insert-Bulk Options. */
+		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+		insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
+		insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
+
 		return 0;
 	}
 
-	src = makeStringInfo();
-	bindParams = makeStringInfo();
 
 	PG_TRY();
 	{
-		elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
-		appendStringInfo(src, "Insert into %s OVERRIDING SYSTEM VALUE values ", bulk_load_table_name);
-
-		/* Disable triggers on the table. */
-		rel = table_open(bulk_load_table_oid, AccessShareLock);
-		EnableDisableTrigger(rel, NULL, TRIGGER_DISABLED, false, AccessShareLock);
-		relation_close(rel, AccessShareLock);
-
-		for (int i = 0; i < nrow; i++)
-		{
-			for (int j = 0; j < ncol; j++)
-			{
-				/* If Defaults is set then we need to insert default value for this index. */
-				if (Defaults[i * ncol + j])
-					appendStringInfo(bindParams, ",DEFAULT");
-				else
-					appendStringInfo(bindParams, ",$%d", count++);
-			}
-			bindParams->data[0] = ' ';
-			appendStringInfo(src, "(%s),", bindParams->data);
-			resetStringInfo(bindParams);
-		}
-
-		src->data[src->len - 1] = ' '; /* Taking care of the last ',' */
-
-		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-							  (superuser() ? PGC_SUSET : PGC_USERSET),
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		cstmt->nrow 	= nrow;
+		cstmt->ncol 	= ncol;
+		cstmt->Values 	= Values;
+		cstmt->Nulls 	= Nulls;
 
 		snap = GetTransactionSnapshot();
 		PushActiveSnapshot(snap);
 
-		if ((rc = SPI_connect()) < 0)
-			elog(ERROR, "SPI_connect() failed with return code %d", rc);
+		BulkCopy(cstmt, &retValue);
 
-		rc = SPI_execute_with_args(src->data,
-				count - 1, argtypes,
-				Values, Nulls,
-				false, 1);
-
-		retValue = SPI_processed;
-
-		SPI_finish();
 		PopActiveSnapshot();
-
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-							  (superuser() ? PGC_SUSET : PGC_USERSET),
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-		/* Re-Enable triggers on the table after insertion. */
-		rel = table_open(bulk_load_table_oid, AccessShareLock);
-		EnableDisableTrigger(rel, NULL, TRIGGER_FIRES_ON_ORIGIN, false, AccessShareLock);
-		relation_close(rel, AccessShareLock);
+		cstmt->cur_batch_num++;
 	}
 	PG_CATCH();
 	{
+		/* In an error condition, the caller calls the function again to do the cleanup. */
 		MemoryContext oldcontext;
-		SPI_finish();
 		if (ActiveSnapshotSet() && GetActiveSnapshot() == snap)
 			PopActiveSnapshot();
 		oldcontext = CurrentMemoryContext;
@@ -2936,15 +2905,6 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			pltsql_rollback_txn();
 		MemoryContextSwitchTo(oldcontext);
 
-		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-							  (superuser() ? PGC_SUSET : PGC_USERSET),
-							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-		/* Re-Enable triggers on the table incase of an error. */
-		rel = table_open(bulk_load_table_oid, AccessShareLock);
-		EnableDisableTrigger(rel, NULL, TRIGGER_FIRES_ON_ORIGIN, false, AccessShareLock);
-		relation_close(rel, AccessShareLock);
-
 		/* Reset Insert-Bulk Options. */
 		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
 		insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
@@ -2954,27 +2914,6 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 	}
 	PG_END_TRY();
 
-	if (rc != SPI_OK_INSERT)
-		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-			errmsg("Failed to insert in the table %s for bulk load", bulk_load_table_name)));
-
-	/* Cleanup all the pointers. */
-	if (bindParams)
-	{
-		if (bindParams->data)
-			pfree(bindParams->data);
-		pfree(bindParams);
-	}
-	if (src)
-	{
-		if (src->data)
-			pfree(src->data);
-		pfree(src);
-	}
-	/* Reset Insert-Bulk Options. */
-	insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
-	insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
-	insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
 	return retValue;
 }
 

@@ -34,14 +34,14 @@ select datediff(dd, dto, d) from babel_1510_t;
 go
 ~~START~~
 int
-3
+4
 ~~END~~
 
 select datediff(dd, dto, t) from babel_1510_t;
 go
 ~~START~~
 int
--44314
+-44315
 ~~END~~
 
 
@@ -70,7 +70,7 @@ select datediff(dd, dt2, d) from babel_1510_t;
 go
 ~~START~~
 int
-2
+3
 ~~END~~
 
 select datediff(dd, dt2, t) from babel_1510_t;
@@ -92,7 +92,7 @@ select datediff(dd, dt, dt2) from babel_1510_t;
 go
 ~~START~~
 int
-0
+-1
 ~~END~~
 
 select datediff(dd, dt, sdt) from babel_1510_t;
@@ -106,14 +106,14 @@ select datediff(dd, dt, d) from babel_1510_t;
 go
 ~~START~~
 int
-1
+2
 ~~END~~
 
 select datediff(dd, dt, t) from babel_1510_t;
 go
 ~~START~~
 int
--44316
+-44317
 ~~END~~
 
 
@@ -142,7 +142,7 @@ select datediff(dd, sdt, d) from babel_1510_t;
 go
 ~~START~~
 int
-0
+1
 ~~END~~
 
 select datediff(dd, sdt, t) from babel_1510_t;
@@ -157,35 +157,35 @@ select datediff(dd, d, dto) from babel_1510_t;
 go
 ~~START~~
 int
--3
+-4
 ~~END~~
 
 select datediff(dd, d, dt2) from babel_1510_t;
 go
 ~~START~~
 int
--2
+-3
 ~~END~~
 
 select datediff(dd, d, dt) from babel_1510_t;
 go
 ~~START~~
 int
--1
+-2
 ~~END~~
 
 select datediff(dd, d, sdt) from babel_1510_t;
 go
 ~~START~~
 int
-0
+-1
 ~~END~~
 
 select datediff(dd, d, t) from babel_1510_t;
 go
 ~~START~~
 int
--44318
+-44319
 ~~END~~
 
 
@@ -193,7 +193,7 @@ select datediff(dd, t, dto) from babel_1510_t;
 go
 ~~START~~
 int
-44314
+44315
 ~~END~~
 
 select datediff(dd, t, dt2) from babel_1510_t;
@@ -207,7 +207,7 @@ select datediff(dd, t, dt) from babel_1510_t;
 go
 ~~START~~
 int
-44316
+44317
 ~~END~~
 
 select datediff(dd, t, sdt) from babel_1510_t;
@@ -221,7 +221,7 @@ select datediff(dd, t, d) from babel_1510_t;
 go
 ~~START~~
 int
-44318
+44319
 ~~END~~
 
 

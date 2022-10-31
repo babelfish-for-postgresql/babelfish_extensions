@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string BBF_TABLE_NAME = "master.dbo.bytea_table_odbc_test";
@@ -50,27 +51,6 @@ class PSQL_DataTypes_ByteA : public testing::Test {
     pg_test_setup.ExecQuery(DropObjectStatement("TABLE", PG_TABLE_NAME));
   }
 };
-
-string stringToHex(string input) {
-    std::ostringstream result;
-    result << std::setw(2) << std::setfill('0') << std::hex << std::uppercase;
-    string::iterator start = input.begin();
-    if (input.find('\\') != string::npos) {
-      start = std::next(start, 1);
-    }
-    std::copy(start, input.end(), std::ostream_iterator<unsigned int>(result, ""));
-    return result.str();
-}
-
-vector<string> getExpectedResults_Bytea(const vector<string> &input) {
-  vector<string> ret = {};
-
-  for (int i = 0; i < input.size(); i++) {
-    ret.push_back(stringToHex(input[i]));
-  }
-
-  return ret;
-}
 
 TEST_F(PSQL_DataTypes_ByteA, Table_Creation) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);

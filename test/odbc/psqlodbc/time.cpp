@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string BBF_TABLE_NAME = "master.dbo.time_table_odbc_test";
@@ -59,31 +60,6 @@ class PSQL_DataTypes_Time : public testing::Test {
   }
 };
 
-string stringToTime(const string &input) {
-  string ret = string(input);
-  if (strcmp(input.data(), "NULL") == 0) {
-    return ret;
-  }
-
-  size_t period_pos = ret.find('.');
-  if (period_pos == std::string::npos) {
-    ret.append(".");
-  }
-  unsigned int padding = TIME_BYTES_EXPECTED - ret.length();
-  ret.append(string(padding, '0'));
-  return ret;
-}
-
-vector<string> getExpectedResults_Time(const vector<string> &input) {
-  vector<string> ret = {};
-
-  for (int i = 0; i < input.size(); i++) {
-    ret.push_back(stringToTime(input[i]));
-  }
-
-  return ret;
-}
-
 TEST_F(PSQL_DataTypes_Time, Table_Creation) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
@@ -136,7 +112,7 @@ TEST_F(PSQL_DataTypes_Time, Insertion_Success) {
   };
   const int NUM_OF_DATA = inserted_values.size();
 
-  vector<string> expected_values = getExpectedResults_Time(inserted_values);
+  vector<string> expected_values = getExpectedResults_Time(inserted_values, TIME_BYTES_EXPECTED);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
@@ -184,7 +160,7 @@ TEST_F(PSQL_DataTypes_Time, Update_Success) {
   const vector<string> INSERTED_VALUES = {
     "00:00:00"
   };
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES, TIME_BYTES_EXPECTED);
 
   const vector<string> UPDATED_VALUES = {
     "NULL",
@@ -197,7 +173,7 @@ TEST_F(PSQL_DataTypes_Time, Update_Success) {
     // "23:59:59.666666",
     "00:00:00"
   };
-  const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults_Time(UPDATED_VALUES);
+  const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults_Time(UPDATED_VALUES, TIME_BYTES_EXPECTED);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
@@ -216,7 +192,7 @@ TEST_F(PSQL_DataTypes_Time, Update_Fail) {
   const vector<string> INSERTED_VALUES = {
     "00:00:00"
   };
-  const vector<string> DATA_EXPECTED = getExpectedResults_Time(INSERTED_VALUES);
+  const vector<string> DATA_EXPECTED = getExpectedResults_Time(INSERTED_VALUES, TIME_BYTES_EXPECTED);
 
   const vector<string> UPDATED_VALUES = {
     "24:60:60"
@@ -244,7 +220,7 @@ TEST_F(PSQL_DataTypes_Time, View_Creation) {
   };
   const int NUM_OF_INSERTS = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES, TIME_BYTES_EXPECTED);
 
   const string BBF_VIEW_QUERY = "SELECT * FROM " + BBF_TABLE_NAME;
   const string PG_VIEW_QUERY = "SELECT * FROM " + PG_TABLE_NAME;
@@ -286,7 +262,7 @@ TEST_F(PSQL_DataTypes_Time, Table_Single_Primary_Keys) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES, TIME_BYTES_EXPECTED);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -325,7 +301,7 @@ TEST_F(PSQL_DataTypes_Time, Table_Composite_Keys) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES, TIME_BYTES_EXPECTED);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -363,7 +339,7 @@ TEST_F(PSQL_DataTypes_Time, Table_Unique_Constraint) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES, TIME_BYTES_EXPECTED);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -497,8 +473,8 @@ TEST_F(PSQL_DataTypes_Time, Comparison_Functions) {
     min_expected = strcmp(curr, currMin) < 0 ? i : min_expected;
     max_expected = strcmp(curr, currMax) > 0 ? i : max_expected;
   }
-  bbf_expected_results.push_back(stringToTime(INSERTED_DATA[min_expected]));
-  bbf_expected_results.push_back(stringToTime(INSERTED_DATA[max_expected]));
+  bbf_expected_results.push_back(stringToTime(INSERTED_DATA[min_expected], TIME_BYTES_EXPECTED));
+  bbf_expected_results.push_back(stringToTime(INSERTED_DATA[max_expected], TIME_BYTES_EXPECTED));
   pg_expected_results.push_back(INSERTED_DATA[min_expected]);
   pg_expected_results.push_back(INSERTED_DATA[max_expected]);
 

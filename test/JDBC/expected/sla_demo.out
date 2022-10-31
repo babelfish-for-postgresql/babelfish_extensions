@@ -1,0 +1,24 @@
+-- psql
+select 1;
+GO
+~~START~~
+int4
+1
+~~END~~
+
+
+select pg_sleep(3);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+select 2;
+GO
+~~START~~
+int4
+2
+~~END~~
+
