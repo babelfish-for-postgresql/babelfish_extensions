@@ -154,29 +154,6 @@ TEST_F(PSQL_DataTypes_Xml, Insertion_Success) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Xml, Data_Length) {
-  vector<string> inserted_values = {
-    "NULL",
-    SIMPLE_XML,
-    NORMAL_XML,
-    LARGE_XML
-  };
-  const int NUMBER_OF_ENTRIES = inserted_values.size();
-
-  createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
-
-  testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
-  insertValuesInTable(ServerType::PSQL, PG_TABLE_NAME, inserted_values, false, NUMBER_OF_ENTRIES);
-
-  inserted_values = duplicateElements(inserted_values);
-
-  verifyValuesInObject(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
-  verifyValuesInObject(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
-
-  dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
-  dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
-}
-
 TEST_F(PSQL_DataTypes_Xml, Update_Success) {
   vector<string> inserted_values = {
     NORMAL_XML
