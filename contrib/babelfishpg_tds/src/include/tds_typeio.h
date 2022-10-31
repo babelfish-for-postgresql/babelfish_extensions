@@ -257,7 +257,7 @@ typedef struct BulkLoadRowData
 	/* Array of length col count, holds value of each column in that row. */
 	StringInfo columnValues;
 
-	char *isNull;
+	bool *isNull;
 } BulkLoadRowData;
 
 /* Map TVP to its underlying table, either by relid or by table name. */
@@ -457,7 +457,7 @@ extern Datum TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken
 extern Datum TdsTypeBitToDatum(StringInfo buf);
 extern Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
 extern Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
-extern Datum TdsTypeVarcharToDatum(StringInfo buf, Oid pgTypeOid, uint32_t collation, uint8_t tdsColDataType);
+extern Datum TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType);
 extern Datum TdsTypeNCharToDatum(StringInfo buf);
 extern Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 extern Datum TdsTypeVarbinaryToDatum(StringInfo buf);

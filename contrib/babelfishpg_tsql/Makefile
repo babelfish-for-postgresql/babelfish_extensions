@@ -71,6 +71,7 @@ export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
 export ANTLR4_RUNTIME_INCLUDE_DIR=/usr/local/include/antlr4-runtime
 export ANTLR4_RUNTIME_LIB_DIR=/usr/local/lib
+OBJS += src/pltsql_bulkcopy.o
 
 PG_CXXFLAGS += -g -Werror
 PG_CXXFLAGS += -Wno-deprecated -Wno-error=attributes -Wno-suggest-attribute=format # disable some warnings from ANTLR runtime header

@@ -98,13 +98,13 @@ uint128 GetMsgUInt128(StringInfo msg);
 float4 GetMsgFloat4(StringInfo msg);
 float8 GetMsgFloat8(StringInfo msg);
 static void SwapData(StringInfo buf, int st, int end);
-static Datum TdsAnyToServerEncodingConversion(Oid oid, pg_enc encoding, char *str, int len, uint8_t tdsColDataType);
+static Datum TdsAnyToServerEncodingConversion(pg_enc encoding, char *str, int len, uint8_t tdsColDataType);
 int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr);
 
 Datum TdsTypeBitToDatum(StringInfo buf);
 Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
 Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
-Datum TdsTypeVarcharToDatum(StringInfo buf, Oid pgTypeOid, uint32_t collation, uint8_t tdsColDataType);
+Datum TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType);
 Datum TdsTypeNCharToDatum(StringInfo buf);
 Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 Datum TdsTypeVarbinaryToDatum(StringInfo buf);
@@ -309,7 +309,7 @@ int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
  * and convert the encoding of input str
  */
 static Datum
-TdsAnyToServerEncodingConversion(Oid oid, pg_enc encoding, char *str, int len, uint8_t tdsColDataType)
+TdsAnyToServerEncodingConversion(pg_enc encoding, char *str, int len, uint8_t tdsColDataType)
 {
 	Oid 		typinput;
 	Oid 		typioparam;
@@ -334,7 +334,7 @@ TdsAnyToServerEncodingConversion(Oid oid, pg_enc encoding, char *str, int len, u
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("TdsAnyToServerEncodingConversion is not supported for Oid: %s", format_type_be(oid))));
+					errmsg("TdsAnyToServerEncodingConversion is not supported for Tds Type: %d", tdsColDataType)));
 			break;
 	}
 
@@ -902,7 +902,7 @@ TdsTypeFloatToDatum(StringInfo buf, int maxLen)
 
 /* Helper Function to convert Varchar,Char and Text values into Datum. */
 Datum
-TdsTypeVarcharToDatum(StringInfo buf, Oid pgTypeOid, uint32_t collation, uint8_t tdsColDataType)
+TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType)
 {
 	char 		csave;
 	Datum 		pval;
@@ -914,8 +914,7 @@ TdsTypeVarcharToDatum(StringInfo buf, Oid pgTypeOid, uint32_t collation, uint8_t
 	/* If we recieve 0 value for LCID then we should treat it as a default LCID.*/
 	encoding = TdsGetEncoding(collation);
 
-	pval = TdsAnyToServerEncodingConversion(pgTypeOid,
-									encoding,
+	pval = TdsAnyToServerEncodingConversion(encoding,
 									buf->data, buf->len,
 									tdsColDataType);
 	buf->data[buf->len] = csave;
@@ -1559,8 +1558,7 @@ TdsRecvTypeVarchar(const char *message, const ParameterToken token)
 
 	csave = buf->data[buf->len];
 	buf->data[buf->len] = '\0';
-	pval = TdsAnyToServerEncodingConversion(token->paramMeta.pgTypeOid,
-									token->paramMeta.encoding,
+	pval = TdsAnyToServerEncodingConversion(token->paramMeta.encoding,
 									buf->data, buf->len, TDS_TYPE_VARCHAR);
 	buf->data[buf->len] = csave;
 
@@ -1632,8 +1630,7 @@ TdsRecvTypeText(const char *message, const ParameterToken token)
 
 	csave = buf->data[buf->len];
 	buf->data[buf->len] = '\0';
-	pval = TdsAnyToServerEncodingConversion(token->paramMeta.pgTypeOid,
-									token->paramMeta.encoding, buf->data, buf->len,
+	pval = TdsAnyToServerEncodingConversion(token->paramMeta.encoding, buf->data, buf->len,
 									TDS_TYPE_TEXT);
 	buf->data[buf->len] = csave;
 
@@ -1668,8 +1665,7 @@ TdsRecvTypeChar(const char *message, const ParameterToken token)
 
 	csave = buf->data[buf->len];
 	buf->data[buf->len] = '\0';
-	pval = TdsAnyToServerEncodingConversion(token->paramMeta.pgTypeOid,
-									token->paramMeta.encoding, buf->data, buf->len, TDS_TYPE_CHAR);
+	pval = TdsAnyToServerEncodingConversion(token->paramMeta.encoding, buf->data, buf->len, TDS_TYPE_CHAR);
 	buf->data[buf->len] = csave;
 
 	pfree(buf);
@@ -2080,7 +2076,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
-							values[i] = TdsTypeVarcharToDatum(temp, argtypes[i], colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
+							values[i] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
 						break;
 						case TDS_TYPE_NCHAR:
 							values[i] = TdsTypeNCharToDatum(temp);

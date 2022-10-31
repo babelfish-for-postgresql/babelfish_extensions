@@ -4387,7 +4387,7 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	std::string table_name;
 	std::string schema_name;
 	std::string db_name;
-	std::stringstream column_refs;
+	stmt->column_refs = NIL;
 
 	if (!bulk_ctx)
 	{
@@ -4426,15 +4426,13 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 		/* create a list of columns to insert into */
 		if (!column_list.empty())
 		{
-			for (size_t i = 0; i < column_list.size() - 1; i++)
+			for (size_t i = 0; i < column_list.size(); i++)
 			{
-				if (column_list[i]->simple_column_name())
-					column_refs << ::stripQuoteFromId(column_list[i]->simple_column_name()->id()) << ", ";
+				std::string column_refs;
+				column_refs = ::stripQuoteFromId(column_list[i]->simple_column_name()->id());
+				if (!column_refs.empty())
+					stmt->column_refs = lappend(stmt->column_refs , pstrdup(downcase_truncate_identifier(column_refs.c_str(), column_refs.length(), true)));
 			}
-			if (column_list[column_list.size() - 1]->simple_column_name())
-				column_refs << ::stripQuoteFromId(column_list[column_list.size() - 1]->simple_column_name()->id());
-
-			stmt->column_refs = pstrdup(column_refs.str().c_str());
 		}
 
 		if (!option_list.empty())
