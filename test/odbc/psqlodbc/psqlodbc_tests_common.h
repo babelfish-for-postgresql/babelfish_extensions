@@ -1,6 +1,7 @@
 #ifndef PSQLODBC_TESTS_COMMON_H
 #define PSQLODBC_TESTS_COMMON_H
 
+#include <algorithm>
 #include <cmath>
 #include <gtest/gtest.h>
 #include <sqlext.h>
@@ -16,8 +17,33 @@ using std::vector;
 using std::string;
 using std::pair;
 
-const int BUFFER_SIZE = 8192;
+const int BUFFER_SIZE = 16384;
 const int INT_BYTES_EXPECTED = 4;
+
+/**
+ * Left pads (adds spaces on the right side) the input string until a length of table_size
+ * 
+ * @param input string to be padded
+ * @param table_size the desired length
+ */
+string padString(string input, size_t table_size);
+
+/**
+ * Convert integer string into hex string with proper padding
+ *
+ * @param inserted_int string of an integer to be converted to hex
+ * @param table_size size of the 
+ * @return string of the integer in hexadecimal values
+ */ 
+std::string GetHexRepresentation(std::string inserted_int, size_t table_size = -1);
+
+/**
+ * Duplicates the values in the input vector
+ *
+ * @param input Vector of data to be duplicated
+ * @return vector which has the elements duplicated and appended
+ */ 
+vector<string> duplicateElements(vector<string> input);
 
 /**
  * Create a string that can be used in an insert statement. Assumes there is a column associated with
@@ -97,7 +123,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const v
  * @param serverType The ODBC driver type to create the connection against. 
  * @param tableName The table to insert values into. Can include the database and/or schema name. e.g. "master_dbo.SampleTable"
  * @param insertString The valid insert string to execute against the table.
- * @param The number of rows inserted in the table.
+ * @param numRows The number of rows inserted in the table.
 */
 void insertValuesInTable(ServerType serverType, const string &tableName, const string &insertString, int numRows);
 
@@ -112,9 +138,10 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const s
  * @param insertedValues The values that were inserted into the object.
  * @param expectedInsertedValues The values expected from the object when selecting all from it.
  * @param pkStartingValue Optional. The primary key value the object starts incrementing at. The default value is 0.
+ * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
 */
 void verifyValuesInObject(ServerType serverType, const string &objectName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0);
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0, bool caseInsensitive = false);
 
 /**
  * Verify that all data in an object (like table or view) are of expected values.
@@ -200,9 +227,12 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
  * @param insertedValues Vector of data to be inserted. e.g. {"NULL", "5", "9568546", "-1"}
  * @param expectedInsertedValues The values expected from the table when selecting all from it.
  * @param pkStartingValue Optional. The primary key value the object starts incrementing at. The default value is 0.
+ * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
+ * @param numericInsert Optional. Allow inserts without quotes. e.g. inserting using integers. The default value is false.
 */
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0);
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0,
+  bool caseInsensitive = false, bool numericInsert = false);
 
 /**
  * Insert values in a table given a vector of values to insert, and validate that all data in the table are of expected values.
@@ -254,9 +284,12 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
  * @param colNameToUpdate The name of the column to update.
  * @param updatedValues A vector of values to update some data in the table with one by one.
  * @param expectedUpdatedValues A vector containing expected values after a successful update.
+ * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
+ * @param numericUpdate Optional. Allow updates without quotes. e.g. updating using integers. The default value is false.
 */
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues);
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues,
+  bool caseInsensitive = false, bool numericUpdate = false);
 
 /**
  * Given a vector of values, test that some data in the table can be updated successfully with each value.
@@ -273,10 +306,11 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
  * @param updatedValues A vector of values to update some data in the table with one by one.
  * @param expectedUpdatedValues A vector containing expected values to test against when a successful update occurs.
  * @param expectedUpdatedLen A vector containing the expected length of successfully updated data in the table. 
+ * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
 */
 template <typename T>
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, const string &colNameToUpdate, int type, 
-  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen);
+  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen, bool caseInsensitive = false);
 
 /**
  * Given a vector of invalid values, test that updating a table fails using these values.
@@ -346,9 +380,12 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
  * @param col2Data Vector containing data in within the second column.
  * @param operationsQuery Vector containing the operators to test the two columns against.
  * @param expectedResults Vector containing the expected results for each operation.
+ * @param explicitCast Optional. Explicit cast to use `OPERATOR(sys.=)`. The default value is false.
+ * @param explicitQuotes Optional. Explicit quotes around col2Name. The default value is false.
 */
 void testComparisonOperators(ServerType serverType, const string &tableName, const string &col1Name, const string &col2Name, 
-  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults);
+  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, 
+  bool explicitCast = false, bool explicitQuotes = false);
 
 /**
  * Verify the expected results for various comparison functions (MIN, MAX, SUM, etc.).
@@ -360,6 +397,47 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
  * @param expectedResults Vector containing the expected results for each operation.
 */
 void testComparisonFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<string> &expectedResults);
+
+/**
+ *Verify the expected results for various arithmetic operators (+, -, *, etc.).
+ * Two different columns in the table are used by these arithmetic operators. E.g. COL1 + COL2
+ * The data on each row in the table will have multiple arithmetic operators performed on them. 
+ * The expected results will be a 2D array.
+ * e.g.
+ *  {
+ *    {ROW1_COL1_DATA + ROW1_COL2_DATA, ROW1_COL1_DATA - ROW1_COL2_DATA},
+ *    {ROW2_COL1_DATA + ROW2_COL2_DATA, ROW2_COL1_DATA - ROW2_COL2_DATA}
+ *  }
+ * 
+ * This non-templated version will expect the type to be SQL_C_CHAR and that the expected values
+ * are strings.
+ * 
+ * @param serverType The ODBC driver type to create the connection against. 
+ * @param tableName The name of the table to test arithmetic operations with. Can include the database and/or schema name. e.g. "master_dbo.SampleTable"
+ * @param orderByColumnName The column to order by when selecting all from the object. Useful for when there is a primary key
+ *  column in the object to order by.
+ * 
+ * @param numOfData Number of rows in the table.
+ * @param operationsQuery Vector containing the operators to test.
+ * @param expectedResults 2D vector containing the expected results for each operation.
+ * 
+ */
+void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData,
+  const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults);
+  
+/**
+ * Verify the expected results for various string functions (LOWER, UPPER, TRIM, etc.).
+ * 
+ * @param serverType The ODBC driver type to create the connection against. 
+ * @param tableName The name of the table to test string functions with. Can include the database and/or schema name. e.g. "master_dbo.SampleTable"
+ * @param operationsQuery Vector containing the function operators to test.
+ * @param expectedResults 2D vector containing the expected results for each string function.
+ * @param insertionSize Number of elements that was inserted into the table.
+ * @param orderByColumnName The column to order by when selecting all from the object. Useful for when there is a primary key
+ *  column in the object to order by.
+*/
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults, 
+  const int insertionSize, const string &orderByColumnName);
 
 /**
  * Verify the expected results for various comparison functions (MIN, MAX, SUM, etc.).
@@ -405,6 +483,36 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, int
 template <typename T>
 void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData, int type, 
   const vector<T> &colResults, int bufferLen, const vector<string> &operationsQuery, const vector<vector<T>> &expectedResults, const vector<long> &expectedLen);
+
+/**
+ * Return a vector based on a specific column of a 2D vector
+ * 
+ * @param vec The 2D vector to copy
+ * @param col The column from the 2D vector to copy
+ * 
+ * @return vector which contains the elements of column 'col' in 'vec'
+*/
+vector<string> getVectorBasedOnColumn(const vector<vector<string>> &vec, const int &col);
+
+/**
+ * Formats a string to correspond to a numeric or decimal output
+ * 
+ * @param decimal 
+ * @param scale The scale of the 
+ * @param is_bbf True if we want it to correspond to Babelfish, false if we want the output to be formatted for postgres
+ * @return string which is the formatted number
+ */
+string formatNumericWithScale(string decimal, const int &scale, const bool &is_bbf);
+
+/**
+ * Formats a vector of strings to correspond to a numeric or decimal output 
+ * 
+ * @param vec Vector that would be changed by reference
+ * @param scale Scale of the numeric or decimal column
+ * @param is_bbf True if the output is to correspond with Babelfish's result set,
+ *    False for Postgres
+ */
+void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is_bbf);
 
 /** Implementation of templated functions below **/
 
@@ -462,7 +570,7 @@ void testInsertionSuccess(ServerType serverType, const string &tableName, const 
 
 template <typename T>
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, const string &colNameToUpdate, int type, 
-  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen) {
+  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen, bool caseInsensitive) {
     
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -504,12 +612,17 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
     // Assert that updated value is present
     odbcHandler.ExecQuery(SelectStatement(tableName, {"*"}, vector<string>{orderByColumnName}));
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
-
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedUpdatedLen[i]);
-    EXPECT_EQ(data, expectedUpdatedValues[i]);
+    
+    if (updatedValues[i] != "NULL") {
+      EXPECT_EQ(data_len, expectedUpdatedLen[i]);
+      EXPECT_EQ(data, expectedUpdatedValues[i]);
+    }
+    else {
+      EXPECT_EQ(data_len, SQL_NULL_DATA);
+    }
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);

@@ -1,0 +1,122 @@
+CREATE DATABASE BABEL_3117_prepare_db1
+CREATE DATABASE BABEL_3117_prepare_db2
+GO
+
+USE BABEL_3117_prepare_db1
+GO
+CREATE TABLE BABEL_3117_prepare_db1_employeeData(ID INT IDENTITY (1,1) PRIMARY KEY,Emp_First_name VARCHAR (50))
+GO
+CREATE TRIGGER BABEL_3117_prepare_trigger1
+    on BABEL_3117_prepare_db1_employeeData
+    INSTEAD OF INSERT AS
+BEGIN
+    SELECT count(*) FROM inserted;
+END
+GO
+INSERT INTO BABEL_3117_prepare_db1_employeeData VALUES ('a'),('b'),('c');
+GO
+
+USE BABEL_3117_prepare_db2
+GO
+CREATE TABLE BABEL_3117_prepare_db2_employeeData(ID INT IDENTITY (1,1) PRIMARY KEY,Emp_First_name VARCHAR (50))
+GO
+CREATE TRIGGER BABEL_3117_prepare_trigger1
+    on BABEL_3117_prepare_db2_employeeData
+    INSTEAD OF INSERT AS
+BEGIN
+    SELECT count(*) FROM inserted;
+END
+GO
+INSERT INTO BABEL_3117_prepare_db2_employeeData VALUES ('a'),('b'),('c');
+GO
+DROP TRIGGER BABEL_3117_prepare_trigger1
+GO
+INSERT INTO BABEL_3117_prepare_db2_employeeData VALUES ('a'),('b'),('c');
+GO
+
+-- Test with database has the same schema name, same table name and same trigger name
+CREATE DATABASE BABEL_3117_prepare_db3
+CREATE DATABASE BABEL_3117_prepare_db4
+GO
+
+USE BABEL_3117_prepare_db3
+GO
+
+CREATE SCHEMA BABEL_3117_schema
+GO
+
+CREATE TABLE BABEL_3117_schema.BABEL_3117_t1 ( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger2 on BABEL_3117_schema.BABEL_3117_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_schema.BABEL_3117_t1 VALUES (1,1),(2,2),(3,3);
+GO
+
+USE BABEL_3117_prepare_db4
+GO
+
+CREATE SCHEMA BABEL_3117_schema
+GO
+
+CREATE TABLE BABEL_3117_schema.BABEL_3117_t1 ( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger2 on BABEL_3117_schema.BABEL_3117_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_schema.BABEL_3117_t1 VALUES (1,1),(2,2),(3,3);
+GO
+
+-- Test with database has different schema name, same table name and same trigger name
+CREATE DATABASE BABEL_3117_prepare_db5
+CREATE DATABASE BABEL_3117_prepare_db6
+GO
+
+USE BABEL_3117_prepare_db5
+GO
+
+CREATE SCHEMA BABEL_3117_schemaA
+GO
+
+CREATE TABLE BABEL_3117_schemaA.BABEL_3117_t1 ( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger3 on BABEL_3117_schemaA.BABEL_3117_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_schemaA.BABEL_3117_t1 VALUES (1,1),(2,2),(3,3);
+GO
+
+USE BABEL_3117_prepare_db6
+GO
+
+CREATE SCHEMA BABEL_3117_schemaB
+GO
+
+CREATE TABLE BABEL_3117_schemaB.BABEL_3117_t1 ( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger3 on BABEL_3117_schemaB.BABEL_3117_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_schemaB.BABEL_3117_t1 VALUES (1,1),(2,2),(3,3);
+GO
+
+-- Test if user default schema is not dbo schema
+CREATE LOGIN BABEL_3117_login WITH PASSWORD = '123'
+GO
+
+USE master
+GO
+
+CREATE SCHEMA BABEL_3117_schemaC
+GO
+
+CREATE USER BABEL_3117_user for LOGIN BABEL_3117_login WITH DEFAULT_SCHEMA = BABEL_3117_schemaC
+GO
+
+-- psql
+GRANT ALL ON SCHEMA master_BABEL_3117_schemaC to master_BABEL_3117_user;
+GO

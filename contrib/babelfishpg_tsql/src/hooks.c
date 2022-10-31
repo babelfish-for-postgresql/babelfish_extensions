@@ -11,12 +11,16 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef_d.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_trigger.h"
+#include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/explain.h"
 #include "commands/tablecmds.h"
 #include "commands/view.h"
+#include "common/logging.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -36,6 +40,7 @@
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -54,10 +59,12 @@
 #include "catalog.h"
 #include "rolecmds.h"
 #include "session.h"
+#include "multidb.h"
+
 
 #define TDS_NUMERIC_MAX_PRECISION	38
-
 extern bool babelfish_dump_restore;
+extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
@@ -73,6 +80,8 @@ static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 								   List **defaults, bool expand_defaults, bool expand_variadic,
 								   bool *use_defaults, bool *any_special,
 								   bool *variadic, Oid *va_elem_type);
+static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok,bool object_from_input);
+Oid get_tsql_trigger_oid(List *object, const char *tsql_trigger_name,bool object_from_input);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -108,6 +117,7 @@ static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid table
 static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base);
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
+static void pltsql_GetNewObjectId(VariableCache variableCache);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -117,6 +127,11 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
+static void pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access);
+static void pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid table_oid, Oid roleid, AclMode mask, bool *has_permission_via_hook, bool *read_write_all_data_safe);
+static void pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid, AclMode mode, bool *has_access);
+static void pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode, AclMaskHow how, bool *has_access);
+
 
 /*****************************************
  * 			Replication Hooks
@@ -138,6 +153,7 @@ static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
+static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
 static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_hook = NULL;
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
@@ -149,7 +165,12 @@ static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
+static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
+static pg_proc_aclchk_hook_type prev_pg_proc_aclchk_hook = NULL;
+static pg_class_aclmask_hook_type prev_pg_class_aclmask_hook = NULL;
+static pg_attribute_aclchk_hook_type prev_pg_attribute_aclchk_hook = NULL;
+static pg_attribute_aclchk_all_hook_type prev_pg_attribute_aclchk_all_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -192,6 +213,9 @@ InstallExtendedHooks(void)
 	prev_tle_name_comparison_hook = tle_name_comparison_hook;
 	tle_name_comparison_hook = tle_name_comparison;
 
+	prev_get_trigger_object_address_hook = get_trigger_object_address_hook;
+	get_trigger_object_address_hook = get_trigger_object_address;
+
 	prev_resolve_target_list_unknowns_hook = resolve_target_list_unknowns_hook;
 	resolve_target_list_unknowns_hook = resolve_target_list_unknowns;
 
@@ -225,9 +249,23 @@ InstallExtendedHooks(void)
 	prev_ExecutorEnd = ExecutorEnd_hook;
 	ExecutorEnd_hook = pltsql_ExecutorEnd;
 
+	prev_GetNewObjectId_hook = GetNewObjectId_hook;
+	GetNewObjectId_hook = pltsql_GetNewObjectId;
+
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
+
+	prev_pg_proc_aclchk_hook = pg_proc_aclchk_hook;
+	pg_proc_aclchk_hook = pltsql_pg_proc_aclchk;
+
+	prev_pg_class_aclmask_hook = pg_class_aclmask_hook;
+	pg_class_aclmask_hook = pltsql_pg_class_aclmask_hook;
+
+	prev_pg_attribute_aclchk_hook = pg_attribute_aclchk_hook;
+	pg_attribute_aclchk_hook = pltsql_pg_attribute_aclchk;
+	prev_pg_attribute_aclchk_all_hook = pg_attribute_aclchk_all_hook;
+	pg_attribute_aclchk_all_hook = pltsql_pg_attribute_aclchk_all;
 
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
@@ -259,6 +297,7 @@ UninstallExtendedHooks(void)
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
 	tle_name_comparison_hook = prev_tle_name_comparison_hook;
+	get_trigger_object_address_hook = prev_get_trigger_object_address_hook;
 	resolve_target_list_unknowns_hook = prev_resolve_target_list_unknowns_hook;
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
@@ -270,7 +309,12 @@ UninstallExtendedHooks(void)
 	ExecutorRun_hook = prev_ExecutorRun;
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
+	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
+	pg_proc_aclchk_hook = prev_pg_proc_aclchk_hook;
+	pg_class_aclmask_hook = prev_pg_class_aclmask_hook;
+	pg_attribute_aclchk_hook = prev_pg_attribute_aclchk_hook;
+	pg_attribute_aclchk_all_hook = prev_pg_attribute_aclchk_all_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -280,6 +324,23 @@ UninstallExtendedHooks(void)
 /*****************************************
  * 			Hook Functions
  *****************************************/
+
+static void
+pltsql_GetNewObjectId(VariableCache variableCache)
+{
+	Oid minOid;
+
+	if (!babelfish_dump_restore || !babelfish_dump_restore_min_oid)
+		return;
+
+	minOid = atooid(babelfish_dump_restore_min_oid);
+	Assert(OidIsValid(minOid));
+	if (ShmemVariableCache->nextOid >= minOid + 1)
+		return;
+
+	ShmemVariableCache->nextOid = minOid + 1;
+	ShmemVariableCache->oidCount = 0;
+}
 
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
@@ -1178,6 +1239,131 @@ tle_name_comparison(const char *tlename, const char *identifier)
 		return (*prev_tle_name_comparison_hook) (tlename, identifier);
 	else
 		return (0 == strcmp(tlename, identifier));
+}
+
+Oid
+get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input){
+	Oid				trigger_rel_oid = InvalidOid;
+	Relation		tgrel;
+	ScanKeyData		key;
+	SysScanDesc 	tgscan;
+	HeapTuple		tuple;
+	Oid				reloid;
+	Relation		relation = NULL;
+	const char		*pg_trigger_physical_schema = NULL;
+	const char		*pg_trigger_logical_schema = NULL;
+	const char 		*cur_dbo_physical_schema = NULL;
+	const char 		*cur_physical_schema = NULL;
+	const char		*tsql_trigger_physical_schema = NULL;
+	const char		*tsql_trigger_logical_schema = NULL;
+	List	   		*search_path = fetch_search_path(false);
+
+	if(list_length(object) == 1)
+	{
+		cur_physical_schema = get_namespace_name(linitial_oid(search_path));
+		list_free(search_path);
+	}
+	else
+	{
+		if(object_from_input)
+			tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
+		else
+		{
+			tsql_trigger_physical_schema = ((Value *)linitial(object))->val.str;
+			tsql_trigger_logical_schema = get_logical_schema_name(tsql_trigger_physical_schema, true);
+		}
+		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),tsql_trigger_logical_schema);
+	}
+
+	/* 
+	* Get the table name of the trigger from pg_trigger. We know that
+	* trigger names are forced to be unique in the tsql dialect, so we
+	* can rely on searching for trigger name and schema name to find 
+	* the corresponding relation name.
+	*/
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
+	ScanKeyInit(&key,
+					Anum_pg_trigger_tgname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(tsql_trigger_name));
+
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
+									NULL, 1, &key);
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		if(!OidIsValid(pg_trigger->tgrelid))
+		{
+			break;
+		}
+		
+		if(namestrcmp(&(pg_trigger->tgname), tsql_trigger_name) == 0){
+			reloid = pg_trigger->tgrelid;
+			relation = RelationIdGetRelation(reloid);
+			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+			pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
+			if(strcasecmp(pg_trigger_physical_schema,cur_physical_schema) == 0)
+			{
+				trigger_rel_oid = reloid;
+				RelationClose(relation);
+				break;
+			}
+			RelationClose(relation);
+		}
+	}
+
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+
+	if (!OidIsValid(trigger_rel_oid))
+	{
+		relation = NULL;		/* department of accident prevention */
+		return InvalidOid;
+	}
+	return trigger_rel_oid;
+}
+
+/*
+* A special case of the get_object_address_relobject() function, specifically
+* for the case of triggers in tsql dialect. We add a pg_trigger lookup to search
+* for the relation that the trigger is associated with, since the relation name
+* is not supplied by the user, and thus not a part of the *object list.
+*/
+static ObjectAddress
+get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input)
+{
+	ObjectAddress 	address;
+	Relation		relation = NULL;
+	const char 		*depname;
+	Oid 			trigger_rel_oid = InvalidOid;
+
+
+	address.classId = InvalidOid;
+	address.objectId = InvalidOid;
+	address.objectSubId = InvalidAttrNumber;
+		
+	if (sql_dialect != SQL_DIALECT_TSQL)
+	{
+		return address;
+	}
+	/* Extract name of dependent object. */
+	depname = strVal(llast(object));
+
+	if (prev_get_trigger_object_address_hook)
+		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok,object_from_input);
+
+	trigger_rel_oid = get_tsql_trigger_oid(object,depname,object_from_input);
+
+	if(!OidIsValid(trigger_rel_oid))
+		return address;
+
+	address.classId = TriggerRelationId;
+	address.objectId = get_trigger_oid(trigger_rel_oid, depname, missing_ok);
+	address.objectSubId = 0;
+
+	*relp = RelationIdGetRelation(trigger_rel_oid);
+	RelationClose(*relp);
+	return address;
 }
 
 /* Generate similar error message with SQL Server when function/procedure is not found if possible. */
@@ -2688,4 +2874,73 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 		ReleaseSysCache(bbffunctuple);
 
 	return argsprinted;
+}
+
+/*
+ * Following pltsql_pg_*_aclchk hooks are implemented to support ownership
+ * chaining during procedure/function execution
+ */
+static void
+pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(proc_oid))
+		*has_access = pg_proc_ownercheck(proc_oid, procOwner);
+
+	if (prev_pg_proc_aclchk_hook)
+		prev_pg_proc_aclchk_hook(proc_oid, roleid, mode, has_access);
+}
+
+static void
+pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid class_oid, Oid roleid,
+							 AclMode mask, bool *has_permission_via_hook,
+							 bool *read_write_all_data_safe)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	/*
+	 * Ownership chain will be denied if TRUNCATE permission is required since
+	 * ownership chain won't be formed if it is TRUNCATE TABLE statement
+	 */
+	if (*has_permission_via_hook == false &&
+		!(mask & ACL_TRUNCATE) &&
+		OidIsValid(procOwner) &&
+		OidIsValid(class_oid))
+		*has_permission_via_hook = pg_class_ownercheck(class_oid, procOwner);
+
+    if (prev_pg_class_aclmask_hook)
+        prev_pg_class_aclmask_hook(classForm, class_oid, roleid,
+								   mask, has_permission_via_hook,
+								   read_write_all_data_safe);
+}
+
+static
+void
+pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid,
+						   AclMode mode, bool *has_access)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(table_oid))
+		*has_access = pg_class_ownercheck(table_oid, procOwner);
+
+	if (prev_pg_attribute_aclchk_hook)
+		prev_pg_attribute_aclchk_hook(table_oid, attnum, roleid, mode, has_access);
+}
+
+static
+void
+pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode,
+							   AclMaskHow how, bool *has_access)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(table_oid))
+		*has_access = pg_class_ownercheck(table_oid, procOwner);
+
+	if (prev_pg_attribute_aclchk_all_hook)
+		prev_pg_attribute_aclchk_all_hook(table_oid, roleid, mode, how, has_access);
 }

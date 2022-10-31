@@ -659,6 +659,33 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	if (pltsql_trace_exec_time)
 		config.trace_mode |= TRACE_EXEC_TIME;
 
+	/* Cache func owner id and check if it exists in shared schema or not */
+	estate.func->fn_owner = InvalidOid;
+	estate.func->exists_in_shared_schema = false;
+	if (OidIsValid(fcinfo->flinfo->fn_oid))
+	{
+		HeapTuple		proctup;
+		Form_pg_proc	form_proctup;
+		char			*nspname;
+
+		proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+		if (!HeapTupleIsValid(proctup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation with OID %u does not exist", fcinfo->flinfo->fn_oid)));
+		form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+		estate.func->fn_owner = form_proctup->proowner;
+		nspname = get_namespace_name(form_proctup->pronamespace);
+		if (!nspname)
+			elog(ERROR, "cache lookup failed for namespace %u",
+				 form_proctup->pronamespace);
+		else
+			estate.func->exists_in_shared_schema = is_shared_schema(nspname);
+
+		pfree(nspname);
+		ReleaseSysCache(proctup);
+	}
+
 	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
 
 	if (rc != PLTSQL_RC_RETURN)
@@ -4620,6 +4647,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 							errmsg("The server principal \"%s\" is not able to access "
 								"the database \"%s\" under the current security context",
 								login, stmt->db_name)));
+		/*
+		 * When there is cross db reference to sys or information_schema schemas,
+		 * Change the session property.
+		 */
+		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+			set_session_properties(stmt->db_name);
 	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
@@ -5014,7 +5047,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			SetCurrentRoleId(current_user_id, false);
 		}
 		if (stmt->is_cross_db)
+		{
+			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+				set_session_properties(cur_dbname);
 			SetCurrentRoleId(current_user_id, false);
+		}
 		list_free(path_oids);
 		PG_RE_THROW();
 	}
@@ -5030,7 +5067,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		SetCurrentRoleId(current_user_id, false);
 	}
 	if (stmt->is_cross_db)
+	{
+		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+			set_session_properties(cur_dbname);
 		SetCurrentRoleId(current_user_id, false);
+	}
 	list_free(path_oids);
 
 	return PLTSQL_RC_OK;

@@ -6,6 +6,9 @@
 #    input folder
 # 5. To add a test, add test name (without extension, -vu-prepare, -vu-verify and -vu-cleanup. For example if test file name is TestBigInt-vu-prepare.txt write TestBigInt) on a new line
 
+# This should be the first test to check there are no duplicated object_ids
+BABEL-3613
+
 TestBigInt
 TestBinary
 TestBIT
@@ -60,6 +63,7 @@ sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
+objectproperty
 objectpropertyex
 sys-column-property
 sys-configurations
@@ -113,6 +117,8 @@ BABEL-3116
 BABEL-3118
 BABEL-3249
 BABEL-3474
+BABEL-3369
+BABEL-3370
 BABEL-383
 BABEL-405
 BABEL-PROCID
@@ -123,6 +129,10 @@ insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_addrole
+Test-sp_addrolemember
+Test-sp_droprole
+Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
@@ -277,7 +287,9 @@ BABEL-889
 babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
+BABEL-3347-before-14_6
 BABEL-3556-before-14_6
 BABEL-3010-before-14_6
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
+BABEL-2795

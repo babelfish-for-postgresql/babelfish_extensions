@@ -16,6 +16,8 @@
 static int migration_mode = SINGLE_DB;
 bool   enable_ownership_structure = false;
 
+bool enable_metadata_inconsistency_check = true;
+
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
@@ -75,9 +77,11 @@ extern bool Transform_null_equals;
 /* Dump and Restore */
 bool babelfish_dump_restore = false;
 bool restore_tsql_tabletype = false;
+char *babelfish_dump_restore_min_oid = NULL;
 
 /* T-SQL Hint Mapping */
-bool enable_hint_mapping = false;
+bool enable_hint_mapping = true;
+bool enable_pg_hint = false;
 
 static bool check_server_collation_name(char **newval, void **extra, GucSource source);
 static bool check_default_locale (char **newval, void **extra, GucSource source);
@@ -87,6 +91,7 @@ static bool check_ansi_padding (bool *newval, void **extra, GucSource source);
 static bool check_ansi_warnings (bool *newval, void **extra, GucSource source);
 static bool check_arithignore (bool *newval, void **extra, GucSource source);
 static bool check_arithabort (bool *newval, void **extra, GucSource source);
+static bool check_babelfish_dump_restore_min_oid (char **newval, void **extra, GucSource source);
 static bool check_numeric_roundabort (bool *newval, void **extra, GucSource source);
 static bool check_cursor_close_on_commit (bool *newval, void **extra, GucSource source);
 static bool check_rowcount (int *newval, void **extra, GucSource source);
@@ -107,6 +112,7 @@ static void assign_language (const char *newval, void *extra);
 static void assign_lock_timeout (int newval, void *extra);
 static void assign_datefirst (int newval, void *extra);
 static bool check_no_browsetable (bool *newval, void **extra, GucSource source);
+static void assign_enable_pg_hint (bool newval, void *extra);
 int escape_hatch_session_settings; /* forward declaration */
 
 static const struct config_enum_entry migration_mode_options[] = {
@@ -241,6 +247,11 @@ static bool check_arithabort (bool *newval, void **extra, GucSource source)
 		*newval = true; /* overwrite to a default value */
 	}
     return true;
+}
+
+static bool check_babelfish_dump_restore_min_oid (char **newval, void **extra, GucSource source)
+{
+	return *newval == NULL || OidIsValid(atooid(*newval));
 }
 
 static bool check_numeric_roundabort (bool *newval, void **extra, GucSource source)
@@ -381,6 +392,18 @@ static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
 		*newval = false; /* overwrite to a default value */
 	}
 	return true;
+}
+
+static void assign_enable_pg_hint (bool newval, void *extra)
+{
+	if (newval)
+	{
+		/* Will throw an error if pg_hint_plan is not installed */
+		load_libraries("pg_hint_plan", NULL, false);
+	}
+
+	if (GetConfigOption("pg_hint_plan.enable_hint", true, false))
+		SetConfigOption("pg_hint_plan.enable_hint", newval ? "on" : "off", PGC_USERSET, PGC_S_SESSION);
 }
 
 static void assign_transform_null_equals (bool newval, void *extra)
@@ -1041,15 +1064,32 @@ define_custom_variables(void)
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 
+	DefineCustomStringVariable("babelfishpg_tsql.dump_restore_min_oid",
+				 gettext_noop("All new OIDs should be greater than this number during dump and restore"),
+				 NULL,
+				 &babelfish_dump_restore_min_oid,
+				 NULL,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 check_babelfish_dump_restore_min_oid, NULL, NULL);
+
 	/* T-SQL Hint Mapping */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_hint_mapping",
-				 gettext_noop("Enables T-SQL hint mapping"),
+				 gettext_noop("Enables T-SQL hint mapping in ANTLR parser"),
 				 NULL,
 				 &enable_hint_mapping,
-				 false,
+				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_pg_hint",
+				 gettext_noop("Loads and enables pg_hint_plan library"),
+				 NULL,
+				 &enable_pg_hint,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, assign_enable_pg_hint, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.insert_bulk_rows_per_batch",
 				gettext_noop("Sets the number of rows per batch to be processed for Insert Bulk"),
@@ -1068,6 +1108,16 @@ define_custom_variables(void)
 				PGC_USERSET,
 				GUC_NOT_IN_SAMPLE,
 				NULL, NULL, NULL);
+
+
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_metadata_inconsistency_check",
+				 gettext_noop("Enables babelfish_inconsistent_metadata"),
+				 NULL,
+				 &enable_metadata_inconsistency_check,
+				 true,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
 }
 
 int escape_hatch_storage_options = EH_IGNORE;
@@ -1101,6 +1151,9 @@ int escape_hatch_ignore_dup_key = EH_STRICT;
 int escape_hatch_rowversion = EH_STRICT;
 int escape_hatch_showplan_all = EH_STRICT;
 int escape_hatch_checkpoint = EH_IGNORE;
+int escape_hatch_hierarchyid = EH_STRICT;
+int escape_hatch_geography = EH_STRICT;
+int escape_hatch_geometry = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1417,6 +1470,36 @@ define_escape_hatch_variables(void)
 							  PGC_USERSET,
 							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							  NULL, NULL, NULL);
+	
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_hierarchyid",
+							  gettext_noop("escape hatch for HIERARCHYID columns"),
+							  NULL,
+							  &escape_hatch_hierarchyid,
+							  EH_STRICT,
+							  escape_hatch_options,
+							  PGC_USERSET,
+							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							  NULL, NULL, NULL);
+	
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_geography",
+							  gettext_noop("escape hatch for GEOGRAPHY columns"),
+							  NULL,
+							  &escape_hatch_geography,
+							  EH_STRICT,
+							  escape_hatch_options,
+							  PGC_USERSET,
+							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							  NULL, NULL, NULL);
+
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_geometry",
+							  gettext_noop("escape hatch for GEOMETRY columns"),
+							  NULL,
+							  &escape_hatch_geometry,
+							  EH_STRICT,
+							  escape_hatch_options,
+							  PGC_USERSET,
+							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							  NULL, NULL, NULL);
 
 	/* SHOWPLAN_ALL */
 	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_showplan_all",
@@ -1465,3 +1548,8 @@ get_migration_mode(void)
 }
 
 
+bool
+metadata_inconsistency_check_enabled(void)
+{
+	return enable_metadata_inconsistency_check;
+}
