@@ -26,7 +26,7 @@ const int INT_BYTES_EXPECTED = 4;
  * @return vector which has the elements duplicated and appended
  */ 
 template <typename T>
-vector<string> duplicateElements(vector<string> input);
+vector<T> duplicateElements(vector<T> input);
 
 /**
  * Create a string that can be used in an insert statement. Assumes there is a column associated with
