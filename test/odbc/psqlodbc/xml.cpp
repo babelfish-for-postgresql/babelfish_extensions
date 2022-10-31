@@ -171,7 +171,7 @@ TEST_F(PSQL_DataTypes_Xml, Update_Success) {
   verifyValuesInObject(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, data_update_values, data_update_values);
 
   data_update_values = {
-    SIMPLE_XML
+    LARGE_XML
   };
 
   testUpdateSuccess(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, COL2_NAME, data_update_values, data_update_values);
