@@ -47,6 +47,7 @@ static Node *TsqlFunctionIIF(Node *bool_expr, Node *arg1, Node *arg2, int locati
 static Node *TsqlFunctionChoose(Node *int_expr, List *choosable, int location);
 static void tsql_check_param_readonly(const char* paramname, TypeName *typename, bool readonly);
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause, char *src_query, size_t start_location, core_yyscan_t yyscanner);
+static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause, char *src_query, size_t start_location, core_yyscan_t yyscanner);
 
 char * construct_unique_index_name(char *index_name, char *relation_name);
 

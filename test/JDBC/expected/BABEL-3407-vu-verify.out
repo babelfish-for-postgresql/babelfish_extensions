@@ -1,0 +1,81 @@
+-- Display Table Contents
+SELECT * FROM babel_3407_table1
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#Divya#!#<NULL>
+2#!#Akshay#!#Bengaluru
+3#!#Kavya#!#Kolkata
+~~END~~
+
+
+-- FOR JSON PATH clause
+SELECT * FROM babel_3407_view1
+GO
+~~START~~
+ntext
+[{"id":1,"name":"Divya"},{"id":2,"name":"Akshay","state":"Bengaluru"},{"id":3,"name":"Kavya","state":"Kolkata"}]
+~~END~~
+
+
+-- ROOT directive without specifying value
+SELECT * FROM babel_3407_view2
+GO
+~~START~~
+ntext
+{"root":[{"name":"Divya"},{"name":"Akshay","state":"Bengaluru"},{"name":"Kavya","state":"Kolkata"}]}
+~~END~~
+
+
+-- ROOT directive with specifying ROOT value
+SELECT * FROM babel_3407_view3
+GO
+~~START~~
+ntext
+{"Employee":[{"name":"Divya"},{"name":"Akshay","state":"Bengaluru"},{"name":"Kavya","state":"Kolkata"}]}
+~~END~~
+
+
+-- WITHOUT_ARRAY_WRAPPERS directive
+SELECT * FROM babel_3407_view4
+GO
+~~START~~
+ntext
+{"name":"Divya"},{"name":"Akshay","state":"Bengaluru"},{"name":"Kavya","state":"Kolkata"}
+~~END~~
+
+
+-- INCLUDE_NULL_VALUES directive
+SELECT * FROM babel_3407_view5
+GO
+~~START~~
+ntext
+[{"name":"Divya","state":null},{"name":"Akshay","state":"Bengaluru"},{"name":"Kavya","state":"Kolkata"}]
+~~END~~
+
+
+-- Multiple Directives ROOT, INCLUDE_NULL_VALUES
+SELECT * FROM babel_3407_view6
+GO
+~~START~~
+ntext
+{"Employee":[{"id":1,"name":"Divya","state":null},{"id":2,"name":"Akshay","state":"Bengaluru"},{"id":3,"name":"Kavya","state":"Kolkata"}]}
+~~END~~
+
+
+-- Multiple Directives WITHOUT_ARRAY_WRAPPER, INCLUDE_NULL_VALUES
+SELECT * FROM babel_3407_view7
+GO
+~~START~~
+ntext
+{"id":1,"name":"Divya","state":null},{"id":2,"name":"Akshay","state":"Bengaluru"},{"id":3,"name":"Kavya","state":"Kolkata"}
+~~END~~
+
+
+-- Throws error as ROOT and WITHOUT_ARRAY_WRAPPER cannot be used together
+SELECT * FROM babel_3407_view8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON. Remove one of these options)~~
+

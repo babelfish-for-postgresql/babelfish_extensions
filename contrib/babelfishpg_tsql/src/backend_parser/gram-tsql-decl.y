@@ -77,6 +77,9 @@
 %type <node> tsql_for_clause tsql_xml_common_directive
 %type <list> tsql_xml_common_directives
 
+%type <node> tsql_for_json_clause tsql_json_common_directive
+%type <list> tsql_json_common_directives
+
 %type <istmt> tsql_output_insert_rest tsql_output_insert_rest_no_paren
 
 %type <node> tsql_output_simple_select tsql_values_clause
@@ -104,6 +107,7 @@
 	TSQL_MUST_CHANGE TSQL_CHECK_EXPIRATION TSQL_CHECK_POLICY TSQL_CREDENTIAL TSQL_SID TSQL_OLD_PASSWORD
 	TSQL_UNLOCK TSQL_VALUES
 	TSQL_NVARCHAR
+	TSQL_JSON TSQL_INCLUDE_NULL_VALUES TSQL_WITHOUT_ARRAY_WRAPPER
 
 /*
  * WITH_paren is added to support table hints syntax WITH (<table_hint> [[,]...n]),

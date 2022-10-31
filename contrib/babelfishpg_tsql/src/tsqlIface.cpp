@@ -2381,10 +2381,16 @@ static void process_select_statement(
 	PLtsql_expr_query_mutator *mutator)
 {
 	/* remove unsupported_tokens */
-	if (selectCtx->for_clause()) // for xml
+	if (selectCtx->for_clause()) 
 	{
-		Assert(selectCtx->for_clause()->XML()); // we only support FOR XML
-		Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
+		if (selectCtx->for_clause()->XML()) // FOR XML
+		{
+			Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
+		}
+		else if (selectCtx->for_clause()->JSON()) // for JSON
+		{
+			Assert(selectCtx->for_clause()->PATH());
+		}		
 	}
 
 	Assert(mutator);
