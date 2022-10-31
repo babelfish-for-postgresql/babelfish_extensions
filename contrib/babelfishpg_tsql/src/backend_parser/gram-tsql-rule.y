@@ -1526,16 +1526,16 @@ table_ref:	relation_expr tsql_table_hint_expr
 					n->subquery = $2;
 					n->alias = $3;
 					/*
-						* The SQL spec does not permit a subselect
-						* (<derived_table>) without an alias clause,
-						* so we don't either.  This avoids the problem
-						* of needing to invent a unique refname for it.
-						* That could be surmounted if there's sufficient
-						* popular demand, but for now let's just implement
-						* the spec and see if anyone complains.
-						* However, it does seem like a good idea to emit
-						* an error message that's better than "syntax error".
-						*/
+					 * The SQL spec does not permit a subselect
+					 * (<derived_table>) without an alias clause,
+					 * so we don't either.  This avoids the problem
+					 * of needing to invent a unique refname for it.
+					 * That could be surmounted if there's sufficient
+					 * popular demand, but for now let's just implement
+					 * the spec and see if anyone complains.
+					 * However, it does seem like a good idea to emit
+					 * an error message that's better than "syntax error".
+					 */
 					if ($3 == NULL)
 					{
 						if (IsA($2, SelectStmt) &&

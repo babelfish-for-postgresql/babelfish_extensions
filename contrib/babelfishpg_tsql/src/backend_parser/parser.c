@@ -167,12 +167,12 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case SERVER:
 			cur_token_length = 6;
 			break;
-        case CROSS:
-            cur_token_length = 5;
-            break;
-        case OUTER_P:
-            cur_token_length = 5;
-            break;
+		case CROSS:
+			cur_token_length = 5;
+			break;
+		case OUTER_P:
+			cur_token_length = 5;
+			break;
 		default:
 			return cur_token;
 	}
