@@ -192,6 +192,7 @@ sys-plan_guides
 sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
+view_column_usage
 bitwise_not-operator
 BABEL-1683
 BABEL-1953
