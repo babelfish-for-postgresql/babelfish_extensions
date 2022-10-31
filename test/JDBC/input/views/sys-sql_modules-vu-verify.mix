@@ -1,4 +1,9 @@
-USE db1_sys_sql_modules
+-- NOTE: Some tests will be marked as "DISABLED DUE TO NON-UNIQUE OBJECT_ID"
+-- This is because during MVU, items in pg_class an pg_proc could have the same OBJECT_ID
+-- Some tests have no way of identification except for OBJECT_ID since definition will be missing
+-- These will be tested in the regular JDBC test
+
+USE sys_sql_modules_vu_prepare_db
 GO
 
 -- Test for function
@@ -13,7 +18,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sql_modules_function')
+WHERE definition LIKE 'CREATE FUNCTION dbo.sys_sql_modules_vu_prepare_f1()%'
 GO
 
 -- Test for views
@@ -28,38 +33,86 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sql_modules_view')
+WHERE definition LIKE 'CREATE VIEW sys_all_sql_modules_vu_prepare_v2%'
 GO
 
+-- DISABLED DUE TO NON-UNIQUE OBJECT_ID
 -- Test for triggers
-SELECT
-    definition,
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = (SELECT TOP(1) object_id FROM sys.all_objects WHERE name = 'sql_mod_trig')
-GO
+-- SELECT
+--     definition,
+--     uses_ansi_nulls,
+--     uses_quoted_identifier,
+--     is_schema_bound,
+--     uses_database_collation,
+--     is_recompiled,
+--     null_on_null_input,
+--     execute_as_principal_id,
+--     uses_native_compilation
+-- FROM sys.sql_modules
+-- WHERE object_id = (SELECT TOP(1) object_id FROM sys.objects WHERE name = 'sys_sql_modules_vu_prepare_tr1')
+-- GO
 
+-- DISABLED DUE TO NON-UNIQUE OBJECT_ID
 -- Test for proc
-SELECT
-    definition,
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sql_modules_proc')
-GO
+-- SELECT
+--     definition,
+--     uses_ansi_nulls,
+--     uses_quoted_identifier,
+--     is_schema_bound,
+--     uses_database_collation,
+--     is_recompiled,
+--     null_on_null_input,
+--     execute_as_principal_id,
+--     uses_native_compilation
+-- FROM sys.sql_modules
+-- WHERE definition = 'CREATE PROCEDURE dbo.sys_sql_modules_vu_prepare_p1 AS SELECT 1'
+-- GO
+
+-- DISABLED DUE TO NON-UNIQUE OBJECT_ID
+-- Test for system function
+-- SELECT
+--     uses_ansi_nulls,
+--     uses_quoted_identifier,
+--     is_schema_bound,
+--     uses_database_collation,
+--     is_recompiled,
+--     null_on_null_input,
+--     execute_as_principal_id,
+--     uses_native_compilation
+-- FROM sys.sql_modules
+-- WHERE object_id = OBJECT_ID('sys.fn_listextendedproperty')
+-- GO
+
+-- DISABLED DUE TO NON-UNIQUE OBJECT_ID
+-- Test for system views
+-- SELECT
+--     uses_ansi_nulls,
+--     uses_quoted_identifier,
+--     is_schema_bound,
+--     uses_database_collation,
+--     is_recompiled,
+--     null_on_null_input,
+--     execute_as_principal_id,
+--     uses_native_compilation
+-- FROM sys.sql_modules
+-- WHERE object_id = OBJECT_ID('sys.tables')
+-- GO
+
+-- DISABLED DUE TO NON-UNIQUE OBJECT_ID
+-- Test for system proc
+-- SELECT
+--     uses_ansi_nulls,
+--     uses_quoted_identifier,
+--     is_schema_bound,
+--     uses_database_collation,
+--     is_recompiled,
+--     null_on_null_input,
+--     execute_as_principal_id,
+--     uses_native_compilation
+-- FROM sys.sql_modules
+-- WHERE object_id = OBJECT_ID('sys.sp_tables')
+-- GO
+
 
 -- Test that sys.sql_modules is database-scoped
 SELECT
@@ -73,15 +126,15 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('my_master_view_sys_sql_modules')
+WHERE definition LIKE 'CREATE VIEW sys_all_sql_modules_vu_prepare_v1%'
 GO
 
 USE master
 GO
 
--- tsql user=sql_modules_user password=test
+-- tsql user=sys_sql_modules_vu_prepare_user password=test
 
-USE db1_sys_sql_modules
+USE sys_sql_modules_vu_prepare_db
 GO
 
 SELECT
@@ -95,5 +148,8 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sql_modules_proc')
+WHERE definition = 'CREATE PROCEDURE dbo.sys_sql_modules_vu_prepare_p1 AS SELECT 1'
+GO
+
+USE master
 GO

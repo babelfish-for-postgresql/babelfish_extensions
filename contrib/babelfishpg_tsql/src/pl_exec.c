@@ -4608,7 +4608,19 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	char 		*old_search_path = flatten_search_path(path_oids);
 
 	if (stmt->is_cross_db)
-		SetCurrentRoleId(GetSessionUserId(), false);
+	{
+		char *login = GetUserNameFromId(GetSessionUserId(), false);
+		char *user = get_user_for_database(stmt->db_name);
+
+		if (user)
+			SetCurrentRoleId(GetSessionUserId(), false);
+		else
+			ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_DATABASE),
+							errmsg("The server principal \"%s\" is not able to access "
+								"the database \"%s\" under the current security context",
+								login, stmt->db_name)));
+	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
 		if (stmt->is_schema_specified)

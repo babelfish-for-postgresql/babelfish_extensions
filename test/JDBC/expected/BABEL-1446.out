@@ -111,7 +111,7 @@ AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db1_db_owner');
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -124,7 +124,7 @@ AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'db2_db_owner');
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 

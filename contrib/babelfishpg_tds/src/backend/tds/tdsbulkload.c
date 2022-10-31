@@ -784,12 +784,12 @@ ProcessBCPRequest(TDSRequest request)
 		}
 		PG_END_TRY();
 		/*
-		 * If the row-count is 0 then this no rows are left to be inserted.
+		 * If the row-count is 0 then there are no rows left to be inserted.
 		 * We should begin with cleanup.
 		 */
 		if (req->rowCount == 0)
 		{
-			/* Using Same callback function to fo the clean-up. */
+			/* Using Same callback function to do the clean-up. */
 			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
 			break;
 		}
@@ -902,7 +902,7 @@ ProcessBCPRequest(TDSRequest request)
 
 				RESUME_CANCEL_INTERRUPTS();
 
-				/* Using Same callback function to fo the clean-up. */
+				/* Using Same callback function to do the clean-up. */
 				pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
 
 				if (ret < 0)

@@ -179,7 +179,8 @@ typedef enum PLtsql_stmt_type
     PLTSQL_STMT_SAVE_CTX,
     PLTSQL_STMT_RESTORE_CTX_FULL,
     PLTSQL_STMT_RESTORE_CTX_PARTIAL,
-    PLTSQL_STMT_INSERT_BULK
+    PLTSQL_STMT_INSERT_BULK,
+    PLTSQL_STMT_GRANTDB
 } PLtsql_stmt_type;
 
 /*
@@ -910,17 +911,17 @@ typedef struct PLtsql_stmt_exit
  */
 typedef struct PLtsql_stmt_insert_bulk
 {
-    PLtsql_stmt_type cmd_type;
-    int         lineno;
-    char  *table_name;
-    char  *schema_name;
-    char  *db_name;
+	PLtsql_stmt_type cmd_type;
+	int         lineno;
+	char  *table_name;
+	char  *schema_name;
+	char  *db_name;
 	List *column_refs;
 
-    /* Insert Bulk Options. */
-    char *kilobytes_per_batch;
-    char *rows_per_batch;
-    bool keep_nulls;
+	/* Insert Bulk Options. */
+	char *kilobytes_per_batch;
+	char *rows_per_batch;
+	bool keep_nulls;
 } PLtsql_stmt_insert_bulk;
 
 /*
@@ -981,6 +982,17 @@ typedef struct PLtsql_raise_option
 } PLtsql_raise_option;
 
 /*
+ *	Grant Connect stmt
+ */
+typedef struct PLtsql_stmt_grantdb
+{
+	PLtsql_stmt_type    cmd_type;
+	int 				lineno;
+	bool				is_grant;
+	List	   			*grantees;		/* list of users */
+} PLtsql_stmt_grantdb;
+
+/*
  * ASSERT statement
  */
 typedef struct PLtsql_stmt_assert
@@ -1023,6 +1035,7 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_ddl;			/* DDL statement? */
 	bool		func_call;		/* Function call? */
 	char		*schema_name;	/* Schema specified */
+	char		*db_name;		/* db_name: only for cross db query */
 	bool            is_schema_specified;    /*is schema name specified? */
 	bool		is_create_view;		/* CREATE VIEW? */
 } PLtsql_stmt_execsql;
@@ -1942,7 +1955,7 @@ extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool 
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
-extern const char *get_pltsql_function_signature(const char *funcname, int nargs, const Oid *argtypes);
+extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 
 typedef struct
 {
