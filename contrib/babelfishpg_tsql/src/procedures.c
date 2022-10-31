@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/value.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/rel.h"
@@ -31,8 +32,11 @@
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
+#include "tsearch/ts_locale.h"
 
+#include "catalog.h"
 #include "multidb.h"
+#include "session.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
@@ -57,7 +61,6 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
-static void rolname_check(char* rolname);
 
 char *sp_describe_first_result_set_view_name = NULL;
 
@@ -1461,37 +1464,11 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-/*
- * Internal function to tim leading/trailing whitespaces and check rolname
- * doesn't contain whitespace or backslah
- */
-static void rolname_check(char* rolname)
-{
-	size_t len;
-	char * str = rolname;
-	len = strlen(str);
-
-	while(isspace(str[len - 1])) str[--len] = 0;
-	while(* str && isspace(* str)) ++str, --len;
-
-	memmove(rolname, str, len + 1);
-
-	if (!len)
-		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-			errmsg("query argument of procedure is null")));
-
-	/* Role name cannot contain '\' */
-	if(strchr(rolname, ' ') != NULL)
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),errmsg("query argument of procedure contains whitespace")));
-
-	/* Role name cannot contain '\' */
-	if(strchr(rolname, '\\') != NULL)
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),errmsg("query argument of procedure contains \\")));
-}
-
 Datum sp_addrole(PG_FUNCTION_ARGS)
 {
-	char *rolname;
+	char *rolname, *lowercase_rolname;
+	char *physical_role_name;
+	Oid role_oid;
 	List *parsetree_list;
 	ListCell *parsetree_item;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
@@ -1504,16 +1481,33 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
-		/*
-		 * Trim leading/trailing whitespaces and check rolname
-		 * doesn't contain whitespace or backslah
-		 */
-		rolname_check(rolname);
+		/* Role name is not NULL */
+		if (strlen(rolname) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Role name cannot contain '\' */
+		if (strchr(rolname, '\\') != NULL)
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("'%s' is not a valid name because it contains invalid characters.", rolname)));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+
+		/* Map the logical role name to its physical name in the database.*/
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		role_oid = get_role_oid(physical_role_name, true);
+
+		/* Check if the user, group or role already exists */
+		if (role_oid)
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("User, group, or role '%s' already exists in the current database.", rolname)));
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		parsetree_list = gen_sp_addrole_subcmds(rolname);
+		parsetree_list = gen_sp_addrole_subcmds(lowercase_rolname);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
@@ -1563,7 +1557,7 @@ gen_sp_addrole_subcmds(const char *user)
 	StringInfoData query;
 	List *res;
 	Node *stmt;
-	CreateRoleStmt	*rolestmt;
+	CreateRoleStmt *rolestmt;
 	List *user_options = NIL;
 
 	initStringInfo(&query);
@@ -1572,9 +1566,8 @@ gen_sp_addrole_subcmds(const char *user)
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(res))));
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
 
 	stmt = parsetree_nth_stmt(res, 0);
 
@@ -1601,7 +1594,9 @@ gen_sp_addrole_subcmds(const char *user)
 
 Datum sp_droprole(PG_FUNCTION_ARGS)
 {
-	char *rolname;
+	char *rolname, *lowercase_rolname;
+	char *physical_role_name;
+	Oid role_oid;
 	List *parsetree_list;
 	ListCell *parsetree_item;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
@@ -1614,16 +1609,28 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
-		/*
-		 * Trim leading/trailing whitespaces and check rolname
-		 * doesn't contain whitespace or backslah
-		 */
-		rolname_check(rolname);
+		/* Role name is not NULL */
+		if (strlen(rolname) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+
+		/* Map the logical role name to its physical name in the database.*/
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		role_oid = get_role_oid(physical_role_name, true);
+
+		/* Check if the role does not exists*/
+		if(role_oid == InvalidOid || !is_role(role_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot drop the role '%s', because it does not exist or you do not have permission.", rolname)));
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		parsetree_list = gen_sp_droprole_subcmds(rolname);
+		parsetree_list = gen_sp_droprole_subcmds(lowercase_rolname);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
@@ -1681,9 +1688,8 @@ gen_sp_droprole_subcmds(const char *user)
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(res))));
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
 
 	stmt = parsetree_nth_stmt(res, 0);
 	dropstmt = (DropRoleStmt *) stmt;
@@ -1704,8 +1710,11 @@ gen_sp_droprole_subcmds(const char *user)
 
 Datum sp_addrolemember(PG_FUNCTION_ARGS)
 {
-	char *rolname;
-	char *membername;
+	char *rolname, *lowercase_rolname;
+	char *membername, *lowercase_membername;
+	char *physical_member_name;
+	char *physical_role_name;
+	Oid role_oid, member_oid;
 	List *parsetree_list;
 	ListCell *parsetree_item;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
@@ -1719,17 +1728,51 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
-		/*
-		 * Trim leading/trailing whitespaces and check rolname,
-		 * membername doesn't contain whitespace or backslah
-		 */
-		rolname_check(rolname);
-		rolname_check(membername);
+		/* Role name, member name is not NULL */
+		if ((strlen(rolname) == 0) || (strlen(membername) == 0))
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names, user names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+		lowercase_membername = lowerstr(membername);
+
+		/* Throws an error if role name and member name are same*/
+		if(strcmp(lowercase_rolname,lowercase_membername)==0)
+			ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Cannot make a role a member of itself")));
+
+		/* Map the logical member name to its physical name in the database.*/
+		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername);
+		member_oid = get_role_oid(physical_member_name, true);
+
+		/* Check if the user, group or role does not exists and given member name is an role or user*/
+		if(member_oid == InvalidOid || ( !is_role(member_oid) && !is_user(member_oid) ))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("User or role '%s' does not exist in this database.", membername)));
+
+		/* Map the logical role name to its physical name in the database.*/
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		role_oid = get_role_oid(physical_role_name, true);
+
+		/* Check if the role does not exists and given role name is an role*/
+		if(role_oid == InvalidOid || !is_role(role_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
+
+		/* Check if the member oid is already a member of given role oid*/
+		if(is_member_of_role_nosuper( role_oid, member_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Cannot make a role a member of itself")));
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		parsetree_list = gen_sp_addrolemember_subcmds(rolname, membername);
+		parsetree_list = gen_sp_addrolemember_subcmds(lowercase_rolname, lowercase_membername);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
@@ -1779,8 +1822,8 @@ gen_sp_addrolemember_subcmds(const char *user, const char *member)
 	StringInfoData query;
 	List *res;
 	Node *stmt;
-	AccessPriv		*granted;
-	RoleSpec		*grantee;
+	AccessPriv *granted;
+	RoleSpec *grantee;
 	GrantRoleStmt *grant_role;
 
 	initStringInfo(&query);
@@ -1789,9 +1832,8 @@ gen_sp_addrolemember_subcmds(const char *user, const char *member)
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(res))));
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
 
 	stmt = parsetree_nth_stmt(res, 0);
 	grant_role = (GrantRoleStmt *) stmt;
@@ -1814,8 +1856,10 @@ gen_sp_addrolemember_subcmds(const char *user, const char *member)
 
 Datum sp_droprolemember(PG_FUNCTION_ARGS)
 {
-	char *rolname;
-	char *membername;
+	char *rolname, *lowercase_rolname;
+	char *membername, *lowercase_membername;
+	char *physical_name;
+	Oid role_oid;
 	List *parsetree_list;
 	ListCell *parsetree_item;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
@@ -1829,12 +1873,34 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
-		/*
-		 * Trim leading/trailing whitespaces and check rolname,
-		 * membername doesn't contain whitespace or backslah
-		 */
-		rolname_check(rolname);
-		rolname_check(membername);
+		/* Role name, member name is not NULL */
+		if ((strlen(rolname) == 0) || (strlen(membername) == 0))
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names, user names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+		lowercase_membername = lowerstr(membername);
+
+		/* Map the logical role name to its physical name in the database.*/
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		role_oid = get_role_oid(physical_name, true);
+
+		/* Throw an error id the given role name doesn't exist or isn't a role*/
+		if(role_oid == InvalidOid || !is_role(role_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
+
+		/* Map the logical member name to its physical name in the database.*/
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername);
+		role_oid = get_role_oid(physical_name, true);
+
+		/* Throw an error id the given member name doesn't exist or isn't a role or user*/
+		if(role_oid == InvalidOid || ( !is_role(role_oid) && !is_user(role_oid) ))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot drop the principal '%s', because it does not exist or you do not have permission.", membername)));
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -1899,9 +1965,8 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(res))));
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
 
 	stmt = parsetree_nth_stmt(res, 0);
 	grant_role = (GrantRoleStmt *) stmt;
@@ -1918,6 +1983,5 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	grantee->rolename = (char *) member;
 
 	rewrite_object_refs(stmt);
-
 	return res;
 }
