@@ -214,7 +214,7 @@ INSERT INTO #overflow_test VALUES(1.123);
 SELECT sum(amount) from #overflow_test;
 SELECT avg(amount) from #overflow_test;
 DROP TABLE #overflow_test;
- 
+
 CREATE TABLE #overflow_test (amount decimal(5, 2));
 INSERT INTO #overflow_test VALUES(999.12);
 INSERT INTO #overflow_test VALUES(1.12);
@@ -252,3 +252,23 @@ INSERT INTO overflow_test VALUES (55555555555555555555555555555555555, 555555555
 SELECT num1 + num2 from overflow_test;
 SELECT num1 - num2 from overflow_test;
 DROP TABLE overflow_test;
+
+#BABEL-3345
+create table testdecimal_tab (int1 decimal(24,6),int2 decimal(24,6),rate decimal(24,6), type varchar(1000));
+insert into testdecimal_tab values (1879323.2222, 2383823.343, 4.5484, NULL);
+select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from testdecimal_tab;
+drop table testdecimal_tab;
+
+create table testdecimal_tab (in1 decimal(24, 6), in2 decimal(24, 6), in3 decimal(24, 1), in4 decimal(24, 2), in5 decimal(15, 3));
+insert into testdecimal_tab values (1879323.2222, 2383823.343, 4.5484, 232.79, 345.2345);
+
+#resultant precision = 49 > 38, scale = 12 > 6, precision - scale = 37 > 32; o/p precision set to 38, o/p scale set to 6
+select in1 * in2 from testdecimal_tab;
+
+#resultant precision = 40 > 38, scale = 5, precision - scale = 35 <= 38; delta = precision - 38 = 2,  o/p scale = scale - delta = 3(scale adjustment), o/p precision = 38
+select in4 * in5 from testdecimal_tab;
+
+#resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
+select in3 * in4 from testdecimal_tab;
+
+drop table testdecimal_tab;

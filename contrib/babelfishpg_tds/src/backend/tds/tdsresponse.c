@@ -564,18 +564,31 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			 * Otherwise it simply won't fit in 38 precision and let an
 			 * overflow error be thrown in PrepareRowDescription.
 			 */
-			if (precision > TDS_MAX_NUM_PRECISION &&
-			    precision - scale <= TDS_MAX_NUM_PRECISION)
+			if (precision > TDS_MAX_NUM_PRECISION)
 			{
-			    /*
-			     * scale adjustment by delta is only applicable for division
-			     * and (multiplcation having no aggregate operand)
-			     */
-			    int delta = precision - TDS_MAX_NUM_PRECISION;
-			    precision = TDS_MAX_NUM_PRECISION;
-			    scale = Max(scale - delta, 0);
+				if (precision - scale > 32 && scale > 6)
+				{
+					/*
+					 * Result might be rounded to 6 decimal places or the overflow error
+					 * will be thrown if the integral part can't fit into 32 digits.
+					 */
+					precision = TDS_MAX_NUM_PRECISION;
+					scale = 6;
+				}
+				else if (precision - scale <= TDS_MAX_NUM_PRECISION)
+				{
+					/*
+					 * scale adjustment by delta is only applicable for division
+			     		 * and (multiplcation having no aggregate operand)
+			     		 */
+			    		int delta = precision - TDS_MAX_NUM_PRECISION;
+			    		precision = TDS_MAX_NUM_PRECISION;
+			    		scale = Max(scale - delta, 0);
+				}
+				/*
+				 * Control reaching here for only arithmetic overflow cases
+				 */
 			}
-
 			return ((precision << 16) | scale) + VARHDRSZ;
 		}
 		case T_FuncExpr:

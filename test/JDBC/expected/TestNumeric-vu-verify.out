@@ -431,3 +431,34 @@ numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
 109999.89#!#10999.989#!#10990.35802458#!#9999.990000#!#999.999000#!#999.12345678
 ~~END~~
 
+
+#BABEL-3345
+select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from testnumeric_vu_prepare_tab1;
+~~START~~
+numeric
+1879323.222200
+~~END~~
+
+
+#resultant precision = 49 > 38, scale = 12 > 6, precision - scale = 37 > 32; o/p precision set to 38, o/p scale set to 6
+select in1 * in2 from testnumeric_vu_prepare_tab2;
+~~START~~
+numeric
+4479974566122.335814
+~~END~~
+
+
+#resultant precision = 40 > 38, scale = 5, precision - scale = 35 <= 38; delta = precision - 38 = 2,  o/p scale = scale - delta = 3(scale adjustment), o/p precision = 38
+select in4 * in5 from testnumeric_vu_prepare_tab2;
+~~START~~
+numeric
+80367.255
+~~END~~
+
+
+#resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
+select in3 * in4 from testnumeric_vu_prepare_tab2;
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
