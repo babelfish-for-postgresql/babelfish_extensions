@@ -70,6 +70,13 @@ show babelfishpg_tsql.sql_dialect;
 SELECT * FROM employees;
 SELECT * FROM employee_audits;
 
+-- cleanup
+drop function test_func;
+drop table employees;
+drop table employee_audits;
+drop function log_last_name_changes;
+
+
 -- test executing a plpgsql function in tsql dialect
 CREATE OR REPLACE FUNCTION test_increment(i integer) RETURNS integer AS $$
 BEGIN
@@ -635,10 +642,6 @@ DROP TABLE t2;
 DROP TABLE t3;
 
 -- clean up
-drop function test_func;
-drop table employees;
-drop table employee_audits;
-drop function log_last_name_changes;
 drop function test_increment;
 drop function test_increment1;
 drop table dateadd_table;
