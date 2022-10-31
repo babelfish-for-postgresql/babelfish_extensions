@@ -16,6 +16,12 @@ GO
 EXEC babel_328_vu_p2
 GO
 
+EXEC babel_328_vu_p3
+GO
+
+EXEC babel_328_vu_p4
+GO
+
 SELECT * FROM babel_328_vu_v5
 GO
 

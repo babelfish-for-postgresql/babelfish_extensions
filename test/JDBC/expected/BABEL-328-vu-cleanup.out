@@ -4,6 +4,12 @@ GO
 DROP PROC babel_328_vu_p2
 GO
 
+DROP PROC babel_328_vu_p3
+GO
+
+DROP PROC babel_328_vu_p4
+GO
+
 DROP FUNCTION babel_328_vu_f1
 GO
 

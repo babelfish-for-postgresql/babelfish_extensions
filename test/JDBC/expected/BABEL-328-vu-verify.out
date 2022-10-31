@@ -61,12 +61,30 @@ EXEC babel_328_vu_p2
 GO
 ~~START~~
 int#!#varchar#!#int#!#varchar#!#varchar#!#int
+3#!#Sales#!#3#!#Donna#!#Carreras#!#3
+3#!#Sales#!#4#!#Janet#!#Gates#!#3
+~~END~~
+
+
+EXEC babel_328_vu_p3
+GO
+~~START~~
+int#!#varchar#!#int#!#varchar#!#varchar#!#int
 1#!#Engineering#!#1#!#Orlando#!#Gee#!#1
 2#!#Administration#!#2#!#Keith#!#Harris#!#2
 3#!#Sales#!#3#!#Donna#!#Carreras#!#3
 3#!#Sales#!#4#!#Janet#!#Gates#!#3
 4#!#Marketing#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 5#!#Finance#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+EXEC babel_328_vu_p4
+GO
+~~START~~
+int#!#varchar#!#int#!#varchar#!#varchar#!#int
+3#!#Sales#!#3#!#Donna#!#Carreras#!#3
+3#!#Sales#!#4#!#Janet#!#Gates#!#3
 ~~END~~
 
 

@@ -82,8 +82,20 @@ CREATE PROC babel_328_vu_p1 AS
 GO
 
 CREATE PROC babel_328_vu_p2 AS
+    SELECT * FROM babel_328_vu_t1 D
+    CROSS APPLY babel_328_vu_f1(D.DepartmentID) E
+    WHERE E.DepartmentID = 3
+GO
+
+CREATE PROC babel_328_vu_p3 AS
     SELECT * FROM babel_328_vu_t1 D 
     OUTER APPLY babel_328_vu_f1(D.DepartmentID) 
+GO
+
+CREATE PROC babel_328_vu_p4 AS
+    SELECT * FROM babel_328_vu_t1 D
+    OUTER APPLY babel_328_vu_f1(D.DepartmentID) E
+    WHERE E.DepartmentID = 3
 GO
 
 -- chaining apply calls
