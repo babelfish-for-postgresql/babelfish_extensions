@@ -3611,3 +3611,28 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_table(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+
+CREATE OR REPLACE VIEW information_schema_tsql.domain_constraints
+AS SELECT sys.db_name()::information_schema.sql_identifier AS constraint_catalog,
+    rs.nspname::information_schema.sql_identifier AS constraint_schema,
+    con.conname::information_schema.sql_identifier AS constraint_name,
+    sys.db_name()::information_schema.sql_identifier AS domain_catalog,
+    sys.schema_name(n."oid")::information_schema.sql_identifier AS domain_schema,
+    t.typname::information_schema.sql_identifier AS domain_name,
+        CASE
+            WHEN con.condeferrable THEN 'YES'::text
+            ELSE 'NO'::text
+        END::information_schema.yes_or_no AS is_deferrable,
+        CASE
+            WHEN con.condeferred THEN 'YES'::text
+            ELSE 'NO'::text
+        END::information_schema.yes_or_no AS initially_deferred
+   FROM pg_catalog.pg_namespace rs,
+    pg_catalog.pg_namespace n,
+    pg_catalog.pg_constraint con,
+    pg_catalog.pg_type t
+  WHERE rs.oid = con.connamespace AND n.oid = t.typnamespace AND t.oid = con.contypid 
+  AND (pg_catalog.pg_has_role(t.typowner, 'USAGE'::text) OR has_type_privilege(t.oid, 'USAGE'::text));
+
+  GRANT SELECT ON information_schema_tsql.domain_constraints TO PUBLIC;
