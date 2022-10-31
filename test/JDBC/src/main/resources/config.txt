@@ -42,5 +42,5 @@ testFileRoot = ./
 # WHETHER TEST RUN MODE IS UPGRADE TEST RUN
 isUpgradeTestMode = false
 
-# Default SLA
+# Default SLA in milliseconds
 defaultSLA = 15000

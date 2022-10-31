@@ -52,7 +52,6 @@ public class batch_run {
             FileInputStream fstream;    // stream of input file with the SQL batch queries to be tested
             DataInputStream in;
             BufferedReader br;
-            int file_length = 0;
 
             fstream = new FileInputStream(testFilePath);
             // get the object of DataInputStream
