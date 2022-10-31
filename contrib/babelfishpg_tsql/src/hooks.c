@@ -2963,6 +2963,8 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	}
 
 	return plan;
+}
+
 static Node* 
 transform_like_in_add_constraint (Node* node)
 {
