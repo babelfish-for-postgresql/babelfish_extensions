@@ -4156,14 +4156,14 @@ reserved_keyword:
 			  TSQL_APPLY
 			| TSQL_CHOOSE
 			| TSQL_CONVERT
-            | TSQL_CROSS
+			| TSQL_CROSS
 			| TSQL_DATEADD
 			| TSQL_DATEDIFF
 			| TSQL_DATENAME
 			| TSQL_DATEPART
 			| TSQL_IIF
 			| TSQL_OUT
-            | TSQL_OUTER
+			| TSQL_OUTER
 			| TSQL_OUTPUT
 			| TSQL_PARSE
 			| TSQL_PERCENT

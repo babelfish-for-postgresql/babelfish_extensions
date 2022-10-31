@@ -294,14 +294,14 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 			if (next_token == ROLE)
 				cur_token = TSQL_SERVER;
 			break;
-        case CROSS:
-            if (next_token == TSQL_APPLY)
-                cur_token = TSQL_CROSS;
-            break;
-        case OUTER_P:
-            if (next_token == TSQL_APPLY)
-                cur_token = TSQL_OUTER;
-            break;
+		case CROSS:
+			if (next_token == TSQL_APPLY)
+				cur_token = TSQL_CROSS;
+			break;
+		case OUTER_P:
+			if (next_token == TSQL_APPLY)
+				cur_token = TSQL_OUTER;
+			break;
 		default:
 			break;
 	}
