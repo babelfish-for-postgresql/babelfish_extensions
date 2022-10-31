@@ -7,7 +7,7 @@
 
 
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
-
+extern PLtsql_execstate *get_current_tsql_estate();
 bool pltsql_explain_only = false;
 bool pltsql_explain_analyze = false;
 bool pltsql_explain_verbose = false;
@@ -16,7 +16,7 @@ bool pltsql_explain_settings = false;
 bool pltsql_explain_buffers = false;
 bool pltsql_explain_wal = false;
 bool pltsql_explain_timing = true;
-bool pltsql_explain_summary = false;
+bool pltsql_explain_summary = true;
 int pltsql_explain_format = EXPLAIN_FORMAT_TEXT;
 
 static ExplainInfo *get_last_explain_info();
@@ -144,6 +144,14 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 			ExplainPrintTriggers(es, queryDesc);
 		if (es->costs)
 			ExplainPrintJITSummary(es, queryDesc);
+		if (es->summary) {
+			PLtsql_execstate *time_state = get_current_tsql_estate();
+			ExplainPropertyFloat("Planning Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(time_state->planning_end), 3, es);
+			INSTR_TIME_SET_CURRENT(time_state->execution_end);
+			INSTR_TIME_SUBTRACT(time_state->execution_end, time_state->execution_start);
+			ExplainPropertyFloat("Execution Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(time_state->execution_end), 3, es);
+		}
+
 	}
 	else if (queryString)
 	{

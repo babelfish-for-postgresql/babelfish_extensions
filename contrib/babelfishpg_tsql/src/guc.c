@@ -980,7 +980,7 @@ define_custom_variables(void)
 				 gettext_noop("Include actual startup time and time spent in each node in the output"),
 				 NULL,
 				 &pltsql_explain_timing,
-				 false,
+				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
@@ -989,7 +989,7 @@ define_custom_variables(void)
 				 gettext_noop("Include summary information (e.g., totaled timing information) after the query plan"),
 				 NULL,
 				 &pltsql_explain_summary,
-				 false,
+				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);

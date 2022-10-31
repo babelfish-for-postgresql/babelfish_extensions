@@ -1,5 +1,19 @@
 use master;
 go
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
 
 set babelfish_statistics profile On;
 go
@@ -364,3 +378,18 @@ drop table babel_2843_t2;
 go
 set babelfish_statistics profile oFf;
 go
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+

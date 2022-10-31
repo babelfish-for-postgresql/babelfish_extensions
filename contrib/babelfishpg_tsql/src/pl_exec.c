@@ -7232,9 +7232,7 @@ exec_run_select(PLtsql_execstate *estate,
 	 * can't support.
 	 */
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr,
-						  portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
-
+		exec_prepare_plan(estate, expr, portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
 	/*
 	 * If we started an implicit_transaction for this statement but
 	 * the statement has a simple expression associated with them,
