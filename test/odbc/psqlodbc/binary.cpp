@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.binary_table_odbc_test";
@@ -38,16 +39,6 @@ class PSQL_DataTypes_Binary : public testing::Test {
   }
 };
 
-vector<string> getExpectedResults_Binary(vector<string> data, size_t table_size = DATATYPE_SIZE) {
-  vector<string> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    expectedResults.push_back(GetHexRepresentation(data[i], table_size));
-  }
-
-  return expectedResults;
-}
-
 TEST_F(PSQL_DataTypes_Binary, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 1};
   const vector<int> PRECISION_EXPECTED = {0, 0};
@@ -70,7 +61,7 @@ TEST_F(PSQL_DataTypes_Binary, Insertion_Success) {
     "255",    // Max
     "256"     // Max + 1, truncate
   };
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES, DATATYPE_SIZE);
   const int NUM_OF_INSERTS = INSERTED_VALUES.size();
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
@@ -83,7 +74,7 @@ TEST_F(PSQL_DataTypes_Binary, Update_Success) {
   const vector<string> INSERTED_VALUES = {
     "123"
   };
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES, DATATYPE_SIZE);
 
   const vector <string> UPDATED_VALUES = {
     "NULL",
@@ -94,7 +85,7 @@ TEST_F(PSQL_DataTypes_Binary, Update_Success) {
     "255",    // Max
     "256"     // Max + 1, truncate
   };
-  const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults_Binary(UPDATED_VALUES);
+  const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults_Binary(UPDATED_VALUES, DATATYPE_SIZE);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME,
@@ -115,7 +106,7 @@ TEST_F(PSQL_DataTypes_Binary, View_creation) {
     "256"     // Max + 1, truncate
   };
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES, DATATYPE_SIZE);
 
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
@@ -152,7 +143,7 @@ TEST_F(PSQL_DataTypes_Binary, Table_Single_Primary_Keys) {
   };
   const size_t NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES, DATATYPE_SIZE);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
@@ -184,7 +175,7 @@ TEST_F(PSQL_DataTypes_Binary, Table_Composite_Primary_Keys) {
   };
   const size_t NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES, DATATYPE_SIZE);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
@@ -213,13 +204,13 @@ TEST_F(PSQL_DataTypes_Binary, Table_Unique_Constraint) {
   };
   const size_t NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Binary(INSERTED_VALUES, DATATYPE_SIZE);
 
   // table name without the schema
-  const string tableName = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
+  const string TABLE_NAME_WITHOUT_SCHEMA = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
-  testUniqueConstraint(ServerType::PSQL, tableName, UNIQUE_COLUMNS);
+  testUniqueConstraint(ServerType::PSQL, TABLE_NAME_WITHOUT_SCHEMA, UNIQUE_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES, 0, false, true);
   testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, true, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);

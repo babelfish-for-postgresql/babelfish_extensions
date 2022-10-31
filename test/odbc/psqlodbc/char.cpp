@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string BBF_TABLE_NAME = "master.dbo.char_table_odbc_test";
@@ -132,16 +133,6 @@ class PSQL_DataTypes_Char : public testing::Test {
     pg_test_setup.ExecQuery(DropObjectStatement("TABLE", PG_TABLE_NAME));
   }
 };
-
-vector<string> getExpectedResults_Char(const vector<string> &input, size_t table_size) {
-  vector<string> ret = {};
-
-  for (int i = 0; i < input.size(); i++) {
-    ret.push_back(padString(input[i], table_size));
-  }
-
-  return ret;
-}
 
 TEST_F(PSQL_DataTypes_Char, Table_Creation) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS_1);
