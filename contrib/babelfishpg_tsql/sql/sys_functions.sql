@@ -1243,6 +1243,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1260,14 +1266,25 @@ BEGIN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		result = day_diff;
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = sys.datepart('hour', enddate) - sys.datepart('hour', startdate);
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
@@ -1329,6 +1346,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1346,14 +1369,25 @@ BEGIN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		result = day_diff;
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER;
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
