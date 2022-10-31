@@ -124,6 +124,23 @@ make_or_qual(Node *qual1, Node *qual2)
 	return (Node *) make_orclause(list_make2(qual1, qual2));
 }
 
+static void
+init_and_check_collation_callbacks(void)
+{
+	if (!collation_callbacks_ptr)
+	{
+		collation_callbacks **callbacks_ptr;
+		callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
+		collation_callbacks_ptr = *callbacks_ptr;
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("collation callbacks pointer is not initialised properly.")));
+	}
+}
+
 static Node*
 transform_funcexpr(Node* node)
 {
@@ -568,23 +585,6 @@ Node* pltsql_planner_node_transformer(PlannerInfo *root,
 			NULL);
 	}
 	return pltsql_predicate_transformer(expr);
-}
-
-static void
-init_and_check_collation_callbacks(void)
-{
-	if (!collation_callbacks_ptr)
-	{
-		collation_callbacks **callbacks_ptr;
-		callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
-		collation_callbacks_ptr = *callbacks_ptr;
-
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 }
 
 Oid
