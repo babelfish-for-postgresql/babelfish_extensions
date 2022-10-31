@@ -509,3 +509,76 @@ TEST_F(PSQL_DataTypes_SmallInt, Comparison_Functions) {
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
+
+TEST_F(PSQL_DataTypes_SmallInt, Arithmetic_Operators) {
+  const int BUFFER_LEN = 0;
+
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE_NAME}
+  };
+
+  const vector<string> INSERTED_PK = {
+    "-2",
+    "3",
+    "4"
+  };
+
+  const vector<string> INSERTED_DATA = {
+    "2",
+    "3",
+    "5"
+  };
+  const int NUM_OF_DATA = INSERTED_DATA.size();
+  
+  // insertString initialization
+  string insertString{};
+  string comma{};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(" + INSERTED_PK[i] + "," + INSERTED_DATA[i] + ")";
+    comma = ",";
+  }
+
+  const vector<string> OPERATIONS_QUERY = {
+    COL1_NAME + "+" + COL2_NAME,
+    COL1_NAME + "-" + COL2_NAME,
+    COL1_NAME + "/" + COL2_NAME,
+    COL1_NAME + "*" + COL2_NAME,
+
+    "abs(" + COL1_NAME + ")",             // Absolute Value
+  };
+
+  const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
+
+  vector<vector<short int>> expected_results = {};
+
+  // initialization of expected_results
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    expected_results.push_back({});
+    short int data_1 = stringToShortInt(INSERTED_PK[i]);
+    short int data_2 = stringToShortInt(INSERTED_DATA[i]);
+
+    expected_results[i].push_back(data_1 + data_2);
+    expected_results[i].push_back(data_1 - data_2);
+    expected_results[i].push_back(data_1 / data_2);
+    expected_results[i].push_back(data_1 * data_2);
+
+    expected_results[i].push_back(abs(data_1));
+  }
+
+  // Create a vector of length NUM_OF_OPERATIONS with dummy value of -1 to store column results
+  vector<short int> col_results(NUM_OF_OPERATIONS, -1);
+  const vector<long> EXPECTED_LEN(NUM_OF_OPERATIONS, SMALLINT_BYTES_EXPECTED);
+  
+  createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
+  insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insertString, NUM_OF_DATA);
+
+  testArithmeticOperators(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, NUM_OF_DATA, SQL_C_SSHORT, 
+                          col_results, BUFFER_LEN, OPERATIONS_QUERY, expected_results, EXPECTED_LEN);
+  
+  testArithmeticOperators(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, NUM_OF_DATA, SQL_C_SSHORT, 
+                          col_results, BUFFER_LEN, OPERATIONS_QUERY, expected_results, EXPECTED_LEN);
+
+  dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
+  dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
+}
