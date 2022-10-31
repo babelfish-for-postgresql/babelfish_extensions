@@ -247,12 +247,53 @@ go
 SELECT * FROM t_neg_inc_1;
 go
 
--- Test get id max/min helper functions
-SELECT sys.get_min_id_from_table(';drop table master_dbo.test_table1;', 'master_dbo', 'test_table1');
-GO
+-- Test that identity counters shouldn't rolled back even if the transaction
+-- is rolled back.
+CREATE TABLE dbo.t1_identity_1(a int identity primary key, b int unique not null);
+SET IDENTITY_INSERT dbo.t1_identity_1 ON;
+INSERT INTO dbo.t1_identity_1 (a,b) VALUES (1,1);
+go
 
-SELECT sys.get_max_id_from_table('test_id', ';drop table master_dbo', 'test_table1;');
-GO
+-- Check transaction rollback should increase identity
+BEGIN TRAN t1; INSERT INTO dbo.t1_identity_1 (a,b) VALUES (300,2); ROLLBACK TRAN t1;
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+
+-- Check Statement error shouldn't increase identity
+BEGIN TRAN t1; INSERT INTO dbo.t1_identity_1 (a,b) VALUES (400,1); ROLLBACK TRAN t1;
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+
+-- Smaller value shouldn't update identity seed
+INSERT INTO dbo.t1_identity_1 (a,b) VALUES (100,3);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+
+SET IDENTITY_INSERT dbo.t1_identity_1 OFF;
+go
+
+CREATE TABLE dbo.t1_identity_2(a int identity(1, -1) primary key, b int unique not null);
+SET IDENTITY_INSERT dbo.t1_identity_2 ON;
+INSERT INTO dbo.t1_identity_2 (a,b) VALUES (1,1);
+go
+
+-- Check transaction rollback should decrease identity
+BEGIN TRAN t1; INSERT INTO dbo.t1_identity_2 (a,b) VALUES (-300,2); ROLLBACK TRAN t1;
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_2'); SELECT SCOPE_IDENTITY();
+go
+
+-- Check Statement error shouldn't decrease identity
+BEGIN TRAN t1; INSERT INTO dbo.t1_identity_2 (a,b) VALUES (-400,1); ROLLBACK TRAN t1;
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_2'); SELECT SCOPE_IDENTITY();
+go
+
+-- Larger value shouldn't update identity seed
+INSERT INTO dbo.t1_identity_2 (a,b) VALUES (-100,3);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_2'); SELECT SCOPE_IDENTITY();
+go
+
+SET IDENTITY_INSERT dbo.t1_identity_2 OFF;
+go
 
 -- Clean up
 DROP PROCEDURE insert_test_table1,
@@ -266,5 +307,7 @@ DROP TABLE dbo.test_table1,
 dbo.test_table2,
 dbo.test_table3,
 dbo.employees,
-dbo.t_neg_inc_1;
+dbo.t_neg_inc_1,
+dbo.t1_identity_1,
+dbo.t1_identity_2
 go

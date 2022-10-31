@@ -3762,6 +3762,12 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
+-- Identity related helper functions are no longer needed
+ALTER FUNCTION sys.get_min_id_from_table RENAME TO get_min_id_from_table_deprecated_in_2_3_0;
+ALTER FUNCTION sys.get_max_id_from_table RENAME TO get_max_id_from_table_deprecated_in_2_3_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_table_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

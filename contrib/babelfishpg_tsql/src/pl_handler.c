@@ -231,6 +231,7 @@ write_stored_proc_probin_hook_type write_stored_proc_probin_hook = NULL;
 make_fn_arguments_from_stored_proc_probin_hook_type make_fn_arguments_from_stored_proc_probin_hook = NULL;
 pltsql_nextval_hook_type prev_pltsql_nextval_hook = NULL;
 pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
+pltsql_setval_hook_type prev_pltsql_setval_hook = NULL;
 
 static void
 set_procid(Oid oid)
@@ -3529,6 +3530,9 @@ _PG_init(void)
 	prev_pltsql_resetcache_hook = pltsql_resetcache_hook;
 	pltsql_resetcache_hook = pltsql_resetcache_identity;
 
+	prev_pltsql_setval_hook = pltsql_setval_hook;
+	pltsql_setval_hook = pltsql_setval_identity;
+
 	suppress_string_truncation_error_hook = pltsql_suppress_string_truncation_error;
 
 	pre_function_call_hook = pre_function_call_hook_impl;
@@ -3575,6 +3579,7 @@ _PG_fini(void)
 	planner_node_transformer_hook = prev_planner_node_transformer_hook;
 	pltsql_nextval_hook = prev_pltsql_nextval_hook;
 	pltsql_resetcache_hook = prev_pltsql_resetcache_hook;
+	pltsql_setval_hook = prev_pltsql_setval_hook;
 	relname_lookup_hook = prev_relname_lookup_hook;
 	uninstall_object_access_hook_drop_relation();
 	ProcessUtility_hook = prev_ProcessUtility;
