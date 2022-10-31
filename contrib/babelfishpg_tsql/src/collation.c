@@ -267,6 +267,7 @@ transform_likenode(Node* node, Oid opno)
 		 * ahead with replacing the ci_as collation with a corresponding cs_as one
 		 * if an ILIKE node is found during dump and restore. 
 		 */
+		init_and_check_collation_callbacks();
 		if ((*collation_callbacks_ptr->expr_contains_ilike_and_ci_as_coll)(node, false)
 				 && babelfish_dump_restore)
 		{
