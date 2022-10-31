@@ -1,7 +1,4 @@
 -- tsql
-DROP ROLE sp_droprolemember_r3;
-GO
-
 DROP ROLE sp_droprolemember_r2;
 GO
 

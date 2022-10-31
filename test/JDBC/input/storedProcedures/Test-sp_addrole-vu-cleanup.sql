@@ -2,7 +2,8 @@
 DROP ROLE sp_addrole_r3;
 GO
 
-DROP ROLE sp_addrole_r2;
+-- Cannot drop the role which contains leading/trailing whitespaces, special characters from DROP ROLE cmd
+Exec sp_droprole '   @sp_addrole_r2   ';
 GO
 
 DROP ROLE sp_addrole_r1;
