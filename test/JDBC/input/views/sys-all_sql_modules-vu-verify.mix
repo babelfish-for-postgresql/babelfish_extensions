@@ -1,3 +1,4 @@
+-- sla 60000
 -- NOTE: Some tests will be marked as "DISABLED DUE TO NON-UNIQUE OBJECT_ID"
 -- This is because during MVU, items in pg_class an pg_proc could have the same OBJECT_ID
 -- Some tests have no way of identification except for OBJECT_ID since definition will be missing

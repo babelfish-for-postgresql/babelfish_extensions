@@ -10,6 +10,8 @@ import static java.util.Objects.isNull;
 
 import static com.sqlsamples.Config.*;
 import static com.sqlsamples.Statistics.exec_times;
+import static com.sqlsamples.Statistics.curr_exec_time;
+import static com.sqlsamples.Statistics.sla;
 
 public class batch_run {
 
@@ -20,6 +22,7 @@ public class batch_run {
         boolean isCrossDialectFile = false;
         boolean tsqlDialect = false;
         boolean psqlDialect = false;
+        boolean customSLA = false;
 
         if (testFilePath.contains(".mix")) {
             isCrossDialectFile = true;
@@ -65,12 +68,10 @@ public class batch_run {
                     }
                     continue;
                 }
-
                 long startTime = System.nanoTime();
 
                 // if line starts with keyword "prepst", it means it is either a prep exec statement or an exec statement
                 if (strLine.startsWith("prepst")) {
-
                     // Convert .NET input file format for prepared statement to JDBC
                     strLine = strLine.replaceAll("@[a-zA-Z0-9]+", "?");
 
@@ -91,7 +92,6 @@ public class batch_run {
                         jdbcPreparedStatement.testPreparedStatementWithFile(result, bw, strLine, logger);
 
                     } else if (!result[1].equals("exec")) {
-
                         jdbcPreparedStatement.closePreparedStatements(bw, logger);
 
                         SQL = result[1];
@@ -186,7 +186,6 @@ public class batch_run {
                     
                 // if line starts with keyword "cursor", it means it is a cursor operation
                 } else if (strLine.startsWith("cursor")) {
-
                     // Convert .NET input file format for prepared statement to JDBC
                     // Used if cursor opened on a result set from a prepared statement
                     if (strLine.contains("prepst")) {
@@ -255,7 +254,14 @@ public class batch_run {
                 } else {
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {
-                        if (!strLine.equalsIgnoreCase("GO")) {
+                        customSLA = strLine.toLowerCase().startsWith("-- sla");
+                        if (customSLA){
+                            String[] tokens=strLine.split(" ");  
+                            sla = Long.parseLong(tokens[2]);
+                            sla = sla*(1000000L);
+                            continue;
+                        }
+                        else if (!strLine.equalsIgnoreCase("GO")) {
                             sqlBatch.append(strLine).append(System.lineSeparator());
                             continue;
                         } else {
@@ -273,10 +279,10 @@ public class batch_run {
                     jdbcStatement.createStatements(con_bbl, bw, logger);
                     jdbcStatement.testStatementWithFile(SQL, bw, strLine, logger);
                 }
-
                 long endTime = System.nanoTime();
                 long duration = (endTime - startTime);
                 exec_times.add(duration);
+                curr_exec_time += duration;
             }
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);

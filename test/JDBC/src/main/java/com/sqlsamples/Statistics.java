@@ -7,7 +7,8 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 public class Statistics {
     DescriptiveStatistics descriptiveStatistics;
     static ArrayList<Long> exec_times = new ArrayList<>();
-    
+    static long curr_exec_time = 0L;
+    static long sla = 0L;
     public Statistics(double[] values) { 
         descriptiveStatistics = new DescriptiveStatistics(values);
     }

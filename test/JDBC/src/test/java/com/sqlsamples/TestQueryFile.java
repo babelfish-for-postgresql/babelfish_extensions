@@ -16,6 +16,8 @@ import java.util.stream.Stream;
 import static com.sqlsamples.Config.*;
 
 import static com.sqlsamples.Statistics.exec_times;
+import static com.sqlsamples.Statistics.curr_exec_time;
+import static com.sqlsamples.Statistics.sla;
 
 public class TestQueryFile {
     
@@ -26,6 +28,7 @@ public class TestQueryFile {
     static Logger summaryLogger = LogManager.getLogger("testSummaryLogger");    //logger to write summary of tests executed
     static Logger logger = LogManager.getLogger("eventLoggger");                //logger to log any test framework events
     static ArrayList<AbstractMap.SimpleEntry<String, Boolean>> summaryMap = new ArrayList<>(); //map to store test names and status
+    static ArrayList<AbstractMap.SimpleEntry<String, ArrayList<Long>>> slaMap = new ArrayList<>(); //map to store execution time and SLA
     static ArrayList<AbstractMap.SimpleEntry<String, ArrayList<Integer>>> testCountMap = new ArrayList<>(); //map to store test names and number of tests passed
     static ArrayList <String> fileList = new ArrayList<>();
     static HashMap<String, String> filePaths = new HashMap<>(); //map to store fileName and their paths
@@ -252,16 +255,23 @@ public class TestQueryFile {
             String testMethodName = summaryMap.get(i).getKey();
 
             boolean status = summaryMap.get(i).getValue();
+            Long exec_time = slaMap.get(i).getValue().get(0);
+            Long sla_val = slaMap.get(i).getValue().get(1);
             int testsPassed = 0, totalTests = 0;
 
             if(status){
                 //extra spaces for right side padding
-                summaryLogger.info((testMethodName + ":" + "                                                     ").substring(0, maxlen+2) + "Passed!" + testStats);
+                summaryLogger.info((testMethodName + ":" + "                                                     ").substring(0, maxlen+2) + "Passed! (" + exec_time + "/" + sla_val + "ms OK)" + testStats);
                 passed++;
+            }
+            else if(exec_time <= sla_val){
+                //extra spaces for right side padding
+                summaryLogger.info((testMethodName + ":" + "                                                     ").substring(0, maxlen+2) + "Failed! (" + exec_time + "/" + sla_val + "ms OK)" + testStats);
+                failed++;
             }
             else{
                 //extra spaces for right side padding
-                summaryLogger.info((testMethodName + ":" + "                                                     ").substring(0, maxlen+2) + "Failed!" + testStats);
+                summaryLogger.info((testMethodName + ":" + "                                                     ").substring(0, maxlen+2) + "Failed! (" + exec_time + "/" + sla_val + "ms TIME OUT)" + testStats);
                 failed++;
             }
         }
@@ -378,8 +388,8 @@ public class TestQueryFile {
         String testFilePath = filePaths.get(inputFileName);
         
         boolean result; // whether test passed or failed
+        boolean timeout;
         int failed;
-
         String outputFileName;
 
         if(inputFilesDirectoryPath.substring(inputFilesDirectoryPath.length() - 1) == "/"){
@@ -394,12 +404,21 @@ public class TestQueryFile {
         // generate buffer reader associated with the file
         FileWriter fw = new FileWriter(outputFile);
         BufferedWriter bw = new BufferedWriter(fw);
+        curr_exec_time = 0L;
         batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
         bw.close();
-        
+        if(sla == 0){
+            sla = defaultSLA*1000000L;
+        }
         File expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
+        if(curr_exec_time <= sla){
+            timeout = false;
+        }
+        else{
+            timeout = true;
+        }
         if (expectedFile.exists()) {
             // get the diff
             result = compareOutFiles(outputFile, expectedFile);
@@ -410,14 +429,31 @@ public class TestQueryFile {
             result = false;
         }
 
-        summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result)); //add test name and result to map
+        ArrayList<Long> tempSla = new ArrayList<>();
+        tempSla.add(curr_exec_time/1000000L);
+        tempSla.add(sla/1000000L);
+        summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result && !timeout)); //add test name and result to map
+        slaMap.add(new AbstractMap.SimpleEntry<>(inputFileName, tempSla)); //add execution time and SLA
+        sla = 0L;
 
         try {
-            Assertions.assertTrue(result);
+            Assertions.assertTrue(result && !timeout);
         } catch (AssertionError e) {
-            Throwable throwable = new Throwable(inputFileName + " FAILED! Output diff can be found in '" + diffFile.getAbsolutePath() + "'");
-            throwable.setStackTrace(new StackTraceElement[0]);
-            throw throwable;
+            if(timeout && result){
+                Throwable throwable = new Throwable(inputFileName + " FAILED! Execution timed out!!");
+                throwable.setStackTrace(new StackTraceElement[0]);
+                throw throwable;
+            }
+            else if(timeout && !result){
+                Throwable throwable = new Throwable(inputFileName + " FAILED! Execution timed out! Output diff can be found in '" + diffFile.getAbsolutePath() + "'");
+                throwable.setStackTrace(new StackTraceElement[0]);
+                throw throwable;
+            }
+            else{
+                Throwable throwable = new Throwable(inputFileName + " FAILED! Output diff can be found in '" + diffFile.getAbsolutePath() + "'");
+                throwable.setStackTrace(new StackTraceElement[0]);
+                throw throwable;
+            }
         }
     }
 }

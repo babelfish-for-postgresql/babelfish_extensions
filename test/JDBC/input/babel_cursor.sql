@@ -1,3 +1,4 @@
+-- sla 10000
 CREATE TABLE babel_cursor_t1 (i INT, d numeric(8, 4), c varchar(10), u uniqueidentifier, v sql_variant);
 INSERT INTO babel_cursor_t1 VALUES (1, 1.1, 'a', '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 1);
 INSERT INTO babel_cursor_t1 VALUES (2, 22.22, 'bb', '2E984725-C51C-4BF4-9960-E1C80E27ABA0', 22.22);

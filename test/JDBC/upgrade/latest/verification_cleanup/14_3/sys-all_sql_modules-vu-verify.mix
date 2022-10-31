@@ -1,3 +1,4 @@
+-- sla 200000
 USE sys_all_sql_modules_vu_prepare_db
 GO
 
