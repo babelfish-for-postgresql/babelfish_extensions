@@ -1,0 +1,52 @@
+use babel_3640_db
+go
+
+exec babel_3640_p1
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3640_db#!#dbo#!#mytable1#!#TABLE#!#<NULL>
+babel_3640_db#!#dbo#!#trans2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec babel_3640_p2
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3640_db#!#dbo#!#mytable1#!#TABLE#!#<NULL>
+babel_3640_db#!#dbo#!#trans2#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec babel_3640_p3
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+exec babel_3640_p4
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3640_db#!#dbo#!#sysdatabases#!#VIEW#!#<NULL>
+babel_3640_db#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+
+exec babel_3640_p5
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3640_db#!#dbo#!#sysdatabases#!#VIEW#!#<NULL>
+babel_3640_db#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+
+exec babel_3640_p6
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
