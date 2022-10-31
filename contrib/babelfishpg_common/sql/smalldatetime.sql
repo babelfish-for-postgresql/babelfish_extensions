@@ -351,12 +351,12 @@ CREATE OPERATOR sys.>= (
 -- smalldatetime +/- operators (smalldatetime, int4, float8)
 CREATE FUNCTION sys.smalldatetime_add(sys.smalldatetime, sys.smalldatetime)
 RETURNS sys.smalldatetime
-AS 'babelfishpg_common', 'datetime_pl_datetime'
+AS 'babelfishpg_common', 'smalldatetime_pl_smalldatetime'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.smalldatetime_minus(sys.smalldatetime, sys.smalldatetime)
 RETURNS sys.smalldatetime
-AS 'babelfishpg_common', 'datetime_mi_datetime'
+AS 'babelfishpg_common', 'smalldatetime_mi_smalldatetime'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.+ (

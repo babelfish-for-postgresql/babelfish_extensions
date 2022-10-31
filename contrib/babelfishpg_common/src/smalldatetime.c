@@ -38,8 +38,8 @@ PG_FUNCTION_INFO_V1(smalldatetime_mi_float8);
 PG_FUNCTION_INFO_V1(float8_pl_smalldatetime);
 PG_FUNCTION_INFO_V1(float8_mi_smalldatetime);
 
-PG_FUNCTION_INFO_V1(datetime_pl_datetime);
-PG_FUNCTION_INFO_V1(datetime_mi_datetime);
+PG_FUNCTION_INFO_V1(smalldatetime_pl_smalldatetime);
+PG_FUNCTION_INFO_V1(smalldatetime_mi_smalldatetime);
 
 void AdjustTimestampForSmallDatetime(Timestamp *time);
 void CheckSmalldatetimeRange(const Timestamp time);
@@ -607,7 +607,7 @@ smalldatetime_mi_float8(PG_FUNCTION_ARGS)
 }
 
 Datum
-datetime_pl_datetime(PG_FUNCTION_ARGS)
+smalldatetime_pl_smalldatetime(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp timestamp2 = PG_GETARG_TIMESTAMP(1);
@@ -626,7 +626,7 @@ datetime_pl_datetime(PG_FUNCTION_ARGS)
 }
 
 Datum
-datetime_mi_datetime(PG_FUNCTION_ARGS)
+smalldatetime_mi_smalldatetime(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp timestamp2 = PG_GETARG_TIMESTAMP(1);
