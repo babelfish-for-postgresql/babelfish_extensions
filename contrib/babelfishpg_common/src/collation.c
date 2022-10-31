@@ -872,7 +872,7 @@ lookup_collation_table(Oid coll_oid)
 	{
 		coll_info invalid;
 		invalid.oid = InvalidOid;
-		invalid.enc = PG_UTF8;
+		invalid.enc = coll_infos[server_collation_collidx].enc;
 		elog(DEBUG2, "collation oid %d not found, using default collation", coll_oid);
 		return invalid;
 	}
