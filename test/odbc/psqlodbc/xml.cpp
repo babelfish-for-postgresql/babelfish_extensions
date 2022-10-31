@@ -168,14 +168,14 @@ TEST_F(PSQL_DataTypes_Xml, Update_Success) {
   testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
 
   testUpdateSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, COL2_NAME, data_update_values, data_update_values);
-  verifyValuesInObject(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, data_update_values, data_update_values);
+  verifyValuesInObject(ServerType::PSQL, BBF_TABLE_NAME, COL1_NAME, data_update_values, data_update_values);
 
   data_update_values = {
     LARGE_XML
   };
 
   testUpdateSuccess(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, COL2_NAME, data_update_values, data_update_values);
-  verifyValuesInObject(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, data_update_values, data_update_values);
+  verifyValuesInObject(ServerType::MSSQL, PG_TABLE_NAME, COL1_NAME, data_update_values, data_update_values);
 
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
