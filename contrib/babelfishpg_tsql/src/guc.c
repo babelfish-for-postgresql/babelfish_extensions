@@ -1151,9 +1151,6 @@ int escape_hatch_ignore_dup_key = EH_STRICT;
 int escape_hatch_rowversion = EH_STRICT;
 int escape_hatch_showplan_all = EH_STRICT;
 int escape_hatch_checkpoint = EH_IGNORE;
-int escape_hatch_hierarchyid = EH_STRICT;
-int escape_hatch_geography = EH_STRICT;
-int escape_hatch_geometry = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1465,36 +1462,6 @@ define_escape_hatch_variables(void)
 							  gettext_noop("escape hatch for TIMESTAMP/ROWVERSION columns"),
 							  NULL,
 							  &escape_hatch_rowversion,
-							  EH_STRICT,
-							  escape_hatch_options,
-							  PGC_USERSET,
-							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							  NULL, NULL, NULL);
-	
-	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_hierarchyid",
-							  gettext_noop("escape hatch for HIERARCHYID columns"),
-							  NULL,
-							  &escape_hatch_hierarchyid,
-							  EH_STRICT,
-							  escape_hatch_options,
-							  PGC_USERSET,
-							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							  NULL, NULL, NULL);
-	
-	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_geography",
-							  gettext_noop("escape hatch for GEOGRAPHY columns"),
-							  NULL,
-							  &escape_hatch_geography,
-							  EH_STRICT,
-							  escape_hatch_options,
-							  PGC_USERSET,
-							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							  NULL, NULL, NULL);
-
-	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_geometry",
-							  gettext_noop("escape hatch for GEOMETRY columns"),
-							  NULL,
-							  &escape_hatch_geometry,
 							  EH_STRICT,
 							  escape_hatch_options,
 							  PGC_USERSET,
