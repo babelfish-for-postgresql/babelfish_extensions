@@ -97,7 +97,7 @@ typedef struct collation_callbacks
 
 	int (*find_collation_internal)(const char *collation_name);
 
-	bool (*expr_contains_ilike_and_ci_as_coll)(Oid colloid, bool check_for_ci_as_collation);
+	bool (*expr_contains_ilike_and_ci_as_coll)(Node *expr, bool check_for_ci_as_collation);
 
 } collation_callbacks;
 
