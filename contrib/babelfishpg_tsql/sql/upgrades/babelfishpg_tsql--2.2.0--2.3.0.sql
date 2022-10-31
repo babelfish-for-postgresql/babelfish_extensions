@@ -2801,6 +2801,237 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) RETURNS INTEGER AS $$
+DECLARE
+	i INTEGER;
+	n1 INTEGER;
+BEGIN
+	n1 = y1 * 365 + d1;
+	FOR i in 0 .. m1-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n1 = n1 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n1 = n1 + 30;
+		ELSIF (i = 1) THEN
+			n1 = n1 + 28;
+		END IF;
+	END LOOP;
+	IF m1 <= 2 THEN
+		y1 = y1 - 1;
+	END IF;
+	n1 = n1 + (y1/4 - y1/100 + y1/400);
+
+	return n1;
+END
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS INTEGER AS $$
+DECLARE
+	result INTEGER;
+	year_diff INTEGER;
+	month_diff INTEGER;
+	day_diff INTEGER;
+	hour_diff INTEGER;
+	minute_diff INTEGER;
+	second_diff INTEGER;
+	millisecond_diff INTEGER;
+	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
+		result = year_diff;
+	WHEN 'quarter' THEN
+		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
+		month_diff = sys.datepart('month', enddate) - sys.datepart('month', startdate);
+		result = (year_diff * 12 + month_diff) / 3;
+	WHEN 'month' THEN
+		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
+		month_diff = sys.datepart('month', enddate) - sys.datepart('month', startdate);
+		result = year_diff * 12 + month_diff;
+	WHEN 'doy', 'y' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		result = day_diff;
+	WHEN 'day' THEN
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+	WHEN 'week' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		result = day_diff / 7;
+	WHEN 'hour' THEN
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = sys.datepart('hour', enddate) - sys.datepart('hour', startdate);
+		result = day_diff * 24 + hour_diff;
+	WHEN 'minute' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		result = (day_diff * 24 + hour_diff) * 60 + minute_diff;
+	WHEN 'second' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
+		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
+	WHEN 'millisecond' THEN
+		-- millisecond result from date_part by default contains second value,
+		-- so we don't need to add second_diff again
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
+		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
+	WHEN 'microsecond' THEN
+		-- microsecond result from date_part by default contains second and millisecond values,
+		-- so we don't need to add second_diff and millisecond_diff again
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
+		microsecond_diff = TRUNC(sys.datepart('microsecond', enddate OPERATOR(sys.-) startdate));
+		result = ((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		day_diff = sys.datepart('day', enddate - startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
+		microsecond_diff = TRUNC(sys.datepart('microsecond', enddate OPERATOR(sys.-) startdate));
+		result = (((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff) * 1000;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
+	END CASE;
+
+	return result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS INTEGER AS $$
+DECLARE
+	result INTEGER;
+	year_diff INTEGER;
+	month_diff INTEGER;
+	day_diff INTEGER;
+	hour_diff INTEGER;
+	minute_diff INTEGER;
+	second_diff INTEGER;
+	millisecond_diff INTEGER;
+	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		result = year_diff;
+	WHEN 'quarter' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		result = (year_diff * 12 + month_diff) / 3;
+	WHEN 'month' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		result = year_diff * 12 + month_diff;
+	WHEN 'doy', 'y' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		result = day_diff;
+	WHEN 'day' THEN
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+	WHEN 'week' THEN
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		result = day_diff / 7;
+	WHEN 'hour' THEN
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER;
+		result = day_diff * 24 + hour_diff;
+	WHEN 'minute' THEN
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		result = (day_diff * 24 + hour_diff) * 60 + minute_diff;
+	WHEN 'second' THEN
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
+		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
+	WHEN 'millisecond' THEN
+		-- millisecond result from date_part by default contains second value,
+		-- so we don't need to add second_diff again
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
+		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
+	WHEN 'microsecond' THEN
+		-- microsecond result from date_part by default contains second and millisecond values,
+		-- so we don't need to add second_diff and millisecond_diff again
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
+		microsecond_diff = TRUNC(date_part('microsecond', enddate OPERATOR(sys.-) startdate));
+		result = ((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
+		microsecond_diff = TRUNC(date_part('microsecond', enddate OPERATOR(sys.-) startdate));
+		result = (((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff) * 1000;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
+	END CASE;
+
+	return result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_in_2_3_0');
 
