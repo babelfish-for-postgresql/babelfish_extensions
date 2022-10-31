@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string BBF_TABLE_NAME = "master.dbo.sql_variant_table_odbc_test";
@@ -109,15 +110,6 @@ class PSQL_DataTypes_Sql_Variant : public testing::Test {
   }
 };
 
-// Converts a hex value (withotu 0x) to it's associated integer string
-string HexToIntStr(const string &inserted_hex) {
-  int i;
-  std::istringstream iss(inserted_hex);
-  iss >> std::hex >> i;
-
-  return std::to_string(i);
-}
-
 // Helper function to help set up insertion for sql_variant
 void SplitInsertionInfo(const vector<tuple<string,string,string,bool>> &INSERTION_INFO, 
   vector<string> &casted_inserted_values, vector<string> &bbf_expected, vector<string> &pg_expected) {
@@ -142,7 +134,7 @@ void SplitInsertionInfo(const vector<tuple<string,string,string,bool>> &INSERTIO
       insert_string = "CAST('" + insert_value + "' AS " + type + ")";
     }
     else if (is_binary) {
-      insert_string = "CAST(" + HexToIntStr(insert_value) + " AS " + type + ")";
+      insert_string = "CAST(" + hexToIntStr(insert_value) + " AS " + type + ")";
     }
     else {
       insert_string = "CAST(" + insert_value + " AS " + type + ")";

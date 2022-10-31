@@ -61,16 +61,6 @@ const string STRING_4000 = "TQR6vCl9UH5qg2UEJMleJaa3yToVaUbhhxQ7e0SgHjrKg1TYvyUz
   "7a5RbDg2OWxrWcX4KmfsgIozSpCGUoMv15WHuGeZrPvAmk3nyr7BrMhYqvMg13JceO82rER67IOxVXTM9KnVwlOxbmSnH1w3CzWrZVqzpKY5W0UPZB2tQXezqqMFHRhWG"
   "L5KUxdTyPGBrTIyo1VesEBvkqgKzIiROBK6UVaP24WGl74nyGX5YGg9Cqs";
 
-vector<string> getExpectedResults_nvarChar(const vector<string> &input, size_t table_size) {
-  vector<string> ret = {};
-
-  for (int i = 0; i < input.size(); i++) {
-    ret.push_back(padString(input[i], table_size));
-  }
-
-  return ret;
-}
-
 class PSQL_DataTypes_nvarChar : public testing::Test {
   void SetUp() override {
     if (!Drivers::DriverExists(ServerType::PSQL)) {

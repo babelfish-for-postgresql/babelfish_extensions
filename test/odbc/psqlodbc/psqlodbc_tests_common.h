@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 #include <sqlext.h>
 #include <string>
-#include <time.h>
 #include <vector>
 
 #include "../src/drivers.h"
@@ -19,23 +18,6 @@ using std::pair;
 
 const int BUFFER_SIZE = 16384;
 const int INT_BYTES_EXPECTED = 4;
-
-/**
- * Left pads (adds spaces on the right side) the input string until a length of table_size
- * 
- * @param input string to be padded
- * @param table_size the desired length
- */
-string padString(string input, size_t table_size);
-
-/**
- * Convert integer string into hex string with proper padding
- *
- * @param inserted_int string of an integer to be converted to hex
- * @param table_size size of the 
- * @return string of the integer in hexadecimal values
- */ 
-std::string GetHexRepresentation(std::string inserted_int, size_t table_size = -1);
 
 /**
  * Duplicates the values in the input vector
