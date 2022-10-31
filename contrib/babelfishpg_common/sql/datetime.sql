@@ -163,7 +163,29 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIME)
     parallel = safe
 );
 
--- datetime <-> int operators for datetime-int +/- arithmetic 
+-- datetime +/- operators (datetime, int4, float8)
+CREATE FUNCTION sys.datetime_add(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'babelfishpg_common', 'datetime_pl_datetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.datetime_minus(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'babelfishpg_common', 'datetime_mi_datetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.DATETIME,
+    RIGHTARG   = sys.DATETIME,
+    PROCEDURE  = sys.datetime_add
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.DATETIME,
+    RIGHTARG   = sys.DATETIME,
+    PROCEDURE  = sys.datetime_minus
+);
+
 CREATE FUNCTION sys.datetimeplint4(sys.DATETIME, INT4)
 RETURNS sys.DATETIME
 AS 'babelfishpg_common', 'datetime_pl_int4'
@@ -206,28 +228,6 @@ CREATE OPERATOR sys.- (
     LEFTARG    = INT4,
     RIGHTARG   = sys.DATETIME,
     PROCEDURE  = sys.int4midatetime
-);
-
-CREATE FUNCTION sys.datetime_add(sys.DATETIME, sys.DATETIME)
-RETURNS sys.DATETIME
-AS 'babelfishpg_common', 'datetime_pl_datetime'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE FUNCTION sys.datetime_minus(sys.DATETIME, sys.DATETIME)
-RETURNS sys.DATETIME
-AS 'babelfishpg_common', 'datetime_mi_datetime'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OPERATOR sys.+ (
-    LEFTARG    = sys.DATETIME,
-    RIGHTARG   = sys.DATETIME,
-    PROCEDURE  = sys.datetime_add
-);
-
-CREATE OPERATOR sys.- (
-    LEFTARG    = sys.DATETIME,
-    RIGHTARG   = sys.DATETIME,
-    PROCEDURE  = sys.datetime_minus
 );
 
 CREATE FUNCTION sys.datetimeplfloat8(sys.DATETIME, float8)

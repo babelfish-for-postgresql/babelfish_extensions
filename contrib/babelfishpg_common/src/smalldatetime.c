@@ -38,6 +38,9 @@ PG_FUNCTION_INFO_V1(smalldatetime_mi_float8);
 PG_FUNCTION_INFO_V1(float8_pl_smalldatetime);
 PG_FUNCTION_INFO_V1(float8_mi_smalldatetime);
 
+PG_FUNCTION_INFO_V1(datetime_pl_datetime);
+PG_FUNCTION_INFO_V1(datetime_mi_datetime);
+
 void AdjustTimestampForSmallDatetime(Timestamp *time);
 void CheckSmalldatetimeRange(const Timestamp time);
 static Datum smalldatetime_in_str(char *str);
@@ -598,6 +601,44 @@ smalldatetime_mi_float8(PG_FUNCTION_ARGS)
 
 	/* subtract interval */
 	result = DirectFunctionCall2(timestamp_mi_interval, timestamp, PointerGetDatum(input_interval));
+
+	CheckSmalldatetimeRange(result);
+	PG_RETURN_TIMESTAMP(result);
+}
+
+Datum
+datetime_pl_datetime(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp2 = PG_GETARG_TIMESTAMP(1);
+	uint64 diff;
+	Interval  *input_interval;
+	Timestamp result;
+
+	/* calculate interval from timestamp2. It should be calculated as the difference from 1900-01-01 00:00:00 (default datetime) */
+	diff = timestamp2 - initializeToDefaultDatetime();
+	
+	/* add interval */
+	result = timestamp1 + diff;
+
+	CheckSmalldatetimeRange(result);
+	PG_RETURN_TIMESTAMP(result);
+}
+
+Datum
+datetime_mi_datetime(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp2 = PG_GETARG_TIMESTAMP(1);
+	uint64 diff;
+	Interval  *input_interval;
+	Timestamp result;
+
+	/* calculate interval from timestamp2. It should be calculated as the difference from 1900-01-01 00:00:00 (default datetime) */
+	diff = timestamp2 - initializeToDefaultDatetime();
+	
+	/* add interval */
+	result = timestamp1 - diff;
 
 	CheckSmalldatetimeRange(result);
 	PG_RETURN_TIMESTAMP(result);
