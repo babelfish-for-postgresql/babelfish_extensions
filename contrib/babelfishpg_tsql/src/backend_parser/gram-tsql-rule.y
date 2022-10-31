@@ -1532,20 +1532,30 @@ table_ref:	relation_expr tsql_table_hint_expr
                     n->lateral = true;
                     n->subquery = $2;
                     n->alias = $3;
-                    /* same comment as above */
+					/*
+					 * The SQL spec does not permit a subselect
+					 * (<derived_table>) without an alias clause,
+					 * so we don't either.  This avoids the problem
+					 * of needing to invent a unique refname for it.
+					 * That could be surmounted if there's sufficient
+					 * popular demand, but for now let's just implement
+					 * the spec and see if anyone complains.
+					 * However, it does seem like a good idea to emit
+					 * an error message that's better than "syntax error".
+					 */
                     if ($3 == NULL)
                     {
                         if (IsA($2, SelectStmt) &&
                             ((SelectStmt *) $2)->valuesLists)
                             ereport(ERROR,
                                     (errcode(ERRCODE_SYNTAX_ERROR),
-                                        errmsg("VALUES in FROM must have an alias"),
+                                        errmsg("VALUES in APPLY must have an alias"),
                                         errhint("For example, FROM (VALUES ...) [AS] foo."),
                                         parser_errposition(@2)));
                         else
                             ereport(ERROR,
                                     (errcode(ERRCODE_SYNTAX_ERROR),
-                                        errmsg("subquery in FROM must have an alias"),
+                                        errmsg("subquery in APPLY must have an alias"),
                                         errhint("For example, FROM (SELECT ...) [AS] foo."),
                                         parser_errposition(@2)));
                     }
