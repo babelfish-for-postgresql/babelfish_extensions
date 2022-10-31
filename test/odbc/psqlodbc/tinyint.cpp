@@ -1,18 +1,21 @@
 #include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
-const string TABLE_NAME = "master_dbo.money_table_odbc_test";
+const string TABLE_NAME = "master_dbo.tinyint_table_odbc_test";
 const string COL1_NAME = "pk";
 const string COL2_NAME = "data";
-const string DATATYPE_NAME = "sys.money";
-const string VIEW_NAME = "master_dbo.money_view_odbc_test";
-const vector<pair<string, string>> TABLE_COLUMNS = {
-  {COL1_NAME, "INT PRIMARY KEY"},
-  {COL2_NAME, DATATYPE_NAME}
-};
-const int DOUBLE_BYTES_EXPECTED = 8;
+const string DATATYPE_NAME = "sys.tinyint";
+const string VIEW_NAME = "master_dbo.tinyint_view_odbc_test";
 
-class PSQL_DataTypes_Money : public testing::Test {
+const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, "INT PRIMARY KEY"},
+    {COL2_NAME, DATATYPE_NAME}
+};
+
+const int TINYINT_BYTES_EXPECTED = 1;
+
+class PSQL_DataTypes_TinyInt : public testing::Test {
+
   void SetUp() override {
     if (!Drivers::DriverExists(ServerType::PSQL)) {
       GTEST_SKIP() << "PSQL Driver not present: skipping all tests for this fixture.";
@@ -34,11 +37,12 @@ class PSQL_DataTypes_Money : public testing::Test {
   }
 };
 
-TEST_F(PSQL_DataTypes_Money, Table_Creation) {
-  const vector<int> LENGTH_EXPECTED = {4, 255};
+TEST_F(PSQL_DataTypes_TinyInt, Table_Creation) {
+  // SQL_DESC_LENGTH length reported as 2 for tinyint column instead of 1.
+  const vector<int> LENGTH_EXPECTED = {4, 2};
   const vector<int> PRECISION_EXPECTED = {0, 0};
   const vector<int> SCALE_EXPECTED = {0, 0};
-  const vector<string> NAME_EXPECTED = {"int4", "unknown"};
+  const vector<string> NAME_EXPECTED = {"int4", "int2"};
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   testCommonColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS.size(), COL1_NAME, LENGTH_EXPECTED, 
@@ -46,34 +50,31 @@ TEST_F(PSQL_DataTypes_Money, Table_Creation) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Insertion_Success) {
-  double data;
+TEST_F(PSQL_DataTypes_TinyInt, Insertion_Success) {
+  int data{};
   const int BUFFER_LEN = 0;
 
-  const vector<string> INSERTED_DATA = {
-    "-922337203685477.5808",
-    "922337203685477.5807",
+  const vector<string> VALID_INSERTED_VALUES = {
     "0",
-    "100000000.01",
-    "-100000000.01",
+    "255",
+    "3",
     "NULL"
   };
-  const vector<double> EXPECTED = getExpectedResults_Double(INSERTED_DATA);
 
-  const vector<long> EXPECTED_LEN(EXPECTED.size(), DOUBLE_BYTES_EXPECTED);
+  const vector<int> EXPECTED = getExpectedResults_Int(VALID_INSERTED_VALUES);
+
+  const vector<long> EXPECTED_LEN(EXPECTED.size(), TINYINT_BYTES_EXPECTED);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, INSERTED_DATA, 
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_STINYINT, data, BUFFER_LEN, VALID_INSERTED_VALUES, 
     EXPECTED, EXPECTED_LEN);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Insertion_Fail) {
+TEST_F(PSQL_DataTypes_TinyInt, Insertion_Fail) {
   const vector<string> INVALID_INSERTED_VALUES = {
-    "AAA",
-    "-922337203685477.5809",
-    "922337203685477.5808",
-    "999999999999999999999999999999",
+    "-1",
+    "256"
   };
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
@@ -81,50 +82,49 @@ TEST_F(PSQL_DataTypes_Money, Insertion_Fail) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Update_Success) {
-  double data;
+TEST_F(PSQL_DataTypes_TinyInt, Update_Success) {
+  int data{};
   const int BUFFER_LEN = 0;
 
   const vector<string> DATA_INSERTED = {"1"};
-  const vector<double> DATA_EXPECTED = getExpectedResults_Double(DATA_INSERTED);
-  const vector<long> EXPECTED_INSERT_LEN(DATA_INSERTED.size(), DOUBLE_BYTES_EXPECTED);
+  const vector<int> DATA_EXPECTED = getExpectedResults_Int(DATA_INSERTED);
+  const vector<long> EXPECTED_INSERT_LEN(DATA_INSERTED.size(), TINYINT_BYTES_EXPECTED);
 
-  const vector <string> DATA_UPDATED_VALUES = {
-    "NULL",
-    "-922337203685477.5808",
-    "922337203685477.5807",
-    "0"
+  const vector<string> DATA_UPDATED_VALUES = {
+    "5",
+    "0",
+    "255"
   };
-  const vector<double> DATA_UPDATED_EXPECTED = getExpectedResults_Double(DATA_UPDATED_VALUES);
+  const vector<int> DATA_UPDATED_EXPECTED = getExpectedResults_Int(DATA_UPDATED_VALUES);
 
-  const vector<long> EXPECTED_LEN(DATA_UPDATED_EXPECTED.size(), DOUBLE_BYTES_EXPECTED);
+  const vector<long> EXPECTED_LEN(DATA_UPDATED_EXPECTED.size(), TINYINT_BYTES_EXPECTED);
   
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, DATA_INSERTED, DATA_EXPECTED, EXPECTED_INSERT_LEN);
-  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, DATA_UPDATED_VALUES, 
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_STINYINT, data, BUFFER_LEN, DATA_INSERTED, DATA_EXPECTED, EXPECTED_INSERT_LEN);
+  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, SQL_C_STINYINT, data, BUFFER_LEN, DATA_UPDATED_VALUES, 
     DATA_UPDATED_EXPECTED, EXPECTED_LEN);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Update_Fail) {
-  double data;
+TEST_F(PSQL_DataTypes_TinyInt, Update_Fail) {
+  int data{};
   const int BUFFER_LEN = 0;
-  
-  const vector<string> DATA_INSERTED = {"12345"};
-  const vector<double> EXPECTED_DATA_INSERTED = getExpectedResults_Double(DATA_INSERTED);
-  const vector<long> EXPECTED_INSERT_LEN(DATA_INSERTED.size(), DOUBLE_BYTES_EXPECTED);
 
-  const vector<string> DATA_UPDATED_VALUE = {"999999999999999999999999999999"}; // Over max
+  const vector<string> DATA_INSERTED = {"1"};
+  const vector<int> EXPECTED_DATA_INSERTED = getExpectedResults_Int(DATA_INSERTED);
+  const vector<long> EXPECTED_INSERT_LEN(DATA_INSERTED.size(), TINYINT_BYTES_EXPECTED);
+
+  const vector<string> DATA_UPDATED_VALUE = {"256"};
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, DATA_INSERTED, 
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_STINYINT, data, BUFFER_LEN, DATA_INSERTED, 
     EXPECTED_DATA_INSERTED, EXPECTED_INSERT_LEN);
-  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, EXPECTED_DATA_INSERTED, 
+  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, SQL_C_STINYINT, data, BUFFER_LEN, EXPECTED_DATA_INSERTED, 
     EXPECTED_INSERT_LEN, DATA_UPDATED_VALUE);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Arithmetic_Operators) {
+TEST_F(PSQL_DataTypes_TinyInt, Arithmetic_Operators) {
   const int BUFFER_LEN = 0;
 
   const vector<pair<string, string>> TABLE_COLUMNS = {
@@ -132,16 +132,16 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Operators) {
     {COL2_NAME, DATATYPE_NAME}
   };
 
-  const vector<string> INSERTED_PK = {
-    "-987654321.1234",
-    "-123456789.4321",
-    "0"
+  vector<string> INSERTED_PK = {
+    "1",
+    "2",
+    "5"
   };
 
-  const vector<string> INSERTED_DATA = {
-    "2.01",
-    "-100000000.01",
-    "922337203685477.5807"
+  vector<string> INSERTED_DATA = {
+    "1",
+    "2",
+    "3"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
@@ -157,51 +157,59 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Operators) {
     COL1_NAME + "+" + COL2_NAME,
     COL1_NAME + "-" + COL2_NAME,
     COL1_NAME + "/" + COL2_NAME,
-    COL1_NAME + "*" + COL2_NAME
+    COL1_NAME + "*" + COL2_NAME,
+    "ABS(" + COL1_NAME + ")",
+    "POWER(" + COL1_NAME + "," + COL2_NAME + ")",
+    "||/ " + COL1_NAME,
+    "LOG(" + COL1_NAME + ")"
   };
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
-  vector<vector<double>> expected_results = {};
+  vector<vector<int>> expected_results = {};
 
   // initialization of expected_results
-  for (int i = 0; i < INSERTED_DATA.size(); i++) {
+  for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    const double data_1 = stringToDouble(INSERTED_PK[i]);
-    const double data_2 = stringToDouble(INSERTED_DATA[i]);
+    int data_1 = stringToInt(INSERTED_PK[i]);
+    int data_2 = stringToInt(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 + data_2);
     expected_results[i].push_back(data_1 - data_2);
     expected_results[i].push_back(data_1 / data_2);
     expected_results[i].push_back(data_1 * data_2);
+
+    expected_results[i].push_back(abs(data_1));
+    expected_results[i].push_back(pow(data_1, data_2));
+    expected_results[i].push_back(cbrt(data_1));
+    expected_results[i].push_back(log10(data_1));
   }
 
-  // Create a vector of length NUM_OF_OPERATIONS with dummy value of -1 to store column results
-  vector<double> col_results(NUM_OF_OPERATIONS, -1);
-  const vector<long> EXPECTED_LEN(NUM_OF_OPERATIONS, DOUBLE_BYTES_EXPECTED);
+  vector<int> col_results(NUM_OF_OPERATIONS, {});
+  const vector<long> EXPECTED_LEN(NUM_OF_OPERATIONS, TINYINT_BYTES_EXPECTED);
   
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
-  testArithmeticOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, NUM_OF_DATA, SQL_C_DOUBLE, 
+  testArithmeticOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, NUM_OF_DATA, SQL_C_STINYINT, 
     col_results, BUFFER_LEN, OPERATIONS_QUERY, expected_results, EXPECTED_LEN);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Comparison_Operators) {
+TEST_F(PSQL_DataTypes_TinyInt, Comparison_Operators) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
     {COL2_NAME, DATATYPE_NAME}
   };
 
-  const vector<string> INSERTED_PK = {
-    "-987654321.1234",
-    "-123456789.4321",
-    "0"
+  vector<string> INSERTED_PK = {
+    "1",
+    "2",
+    "5"
   };
 
-  const vector<string> INSERTED_DATA = {
-    "2.01",
-    "-100000000.01",
-    "922337203685477.5807"
+  vector<string> INSERTED_DATA = {
+    "1",
+    "2",
+    "3"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
@@ -227,8 +235,8 @@ TEST_F(PSQL_DataTypes_Money, Comparison_Operators) {
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
-    const double data_1 = stringToDouble(INSERTED_PK[i]);
-    const double data_2 = stringToDouble(INSERTED_DATA[i]);
+    int data_1 = stringToInt(INSERTED_PK[i]);
+    int data_2 = stringToInt(INSERTED_DATA[i]);
 
     expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
     expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
@@ -244,24 +252,14 @@ TEST_F(PSQL_DataTypes_Money, Comparison_Operators) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Comparison_Functions) {
+TEST_F(PSQL_DataTypes_TinyInt, Comparison_Functions) {
   const int BUFFER_LEN = 0;
 
-  const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
-    {COL2_NAME, DATATYPE_NAME}
-  };
-
-  const vector<string> INSERTED_PK = {
-    "-987654321.1234",
-    "-123456789.4321",
-    "0"
-  };
-
   const vector<string> INSERTED_DATA = {
-    "2.01",
-    "-100000000.01",
-    "922337203685477.5807"
+    "8",
+    "2",
+    "0",
+    "200"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
 
@@ -269,74 +267,77 @@ TEST_F(PSQL_DataTypes_Money, Comparison_Functions) {
   string insertString{};
   string comma{};
   for (int i = 0; i < NUM_OF_DATA; i++) {
-    insertString += comma + "(" + INSERTED_PK[i] + "," + INSERTED_DATA[i] + ")";
+    insertString += comma + "(" + std::to_string(i) + ",\'" + INSERTED_DATA[i] + "\')";
     comma = ",";
   }
 
   const vector<string> OPERATIONS_QUERY = {
-    "MIN(" + COL1_NAME + ")",
-    "MAX(" + COL1_NAME + ")",
-    "SUM(" + COL1_NAME + ")",
-    "AVG(" + COL1_NAME + ")"
+    "MIN(" + COL2_NAME + ")",
+    "MAX(" + COL2_NAME + ")",
+    "SUM(" + COL2_NAME + ")",
+    "AVG(" + COL2_NAME + ")"
   };
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
-  
-  const vector<long> EXPECTED_LEN(NUM_OF_OPERATIONS, DOUBLE_BYTES_EXPECTED);
+
+  const vector<long> EXPECTED_LEN(NUM_OF_OPERATIONS, TINYINT_BYTES_EXPECTED);
 
   // initialization of expected_results
-  vector<double> expected_results = {};
-  double curr = stringToDouble(INSERTED_PK[0]);
-  double min_expected = curr, max_expected = curr, sum_expected = curr, avg_expected = 0;
+  vector<int> expected_results = {};
+
+  int curr = stringToInt(INSERTED_DATA[0]);
+  int min_expected = curr, max_expected = curr, sum = curr;
+
   for (int i = 1; i < NUM_OF_DATA; i++) {
-    curr = stringToDouble(INSERTED_PK[i]);
-    sum_expected += curr;
-    min_expected = std::min(min_expected, curr);
-    max_expected = std::max(max_expected, curr);
+    curr = stringToInt(INSERTED_DATA[i]);
+    sum += curr;
+
+    min_expected = std::min(curr, min_expected);
+    max_expected = std::max(curr, max_expected);
   }
-  avg_expected = sum_expected / NUM_OF_DATA;
   expected_results.push_back(min_expected);
   expected_results.push_back(max_expected);
-  expected_results.push_back(sum_expected);
-  expected_results.push_back(avg_expected);
+  expected_results.push_back(sum);
+  expected_results.push_back(sum / NUM_OF_DATA);
 
-  // Create a vector of length NUM_OF_OPERATIONS with dummy value of -1 to store column results
-  vector<double> col_results(NUM_OF_OPERATIONS, -1);
+  // Create a vector of length NUM_OF_OPERATIONS to store column results
+  vector<int> col_results(NUM_OF_OPERATIONS, {});
   
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
-  testComparisonFunctions(ServerType::PSQL, TABLE_NAME, SQL_C_DOUBLE, col_results, BUFFER_LEN, OPERATIONS_QUERY, expected_results, EXPECTED_LEN);
+  testComparisonFunctions(ServerType::PSQL, TABLE_NAME, SQL_C_STINYINT, col_results, BUFFER_LEN, OPERATIONS_QUERY, expected_results, EXPECTED_LEN);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, View_Creation) {
+TEST_F(PSQL_DataTypes_TinyInt, View_Creation) {
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
-  double data;
+  int data{};
   const int BUFFER_LEN = 0;
 
   const vector<string> INSERTED_DATA = {
-    "123456789.0001",
-    "1",
+    "0",
+    "255",
+    "3",
     "NULL"
   };
   
-  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
-  const vector<long> EXPECTED_LEN(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
+  const vector<long> EXPECTED_LEN(EXPECTED_DATA.size(), TINYINT_BYTES_EXPECTED);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, INSERTED_DATA, EXPECTED_DATA, EXPECTED_LEN);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_STINYINT, data, BUFFER_LEN, INSERTED_DATA, EXPECTED_DATA, EXPECTED_LEN);
 
   createView(ServerType::PSQL, VIEW_NAME, VIEW_QUERY);
-  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, INSERTED_DATA, EXPECTED_DATA, EXPECTED_LEN);
+  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, SQL_C_STINYINT, data, BUFFER_LEN, INSERTED_DATA, EXPECTED_DATA, EXPECTED_LEN);
   
   dropObject(ServerType::PSQL, "VIEW", VIEW_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
+TEST_F(PSQL_DataTypes_TinyInt, Table_Unique_Constraints) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, "INT PRIMARY KEY"},
+    {COL1_NAME, "INT"},
     {COL2_NAME, DATATYPE_NAME}
   };
 
@@ -344,33 +345,33 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
 
   string tableConstraints = createTableConstraint("UNIQUE", UNIQUE_COLUMNS);
 
-  double data;
+  int data;
   const int BUFFER_LEN = 0;
 
   const vector<string> INSERTED_DATA = {
-    "1000.0001",
-    "-1000.0001"
+    "0",
+    "1"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
-  const vector<long> EXPECTED_LEN(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
+  const vector<long> EXPECTED_LEN(EXPECTED_DATA.size(), TINYINT_BYTES_EXPECTED);
 
   // table name without the schema
   const string TABLE_NAME_WITHOUT_SCHEMA = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testUniqueConstraint(ServerType::PSQL, TABLE_NAME_WITHOUT_SCHEMA, UNIQUE_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, INSERTED_DATA, 
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_STINYINT, data, BUFFER_LEN, INSERTED_DATA, 
     EXPECTED_DATA, EXPECTED_LEN);
   testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, true, INSERTED_DATA.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Table_Single_Primary_Keys) {
-  double data;
+TEST_F(PSQL_DataTypes_TinyInt, Table_Single_Primary_Keys) {
+  int data{};
 
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, "INT"},
+    {COL1_NAME, DATATYPE_NAME},
     {COL2_NAME, DATATYPE_NAME}
   };
   const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
@@ -385,26 +386,26 @@ TEST_F(PSQL_DataTypes_Money, Table_Single_Primary_Keys) {
   const int BUFFER_LEN = 0;
 
   const vector<string> INSERTED_DATA = {
-    "1000.01",
-    "-100.0001"
+    "0",
+    "1"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
-  const vector<long> EXPECTED_LEN(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
+  const vector<long> EXPECTED_LEN(EXPECTED_DATA.size(), TINYINT_BYTES_EXPECTED);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, INSERTED_DATA, 
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_STINYINT, data, BUFFER_LEN, INSERTED_DATA, 
     EXPECTED_DATA, EXPECTED_LEN);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, true, INSERTED_DATA.size(), false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
-  double data;
+TEST_F(PSQL_DataTypes_TinyInt, Table_Composite_Primary_Keys) {
+  int data{};
 
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, "INT"},
+    {COL1_NAME, DATATYPE_NAME},
     {COL2_NAME, DATATYPE_NAME}
   };
   const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
@@ -420,17 +421,17 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   const int BUFFER_LEN = 0;
 
   const vector<string> INSERTED_DATA = {
-    "1000.01",
-    "-100.0001"
+    "0",
+    "1"
   };
-  const vector<double> EXPECTED_DATA = getExpectedResults_Double(INSERTED_DATA);
+  const vector<int> EXPECTED_DATA = getExpectedResults_Int(INSERTED_DATA);
 
-  const vector<long> EXPECTED_LEN(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
+  const vector<long> EXPECTED_LEN(EXPECTED_DATA.size(), TINYINT_BYTES_EXPECTED);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
-  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, BUFFER_LEN, INSERTED_DATA, 
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_STINYINT, data, BUFFER_LEN, INSERTED_DATA, 
     EXPECTED_DATA, EXPECTED_LEN);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, true, 0, false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
