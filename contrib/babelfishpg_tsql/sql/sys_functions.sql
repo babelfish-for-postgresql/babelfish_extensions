@@ -3231,6 +3231,9 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 int, IN arg2 int)
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
 $BODY$
@@ -3297,3 +3300,5 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
+
+GRANT EXECUTE ON FUNCTION sys.power(int) TO PUBLIC;

@@ -76,6 +76,7 @@ PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
+PG_FUNCTION_INFO_V1(int_power);
 
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
@@ -1187,3 +1188,16 @@ babelfish_integrity_checker(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(true);
 }
+
+Datum
+int_power(PG_FUNCTION_ARGS)
+ {
+     int32    arg1 = PG_GETARG_INT32(0);
+     int32    arg2 = PG_GETARG_INT32(1);
+     float8  result;
+
+     result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
+
+     PG_RETURN_INT32((int32)result);
+	 
+ }
