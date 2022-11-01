@@ -1,10 +1,3 @@
--- Test for sys.babelfish_configurations_view
-CREATE VIEW BABEL_3588_VIEW AS SELECT * FROM sys.babelfish_configurations_view
-GO
-
-SELECT COUNT(*) FROM  BABEL_3588_VIEW
-GO
-
 -- Default value is on
 SELECT CURRENT_SETTING('babelfishpg_tsql.explain_costs')
 GO
@@ -47,7 +40,4 @@ GO
 
 -- Set all GUCs back to default values
 EXEC sp_babelfish_configure '%', 'default', 'server'
-GO
-
-DROP VIEW BABEL_3588_VIEW
 GO
