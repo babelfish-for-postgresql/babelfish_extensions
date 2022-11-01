@@ -33,3 +33,7 @@ GO
 -- Throws error as ROOT and WITHOUT_ARRAY_WRAPPER cannot be used together
 SELECT * FROM babel_3407_view8
 GO
+
+-- Test for explicit call to the function
+SELECT * FROM explicit_call_view
+GO

@@ -24,3 +24,6 @@ GO
 
 DROP VIEW babel_3407_view8
 GO
+
+DROP VIEW explicit_call_view
+GO

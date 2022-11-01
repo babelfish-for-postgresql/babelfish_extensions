@@ -77,3 +77,8 @@ GO
 
 ~~ERROR (Message: 'FOR JSON AUTO mode' is not currently supported in Babelfish)~~
 
+
+-- Test for explicit call to the function
+CREATE VIEW explicit_call_view AS
+SELECT tsql_query_to_json_text('SELECT 2+2 AS TEST', 1, FALSE,FALSE,FALSE,'');
+GO

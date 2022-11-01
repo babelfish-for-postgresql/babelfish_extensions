@@ -71,3 +71,8 @@ SELECT id, name, state
 FROM babel_3407_table1
 FOR JSON AUTO;
 GO
+
+-- Test for explicit call to the function
+CREATE VIEW explicit_call_view AS
+SELECT tsql_query_to_json_text('SELECT 2+2 AS TEST', 1, FALSE,FALSE,FALSE,'');
+GO

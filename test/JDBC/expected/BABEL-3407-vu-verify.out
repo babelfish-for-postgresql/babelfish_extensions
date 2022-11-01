@@ -79,3 +79,12 @@ GO
 
 ~~ERROR (Message: ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON. Remove one of these options)~~
 
+
+-- Test for explicit call to the function
+SELECT * FROM explicit_call_view
+GO
+~~START~~
+ntext
+[{"TEST":4}]
+~~END~~
+
