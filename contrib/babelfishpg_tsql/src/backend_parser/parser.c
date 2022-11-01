@@ -167,6 +167,12 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case SERVER:
 			cur_token_length = 6;
 			break;
+		case CROSS:
+			cur_token_length = 5;
+			break;
+		case OUTER_P:
+			cur_token_length = 5;
+			break;
 		default:
 			return cur_token;
 	}
@@ -287,6 +293,14 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case SERVER:
 			if (next_token == ROLE)
 				cur_token = TSQL_SERVER;
+			break;
+		case CROSS:
+			if (next_token == TSQL_APPLY)
+				cur_token = TSQL_CROSS;
+			break;
+		case OUTER_P:
+			if (next_token == TSQL_APPLY)
+				cur_token = TSQL_OUTER;
 			break;
 		default:
 			break;

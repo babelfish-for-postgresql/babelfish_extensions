@@ -104,6 +104,7 @@
 	TSQL_MUST_CHANGE TSQL_CHECK_EXPIRATION TSQL_CHECK_POLICY TSQL_CREDENTIAL TSQL_SID TSQL_OLD_PASSWORD
 	TSQL_UNLOCK TSQL_VALUES
 	TSQL_NVARCHAR
+	TSQL_CROSS TSQL_OUTER TSQL_APPLY
 
 /*
  * WITH_paren is added to support table hints syntax WITH (<table_hint> [[,]...n]),
@@ -111,3 +112,5 @@
  * lead to a shift/reduce conflict.
  */
 %token	WITH_paren TSQL_HINT_START_BRACKET UPDATE_paren
+
+%left TSQL_CROSS TSQL_OUTER
