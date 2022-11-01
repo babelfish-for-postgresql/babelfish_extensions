@@ -1,7 +1,4 @@
 -- psql 
-GRANT SELECT ON sys.type_info_internal TO PUBLIC;
-GO
-
 GRANT SELECT ON sys.table_types_internal TO PUBLIC;
 GO
 
@@ -42,8 +39,5 @@ DROP TYPE IF EXISTS table_types_internal_test2;
 GO
 
 -- psql 
-REVOKE SELECT ON sys.type_info_internal FROM PUBLIC;
-GO
-
 REVOKE SELECT ON sys.table_types_internal FROM PUBLIC;
 GO
