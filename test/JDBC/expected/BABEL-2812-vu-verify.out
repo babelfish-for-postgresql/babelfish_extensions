@@ -18,6 +18,54 @@ EXEC babel_2812_vu_p3 '17:30:00', '20211212';
 GO
 ~~START~~
 datetime
+2021-12-11 06:30:00.0
+~~END~~
+
+
+EXEC babel_2812_vu_p4 '17:30:00', '20211212';
+GO
+~~START~~
+datetime
 2021-12-12 17:30:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v1
+GO
+~~START~~
+datetime
+2021-12-12 17:30:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v2
+GO
+~~START~~
+smalldatetime
+2021-12-12 17:30:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v3
+GO
+~~START~~
+datetime
+2021-12-11 06:30:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v4
+GO
+~~START~~
+smalldatetime
+2021-12-11 06:30:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v5
+GO
+~~START~~
+int
+-9
 ~~END~~
 

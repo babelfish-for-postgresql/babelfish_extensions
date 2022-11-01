@@ -6,3 +6,21 @@ GO
 
 DROP PROCEDURE babel_2812_vu_p3;
 GO
+
+DROP PROCEDURE babel_2812_vu_p4;
+GO
+
+DROP VIEW babel_2812_vu_v1;
+GO
+
+DROP VIEW babel_2812_vu_v2;
+GO
+
+DROP VIEW babel_2812_vu_v3;
+GO
+
+DROP VIEW babel_2812_vu_v4;
+GO
+
+DROP VIEW babel_2812_vu_v5;
+GO
