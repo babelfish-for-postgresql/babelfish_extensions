@@ -3922,7 +3922,7 @@ LANGUAGE plpgsql IMMUTABLE;
 
 -- helper function sys.babelfish_conv_helper_to_datetime(text, bool, numeric) needs to change return type to sys.DATETIME
 ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(text, bool, numeric) RENAME TO babelfish_conv_helper_to_datetime_deprecated_in_2_3_0_1;
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_deprecated_in_2_3_0(text, bool, numeric)_1');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_deprecated_in_2_3_0_1');
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg TEXT, IN try BOOL, IN p_style NUMERIC DEFAULT 0)
 RETURNS sys.DATETIME
