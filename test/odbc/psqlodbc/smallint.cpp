@@ -178,6 +178,8 @@ TEST_F(PSQL_DataTypes_SmallInt, Update_Fail) {
   const vector<long> EXPECTED_INSERT_LEN(INSERTED_VALUES.size(), SMALLINT_BYTES_EXPECTED);
 
   const vector<string> UPDATED_VALUES = {
+    "-32769",       // Under Min
+    "32768",        // Over Max
     "9999999999999" // Over
   };
   const vector<long> EXPECTED_UPDATE_LEN(UPDATED_VALUES.size(), SMALLINT_BYTES_EXPECTED);

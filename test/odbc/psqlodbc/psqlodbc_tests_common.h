@@ -662,8 +662,8 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedInsertedLen[i]);
-    EXPECT_EQ(data, expectedInsertedValues[i]);
+    EXPECT_EQ(data_len, expectedInsertedLen[0]);
+    EXPECT_EQ(data, expectedInsertedValues[0]);
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
