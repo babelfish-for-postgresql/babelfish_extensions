@@ -481,7 +481,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 		request->rowCount++;
 
 		rowData->columnValues = palloc0(request->colCount * sizeof(StringInfoData));
-		rowData->isNull 	  = palloc0(request->colCount);
+		rowData->isNull 	  = palloc0(request->colCount * sizeof(bool));
 
 		offset++;
 		request->currentBatchSize++;
@@ -489,7 +489,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 		while(i != request->colCount) /* Loop over each column. */
 		{
 			initStringInfo(&rowData->columnValues[i]);
-			rowData->isNull[i] = 'f';
+			rowData->isNull[i] = false;
 			switch(colmetadata[i].columnTdsType)
 			{
 				case TDS_TYPE_INTEGER:
@@ -514,7 +514,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 						if (rowData->columnValues[i].len == 0) /* null */
 						{
-							rowData->isNull[i] = 'n';
+							rowData->isNull[i] = true;
 							i++;
 							continue;
 						}
@@ -547,7 +547,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					request->currentBatchSize++;
 					if (rowData->columnValues[i].len == 0) /* null */
 					{
-						rowData->isNull[i] = 'n';
+						rowData->isNull[i] = true;
 						i++;
 						continue;
 					}
@@ -592,7 +592,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						}
 						else /* null */
 						{
-							rowData->isNull[i] = 'n';
+							rowData->isNull[i] = true;
 							i++;
 							continue;
 						}
@@ -607,7 +607,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						CheckPLPStatusNotOK(request, retStatus, i);
 						if (temp->isNull) /* null */
 						{
-							rowData->isNull[i] = 'n';
+							rowData->isNull[i] = true;
 							i++;
 							temp->isNull = false;
 							continue;
@@ -630,7 +630,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					request->currentBatchSize++;
 					if (dataTextPtrLen == 0) /* null */
 					{
-						rowData->isNull[i] = 'n';
+						rowData->isNull[i] = true;
 						i++;
 						continue;
 					}
@@ -647,7 +647,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					request->currentBatchSize += sizeof(uint32_t);
 					if (rowData->columnValues[i].len == 0) /* null */
 					{
-						rowData->isNull[i] = 'n';
+						rowData->isNull[i] = true;
 						i++;
 						continue;
 					}
@@ -672,7 +672,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					CheckPLPStatusNotOK(request, retStatus, i);
 					if (temp->isNull) /* null */
 					{
-						rowData->isNull[i] = 'n';
+						rowData->isNull[i] = true;
 						i++;
 						temp->isNull = false;
 						continue;
@@ -694,7 +694,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 					if (rowData->columnValues[i].len == 0) /* null */
 					{
-						rowData->isNull[i] = 'n';
+						rowData->isNull[i] = true;
 						i++;
 						continue;
 					}
@@ -742,7 +742,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 void
 ProcessBCPRequest(TDSRequest request)
 {
-	int retValue = 0;
+	uint64 retValue = 0;
 	StringInfo temp = makeStringInfo();
 	TDSRequestBulkLoad req = (TDSRequestBulkLoad) request;
 	BulkLoadColMetaData *colMetaData = req->colMetaData;
@@ -755,9 +755,7 @@ ProcessBCPRequest(TDSRequest request)
 	{
 		int nargs = 0;
 		Datum *values = NULL;
-		char *nulls = NULL;
-		Oid *argtypes = NULL;
-		bool *defaults = NULL;
+		bool *nulls = NULL;
 		int count = 0;
 		ListCell 	*lc;
 
@@ -786,27 +784,19 @@ ProcessBCPRequest(TDSRequest request)
 		}
 		PG_END_TRY();
 		/*
-		 * If the row-count is 0 then this no rows are left to be inserted.
+		 * If the row-count is 0 then there are no rows left to be inserted.
 		 * We should begin with cleanup.
 		 */
 		if (req->rowCount == 0)
 		{
-			/* Using Same callback function to fo the clean-up. */
-			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL, NULL, NULL);
+			/* Using Same callback function to do the clean-up. */
+			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
 			break;
 		}
 
-		/*
-		 * defaults array will always contain nargs length of data, where as
-		 * values and nulls array can be less than nargs length. The length of
-		 * values and nulls array will be the number of bind params in
-		 * bulk_load_callback function.
-		 */
 		nargs = req->colCount * req->rowCount;
 		values = palloc0(nargs * sizeof(Datum));
-		nulls = palloc0(nargs * sizeof(char));
-		argtypes= palloc0(nargs * sizeof(Oid));
-		defaults = palloc0(nargs * sizeof(bool));
+		nulls = palloc0(nargs * sizeof(bool));
 		nargs = 0;
 
 		foreach (lc, req->rowData) /* build an array of Value Datums */
@@ -814,17 +804,11 @@ ProcessBCPRequest(TDSRequest request)
 			BulkLoadRowData *row = (BulkLoadRowData *) lfirst(lc);
 			TdsIoFunctionInfo tempFuncInfo;
 			int currentColumn = 0;
-
 			while(currentColumn != req->colCount)
 			{
 				temp = &(row->columnValues[currentColumn]);
-				tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
-				GetPgOid(argtypes[count], tempFuncInfo);
-				if (row->isNull[currentColumn] == 'n') /* null */
-					if (pltsql_plugin_handler_ptr->get_insert_bulk_keep_nulls())
+				if (row->isNull[currentColumn]) /* null */
 						nulls[count++] = row->isNull[currentColumn];
-					else
-						defaults[nargs] = true;
 				else
 				{
 					switch(colMetaData[currentColumn].columnTdsType)
@@ -832,7 +816,7 @@ ProcessBCPRequest(TDSRequest request)
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
 						case TDS_TYPE_TEXT:
-							values[count] = TdsTypeVarcharToDatum(temp, argtypes[count], colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
+							values[count] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
 						break;
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_NVARCHAR:
@@ -854,7 +838,6 @@ ProcessBCPRequest(TDSRequest request)
 						case TDS_TYPE_BINARY:
 						case TDS_TYPE_IMAGE:
 							values[count] = TdsTypeVarbinaryToDatum(temp);
-							argtypes[count] = tempFuncInfo->ttmtypeid;
 						break;
 						case TDS_TYPE_DATE:
 							values[count] = TdsTypeDateToDatum(temp);
@@ -902,8 +885,7 @@ ProcessBCPRequest(TDSRequest request)
 			PG_TRY();
 			{
 				retValue += pltsql_plugin_handler_ptr->bulk_load_callback(req->colCount,
-											req->rowCount, argtypes,
-											values, nulls, defaults);
+											req->rowCount, values, nulls);
 			}
 			PG_CATCH();
 			{
@@ -919,6 +901,9 @@ ProcessBCPRequest(TDSRequest request)
 					ret = TdsDiscardAllPendingBcpRequest();
 
 				RESUME_CANCEL_INTERRUPTS();
+
+				/* Using Same callback function to do the clean-up. */
+				pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
 
 				if (ret < 0)
 					TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
@@ -939,10 +924,9 @@ ProcessBCPRequest(TDSRequest request)
 				pfree(values);
 			if (nulls)
 				pfree(nulls);
-			if (argtypes)
-				pfree(argtypes);
 		}
 	}
+
 	/* Send Done Token if rows processed is a positive number. Command type - execute (0xf0). */
 	if (retValue >= 0)
 		TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_COUNT, 0xf0, retValue);

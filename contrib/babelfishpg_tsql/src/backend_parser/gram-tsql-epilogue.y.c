@@ -190,6 +190,19 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_time"), args, COERCE_EXPLICIT_CALL, location);
 	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime")))
 	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime"), args, COERCE_EXPLICIT_CALL, location);
+	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime2")))
+	{
+		/*
+		 *	Handles null typmod case. typmod is set to 6 because that is the current max precision for datetime2 
+		 *	Update to 7 when BABEL-2934 is reolved
+		 */
+		if(typmod < 0)
+			typmod = 6;
+
+		typename_string = psprintf("%s(%d)", "DATETIME2", typmod);
+		args = lcons(makeStringConst(typename_string, location), args);
+		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime2"), args, COERCE_EXPLICIT_CALL, location);
+	}
 	else if (strcmp(typename_string, "varchar") == 0)
 	{
 		Node *helperFuncCall;

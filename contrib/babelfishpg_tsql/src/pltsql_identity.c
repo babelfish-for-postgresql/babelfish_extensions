@@ -308,3 +308,39 @@ void pltsql_resetcache_identity()
 
 	last_used_seq_identity = NULL;
 }
+
+/*
+ * BABELFISH: In T-SQL, with identity_insert=on, sequence value is set as
+ * max(value to be inserted, last used sequence value) when increment is
+ * positive. Min value is set with a negative increment.
+ * We need to calculate the max/min and set the value without releasing
+ * the lock so that other backends can't overwrite the value concurrently.
+ */
+int64
+pltsql_setval_identity(Oid seqid, int64 val, int64 last_val)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		ListCell *seq_lc;
+		List *seq_options;
+		int64 seq_incr = 0;
+
+		seq_options = sequence_options(seqid);
+
+		foreach (seq_lc, seq_options)
+		{
+			DefElem *defel = (DefElem *) lfirst(seq_lc);
+
+			if (strcmp(defel->defname, "increment") == 0)
+				seq_incr = defGetInt64(defel);
+
+		}
+
+		if (seq_incr > 0)
+			val = val > last_val ? val : last_val;
+		else
+			val = val < last_val ? val : last_val;
+	}
+
+	return val;
+}

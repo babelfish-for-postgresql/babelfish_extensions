@@ -1,5 +1,9 @@
 select set_config('babelfishpg_tsql.explain_costs', 'off', false);
 go
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+go
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+go
 select current_setting('babelfishpg_tsql.escape_hatch_showplan_all');
 go
 
@@ -39,4 +43,8 @@ EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_showplan_all', 'stric
 go
 
 select set_config('babelfishpg_tsql.explain_costs', 'on', false);
+go
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+go
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
 go
