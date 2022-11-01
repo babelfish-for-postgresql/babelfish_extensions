@@ -1703,7 +1703,7 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN COALESCE(tsql_get_functiondef(ao.object_id), pg_get_functiondef(ao.object_id))
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
