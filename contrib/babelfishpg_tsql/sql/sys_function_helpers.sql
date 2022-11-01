@@ -23,30 +23,6 @@ $BODY$
 $BODY$
 LANGUAGE SQL STABLE;
 
-CREATE OR REPLACE FUNCTION sys.get_min_id_from_table(IN id_colname TEXT,
-													 IN schemaname TEXT,
-													 IN tablename TEXT,
-													 OUT result INT8)
-AS
-$BODY$
-BEGIN
-	EXECUTE FORMAT('SELECT MIN(%I) FROM %I.%I', id_colname, schemaname, tablename) INTO result;
-END
-$BODY$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION sys.get_max_id_from_table(IN id_colname TEXT,
-													 IN schemaname TEXT,
-													 IN tablename TEXT,
-													 OUT result INT8)
-AS
-$BODY$
-BEGIN
-	EXECUTE FORMAT('SELECT MAX(%I) FROM %I.%I', id_colname, schemaname, tablename) INTO result;
-END
-$BODY$
-LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION sys.user_name_sysname()
 RETURNS sys.SYSNAME AS
 $BODY$
@@ -1663,6 +1639,10 @@ BEGIN
             v_day := substr(v_datestring, 7, 2);
             v_month := substr(v_datestring, 5, 2);
             v_year := substr(v_datestring, 1, 4);
+        ELSE
+            v_day := '01';
+            v_month := '01';
+            v_year := '1900';
         END IF;
     ELSIF (v_datetimestring ~* HHMMSSFS_REGEXP)
     THEN
@@ -1689,9 +1669,7 @@ BEGIN
     v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
     v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
 
-    IF ((v_res_datatype IN ('DATETIME', 'SMALLDATETIME') OR
-         (v_res_datatype = 'DATETIME2' AND v_timepart !~* HHMMSSFS_DOT_PART_REGEXP)) AND
-        char_length(v_fseconds) > 3)
+    IF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND char_length(v_fseconds) > 3)
     THEN
         RAISE invalid_datetime_format;
     END IF;
@@ -1713,9 +1691,11 @@ BEGIN
             END IF;
         ELSIF (v_res_datatype = 'DATETIME2')
         THEN
-            v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
-            v_seconds := concat_ws('.', v_seconds, v_fseconds);
-
+            IF (v_scale <> 0)
+            THEN
+                v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+                v_seconds := concat_ws('.', v_seconds, v_fseconds);
+            END IF;
             v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
                                             v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
         END IF;
@@ -9647,6 +9627,58 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE;
 
+-- conversion to datetime2
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
+                                                            IN arg TEXT,
+                                                            IN try BOOL,
+                                                            IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME2
+AS
+$BODY$
+BEGIN
+    IF try THEN
+	    RETURN sys.babelfish_try_conv_string_to_datetime(typename, arg, p_style);
+    ELSE
+        RETURN sys.babelfish_conv_string_to_datetime(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
+                                                            IN arg anyelement,
+                                                            IN try BOOL,
+                                                            IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME2
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_datetime2(arg);
+    ELSE
+        RETURN CAST(arg AS sys.DATETIME2);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime2(IN arg anyelement)
+RETURNS sys.DATETIME2
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS sys.DATETIME2);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
 -- convertion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg TEXT,
@@ -10293,3 +10325,28 @@ AS 'babelfishpg_tsql', 'get_server_collation_oid';
 CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
 RETURNS text
 AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) RETURNS INTEGER AS $$
+DECLARE
+	i INTEGER;
+	n1 INTEGER;
+BEGIN
+	n1 = y1 * 365 + d1;
+	FOR i in 0 .. m1-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n1 = n1 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n1 = n1 + 30;
+		ELSIF (i = 1) THEN
+			n1 = n1 + 28;
+		END IF;
+	END LOOP;
+	IF m1 <= 2 THEN
+		y1 = y1 - 1;
+	END IF;
+	n1 = n1 + (y1/4 - y1/100 + y1/400);
+
+	return n1;
+END
+$$
+LANGUAGE plpgsql;

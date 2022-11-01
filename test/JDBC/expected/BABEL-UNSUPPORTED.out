@@ -2729,13 +2729,13 @@ GO
 DROP TABLE t_unsupported_sp;
 GO
 
---HIERARCHYID, GEORGRAPHY, GEOMETRY
+--HIERARCHYID, GEOGRAPHY, GEOMETRY
 -- Should throw detailed error messages, same as TIMESTAMP and ROWVERSION cases
 CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_hierarchyid;
 GO
@@ -2743,23 +2743,23 @@ GO
 
 ~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
 
-CREATE TABLE test_unsupported_georgraphy(a GEORGRAPHY);
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEORGRAPHY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
-DROP TABLE test_unsupported_georgraphy;
+DROP TABLE test_unsupported_geography;
 GO
 ~~ERROR (Code: 3701)~~
 
-~~ERROR (Message: table "test_unsupported_georgraphy" does not exist)~~
+~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
 
 CREATE TABLE test_unsupported_geometry(a GEOMETRY);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geometry;
 GO
@@ -2768,16 +2768,24 @@ GO
 ~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
 
 
--- With escape_hatch to ignore
+-- With escape_hatch_rowversion to ignore
 -- Should throw a simple error message saying the datatype does not exist
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 GO
 
+CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
+GO
+DROP TABLE test_unsupported_rowversion;
+GO
+CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
+GO
+DROP TABLE test_unsupported_timestamp;
+GO
 CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: type "hierarchyid" does not exist)~~
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_hierarchyid;
 GO
@@ -2785,23 +2793,23 @@ GO
 
 ~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
 
-CREATE TABLE test_unsupported_georgraphy(a GEORGRAPHY);
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: type "georgraphy" does not exist)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
-DROP TABLE test_unsupported_georgraphy;
+DROP TABLE test_unsupported_geography;
 GO
 ~~ERROR (Code: 3701)~~
 
-~~ERROR (Message: table "test_unsupported_georgraphy" does not exist)~~
+~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
 
 CREATE TABLE test_unsupported_geometry(a GEOMETRY);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: type "geometry" does not exist)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geometry;
 GO

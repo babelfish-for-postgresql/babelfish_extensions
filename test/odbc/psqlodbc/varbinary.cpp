@@ -1,3 +1,4 @@
+#include "conversion_functions_common.h"
 #include "psqlodbc_tests_common.h"
 
 const string TABLE_NAME = "master_dbo.varbinary_table_odbc_test";
@@ -31,16 +32,6 @@ class PSQL_DataTypes_VarBinary : public testing::Test {
     test_teardown.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
   }
 };
-
-vector<string> getExpectedResults_VarBinary(vector<string> data) {
-  vector<string> expectedResults{};
-
-  for (int i = 0; i < data.size(); i++) {
-    expectedResults.push_back(GetHexRepresentation(data[i]));
-  }
-
-  return expectedResults;
-}
 
 TEST_F(PSQL_DataTypes_VarBinary, Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {4, 255};
@@ -213,10 +204,10 @@ TEST_F(PSQL_DataTypes_VarBinary, Table_Unique_Constraint) {
   const vector<string> EXPECTED_VALUES = getExpectedResults_VarBinary(INSERTED_VALUES);
 
   // table name without the schema
-  const string tableName = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
+  const string TABLE_NAME_WITHOUT_SCHEMA = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
-  testUniqueConstraint(ServerType::PSQL, tableName, UNIQUE_COLUMNS);
+  testUniqueConstraint(ServerType::PSQL, TABLE_NAME_WITHOUT_SCHEMA, UNIQUE_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES, 0, false, true);
   testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, true, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);

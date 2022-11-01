@@ -1,3 +1,4 @@
+-- sla 50000
 USE sys_objects_vu_prepare_db1
 GO
 
