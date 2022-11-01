@@ -1,6 +1,0 @@
--- psql 
-REVOKE SELECT ON sys.type_info_internal FROM PUBLIC;
-GO
-
-REVOKE SELECT ON sys.table_types_internal FROM PUBLIC;
-GO

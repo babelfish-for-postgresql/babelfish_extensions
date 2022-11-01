@@ -302,50 +302,14 @@ SELECT pt.typrelid
     AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass)
 ;
 
--- The view sys.type_info_internal corresponds to 
--- type_info_t type_infos[TOTAL_TYPECODE_COUNT] in contrib/babelfishpg_common/src/typecode.c
--- any changes there need to be reflected here
-create or replace view sys.type_info_internal AS
-select * from
-(
- values 
-    ('sql_variant'     , 'sql_variant'),
-    ('datetimeoffset'  , 'datetimeoffset'),
-    ('datetime2'       , 'datetime2'),
-    ('datetime'        , 'datetime'),
-    ('smalldatetime'   , 'smalldatetime'),
-    ('date'            , 'date'),
-    ('time'            , 'time'),
-    ('float8'          , 'float'),
-    ('float4'          , 'real'),
-    ('numeric'         , 'numeric'),
-    ('money'           , 'money'),
-    ('smallmoney'      , 'smallmoney'),
-    ('int8'            , 'bigint'),
-    ('int4'            , 'int'),
-    ('int2'            , 'smallint'),
-    ('tinyint'         , 'tinyint'),
-    ('bit'             , 'bit'),
-    ('nvarchar'        , 'nvarchar'),
-    ('nchar'           , 'nchar'),
-    ('varchar'         , 'varchar'),
-    ('bpchar'          , 'char'),
-    ('varbinary'       , 'varbinary'),
-    ('binary'          , 'binary'),
-    ('uniqueidentifier', 'uniqueidentifier'),
-    ('text'            , 'text'),
-    ('ntext'           , 'ntext'),
-    ('image'           , 'image'),
-    ('xml'             , 'xml'),
-    ('decimal'         , 'decimal'),
-    ('sysname'         , 'sysname'),
-    ('rowversion'      , 'timestamp' ),
-    ('timestamp'       , 'timestamp')
-)  t(pg_type_name,tsql_type_name);
-
 -- re-creating objects to point to new tsql_type_max_length_helper
 
 create or replace view sys.types As
+with type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+)
 -- For System types
 select 
   ti.tsql_type_name as name
@@ -368,7 +332,7 @@ select
   , 0 as is_table_type
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
-inner join sys.type_info_internal ti on t.typname = ti.pg_type_name
+inner join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 ,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
 where
@@ -401,7 +365,7 @@ select cast(t.typname as text) as name
   , case when tt.typrelid is not null then 1 else 0 end as is_table_type
 from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
-left join sys.type_info_internal ti on t.typname = ti.pg_type_name
+left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 left join sys.table_types_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
