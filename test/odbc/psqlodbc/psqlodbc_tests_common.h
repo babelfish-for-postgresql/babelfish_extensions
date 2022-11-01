@@ -25,7 +25,8 @@ const int INT_BYTES_EXPECTED = 4;
  * @param input Vector of data to be duplicated
  * @return vector which has the elements duplicated and appended
  */ 
-vector<string> duplicateElements(vector<string> input);
+template <typename T>
+vector<T> duplicateElements(vector<T> input);
 
 /**
  * Create a string that can be used in an insert statement. Assumes there is a column associated with
@@ -497,6 +498,12 @@ string formatNumericWithScale(string decimal, const int &scale, const bool &is_b
 void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is_bbf);
 
 /** Implementation of templated functions below **/
+template <typename T>
+vector<T> duplicateElements(vector<T> input) {
+  std::vector<T> duplicated(input);
+  duplicated.insert(duplicated.end(), input.begin(), input.end());
+  return duplicated;
+}
 
 template <typename T>
 void verifyValuesInObject(ServerType serverType, string objectName, string orderByColumnName, int type, T data, 
@@ -655,8 +662,8 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedInsertedLen[i]);
-    EXPECT_EQ(data, expectedInsertedValues[i]);
+    EXPECT_EQ(data_len, expectedInsertedLen[0]);
+    EXPECT_EQ(data, expectedInsertedValues[0]);
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);

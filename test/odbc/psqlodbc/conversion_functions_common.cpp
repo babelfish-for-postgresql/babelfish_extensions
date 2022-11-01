@@ -151,6 +151,31 @@ vector<int> getExpectedResults_Int(const vector<string> &data) {
   return expectedResults;
 }
 
+short int stringToShortInt(const string &value) {
+  if (value == "NULL") {
+    // Return a dummy value of zero.
+    return 0;
+  }
+  int full_size = std::stoi(value.c_str(), NULL, 10);
+
+  // Convert to short int
+  if (full_size <= static_cast<int>(INT16_MAX) && full_size >= static_cast<int>(INT16_MIN)) {
+    return static_cast<short int>(full_size);
+  }
+
+  // Conversion failed / out of range, return dummy value
+  return 0;
+}
+
+vector<short int> getExpectedResults_ShortInt(const vector<string> &data) {
+  vector<short int> expectedResults{};
+
+  for (int i = 0; i < data.size(); i++) {
+    expectedResults.push_back(stringToShortInt(data[i]));
+  }
+  return expectedResults;
+}
+
 float stringToFloat(const string &value) {
   if (value == "NULL") {
     // Return a dummy value of zero.

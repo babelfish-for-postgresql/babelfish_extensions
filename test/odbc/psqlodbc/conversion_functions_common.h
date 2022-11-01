@@ -122,6 +122,22 @@ int stringToInt(const string &value);
 vector<int> getExpectedResults_Int(const vector<string> &data);
 
 /**
+ * Convert a string to an short int.
+ * 
+ * @param value The string to convert.
+ * @return The short int value converted from the string.
+*/
+short int stringToShortInt(const string &value);
+
+/**
+ * Convert a vector of strings to vector of short ints.
+ * 
+ * @param data The vector of strings to convert.
+ * @return The vector of short ints converted from the vector of strings.
+*/
+vector<short int> getExpectedResults_ShortInt(const vector<string> &data);
+
+/**
  * Convert a string to a float.
  * 
  * @param value The string to convert.
