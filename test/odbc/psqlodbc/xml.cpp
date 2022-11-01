@@ -1,5 +1,4 @@
 #include "psqlodbc_tests_common.h"
-#include "../src/query_generator.h"
 
 const string BBF_TABLE_NAME = "master.dbo.xml_table_odbc_test";
 // For BBF Connection
