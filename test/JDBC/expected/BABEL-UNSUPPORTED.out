@@ -2001,8 +2001,8 @@ babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
 babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
 babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
 babelfishpg_tsql.explain_settings#!#off#!#Include information on configuration parameters
-babelfishpg_tsql.explain_summary#!#off#!#Include summary information (e.g., totaled timing information) after the query plan
-babelfishpg_tsql.explain_timing#!#off#!#Include actual startup time and time spent in each node in the output
+babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., totaled timing information) after the query plan
+babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 ~~END~~
@@ -2066,8 +2066,8 @@ babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
 babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
 babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
 babelfishpg_tsql.explain_settings#!#off#!#Include information on configuration parameters
-babelfishpg_tsql.explain_summary#!#off#!#Include summary information (e.g., totaled timing information) after the query plan
-babelfishpg_tsql.explain_timing#!#off#!#Include actual startup time and time spent in each node in the output
+babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., totaled timing information) after the query plan
+babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 ~~END~~
@@ -2112,8 +2112,8 @@ babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
 babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
 babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
 babelfishpg_tsql.explain_settings#!#off#!#Include information on configuration parameters
-babelfishpg_tsql.explain_summary#!#off#!#Include summary information (e.g., totaled timing information) after the query plan
-babelfishpg_tsql.explain_timing#!#off#!#Include actual startup time and time spent in each node in the output
+babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., totaled timing information) after the query plan
+babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 ~~END~~
