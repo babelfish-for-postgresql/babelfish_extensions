@@ -4083,6 +4083,7 @@ unreserved_keyword:
 			| TSQL_ISOWK
 			| TSQL_ISOWW
 			| TSQL_ISO_WEEK
+			| TSQL_JSON
 			| TSQL_LOGIN
 			| TSQL_M
 			| TSQL_MCS
@@ -4143,7 +4144,6 @@ unreserved_keyword:
 			| TSQL_Y
 			| TSQL_YY
 			| TSQL_YYYY
-			| TSQL_JSON
 		;
 
 reserved_keyword:
