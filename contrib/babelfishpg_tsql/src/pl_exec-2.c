@@ -1250,8 +1250,9 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
-      	char *old_db_name = get_cur_db_name();
-      	char *cur_db_name = NULL;
+	char *old_db_name = get_cur_db_name();
+	char *cur_db_name = NULL;
+	int save_nestlevel = pltsql_new_guc_nest_level();
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
@@ -1283,10 +1284,13 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		/* Pass the control the inline handler */
 		pltsql_inline_handler(fcinfo);
-                cur_db_name = get_cur_db_name();
 
-                if(strcmp(cur_db_name, old_db_name) != 0)
-                        set_session_properties(old_db_name);
+		cur_db_name = get_cur_db_name();
+		if(strcmp(cur_db_name, old_db_name) != 0)
+			set_session_properties(old_db_name);
+
+		pltsql_revert_guc(save_nestlevel);
+		
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
@@ -1907,6 +1911,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			Oid		restype;
 			int32	restypmod;
 			InlineCodeBlockArgs *args = NULL;
+			int save_nestlevel = pltsql_new_guc_nest_level();
 
 			batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
 			if (isnull)
@@ -1953,6 +1958,9 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			{
 				exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
 			}
+
+			pltsql_revert_guc(save_nestlevel);
+
 			break;
 		}
 		case PLTSQL_EXEC_SP_EXECUTE:

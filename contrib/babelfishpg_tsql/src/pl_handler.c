@@ -201,8 +201,6 @@ static bool                            pltsql_guc_dirty;
 static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
-static int pltsql_new_guc_nest_level(void);
-static void pltsql_revert_guc(int nest_level);
 bool current_query_is_create_tbl_check_constraint = false;
 
 /* Configurations */
@@ -4642,12 +4640,6 @@ canCommitTransaction(void)
 	return (AbortCurTransaction == false);
 }
 
-static int
-pltsql_new_guc_nest_level(void)
-{
-       return ++PltsqlGUCNestLevel;
-}
-
 static void
 pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
 {
@@ -4712,7 +4704,13 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
        pltsql_guc_dirty = true;
 }
 
-static void
+int
+pltsql_new_guc_nest_level(void)
+{
+       return ++PltsqlGUCNestLevel;
+}
+
+void
 pltsql_revert_guc(int nest_level)
 {
        bool            still_dirty;
