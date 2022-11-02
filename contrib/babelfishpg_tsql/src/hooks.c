@@ -3063,7 +3063,7 @@ transform_like_in_add_constraint (Node* node)
 	if (current_query_is_create_tbl_check_constraint)
 		create_tbl_stmt_is_invalid = expr_contains_ilike_and_ci_collation_wrapper(node, true);
 
-	if (current_query_is_create_tbl_check_constraint && create_tbl_stmt_is_invalid)
+	if (!babelfish_dump_restore && current_query_is_create_tbl_check_constraint && create_tbl_stmt_is_invalid)
 	{
 		current_query_is_create_tbl_check_constraint = false;
 		ereport(ERROR,
