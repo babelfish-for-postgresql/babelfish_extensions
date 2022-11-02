@@ -37,6 +37,13 @@ static HTAB * appLockCacheGlobal = NULL;
 
 /* Max length of applock resource name string (including the ending '\0') */
 #define APPLOCK_MAX_RESOURCE_LENGTH 256
+
+/* Max length of other relevant applock argument strings (including the ending '\0') */
+#define APPLOCK_MAX_LOCKMODE_LENGTH 33
+#define APPLOCK_MAX_LOCKOWNER_LENGTH 33
+#define APPLOCK_MAX_LOCKTIMEOUT_LENGTH 33
+#define APPLOCK_MAX_DBPRINCIPAL_LENGTH 33
+
 /* 
  * Max number of retries to search for usable key when hash collision happens.
  * The chance of multiple strings being hashed to the same key is roughly
@@ -110,28 +117,58 @@ static const char *AppLockModeStrings[] =
 	"UpdateIntentExclusive"
 };
 
-static void ApplockPrintMessage(const char *fmt, ...) {
-	char msg[128];
-	va_list args;
+/*
+ * Added pg_attribute_printf() to silence compiler warning tunrned error [-Werror=suggest-attribute=format]
+ */
+static pg_attribute_printf(1, 2) void ApplockPrintMessage(const char *fmt, ...) {
 
-	va_start(args, fmt);
-	vsprintf(msg, fmt, args);
+	int		save_errno = errno;
+	size_t		len = 128;		/* initial assumption about buffer size */
+	char		*msg;
+
+	for (;;)
+	{
+		char		*buf;
+		va_list		args;
+		size_t		newlen;
+
+		/*
+		 * Allocate buffer.  Note that in frontend this maps to malloc
+		 * with exit-on-error.
+		 */
+		buf = (char *) palloc(len);
+
+		/* Try to format the data. */
+		errno = save_errno;
+		va_start(args, fmt);
+		newlen = pvsnprintf(buf, len, fmt, args);
+		va_end(args);
+
+		if (newlen < len)
+		{	msg = buf;
+			break;		/* success */
+		}
+
+		/* Release buffer and loop around to try again with larger len. */
+		pfree(buf);
+		len = newlen;
+	}
 
 	ereport(WARNING, errmsg_internal("%s", msg));
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg, 0);
 
-	va_end (args);
+	pfree(msg);
 }
 
 /* Helper macro to validate and get a string argument */
-#define ApplockGetStringArg(argnum, OUT)		\
+#define ApplockGetStringArg(argnum, OUT, len)		\
     do {					\
 		if (fcinfo->args[argnum].isnull)  {  \
 			ApplockPrintMessage("parameter cannot be null"); \
 			return -999;  \
 		}  \
-		OUT = text_to_cstring(DatumGetVarCharPP(PG_GETARG_DATUM(argnum)));  \
+		text_to_cstring_buffer(DatumGetVarCharPP(PG_GETARG_DATUM(argnum)), OUT, len); \
     } while (0);
 
 #define SET_LOCKTAG_APPLOCK(locktag,id1,id2,id3,id4) \
@@ -693,7 +730,8 @@ static int _sp_releaseapplock_internal(char *resource, char *lockowner,
 Datum
 sp_getapplock_function(PG_FUNCTION_ARGS)
 {
-	char 		*resource, *lockmode, *lockowner, *dbprincipal;
+	char		resource[APPLOCK_MAX_RESOURCE_LENGTH], lockmode[APPLOCK_MAX_LOCKMODE_LENGTH];
+	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH], dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
 	int32_t		timeout;
 	int			ret;
 
@@ -701,11 +739,11 @@ sp_getapplock_function(PG_FUNCTION_ARGS)
 	if (!appLockCacheLocal)
 		initApplockCache();
 
-	ApplockGetStringArg(0, resource);
-	ApplockGetStringArg(1, lockmode);
-	ApplockGetStringArg(2, lockowner);
+	ApplockGetStringArg(0, resource, sizeof(resource));
+	ApplockGetStringArg(1, lockmode, sizeof(lockmode));
+	ApplockGetStringArg(2, lockowner, sizeof(lockowner));
 	timeout = DatumGetInt32(PG_GETARG_DATUM(3));
-	ApplockGetStringArg(4, dbprincipal);
+	ApplockGetStringArg(4, dbprincipal, sizeof(dbprincipal));
 
 	ret = _sp_getapplock_internal(resource, lockmode, lockowner, timeout, dbprincipal, false);
 
@@ -718,16 +756,17 @@ sp_getapplock_function(PG_FUNCTION_ARGS)
 Datum
 sp_releaseapplock_function(PG_FUNCTION_ARGS)
 {
-	char 		*resource, *lockowner, *dbprincipal;
+	char		resource[APPLOCK_MAX_RESOURCE_LENGTH];
+	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH], dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
 	int			ret;
 
 	/* Init applock hash table if we haven't done so. */
 	if (!appLockCacheLocal)
 		initApplockCache();
 
-	ApplockGetStringArg(0, resource);
-	ApplockGetStringArg(1, lockowner);
-	ApplockGetStringArg(2, dbprincipal);
+	ApplockGetStringArg(0, resource, sizeof(resource));
+	ApplockGetStringArg(1, lockowner, sizeof(lockowner));
+	ApplockGetStringArg(2, dbprincipal, sizeof(dbprincipal));
 
 	ret = _sp_releaseapplock_internal(resource, lockowner, dbprincipal, false);
 
@@ -749,7 +788,7 @@ sp_releaseapplock_function(PG_FUNCTION_ARGS)
 Datum
 APPLOCK_MODE(PG_FUNCTION_ARGS)
 {
-	char				*resource;
+	char				resource[APPLOCK_MAX_RESOURCE_LENGTH];
 	short				high_mode, ret_mode;
 	AppLockCacheEnt		*entry;
 	int64				key;
@@ -760,7 +799,7 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 	if (!appLockCacheLocal)
 		initApplockCache();
 
-	ApplockGetStringArg(1, resource);
+	ApplockGetStringArg(1, resource, sizeof(resource));
 
 	/* If we don't own the lock, just return NoLock */
 	if ((key = AppLockSearchKeyLocal(resource)) < 0)
@@ -808,16 +847,17 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 Datum
 APPLOCK_TEST(PG_FUNCTION_ARGS)
 {
-	char 		*resource, *lockmode, *lockowner, *dbprincipal;
+	char		resource[APPLOCK_MAX_RESOURCE_LENGTH], lockmode[APPLOCK_MAX_LOCKMODE_LENGTH];
+	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH], dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
 
 	/* Init applock hash table if not yet done. */
 	if (!appLockCacheLocal)
 		initApplockCache();
 
-	ApplockGetStringArg(0, dbprincipal);
-	ApplockGetStringArg(1, resource);
-	ApplockGetStringArg(2, lockmode);
-	ApplockGetStringArg(3, lockowner);
+	ApplockGetStringArg(0, dbprincipal, sizeof(dbprincipal));
+	ApplockGetStringArg(1, resource, sizeof(resource));
+	ApplockGetStringArg(2, lockmode, sizeof(lockmode));
+	ApplockGetStringArg(3, lockowner, sizeof(lockowner));
 
 	if (pg_strcasecmp(lockowner, "Transaction") == 0 && !IsTransactionBlockActive())
 		ereport(ERROR,
