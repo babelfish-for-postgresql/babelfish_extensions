@@ -96,7 +96,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const s
 }
 
 void verifyValuesInObject(ServerType serverType, const string &objectName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, bool caseInsensitive) {
     
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
 
@@ -124,7 +124,12 @@ void verifyValuesInObject(ServerType serverType, const string &objectName, const
     EXPECT_EQ(pk, pkStartingValue);
     if (insertedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedInsertedValues[i].size());
-      EXPECT_EQ(data, expectedInsertedValues[i]);
+      string expected = expectedInsertedValues[i];
+      if (caseInsensitive) {
+        for (auto & c: data) c = tolower(c);
+        for (auto & c: expected) c = tolower(c);
+      }
+      EXPECT_EQ(data, expected);
     }
     else {
       EXPECT_EQ(data_len, SQL_NULL_DATA);
@@ -183,7 +188,9 @@ void testCommonColumnAttributes(ServerType serverType, const string &tableName, 
                             (SQLLEN*) &scale); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(scale, scaleExpected[i - 1]);
+  }
 
+  for (int i = 1; i <= numCols; i++) {
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
                             SQL_DESC_TYPE_NAME, // Get the type name of the column
@@ -311,10 +318,11 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
 }
 
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, 
+  bool caseInsensitive, bool numericInsert) {
 
-  insertValuesInTable(serverType, tableName, insertedValues, false, pkStartingValue);
-  verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue);
+  insertValuesInTable(serverType, tableName, insertedValues, numericInsert, pkStartingValue);
+  verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue, caseInsensitive);
 }
 
 void testInsertionFailure(ServerType serverType, const string &tableName, const string &orderByColumnName, 
@@ -349,7 +357,8 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
 }
 
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues) {
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, 
+  bool caseInsensitive, bool numericUpdate) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -376,7 +385,8 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
   
   vector<pair<string, string>> update_col{};
   for (int i = 0; i < updatedValues.size(); i++) {
-    string valueToUpdate = "'" + updatedValues[i] + "'";
+    string valueToUpdate = (numericUpdate || updatedValues[i] == "NULL") ? 
+                            updatedValues[i] :  "\'" + updatedValues[i] + "\'";
     update_col.push_back(pair<string, string>(colNameToUpdate, valueToUpdate));
   }
 
@@ -397,8 +407,19 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedUpdatedValues[i].size());
-    EXPECT_EQ(data, expectedUpdatedValues[i]);
+
+    if (updatedValues[i] != "NULL") {
+      EXPECT_EQ(data_len, expectedUpdatedValues[i].size());
+      string expected = expectedUpdatedValues[i];
+      if (caseInsensitive) {
+        for (auto & c: data) c = tolower(c);
+        for (auto & c: expected) c = tolower(c);
+      }
+      EXPECT_EQ(data, expected);
+    }
+    else {
+      EXPECT_EQ(data_len, SQL_NULL_DATA);
+    }
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -450,8 +471,8 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedInsertedValues[i].size());
-    EXPECT_EQ(data, expectedInsertedValues[i]);
+    EXPECT_EQ(data_len, expectedInsertedValues[0].size());
+    EXPECT_EQ(data, expectedInsertedValues[0]);
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -529,11 +550,12 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
 }
 
 void testComparisonOperators(ServerType serverType, const string &tableName, const string &col1Name, const string &col2Name, 
-  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults) {
+  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, 
+  bool explicitCast, bool explicitQuotes) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
-  
+
   const int BYTES_EXPECTED = 1;
   const int NUM_OF_DATA = col2Data.size();
   const int NUM_OF_OPERATIONS = operationsQuery.size();
@@ -556,7 +578,10 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, col1Name + "=\'" + col1Data[i] + "\'"));
+    const string WHERE_STATEMENT = explicitCast ? 
+      col1Name + " OPERATOR(sys.=) " + (explicitQuotes ? "\'" + col1Data[i] + "\'" : col1Data[i]) :
+      col1Name + "=" + (explicitQuotes ? "\'" + col1Data[i] + "\'" : col1Data[i]);
+    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, WHERE_STATEMENT));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -611,4 +636,128 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, con
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   EXPECT_EQ(rcode, SQL_NO_DATA);
   odbcHandler.CloseStmt();
+}
+
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults, 
+  const int insertionSize, const string &orderByColumnName) {
+  
+  OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
+  odbcHandler.Connect(true);
+
+  RETCODE rcode;
+  SQLLEN affectedRows;
+
+  const int NUM_OF_OPERATIONS = operationsQuery.size();
+  char colResults[NUM_OF_OPERATIONS][BUFFER_SIZE];
+  SQLLEN colLen[NUM_OF_OPERATIONS];
+
+  vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {};
+
+  // initialization for bind_columns
+  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
+    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&colResults[i], BUFFER_SIZE, &colLen[i]);
+    bind_columns.push_back(tuple_to_insert);
+  }
+  odbcHandler.CloseStmt();
+
+  odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}));
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  for (int i = 0; i < insertionSize; ++i) {
+    rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
+    EXPECT_EQ(rcode, SQL_SUCCESS);
+
+    for (int j = 0; j < NUM_OF_OPERATIONS; j++) { // retrieve column-by-column
+      EXPECT_EQ(colLen[j], expectedResults[j][i].size());
+      EXPECT_EQ(string(colResults[j]), expectedResults[j][i]);
+    }
+  }
+
+  // Assert that there is no more data
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  EXPECT_EQ(rcode, SQL_NO_DATA);
+  odbcHandler.CloseStmt();
+}
+
+void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData,
+  const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults) {
+
+  OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
+  odbcHandler.Connect(true);
+
+  RETCODE rcode;
+
+  const int NUM_OF_OPERATIONS = operationsQuery.size();
+  SQLLEN col_len[NUM_OF_OPERATIONS];
+  char colResults[NUM_OF_OPERATIONS][BUFFER_SIZE];
+
+  vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {};
+
+  // initialization for bind_columns
+  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
+    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&colResults[i], BUFFER_SIZE, &col_len[i]);
+    bind_columns.push_back(tuple_to_insert);
+  }
+
+  // Make sure values with operations performed on them output correct result
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{orderByColumnName}));  
+
+  for (int i = 0; i < numOfData; i++) {
+    rcode = SQLFetch(odbcHandler.GetStatementHandle());
+    EXPECT_EQ(rcode, SQL_SUCCESS);
+
+    for (int j = 0; j < NUM_OF_OPERATIONS; j++) {
+      EXPECT_EQ(col_len[j], expectedResults[i][j].size());
+      EXPECT_EQ(colResults[j], expectedResults[i][j]);
+    }
+  }
+
+  // Assert that there is no more data
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  EXPECT_EQ(rcode, SQL_NO_DATA);
+  odbcHandler.CloseStmt();
+}
+
+vector<string> getVectorBasedOnColumn(const vector<vector<string>> &vec, const int &col) {
+  vector<string> col_vector;
+
+  for (int i = 0; i < vec.size(); i++) {
+    col_vector.push_back(vec[i][col]);
+  }
+  return col_vector;
+}
+
+string formatNumericWithScale(string decimal, const int &scale, const bool &is_bbf) {
+  size_t dec_pos = decimal.find('.');
+
+  if (dec_pos == std::string::npos) {
+    if (scale == 0) { // if no decimal sign and scale is 0, no need to append
+      return decimal;
+    }
+    dec_pos = decimal.size();
+    decimal += ".";
+  }
+
+  // add extra 0s
+  int zeros_needed = scale - (decimal.size() - dec_pos - 1);
+  for (int i = 0; i < zeros_needed; i++) {
+    decimal += "0";
+  }
+
+  if (is_bbf){
+    dec_pos = decimal.find('.');
+
+    if ((decimal[dec_pos - 1] == '0' && (dec_pos - 1) == 0) || (decimal[0] == '-' and decimal[1] == '0')){
+      decimal.erase(dec_pos - 1, 1);
+    }
+  }
+  return decimal;
+}
+
+void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is_bbf) {
+  for (int i = 0; i < vec.size(); i++) {
+    vec[i] = formatNumericWithScale(vec[i], scale, is_bbf);
+  }
 }

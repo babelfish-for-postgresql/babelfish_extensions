@@ -1491,9 +1491,11 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		/* Check metadata inconsistency */
-		metadata_inconsistency_check(tupstore, tupdesc);
-
+		if(metadata_inconsistency_check_enabled())		
+		{
+			/* Check metadata inconsistency */
+			metadata_inconsistency_check(tupstore, tupdesc);
+		}
 		/* clean up and return the tuplestore */
 		tuplestore_donestoring(tupstore);
 

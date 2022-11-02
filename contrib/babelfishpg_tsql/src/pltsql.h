@@ -1201,6 +1201,9 @@ typedef struct PLtsql_function
 
 	/* arguments for inline code block */
 	InlineCodeBlockArgs *inline_args;
+
+	Oid			fn_owner;
+	bool		exists_in_shared_schema;
 } PLtsql_function;
 
 /*
@@ -1397,6 +1400,10 @@ typedef struct PLtsql_execstate
 	List 		*explain_infos;
 	char		*schema_name;
 	const char		*db_name;
+	instr_time	planning_start;
+	instr_time	planning_end;
+	instr_time execution_start;
+	instr_time execution_end;
 } PLtsql_execstate;
 
 /*
@@ -1956,6 +1963,7 @@ extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
+extern Oid get_function_owner_for_top_estate();
 
 typedef struct
 {
@@ -2034,5 +2042,6 @@ extern void pltsql_update_last_identity(Oid seqid, int64 val);
 extern int64 last_identity_value(void);
 extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
+extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
 
 #endif							/* PLTSQL_H */

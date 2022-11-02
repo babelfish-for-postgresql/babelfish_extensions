@@ -231,6 +231,7 @@ write_stored_proc_probin_hook_type write_stored_proc_probin_hook = NULL;
 make_fn_arguments_from_stored_proc_probin_hook_type make_fn_arguments_from_stored_proc_probin_hook = NULL;
 pltsql_nextval_hook_type prev_pltsql_nextval_hook = NULL;
 pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
+pltsql_setval_hook_type prev_pltsql_setval_hook = NULL;
 
 static void
 set_procid(Oid oid)
@@ -2364,6 +2365,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (strcmp(headel->defname, "isrole") == 0)
 					{
 						int location = -1;
+						bool orig_username_exists = false;
 
 						isrole = true;
 						stmt->options = list_delete_cell(stmt->options,
@@ -2380,7 +2382,18 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								location = defel->location;
 								user_options = lappend(user_options, defel);
 							}
+							/*
+							 * This condition is to handle create role when using sp_addrole procedure
+							 * because there we add original_user_name before hand
+							 */
+							if(strcmp(defel->defname, "original_user_name") == 0)
+							{
+								user_options = lappend(user_options, defel);
+								orig_username_exists = true;
+							}
+							
 						}
+						
 
 						foreach(option, user_options)
 						{
@@ -2388,7 +2401,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 															lfirst(option));
 						}
 
-						if (location >= 0)
+						if (location >= 0 && !orig_username_exists)
 						{
 							char        *orig_user_name;
 
@@ -3517,6 +3530,9 @@ _PG_init(void)
 	prev_pltsql_resetcache_hook = pltsql_resetcache_hook;
 	pltsql_resetcache_hook = pltsql_resetcache_identity;
 
+	prev_pltsql_setval_hook = pltsql_setval_hook;
+	pltsql_setval_hook = pltsql_setval_identity;
+
 	suppress_string_truncation_error_hook = pltsql_suppress_string_truncation_error;
 
 	pre_function_call_hook = pre_function_call_hook_impl;
@@ -3563,6 +3579,7 @@ _PG_fini(void)
 	planner_node_transformer_hook = prev_planner_node_transformer_hook;
 	pltsql_nextval_hook = prev_pltsql_nextval_hook;
 	pltsql_resetcache_hook = prev_pltsql_resetcache_hook;
+	pltsql_setval_hook = prev_pltsql_setval_hook;
 	relname_lookup_hook = prev_relname_lookup_hook;
 	uninstall_object_access_hook_drop_relation();
 	ProcessUtility_hook = prev_ProcessUtility;

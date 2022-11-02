@@ -927,6 +927,7 @@ STUFF:                                           S T U F F;
 SUBJECT:                                         S U B J E C T;
 SUBSCRIBE:                                       S U B S C R I B E;
 SUBSCRIPTION:                                    S U B S C R I P T I O N;
+SUBSTRING:                                       S U B S T R I N G;
 SUM:                                             S U M;
 SUPPORTED:                                       S U P P O R T E D;
 SUSPEND:                                         S U S P E N D;

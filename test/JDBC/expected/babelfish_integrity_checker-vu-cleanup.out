@@ -1,0 +1,10 @@
+-- tsql
+DROP VIEW babelfish_integrity_checker_vu_prepare_view;
+GO
+
+DROP PROC babelfish_integrity_checker_vu_prepare_proc;
+GO
+
+-- psql
+DROP FUNCTION master_dbo.babelfish_integrity_checker_vu_prepare_func;
+GO

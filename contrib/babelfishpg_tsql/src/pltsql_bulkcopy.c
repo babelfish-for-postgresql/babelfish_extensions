@@ -40,6 +40,7 @@
 #include "utils/rls.h"
 #include "pltsql.h"
 
+
 /*
  * No more than this many tuples per CopyMultiInsertBuffer
  *

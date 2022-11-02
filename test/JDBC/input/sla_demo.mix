@@ -1,0 +1,10 @@
+-- sla 5000
+-- psql
+select 1;
+GO
+
+select pg_sleep(3);
+GO
+
+select 2;
+GO

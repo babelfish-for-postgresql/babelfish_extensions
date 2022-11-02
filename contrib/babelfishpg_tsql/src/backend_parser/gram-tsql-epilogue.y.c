@@ -190,6 +190,19 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_time"), args, COERCE_EXPLICIT_CALL, location);
 	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime")))
 	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime"), args, COERCE_EXPLICIT_CALL, location);
+	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime2")))
+	{
+		/*
+		 *	Handles null typmod case. typmod is set to 6 because that is the current max precision for datetime2 
+		 *	Update to 7 when BABEL-2934 is reolved
+		 */
+		if(typmod < 0)
+			typmod = 6;
+
+		typename_string = psprintf("%s(%d)", "DATETIME2", typmod);
+		args = lcons(makeStringConst(typename_string, location), args);
+		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime2"), args, COERCE_EXPLICIT_CALL, location);
+	}
 	else if (strcmp(typename_string, "varchar") == 0)
 	{
 		Node *helperFuncCall;
@@ -487,7 +500,7 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_
 		appendStringInfoString(format_query, end_param);
 		format_func_args = list_concat(list_make1(makeStringConst(format_query->data, -1)),
 									   params);
-		format_fc = makeFuncCall(list_make1(makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
+		format_fc = makeFuncCall(list_make2(makeString("pg_catalog"), makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
 		arg1 = (Node *) format_fc;
 	}
 	else

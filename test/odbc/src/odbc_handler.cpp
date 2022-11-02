@@ -240,6 +240,8 @@ string OdbcHandler::GetErrorMessage(SQLSMALLINT HandleType, const RETCODE& retco
 }
 
 void OdbcHandler::BindColumns(vector<tuple<int, int, SQLPOINTER, int>> columns) {
+
+  // ToDo: Refactor this to call the other BindColumns function with std::tuple_cat
   RETCODE rcode;
 
   for (auto column : columns) {

@@ -1222,6 +1222,7 @@ from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
 where t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
 and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and not sys.is_table_type(t.oid)
 and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
@@ -1299,8 +1300,15 @@ select
       when 'p' then 'P'::varchar(2)
       when 'a' then 'AF'::varchar(2)
       else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'::varchar(2)
+        case 
+          when pg_catalog.format_type(p.prorettype, null) = 'trigger'
+            then 'TR'::varchar(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::varchar(2)
+              else 'IF'::varchar(2)
+            end
           else 'FN'::varchar(2)
         end
     end as type
@@ -1308,8 +1316,15 @@ select
       when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
       when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'::varchar(60)
+        case 
+          when pg_catalog.format_type(p.prorettype, null) = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
           else 'SQL_SCALAR_FUNCTION'::varchar(60)
         end
     end as type_desc
@@ -1320,6 +1335,7 @@ select
   , 0 as is_schema_published
 from pg_proc p
 inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
 left join pg_trigger tr on tr.tgfoid = p.oid
 where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
 and has_schema_privilege(s.oid, 'USAGE')
@@ -1687,7 +1703,7 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN COALESCE(tsql_get_functiondef(ao.object_id), pg_get_functiondef(ao.object_id))
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
