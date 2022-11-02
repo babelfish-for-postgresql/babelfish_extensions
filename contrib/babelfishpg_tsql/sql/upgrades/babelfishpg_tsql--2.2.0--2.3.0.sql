@@ -7353,7 +7353,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
             AND (pg_has_role(r.relowner, 'USAGE')
                 OR has_sequence_privilege(r.oid, 'SELECT, UPDATE, USAGE'));
 
-GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC; 
+GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
