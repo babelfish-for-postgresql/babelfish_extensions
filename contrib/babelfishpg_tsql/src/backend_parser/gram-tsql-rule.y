@@ -3415,12 +3415,13 @@ tsql_CreateFunctionStmt:
 						CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 						DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 						DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($10)), @10);
+						DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
 						n->is_procedure = false;
 						n->replace = $2;
 						n->funcname = $4;
 						n->parameters = $5;
 						n->returnType = $7;
-						n->options = list_concat(list_make2(lang, body), $8);
+						n->options = list_concat(list_make3(lang, body, location), $8);
 						$$ = (Node *)n;
 					}
 			| CREATE opt_or_replace proc_keyword tsql_func_name tsql_createproc_args
@@ -3429,13 +3430,14 @@ tsql_CreateFunctionStmt:
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($8)), @8);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
 
 					n->is_procedure = true;
 					n->replace = $2;
 					n->funcname = $4;
 					n->parameters = $5;
 					n->returnType = NULL;
-					n->options = list_concat(list_make2(lang, body), $6);
+					n->options = list_concat(list_make3(lang, body, location), $6);
 					$$ = (Node *)n;
 				}
 			/*
@@ -3455,6 +3457,7 @@ tsql_CreateFunctionStmt:
 					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($13)), @13);
 					DefElem *tbltypStmt = makeDefElem("tbltypStmt", (Node *) n1, @1);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
 					TSQLInstrumentation(INSTR_TSQL_CREATE_FUNCTION_RETURNS_TABLE);
 					if (sql_dialect != SQL_DIALECT_TSQL)
 						ereport(ERROR,
@@ -3490,7 +3493,7 @@ tsql_CreateFunctionStmt:
 					n2->returnType = makeTypeNameFromNameList(tbltyp);
 					n2->returnType->setof = true;
 					n2->returnType->location = @8;
-					n2->options = list_make3(lang, body, tbltypStmt);
+					n2->options = list_make4(lang, body, tbltypStmt, location);
 
 					$$ = (Node *)n2;
 				}
@@ -3501,6 +3504,7 @@ tsql_CreateFunctionStmt:
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($9)), @9);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
 
 					TSQLInstrumentation(INSTR_TSQL_CREATE_FUNCTION_RETURNS_TABLE);
 					n->is_procedure = false;
@@ -3519,7 +3523,7 @@ tsql_CreateFunctionStmt:
 					n->returnType = SystemTypeName("record");
 					n->returnType->setof = true;
 					n->returnType->location = @7;
-					n->options = list_make2(lang, body);
+					n->options = list_make3(lang, body, location);
 
 					$$ = (Node *)n;
 				}
