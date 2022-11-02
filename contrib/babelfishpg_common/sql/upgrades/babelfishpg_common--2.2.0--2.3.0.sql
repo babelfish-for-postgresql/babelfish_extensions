@@ -71,13 +71,13 @@ RETURNS sys.DATETIME
 AS 'babelfishpg_common', 'datetime_mi_datetime'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE OPERATOR sys.+ (
+CREATE OPERATOR sys.+ (
     LEFTARG    = sys.DATETIME,
     RIGHTARG   = sys.DATETIME,
     PROCEDURE  = sys.datetime_add
 );
 
-CREATE OR REPLACE OPERATOR sys.- (
+CREATE OPERATOR sys.- (
     LEFTARG    = sys.DATETIME,
     RIGHTARG   = sys.DATETIME,
     PROCEDURE  = sys.datetime_minus
@@ -94,13 +94,13 @@ RETURNS sys.smalldatetime
 AS 'babelfishpg_common', 'smalldatetime_mi_smalldatetime'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE OPERATOR sys.+ (
+CREATE OPERATOR sys.+ (
     LEFTARG    = sys.smalldatetime,
     RIGHTARG   = sys.smalldatetime,
     PROCEDURE  = sys.smalldatetime_add
 );
 
-CREATE OR REPLACE OPERATOR sys.- (
+CREATE OPERATOR sys.- (
     LEFTARG    = sys.smalldatetime,
     RIGHTARG   = sys.smalldatetime,
     PROCEDURE  = sys.smalldatetime_minus
