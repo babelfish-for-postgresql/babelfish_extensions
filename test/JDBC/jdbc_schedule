@@ -9,4 +9,4 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
-
+ignore#!#tds_faultinjection
