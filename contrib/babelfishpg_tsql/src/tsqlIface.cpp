@@ -2383,14 +2383,15 @@ static void process_select_statement(
 	/* remove unsupported_tokens */
 	if (selectCtx->for_clause()) 
 	{
+		Assert(selectCtx->for_clause()->XML() || selectCtx->for_clause()->JSON());
 		if (selectCtx->for_clause()->XML()) // FOR XML
 		{
 			Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
 		}
-		else if (selectCtx->for_clause()->JSON()) // for JSON
+		else // for JSON
 		{
-			Assert(selectCtx->for_clause()->PATH());
-		}		
+			Assert(selectCtx->for_clause()->PATH() || selectCtx->for_clause()->AUTO());
+		}
 	}
 
 	Assert(mutator);

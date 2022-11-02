@@ -70,25 +70,16 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 							   SPI_tuptable->tupdesc,
 							   i,
 							   &isnull);	
-			
-		if (!isnull)
-		{
-			appendStringInfo(result,sep);
-			sep = ",";
-			appendStringInfo(result, "%s",
-							 tsql_json_build_object(CStringGetDatum(colname), 
-							 						colval,
-							 						SPI_gettypeid(SPI_tuptable->tupdesc,i),false)->data);
-		}
-		else if (include_null_value)
-		{
-			appendStringInfo(result,sep);
-			sep = ",";
-			appendStringInfo(result, "%s",
-							 tsql_json_build_object(CStringGetDatum(colname), 
-							 						colval,
-							 						SPI_gettypeid(SPI_tuptable->tupdesc,i),true)->data);
-		}
+
+		if (isnull && !include_null_value)
+			continue;
+
+		appendStringInfo(result,sep);
+		sep = ",";
+		tsql_json_build_object(result, 
+								CStringGetDatum(colname), colval,
+								SPI_gettypeid(SPI_tuptable->tupdesc,i),isnull);
+
 	}
 	appendStringInfoChar(result,'}');
 	if (rownum != SPI_processed-1)
@@ -118,15 +109,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("invalid query")));
 
-	/* ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON */
-	if (root_name_present && without_array_wrapper)
-	{
-		ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON. Remove one of these options")));
-	}
-
-	/* If root_name_present is TRUE then WITHOUT_ARRAY_WRAPPER will be FALSE */
+	/* If (root_name_present) is TRUE then WITHOUT_ARRAY_WRAPPER will be FALSE */
 	if(root_name_present)
 		appendStringInfo(result, "{\"%s\":[",root_name);
 	else if (!without_array_wrapper)

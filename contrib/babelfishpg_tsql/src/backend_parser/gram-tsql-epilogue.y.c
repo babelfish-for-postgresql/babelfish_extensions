@@ -489,22 +489,10 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_
 		}
 	}
 
-	/*
-	 * Make a function call to Function FORMAT if format_query is built from the
-	 * above process.
-	 */
-	if (format_query->len > 0)
-	{
-		FuncCall *format_fc;
-		List *format_func_args;
-		appendStringInfoString(format_query, end_param);
-		format_func_args = list_concat(list_make1(makeStringConst(format_query->data, -1)),
-									   params);
-		format_fc = makeFuncCall(list_make2(makeString("pg_catalog"), makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
-		arg1 = (Node *) format_fc;
-	}
-	else
-		arg1 = makeStringConst(query, -1);
+
+
+	// Funtion call to get the updated query based on the format_query
+	arg1 = tsql_get_transformed_query(format_query,end_param,query,params);
 
 	/*
 	 * Finally make funtion call to tsql_query_to_xml or tsql_query_to_xml_text
@@ -1439,6 +1427,15 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 			}
 		}
 	}
+
+	/* ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON */
+	if (root_name_present && without_array_wrapper)
+	{
+		ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON. Remove one of these options")));
+	}
+
 	
 	query = memcpy(query,
 				   src_query + start_location,
@@ -1518,27 +1515,12 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 		}
 	}
 
-	/*
-	 * Make a function call to Function FORMAT if format_query is built from the
-	 * above process.
-	 */
-	if (format_query->len > 0)
-	{
-		FuncCall *format_fc;
-		List *format_func_args;
-		appendStringInfoString(format_query, end_param);
-		format_func_args = list_concat(list_make1(makeStringConst(format_query->data, -1)),
-									   params);
-		format_fc = makeFuncCall(list_make1(makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
-		arg1 = (Node *) format_fc;
-	}
-	else
-		arg1 = makeStringConst(query, -1);
-
+	// Funtion call to get the updated query based on the format_query
+	arg1 = tsql_get_transformed_query(format_query,end_param,query,params);
+	
 	/*
 	 * Finally make funtion call to tsql_query_to_json_text
 	 */
-	
 	func_name= list_make2(makeString("sys"), makeString("tsql_query_to_json_text"));
 	func_args = list_make5(arg1,
 						   makeIntConst(forclause->mode, -1),
@@ -1553,5 +1535,33 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 	rt->val = (Node *) fc;
 	rt->location = -1;
 	return rt;
+}
+
+/*
+ * Get the transformed query based on the length of format_query.
+ * Transform the query to use PG's function FORMAT in order to support
+ * variable binding.
+ */
+static Node*
+tsql_get_transformed_query(StringInfo format_query, char *end_param, char *query, List *params)
+{
+	Node* arg1;
+	/*
+	 * Make a function call to Function FORMAT if format_query has length > 0.
+	 */
+	if (format_query->len > 0)
+	{
+		FuncCall *format_fc;
+		List *format_func_args;
+		appendStringInfoString(format_query, end_param);
+		format_func_args = list_concat(list_make1(makeStringConst(format_query->data, -1)),
+									   params);
+		format_fc = makeFuncCall(list_make2(makeString("pg_catalog"), makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
+		arg1 = (Node *) format_fc;
+	}
+	else
+		arg1 = makeStringConst(query, -1);
+
+	return arg1;
 }
 

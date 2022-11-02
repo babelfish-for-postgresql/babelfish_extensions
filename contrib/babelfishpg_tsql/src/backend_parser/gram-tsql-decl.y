@@ -77,8 +77,8 @@
 %type <node> tsql_for_clause tsql_xml_common_directive
 %type <list> tsql_xml_common_directives
 
-%type <node> tsql_for_json_clause tsql_json_common_directive
-%type <list> tsql_json_common_directives
+%type <node> tsql_for_json_clause tsql_for_json_common_directive
+%type <list> tsql_for_json_common_directives
 
 %type <istmt> tsql_output_insert_rest tsql_output_insert_rest_no_paren
 

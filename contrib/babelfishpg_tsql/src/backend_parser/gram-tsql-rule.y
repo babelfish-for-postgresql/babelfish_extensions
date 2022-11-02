@@ -4335,16 +4335,15 @@ RevokeStmt:
  * Map the mode to the corresponding ENUM.
  */
 tsql_for_json_clause:
-			TSQL_FOR TSQL_JSON TSQL_AUTO tsql_json_common_directives
+			TSQL_FOR TSQL_JSON TSQL_AUTO tsql_for_json_common_directives
 			{
 				TSQL_ForClause *n = (TSQL_ForClause *) palloc(sizeof(TSQL_ForClause));
-				TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_FOR_JSON_CLAUSE);
 				n->mode = TSQL_FORJSON_AUTO;
 				n->commonDirectives = $4;
 				n->location = @1;
 				$$ = (Node *) n;
 			}
-			| TSQL_FOR TSQL_JSON TSQL_PATH tsql_json_common_directives
+			| TSQL_FOR TSQL_JSON TSQL_PATH tsql_for_json_common_directives
 			{
 				TSQL_ForClause *n = (TSQL_ForClause *) palloc(sizeof(TSQL_ForClause));
 				n->mode = TSQL_FORJSON_PATH;
@@ -4355,8 +4354,8 @@ tsql_for_json_clause:
 		;
 
 
-tsql_json_common_directives:
-			tsql_json_common_directives ',' tsql_json_common_directive
+tsql_for_json_common_directives:
+			tsql_for_json_common_directives ',' tsql_for_json_common_directive
 			{
 				$$ = lappend($1, $3);
 			}
@@ -4367,7 +4366,7 @@ tsql_json_common_directives:
  * FOR JSON clause can have 3 directives: ROOT, INCLUDE_NULL_VALUES and WITHOUT_ARRAY_WRAPPER.
  * Map them to ENUM TSQLJSONDirective and String of the ROOT name respectively.
  */
-tsql_json_common_directive:
+tsql_for_json_common_directive:
 			TSQL_ROOT									{ $$ = makeStringConst("root", -1); }
 			| TSQL_ROOT '(' Sconst ')'					{ $$ = makeStringConst($3, -1); }
 			| TSQL_INCLUDE_NULL_VALUES					{ $$ = makeIntConst(TSQL_JSON_DIRECTIVE_INCLUDE_NULL_VALUES, -1); }
