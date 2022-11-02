@@ -5,12 +5,11 @@ create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
     INNER JOIN pg_catalog.pg_depend dep
-    ON pt.typrelid = dep.objid AND pt.oid = dep.refobjid
+    ON pt.typrelid = dep.objid
     INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
     WHERE 
     pt.typnamespace in (select schema_id from sys.schemas) 
-    AND (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r'
-    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass)
+    and (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r')
 ;
 
 create or replace view sys.tables as
