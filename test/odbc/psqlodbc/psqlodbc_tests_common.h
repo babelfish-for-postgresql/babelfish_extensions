@@ -543,6 +543,7 @@ void verifyValuesInObject(ServerType serverType, string objectName, string order
     EXPECT_EQ(pk, i);
     if (insertedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedLen[i]);
+
       if (type == SQL_C_DOUBLE) {
         compareDoubleEquality(data, expectedInsertedValues[i]);
       }
@@ -621,6 +622,7 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
     
     if (updatedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedUpdatedLen[i]);
+
       if (type == SQL_C_DOUBLE) {
         compareDoubleEquality(data, expectedUpdatedValues[i]);
       }
@@ -733,8 +735,7 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, int
     }
     else {
       EXPECT_EQ(colResults[i], expectedResults[i]);
-    }
-    
+    } 
   }
   // Assert that there is no more data
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
