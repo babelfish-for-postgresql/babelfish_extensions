@@ -2342,6 +2342,7 @@ BEGIN
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
 					ELSE Base3.rolname END
 					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
