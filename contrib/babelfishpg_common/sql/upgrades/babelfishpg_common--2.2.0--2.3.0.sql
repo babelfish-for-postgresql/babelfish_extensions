@@ -104,7 +104,7 @@ CREATE OPERATOR sys.- (
     LEFTARG    = sys.smalldatetime,
     RIGHTARG   = sys.smalldatetime,
     PROCEDURE  = sys.smalldatetime_minus
-);)
+);
 
 -- cast to DATETIME
 -- cast BIT to DATETIME
