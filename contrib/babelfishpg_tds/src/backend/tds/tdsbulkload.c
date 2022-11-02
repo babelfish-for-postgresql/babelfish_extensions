@@ -754,7 +754,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 				case TDS_TYPE_XML:
 				{
 					ParameterToken token = palloc0(sizeof(ParameterTokenData));
-					// offset and batchsize is increased via ReadBcpPlp
+
 					retStatus = ReadBcpPlp(token, &message, request);
 					CheckPLPStatusNotOK(request, retStatus, i);
 					if (token->isNull) /* null */
