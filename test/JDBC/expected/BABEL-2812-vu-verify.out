@@ -30,42 +30,190 @@ datetime
 ~~END~~
 
 
-SELECT * FROM babel_2812_vu_v1
-GO
-~~START~~
-datetime
-2021-12-12 17:30:00.0
-~~END~~
 
-
+-- SELECT * FROM babel_2812_vu_v1
+-- GO
 SELECT * FROM babel_2812_vu_v2
 GO
 ~~START~~
-smalldatetime
-2021-12-12 17:30:00.0
+datetime#!#datetime
+2021-12-12 17:30:00.0#!#2021-12-11 06:30:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v3
 GO
 ~~START~~
-datetime
-2021-12-11 06:30:00.0
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0#!#2021-12-13 00:00:00.0#!#2021-12-13 00:00:00.0#!#2022-02-06 00:00:00.0#!#2022-02-06 00:00:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-06 00:00:00.0#!#2022-02-06 00:00:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v4
 GO
 ~~START~~
-smalldatetime
-2021-12-11 06:30:00.0
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+2021-10-18 00:00:00.0#!#1778-03-16 00:00:00.0#!#2021-12-11 00:00:00.0#!#1778-01-21 00:00:00.0#!#2021-10-17 00:00:00.0#!#1778-03-17 00:00:00.0#!#2021-10-18 00:00:00.0#!#1778-03-16 00:00:00.0#!#2021-10-17 10:48:00.0#!#1778-03-16 13:12:00.0#!#2021-10-17 00:00:00.0#!#1778-03-17 00:00:00.0#!#2021-10-18 00:00:00.0#!#1778-03-16 00:00:00.0#!#2021-10-17 10:48:00.0#!#1778-03-16 13:12:00.0#!#2021-10-18 00:00:00.0#!#1778-03-16 00:00:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v5
 GO
 ~~START~~
-int
--9
+datetime#!#datetime#!#datetime#!#datetime
+2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:11:59.933#!#2022-02-05 13:11:59.933
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v6
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime
+2021-10-17 10:48:00.0#!#1778-03-16 13:12:00.0#!#2021-10-17 10:48:00.067#!#1778-03-16 13:11:59.933
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v7
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v8
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime
+2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0#!#2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v9
+GO
+~~START~~
+datetime#!#datetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v10
+GO
+~~START~~
+datetime#!#datetime
+2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v11
+GO
+~~START~~
+datetime#!#datetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v12
+GO
+~~START~~
+datetime#!#datetime
+2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v13
+GO
+~~START~~
+smalldatetime#!#smalldatetime
+2021-12-12 17:30:00.0#!#2021-12-11 06:30:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v14
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0#!#2021-12-13 00:00:00.0#!#2021-12-13 00:00:00.0#!#2022-02-06 00:00:00.0#!#2022-02-06 00:00:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-06 00:00:00.0#!#2022-02-06 00:00:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v15
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2021-10-18 00:00:00.0#!#1900-02-23 00:00:00.0#!#2021-12-11 00:00:00.0#!#1900-01-02 00:00:00.0#!#2021-10-17 00:00:00.0#!#1900-02-24 00:00:00.0#!#2021-10-18 00:00:00.0#!#1900-02-23 00:00:00.0#!#2021-10-17 10:48:00.0#!#1900-02-23 13:12:00.0#!#2021-10-17 00:00:00.0#!#1900-02-24 00:00:00.0#!#2021-10-18 00:00:00.0#!#1900-02-23 00:00:00.0#!#2021-10-17 10:48:00.0#!#1900-02-23 13:12:00.0#!#2021-10-18 00:00:00.0#!#1900-02-23 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v16
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v17
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2021-10-17 10:48:00.0#!#1900-02-23 13:12:00.0#!#2021-10-17 10:48:00.0#!#1900-02-23 13:12:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v18
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#datetime#!#datetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v19
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#datetime#!#datetime
+2021-12-10 00:00:00.0#!#2021-12-10 00:00:00.0#!#2021-12-10 00:00:00.0#!#2021-12-10 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v20
+GO
+~~START~~
+smalldatetime#!#smalldatetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v21
+GO
+~~START~~
+smalldatetime#!#smalldatetime
+2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v22
+GO
+~~START~~
+smalldatetime#!#smalldatetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v23
+GO
+~~START~~
+smalldatetime#!#smalldatetime
+2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0
+~~END~~
+
+
+-- test DATETIME + other date and time data types (should not work)
+SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS DATE))
+GO
+~~START~~
+datetime
+2021-12-14 00:00:00.0
 ~~END~~
 

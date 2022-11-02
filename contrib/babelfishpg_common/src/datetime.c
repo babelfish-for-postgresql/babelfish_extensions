@@ -528,12 +528,13 @@ float8_mi_datetime(PG_FUNCTION_ARGS)
 
 	/* split day into whole and fractional parts */
 	day_fract = modf(days, &day_whole);
-	day_fract = modf(SECS_PER_DAY*day_fract, &sec_whole);
+
+	/* make interval */
+	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY*day_fract));
 
 
 	/* inialize input int(days) as timestamp */
 	default_timestamp = DirectFunctionCall6(make_timestamp, 1900, 1, 1, 0, 0,0);
-	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(sec_whole));
 	timestamp_left = DirectFunctionCall2(timestamp_pl_interval, default_timestamp, PointerGetDatum(input_interval));
 
 	/* calculate timestamp diff */
@@ -565,10 +566,9 @@ float8_pl_datetime(PG_FUNCTION_ARGS)
 
 	/* split day into whole and fractional parts */
 	day_fract = modf(days, &day_whole);
-	day_fract = modf(SECS_PER_DAY*day_fract, &sec_whole);
 
 	/* make interval */
-	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(sec_whole));
+	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY*day_fract));
 
 	/* add interval */
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(input_interval));
@@ -595,10 +595,9 @@ datetime_mi_float8(PG_FUNCTION_ARGS)
 
 	/* split day into whole and fractional parts */
 	day_fract = modf(days, &day_whole);
-	day_fract = modf(SECS_PER_DAY*day_fract, &sec_whole);
 
 	/* make interval */
-	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(sec_whole));
+	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY*day_fract));
 
 
 	/* subtract interval */
