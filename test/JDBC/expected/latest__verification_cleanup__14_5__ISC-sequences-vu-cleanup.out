@@ -24,13 +24,6 @@ go
 drop sequence isc_sequences_sc2.isc_sequences_seq3;
 go
 
-drop view isc_sequences_view1;
-go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "isc_sequences_view1" does not exist)~~
-
-
 drop schema isc_sequences_sc1;
 go
 
