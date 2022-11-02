@@ -1906,6 +1906,12 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	{
 		uint128		n128 = 0;
 
+		if ((token->len - 1) > sizeof(n128))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						errmsg("Data length %d is invalid for NUMERIC/DECIMAL data types.",
+								token->len)));
+
 		memcpy(&n128, &buf->data[buf->cursor], token->len - 1);
 		buf->cursor += token->len - 1;
 
