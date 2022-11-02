@@ -713,6 +713,7 @@ expr_contains_ilike_and_ci_collation_wrapper(Node *expr, bool check_for_ci_as_co
 {
 	List 		*queue;
 	ListCell 	*lc = NULL;
+	bool 		expr_contains_ilike_and_ci_as = false;
 	
 	if(expr == NULL)
 		return false;
@@ -722,20 +723,21 @@ expr_contains_ilike_and_ci_collation_wrapper(Node *expr, bool check_for_ci_as_co
 	while(list_length(queue) > 0)
 	{
 		Node *predicate = (Node *) linitial(queue);
-
+		queue = list_delete_first(queue);
+		
 		if(IsA(predicate, OpExpr))
 		{
 			/* Initialize collation callbacks */
 			init_and_check_collation_callbacks();
-			return (*collation_callbacks_ptr->expr_contains_ilike_and_ci_as_coll)(predicate, true);
+			expr_contains_ilike_and_ci_as = (*collation_callbacks_ptr->expr_contains_ilike_and_ci_as_coll)(predicate, true);
+			if (expr_contains_ilike_and_ci_as)
+				break;
 		}
 		else if (IsA(predicate, BoolExpr))
 		{
-			BoolExpr   *boolexpr = (BoolExpr *) predicate;
-			
+			BoolExpr   *boolexpr = (BoolExpr *) predicate;			
 			queue = list_concat(queue, boolexpr->args);
-			queue = list_delete_first(queue);
 		}
 	}
-	return false;
+	return expr_contains_ilike_and_ci_as;
 }
