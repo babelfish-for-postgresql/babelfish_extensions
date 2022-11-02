@@ -1,5 +1,5 @@
-#include "conversion_functions_common.h"
-#include "psqlodbc_tests_common.h"
+#include "../conversion_functions_common.h"
+#include "../psqlodbc_tests_common.h"
 #include <fstream>
 
 const string TABLE_NAME = "master_dbo.image_table_odbc_test";
