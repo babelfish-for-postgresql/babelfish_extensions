@@ -1776,7 +1776,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	aclresult = pg_type_aclcheck(*newtypid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error_type(aclresult, *newtypid);
-	
+
 	tsqlSeqTypOid = pltsql_seq_type_map(*newtypid);
 
 	if (type_def->typemod != -1)
@@ -1850,11 +1850,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		 */
 		if (typmod_p == -1)
 			typmod_p = 1179652;
-<<<<<<< HEAD
 
-=======
-		
->>>>>>> 95154800 (BABEL-3504,3452:Support UDTS for sequences and ISC-sequences view)
 		if (!for_identity || typmod_p != -1)
 		{
 			uint8_t scale = (typmod_p - VARHDRSZ) & 0xffff;
