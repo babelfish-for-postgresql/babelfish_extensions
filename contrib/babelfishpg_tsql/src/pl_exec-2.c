@@ -2242,6 +2242,13 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	 */
 	params = ((CreateFunctionStmt *) (((RawStmt *) linitial(parsetree))->stmt))->parameters;
 
+	/* Throw error if the provided number of arguments are more than the max allowed limit. */
+	if (list_length(params) > FUNC_MAX_ARGS)
+			ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						errmsg("Too many arguments were provided: %d. The maximum allowed limit is %d",
+							list_length(params), FUNC_MAX_ARGS)));
+
 	args->numargs = list_length(params);
 	args->argtypes = (Oid *) palloc(sizeof(Oid) * args->numargs);
 	args->argtypmods = (int32 *) palloc(sizeof(int32) * args->numargs);
