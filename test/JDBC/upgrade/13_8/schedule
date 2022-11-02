@@ -1,4 +1,4 @@
-p# Schedule File for JDBC Test Framework for local run
+# Schedule File for JDBC Test Framework for local run
 # 1. Lines starting with '#' will be treated as comments
 # 2. To run a postgres command:	cmd#!#postgresql#!#<enter postgres command>
 # 3. To run a T-SQL command: cmd#!#sqlserver#!#<enter T-SQL command>
