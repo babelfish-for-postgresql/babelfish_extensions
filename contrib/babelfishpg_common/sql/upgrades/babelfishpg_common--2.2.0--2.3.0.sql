@@ -61,27 +61,50 @@ AS 'babelfishpg_money', 'int8_to_smallmoney'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- datetime +/- operators (datetime, int4, float8)
-CREATE FUNCTION sys.datetime_add(sys.DATETIME, sys.DATETIME)
+CREATE OR REPLACE FUNCTION sys.datetime_add(sys.DATETIME, sys.DATETIME)
 RETURNS sys.DATETIME
 AS 'babelfishpg_common', 'datetime_pl_datetime'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.datetime_minus(sys.DATETIME, sys.DATETIME)
+CREATE OR REPLACE FUNCTION sys.datetime_minus(sys.DATETIME, sys.DATETIME)
 RETURNS sys.DATETIME
 AS 'babelfishpg_common', 'datetime_mi_datetime'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OPERATOR sys.+ (
+CREATE OR REPLACE OPERATOR sys.+ (
     LEFTARG    = sys.DATETIME,
     RIGHTARG   = sys.DATETIME,
     PROCEDURE  = sys.datetime_add
 );
 
-CREATE OPERATOR sys.- (
+CREATE OR REPLACE OPERATOR sys.- (
     LEFTARG    = sys.DATETIME,
     RIGHTARG   = sys.DATETIME,
     PROCEDURE  = sys.datetime_minus
 );
+
+-- smalldatetime +/- operators (smalldatetime, int4, float8
+CREATE OR REPLACE FUNCTION sys.smalldatetime_add(sys.smalldatetime, sys.smalldatetime)
+RETURNS sys.smalldatetime
+AS 'babelfishpg_common', 'smalldatetime_pl_smalldatetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_minus(sys.smalldatetime, sys.smalldatetime)
+RETURNS sys.smalldatetime
+AS 'babelfishpg_common', 'smalldatetime_mi_smalldatetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE OPERATOR sys.+ (
+    LEFTARG    = sys.smalldatetime,
+    RIGHTARG   = sys.smalldatetime,
+    PROCEDURE  = sys.smalldatetime_add
+);
+
+CREATE OR REPLACE OPERATOR sys.- (
+    LEFTARG    = sys.smalldatetime,
+    RIGHTARG   = sys.smalldatetime,
+    PROCEDURE  = sys.smalldatetime_minus
+);)
 
 -- cast to DATETIME
 -- cast BIT to DATETIME
