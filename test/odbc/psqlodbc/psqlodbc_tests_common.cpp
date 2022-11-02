@@ -761,3 +761,11 @@ void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is
     vec[i] = formatNumericWithScale(vec[i], scale, is_bbf);
   }
 }
+
+void compareDoubleEquality(double actual, double expected) {
+  std::string errorstmt = "Actual value:" + std::to_string(actual)
+          + "\nExpected valuee:" + std::to_string(expected);
+
+  EXPECT_TRUE(std::fabs(actual - expected) < std::numeric_limits<double>::epsilon()
+          ) << errorstmt;    
+}
