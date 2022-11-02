@@ -14,11 +14,15 @@
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/prepare.h"
+#include "common/string.h"
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "hooks.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
+#include "nodes/value.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/rel.h"
@@ -27,8 +31,12 @@
 #include "parser/parse_target.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
+#include "tcop/utility.h"
+#include "tsearch/ts_locale.h"
 
+#include "catalog.h"
 #include "multidb.h"
+#include "session.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
@@ -39,12 +47,20 @@ PG_FUNCTION_INFO_V1(xp_qv_internal);
 PG_FUNCTION_INFO_V1(create_xp_qv_in_master_dbo_internal);
 PG_FUNCTION_INFO_V1(xp_instance_regread_internal);
 PG_FUNCTION_INFO_V1(create_xp_instance_regread_in_master_dbo_internal);
+PG_FUNCTION_INFO_V1(sp_addrole);
+PG_FUNCTION_INFO_V1(sp_droprole);
+PG_FUNCTION_INFO_V1(sp_addrolemember);
+PG_FUNCTION_INFO_V1(sp_droprolemember);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
 extern void read_param_def(InlineCodeBlockArgs * args, const char *paramdefstr);
 extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
 extern PLtsql_execstate *get_current_tsql_estate(void);
+static List *gen_sp_addrole_subcmds(const char *user);
+static List *gen_sp_droprole_subcmds(const char *user);
+static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
+static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 
 char *sp_describe_first_result_set_view_name = NULL;
 
@@ -486,6 +502,302 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 	}
 }
 
+/*
+ * Recurse down the BoolExpr if needed, and append all relevant ColumnRef->fields
+ * to the list.
+ */
+List *handle_bool_expr_rec(BoolExpr *expr, List *list)
+{
+	List *args = expr->args;
+	ListCell *lc;
+	A_Expr *xpr;
+	ColumnRef *ref;
+	foreach(lc, args)
+	{
+		Expr *arg = (Expr *) lfirst(lc);
+		switch(arg->type)
+		{
+			case T_A_Expr:
+				xpr = (A_Expr *)arg;
+
+				if (nodeTag(xpr->rexpr) != T_ColumnRef)
+				{
+					ereport(WARNING,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+				}
+				ref = (ColumnRef *) xpr->rexpr;
+				list = list_concat(list, ref->fields);
+				break;
+			case T_BoolExpr:
+				list = handle_bool_expr_rec((BoolExpr *)arg, list);
+				break;
+			default:
+				break;
+		}
+	}
+	return list;
+}
+
+/*
+ * Returns a list of attnums constructed from the where clause provided, using
+ * the column names given on the left hand side of the assignments
+ */
+List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums)
+{
+	/*
+	 * Append attnos from WHERE clause into target_attnums
+	 */
+	if (nodeTag(w_clause) == T_A_Expr)
+	{
+		A_Expr *where_clause = (A_Expr *)w_clause;
+		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		}
+		ColumnRef *ref = where_clause->lexpr;
+		Value *field = linitial(ref->fields);
+		char *name = field->val.str;
+		int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+		if (attrno == InvalidAttrNumber)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						name,
+						RelationGetRelationName(pstate->p_target_relation))));
+		}
+
+		return lappend_int(target_attnums, attrno);
+	}
+	else if (nodeTag(w_clause) == T_BoolExpr)
+	{
+		BoolExpr *where_clause = (BoolExpr *)w_clause;
+		ListCell *lc;
+		foreach(lc, where_clause->args)
+		{
+			Expr *arg = (Expr *) lfirst(lc);
+			A_Expr *xpr;
+			switch(arg->type)
+			{
+				case T_A_Expr:
+					xpr = (A_Expr *)arg;
+
+					if (nodeTag(xpr->lexpr) != T_ColumnRef)
+					{
+						ereport(WARNING,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+					}
+					ColumnRef *ref = (ColumnRef *) xpr->lexpr;
+					Value *field = linitial(ref->fields);
+					char *name = field->val.str;
+					int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					if (attrno == InvalidAttrNumber)
+					{
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
+					}
+					target_attnums = lappend_int(target_attnums, attrno);
+					break;
+				case T_BoolExpr:
+					target_attnums = handle_where_clause_attnums(pstate, (BoolExpr *)arg, target_attnums);
+					break;
+				default:
+					break;
+			}
+		}
+		return target_attnums;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+	}
+	return target_attnums;
+}
+
+/*
+ * Returns a list of ResTargets constructed from the where clause provided, using
+ * the left hand side of the assignment (assumed to be intended as column names).
+ */
+List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets)
+{
+	/*
+	 * Construct a ResTarget and append it to the list.
+	 */
+	if (nodeTag(w_clause) == T_A_Expr)
+	{
+		A_Expr *where_clause = (A_Expr *)w_clause;
+		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		}
+		ColumnRef *ref = where_clause->lexpr;
+		Value *field = linitial(ref->fields);
+		char *name = field->val.str;
+		int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+		if (attrno == InvalidAttrNumber)
+		{
+			ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_COLUMN),
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
+					name,
+					RelationGetRelationName(pstate->p_target_relation))));
+		}
+		ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+		res->type = ref->type;
+		res->name = field->val.str;
+		res->indirection = NIL; /* Unused for now */
+		res->val = ref; /* Store the ColumnRef here if needed */
+		res->location = ref->location;
+
+		return lappend(extra_restargets, res);
+	}
+	else if (nodeTag(w_clause) == T_BoolExpr)
+	{
+		BoolExpr *where_clause = (BoolExpr *)w_clause;
+		ListCell *lc;
+		foreach(lc, where_clause->args)
+		{
+			Expr *arg = (Expr *) lfirst(lc);
+			A_Expr *xpr;
+			switch(arg->type)
+			{
+				case T_A_Expr:
+					xpr = (A_Expr *)arg;
+
+					if (nodeTag(xpr->lexpr) != T_ColumnRef)
+					{
+						ereport(WARNING,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+					}
+					ColumnRef *ref = (ColumnRef *) xpr->lexpr;
+					Value *field = linitial(ref->fields);
+					char *name = field->val.str;
+					int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					if (attrno == InvalidAttrNumber)
+					{
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
+					}
+					ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+					res->type = ref->type;
+					res->name = field->val.str;
+					res->indirection = NIL; /* Unused for now */
+					res->val = ref; /* Store the ColumnRef here if needed */
+					res->location = ref->location;
+
+					extra_restargets = lappend(extra_restargets, res);
+					break;
+				case T_BoolExpr:
+					extra_restargets = handle_where_clause_restargets_left(pstate, (BoolExpr *)arg, extra_restargets);
+					break;
+				default:
+					break;
+			}
+		}
+		return extra_restargets;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+	}
+	return extra_restargets;
+}
+
+/*
+ * Returns a list of ResTargets constructed from the where clause provided, using
+ * the right hand side of the assignment (assumed to be values/parameters).
+ */
+List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets)
+{
+	/*
+	 * Construct a ResTarget and append it to the list.
+	 */
+	if (nodeTag(w_clause) == T_A_Expr)
+	{
+		A_Expr *where_clause = (A_Expr *)w_clause;
+		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		}
+		ColumnRef *ref = where_clause->rexpr;
+		Value *field = linitial(ref->fields);
+		char *name = field->val.str;
+		ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+		res->type = ref->type;
+		res->name = field->val.str;
+		res->indirection = NIL; /* Unused for now */
+		res->val = ref; /* Store the ColumnRef here if needed */
+		res->location = ref->location;
+
+		return lappend(extra_restargets, res);
+	}
+	else if (nodeTag(w_clause) == T_BoolExpr)
+	{
+		BoolExpr *where_clause = (BoolExpr *)w_clause;
+		ListCell *lc;
+		foreach(lc, where_clause->args)
+		{
+			Expr *arg = (Expr *) lfirst(lc);
+			A_Expr *xpr;
+			switch(arg->type)
+			{
+				case T_A_Expr:
+					xpr = (A_Expr *)arg;
+
+					if (nodeTag(xpr->rexpr) != T_ColumnRef)
+					{
+						ereport(WARNING,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+					}
+					ColumnRef *ref = (ColumnRef *) xpr->rexpr;
+					Value *field = linitial(ref->fields);
+					char *name = field->val.str;
+					ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+					res->type = ref->type;
+					res->name = field->val.str;
+					res->indirection = NIL; /* Unused for now */
+					res->val = ref; /* Store the ColumnRef here if needed */
+					res->location = ref->location;
+
+					extra_restargets = lappend(extra_restargets, res);
+					break;
+				case T_BoolExpr:
+					extra_restargets = handle_where_clause_restargets_right(pstate, (BoolExpr *)arg, extra_restargets);
+					break;
+				default:
+					break;
+			}
+		}
+		return extra_restargets;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+	}
+	return extra_restargets;
+}
 
 /*
  * Internal function used by procedure sys.sp_describe_undeclared_parameters
@@ -527,10 +839,13 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		int num_target_attnums = 0;
 		RawStmt    *parsetree;
 		InsertStmt *insert_stmt;
+		UpdateStmt *update_stmt;
+		DeleteStmt *delete_stmt;
 		RangeVar *relation;
 		Oid relid;
 		Relation r;
 		List *target_attnums = NIL;
+		List *extra_restargets = NIL;
 		ParseState *pstate;
 		int relname_len;
 		List *cols;
@@ -585,26 +900,102 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		}
 		list_item = list_head(raw_parsetree_list);
 		parsetree = lfirst_node(RawStmt, list_item);
-		if (nodeTag(parsetree->stmt) != T_InsertStmt)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-		}
 
 		/*
-		 * Analyze the parsed InsertStmt to suggest types for undeclared
+		 * Analyze the parsed statement to suggest types for undeclared
 		 * parameters
 		 */
-		rewrite_object_refs(parsetree->stmt);
-		sql_dialect = sql_dialect_value_old;
-		insert_stmt = (InsertStmt *)parsetree->stmt;
-		relation = insert_stmt->relation;
-		relid = RangeVarGetRelid(relation, NoLock, false);
-		r = relation_open(relid, AccessShareLock);
-		pstate = (ParseState *) palloc(sizeof(ParseState));
-		pstate->p_target_relation = r;
-		cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
+		switch(nodeTag(parsetree->stmt))
+		{
+			case T_InsertStmt:
+				rewrite_object_refs(parsetree->stmt);
+				sql_dialect = sql_dialect_value_old;
+				insert_stmt = (InsertStmt *)parsetree->stmt;
+				relation = insert_stmt->relation;
+				relid = RangeVarGetRelid(relation, NoLock, false);
+				r = relation_open(relid, AccessShareLock);
+				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate->p_target_relation = r;
+				cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
+				break;
+			case T_UpdateStmt:
+				rewrite_object_refs(parsetree->stmt);
+				sql_dialect = sql_dialect_value_old;
+				update_stmt = (UpdateStmt *)parsetree->stmt;
+				relation = update_stmt->relation;
+				relid = RangeVarGetRelid(relation, NoLock, false);
+				r = relation_open(relid, AccessShareLock);
+				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate->p_target_relation = r;
+				cols = list_copy(update_stmt->targetList);
+
+				/*
+				 * Add attnums to cols based on targetList
+				 */
+				foreach(lc, cols)
+				{
+					ResTarget  *col = (ResTarget *) lfirst(lc);
+					char	   *name = col->name;
+					int			attrno;
+
+					attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					if (attrno == InvalidAttrNumber)
+					{
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
+					}
+					target_attnums = lappend_int(target_attnums, attrno);
+				}
+				target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums);
+				extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets);
+
+				cols = list_concat_copy(cols, extra_restargets);
+				break;
+			case T_DeleteStmt:
+				rewrite_object_refs(parsetree->stmt);
+				sql_dialect = sql_dialect_value_old;
+				delete_stmt = (DeleteStmt *)parsetree->stmt;
+				relation = delete_stmt->relation;
+				relid = RangeVarGetRelid(relation, NoLock, false);
+				r = relation_open(relid, AccessShareLock);
+				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate->p_target_relation = r;
+				cols = NIL;
+
+				/*
+				 * Add attnums to cols based on targetList
+				 */
+				foreach(lc, cols)
+				{
+					ResTarget  *col = (ResTarget *) lfirst(lc);
+					char	   *name = col->name;
+					int			attrno;
+
+					attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					if (attrno == InvalidAttrNumber)
+					{
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
+					}
+					target_attnums = lappend_int(target_attnums, attrno);
+				}
+				target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums);
+				extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets);
+
+				cols = list_concat_copy(cols, extra_restargets);
+				break;
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+				break;
+		}
 
 		undeclaredparams->tablename = (char *) palloc(sizeof(char) * 64);
 		relname_len = strlen(relation->relname);
@@ -640,8 +1031,29 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		pfree(pstate);
 
 		/* Parse the list of parameters, and determine which and how many are undeclared. */
-		select_stmt = (SelectStmt *)insert_stmt->selectStmt;
-		values_list = select_stmt->valuesLists;
+		switch(nodeTag(parsetree->stmt))
+		{
+			case T_InsertStmt:
+				select_stmt = (SelectStmt *)insert_stmt->selectStmt;
+				values_list = select_stmt->valuesLists;
+				break;
+			case T_UpdateStmt:
+				/* 
+				 * In an UPDATE statement, we could have both SET and WHERE with undeclared parameters. 
+				 * That's targetList (SET ...) and whereClause (WHERE ...)
+				 */
+				values_list = list_make1(handle_where_clause_restargets_right(pstate, update_stmt->whereClause, update_stmt->targetList));
+				break;
+			case T_DeleteStmt:
+				values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL));
+				break;
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+				break;
+		}
+
 		if (list_length(values_list) > 1) {
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -662,15 +1074,41 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			}
 			foreach(sublc, sublist)
 			{
-				ColumnRef *columnref = lfirst(sublc);
-				ListCell *fieldcell;
-				if (nodeTag(columnref) != T_ColumnRef)
+				ColumnRef *columnref;
+				ResTarget *res;
+				List *fields;
+				/*
+				 * Tack on WHERE clause for the same as above, for
+				 * UPDATE and DELETE statements.
+				 */
+				switch(nodeTag(parsetree->stmt))
+				{
+					case T_InsertStmt:
+						columnref = lfirst(sublc);
+						break;
+					case T_UpdateStmt:
+					case T_DeleteStmt:
+						res = lfirst(sublc);
+						if (nodeTag(res->val) != T_ColumnRef)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+						}
+						columnref = (ColumnRef *)res->val;
+						break;
+					default:
+						break;
+				}
+				fields = columnref->fields;
+				if (nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 				}
-				foreach(fieldcell, columnref->fields)
+				ListCell *fieldcell;
+				foreach(fieldcell, fields)
 				{
 					Value *field = lfirst(fieldcell);
 					/* Make sure it's a parameter reference */
@@ -846,6 +1284,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 "AND O.name = \'%s\'  " /*  -- INPUT table name */
 "AND O.schema_id = %d " /*  -- INPUT schema Oid */
 "AND O.type = \'U\'"; /* -- User tables only for the time being */
+
 		char *query = psprintf(tempq,
 				undeclaredparams->targetcolnames[undeclaredparams->paramindexes[call_cntr]],
 				undeclaredparams->tablename,
@@ -1023,4 +1462,526 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	PG_RETURN_INT32(0);
+}
+
+Datum sp_addrole(PG_FUNCTION_ARGS)
+{
+	char *rolname, *lowercase_rolname;
+	char *physical_role_name;
+	Oid role_oid;
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+
+		/* Role name is not NULL */
+		if (strlen(rolname) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Role name cannot contain '\' */
+		if (strchr(rolname, '\\') != NULL)
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("'%s' is not a valid name because it contains invalid characters.", rolname)));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+
+		/* Map the logical role name to its physical name in the database.*/
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		role_oid = get_role_oid(physical_role_name, true);
+
+		/* Check if the user, group or role already exists */
+		if (role_oid)
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("User, group, or role '%s' already exists in the current database.", rolname)));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_addrole_subcmds(lowercase_rolname);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(CREATE ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
+}
+
+static List *
+gen_sp_addrole_subcmds(const char *user)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	CreateRoleStmt *rolestmt;
+	List *user_options = NIL;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE ROLE dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+
+	rolestmt = (CreateRoleStmt *) stmt;
+	if (!IsA(rolestmt, CreateRoleStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
+
+	rolestmt->role = pstrdup(user);
+	rewrite_object_refs(stmt);
+
+	/*
+	 * Add original_user_name before hand because placeholder
+	 * query "(CREATE ROLE )" is being passed
+	 * that doesn't contain the user name.
+	 */
+	user_options = lappend(user_options,
+				makeDefElem("original_user_name",
+				(Node *) makeString((char *)user),
+						-1));
+	rolestmt->options = list_concat(rolestmt->options, user_options);
+
+	return res;
+}
+
+Datum sp_droprole(PG_FUNCTION_ARGS)
+{
+	char *rolname, *lowercase_rolname;
+	char *physical_role_name;
+	Oid role_oid;
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+
+		/* Role name is not NULL */
+		if (strlen(rolname) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+
+		/* Map the logical role name to its physical name in the database.*/
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		role_oid = get_role_oid(physical_role_name, true);
+
+		/* Check if the role does not exists*/
+		if(role_oid == InvalidOid || !is_role(role_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot drop the role '%s', because it does not exist or you do not have permission.", rolname)));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_droprole_subcmds(lowercase_rolname);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(DROP ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
+}
+
+static List *
+gen_sp_droprole_subcmds(const char *user)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	DropRoleStmt *dropstmt;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "DROP ROLE dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	dropstmt = (DropRoleStmt *) stmt;
+
+	if (!IsA(dropstmt, DropRoleStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a DropRoleStmt")));
+
+	if (user && dropstmt->roles)
+	{
+		RoleSpec *tmp;
+
+		/* Update the statement with given role name */
+		tmp = (RoleSpec *) llast(dropstmt->roles);
+		tmp->rolename = pstrdup(user);
+	}
+	return res;
+}
+
+Datum sp_addrolemember(PG_FUNCTION_ARGS)
+{
+	char *rolname, *lowercase_rolname;
+	char *membername, *lowercase_membername;
+	char *physical_member_name;
+	char *physical_role_name;
+	Oid role_oid, member_oid;
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+
+		/* Role name, member name is not NULL */
+		if ((strlen(rolname) == 0) || (strlen(membername) == 0))
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names, user names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+		lowercase_membername = lowerstr(membername);
+
+		/* Throws an error if role name and member name are same*/
+		if(strcmp(lowercase_rolname,lowercase_membername)==0)
+			ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Cannot make a role a member of itself")));
+
+		/* Map the logical member name to its physical name in the database.*/
+		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername);
+		member_oid = get_role_oid(physical_member_name, true);
+
+		/* Check if the user, group or role does not exists and given member name is an role or user*/
+		if(member_oid == InvalidOid || ( !is_role(member_oid) && !is_user(member_oid) ))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("User or role '%s' does not exist in this database.", membername)));
+
+		/* Map the logical role name to its physical name in the database.*/
+		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		role_oid = get_role_oid(physical_role_name, true);
+
+		/* Check if the role does not exists and given role name is an role*/
+		if(role_oid == InvalidOid || !is_role(role_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
+
+		/* Check if the member oid is already a member of given role oid*/
+		if(is_member_of_role_nosuper( role_oid, member_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Cannot make a role a member of itself")));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_addrolemember_subcmds(lowercase_rolname, lowercase_membername);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(ALTER ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
+}
+
+static List *
+gen_sp_addrolemember_subcmds(const char *user, const char *member)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	AccessPriv *granted;
+	RoleSpec *grantee;
+	GrantRoleStmt *grant_role;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "ALTER ROLE dummy ADD MEMBER dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	grant_role = (GrantRoleStmt *) stmt;
+	granted = (AccessPriv *) linitial(grant_role->granted_roles);
+
+	/* This is ALTER ROLE statement */
+	grantee = (RoleSpec *) linitial(grant_role->grantee_roles);
+
+	/* Rewrite granted and grantee roles */
+	pfree(granted->priv_name);
+	granted->priv_name = (char *) user;
+
+	pfree(grantee->rolename);
+	grantee->rolename = (char *) member;
+
+	rewrite_object_refs(stmt);
+
+	return res;
+}
+
+Datum sp_droprolemember(PG_FUNCTION_ARGS)
+{
+	char *rolname, *lowercase_rolname;
+	char *membername, *lowercase_membername;
+	char *physical_name;
+	Oid role_oid;
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+
+		/* Role name, member name is not NULL */
+		if ((strlen(rolname) == 0) || (strlen(membername) == 0))
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names, user names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+		lowercase_membername = lowerstr(membername);
+
+		/* Map the logical role name to its physical name in the database.*/
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
+		role_oid = get_role_oid(physical_name, true);
+
+		/* Throw an error id the given role name doesn't exist or isn't a role*/
+		if(role_oid == InvalidOid || !is_role(role_oid))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot alter the role '%s', because it does not exist or you do not have permission.", rolname)));
+
+		/* Map the logical member name to its physical name in the database.*/
+		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_membername);
+		role_oid = get_role_oid(physical_name, true);
+
+		/* Throw an error id the given member name doesn't exist or isn't a role or user*/
+		if(role_oid == InvalidOid || ( !is_role(role_oid) && !is_user(role_oid) ))
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot drop the principal '%s', because it does not exist or you do not have permission.", membername)));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_droprolemember_subcmds(rolname, membername);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(ALTER ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
+}
+
+static List *
+gen_sp_droprolemember_subcmds(const char *user, const char *member)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	AccessPriv *granted;
+	RoleSpec *grantee;
+	GrantRoleStmt *grant_role;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "ALTER ROLE dummy DROP MEMBER dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	grant_role = (GrantRoleStmt *) stmt;
+	granted = (AccessPriv *) linitial(grant_role->granted_roles);
+
+	/* This is ALTER ROLE statement */
+	grantee = (RoleSpec *) linitial(grant_role->grantee_roles);
+
+	/* Rewrite granted and grantee roles */
+	pfree(granted->priv_name);
+	granted->priv_name = (char *) user;
+
+	pfree(grantee->rolename);
+	grantee->rolename = (char *) member;
+
+	rewrite_object_refs(stmt);
+	return res;
 }

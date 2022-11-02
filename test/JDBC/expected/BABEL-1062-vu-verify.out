@@ -1,0 +1,119 @@
+SELECT * FROM BABEL_1062_vu_prepare_v1
+GO
+~~START~~
+int
+43
+~~END~~
+
+DROP VIEW BABEL_1062_vu_prepare_v1
+GO
+
+SELECT * FROM BABEL_1062_vu_prepare_v2
+GO
+~~START~~
+text
+43
+~~END~~
+
+DROP VIEW BABEL_1062_vu_prepare_v2
+GO
+
+SELECT * FROM BABEL_1062_vu_prepare_v3
+GO
+~~START~~
+int
+201601
+~~END~~
+
+DROP VIEW BABEL_1062_vu_prepare_v3
+GO
+
+SELECT * FROM BABEL_1062_vu_prepare_v4
+GO
+~~START~~
+datetime
+2016-11-14 15:12:10.0
+~~END~~
+
+DROP VIEW BABEL_1062_vu_prepare_v4
+GO
+
+EXEC BABEL_1062_vu_prepare_p1
+GO
+~~START~~
+int
+43
+~~END~~
+
+DROP procedure  BABEL_1062_vu_prepare_p1
+GO
+
+EXEC BABEL_1062_vu_prepare_p2
+GO
+~~START~~
+text
+43
+~~END~~
+
+DROP procedure  BABEL_1062_vu_prepare_p2
+GO
+
+EXEC BABEL_1062_vu_prepare_p3
+GO
+~~START~~
+int
+201601
+~~END~~
+
+DROP procedure  BABEL_1062_vu_prepare_p3
+GO
+
+EXEC BABEL_1062_vu_prepare_p4
+GO
+~~START~~
+datetime
+2016-11-14 15:12:10.0
+~~END~~
+
+DROP procedure  BABEL_1062_vu_prepare_p4
+GO
+
+SELECT BABEL_1062_vu_prepare_f1()
+GO
+~~START~~
+datetime
+1900-02-13 00:00:00.0
+~~END~~
+
+DROP FUNCTION BABEL_1062_vu_prepare_f1
+GO
+
+SELECT BABEL_1062_vu_prepare_f2()
+GO
+~~START~~
+nvarchar
+43
+~~END~~
+
+DROP FUNCTION BABEL_1062_vu_prepare_f2
+GO
+
+SELECT BABEL_1062_vu_prepare_f3()
+GO
+~~START~~
+int
+201601
+~~END~~
+
+DROP FUNCTION BABEL_1062_vu_prepare_f3
+GO
+
+SELECT BABEL_1062_vu_prepare_f4()
+GO
+~~START~~
+datetime
+2016-11-14 15:12:10.0
+~~END~~
+
+DROP FUNCTION BABEL_1062_vu_prepare_f4
+GO

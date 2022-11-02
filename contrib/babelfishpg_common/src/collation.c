@@ -870,9 +870,18 @@ lookup_collation_table(Oid coll_oid)
 	 */
 	if (!found)
 	{
+		int collidx;
+
 		coll_info invalid;
 		invalid.oid = InvalidOid;
-		invalid.enc = PG_UTF8;
+
+		collidx = get_server_collation_collidx();
+		if (collidx == NOT_FOUND)
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Encoding corresponding to default server collation could not be found.")));
+		else
+			invalid.enc = coll_infos[collidx].enc;
 		elog(DEBUG2, "collation oid %d not found, using default collation", coll_oid);
 		return invalid;
 	}
@@ -1351,7 +1360,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.is_server_collation_CI_AS = &is_server_collation_CI_AS;
 		collation_callbacks_var.is_valid_server_collation_name = &is_valid_server_collation_name;
 		collation_callbacks_var.find_locale = &find_locale;
-		collation_callbacks_var.EncodingConversion = &server_to_any;
+		collation_callbacks_var.EncodingConversion = &encoding_conv_util;
 		collation_callbacks_var.get_oid_from_collidx_internal = &get_oid_from_collidx;
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;
 		collation_callbacks_var.find_collation_internal = &find_collation;

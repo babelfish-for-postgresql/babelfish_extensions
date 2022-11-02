@@ -1543,3 +1543,44 @@ INSERT INTO t_unsupported_sp EXEC sp_help 'a'
 GO
 DROP TABLE t_unsupported_sp;
 GO
+
+--HIERARCHYID, GEOGRAPHY, GEOMETRY
+-- Should throw detailed error messages, same as TIMESTAMP and ROWVERSION cases
+CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
+GO
+DROP TABLE test_unsupported_hierarchyid;
+GO
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
+GO
+DROP TABLE test_unsupported_geography;
+GO
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+DROP TABLE test_unsupported_geometry;
+GO
+
+-- With escape_hatch_rowversion to ignore
+-- Should throw a simple error message saying the datatype does not exist
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
+CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
+GO
+DROP TABLE test_unsupported_rowversion;
+GO
+CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
+GO
+DROP TABLE test_unsupported_timestamp;
+GO
+CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
+GO
+DROP TABLE test_unsupported_hierarchyid;
+GO
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
+GO
+DROP TABLE test_unsupported_geography;
+GO
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+DROP TABLE test_unsupported_geometry;
+GO

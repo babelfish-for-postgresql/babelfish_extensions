@@ -179,7 +179,8 @@ typedef enum PLtsql_stmt_type
     PLTSQL_STMT_SAVE_CTX,
     PLTSQL_STMT_RESTORE_CTX_FULL,
     PLTSQL_STMT_RESTORE_CTX_PARTIAL,
-    PLTSQL_STMT_INSERT_BULK
+    PLTSQL_STMT_INSERT_BULK,
+    PLTSQL_STMT_GRANTDB
 } PLtsql_stmt_type;
 
 /*
@@ -910,17 +911,17 @@ typedef struct PLtsql_stmt_exit
  */
 typedef struct PLtsql_stmt_insert_bulk
 {
-    PLtsql_stmt_type cmd_type;
-    int         lineno;
-    char  *table_name;
-    char  *schema_name;
-    char  *db_name;
-    char  *column_refs;
+	PLtsql_stmt_type cmd_type;
+	int         lineno;
+	char  *table_name;
+	char  *schema_name;
+	char  *db_name;
+	List *column_refs;
 
-    /* Insert Bulk Options. */
-    char *kilobytes_per_batch;
-    char *rows_per_batch;
-    bool keep_nulls;
+	/* Insert Bulk Options. */
+	char *kilobytes_per_batch;
+	char *rows_per_batch;
+	bool keep_nulls;
 } PLtsql_stmt_insert_bulk;
 
 /*
@@ -981,6 +982,17 @@ typedef struct PLtsql_raise_option
 } PLtsql_raise_option;
 
 /*
+ *	Grant Connect stmt
+ */
+typedef struct PLtsql_stmt_grantdb
+{
+	PLtsql_stmt_type    cmd_type;
+	int 				lineno;
+	bool				is_grant;
+	List	   			*grantees;		/* list of users */
+} PLtsql_stmt_grantdb;
+
+/*
  * ASSERT statement
  */
 typedef struct PLtsql_stmt_assert
@@ -1023,6 +1035,7 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_ddl;			/* DDL statement? */
 	bool		func_call;		/* Function call? */
 	char		*schema_name;	/* Schema specified */
+	char		*db_name;		/* db_name: only for cross db query */
 	bool            is_schema_specified;    /*is schema name specified? */
 	bool		is_create_view;		/* CREATE VIEW? */
 } PLtsql_stmt_execsql;
@@ -1188,6 +1201,9 @@ typedef struct PLtsql_function
 
 	/* arguments for inline code block */
 	InlineCodeBlockArgs *inline_args;
+
+	Oid			fn_owner;
+	bool		exists_in_shared_schema;
 } PLtsql_function;
 
 /*
@@ -1281,6 +1297,9 @@ typedef struct ExplainInfo
 
 	/* indent for the next ExplainInfo */
 	size_t next_indent;
+
+	/* used to restore session to original schema if "use db" is invoked */
+	const char *initial_database;
 } ExplainInfo;
 
 typedef struct PLtsql_execstate
@@ -1380,7 +1399,11 @@ typedef struct PLtsql_execstate
 
 	List 		*explain_infos;
 	char		*schema_name;
-	char		*db_name;
+	const char		*db_name;
+	instr_time	planning_start;
+	instr_time	planning_end;
+	instr_time execution_start;
+	instr_time execution_end;
 } PLtsql_execstate;
 
 /*
@@ -1584,8 +1607,8 @@ typedef struct PLtsql_protocol_plugin
 
 	int* (*get_mapped_tsql_error_code_list) (void);
 
-	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
-				Datum *Values, const char *Nulls, bool *Defaults);
+	uint64 (*bulk_load_callback) (int ncol, int nrow,
+				Datum *Values, bool *Nulls);
 
 	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
@@ -1605,6 +1628,10 @@ typedef struct PLtsql_protocol_plugin
 
 	int (*get_insert_bulk_kilobytes_per_batch) ();
 
+	void* (*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
+
+	void* (*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
+	
 } PLtsql_protocol_plugin;
 
 /*
@@ -1812,8 +1839,8 @@ extern Datum sp_prepare(PG_FUNCTION_ARGS);
 extern Datum sp_unprepare(PG_FUNCTION_ARGS);
 extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
-extern int execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
-				Datum *Values, const char *Nulls, bool *Defaults);
+extern uint64 execute_bulk_load_insert(int ncol, int nrow,
+				Datum *Values, bool *Nulls);
 /*
  * Functions in pl_exec.c
  */
@@ -1935,7 +1962,8 @@ extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool 
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
-extern const char *get_pltsql_function_signature(const char *funcname, int nargs, const Oid *argtypes);
+extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
+extern Oid get_function_owner_for_top_estate();
 
 typedef struct
 {
@@ -2014,6 +2042,6 @@ extern void pltsql_update_last_identity(Oid seqid, int64 val);
 extern int64 last_identity_value(void);
 extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
-
+extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
 
 #endif							/* PLTSQL_H */

@@ -128,9 +128,6 @@ go
 drop table t1;
 go
 
-select distinct checksum(create_date) from sys.objects;
-go
-
 select cast(cast(1 as rowversion) as text);
 go
 

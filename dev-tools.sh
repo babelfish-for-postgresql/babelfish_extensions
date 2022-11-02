@@ -12,7 +12,7 @@ if [ ! $1 ]; then
     echo "  (if TARGET_WS is not provided, the current workspace will be used)"
     echo ""
     echo "  initpg [TARGET_WS]"
-    echo "      init postgres directory + build pg and contrib + copy ANTLR lib"
+    echo "      init postgres directory + build pg and contrib + copy ANTLR lib + build pg_hint_plan"
     echo ""
     echo "  initdb [TARGET_WS]"
     echo "      init data directory + modify postgresql.conf + restart db"
@@ -32,8 +32,8 @@ if [ ! $1 ]; then
     echo "  pg_upgrade SOURCE_WS [TARGET_WS]"
     echo "      run pg_upgrade from SOURCE_WS to TARGET_WS"
     echo ""
-    echo "  test INPUT_DIR [TARGET_WS]"
-    echo "      run JDBC test"
+    echo "  test INPUT_DIR [MIGRATION_MODE]"
+    echo "      run JDBC test, default migration_mode is single-db"
     echo ""
     echo "  minor_version_upgrade SOURCE_WS [TARGET_WS]"
     echo "      upgrade minor version using ALTER EXTENSION ... UPDATE"
@@ -47,8 +47,14 @@ CUR_WS=$PWD
 echo "Current Workspace: $CUR_WS"
 
 TARGET_WS=$2
-if [ "$1" == "pg_upgrade" ] || [ "$1" == "test" ] || [ "$1" == "minor_version_upgrade" ]; then
+if [ "$1" == "pg_upgrade" ] || [ "$1" == "minor_version_upgrade" ]; then
     TARGET_WS=$3
+elif [ "$1" == "test" ]; then
+    TARGET_WS=$CUR_WS
+    MIGRATION_MODE=$3
+    if [ ! $MIGRATION_MODE ]; then
+        MIGRATION_MODE="single-db"
+    fi
 fi
 if [ ! $TARGET_WS ]; then
     TARGET_WS=$CUR_WS
@@ -115,6 +121,17 @@ init_db() {
     restart $1
 }
 
+init_pghint() {
+    cd $1
+    if [ ! -d "./pg_hint_plan" ]; then
+        git clone --depth 1 --branch REL14_1_4_0 https://github.com/ossc-db/pg_hint_plan.git
+    fi
+    cd pg_hint_plan
+    export PATH=$2/postgres/bin:$PATH
+    make
+    make install
+}
+
 init_pg() {
     cd $1/postgresql_modified_for_babelfish
     ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
@@ -122,6 +139,7 @@ init_pg() {
     make install
     cd contrib && make && sudo make install
     cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" $2/postgres/lib/
+    init_pghint $1 $2
 }
 
 if [ "$1" == "initdb" ]; then
@@ -183,17 +201,9 @@ elif [ "$1" == "pg_upgrade" ]; then
 elif [ "$1" == "test" ]; then
     INPUT_DIR=$2
     cd $TARGET_WS/postgres
-    if [[ "$INPUT_DIR" == "upgrade/"* ]]; then
-        bin/psql -d $TEST_DB -U $USER -c \
-            "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-    else
-        bin/psql -d $TEST_DB -U $USER -c \
-            "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';"
-        if [ "$INPUT_DIR" == "pg_hint_plan" ]; then
-            bin/psql -d $TEST_DB -U $USER -c \
-                "ALTER DATABASE $TEST_DB SET session_preload_libraries = pg_hint_plan;"
-        fi
-    fi
+
+    bin/psql -d $TEST_DB -U $USER -c \
+        "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '$MIGRATION_MODE';"
     bin/psql -d $TEST_DB -U $USER -c \
         "SELECT pg_reload_conf();"
 

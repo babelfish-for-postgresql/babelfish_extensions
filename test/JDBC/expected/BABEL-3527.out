@@ -1,0 +1,65 @@
+-- Set escape_hatch_checkpoint to ignore
+SELECT set_config('babelfishpg_tsql.escape_hatch_checkpoint', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+CHECKPOINT 5
+GO
+
+CHECKPOINT -5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 11)~~
+
+
+CHECKPOINT 100000000
+GO
+
+CHECKPOINT "Invalid Input"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '<EOF>' at line 2 and character position 0)~~
+
+
+-- Set escape_hatch_checkpoint to strict
+SELECT set_config('babelfishpg_tsql.escape_hatch_checkpoint', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+
+
+CHECKPOINT 5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'CHECKPOINT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_checkpoint to ignore)~~
+
+
+CHECKPOINT 100000000
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'CHECKPOINT' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_checkpoint to ignore)~~
+
+
+CHECKPOINT -5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 11)~~
+
+
+CHECKPOINT "Invalid Input"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '<EOF>' at line 2 and character position 0)~~
+

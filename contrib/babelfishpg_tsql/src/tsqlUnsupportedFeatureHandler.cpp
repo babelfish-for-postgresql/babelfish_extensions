@@ -58,6 +58,7 @@ declare_escape_hatch(escape_hatch_join_hints);
 declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
+declare_escape_hatch(escape_hatch_checkpoint);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -148,7 +149,7 @@ protected:
 		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_DBCC, "DBCC", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitBackup_statement(TSqlParser::Backup_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BACKUP, "BACKUP", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitRestore_statement(TSqlParser::Restore_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RESTORE, "RESTORE", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override;
 		antlrcpp::Any visitReadtext_statement(TSqlParser::Readtext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_READTEXT, "READTEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitWritetext_statement(TSqlParser::Writetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WRITETEXT, "WRITETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitUpdatetext_statement(TSqlParser::Updatetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_UPDATETEXT, "UPDATETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -214,7 +215,6 @@ protected:
 
 		// built-in functions
 		antlrcpp::Any visitBif_cast_parse(TSqlParser::Bif_cast_parseContext *ctx) override;
-		antlrcpp::Any visitBif_convert(TSqlParser::Bif_convertContext *ctx) override;
 		antlrcpp::Any visitSql_option(TSqlParser::Sql_optionContext *ctx) override;
 
 		// datatype
@@ -1207,6 +1207,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSecurity_statement(TSqlPar
 	return visitChildren(ctx);
 }
 
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx)
+{
+	handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", &st_escape_hatch_checkpoint, getLineAndPos(ctx));
+	return visitChildren(ctx);
+}
+
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
 {
 	if (ctx->PIVOT())
@@ -1377,13 +1383,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitBif_cast_parse(TSqlParser:
 	return visitChildren(ctx);
 }
 
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitBif_convert(TSqlParser::Bif_convertContext *ctx)
-{
-	if (ctx->TRY_CONVERT())
-		handle(INSTR_TSQL_TRY_CONVERT, ctx->TRY_CONVERT());
-	return visitChildren(ctx);
-}
-
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data_typeContext *ctx)
 {
 	if (ctx->simple_name())
@@ -1400,6 +1399,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 				handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
 			else if (pg_strcasecmp("rowversion", name.c_str()) == 0)
 				handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			else if (pg_strcasecmp("hierarchyid", name.c_str()) == 0)
+				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", getLineAndPos(ctx));
+			else if (pg_strcasecmp("geography", name.c_str()) == 0)
+				handle(INSTR_TSQL_GEOGRAPHY_DATATYPE, "GEOGRAPHY datatype", getLineAndPos(ctx));
+			else if (pg_strcasecmp("geometry", name.c_str()) == 0)
+				handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", getLineAndPos(ctx));
 		}
 	}
 	if (ctx->NATIONAL())
@@ -1526,8 +1531,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_addlinkedsrvlogin",
 	"sp_addlogin",
 	"sp_addremotelogin",
-	"sp_addrole",
-	"sp_addrolemember",
 	"sp_addserver",
 	"sp_addsrvrolemember",
 	"sp_adduser",
@@ -1548,15 +1551,12 @@ const char *unsupported_sp_procedures[] = {
 	"sp_droplinkedsrvlogin",
 	"sp_droplogin",
 	"sp_dropremotelogin",
-	"sp_droprole",
-	"sp_droprolemember",
 	"sp_dropserver",
 	"sp_dropsrvrolemember",
 	"sp_dropuser",
 	"sp_generate_database_ledger_digest",
 	"sp_grantdbaccess",
 	"sp_grantlogin",
-	"sp_helpdbfixedrole",
 	"sp_helplinkedsrvlogin",
 	"sp_helplogins",
 	"sp_helpntgroup",
@@ -1594,8 +1594,23 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 {
 	std::string unsupported_feature;
 
-	if (!grant->permission_object()) 
-		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "GRANT Database", getLineAndPos(grant));
+	if (!grant->permission_object())
+	{
+		if (grant->ALL())
+			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "GRANT ALL on Database", getLineAndPos(grant));
+
+		if (grant->permissions())
+		{
+			for (auto perm : grant->permissions()->permission())
+			{
+				auto single_perm = perm->single_permission();
+				if (single_perm->CONNECT())
+					continue;
+				else
+					handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "GRANT Database", getLineAndPos(grant));
+			}
+		}
+	}
 
 	if (grant->permissions())
 	{
@@ -1608,7 +1623,8 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 					|| single_perm->INSERT()
 					|| single_perm->UPDATE()
 					|| single_perm->DELETE()
-					|| single_perm->REFERENCES())
+					|| single_perm->REFERENCES()
+					|| single_perm->CONNECT())
 				continue;
 			else
 			{
@@ -1638,8 +1654,23 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 {
 	std::string unsupported_feature;
 
-	if (!revoke->permission_object()) 
-		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE Database", getLineAndPos(revoke));
+	if (!revoke->permission_object())
+	{
+		if (revoke->ALL())
+			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE ALL on Database", getLineAndPos(revoke));
+
+		if (revoke->permissions())
+		{
+			for (auto perm : revoke->permissions()->permission())
+			{
+				auto single_perm = perm->single_permission();
+				if (single_perm->CONNECT())
+					continue;
+				else
+					handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE Database", getLineAndPos(revoke));
+			}
+		}
+	}
 
 	if (revoke->permissions())
 	{
@@ -1652,7 +1683,8 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 					|| single_perm->INSERT()
 					|| single_perm->UPDATE()
 					|| single_perm->DELETE()
-					|| single_perm->REFERENCES())
+					|| single_perm->REFERENCES()
+					|| single_perm->CONNECT())
 				continue;
 			else
 			{

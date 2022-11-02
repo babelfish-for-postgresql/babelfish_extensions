@@ -27,6 +27,7 @@ public class Config {
     static String scheduleFileName = properties.getProperty("scheduleFile");
     static String testFileRoot = properties.getProperty("testFileRoot");
     static boolean isUpgradeTestMode =  Boolean.parseBoolean(properties.getProperty("isUpgradeTestMode"));
+    static long defaultSLA = Long.parseLong(properties.getProperty("defaultSLA"));
 
     static String connectionString = constructConnectionString();
 

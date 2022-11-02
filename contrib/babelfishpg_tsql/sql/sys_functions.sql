@@ -233,7 +233,7 @@ BEGIN
       RAISE invalid_parameter_value;
    END IF;
 
-   v_calc_seconds := format('%s.%s',
+   v_calc_seconds := pg_catalog.format('%s.%s',
                             floor(p_seconds)::SMALLINT,
                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
 
@@ -250,7 +250,7 @@ EXCEPTION
                   HINT := 'Change "precision" parameter to the proper value and try again.';
 
    WHEN invalid_parameter_value THEN
-      RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_precision),
+      RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
                   DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
                   HINT := 'Change "precision" parameter to the proper value and try again.';
 
@@ -263,9 +263,9 @@ EXCEPTION
       GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
       v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-      RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
-                  DETAIL := format('Source value is out of %s data type range.', v_err_message),
-                  HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+      RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                  DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                  HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
                                  v_err_message);
 END;
 $BODY$
@@ -295,7 +295,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -334,7 +334,7 @@ BEGIN
 
     v_milliseconds := sys.babelfish_round_fractseconds(p_milliseconds::INTEGER);
 
-    v_calc_seconds := format('%s.%s',
+    v_calc_seconds := pg_catalog.format('%s.%s',
                              floor(p_seconds)::SMALLINT,
                              CASE v_milliseconds
                                 WHEN 1000 THEN '0'
@@ -361,9 +361,9 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-        RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
-                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
-                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
                                    v_err_message);
 END;
 $BODY$
@@ -392,7 +392,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -616,7 +616,7 @@ BEGIN
         RAISE numeric_value_out_of_range;
     END IF;
 
-    v_calc_seconds := format('%s.%s',
+    v_calc_seconds := pg_catalog.format('%s.%s',
                              floor(p_seconds)::SMALLINT,
                              substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
 
@@ -630,7 +630,7 @@ EXCEPTION
                     HINT := 'Change "precision" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_precision),
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
                     DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
                     HINT := 'Change "precision" parameter to the proper value and try again.';
 
@@ -643,9 +643,9 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-        RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
-                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
-                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
                                    v_err_message);
 END;
 $BODY$
@@ -672,7 +672,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -714,6 +714,100 @@ $BODY$
 STRICT
 LANGUAGE SQL IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER,
+                                                               IN p_seconds INTEGER,
+                                                               IN p_fractions INTEGER,
+                                                               IN p_hour_offset INTEGER,
+                                                               IN p_minute_offset INTEGER,
+                                                               IN p_precision NUMERIC)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+DECLARE
+    v_err_message SYS.VARCHAR;
+    v_fractions SYS.VARCHAR;
+    v_precision SMALLINT;
+    v_calc_seconds NUMERIC; 
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+BEGIN
+    v_fractions := p_fractions::SYS.VARCHAR;
+    IF p_precision IS NULL THEN
+        RAISE EXCEPTION 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.';
+    END IF;
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR p_fractions IS NULL
+            OR p_hour_offset IS NULL OR p_minute_offset is NULL THEN
+        RETURN NULL;
+    END IF;
+    v_precision := p_precision::SMALLINT;
+
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+
+    -- Check if arguments are out of range
+    ELSIF ((p_year NOT BETWEEN 1753 AND 9999) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59) OR
+        (p_seconds NOT BETWEEN 0 AND 59) OR
+        (p_hour_offset NOT BETWEEN -14 AND 14) OR
+        (p_minute_offset NOT BETWEEN -59 AND 59) OR
+        (p_hour_offset * p_minute_offset < 0) OR
+        (p_hour_offset = 14 AND p_minute_offset != 0) OR
+        (p_hour_offset = -14 AND p_minute_offset != 0) OR
+        (p_fractions != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+    v_calc_seconds := format('%s.%s',
+                             p_seconds,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+    v_resdatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    v_calc_seconds);
+    v_sign := (
+        SELECT CASE
+            WHEN (p_hour_offset) > 0
+                THEN '+'
+            WHEN (p_hour_offset) = 0 AND (p_minute_offset) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
+                                                          abs(p_minute_offset)::SMALLINT::text);
+    RETURN CAST(v_string AS sys.DATETIMEOFFSET);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';    
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := format('Specified scale % is invalid.', p_fractions),
+                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
 
 -- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)
@@ -804,7 +898,7 @@ CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) 
 -- sys.varchar has default length of 1, so we have to pass in 'number' to be the
 -- type modifier.
 BEGIN
-	EXECUTE format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
 END;
 $$
 STRICT
@@ -994,13 +1088,7 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
-        return sys.dateadd_internal_df(datepart, num,
-                     startdate);
-    ELSE
-        return sys.dateadd_internal(datepart, num,
-                     startdate);
-    END IF;
+    RETURN sys.dateadd_internal(datepart, num, startdate);
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1078,44 +1166,6 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
-BEGIN
-	CASE datepart
-	WHEN 'year' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
-	WHEN 'quarter' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
-	WHEN 'month' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
-	WHEN 'dayofyear', 'y' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'day' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'week' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
-	WHEN 'weekday' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'hour' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
-	WHEN 'minute' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
-	WHEN 'second' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
-	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
-    WHEN 'microsecond' THEN
-        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		RETURN startdate;
-	ELSE
-		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
-	END CASE;
-END;
-$$
-STRICT
-LANGUAGE plpgsql IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
 BEGIN
     IF pg_typeof(startdate) = 'date'::regtype AND
@@ -1149,14 +1199,33 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
-    WHEN 'microsecond' THEN
-        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
 	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		RETURN startdate;
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
 	ELSE
-		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+		RAISE EXCEPTION '''%'' is not a recognized dateadd option.', datepart;
 	END CASE;
 END;
 $$
@@ -1174,6 +1243,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1191,14 +1266,25 @@ BEGIN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		result = day_diff;
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = sys.datepart('hour', enddate) - sys.datepart('hour', startdate);
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
@@ -1260,6 +1346,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1277,14 +1369,25 @@ BEGIN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		result = day_diff;
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER;
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
@@ -2513,6 +2616,12 @@ RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
 
+/*
+ * Table type can identified by reverse dependency between table and
+ * type in pg_depend.
+ * If a table is dependent upon it's row type with dependency type
+ * as DEPENDENCY_INTERNAL (i) then it's a T-SQL table type.
+ */
 CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
 $BODY$
 SELECT
@@ -2520,10 +2629,11 @@ SELECT
     SELECT 1
     FROM pg_catalog.pg_type pt
     INNER JOIN pg_catalog.pg_depend dep
-    ON pt.typrelid = dep.objid
+    ON pt.typrelid = dep.objid AND pt.oid = dep.refobjid
     join sys.schemas sch on pt.typnamespace = sch.schema_id
     JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r');
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
+    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
 $BODY$
 LANGUAGE SQL VOLATILE STRICT;
 
@@ -2539,6 +2649,155 @@ AS 'babelfishpg_tsql', 'tsql_json_value' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+/*
+ * JSON MODIFY
+ * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+ * It has been implemented in three parts:
+ *  1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+ *  2) To convert the input path into the expected jsonb_path.
+ *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
+ */
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    json_path TEXT;
+    json_path_convert TEXT;
+    new_jsonb_path TEXT[];
+    key_value_type TEXT;
+    path_split_array TEXT[];
+    comparison_string TEXT COLLATE "C";
+    len_array INTEGER;
+    word_count INTEGER;
+    create_if_missing BOOL = TRUE;
+    append_modifier BOOL = FALSE;
+    key_exists BOOL;
+    key_value JSONB;
+    json_expression JSONB = expression::JSONB;
+    result_json sys.NVARCHAR;
+BEGIN
+    path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
+    word_count = array_length(path_split_array,1);
+    /* 
+     * This if else block is added to set the create_if_missing and append_modifier flags.
+     * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
+     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+     * Comparisons for comparison_string are case-sensitive.    
+     */
+    IF word_count = 1 THEN
+        json_path = path_split_array[1];
+        create_if_missing = TRUE;
+        append_modifier = FALSE;
+    ELSIF word_count = 2 THEN 
+        json_path = path_split_array[2];
+        comparison_string = path_split_array[1]; -- append or lax/strict mode
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSIF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSIF word_count = 3 THEN
+        json_path = path_split_array[3];
+        comparison_string = path_split_array[1]; -- append mode 
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+        comparison_string = path_split_array[2]; -- lax/strict mode
+        IF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSE
+        RAISE invalid_json_text;
+    END IF;
+
+    -- To convert input jsonpath to the required jsonb_path format
+    json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
+
+    key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
+    
+    --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
+    IF append_modifier THEN 
+        IF key_exists THEN
+            key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
+            key_value_type = jsonb_typeof(key_value);
+            IF key_value_type = 'array' THEN
+                len_array = jsonb_array_length(key_value);
+                /*
+                 * As jsonb_insert requires the index of the value to be inserted, so the below FORMAT function changes the path format into the required jsonb_insert path format.
+                 * Eg: JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure'); -> converts the path from '$.skills' to '{skills,2}' instead of '{skills}'
+                 */
+                new_jsonb_path = FORMAT('%s,%s}',TRIM('}' FROM new_jsonb_path::TEXT),len_array);
+                IF new_value IS NULL THEN
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
+                ELSE
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_array_not_found;
+                ELSE
+                    result_json = json_expression;
+                END IF;
+            END IF;
+        ELSE
+            IF NOT create_if_missing THEN
+                RAISE sql_json_object_not_found;
+            ELSE
+                result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+            END IF;
+        END IF;
+    ELSE --When no append modifier is present
+        IF new_value IS NOT NULL THEN
+            IF key_exists OR create_if_missing THEN
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
+            ELSE
+                RAISE sql_json_object_not_found;
+            END IF;
+        ELSE
+            IF key_exists THEN
+                IF NOT create_if_missing THEN
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_object_not_found;
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
+                END IF;
+            END IF;
+        END IF;
+    END IF;  -- If append_modifier block ends here
+    RETURN result_json;
+EXCEPTION
+    WHEN invalid_json_text THEN
+            RAISE USING MESSAGE = 'JSON path is not properly formatted',
+                        DETAIL = FORMAT('Unexpected keyword "%s" is found.',comparison_string),
+                        HINT = 'Change "modifier/mode" parameter to the proper value and try again.';
+    WHEN sql_json_array_not_found THEN
+            RAISE USING MESSAGE = 'array cannot be found in the specified JSON path',
+                        HINT = 'Change JSON path to target array property and try again.';
+    WHEN sql_json_object_not_found THEN
+            RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
+END;        
+$BODY$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
 RETURNS TABLE
@@ -2776,7 +3035,7 @@ BEGIN
     
     ELSEIF property = 'isinlinefunction' -- IsInlineFunction
     THEN
-        RETURN 0;
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF'));
     
     ELSEIF property = 'isscalarfunction' -- IsScalarFunction
     THEN

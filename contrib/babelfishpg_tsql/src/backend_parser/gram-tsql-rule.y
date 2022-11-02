@@ -1519,42 +1519,50 @@ table_ref:	relation_expr tsql_table_hint_expr
 					n->coldeflist = lsecond($3);
 					$$ = (Node *) n;
 				}
-			| TSQL_APPLY xmltable opt_alias_clause
-				{
-					RangeTableFunc *n = (RangeTableFunc *) $2;
-					n->lateral = true;
-					n->alias = $3;
-					$$ = (Node *) n;
-				}
 			| TSQL_APPLY select_with_parens opt_alias_clause
 				{
 					RangeSubselect *n = makeNode(RangeSubselect);
 					n->lateral = true;
 					n->subquery = $2;
 					n->alias = $3;
-					/* same comment as above */
+					/*
+					 * The SQL spec does not permit a subselect
+					 * (<derived_table>) without an alias clause,
+					 * so we don't either.  This avoids the problem
+					 * of needing to invent a unique refname for it.
+					 * That could be surmounted if there's sufficient
+					 * popular demand, but for now let's just implement
+					 * the spec and see if anyone complains.
+					 * However, it does seem like a good idea to emit
+					 * an error message that's better than "syntax error".
+					 */
 					if ($3 == NULL)
 					{
 						if (IsA($2, SelectStmt) &&
 							((SelectStmt *) $2)->valuesLists)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("VALUES in FROM must have an alias"),
-									 errhint("For example, FROM (VALUES ...) [AS] foo."),
-									 parser_errposition(@2)));
+										errmsg("VALUES in APPLY must have an alias"),
+										errhint("For example, FROM (VALUES ...) [AS] foo."),
+										parser_errposition(@2)));
 						else
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("subquery in FROM must have an alias"),
-									 errhint("For example, FROM (SELECT ...) [AS] foo."),
-									 parser_errposition(@2)));
+										errmsg("subquery in APPLY must have an alias"),
+										errhint("For example, FROM (SELECT ...) [AS] foo."),
+										parser_errposition(@2)));
 					}
 					$$ = (Node *) n;
+				}
+			| TSQL_APPLY relation_expr opt_alias_clause
+				{
+					$2->alias = $3;
+					$$ = (Node *) $2;
 				}
 		;
 
 joined_table:
-			table_ref CROSS table_ref
+			table_ref TSQL_CROSS table_ref
 				{
 					/* CROSS APPLY is the same as CROSS JOIN LATERAL */
 					JoinExpr *n = makeNode(JoinExpr);
@@ -1567,7 +1575,7 @@ joined_table:
 					n->quals = NULL;
 					$$ = n;
 				}
-			| table_ref OUTER_P table_ref
+			| table_ref TSQL_OUTER table_ref
 				{
 					/* OUTER APPLY is the same as LEFT JOIN LATERAL */
 					JoinExpr *n = makeNode(JoinExpr);
@@ -3225,16 +3233,19 @@ datepart_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
 			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "tsql_week"; }
 			| TSQL_WK								{ $$ = "tsql_week"; }
 			| TSQL_WW								{ $$ = "tsql_week"; }
+			| TSQL_W								{ $$ = "dow"; }
 			| TSQL_WEEKDAY							{ $$ = "dow"; }
 			| TSQL_DW								{ $$ = "dow"; }
 			| HOUR_P								{ $$ = "hour"; }
 			| TSQL_HH								{ $$ = "hour"; }
+			| TSQL_MI								{ $$ = "minute"; }
 			| MINUTE_P								{ $$ = "minute"; }
 			| TSQL_N								{ $$ = "minute"; }
 			| SECOND_P								{ $$ = "second"; }
@@ -3269,14 +3280,17 @@ datediff_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
 			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
+			| TSQL_W								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
 			| HOUR_P								{ $$ = "hour"; }
 			| TSQL_HH								{ $$ = "hour"; }
+			| TSQL_MI								{ $$ = "minute"; }
 			| MINUTE_P								{ $$ = "minute"; }
 			| TSQL_N								{ $$ = "minute"; }
 			| SECOND_P								{ $$ = "second"; }
@@ -3306,16 +3320,19 @@ dateadd_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "dayofyear"; }
 			| TSQL_DY								{ $$ = "dayofyear"; }
+			| TSQL_Y								{ $$ = "dayofyear"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
+			| TSQL_W								{ $$ = "weekday"; }
 			| TSQL_WEEKDAY							{ $$ = "weekday"; }
 			| TSQL_DW								{ $$ = "weekday"; }
 			| HOUR_P								{ $$ = "hour"; }
 			| TSQL_HH								{ $$ = "hour"; }
+			| TSQL_MI								{ $$ = "minute"; }
 			| MINUTE_P								{ $$ = "minute"; }
 			| TSQL_N								{ $$ = "minute"; }
 			| SECOND_P								{ $$ = "second"; }
@@ -4071,6 +4088,7 @@ unreserved_keyword:
 			| TSQL_M
 			| TSQL_MCS
 			| TSQL_MEMBER
+			| TSQL_MI
 			| TSQL_MICROSECOND
 			| TSQL_MILLISECOND
 			| TSQL_MM
@@ -4115,12 +4133,14 @@ unreserved_keyword:
 			| TSQL_TZOFFSET
 			| TSQL_UNLOCK
 			| TSQL_UPDLOCK
+			| TSQL_W
 			| TSQL_WEEK
 			| TSQL_WEEKDAY
 			| TSQL_WINDOWS
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
+			| TSQL_Y
 			| TSQL_YY
 			| TSQL_YYYY
 		;
@@ -4129,12 +4149,14 @@ reserved_keyword:
 			  TSQL_APPLY
 			| TSQL_CHOOSE
 			| TSQL_CONVERT
+			| TSQL_CROSS
 			| TSQL_DATEADD
 			| TSQL_DATEDIFF
 			| TSQL_DATENAME
 			| TSQL_DATEPART
 			| TSQL_IIF
 			| TSQL_OUT
+			| TSQL_OUTER
 			| TSQL_OUTPUT
 			| TSQL_PARSE
 			| TSQL_PERCENT

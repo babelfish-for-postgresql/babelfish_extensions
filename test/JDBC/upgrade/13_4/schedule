@@ -5,6 +5,9 @@
 # 4. Keyword "all" is equivalent to running all test files in input folder
 # 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 
+# This should be the first test to check there are no duplicated object_ids
+BABEL-3613
+
 TestBigInt
 TestBinary
 TestBIT
@@ -32,8 +35,11 @@ BABEL-2934
 BABEL-3121
 BABEL-3166
 BABEL-3192
+BABEL-3369
+BABEL-3370
 sys-check_constraints
 sys-computed_columns
+sys-databases
 sys-dm_exec_connections
 sys-dm_os_host_info
 sys-endpoints
@@ -79,11 +85,17 @@ BABEL-2787-2
 BABEL-2845
 BABEL-2884
 BABEL-3249
+BABEL-3474
 BABEL-PROCID
 babel_trigger
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_addrole
+Test-sp_addrolemember
+Test-sp_droprole
+Test-sp_droprolemember
+Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 BABEL-404
 BABEL-493
@@ -96,6 +108,7 @@ BABEL-1444
 BABEL-1465
 BABEL-1466
 BABEL-2086
+BABEL-3314
 BABEL-TABLEOPTIONS
 temp-tables
 TestNotNull
@@ -133,6 +146,7 @@ babel_sqlvariant_cast_compare
 tdscollation
 babel_datatype_sqlvariant
 sys-all_columns
+sys-all_parameters
 sys-default_constraints
 sys-dm_exec_sessions
 sys-foreign_key_columns
@@ -167,3 +181,8 @@ sys-types-dep
 sys-views-dep
 BABEL-SPCOLUMNS-dep
 BABEL-3000-dep
+BABEL-3556-before-14_6
+BABEL-3010-before-14_6
+BABEL_GRANT_CONNECT
+BABEL-sp_helpdb
+BABEL-2795

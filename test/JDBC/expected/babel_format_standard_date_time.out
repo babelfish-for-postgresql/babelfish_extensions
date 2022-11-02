@@ -1,0 +1,1012 @@
+--DATE standard formatting
+CREATE TABLE date_testing(d DATE);
+INSERT INTO date_testing VALUES('1753-1-1');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO date_testing VALUES('9999-12-31');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO date_testing VALUES('1992-05-23');
+go
+~~ROW COUNT: 1~~
+
+
+select * from date_testing;
+go
+~~START~~
+date
+1753-01-01
+9999-12-31
+1992-05-23
+~~END~~
+
+select FORMAT(d, 'd','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753
+12/31/9999
+5/23/1992
+~~END~~
+
+select FORMAT(d, 'D','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753
+Friday, December 31, 9999
+Saturday, May 23, 1992
+~~END~~
+
+select FORMAT(d, 'f','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00 AM
+Friday, December 31, 9999 12:00 AM
+Saturday, May 23, 1992 12:00 AM
+~~END~~
+
+select FORMAT(d, 'F','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00:00 AM
+Friday, December 31, 9999 12:00:00 AM
+Saturday, May 23, 1992 12:00:00 AM
+~~END~~
+
+select FORMAT(d, 'g','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753 12:00 AM
+12/31/9999 12:00 AM
+5/23/1992 12:00 AM
+~~END~~
+
+select FORMAT(d, 'G','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753 12:00:00 AM
+12/31/9999 12:00:00 AM
+5/23/1992 12:00:00 AM
+~~END~~
+
+select FORMAT(d, 'R','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Mon, 01 Jan 1753 00:00:00 GMT
+Fri, 31 Dec 9999 00:00:00 GMT
+Sat, 23 May 1992 00:00:00 GMT
+~~END~~
+
+select FORMAT(d, 'r','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Mon, 01 Jan 1753 00:00:00 GMT
+Fri, 31 Dec 9999 00:00:00 GMT
+Sat, 23 May 1992 00:00:00 GMT
+~~END~~
+
+select FORMAT(d, 's','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+1753-01-01T00:00:00
+9999-12-31T00:00:00
+1992-05-23T00:00:00
+~~END~~
+
+select FORMAT(d, 't','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+12:00 AM
+12:00 AM
+12:00 AM
+~~END~~
+
+select FORMAT(d, 'T','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+12:00:00 AM
+12:00:00 AM
+12:00:00 AM
+~~END~~
+
+select FORMAT(d, 'u','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+1753-01-01 00:00:00Z
+9999-12-31 00:00:00Z
+1992-05-23 00:00:00Z
+~~END~~
+
+select FORMAT(d, 'U','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00:00 AM
+Friday, December 31, 9999 12:00:00 AM
+Saturday, May 23, 1992 12:00:00 AM
+~~END~~
+
+select FORMAT(d, 'Y','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+January 1753
+December 9999
+May 1992
+~~END~~
+
+select FORMAT(d, 'y','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+January 1753
+December 9999
+May 1992
+~~END~~
+
+
+--DateTime standard formatting
+create table datetime_testing ( dt DATETIME );
+go
+INSERT INTO datetime_testing VALUES('1753-1-1 00:00:00.000');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO datetime_testing VALUES('9999-12-31 23:59:59.456');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO datetime_testing VALUES('1992-05-23 23:40:30.000');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO datetime_testing VALUES('1999-12-31 23:59:59.123');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO datetime_testing VALUES('23:40:29.456');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO datetime_testing VALUES('23:40:30.000');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO datetime_testing VALUES('2020-03-14');
+go
+~~ROW COUNT: 1~~
+
+
+select * from datetime_testing;
+go
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+9999-12-31 23:59:59.457
+1992-05-23 23:40:30.0
+1999-12-31 23:59:59.123
+1900-01-01 23:40:29.457
+1900-01-01 23:40:30.0
+2020-03-14 00:00:00.0
+~~END~~
+
+select FORMAT(dt, 'd','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753
+12/31/9999
+5/23/1992
+12/31/1999
+1/1/1900
+1/1/1900
+3/14/2020
+~~END~~
+
+select FORMAT(dt, 'D','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753
+Friday, December 31, 9999
+Saturday, May 23, 1992
+Friday, December 31, 1999
+Monday, January 1, 1900
+Monday, January 1, 1900
+Saturday, March 14, 2020
+~~END~~
+
+select FORMAT(dt, 'f','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00 AM
+Friday, December 31, 9999 11:59 PM
+Saturday, May 23, 1992 11:40 PM
+Friday, December 31, 1999 11:59 PM
+Monday, January 1, 1900 11:40 PM
+Monday, January 1, 1900 11:40 PM
+Saturday, March 14, 2020 12:00 AM
+~~END~~
+
+select FORMAT(dt, 'F','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00:00 AM
+Friday, December 31, 9999 11:59:59 PM
+Saturday, May 23, 1992 11:40:30 PM
+Friday, December 31, 1999 11:59:59 PM
+Monday, January 1, 1900 11:40:29 PM
+Monday, January 1, 1900 11:40:30 PM
+Saturday, March 14, 2020 12:00:00 AM
+~~END~~
+
+select FORMAT(dt, 'g','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753 12:00 AM
+12/31/9999 11:59 PM
+5/23/1992 11:40 PM
+12/31/1999 11:59 PM
+1/1/1900 11:40 PM
+1/1/1900 11:40 PM
+3/14/2020 12:00 AM
+~~END~~
+
+select FORMAT(dt, 'G','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753 12:00:00 AM
+12/31/9999 11:59:59 PM
+5/23/1992 11:40:30 PM
+12/31/1999 11:59:59 PM
+1/1/1900 11:40:29 PM
+1/1/1900 11:40:30 PM
+3/14/2020 12:00:00 AM
+~~END~~
+
+select FORMAT(dt, 'R','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+Mon, 01 Jan 1753 00:00:00 GMT
+Fri, 31 Dec 9999 23:59:59 GMT
+Sat, 23 May 1992 23:40:30 GMT
+Fri, 31 Dec 1999 23:59:59 GMT
+Mon, 01 Jan 1900 23:40:29 GMT
+Mon, 01 Jan 1900 23:40:30 GMT
+Sat, 14 Mar 2020 00:00:00 GMT
+~~END~~
+
+select FORMAT(dt, 'r','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+Mon, 01 Jan 1753 00:00:00 GMT
+Fri, 31 Dec 9999 23:59:59 GMT
+Sat, 23 May 1992 23:40:30 GMT
+Fri, 31 Dec 1999 23:59:59 GMT
+Mon, 01 Jan 1900 23:40:29 GMT
+Mon, 01 Jan 1900 23:40:30 GMT
+Sat, 14 Mar 2020 00:00:00 GMT
+~~END~~
+
+select FORMAT(dt, 's','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+1753-01-01T00:00:00
+9999-12-31T23:59:59
+1992-05-23T23:40:30
+1999-12-31T23:59:59
+1900-01-01T23:40:29
+1900-01-01T23:40:30
+2020-03-14T00:00:00
+~~END~~
+
+select FORMAT(dt, 't','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+12:00 AM
+11:59 PM
+11:40 PM
+11:59 PM
+11:40 PM
+11:40 PM
+12:00 AM
+~~END~~
+
+select FORMAT(dt, 'T','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+12:00:00 AM
+11:59:59 PM
+11:40:30 PM
+11:59:59 PM
+11:40:29 PM
+11:40:30 PM
+12:00:00 AM
+~~END~~
+
+select FORMAT(dt, 'u','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+1753-01-01 00:00:00Z
+9999-12-31 23:59:59Z
+1992-05-23 23:40:30Z
+1999-12-31 23:59:59Z
+1900-01-01 23:40:29Z
+1900-01-01 23:40:30Z
+2020-03-14 00:00:00Z
+~~END~~
+
+select FORMAT(dt, 'U','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00:00 AM
+Friday, December 31, 9999 11:59:59 PM
+Saturday, May 23, 1992 11:40:30 PM
+Friday, December 31, 1999 11:59:59 PM
+Monday, January 1, 1900 11:40:29 PM
+Monday, January 1, 1900 11:40:30 PM
+Saturday, March 14, 2020 12:00:00 AM
+~~END~~
+
+select FORMAT(dt, 'Y','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+January 1753
+December 9999
+May 1992
+December 1999
+January 1900
+January 1900
+March 2020
+~~END~~
+
+select FORMAT(dt, 'y','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+January 1753
+December 9999
+May 1992
+December 1999
+January 1900
+January 1900
+March 2020
+~~END~~
+
+
+--DATETIME2 standard formatting
+create table datetime2_testing ( dt2 DATETIME2 );
+INSERT INTO datetime2_testing VALUES('0001-1-1 00:00:00');
+INSERT INTO datetime2_testing VALUES('9999-12-31 23:59:59');
+INSERT INTO datetime2_testing VALUES('1992-05-23 23:40:29');
+INSERT INTO datetime2_testing VALUES('1992-05-23 23:40:30');
+INSERT INTO datetime2_testing VALUES('1999-12-31 23:59:59');
+INSERT INTO datetime2_testing VALUES('1999-12-31 23:59:59');
+INSERT INTO datetime2_testing VALUES('23:40:29.236');
+INSERT INTO datetime2_testing VALUES('23:40:30.000');
+INSERT INTO datetime2_testing VALUES('2020-03-14');
+select * from datetime2_testing;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+datetime2
+0001-01-01 00:00:00.0000000
+9999-12-31 23:59:59.0000000
+1992-05-23 23:40:29.0000000
+1992-05-23 23:40:30.0000000
+1999-12-31 23:59:59.0000000
+1999-12-31 23:59:59.0000000
+1900-01-01 23:40:29.2360000
+1900-01-01 23:40:30.0000000
+2020-03-14 00:00:00.0000000
+~~END~~
+
+select FORMAT(dt2, 'd','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+1/1/0001
+12/31/9999
+5/23/1992
+5/23/1992
+12/31/1999
+12/31/1999
+1/1/1900
+1/1/1900
+3/14/2020
+~~END~~
+
+select FORMAT(dt2, 'D','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 0001
+Friday, December 31, 9999
+Saturday, May 23, 1992
+Saturday, May 23, 1992
+Friday, December 31, 1999
+Friday, December 31, 1999
+Monday, January 1, 1900
+Monday, January 1, 1900
+Saturday, March 14, 2020
+~~END~~
+
+select FORMAT(dt2, 'f','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 0001 12:00 AM
+Friday, December 31, 9999 11:59 PM
+Saturday, May 23, 1992 11:40 PM
+Saturday, May 23, 1992 11:40 PM
+Friday, December 31, 1999 11:59 PM
+Friday, December 31, 1999 11:59 PM
+Monday, January 1, 1900 11:40 PM
+Monday, January 1, 1900 11:40 PM
+Saturday, March 14, 2020 12:00 AM
+~~END~~
+
+select FORMAT(dt2, 'F','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 0001 12:00:00 AM
+Friday, December 31, 9999 11:59:59 PM
+Saturday, May 23, 1992 11:40:29 PM
+Saturday, May 23, 1992 11:40:30 PM
+Friday, December 31, 1999 11:59:59 PM
+Friday, December 31, 1999 11:59:59 PM
+Monday, January 1, 1900 11:40:29 PM
+Monday, January 1, 1900 11:40:30 PM
+Saturday, March 14, 2020 12:00:00 AM
+~~END~~
+
+select FORMAT(dt2, 'g','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+1/1/0001 12:00 AM
+12/31/9999 11:59 PM
+5/23/1992 11:40 PM
+5/23/1992 11:40 PM
+12/31/1999 11:59 PM
+12/31/1999 11:59 PM
+1/1/1900 11:40 PM
+1/1/1900 11:40 PM
+3/14/2020 12:00 AM
+~~END~~
+
+select FORMAT(dt2, 'G','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+1/1/0001 12:00:00 AM
+12/31/9999 11:59:59 PM
+5/23/1992 11:40:29 PM
+5/23/1992 11:40:30 PM
+12/31/1999 11:59:59 PM
+12/31/1999 11:59:59 PM
+1/1/1900 11:40:29 PM
+1/1/1900 11:40:30 PM
+3/14/2020 12:00:00 AM
+~~END~~
+
+select FORMAT(dt2, 'R','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Mon, 01 Jan 0001 00:00:00 GMT
+Fri, 31 Dec 9999 23:59:59 GMT
+Sat, 23 May 1992 23:40:29 GMT
+Sat, 23 May 1992 23:40:30 GMT
+Fri, 31 Dec 1999 23:59:59 GMT
+Fri, 31 Dec 1999 23:59:59 GMT
+Mon, 01 Jan 1900 23:40:29 GMT
+Mon, 01 Jan 1900 23:40:30 GMT
+Sat, 14 Mar 2020 00:00:00 GMT
+~~END~~
+
+select FORMAT(dt2, 'r','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Mon, 01 Jan 0001 00:00:00 GMT
+Fri, 31 Dec 9999 23:59:59 GMT
+Sat, 23 May 1992 23:40:29 GMT
+Sat, 23 May 1992 23:40:30 GMT
+Fri, 31 Dec 1999 23:59:59 GMT
+Fri, 31 Dec 1999 23:59:59 GMT
+Mon, 01 Jan 1900 23:40:29 GMT
+Mon, 01 Jan 1900 23:40:30 GMT
+Sat, 14 Mar 2020 00:00:00 GMT
+~~END~~
+
+select FORMAT(dt2, 's','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+0001-01-01T00:00:00
+9999-12-31T23:59:59
+1992-05-23T23:40:29
+1992-05-23T23:40:30
+1999-12-31T23:59:59
+1999-12-31T23:59:59
+1900-01-01T23:40:29
+1900-01-01T23:40:30
+2020-03-14T00:00:00
+~~END~~
+
+select FORMAT(dt2, 't','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+12:00 AM
+11:59 PM
+11:40 PM
+11:40 PM
+11:59 PM
+11:59 PM
+11:40 PM
+11:40 PM
+12:00 AM
+~~END~~
+
+select FORMAT(dt2, 'T','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+12:00:00 AM
+11:59:59 PM
+11:40:29 PM
+11:40:30 PM
+11:59:59 PM
+11:59:59 PM
+11:40:29 PM
+11:40:30 PM
+12:00:00 AM
+~~END~~
+
+select FORMAT(dt2, 'u','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+0001-01-01 00:00:00Z
+9999-12-31 23:59:59Z
+1992-05-23 23:40:29Z
+1992-05-23 23:40:30Z
+1999-12-31 23:59:59Z
+1999-12-31 23:59:59Z
+1900-01-01 23:40:29Z
+1900-01-01 23:40:30Z
+2020-03-14 00:00:00Z
+~~END~~
+
+select FORMAT(dt2, 'U','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 0001 12:00:00 AM
+Friday, December 31, 9999 11:59:59 PM
+Saturday, May 23, 1992 11:40:29 PM
+Saturday, May 23, 1992 11:40:30 PM
+Friday, December 31, 1999 11:59:59 PM
+Friday, December 31, 1999 11:59:59 PM
+Monday, January 1, 1900 11:40:29 PM
+Monday, January 1, 1900 11:40:30 PM
+Saturday, March 14, 2020 12:00:00 AM
+~~END~~
+
+select FORMAT(dt2, 'Y','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+January 0001
+December 9999
+May 1992
+May 1992
+December 1999
+December 1999
+January 1900
+January 1900
+March 2020
+~~END~~
+
+select FORMAT(dt2, 'y','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+January 0001
+December 9999
+May 1992
+May 1992
+December 1999
+December 1999
+January 1900
+January 1900
+March 2020
+~~END~~
+
+
+--SMALLDATETIME standard formatting
+create table smalldatetime_testing ( sdt smalldatetime );
+INSERT INTO smalldatetime_testing VALUES('1990-05-23 23:40:29');
+INSERT INTO smalldatetime_testing VALUES('2022-12-31 23:59:59');
+INSERT INTO smalldatetime_testing VALUES('2079-06-06 22:59:59');
+select * from smalldatetime_testing;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+smalldatetime
+1990-05-23 23:40:00.0
+2023-01-01 00:00:00.0
+2079-06-06 23:00:00.0
+~~END~~
+
+select FORMAT(sdt, 'd','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+5/23/1990
+1/1/2023
+6/6/2079
+~~END~~
+
+select FORMAT(sdt, 'D','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wednesday, May 23, 1990
+Sunday, January 1, 2023
+Tuesday, June 6, 2079
+~~END~~
+
+select FORMAT(sdt, 'f','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wednesday, May 23, 1990 11:40 PM
+Sunday, January 1, 2023 12:00 AM
+Tuesday, June 6, 2079 11:00 PM
+~~END~~
+
+select FORMAT(sdt, 'F','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wednesday, May 23, 1990 11:40:00 PM
+Sunday, January 1, 2023 12:00:00 AM
+Tuesday, June 6, 2079 11:00:00 PM
+~~END~~
+
+select FORMAT(sdt, 'g','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+5/23/1990 11:40 PM
+1/1/2023 12:00 AM
+6/6/2079 11:00 PM
+~~END~~
+
+select FORMAT(sdt, 'G','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+5/23/1990 11:40:00 PM
+1/1/2023 12:00:00 AM
+6/6/2079 11:00:00 PM
+~~END~~
+
+select FORMAT(sdt, 'R','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wed, 23 May 1990 23:40:00 GMT
+Sun, 01 Jan 2023 00:00:00 GMT
+Tue, 06 Jun 2079 23:00:00 GMT
+~~END~~
+
+select FORMAT(sdt, 'r','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wed, 23 May 1990 23:40:00 GMT
+Sun, 01 Jan 2023 00:00:00 GMT
+Tue, 06 Jun 2079 23:00:00 GMT
+~~END~~
+
+select FORMAT(sdt, 's','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+1990-05-23T23:40:00
+2023-01-01T00:00:00
+2079-06-06T23:00:00
+~~END~~
+
+select FORMAT(sdt, 't','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+11:40 PM
+12:00 AM
+11:00 PM
+~~END~~
+
+select FORMAT(sdt, 'T','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+11:40:00 PM
+12:00:00 AM
+11:00:00 PM
+~~END~~
+
+select FORMAT(sdt, 'u','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+1990-05-23 23:40:00Z
+2023-01-01 00:00:00Z
+2079-06-06 23:00:00Z
+~~END~~
+
+select FORMAT(sdt, 'U','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wednesday, May 23, 1990 11:40:00 PM
+Sunday, January 1, 2023 12:00:00 AM
+Tuesday, June 6, 2079 11:00:00 PM
+~~END~~
+
+select FORMAT(sdt, 'Y','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+May 1990
+January 2023
+June 2079
+~~END~~
+
+select FORMAT(sdt, 'y','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+May 1990
+January 2023
+June 2079
+~~END~~
+
+
+--TIME standard formatting
+create table time_testing ( ti TIME );
+INSERT INTO time_testing VALUES('00:00:00.12345');
+INSERT INTO time_testing VALUES('3:53:59');
+INSERT INTO time_testing VALUES('15:5:45.0000');
+INSERT INTO time_testing VALUES('23:59:59.12345');
+select * from time_testing;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+time
+00:00:00.1234500
+03:53:59.0000000
+15:05:45.0000000
+23:59:59.1234500
+~~END~~
+
+select FORMAT(ti, 'c','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+00:00:00.123450
+03:53:59
+15:05:45
+23:59:59.123450
+~~END~~
+
+select FORMAT(ti, 'd','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'D','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'f','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'F','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'g','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Format g is not supported currently! Please try again with another format)~~
+
+select FORMAT(ti, 'R','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'r','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 's','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 't','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+00:00:00.123450
+03:53:59
+15:05:45
+23:59:59.123450
+~~END~~
+
+select FORMAT(ti, 'T','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+00:00:00.123450
+03:53:59
+15:05:45
+23:59:59.123450
+~~END~~
+
+select FORMAT(ti, 'u','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'U','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'Y','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'y','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+-- Clean up
+drop table date_testing;
+go
+drop table datetime_testing;
+go
+drop table datetime2_testing;
+go
+drop table smalldatetime_testing;
+go
+drop table time_testing;
+go
+

@@ -232,6 +232,7 @@
 							case TSQL_LOGIN:
 							case TSQL_M:
 							case TSQL_MCS:
+							case TSQL_MI:
 							case TSQL_MICROSECOND:
 							case TSQL_MILLISECOND:
 							case TSQL_MM:
@@ -257,10 +258,12 @@
 							case TSQL_TZ:
 							case TSQL_TEXTIMAGE_ON:
 							case TSQL_TZOFFSET:
+							case TSQL_W:
 							case TSQL_WEEK:
 							case TSQL_WEEKDAY:
 							case TSQL_WK:
 							case TSQL_WW:
+							case TSQL_Y:
 							case TSQL_YY:
 							case TSQL_YYYY:
 							case TSQL_TRY_CAST:

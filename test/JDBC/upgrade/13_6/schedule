@@ -6,6 +6,9 @@
 #    input folder
 # 5. To add a test, add test name (without extension, -vu-prepare, -vu-verify and -vu-cleanup. For example if test file name is TestBigInt-vu-prepare.txt write TestBigInt) on a new line
 
+# This should be the first test to check there are no duplicated object_ids
+BABEL-3613
+
 TestBigInt
 TestBinary
 TestBIT
@@ -39,20 +42,20 @@ BABEL-3221
 BABEL-3204
 BABEL-3234
 BABEL-3402
+BABEL-3369
+BABEL-3370
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
-sys-all_sql_modules
 sys-assembly_modules
 sys-change_tracking_databases
 sys-change_tracking_tables
-sys-check_constraints
 sys-columns
 sys-computed_columns
 sys-data_spaces
 sys-database_files
+sys-databases
 sys-database_filestream_options
 sys-database_recovery_status
-sys-default_constraints
 sys-dm_exec_connections
 sys-dm_exec_sessions
 sys-dm_hadr_cluster
@@ -101,6 +104,7 @@ fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 objectpropertyex
+sys-all_parameters
 sys-column-property
 sys-datefirst
 sys-lock_timeout
@@ -139,6 +143,7 @@ BABEL-2944
 BABEL-3116
 BABEL-3118
 BABEL-3249
+BABEL-3474
 BABEL-383
 BABEL-405
 BABEL-PROCID
@@ -149,6 +154,11 @@ insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_addrole
+Test-sp_addrolemember
+Test-sp_droprole
+Test-sp_droprolemember
+Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 BABEL-404
 BABEL-493
@@ -163,6 +173,7 @@ BABEL-1466
 BABEL-1654
 BABEL-1715
 BABEL-2086
+BABEL-3314
 BABEL-TABLEOPTIONS
 BABEL-2765
 BABEL-2917
@@ -260,3 +271,9 @@ BABEL-SP_SPECIAL_COLUMNS-dep
 BABEL-SP_FKEYS-dep
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-3000-dep
+BABEL-3347-before-14_6
+BABEL-3556-before-14_6
+BABEL-3010-before-14_6
+BABEL_GRANT_CONNECT
+BABEL-sp_helpdb
+BABEL-2795

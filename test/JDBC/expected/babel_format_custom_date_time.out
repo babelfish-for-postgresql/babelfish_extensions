@@ -1,0 +1,270 @@
+
+-- Custom date formats
+DECLARE @curr_date date;
+SET @curr_date = '12/01/1999';
+SELECT FORMAT(@curr_date, 'dd/yy/MM', 'dz-BT');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The culture parameter "dz-BT" provided in the function call is not supported.)~~
+
+
+DECLARE @curr_date2 date;
+SET @curr_date2 = '11/5/9999';
+SELECT FORMAT(@curr_date2, 'ddd, MMMM, yyyy', 'en-US');
+GO
+~~START~~
+nvarchar
+Fri, November, 9999
+~~END~~
+
+
+DECLARE @curr_date3 date;
+SET @curr_date3 = '5/12/9999';
+SELECT FORMAT(@curr_date3, 'dddd, MMMMM, yyyy', 'en-US');
+GO
+~~START~~
+nvarchar
+Wednesday, May, 9999
+~~END~~
+
+
+DECLARE @curr_date4 date;
+SET @curr_date4 = '12/08/2022';
+SELECT FORMAT(@curr_date4, 'dd, MM, y yy yyy yyyy yyyyy, ffffff  gg h hh H HH m mm s ss t tt',  'en-US');
+GO
+~~START~~
+nvarchar
+08, 12, 22 22 022 2022 02022, 000000  A.D. 12 12 0 00 0 00 0 00 AM AM
+~~END~~
+
+
+DECLARE @curr_date5 date;
+SET @curr_date5 = '7/5/2021';
+SELECT FORMAT(@curr_date5, 'abc "dd abc" \dddd/MMM/yyyyy, hh:mm:ss, dd,MM,yy d/MMMMMM/y f   ff  fff  ffff  fffff  ffffff  fffffff  h:m:s','en-US');
+GO
+~~START~~
+nvarchar
+abc dd abc dMon/Jul/02021, 12:00:00, 05,07,21 5/July/21 0   00  000  0000  00000  000000  000000  12:0:0
+~~END~~
+
+
+-- Custom datetime formats
+DECLARE @curr_datetime datetime;
+SET @curr_datetime = '1753-01-01 00:00:00.123';
+SELECT FORMAT(@curr_datetime, 'dd/yy/MM', 'dz-BT');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The culture parameter "dz-BT" provided in the function call is not supported.)~~
+
+
+DECLARE @curr_datetime2 datetime;
+SET @curr_datetime2 = '9999-12-31 23:59:55.456';
+SELECT FORMAT(@curr_datetime2, 'ddd, MMMM, yyyy', 'en-US');
+GO
+~~START~~
+nvarchar
+Fri, December, 9999
+~~END~~
+
+
+DECLARE @curr_datetime3 datetime;
+SET @curr_datetime3 = '5/12/2022';
+SELECT FORMAT(@curr_datetime3, 'dddd, MMMMM, yyyy', 'en-US');
+GO
+~~START~~
+nvarchar
+Thursday, May, 2022
+~~END~~
+
+
+DECLARE @curr_datetime4 datetime;
+SET @curr_datetime4 = '1753-01-01 00:00:00.456';
+SELECT FORMAT(@curr_datetime4, 'dd, MM, y yy yyy yyyy yyyyy, ffffff  gg h hh H HH m mm s ss t tt',  'en-US');
+GO
+~~START~~
+nvarchar
+01, 01, 53 53 753 1753 01753, 456000  A.D. 12 12 0 00 0 00 0 00 AM AM
+~~END~~
+
+
+DECLARE @curr_datetime5 datetime;
+SET @curr_datetime5 = '9999-12-31 23:59:55.987';
+SELECT FORMAT(@curr_datetime5, 'abc "dd abc" \dddd/MMM/yyyyy, hh:mm:ss, dd,MM,yy d/MMMMMM/y f   ff  fff  ffff  fffff  ffffff  fffffff  h:m:s','en-US');
+GO
+~~START~~
+nvarchar
+abc dd abc dFri/Dec/09999, 11:59:55, 31,12,99 31/December/99 9   98  987  9870  98700  987000  987000  11:59:55
+~~END~~
+
+
+-- Custom datetime2 formats
+DECLARE @curr_datetime_2 datetime2;
+SET @curr_datetime_2 = '0001-01-01 00:00:00.123';
+SELECT FORMAT(@curr_datetime_2, 'dd/yy/MM', 'dz-BT');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The culture parameter "dz-BT" provided in the function call is not supported.)~~
+
+
+DECLARE @curr_datetime2_2 datetime2;
+SET @curr_datetime2_2 = '9999-12-31 23:59:55.1234567';
+SELECT FORMAT(@curr_datetime2_2, 'ddd, MMMM, yyyy', 'en-US');
+GO
+~~START~~
+nvarchar
+Fri, December, 9999
+~~END~~
+
+
+DECLARE @curr_datetime3_2 datetime2;
+SET @curr_datetime3_2 = '5/12/2022';
+SELECT FORMAT(@curr_datetime3_2, 'dddd, MMMMM, yyyy', 'en-US');
+GO
+~~START~~
+nvarchar
+Thursday, May, 2022
+~~END~~
+
+
+DECLARE @curr_datetime4_2 datetime2;
+SET @curr_datetime4_2 = '0001-01-01 00:00:00.123';
+SELECT FORMAT(@curr_datetime4_2, 'dd, MM, y yy yyy yyyy yyyyy, ffffff  gg h hh H HH m mm s ss t tt y',  'en-US');
+GO
+~~START~~
+nvarchar
+01, 01, 1 01 001 0001 00001, 123000  A.D. 12 12 0 00 0 00 0 00 AM AM 1
+~~END~~
+
+
+DECLARE @curr_datetime5_2 datetime2;
+SET @curr_datetime5_2 = '9999-12-31 23:59:55.1234567';
+SELECT FORMAT(@curr_datetime5_2, 'abc "dd abc" \dddd/MMM/yyyyy, hh:mm:ss, dd,MM,yy d/MMMMMM/y f   ff  fff  ffff  fffff  ffffff  fffffff  h:m:s','en-US');
+GO
+~~START~~
+nvarchar
+abc dd abc dFri/Dec/09999, 11:59:55, 31,12,99 31/December/99 1   12  123  1234  12345  123457  123457  11:59:55
+~~END~~
+
+
+-- Custom smalldatetime formats
+DECLARE @curr_sdt smalldatetime;
+SET @curr_sdt = '1753-01-01 1:11:31';
+SELECT FORMAT(@curr_sdt, 'dd/yy/MM', 'dz-BT');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+DECLARE @curr_sdt2 smalldatetime;
+SET @curr_sdt2 = '2079-06-04 23:59:55';
+SELECT FORMAT(@curr_sdt2, 'ddd, MMMM, yyyy', 'en-US');
+GO
+~~START~~
+nvarchar
+Mon, June, 2079
+~~END~~
+
+
+DECLARE @curr_sdt3 smalldatetime;
+SET @curr_sdt3 = '5/12/2022';
+SELECT FORMAT(@curr_sdt3, 'dddd, MMMMM, yyyy', 'en-US');
+GO
+~~START~~
+nvarchar
+Thursday, May, 2022
+~~END~~
+
+
+DECLARE @curr_sdt4 smalldatetime;
+SET @curr_sdt4 = '1753-01-01 20:3:54';
+SELECT FORMAT(@curr_sdt4, 'dd, MM, y yy yyy yyyy yyyyy, ffffff  gg h hh H HH m mm s ss t tt',  'en-US');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+DECLARE @curr_sdt5 smalldatetime;
+SET @curr_sdt5 = '2079-06-04 23:59:55';
+SELECT FORMAT(@curr_sdt5, 'abc "dd abc" \dddd/MMM/yyyyy, hh:mm:ss, dd,MM,yy d/MMMMMM/y f   ff  fff  ffff  fffff  ffffff  fffffff  h:m:s','en-US');
+GO
+~~START~~
+nvarchar
+abc dd abc dMon/Jun/02079, 12:00:00, 05,06,79 5/June/79 0   00  000  0000  00000  000000  000000  12:0:0
+~~END~~
+
+
+
+
+-- Time custom formats
+SELECT FORMAT(cast('07:35' as time), N'hh.mm');  
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+SELECT FORMAT(cast('07:35' as time), N'hh:mm');  
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT FORMAT(cast('07:35' as time), N'hh\.mm');  
+GO
+~~START~~
+nvarchar
+07.35
+~~END~~
+
+SELECT FORMAT(cast('07:35' as time), N'hh\:mm');  
+GO
+~~START~~
+nvarchar
+07:35
+~~END~~
+
+
+select FORMAT(CAST('2018-01-01 01:00' AS datetime2), N'hh:mm tt');
+GO
+~~START~~
+nvarchar
+01:00 AM
+~~END~~
+
+select FORMAT(CAST('2018-01-01 01:00' AS datetime2), N'hh:mm t')  ;
+GO
+~~START~~
+nvarchar
+01:00 AM
+~~END~~
+
+
+select FORMAT(CAST('2018-01-01 14:00' AS datetime2), N'hh:mm tt') ;
+GO
+~~START~~
+nvarchar
+02:00 PM
+~~END~~
+
+select FORMAT(CAST('2018-01-01 14:00' AS datetime2), N'hh:mm t') ;
+GO
+~~START~~
+nvarchar
+02:00 PM
+~~END~~
+
+
+select FORMAT(CAST('2018-01-01 14:00' AS datetime2), N'HH:mm') ;
+GO
+~~START~~
+nvarchar
+14:00
+~~END~~
+

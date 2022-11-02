@@ -3729,7 +3729,7 @@ function_call
 partition_function_call
     : (db_name=id DOT)? DOLLAR_PARTITION DOT func_name=id LR_BRACKET function_arg_list RR_BRACKET
     ;
-    
+
 freetext_function
     : (CONTAINSTABLE | FREETEXTTABLE) LR_BRACKET table_name COMMA (full_column_name | LR_BRACKET full_column_name (COMMA full_column_name)* RR_BRACKET | (table_name DOT)? STAR  ) COMMA expression  (COMMA LANGUAGE expression)? (COMMA expression)? RR_BRACKET
     | (SEMANTICSIMILARITYTABLE | SEMANTICKEYPHRASETABLE) LR_BRACKET table_name COMMA (full_column_name | LR_BRACKET full_column_name (COMMA full_column_name)* RR_BRACKET | (table_name DOT)? STAR  ) COMMA expression RR_BRACKET
@@ -3898,20 +3898,31 @@ sample_clause
     : TABLESAMPLE SYSTEM? LR_BRACKET expression (PERCENT|ROWS) RR_BRACKET (REPEATABLE LR_BRACKET PLUS? DECIMAL RR_BRACKET)?
     ;
   
-// Id runtime check. Id can be (FORCESCAN, HOLDLOCK, NOLOCK, NOWAIT, PAGLOCK, READCOMMITTED,
-// READCOMMITTEDLOCK, READPAST, READUNCOMMITTED, REPEATABLEREAD, ROWLOCK, TABLOCK, TABLOCKX
-// UPDLOCK, XLOCK)
+// https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/hints-transact-sql-table.md
 table_hint
     : NOEXPAND? ( INDEX (LR_BRACKET index_value (COMMA index_value)* RR_BRACKET | index_value (COMMA index_value)*) )
     | INDEX  EQUAL  index_value
     | NOEXPAND
     | FORCESEEK ( LR_BRACKET index_value LR_BRACKET ID  (COMMA ID)* RR_BRACKET RR_BRACKET )?
+    | FORCESCAN
+    | FORCESEEK
+    | HOLDLOCK
+    | NOLOCK
+    | NOWAIT
+    | PAGLOCK
+    | READCOMMITTED
+    | READCOMMITTEDLOCK
+    | READPAST
+    | READUNCOMMITTED
+    | REPEATABLEREAD
+    | ROWLOCK
     | SERIALIZABLE
     | SNAPSHOT
     | SPATIAL_WINDOW_MAX_CELLS  EQUAL  DECIMAL
-    | NOWAIT
-    | HOLDLOCK
-	| ID
+    | TABLOCK
+    | TABLOCKX
+    | UPDLOCK
+    | XLOCK
     ;
 
 index_value
@@ -4887,6 +4898,7 @@ keyword
     | SUBJECT
     | SUBSCRIBE
     | SUBSCRIPTION
+    | SUBSTRING
     | SUM
     | SUPPORTED
     | SUSPEND

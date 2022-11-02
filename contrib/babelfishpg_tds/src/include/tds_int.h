@@ -15,6 +15,7 @@
 #ifndef TDS_INT_H
 #define TDS_INT_H
 
+#include "catalog/objectaccess.h"
 #include "datatype/timestamp.h"
 #include "fmgr.h"
 #include "lib/stringinfo.h"
@@ -25,6 +26,7 @@
 #include "parser/parse_node.h"
 #include "nodes/params.h"
 #include "tcop/dest.h"
+#include "tcop/utility.h"
 #include "utils/memutils.h"
 #include "utils/numeric.h"
 #include <libxml/uri.h>
@@ -235,6 +237,14 @@ extern TdsErrorContextData *TdsErrorContext;
 /* Socket functions */
 typedef ssize_t (*TdsSecureSocketApi)(Port *port, void *ptr, size_t len);
 
+/* Globals in backend/tds/tdsutils.c */
+extern object_access_hook_type next_object_access_hook;
+extern ProcessUtility_hook_type next_ProcessUtility;
+
+/* Postgres Public role name */
+#define PUBLIC_ROLE_NAME "public"
+#define BABELFISH_SYSADMIN "sysadmin"
+
 /* Functions in backend/tds/tdscomm.c */
 extern void TdsSetMessageType(uint8_t msgType);
 extern void TdsCommInit(uint32_t bufferSize,
@@ -303,6 +313,8 @@ extern void TdsUTF8toUTF16StringInfo(StringInfo out,
 extern int32_t ProcessStreamHeaders(const StringInfo message);
 extern Node * TdsFindParam(ParseState *pstate, ColumnRef *cref);
 extern void TdsErrorContextCallback(void *arg);
+extern void babelfish_object_access(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
+extern void tdsutils_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
 
 /* Functions in backend/tds/guc.c */
 extern void TdsDefineGucs(void);
@@ -347,7 +359,7 @@ extern int tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
 								 xmlChar **version, xmlChar **encoding, int *standalone);
 
 /* Functions in tdstypeio.c */
-extern char * TdsEncodingConversion(const char *s, int len, int encoding, int *encodedByteLen);
+extern char * TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen);
 extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 
 #endif	/* TDS_INT_H */

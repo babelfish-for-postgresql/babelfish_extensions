@@ -831,7 +831,7 @@ flatten_search_path(List *oid_list)
 }
 
 const char *
-get_pltsql_function_signature(const char *funcname,
+get_pltsql_function_signature_internal(const char *funcname,
 							  int nargs, const Oid *argtypes)
 {
 	StringInfoData argbuf;
@@ -867,3 +867,63 @@ get_pltsql_function_signature(const char *funcname,
 
 	return argbuf.data;			/* return palloc'd string buffer */
 }
+
+PG_FUNCTION_INFO_V1(get_pltsql_function_signature);
+
+Datum
+get_pltsql_function_signature(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	HeapTuple	proctup;
+	Form_pg_proc form_proctup;
+	char		*func_signature;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
+	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+
+	func_signature = get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+															form_proctup->pronargs,
+															form_proctup->proargtypes.values);
+
+	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
+}
+
+/*
+ * Retuns function owner which is cached at the start of every function/proc call
+ * only if we are currently in function/proc execution
+ */
+Oid
+get_function_owner_for_top_estate()
+{
+	PLtsql_execstate *top_estate;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return InvalidOid;
+
+	/*
+	 * Fetch the top procedure excution state from execution state call stack
+	 * and get the owner of that procedure. Top entry in stack will have
+	 * fn_oid and fn_owner value set.
+	 */
+	if (!exec_state_call_stack ||
+		!exec_state_call_stack->estate)
+		return InvalidOid;
+
+	top_estate = exec_state_call_stack->estate;
+
+	/*
+	 * Returns InvalidOid if function/proc is in shared schemas because
+	 * ownership chain is disabled for system objects
+	 */
+	if (!top_estate ||
+		!top_estate->func ||
+		top_estate->func->fn_oid == InvalidOid ||
+		top_estate->func->fn_owner == InvalidOid ||
+		top_estate->func->exists_in_shared_schema)
+		return InvalidOid;
+
+	return top_estate->func->fn_owner;
+}
+

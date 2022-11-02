@@ -50,7 +50,6 @@ static List *gen_dropdb_subcmds(const char *schema,
 								List *db_users);
 static Oid do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
-static List *grant_guest_to_logins(StringInfoData *query);
 static void drop_related_bbf_namespace_entries(int16 dbid);
 
 static bool
@@ -454,11 +453,17 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		}
 		set_cur_db(old_dbid, old_dbname);
 		if (dbo_role)
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false, true);
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true, true);
 		if (guest)
-			add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false);
+		{
+			/* For master, tempdb and msdb databases, the guest user will be enabled by default */
+			if (strcmp(dbname, "master") == 0 || strcmp(dbname, "tempdb") == 0 || strcmp(dbname, "msdb") == 0)
+				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, true);
+			else
+				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false);
+		}
 	}
 	PG_CATCH();
 	{
@@ -539,8 +544,10 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	PG_TRY();
 	{
 		Oid roleid = GetSessionUserId();
-
-		if (!has_privs_of_role(roleid, get_role_oid("sysadmin", false)))
+		const char *login = GetUserNameFromId(roleid, false);
+		bool login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+		
+		if (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   dbname);
 
@@ -758,7 +765,7 @@ Datum drop_all_dbs(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-static List *
+List *
 grant_guest_to_logins(StringInfoData *query)
 {
 	Relation		login_rel;
@@ -831,4 +838,29 @@ drop_related_bbf_namespace_entries(int16 dbid)
 	}
 	table_endscan(scan);
 	table_close(namespace_rel, RowExclusiveLock);
+}
+
+/* 
+ * Helper function to get the owner from a given database name
+ * Caller is responsible for validating that the given database exists
+ */
+const char *
+get_owner_of_db(const char *dbname)
+{
+	char				*owner = NULL;
+	HeapTuple 			tuple;
+	Form_sysdatabases 	sysdb;
+
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR, 
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				errmsg("database \"%s\" does not exist", dbname)));
+
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	owner = NameStr(sysdb->owner);
+	ReleaseSysCache(tuple);
+
+	return owner;
 }

@@ -78,7 +78,6 @@
 #include "pltsql.h"
 #include "pl_explain.h"
 #include "datatypes.h"
-#include "src/encoding/encoding.h"
 
 #include "access/xact.h"
 
@@ -232,6 +231,7 @@ write_stored_proc_probin_hook_type write_stored_proc_probin_hook = NULL;
 make_fn_arguments_from_stored_proc_probin_hook_type make_fn_arguments_from_stored_proc_probin_hook = NULL;
 pltsql_nextval_hook_type prev_pltsql_nextval_hook = NULL;
 pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
+pltsql_setval_hook_type prev_pltsql_setval_hook = NULL;
 
 static void
 set_procid(Oid oid)
@@ -286,7 +286,7 @@ assign_identity_insert(const char *newval, void *extra)
                 {
                         schema_name = (char *) lthird(elemlist);
 
-						if (ownership_structure_enabled() && cur_db_name)
+						if (cur_db_name)
 							schema_name = get_physical_schema_name(cur_db_name,
 																   schema_name);
 
@@ -2280,8 +2280,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 		case T_CreateRoleStmt:
 		{
-			if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				const char      *prev_current_user;
 				CreateRoleStmt	*stmt = (CreateRoleStmt *) parsetree;
@@ -2366,6 +2365,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (strcmp(headel->defname, "isrole") == 0)
 					{
 						int location = -1;
+						bool orig_username_exists = false;
 
 						isrole = true;
 						stmt->options = list_delete_cell(stmt->options,
@@ -2382,7 +2382,18 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								location = defel->location;
 								user_options = lappend(user_options, defel);
 							}
+							/*
+							 * This condition is to handle create role when using sp_addrole procedure
+							 * because there we add original_user_name before hand
+							 */
+							if(strcmp(defel->defname, "original_user_name") == 0)
+							{
+								user_options = lappend(user_options, defel);
+								orig_username_exists = true;
+							}
+							
 						}
+						
 
 						foreach(option, user_options)
 						{
@@ -2390,7 +2401,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 															lfirst(option));
 						}
 
-						if (location >= 0)
+						if (location >= 0 && !orig_username_exists)
 						{
 							char        *orig_user_name;
 
@@ -2489,8 +2500,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 		case T_AlterRoleStmt:
 		{
-			if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				AlterRoleStmt	*stmt = (AlterRoleStmt *) parsetree;
 				List			*login_options = NIL;
@@ -2713,8 +2723,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 		case T_DropRoleStmt:
 		{
-			if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				const char      *prev_current_user;
 				DropRoleStmt	*stmt = (DropRoleStmt *) parsetree;
@@ -2764,6 +2773,31 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 									ereport(ERROR,
 											(errcode(ERRCODE_CHECK_VIOLATION),
 											 errmsg("The role has members. It must be empty before it can be dropped.")));
+
+								/*
+								 * If the statement is drop_user and the user is guest:
+								 * 1. If the db is "master" or "tempdb", don't disable the guest user.
+								 * 2. Else, disable the guest user if enabled.
+								 * 3. Otherwise throw an error.
+								 */
+								if (drop_user && strcmp(rolspec->rolename, "guest") == 0)
+								{
+									if (guest_has_dbaccess(db_name))
+									{
+										if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0)
+											ereport(ERROR,
+												(errcode(ERRCODE_CHECK_VIOLATION),
+												errmsg("Cannot disable access to the guest user in master or tempdb.")));
+
+										alter_user_can_connect(false, rolspec->rolename, db_name);
+										return;
+									}
+									else
+										ereport(ERROR,
+											(errcode(ERRCODE_CHECK_VIOLATION),
+											 errmsg("User 'guest' cannot be dropped, it can only be disabled. "
+											"The user is already disabled in the current database.")));
+								}
 
 								pfree(rolspec->rolename);
 								rolspec->rolename = user_name;
@@ -2864,8 +2898,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 		case T_CreateSchemaStmt:
 		{
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
             {
 				CreateSchemaStmt	*create_schema = (CreateSchemaStmt *) parsetree;
 				const char			*orig_schema = NULL;
@@ -2928,8 +2961,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			if (drop_stmt->removeType != OBJECT_SCHEMA)
 				break;
 
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				del_ns_ext_info(strVal(lfirst(list_head(drop_stmt->objects))), drop_stmt->missing_ok);
 
@@ -2954,16 +2986,14 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		}
 		case T_CreatedbStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
             {
 				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
 				return;
 			}
 			break;
         case T_DropdbStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
             {
                 DropdbStmt *stmt = (DropdbStmt *) parsetree;
                 drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
@@ -2971,8 +3001,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
             }
             break;
 		case T_GrantRoleStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
             {
 				GrantRoleStmt *grant_role = (GrantRoleStmt *) parsetree;
 				if (is_alter_server_stmt(grant_role))
@@ -3460,6 +3489,8 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_keep_nulls = get_insert_bulk_keep_nulls;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_rows_per_batch = &get_insert_bulk_rows_per_batch;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
+		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = &tsql_varchar_input;
+		(*pltsql_protocol_plugin_ptr)->tsql_char_input = &tsql_bpchar_input;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
@@ -3498,6 +3529,9 @@ _PG_init(void)
 
 	prev_pltsql_resetcache_hook = pltsql_resetcache_hook;
 	pltsql_resetcache_hook = pltsql_resetcache_identity;
+
+	prev_pltsql_setval_hook = pltsql_setval_hook;
+	pltsql_setval_hook = pltsql_setval_identity;
 
 	suppress_string_truncation_error_hook = pltsql_suppress_string_truncation_error;
 
@@ -3545,6 +3579,7 @@ _PG_fini(void)
 	planner_node_transformer_hook = prev_planner_node_transformer_hook;
 	pltsql_nextval_hook = prev_pltsql_nextval_hook;
 	pltsql_resetcache_hook = prev_pltsql_resetcache_hook;
+	pltsql_setval_hook = prev_pltsql_setval_hook;
 	relname_lookup_hook = prev_relname_lookup_hook;
 	uninstall_object_access_hook_drop_relation();
 	ProcessUtility_hook = prev_ProcessUtility;

@@ -1,0 +1,526 @@
+select FORMAT(d, 'd','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753
+12/31/9999
+5/23/1992
+~~END~~
+
+select FORMAT(d, 'D','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753
+Friday, December 31, 9999
+Saturday, May 23, 1992
+~~END~~
+
+select FORMAT(d, 'f','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00 AM
+Friday, December 31, 9999 12:00 AM
+Saturday, May 23, 1992 12:00 AM
+~~END~~
+
+select FORMAT(d, 'F','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00:00 AM
+Friday, December 31, 9999 12:00:00 AM
+Saturday, May 23, 1992 12:00:00 AM
+~~END~~
+
+select FORMAT(d, 'g','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753 12:00 AM
+12/31/9999 12:00 AM
+5/23/1992 12:00 AM
+~~END~~
+
+select FORMAT(d, 'G','en-us') from date_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753 12:00:00 AM
+12/31/9999 12:00:00 AM
+5/23/1992 12:00:00 AM
+~~END~~
+
+select FORMAT(dt, 'd','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+1/1/1753
+12/31/9999
+5/23/1992
+12/31/1999
+1/1/1900
+1/1/1900
+3/14/2020
+~~END~~
+
+select FORMAT(dt, 'D','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753
+Friday, December 31, 9999
+Saturday, May 23, 1992
+Friday, December 31, 1999
+Monday, January 1, 1900
+Monday, January 1, 1900
+Saturday, March 14, 2020
+~~END~~
+
+select FORMAT(dt, 'f','en-us') from datetime_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00 AM
+Friday, December 31, 9999 11:59 PM
+Saturday, May 23, 1992 11:40 PM
+Friday, December 31, 1999 11:59 PM
+Monday, January 1, 1900 11:40 PM
+Monday, January 1, 1900 11:40 PM
+Saturday, March 14, 2020 12:00 AM
+~~END~~
+
+select FORMAT(dt2, 'd','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+1/1/0001
+12/31/9999
+5/23/1992
+5/23/1992
+12/31/1999
+12/31/1999
+1/1/1900
+1/1/1900
+3/14/2020
+~~END~~
+
+select FORMAT(dt2, 'D','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 0001
+Friday, December 31, 9999
+Saturday, May 23, 1992
+Saturday, May 23, 1992
+Friday, December 31, 1999
+Friday, December 31, 1999
+Monday, January 1, 1900
+Monday, January 1, 1900
+Saturday, March 14, 2020
+~~END~~
+
+select FORMAT(dt2, 'f','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 0001 12:00 AM
+Friday, December 31, 9999 11:59 PM
+Saturday, May 23, 1992 11:40 PM
+Saturday, May 23, 1992 11:40 PM
+Friday, December 31, 1999 11:59 PM
+Friday, December 31, 1999 11:59 PM
+Monday, January 1, 1900 11:40 PM
+Monday, January 1, 1900 11:40 PM
+Saturday, March 14, 2020 12:00 AM
+~~END~~
+
+select FORMAT(dt2, 'F','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+Monday, January 1, 0001 12:00:00 AM
+Friday, December 31, 9999 11:59:59 PM
+Saturday, May 23, 1992 11:40:29 PM
+Saturday, May 23, 1992 11:40:30 PM
+Friday, December 31, 1999 11:59:59 PM
+Friday, December 31, 1999 11:59:59 PM
+Monday, January 1, 1900 11:40:29 PM
+Monday, January 1, 1900 11:40:30 PM
+Saturday, March 14, 2020 12:00:00 AM
+~~END~~
+
+select FORMAT(dt2, 'g','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+1/1/0001 12:00 AM
+12/31/9999 11:59 PM
+5/23/1992 11:40 PM
+5/23/1992 11:40 PM
+12/31/1999 11:59 PM
+12/31/1999 11:59 PM
+1/1/1900 11:40 PM
+1/1/1900 11:40 PM
+3/14/2020 12:00 AM
+~~END~~
+
+select FORMAT(dt2, 'G','en-us') from datetime2_testing;
+GO
+~~START~~
+nvarchar
+1/1/0001 12:00:00 AM
+12/31/9999 11:59:59 PM
+5/23/1992 11:40:29 PM
+5/23/1992 11:40:30 PM
+12/31/1999 11:59:59 PM
+12/31/1999 11:59:59 PM
+1/1/1900 11:40:29 PM
+1/1/1900 11:40:30 PM
+3/14/2020 12:00:00 AM
+~~END~~
+
+select FORMAT(sdt, 'd','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+5/23/1990
+1/1/2023
+6/6/2079
+~~END~~
+
+select FORMAT(sdt, 'D','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wednesday, May 23, 1990
+Sunday, January 1, 2023
+Tuesday, June 6, 2079
+~~END~~
+
+select FORMAT(sdt, 'f','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wednesday, May 23, 1990 11:40 PM
+Sunday, January 1, 2023 12:00 AM
+Tuesday, June 6, 2079 11:00 PM
+~~END~~
+
+select FORMAT(sdt, 'F','en-us') from smalldatetime_testing;
+GO
+~~START~~
+nvarchar
+Wednesday, May 23, 1990 11:40:00 PM
+Sunday, January 1, 2023 12:00:00 AM
+Tuesday, June 6, 2079 11:00:00 PM
+~~END~~
+
+select FORMAT(ti, 'c','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+00:00:00.123450
+03:53:59
+15:05:45
+23:59:59.123450
+~~END~~
+
+select FORMAT(ti, 'd','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'D','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+select FORMAT(ti, 'f','en-us') from time_testing;
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT FORMAT(ti, 'C', 'en-us') from tinyint_testing;
+GO
+~~START~~
+nvarchar
+$0.00
+$31.00
+$255.00
+~~END~~
+
+SELECT FORMAT(ti, 'C0', 'en-us') from tinyint_testing;
+GO
+~~START~~
+nvarchar
+$0
+$31
+$255
+~~END~~
+
+SELECT FORMAT(si, 'C', 'aa-DJ') from smallint_testing;
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The culture parameter "aa-DJ" provided in the function call is not supported.)~~
+
+SELECT FORMAT(si, 'C6', 'en-us') from smallint_testing;
+GO
+~~START~~
+nvarchar
+($2,456.000000)
+($62.000000)
+$282.000000
+$2,456.000000
+~~END~~
+
+SELECT FORMAT(it, 'C', 'en-us') from int_testing;
+GO
+~~START~~
+nvarchar
+($2,147,483.00)
+($586.00)
+$7,869.00
+$2,147,483.00
+~~END~~
+
+SELECT FORMAT(it, 'C6', 'en-us') from int_testing;
+GO
+~~START~~
+nvarchar
+($2,147,483.000000)
+($586.000000)
+$7,869.000000
+$2,147,483.000000
+~~END~~
+
+SELECT FORMAT(bi, 'C', 'en-us') from bigint_testing;
+GO
+~~START~~
+nvarchar
+($9,223,372,036,854.00)
+($352.00)
+$2,822.00
+$9,223,372,036,854.00
+~~END~~
+
+SELECT FORMAT(bi, 'C6', 'en-us') from bigint_testing;
+GO
+~~START~~
+nvarchar
+($9,223,372,036,854.000000)
+($352.000000)
+$2,822.000000
+$9,223,372,036,854.000000
+~~END~~
+
+SELECT FORMAT(dt, 'C', 'en-us') from decimal_testing;
+GO
+~~START~~
+nvarchar
+($8,999,999,999.10)
+($352.00)
+$5,478.00
+$9,000,000,000.00
+~~END~~
+
+SELECT FORMAT(dt, 'C6', 'en-us') from decimal_testing;
+GO
+~~START~~
+nvarchar
+($8,999,999,999.099090)
+($352.000000)
+$5,478.000000
+$8,999,999,999.999990
+~~END~~
+
+SELECT FORMAT(nt, 'C', 'en-us') from numeric_testing;
+GO
+~~START~~
+nvarchar
+($8,999,999,999.10)
+($352.00)
+$5,478.00
+$9,000,000,000.00
+~~END~~
+
+SELECT FORMAT(nt, 'C6', 'en-us') from numeric_testing;
+GO
+~~START~~
+nvarchar
+($8,999,999,999.099000)
+($352.000000)
+$5,478.000000
+$8,999,999,999.999900
+~~END~~
+
+SELECT FORMAT(rt, 'C', 'en-us') from real_testing;
+GO
+~~START~~
+nvarchar
+($340,000,000,000,000,000,000,000,000,000,000,000,000.00)
+($331,234,600,000,000,000,000,000,000,000,000,000,000.00)
+($331,234,100,000,000,000,000,000,000,000,000,000,000.00)
+($22.12)
+$22.12
+$22.12
+$331,234,600,000,000,000,000,000,000,000,000,000,000.00
+$340,000,000,000,000,000,000,000,000,000,000,000,000.00
+~~END~~
+
+SELECT FORMAT(rt, 'C9', 'en-us') from real_testing;
+GO
+~~START~~
+nvarchar
+($340,000,000,000,000,000,000,000,000,000,000,000,000.000000000)
+($331,234,600,000,000,000,000,000,000,000,000,000,000.000000000)
+($331,234,100,000,000,000,000,000,000,000,000,000,000.000000000)
+($22.123400000)
+$22.123400000
+$22.123410000
+$331,234,600,000,000,000,000,000,000,000,000,000,000.000000000
+$340,000,000,000,000,000,000,000,000,000,000,000,000.000000000
+~~END~~
+
+SELECT FORMAT(ft, 'C', 'en-us') from float_testing;
+GO
+~~START~~
+nvarchar
+($179,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000.00)
+($340,000,000,000,000,000,000,000,000,000,000,000,000.00)
+$35.37
+$340,000,000,000,000,000,000,000,000,000,000,000,000.00
+$179,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000.00
+~~END~~
+
+SELECT FORMAT(ft, 'C9', 'en-us') from float_testing;
+GO
+~~START~~
+nvarchar
+($179,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000.000000000)
+($340,000,000,000,000,000,000,000,000,000,000,000,000.000000000)
+$35.367500000
+$340,000,000,000,000,000,000,000,000,000,000,000,000.000000000
+$179,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000.000000000
+~~END~~
+
+SELECT FORMAT(sm, 'C', 'en-us') from smallmoney_testing;
+GO
+~~START~~
+nvarchar
+($214,478.36)
+$435,627.14
+($435,627.14)
+$214,478.36
+~~END~~
+
+SELECT FORMAT(sm, 'C9', 'en-us') from smallmoney_testing;
+GO
+~~START~~
+nvarchar
+($214,478.364800000)
+$435,627.143500000
+($435,627.143500000)
+$214,478.364700000
+~~END~~
+
+SELECT FORMAT(mt, 'C', 'en-us') from money_testing;
+GO
+~~START~~
+nvarchar
+($92,233,720.58)
+($214,478.36)
+$435,627.14
+$214,478.36
+$92,233,720.58
+~~END~~
+
+SELECT FORMAT(mt, 'C9', 'en-us') from money_testing;
+GO
+~~START~~
+nvarchar
+($92,233,720.580800000)
+($214,478.364800000)
+$435,627.143500000
+$214,478.364700000
+$92,233,720.580700000
+~~END~~
+
+SELECT FORMAT(rt, 'C', 'en-us') from real_testing2;
+GO
+~~START~~
+nvarchar
+($34.00)
+($34.00)
+($331,234,700,000,000,000,000,000,000,000,000,000,000.00)
+$22,123.46
+$22.12
+$331,234,600,000,000,000,000,000,000,000,000,000,000.00
+$340,000,000,000,000,000,000,000,000,000,000,000,000.00
+~~END~~
+
+SELECT FORMAT(rt, 'C9', 'en-us') from real_testing2;
+GO
+~~START~~
+nvarchar
+($34.000000000)
+($34.000000000)
+($331,234,700,000,000,000,000,000,000,000,000,000,000.000000000)
+$22,123.460000000
+$22.123410000
+$331,234,600,000,000,000,000,000,000,000,000,000,000.000000000
+$340,000,000,000,000,000,000,000,000,000,000,000,000.000000000
+~~END~~
+
+SELECT FORMAT(ft, 'C', 'en-us') from float_testing2;
+GO
+~~START~~
+nvarchar
+($331,234,678,912,346,000,000,000,000,000,000,000,000.00)
+$3.31
+$3.31
+$3.31
+$3.31
+$3.31
+$33,123,489,656,565,100.00
+$3.31
+$3.31
+$351,234,567,891,026,000.00
+~~END~~
+
+SELECT FORMAT(ft, 'C9', 'en-us') from float_testing2;
+GO
+~~START~~
+nvarchar
+($331,234,678,912,346,000,000,000,000,000,000,000,000.000000000)
+$3.312348966
+$3.312348966
+$3.312348966
+$3.312348966
+$3.312348966
+$33,123,489,656,565,100.000000000
+$3.312348966
+$3.312348966
+$351,234,567,891,026,000.000000000
+~~END~~
+
