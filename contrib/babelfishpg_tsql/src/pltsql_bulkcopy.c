@@ -25,6 +25,7 @@
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "commands/sequence.h"
+#include "commands/copy.h"
 #include "executor/executor.h"
 #include "executor/nodeModifyTable.h"
 #include "executor/tuptable.h"
@@ -684,6 +685,12 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					{
 						myslot->tts_values[i] = Int64GetDatum(nextval_internal(cstate->seqid, true));
 					}
+					else if (cstate->rv_index == i)
+					{
+						Expr *defexpr = (Expr *) build_column_default(cstate->rel, i + 1);
+						defexpr = expression_planner(defexpr);
+						myslot->tts_values[i] = ExecEvalExpr(ExecInitExpr(defexpr, NULL), econtext, &myslot->tts_isnull[i]);
+					}
 					else
 						myslot->tts_isnull[i] = true;
 				}
@@ -874,6 +881,7 @@ BeginBulkCopy(Relation rel,
 	cstate->cur_relname = RelationGetRelationName(cstate->rel);
 	cstate->cur_rowno = 0;
 	cstate->seq_index = -1;
+	cstate->rv_index = -1;
 
 	/* Assign range table. */
 	cstate->range_table = pstate->p_rtable;
@@ -897,8 +905,13 @@ BeginBulkCopy(Relation rel,
 		if (att->attisdropped)
 			continue;
 
+		/* Save the index for the rowversion datatype */
+		if (is_tsql_rowversion_or_timestamp_datatype_hook && is_tsql_rowversion_or_timestamp_datatype_hook(att->atttypid))
+		{
+			cstate->rv_index = attnum - 1;
+		}
 		/* Save the index for the identity column */
-		if (att->attidentity)
+		else if (att->attidentity)
 		{
 			cstate->seq_index = attnum - 1;
 			cstate->seqid = getIdentitySequence(RelationGetRelid(cstate->rel), attnum, false);
