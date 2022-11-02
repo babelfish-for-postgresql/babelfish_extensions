@@ -36,3 +36,4 @@ ignore#!#TestErrorHelperFunctionsUpgrade-vu-prepare
 ignore#!#TestErrorHelperFunctionsUpgrade-vu-verify
 ignore#!#TestErrorHelperFunctionsUpgrade-vu-cleanup
 ignore#!#tds_faultinjection
+ignore#!#babel_tds_fault_injection
