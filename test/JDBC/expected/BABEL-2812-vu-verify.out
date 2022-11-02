@@ -209,11 +209,35 @@ smalldatetime#!#smalldatetime
 ~~END~~
 
 
+SELECT * FROM babel_2812_vu_v24
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 13:12:00.0#!#2022-02-05 00:00:00.0#!#2022-02-05 00:00:00.0
+~~END~~
+
+
+SELECT * FROM babel_2812_vu_v25
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0#!#2021-10-17 10:48:00.0#!#1778-03-16 13:12:00.0#!#2021-10-18 00:00:00.0#!#1778-03-16 00:00:00.0#!#2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0#!#2021-10-17 10:48:00.0#!#1900-02-23 13:12:00.0#!#2021-10-18 00:00:00.0#!#1900-02-23 00:00:00.0
+~~END~~
+
+
 -- test DATETIME + other date and time data types (should not work)
 SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS DATE))
 GO
 ~~START~~
 datetime
 2021-12-14 00:00:00.0
+~~END~~
+
+
+SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS TEXT))
+GO
+~~START~~
+varchar
+2021-12-12 00:00:0019000103
 ~~END~~
 

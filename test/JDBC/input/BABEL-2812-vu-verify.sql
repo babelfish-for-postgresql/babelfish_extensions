@@ -79,6 +79,15 @@ GO
 SELECT * FROM babel_2812_vu_v23
 GO
 
+SELECT * FROM babel_2812_vu_v24
+GO
+
+SELECT * FROM babel_2812_vu_v25
+GO
+
 -- test DATETIME + other date and time data types (should not work)
 SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS DATE))
+GO
+
+SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS TEXT))
 GO

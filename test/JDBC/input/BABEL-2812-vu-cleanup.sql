@@ -78,3 +78,9 @@ GO
 
 DROP VIEW babel_2812_vu_v23;
 GO
+
+DROP VIEW babel_2812_vu_v24;
+GO
+
+DROP VIEW babel_2812_vu_v25;
+GO
