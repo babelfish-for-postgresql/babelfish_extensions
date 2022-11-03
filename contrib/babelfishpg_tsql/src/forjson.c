@@ -27,8 +27,10 @@ Datum
 tsql_query_to_json_text(PG_FUNCTION_ARGS)
 {
 	for (int i=0; i< PG_NARGS()-1; i++)
+	{
 		if PG_ARGISNULL(i) 
 			PG_RETURN_NULL();
+	}
 	char *query = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int mode = PG_GETARG_INT32(1);
 	bool include_null_value = PG_GETARG_BOOL(2);
@@ -111,7 +113,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("invalid query")));
 
-	/* If (root_name_present) is TRUE then WITHOUT_ARRAY_WRAPPER will be FALSE */
+	/* If root_name is present then WITHOUT_ARRAY_WRAPPER will be FALSE */
 	if(root_name)
 		appendStringInfo(result, "{\"%s\":[",root_name);
 	else if (!without_array_wrapper)
