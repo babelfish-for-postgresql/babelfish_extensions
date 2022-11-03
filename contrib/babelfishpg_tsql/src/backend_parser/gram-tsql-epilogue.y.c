@@ -190,19 +190,6 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_time"), args, COERCE_EXPLICIT_CALL, location);
 	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime")))
 	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime"), args, COERCE_EXPLICIT_CALL, location);
-	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime2")))
-	{
-		/*
-		 *	Handles null typmod case. typmod is set to 6 because that is the current max precision for datetime2 
-		 *	Update to 7 when BABEL-2934 is reolved
-		 */
-		if(typmod < 0)
-			typmod = 6;
-
-		typename_string = psprintf("%s(%d)", "DATETIME2", typmod);
-		args = lcons(makeStringConst(typename_string, location), args);
-		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime2"), args, COERCE_EXPLICIT_CALL, location);
-	}
 	else if (strcmp(typename_string, "varchar") == 0)
 	{
 		Node *helperFuncCall;
@@ -299,6 +286,17 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
                 result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_int"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
         else if (type_oid == INT8OID)
                 result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_bigint"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
+        else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime2")))
+        {
+		/*
+		 *      Handles null typmod case. typmod is set to 6 because that is the current max precision for datetime2
+		 *      Update to 7 when BABEL-2934 is reolved
+		 */
+                if(typmod < 0)
+                        typmod = 6;
+
+                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_datetime2"), list_make2(arg, makeIntConst(typmod, location)), COERCE_EXPLICIT_CALL, location);
+        }
         else
         {
                 Node *arg_const = makeTypeCast(arg, SystemTypeName("text"), location);
