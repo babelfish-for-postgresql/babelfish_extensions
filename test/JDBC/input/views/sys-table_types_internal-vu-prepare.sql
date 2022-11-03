@@ -1,11 +1,3 @@
-
--- psql 
-GRANT SELECT ON sys.table_types_internal TO PUBLIC;
-GO
-
--- tsql
-GO
-
 DROP TYPE IF EXISTS table_types_internal_test1;
 GO
 

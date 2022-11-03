@@ -1,10 +1,3 @@
--- psql 
-GRANT SELECT ON sys.table_types_internal TO PUBLIC;
-GO
-
--- tsql
-GO
-
 CREATE TYPE table_types_internal_dep_test1 AS TABLE (Id INT, Name VARCHAR(100));
 GO
 

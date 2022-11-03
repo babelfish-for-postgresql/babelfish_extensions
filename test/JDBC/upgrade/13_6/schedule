@@ -278,5 +278,8 @@ BABEL-3010-before-14_6
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
+<<<<<<< HEAD
 BABEL-PG-SYSTEM-FUNCTIONS
 sys-table_types_internal
+=======
+>>>>>>> e5f533ab (Fixed upgrade tests.)
