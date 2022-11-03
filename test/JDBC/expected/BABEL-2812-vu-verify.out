@@ -97,32 +97,32 @@ datetime#!#datetime#!#datetime#!#datetime
 SELECT * FROM babel_2812_vu_v9
 GO
 ~~START~~
-datetime#!#datetime
-2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+datetime#!#datetime#!#datetime#!#datetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v10
 GO
 ~~START~~
-datetime#!#datetime
-2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0
+datetime#!#datetime#!#datetime#!#datetime
+2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0#!#2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v11
 GO
 ~~START~~
-datetime#!#datetime
-2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+datetime#!#datetime#!#datetime#!#datetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v12
 GO
 ~~START~~
-datetime#!#datetime
-2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0
+datetime#!#datetime#!#datetime#!#datetime
+2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0#!#2021-12-10 00:00:00.0#!#1778-01-22 00:00:00.0
 ~~END~~
 
 
@@ -185,32 +185,32 @@ smalldatetime#!#smalldatetime#!#datetime#!#datetime
 SELECT * FROM babel_2812_vu_v20
 GO
 ~~START~~
-smalldatetime#!#smalldatetime
-2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v21
 GO
 ~~START~~
-smalldatetime#!#smalldatetime
-2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0#!#2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v22
 GO
 ~~START~~
-smalldatetime#!#smalldatetime
-2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0#!#2021-12-14 00:00:00.0
 ~~END~~
 
 
 SELECT * FROM babel_2812_vu_v23
 GO
 ~~START~~
-smalldatetime#!#smalldatetime
-2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0#!#2021-12-10 00:00:00.0#!#1900-01-01 00:00:00.0
 ~~END~~
 
 
@@ -245,4 +245,19 @@ GO
 varchar
 2021-12-12 00:00:0019000103
 ~~END~~
+
+
+-- overflow for datetime, should error
+SELECT  (CAST('1753-01-01' AS DATETIME) + CAST(2000000000 AS INT))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+SELECT  (CAST('1753-01-01' AS DATETIME) + CAST(4000000000 AS BIGINT))
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
 

@@ -81,25 +81,25 @@ GO
 
 -- DATETIME + Character strings - text is not valid in SQL Server
 CREATE VIEW babel_2812_vu_v9 AS
-SELECT  --(CAST('20211212' AS DATETIME) + CAST('19000103' AS char)) c1, (CAST('19000103' AS char) + CAST('20211212' AS DATETIME)) c2, --char currently not working
+SELECT  (CAST('20211212' AS DATETIME) + CAST('19000103' AS char)) c1, (CAST('19000103' AS char) + CAST('20211212' AS DATETIME)) c2, --char currently not working
         (CAST('20211212' AS DATETIME) + CAST('19000103' AS varchar)) c5, (CAST('19000103' AS varchar) + CAST('20211212' AS DATETIME)) c6
 GO
 
 -- DATETIME - Character strings - text is not valid in SQL Server
 CREATE VIEW babel_2812_vu_v10 AS
-SELECT  --(CAST('20211212' AS DATETIME) - CAST('19000103' AS char)) c1, (CAST('19000103' AS char) - CAST('20211212' AS DATETIME)) c2, --char currently not working
+SELECT  (CAST('20211212' AS DATETIME) - CAST('19000103' AS char)) c1, (CAST('19000103' AS char) - CAST('20211212' AS DATETIME)) c2, --char currently not working
         (CAST('20211212' AS DATETIME) - CAST('19000103' AS varchar)) c5, (CAST('19000103' AS varchar) - CAST('20211212' AS DATETIME)) c6
 GO
 
 -- DATETIME + Unicode character strings - ntext is not valid in SQL Server
 CREATE VIEW babel_2812_vu_v11 AS
-SELECT  --(CAST('20211212' AS DATETIME) + CAST('19000103' AS nchar)) c1, (CAST('19000103' AS nchar) + CAST('20211212' AS DATETIME)) c2, --nchar currently not working
+SELECT  (CAST('20211212' AS DATETIME) + CAST('19000103' AS nchar)) c1, (CAST('19000103' AS nchar) + CAST('20211212' AS DATETIME)) c2, --nchar currently not working
         (CAST('20211212' AS DATETIME) + CAST('19000103' AS nvarchar)) c5, (CAST('19000103' AS nvarchar) + CAST('20211212' AS DATETIME)) c6
 GO
 
 -- DATETIME - Unicode character strings - ntext is not valid in SQL Server
 CREATE VIEW babel_2812_vu_v12 AS
-SELECT  --(CAST('20211212' AS DATETIME) - CAST('19000103' AS nchar)) c1, (CAST('19000103' AS char) - CAST('20211212' AS DATETIME)) c2, --nchar currently not working
+SELECT  (CAST('20211212' AS DATETIME) - CAST('19000103' AS nchar)) c1, (CAST('19000103' AS char) - CAST('20211212' AS DATETIME)) c2, --nchar currently not working
         (CAST('20211212' AS DATETIME) - CAST('19000103' AS nvarchar)) c5, (CAST('19000103' AS nvarchar) - CAST('20211212' AS DATETIME)) c6
 GO
 
@@ -160,25 +160,25 @@ GO
 
 -- SMALLDATETIME + Character strings - text is not valid in SQL Server
 CREATE VIEW babel_2812_vu_v20 AS
-SELECT  --(CAST('20211212' AS SMALLDATETIME) + CAST('19000103' AS char)) c1, (CAST('19000103' AS char) + CAST('20211212' AS SMALLDATETIME)) c2, --char currently not working
+SELECT  (CAST('20211212' AS SMALLDATETIME) + CAST('19000103' AS char)) c1, (CAST('19000103' AS char) + CAST('20211212' AS SMALLDATETIME)) c2, --char currently not working
         (CAST('20211212' AS SMALLDATETIME) + CAST('19000103' AS varchar)) c5, (CAST('19000103' AS varchar) + CAST('20211212' AS SMALLDATETIME)) c6
 GO
 
 -- SMALLDATETIME - Character strings - text is not valid in SQL Server
 CREATE VIEW babel_2812_vu_v21 AS
-SELECT  --(CAST('20211212' AS SMALLDATETIME) - CAST('19000103' AS char)) c1, (CAST('19000103' AS char) - CAST('20211212' AS SMALLDATETIME)) c2, --char currently not working
+SELECT  (CAST('20211212' AS SMALLDATETIME) - CAST('19000103' AS char)) c1, (CAST('19000103' AS char) - CAST('19000103' AS SMALLDATETIME)) c2, --char currently not working
         (CAST('20211212' AS SMALLDATETIME) - CAST('19000103' AS varchar)) c5, (CAST('19000103' AS varchar) - CAST('19000103' AS SMALLDATETIME)) c6
 GO
 
 -- SMALLDATETIME + Unicode character strings - ntext is not valid in SQL Server
 CREATE VIEW babel_2812_vu_v22 AS
-SELECT  --(CAST('20211212' AS SMALLDATETIME) + CAST('19000103' AS nchar)) c1, (CAST('19000103' AS nchar) + CAST('20211212' AS SMALLDATETIME)) c2, --nchar currently not working
+SELECT  (CAST('20211212' AS SMALLDATETIME) + CAST('19000103' AS nchar)) c1, (CAST('19000103' AS nchar) + CAST('20211212' AS SMALLDATETIME)) c2, --nchar currently not working
         (CAST('20211212' AS SMALLDATETIME) + CAST('19000103' AS nvarchar)) c5, (CAST('19000103' AS nvarchar) + CAST('20211212' AS SMALLDATETIME)) c6
 GO
 
 -- SMALLDATETIME - Unicode character strings - ntext is not valid in SQL Server
 CREATE VIEW babel_2812_vu_v23 AS
-SELECT  --(CAST('20211212' AS SMALLDATETIME) - CAST('19000103' AS nchar)) c1, (CAST('19000103' AS char) - CAST('20211212' AS SMALLDATETIME)) c2, --nchar currently not working
+SELECT  (CAST('20211212' AS SMALLDATETIME) - CAST('19000103' AS nchar)) c1, (CAST('19000103' AS char) - CAST('19000103' AS SMALLDATETIME)) c2, --nchar currently not working
         (CAST('20211212' AS SMALLDATETIME) - CAST('19000103' AS nvarchar)) c5, (CAST('19000103' AS nvarchar) - CAST('19000103' AS SMALLDATETIME)) c6
 GO
 
