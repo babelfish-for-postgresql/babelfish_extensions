@@ -1971,9 +1971,6 @@ babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatc
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
 babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
-babelfishpg_tsql.escape_hatch_geography#!#strict#!#escape hatch for GEOGRAPHY columns
-babelfishpg_tsql.escape_hatch_geometry#!#strict#!#escape hatch for GEOMETRY columns
-babelfishpg_tsql.escape_hatch_hierarchyid#!#strict#!#escape hatch for HIERARCHYID columns
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
@@ -2030,9 +2027,6 @@ babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatc
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
 babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
-babelfishpg_tsql.escape_hatch_geography#!#strict#!#escape hatch for GEOGRAPHY columns
-babelfishpg_tsql.escape_hatch_geometry#!#strict#!#escape hatch for GEOMETRY columns
-babelfishpg_tsql.escape_hatch_hierarchyid#!#strict#!#escape hatch for HIERARCHYID columns
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
@@ -2070,9 +2064,6 @@ babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatc
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
 babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
-babelfishpg_tsql.escape_hatch_geography#!#strict#!#escape hatch for GEOGRAPHY columns
-babelfishpg_tsql.escape_hatch_geometry#!#strict#!#escape hatch for GEOMETRY columns
-babelfishpg_tsql.escape_hatch_hierarchyid#!#strict#!#escape hatch for HIERARCHYID columns
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
@@ -2744,7 +2735,7 @@ CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_hierarchyid to ignore)~~
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_hierarchyid;
 GO
@@ -2756,7 +2747,7 @@ CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_geography to ignore)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geography;
 GO
@@ -2768,7 +2759,7 @@ CREATE TABLE test_unsupported_geometry(a GEOMETRY);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_geometry to ignore)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geometry;
 GO
@@ -2794,7 +2785,7 @@ CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_hierarchyid to ignore)~~
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_hierarchyid;
 GO
@@ -2806,7 +2797,7 @@ CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_geography to ignore)~~
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geography;
 GO
@@ -2818,211 +2809,7 @@ CREATE TABLE test_unsupported_geometry(a GEOMETRY);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_geometry to ignore)~~
-
-DROP TABLE test_unsupported_geometry;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
-
-
--- With escape_hatch_hierarchyid to ignore
--- Should throw a simple error message saying the datatype does not exist
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
-GO
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_hierarchyid', 'ignore';
-GO
-
-CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ROWVERSION datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
-
-DROP TABLE test_unsupported_rowversion;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_rowversion" does not exist)~~
-
-CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
-
-DROP TABLE test_unsupported_timestamp;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_timestamp" does not exist)~~
-
-CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "hierarchyid" does not exist)~~
-
-DROP TABLE test_unsupported_hierarchyid;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
-
-CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_geography to ignore)~~
-
-DROP TABLE test_unsupported_geography;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
-
-CREATE TABLE test_unsupported_geometry(a GEOMETRY);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_geometry to ignore)~~
-
-DROP TABLE test_unsupported_geometry;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
-
-
--- With escape_hatch_geography to ignore
--- Should throw a simple error message saying the datatype does not exist
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_hierarchyid', 'strict';
-GO
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geography', 'ignore';
-GO
-
-CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ROWVERSION datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
-
-DROP TABLE test_unsupported_rowversion;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_rowversion" does not exist)~~
-
-CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
-
-DROP TABLE test_unsupported_timestamp;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_timestamp" does not exist)~~
-
-CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_hierarchyid to ignore)~~
-
-DROP TABLE test_unsupported_hierarchyid;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
-
-CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "geography" does not exist)~~
-
-DROP TABLE test_unsupported_geography;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
-
-CREATE TABLE test_unsupported_geometry(a GEOMETRY);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_geometry to ignore)~~
-
-DROP TABLE test_unsupported_geometry;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
-
-
--- With escape_hatch_geometry to ignore
--- Should throw a simple error message saying the datatype does not exist
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geography', 'strict';
-GO
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geometry', 'ignore';
-GO
-
-CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ROWVERSION datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
-
-DROP TABLE test_unsupported_rowversion;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_rowversion" does not exist)~~
-
-CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
-
-DROP TABLE test_unsupported_timestamp;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_timestamp" does not exist)~~
-
-CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_hierarchyid to ignore)~~
-
-DROP TABLE test_unsupported_hierarchyid;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
-
-CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_geography to ignore)~~
-
-DROP TABLE test_unsupported_geography;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
-
-CREATE TABLE test_unsupported_geometry(a GEOMETRY);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "geometry" does not exist)~~
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geometry;
 GO

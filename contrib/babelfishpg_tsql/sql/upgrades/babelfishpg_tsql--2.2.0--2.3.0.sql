@@ -516,7 +516,7 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN COALESCE(tsql_get_functiondef(ao.object_id), pg_get_functiondef(ao.object_id))
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
@@ -2287,6 +2287,8 @@ CREATE TABLE sys.babelfish_function_ext (
 	orig_name sys.NVARCHAR(128), -- users' original input name
 	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
+	flag_validity BIGINT,
+	flag_values BIGINT,
 	create_date SYS.DATETIME NOT NULL,
 	modify_date SYS.DATETIME NOT NULL,
 	PRIMARY KEY(nspname, funcsignature)
@@ -3795,6 +3797,7 @@ BEGIN
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
 					ELSE CAST(Base3.oid AS INT) END
 					AS SYS.VARBINARY(85)) AS 'SID'
 		FROM sys.babelfish_authid_user_ext AS Ext1
