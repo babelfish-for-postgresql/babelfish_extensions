@@ -47,12 +47,3 @@ GO
   Detail: Failing row contains (11dsjkdnb           ).
     Server SQLState: 23514)~~
 
-
-SELECT conbin FROM pg_constraint WHERE conrelid = 
-    (SELECT oid FROM pg_class WHERE relname = 'tbl_creation_should_succeed');
-GO
-~~START~~
-pg_node_tree
-{BOOLEXPR :boolop not :args ({BOOLEXPR :boolop and :args ({OPEXPR :opno 1627 :opfuncid 1633 :opresulttype 16 :opretset false :opcollid 0 :inputcollid 100 :args ({RELABELTYPE :arg {VAR :varno 1 :varattno 1 :vartype 16849 :vartypmod 24 :varcollid 100 :varlevelsup 0 :varnosyn 1 :varattnosyn 1 :location 120} :resulttype 25 :resulttypmod -1 :resultcollid 100 :relabelformat 1 :location 122} {CONST :consttype 25 :consttypmod -1 :constcollid 100 :constlen -1 :constbyval false :constisnull false :location 133 :constvalue 7 [ 28 0 0 0 49 49 37 ]}) :location 129} {BOOLEXPR :boolop and :args ({OPEXPR :opno 667 :opfuncid 743 :opresulttype 16 :opretset false :opcollid 0 :inputcollid 100 :args ({RELABELTYPE :arg {VAR :varno 1 :varattno 1 :vartype 16849 :vartypmod 24 :varcollid 100 :varlevelsup 0 :varnosyn 1 :varattnosyn 1 :location 153} :resulttype 25 :resulttypmod -1 :resultcollid 100 :relabelformat 1 :location 155} {CONST :consttype 25 :consttypmod -1 :constcollid 100 :constlen -1 :constbyval false :constisnull false :location 165 :constvalue 6 [ 24 0 0 0 49 49 ]}) :location 162} {OPEXPR :opno 664 :opfuncid 740 :opresulttype 16 :opretset false :opcollid 0 :inputcollid 17944 :args ({RELABELTYPE :arg {VAR :varno 1 :varattno 1 :vartype 16849 :vartypmod 24 :varcollid 100 :varlevelsup 0 :varnosyn 1 :varattnosyn 1 :location 194} :resulttype 25 :resulttypmod -1 :resultcollid 100 :relabelformat 1 :location 196} {OPEXPR :opno 654 :opfuncid 1258 :opresulttype 25 :opretset false :opcollid 17944 :inputcollid 17944 :args ({CONST :consttype 25 :consttypmod -1 :constcollid 100 :constlen -1 :constbyval false :constisnull false :location 206 :constvalue 6 [ 24 0 0 0 49 49 ]} {COLLATE :arg {CONST :consttype 25 :consttypmod -1 :constcollid 100 :constlen -1 :constbyval false :constisnull false :location 220 :constvalue 7 [ 28 0 0 0 -17 -65 -65 ]} :collOid 17944 :location 232}) :location 217}) :location 203}) :location 188}) :location 146}) :location 113}
-~~END~~
-
