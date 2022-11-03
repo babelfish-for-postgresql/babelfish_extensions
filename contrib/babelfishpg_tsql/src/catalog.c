@@ -2267,6 +2267,11 @@ create_guest_role_for_db(char *dbname)
 	bbf_set_current_user(prev_current_user);
 }
 
+/*
+ * Retrieve the db_owner role name of a specific
+ * database from the catalog, it doesn't rely on the
+ * migration mode GUC.
+ */
 static char *
 get_db_owner_role_name(char *dbname)
 {

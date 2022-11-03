@@ -3048,6 +3048,9 @@ AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
 CALL sys.babelfish_update_user_catalog_for_guest();
 
+-- Drop this procedure after it is executed once during upgrade.
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
+
 ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_deprecated_in_2_3_0;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
