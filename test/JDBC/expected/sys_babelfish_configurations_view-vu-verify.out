@@ -1,0 +1,32 @@
+SELECT * FROM sys_babelfish_configurations_view_vu_prepare_view
+GO
+~~START~~
+int
+39
+~~END~~
+
+
+EXEC sys_babelfish_configurations_view_vu_prepare_proc
+GO
+~~START~~
+int
+39
+~~END~~
+
+
+SELECT * FROM sys_babelfish_configurations_view_vu_prepare_func()
+GO
+~~START~~
+int
+39
+~~END~~
+
+
+DROP VIEW sys_babelfish_configurations_view_vu_prepare_view
+GO
+
+DROP PROC sys_babelfish_configurations_view_vu_prepare_proc
+GO
+
+DROP FUNCTION sys_babelfish_configurations_view_vu_prepare_func
+GO
