@@ -30,9 +30,14 @@ datetime
 ~~END~~
 
 
+SELECT * FROM babel_2812_vu_v1
+GO
+~~START~~
+int
+-9
+~~END~~
 
--- SELECT * FROM babel_2812_vu_v1
--- GO
+
 SELECT * FROM babel_2812_vu_v2
 GO
 ~~START~~

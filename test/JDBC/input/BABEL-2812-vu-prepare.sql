@@ -19,9 +19,9 @@ SELECT DATEADD(day ,DATEDIFF(day, 0, @dt2) ,@dt1) as NextTime;
 GO
 
 -- test newly defined function
--- CREATE VIEW babel_2812_vu_v1 AS
--- SELECT datediff_internal_date('day', CAST('20201010' AS DATE), CAST('20201001' AS DATE))
--- GO
+CREATE VIEW babel_2812_vu_v1 AS
+SELECT datediff_internal_date('day', CAST('20201010' AS DATE), CAST('20201001' AS DATE))
+GO
 
 -- DATETIME + DATETIME, DATETIME - DATETIME
 CREATE VIEW babel_2812_vu_v2 AS
