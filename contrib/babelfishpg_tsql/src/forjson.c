@@ -17,7 +17,7 @@
 #include "utils/json.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
-								bool without_array_wrapper,bool root_name_present, const char *root_name);
+								bool without_array_wrapper, const char *root_name);
 static void SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_value);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
@@ -26,15 +26,17 @@ PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
 Datum 
 tsql_query_to_json_text(PG_FUNCTION_ARGS)
 {
+	for (int i=0; i< PG_NARGS()-1; i++)
+		if PG_ARGISNULL(i) 
+			PG_RETURN_NULL();
 	char *query = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int mode = PG_GETARG_INT32(1);
 	bool include_null_value = PG_GETARG_BOOL(2);
 	bool without_array_wrapper = PG_GETARG_BOOL(3);
-	bool root_name_present = PG_GETARG_BOOL(4);
-	char *root_name = PG_ARGISNULL(5) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(5));
+	char *root_name = PG_ARGISNULL(4) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(4));
 
 	StringInfo result = tsql_query_to_json_internal(query, mode, include_null_value,
-											without_array_wrapper, root_name_present, root_name);
+											without_array_wrapper, root_name);
 	
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
@@ -93,7 +95,7 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
  */
 static StringInfo
 tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
-				bool without_array_wrapper, bool root_name_present, const char *root_name)
+				bool without_array_wrapper, const char *root_name)
 {
 	StringInfo	result;
 	uint64		i;
@@ -110,7 +112,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 				 errmsg("invalid query")));
 
 	/* If (root_name_present) is TRUE then WITHOUT_ARRAY_WRAPPER will be FALSE */
-	if(root_name_present)
+	if(root_name)
 		appendStringInfo(result, "{\"%s\":[",root_name);
 	else if (!without_array_wrapper)
 		appendStringInfoChar(result,'[');
@@ -137,7 +139,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 	SPI_finish();
 
 
-	if(root_name_present)
+	if(root_name)
 		appendStringInfoString(result, "]}");
 	else if (!without_array_wrapper)
 		appendStringInfoChar(result,']');

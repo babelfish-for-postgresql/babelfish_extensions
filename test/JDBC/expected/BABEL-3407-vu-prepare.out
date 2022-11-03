@@ -208,7 +208,7 @@ WITH babel_3407_with2(avg_age) AS (
     FROM babel_3407_table2
 )
 SELECT Id, Age, Country 
-FROM babel_3407_table2, babel_3407_with1
+FROM babel_3407_table2, babel_3407_with2
 WHERE Age >= babel_3407_with2.avg_age
 ORDER BY Country
 FOR JSON PATH;
@@ -217,5 +217,5 @@ GO
 
 -- Explicit call to the function
 CREATE VIEW explicit_call_view AS
-SELECT tsql_query_to_json_text('SELECT 2+2 AS TEST', 1, FALSE,FALSE,FALSE,'');
+SELECT tsql_query_to_json_text('SELECT 2+2 AS TEST', 1, FALSE,FALSE,NULL);
 GO

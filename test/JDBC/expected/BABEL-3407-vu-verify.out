@@ -182,9 +182,10 @@ nvarchar
 
 SELECT * FROM babel_3407_view17
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_3407_with1" does not exist)~~
+~~START~~
+nvarchar
+[{"Id":1,"Age":25,"Country":"India"},{"Id":3,"Age":30,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"}]
+~~END~~
 
 
 -- Explicit call to the function

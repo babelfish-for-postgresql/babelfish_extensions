@@ -1396,7 +1396,6 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 	List *params = NIL;
 	bool include_null_values = false;
 	bool without_array_wrapper = false;
-	bool root_name_present = false;
 	char* root_name = NULL;
 	Node* arg1;
 
@@ -1423,13 +1422,12 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 			else if (myConst->val.type == T_String)
 			{
 				root_name = myConst->val.val.str;
-				root_name_present = true;
 			}
 		}
 	}
 
 	/* ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON */
-	if (root_name_present && without_array_wrapper)
+	if (root_name && without_array_wrapper)
 	{
 		ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
@@ -1522,12 +1520,11 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 	 * Finally make funtion call to tsql_query_to_json_text
 	 */
 	func_name= list_make2(makeString("sys"), makeString("tsql_query_to_json_text"));
-	func_args = list_make5(arg1,
+	func_args = list_make4(arg1,
 						   makeIntConst(forclause->mode, -1),
 						   makeBoolAConst(include_null_values, -1),
-						   makeBoolAConst(without_array_wrapper, -1),
-						   makeBoolAConst(root_name_present, -1));
-	func_args = lappend(func_args, root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
+						   makeBoolAConst(without_array_wrapper, -1));
+	func_args = lappend(func_args, root_name ? makeStringConst(root_name, -1) : makeNullAConst(-1));
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	rt->name = NULL;
