@@ -1966,6 +1966,7 @@ EXEC sp_babelfish_configure;
 GO
 ~~START~~
 text#!#text#!#text
+babelfishpg_tsql.enable_pg_hint#!#off#!#Loads and enables pg_hint_plan library
 babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
@@ -1996,6 +1997,14 @@ babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for s
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_table_hints#!#ignore#!#escape hatch for table hints
 babelfishpg_tsql.escape_hatch_unique_constraint#!#ignore#!#escape hatch for unique constraint
+babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
+babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
+babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
+babelfishpg_tsql.explain_settings#!#off#!#Include information on configuration parameters
+babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., totaled timing information) after the query plan
+babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
+babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
+babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 ~~END~~
 
 
@@ -2022,6 +2031,7 @@ EXEC sp_babelfish_configure '%';
 GO
 ~~START~~
 text#!#text#!#text
+babelfishpg_tsql.enable_pg_hint#!#off#!#Loads and enables pg_hint_plan library
 babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
@@ -2052,6 +2062,14 @@ babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for s
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_table_hints#!#ignore#!#escape hatch for table hints
 babelfishpg_tsql.escape_hatch_unique_constraint#!#ignore#!#escape hatch for unique constraint
+babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
+babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
+babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
+babelfishpg_tsql.explain_settings#!#off#!#Include information on configuration parameters
+babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., totaled timing information) after the query plan
+babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
+babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
+babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 ~~END~~
 
 
@@ -2059,6 +2077,7 @@ EXEC sp_babelfish_configure 'babelfishpg_tsql.%';
 GO
 ~~START~~
 text#!#text#!#text
+babelfishpg_tsql.enable_pg_hint#!#off#!#Loads and enables pg_hint_plan library
 babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
@@ -2089,6 +2108,14 @@ babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for s
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_table_hints#!#ignore#!#escape hatch for table hints
 babelfishpg_tsql.escape_hatch_unique_constraint#!#ignore#!#escape hatch for unique constraint
+babelfishpg_tsql.explain_buffers#!#off#!#Include information on buffer usage
+babelfishpg_tsql.explain_costs#!#on#!#Include information on estimated startup and total cost
+babelfishpg_tsql.explain_format#!#text#!#Specify the output format, which can be TEXT, XML, JSON, or YAML
+babelfishpg_tsql.explain_settings#!#off#!#Include information on configuration parameters
+babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., totaled timing information) after the query plan
+babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
+babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
+babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
 ~~END~~
 
 
