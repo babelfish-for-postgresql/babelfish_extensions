@@ -1172,6 +1172,13 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
+/*
+    This function is needed when input date is datetimeoffset type. When running the following query in postgres using tsql dialect, it faied.
+        select dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset);
+    We tried to merge this function with sys.dateadd_internal by using '+' when adding interval to datetimeoffset, 
+    but the error shows : operator does not exist: sys.datetimeoffset + interval. As the result, we should not use '+' directly
+    but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
+*/
 CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
 BEGIN
 	CASE datepart
@@ -1197,11 +1204,11 @@ BEGIN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
 	WHEN 'millisecond' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
-    WHEN 'microsecond' THEN
-        RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+	WHEN 'microsecond' THEN
+        RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.000001);
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
-		RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
 	ELSE
 		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
 	END CASE;
