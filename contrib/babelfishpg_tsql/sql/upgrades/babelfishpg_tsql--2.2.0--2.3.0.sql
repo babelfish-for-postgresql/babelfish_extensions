@@ -4860,7 +4860,7 @@ SELECT 1001 as type,
   NULL::image definition;
 GRANT SELECT ON sys.syscharsets TO PUBLIC;
 
-ALTER VIEW sys.computed_columns RENAME TO computed_columns_deprecated_in_2_3_0;
+-- ALTER VIEW sys.computed_columns RENAME TO computed_columns_deprecated_in_2_3_0;
 
 CREATE OR REPLACE VIEW sys.computed_columns
 AS
@@ -4908,6 +4908,15 @@ INNER JOIN pg_attribute a ON sc.out_name = a.attname COLLATE sys.database_defaul
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
+
+CALL sys.babelfish_update_collation_to_default('sys', 'computed_columns', 'name');
+CALL sys.babelfish_update_collation_to_default('sys', 'computed_columns', 'collation_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'computed_columns', 'generated_always_type_desc');
+CALL sys.babelfish_update_collation_to_default('sys', 'computed_columns', 'encryption_type_desc');
+CALL sys.babelfish_update_collation_to_default('sys', 'computed_columns', 'encryption_algorithm_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'computed_columns', 'column_encryption_key_database_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'computed_columns', 'graph_type_desc');
+CALL sys.babelfish_update_collation_to_default('sys', 'computed_columns', 'definition');
 
 ALTER VIEW sys.endpoints RENAME TO endpoints_deprecated_in_2_3_0;
 
@@ -9061,7 +9070,7 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_sessions_depre
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'index_columns_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'endpoints_deprecated_in_2_3_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'computed_columns_deprecated_in_2_3_0');
+--CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'computed_columns_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscharsets_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sql_modules_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_sql_modules_deprecated_in_2_3_0');

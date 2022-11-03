@@ -247,6 +247,7 @@ BABEL-3000
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-indexes-dep
+sys-computed_columns-dep
 sys-key_constraints-dep
 sys-schemas-dep
 sys-sp_tables_view-dep

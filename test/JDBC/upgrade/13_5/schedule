@@ -215,6 +215,7 @@ sys-foreign_keys-dep
 sys-indexes-dep
 sys-key_constraints-dep
 sys-schemas-dep
+sys-computed_columns-dep
 sys-sp_tables_view-dep
 sys-sysforeignkeys-dep
 sys-tables-dep
