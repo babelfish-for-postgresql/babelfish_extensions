@@ -2844,3 +2844,148 @@ GO
 
 ~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
 
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+GO
+
+--HIERARCHYID, GEOGRAPHY, GEOMETRY
+-- Create Type: Should throw detailed error messages
+CREATE TYPE [FolderHierarchy] AS TABLE( 
+	[FolderId] UNIQUEIDENTIFIER NULL,
+	[Name] NVARCHAR(225) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[PathLocator] HIERARCHYID NULL,
+	[ParentPathLocator] HIERARCHYID NULL,
+	[Level] INT NULL
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+
+CREATE TYPE [FolderGeography] AS TABLE( 
+	[FolderGeography_ID] UNIQUEIDENTIFIER NULL,
+	[FolderGeography_X] GEOGRAPHY NULL,
+	[FolderGeography_Y] GEOGRAPHY NULL
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+
+CREATE TYPE [FolderGeometry] AS TABLE( 
+	[FolderGeometry_ID] UNIQUEIDENTIFIER NULL,
+	[FolderGeometry_Geometry] Geometry NULL
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+
+-- Create Function: Should throw detailed error messages
+CREATE FUNCTION [func_hierarchyid]() RETURNS HIERARCHYID AS
+BEGIN
+RETURN NULL;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION [func_geography](@X float,@Y float) RETURNS GEOGRAPHY AS 
+BEGIN 
+IF (@X IS NULL OR @Y IS NULL OR (@X = 0 and @Y = 0)) RETURN NULL;
+IF (@X < -90) BEGIN SET @X=-90; END
+IF (@X > 90) BEGIN SET @X=90; END
+IF (@Y < -15069) BEGIN SET @Y=-15069; END
+IF (@Y > 15069) BEGIN SET @Y=15069; END
+RETURN GEOGRAPHY::Point(@X,@Y,4326);
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION [func_geometry]() RETURNS GEOMETRY AS
+BEGIN
+RETURN NULL;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+
+-- Variable Declaration: Should throw detailed error messages
+DECLARE @var_rowversion ROWVERSION;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ROWVERSION datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
+DECLARE @var_timestamp TIMESTAMP;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
+DECLARE @var_hierarchyid HIERARCHYID;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+DECLARE @var_geography GEOGRAPHY;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+DECLARE @var_geometry GEOMETRY;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+
+-- Create Procedure: Should throw detailed error messages
+CREATE PROCEDURE proc_hierarchyid (@var_hierarchyid2 HIERARCHYID) AS BEGIN PRINT CAST(@var_hierarchyid2 AS VARCHAR(10)) END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+DROP PROCEDURE proc_hierarchyid;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "proc_hierarchyid")~~
+
+CREATE PROCEDURE proc_geography (@var_geography2 GEOGRAPHY) AS BEGIN PRINT CAST(@var_geography2 AS VARCHAR(10)) END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+DROP PROCEDURE proc_geography;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "proc_geography")~~
+
+CREATE PROCEDURE proc_geometry (@var_geometry2 GEOMETRY) AS BEGIN PRINT CAST(@var_geometry2 AS VARCHAR(10)) END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+DROP PROCEDURE proc_geometry;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "proc_geometry")~~
+
