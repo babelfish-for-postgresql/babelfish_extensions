@@ -255,7 +255,7 @@ typedef struct BulkLoadColMetaData
 typedef struct BulkLoadRowData
 {
 	/* Array of length col count, holds value of each column in that row. */
-	StringInfo columnValues;
+	Datum *columnValues;
 
 	bool *isNull;
 } BulkLoadRowData;
