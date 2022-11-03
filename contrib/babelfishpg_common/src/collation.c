@@ -543,38 +543,21 @@ find_any_collation(const char *collation_name, bool check_for_server_collation_n
 }
 
 /*
- * translate_collation - Returns index of babelfish collation corresponding to supplied collation_name
+ * translate_collation_utility - utility to find index of babelfish collation corresponding to supplied collation_name
  * by looking into coll_translations array or returns NOT_FOUND.
  */
-int
-translate_collation(const char *collname, bool check_for_server_collation_name_guc)
+static int
+translate_collation_utility(const char *collname)
 {
 	int first = 0;
 	int last = TOTAL_COLL_TRANSLATION_COUNT - 1;
 	int middle = 25; /* optimization: usually it's the default collation (first + last) / 2; */
-	int compare;
-	char *collation_name = NULL;
 	int idx = NOT_FOUND;
-
-	/* Special case handling for database_default and catalog_default collations which should be translated to server_collation_name. */
-	if (!check_for_server_collation_name_guc && (pg_strcasecmp(collname, DATABASE_DEFAULT) == 0 || pg_strcasecmp(collname, CATALOG_DEFAULT) == 0))
-	{
-		init_server_collation_name();
-		if (server_collation_name)
-			collation_name = pstrdup(server_collation_name);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("invalid setting detected for babelfishpg_tsql.server_collation_name")));
-	}
-	else
-	{
-		collation_name = pstrdup(collname);
-	}
+	int compare;
 
 	while (first <= last)
 	{
-		compare = pg_strcasecmp(coll_translations[middle].from_collname, collation_name);
+		compare = pg_strcasecmp(coll_translations[middle].from_collname, collname);
 		if (compare < 0)
 			first = middle + 1;
 		else if (compare == 0)
@@ -587,10 +570,38 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 
 		middle = (first + last) / 2;
 	}
-
-	if (collation_name)
-		pfree(collation_name);
-
+	return idx;
+}
+/*
+ * translate_collation - Returns index of babelfish collation corresponding to supplied collation_name
+ * by looking into coll_translations array or returns NOT_FOUND.
+ * Here, we handle DATABASE_DEFAULT and CATALOG_DEFAULT somewhat differently. If we encounter such collation
+ * then we have to return index of server_collation_name setting either by translating server_collation_name to
+ * actual collation or by looking into coll_infos table through find_collation().
+ */
+int
+translate_collation(const char *collname, bool check_for_server_collation_name_guc)
+{
+	int idx = NOT_FOUND;
+	/* Special case handling for database_default and catalog_default collations which should be translated to server_collation_name. */
+	if (!check_for_server_collation_name_guc && (pg_strcasecmp(collname, DATABASE_DEFAULT) == 0 || pg_strcasecmp(collname, CATALOG_DEFAULT) == 0))
+	{
+		init_server_collation_name();
+		if (server_collation_name)
+		{
+			idx = translate_collation_utility(server_collation_name);
+			if (idx == NOT_FOUND)
+				idx = find_collation(server_collation_name);
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("invalid setting detected for babelfishpg_tsql.server_collation_name")));
+	}
+	else
+	{
+		idx = translate_collation_utility(collname);
+	}
 	return idx;
 }
 
