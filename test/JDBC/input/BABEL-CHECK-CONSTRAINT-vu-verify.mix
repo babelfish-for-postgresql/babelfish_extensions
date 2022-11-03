@@ -23,7 +23,3 @@ GO
 
 INSERT INTO tbl_creation_should_succeed VALUES ('11dsjkdnb');
 GO
-
-SELECT conbin FROM pg_constraint WHERE conrelid = 
-    (SELECT oid FROM pg_class WHERE relname = 'tbl_creation_should_succeed');
-GO
