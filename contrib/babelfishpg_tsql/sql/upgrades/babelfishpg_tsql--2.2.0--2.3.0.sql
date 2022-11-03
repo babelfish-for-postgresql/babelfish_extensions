@@ -577,7 +577,7 @@ BEGIN
 	WHEN 'millisecond' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
 	WHEN 'microsecond' THEN
-        RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.000001);
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
