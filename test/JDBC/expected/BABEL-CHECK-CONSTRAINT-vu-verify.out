@@ -44,6 +44,6 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: new row for relation "tbl_creation_should_succeed" violates check constraint "tbl1_a_check"
-  Detail: Failing row contains (11dsjkdnb           ).
+  Detail: Failing row contains (11dsjkdnb).
     Server SQLState: 23514)~~
 
