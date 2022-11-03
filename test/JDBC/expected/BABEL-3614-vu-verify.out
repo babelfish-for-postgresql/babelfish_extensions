@@ -450,3 +450,66 @@ datetime2
 
 DROP FUNCTION BABEL_3614_vu_prepare_f15()
 GO
+
+SELECT * FROM BABEL_3614_vu_prepare_v16
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to datetime2.)~~
+
+DROP VIEW BABEL_3614_vu_prepare_v16
+GO
+
+EXEC BABEL_3614_vu_prepare_p16
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to datetime2.)~~
+
+DROP PROCEDURE BABEL_3614_vu_prepare_p16
+GO
+
+SELECT BABEL_3614_vu_prepare_f16()
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to datetime2.)~~
+
+DROP FUNCTION BABEL_3614_vu_prepare_f16()
+GO
+
+SELECT * FROM BABEL_3614_vu_prepare_v17
+GO
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000000
+~~END~~
+
+DROP VIEW BABEL_3614_vu_prepare_v17
+GO
+
+EXEC BABEL_3614_vu_prepare_p17
+GO
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3614_vu_prepare_p17
+GO
+
+SELECT BABEL_3614_vu_prepare_f17()
+GO
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3614_vu_prepare_f17()
+GO
