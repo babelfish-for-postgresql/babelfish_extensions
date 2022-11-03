@@ -2202,6 +2202,7 @@ create_guest_role_for_db(char *dbname)
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
+	pfree(db_owner_role);
 
 	if (list_length(logins) > 0)
 	{
@@ -2279,7 +2280,7 @@ get_db_owner_role_name(char *dbname)
 	HeapTuple	tuple_user_ext;
 	ScanKeyData		key[2];
 	TableScanDesc		scan;
-	char		*db_owner_role;
+	char		*db_owner_role = NULL;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
@@ -2298,7 +2299,7 @@ get_db_owner_role_name(char *dbname)
 	if (HeapTupleIsValid(tuple_user_ext))
 		{
 			Form_authid_user_ext userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-			db_owner_role = NameStr(userform->rolname);
+			db_owner_role = pstrdup(NameStr(userform->rolname));
 		}
 
 	table_endscan(scan);

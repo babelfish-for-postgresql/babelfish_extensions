@@ -3042,13 +3042,15 @@ ALTER TABLE sys.babelfish_authid_user_ext add COLUMN IF NOT EXISTS user_can_conn
 
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
+-- This is a temporary procedure which is called during upgrade to create guest users
+-- for the user created databases if it doesn't have guest user already.
 CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
 CALL sys.babelfish_update_user_catalog_for_guest();
 
--- Drop this procedure after it is executed once during upgrade.
+-- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
 
 ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_deprecated_in_2_3_0;
