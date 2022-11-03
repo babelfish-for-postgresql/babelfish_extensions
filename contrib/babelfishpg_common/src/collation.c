@@ -589,7 +589,7 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 		init_server_collation_name();
 		if (server_collation_name)
 		{
-			idx = translate_collation_utility(collname);
+			idx = translate_collation_utility(server_collation_name);
 			if (idx == NOT_FOUND)
 				idx = find_collation(server_collation_name);
 		}
