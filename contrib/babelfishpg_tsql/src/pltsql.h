@@ -1861,9 +1861,9 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 								 PLtsql_datum *datum,
 								 Oid *typeId, int32 *typMod, Oid *collation);
 
-extern bool get_insert_bulk_keep_nulls();
-extern int get_insert_bulk_rows_per_batch();
-extern int get_insert_bulk_kilobytes_per_batch();
+extern bool get_insert_bulk_keep_nulls(void);
+extern int get_insert_bulk_rows_per_batch(void);
+extern int get_insert_bulk_kilobytes_per_batch(void);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -1963,7 +1963,7 @@ extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
-extern Oid get_function_owner_for_top_estate();
+extern Oid get_function_owner_for_top_estate(void);
 
 typedef struct
 {

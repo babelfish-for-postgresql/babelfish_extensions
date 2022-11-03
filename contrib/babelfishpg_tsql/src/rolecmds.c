@@ -37,6 +37,7 @@
 #include "parser/parser.h"
 #include "parser/scansup.h"
 #include "storage/lmgr.h"
+#include "storage/procarray.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/catcache.h"
@@ -67,6 +68,7 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										void *arg);
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
+List * gen_droprole_subcmds(const char *user);
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -484,10 +486,11 @@ grant_guests_to_login(const char *login)
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
 		char *guest_name = NULL;
-		if (guest_role_exists_for_db(db_name))
-			guest_name = get_guest_role_name(db_name);
-
 		AccessPriv *tmp = makeNode(AccessPriv);
+		
+		if (guest_role_exists_for_db(db_name))
+			guest_name = (char *) get_guest_role_name(db_name);
+
 		if (guest_name)
 		{
 			tmp->priv_name = pstrdup(guest_name);
@@ -997,6 +1000,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		HeapTuple		tuple_user_ext;
 		ScanKeyData		key[2];
 		TableScanDesc	scan;
+		const char *cur_db_owner;
 
 		if (login == NULL || !is_login_name(login->rolename))
 			ereport(ERROR,
@@ -1031,7 +1035,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 		login_name_str = login->rolename;
-		char *cur_db_owner = get_owner_of_db(get_cur_db_name());
+		cur_db_owner = get_owner_of_db((const char *)get_cur_db_name());
 
 		if (strcmp(login_name_str, cur_db_owner) == 0)
 			ereport(ERROR,
@@ -1336,7 +1340,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	}
 }
 
-static List *
+List *
 gen_droprole_subcmds(const char *user)
 {
 	StringInfoData query;

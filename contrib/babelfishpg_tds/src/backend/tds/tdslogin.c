@@ -1202,6 +1202,8 @@ ProcessLoginInternal(Port *port)
 			break;
 		case CAC_OK:
 			break;
+		default:
+			break;
 	}
 
 	TdsErrorContext->err_text = "Process Login Flags";
@@ -1924,7 +1926,6 @@ void
 TdsSendLoginAck(Port *port)
 {
 	uint16_t	temp16;
-	char		mbuf[1024];
 	char	   *dbname = NULL;
 	int			prognameLen = pg_mbstrlen(default_server_name);
 	LoginRequest request;

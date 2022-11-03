@@ -616,7 +616,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				char	*schema = rv->schemaname;	/* this is physical name */	
 				char	*obj = rv->relname;
 				Oid		func_oid;
-				Oid     argoids[FUNC_MAX_ARGS];
 
 				/* table, sequence, view, materialized view */
 				/* don't distinguish table sequence here */
@@ -2133,7 +2132,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				Node 			*tbltypStmt = NULL;
 				Node 			*trigStmt = NULL;
 				ObjectAddress 	tbltyp;
-				ObjectAddress 	trig;
 				ObjectAddress 	address;
 
 				/* All event trigger calls are done only when isCompleteQuery is true */
@@ -2227,7 +2225,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if(trigStmt)
 					{
-						trig = CreateTrigger((CreateTrigStmt *) trigStmt,
+						(void) CreateTrigger((CreateTrigStmt *) trigStmt,
 									  pstate->p_sourcetext, InvalidOid, InvalidOid,
 									  InvalidOid, InvalidOid, address.objectId,
 									  InvalidOid, NULL, false, false);
@@ -3068,6 +3066,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					return;
 				}
 			}
+			break;
 		case T_RenameStmt:
 			{
 				if (prev_ProcessUtility)

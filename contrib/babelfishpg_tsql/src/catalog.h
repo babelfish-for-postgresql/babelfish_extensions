@@ -139,7 +139,7 @@ extern char *get_authid_user_ext_schema_name(const char *db_name, const char *us
 extern List *get_authid_user_ext_db_users(const char *db_name);
 extern char *get_user_for_database(const char *db_name);
 extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
-extern bool guest_role_exists_for_db(char *dbname);
+extern bool guest_role_exists_for_db(const char *dbname);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext

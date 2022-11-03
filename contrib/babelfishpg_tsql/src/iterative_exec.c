@@ -1547,7 +1547,7 @@ void process_explain(PLtsql_execstate *estate)
 		if (einfo->initial_database)
 		{
 			PLtsql_stmt_usedb *initial_db = palloc0(sizeof(PLtsql_stmt_usedb));
-			initial_db->db_name = einfo->initial_database;
+			initial_db->db_name = (char *) einfo->initial_database;
 			exec_stmt_usedb_explain(estate, initial_db, true);
 		}
 	}

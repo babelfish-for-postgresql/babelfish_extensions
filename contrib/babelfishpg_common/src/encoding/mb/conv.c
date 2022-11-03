@@ -387,7 +387,6 @@ TsqlLocalToUtf(const unsigned char *iso, int len,
 	uint32		iiso;
 	int			l;
 	const pg_local_to_utf_combined *cp;
-	const unsigned char *start = iso;
 	int		encodedByteLen = 0;
 
 	if (!PG_VALID_ENCODING(encoding))

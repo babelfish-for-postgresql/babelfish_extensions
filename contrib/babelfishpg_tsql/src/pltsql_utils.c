@@ -835,7 +835,6 @@ get_pltsql_function_signature_internal(const char *funcname,
 							  int nargs, const Oid *argtypes)
 {
 	StringInfoData argbuf;
-	ListCell   *lc;
 	int			i;
 	const char *prev_quote_ident = GetConfigOption("quote_all_identifiers", true, true);
 
@@ -883,7 +882,7 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
 
-	func_signature = get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+	func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
 															form_proctup->pronargs,
 															form_proctup->proargtypes.values);
 

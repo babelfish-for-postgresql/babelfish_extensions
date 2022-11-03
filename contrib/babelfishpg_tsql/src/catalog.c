@@ -941,7 +941,7 @@ get_authid_user_ext_db_users(const char *db_name)
 char *
 get_user_for_database(const char *db_name)
 {
-	const char		*user = NULL;
+	char		*user = NULL;
 	const char		*login;
 	bool			login_is_db_owner;
 
@@ -955,12 +955,12 @@ get_user_for_database(const char *db_name)
 
 		datdba = get_role_oid("sysadmin", false);
 		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
-			user = get_dbo_role_name(db_name);
+			user = (char *) get_dbo_role_name(db_name);
 		else
 		{
 			/* Get the guest role name only if the guest is enabled on the current db.*/
-			if (guest_has_dbaccess(db_name))
-				user = get_guest_role_name(db_name);
+			if (guest_has_dbaccess((char *) db_name))
+				user = (char *) get_guest_role_name(db_name);
 			else
 				user = NULL;
 		}
@@ -1065,7 +1065,7 @@ check_is_tsql_view(Oid relid)
 		pfree(view_name);
 		pfree(schema_name);
 		if (logical_schema_name)
-			pfree(logical_schema_name);
+			pfree((char *) logical_schema_name);
 		return false;
 	}
 	/* Fetch the relation */
@@ -1081,7 +1081,7 @@ check_is_tsql_view(Oid relid)
 	table_close(bbf_view_def_rel, AccessShareLock);
 	pfree(view_name);
 	pfree(schema_name);
-	pfree(logical_schema_name);
+	pfree((char *) logical_schema_name);
 	return is_tsql_view;
 }
 
@@ -1171,7 +1171,7 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 		return NULL;
 	}
 
-	func_signature = get_pltsql_function_signature_internal(NameStr(form->proname),
+	func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form->proname),
 															form->pronargs,
 															form->proargtypes.values);
 
@@ -1304,6 +1304,7 @@ static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
 /* Condition function declaration */
 static bool is_multidb(void);
+static bool is_singledb(void);
 static bool is_singledb_exists_userdb(void);
 /* Rule validation function declaration */
 static bool check_exist(void *arg, HeapTuple tuple);
@@ -1315,7 +1316,7 @@ static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_o
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
-static void create_guest_role_for_db(char *dbname);
+static void create_guest_role_for_db(const char *dbname);
 
 /*****************************************
  * 			Catalog Extra Info
@@ -1396,7 +1397,7 @@ Rule must_match_rules_sysdb[] =
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_multidb, check_exist, NULL},
 	{"In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
-         "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, !is_multidb, check_exist, NULL}
+         "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_singledb, check_exist, NULL}
 };
 
 /* babelfish_namespace_ext */
@@ -1841,6 +1842,12 @@ is_multidb(void)
 	return (MULTI_DB == get_migration_mode());
 }
 
+static bool
+is_singledb(void)
+{
+	return !is_multidb();
+}
+
 /*****************************************
  * 			Rule validation funcs
  *****************************************/
@@ -2143,7 +2150,7 @@ Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 }
 
 bool
-guest_role_exists_for_db(char *dbname)
+guest_role_exists_for_db(const char *dbname)
 {
 	const char 	*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
@@ -2178,7 +2185,7 @@ guest_role_exists_for_db(char *dbname)
 }
 
 static void
-create_guest_role_for_db(char *dbname)
+create_guest_role_for_db(const char *dbname)
 {
 	const char		*guest = get_guest_role_name(dbname);
 	const char		*db_owner_role = get_db_owner_name(dbname);

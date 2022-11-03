@@ -61,6 +61,10 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
+List *handle_bool_expr_rec(BoolExpr *expr, List *list);
+List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
+List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets);
+List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets);
 
 char *sp_describe_first_result_set_view_name = NULL;
 
@@ -363,8 +367,6 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 
 	SPITupleTable *tuptable;
 	char *batch;
-	char *params;
-	int browseMode;
 	char *query;
 	int rc;
 	ANTLR_result result;
@@ -378,8 +380,6 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		
 		batch		= PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-		params	= PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
-		browseMode 	= PG_ARGISNULL(2) ? 0 : PG_GETARG_INT32(0);
 		sp_describe_first_result_set_view_name = psprintf("sp_describe_first_result_set_view_%d", rand());
 
 		get_call_result_type(fcinfo, NULL, &tupdesc);
@@ -740,7 +740,6 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 		}
 		ColumnRef *ref = where_clause->rexpr;
 		Value *field = linitial(ref->fields);
-		char *name = field->val.str;
 		ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
 		res->type = ref->type;
 		res->name = field->val.str;
@@ -771,7 +770,6 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 					}
 					ColumnRef *ref = (ColumnRef *) xpr->rexpr;
 					Value *field = linitial(ref->fields);
-					char *name = field->val.str;
 					ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
 					res->type = ref->type;
 					res->name = field->val.str;

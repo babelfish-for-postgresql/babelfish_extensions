@@ -693,7 +693,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			/* select max(a) from t; max(a) is an Aggref */
 			Aggref *aggref = (Aggref *) expr;
 			TargetEntry *te;
-			const char *aggFuncName;
+			char *aggFuncName;
 			int32 typmod;
 			uint8_t precision, scale;
 
@@ -1772,7 +1772,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			{
 				Relation		rel;
 				TdsRelationMetaDataInfo	relMetaDataInfo;
-				const char		*physical_schema_name;
+				char		*physical_schema_name;
 
 				relMetaDataInfo = (TdsRelationMetaDataInfo) palloc(sizeof(TdsRelationMetaDataInfoData));
 				tableNum++;
@@ -1803,7 +1803,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				 */
 				if (pltsql_plugin_handler_ptr && 
 					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
-					relMetaDataInfo->partName[1] = pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
+					relMetaDataInfo->partName[1] = (char *) pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
 
 				/* If we could not find logical schema name then send physical schema name only assuming its shared schema. */
 				if (relMetaDataInfo->partName[1] == NULL)
