@@ -42,6 +42,7 @@ BABEL-3121
 sys-events
 sys-suser_sid
 sys-trigger_events
+BABEL-328
 BABEL-3166
 BABEL-3192
 BABEL-3221
@@ -320,4 +321,5 @@ BABEL-3268
 BABEL-3513
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
+BABEL-2795
 babelfish_integrity_checker

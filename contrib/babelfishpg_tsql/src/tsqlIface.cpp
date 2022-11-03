@@ -986,39 +986,6 @@ public:
 		}
 
 	}
-
-    void exitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override
-    {
-        /* rewrite CROSS/OUTER APPLY to CROSS/LEFT JOIN LATERAL */
-        if (ctx->APPLY())
-        {
-            /* In PG, LATERAL joins can only be applied to table_refs and not bare table calls, so check for that case.
-             * Luckily, in PG all LATERAL joins (cross and left) require that the joined table_ref has an alias, so just
-             * check for any alias clause to determine whether to use a lateral join or just regular join. The only other
-             * caveat is with with function calls (which don't need an alias in either SQL Server or PG), so also check for that case.
-             */
-            bool lateral = (ctx->table_source_item(1) && (ctx->table_source_item(1)->function_call() || ctx->table_source_item(1)->as_table_alias(0)));
-            
-            if (ctx->CROSS())
-            {
-                rewritten_query_fragment.emplace(std::make_pair(ctx->APPLY()->getSymbol()->getStartIndex(),
-                                                                std::make_pair(ctx->APPLY()->getText(), lateral ? "JOIN LATERAL" : "JOIN")));
-            }
-            else if (ctx->OUTER())
-            {
-                /* replace OUTER with LEFT */
-                rewritten_query_fragment.emplace(std::make_pair(ctx->OUTER()->getSymbol()->getStartIndex(),
-                                                                std::make_pair(ctx->OUTER()->getText(), "LEFT")));
-
-                rewritten_query_fragment.emplace(std::make_pair(ctx->APPLY()->getSymbol()->getStartIndex(),
-                                                                    std::make_pair(ctx->APPLY()->getText(), lateral ? "JOIN LATERAL" : "JOIN")));
-                
-                /* Need to add an always true join qualifier in order to satisfy PG grammar for left joins */
-                rewritten_query_fragment.emplace(std::make_pair(ctx->getStop()->getStopIndex() + 1,
-                                                                std::make_pair("", " ON TRUE ")));
-            }
-        }
-    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4387,7 +4354,7 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	std::string table_name;
 	std::string schema_name;
 	std::string db_name;
-	std::stringstream column_refs;
+	stmt->column_refs = NIL;
 
 	if (!bulk_ctx)
 	{
@@ -4426,15 +4393,13 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 		/* create a list of columns to insert into */
 		if (!column_list.empty())
 		{
-			for (size_t i = 0; i < column_list.size() - 1; i++)
+			for (size_t i = 0; i < column_list.size(); i++)
 			{
-				if (column_list[i]->simple_column_name())
-					column_refs << ::stripQuoteFromId(column_list[i]->simple_column_name()->id()) << ", ";
+				std::string column_refs;
+				column_refs = ::stripQuoteFromId(column_list[i]->simple_column_name()->id());
+				if (!column_refs.empty())
+					stmt->column_refs = lappend(stmt->column_refs , pstrdup(downcase_truncate_identifier(column_refs.c_str(), column_refs.length(), true)));
 			}
-			if (column_list[column_list.size() - 1]->simple_column_name())
-				column_refs << ::stripQuoteFromId(column_list[column_list.size() - 1]->simple_column_name()->id());
-
-			stmt->column_refs = pstrdup(column_refs.str().c_str());
 		}
 
 		if (!option_list.empty())

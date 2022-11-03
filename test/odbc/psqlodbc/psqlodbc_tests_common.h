@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 #include <sqlext.h>
 #include <string>
-#include <time.h>
 #include <vector>
 
 #include "../src/drivers.h"
@@ -21,21 +20,13 @@ const int BUFFER_SIZE = 16384;
 const int INT_BYTES_EXPECTED = 4;
 
 /**
- * Convert integer string into hex string with proper padding
- *
- * @param inserted_int string of an integer to be converted to hex
- * @param table_size size of the 
- * @return string of the integer in hexadecimal values
- */ 
-std::string GetHexRepresentation(std::string inserted_int, size_t table_size = -1);
-
-/**
  * Duplicates the values in the input vector
  *
  * @param input Vector of data to be duplicated
  * @return vector which has the elements duplicated and appended
  */ 
-vector<string> duplicateElements(vector<string> input);
+template <typename T>
+vector<T> duplicateElements(vector<T> input);
 
 /**
  * Create a string that can be used in an insert statement. Assumes there is a column associated with
@@ -391,6 +382,47 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
 void testComparisonFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<string> &expectedResults);
 
 /**
+ *Verify the expected results for various arithmetic operators (+, -, *, etc.).
+ * Two different columns in the table are used by these arithmetic operators. E.g. COL1 + COL2
+ * The data on each row in the table will have multiple arithmetic operators performed on them. 
+ * The expected results will be a 2D array.
+ * e.g.
+ *  {
+ *    {ROW1_COL1_DATA + ROW1_COL2_DATA, ROW1_COL1_DATA - ROW1_COL2_DATA},
+ *    {ROW2_COL1_DATA + ROW2_COL2_DATA, ROW2_COL1_DATA - ROW2_COL2_DATA}
+ *  }
+ * 
+ * This non-templated version will expect the type to be SQL_C_CHAR and that the expected values
+ * are strings.
+ * 
+ * @param serverType The ODBC driver type to create the connection against. 
+ * @param tableName The name of the table to test arithmetic operations with. Can include the database and/or schema name. e.g. "master_dbo.SampleTable"
+ * @param orderByColumnName The column to order by when selecting all from the object. Useful for when there is a primary key
+ *  column in the object to order by.
+ * 
+ * @param numOfData Number of rows in the table.
+ * @param operationsQuery Vector containing the operators to test.
+ * @param expectedResults 2D vector containing the expected results for each operation.
+ * 
+ */
+void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData,
+  const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults);
+  
+/**
+ * Verify the expected results for various string functions (LOWER, UPPER, TRIM, etc.).
+ * 
+ * @param serverType The ODBC driver type to create the connection against. 
+ * @param tableName The name of the table to test string functions with. Can include the database and/or schema name. e.g. "master_dbo.SampleTable"
+ * @param operationsQuery Vector containing the function operators to test.
+ * @param expectedResults 2D vector containing the expected results for each string function.
+ * @param insertionSize Number of elements that was inserted into the table.
+ * @param orderByColumnName The column to order by when selecting all from the object. Useful for when there is a primary key
+ *  column in the object to order by.
+*/
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults, 
+  const int insertionSize, const string &orderByColumnName);
+
+/**
  * Verify the expected results for various comparison functions (MIN, MAX, SUM, etc.).
  * Only a single column in the table is used by these comparison functions. E.g. MIN(COL1)
  * 
@@ -435,7 +467,52 @@ template <typename T>
 void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData, int type, 
   const vector<T> &colResults, int bufferLen, const vector<string> &operationsQuery, const vector<vector<T>> &expectedResults, const vector<long> &expectedLen);
 
+/**
+ * Return a vector based on a specific column of a 2D vector
+ * 
+ * @param vec The 2D vector to copy
+ * @param col The column from the 2D vector to copy
+ * 
+ * @return vector which contains the elements of column 'col' in 'vec'
+*/
+vector<string> getVectorBasedOnColumn(const vector<vector<string>> &vec, const int &col);
+
+/**
+ * Formats a string to correspond to a numeric or decimal output
+ * 
+ * @param decimal 
+ * @param scale The scale of the 
+ * @param is_bbf True if we want it to correspond to Babelfish, false if we want the output to be formatted for postgres
+ * @return string which is the formatted number
+*/
+string formatNumericWithScale(string decimal, const int &scale, const bool &is_bbf);
+
+/**
+ * Formats a vector of strings to correspond to a numeric or decimal output 
+ * 
+ * @param vec Vector that would be changed by reference
+ * @param scale Scale of the numeric or decimal column
+ * @param is_bbf True if the output is to correspond with Babelfish's result set,
+ *    False for Postgres
+*/
+void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is_bbf);
+
+/**
+ * Checks to see if the actual and expected values of two doubles
+ * are equal or not (based on machine epsilon differences).
+ * 
+ * @param actual The actual value from the test
+ * @param expect The expected value 
+*/
+void compareDoubleEquality(double actual, double expected);
+
 /** Implementation of templated functions below **/
+template <typename T>
+vector<T> duplicateElements(vector<T> input) {
+  std::vector<T> duplicated(input);
+  duplicated.insert(duplicated.end(), input.begin(), input.end());
+  return duplicated;
+}
 
 template <typename T>
 void verifyValuesInObject(ServerType serverType, string objectName, string orderByColumnName, int type, T data, 
@@ -466,7 +543,13 @@ void verifyValuesInObject(ServerType serverType, string objectName, string order
     EXPECT_EQ(pk, i);
     if (insertedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedLen[i]);
-      EXPECT_EQ(data, expectedInsertedValues[i]);
+
+      if (type == SQL_C_DOUBLE) {
+        compareDoubleEquality(data, expectedInsertedValues[i]);
+      }
+      else {
+        EXPECT_EQ(data, expectedInsertedValues[i]);
+      }
     }
     else {
       EXPECT_EQ(data_len, SQL_NULL_DATA);
@@ -539,7 +622,13 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
     
     if (updatedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedUpdatedLen[i]);
-      EXPECT_EQ(data, expectedUpdatedValues[i]);
+
+      if (type == SQL_C_DOUBLE) {
+        compareDoubleEquality(data, expectedUpdatedValues[i]);
+      }
+      else {
+        EXPECT_EQ(data, expectedUpdatedValues[i]);
+      }
     }
     else {
       EXPECT_EQ(data_len, SQL_NULL_DATA);
@@ -594,8 +683,15 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedInsertedLen[i]);
-    EXPECT_EQ(data, expectedInsertedValues[i]);
+    EXPECT_EQ(data_len, expectedInsertedLen[0]);
+
+    if (type == SQL_C_DOUBLE) {
+      compareDoubleEquality(data, expectedInsertedValues[0]);
+    }
+    else {
+      EXPECT_EQ(data, expectedInsertedValues[0]);
+    }
+    EXPECT_EQ(data, expectedInsertedValues[0]);
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -633,9 +729,14 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, int
   EXPECT_EQ(rcode, SQL_SUCCESS);
   for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
     EXPECT_EQ(col_len[i], expectedLen[i]);
-    EXPECT_EQ(colResults[i], expectedResults[i]);
-  }
 
+    if (type == SQL_C_DOUBLE) {
+        compareDoubleEquality(colResults[i], expectedResults[i]);
+    }
+    else {
+      EXPECT_EQ(colResults[i], expectedResults[i]);
+    } 
+  }
   // Assert that there is no more data
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -673,7 +774,13 @@ void testArithmeticOperators(ServerType serverType, const string &tableName, con
 
     for (int j = 0; j < NUM_OF_OPERATIONS; j++) {
       EXPECT_EQ(col_len[j], expectedLen[j]);
-      EXPECT_EQ(colResults[j], expectedResults[i][j]);
+
+      if (type == SQL_C_DOUBLE) {
+        compareDoubleEquality(colResults[j], expectedResults[i][j]);
+      }
+      else {
+        EXPECT_EQ(colResults[j], expectedResults[i][j]);
+      }
     }
   }
 

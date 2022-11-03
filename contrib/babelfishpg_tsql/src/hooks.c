@@ -26,6 +26,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/planner.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -40,6 +41,7 @@
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -65,6 +67,7 @@
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
+extern bool pltsql_ansi_nulls;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
@@ -110,6 +113,7 @@ static void pltsql_drop_func_default_positions(Oid objectId);
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+extern PLtsql_execstate *get_current_tsql_estate();
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
 static void pltsql_drop_view_definition(Oid objectId);
 static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
@@ -126,6 +130,11 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
+static void pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access);
+static void pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid table_oid, Oid roleid, AclMode mask, bool *has_permission_via_hook, bool *read_write_all_data_safe);
+static void pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid, AclMode mode, bool *has_access);
+static void pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode, AclMaskHow how, bool *has_access);
+
 
 /*****************************************
  * 			Replication Hooks
@@ -139,6 +148,11 @@ static object_access_hook_type prev_object_access_hook = NULL;
 static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
 static void revoke_func_permission_from_public(Oid objectId);
 static char *gen_func_arg_list(Oid objectId);
+
+/*****************************************
+ * 			Planner Hook
+ *****************************************/
+static PlannedStmt * pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -161,10 +175,15 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
+static pg_proc_aclchk_hook_type prev_pg_proc_aclchk_hook = NULL;
+static pg_class_aclmask_hook_type prev_pg_class_aclmask_hook = NULL;
+static pg_attribute_aclchk_hook_type prev_pg_attribute_aclchk_hook = NULL;
+static pg_attribute_aclchk_all_hook_type prev_pg_attribute_aclchk_all_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
+static planner_hook_type prev_planner_hook = NULL;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -246,6 +265,17 @@ InstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
 
+	prev_pg_proc_aclchk_hook = pg_proc_aclchk_hook;
+	pg_proc_aclchk_hook = pltsql_pg_proc_aclchk;
+
+	prev_pg_class_aclmask_hook = pg_class_aclmask_hook;
+	pg_class_aclmask_hook = pltsql_pg_class_aclmask_hook;
+
+	prev_pg_attribute_aclchk_hook = pg_attribute_aclchk_hook;
+	pg_attribute_aclchk_hook = pltsql_pg_attribute_aclchk;
+	prev_pg_attribute_aclchk_all_hook = pg_attribute_aclchk_all_hook;
+	pg_attribute_aclchk_all_hook = pltsql_pg_attribute_aclchk_all;
+
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -257,6 +287,9 @@ InstallExtendedHooks(void)
 
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
+
+	prev_planner_hook = planner_hook;
+	planner_hook = pltsql_planner_hook;
 }
 
 void
@@ -290,10 +323,15 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
+	pg_proc_aclchk_hook = prev_pg_proc_aclchk_hook;
+	pg_class_aclmask_hook = prev_pg_class_aclmask_hook;
+	pg_attribute_aclchk_hook = prev_pg_attribute_aclchk_hook;
+	pg_attribute_aclchk_all_hook = prev_pg_attribute_aclchk_all_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
+	planner_hook = prev_planner_hook;
 }
 
 /*****************************************
@@ -320,6 +358,12 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
+	if (pltsql_explain_analyze)
+	{
+		PLtsql_execstate *estate = get_current_tsql_estate();
+		Assert(estate != NULL);
+		INSTR_TIME_SET_CURRENT(estate->execution_start);
+	}
 	int ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
 	if (is_explain_analyze_mode())
 	{
@@ -2061,7 +2105,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
  * Stores argument positions of default values of a PL/tsql function to bbf_function_ext catalog
  */
 void
-pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
+pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location)
 {
 	Relation	bbf_function_ext_rel;
 	TupleDesc	bbf_function_ext_rel_dsc;
@@ -2072,9 +2116,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	Form_pg_proc	form_proctup;
 	char		*physical_schemaname;
 	char		*func_signature;
+	char		*original_name = NULL;
 	List		*default_positions = NIL;
 	ListCell	*x;
 	int			idx;
+	uint64		flag_values = 0, flag_validity = 0;
 
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
@@ -2133,14 +2179,66 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
+	if (origname_location != -1 && queryString)
+	{
+		/* To get original function name, utilize location of original name and query string. */
+		char *func_name_start, *temp;
+		const char *funcname = NameStr(form_proctup->proname);
+
+		func_name_start = queryString + origname_location;
+
+		/*
+		 * Could be the case that the fully qualified name is included,
+		 * so just find the text after '.' in the identifier.
+		 * We need to be careful as there can be '.' in the function name
+		 * itself, so we will break the loop if current string matches
+		 * with actual funcname.
+		 */
+		temp = strpbrk(func_name_start, ". ");
+		while (temp && temp[0] != ' ' &&
+			strncasecmp(funcname, func_name_start, strlen(funcname)) != 0 &&
+			strncasecmp(funcname, func_name_start + 1, strlen(funcname)) != 0) /* match after skipping delimiter */
+		{
+			temp += 1;
+			func_name_start = temp;
+			temp = strpbrk(func_name_start, ". ");
+		}
+
+		original_name = extract_identifier(func_name_start);
+		if (original_name == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("can't extract original function name.")));
+	}
+
+	/*
+	 * To store certain flag, Set corresponding bit in flag_validity which
+	 * tracks currently supported flag bits and then set/unset flag_values bit
+	 * according to flag settings.
+	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
+	 * being inserted in catalog if it is used.
+	 * Currently, Only two flags are supported.
+	 */
+	flag_validity |= FLAG_IS_ANSI_NULLS_ON;
+	if (!Transform_null_equals)
+		flag_values |= FLAG_IS_ANSI_NULLS_ON;
+	flag_validity |= FLAG_USES_QUOTED_IDENTIFIER;
+	if (pltsql_quoted_identifier)
+		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
+
 	new_record[Anum_bbf_function_ext_nspname -1] = CStringGetDatum(physical_schemaname);
 	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
-	new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
+	if (original_name)
+		new_record[Anum_bbf_function_ext_orig_name -1] = CStringGetTextDatum(original_name);
+	else
+		new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
 	new_record[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(func_signature);
 	if (default_positions != NIL)
 		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
 	else
 		new_record_nulls[Anum_bbf_function_ext_default_positions - 1] = true;
+	new_record[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
+	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
@@ -2849,4 +2947,98 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 		ReleaseSysCache(bbffunctuple);
 
 	return argsprinted;
+}
+
+/*
+ * Following pltsql_pg_*_aclchk hooks are implemented to support ownership
+ * chaining during procedure/function execution
+ */
+static void
+pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(proc_oid))
+		*has_access = pg_proc_ownercheck(proc_oid, procOwner);
+
+	if (prev_pg_proc_aclchk_hook)
+		prev_pg_proc_aclchk_hook(proc_oid, roleid, mode, has_access);
+}
+
+static void
+pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid class_oid, Oid roleid,
+							 AclMode mask, bool *has_permission_via_hook,
+							 bool *read_write_all_data_safe)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	/*
+	 * Ownership chain will be denied if TRUNCATE permission is required since
+	 * ownership chain won't be formed if it is TRUNCATE TABLE statement
+	 */
+	if (*has_permission_via_hook == false &&
+		!(mask & ACL_TRUNCATE) &&
+		OidIsValid(procOwner) &&
+		OidIsValid(class_oid))
+		*has_permission_via_hook = pg_class_ownercheck(class_oid, procOwner);
+
+    if (prev_pg_class_aclmask_hook)
+        prev_pg_class_aclmask_hook(classForm, class_oid, roleid,
+								   mask, has_permission_via_hook,
+								   read_write_all_data_safe);
+}
+
+static
+void
+pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid,
+						   AclMode mode, bool *has_access)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(table_oid))
+		*has_access = pg_class_ownercheck(table_oid, procOwner);
+
+	if (prev_pg_attribute_aclchk_hook)
+		prev_pg_attribute_aclchk_hook(table_oid, attnum, roleid, mode, has_access);
+}
+
+static
+void
+pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode,
+							   AclMaskHow how, bool *has_access)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(table_oid))
+		*has_access = pg_class_ownercheck(table_oid, procOwner);
+
+	if (prev_pg_attribute_aclchk_all_hook)
+		prev_pg_attribute_aclchk_all_hook(table_oid, roleid, mode, how, has_access);
+}
+
+static PlannedStmt *
+pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
+{
+	PlannedStmt * plan;
+	PLtsql_execstate *estate;
+
+	if (pltsql_explain_analyze)
+	{
+		estate = get_current_tsql_estate();
+		Assert(estate != NULL);
+		INSTR_TIME_SET_CURRENT(estate->planning_start);
+	}
+	if (prev_planner_hook)
+		plan = prev_planner_hook(parse, query_string, cursorOptions, boundParams);
+	else
+		plan = standard_planner(parse, query_string, cursorOptions, boundParams);
+	if (pltsql_explain_analyze)
+	{
+		INSTR_TIME_SET_CURRENT(estate->planning_end);
+		INSTR_TIME_SUBTRACT(estate->planning_end, estate->planning_start);
+	}
+
+	return plan;
 }

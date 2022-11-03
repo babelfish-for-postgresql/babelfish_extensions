@@ -46,6 +46,7 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -658,6 +659,33 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 		config.trace_mode |= TRACE_EXEC_COUNTS;
 	if (pltsql_trace_exec_time)
 		config.trace_mode |= TRACE_EXEC_TIME;
+
+	/* Cache func owner id and check if it exists in shared schema or not */
+	estate.func->fn_owner = InvalidOid;
+	estate.func->exists_in_shared_schema = false;
+	if (OidIsValid(fcinfo->flinfo->fn_oid))
+	{
+		HeapTuple		proctup;
+		Form_pg_proc	form_proctup;
+		char			*nspname;
+
+		proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+		if (!HeapTupleIsValid(proctup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation with OID %u does not exist", fcinfo->flinfo->fn_oid)));
+		form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+		estate.func->fn_owner = form_proctup->proowner;
+		nspname = get_namespace_name(form_proctup->pronamespace);
+		if (!nspname)
+			elog(ERROR, "cache lookup failed for namespace %u",
+				 form_proctup->pronamespace);
+		else
+			estate.func->exists_in_shared_schema = is_shared_schema(nspname);
+
+		pfree(nspname);
+		ReleaseSysCache(proctup);
+	}
 
 	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
 
@@ -5412,22 +5440,11 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 		{
 			Relation rel;
 			TupleDesc tupdesc;
-			char *rel_name;
-			const char *physical_schema_name;
 			AttrNumber attnum;
-			SPIPlanPtr setval_plan;
-			char *setval_query;
-			char buf[1024];
-			Datum setval_values [NUM_SETVAL_QUERY_PARAMS];
-			Oid setval_argtypes [NUM_SETVAL_QUERY_PARAMS] = { TEXTOID, TEXTOID, TEXTOID, TEXTOID };
 			char *id_attname = NULL;
 			Oid seqid = InvalidOid;
-			ListCell *seq_lc;
-			List *seq_options;
-			int64 seq_incr = 0;
 			SPITupleTable *tuptable = SPI_tuptable;
 			uint64 n_processed = SPI_processed;
-			int prev_sql_dialect = sql_dialect;
 
 			/* Get the identity column name */
 			rel = RelationIdGetRelation(tsql_identity_insert.rel_oid);
@@ -5444,8 +5461,6 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 				}
 			}
 
-			rel_name = RelationGetRelationName(rel);
-
 			RelationClose(rel);
 
 			/* Handle if identity column name not found */
@@ -5458,71 +5473,81 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 			if (tuptable != NULL && n_processed > 0)
 			{
 				TupleDesc tupdesc_ret = tuptable->tupdesc;
-				HeapTuple tuple = tuptable->vals[n_processed-1];
 
-				/* Obtain the user identity value */
+				/* Obtain the user identity column */
 				for (attnum = 0; attnum < tupdesc_ret->natts; attnum++)
 				{
 					Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
-					bool isnull;
 
 					/* Find by name since other attributes not defined */
 					if (strcmp(NameStr(attr->attname), id_attname) == 0)
 					{
-						int64 last_identity = DatumGetInt64(SPI_getbinval(tuple,
-																		  tupdesc_ret,
-																		  attnum+1,
-																		  &isnull));
+						int tup_idx;
+						int64 seq_incr = 0;
+						int64 last_identity;
+						int64 min_identity = LONG_MAX;
+						int64 max_identity = LONG_MIN;
+						ListCell *seq_lc;
+						List *seq_options;
 
+						for (tup_idx = 0; tup_idx < n_processed; tup_idx++)
+						{
+							bool isnull;
+							HeapTuple tuple = tuptable->vals[tup_idx];
+
+							last_identity = DatumGetInt64(SPI_getbinval(tuple,
+																		tupdesc_ret,
+																		attnum+1,
+																		&isnull));
+
+							Assert(!isnull);
+
+							if (last_identity < min_identity)
+								min_identity = last_identity;
+							if (last_identity > max_identity)
+								max_identity = last_identity;
+						}
+
+						/* update last used identity */
 						pltsql_update_last_identity(seqid, last_identity);
+
+						/*
+						 * We also need to reset the seed.  If the increment
+						 * is positive, we need to find the max identity that
+						 * we've inserted.  Other wise, we need to set the
+						 * min identity.
+						 */
+						seq_options = sequence_options(seqid);
+
+						foreach (seq_lc, seq_options)
+						{
+							DefElem *defel = (DefElem *) lfirst(seq_lc);
+
+							if (strcmp(defel->defname, "increment") == 0)
+								seq_incr = defGetInt64(defel);
+
+						}
+
+						if (seq_incr > 0)
+							DirectFunctionCall2(setval_oid,
+												ObjectIdGetDatum(seqid),
+												Int64GetDatum(max_identity));
+						else if (seq_incr < 0)
+							DirectFunctionCall2(setval_oid,
+												ObjectIdGetDatum(seqid),
+												Int64GetDatum(min_identity));
+						else {
+							/* increment can't be zero */
+							Assert(0);
+						}
+
+						/* more than one identity column isn't allowed */
+						break;
 					}
 				}
 			}
 
-			physical_schema_name = get_namespace_name(tsql_identity_insert.schema_oid);
-
-			seq_options = sequence_options(seqid);
-
-			foreach (seq_lc, seq_options)
-			{
-				DefElem *defel = (DefElem *) lfirst(seq_lc);
-
-				if (strcmp(defel->defname, "increment") == 0)
-					seq_incr = defGetInt64(defel);
-			}
-
-			/*
-			* Set sequence start value. Since names are qualified (fetched from built-in functions),
-			* double-quote to preserve cases. Second argument of pg_get_serial_sequence() preserves
-			* case by default
-			*/
-			if (seq_incr < 0)
-				setval_query = "SELECT setval(pg_get_serial_sequence($1, $2), sys.get_min_id_from_table($2, $3, $4));";
-			else
-				setval_query = "SELECT setval(pg_get_serial_sequence($1, $2), sys.get_max_id_from_table($2, $3, $4));";
-
-			snprintf(buf, 1024, "\"%s\".\"%s\"", physical_schema_name, rel_name);
-			setval_values[0] = CStringGetTextDatum(buf);
-			setval_values[1] = CStringGetTextDatum(id_attname);
-			setval_values[2] = CStringGetTextDatum(physical_schema_name);
-			setval_values[3] = CStringGetTextDatum(rel_name);
-
-			sql_dialect = SQL_DIALECT_PG;
-			PG_TRY();
-			{
-				setval_plan = SPI_prepare(setval_query, NUM_SETVAL_QUERY_PARAMS, setval_argtypes);
-				if (setval_plan)
-					SPI_execute_plan(setval_plan, setval_values, NULL, false, 1);
-			}
-			PG_CATCH();
-			{
-				FlushErrorState();
-			}
-			PG_END_TRY();
-			sql_dialect = prev_sql_dialect;
-
 			/* Clean up */
-			SPI_freeplan(setval_plan);
 			SPI_freetuptable(SPI_tuptable);
 		}
 	}
@@ -7207,9 +7232,7 @@ exec_run_select(PLtsql_execstate *estate,
 	 * can't support.
 	 */
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr,
-						  portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
-
+		exec_prepare_plan(estate, expr, portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
 	/*
 	 * If we started an implicit_transaction for this statement but
 	 * the statement has a simple expression associated with them,

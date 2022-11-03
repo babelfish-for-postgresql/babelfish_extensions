@@ -38,3 +38,15 @@ SELECT avg(amount) from testdecimal_overflow_test4;
 select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from testdecimal_overflow_test5;
 With Top10 as (select top (10) * from testdecimal_overflow_test5) select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from Top10;
 With Top11 as (select top (11) * from testdecimal_overflow_test5) select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from Top11;
+
+#BABEL-3345
+select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from testdecimal_vu_prepare_tab1;
+
+#resultant precision = 49 > 38, scale = 12 > 6, precision - scale = 37 > 32; o/p precision set to 38, o/p scale set to 6
+select in1 * in2 from testdecimal_vu_prepare_tab2;
+
+#resultant precision = 40 > 38, scale = 5, precision - scale = 35 <= 38; delta = precision - 38 = 2,  o/p scale = scale - delta = 3(scale adjustment), o/p precision = 38
+select in4 * in5 from testdecimal_vu_prepare_tab2;
+
+#resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
+select in3 * in4 from testdecimal_vu_prepare_tab2;

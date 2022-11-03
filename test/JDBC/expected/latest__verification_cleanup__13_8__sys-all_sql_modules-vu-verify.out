@@ -154,7 +154,7 @@ WHERE object_id = OBJECT_ID('sys.user_name')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-<NULL>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE OR REPLACE FUNCTION sys.user_name(id oid DEFAULT NULL::oid)<newline> RETURNS nvarchar<newline> LANGUAGE c<newline> IMMUTABLE PARALLEL SAFE<newline>AS 'babelfishpg_tsql', $function$user_name$function$<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 

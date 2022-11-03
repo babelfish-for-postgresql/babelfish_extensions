@@ -1,49 +1,5 @@
 #include "psqlodbc_tests_common.h"
 
-std::string GetHexRepresentation(std::string inserted_int, size_t table_size) {
-  if (inserted_int == "NULL") {
-    return "NULL";
-  }
-
-  std::stringstream stream;
-  stream << std::hex << strtoul(inserted_int.c_str(), nullptr, 10);
-  string expected_hex = stream.str();
-
-  size_t expected_length = expected_hex.length();
-  if (table_size == -1 || table_size >= 8) {
-    if (((expected_length + 7) & (-8)) - expected_length == 0) {
-      // Pad with extra 8 characters
-      expected_length += 8;
-    }
-
-    // Round to nearest multiple of 8
-    expected_length = ((expected_length + 7) & (-8));
-  }
-  else {
-    expected_length = table_size * 2;
-  }
-
-  // Padding extra one `0` if not in multiple of 2s
-  expected_length = expected_length % 2 == 0 ? expected_length : expected_length + 1;
-
-  // Prepend string with '0x'
-  int extra_padding = expected_length - expected_hex.length();
-  if (extra_padding < 0) {
-    return "0x" + expected_hex.substr(expected_hex.length() - expected_length, expected_length);
-  } 
-  else if (extra_padding > 0){
-    return "0x" + string(extra_padding, '0') + expected_hex;
-  }
-  return "0x" + expected_hex;
-}
-
-vector<string> duplicateElements(vector<string> input) {
-  typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
-  std::vector<string> duplicated(input);
-  std::copy(VecMoveIter(input.begin()), VecMoveIter(input.end()), std::back_inserter(duplicated));
-  return duplicated;
-}
-
 // helper function to initialize insert string (1, "", "", ""), etc.
 string InitializeInsertString(const vector<string>& insertedValues, bool isNumericInsert, int pkStartingValue) {
 
@@ -515,8 +471,8 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedInsertedValues[i].size());
-    EXPECT_EQ(data, expectedInsertedValues[i]);
+    EXPECT_EQ(data_len, expectedInsertedValues[0].size());
+    EXPECT_EQ(data, expectedInsertedValues[0]);
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -680,4 +636,136 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, con
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   EXPECT_EQ(rcode, SQL_NO_DATA);
   odbcHandler.CloseStmt();
+}
+
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults, 
+  const int insertionSize, const string &orderByColumnName) {
+  
+  OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
+  odbcHandler.Connect(true);
+
+  RETCODE rcode;
+  SQLLEN affectedRows;
+
+  const int NUM_OF_OPERATIONS = operationsQuery.size();
+  char colResults[NUM_OF_OPERATIONS][BUFFER_SIZE];
+  SQLLEN colLen[NUM_OF_OPERATIONS];
+
+  vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {};
+
+  // initialization for bind_columns
+  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
+    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&colResults[i], BUFFER_SIZE, &colLen[i]);
+    bind_columns.push_back(tuple_to_insert);
+  }
+  odbcHandler.CloseStmt();
+
+  odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}));
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  for (int i = 0; i < insertionSize; ++i) {
+    rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
+    EXPECT_EQ(rcode, SQL_SUCCESS);
+
+    for (int j = 0; j < NUM_OF_OPERATIONS; j++) { // retrieve column-by-column
+      EXPECT_EQ(colLen[j], expectedResults[j][i].size());
+      EXPECT_EQ(string(colResults[j]), expectedResults[j][i]);
+    }
+  }
+
+  // Assert that there is no more data
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  EXPECT_EQ(rcode, SQL_NO_DATA);
+  odbcHandler.CloseStmt();
+}
+
+void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData,
+  const vector<string> &operationsQuery, const vector<vector<string>> &expectedResults) {
+
+  OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
+  odbcHandler.Connect(true);
+
+  RETCODE rcode;
+
+  const int NUM_OF_OPERATIONS = operationsQuery.size();
+  SQLLEN col_len[NUM_OF_OPERATIONS];
+  char colResults[NUM_OF_OPERATIONS][BUFFER_SIZE];
+
+  vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {};
+
+  // initialization for bind_columns
+  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
+    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&colResults[i], BUFFER_SIZE, &col_len[i]);
+    bind_columns.push_back(tuple_to_insert);
+  }
+
+  // Make sure values with operations performed on them output correct result
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{orderByColumnName}));  
+
+  for (int i = 0; i < numOfData; i++) {
+    rcode = SQLFetch(odbcHandler.GetStatementHandle());
+    EXPECT_EQ(rcode, SQL_SUCCESS);
+
+    for (int j = 0; j < NUM_OF_OPERATIONS; j++) {
+      EXPECT_EQ(col_len[j], expectedResults[i][j].size());
+      EXPECT_EQ(colResults[j], expectedResults[i][j]);
+    }
+  }
+
+  // Assert that there is no more data
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  EXPECT_EQ(rcode, SQL_NO_DATA);
+  odbcHandler.CloseStmt();
+}
+
+vector<string> getVectorBasedOnColumn(const vector<vector<string>> &vec, const int &col) {
+  vector<string> col_vector;
+
+  for (int i = 0; i < vec.size(); i++) {
+    col_vector.push_back(vec[i][col]);
+  }
+  return col_vector;
+}
+
+string formatNumericWithScale(string decimal, const int &scale, const bool &is_bbf) {
+  size_t dec_pos = decimal.find('.');
+
+  if (dec_pos == std::string::npos) {
+    if (scale == 0) { // if no decimal sign and scale is 0, no need to append
+      return decimal;
+    }
+    dec_pos = decimal.size();
+    decimal += ".";
+  }
+
+  // add extra 0s
+  int zeros_needed = scale - (decimal.size() - dec_pos - 1);
+  for (int i = 0; i < zeros_needed; i++) {
+    decimal += "0";
+  }
+
+  if (is_bbf){
+    dec_pos = decimal.find('.');
+
+    if ((decimal[dec_pos - 1] == '0' && (dec_pos - 1) == 0) || (decimal[0] == '-' and decimal[1] == '0')){
+      decimal.erase(dec_pos - 1, 1);
+    }
+  }
+  return decimal;
+}
+
+void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is_bbf) {
+  for (int i = 0; i < vec.size(); i++) {
+    vec[i] = formatNumericWithScale(vec[i], scale, is_bbf);
+  }
+}
+
+void compareDoubleEquality(double actual, double expected) {
+  std::string errorstmt = "Actual value:" + std::to_string(actual)
+          + "\nExpected valuee:" + std::to_string(expected);
+
+  EXPECT_TRUE(std::fabs(actual - expected) < std::numeric_limits<double>::epsilon()
+          ) << errorstmt;    
 }

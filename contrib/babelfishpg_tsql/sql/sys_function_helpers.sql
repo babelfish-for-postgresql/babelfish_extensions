@@ -23,30 +23,6 @@ $BODY$
 $BODY$
 LANGUAGE SQL STABLE;
 
-CREATE OR REPLACE FUNCTION sys.get_min_id_from_table(IN id_colname TEXT,
-													 IN schemaname TEXT,
-													 IN tablename TEXT,
-													 OUT result INT8)
-AS
-$BODY$
-BEGIN
-	EXECUTE FORMAT('SELECT MIN(%I) FROM %I.%I', id_colname, schemaname, tablename) INTO result;
-END
-$BODY$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION sys.get_max_id_from_table(IN id_colname TEXT,
-													 IN schemaname TEXT,
-													 IN tablename TEXT,
-													 OUT result INT8)
-AS
-$BODY$
-BEGIN
-	EXECUTE FORMAT('SELECT MAX(%I) FROM %I.%I', id_colname, schemaname, tablename) INTO result;
-END
-$BODY$
-LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION sys.user_name_sysname()
 RETURNS sys.SYSNAME AS
 $BODY$
@@ -10366,3 +10342,28 @@ AS 'babelfishpg_tsql', 'get_server_collation_oid';
 CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
 RETURNS text
 AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) RETURNS INTEGER AS $$
+DECLARE
+	i INTEGER;
+	n1 INTEGER;
+BEGIN
+	n1 = y1 * 365 + d1;
+	FOR i in 0 .. m1-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n1 = n1 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n1 = n1 + 30;
+		ELSIF (i = 1) THEN
+			n1 = n1 + 28;
+		END IF;
+	END LOOP;
+	IF m1 <= 2 THEN
+		y1 = y1 - 1;
+	END IF;
+	n1 = n1 + (y1/4 - y1/100 + y1/400);
+
+	return n1;
+END
+$$
+LANGUAGE plpgsql;

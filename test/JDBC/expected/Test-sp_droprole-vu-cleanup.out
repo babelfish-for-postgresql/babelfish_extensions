@@ -1,3 +1,9 @@
+DROP USER sp_droprole_user;
+GO
+
+DROP LOGIN sp_droprole_login;
+GO
+
 -- Check if catalog is cleaned up
 SELECT rolname, type, orig_username, database_name
 FROM sys.babelfish_authid_user_ext
