@@ -611,7 +611,7 @@ smalldatetime_pl_smalldatetime(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp timestamp2 = PG_GETARG_TIMESTAMP(1);
-	uint64 diff;
+	Timestamp diff;
 	Interval  *input_interval;
 	Timestamp result;
 
@@ -630,7 +630,7 @@ smalldatetime_mi_smalldatetime(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp timestamp2 = PG_GETARG_TIMESTAMP(1);
-	uint64 diff;
+	Timestamp diff;
 	Interval  *input_interval;
 	Timestamp result;
 
