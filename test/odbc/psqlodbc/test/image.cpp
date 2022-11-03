@@ -90,10 +90,12 @@ TEST_F(PSQL_DataTypes_Image, Insertion_Success) {
     "0x" + INSERTED_IMAGE_HEX_STR
   };
 
+  const int NUM_OF_DATA = INSERTED_VALUES.size();
+
   const string INSERT_STRING = "(0, DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex'))";
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  insertValuesInTable(ServerType::PSQL, TABLE_NAME, INSERT_STRING, 1);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, INSERT_STRING, NUM_OF_DATA);
   verifyValuesInObject(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
@@ -108,26 +110,31 @@ TEST_F(PSQL_DataTypes_Image, Update_Success) {
   const vector<string> EXPECTED_UPDATED_VALUES = {
     "0x" + UPDATED_IMAGE_HEX_STR 
   };
+
+  const int NUM_OF_DATA = INSERTED_VALUES.size();
+
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   
   const string INSERTED_STRING = "(0, DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex'))";
 
-  insertValuesInTable(ServerType::PSQL, TABLE_NAME, INSERTED_STRING, 1);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, INSERTED_STRING, NUM_OF_DATA);
   verifyValuesInObject(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
   testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES, EXPECTED_UPDATED_VALUES, false, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_DataTypes_Image, View_creation) {
- const vector<string> INSERTED_VALUES = {
+  const vector<string> INSERTED_VALUES = {
     "0x" + INSERTED_IMAGE_HEX_STR
   };
+
+  const int NUM_OF_DATA = INSERTED_VALUES.size();
 
   const string INSERT_STRING = "(0, DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex'))";
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
-  insertValuesInTable(ServerType::PSQL, TABLE_NAME, INSERT_STRING, 1);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, INSERT_STRING, NUM_OF_DATA);
   verifyValuesInObject(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
 
   createView(ServerType::PSQL, VIEW_NAME, VIEW_QUERY);
