@@ -28,6 +28,7 @@ collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
 
 static Node * pgtsql_expression_tree_mutator(Node *node, void* context);
+static void init_and_check_collation_callbacks(void);
 
 extern int pattern_fixed_prefix_wrapper(Const *patt,
 										int ptype,
@@ -122,23 +123,6 @@ make_or_qual(Node *qual1, Node *qual2)
 	if (qual2 == NULL)
 		return qual1;
 	return (Node *) make_orclause(list_make2(qual1, qual2));
-}
-
-static void
-init_and_check_collation_callbacks(void)
-{
-	if (!collation_callbacks_ptr)
-	{
-		collation_callbacks **callbacks_ptr;
-		callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
-		collation_callbacks_ptr = *callbacks_ptr;
-
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 }
 
 static Node*
@@ -267,7 +251,7 @@ transform_funcexpr(Node* node)
  *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
 static Node*
-transform_likenode(Node* node, Oid opno)
+transform_likenode(Node* node)
 {
 	if (node && IsA(node, OpExpr))
 	{
@@ -285,7 +269,7 @@ transform_likenode(Node* node, Oid opno)
 		 * if an ILIKE node is found during dump and restore. 
 		 */
 		init_and_check_collation_callbacks();
-		if ((*collation_callbacks_ptr->expr_contains_ilike_and_ci_as_coll)(node, false)
+		if ((*collation_callbacks_ptr->has_valid_collation)(node, false)
 				 && babelfish_dump_restore)
 		{
 			int		 collidx_of_cs_as;
@@ -296,15 +280,15 @@ transform_likenode(Node* node, Oid opno)
 					tsql_find_cs_as_collation_internal(
 						tsql_find_collation_internal(coll_info_of_inputcollid.collname));
 				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+				if (NOT_FOUND == collidx_of_cs_as)
+					return node;
 			}
 			else
 			{
 				/* If a collation is not specified, use the default one */
 				op->inputcollid = DEFAULT_COLLATION_OID;
 			}
-
-			if (NOT_FOUND == collidx_of_cs_as)
-				return node;
 		}
 
 		/* check if this is LIKE expr, and collation is CI_AS */
@@ -450,7 +434,7 @@ Node* pltsql_predicate_transformer(Node *expr)
 	if(IsA(expr, OpExpr))
 	{
 		/* Singleton predicate */
-		return transform_likenode(expr, ((OpExpr*) expr)->opno);
+		return transform_likenode(expr);
 	}
 	else
 	{
@@ -504,7 +488,7 @@ Node* pltsql_predicate_transformer(Node *expr)
 			else if (IsA(qual, OpExpr))
 			{
 				new_predicates = lappend(new_predicates,
-									transform_likenode(qual, ((OpExpr*) qual)->opno));
+									transform_likenode(qual));
 			}
 			else
 				new_predicates = lappend(new_predicates, qual);
@@ -558,7 +542,7 @@ pgtsql_expression_tree_mutator(Node *node, void* context)
 		 * Possibly a singleton LIKE predicate:  SELECT 'abc' LIKE 'ABC'; 
 		 * This is done even in the postgres dialect.
 		 */
-		node = transform_likenode(node,((OpExpr*) node)->opno);
+		node = transform_likenode(node);
 	}
 
 	return node;
@@ -585,6 +569,23 @@ Node* pltsql_planner_node_transformer(PlannerInfo *root,
 			NULL);
 	}
 	return pltsql_predicate_transformer(expr);
+}
+
+static void
+init_and_check_collation_callbacks(void)
+{
+	if (!collation_callbacks_ptr)
+	{
+		collation_callbacks **callbacks_ptr;
+		callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
+		collation_callbacks_ptr = *callbacks_ptr;
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("collation callbacks pointer is not initialised properly.")));
+	}
 }
 
 Oid
@@ -709,15 +710,14 @@ tsql_find_collation_internal(const char *collation_name)
 }
 
 bool
-expr_contains_ilike_and_ci_collation_wrapper(Node *expr, bool check_for_ci_as_collation)
+has_valid_coll_wrapper(Node *expr)
 {
 	List 		*queue;
 	ListCell 	*lc = NULL;
-	bool 		expr_contains_ilike_and_ci_as = false;
 	
 	if(expr == NULL)
 		return false;
-	queue = NIL;
+	
 	queue = list_make1(expr);
 
 	while(list_length(queue) > 0)
@@ -729,9 +729,8 @@ expr_contains_ilike_and_ci_collation_wrapper(Node *expr, bool check_for_ci_as_co
 		{
 			/* Initialize collation callbacks */
 			init_and_check_collation_callbacks();
-			expr_contains_ilike_and_ci_as = (*collation_callbacks_ptr->expr_contains_ilike_and_ci_as_coll)(predicate, true);
-			if (expr_contains_ilike_and_ci_as)
-				break;
+			if ((*collation_callbacks_ptr->has_valid_collation)(predicate, true))
+				return true;
 		}
 		else if (IsA(predicate, BoolExpr))
 		{
@@ -739,5 +738,5 @@ expr_contains_ilike_and_ci_collation_wrapper(Node *expr, bool check_for_ci_as_co
 			queue = list_concat(queue, boolexpr->args);
 		}
 	}
-	return expr_contains_ilike_and_ci_as;
+	return false;
 }
