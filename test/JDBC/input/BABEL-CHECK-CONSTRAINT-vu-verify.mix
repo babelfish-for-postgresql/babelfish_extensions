@@ -1,3 +1,4 @@
+-- tsql
 ALTER TABLE [dbo].[alter_table_check_constraint] ADD CONSTRAINT [check_col1] CHECK ([col1] like N'%TP')
 GO
 
@@ -14,4 +15,15 @@ INSERT INTO create_check_constraint VALUES ('abcdEFg')
 GO
     
 INSERT INTO create_check_constraint VALUES ('11E')
+GO
+
+-- psql
+INSERT INTO tbl_creation_should_succeed VALUES ('abcd');
+GO
+
+INSERT INTO tbl_creation_should_succeed VALUES ('11dsjkdnb');
+GO
+
+SELECT conbin FROM pg_constraint WHERE conrelid = 
+    (SELECT oid FROM pg_class WHERE relname = 'tbl_creation_should_succeed');
 GO
