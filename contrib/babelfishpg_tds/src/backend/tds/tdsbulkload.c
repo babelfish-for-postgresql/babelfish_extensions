@@ -664,6 +664,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 							continue;
 						}
 
+						/* Free the previously allocated temp. */
+						pfree(temp);
 						temp = TdsGetPlpStringInfoBufferFromToken(message->data, token);
 						pfree(token);
 					}
@@ -684,9 +686,12 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 							rowData->columnValues[i] = TdsTypeVarbinaryToDatum(temp);
 						break;
 					}
-					/* Free temp only if this was created as part of PLP parsing. */
+					/*
+					 * Free temp->data only if this was created as part of PLP parsing.
+					 * We do not free temp pointer since it can be re-used for the next iteration.
+					 */
 					if (colmetadata[i].maxLen == 0xffff)
-						pfree(temp);
+						pfree(temp->data);
 				}
 				break;
 				case TDS_TYPE_TEXT:
@@ -764,11 +769,14 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						token->isNull = false;
 						continue;
 					}
-
+					/* Free the previously allocated temp. */
+					pfree(temp);
 					temp = TdsGetPlpStringInfoBufferFromToken(message->data, token);
 					/* Create and store the appropriate datum for this column. */
 					rowData->columnValues[i] = TdsTypeXMLToDatum(temp);
-					pfree(temp);
+
+					/* We do not free temp pointer since it can be re-used for the next iteration. */
+					pfree(temp->data);
 					pfree(token);
 				}
 				break;
@@ -810,6 +818,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 		request->rowData = lappend(request->rowData, rowData);
 		CheckMessageHasEnoughBytesToRead(&message, 1);
 	}
+
 	/*
 	 * If row count is less than the default batch size then this is the last packet,
 	 * the next byte should be the done token.
@@ -824,6 +833,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
 						"Row %d, unexpected token encountered processing the request. %d",
 						request->rowCount, (uint8_t)message->data[offset])));
+
+	pfree(temp);
 	return message;
 }
 
