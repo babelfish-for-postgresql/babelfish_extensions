@@ -1134,15 +1134,14 @@ bool collation_is_CI_AS(Oid colloid)
 	return false;
 }
 
-bool expr_has_ilike_node_and_ci_as_coll(Node *expr, bool check_for_ci_as_collation)
+bool has_valid_coll(Node *expr, bool check_for_ci_as_collation)
 {
-	int i = 0;
 	bool ilike_node_found = false;
 	
 	Assert(IsA(expr, OpExpr));
 	
 	OpExpr	 *op = (OpExpr *) expr;
-	for(i = 0; i < TOTAL_LIKE_OP_COUNT; i++)
+	for(int i = 0; i < TOTAL_LIKE_OP_COUNT; i++)
 	{
 		if(strncmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name, 
 				sizeof(like_ilike_table[i].ilike_op_name)) == 0)
@@ -1154,7 +1153,7 @@ bool expr_has_ilike_node_and_ci_as_coll(Node *expr, bool check_for_ci_as_collati
 	if (!check_for_ci_as_collation)
 		return ilike_node_found;
 	
-	return (ilike_node_found & collation_is_CI_AS(op->inputcollid));
+	return (ilike_node_found && collation_is_CI_AS(op->inputcollid));
 }
 
 Datum
@@ -1397,7 +1396,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.get_oid_from_collidx_internal = &get_oid_from_collidx;
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;
 		collation_callbacks_var.find_collation_internal = &find_collation;
-		collation_callbacks_var.expr_contains_ilike_and_ci_as_coll = &expr_has_ilike_node_and_ci_as_coll;
+		collation_callbacks_var.has_valid_collation = &has_valid_coll;
 	}
 	return &collation_callbacks_var;
 }

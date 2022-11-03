@@ -147,7 +147,7 @@ static Constraint *get_rowversion_default_constraint(TypeName *typname);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
-static void check_current_query_is_create_tbl_check_constraint(Node *expr);
+static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -817,7 +817,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	  prev_post_parse_analyze_hook(pstate, query, jstate);
 
 	if (query->commandType == CMD_UTILITY && nodeTag((Node*)(query->utilityStmt)) == T_CreateStmt)
-		check_current_query_is_create_tbl_check_constraint(query->utilityStmt);
+		set_current_query_is_create_tbl_check_constraint(query->utilityStmt);
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -4820,31 +4820,23 @@ pltsql_revert_guc(int nest_level)
 }
 
 void
-check_current_query_is_create_tbl_check_constraint(Node *expr)
+set_current_query_is_create_tbl_check_constraint(Node *expr)
 {
 	CreateStmt *stmt = (CreateStmt *) expr;
 	ListCell   *elements;
-	bool		contains_check_constraint = false;
 
 	foreach(elements, stmt->tableElts)
 	{
 		Node *element = lfirst(elements);
-		switch (nodeTag(element))
+
+		if (nodeTag(element) == T_Constraint)
 		{
-			case T_Constraint:
+			Constraint *c = (Constraint *) element;
+			if(c->contype == CONSTR_CHECK)
 			{
-				Constraint *c = (Constraint *) element;
-				if(c->contype == CONSTR_CHECK)
-					contains_check_constraint = true;
+				current_query_is_create_tbl_check_constraint = true;
+				break;
 			}
-				break;
-			default:
-				break;
-		}
-		if (contains_check_constraint)
-		{
-			current_query_is_create_tbl_check_constraint = true;
-			break;
 		}
 	}
 }

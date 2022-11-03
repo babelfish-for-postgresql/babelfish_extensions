@@ -48,7 +48,7 @@ jobs:
           sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
-        if: always() && (steps.jdbc.outcome == 'failure' || steps.install-extensions.outcome == 'failure')
+        if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: postgres-log
