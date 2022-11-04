@@ -1603,7 +1603,7 @@ typedef struct PLtsql_protocol_plugin
 
 	char* (*pltsql_get_login_default_db) (char *login_name);
 
-	error_map_details_t * (*get_mapped_error_list) (void);
+	void* (*get_mapped_error_list) (void);
 
 	int* (*get_mapped_tsql_error_code_list) (void);
 

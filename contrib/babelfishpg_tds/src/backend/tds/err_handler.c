@@ -31,7 +31,7 @@ error_map_details error_list[] = {
 /*
  * Returns list of sql error code for which Babel does have support for.
  */
-error_map_details *
+void *
 get_mapped_error_list()
 {
 	return error_list;

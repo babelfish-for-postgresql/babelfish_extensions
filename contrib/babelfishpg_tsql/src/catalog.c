@@ -1319,7 +1319,7 @@ static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc r
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static void create_guest_role_for_db(const char *dbname);
-static char *get_db_owner_role_name(char *dbname);
+static char *get_db_owner_role_name(const char *dbname);
 
 
 /*****************************************
@@ -2231,7 +2231,7 @@ create_guest_role_for_db(const char *dbname)
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
-	pfree(db_owner_role);
+	pfree((char *) db_owner_role);
 
 	if (list_length(logins) > 0)
 	{
@@ -2303,7 +2303,7 @@ create_guest_role_for_db(const char *dbname)
  * migration mode GUC.
  */
 static char *
-get_db_owner_role_name(char *dbname)
+get_db_owner_role_name(const char *dbname)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
