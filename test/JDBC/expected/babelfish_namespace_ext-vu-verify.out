@@ -25,6 +25,7 @@ int
 
 
 SELECT nspname FROM sys.babelfish_namespace_ext WHERE nspname LIKE '%test_babelfish_namespace_sch%'
+ORDER BY nspname
 GO
 ~~START~~
 varchar

@@ -59,10 +59,10 @@ do \
 } while(0)
 
 /* For checking the invalid length in the request. */
-#define CheckForInvalidLength(rowData, temp, colNum) \
+#define CheckForInvalidLength(len, temp, colNum) \
 do \
 { \
-	if ((uint32_t)rowData->columnValues[i].len > (uint32_t)temp->colMetaData[i].maxLen) \
+	if ((uint32_t)len > (uint32_t)temp->colMetaData[i].maxLen) \
 		ereport(ERROR, \
 				(errcode(ERRCODE_PROTOCOL_VIOLATION), \
 				errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. " \
@@ -465,6 +465,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 {
 	BulkLoadColMetaData *colmetadata = request->colMetaData;
 	int retStatus = 0;
+	uint32_t len;
+	StringInfo temp = palloc0(sizeof(StringInfoData));
 	request->rowCount = 0;
 	request->rowData = NIL;
 	request->currentBatchSize = 0;
@@ -480,7 +482,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 		BulkLoadRowData *rowData = palloc0(sizeof(BulkLoadRowData));
 		request->rowCount++;
 
-		rowData->columnValues = palloc0(request->colCount * sizeof(StringInfoData));
+		rowData->columnValues = palloc0(request->colCount * sizeof(Datum));
 		rowData->isNull 	  = palloc0(request->colCount * sizeof(bool));
 
 		offset++;
@@ -488,8 +490,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 		while(i != request->colCount) /* Loop over each column. */
 		{
-			initStringInfo(&rowData->columnValues[i]);
-			rowData->isNull[i] = false;
+			len = 0;
 			switch(colmetadata[i].columnTdsType)
 			{
 				case TDS_TYPE_INTEGER:
@@ -501,33 +502,76 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 				case TDS_TYPE_DATETIMEN:
 				case TDS_TYPE_MONEYN:
 				case TDS_TYPE_UNIQUEIDENTIFIER:
+				case TDS_TYPE_DATETIMEOFFSET:
 				{
 					if (colmetadata[i].variantType)
 					{
-						rowData->columnValues[i].len = colmetadata[i].maxLen;
+						len = colmetadata[i].maxLen;
 					}
 					else
 					{
 						CheckMessageHasEnoughBytesToRead(&message, 1);
-						rowData->columnValues[i].len = message->data[offset++];
+						len = message->data[offset++];
 						request->currentBatchSize++;
 
-						if (rowData->columnValues[i].len == 0) /* null */
+						if (len == 0) /* null */
 						{
 							rowData->isNull[i] = true;
 							i++;
 							continue;
 						}
 					}
-					CheckForInvalidLength(rowData, request, i);
+					CheckForInvalidLength(len, request, i);
 
-					if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
-						enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
+					CheckMessageHasEnoughBytesToRead(&message, len);
 
-					CheckMessageHasEnoughBytesToRead(&message, rowData->columnValues[i].len);
-					memcpy(rowData->columnValues[i].data, &message->data[offset], rowData->columnValues[i].len);
-					offset += rowData->columnValues[i].len;
-					request->currentBatchSize += rowData->columnValues[i].len;
+					/* Build temp Stringinfo. */
+					temp->data = &message->data[offset];
+					temp->len = len;
+					temp->maxlen = colmetadata[i].maxLen;
+					temp->cursor = 0;
+
+					/* Create and store the appropriate datum for this column. */
+					switch(colmetadata[i].columnTdsType)
+					{
+						case TDS_TYPE_INTEGER:
+						case TDS_TYPE_BIT:
+							rowData->columnValues[i] = TdsTypeIntegerToDatum(temp, colmetadata[i].maxLen);
+						break;
+						case TDS_TYPE_FLOAT:
+							rowData->columnValues[i] = TdsTypeFloatToDatum(temp, colmetadata[i].maxLen);
+						break;
+						case TDS_TYPE_TIME:
+							rowData->columnValues[i] = TdsTypeTimeToDatum(temp, colmetadata[i].scale, len);
+						break;
+						case TDS_TYPE_DATE:
+							rowData->columnValues[i] = TdsTypeDateToDatum(temp);
+						break;
+						case TDS_TYPE_DATETIME2:
+							rowData->columnValues[i] = TdsTypeDatetime2ToDatum(temp, colmetadata[i].scale, temp->len);
+						break;
+						case TDS_TYPE_DATETIMEN:
+							if (colmetadata[i].maxLen == TDS_MAXLEN_SMALLDATETIME)
+								rowData->columnValues[i] = TdsTypeSmallDatetimeToDatum(temp);
+							else
+								rowData->columnValues[i] = TdsTypeDatetimeToDatum(temp);
+						break;
+						case TDS_TYPE_DATETIMEOFFSET:
+							rowData->columnValues[i] = TdsTypeDatetimeoffsetToDatum(temp, colmetadata[i].scale, temp->len);
+						break;
+						case TDS_TYPE_MONEYN:
+							if (colmetadata[i].maxLen == TDS_MAXLEN_SMALLMONEY)
+								rowData->columnValues[i] = TdsTypeSmallMoneyToDatum(temp);
+							else
+								rowData->columnValues[i] = TdsTypeMoneyToDatum(temp);
+						break;
+						case TDS_TYPE_UNIQUEIDENTIFIER:
+							rowData->columnValues[i] = TdsTypeUIDToDatum(temp);
+						break;
+					}
+
+					offset += len;
+					request->currentBatchSize += len;
 				}
 				break;
 				case TDS_TYPE_NUMERICN:
@@ -543,25 +587,30 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 					CheckMessageHasEnoughBytesToRead(&message, 1);
 
-					rowData->columnValues[i].len = message->data[offset++];
+					len = message->data[offset++];
 					request->currentBatchSize++;
-					if (rowData->columnValues[i].len == 0) /* null */
+					if (len == 0) /* null */
 					{
 						rowData->isNull[i] = true;
 						i++;
 						continue;
 					}
 
-					CheckForInvalidLength(rowData, request, i);
+					CheckForInvalidLength(len, request, i);
 
-					if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
-						enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
+					CheckMessageHasEnoughBytesToRead(&message, len);
 
-					CheckMessageHasEnoughBytesToRead(&message, rowData->columnValues[i].len);
+					/* Build temp Stringinfo. */
+					temp->data = &message->data[offset];
+					temp->len = len;
+					temp->maxlen = colmetadata[i].maxLen;
+					temp->cursor = 0;
 
-					memcpy(rowData->columnValues[i].data, &message->data[offset], rowData->columnValues[i].len);
-					offset += rowData->columnValues[i].len;
-					request->currentBatchSize += rowData->columnValues[i].len;
+					/* Create and store the appropriate datum for this column. */
+					rowData->columnValues[i] = TdsTypeNumericToDatum(temp, colmetadata[i].scale);
+
+					offset += len;
+					request->currentBatchSize += len;
 				}
 				break;
 
@@ -575,20 +624,23 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					if (colmetadata[i].maxLen != 0xffff)
 					{
 						CheckMessageHasEnoughBytesToRead(&message, sizeof(short));
-						memcpy(&rowData->columnValues[i].len, &message->data[offset], sizeof(short));
+						memcpy(&len, &message->data[offset], sizeof(short));
 						offset +=  sizeof(short);
 						request->currentBatchSize +=  sizeof(short);
-						if (rowData->columnValues[i].len != 0xffff)
+						if (len != 0xffff)
 						{
-							CheckForInvalidLength(rowData, request, i);
+							CheckForInvalidLength(len, request, i);
 
-							if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
-								enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
+							CheckMessageHasEnoughBytesToRead(&message, len);
 
-							CheckMessageHasEnoughBytesToRead(&message, rowData->columnValues[i].len);
-							memcpy(rowData->columnValues[i].data, &message->data[offset], rowData->columnValues[i].len);
-							offset += rowData->columnValues[i].len;
-							request->currentBatchSize += rowData->columnValues[i].len;
+							/* Build temp Stringinfo. */
+							temp->data = &message->data[offset];
+							temp->len = len;
+							temp->maxlen = colmetadata[i].maxLen;
+							temp->cursor = 0;
+
+							offset += len;
+							request->currentBatchSize += len;
 						}
 						else /* null */
 						{
@@ -599,34 +651,58 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					}
 					else
 					{
-						StringInfo plpStr;
-						ParameterToken temp = palloc0(sizeof(ParameterTokenData));
+						ParameterToken token = palloc0(sizeof(ParameterTokenData));
 
-						retStatus = ReadBcpPlp(temp, &message, request);
+						retStatus = ReadBcpPlp(token, &message, request);
 
 						CheckPLPStatusNotOK(request, retStatus, i);
-						if (temp->isNull) /* null */
+						if (token->isNull) /* null */
 						{
 							rowData->isNull[i] = true;
 							i++;
-							temp->isNull = false;
+							token->isNull = false;
 							continue;
 						}
 
-						plpStr = TdsGetPlpStringInfoBufferFromToken(message->data, temp);
-						rowData->columnValues[i] = *plpStr;
-						pfree(plpStr);
+						/* Free the previously allocated temp. */
 						pfree(temp);
+						temp = TdsGetPlpStringInfoBufferFromToken(message->data, token);
+						pfree(token);
 					}
+
+					/* Create and store the appropriate datum for this column. */
+					switch(colmetadata[i].columnTdsType)
+					{
+						case TDS_TYPE_CHAR:
+						case TDS_TYPE_VARCHAR:
+							rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].collation, colmetadata[i].columnTdsType);
+						break;
+						case TDS_TYPE_NCHAR:
+						case TDS_TYPE_NVARCHAR:
+							rowData->columnValues[i] = TdsTypeNCharToDatum(temp);
+						break;
+						case TDS_TYPE_BINARY:
+						case TDS_TYPE_VARBINARY:
+							rowData->columnValues[i] = TdsTypeVarbinaryToDatum(temp);
+						break;
+					}
+					/*
+					 * Free temp->data only if this was created as part of PLP parsing.
+					 * We do not free temp pointer since it can be re-used for the next iteration.
+					 */
+					if (colmetadata[i].maxLen == 0xffff)
+						pfree(temp->data);
 				}
 				break;
 				case TDS_TYPE_TEXT:
 				case TDS_TYPE_NTEXT:
 				case TDS_TYPE_IMAGE:
 				{
+					uint8 dataTextPtrLen;
+
 					CheckMessageHasEnoughBytesToRead(&message, 1);
 					/* Ignore the Data Text Ptr since its currently of no use. */
-					uint8 dataTextPtrLen = message->data[offset++];
+					dataTextPtrLen = message->data[offset++];
 					request->currentBatchSize++;
 					if (dataTextPtrLen == 0) /* null */
 					{
@@ -642,73 +718,98 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					offset += 8; /* TODO: Ignored the Data Text TimeStamp for now. */
 					request->currentBatchSize += 8;
 
-					memcpy(&rowData->columnValues[i].len, &message->data[offset], sizeof(uint32_t));
+					memcpy(&len, &message->data[offset], sizeof(uint32_t));
 					offset +=  sizeof(uint32_t);
 					request->currentBatchSize += sizeof(uint32_t);
-					if (rowData->columnValues[i].len == 0) /* null */
+					if (len == 0) /* null */
 					{
 						rowData->isNull[i] = true;
 						i++;
 						continue;
 					}
 
-					CheckForInvalidLength(rowData, request, i);
+					CheckForInvalidLength(len, request, i);
 
-					if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
-						enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
+					CheckMessageHasEnoughBytesToRead(&message, len);
 
-					CheckMessageHasEnoughBytesToRead(&message, rowData->columnValues[i].len);
+					/* Build temp Stringinfo. */
+					temp->data = &message->data[offset];
+					temp->len = len;
+					temp->maxlen = colmetadata[i].maxLen;
+					temp->cursor = 0;
 
-					memcpy(rowData->columnValues[i].data, &message->data[offset], rowData->columnValues[i].len);
-					offset += rowData->columnValues[i].len;
-					request->currentBatchSize += rowData->columnValues[i].len;
+					/* Create and store the appropriate datum for this column. */
+					switch(colmetadata[i].columnTdsType)
+					{
+						case TDS_TYPE_TEXT:
+							rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].collation, colmetadata[i].columnTdsType);
+						break;
+						case TDS_TYPE_NTEXT:
+							rowData->columnValues[i] = TdsTypeNCharToDatum(temp);
+						break;
+						case TDS_TYPE_IMAGE:
+							rowData->columnValues[i] = TdsTypeVarbinaryToDatum(temp);
+						break;
+					}
+
+					offset += len;
+					request->currentBatchSize += len;
 				}
 				break;
 				case TDS_TYPE_XML:
 				{
-					StringInfo plpStr;
-					ParameterToken temp = palloc0(sizeof(ParameterTokenData));
-					retStatus = ReadBcpPlp(temp, &message, request);
+					ParameterToken token = palloc0(sizeof(ParameterTokenData));
+
+					retStatus = ReadBcpPlp(token, &message, request);
 					CheckPLPStatusNotOK(request, retStatus, i);
-					if (temp->isNull) /* null */
+					if (token->isNull) /* null */
 					{
 						rowData->isNull[i] = true;
 						i++;
-						temp->isNull = false;
+						token->isNull = false;
 						continue;
 					}
-
-					plpStr = TdsGetPlpStringInfoBufferFromToken(message->data, temp);
-					rowData->columnValues[i] = *plpStr;
-					pfree(plpStr);
+					/* Free the previously allocated temp. */
 					pfree(temp);
+					temp = TdsGetPlpStringInfoBufferFromToken(message->data, token);
+					/* Create and store the appropriate datum for this column. */
+					rowData->columnValues[i] = TdsTypeXMLToDatum(temp);
+
+					/* We do not free temp pointer since it can be re-used for the next iteration. */
+					pfree(temp->data);
+					pfree(token);
 				}
 				break;
 				case TDS_TYPE_SQLVARIANT:
 				{
 					CheckMessageHasEnoughBytesToRead(&message, sizeof(uint32_t));
 
-					memcpy(&rowData->columnValues[i].len, &message->data[offset], sizeof(uint32_t));
+					memcpy(&len, &message->data[offset], sizeof(uint32_t));
 					offset += sizeof(uint32_t);
 					request->currentBatchSize += sizeof(uint32_t);
 
-					if (rowData->columnValues[i].len == 0) /* null */
+					if (len == 0) /* null */
 					{
 						rowData->isNull[i] = true;
 						i++;
 						continue;
 					}
 
-					CheckForInvalidLength(rowData, request, i);
+					CheckForInvalidLength(len, request, i);
 
-					if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
-						enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
+					CheckMessageHasEnoughBytesToRead(&message, len);
 
-					CheckMessageHasEnoughBytesToRead(&message, rowData->columnValues[i].len);
+					/* Build temp Stringinfo. */
+					temp->data = &message->data[offset];
+					temp->len = len;
+					temp->maxlen = colmetadata[i].maxLen;
+					temp->cursor = 0;
 
-					memcpy(rowData->columnValues[i].data, &message->data[offset], rowData->columnValues[i].len);
-					offset += rowData->columnValues[i].len;
-					request->currentBatchSize += rowData->columnValues[i].len;
+					/* Create and store the appropriate datum for this column. */
+					rowData->columnValues[i] = TdsTypeSqlVariantToDatum(temp);
+
+					offset += len;
+					request->currentBatchSize += len;
 				}
 				break;
 			}
@@ -717,6 +818,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 		request->rowData = lappend(request->rowData, rowData);
 		CheckMessageHasEnoughBytesToRead(&message, 1);
 	}
+
 	/*
 	 * If row count is less than the default batch size then this is the last packet,
 	 * the next byte should be the done token.
@@ -731,6 +833,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
 						"Row %d, unexpected token encountered processing the request. %d",
 						request->rowCount, (uint8_t)message->data[offset])));
+
+	pfree(temp);
 	return message;
 }
 
@@ -743,9 +847,7 @@ void
 ProcessBCPRequest(TDSRequest request)
 {
 	uint64 retValue = 0;
-	StringInfo temp = makeStringInfo();
 	TDSRequestBulkLoad req = (TDSRequestBulkLoad) request;
-	BulkLoadColMetaData *colMetaData = req->colMetaData;
 	StringInfo message = req->firstMessage;
 
 	TdsErrorContext->err_text = "Processing Bulk Load Request";
@@ -797,86 +899,18 @@ ProcessBCPRequest(TDSRequest request)
 		nargs = req->colCount * req->rowCount;
 		values = palloc0(nargs * sizeof(Datum));
 		nulls = palloc0(nargs * sizeof(bool));
-		nargs = 0;
 
-		foreach (lc, req->rowData) /* build an array of Value Datums */
+		/* Flaten and create a 1-D array of Value & Datums */
+		foreach (lc, req->rowData)
 		{
 			BulkLoadRowData *row = (BulkLoadRowData *) lfirst(lc);
-			TdsIoFunctionInfo tempFuncInfo;
-			int currentColumn = 0;
-			while(currentColumn != req->colCount)
+			for(int currentColumn = 0; currentColumn < req->colCount; currentColumn++)
 			{
-				temp = &(row->columnValues[currentColumn]);
 				if (row->isNull[currentColumn]) /* null */
-						nulls[count++] = row->isNull[currentColumn];
+					nulls[count] = row->isNull[currentColumn];
 				else
-				{
-					switch(colMetaData[currentColumn].columnTdsType)
-					{
-						case TDS_TYPE_CHAR:
-						case TDS_TYPE_VARCHAR:
-						case TDS_TYPE_TEXT:
-							values[count] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
-						break;
-						case TDS_TYPE_NCHAR:
-						case TDS_TYPE_NVARCHAR:
-						case TDS_TYPE_NTEXT:
-							values[count] = TdsTypeNCharToDatum(temp);
-						break;
-						case TDS_TYPE_INTEGER:
-						case TDS_TYPE_BIT:
-							values[count] = TdsTypeIntegerToDatum(temp, colMetaData[currentColumn].maxLen);
-						break;
-						case TDS_TYPE_FLOAT:
-							values[count] = TdsTypeFloatToDatum(temp, colMetaData[currentColumn].maxLen);
-						break;
-						case TDS_TYPE_NUMERICN:
-						case TDS_TYPE_DECIMALN:
-							values[count] = TdsTypeNumericToDatum(temp, colMetaData[currentColumn].scale);
-						break;
-						case TDS_TYPE_VARBINARY:
-						case TDS_TYPE_BINARY:
-						case TDS_TYPE_IMAGE:
-							values[count] = TdsTypeVarbinaryToDatum(temp);
-						break;
-						case TDS_TYPE_DATE:
-							values[count] = TdsTypeDateToDatum(temp);
-						break;
-						case TDS_TYPE_TIME:
-							values[count] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
-						break;
-						case TDS_TYPE_DATETIME2:
-							values[count] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
-						break;
-						case TDS_TYPE_DATETIMEN:
-							if (colMetaData[currentColumn].maxLen == TDS_MAXLEN_SMALLDATETIME)
-								values[count] = TdsTypeSmallDatetimeToDatum(temp);
-							else
-								values[count] = TdsTypeDatetimeToDatum(temp);
-						break;
-						case TDS_TYPE_DATETIMEOFFSET:
-							values[count] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
-						break;
-						case TDS_TYPE_MONEYN:
-							if (colMetaData[currentColumn].maxLen == TDS_MAXLEN_SMALLMONEY)
-								values[count] = TdsTypeSmallMoneyToDatum(temp);
-							else
-								values[count] = TdsTypeMoneyToDatum(temp);
-						break;
-						case TDS_TYPE_XML:
-							values[count] = TdsTypeXMLToDatum(temp);
-						break;
-						case TDS_TYPE_UNIQUEIDENTIFIER:
-							values[count] = TdsTypeUIDToDatum(temp);
-						break;
-						case TDS_TYPE_SQLVARIANT:
-							values[count] = TdsTypeSqlVariantToDatum(temp);
-						break;
-					}
-					count++;
-				}
-				nargs++;
-				currentColumn++;
+					values[count] = row->columnValues[currentColumn];
+				count++;
 			}
 		}
 

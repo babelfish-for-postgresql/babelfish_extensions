@@ -29,7 +29,7 @@ go
 set babelfish_showplan_all off;
 go
 
-select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
+exec sp_babelfish_configure 'enable_pg_hint', 'on'
 go
 
 set babelfish_showplan_all on;
@@ -46,9 +46,5 @@ go
 set babelfish_showplan_all off;
 go
 
--- psql
-do $$
-begin
-    EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_pg_hint = on', CURRENT_DATABASE());
-end$$;
+exec sp_babelfish_configure 'enable_pg_hint', 'on', 'server'
 go
