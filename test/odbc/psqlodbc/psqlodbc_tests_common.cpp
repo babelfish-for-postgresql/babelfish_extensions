@@ -1,55 +1,5 @@
 #include "psqlodbc_tests_common.h"
 
-string padString(string input, size_t table_size) {
-  std::ostringstream result;
-  result << std::left << std::setw(table_size) << std::setfill(' ') << input;
-  return result.str();
-}
-
-std::string GetHexRepresentation(std::string inserted_int, size_t table_size) {
-  if (inserted_int == "NULL") {
-    return "NULL";
-  }
-
-  std::stringstream stream;
-  stream << std::hex << strtoul(inserted_int.c_str(), nullptr, 10);
-  string expected_hex = stream.str();
-
-  size_t expected_length = expected_hex.length();
-  if (table_size == -1 || table_size >= 8) {
-    if (((expected_length + 7) & (-8)) - expected_length == 0) {
-      // Pad with extra 8 characters
-      expected_length += 8;
-    }
-
-    // Round to nearest multiple of 8
-    expected_length = ((expected_length + 7) & (-8));
-  }
-  else {
-    expected_length = table_size * 2;
-  }
-
-  // Padding extra one `0` if not in multiple of 2s
-  expected_length = expected_length % 2 == 0 ? expected_length : expected_length + 1;
-
-  // Prepend string with '0x'
-  int extra_padding = expected_length - expected_hex.length();
-  if (extra_padding < 0) {
-    return "0x" + expected_hex.substr(expected_hex.length() - expected_length, expected_length);
-  } 
-  else if (extra_padding > 0){
-    return "0x" + string(extra_padding, '0') + expected_hex;
-  }
-  return "0x" + expected_hex;
-}
-
-vector<string> duplicateElements(vector<string> input) {
-  typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
-  std::vector<string> duplicated(input);
-  std::copy(VecMoveIter(input.begin()), VecMoveIter(input.end()), std::back_inserter(duplicated));
-  return duplicated;
-}
-
 // helper function to initialize insert string (1, "", "", ""), etc.
 string InitializeInsertString(const vector<string>& insertedValues, bool isNumericInsert, int pkStartingValue) {
 
@@ -521,8 +471,8 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedInsertedValues[i].size());
-    EXPECT_EQ(data, expectedInsertedValues[i]);
+    EXPECT_EQ(data_len, expectedInsertedValues[0].size());
+    EXPECT_EQ(data, expectedInsertedValues[0]);
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -810,4 +760,12 @@ void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is
   for (int i = 0; i < vec.size(); i++) {
     vec[i] = formatNumericWithScale(vec[i], scale, is_bbf);
   }
+}
+
+void compareDoubleEquality(double actual, double expected) {
+  std::string errorstmt = "Actual value:" + std::to_string(actual)
+          + "\nExpected valuee:" + std::to_string(expected);
+
+  EXPECT_TRUE(std::fabs(actual - expected) < std::numeric_limits<double>::epsilon()
+          ) << errorstmt;    
 }

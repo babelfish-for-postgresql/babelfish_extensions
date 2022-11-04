@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 #include <sqlext.h>
 #include <string>
-#include <time.h>
 #include <vector>
 
 #include "../src/drivers.h"
@@ -21,29 +20,13 @@ const int BUFFER_SIZE = 16384;
 const int INT_BYTES_EXPECTED = 4;
 
 /**
- * Left pads (adds spaces on the right side) the input string until a length of table_size
- * 
- * @param input string to be padded
- * @param table_size the desired length
- */
-string padString(string input, size_t table_size);
-
-/**
- * Convert integer string into hex string with proper padding
- *
- * @param inserted_int string of an integer to be converted to hex
- * @param table_size size of the 
- * @return string of the integer in hexadecimal values
- */ 
-std::string GetHexRepresentation(std::string inserted_int, size_t table_size = -1);
-
-/**
  * Duplicates the values in the input vector
  *
  * @param input Vector of data to be duplicated
  * @return vector which has the elements duplicated and appended
  */ 
-vector<string> duplicateElements(vector<string> input);
+template <typename T>
+vector<T> duplicateElements(vector<T> input);
 
 /**
  * Create a string that can be used in an insert statement. Assumes there is a column associated with
@@ -501,7 +484,7 @@ vector<string> getVectorBasedOnColumn(const vector<vector<string>> &vec, const i
  * @param scale The scale of the 
  * @param is_bbf True if we want it to correspond to Babelfish, false if we want the output to be formatted for postgres
  * @return string which is the formatted number
- */
+*/
 string formatNumericWithScale(string decimal, const int &scale, const bool &is_bbf);
 
 /**
@@ -511,10 +494,25 @@ string formatNumericWithScale(string decimal, const int &scale, const bool &is_b
  * @param scale Scale of the numeric or decimal column
  * @param is_bbf True if the output is to correspond with Babelfish's result set,
  *    False for Postgres
- */
+*/
 void formatNumericExpected(vector<string> &vec, const int &scale, const bool &is_bbf);
 
+/**
+ * Checks to see if the actual and expected values of two doubles
+ * are equal or not (based on machine epsilon differences).
+ * 
+ * @param actual The actual value from the test
+ * @param expect The expected value 
+*/
+void compareDoubleEquality(double actual, double expected);
+
 /** Implementation of templated functions below **/
+template <typename T>
+vector<T> duplicateElements(vector<T> input) {
+  std::vector<T> duplicated(input);
+  duplicated.insert(duplicated.end(), input.begin(), input.end());
+  return duplicated;
+}
 
 template <typename T>
 void verifyValuesInObject(ServerType serverType, string objectName, string orderByColumnName, int type, T data, 
@@ -545,7 +543,13 @@ void verifyValuesInObject(ServerType serverType, string objectName, string order
     EXPECT_EQ(pk, i);
     if (insertedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedLen[i]);
-      EXPECT_EQ(data, expectedInsertedValues[i]);
+
+      if (type == SQL_C_DOUBLE) {
+        compareDoubleEquality(data, expectedInsertedValues[i]);
+      }
+      else {
+        EXPECT_EQ(data, expectedInsertedValues[i]);
+      }
     }
     else {
       EXPECT_EQ(data_len, SQL_NULL_DATA);
@@ -618,7 +622,13 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
     
     if (updatedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedUpdatedLen[i]);
-      EXPECT_EQ(data, expectedUpdatedValues[i]);
+
+      if (type == SQL_C_DOUBLE) {
+        compareDoubleEquality(data, expectedUpdatedValues[i]);
+      }
+      else {
+        EXPECT_EQ(data, expectedUpdatedValues[i]);
+      }
     }
     else {
       EXPECT_EQ(data_len, SQL_NULL_DATA);
@@ -673,8 +683,15 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedInsertedLen[i]);
-    EXPECT_EQ(data, expectedInsertedValues[i]);
+    EXPECT_EQ(data_len, expectedInsertedLen[0]);
+
+    if (type == SQL_C_DOUBLE) {
+      compareDoubleEquality(data, expectedInsertedValues[0]);
+    }
+    else {
+      EXPECT_EQ(data, expectedInsertedValues[0]);
+    }
+    EXPECT_EQ(data, expectedInsertedValues[0]);
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -712,9 +729,14 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, int
   EXPECT_EQ(rcode, SQL_SUCCESS);
   for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
     EXPECT_EQ(col_len[i], expectedLen[i]);
-    EXPECT_EQ(colResults[i], expectedResults[i]);
-  }
 
+    if (type == SQL_C_DOUBLE) {
+        compareDoubleEquality(colResults[i], expectedResults[i]);
+    }
+    else {
+      EXPECT_EQ(colResults[i], expectedResults[i]);
+    } 
+  }
   // Assert that there is no more data
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -752,7 +774,13 @@ void testArithmeticOperators(ServerType serverType, const string &tableName, con
 
     for (int j = 0; j < NUM_OF_OPERATIONS; j++) {
       EXPECT_EQ(col_len[j], expectedLen[j]);
-      EXPECT_EQ(colResults[j], expectedResults[i][j]);
+
+      if (type == SQL_C_DOUBLE) {
+        compareDoubleEquality(colResults[j], expectedResults[i][j]);
+      }
+      else {
+        EXPECT_EQ(colResults[j], expectedResults[i][j]);
+      }
     }
   }
 

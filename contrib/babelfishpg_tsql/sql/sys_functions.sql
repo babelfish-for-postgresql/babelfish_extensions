@@ -1088,7 +1088,13 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-    RETURN sys.dateadd_internal(datepart, num, startdate);
+    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.dateadd_internal_df(datepart, num,
+                     startdate);
+    ELSE
+        return sys.dateadd_internal(datepart, num,
+                     startdate);
+    END IF;
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1166,6 +1172,51 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
+/*
+    This function is needed when input date is datetimeoffset type. When running the following query in postgres using tsql dialect, it faied.
+        select dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset);
+    We tried to merge this function with sys.dateadd_internal by using '+' when adding interval to datetimeoffset, 
+    but the error shows : operator does not exist: sys.datetimeoffset + interval. As the result, we should not use '+' directly
+    but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
+*/
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.000001);
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
 BEGIN
     IF pg_typeof(startdate) = 'date'::regtype AND
@@ -1201,9 +1252,7 @@ BEGIN
 	WHEN 'millisecond' THEN
 		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
 	WHEN 'microsecond' THEN
-        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
-            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
-        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+        IF pg_typeof(startdate) = 'time'::regtype THEN
             RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
         ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
             RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
@@ -1213,9 +1262,7 @@ BEGIN
             RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
         END IF;
 	WHEN 'nanosecond' THEN
-        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
-            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
-        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+        IF pg_typeof(startdate) = 'time'::regtype THEN
             RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
         ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
             RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
@@ -1243,6 +1290,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1260,14 +1313,25 @@ BEGIN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		result = day_diff;
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = sys.datepart('hour', enddate) - sys.datepart('hour', startdate);
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
@@ -1329,6 +1393,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1346,14 +1416,25 @@ BEGIN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		result = day_diff;
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER;
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;

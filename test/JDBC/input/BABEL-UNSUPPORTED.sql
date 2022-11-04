@@ -1585,86 +1585,79 @@ GO
 DROP TABLE test_unsupported_geometry;
 GO
 
--- With escape_hatch_hierarchyid to ignore
--- Should throw a simple error message saying the datatype does not exist
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 GO
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_hierarchyid', 'ignore';
+
+--HIERARCHYID, GEOGRAPHY, GEOMETRY
+-- Create Type: Should throw detailed error messages
+CREATE TYPE [FolderHierarchy] AS TABLE( 
+	[FolderId] UNIQUEIDENTIFIER NULL,
+	[Name] NVARCHAR(225) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[PathLocator] HIERARCHYID NULL,
+	[ParentPathLocator] HIERARCHYID NULL,
+	[Level] INT NULL
+);
 GO
 
-CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
-GO
-DROP TABLE test_unsupported_rowversion;
-GO
-CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
-GO
-DROP TABLE test_unsupported_timestamp;
-GO
-CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
-GO
-DROP TABLE test_unsupported_hierarchyid;
-GO
-CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
-GO
-DROP TABLE test_unsupported_geography;
-GO
-CREATE TABLE test_unsupported_geometry(a GEOMETRY);
-GO
-DROP TABLE test_unsupported_geometry;
+CREATE TYPE [FolderGeography] AS TABLE( 
+	[FolderGeography_ID] UNIQUEIDENTIFIER NULL,
+	[FolderGeography_X] GEOGRAPHY NULL,
+	[FolderGeography_Y] GEOGRAPHY NULL
+);
 GO
 
--- With escape_hatch_geography to ignore
--- Should throw a simple error message saying the datatype does not exist
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_hierarchyid', 'strict';
-GO
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geography', 'ignore';
-GO
-
-CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
-GO
-DROP TABLE test_unsupported_rowversion;
-GO
-CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
-GO
-DROP TABLE test_unsupported_timestamp;
-GO
-CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
-GO
-DROP TABLE test_unsupported_hierarchyid;
-GO
-CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
-GO
-DROP TABLE test_unsupported_geography;
-GO
-CREATE TABLE test_unsupported_geometry(a GEOMETRY);
-GO
-DROP TABLE test_unsupported_geometry;
+CREATE TYPE [FolderGeometry] AS TABLE( 
+	[FolderGeometry_ID] UNIQUEIDENTIFIER NULL,
+	[FolderGeometry_Geometry] Geometry NULL
+);
 GO
 
--- With escape_hatch_geometry to ignore
--- Should throw a simple error message saying the datatype does not exist
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geography', 'strict';
-GO
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_geometry', 'ignore';
+-- Create Function: Should throw detailed error messages
+CREATE FUNCTION [func_hierarchyid]() RETURNS HIERARCHYID AS
+BEGIN
+RETURN NULL;
+END
 GO
 
-CREATE TABLE test_unsupported_rowversion(a ROWVERSION);
+CREATE FUNCTION [func_geography](@X float,@Y float) RETURNS GEOGRAPHY AS 
+BEGIN 
+IF (@X IS NULL OR @Y IS NULL OR (@X = 0 and @Y = 0)) RETURN NULL;
+IF (@X < -90) BEGIN SET @X=-90; END
+IF (@X > 90) BEGIN SET @X=90; END
+IF (@Y < -15069) BEGIN SET @Y=-15069; END
+IF (@Y > 15069) BEGIN SET @Y=15069; END
+RETURN GEOGRAPHY::Point(@X,@Y,4326);
+END
 GO
-DROP TABLE test_unsupported_rowversion;
+
+CREATE FUNCTION [func_geometry]() RETURNS GEOMETRY AS
+BEGIN
+RETURN NULL;
+END
 GO
-CREATE TABLE test_unsupported_timestamp(a TIMESTAMP);
+
+-- Variable Declaration: Should throw detailed error messages
+DECLARE @var_rowversion ROWVERSION;
 GO
-DROP TABLE test_unsupported_timestamp;
+DECLARE @var_timestamp TIMESTAMP;
 GO
-CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
+DECLARE @var_hierarchyid HIERARCHYID;
 GO
-DROP TABLE test_unsupported_hierarchyid;
+DECLARE @var_geography GEOGRAPHY;
 GO
-CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
+DECLARE @var_geometry GEOMETRY;
 GO
-DROP TABLE test_unsupported_geography;
+
+-- Create Procedure: Should throw detailed error messages
+CREATE PROCEDURE proc_hierarchyid (@var_hierarchyid2 HIERARCHYID) AS BEGIN PRINT CAST(@var_hierarchyid2 AS VARCHAR(10)) END;
 GO
-CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+DROP PROCEDURE proc_hierarchyid;
 GO
-DROP TABLE test_unsupported_geometry;
+CREATE PROCEDURE proc_geography (@var_geography2 GEOGRAPHY) AS BEGIN PRINT CAST(@var_geography2 AS VARCHAR(10)) END;
+GO
+DROP PROCEDURE proc_geography;
+GO
+CREATE PROCEDURE proc_geometry (@var_geometry2 GEOMETRY) AS BEGIN PRINT CAST(@var_geometry2 AS VARCHAR(10)) END;
+GO
+DROP PROCEDURE proc_geometry;
 GO
