@@ -253,15 +253,11 @@ transform_funcexpr(Node* node)
 static Node*
 transform_likenode(Node* node)
 {
-	ereport(LOG, (errmsg("Inside transform_likenode()")));
 	if (node && IsA(node, OpExpr))
 	{
-		ereport(LOG, (errmsg("Inside transform_likenode(). Node is an OpExpr")));
 		OpExpr	 *op = (OpExpr *) node;
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
-		ereport(LOG, (errmsg("Inside transform_likenode(). like_entry found.")));
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
-		ereport(LOG, (errmsg("Inside transform_likenode(). coll_info_of_inputcollid found.")));
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where the
 		 * constraint has an ILIKE operator and the collation is ci_as. But during
@@ -287,15 +283,12 @@ transform_likenode(Node* node)
 					op->inputcollid = DEFAULT_COLLATION_OID;
 					return node;
 				}
-				ereport(LOG, (errmsg("Inside transform_likenode(). collidx_of_cs_as found.")));
 				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-				ereport(LOG, (errmsg("Inside transform_likenode(). op->inputcollid found.")));					
 			}
 			else
 			{
 				/* If a collation is not specified, use the default one */
 				op->inputcollid = DEFAULT_COLLATION_OID;
-				ereport(LOG, (errmsg("Inside transform_likenode(). Using DEFAULT_COLLATION_OID.")));
 			}
 		}
 
@@ -304,7 +297,6 @@ transform_likenode(Node* node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
 		{
-			ereport(LOG, (errmsg("Inside transform_likenode(). LIKE expr and ci_as")));
 			Node*	   leftop = (Node *) linitial(op->args);
 			Node*	   rightop = (Node *) lsecond(op->args);
 			Oid		 ltypeId = exprType(leftop);
@@ -338,13 +330,11 @@ transform_likenode(Node* node)
 			 */
 			if (NOT_FOUND == collidx_of_cs_as)
 				return node;
-			ereport(LOG, (errmsg("Inside transform_likenode(). LIKE expr and ci_as. collidx_of_cs_as found")));
 			/* Change the opno and oprfuncid to ILIKE */
 			op->opno = like_entry.ilike_oid;
 			op->opfuncid = like_entry.ilike_opfuncid;
 
 			op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-			ereport(LOG, (errmsg("Inside transform_likenode(). LIKE expr and ci_as. op->inputcollid")));
 
 			/* no constant prefix found in pattern, or pattern is not constant */
 			if (IsA(leftop, Const) || !IsA(rightop, Const) ||
@@ -430,7 +420,6 @@ transform_likenode(Node* node)
 					ret = make_and_qual(node, constant_suffix);
 				}
 				ReleaseSysCache(optup);
-				ereport(LOG, (errmsg("Inside transform_likenode(). LIKE expr and ci_as. Pattern constructed. ")));
 				return ret;
 			}
 		}
@@ -445,13 +434,11 @@ Node* pltsql_predicate_transformer(Node *expr)
 
 	if(IsA(expr, OpExpr))
 	{
-		ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() OpExpr condition")));
 		/* Singleton predicate */
 		return transform_likenode(expr);
 	}
 	else
 	{
-		ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() BoolExpr condition")));
 		/* Nonsingleton predicate, which could either a BoolExpr
 		 * with a list of predicates or a simple List of
 		 * predicates.
@@ -478,7 +465,6 @@ Node* pltsql_predicate_transformer(Node *expr)
 		}
 		else if (IsA(expr, FuncExpr))
 		{
-			ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() FuncExpr condition")));
 			/*
 			 * This is performed even in the postgres dialect to handle babelfish CI_AS
 			 * collations so that regexp operators can work inside plpgsql functions
@@ -497,13 +483,11 @@ Node* pltsql_predicate_transformer(Node *expr)
 			Node *qual = (Node *) lfirst(lc);
 			if (is_andclause(qual) || is_orclause(qual))
 			{
-				ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() predicate is and/or clause")));
 				new_predicates = lappend(new_predicates,
 									pltsql_predicate_transformer(qual));
 			}
 			else if (IsA(qual, OpExpr))
 			{
-				ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() predicate is OpExpr")));
 				new_predicates = lappend(new_predicates,
 									transform_likenode(qual));
 			}
@@ -744,24 +728,17 @@ has_valid_coll_wrapper(Node *expr)
 		
 		if(IsA(predicate, OpExpr))
 		{
-			ereport(LOG, (errmsg("Inside has_valid_coll_wrapper() OpExpr condition")));
 			/* Initialize collation callbacks */
 			init_and_check_collation_callbacks();
-			ereport(LOG, (errmsg("Inside has_valid_coll_wrapper() after init-ing collation callbacks")));
 			if ((*collation_callbacks_ptr->has_valid_collation)(predicate, true))
-			{
-				ereport(LOG, (errmsg("Inside has_valid_coll_wrapper(). Expr has ci_as and ilike node (return true)")));
 				return true;
-			}
 				
 		}
 		else if (IsA(predicate, BoolExpr))
 		{
-			ereport(LOG, (errmsg("Inside has_valid_coll_wrapper() BoolExpr condition")));
 			BoolExpr   *boolexpr = (BoolExpr *) predicate;			
 			queue = list_concat(queue, boolexpr->args);
 		}
 	}
-	ereport(LOG, (errmsg("Inside has_valid_coll_wrapper() return false")));
 	return false;
 }
