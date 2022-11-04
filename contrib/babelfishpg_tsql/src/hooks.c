@@ -2980,6 +2980,7 @@ transform_like_in_add_constraint (Node* node)
 	}
 	PG_FINALLY();
 	{
+		ereport(LOG, (errmsg("Inside PG_finally in transform_like_in_add_constraint (hooks.c)")));
 		current_query_is_create_tbl_check_constraint = false;
 	}
 	PG_END_TRY();
