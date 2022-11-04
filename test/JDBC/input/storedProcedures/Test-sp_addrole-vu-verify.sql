@@ -29,7 +29,7 @@ GO
 EXEC sp_addrole 'sp_addrole_user';
 GO
 
--- Creates role even if it contains leading/trailing spaces, special characters(except \)
+-- Creates role even if rolename contains leading/trailing spaces, special characters(except \) by removing trailing spaces
 EXEC sp_addrole '   @sp_addrole_r2   ';
 GO
 
@@ -52,4 +52,9 @@ GO
 SELECT rolname, type, orig_username, database_name
 FROM sys.babelfish_authid_user_ext
 WHERE orig_username = 'sp_addrole_r3'
+GO
+
+SELECT rolname, type, orig_username, database_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'SP_ADDROLE_R3'
 GO

@@ -1,5 +1,5 @@
 -- tsql
-CREATE ROLE sp_addrolemember_r1;
+CREATE ROLE SP_ADDROLEMEMBER_R1;
 GO
 
 CREATE ROLE sp_addrolemember_r2;
@@ -42,7 +42,7 @@ GO
 Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_role_doesnot_exist';
 GO
 
--- Throw an error when role doesn't exist or when an user/login is passed
+-- Throw an error when role doesn't exist or when an user/login is passed as rolename
 Exec sp_addrolemember 'sp_addrolemember_role_doesnot_exist', 'sp_addrolemember_r1';
 GO
 
@@ -73,4 +73,25 @@ GO
 
 -- Check whether sp_addrolemember_user is rolemember of sp_addrolemember_r1
 SELECT IS_ROLEMEMBER('sp_addrolemember_r1', 'sp_addrolemember_user')
+GO
+
+-- case insensitivity check
+-- role 'sp_addrolemember_r1', 'sp_addrolemember_r2' exists in DB
+Exec sp_addrolemember 'SP_ADDROLEMEMBER_R1', 'sp_addrolemember_r2';
+GO
+
+Exec sp_addrolemember 'sp_addrolemember_r1', 'SP_ADDROLEMEMBER_R2';
+GO
+
+-- procedure does not remove leading spaces but removes trailing whitespaces if exists in rolename/membername
+Exec sp_addrolemember ' sp_addrolemember_r1', 'sp_addrolemember_r2';
+GO
+
+Exec sp_addrolemember 'sp_addrolemember_r1 ', 'sp_addrolemember_r2';
+GO
+
+Exec sp_addrolemember 'sp_addrolemember_r1', ' sp_addrolemember_r2';
+GO
+
+Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r2 ';
 GO

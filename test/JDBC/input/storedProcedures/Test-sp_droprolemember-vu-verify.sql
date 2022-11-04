@@ -70,3 +70,24 @@ GO
 -- Test whether sp_droprolemember_user is rolemember of sp_droprolemember_r1
 SELECT IS_ROLEMEMBER('sp_droprolemember_r1', 'sp_droprolemember_user')
 GO
+
+-- case insensitivity check
+-- role 'sp_droprolemember_r1', 'sp_droprolemember_r2' exists in DB
+Exec sp_droprolemember 'SP_DROPROLEMEMBER_R1', 'sp_droprolemember_r2';
+GO
+
+Exec sp_droprolemember 'sp_droprolemember_r1', 'SP_DROPROLEMEMBER_R2';
+GO
+
+-- procedure does not remove leading spaces but removes trailing whitespaces if exists in rolename/membername
+Exec sp_droprolemember ' sp_droprolemember_r1', 'sp_droprolemember_r2';
+GO
+
+Exec sp_droprolemember 'sp_droprolemember_r1 ', 'sp_droprolemember_r2';
+GO
+
+Exec sp_droprolemember 'sp_droprolemember_r1', ' sp_droprolemember_r2';
+GO
+
+Exec sp_droprolemember 'sp_droprolemember_r1', 'sp_droprolemember_r2 ';
+GO

@@ -1467,6 +1467,7 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 Datum sp_addrole(PG_FUNCTION_ARGS)
 {
 	char *rolname, *lowercase_rolname;
+	size_t len;
 	char *physical_role_name;
 	Oid role_oid;
 	List *parsetree_list;
@@ -1494,6 +1495,10 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
 		lowercase_rolname = lowerstr(rolname);
 
+		/* Remove trailing whitespaces */
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
+
 		/* Map the logical role name to its physical name in the database.*/
 		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
 		role_oid = get_role_oid(physical_role_name, true);
@@ -1504,10 +1509,14 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("User, group, or role '%s' already exists in the current database.", rolname)));
 
+		/* Remove trailing whitespaces */
+		len = strlen(rolname);
+		while(isspace(rolname[len - 1])) rolname[--len] = 0;
+
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		parsetree_list = gen_sp_addrole_subcmds(lowercase_rolname);
+		parsetree_list = gen_sp_addrole_subcmds(rolname);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
@@ -1575,7 +1584,7 @@ gen_sp_addrole_subcmds(const char *user)
 	if (!IsA(rolestmt, CreateRoleStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
 
-	rolestmt->role = pstrdup(user);
+	rolestmt->role = pstrdup(lowerstr(user));
 	rewrite_object_refs(stmt);
 
 	/*
@@ -1595,6 +1604,7 @@ gen_sp_addrole_subcmds(const char *user)
 Datum sp_droprole(PG_FUNCTION_ARGS)
 {
 	char *rolname, *lowercase_rolname;
+	size_t len;
 	char *physical_role_name;
 	Oid role_oid;
 	List *parsetree_list;
@@ -1616,6 +1626,10 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 
 		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
 		lowercase_rolname = lowerstr(rolname);
+
+		/* Remove trailing whitespaces */
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
 
 		/* Map the logical role name to its physical name in the database.*/
 		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
@@ -1712,6 +1726,7 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 {
 	char *rolname, *lowercase_rolname;
 	char *membername, *lowercase_membername;
+	size_t len;
 	char *physical_member_name;
 	char *physical_role_name;
 	Oid role_oid, member_oid;
@@ -1736,6 +1751,12 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 		/* Ensure the database name input argument is lower-case, as all Babel role names, user names are lower-case */
 		lowercase_rolname = lowerstr(rolname);
 		lowercase_membername = lowerstr(membername);
+
+		/* Remove trailing whitespaces in rolename and membername*/
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
+		len = strlen(lowercase_membername);
+		while(isspace(lowercase_membername[len - 1])) lowercase_membername[--len] = 0;
 
 		/* Throws an error if role name and member name are same*/
 		if(strcmp(lowercase_rolname,lowercase_membername)==0)
@@ -1858,6 +1879,7 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 {
 	char *rolname, *lowercase_rolname;
 	char *membername, *lowercase_membername;
+	size_t len;
 	char *physical_name;
 	Oid role_oid;
 	List *parsetree_list;
@@ -1882,6 +1904,12 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 		lowercase_rolname = lowerstr(rolname);
 		lowercase_membername = lowerstr(membername);
 
+		/* Remove trailing whitespaces in rolename and membername*/
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
+		len = strlen(lowercase_membername);
+		while(isspace(lowercase_membername[len - 1])) lowercase_membername[--len] = 0;
+
 		/* Map the logical role name to its physical name in the database.*/
 		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
 		role_oid = get_role_oid(physical_name, true);
@@ -1905,7 +1933,7 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		parsetree_list = gen_sp_droprolemember_subcmds(rolname, membername);
+		parsetree_list = gen_sp_droprolemember_subcmds(lowercase_rolname, lowercase_membername);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)

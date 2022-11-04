@@ -3,6 +3,7 @@ DROP ROLE sp_addrole_r3;
 GO
 
 -- Cannot drop the role name contains leading/trailing whitespaces, special characters using DROP ROLE cmd
+-- sp_droprole procedure removes trailing spaces
 Exec sp_droprole '   @sp_addrole_r2   ';
 GO
 
