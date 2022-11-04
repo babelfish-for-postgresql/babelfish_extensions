@@ -90,6 +90,7 @@ sys-syscharsets
 sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
+sys-system_sql_modules
 sys-system_sql_modules-dep
 sys-table_types
 sys-tables

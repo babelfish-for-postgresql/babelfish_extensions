@@ -217,6 +217,7 @@ sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
 sys-sql_modules-dep
+sys-system_sql_modules
 sys-system_sql_modules-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
