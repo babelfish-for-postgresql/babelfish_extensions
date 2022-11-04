@@ -284,6 +284,8 @@
 							case TSQL_BASE64:
 							case TSQL_ROOT:
 							case TSQL_PROC:
+							case TSQL_INCLUDE_NULL_VALUES:
+							case TSQL_WITHOUT_ARRAY_WRAPPER:
 							case TSQL_IIF:
 							case TSQL_NOCHECK:
 							case TSQL_NOLOCK:
