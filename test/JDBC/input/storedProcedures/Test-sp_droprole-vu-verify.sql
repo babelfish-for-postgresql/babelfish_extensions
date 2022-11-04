@@ -22,7 +22,10 @@ EXEC sp_droprole '','','';
 GO
 
 --Throws an error if the argument is empty or contains backslash(\)
-Exec sp_droprole '';
+EXEC sp_droprole '';
+GO
+
+EXEC sp_droprole NULL;
 GO
 
 --Throw an error when passed argument is not an role

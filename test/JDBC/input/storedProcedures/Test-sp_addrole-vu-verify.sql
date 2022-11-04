@@ -9,6 +9,9 @@ CREATE USER sp_addrole_user FOR LOGIN sp_addrole_login;
 GO
 
 --Throws an error if the argument is empty or contains backslash(\)
+EXEC sp_addrole NULL;
+GO
+
 EXEC sp_addrole '';
 GO
 

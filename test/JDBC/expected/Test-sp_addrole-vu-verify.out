@@ -9,6 +9,13 @@ CREATE USER sp_addrole_user FOR LOGIN sp_addrole_login;
 GO
 
 --Throws an error if the argument is empty or contains backslash(\)
+EXEC sp_addrole NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
 EXEC sp_addrole '';
 GO
 ~~ERROR (Code: 33557097)~~

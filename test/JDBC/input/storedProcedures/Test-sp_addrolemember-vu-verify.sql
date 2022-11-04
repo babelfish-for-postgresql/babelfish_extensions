@@ -25,6 +25,15 @@ EXEC sp_addrolemember '','','';
 GO
 
 -- Throw an error is role/member is empty
+EXEC sp_addrolemember NULL, NULL;
+GO
+
+EXEC sp_addrolemember 'sp_addrolemember_role_doesnot_exist', NULL;
+GO
+
+EXEC sp_addrolemember NULL, 'sp_addrolemember_role_doesnot_exist';
+GO
+
 EXEC sp_addrolemember '', '';
 GO
 

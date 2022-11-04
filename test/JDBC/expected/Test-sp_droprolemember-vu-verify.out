@@ -63,6 +63,27 @@ GO
 ~~ERROR (Message: Name cannot be NULL.)~~
 
 
+EXEC sp_droprolemember NULL, NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
+EXEC sp_droprolemember 'sp_droprolemember_role_doesnot_exist', NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
+EXEC sp_droprolemember NULL, 'sp_droprolemember_role_doesnot_exist';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
 -- Throw an error if member does not exist
 EXEC sp_droprolemember 'sp_droprolemember_r1', 'sp_droprolemember_role_doesnot_exist';
 GO

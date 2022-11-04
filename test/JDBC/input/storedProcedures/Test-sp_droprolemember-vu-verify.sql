@@ -39,6 +39,15 @@ GO
 EXEC sp_droprolemember '', 'sp_droprolemember_role_doesnot_exist';
 GO
 
+EXEC sp_droprolemember NULL, NULL;
+GO
+
+EXEC sp_droprolemember 'sp_droprolemember_role_doesnot_exist', NULL;
+GO
+
+EXEC sp_droprolemember NULL, 'sp_droprolemember_role_doesnot_exist';
+GO
+
 -- Throw an error if member does not exist
 EXEC sp_droprolemember 'sp_droprolemember_r1', 'sp_droprolemember_role_doesnot_exist';
 GO

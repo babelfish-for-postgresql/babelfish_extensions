@@ -1483,7 +1483,7 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 		/* Role name is not NULL */
-		if (strlen(rolname) == 0)
+		if (rolname == NULL || strlen(rolname) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
@@ -1620,7 +1620,7 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 		/* Role name is not NULL */
-		if (strlen(rolname) == 0)
+		if (rolname == NULL || strlen(rolname) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
@@ -1744,7 +1744,7 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name, member name is not NULL */
-		if ((strlen(rolname) == 0) || (strlen(membername) == 0))
+		if ((rolname == NULL || membername ==NULL) || (strlen(rolname) == 0) || (strlen(membername) == 0))
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
@@ -1896,7 +1896,7 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name, member name is not NULL */
-		if ((strlen(rolname) == 0) || (strlen(membername) == 0))
+		if ((rolname == NULL || membername ==NULL) || (strlen(rolname) == 0) || (strlen(membername) == 0))
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
