@@ -45,6 +45,9 @@ GO
 EXEC sp_addrole 'SP_ADDROLE_R3';
 GO
 
+select name from sys.database_principals where name = 'SP_ADDROLE_R3';
+GO
+
 -- Throws an error when role exists
 EXEC sp_addrole 'SP_ADDROLE_R3';
 GO
