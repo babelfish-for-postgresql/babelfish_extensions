@@ -4121,15 +4121,15 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_ta
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
 
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 int, IN arg2 int)
-RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(int,int) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 int)
-RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(int) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 int)
-RETURNS int  AS 'babelfishpg_tsql','int_degrees' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(int) TO PUBLIC;
 
 
