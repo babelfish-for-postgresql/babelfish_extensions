@@ -288,6 +288,10 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 				case XML_P:
 					cur_token = TSQL_FOR;
 					break;
+				
+				case TSQL_JSON:
+					cur_token = TSQL_FOR;
+					break;
 			}
 			break;
 		case SERVER:

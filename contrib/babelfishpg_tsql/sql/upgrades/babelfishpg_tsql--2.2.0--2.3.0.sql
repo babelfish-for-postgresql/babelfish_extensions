@@ -3582,6 +3582,12 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
+-- Helper function to support the FOR JSON clause
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_text(query text, mode int, include_null_value boolean,
+           without_array_wrappers boolean, root_name text)
+RETURNS sys.NVARCHAR(4000)
+AS 'babelfishpg_tsql', 'tsql_query_to_json_text'
+LANGUAGE C IMMUTABLE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
