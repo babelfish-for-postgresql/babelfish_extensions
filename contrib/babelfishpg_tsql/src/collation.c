@@ -282,11 +282,14 @@ transform_likenode(Node* node)
 				collidx_of_cs_as =
 					tsql_find_cs_as_collation_internal(
 						tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+				if (NOT_FOUND == collidx_of_cs_as)
+				{
+					op->inputcollid = DEFAULT_COLLATION_OID;
+					return node;
+				}
 				ereport(LOG, (errmsg("Inside transform_likenode(). collidx_of_cs_as found.")));
 				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-				ereport(LOG, (errmsg("Inside transform_likenode(). op->inputcollid found.")));
-				if (NOT_FOUND == collidx_of_cs_as)
-					return node;
+				ereport(LOG, (errmsg("Inside transform_likenode(). op->inputcollid found.")));					
 			}
 			else
 			{
