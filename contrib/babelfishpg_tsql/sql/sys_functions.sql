@@ -1359,9 +1359,9 @@ BEGIN
 		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
 		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
 		result = year_diff * 12 + month_diff;
-    -- for all intervals smaller than month, (DATE - DATE) already returns the integer number of days
-    -- between the dates, so just use that directly as the day_diff. There is no finer resolution
-    -- than days with the DATE type anyways.
+	-- for all intervals smaller than month, (DATE - DATE) already returns the integer number of days
+	-- between the dates, so just use that directly as the day_diff. There is no finer resolution
+	-- than days with the DATE type anyways.
 	WHEN 'doy', 'y' THEN
 		day_diff = enddate - startdate;
 		result = day_diff;
