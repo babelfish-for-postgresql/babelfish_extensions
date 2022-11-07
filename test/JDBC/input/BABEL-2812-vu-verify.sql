@@ -106,7 +106,7 @@ SELECT datediff(quarter, CAST('2015-12-31' as date), cast('2016-12-28' as date))
 GO
 SELECT datediff(month, CAST('2015-12-31' as date), cast('2016-12-28' as date));
 GO
--- datediff(week) is not 100% the same as SQL Server, needs to be fixed
+-- datediff(week) is not 100% the same as SQL Server, needs to be fixed - should return 52
 SELECT datediff(week, CAST('2015-12-31' as date), cast('2016-12-28' as date));
 GO
 SELECT datediff(y, CAST('2015-12-31' as date), cast('2016-12-28' as date));
