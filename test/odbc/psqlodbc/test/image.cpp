@@ -14,7 +14,7 @@ const string COL2_NAME = "data";
 const string DATATYPE_NAME = "sys.image";
 const string VIEW_NAME = "master_dbo.image_view_odbc_test";
 
-// Relative to where `./build/main` is ran
+// Relative to where calling the exectable
 const std::string INSERTED_FILE_PATH = "psqlodbc/Images/Black.png";
 const std::string UPDATED_FILE_PATH = "psqlodbc/Images/circle.png";
 static string INSERTED_IMAGE_HEX_STR;
@@ -179,7 +179,6 @@ TEST_F(PSQL_DataTypes_Image, View_creation) {
   dropObject(ServerType::PSQL, "VIEW", VIEW_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
-
 
 // BBF supports DATALENGTH() operator for sys.image but PG does not support sys.DATALENGTH()
 // since sys.DATALENGTH() has explicitly support 3 sys schema datatypes char,text and sql_variant
