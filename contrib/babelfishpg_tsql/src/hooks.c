@@ -1271,7 +1271,6 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 	Oid				reloid;
 	Relation		relation = NULL;
 	const char		*pg_trigger_physical_schema = NULL;
-	const char		*pg_trigger_logical_schema = NULL;
 	const char 		*cur_physical_schema = NULL;
 	const char		*tsql_trigger_physical_schema = NULL;
 	const char		*tsql_trigger_logical_schema = NULL;
@@ -1320,7 +1319,6 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-			pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
 			if(strcasecmp(pg_trigger_physical_schema,cur_physical_schema) == 0)
 			{
 				trigger_rel_oid = reloid;
@@ -2185,7 +2183,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		char *func_name_start, *temp;
 		const char *funcname = NameStr(form_proctup->proname);
 
-		func_name_start = queryString + origname_location;
+		func_name_start = (char *) queryString + origname_location;
 
 		/*
 		 * Could be the case that the fully qualified name is included,
