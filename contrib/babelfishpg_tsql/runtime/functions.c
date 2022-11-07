@@ -1195,46 +1195,46 @@ babelfish_integrity_checker(PG_FUNCTION_ARGS)
 Datum
 int_power(PG_FUNCTION_ARGS)
  {
-     int32    arg1 = PG_GETARG_INT32(0);
-     int32    arg2 = PG_GETARG_INT32(1);
-     float8  result;
+    int64    arg1 = PG_GETARG_INT64(0);
+    int64    arg2 = PG_GETARG_INT64(1);
+    float8  result;
 
-     result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
+    result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
 
-	 if (result < 0)
+	if (result < 0)
      	result = ceil(result);
-	 else
+	else
     	result = floor(result);
 
-	 /* Range check */
-	 if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
+	/* Range check */
+	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
 		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			errmsg("integer out of range")));
 
-     PG_RETURN_INT32((int32)result);
+    PG_RETURN_INT64((int64)result);
 	 
  }
 
 Datum
 int_radians(PG_FUNCTION_ARGS)
  {
-     int32    arg1 = PG_GETARG_INT32(0);
-     float8  result;
+    int64    arg1 = PG_GETARG_INT64(0);
+    float8  result;
 
-     result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+    result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
 
-     PG_RETURN_INT32((int32)result);
+    PG_RETURN_INT64((int64)result);
 	 
  }
 
  Datum
 int_degrees(PG_FUNCTION_ARGS)
  {
-     int32    arg1 = PG_GETARG_INT32(0);
-     float8  result;
+    int64    arg1 = PG_GETARG_INT64(0);
+    float8  result;
 	 
-     result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
+    result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
 
 	if (result < 0)
      	result = ceil(result);
@@ -1242,10 +1242,10 @@ int_degrees(PG_FUNCTION_ARGS)
     	result = floor(result);
 
 	 /* Range check */
-	 if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
+	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
+				errmsg("integer out of range")));
 
-     PG_RETURN_INT32((int32)result);
+    PG_RETURN_INT64((int64)result);
  }
