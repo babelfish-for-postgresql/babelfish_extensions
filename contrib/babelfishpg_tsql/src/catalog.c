@@ -1316,6 +1316,7 @@ static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc r
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static void create_guest_role_for_db(char *dbname);
+static char *get_db_owner_role_name(char *dbname);
 
 /*****************************************
  * 			Catalog Extra Info
@@ -2181,7 +2182,7 @@ static void
 create_guest_role_for_db(char *dbname)
 {
 	const char		*guest = get_guest_role_name(dbname);
-	const char		*db_owner_role = get_db_owner_name(dbname);
+	const char		*db_owner_role = get_db_owner_role_name(dbname);
 	List			*logins = NIL;
 	List			*res;
 	StringInfoData	query;
@@ -2201,6 +2202,7 @@ create_guest_role_for_db(char *dbname)
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
+	pfree(db_owner_role);
 
 	if (list_length(logins) > 0)
 	{
@@ -2264,4 +2266,43 @@ create_guest_role_for_db(char *dbname)
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
+}
+
+/*
+ * Retrieve the db_owner role name of a specific
+ * database from the catalog, it doesn't rely on the
+ * migration mode GUC.
+ */
+static char *
+get_db_owner_role_name(char *dbname)
+{
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple_user_ext;
+	ScanKeyData		key[2];
+	TableScanDesc		scan;
+	char		*db_owner_role = NULL;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_orig_username,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum("db_owner"));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(dbname));
+
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+		{
+			Form_authid_user_ext userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
+			db_owner_role = pstrdup(NameStr(userform->rolname));
+		}
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	return db_owner_role;
 }

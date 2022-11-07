@@ -170,7 +170,7 @@ sp_babelfish_configure(PG_FUNCTION_ARGS)
 	MemoryContext savedPortalCxt;
 
 	/* SPI call input */
-	const char* query = "SELECT name, setting, short_desc from pg_settings where name like 'babelfish%%escape_hatch%%' AND name like $1";
+	const char* query = "SELECT name, setting, short_desc FROM sys.babelfish_configurations_view WHERE name like $1";
 	Datum arg;
 	Oid argoid = TEXTOID;
 	char nulls = 0;
