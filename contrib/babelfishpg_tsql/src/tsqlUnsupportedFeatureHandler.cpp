@@ -1237,8 +1237,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For
 		if (!ctx->XMLDATA().empty())
 			handle(INSTR_UNSUPPORTED_TSQL_XMLDATA, "XMLDATA", getLineAndPos(ctx->XMLDATA()[0]));
 	}
-	else if (ctx->JSON())
-		handle(INSTR_UNSUPPORTED_TSQL_FOR_JSON_CLAUSE, "FOR JSON", getLineAndPos(ctx->JSON()));
 	return visitChildren(ctx);
 }
 

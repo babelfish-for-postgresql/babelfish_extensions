@@ -11,6 +11,13 @@ RETURNS ntext
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_text'
 LANGUAGE C IMMUTABLE STRICT COST 100;
 
+-- Helper function to support the FOR JSON clause
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_text(query text, mode int, include_null_value boolean,
+           without_array_wrappers boolean, root_name text)
+RETURNS sys.NVARCHAR(4000)
+AS 'babelfishpg_tsql', 'tsql_query_to_json_text'
+LANGUAGE C IMMUTABLE COST 100;
+
 -- User and Login Functions
 CREATE OR REPLACE FUNCTION sys.user_name(IN id OID DEFAULT NULL)
 RETURNS sys.NVARCHAR(128)
