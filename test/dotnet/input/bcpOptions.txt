@@ -74,18 +74,6 @@ Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
 
-# -k keep_nulls
-Create table sourceTable(a smallint, b smallint not null)
-Create table destinationTable(a smallint, b smallint not null)
-Insert into sourceTable values (1, 1);
-Insert into sourceTable values (NULL, 2);
-bcp -k#!#out#!#bcp_source#!#sourceTable
-bcp -k#!#in#!#bcp_source#!#destinationTable
-Select * from sourceTable
-Select * from destinationTable
-drop table sourceTable
-drop table destinationTable
-
 # -n native datatype
 Create table sourceTable(a int, b int not null)
 Create table destinationTable(a int, b int not null)
@@ -273,6 +261,93 @@ Insert into sourceTable values (1, 1);
 Insert into sourceTable values (NULL, 2);
 bcp -w#!#out#!#bcp_source#!#sourceTable
 bcp -w#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -k keep_nulls
+Create table sourceTable(a int, b int)
+Create table destinationTable1(a int, b int default(4))
+Create table destinationTable2(a int, b int default(4))
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (1, NULL);
+Insert into sourceTable values (NULL, 1);
+Insert into sourceTable values (NULL, NULL);
+Insert into sourceTable(a) values (2);
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable1
+bcp#!#in#!#bcp_source#!#destinationTable2
+Select * from sourceTable
+Select * from destinationTable1
+Select * from destinationTable2
+drop table sourceTable
+drop table destinationTable1
+drop table destinationTable2
+
+Create table sourceTable(a int, b int default(4))
+Create table destinationTable1(a int, b int default(4))
+Create table destinationTable2(a int, b int default(4))
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (1, NULL);
+Insert into sourceTable values (NULL, 1);
+Insert into sourceTable values (NULL, NULL);
+Insert into sourceTable(a) values (2);
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable1
+bcp#!#in#!#bcp_source#!#destinationTable2
+Select * from sourceTable
+Select * from destinationTable1
+Select * from destinationTable2
+drop table sourceTable
+drop table destinationTable1
+drop table destinationTable2
+
+#computed columns
+Create table sourceTable(a int, b int,c as a * b)
+Create table destinationTable(a int, b int,c as a * b)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (2, 2);
+Insert into sourceTable values (NULL, 2);
+Insert into sourceTable values (2, NULL);
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int,c as a + b)
+Create table destinationTable(a int, b int,c as a - b)
+Insert into sourceTable values (1, 3);
+Insert into sourceTable values (2, 6);
+Insert into sourceTable values (NULL, 2);
+Insert into sourceTable values (2, NULL);
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b int,c as a + b)
+Create table destinationTable(a int, b int,c as a - b)
+Insert into sourceTable values (1, 3);
+Insert into sourceTable values (2, 6);
+Insert into sourceTable values (NULL, 2);
+Insert into sourceTable values (2, NULL);
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+create table sourceTable(a date, b as DATEADD(year,60,a))
+create table destinationTable(a date, b as DATEADD(year,60,a))
+insert into sourceTable values ('01-01-2000')
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
 Select * from sourceTable
 Select * from destinationTable
 drop table sourceTable

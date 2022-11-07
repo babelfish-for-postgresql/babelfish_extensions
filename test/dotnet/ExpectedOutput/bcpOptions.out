@@ -102,22 +102,6 @@ bcp -m 1#!#in#!#bcp_source#!#destinationTable
 #!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
-#Q#Create table sourceTable(a smallint, b smallint not null)
-#Q#Create table destinationTable(a smallint, b smallint not null)
-#Q#Insert into sourceTable values (1, 1);
-#Q#Insert into sourceTable values (NULL, 2);
-bcp -k#!#out#!#bcp_source#!#sourceTable
-bcp -k#!#in#!#bcp_source#!#destinationTable
-#Q#Select * from sourceTable
-#D#smallint#!#smallint
-1#!#1
-#!#2
-#Q#Select * from destinationTable
-#D#smallint#!#smallint
-1#!#1
-#!#2
-#Q#drop table sourceTable
-#Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int not null)
 #Q#Create table destinationTable(a int, b int not null)
 #Q#Insert into sourceTable values (1, 1);
@@ -364,5 +348,154 @@ bcp -w#!#in#!#bcp_source#!#destinationTable
 #D#bigint#!#bigint
 1#!#1
 #!#2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int)
+#Q#Create table destinationTable1(a int, b int default(4))
+#Q#Create table destinationTable2(a int, b int default(4))
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (1, NULL);
+#Q#Insert into sourceTable values (NULL, 1);
+#Q#Insert into sourceTable values (NULL, NULL);
+#Q#Insert into sourceTable(a) values (2);
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable1
+bcp#!#in#!#bcp_source#!#destinationTable2
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+1#!#
+#!#1
+#!#
+2#!#
+#Q#Select * from destinationTable1
+#D#int#!#int
+1#!#1
+1#!#
+#!#1
+#!#
+2#!#
+#Q#Select * from destinationTable2
+#D#int#!#int
+1#!#1
+1#!#4
+#!#1
+#!#4
+2#!#4
+#Q#drop table sourceTable
+#Q#drop table destinationTable1
+#Q#drop table destinationTable2
+#Q#Create table sourceTable(a int, b int default(4))
+#Q#Create table destinationTable1(a int, b int default(4))
+#Q#Create table destinationTable2(a int, b int default(4))
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (1, NULL);
+#Q#Insert into sourceTable values (NULL, 1);
+#Q#Insert into sourceTable values (NULL, NULL);
+#Q#Insert into sourceTable(a) values (2);
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable1
+bcp#!#in#!#bcp_source#!#destinationTable2
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+1#!#
+#!#1
+#!#
+2#!#4
+#Q#Select * from destinationTable1
+#D#int#!#int
+1#!#1
+1#!#
+#!#1
+#!#
+2#!#4
+#Q#Select * from destinationTable2
+#D#int#!#int
+1#!#1
+1#!#4
+#!#1
+#!#4
+2#!#4
+#Q#drop table sourceTable
+#Q#drop table destinationTable1
+#Q#drop table destinationTable2
+#Q#Create table sourceTable(a int, b int,c as a * b)
+#Q#Create table destinationTable(a int, b int,c as a * b)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (2, 2);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#Insert into sourceTable values (2, NULL);
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int#!#int
+1#!#1#!#1
+2#!#2#!#4
+#!#2#!#
+2#!##!#
+#Q#Select * from destinationTable
+#D#int#!#int#!#int
+1#!#1#!#1
+2#!#2#!#4
+#!#2#!#
+2#!##!#
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int,c as a + b)
+#Q#Create table destinationTable(a int, b int,c as a - b)
+#Q#Insert into sourceTable values (1, 3);
+#Q#Insert into sourceTable values (2, 6);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#Insert into sourceTable values (2, NULL);
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int#!#int
+1#!#3#!#4
+2#!#6#!#8
+#!#2#!#
+2#!##!#
+#Q#Select * from destinationTable
+#D#int#!#int#!#int
+1#!#3#!#-2
+2#!#6#!#-4
+#!#2#!#
+2#!##!#
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int,c as a + b)
+#Q#Create table destinationTable(a int, b int,c as a - b)
+#Q#Insert into sourceTable values (1, 3);
+#Q#Insert into sourceTable values (2, 6);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#Insert into sourceTable values (2, NULL);
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int#!#int
+1#!#3#!#4
+2#!#6#!#8
+#!#2#!#
+2#!##!#
+#Q#Select * from destinationTable
+#D#int#!#int#!#int
+1#!#3#!#-2
+2#!#6#!#-4
+#!#2#!#
+2#!##!#
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#create table sourceTable(a date, b as DATEADD(year,60,a))
+#Q#create table destinationTable(a date, b as DATEADD(year,60,a))
+#Q#insert into sourceTable values ('01-01-2000')
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#date#!#date
+01/01/2000 00:00:00#!#01/01/2060 00:00:00
+#Q#Select * from destinationTable
+#D#date#!#date
+01/01/2000 00:00:00#!#01/01/2060 00:00:00
 #Q#drop table sourceTable
 #Q#drop table destinationTable
