@@ -23,6 +23,9 @@ GO
 EXEC sp_droprolemember;
 GO
 
+EXEC sp_droprolemember NULL;
+GO
+
 EXEC sp_droprolemember '';
 GO
 
@@ -62,6 +65,9 @@ GO
 EXEC sp_droprolemember 'sp_droprolemember_login', 'sp_droprolemember_r1';
 GO
 
+EXEC sp_droprolemember 'sp_droprolemember_role_doesnot_exist_1', 'sp_droprolemember_role_doesnot_exist_2';
+GO
+
 -- Test whether sp_droprolemember_r2 is rolemember of sp_droprolemember_r1
 SELECT IS_ROLEMEMBER('sp_droprolemember_r1', 'sp_droprolemember_r2')
 GO
@@ -82,21 +88,21 @@ GO
 
 -- case insensitivity check
 -- role 'sp_droprolemember_r1', 'sp_droprolemember_r2' exists in DB
-Exec sp_droprolemember 'SP_DROPROLEMEMBER_R1', 'sp_droprolemember_r2';
+EXEC sp_droprolemember 'SP_DROPROLEMEMBER_R1', 'sp_droprolemember_r2';
 GO
 
-Exec sp_droprolemember 'sp_droprolemember_r1', 'SP_DROPROLEMEMBER_R2';
+EXEC sp_droprolemember 'sp_droprolemember_r1', 'SP_DROPROLEMEMBER_R2';
 GO
 
 -- procedure does not remove leading spaces but removes trailing whitespaces if exists in rolename/membername
-Exec sp_droprolemember ' sp_droprolemember_r1', 'sp_droprolemember_r2';
+EXEC sp_droprolemember ' sp_droprolemember_r1', 'sp_droprolemember_r2';
 GO
 
-Exec sp_droprolemember 'sp_droprolemember_r1 ', 'sp_droprolemember_r2';
+EXEC sp_droprolemember 'sp_droprolemember_r1 ', 'sp_droprolemember_r2';
 GO
 
-Exec sp_droprolemember 'sp_droprolemember_r1', ' sp_droprolemember_r2';
+EXEC sp_droprolemember 'sp_droprolemember_r1', ' sp_droprolemember_r2';
 GO
 
-Exec sp_droprolemember 'sp_droprolemember_r1', 'sp_droprolemember_r2 ';
+EXEC sp_droprolemember 'sp_droprolemember_r1', 'sp_droprolemember_r2 ';
 GO

@@ -18,6 +18,9 @@ GO
 EXEC sp_addrolemember;
 GO
 
+EXEC sp_addrolemember NULL;
+GO
+
 EXEC sp_addrolemember '';
 GO
 
@@ -44,28 +47,32 @@ EXEC sp_addrolemember '', 'sp_addrolemember_role_doesnot_exist';
 GO
 
 -- Throw an error when same roles are passed
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r1';
 GO
 
 -- Throw an error when member doesn't exist
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_role_doesnot_exist';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_role_doesnot_exist';
 GO
 
 -- Throw an error when role doesn't exist or when an user/login is passed as rolename
-Exec sp_addrolemember 'sp_addrolemember_role_doesnot_exist', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_role_doesnot_exist', 'sp_addrolemember_r1';
 GO
 
-Exec sp_addrolemember 'sp_addrolemember_user', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_user', 'sp_addrolemember_r1';
 GO
 
-Exec sp_addrolemember 'sp_addrolemember_login', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_login', 'sp_addrolemember_r1';
+GO
+
+-- Throw an error when both role and member doesn't exist
+EXEC sp_addrolemember 'sp_addrolemember_role_doesnot_exist_1', 'sp_addrolemember_role_doesnot_exist_2';
 GO
 
 -- Check whether sp_addrolemember_r2 is rolemember of sp_addrolemember_r1
 SELECT IS_ROLEMEMBER('sp_addrolemember_r1', 'sp_addrolemember_r2')
 GO
 
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r2';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r2';
 GO
 
 -- Check whether sp_addrolemember_r2 is rolemember of sp_addrolemember_r1
@@ -73,11 +80,11 @@ SELECT IS_ROLEMEMBER('sp_addrolemember_r1', 'sp_addrolemember_r2')
 GO
 
 -- Throw an error if role is already a member of member
-Exec sp_addrolemember 'sp_addrolemember_r2', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_r2', 'sp_addrolemember_r1';
 GO
 
 -- Can add user, role or group as an member for a role
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_user';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_user';
 GO
 
 -- Check whether sp_addrolemember_user is rolemember of sp_addrolemember_r1
@@ -86,21 +93,21 @@ GO
 
 -- case insensitivity check
 -- role 'sp_addrolemember_r1', 'sp_addrolemember_r2' exists in DB
-Exec sp_addrolemember 'SP_ADDROLEMEMBER_R1', 'sp_addrolemember_r2';
+EXEC sp_addrolemember 'SP_ADDROLEMEMBER_R1', 'sp_addrolemember_r2';
 GO
 
-Exec sp_addrolemember 'sp_addrolemember_r1', 'SP_ADDROLEMEMBER_R2';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'SP_ADDROLEMEMBER_R2';
 GO
 
 -- procedure does not remove leading spaces but removes trailing whitespaces if exists in rolename/membername
-Exec sp_addrolemember ' sp_addrolemember_r1', 'sp_addrolemember_r2';
+EXEC sp_addrolemember ' sp_addrolemember_r1', 'sp_addrolemember_r2';
 GO
 
-Exec sp_addrolemember 'sp_addrolemember_r1 ', 'sp_addrolemember_r2';
+EXEC sp_addrolemember 'sp_addrolemember_r1 ', 'sp_addrolemember_r2';
 GO
 
-Exec sp_addrolemember 'sp_addrolemember_r1', ' sp_addrolemember_r2';
+EXEC sp_addrolemember 'sp_addrolemember_r1', ' sp_addrolemember_r2';
 GO
 
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r2 ';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r2 ';
 GO

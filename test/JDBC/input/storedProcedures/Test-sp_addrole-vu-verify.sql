@@ -18,15 +18,23 @@ GO
 EXEC sp_addrole '\';
 GO
 
--- Throw error if no argument or more than 1 arguments are passed to sp_addrole procedure
+-- Throw error if no argument or more than 2 arguments are passed to sp_addrole procedure
 EXEC sp_addrole;
 GO
 
 EXEC sp_addrole '','','';
 GO
 
+-- @ownername is not yet supported in babelfish
+EXEC sp_addrole 'sp_addrole_r1', '';
+GO
+
+EXEC sp_addrole 'sp_addrole_r1', 'sp_addrole_owner1';
+GO
+
+-- The addrole procedure doesnot consider ownername if we pass NULL
 -- Throws an error when role exists in DB
-EXEC sp_addrole 'sp_addrole_r1';
+EXEC sp_addrole 'sp_addrole_r1', NULL;
 GO
 
 EXEC sp_addrole 'sp_addrole_user';
