@@ -2421,7 +2421,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (strcmp(headel->defname, "isrole") == 0)
 					{
 						int location = -1;
-                        bool orig_username_exists = false;
+						bool orig_username_exists = false;
 
 						isrole = true;
 						stmt->options = list_delete_cell(stmt->options,
