@@ -204,6 +204,13 @@ BulkCopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 								 errmsg("column \"%s\" is a Computed column",
 										name),
 								 errdetail("Computed columns cannot be used in BULK COPY.")));
+					else if (is_tsql_rowversion_or_timestamp_datatype_hook && is_tsql_rowversion_or_timestamp_datatype_hook(att->atttypid))
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+									errmsg("column \"%s\" is a ROWVERSION/TIMESTAMP column",
+										name),
+									errdetail("ROWVERSION/TIMESTAMP columns cannot be used in BULK COPY.")));
+					
 					attnum = att->attnum;
 					break;
 				}
@@ -686,12 +693,6 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 					{
 						myslot->tts_values[i] = Int64GetDatum(nextval_internal(cstate->seqid, true));
 					}
-					else if (cstate->rv_index == i)
-					{
-						Expr *defexpr = (Expr *) build_column_default(cstate->rel, i + 1);
-						defexpr = expression_planner(defexpr);
-						myslot->tts_values[i] = ExecEvalExpr(ExecInitExpr(defexpr, NULL), econtext, &myslot->tts_isnull[i]);
-					}
 					else
 						myslot->tts_isnull[i] = true;
 				}
@@ -730,7 +731,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 				Assert(econtext != NULL);
 				Assert(CurrentMemoryContext == econtext->ecxt_per_tuple_memory);
 
-				if (myslot->tts_isnull[defmap[i]] && !insert_bulk_keep_nulls)
+				if (myslot->tts_isnull[defmap[i]] && (!insert_bulk_keep_nulls || cstate->rv_index == defmap[i]))
 					myslot->tts_values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
 													&myslot->tts_isnull[defmap[i]]);
 			}
@@ -906,13 +907,8 @@ BeginBulkCopy(Relation rel,
 		if (att->attisdropped)
 			continue;
 
-		/* Save the index for the rowversion datatype */
-		if (is_tsql_rowversion_or_timestamp_datatype_hook && is_tsql_rowversion_or_timestamp_datatype_hook(att->atttypid))
-		{
-			cstate->rv_index = attnum - 1;
-		}
 		/* Save the index for the identity column */
-		else if (att->attidentity)
+		if (att->attidentity)
 		{
 			cstate->seq_index = attnum - 1;
 			cstate->seqid = getIdentitySequence(RelationGetRelid(cstate->rel), attnum, false);
@@ -922,6 +918,11 @@ BeginBulkCopy(Relation rel,
 		{
 			Expr	   *defexpr = (Expr *) build_column_default(cstate->rel,
 																attnum);
+			
+			/* Save the index for the rowversion datatype */
+			if (is_tsql_rowversion_or_timestamp_datatype_hook && is_tsql_rowversion_or_timestamp_datatype_hook(att->atttypid))
+				cstate->rv_index = attnum - 1;
+
 			/* Use default value if one exists */
 			if (defexpr != NULL)
 			{
