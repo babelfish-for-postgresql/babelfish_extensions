@@ -1,0 +1,31 @@
+EXEC get_tds_id_proc;
+GO
+~~START~~
+int
+173
+~~END~~
+
+
+SELECT get_tds_id_func('timestamp') as rv;
+GO
+~~START~~
+int
+173
+~~END~~
+
+
+SELECT get_tds_id_func('random') as rv;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT  * FROM get_tds_id_view;
+GO
+~~START~~
+int
+173
+~~END~~
+
