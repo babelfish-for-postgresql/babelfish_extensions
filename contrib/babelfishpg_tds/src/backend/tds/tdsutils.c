@@ -48,7 +48,7 @@ void tdsutils_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool 
 ProcessUtility_hook_type next_ProcessUtility = NULL;
 static void call_next_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
 static void check_babelfish_droprole_restrictions(char *role);
-static void check_babelfish_alterrole_restictions(char *role);
+static void check_babelfish_renamerole_restrictions(char *role);
 static void check_babelfish_renamedb_restrictions(Oid target_db_id);
 static void check_babelfish_dropdb_restrictions(Oid target_db_id);
 static bool is_babelfish_ownership_enabled(ArrayType *array);
@@ -57,8 +57,6 @@ static bool is_babelfish_role(const char *role);
 /* Role specific handlers */
 static bool handle_drop_role (DropRoleStmt* drop_role_stmt);
 static bool handle_rename(RenameStmt* rename_stmt);
-static bool handle_alter_role(AlterRoleStmt* alter_role_stmt);
-static bool handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt);
 
 /* Drop database handler */
 static bool handle_dropdb(DropdbStmt *dropdb_stmt);
@@ -593,7 +591,6 @@ babelfish_object_access(ObjectAccessType access,
 
 	switch (access)
 	{
-		case OAT_POST_ALTER:
 		case OAT_DROP:
 			{
 				switch (classId)
@@ -698,12 +695,6 @@ void tdsutils_ProcessUtility(PlannedStmt *pstmt,
 			break;
 		case T_RenameStmt:
 			handle_result = handle_rename((RenameStmt *)parsetree);
-			break;
-		case T_AlterRoleStmt:
-			handle_result = handle_alter_role((AlterRoleStmt*)parsetree);
-			break;
-		case T_AlterRoleSetStmt:
-			handle_result = handle_alter_role_set((AlterRoleSetStmt*)parsetree);
 			break;
 		/* Case that deal with Drop Database */
 		case T_DropdbStmt:
@@ -948,7 +939,7 @@ handle_rename(RenameStmt* rename_stmt)
      * (obviously) event triggers, so we need to ignore those.
      */
     if (OBJECT_ROLE == rename_stmt->renameType)
-        check_babelfish_alterrole_restictions(rename_stmt->subname);
+        check_babelfish_renamerole_restrictions(rename_stmt->subname);
 
     else if (OBJECT_DATABASE == rename_stmt->renameType)
     {
@@ -976,13 +967,13 @@ handle_rename(RenameStmt* rename_stmt)
 }
 
 /*
- * check_babelfish_alterrole_restictions
+ * check_babelfish_renamerole_restrictions
  *
  * Implements following one additional limitation to drop role stmt
  * block renaming an active babelfish role/user
  */
 static void
-check_babelfish_alterrole_restictions(char *role)
+check_babelfish_renamerole_restrictions(char *role)
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 		return;
@@ -1156,71 +1147,4 @@ is_babelfish_ownership_enabled(ArrayType *array)
 			return true;
 	}
 	return false;
-}
-
-/*
- * handle_alter_role
- *
- * Description: This function handles dealing with ALTER ROLE <role> WITH.
- *
- * Returns: true - We're not attempting to modify something we shouldn't have access to. Normal security checks.
- *          false - We've reported an error and should not continue executing this call.
- */
-static bool
-handle_alter_role(AlterRoleStmt* alter_role_stmt)
-{
-    char *name = get_role_name(alter_role_stmt->role);
-
-    /* If the role does not exist, just let the normal Postgres checks happen. */
-    if (name == NULL)
-        return true;
-
-    check_babelfish_alterrole_restictions(name);
-
-    /* We don't need "name" anymore */
-    pfree(name);
-    return true;
-}
-
-/* handle_alter_role_set
- *
- * Description: This function handles dealing with ALTER ROLE <role> SET.
- *
- * Returns: true - We're not attempting to modify something we shouldn't have access to, continue on.
- *          false - We've reported an error and should not continue executing this call.
- */
-static bool
-handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
-{
-    char *name;
-
-    /*
-     * If this is an ALTER ROLE ALL [ IN DATABASE ] SET statement,
-     * alter_role_set_stmt->role will be NULL.  While we don't want users
-     * altering our "protected" roles, we can pass through here because
-     * PostgreSQL already handles those situations correctly.
-     *
-     * The ALTER ROLE ALL SET variant of this command can only be run by
-     * superusers, and the ALTER ROLE ALL IN DATABASE SET variant is the same as
-     * ALTER DATABASE SET, which is handled via the regular database ownership
-     * checks.  (Customers should not be able to obtain ownership of our
-     * "protected" databases thanks to handle_alter_owner().)
-     */
-    if (alter_role_set_stmt->role == NULL)
-        return true;
-
-    name = get_role_name(alter_role_set_stmt->role);
-
-    /* If the role does not exist, just let the normal Postgres checks happen.*/
-    if (NULL == name)
-        return true;
-
-    check_babelfish_alterrole_restictions(name);
-
-    /*
-     * Reaching here does not mean that this user has permission to modify the role.
-     * Those permissions checks are done through normal handling.
-     */
-    pfree(name);
-    return true;
 }

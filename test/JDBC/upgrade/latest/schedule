@@ -133,6 +133,7 @@ BABEL-3614
 BABEL-383
 BABEL-405
 BABEL-937
+BABEL-3407
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -250,6 +251,7 @@ BABEL-SP_SPROC_COLUMNS-dep
 BABEL-3000-dep
 format
 msdb-dbo-syspolicy_system_health_state
+dateadd_internal_df
 sys-all_columns
 sys-all_sql_modules
 sys-assembly_modules
@@ -306,6 +308,7 @@ sys-views
 sys-xml_indexes
 sys-xml_schema_collections
 sys_all_objects
+sys_babelfish_configurations_view
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR
@@ -318,6 +321,7 @@ BABEL-3347
 BABEL-3144
 sys-all_parameters-dep
 BABEL-3556
+BABEL-3588
 BABEL-3268
 BABEL-3513
 BABEL_GRANT_CONNECT

@@ -21,6 +21,7 @@
 
 #include "src/include/tds_debug.h"
 #include "src/include/tds_int.h"
+#include "src/include/tds_iofuncmap.h"
 #include "src/include/tds_protocol.h"
 #include "src/include/tds_response.h"
 #include "src/include/tds_instr.h"
@@ -1698,6 +1699,12 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 				                            paramOrdinal, temp->paramMeta.colName.data)));
 
 				temp->len = message->data[offset++];
+				if (temp->len > TDS_MAXLEN_NUMERIC)
+					ereport(ERROR,
+							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+								errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+									"Parameter %d (\"%s\"): Data type 0x%02X has an invalid data length or metadata length.",
+									paramOrdinal, temp->paramMeta.colName.data, tdsType)));
 
 	 			if (temp->len == 0)
 	 				temp->isNull = true;

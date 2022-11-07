@@ -44,9 +44,5 @@ go
 drop table babel_3513_t2;
 go
 
--- psql
-do $$
-begin
-    EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_pg_hint = off', CURRENT_DATABASE());
-end$$;
+exec sp_babelfish_configure 'enable_pg_hint', 'off', 'server'
 go

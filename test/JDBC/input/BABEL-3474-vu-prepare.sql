@@ -34,6 +34,12 @@ go
 create view BABEL_3474_vu_prepare_v12 as (SELECT DATEADD(second,150,cast('1955-12-13' as DATE)));
 go
 
+create view BABEL_3474_vu_prepare_v13 as (SELECT DATEADD(minute, 70, cast('2016-12-26 23:30:05.523456+8' as DATETIMEOFFSET)));
+go
+
+create view BABEL_3474_vu_prepare_v14 as (SELECT DATEADD(month, 2, cast('2016-12-26 23:30:05.523456+8' as DATETIMEOFFSET)));
+go
+
 create procedure  BABEL_3474_vu_prepare_p1 as (SELECT DATEADD(microsecond, 56, cast('2016-12-26 12:15:01' as DATETIMEOFFSET)));
 go
 
@@ -68,6 +74,12 @@ create procedure  BABEL_3474_vu_prepare_p11 as (SELECT DATEADD(day,150,cast('12:
 go
 
 create procedure  BABEL_3474_vu_prepare_p12 as (SELECT DATEADD(second,150,cast('1955-12-13' as DATE)));
+go
+
+create procedure  BABEL_3474_vu_prepare_p13 as (SELECT DATEADD(minute, 70, cast('2016-12-26 23:30:05.523456+8' as DATETIMEOFFSET)));
+go
+
+create procedure  BABEL_3474_vu_prepare_p14 as (SELECT DATEADD(month, 2, cast('2016-12-26 23:30:05.523456+8' as DATETIMEOFFSET)));
 go
 
 create function BABEL_3474_vu_prepare_f1()
@@ -151,5 +163,19 @@ create function BABEL_3474_vu_prepare_f12()
 returns DATE as
 begin
 return (SELECT * from DATEADD(second,150,cast('1955-12-13' as DATE)));
+end
+go
+
+create function BABEL_3474_vu_prepare_f13()
+returns DATE as
+begin
+return (SELECT DATEADD(minute, 70, cast('2016-12-26 23:30:05.523456+8' as DATETIMEOFFSET)));
+end
+go
+
+create function BABEL_3474_vu_prepare_f14()
+returns DATE as
+begin
+return (SELECT DATEADD(month, 2, cast('2016-12-26 23:30:05.523456+8' as DATETIMEOFFSET)));
 end
 go

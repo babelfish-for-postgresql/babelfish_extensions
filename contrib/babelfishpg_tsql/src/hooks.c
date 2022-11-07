@@ -67,6 +67,7 @@
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
+extern bool pltsql_ansi_nulls;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
@@ -2104,7 +2105,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
  * Stores argument positions of default values of a PL/tsql function to bbf_function_ext catalog
  */
 void
-pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
+pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location)
 {
 	Relation	bbf_function_ext_rel;
 	TupleDesc	bbf_function_ext_rel_dsc;
@@ -2115,9 +2116,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	Form_pg_proc	form_proctup;
 	char		*physical_schemaname;
 	char		*func_signature;
+	char		*original_name = NULL;
 	List		*default_positions = NIL;
 	ListCell	*x;
 	int			idx;
+	uint64		flag_values = 0, flag_validity = 0;
 
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
@@ -2168,7 +2171,12 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	}
 
 	if (!OidIsValid(get_bbf_function_ext_idx_oid()))
+	{	
+		pfree(func_signature);
+		pfree(physical_schemaname);
+		ReleaseSysCache(proctup);
 		return;
+	}
 
 	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
 	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
@@ -2176,14 +2184,66 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
+	if (origname_location != -1 && queryString)
+	{
+		/* To get original function name, utilize location of original name and query string. */
+		char *func_name_start, *temp;
+		const char *funcname = NameStr(form_proctup->proname);
+
+		func_name_start = queryString + origname_location;
+
+		/*
+		 * Could be the case that the fully qualified name is included,
+		 * so just find the text after '.' in the identifier.
+		 * We need to be careful as there can be '.' in the function name
+		 * itself, so we will break the loop if current string matches
+		 * with actual funcname.
+		 */
+		temp = strpbrk(func_name_start, ". ");
+		while (temp && temp[0] != ' ' &&
+			strncasecmp(funcname, func_name_start, strlen(funcname)) != 0 &&
+			strncasecmp(funcname, func_name_start + 1, strlen(funcname)) != 0) /* match after skipping delimiter */
+		{
+			temp += 1;
+			func_name_start = temp;
+			temp = strpbrk(func_name_start, ". ");
+		}
+
+		original_name = extract_identifier(func_name_start);
+		if (original_name == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("can't extract original function name.")));
+	}
+
+	/*
+	 * To store certain flag, Set corresponding bit in flag_validity which
+	 * tracks currently supported flag bits and then set/unset flag_values bit
+	 * according to flag settings.
+	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
+	 * being inserted in catalog if it is used.
+	 * Currently, Only two flags are supported.
+	 */
+	flag_validity |= FLAG_IS_ANSI_NULLS_ON;
+	if (!Transform_null_equals)
+		flag_values |= FLAG_IS_ANSI_NULLS_ON;
+	flag_validity |= FLAG_USES_QUOTED_IDENTIFIER;
+	if (pltsql_quoted_identifier)
+		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
+
 	new_record[Anum_bbf_function_ext_nspname -1] = CStringGetDatum(physical_schemaname);
 	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
-	new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
+	if (original_name)
+		new_record[Anum_bbf_function_ext_orig_name -1] = CStringGetTextDatum(original_name);
+	else
+		new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
 	new_record[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(func_signature);
 	if (default_positions != NIL)
 		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
 	else
 		new_record_nulls[Anum_bbf_function_ext_default_positions - 1] = true;
+	new_record[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
+	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;

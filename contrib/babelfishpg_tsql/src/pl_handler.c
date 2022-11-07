@@ -186,7 +186,6 @@ bool		output_update_transformation = false;
 bool		output_into_insert_transformation = false;
 char       *update_delete_target_alias = NULL;
 int			pltsql_trigger_depth = 0;
-bool		insert_bulk_keep_nulls;
 
 PLExecStateCallStack	*exec_state_call_stack = NULL;
 int 					text_size;
@@ -2127,14 +2126,16 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	{
 		case T_CreateFunctionStmt:
 			{
+				CreateFunctionStmt *stmt = (CreateFunctionStmt *) parsetree;
 				bool 			isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
 				bool 			needCleanup;
-				ListCell 		*option;
+				ListCell 		*option, *location_cell = NULL;
 				Node 			*tbltypStmt = NULL;
 				Node 			*trigStmt = NULL;
 				ObjectAddress 	tbltyp;
 				ObjectAddress 	trig;
 				ObjectAddress 	address;
+				int 			origname_location = -1;
 
 				/* All event trigger calls are done only when isCompleteQuery is true */
 				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
@@ -2145,7 +2146,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (isCompleteQuery)
 						EventTriggerDDLCommandStart(parsetree);
 
-					foreach (option, ((CreateFunctionStmt *) parsetree)->options)
+					foreach (option, stmt->options)
 					{
 						DefElem *defel = (DefElem *) lfirst(option);
 						if (strcmp(defel->defname, "tbltypStmt") == 0)
@@ -2167,7 +2168,23 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							 */
 							trigStmt = defel->arg;
 						}
+						else if (strcmp(defel->defname, "location") == 0)
+						{
+							/*
+							 * location is an implicit option in tsql dialect,
+							 * we use this mechanism to store location of function
+							 * name so that we can extract original input function
+							 * name from queryString.
+							 */
+							origname_location = intVal((Node *) defel->arg);
+							location_cell = option;
+							pfree(defel);
+						}
 					}
+
+					/* delete location cell if it exists as it is for internal use only */
+					if (location_cell)
+						stmt->options = list_delete_cell(stmt->options, location_cell);
 
 					/*
 					 * For tbltypStmt, we need to first process the CreateStmt
@@ -2200,10 +2217,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						CommandCounterIncrement();
 					}
 
-					address = CreateFunction(pstate, (CreateFunctionStmt *) parsetree);
+					address = CreateFunction(pstate, stmt);
 
-					/* Store function default positions in babelfish catalog */
-					pltsql_store_func_default_positions(address, castNode(CreateFunctionStmt, parsetree)->parameters);
+					/* Store function/procedure related metadata in babelfish catalog */
+					pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
 
 					if (tbltypStmt || restore_tsql_tabletype)
 					{
@@ -2213,7 +2230,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						 */
 						tbltyp.classId = TypeRelationId;
 						tbltyp.objectId = typenameTypeId(pstate,
-								((CreateFunctionStmt *) parsetree)->returnType);
+								stmt->returnType);
 						tbltyp.objectSubId = 0;
 						recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
 					}
@@ -3486,7 +3503,6 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_user_for_database = &get_user_for_database;
-		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_keep_nulls = get_insert_bulk_keep_nulls;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_rows_per_batch = &get_insert_bulk_rows_per_batch;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
 		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = &tsql_varchar_input;

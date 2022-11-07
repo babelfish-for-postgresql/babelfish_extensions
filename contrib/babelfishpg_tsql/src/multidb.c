@@ -444,7 +444,7 @@ rewrite_object_refs(Node *stmt)
 			}
 
 			rewrite_plain_name(create_func->funcname);
-			if (list_length(create_func->options) == 3)
+			if (list_length(create_func->options) >= 3)
 			{
 				DefElem *defElem = (DefElem *) lthird(create_func->options);
 				if (strncmp(defElem->defname, "trigStmt", 8) == 0)

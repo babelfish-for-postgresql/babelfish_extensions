@@ -9,4 +9,5 @@ GO
 
 SELECT rolname FROM sys.babelfish_authid_user_ext
 WHERE rolname LIKE '%babelfish_authid_user_ext_vu_prepare_%'
+ORDER BY rolname
 GO

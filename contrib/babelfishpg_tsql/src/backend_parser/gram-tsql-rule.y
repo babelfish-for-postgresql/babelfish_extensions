@@ -1436,6 +1436,81 @@ select_no_parens:
 					}
 					$$ = $2;
 				}
+			| select_clause tsql_for_json_clause
+				{
+					base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+					char *src_query = yyextra->core_yy_extra.scanbuf;
+					/*
+					 * We can free the SelectStmt because we will process the transformed
+					 * FOR JSON query by calling function tsql_query_to_json().
+					 */
+					pfree($1);
+					$1 = (Node *) makeNode(SelectStmt);
+					((SelectStmt *)$1)->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $2, src_query, @1, yyscanner));
+					$$ = $1;
+				}
+			| select_clause sort_clause tsql_for_json_clause
+				{
+					if ($3 == NULL)
+						insertSelectOptions((SelectStmt *) $1, $2, NIL,
+											NULL, NULL,
+											yyscanner);
+					else
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *src_query = yyextra->core_yy_extra.scanbuf;
+						/*
+						 * We can free the SelectStmt because we will process the transformed
+						 * FOR JSON query by calling function tsql_query_to_json().
+						 */
+						pfree($1);
+						$1 = (Node *) makeNode(SelectStmt);
+						((SelectStmt *)$1)->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $3, src_query, @1, yyscanner));
+					}
+					$$ = $1;
+				}
+			| with_clause select_clause tsql_for_json_clause
+				{
+					if ($3 == NULL)
+						insertSelectOptions((SelectStmt *) $2, NULL, NIL,
+											NULL,
+											$1,
+											yyscanner);
+					else
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *src_query = yyextra->core_yy_extra.scanbuf;
+						/*
+						 * We can free the SelectStmt because we will process the transformed
+						 * FOR JSON query by calling function tsql_query_to_json().
+						 */
+						pfree($2);
+						$2 = (Node *) makeNode(SelectStmt);
+						((SelectStmt *)$2)->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $3, src_query, @1, yyscanner));
+					}
+					$$ = $2;
+				}
+			| with_clause select_clause sort_clause tsql_for_json_clause
+				{
+					if ($4 == NULL)
+						insertSelectOptions((SelectStmt *) $2, $3, NIL,
+											NULL,
+											$1,
+											yyscanner);
+					else
+					{
+						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
+						char *src_query = yyextra->core_yy_extra.scanbuf;
+						/*
+						 * We can free the SelectStmt because we will process the transformed
+						 * FOR JSON query by calling function tsql_query_to_json().
+						 */
+						pfree($2);
+						$2 = (Node *) makeNode(SelectStmt);
+						((SelectStmt *)$2)->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $4, src_query, @1, yyscanner));
+					}
+					$$ = $2;
+				}
 		;
 
 simple_select:
@@ -3415,12 +3490,13 @@ tsql_CreateFunctionStmt:
 						CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 						DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 						DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($10)), @10);
+						DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
 						n->is_procedure = false;
 						n->replace = $2;
 						n->funcname = $4;
 						n->parameters = $5;
 						n->returnType = $7;
-						n->options = list_concat(list_make2(lang, body), $8);
+						n->options = list_concat(list_make3(lang, body, location), $8);
 						$$ = (Node *)n;
 					}
 			| CREATE opt_or_replace proc_keyword tsql_func_name tsql_createproc_args
@@ -3429,13 +3505,14 @@ tsql_CreateFunctionStmt:
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($8)), @8);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
 
 					n->is_procedure = true;
 					n->replace = $2;
 					n->funcname = $4;
 					n->parameters = $5;
 					n->returnType = NULL;
-					n->options = list_concat(list_make2(lang, body), $6);
+					n->options = list_concat(list_make3(lang, body, location), $6);
 					$$ = (Node *)n;
 				}
 			/*
@@ -3455,6 +3532,7 @@ tsql_CreateFunctionStmt:
 					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($13)), @13);
 					DefElem *tbltypStmt = makeDefElem("tbltypStmt", (Node *) n1, @1);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
 					TSQLInstrumentation(INSTR_TSQL_CREATE_FUNCTION_RETURNS_TABLE);
 					if (sql_dialect != SQL_DIALECT_TSQL)
 						ereport(ERROR,
@@ -3490,7 +3568,7 @@ tsql_CreateFunctionStmt:
 					n2->returnType = makeTypeNameFromNameList(tbltyp);
 					n2->returnType->setof = true;
 					n2->returnType->location = @8;
-					n2->options = list_make3(lang, body, tbltypStmt);
+					n2->options = list_make4(lang, body, tbltypStmt, location);
 
 					$$ = (Node *)n2;
 				}
@@ -3501,6 +3579,7 @@ tsql_CreateFunctionStmt:
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($9)), @9);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
 
 					TSQLInstrumentation(INSTR_TSQL_CREATE_FUNCTION_RETURNS_TABLE);
 					n->is_procedure = false;
@@ -3519,7 +3598,7 @@ tsql_CreateFunctionStmt:
 					n->returnType = SystemTypeName("record");
 					n->returnType->setof = true;
 					n->returnType->location = @7;
-					n->options = list_make2(lang, body);
+					n->options = list_make3(lang, body, location);
 
 					$$ = (Node *)n;
 				}
@@ -4081,9 +4160,11 @@ unreserved_keyword:
 			| TSQL_HASHED
 			| TSQL_HH
 			| TSQL_IDENTITY_INSERT
+			| TSQL_INCLUDE_NULL_VALUES
 			| TSQL_ISOWK
 			| TSQL_ISOWW
 			| TSQL_ISO_WEEK
+			| TSQL_JSON
 			| TSQL_LOGIN
 			| TSQL_M
 			| TSQL_MCS
@@ -4137,6 +4218,7 @@ unreserved_keyword:
 			| TSQL_WEEK
 			| TSQL_WEEKDAY
 			| TSQL_WINDOWS
+			| TSQL_WITHOUT_ARRAY_WRAPPER
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
@@ -4331,3 +4413,48 @@ RevokeStmt:
                     $$ = (Node *)n;
                 }			
         ;
+
+/*
+ * FOR JSON clause can have 2 modes: AUTO and PATH.
+ * Map the mode to the corresponding ENUM.
+ */
+tsql_for_json_clause:
+			TSQL_FOR TSQL_JSON TSQL_AUTO tsql_for_json_common_directives
+			{
+				TSQL_ForClause *n = (TSQL_ForClause *) palloc(sizeof(TSQL_ForClause));
+				n->mode = TSQL_FORJSON_AUTO;
+				n->commonDirectives = $4;
+				n->location = @1;
+				$$ = (Node *) n;
+			}
+			| TSQL_FOR TSQL_JSON TSQL_PATH tsql_for_json_common_directives
+			{
+				TSQL_ForClause *n = (TSQL_ForClause *) palloc(sizeof(TSQL_ForClause));
+				n->mode = TSQL_FORJSON_PATH;
+				n->commonDirectives = $4;
+				n->location = @1;
+				$$ = (Node *) n;
+			}
+		;
+
+
+tsql_for_json_common_directives:
+			tsql_for_json_common_directives ',' tsql_for_json_common_directive
+			{
+				$$ = lappend($1, $3);
+			}
+			| /*EMPTY*/													{ $$ = NIL; }
+		;
+
+/*
+ * FOR JSON clause can have 3 directives: ROOT, INCLUDE_NULL_VALUES and WITHOUT_ARRAY_WRAPPER.
+ * Map them to ENUM TSQLJSONDirective and String of the ROOT name respectively.
+ */
+tsql_for_json_common_directive:
+			TSQL_ROOT									{ $$ = makeStringConst("root", -1); }
+			| TSQL_ROOT '(' Sconst ')'					{ $$ = makeStringConst($3, -1); }
+			| TSQL_INCLUDE_NULL_VALUES					{ $$ = makeIntConst(TSQL_JSON_DIRECTIVE_INCLUDE_NULL_VALUES, -1); }
+			| TSQL_WITHOUT_ARRAY_WRAPPER				{ $$ = makeIntConst(TSQL_JSON_DIRECTIVE_WITHOUT_ARRAY_WRAPPER, -1); }
+		;
+
+

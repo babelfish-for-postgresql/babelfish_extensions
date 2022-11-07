@@ -11,6 +11,13 @@ RETURNS ntext
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_text'
 LANGUAGE C IMMUTABLE STRICT COST 100;
 
+-- Helper function to support the FOR JSON clause
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_text(query text, mode int, include_null_value boolean,
+           without_array_wrappers boolean, root_name text)
+RETURNS sys.NVARCHAR(4000)
+AS 'babelfishpg_tsql', 'tsql_query_to_json_text'
+LANGUAGE C IMMUTABLE COST 100;
+
 -- User and Login Functions
 CREATE OR REPLACE FUNCTION sys.user_name(IN id OID DEFAULT NULL)
 RETURNS sys.NVARCHAR(128)
@@ -1088,7 +1095,13 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-    RETURN sys.dateadd_internal(datepart, num, startdate);
+    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.dateadd_internal_df(datepart, num,
+                     startdate);
+    ELSE
+        return sys.dateadd_internal(datepart, num,
+                     startdate);
+    END IF;
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1166,6 +1179,51 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
+/*
+    This function is needed when input date is datetimeoffset type. When running the following query in postgres using tsql dialect, it faied.
+        select dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset);
+    We tried to merge this function with sys.dateadd_internal by using '+' when adding interval to datetimeoffset, 
+    but the error shows : operator does not exist: sys.datetimeoffset + interval. As the result, we should not use '+' directly
+    but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
+*/
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.000001);
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
 BEGIN
     IF pg_typeof(startdate) = 'date'::regtype AND
@@ -1201,9 +1259,7 @@ BEGIN
 	WHEN 'millisecond' THEN
 		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
 	WHEN 'microsecond' THEN
-        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
-            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
-        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+        IF pg_typeof(startdate) = 'time'::regtype THEN
             RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
         ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
             RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
@@ -1213,9 +1269,7 @@ BEGIN
             RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
         END IF;
 	WHEN 'nanosecond' THEN
-        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
-            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
-        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+        IF pg_typeof(startdate) = 'time'::regtype THEN
             RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
         ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
             RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));

@@ -2348,6 +2348,7 @@ BEGIN
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
 					ELSE CAST(Base3.oid AS INT) END
 					AS SYS.VARBINARY(85)) AS 'SID'
 		FROM sys.babelfish_authid_user_ext AS Ext1

@@ -445,6 +445,11 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 								 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
 									 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
 									 temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
+
+					/* Check if rowData->columnValues[i].data has enough length allocated. */
+					if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
+						enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
+
 					memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
 					*offset += rowData->columnValues[i].len;
 				}

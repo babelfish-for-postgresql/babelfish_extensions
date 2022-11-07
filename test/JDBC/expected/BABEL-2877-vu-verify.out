@@ -177,15 +177,53 @@ int#!#varchar#!#money#!#float
 
 
 -- babelfish_function_ext table should have entry for all the above functions and procedures
-SELECT nspname, funcname, orig_name, funcsignature, default_positions FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel_2877_vu_prepare%' ORDER BY funcname;
+SELECT nspname,
+		funcname,
+		funcsignature,
+		default_positions
+FROM sys.babelfish_function_ext
+	WHERE funcname LIKE 'babel_2877_vu_prepare%'
+	AND funcname NOT LIKE '%ansi%' ORDER BY funcname;
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar#!#text#!#text
-master_dbo#!#babel_2877_vu_prepare_func1#!#<NULL>#!#babel_2877_vu_prepare_func1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 3)
-master_dbo#!#babel_2877_vu_prepare_func2#!#<NULL>#!#babel_2877_vu_prepare_func2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
-master_dbo#!#babel_2877_vu_prepare_func3#!#<NULL>#!#babel_2877_vu_prepare_func3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
-master_dbo#!#babel_2877_vu_prepare_proc1#!#<NULL>#!#babel_2877_vu_prepare_proc1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 2)
-master_dbo#!#babel_2877_vu_prepare_proc2#!#<NULL>#!#babel_2877_vu_prepare_proc2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
-master_dbo#!#babel_2877_vu_prepare_proc3#!#<NULL>#!#babel_2877_vu_prepare_proc3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
+varchar#!#varchar#!#text#!#text
+master_dbo#!#babel_2877_vu_prepare_func1#!#babel_2877_vu_prepare_func1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 3)
+master_dbo#!#babel_2877_vu_prepare_func2#!#babel_2877_vu_prepare_func2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
+master_dbo#!#babel_2877_vu_prepare_func3#!#babel_2877_vu_prepare_func3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
+master_dbo#!#babel_2877_vu_prepare_proc1#!#babel_2877_vu_prepare_proc1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 2)
+master_dbo#!#babel_2877_vu_prepare_proc2#!#babel_2877_vu_prepare_proc2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
+master_dbo#!#babel_2877_vu_prepare_proc3#!#babel_2877_vu_prepare_proc3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
+~~END~~
+
+
+SELECT orig_name,
+	CASE flag_validity & 1
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 1
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS ansi_null,
+	CASE flag_validity & 2
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 2
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS quoted_identifier
+FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORDER BY funcname;
+GO
+~~START~~
+nvarchar#!#int#!#int
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDOFF#!#0#!#0
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDON#!#0#!#1
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDOFF#!#1#!#0
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDON#!#1#!#1
 ~~END~~
 

@@ -433,6 +433,22 @@ bcp#!#in#!#bcp_source#!#destinationTable
 2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b int identity)
+#Q#Create table destinationTable(a int, b int identity)
+#Q#insert into sourceTable values (1)
+#Q#insert into sourceTable values (2)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
 #Q#create table t_rcv (a int)
 #Q#create table t_rcv2 (b int)
 #Q#create trigger tri on t_rcv for insert as begin insert t_rcv2 select a*-1 from inserted end

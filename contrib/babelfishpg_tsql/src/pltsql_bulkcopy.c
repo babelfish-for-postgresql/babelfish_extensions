@@ -37,6 +37,7 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/rls.h"
+#include "pltsql.h"
 
 /*
  * No more than this many tuples per CopyMultiInsertBuffer
@@ -721,7 +722,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 				Assert(econtext != NULL);
 				Assert(CurrentMemoryContext == econtext->ecxt_per_tuple_memory);
 
-				if (myslot->tts_isnull[defmap[i]])
+				if (myslot->tts_isnull[defmap[i]] && !insert_bulk_keep_nulls)
 					myslot->tts_values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
 													&myslot->tts_isnull[defmap[i]]);
 			}

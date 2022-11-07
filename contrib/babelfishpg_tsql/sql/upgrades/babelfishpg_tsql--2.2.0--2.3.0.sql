@@ -551,13 +551,42 @@ LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT
-AS
-$body$
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
 BEGIN
-    RETURN sys.dateadd_internal(datepart, num, startdate);
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.000001);
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+	END CASE;
 END;
-$body$
+$$
+STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
@@ -595,9 +624,7 @@ BEGIN
 	WHEN 'millisecond' THEN
 		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
 	WHEN 'microsecond' THEN
-        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
-            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
-        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+        IF pg_typeof(startdate) = 'time'::regtype THEN
             RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
         ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
             RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
@@ -607,9 +634,7 @@ BEGIN
             RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
         END IF;
 	WHEN 'nanosecond' THEN
-        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
-            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
-        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+        IF pg_typeof(startdate) = 'time'::regtype THEN
             RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
         ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
             RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
@@ -1738,6 +1763,91 @@ LANGUAGE plpgsql
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE VIEW sys.babelfish_configurations_view as
+    SELECT * 
+    FROM pg_catalog.pg_settings 
+    WHERE name collate "C" like 'babelfishpg_tsql.explain_%' OR
+          name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
+          name collate "C" = 'babelfishpg_tsql.enable_pg_hint';
+GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar(128),  IN "@option_value" varchar(128), IN "@option_scope" varchar(128))
+AS $$
+DECLARE
+  normalized_name varchar(256);
+  default_value text;
+  value_type text;
+  enum_value text[];
+  cnt int;
+  cur refcursor;
+  guc_name varchar(256);
+  server boolean := false;
+  prev_user text;
+BEGIN
+  IF lower("@option_name") like 'babelfishpg_tsql.%' collate "C" THEN
+    SELECT "@option_name" INTO normalized_name;
+  ELSE
+    SELECT concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
+  END IF;
+
+  IF lower("@option_scope") = 'server' THEN
+    server := true;
+  ELSIF btrim("@option_scope") != '' THEN
+    RAISE EXCEPTION 'invalid option: %', "@option_scope";
+  END IF;
+
+  SELECT COUNT(*) INTO cnt FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
+  IF cnt = 0 THEN 
+    RAISE EXCEPTION 'unknown configuration: %', normalized_name;
+  ELSIF cnt > 1 AND (lower("@option_value") != 'ignore' AND lower("@option_value") != 'strict' 
+                AND lower("@option_value") != 'default') THEN
+    RAISE EXCEPTION 'unvalid option: %', lower("@option_value");
+  END IF;
+
+  OPEN cur FOR SELECT name FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
+  LOOP
+    FETCH NEXT FROM cur into guc_name;
+    exit when not found;
+
+    SELECT boot_val, vartype, enumvals INTO default_value, value_type, enum_value FROM pg_catalog.pg_settings WHERE name = guc_name;
+    IF lower("@option_value") = 'default' THEN
+        PERFORM pg_catalog.set_config(guc_name, default_value, 'false');
+    ELSIF lower("@option_value") = 'ignore' or lower("@option_value") = 'strict' THEN
+      IF value_type = 'enum' AND enum_value = '{"strict", "ignore"}' THEN
+        PERFORM pg_catalog.set_config(guc_name, "@option_value", 'false');
+      ELSE
+        CONTINUE;
+      END IF;
+    ELSE
+        PERFORM pg_catalog.set_config(guc_name, "@option_value", 'false');
+    END IF;
+    IF server THEN
+      SELECT current_user INTO prev_user;
+      PERFORM sys.babelfish_set_role(session_user);
+      IF lower("@option_value") = 'default' THEN
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, default_value);
+      ELSIF lower("@option_value") = 'ignore' or lower("@option_value") = 'strict' THEN
+        IF value_type = 'enum' AND enum_value = '{"strict", "ignore"}' THEN
+          EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, "@option_value");
+        ELSE
+          CONTINUE;
+        END IF;
+      ELSE
+        -- store the setting in PG master database so that it can be applied to all bbf databases
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, "@option_value");
+      END IF;
+      PERFORM sys.babelfish_set_role(prev_user);
+    END IF;
+  END LOOP;
+
+  CLOSE cur;
+
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(
+	IN varchar(128), IN varchar(128), IN varchar(128)
+) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
                                                            IN p_minute NUMERIC,
                                                            IN p_seconds NUMERIC,
@@ -2287,6 +2397,8 @@ CREATE TABLE sys.babelfish_function_ext (
 	orig_name sys.NVARCHAR(128), -- users' original input name
 	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
+	flag_validity BIGINT,
+	flag_values BIGINT,
 	create_date SYS.DATETIME NOT NULL,
 	modify_date SYS.DATETIME NOT NULL,
 	PRIMARY KEY(nspname, funcsignature)
@@ -3040,6 +3152,8 @@ ALTER TABLE sys.babelfish_authid_user_ext add COLUMN IF NOT EXISTS user_can_conn
 
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
+-- This is a temporary procedure which is called during upgrade to create guest users
+-- for the user created databases if it doesn't have guest user already.
 CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
@@ -3468,6 +3582,12 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
+-- Helper function to support the FOR JSON clause
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_text(query text, mode int, include_null_value boolean,
+           without_array_wrappers boolean, root_name text)
+RETURNS sys.NVARCHAR(4000)
+AS 'babelfishpg_tsql', 'tsql_query_to_json_text'
+LANGUAGE C IMMUTABLE COST 100;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
@@ -3789,6 +3909,7 @@ BEGIN
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
 					ELSE CAST(Base3.oid AS INT) END
 					AS SYS.VARBINARY(85)) AS 'SID'
 		FROM sys.babelfish_authid_user_ext AS Ext1
@@ -3971,6 +4092,9 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_ta
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

@@ -101,14 +101,24 @@ END;
 $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(IN varchar(128), IN varchar(128)) TO PUBLIC;
 
+CREATE VIEW sys.babelfish_configurations_view as
+    SELECT * 
+    FROM pg_catalog.pg_settings 
+    WHERE name collate "C" like 'babelfishpg_tsql.explain_%' OR
+          name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
+          name collate "C" = 'babelfishpg_tsql.enable_pg_hint';
+GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar(128),  IN "@option_value" varchar(128), IN "@option_scope" varchar(128))
 AS $$
 DECLARE
   normalized_name varchar(256);
   default_value text;
+  value_type text;
+  enum_value text[];
   cnt int;
   cur refcursor;
-  eh_name varchar(256);
+  guc_name varchar(256);
   server boolean := false;
   prev_user text;
 BEGIN
@@ -124,34 +134,45 @@ BEGIN
     RAISE EXCEPTION 'invalid option: %', "@option_scope";
   END IF;
 
-  SELECT COUNT(*) INTO cnt FROM pg_catalog.pg_settings WHERE name collate "C" like normalized_name and name collate "C" like '%escape_hatch%';
-  IF cnt = 0 THEN
+  SELECT COUNT(*) INTO cnt FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
+  IF cnt = 0 THEN 
     RAISE EXCEPTION 'unknown configuration: %', normalized_name;
+  ELSIF cnt > 1 AND (lower("@option_value") != 'ignore' AND lower("@option_value") != 'strict' 
+                AND lower("@option_value") != 'default') THEN
+    RAISE EXCEPTION 'unvalid option: %', lower("@option_value");
   END IF;
 
-  OPEN cur FOR SELECT name FROM pg_catalog.pg_settings WHERE name collate "C" like normalized_name and name collate "C" like '%escape_hatch%';
-
+  OPEN cur FOR SELECT name FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
   LOOP
-    FETCH NEXT FROM cur into eh_name;
+    FETCH NEXT FROM cur into guc_name;
     exit when not found;
 
-    -- Each setting has a boot_val which is the wired-in default value
-    -- Assuming that escape hatches cannot be modified using ALTER SYTEM/config file
-    -- we are setting the boot_val as the default value for the escape hatches
-    SELECT boot_val INTO default_value FROM pg_catalog.pg_settings WHERE name = eh_name;
+    SELECT boot_val, vartype, enumvals INTO default_value, value_type, enum_value FROM pg_catalog.pg_settings WHERE name = guc_name;
     IF lower("@option_value") = 'default' THEN
-        PERFORM pg_catalog.set_config(eh_name, default_value, 'false');
+        PERFORM pg_catalog.set_config(guc_name, default_value, 'false');
+    ELSIF lower("@option_value") = 'ignore' or lower("@option_value") = 'strict' THEN
+      IF value_type = 'enum' AND enum_value = '{"strict", "ignore"}' THEN
+        PERFORM pg_catalog.set_config(guc_name, "@option_value", 'false');
+      ELSE
+        CONTINUE;
+      END IF;
     ELSE
-        PERFORM pg_catalog.set_config(eh_name, "@option_value", 'false');
+        PERFORM pg_catalog.set_config(guc_name, "@option_value", 'false');
     END IF;
     IF server THEN
       SELECT current_user INTO prev_user;
       PERFORM sys.babelfish_set_role(session_user);
       IF lower("@option_value") = 'default' THEN
-        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, default_value);
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, default_value);
+      ELSIF lower("@option_value") = 'ignore' or lower("@option_value") = 'strict' THEN
+        IF value_type = 'enum' AND enum_value = '{"strict", "ignore"}' THEN
+          EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, "@option_value");
+        ELSE
+          CONTINUE;
+        END IF;
       ELSE
         -- store the setting in PG master database so that it can be applied to all bbf databases
-        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, "@option_value");
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), guc_name, "@option_value");
       END IF;
       PERFORM sys.babelfish_set_role(prev_user);
     END IF;
