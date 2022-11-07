@@ -1400,6 +1400,10 @@ typedef struct PLtsql_execstate
 	List 		*explain_infos;
 	char		*schema_name;
 	const char		*db_name;
+	instr_time	planning_start;
+	instr_time	planning_end;
+	instr_time execution_start;
+	instr_time execution_end;
 } PLtsql_execstate;
 
 /*
@@ -2035,5 +2039,6 @@ extern void pltsql_update_last_identity(Oid seqid, int64 val);
 extern int64 last_identity_value(void);
 extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
+extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
 
 #endif							/* PLTSQL_H */
