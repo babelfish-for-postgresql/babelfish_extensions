@@ -511,9 +511,9 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
 
         if (typmod_arr[number_args-1] != -1)
                typmod_arr[number_args-1] += adjustTypmod(proc->prorettype, typmod_arr[number_args-1]);
-		
-		ReleaseSysCache(proctup);
-		PG_RETURN_INT32(typmod_arr[number_args-1]);
+        
+        ReleaseSysCache(proctup);
+        PG_RETURN_INT32(typmod_arr[number_args-1]);
 
 }
 
