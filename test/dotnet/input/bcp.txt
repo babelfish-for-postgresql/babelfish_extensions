@@ -360,7 +360,7 @@ insert into sourceTable(a) values (NULL)
 bcp#!#out#!#bcp_source#!#sourceTable
 bcp#!#in#!#bcp_source#!#destinationTable
 select count(distinct b) from destinationTable
-select count(b) from destinationTable where b = NULL
+select count(*) from destinationTable where b is NULL
 select a from sourceTable
 select a from destinationTable 
 drop table sourceTable
@@ -370,10 +370,10 @@ Create table sourceTable(a int, b rowversion)
 Create table destinationTable(a int, b rowversion)
 insert into sourceTable(a) values (1)
 insert into sourceTable(a) values (NULL)
-bcp#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable
 select count(distinct b) from destinationTable
-select count(b) from destinationTable where b = NULL 
+select count(*) from destinationTable where b is NULL 
 select a from sourceTable
 select a from destinationTable 
 drop table sourceTable
@@ -386,7 +386,7 @@ insert into sourceTable(a) values (NULL)
 bcp#!#out#!#bcp_source#!#sourceTable
 bcp#!#in#!#bcp_source#!#destinationTable
 select count(distinct b) from destinationTable
-select count(b) from destinationTable where b = NULL
+select count(*) from destinationTable where b is NULL
 select a from sourceTable
 select a from destinationTable 
 drop table sourceTable
@@ -396,10 +396,10 @@ Create table sourceTable(b rowversion,a int)
 Create table destinationTable(b rowversion,a int default 2)
 insert into sourceTable(a) values (1)
 insert into sourceTable(a) values (NULL)
-bcp#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable
 select count(distinct b) from destinationTable
-select count(b) from destinationTable where b = NULL
+select count(*) from destinationTable where b is NULL
 select a from sourceTable
 select a from destinationTable 
 drop table sourceTable
@@ -414,7 +414,7 @@ insert into sourceTable(a) values (NULL)
 bcp#!#out#!#bcp_source#!#sourceTable
 bcp#!#in#!#bcp_source#!#destinationTable
 select count(distinct b) from destinationTable
-select count(b) from destinationTable where b = NULL
+select count(*) from destinationTable where b is NULL
 select a from sourceTable
 select a from destinationTable 
 drop table sourceTable
@@ -424,10 +424,10 @@ Create table sourceTable(a int, b timestamp)
 Create table destinationTable(a int, b timestamp)
 insert into sourceTable(a) values (1)
 insert into sourceTable(a) values (NULL)
-bcp#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable
 select count(distinct b) from destinationTable
-select count(b) from destinationTable where b = NULL 
+select count(*) from destinationTable where b is NULL 
 select a from sourceTable
 select a from destinationTable 
 drop table sourceTable
@@ -440,7 +440,7 @@ insert into sourceTable(a) values (NULL)
 bcp#!#out#!#bcp_source#!#sourceTable
 bcp#!#in#!#bcp_source#!#destinationTable
 select count(distinct b) from destinationTable
-select count(b) from destinationTable where b = NULL
+select count(*) from destinationTable where b is NULL
 select a from sourceTable
 select a from destinationTable 
 drop table sourceTable
@@ -450,10 +450,10 @@ Create table sourceTable(b timestamp,a int)
 Create table destinationTable(b timestamp,a int default 2)
 insert into sourceTable(a) values (1)
 insert into sourceTable(a) values (NULL)
-bcp#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable
 select count(distinct b) from destinationTable
-select count(b) from destinationTable where b = NULL
+select count(*) from destinationTable where b is NULL
 select a from sourceTable
 select a from destinationTable 
 drop table sourceTable

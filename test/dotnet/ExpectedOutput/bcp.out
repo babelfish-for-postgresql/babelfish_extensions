@@ -477,7 +477,7 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #Q#select count(distinct b) from destinationTable
 #D#int
 1
-#Q#select count(b) from destinationTable where b = NULL
+#Q#select count(*) from destinationTable where b is NULL
 #D#int
 0
 #Q#select a from sourceTable
@@ -494,12 +494,12 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #Q#Create table destinationTable(a int, b rowversion)
 #Q#insert into sourceTable(a) values (1)
 #Q#insert into sourceTable(a) values (NULL)
-bcp#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable
 #Q#select count(distinct b) from destinationTable
 #D#int
 1
-#Q#select count(b) from destinationTable where b = NULL 
+#Q#select count(*) from destinationTable where b is NULL 
 #D#int
 0
 #Q#select a from sourceTable
@@ -521,7 +521,7 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #Q#select count(distinct b) from destinationTable
 #D#int
 1
-#Q#select count(b) from destinationTable where b = NULL
+#Q#select count(*) from destinationTable where b is NULL
 #D#int
 0
 #Q#select a from sourceTable
@@ -538,12 +538,12 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #Q#Create table destinationTable(b rowversion,a int default 2)
 #Q#insert into sourceTable(a) values (1)
 #Q#insert into sourceTable(a) values (NULL)
-bcp#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable
 #Q#select count(distinct b) from destinationTable
 #D#int
 1
-#Q#select count(b) from destinationTable where b = NULL
+#Q#select count(*) from destinationTable where b is NULL
 #D#int
 0
 #Q#select a from sourceTable
@@ -565,7 +565,7 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #Q#select count(distinct b) from destinationTable
 #D#int
 1
-#Q#select count(b) from destinationTable where b = NULL
+#Q#select count(*) from destinationTable where b is NULL
 #D#int
 0
 #Q#select a from sourceTable
@@ -582,12 +582,12 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #Q#Create table destinationTable(a int, b timestamp)
 #Q#insert into sourceTable(a) values (1)
 #Q#insert into sourceTable(a) values (NULL)
-bcp#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable
 #Q#select count(distinct b) from destinationTable
 #D#int
 1
-#Q#select count(b) from destinationTable where b = NULL 
+#Q#select count(*) from destinationTable where b is NULL 
 #D#int
 0
 #Q#select a from sourceTable
@@ -609,7 +609,7 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #Q#select count(distinct b) from destinationTable
 #D#int
 1
-#Q#select count(b) from destinationTable where b = NULL
+#Q#select count(*) from destinationTable where b is NULL
 #D#int
 0
 #Q#select a from sourceTable
@@ -626,12 +626,12 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #Q#Create table destinationTable(b timestamp,a int default 2)
 #Q#insert into sourceTable(a) values (1)
 #Q#insert into sourceTable(a) values (NULL)
-bcp#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable
 #Q#select count(distinct b) from destinationTable
 #D#int
 1
-#Q#select count(b) from destinationTable where b = NULL
+#Q#select count(*) from destinationTable where b is NULL
 #D#int
 0
 #Q#select a from sourceTable
