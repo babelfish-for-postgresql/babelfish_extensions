@@ -886,6 +886,7 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 															form_proctup->pronargs,
 															form_proctup->proargtypes.values);
 
+	ReleaseSysCache(proctup);
 	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
 }
 

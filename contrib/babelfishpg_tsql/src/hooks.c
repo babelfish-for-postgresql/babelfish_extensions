@@ -2171,7 +2171,12 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	}
 
 	if (!OidIsValid(get_bbf_function_ext_idx_oid()))
+	{	
+		pfree(func_signature);
+		pfree(physical_schemaname);
+		ReleaseSysCache(proctup);
 		return;
+	}
 
 	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
 	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
