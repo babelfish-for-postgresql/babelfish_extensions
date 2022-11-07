@@ -1490,7 +1490,7 @@ select datediff(quarter, '2016-12-26 23:30:05.523456'::datetime2, '2018-08-31 23
 select datediff(hour, '2016-12-26 23:30:05'::smalldatetime, '2016-12-28 21:29:05'::smalldatetime);
  datediff 
 ----------
-       45
+       46
 (1 row)
 
 select datediff(year, '2037-03-01'::date, '2036-02-28'::date);
