@@ -5528,18 +5528,35 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 
 						}
 
-						if (seq_incr > 0)
-							DirectFunctionCall2(setval_oid,
-												ObjectIdGetDatum(seqid),
-												Int64GetDatum(max_identity));
-						else if (seq_incr < 0)
-							DirectFunctionCall2(setval_oid,
-												ObjectIdGetDatum(seqid),
-												Int64GetDatum(min_identity));
-						else {
-							/* increment can't be zero */
-							Assert(0);
+						PG_TRY();
+						{
+							/*
+							 * We want the T-SQL behavior of setval function.
+							 * Please check the variable definition for details.
+							 */
+							pltsql_setval_identity_mode = true;
+							if (seq_incr > 0)
+								DirectFunctionCall2(setval_oid,
+													ObjectIdGetDatum(seqid),
+													Int64GetDatum(max_identity));
+							else if (seq_incr < 0)
+								DirectFunctionCall2(setval_oid,
+													ObjectIdGetDatum(seqid),
+													Int64GetDatum(min_identity));
+							else {
+								/* increment can't be zero */
+								Assert(0);
+							}
+							/* reset the value */
+							pltsql_setval_identity_mode = false;
 						}
+						PG_CATCH();
+						{
+							/* reset the value */
+							pltsql_setval_identity_mode = false;
+							PG_RE_THROW();
+						}
+						PG_END_TRY();
 
 						/* more than one identity column isn't allowed */
 						break;
