@@ -119,6 +119,49 @@ AS $BODY$ BEGIN
 END; $BODY$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg TEXT, IN typmod INTEGER)
+RETURNS sys.DATETIME2
+AS $BODY$
+BEGIN
+    RETURN CASE typmod
+            WHEN 0 THEN CAST(arg as DATETIME2(0))
+            WHEN 1 THEN CAST(arg as DATETIME2(1))
+            WHEN 2 THEN CAST(arg as DATETIME2(2))
+            WHEN 3 THEN CAST(arg as DATETIME2(3))
+            WHEN 4 THEN CAST(arg as DATETIME2(4))
+            WHEN 5 THEN CAST(arg as DATETIME2(5))
+            ELSE CAST(arg as DATETIME2(6))
+        END;
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('cannot cast type %s to datetime2.',
+                                      pg_typeof(arg));
+        WHEN OTHERS THEN
+            RETURN NULL;
+END; $BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg ANYELEMENT, IN typmod INTEGER)
+RETURNS sys.DATETIME2
+AS $BODY$
+BEGIN
+     RETURN CASE typmod
+            WHEN 0 THEN CAST(arg as DATETIME2(0))
+            WHEN 1 THEN CAST(arg as DATETIME2(1))
+            WHEN 2 THEN CAST(arg as DATETIME2(2))
+            WHEN 3 THEN CAST(arg as DATETIME2(3))
+            WHEN 4 THEN CAST(arg as DATETIME2(4))
+            WHEN 5 THEN CAST(arg as DATETIME2(5))
+            ELSE CAST(arg as DATETIME2(6))
+        END;
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('cannot cast type %s to datetime2.',
+                                      pg_typeof(arg));
+        WHEN OTHERS THEN
+            RETURN NULL;
+END; $BODY$
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg TEXT, INOUT output ANYELEMENT, IN typmod INT)
 RETURNS ANYELEMENT
