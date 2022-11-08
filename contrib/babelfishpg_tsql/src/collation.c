@@ -331,13 +331,11 @@ transform_likenode(Node* node)
 			 */
 			if (NOT_FOUND == collidx_of_cs_as)
 				return node;
-			ereport(LOG, (errmsg("Inside transform_likenode(). LIKE expr and ci_as. collidx_of_cs_as found")));
 			/* Change the opno and oprfuncid to ILIKE */
 			op->opno = like_entry.ilike_oid;
 			op->opfuncid = like_entry.ilike_opfuncid;
 
 			op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-			ereport(LOG, (errmsg("Inside transform_likenode(). LIKE expr and ci_as. op->inputcollid")));
 
 			/* no constant prefix found in pattern, or pattern is not constant */
 			if (IsA(leftop, Const) || !IsA(rightop, Const) ||
@@ -423,7 +421,6 @@ transform_likenode(Node* node)
 					ret = make_and_qual(node, constant_suffix);
 				}
 				ReleaseSysCache(optup);
-				ereport(LOG, (errmsg("Inside transform_likenode(). LIKE expr and ci_as. Pattern constructed. ")));
 				return ret;
 			}
 		}
@@ -438,13 +435,11 @@ Node* pltsql_predicate_transformer(Node *expr)
 
 	if(IsA(expr, OpExpr))
 	{
-		ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() OpExpr condition")));
 		/* Singleton predicate */
 		return transform_likenode(expr);
 	}
 	else
 	{
-		ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() BoolExpr condition")));
 		/* Nonsingleton predicate, which could either a BoolExpr
 		 * with a list of predicates or a simple List of
 		 * predicates.
@@ -471,7 +466,6 @@ Node* pltsql_predicate_transformer(Node *expr)
 		}
 		else if (IsA(expr, FuncExpr))
 		{
-			ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() FuncExpr condition")));
 			/*
 			 * This is performed even in the postgres dialect to handle babelfish CI_AS
 			 * collations so that regexp operators can work inside plpgsql functions
