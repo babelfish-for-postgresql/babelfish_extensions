@@ -201,3 +201,71 @@ SELECT  (CAST('20211212' AS DATETIME) - '19000103') c1, ('19000103' - CAST('2021
         (CAST('20211212' AS SMALLDATETIME) - 55.55) c9, (55.55 - CAST('19000103' AS SMALLDATETIME)) c10, 
         (CAST('20211212' AS SMALLDATETIME) - 55) c11, (55 - CAST('19000103' AS SMALLDATETIME)) c12
 GO
+
+-- test DATETIME + other date and time data types (should not work)
+CREATE VIEW babel_2812_vu_v26 AS
+SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS DATE))
+GO
+CREATE VIEW babel_2812_vu_v27 AS
+SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS TEXT))
+GO
+
+-- overflow for datetime, should error
+CREATE VIEW babel_2812_vu_v28 AS
+SELECT  (CAST('1753-01-01' AS DATETIME) + CAST(2000000000 AS INT))
+GO
+CREATE VIEW babel_2812_vu_v29 AS
+SELECT  (CAST('1753-01-01' AS DATETIME) + CAST(4000000000 AS BIGINT))
+GO
+
+-- Test DATEDIFF() with DATE type for different dateparts
+CREATE VIEW babel_2812_vu_v30 AS
+SELECT datediff(year, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+CREATE VIEW babel_2812_vu_v31 AS
+SELECT datediff(quarter, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+CREATE VIEW babel_2812_vu_v32 AS
+SELECT datediff(month, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+-- datediff(week) is not 100% the same as SQL Server, needs to be fixed - should return 52
+CREATE VIEW babel_2812_vu_v33 AS
+SELECT datediff(week, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+CREATE VIEW babel_2812_vu_v34 AS
+SELECT datediff(y, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+CREATE VIEW babel_2812_vu_v35 AS
+SELECT datediff(day, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+CREATE VIEW babel_2812_vu_v36 AS
+SELECT datediff(hour, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+CREATE VIEW babel_2812_vu_v37 AS
+SELECT datediff(minute, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+CREATE VIEW babel_2812_vu_v38 AS
+SELECT datediff(second, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+
+-- should overflow
+CREATE VIEW babel_2812_vu_v39 AS
+SELECT datediff(millisecond, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+GO
+
+-- smaller interval for millisecond
+CREATE VIEW babel_2812_vu_v40 AS
+SELECT datediff(millisecond, CAST('2016-12-27' as date), cast('2016-12-28' as date));
+GO
+
+-- should overflow
+CREATE VIEW babel_2812_vu_v41 AS
+SELECT datediff(microsecond, CAST('2016-12-27' as date), cast('2016-12-28' as date));
+GO
+-- microsecond and nanosecond can only handle diff of 0 for date type
+CREATE VIEW babel_2812_vu_v42 AS
+SELECT datediff(microsecond, CAST('2016-12-28' as date), cast('2016-12-28' as date));
+GO
+CREATE VIEW babel_2812_vu_v43 AS
+SELECT datediff(nanosecond, CAST('2016-12-28' as date), cast('2016-12-28' as date));
+GO

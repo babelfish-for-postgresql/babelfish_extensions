@@ -231,15 +231,14 @@ datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#smalldatetime#
 
 
 -- test DATETIME + other date and time data types (should not work)
-SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS DATE))
+SELECT * FROM babel_2812_vu_v26
 GO
 ~~START~~
 datetime
 2021-12-14 00:00:00.0
 ~~END~~
 
-
-SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS TEXT))
+SELECT * FROM babel_2812_vu_v27
 GO
 ~~START~~
 varchar
@@ -248,14 +247,13 @@ varchar
 
 
 -- overflow for datetime, should error
-SELECT  (CAST('1753-01-01' AS DATETIME) + CAST(2000000000 AS INT))
+SELECT * FROM babel_2812_vu_v28
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: timestamp out of range)~~
 
-
-SELECT  (CAST('1753-01-01' AS DATETIME) + CAST(4000000000 AS BIGINT))
+SELECT * FROM babel_2812_vu_v29
 GO
 ~~ERROR (Code: 8115)~~
 
@@ -263,21 +261,21 @@ GO
 
 
 -- Test DATEDIFF() with DATE type for different dateparts
-SELECT datediff(year, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v30
 GO
 ~~START~~
 int
 1
 ~~END~~
 
-SELECT datediff(quarter, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v31
 GO
 ~~START~~
 int
 4
 ~~END~~
 
-SELECT datediff(month, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v32
 GO
 ~~START~~
 int
@@ -285,42 +283,42 @@ int
 ~~END~~
 
 -- datediff(week) is not 100% the same as SQL Server, needs to be fixed - should return 52
-SELECT datediff(week, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v33
 GO
 ~~START~~
 int
 51
 ~~END~~
 
-SELECT datediff(y, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v34
 GO
 ~~START~~
 int
 363
 ~~END~~
 
-SELECT datediff(day, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v35
 GO
 ~~START~~
 int
 363
 ~~END~~
 
-SELECT datediff(hour, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v36
 GO
 ~~START~~
 int
 8712
 ~~END~~
 
-SELECT datediff(minute, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v37
 GO
 ~~START~~
 int
 522720
 ~~END~~
 
-SELECT datediff(second, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v38
 GO
 ~~START~~
 int
@@ -328,14 +326,14 @@ int
 ~~END~~
 
 -- should overflow
-SELECT datediff(millisecond, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v39
 GO
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
 -- smaller interval for millisecond
-SELECT datediff(millisecond, CAST('2016-12-27' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v40
 GO
 ~~START~~
 int
@@ -343,21 +341,21 @@ int
 ~~END~~
 
 -- should overflow
-SELECT datediff(microsecond, CAST('2016-12-27' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v41
 GO
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
 
 -- microsecond and nanosecond can only handle diff of 0 for date type
-SELECT datediff(microsecond, CAST('2016-12-28' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v42
 GO
 ~~START~~
 int
 0
 ~~END~~
 
-SELECT datediff(nanosecond, CAST('2016-12-28' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v43
 GO
 ~~START~~
 int

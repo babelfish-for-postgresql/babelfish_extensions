@@ -86,50 +86,48 @@ SELECT * FROM babel_2812_vu_v25
 GO
 
 -- test DATETIME + other date and time data types (should not work)
-SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS DATE))
+SELECT * FROM babel_2812_vu_v26
 GO
-
-SELECT (CAST('20211212' AS DATETIME) + CAST('19000103' AS TEXT))
+SELECT * FROM babel_2812_vu_v27
 GO
 
 -- overflow for datetime, should error
-SELECT  (CAST('1753-01-01' AS DATETIME) + CAST(2000000000 AS INT))
+SELECT * FROM babel_2812_vu_v28
 GO
-
-SELECT  (CAST('1753-01-01' AS DATETIME) + CAST(4000000000 AS BIGINT))
+SELECT * FROM babel_2812_vu_v29
 GO
 
 -- Test DATEDIFF() with DATE type for different dateparts
-SELECT datediff(year, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v30
 GO
-SELECT datediff(quarter, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v31
 GO
-SELECT datediff(month, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v32
 GO
 -- datediff(week) is not 100% the same as SQL Server, needs to be fixed - should return 52
-SELECT datediff(week, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v33
 GO
-SELECT datediff(y, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v34
 GO
-SELECT datediff(day, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v35
 GO
-SELECT datediff(hour, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v36
 GO
-SELECT datediff(minute, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v37
 GO
-SELECT datediff(second, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v38
 GO
 -- should overflow
-SELECT datediff(millisecond, CAST('2015-12-31' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v39
 GO
 -- smaller interval for millisecond
-SELECT datediff(millisecond, CAST('2016-12-27' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v40
 GO
 -- should overflow
-SELECT datediff(microsecond, CAST('2016-12-27' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v41
 GO
 -- microsecond and nanosecond can only handle diff of 0 for date type
-SELECT datediff(microsecond, CAST('2016-12-28' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v42
 GO
-SELECT datediff(nanosecond, CAST('2016-12-28' as date), cast('2016-12-28' as date));
+SELECT * FROM babel_2812_vu_v43
 GO

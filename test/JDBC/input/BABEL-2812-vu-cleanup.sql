@@ -84,3 +84,57 @@ GO
 
 DROP VIEW babel_2812_vu_v25;
 GO
+
+DROP VIEW babel_2812_vu_v26;
+GO
+
+DROP VIEW babel_2812_vu_v27;
+GO
+
+DROP VIEW babel_2812_vu_v28;
+GO
+
+DROP VIEW babel_2812_vu_v29;
+GO
+
+DROP VIEW babel_2812_vu_v30;
+GO
+
+DROP VIEW babel_2812_vu_v31;
+GO
+
+DROP VIEW babel_2812_vu_v32;
+GO
+
+DROP VIEW babel_2812_vu_v33;
+GO
+
+DROP VIEW babel_2812_vu_v34;
+GO
+
+DROP VIEW babel_2812_vu_v35;
+GO
+
+DROP VIEW babel_2812_vu_v36;
+GO
+
+DROP VIEW babel_2812_vu_v37;
+GO
+
+DROP VIEW babel_2812_vu_v38;
+GO
+
+DROP VIEW babel_2812_vu_v39;
+GO
+
+DROP VIEW babel_2812_vu_v40;
+GO
+
+DROP VIEW babel_2812_vu_v41;
+GO
+
+DROP VIEW babel_2812_vu_v42;
+GO
+
+DROP VIEW babel_2812_vu_v43;
+GO
