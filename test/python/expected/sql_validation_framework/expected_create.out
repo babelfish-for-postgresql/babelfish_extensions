@@ -22,7 +22,6 @@ Could not find tests for function sys.format_numeric
 Could not find tests for function sys.get_babel_server_collation_oid
 Could not find tests for function sys.get_current_full_xact_id
 Could not find tests for function sys.get_host_os
-Could not find tests for function sys.get_tds_id
 Could not find tests for function sys.is_collated_ci_as
 Could not find tests for function sys.is_collated_ci_as_internal
 Could not find tests for function sys.is_rolemember_internal
@@ -146,7 +145,6 @@ Could not find upgrade tests for function sys.formatmessage
 Could not find upgrade tests for function sys.get_babel_server_collation_oid
 Could not find upgrade tests for function sys.get_current_full_xact_id
 Could not find upgrade tests for function sys.get_host_os
-Could not find upgrade tests for function sys.get_tds_id
 Could not find upgrade tests for function sys.has_perms_by_name
 Could not find upgrade tests for function sys.ident_incr
 Could not find upgrade tests for function sys.ident_seed

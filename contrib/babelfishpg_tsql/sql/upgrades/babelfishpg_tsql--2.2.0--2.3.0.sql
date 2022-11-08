@@ -3943,7 +3943,7 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_ta
 
 
 -- Deprecate the function sys.get_tds_id
-ALTER FUNCTION sys.sys.get_tds_id RENAME TO sys.get_tds_id_deprecated_2_3_0;
+ALTER FUNCTION sys.get_tds_id RENAME TO sys.get_tds_id_deprecated_2_3_0;
 
 -- Recreate Newer sys.get_tds_id function
 create or replace function sys.get_tds_id(
