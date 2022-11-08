@@ -484,13 +484,11 @@ Node* pltsql_predicate_transformer(Node *expr)
 			Node *qual = (Node *) lfirst(lc);
 			if (is_andclause(qual) || is_orclause(qual))
 			{
-				ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() predicate is and/or clause")));
 				new_predicates = lappend(new_predicates,
 									pltsql_predicate_transformer(qual));
 			}
 			else if (IsA(qual, OpExpr))
 			{
-				ereport(LOG, (errmsg("Inside pltsql_predicate_transformer() predicate is OpExpr")));
 				new_predicates = lappend(new_predicates,
 									transform_likenode(qual));
 			}
@@ -731,16 +729,10 @@ has_valid_coll_wrapper(Node *expr)
 		
 		if(IsA(predicate, OpExpr))
 		{
-			ereport(LOG, (errmsg("Inside has_valid_coll_wrapper() OpExpr condition")));
 			/* Initialize collation callbacks */
 			init_and_check_collation_callbacks();
-			ereport(LOG, (errmsg("Inside has_valid_coll_wrapper() after init-ing collation callbacks")));
 			if ((*collation_callbacks_ptr->has_valid_collation)(predicate, true))
-			{
-				ereport(LOG, (errmsg("Inside has_valid_coll_wrapper(). Expr has ci_as and ilike node (return true)")));
-				return true;
-			}
-				
+				return true;				
 		}
 		else if (IsA(predicate, BoolExpr))
 		{
