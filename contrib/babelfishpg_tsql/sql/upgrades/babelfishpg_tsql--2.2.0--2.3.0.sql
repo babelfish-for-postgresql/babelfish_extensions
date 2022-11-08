@@ -5122,6 +5122,26 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_columns_100_view', 'co
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_columns_100_view', 'type_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_columns_100_view', 'column_def');
 
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        o.object_id         AS object_id,
+        o.schema_id         AS schema_id,
+        c.column_id         AS colid,
+        CAST(CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
+		ELSE c.name END as sys.sysname) AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c INNER JOIN
+        sys.all_objects o ON (c.object_id = o.object_id) JOIN
+        pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
+    WHERE
+        c.is_sparse = 0 AND p.attnum >= 0;
+
 CALL sys.babelfish_update_collation_to_default('sys', 'spt_tablecollations_view', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'spt_tablecollations_view', 'collation_28');
 CALL sys.babelfish_update_collation_to_default('sys', 'spt_tablecollations_view', 'collation_90');
