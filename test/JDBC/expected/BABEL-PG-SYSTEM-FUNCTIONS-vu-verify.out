@@ -1,0 +1,70 @@
+SELECT nextval('sequence_test');
+go
+~~START~~
+bigint
+100
+~~END~~
+
+SELECT currval('sequence_test');
+go
+~~START~~
+bigint
+100
+~~END~~
+
+SELECT setval('sequence_test', 32);
+go
+~~START~~
+bigint
+32
+~~END~~
+
+SELECT nextval('sequence_test');
+go
+~~START~~
+bigint
+33
+~~END~~
+
+SELECT setval('sequence_test', 99, false);
+go
+~~START~~
+bigint
+99
+~~END~~
+
+SELECT nextval('sequence_test');
+go
+~~START~~
+bigint
+99
+~~END~~
+
+SELECT setval('sequence_test', 32);
+go
+~~START~~
+bigint
+32
+~~END~~
+
+SELECT nextval('sequence_test');
+go
+~~START~~
+bigint
+33
+~~END~~
+
+SELECT setval('sequence_test', 99, false);
+go
+~~START~~
+bigint
+99
+~~END~~
+
+SELECT nextval('sequence_test');
+go
+~~START~~
+bigint
+99
+~~END~~
+
