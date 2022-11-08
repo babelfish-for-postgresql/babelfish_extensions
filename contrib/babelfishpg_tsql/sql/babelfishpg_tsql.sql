@@ -2661,7 +2661,7 @@ CASE
   WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
   ELSE NULL
 END
-AS sys.varchar(254)) AS REMARKS
+AS sys.varchar(254)) COLLATE sys.database_default AS REMARKS
 , CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
 , CAST(
 CASE
@@ -2705,7 +2705,7 @@ CASE
   WHEN sdit.nullable = 1 THEN 'YES'
   ELSE 'NO'
 END
-AS sys.varchar(254)) AS IS_NULLABLE
+AS sys.varchar(254)) COLLATE sys.database_default AS IS_NULLABLE
 , CAST(
 CASE
   WHEN ss.n IS NULL THEN

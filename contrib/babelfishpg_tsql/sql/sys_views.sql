@@ -893,7 +893,7 @@ select
           then 'TR'
           else 'FN'
         end
-    end as sys.bpchar(2)) as type
+    end as sys.bpchar(2)) COLLATE sys.database_default as type
   , cast(case p.prokind
       when 'p' then 'SQL_STORED_PROCEDURE'
       when 'a' then 'AGGREGATE_FUNCTION'
@@ -2478,7 +2478,7 @@ AS
 SELECT 
    CAST(ds.name AS sys.SYSNAME),
    CAST(ds.data_space_id AS INT),
-   CAST(ds.type AS sys.BPCHAR(2)),
+   CAST(ds.type AS sys.BPCHAR(2)) COLLATE sys.database_default,
    CAST(ds.type_desc AS sys.NVARCHAR(60)),
    CAST(ds.is_default AS sys.BIT),
    CAST(ds.is_system AS sys.BIT),

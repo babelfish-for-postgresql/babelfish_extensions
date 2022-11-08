@@ -3638,7 +3638,7 @@ select
           then 'TR'
           else 'FN'
         end
-    end as sys.bpchar(2)) as type
+    end as sys.bpchar(2)) COLLATE sys.database_default as type
   , cast(case p.prokind
       when 'p' then 'SQL_STORED_PROCEDURE'
       when 'a' then 'AGGREGATE_FUNCTION'
@@ -4506,6 +4506,22 @@ CALL sys.babelfish_update_collation_to_default('sys', 'filetables', 'directory_n
 CALL sys.babelfish_update_collation_to_default('sys', 'filetables', 'filename_collation_name');
 
 CALL sys.babelfish_update_collation_to_default('sys', 'registered_search_property_lists', 'name');
+
+CREATE OR REPLACE VIEW sys.filegroups
+AS
+SELECT 
+   CAST(ds.name AS sys.SYSNAME),
+   CAST(ds.data_space_id AS INT),
+   CAST(ds.type AS sys.BPCHAR(2)) COLLATE sys.database_default,
+   CAST(ds.type_desc AS sys.NVARCHAR(60)),
+   CAST(ds.is_default AS sys.BIT),
+   CAST(ds.is_system AS sys.BIT),
+   CAST(NULL as sys.UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(0 as INT) AS log_filegroup_id,
+   CAST(0 as sys.BIT) AS is_read_only,
+   CAST(0 as sys.BIT) AS is_autogrow_all_files
+FROM sys.data_spaces ds WHERE type = 'FG';
+GRANT SELECT ON sys.filegroups TO PUBLIC;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'filegroups', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'filegroups', 'type');
@@ -6291,6 +6307,8 @@ AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
 CALL sys.babelfish_update_user_catalog_for_guest();
 
+-- comment for the review: Check https://github.com/babelfish-for-postgresql/babelfish_extensions/pull/708 to see if depcrecated
+-- view can cause any collation conflict to cx.
 ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_deprecated_in_2_3_0;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
@@ -6412,7 +6430,7 @@ CASE
   WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
   ELSE NULL
 END
-AS sys.varchar(254)) AS REMARKS
+AS sys.varchar(254)) COLLATE sys.database_default AS REMARKS
 , CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
 , CAST(
 CASE
@@ -6456,7 +6474,7 @@ CASE
   WHEN sdit.nullable = 1 THEN 'YES'
   ELSE 'NO'
 END
-AS sys.varchar(254)) AS IS_NULLABLE
+AS sys.varchar(254)) COLLATE sys.database_default AS IS_NULLABLE
 , CAST(
 CASE
   WHEN ss.n IS NULL THEN
@@ -6547,9 +6565,6 @@ LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left join'd because return t
 -- the join below allows us to retrieve the name of the base type of the user-defined type
 LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
-
-CALL sys.babelfish_update_collation_to_default('sys', 'sp_sproc_columns_view', 'remarks');
-CALL sys.babelfish_update_collation_to_default('sys', 'sp_sproc_columns_view', 'is_nullable');
 
 CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolname" sys.SYSNAME)
 AS 'babelfishpg_tsql', 'sp_addrole' LANGUAGE C;
