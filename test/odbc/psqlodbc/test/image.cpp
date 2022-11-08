@@ -180,10 +180,12 @@ TEST_F(PSQL_DataTypes_Image, View_creation) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-// BBF supports DATALENGTH() operator for sys.image but PG does not support sys.DATALENGTH()
-// since sys.DATALENGTH() has explicitly support 3 sys schema datatypes char,text and sql_variant
-// and besides those three, all other datatypes under ANYELEMENT could be supported. But PG somehow 
-// have conflicts recognize ANYELEMENT and sys.image, not unique datatype can't be supported
+// BBF supports DATALENGTH() operator for sys.image but PG does not
+//   sys.DATALENGTH() has explicit support for 3 datatypes: char, text, sys.sql_variant
+//   All other datatypes (e.g. sys.image) fall under ANYELEMENT
+//   PG connection has issues with ANYELEMENT
+//   PG treats sys.image as both sys.image and ANYELEMENT at the same time
+//   raising an error: function sys.datalength(sys.image) is not unique
 TEST_F(PSQL_DataTypes_Image, DISABLED_String_Functions) {
   const vector<string> INSERTED_VALUES = {
     "0x" + INSERTED_IMAGE_HEX_STR
