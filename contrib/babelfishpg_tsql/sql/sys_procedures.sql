@@ -186,18 +186,18 @@ GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(
 	IN varchar(128), IN varchar(128), IN varchar(128)
 ) TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolname" sys.SYSNAME)
+CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolename" sys.SYSNAME, IN "@ownername" sys.SYSNAME DEFAULT NULL)
 AS 'babelfishpg_tsql', 'sp_addrole' LANGUAGE C;
-GRANT EXECUTE on PROCEDURE sys.sp_addrole(IN sys.SYSNAME) TO PUBLIC;
+GRANT EXECUTE on PROCEDURE sys.sp_addrole(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_droprole(IN "@rolname" sys.SYSNAME)
+CREATE OR REPLACE PROCEDURE sys.sp_droprole(IN "@rolename" sys.SYSNAME)
 AS 'babelfishpg_tsql', 'sp_droprole' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprole(IN sys.SYSNAME) TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_addrolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+CREATE OR REPLACE PROCEDURE sys.sp_addrolemember(IN "@rolename" sys.SYSNAME, IN "@membername" sys.SYSNAME)
 AS 'babelfishpg_tsql', 'sp_addrolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_addrolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolename" sys.SYSNAME, IN "@membername" sys.SYSNAME)
 AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;

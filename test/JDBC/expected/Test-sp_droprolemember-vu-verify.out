@@ -24,7 +24,14 @@ EXEC sp_droprolemember;
 GO
 ~~ERROR (Code: 201)~~
 
-~~ERROR (Message: procedure sp_droprolemember expects parameter "@rolname", which was not supplied.)~~
+~~ERROR (Message: procedure sp_droprolemember expects parameter "@rolename", which was not supplied.)~~
+
+
+EXEC sp_droprolemember NULL;
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure sp_droprolemember expects parameter "@membername", which was not supplied.)~~
 
 
 EXEC sp_droprolemember '';
@@ -63,6 +70,27 @@ GO
 ~~ERROR (Message: Name cannot be NULL.)~~
 
 
+EXEC sp_droprolemember NULL, NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
+EXEC sp_droprolemember 'sp_droprolemember_role_doesnot_exist', NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
+EXEC sp_droprolemember NULL, 'sp_droprolemember_role_doesnot_exist';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
 -- Throw an error if member does not exist
 EXEC sp_droprolemember 'sp_droprolemember_r1', 'sp_droprolemember_role_doesnot_exist';
 GO
@@ -91,6 +119,13 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot alter the role 'sp_droprolemember_login', because it does not exist or you do not have permission.)~~
+
+
+EXEC sp_droprolemember 'sp_droprolemember_role_doesnot_exist_1', 'sp_droprolemember_role_doesnot_exist_2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role 'sp_droprolemember_role_doesnot_exist_1', because it does not exist or you do not have permission.)~~
 
 
 -- Test whether sp_droprolemember_r2 is rolemember of sp_droprolemember_r1
@@ -125,3 +160,32 @@ int
 0
 ~~END~~
 
+
+-- case insensitivity check
+-- role 'sp_droprolemember_r1', 'sp_droprolemember_r2' exists in DB
+EXEC sp_droprolemember 'SP_DROPROLEMEMBER_R1', 'sp_droprolemember_r2';
+GO
+
+EXEC sp_droprolemember 'sp_droprolemember_r1', 'SP_DROPROLEMEMBER_R2';
+GO
+
+-- procedure does not remove leading spaces but removes trailing whitespaces if exists in rolename/membername
+EXEC sp_droprolemember ' sp_droprolemember_r1', 'sp_droprolemember_r2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role ' sp_droprolemember_r1', because it does not exist or you do not have permission.)~~
+
+
+EXEC sp_droprolemember 'sp_droprolemember_r1 ', 'sp_droprolemember_r2';
+GO
+
+EXEC sp_droprolemember 'sp_droprolemember_r1', ' sp_droprolemember_r2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the principal ' sp_droprolemember_r2', because it does not exist or you do not have permission.)~~
+
+
+EXEC sp_droprolemember 'sp_droprolemember_r1', 'sp_droprolemember_r2 ';
+GO
