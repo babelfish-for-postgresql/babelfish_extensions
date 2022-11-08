@@ -284,15 +284,12 @@ transform_likenode(Node* node)
 					op->inputcollid = DEFAULT_COLLATION_OID;
 					return node;
 				}
-				ereport(LOG, (errmsg("Inside transform_likenode(). collidx_of_cs_as found.")));
 				op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-				ereport(LOG, (errmsg("Inside transform_likenode(). op->inputcollid found.")));					
 			}
 			else
 			{
 				/* If a collation is not specified, use the default one */
 				op->inputcollid = DEFAULT_COLLATION_OID;
-				ereport(LOG, (errmsg("Inside transform_likenode(). Using DEFAULT_COLLATION_OID.")));
 			}
 		}
 
@@ -301,7 +298,6 @@ transform_likenode(Node* node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
 		{
-			ereport(LOG, (errmsg("Inside transform_likenode(). LIKE expr and ci_as")));
 			Node*	   leftop = (Node *) linitial(op->args);
 			Node*	   rightop = (Node *) lsecond(op->args);
 			Oid		 ltypeId = exprType(leftop);
