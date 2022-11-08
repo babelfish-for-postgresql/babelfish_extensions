@@ -5127,8 +5127,8 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         o.object_id         AS object_id,
         o.schema_id         AS schema_id,
         c.column_id         AS colid,
-        CAST(CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
-		ELSE c.name END as sys.sysname) AS name,
+        CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
+		ELSE c.name END AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
