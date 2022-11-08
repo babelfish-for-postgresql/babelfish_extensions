@@ -2,11 +2,11 @@
 #include "../psqlodbc_tests_common.h"
 #include <fstream>
 
-const string BBF_TABLE_NAME = "master.dbo.char_table_odbc_test";
+const string BBF_TABLE_NAME = "master.dbo.image_table_odbc_test";
 // For BBF Connection
 //   Cannot prepend database name when creating/dropping view
 //   Must prepend database name when selecting from view
-const string BBF_VIEW_NAME = "dbo.char_view_odbc_test";
+const string BBF_VIEW_NAME = "dbo.image_view_odbc_test";
 
 const string TABLE_NAME = "master_dbo.image_table_odbc_test";
 const string COL1_NAME = "pk";
@@ -107,7 +107,7 @@ TEST_F(PSQL_DataTypes_Image, Table_Creation) {
 }
 
 TEST_F(PSQL_DataTypes_Image, Insertion_Success) {
-  vector<string> INSERTED_VALUES = {
+  vector<string> inserted_values = {
     "NULL",
     "00",     // Min
     "0",      // Min, different format
@@ -119,24 +119,29 @@ TEST_F(PSQL_DataTypes_Image, Insertion_Success) {
     "4294967295", // 8 Bytes
     "4294967296" // 8 Bytes + 1
   };
-  vector<string> EXPECTED_VALUES = getExpectedResults_VarBinary(INSERTED_VALUES);
+  vector<string> expected_values = getExpectedResults_VarBinary(inserted_values);
 
-  INSERTED_VALUES.push_back(" DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex')");
-  EXPECTED_VALUES.push_back("0x" + INSERTED_IMAGE_HEX_STR);
+  inserted_values.push_back(" DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex')");
+  expected_values.push_back("0x" + INSERTED_IMAGE_HEX_STR);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, 
-                      INSERTED_VALUES, EXPECTED_VALUES, 0, false, true);
+                      inserted_values, expected_values, 0, false, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_DataTypes_Image, Update_Success) {
+  // Insert with a image
   const vector<string> INSERTED_VALUES = {
-    "NULL"
+    " DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex')"
   };
-  const vector<string> EXPECTED_VALUES = getExpectedResults_VarBinary(INSERTED_VALUES);
-
-  vector<string> UPDATED_VALUES = {
+  const vector<string> EXPECTED_VALUES = {
+    "0x" + INSERTED_IMAGE_HEX_STR
+  };
+  
+  // test update function with 'Varbinary' values
+  vector<string> updated_values = {
+    "NULL",
     "00",     // Min
     "0",      // Min, different format
     "46",     // Rand
@@ -147,34 +152,32 @@ TEST_F(PSQL_DataTypes_Image, Update_Success) {
     "4294967295", // 8 Bytes
     "4294967296" // 8 Bytes + 1
   };
-  vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults_VarBinary(UPDATED_VALUES);
-  UPDATED_VALUES.push_back(" DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex')");
-  EXPECTED_UPDATED_VALUES.push_back("0x" + INSERTED_IMAGE_HEX_STR);
+  vector<string> expected_updated_values = getExpectedResults_VarBinary(updated_values);
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, 
                       INSERTED_VALUES, EXPECTED_VALUES, 0, false, true);
   testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, 
-                    UPDATED_VALUES, EXPECTED_UPDATED_VALUES, false, true);
+                    updated_values, expected_updated_values, false, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_DataTypes_Image, View_creation) {
-  const vector<string> INSERTED_VALUES = {
+  const vector<string> inserted_values = {
     "0x" + INSERTED_IMAGE_HEX_STR
   };
 
-  const int NUM_OF_DATA = INSERTED_VALUES.size();
+  const int NUM_OF_DATA = inserted_values.size();
 
   const string INSERT_STRING = "(0, DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex'))";
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
 
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, INSERT_STRING, NUM_OF_DATA);
-  verifyValuesInObject(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  verifyValuesInObject(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
 
   createView(ServerType::PSQL, VIEW_NAME, VIEW_QUERY);
-  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, inserted_values, inserted_values);
 
   dropObject(ServerType::PSQL, "VIEW", VIEW_NAME);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
@@ -187,11 +190,11 @@ TEST_F(PSQL_DataTypes_Image, View_creation) {
 //   PG treats sys.image as both sys.image and ANYELEMENT at the same time
 //   raising an error: function sys.datalength(sys.image) is not unique
 TEST_F(PSQL_DataTypes_Image, DISABLED_String_Functions) {
-  const vector<string> INSERTED_VALUES = {
+  const vector<string> inserted_values = {
     "0x" + INSERTED_IMAGE_HEX_STR
   };
 
-  const int NUM_OF_DATA = INSERTED_VALUES.size();
+  const int NUM_OF_DATA = inserted_values.size();
 
   const string INSERT_STRING = "(0, DECODE('" + INSERTED_IMAGE_HEX_STR + "', 'hex'))";
 
