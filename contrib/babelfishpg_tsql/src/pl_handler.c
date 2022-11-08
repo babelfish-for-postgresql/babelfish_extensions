@@ -413,6 +413,12 @@ assign_textsize(int newval, void *extra)
 static void
 pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 {
+	ParseState *p = NULL;
+	if (p->p_target_relation)
+		ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+						errmsg("dummy error")));
+
 	if (prev_pre_parse_analyze_hook)
 	  prev_pre_parse_analyze_hook(pstate, parseTree);
 
