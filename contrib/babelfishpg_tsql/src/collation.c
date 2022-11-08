@@ -256,12 +256,9 @@ transform_likenode(Node* node)
 	ereport(LOG, (errmsg("Inside transform_likenode()")));
 	if (node && IsA(node, OpExpr))
 	{
-		ereport(LOG, (errmsg("Inside transform_likenode(). Node is an OpExpr")));
 		OpExpr	 *op = (OpExpr *) node;
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
-		ereport(LOG, (errmsg("Inside transform_likenode(). like_entry found.")));
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
-		ereport(LOG, (errmsg("Inside transform_likenode(). coll_info_of_inputcollid found.")));
 		/*
 		 * We do not allow CREATE TABLE statements with CHECK constraint where the
 		 * constraint has an ILIKE operator and the collation is ci_as. But during
