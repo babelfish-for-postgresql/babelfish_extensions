@@ -736,11 +736,9 @@ has_valid_coll_wrapper(Node *expr)
 		}
 		else if (IsA(predicate, BoolExpr))
 		{
-			ereport(LOG, (errmsg("Inside has_valid_coll_wrapper() BoolExpr condition")));
 			BoolExpr   *boolexpr = (BoolExpr *) predicate;			
 			queue = list_concat(queue, boolexpr->args);
 		}
 	}
-	ereport(LOG, (errmsg("Inside has_valid_coll_wrapper() return false")));
 	return false;
 }
