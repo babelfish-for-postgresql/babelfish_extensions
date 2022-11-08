@@ -39,7 +39,7 @@ tsql_query_to_json_text(PG_FUNCTION_ARGS)
 
 	StringInfo result = tsql_query_to_json_internal(query, mode, include_null_value,
 											without_array_wrapper, root_name);
-	
+	pfree(query);
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
 

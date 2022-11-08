@@ -1450,7 +1450,7 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 	 * processed by the babelfishpg_tsql parser at this point and is surrounded by quote
 	 * such as in \"@pid"\.
 	 *
-	 * We achieve the above transformation by extacting all parameters starting
+	 * We achieve the above transformation by extracting all parameters starting
 	 * with \"@ from the query string, and replace them with %s. The StringInfo
 	 * variable format_query is used to assemble the new query in this process.
 	 * end_param points the remaiming query string after the parameter, initially
