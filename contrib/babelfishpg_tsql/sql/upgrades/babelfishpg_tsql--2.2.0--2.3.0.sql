@@ -5140,11 +5140,130 @@ CALL sys.babelfish_update_collation_to_default('sys', 'assembly_types', 'assembl
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_databases_view', 'database_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_databases_view', 'remarks');
 
+CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST(seq AS smallint) AS KEY_SEQ,
+CAST(t5.conname AS sys.sysname) AS PK_NAME
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+	JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" COLLATE sys.database_default)
+	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
+WHERE t5.contype = 'p'
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
+  AND ext.dbid = cast(sys.db_id() as oid);
+
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'table_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'table_owner');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'table_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'column_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'pk_name');
+
+CREATE OR REPLACE VIEW sys.sp_statistics_view AS
+SELECT
+CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t3."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t3."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CAST(NULL AS smallint) AS NON_UNIQUE,
+CAST(NULL AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(NULL AS sys.sysname) AS INDEX_NAME,
+CAST(0 AS smallint) AS TYPE,
+CAST(NULL AS smallint) AS SEQ_IN_INDEX,
+CAST(NULL AS sys.sysname) AS COLUMN_NAME,
+CAST(NULL AS sys.varchar(1)) AS COLLATION,
+CAST(t1.reltuples AS int) AS CARDINALITY,
+CAST(t1.relpages AS int) AS PAGES,
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" COLLATE sys.database_default AND s1.name = t3."TABLE_SCHEMA")
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+UNION
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CASE
+WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
+ELSE CAST(1 AS smallint)
+END AS NON_UNIQUE,
+CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
+-- the index name created by CREATE INDEX is re-mapped, find it (by checking
+-- the ones not in pg_constraint) and restoring it back before display
+CASE 
+WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
+ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+END AS INDEX_NAME,
+CASE
+WHEN t7.starelid > 0 THEN CAST(0 AS smallint)
+ELSE
+	CASE
+	WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
+	ELSE CAST(3 AS smallint)
+	END
+END AS TYPE,
+CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST('A' AS sys.varchar(1)) AS COLLATION,
+CAST(t7.stadistinct AS int) AS CARDINALITY,
+CAST(0 AS int) AS PAGES, --not supported
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND s1.name = t4."TABLE_SCHEMA")
+	JOIN (pg_catalog.pg_index t5 JOIN
+		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
+	LEFT JOIN pg_catalog.pg_statistic t7 ON t1.oid = t7.starelid
+	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
+    AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
+GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
+
+create function sys.sp_statistics_internal(
+    in_table_name sys.sysname,
+    in_table_owner sys.sysname = '',
+    in_table_qualifier sys.sysname = '',
+    in_index_name sys.sysname = '',
+	in_is_unique char = 'N',
+	in_accuracy char = 'Q'
+)
+returns table(
+    out_table_qualifier sys.sysname,
+    out_table_owner sys.sysname,
+    out_table_name sys.sysname,
+	out_non_unique smallint,
+	out_index_qualifier sys.sysname,
+	out_index_name sys.sysname,
+	out_type smallint,
+	out_seq_in_index smallint,
+	out_column_name sys.sysname,
+	out_collation sys.varchar(1),
+	out_cardinality int,
+	out_pages int,
+	out_filter_condition sys.varchar(128)
+)
+as $$
+begin
+    return query
+    select * from sys.sp_statistics_view
+    where in_table_name = table_name COLLATE sys.database_default
+        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner  COLLATE sys.database_default)
+        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier COLLATE sys.database_default)
+        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name COLLATE sys.database_default)
+        and ((UPPER(in_is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(in_is_unique) = 'N'))
+    order by non_unique, type, index_name, seq_in_index;
+end;
+$$
+LANGUAGE plpgsql;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_statistics_view', 'table_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_statistics_view', 'table_owner');
@@ -5176,6 +5295,52 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view'
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'grantee');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'privilege');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'is_grantable');
+
+CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
+SELECT DISTINCT 
+CAST(1 as smallint) AS SCOPE,
+CAST(coalesce (split_part(pa.attoptions[1] collate "C", '=', 2) ,c1.name) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS smallint) AS DATA_TYPE,
+
+CASE -- cases for when they are of type identity. 
+	WHEN c1.is_identity = 1 AND (t8.name COLLATE sys.database_default = 'decimal' or t8.name COLLATE sys.database_default = 'numeric') 
+	THEN CAST(CONCAT(t8.name, '() identity') AS sys.sysname)
+	WHEN c1.is_identity = 1 AND (t8.name COLLATE sys.database_default != 'decimal' AND t8.name COLLATE sys.database_default != 'numeric')
+	THEN CAST(CONCAT(t8.name, ' identity') AS sys.sysname)
+	ELSE CAST(t8.name AS sys.sysname)
+END AS TYPE_NAME,
+
+CAST(sys.sp_special_columns_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS int) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS int) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS smallint) AS SCALE,
+CAST(1 AS smallint) AS PSEUDO_COLUMN,
+CAST(c1.is_nullable AS int) AS IS_NULLABLE,
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+
+CASE 
+	WHEN idx.is_primary_key != 1
+	THEN CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
+	ELSE CAST('p' AS sys.sysname)
+END AS CONSTRAINT_TYPE,
+CAST(idx.name AS sys.sysname) AS CONSTRAINT_NAME,
+CAST(idx.index_id AS int) AS INDEX_ID
+        
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	LEFT JOIN sys.indexes idx ON idx.object_id = t1.oid
+	INNER JOIN pg_catalog.pg_attribute i2 ON idx.index_id = i2.attrelid
+	INNER JOIN sys.columns c1 ON c1.object_id = idx.object_id AND cast(i2.attname as sys.sysname) = c1.name collate sys.database_default
+
+	JOIN pg_catalog.pg_type AS t7 ON t7.oid = c1.system_type_id
+	JOIN sys.types AS t8 ON c1.user_type_id = t8.user_type_id 
+	LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON t7.typname = t6.pg_type_name collate sys.database_default OR t7.typname = t6.type_name collate sys.database_default --need in order to get accurate DATA_TYPE value
+	LEFT JOIN pg_catalog.pg_attribute AS pa ON t1.oid = pa.attrelid AND c1.name = pa.attname collate sys.database_default
+	, sys.translate_pg_type_to_tsql(t8.user_type_id) AS tsql_type_name
+	, sys.translate_pg_type_to_tsql(t8.system_type_id) AS tsql_base_type_name
+	WHERE has_schema_privilege(s1.schema_id, 'USAGE');
 
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_special_columns_view', 'column_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_special_columns_view', 'type_name');
