@@ -194,6 +194,7 @@ BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
+sys_all_objects-dep
 sys-columns-dep
 sys-databases-dep
 sys-foreign_key_columns-dep
