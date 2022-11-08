@@ -1,5 +1,5 @@
 -- tsql
-CREATE ROLE sp_addrolemember_r1;
+CREATE ROLE SP_ADDROLEMEMBER_R1;
 GO
 
 CREATE ROLE sp_addrolemember_r2;
@@ -19,7 +19,14 @@ EXEC sp_addrolemember;
 GO
 ~~ERROR (Code: 201)~~
 
-~~ERROR (Message: procedure sp_addrolemember expects parameter "@rolname", which was not supplied.)~~
+~~ERROR (Message: procedure sp_addrolemember expects parameter "@rolename", which was not supplied.)~~
+
+
+EXEC sp_addrolemember NULL;
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure sp_addrolemember expects parameter "@membername", which was not supplied.)~~
 
 
 EXEC sp_addrolemember '';
@@ -37,6 +44,27 @@ GO
 
 
 -- Throw an error is role/member is empty
+EXEC sp_addrolemember NULL, NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
+EXEC sp_addrolemember 'sp_addrolemember_role_doesnot_exist', NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
+EXEC sp_addrolemember NULL, 'sp_addrolemember_role_doesnot_exist';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
 EXEC sp_addrolemember '', '';
 GO
 ~~ERROR (Code: 33557097)~~
@@ -59,41 +87,49 @@ GO
 
 
 -- Throw an error when same roles are passed
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r1';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot make a role a member of itself)~~
+~~ERROR (Message: Cannot make a role a member of itself.)~~
 
 
 -- Throw an error when member doesn't exist
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_role_doesnot_exist';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_role_doesnot_exist';
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: User or role 'sp_addrolemember_role_doesnot_exist' does not exist in this database.)~~
 
 
--- Throw an error when role doesn't exist or when an user/login is passed
-Exec sp_addrolemember 'sp_addrolemember_role_doesnot_exist', 'sp_addrolemember_r1';
+-- Throw an error when role doesn't exist or when an user/login is passed as rolename
+EXEC sp_addrolemember 'sp_addrolemember_role_doesnot_exist', 'sp_addrolemember_r1';
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot alter the role 'sp_addrolemember_role_doesnot_exist', because it does not exist or you do not have permission.)~~
 
 
-Exec sp_addrolemember 'sp_addrolemember_user', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_user', 'sp_addrolemember_r1';
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot alter the role 'sp_addrolemember_user', because it does not exist or you do not have permission.)~~
 
 
-Exec sp_addrolemember 'sp_addrolemember_login', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_login', 'sp_addrolemember_r1';
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot alter the role 'sp_addrolemember_login', because it does not exist or you do not have permission.)~~
+
+
+-- Throw an error when both role and member doesn't exist
+EXEC sp_addrolemember 'sp_addrolemember_role_doesnot_exist_1', 'sp_addrolemember_role_doesnot_exist_2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User or role 'sp_addrolemember_role_doesnot_exist_2' does not exist in this database.)~~
 
 
 -- Check whether sp_addrolemember_r2 is rolemember of sp_addrolemember_r1
@@ -105,7 +141,7 @@ int
 ~~END~~
 
 
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r2';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r2';
 GO
 
 -- Check whether sp_addrolemember_r2 is rolemember of sp_addrolemember_r1
@@ -118,15 +154,15 @@ int
 
 
 -- Throw an error if role is already a member of member
-Exec sp_addrolemember 'sp_addrolemember_r2', 'sp_addrolemember_r1';
+EXEC sp_addrolemember 'sp_addrolemember_r2', 'sp_addrolemember_r1';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot make a role a member of itself)~~
+~~ERROR (Message: Cannot make a role a member of itself.)~~
 
 
 -- Can add user, role or group as an member for a role
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_user';
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_user';
 GO
 
 -- Check whether sp_addrolemember_user is rolemember of sp_addrolemember_r1
@@ -137,3 +173,32 @@ int
 1
 ~~END~~
 
+
+-- case insensitivity check
+-- role 'sp_addrolemember_r1', 'sp_addrolemember_r2' exists in DB
+EXEC sp_addrolemember 'SP_ADDROLEMEMBER_R1', 'sp_addrolemember_r2';
+GO
+
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'SP_ADDROLEMEMBER_R2';
+GO
+
+-- procedure does not remove leading spaces but removes trailing whitespaces if exists in rolename/membername
+EXEC sp_addrolemember ' sp_addrolemember_r1', 'sp_addrolemember_r2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the role ' sp_addrolemember_r1', because it does not exist or you do not have permission.)~~
+
+
+EXEC sp_addrolemember 'sp_addrolemember_r1 ', 'sp_addrolemember_r2';
+GO
+
+EXEC sp_addrolemember 'sp_addrolemember_r1', ' sp_addrolemember_r2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User or role ' sp_addrolemember_r2' does not exist in this database.)~~
+
+
+EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r2 ';
+GO
