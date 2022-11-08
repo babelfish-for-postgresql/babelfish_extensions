@@ -1022,7 +1022,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate, enddate);
+    return sys.datediff_internal_date(datepart, startdate, enddate);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1031,7 +1031,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate, enddate);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1049,7 +1049,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate, enddate);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1058,7 +1058,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate, enddate);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1379,6 +1379,75 @@ BEGIN
 		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
 		microsecond_diff = TRUNC(sys.datepart('microsecond', enddate OPERATOR(sys.-) startdate));
 		result = (((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff) * 1000;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
+	END CASE;
+
+	return result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER AS $$
+DECLARE
+	result INTEGER;
+	year_diff INTEGER;
+	month_diff INTEGER;
+	day_diff INTEGER;
+	hour_diff INTEGER;
+	minute_diff INTEGER;
+	second_diff INTEGER;
+	millisecond_diff INTEGER;
+	microsecond_diff INTEGER;
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		result = year_diff;
+	WHEN 'quarter' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		result = (year_diff * 12 + month_diff) / 3;
+	WHEN 'month' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		result = year_diff * 12 + month_diff;
+	-- for all intervals smaller than month, (DATE - DATE) already returns the integer number of days
+	-- between the dates, so just use that directly as the day_diff. There is no finer resolution
+	-- than days with the DATE type anyways.
+	WHEN 'doy', 'y' THEN
+		day_diff = enddate - startdate;
+		result = day_diff;
+	WHEN 'day' THEN
+		day_diff = enddate - startdate;
+		result = day_diff;
+	WHEN 'week' THEN
+		day_diff = enddate - startdate;
+		result = day_diff / 7;
+	WHEN 'hour' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24;
+	WHEN 'minute' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60;
+	WHEN 'second' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60;
+	WHEN 'millisecond' THEN
+		-- millisecond result from date_part by default contains second value,
+		-- so we don't need to add second_diff again
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000;
+	WHEN 'microsecond' THEN
+		-- microsecond result from date_part by default contains second and millisecond values,
+		-- so we don't need to add second_diff and millisecond_diff again
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000 * 1000;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000 * 1000 * 1000;
 	ELSE
 		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
 	END CASE;

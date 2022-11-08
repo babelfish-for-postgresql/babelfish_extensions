@@ -163,7 +163,29 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIME)
     parallel = safe
 );
 
--- datetime <-> int operators for datetime-int +/- arithmetic 
+-- datetime +/- operators (datetime, int4, float8)
+CREATE FUNCTION sys.datetime_add(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'babelfishpg_common', 'datetime_pl_datetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.datetime_minus(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'babelfishpg_common', 'datetime_mi_datetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.DATETIME,
+    RIGHTARG   = sys.DATETIME,
+    PROCEDURE  = sys.datetime_add
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.DATETIME,
+    RIGHTARG   = sys.DATETIME,
+    PROCEDURE  = sys.datetime_minus
+);
+
 CREATE FUNCTION sys.datetimeplint4(sys.DATETIME, INT4)
 RETURNS sys.DATETIME
 AS 'babelfishpg_common', 'datetime_pl_int4'
@@ -207,8 +229,6 @@ CREATE OPERATOR sys.- (
     RIGHTARG   = sys.DATETIME,
     PROCEDURE  = sys.int4midatetime
 );
-
-
 
 CREATE FUNCTION sys.datetimeplfloat8(sys.DATETIME, float8)
 RETURNS sys.DATETIME
@@ -420,7 +440,7 @@ WITH FUNCTION sys.datetime2bpchar (sys.DATETIME) AS ASSIGNMENT;
 CREATE OR REPLACE FUNCTION sys.bit2datetime(IN num sys.BIT)
 RETURNS sys.DATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + (CASE WHEN num != 0 THEN 1 ELSE 0 END);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -431,7 +451,7 @@ WITH FUNCTION sys.bit2datetime (sys.BIT) AS IMPLICIT;
 CREATE OR REPLACE FUNCTION sys.numeric2datetime(IN num NUMERIC)
 RETURNS sys.DATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(num AS FLOAT8);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -453,7 +473,7 @@ WITH FUNCTION sys.float8datetime (FLOAT8) AS IMPLICIT;
 CREATE OR REPLACE FUNCTION sys.float4datetime(IN num FLOAT4)
 RETURNS sys.DATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(num AS FLOAT8);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -472,10 +492,17 @@ CREATE CAST (INT AS sys.DATETIME)
 WITH FUNCTION sys.int2datetime (INT) AS IMPLICIT;
 
 -- cast BIGINT to DATETIME
+-- BIGINT to INT will either convert successfully if INT_MIN < num < INT_MAX, 
+-- otherwise it will raise an exception for being out of bound for INT. While 
+-- the error message will be different, ultimately I don't think there is much 
+-- issue due to the fact that even INT_MAX/INT_MIN is far beyond the acceptable 
+-- limit of what DATETIME (let alone SMALLDATETIME) can accept. Therefore, 
+-- Babelfish will raise an error in the same situations as SQL Server, just with 
+-- an int out of range instead of a datetime out of range error.
 CREATE OR REPLACE FUNCTION sys.bigint2datetime(IN num BIGINT)
 RETURNS sys.DATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(num AS INT);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -486,7 +513,7 @@ WITH FUNCTION sys.bigint2datetime (BIGINT) AS IMPLICIT;
 CREATE OR REPLACE FUNCTION sys.smallint2datetime(IN num SMALLINT)
 RETURNS sys.DATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(num AS INT);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -497,7 +524,7 @@ WITH FUNCTION sys.smallint2datetime (SMALLINT) AS IMPLICIT;
 CREATE OR REPLACE FUNCTION sys.money2datetime(IN num FIXEDDECIMAL)
 RETURNS sys.DATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(num AS FLOAT8);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
