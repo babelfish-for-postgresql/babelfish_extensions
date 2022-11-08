@@ -3935,6 +3935,154 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
+-- update datediff functions to either explicitly cast to timestamp or use different helper function
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_date(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER AS $$
+DECLARE
+	result INTEGER;
+	year_diff INTEGER;
+	month_diff INTEGER;
+	day_diff INTEGER;
+	hour_diff INTEGER;
+	minute_diff INTEGER;
+	second_diff INTEGER;
+	millisecond_diff INTEGER;
+	microsecond_diff INTEGER;
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		result = year_diff;
+	WHEN 'quarter' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		result = (year_diff * 12 + month_diff) / 3;
+	WHEN 'month' THEN
+		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		result = year_diff * 12 + month_diff;
+	-- for all intervals smaller than month, (DATE - DATE) already returns the integer number of days
+	-- between the dates, so just use that directly as the day_diff. There is no finer resolution
+	-- than days with the DATE type anyways.
+	WHEN 'doy', 'y' THEN
+		day_diff = enddate - startdate;
+		result = day_diff;
+	WHEN 'day' THEN
+		day_diff = enddate - startdate;
+		result = day_diff;
+	WHEN 'week' THEN
+		day_diff = enddate - startdate;
+		result = day_diff / 7;
+	WHEN 'hour' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24;
+	WHEN 'minute' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60;
+	WHEN 'second' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60;
+	WHEN 'millisecond' THEN
+		-- millisecond result from date_part by default contains second value,
+		-- so we don't need to add second_diff again
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000;
+	WHEN 'microsecond' THEN
+		-- microsecond result from date_part by default contains second and millisecond values,
+		-- so we don't need to add second_diff and millisecond_diff again
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000 * 1000;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000 * 1000 * 1000;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
+	END CASE;
+
+	return result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+-- helper function sys.babelfish_conv_helper_to_datetime(text, bool, numeric) needs to change return type to sys.DATETIME
+ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(text, bool, numeric) RENAME TO babelfish_conv_helper_to_datetime_deprecated_in_2_3_0_1;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_deprecated_in_2_3_0_1');
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg TEXT, IN try BOOL, IN p_style NUMERIC DEFAULT 0)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+    IF try THEN
+	    RETURN sys.babelfish_try_conv_string_to_datetime('DATETIME', arg, p_style);
+    ELSE
+        RETURN sys.babelfish_conv_string_to_datetime('DATETIME', arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
+-- helper function sys.babelfish_conv_helper_to_datetime(anyelement, bool, numeric) is no longer needed,
+-- as all arguments should be casted to text anyways. Drop the function.
+ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(anyelement, bool, numeric) RENAME TO babelfish_conv_helper_to_datetime_deprecated_in_2_3_0_2;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_conv_helper_to_datetime_deprecated_in_2_3_0_2');
+
+-- helper function sys.babelfish_try_conv_to_datetime(anyelement) needs to change return type to sys.DATETIME
+ALTER FUNCTION sys.babelfish_try_conv_to_datetime(anyelement) RENAME TO babelfish_try_conv_to_datetime_deprecated_in_2_3_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_conv_to_datetime_deprecated_in_2_3_0');
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement)
+RETURNS sys.DATETIME
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS TIMESTAMP);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
 -- Identity related helper functions are no longer needed
 ALTER FUNCTION sys.get_min_id_from_table RENAME TO get_min_id_from_table_deprecated_in_2_3_0;
 ALTER FUNCTION sys.get_max_id_from_table RENAME TO get_max_id_from_table_deprecated_in_2_3_0;

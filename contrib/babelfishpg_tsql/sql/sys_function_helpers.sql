@@ -9598,7 +9598,7 @@ VOLATILE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg TEXT,
                                                             IN try BOOL,
 													        IN p_style NUMERIC DEFAULT 0)
-RETURNS TIMESTAMP
+RETURNS sys.DATETIME
 AS
 $BODY$
 BEGIN
@@ -9612,26 +9612,9 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg anyelement,
-                                                            IN try BOOL,
-													        IN p_style NUMERIC DEFAULT 0)
-RETURNS TIMESTAMP
-AS
-$BODY$
-BEGIN
-    IF try THEN
-        RETURN sys.babelfish_try_conv_to_datetime(arg);
-    ELSE
-        RETURN CAST(arg AS TIMESTAMP);
-    END IF;
-END;
-$BODY$
-LANGUAGE plpgsql
-VOLATILE;
-
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement)
-RETURNS TIMESTAMP
+RETURNS sys.DATETIME
 AS
 $BODY$
 BEGIN
