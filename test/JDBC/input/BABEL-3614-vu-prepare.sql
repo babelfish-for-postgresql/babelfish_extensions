@@ -97,14 +97,14 @@ RETURN (SELECT sys.datetime2scale(CAST('2017-08-25 13:01:10.1234567' AS DATETIME
 END
 GO
 
-CREATE VIEW BABEL_3614_vu_prepare_v10 as (SELECT sys.babelfish_try_conv_to_datetime2(CAST(5.0 AS decimal)));
+CREATE VIEW BABEL_3614_vu_prepare_v10 as (SELECT TRY_CONVERT(datetime2(7), '9999-12-31 23:59:59.9999999'));
 GO
-CREATE PROCEDURE BABEL_3614_vu_prepare_p10 as (SELECT sys.babelfish_try_conv_to_datetime2(CAST(5.0 AS decimal)));
+CREATE PROCEDURE BABEL_3614_vu_prepare_p10 as (SELECT TRY_CONVERT(DATETIME2(7), '9999-12-31 23:59:59.9999999'));
 GO
 CREATE FUNCTION BABEL_3614_vu_prepare_f10()
 RETURNS DATETIME2 AS
 BEGIN
-RETURN (SELECT sys.babelfish_try_conv_to_datetime2(CAST(5.0 AS decimal)));
+RETURN (SELECT TRY_CONVERT(DATETIME2(7), '9999-12-31 23:59:59.9999999'));
 END
 GO
 
@@ -160,5 +160,27 @@ CREATE FUNCTION BABEL_3614_vu_prepare_f15()
 RETURNS DATETIME2 AS
 BEGIN
 RETURN (SELECT TRY_CONVERT(DATETIME2(0), '13:01:10.1234567'));
+END
+GO
+
+CREATE VIEW BABEL_3614_vu_prepare_v16 as (SELECT babelfish_try_cast_to_datetime2(CAST ('1900-01-01' as xml), CAST(2 as INTEGER)));
+GO
+CREATE PROCEDURE BABEL_3614_vu_prepare_p16 as (SELECT babelfish_try_cast_to_datetime2(CAST ('1900-01-01' as xml), CAST(2 as INTEGER)));
+GO
+CREATE FUNCTION BABEL_3614_vu_prepare_f16()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT babelfish_try_cast_to_datetime2(CAST ('1900-01-01' as xml), CAST(2 as INTEGER)));
+END
+GO
+
+CREATE VIEW BABEL_3614_vu_prepare_v17 as (SELECT babelfish_try_cast_to_datetime2('1900-01-01', CAST(2 as INTEGER)));
+GO
+CREATE PROCEDURE BABEL_3614_vu_prepare_p17 as (SELECT babelfish_try_cast_to_datetime2('1900-01-01', CAST(2 as INTEGER)));
+GO
+CREATE FUNCTION BABEL_3614_vu_prepare_f17()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT babelfish_try_cast_to_datetime2('1900-01-01', CAST(2 as INTEGER)));
 END
 GO

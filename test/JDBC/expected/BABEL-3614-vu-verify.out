@@ -182,8 +182,9 @@ SELECT * FROM BABEL_3614_vu_prepare_v7
 GO
 ~~START~~
 datetime2
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to datetime2.)~~
 
 DROP VIEW BABEL_3614_vu_prepare_v7
 GO
@@ -192,8 +193,9 @@ EXEC BABEL_3614_vu_prepare_p7
 GO
 ~~START~~
 datetime2
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to datetime2.)~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p7
 GO
@@ -202,8 +204,9 @@ SELECT BABEL_3614_vu_prepare_f7()
 GO
 ~~START~~
 datetime2
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "decimal" to datetime2.)~~
 
 DROP FUNCTION BABEL_3614_vu_prepare_f7()
 GO
@@ -272,7 +275,7 @@ SELECT * FROM BABEL_3614_vu_prepare_v10
 GO
 ~~START~~
 datetime2
-<NULL>
+9999-12-31 23:59:59.9999990
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v10
@@ -282,7 +285,7 @@ EXEC BABEL_3614_vu_prepare_p10
 GO
 ~~START~~
 datetime2
-<NULL>
+9999-12-31 23:59:59.9999990
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p10
@@ -292,7 +295,7 @@ SELECT BABEL_3614_vu_prepare_f10()
 GO
 ~~START~~
 datetime2
-<NULL>
+9999-12-31 23:59:59.9999990
 ~~END~~
 
 DROP FUNCTION BABEL_3614_vu_prepare_f10()
@@ -446,4 +449,67 @@ datetime2
 ~~END~~
 
 DROP FUNCTION BABEL_3614_vu_prepare_f15()
+GO
+
+SELECT * FROM BABEL_3614_vu_prepare_v16
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to datetime2.)~~
+
+DROP VIEW BABEL_3614_vu_prepare_v16
+GO
+
+EXEC BABEL_3614_vu_prepare_p16
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to datetime2.)~~
+
+DROP PROCEDURE BABEL_3614_vu_prepare_p16
+GO
+
+SELECT BABEL_3614_vu_prepare_f16()
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to datetime2.)~~
+
+DROP FUNCTION BABEL_3614_vu_prepare_f16()
+GO
+
+SELECT * FROM BABEL_3614_vu_prepare_v17
+GO
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000000
+~~END~~
+
+DROP VIEW BABEL_3614_vu_prepare_v17
+GO
+
+EXEC BABEL_3614_vu_prepare_p17
+GO
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3614_vu_prepare_p17
+GO
+
+SELECT BABEL_3614_vu_prepare_f17()
+GO
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3614_vu_prepare_f17()
 GO
