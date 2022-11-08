@@ -5550,11 +5550,10 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 							/* reset the value */
 							pltsql_setval_identity_mode = false;
 						}
-						PG_CATCH();
+						PG_FINALLY();
 						{
 							/* reset the value */
 							pltsql_setval_identity_mode = false;
-							PG_RE_THROW();
 						}
 						PG_END_TRY();
 
