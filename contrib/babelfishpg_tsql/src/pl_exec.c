@@ -5508,9 +5508,6 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 								max_identity = last_identity;
 						}
 
-						/* update last used identity */
-						pltsql_update_last_identity(seqid, last_identity);
-
 						/*
 						 * We also need to reset the seed.  If the increment
 						 * is positive, we need to find the max identity that
@@ -5556,6 +5553,9 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 							pltsql_setval_identity_mode = false;
 						}
 						PG_END_TRY();
+
+						/* update last used identity if setval is successful */
+						pltsql_update_last_identity(seqid, last_identity);
 
 						/* more than one identity column isn't allowed */
 						break;
