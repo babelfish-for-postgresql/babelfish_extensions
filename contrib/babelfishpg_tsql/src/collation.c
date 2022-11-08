@@ -253,6 +253,7 @@ transform_likenode(Node* node)
 {
 	if (node && IsA(node, OpExpr))
 	{
+		Assert(false);
 		OpExpr	 *op = (OpExpr *) node;
 		like_ilike_info_t like_entry = tsql_lookup_like_ilike_table_internal(op->opno);
 		coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(op->inputcollid);
