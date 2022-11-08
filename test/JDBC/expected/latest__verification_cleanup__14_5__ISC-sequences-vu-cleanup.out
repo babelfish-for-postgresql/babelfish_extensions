@@ -64,5 +64,8 @@ go
 drop sequence isc_sequences_dbone_sc1.isc_sequences_master_seq1;
 go
 
+drop schema isc_sequences_dbone_sc1;
+go
+
 drop database isc_sequences_dbone;
 go
