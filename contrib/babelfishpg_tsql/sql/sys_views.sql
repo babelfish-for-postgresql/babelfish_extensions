@@ -1448,7 +1448,7 @@ select
   , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
   , CAST(
       CASE 
-        WHEN (v.check_option = 'NONE' COLLATE sys.database_default) 
+        WHEN (v.check_option = 'NONE') 
           THEN 0
         ELSE 1
       END
