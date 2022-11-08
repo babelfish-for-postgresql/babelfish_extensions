@@ -26,7 +26,3 @@ SELECT setval('sequence_test', 99, false);
 go
 SELECT nextval('sequence_test');
 go
-
--- Sync the last sequence value
-CHECKPOINT
-go
