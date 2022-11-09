@@ -183,13 +183,13 @@ ${BABELFISH_HOME}/bin/initdb -D ${BABELFISH_DATA}/ -E "UTF8" --auth=trust --auth
 
 #### Initiate data with specific HBA configuration
 
-For production or isolated environments, it is recommended to specify the allowed IP addresses that can access the system and a secure authentication method such as `md5` in the `pg_hba.conf`. For other supported methods see [Authentication Methods documentation](https://www.postgresql.org/docs/14/auth-methods.html).
+For production or isolated environments, it is recommended to specify the allowed IP addresses that can access the system and a secure authentication method such as `md5` in the `pg_hba.conf`. For other supported methods see [Authentication Methods documentation](https://www.postgresql.org/docs/13/auth-methods.html).
 
 ```sh
 ${BABELFISH_HOME}/bin/initdb -D ${BABELFISH_DATA}/ -E "UTF8"
 ```
 
-Once the data directory is initialized, edit the `${BABELFISH_DATA}/pg_hba.conf` file following the [vanilla Postgres HBA configuration](https://www.postgresql.org/docs/14/auth-pg-hba-conf.html).
+Once the data directory is initialized, edit the `${BABELFISH_DATA}/pg_hba.conf` file following the [vanilla Postgres HBA configuration](https://www.postgresql.org/docs/13/auth-pg-hba-conf.html).
 
 
 
