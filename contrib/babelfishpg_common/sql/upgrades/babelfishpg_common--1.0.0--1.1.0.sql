@@ -1,32 +1,34 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
 \echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '1.1.0'" to load this file. \quit
 
--- Drops an operator class if it does not have any dependent objects.
--- We will drop redundant operator classes since sys.fixeddecimal_ops operator family will now contain
--- all the operators.
--- It is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
--- Please have this be one of the first statements executed in this upgrade script. 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_opclass(schema_name varchar, opcname varchar) AS
-$$
-DECLARE
-    error_msg text;
-    query1 text;
-    query2 text;
-BEGIN
-    query1 := format('drop operator class if exists %s.%s using btree', schema_name, opcname);
-    query2 := format('drop operator class if exists %s.%s using hash', schema_name, opcname);
-    execute query1;
-    execute query2;
-EXCEPTION
-    when dependent_objects_still_exist then --if 'drop operator class' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-end
-$$
-LANGUAGE plpgsql;
+DROP OPERATOR FAMILY IF EXISTS sys.fixeddecimal_ops USING btree;
+DROP OPERATOR FAMILY IF EXISTS sys.fixeddecimal_ops USING hash;
+
+CREATE OPERATOR FAMILY sys.fixeddecimal_ops USING btree;
+CREATE OPERATOR FAMILY sys.fixeddecimal_ops USING hash;
+
+-- drop fixeddecimal_ops and re-create it in operator family fixeddecimal_ops
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_ops USING hash;
+
+CREATE OPERATOR CLASS sys.fixeddecimal_ops
+DEFAULT FOR TYPE sys.FIXEDDECIMAL USING btree FAMILY sys.fixeddecimal_ops AS
+    OPERATOR    1   sys.<  (sys.FIXEDDECIMAL, sys.FIXEDDECIMAL),
+    OPERATOR    2   sys.<= (sys.FIXEDDECIMAL, sys.FIXEDDECIMAL),
+    OPERATOR    3   sys.=  (sys.FIXEDDECIMAL, sys.FIXEDDECIMAL),
+    OPERATOR    4   sys.>= (sys.FIXEDDECIMAL, sys.FIXEDDECIMAL),
+    OPERATOR    5   sys.>  (sys.FIXEDDECIMAL, sys.FIXEDDECIMAL),
+    FUNCTION    1   sys.fixeddecimal_cmp(sys.FIXEDDECIMAL, sys.FIXEDDECIMAL);
+
+CREATE OPERATOR CLASS sys.fixeddecimal_ops
+DEFAULT FOR TYPE sys.FIXEDDECIMAL USING hash FAMILY sys.fixeddecimal_ops AS
+    OPERATOR    1   sys.=  (sys.FIXEDDECIMAL, sys.FIXEDDECIMAL),
+    FUNCTION    1   sys.fixeddecimal_hash(sys.FIXEDDECIMAL);
+
 
 -- drop fixeddecimal_numeric_ops and add corresponding operators to operator family fixeddecimal_ops
-CALL babelfish_drop_deprecated_opclass('sys', 'fixeddecimal_numeric_ops');
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_numeric_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_numeric_ops USING hash;
 
 ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING btree ADD
     OPERATOR    1   sys.<  (sys.FIXEDDECIMAL, NUMERIC),
@@ -41,7 +43,8 @@ ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING hash ADD
 
 
 -- drop numeric_fixeddecimal_ops and add corresponding operators to operator family fixeddecimal_ops
-CALL babelfish_drop_deprecated_opclass('sys', 'numeric_fixeddecimal_ops');
+DROP OPERATOR CLASS IF EXISTS sys.numeric_fixeddecimal_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.numeric_fixeddecimal_ops USING hash;
 
 ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING btree ADD
     OPERATOR    1   sys.<  (NUMERIC, sys.FIXEDDECIMAL) FOR SEARCH,
@@ -56,7 +59,8 @@ ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING hash ADD
 
 
 -- drop fixeddecimal_int8_ops and add corresponding operators to operator family fixeddecimal_ops
-CALL babelfish_drop_deprecated_opclass('sys', 'fixeddecimal_int8_ops');
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_int8_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_int8_ops USING hash;
 
 ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING btree ADD
     OPERATOR    1   sys.<  (sys.FIXEDDECIMAL, INT8),
@@ -71,7 +75,8 @@ ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING hash ADD
 
 
 -- drop int8_fixeddecimal_ops and add corresponding operators to operator family fixeddecimal_ops
-CALL babelfish_drop_deprecated_opclass('sys', 'int8_fixeddecimal_ops');
+DROP OPERATOR CLASS IF EXISTS sys.int8_fixeddecimal_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.int8_fixeddecimal_ops USING hash;
 
 ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING btree ADD
     OPERATOR    1   sys.<  (INT8, sys.FIXEDDECIMAL),
@@ -86,7 +91,8 @@ ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING hash ADD
 
 
 -- drop fixeddecimal_int4_ops and add corresponding operators to operator family fixeddecimal_ops
-CALL babelfish_drop_deprecated_opclass('sys', 'fixeddecimal_int4_ops');
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_int4_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_int4_ops USING hash;
 
 ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING btree ADD
     OPERATOR    1   sys.<  (sys.FIXEDDECIMAL, INT4),
@@ -101,7 +107,8 @@ ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING hash ADD
 
 
 -- drop int4_fixeddecimal_ops and add corresponding operators to operator family fixeddecimal_ops
-CALL babelfish_drop_deprecated_opclass('sys', 'int4_fixeddecimal_ops');
+DROP OPERATOR CLASS IF EXISTS sys.int4_fixeddecimal_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.int4_fixeddecimal_ops USING hash;
 
 ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING btree ADD
     OPERATOR    1   sys.<  (INT4, sys.FIXEDDECIMAL),
@@ -116,7 +123,8 @@ ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING hash ADD
 
 
 -- drop fixeddecimal_int2_ops and add corresponding operators to operator family fixeddecimal_ops
-CALL babelfish_drop_deprecated_opclass('sys', 'fixeddecimal_int2_ops');
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_int2_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.fixeddecimal_int2_ops USING hash;
 
 ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING btree ADD
     OPERATOR    1   sys.<  (sys.FIXEDDECIMAL, INT2),
@@ -131,7 +139,8 @@ ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING hash ADD
 
 
 -- drop int2_fixeddecimal_ops and add corresponding operators to operator family fixeddecimal_ops
-CALL babelfish_drop_deprecated_opclass('sys', 'int2_fixeddecimal_ops');
+DROP OPERATOR CLASS IF EXISTS sys.int2_fixeddecimal_ops USING btree;
+DROP OPERATOR CLASS IF EXISTS sys.int2_fixeddecimal_ops USING hash;
 
 ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING btree ADD
     OPERATOR    1   sys.<  (INT2, sys.FIXEDDECIMAL),
@@ -327,7 +336,3 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.VARCHAR AS FLOAT8)
 WITH FUNCTION sys.varchar2float8(sys.VARCHAR) AS IMPLICIT;
-
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE babelfish_drop_deprecated_opclass(varchar, varchar);
