@@ -5405,7 +5405,7 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
 	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
 	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
-    
+
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'table_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'table_owner');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'table_name');
@@ -5414,6 +5414,34 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'grantee');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'privilege');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'is_grantable');
+
+CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
+-- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
+SELECT DISTINCT
+CAST(TABLE_QUALIFIER AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(TABLE_OWNER AS sys.sysname) AS TABLE_OWNER,
+CAST(TABLE_NAME AS sys.sysname) AS TABLE_NAME,
+CAST(GRANTOR AS sys.sysname) AS GRANTOR,
+CAST(GRANTEE AS sys.sysname) AS GRANTEE,
+CAST(PRIVILEGE AS sys.sysname) AS PRIVILEGE,
+CAST(IS_GRANTABLE AS sys.sysname) AS IS_GRANTABLE
+FROM sys.sp_column_privileges_view
+
+UNION 
+-- We need these set of joins only for the DELETE privilege
+SELECT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
+CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
+CAST(t4.is_grantable AS sys.sysname) AS IS_GRANTABLE
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
+WHERE t4.privilege_type = 'DELETE'; 
 
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'table_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'table_owner');
