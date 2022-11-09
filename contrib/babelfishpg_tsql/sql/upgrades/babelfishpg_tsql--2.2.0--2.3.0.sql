@@ -5451,6 +5451,40 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view'
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'privilege');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'is_grantable');
 
+CREATE OR REPLACE FUNCTION sys.sp_special_columns_precision_helper(IN type TEXT, IN sp_columns_precision INT, IN sp_columns_max_length SMALLINT, IN sp_datatype_info_precision BIGINT) RETURNS INT
+AS $$
+SELECT
+	CASE
+		WHEN type COLLATE sys.database_default in ('real','float') THEN sp_columns_max_length * 2 - 1
+		WHEN type COLLATE sys.database_default in ('char','varchar','binary','varbinary') THEN sp_columns_max_length
+		WHEN type COLLATE sys.database_default in ('nchar','nvarchar') THEN sp_columns_max_length / 2
+		WHEN type COLLATE sys.database_default in ('sysname','uniqueidentifier') THEN sp_datatype_info_precision
+		ELSE sp_columns_precision
+	END;
+$$ LANGUAGE SQL IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.sp_special_columns_length_helper(IN type TEXT, IN sp_columns_precision INT, IN sp_columns_max_length SMALLINT, IN sp_datatype_info_precision BIGINT) RETURNS INT
+AS $$
+SELECT
+	CASE
+		WHEN type COLLATE sys.database_default in ('decimal','numeric','money','smallmoney') THEN sp_columns_precision + 2
+		WHEN type COLLATE sys.database_default in ('time','date','datetime2','datetimeoffset') THEN sp_columns_precision * 2
+		WHEN type COLLATE sys.database_default in ('smalldatetime') THEN sp_columns_precision
+		WHEN type COLLATE sys.database_default in ('datetime') THEN sp_columns_max_length * 2
+		WHEN type COLLATE sys.database_default in ('sql_variant') THEN sp_datatype_info_precision
+		ELSE sp_columns_max_length
+	END;
+$$ LANGUAGE SQL IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.sp_special_columns_scale_helper(IN type TEXT, IN sp_columns_scale INT) RETURNS INT
+AS $$
+SELECT
+	CASE
+		WHEN type COLLATE sys.database_default in ('bit','real','float','char','varchar','nchar','nvarchar','time','date','datetime2','datetimeoffset','varbinary','binary','sql_variant','sysname','uniqueidentifier') THEN NULL
+		ELSE sp_columns_scale
+	END;
+$$ LANGUAGE SQL IMMUTABLE;
+
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
 SELECT DISTINCT 
 CAST(1 as smallint) AS SCOPE,
