@@ -1134,6 +1134,13 @@ bool collation_is_CI_AS(Oid colloid)
 	return false;
 }
 
+/*
+ * This function has the following outputs based on the value of 'check_for_ci_as_collation':
+ * - check_for_ci_as_collation = true: returns true if the expression contains an ILIKE node 
+ * and a ci_as collation
+ * - check_for_ci_as_collation = false: returns true if the expression contains
+ * an ILIKE node
+ */
 bool has_valid_coll(Node *expr, bool check_for_ci_as_collation)
 {
 	bool ilike_node_found = false;
