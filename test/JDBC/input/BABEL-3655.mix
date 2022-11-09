@@ -1,0 +1,43 @@
+-- tsql
+USE MASTER
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+USE MASTER
+GO
+
+CREATE DATABASE babel_3655_test_db
+GO
+
+USE babel_3655_test_db
+GO
+
+CREATE SCHEMA babel_3655_test_s1
+GO
+
+CREATE FUNCTION babel_3655_test_f1()
+RETURNS INT AS 
+BEGIN 
+RETURN 1; 
+END
+GO
+
+USE MASTER
+GO
+
+DROP DATABASE babel_3655_test_db
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+USE MASTER
+GO
