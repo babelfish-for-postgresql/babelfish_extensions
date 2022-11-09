@@ -58,7 +58,7 @@ format_datetime(PG_FUNCTION_ARGS)
 
 	culture = text_to_cstring(PG_GETARG_TEXT_P(2));
 
-	(void) format_validate_and_culture((char *) culture, "LC_TIME");
+	(void) format_validate_and_culture(culture, "LC_TIME");
 
 	buf = makeStringInfo();
 
@@ -97,7 +97,7 @@ format_datetime(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		fmt_res = process_format_pattern(buf, (char *) format_pattern, (char *) data_type);
+		fmt_res = process_format_pattern(buf, format_pattern, data_type);
 	}
 
 	if (fmt_res <= 0)
@@ -368,7 +368,7 @@ format_numeric_handler(Datum value, Numeric numeric_val, StringInfo format_res, 
  * Function for setting validated input locales for LC_TIME, LC_NUMERIC, LC_MONETARY
  */
 static int
-set_culture(char *valid_culture, const char *config_name, char *culture)
+set_culture(char *valid_culture, const char *config_name, const char *culture)
 {
 	if (valid_culture != NULL && strlen(valid_culture) > 0)
 	{
@@ -392,7 +392,7 @@ set_culture(char *valid_culture, const char *config_name, char *culture)
  * format the given input locale to supported locale format and set it accordingly
  */
 static char *
-format_validate_and_culture(char *culture, const char *config_name)
+format_validate_and_culture(const char *culture, const char *config_name)
 {
 	int 	culture_len = 0;
 	char 	*token;
@@ -658,7 +658,7 @@ format_datetimeformats(StringInfo buf, const char *format_pattern, const char *c
  * https://www.postgresql.org/docs/current/functions-formatting.html
  */
 static int
-process_format_pattern(StringInfo buf, char *msg_string, char *data_type)
+process_format_pattern(StringInfo buf, const char *msg_string, const char *data_type)
 {
 	int i = 0;
 	int bc = 0;
@@ -1439,7 +1439,7 @@ replace_currency_format(char *currency_format_mask, StringInfo format_res)
 														 CStringGetTextDatum(fmt)));
 
 	resetStringInfo(format_res);
-	appendStringInfo(format_res, "%s", result);
+	appendStringInfoString(format_res, result);
 }
 
 /*
