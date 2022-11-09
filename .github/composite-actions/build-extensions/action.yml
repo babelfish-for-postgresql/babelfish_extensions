@@ -38,6 +38,12 @@ runs:
         echo $PG_CONFIG
         echo pg_src
         echo $PG_SRC
-        echo pg_data
+        echo pg_data value below
         echo $PG_DATA
+        echo pgconfig_value_below
+        echo $PGCONFIG
+        echo pgsrc
+        echo $PGSRC
+        echo pgdata value below
+        echo $PGDATA
       shell: bash
