@@ -135,7 +135,8 @@ static bool check_server_collation_name(char **newval, void **extra, GucSource s
 			* We are storing value in lower case since
 			* Collation names are stored in lowercase into pg catalog (pg_collation).
 			*/
-		strncpy(*newval, downcase_identifier(*newval, strlen(*newval), false, false),strlen(*newval));
+		int length = strlen(*newval);
+		strncpy(*newval, downcase_identifier(*newval, length, false, false),length);
 		return true;
 	}
 	return false;
