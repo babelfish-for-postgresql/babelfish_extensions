@@ -186,7 +186,6 @@ bool		output_update_transformation = false;
 bool		output_into_insert_transformation = false;
 char       *update_delete_target_alias = NULL;
 int			pltsql_trigger_depth = 0;
-bool		insert_bulk_keep_nulls;
 
 PLExecStateCallStack	*exec_state_call_stack = NULL;
 int 					text_size;
@@ -3503,7 +3502,6 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_user_for_database = &get_user_for_database;
-		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_keep_nulls = get_insert_bulk_keep_nulls;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_rows_per_batch = &get_insert_bulk_rows_per_batch;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
 		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = &tsql_varchar_input;

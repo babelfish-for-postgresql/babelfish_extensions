@@ -1464,7 +1464,8 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 Datum sp_addrole(PG_FUNCTION_ARGS)
 {
-	char *rolname, *lowercase_rolname;
+	char *rolname, *lowercase_rolname, *ownername;
+	size_t len;
 	char *physical_role_name;
 	Oid role_oid;
 	List *parsetree_list;
@@ -1478,19 +1479,32 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		ownername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name is not NULL */
-		if (strlen(rolname) == 0)
+		if (rolname == NULL || strlen(rolname) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
+		/*
+		 * @ownername is not yet supported in babelfish.
+		 * Throw an error if @ownername is passed either as an empty string or contains value
+		 */
+		if(ownername)
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("The @ownername argument is not yet supported in Babelfish.")));
+
 		/* Role name cannot contain '\' */
 		if (strchr(rolname, '\\') != NULL)
-			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("'%s' is not a valid name because it contains invalid characters.", rolname)));
 
 		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
 		lowercase_rolname = lowerstr(rolname);
+
+		/* Remove trailing whitespaces */
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
 
 		/* Map the logical role name to its physical name in the database.*/
 		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
@@ -1499,13 +1513,17 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 		/* Check if the user, group or role already exists */
 		if (role_oid)
 			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("User, group, or role '%s' already exists in the current database.", rolname)));
+
+		/* Remove trailing whitespaces */
+		len = strlen(rolname);
+		while(isspace(rolname[len - 1])) rolname[--len] = 0;
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		parsetree_list = gen_sp_addrole_subcmds(lowercase_rolname);
+		parsetree_list = gen_sp_addrole_subcmds(rolname);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
@@ -1573,7 +1591,7 @@ gen_sp_addrole_subcmds(const char *user)
 	if (!IsA(rolestmt, CreateRoleStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
 
-	rolestmt->role = pstrdup(user);
+	rolestmt->role = pstrdup(lowerstr(user));
 	rewrite_object_refs(stmt);
 
 	/*
@@ -1593,6 +1611,7 @@ gen_sp_addrole_subcmds(const char *user)
 Datum sp_droprole(PG_FUNCTION_ARGS)
 {
 	char *rolname, *lowercase_rolname;
+	size_t len;
 	char *physical_role_name;
 	Oid role_oid;
 	List *parsetree_list;
@@ -1608,12 +1627,16 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 		/* Role name is not NULL */
-		if (strlen(rolname) == 0)
+		if (rolname == NULL || strlen(rolname) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
 		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
 		lowercase_rolname = lowerstr(rolname);
+
+		/* Remove trailing whitespaces */
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
 
 		/* Map the logical role name to its physical name in the database.*/
 		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
@@ -1710,6 +1733,7 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 {
 	char *rolname, *lowercase_rolname;
 	char *membername, *lowercase_membername;
+	size_t len;
 	char *physical_member_name;
 	char *physical_role_name;
 	Oid role_oid, member_oid;
@@ -1727,7 +1751,7 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name, member name is not NULL */
-		if ((strlen(rolname) == 0) || (strlen(membername) == 0))
+		if ((rolname == NULL || membername ==NULL) || (strlen(rolname) == 0) || (strlen(membername) == 0))
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
@@ -1735,11 +1759,17 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 		lowercase_rolname = lowerstr(rolname);
 		lowercase_membername = lowerstr(membername);
 
+		/* Remove trailing whitespaces in rolename and membername*/
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
+		len = strlen(lowercase_membername);
+		while(isspace(lowercase_membername[len - 1])) lowercase_membername[--len] = 0;
+
 		/* Throws an error if role name and member name are same*/
 		if(strcmp(lowercase_rolname,lowercase_membername)==0)
 			ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Cannot make a role a member of itself")));
+				 errmsg("Cannot make a role a member of itself.")));
 
 		/* Map the logical member name to its physical name in the database.*/
 		physical_member_name = get_physical_user_name(get_cur_db_name(), lowercase_membername);
@@ -1765,7 +1795,7 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 		if(is_member_of_role_nosuper( role_oid, member_oid))
 			ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Cannot make a role a member of itself")));
+				 errmsg("Cannot make a role a member of itself.")));
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -1856,6 +1886,7 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 {
 	char *rolname, *lowercase_rolname;
 	char *membername, *lowercase_membername;
+	size_t len;
 	char *physical_name;
 	Oid role_oid;
 	List *parsetree_list;
@@ -1872,13 +1903,19 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name, member name is not NULL */
-		if ((strlen(rolname) == 0) || (strlen(membername) == 0))
+		if ((rolname == NULL || membername ==NULL) || (strlen(rolname) == 0) || (strlen(membername) == 0))
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
 		/* Ensure the database name input argument is lower-case, as all Babel role names, user names are lower-case */
 		lowercase_rolname = lowerstr(rolname);
 		lowercase_membername = lowerstr(membername);
+
+		/* Remove trailing whitespaces in rolename and membername*/
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
+		len = strlen(lowercase_membername);
+		while(isspace(lowercase_membername[len - 1])) lowercase_membername[--len] = 0;
 
 		/* Map the logical role name to its physical name in the database.*/
 		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
@@ -1903,7 +1940,7 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		parsetree_list = gen_sp_droprolemember_subcmds(rolname, membername);
+		parsetree_list = gen_sp_droprolemember_subcmds(lowercase_rolname, lowercase_membername);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)

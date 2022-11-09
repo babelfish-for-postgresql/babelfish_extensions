@@ -3001,11 +3001,6 @@ get_param_mode(List *params, int paramno, char **modes)
 	}
 }
 
-bool get_insert_bulk_keep_nulls()
-{
-	return insert_bulk_keep_nulls;
-}
-
 int get_insert_bulk_rows_per_batch()
 {
 	return insert_bulk_rows_per_batch;

@@ -1596,11 +1596,16 @@ is_rolemember(PG_FUNCTION_ARGS)
 	Oid		role_oid;
 	Oid		principal_oid;
 	Oid		cur_user_oid = GetUserId();
+	Oid		db_owner_oid;
+	Oid		dbo_role_oid;
 	char	*role;
 	char 	*dc_role;
 	char 	*dc_principal;
 	char	*physical_role_name;
 	char	*physical_principal_name;
+	char	*cur_db_name;
+	char	*db_owner_name;
+	char	*dbo_role_name;
 	int idx;
 
 	if (PG_ARGISNULL(0))
@@ -1659,10 +1664,18 @@ is_rolemember(PG_FUNCTION_ARGS)
 	 * Recursively check if the given principal is a member of the role, not
 	 * considering superuserness
 	 */
-	if (is_member_of_role_nosuper(principal_oid, role_oid))
-		PG_RETURN_INT32(1);
-	else
+	cur_db_name = get_cur_db_name();
+	db_owner_name = get_db_owner_name(cur_db_name);
+	dbo_role_name = get_dbo_role_name(cur_db_name);
+	db_owner_oid = get_role_oid(db_owner_name, false);
+	dbo_role_oid = get_role_oid(dbo_role_name, false);
+	if ((principal_oid == db_owner_oid) || (principal_oid == dbo_role_oid))
 		PG_RETURN_INT32(0);
+	else 
+		if (is_member_of_role_nosuper(principal_oid, role_oid))
+			PG_RETURN_INT32(1);
+		else
+			PG_RETURN_INT32(0);
 }
 
 /*

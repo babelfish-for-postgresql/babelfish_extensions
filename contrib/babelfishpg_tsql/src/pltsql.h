@@ -1622,10 +1622,8 @@ typedef struct PLtsql_protocol_plugin
 
 	int (*TdsGetEncodingFromLcid)(int32_t lcid);
 
-	bool (*get_insert_bulk_keep_nulls) ();
-
 	int (*get_insert_bulk_rows_per_batch) ();
-
+	
 	int (*get_insert_bulk_kilobytes_per_batch) ();
 
 	void* (*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
@@ -1861,9 +1859,9 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 								 PLtsql_datum *datum,
 								 Oid *typeId, int32 *typMod, Oid *collation);
 
-extern bool get_insert_bulk_keep_nulls(void);
 extern int get_insert_bulk_rows_per_batch(void);
 extern int get_insert_bulk_kilobytes_per_batch(void);
+
 
 /*
  * Functions for namespace handling in pl_funcs.c
