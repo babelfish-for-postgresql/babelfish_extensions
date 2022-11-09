@@ -25,6 +25,10 @@ go
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
 
 exec babel_3640_p4
 go

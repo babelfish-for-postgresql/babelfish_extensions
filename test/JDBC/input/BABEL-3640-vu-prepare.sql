@@ -25,13 +25,20 @@ create proc babel_3640_p2 as
 go
 
 create proc babel_3640_p3 as
+    declare @p0 sysname = 'trans2';
+    declare @p1 sysname = null;
+    declare @p2 sysname = null;
     declare @p3 varchar(32) = 'TABLE';
-    EXEC sp_tables NULL,NULL,NULL,@p3;
+    EXEC sp_tables @p0,@p1,@p2,@p3;
+    EXEC sp_tables NULL,NULL,NULL,'TABLE';
 go
 
 create proc babel_3640_p4 as
+    declare @p0 sysname = null;
+    declare @p1 sysname = null;
+    declare @p2 sysname = null;
     declare @p3 varchar(32) = '''''''VIEW''''''';
-    EXEC sp_tables NULL,NULL,NULL,@p3;
+    EXEC sp_tables @p0,@p1,@p2,@p3;
 go
 
 create proc babel_3640_p5 as
@@ -42,4 +49,8 @@ go
 create proc babel_3640_p6 as
     declare @p3 varchar(32) = 'VIEW';
     EXEC sp_tables NULL,NULL,NULL,@p3;
+go
+
+exec sp_tables @table_type = "'TABLE'";
+exec sp_tables @table_type = "'VIEW'";
 go

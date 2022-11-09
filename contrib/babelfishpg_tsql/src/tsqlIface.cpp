@@ -164,6 +164,7 @@ template <class T> static std::string rewrite_column_name_with_omitted_schema_na
 static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
+static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -591,6 +592,37 @@ add_query_hints(PLtsql_expr_query_mutator *mutator, int contextOffset)
 	int queryOffset = contextOffset - baseOffset;
 	int initialTokenOffset = find_hint_offset(&mutator->expr->query[queryOffset]);
 	mutator->add(contextOffset + initialTokenOffset, "", hint);
+}
+
+// Try to retrieve the procedure name as in execute_body/execute_body_batch
+// from the context of execute_parameter.
+static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx)
+{
+	antlr4::tree::ParseTree *ctx = exParamCtx;
+	// We only need to loop max number of dereferences needed from the context 
+	// of execute_parameter to execute_body/execute_body_batch. 
+	// Currently that number is 3 + (number of execute_statement_arg_unnamed - 1).
+	// Because for now we only need this function for sp_tables which have 
+	// at most 5 parameters, 8 seems to be good enough here.
+	int cnt = 8; 
+
+	while (ctx->parent != nullptr && cnt-- > 0)
+	{
+		TSqlParser::Execute_bodyContext * exBodyCtx = dynamic_cast<TSqlParser::Execute_bodyContext *>(ctx->parent);
+		TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
+		TSqlParser::IdContext *proc = nullptr;
+
+		if (exBodyCtx != nullptr)
+			proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
+		else if (exBodyBatchCtx != nullptr)
+			proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
+
+		if (proc != nullptr)
+			return stripQuoteFromId(proc);
+
+		ctx = ctx->parent;
+	}
+	return "";
 }
 
 static std::string
@@ -1051,7 +1083,7 @@ public:
     tree::ParseTree *parser;
     MyInputStream &stream;
 
-	std::vector<int> double_quota_places;
+	const std::vector<int> double_quota_places;
 	int parameterIndex = 0;
 
 	bool is_cross_db = false;
@@ -1671,7 +1703,8 @@ public:
 			post_process_declare_table_statement(decl_table_stmt, ctx->declare_statement()->table_type_definition());
 		}
 
-		if (ctx->execute_statement()){
+		if (ctx->execute_statement())
+		{
 			PLtsql_stmt_exec *stmt = (PLtsql_stmt_exec *) getPLtsql_fragment(ctx);
 			if (stmt->cmd_type == PLTSQL_STMT_EXEC && stmt->proc_name && pg_strcasecmp("sp_tables", stmt->proc_name) == 0){
 				PLtsql_expr_query_mutator mutator(stmt->expr, ctx);
@@ -1683,55 +1716,27 @@ public:
 		clear_rewritten_query_fragment();
 	}
 
-	// Try to retrieve the procedure name as in execute_body/execute_body_batch
-	// from the context of execute_parameter.
-	static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx)
-	{
-		antlr4::tree::ParseTree *ctx = exParamCtx;
-		// We only need to loop max number of dereferences needed from the context 
-		// of execute_parameter to execute_body/execute_body_batch. 
-		// Currently that number is 3 + (number of execute_statement_arg_unnamed - 1).
-		// Because for now we only need this function for sp_tables which have 
-		// at most 5 parameters, 8 seems to be good enough here.
-		int cnt = 8; 
-
-		while (ctx->parent != nullptr && cnt-- > 0)
-		{
-			TSqlParser::Execute_bodyContext * exBodyCtx = dynamic_cast<TSqlParser::Execute_bodyContext *>(ctx->parent);
-			TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
-			TSqlParser::IdContext *proc = nullptr;
-
-			if (exBodyCtx != nullptr)
-				proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
-			else if (exBodyBatchCtx != nullptr)
-				proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
-
-			if (proc != nullptr)
-				return stripQuoteFromId(proc);
-
-			ctx = ctx->parent;
-		}
-		return "";
-	}
-
 	void exitExecute_parameter(TSqlParser::Execute_parameterContext *ctx) override
 	{
-		std::string argStr;
-		if (ctx->constant())
-			argStr = getFullText(ctx->constant());
-		else if (ctx->id())
-			argStr = getFullText(ctx->id());
-
 		if (ctx->constant() || ctx->id())
 		{
 			// BABEL-2395, BABEL-3640: embedded single quotes are allowed in procedure parameters.
 			// in enterExecute_parameter, we replace "" with '', and also record the place of "" into 
 			// double_quota_places, then in here, we'll replace all ' into '' if it's inside ""
+			// we replace " in tsqlMutator.enterExecute_parameter first to pass the syntax validation
+			// then we'll use the double quota rule to replace "'A'" to '''A'''
 			if (pg_strcasecmp(getProcNameFromExecParam(ctx).c_str(), "sp_tables") == 0)
 			{
+				std::string argStr;
+				if (ctx->constant())
+					argStr = getFullText(ctx->constant());
+				else if (ctx->id())
+					argStr = getFullText(ctx->id());
+
 				std::string newStr;
 				if (argStr.size() > 1 && argStr.front() == '\'' && argStr.back() == '\''
-				&& std::binary_search (double_quota_places.begin(), double_quota_places.end(), parameterIndex)){
+					&& std::binary_search (double_quota_places.begin(), double_quota_places.end(), parameterIndex))
+				{
 					newStr += '\'';
 					for (std::string::iterator iter = argStr.begin() + 1; iter != argStr.end() - 1; ++iter)
 					if (*iter == '\''){
@@ -2011,37 +2016,6 @@ private:
 	    return std::string(id->getSymbol()->getText());
 	}	
     }
-
-	// Try to retrieve the procedure name as in execute_body/execute_body_batch
-	// from the context of execute_parameter.
-	static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx)
-	{
-		antlr4::tree::ParseTree *ctx = exParamCtx;
-		// We only need to loop max number of dereferences needed from the context 
-		// of execute_parameter to execute_body/execute_body_batch. 
-		// Currently that number is 3 + (number of execute_statement_arg_unnamed - 1).
-		// Because for now we only need this function for sp_tables which have 
-		// at most 5 parameters, 8 seems to be good enough here.
-		int cnt = 8; 
-
-		while (ctx->parent != nullptr && cnt-- > 0)
-		{
-			TSqlParser::Execute_bodyContext * exBodyCtx = dynamic_cast<TSqlParser::Execute_bodyContext *>(ctx->parent);
-			TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
-			TSqlParser::IdContext *proc = nullptr;
-
-			if (exBodyCtx != nullptr)
-				proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
-			else if (exBodyBatchCtx != nullptr)
-				proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
-
-			if (proc != nullptr)
-				return stripQuoteFromId(proc);
-
-			ctx = ctx->parent;
-		}
-		return "";
-	}
     
 public:
     void enterConstant(TSqlParser::ConstantContext *ctx) override
@@ -2119,8 +2093,8 @@ public:
 			if (argStr.front() == '"' && argStr.back() == '"')
 			{
 				// if it's sp_tables, we will rewrite this into 
-				// exec sptables "test" -> exec sptables 'test'
-				// exec sptables "'test'" -> exec sptables '''test'''
+				// exec sp_tables "test" -> exec sp_tables 'test'
+				// exec sp_tables "'test'" -> exec sp_tables '''test'''
 				if (pg_strcasecmp(getProcNameFromExecParam(ctx).c_str() , "sp_tables") == 0){
 					double_quota_places.push_back(parameterIndex);
 				}
