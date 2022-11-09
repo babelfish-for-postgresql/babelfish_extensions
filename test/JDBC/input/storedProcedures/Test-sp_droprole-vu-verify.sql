@@ -21,11 +21,15 @@ GO
 EXEC sp_droprole '','','';
 GO
 
---Throws an error if the argument is empty or contains backslash(\)
+--Throws an error if the argument is empty
 EXEC sp_droprole '';
 GO
 
 EXEC sp_droprole NULL;
+GO
+
+-- Throw error if rolename is empty after removing trailing spaces
+EXEC sp_droprole '     ';
 GO
 
 --Throw an error when passed argument is not an role

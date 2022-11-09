@@ -29,7 +29,7 @@ GO
 ~~ERROR (Message: procedure sp_droprole has too many arguments specified.)~~
 
 
---Throws an error if the argument is empty or contains backslash(\)
+--Throws an error if the argument is empty
 EXEC sp_droprole '';
 GO
 ~~ERROR (Code: 33557097)~~
@@ -38,6 +38,14 @@ GO
 
 
 EXEC sp_droprole NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
+-- Throw error if rolename is empty after removing trailing spaces
+EXEC sp_droprole '     ';
 GO
 ~~ERROR (Code: 33557097)~~
 
