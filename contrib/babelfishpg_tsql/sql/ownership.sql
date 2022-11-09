@@ -178,7 +178,7 @@ BEGIN
 	-- check reserved roles
 	FOREACH role_name IN ARRAY reserved_roles LOOP
 	BEGIN
-		SELECT oid INTO user_id FROM pg_roles WHERE rolname collate "C" = role_name;
+		SELECT oid INTO user_id FROM pg_roles WHERE rolname = role_name;
 		IF user_id > 0 THEN
 			SELECT datname INTO db_name FROM pg_shdepend AS s INNER JOIN pg_database AS d ON s.dbid = d.oid WHERE s.refobjid = user_id;
 			IF db_name IS NOT NULL THEN

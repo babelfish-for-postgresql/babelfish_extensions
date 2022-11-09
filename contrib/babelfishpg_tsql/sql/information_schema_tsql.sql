@@ -243,7 +243,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 			CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
 			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
-			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin collate "C", ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
+			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
 			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
 				AS varchar(3))
 				AS "IS_NULLABLE",
@@ -300,7 +300,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
 
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN nc.dbname collate "C" ELSE null END
+				THEN nc.dbname ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
 				THEN ext.orig_name ELSE null END
@@ -355,7 +355,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 		CAST(
 			CASE co.collname
 				WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
-				ELSE co.collname collate "C"
+				ELSE co.collname
 			END
 		AS sys.nvarchar(128)) AS "COLLATION_NAME",
 
@@ -383,7 +383,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 			AS smallint)
 		AS "DATETIME_PRECISION",
 
-		CAST(case when is_tbl_type THEN NULL ELSE t.typdefault collate "C" END AS sys.nvarchar(4000)) AS "DOMAIN_DEFAULT"
+		CAST(case when is_tbl_type THEN NULL ELSE t.typdefault END AS sys.nvarchar(4000)) AS "DOMAIN_DEFAULT"
 
 		FROM (pg_type t JOIN sys.pg_namespace_ext nc ON t.typnamespace = nc.oid)
 		LEFT JOIN pg_collation co ON t.typcollation = co.oid
