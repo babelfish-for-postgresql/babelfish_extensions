@@ -1,3 +1,23 @@
+USE table_types_internal_db1;
+
+GO
+
+DROP TYPE IF EXISTS table_types_internal_schema1.table_types_internal_test1_db1;
+GO
+
+DROP TYPE IF EXISTS table_types_internal_schema1.table_types_internal_test2_db1;
+GO
+
+DROP TYPE IF EXISTS table_types_internal_test1_db1;
+GO
+
+DROP TYPE IF EXISTS table_types_internal_test2_db1;
+GO
+
+USE master;
+
+DROP DATABASE IF EXISTS  table_types_internal_db1;
+GO
 
 DROP TYPE IF EXISTS table_types_internal_test1;
 GO
