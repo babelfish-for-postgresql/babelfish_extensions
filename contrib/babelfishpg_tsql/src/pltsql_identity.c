@@ -37,6 +37,12 @@ typedef struct SeqTableIdentityData
 	int64		last_identity;	/* sequence identity value */
 } SeqTableIdentityData;
 
+/*
+ * By default, it is set to false.  This is set to true only when we want setval
+ * to set the max/min(current identity value, new identity value to be inserted.
+ */
+bool pltsql_setval_identity_mode = false;
+
 static HTAB *seqhashtabidentity = NULL;
 
 static SeqTableIdentityData *last_used_seq_identity = NULL;
@@ -319,7 +325,7 @@ void pltsql_resetcache_identity()
 int64
 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val)
 {
-	if (sql_dialect == SQL_DIALECT_TSQL)
+	if (sql_dialect == SQL_DIALECT_TSQL && pltsql_setval_identity_mode)
 	{
 		ListCell *seq_lc;
 		List *seq_options;

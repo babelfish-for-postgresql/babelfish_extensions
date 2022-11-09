@@ -2033,6 +2033,14 @@ void pltsql_function_probin_reader(ParseState *pstate,
 						List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
 
 /*
+ * This variable is set to true, if setval should behave in T-SQL way, i.e.,
+ * setval sets the max/min(current identity value, new identity value to be
+ * inserted.  By default, it is set to fale which means setval should behave
+ * PG way irrespective of the dialect - reset identity seed.
+ */
+extern bool pltsql_setval_identity_mode;
+
+/*
  * Functions in pltsql_identity.c
  */
 extern void pltsql_update_last_identity(Oid seqid, int64 val);

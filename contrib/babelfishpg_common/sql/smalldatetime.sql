@@ -348,7 +348,29 @@ CREATE OPERATOR sys.>= (
 );
 
 
--- smalldatetime <-> int/float operators for smalldatetime-int +/- arithmetic 
+-- smalldatetime +/- operators (smalldatetime, int4, float8)
+CREATE FUNCTION sys.smalldatetime_add(sys.smalldatetime, sys.smalldatetime)
+RETURNS sys.smalldatetime
+AS 'babelfishpg_common', 'smalldatetime_pl_smalldatetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smalldatetime_minus(sys.smalldatetime, sys.smalldatetime)
+RETURNS sys.smalldatetime
+AS 'babelfishpg_common', 'smalldatetime_mi_smalldatetime'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.smalldatetime,
+    RIGHTARG   = sys.smalldatetime,
+    PROCEDURE  = sys.smalldatetime_add
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.smalldatetime,
+    RIGHTARG   = sys.smalldatetime,
+    PROCEDURE  = sys.smalldatetime_minus
+);
+
 CREATE FUNCTION sys.smalldatetimeplint4(sys.smalldatetime, INT4)
 RETURNS sys.smalldatetime
 AS 'babelfishpg_common', 'smalldatetime_pl_int4'
@@ -616,7 +638,7 @@ WITH FUNCTION sys.smalldatetime2bpchar (sys.SMALLDATETIME) AS ASSIGNMENT;
 CREATE OR REPLACE FUNCTION sys.bit2smalldatetime(IN num sys.BIT)
 RETURNS sys.SMALLDATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + (CASE WHEN num != 0 THEN 1 ELSE 0 END);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -627,7 +649,7 @@ WITH FUNCTION sys.bit2smalldatetime (sys.BIT) AS IMPLICIT;
 CREATE OR REPLACE FUNCTION sys.numeric2smalldatetime(IN num NUMERIC)
 RETURNS sys.SMALLDATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + CAST(num AS FLOAT8);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -649,7 +671,7 @@ WITH FUNCTION sys.float8smalldatetime (FLOAT8) AS IMPLICIT;
 CREATE OR REPLACE FUNCTION sys.float4smalldatetime(IN num FLOAT4)
 RETURNS sys.SMALLDATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + CAST(num AS FLOAT8);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -668,10 +690,17 @@ CREATE CAST (INT AS sys.SMALLDATETIME)
 WITH FUNCTION sys.int2smalldatetime (INT) AS IMPLICIT;
 
 -- cast BIGINT to SMALLDATETIME
+-- BIGINT to INT will either convert successfully if INT_MIN < num < INT_MAX, 
+-- otherwise it will raise an exception for being out of bound for INT. While 
+-- the error message will be different, ultimately I don't think there is much 
+-- issue due to the fact that even INT_MAX/INT_MIN is far beyond the acceptable 
+-- limit of what DATETIME (let alone SMALLDATETIME) can accept. Therefore, 
+-- Babelfish will raise an error in the same situations as SQL Server, just with 
+-- an int out of range instead of a datetime out of range error.
 CREATE OR REPLACE FUNCTION sys.bigint2smalldatetime(IN num BIGINT)
 RETURNS sys.SMALLDATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + CAST(num AS INT);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -682,7 +711,7 @@ WITH FUNCTION sys.bigint2smalldatetime (BIGINT) AS IMPLICIT;
 CREATE OR REPLACE FUNCTION sys.smallint2smalldatetime(IN num SMALLINT)
 RETURNS sys.SMALLDATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + CAST(num AS INT);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -693,7 +722,7 @@ WITH FUNCTION sys.smallint2smalldatetime (SMALLINT) AS IMPLICIT;
 CREATE OR REPLACE FUNCTION sys.money2smalldatetime(IN num FIXEDDECIMAL)
 RETURNS sys.SMALLDATETIME
 AS $$
-    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + num;
+    SELECT CAST('1900-01-01 00:00:00' AS sys.SMALLDATETIME) + CAST(num AS FLOAT8);
 $$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
