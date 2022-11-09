@@ -254,6 +254,18 @@ SET IDENTITY_INSERT dbo.t1_identity_1 ON;
 INSERT INTO dbo.t1_identity_1 (a,b) VALUES (1,1);
 go
 
+-- Test with an error in setval
+ALTER SEQUENCE t1_identity_1_a_seq MAXVALUE 700
+INSERT INTO dbo.t1_identity_1 (a,b) VALUES (800,2);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+
+-- Test with setval after an error
+-- It should update on IDENT_CURRENT, not other identity variables
+SELECT setval('t1_identity_1_a_seq', 32);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+
 -- Check transaction rollback should increase identity
 BEGIN TRAN t1; INSERT INTO dbo.t1_identity_1 (a,b) VALUES (300,2); ROLLBACK TRAN t1;
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
@@ -269,7 +281,17 @@ INSERT INTO dbo.t1_identity_1 (a,b) VALUES (100,3);
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
 go
 
+-- After identity insert off, the insert should start from the next seed that
+-- setval sets
+SELECT setval('t1_identity_1_a_seq', 500);
+go
+
 SET IDENTITY_INSERT dbo.t1_identity_1 OFF;
+go
+
+INSERT INTO dbo.t1_identity_1 (b) VALUES (4);
+SELECT a FROM dbo.t1_identity_1 where b = 4;
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
 go
 
 CREATE TABLE dbo.t1_identity_2(a int identity(1, -1) primary key, b int unique not null);

@@ -5508,9 +5508,6 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 								max_identity = last_identity;
 						}
 
-						/* update last used identity */
-						pltsql_update_last_identity(seqid, last_identity);
-
 						/*
 						 * We also need to reset the seed.  If the increment
 						 * is positive, we need to find the max identity that
@@ -5528,18 +5525,35 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 
 						}
 
-						if (seq_incr > 0)
-							DirectFunctionCall2(setval_oid,
-												ObjectIdGetDatum(seqid),
-												Int64GetDatum(max_identity));
-						else if (seq_incr < 0)
-							DirectFunctionCall2(setval_oid,
-												ObjectIdGetDatum(seqid),
-												Int64GetDatum(min_identity));
-						else {
-							/* increment can't be zero */
-							Assert(0);
+						PG_TRY();
+						{
+							/*
+							 * We want the T-SQL behavior of setval function.
+							 * Please check the variable definition for details.
+							 */
+							pltsql_setval_identity_mode = true;
+							if (seq_incr > 0)
+								DirectFunctionCall2(setval_oid,
+													ObjectIdGetDatum(seqid),
+													Int64GetDatum(max_identity));
+							else if (seq_incr < 0)
+								DirectFunctionCall2(setval_oid,
+													ObjectIdGetDatum(seqid),
+													Int64GetDatum(min_identity));
+							else {
+								/* increment can't be zero */
+								Assert(0);
+							}
 						}
+						PG_FINALLY();
+						{
+							/* reset the value */
+							pltsql_setval_identity_mode = false;
+						}
+						PG_END_TRY();
+
+						/* update last used identity if setval is successful */
+						pltsql_update_last_identity(seqid, last_identity);
 
 						/* more than one identity column isn't allowed */
 						break;

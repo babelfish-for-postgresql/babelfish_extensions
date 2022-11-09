@@ -1,0 +1,70 @@
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
+go
+~~START~~
+bigint
+100
+~~END~~
+
+SELECT currval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
+go
+~~START~~
+bigint
+100
+~~END~~
+
+SELECT setval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1', 32);
+go
+~~START~~
+bigint
+32
+~~END~~
+
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
+go
+~~START~~
+bigint
+33
+~~END~~
+
+SELECT setval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1', 99, false);
+go
+~~START~~
+bigint
+99
+~~END~~
+
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
+go
+~~START~~
+bigint
+99
+~~END~~
+
+SELECT setval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1', 32);
+go
+~~START~~
+bigint
+32
+~~END~~
+
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
+go
+~~START~~
+bigint
+33
+~~END~~
+
+SELECT setval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1', 99, false);
+go
+~~START~~
+bigint
+99
+~~END~~
+
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
+go
+~~START~~
+bigint
+99
+~~END~~
+
