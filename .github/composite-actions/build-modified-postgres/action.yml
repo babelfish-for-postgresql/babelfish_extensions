@@ -56,11 +56,14 @@ runs:
 
     - name: Enable Ubuntu Core Dump
       run: |
-        ulimit -c unlimited
-        mkdir -p $HOME/${{ inputs.install_dir }}/core_dump
-        chmod a+w $HOME/${{ inputs.install_dir }}/core_dump
-        sysctl kernel.core_pattern=$HOME/${{ inputs.install_dir }}/core_dump
-        echo 'kernel.core_pattern=$HOME/${{ inputs.install_dir }}/core_dump/core-%e-%p' | sudo tee -a /etc/sysctl.conf
+        sudo mkdir -p /var/coredumps
+        sudo chmod a+w /var/coredumps
+        sudo sysctl kernel.core_pattern=/var/coredumps/core-%e-%p
+        echo 'kernel.core_pattern=/var/coredumps/core-%e-%p| sudo tee -a /etc/sysctl.conf
         echo '* soft core unlimited' | sudo tee -a /etc/security/limits.conf
-        systemctl daemon-reload
+        sudo systemctl daemon-reload
+        ulimit -c unlimited
+        echo 'DefaultLimitCORE=Infinity' | sudo tee -a /etc/systemd/system.conf
+        sudo systemctl daemon-reexec
+      shell: bash
 
