@@ -7,6 +7,6 @@ GO
 SELECT get_tds_id_func('random') as rv;
 GO
 
--- this view will execute previous version of the function 
+-- for minor version upgrade this view will use previous version of the get_tds_id function
 SELECT  * FROM get_tds_id_view;
 GO
