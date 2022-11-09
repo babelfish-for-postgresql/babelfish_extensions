@@ -2840,8 +2840,8 @@ BEGIN
 					SS_DATA_TYPE
 			FROM sys.sp_sproc_columns_view
 			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name)
-				AND (@column_name = '' OR column_name LIKE @column_name)
 				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner)
+				AND (@column_name = '' OR column_name LIKE @column_name)
 				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
 		END
