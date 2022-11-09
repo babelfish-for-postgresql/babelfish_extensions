@@ -5539,6 +5539,77 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_special_columns_view',
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_special_columns_view', 'constraint_type');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_special_columns_view', 'constraint_name');
 
+CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
+SELECT
+-- primary key info
+CAST(t2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
+CAST((select orig_name from sys.babelfish_namespace_ext where dbid = sys.db_id() and nspname COLLATE sys.database_default = ref.table_schema) AS sys.sysname) AS PKTABLE_OWNER,
+CAST(ref.table_name AS sys.sysname) AS PKTABLE_NAME,
+CAST(coalesce(split_part(pkname_table.attoptions[1] COLLATE "C", '=', 2), ref.column_name) AS sys.sysname) AS PKCOLUMN_NAME,
+
+-- foreign key info
+CAST(t2.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
+CAST((select orig_name from sys.babelfish_namespace_ext where dbid = sys.db_id() and nspname COLLATE sys.database_default = fk.table_schema) AS sys.sysname) AS FKTABLE_OWNER,
+CAST(fk.table_name AS sys.sysname) AS FKTABLE_NAME,
+CAST(coalesce(split_part(fkname_table.attoptions[1] COLLATE "C", '=', 2), fk.column_name) AS sys.sysname) AS FKCOLUMN_NAME,
+
+CAST(seq AS smallint) AS KEY_SEQ,
+CASE
+    WHEN map.update_rule = 'NO ACTION' THEN CAST(1 AS smallint)
+    WHEN map.update_rule = 'SET NULL' THEN CAST(2 AS smallint)
+    WHEN map.update_rule = 'SET DEFAULT' THEN CAST(3 AS smallint)
+    ELSE CAST(0 AS smallint)
+END AS UPDATE_RULE,
+
+CASE
+    WHEN map.delete_rule = 'NO ACTION' THEN CAST(1 AS smallint)
+    WHEN map.delete_rule = 'SET NULL' THEN CAST(2 AS smallint)
+    WHEN map.delete_rule = 'SET DEFAULT' THEN CAST(3 AS smallint)
+    ELSE CAST(0 AS smallint)
+END AS DELETE_RULE,
+CAST(fk.constraint_name AS sys.sysname) AS FK_NAME,
+CAST(ref.constraint_name AS sys.sysname) AS PK_NAME
+        
+FROM information_schema.referential_constraints AS map
+
+-- join unique constraints (e.g. PKs constraints) to ref columns info
+INNER JOIN information_schema.key_column_usage AS ref
+	JOIN pg_catalog.pg_class p1 -- Need to join this in order to get oid for pkey's original bbf name
+    JOIN sys.pg_namespace_ext p2 ON p1.relnamespace = p2.oid
+    JOIN information_schema.columns p4 ON p1.relname = p4.table_name AND p1.relnamespace::regnamespace::text = p4.table_schema
+    JOIN pg_constraint p5 ON p1.oid = p5.conrelid
+    ON (p1.relname=ref.table_name AND p4.column_name=ref.column_name AND ref.table_schema = p2.nspname AND ref.table_schema = p4.table_schema)
+    
+    ON ref.constraint_catalog = map.unique_constraint_catalog
+    AND ref.constraint_schema = map.unique_constraint_schema
+    AND ref.constraint_name = map.unique_constraint_name
+
+-- join fk columns to the correct ref columns using ordinal positions
+INNER JOIN information_schema.key_column_usage AS fk
+    ON  fk.constraint_catalog = map.constraint_catalog
+    AND fk.constraint_schema = map.constraint_schema
+    AND fk.constraint_name = map.constraint_name
+    AND fk.position_in_unique_constraint = ref.ordinal_position
+
+INNER JOIN pg_catalog.pg_class t1 
+    JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+    JOIN information_schema.columns t4 ON t1.relname = t4.table_name AND t1.relnamespace::regnamespace::text = t4.table_schema
+    JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+    ON (t1.relname=fk.table_name AND t4.column_name=fk.column_name AND fk.table_schema = t2.nspname AND fk.table_schema = t4.table_schema)
+    
+-- get foreign key's original bbf name
+JOIN pg_catalog.pg_attribute fkname_table
+	ON (t1.oid = fkname_table.attrelid) AND (fk.column_name = fkname_table.attname)
+
+-- get primary key's original bbf name
+JOIN pg_catalog.pg_attribute pkname_table
+	ON (p1.oid = pkname_table.attrelid) AND (ref.column_name = pkname_table.attname)
+	
+	, generate_series(1,16) seq -- BBF has max 16 columns per primary key
+WHERE t5.contype = 'f'
+AND CAST(t4.dtd_identifier AS smallint) = ANY (t5.conkey)
+AND CAST(t4.dtd_identifier AS smallint) = t5.conkey[seq];
+
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_fkeys_view', 'pktable_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_fkeys_view', 'pktable_owner');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_fkeys_view', 'pktable_name');

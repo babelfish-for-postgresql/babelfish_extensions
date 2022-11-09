@@ -1900,16 +1900,16 @@ CAST(coalesce(split_part(fkname_table.attoptions[1] COLLATE "C", '=', 2), fk.col
 
 CAST(seq AS smallint) AS KEY_SEQ,
 CASE
-    WHEN map.update_rule collate sys.database_default = 'NO ACTION' THEN CAST(1 AS smallint)
-    WHEN map.update_rule collate sys.database_default = 'SET NULL' THEN CAST(2 AS smallint)
-    WHEN map.update_rule collate sys.database_default = 'SET DEFAULT' THEN CAST(3 AS smallint)
+    WHEN map.update_rule = 'NO ACTION' THEN CAST(1 AS smallint)
+    WHEN map.update_rule = 'SET NULL' THEN CAST(2 AS smallint)
+    WHEN map.update_rule = 'SET DEFAULT' THEN CAST(3 AS smallint)
     ELSE CAST(0 AS smallint)
 END AS UPDATE_RULE,
 
 CASE
-    WHEN map.delete_rule collate sys.database_default = 'NO ACTION' THEN CAST(1 AS smallint)
-    WHEN map.delete_rule collate sys.database_default = 'SET NULL' THEN CAST(2 AS smallint)
-    WHEN map.delete_rule collate sys.database_default = 'SET DEFAULT' THEN CAST(3 AS smallint)
+    WHEN map.delete_rule = 'NO ACTION' THEN CAST(1 AS smallint)
+    WHEN map.delete_rule = 'SET NULL' THEN CAST(2 AS smallint)
+    WHEN map.delete_rule = 'SET DEFAULT' THEN CAST(3 AS smallint)
     ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
 CAST(fk.constraint_name AS sys.sysname) AS FK_NAME,
