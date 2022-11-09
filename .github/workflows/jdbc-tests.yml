@@ -78,3 +78,10 @@ jobs:
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff
+      
+      - name: Upload Core Dumps
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: core-dumps
+          path: /var/coredumps/core-postgres-*
