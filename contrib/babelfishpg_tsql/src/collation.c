@@ -248,7 +248,7 @@ transform_funcexpr(Node* node)
  * Case 3: if the pattern doesn't have a constant prefix
  *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
-static Node*
+Node*
 transform_likenode(Node* node)
 {
 	if (node && IsA(node, OpExpr))
