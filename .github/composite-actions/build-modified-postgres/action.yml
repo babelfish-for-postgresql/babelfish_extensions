@@ -59,7 +59,7 @@ runs:
         sudo mkdir -p /var/coredumps
         sudo chmod a+w /var/coredumps
         sudo sysctl kernel.core_pattern=/var/coredumps/core-%e-%p
-        echo 'kernel.core_pattern=/var/coredumps/core-%e-%p| sudo tee -a /etc/sysctl.conf
+        echo 'kernel.core_pattern=/var/coredumps/core-%e-%p' | sudo tee -a /etc/sysctl.conf
         echo '* soft core unlimited' | sudo tee -a /etc/security/limits.conf
         sudo systemctl daemon-reload
         ulimit -c unlimited
