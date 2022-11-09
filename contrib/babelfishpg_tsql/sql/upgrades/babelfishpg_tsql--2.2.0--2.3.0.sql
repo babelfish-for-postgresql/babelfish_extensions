@@ -5172,10 +5172,10 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
 	BEGIN
 	   
-		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',' collate "C")) WHERE upper(trim(unnest)) = 'TABLE' collate sys.database_default OR upper(trim(unnest)) = '''TABLE''' collate sys.database_default) >= 1 THEN
+		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'TABLE' OR upper(trim(unnest)) = '''TABLE''') >= 1 THEN
 			opt_table = 'TABLE';
 		END IF;
-		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',' collate "C")) WHERE upper(trim(unnest)) = 'VIEW' collate sys.database_default OR upper(trim(unnest)) = '''VIEW''' collate sys.database_default) >= 1 THEN
+		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'VIEW' OR upper(trim(unnest)) = '''VIEW''') >= 1 THEN
 			opt_view = 'VIEW';
 		END IF;
 		IF in_fusepattern = 1 THEN
@@ -5214,6 +5214,7 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 	END;
 $$
 LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE PROCEDURE sys.sp_tables (
     "@table_name" sys.nvarchar(384) = '',
