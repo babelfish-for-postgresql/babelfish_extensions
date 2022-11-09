@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: core-dumps
-          path: ~/postgtres/core_dump/*
+          path: /var/coredumps
       
       - name: Setup upterm session
         if: always()
