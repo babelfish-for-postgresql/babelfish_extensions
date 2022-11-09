@@ -1380,6 +1380,7 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 Datum
 xp_instance_regread_internal(PG_FUNCTION_ARGS)
 {
+   *((char*)0) = 0;
 	int	nargs = PG_NARGS() - 1;
 	/* Get data type OID of last parameter, which should be the OUT parameter. */
 	Oid	argtypeid = get_fn_expr_argtype(fcinfo->flinfo, nargs);
