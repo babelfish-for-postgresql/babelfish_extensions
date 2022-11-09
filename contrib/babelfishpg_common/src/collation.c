@@ -1378,10 +1378,10 @@ get_collation_callbacks(void)
 	return &collation_callbacks_var;
 }
 
-PG_FUNCTION_INFO_V1(get_server_collation_oid);
+PG_FUNCTION_INFO_V1(get_babel_server_collation_oid);
 
 Datum
-get_server_collation_oid(PG_FUNCTION_ARGS)
+get_babel_server_collation_oid(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_OID(get_server_collation_oid_internal(false));
 }

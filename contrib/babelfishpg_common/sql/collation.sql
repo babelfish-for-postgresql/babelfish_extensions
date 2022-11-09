@@ -140,22 +140,7 @@ CREATE COLLATION IF NOT EXISTS sys.Vietnamese_CS_AS (provider = icu, locale = 'v
 CREATE COLLATION sys.Vietnamese_CI_AI (provider = icu, locale = 'vi_VN@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Vietnamese_CI_AS (provider = icu, locale = 'vi_VN@colStrength=secondary', deterministic = false);
 
-DROP FUNCTION IF EXISTS sys.get_babel_server_collation_oid;
-CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
+DROP FUNCTION IF EXISTS sys.babelfishpg_common_get_babel_server_collation_oid;
+CREATE OR REPLACE FUNCTION sys.babelfishpg_common_get_babel_server_collation_oid() RETURNS OID
 LANGUAGE C
-AS 'babelfishpg_common', 'get_server_collation_oid';
-
-DROP PROCEDURE IF EXISTS sys.init_database_collation_oid;
-CREATE OR REPLACE PROCEDURE sys.init_server_collation_oid()
-AS $$
-DECLARE
-    server_colloid OID;
-BEGIN
-    server_colloid = sys.get_babel_server_collation_oid();
-    perform pg_catalog.set_config('babelfishpg_tsql.server_collation_oid', server_colloid::text, false);
-    execute format('ALTER DATABASE %I SET babelfishpg_tsql.server_collation_oid FROM CURRENT', current_database());
-END;
-$$
-LANGUAGE plpgsql;
-
-CALL sys.init_server_collation_oid();
+AS 'babelfishpg_common', 'get_babel_server_collation_oid';

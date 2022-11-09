@@ -44,9 +44,9 @@ typedef enum
 	Pattern_Prefix_None, Pattern_Prefix_Partial, Pattern_Prefix_Exact
 } Pattern_Prefix_Status;
 
-//PG_FUNCTION_INFO_V1(init_collid_trans_tab);
-//PG_FUNCTION_INFO_V1(init_like_ilike_table);
-//PG_FUNCTION_INFO_V1(get_server_collation_oid);
+PG_FUNCTION_INFO_V1(init_collid_trans_tab);
+PG_FUNCTION_INFO_V1(init_like_ilike_table);
+PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
  
 /* this function is no longer needed and is only a placeholder for upgrade script */
@@ -78,13 +78,16 @@ collation_list(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(tsql_collation_list_internal(fcinfo));
 }
 
-#if 0
+
+/*
+ * get_server_collation_oid - this is being used by get_babel_server_collation_oid_deprecated_in_2_3_0
+ * which is depcrecated and is not recommended to be used.
+ */
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_OID(tsql_get_server_collation_oid_internal(false));
+	PG_RETURN_OID(InvalidOid);
 }
-#endif
 
 Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {

@@ -62,10 +62,17 @@ DECLARE
 BEGIN
     select oid into sys_schema from pg_namespace where nspname = schema_name collate sys.database_default;
     select oid into table_oid from pg_class where relname = table_name collate sys.database_default and relnamespace = sys_schema;
-    update pg_attribute set attcollation = sys.get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
+    update pg_attribute set attcollation = sys.babelfishpg_common_get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
 END
 $$
 LANGUAGE plpgsql;
+
+-- deprecate get_babel_server_collation_oid as corresponding functionality is moved to babelfishpg_common extension as sys.babelfishpg_common_get_babel_server_collation_oid
+ALTER FUNCTION sys.get_babel_server_collation_oid() RENAME TO get_babel_server_collation_oid_deprecated_in_2_3_0;
+CALL sys.babelfish_drop_deprecated_object('FUNCTION', 'sys', 'get_babel_server_collation_oid_deprecated_in_2_3_0');
+
+ALTER PROCEDURE sys.init_server_collation_oid() RENAME TO init_server_collation_oid_deprecated_in_2_3_0;
+CALL sys.babelfish_drop_deprecated_object('PROCEDURE', 'sys', 'init_server_collation_oid_deprecated_in_2_3_0');
 
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'value');
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'minimum');
@@ -210,11 +217,6 @@ EXCEPTION
 end
 $$
 LANGUAGE plpgsql;
-
--- function sys.get_babel_server_collation_oid() is depcreated by babelfishpg_common extension during v2.3.0
-CALL sys.babelfish_drop_deprecated_function('sys', 'get_babel_server_collation_oid_deprecated_in_2_3_0');
-
-
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
