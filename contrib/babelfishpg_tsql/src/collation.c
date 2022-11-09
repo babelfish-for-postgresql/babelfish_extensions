@@ -253,7 +253,6 @@ transform_funcexpr(Node* node)
 static Node*
 transform_likenode(Node* node)
 {
-	ereport(LOG, (errmsg("Inside transform_likenode()")));
 	if (node && IsA(node, OpExpr))
 	{
 		OpExpr	 *op = (OpExpr *) node;
