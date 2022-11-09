@@ -5390,6 +5390,22 @@ CALL sys.babelfish_update_collation_to_default('sys', 'dm_os_host_info', 'host_d
 CALL sys.babelfish_update_collation_to_default('sys', 'dm_os_host_info', 'host_release');
 CALL sys.babelfish_update_collation_to_default('sys', 'dm_os_host_info', 'host_service_pack_level');
 
+CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
+SELECT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(COALESCE(SPLIT_PART(t6.attoptions[1] collate "C", '=', 2), t5.column_name collate "C") AS sys.sysname) AS COLUMN_NAME,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
+CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
+CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
+	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
+    
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'table_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'table_owner');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'table_name');
