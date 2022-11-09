@@ -32,57 +32,22 @@ jobs:
         id: install-extensions
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
-
-      - name: Run JDBC Tests
-        id: jdbc
-        if: always() && steps.install-extensions.outcome == 'success'
-        timeout-minutes: 60
+            
+      - name: Initiate Core Dump
+        id: core-dump
         run: |
-          cd test/JDBC/
-          mvn test
-      - name: Cleanup babelfish database
-        id: cleanup
-        if: always() && steps.install-extensions.outcome == 'success'
-        run: |
-          sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
-      - name: Upload Log
-        if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
-        with:
-          name: postgres-log
-          path: ~/postgres/data/logfile
-      
-      # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
-      - name: Rename Test Summary Files
-        id: test-file-rename
-        if: always() && steps.jdbc.outcome == 'failure'
-        run: |
-          cd test/JDBC/Info
-          timestamp=`ls -Art | tail -n 1`
-          cd $timestamp
-          mv $timestamp.diff ../output-diff.diff
-          mv "$timestamp"_runSummary.log ../run-summary.log
-      
-      - name: Upload Run Summary 
-        if: always() && steps.test-file-rename == 'success'
-        uses: actions/upload-artifact@v2
-        with:
-          name: run-summary.log
-          path: test/JDBC/Info/run-summary.log
-      
-      - name: Upload Output Diff
-        if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
-        with:
-          name: output-diff.diff
-          path: test/JDBC/Info/output-diff.diff
+          ulimit -c unlimited
+          ulimit -c
+          sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "DECLARE @retVal nvarchar(512); EXECUTE master.dbo.xp_instance_regread N'RootKey', N'Key', N'ServiceName', @retVal OUT; "
+        shell: bash
 
       - name: Upload Core Dumps
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: always() && steps.core-dump.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: core-dumps
           path: ~/postgtres/data/core.*
       
       - name: Setup upterm session
+        if: always()
         uses: lhotari/action-upterm@v1
