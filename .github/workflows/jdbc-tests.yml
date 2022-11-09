@@ -28,5 +28,11 @@ jobs:
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
       
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
       - name: Setup upterm session
+        if: always()
         uses: lhotari/action-upterm@v1

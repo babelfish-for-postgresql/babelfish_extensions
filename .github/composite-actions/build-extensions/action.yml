@@ -34,4 +34,10 @@ runs:
         make && make install
         cd ../babelfishpg_tsql
         make && make install
+        echo pg_config_value_below
+        echo $PG_CONFIG
+        echo pg_src
+        echo $PG_SRC
+        echo pg_data
+        echo $PG_DATA
       shell: bash
