@@ -9,6 +9,13 @@ CREATE USER sp_addrole_user FOR LOGIN sp_addrole_login;
 GO
 
 --Throws an error if the argument is empty or contains backslash(\)
+EXEC sp_addrole NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
 EXEC sp_addrole '';
 GO
 ~~ERROR (Code: 33557097)~~
@@ -23,12 +30,12 @@ GO
 ~~ERROR (Message: '\' is not a valid name because it contains invalid characters.)~~
 
 
--- Throw error if no argument or more than 1 arguments are passed to sp_addrole procedure
+-- Throw error if no argument or more than 2 arguments are passed to sp_addrole procedure
 EXEC sp_addrole;
 GO
 ~~ERROR (Code: 201)~~
 
-~~ERROR (Message: procedure sp_addrole expects parameter "@rolname", which was not supplied.)~~
+~~ERROR (Message: procedure sp_addrole expects parameter "@rolename", which was not supplied.)~~
 
 
 EXEC sp_addrole '','','';
@@ -38,8 +45,24 @@ GO
 ~~ERROR (Message: procedure sp_addrole has too many arguments specified.)~~
 
 
+-- @ownername is not yet supported in babelfish
+EXEC sp_addrole 'sp_addrole_r1', '';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The @ownername argument is not yet supported in Babelfish.)~~
+
+
+EXEC sp_addrole 'sp_addrole_r1', 'sp_addrole_owner1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The @ownername argument is not yet supported in Babelfish.)~~
+
+
+-- The addrole procedure doesnot consider ownername if we pass NULL
 -- Throws an error when role exists in DB
-EXEC sp_addrole 'sp_addrole_r1';
+EXEC sp_addrole 'sp_addrole_r1', NULL;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -53,7 +76,7 @@ GO
 ~~ERROR (Message: User, group, or role 'sp_addrole_user' already exists in the current database.)~~
 
 
--- Creates role even if it contains leading/trailing spaces, special characters(except \)
+-- Creates role even if rolename contains leading/trailing spaces, special characters(except \) by removing trailing spaces
 EXEC sp_addrole '   @sp_addrole_r2   ';
 GO
 
@@ -63,13 +86,21 @@ WHERE orig_username = '   @sp_addrole_r2   '
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#nvarchar
-master_   @sp_addrole_r2   #!#R#!#   @sp_addrole_r2   #!#master
+master_   @sp_addrole_r2#!#R#!#   @sp_addrole_r2#!#master
 ~~END~~
 
 
 -- sp_addrole is case insensitive, storing all role values in lower case in DB
 EXEC sp_addrole 'SP_ADDROLE_R3';
 GO
+
+select name from sys.database_principals where name = 'SP_ADDROLE_R3';
+GO
+~~START~~
+varchar
+SP_ADDROLE_R3
+~~END~~
+
 
 -- Throws an error when role exists
 EXEC sp_addrole 'SP_ADDROLE_R3';
@@ -92,6 +123,15 @@ WHERE orig_username = 'sp_addrole_r3'
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#nvarchar
-master_sp_addrole_r3#!#R#!#sp_addrole_r3#!#master
+~~END~~
+
+
+SELECT rolname, type, orig_username, database_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'SP_ADDROLE_R3'
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+master_sp_addrole_r3#!#R#!#SP_ADDROLE_R3#!#master
 ~~END~~
 

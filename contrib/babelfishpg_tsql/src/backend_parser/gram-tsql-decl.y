@@ -77,6 +77,9 @@
 %type <node> tsql_for_clause tsql_xml_common_directive
 %type <list> tsql_xml_common_directives
 
+%type <node> tsql_for_json_clause tsql_for_json_common_directive
+%type <list> tsql_for_json_common_directives
+
 %type <istmt> tsql_output_insert_rest tsql_output_insert_rest_no_paren
 
 %type <node> tsql_output_simple_select tsql_values_clause
@@ -99,6 +102,7 @@
 	TSQL_READCOMMITTED TSQL_TABLOCK TSQL_TABLOCKX TSQL_PAGLOCK TSQL_ROWLOCK
 	TSQL_TOP TSQL_PERCENT
 	TSQL_AUTO TSQL_EXPLICIT TSQL_RAW TSQL_PATH TSQL_FOR TSQL_BASE64 TSQL_ROOT TSQL_READPAST TSQL_XLOCK TSQL_NOEXPAND
+	TSQL_JSON TSQL_INCLUDE_NULL_VALUES TSQL_WITHOUT_ARRAY_WRAPPER
 	TSQL_MEMBER TSQL_SERVER
 	TSQL_WINDOWS TSQL_CERTIFICATE TSQL_DEFAULT_DATABASE TSQL_DEFAULT_LANGUAGE TSQL_HASHED
 	TSQL_MUST_CHANGE TSQL_CHECK_EXPIRATION TSQL_CHECK_POLICY TSQL_CREDENTIAL TSQL_SID TSQL_OLD_PASSWORD

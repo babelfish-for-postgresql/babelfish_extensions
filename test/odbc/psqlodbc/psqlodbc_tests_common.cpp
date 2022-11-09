@@ -766,6 +766,6 @@ void compareDoubleEquality(double actual, double expected) {
   std::string errorstmt = "Actual value:" + std::to_string(actual)
           + "\nExpected valuee:" + std::to_string(expected);
 
-  EXPECT_TRUE(std::fabs(actual - expected) < std::numeric_limits<double>::epsilon()
+  EXPECT_TRUE(std::fabs(actual - expected) < (2 * std::numeric_limits<double>::epsilon())
           ) << errorstmt;    
 }

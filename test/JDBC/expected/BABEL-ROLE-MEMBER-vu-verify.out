@@ -154,6 +154,69 @@ int
 0
 ~~END~~
 
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'db_owner')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'db_owner')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3', 'db_owner')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'dbo')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'dbo')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3', 'dbo')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+0
+~~END~~
+
 
 -- Invalid role/principal name, should return NULL
 SELECT IS_MEMBER('xxx')
