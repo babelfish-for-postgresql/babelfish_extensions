@@ -53,3 +53,14 @@ runs:
       env:
         HEAD_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
       shell: bash
+
+    - name: Enable Ubuntu Core Dump
+      run: |
+        ulimit -c unlimited
+        mkdir -p $HOME/${{ inputs.install_dir }}/core_dump
+        chmod a+w $HOME/${{ inputs.install_dir }}/core_dump
+        sysctl kernel.core_pattern=$HOME/${{ inputs.install_dir }}/core_dump
+        echo 'kernel.core_pattern=$HOME/${{ inputs.install_dir }}/core_dump/core-%e-%p' | sudo tee -a /etc/sysctl.conf
+        echo '* soft core unlimited' | sudo tee -a /etc/security/limits.conf
+        systemctl daemon-reload
+
