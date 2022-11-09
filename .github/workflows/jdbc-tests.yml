@@ -44,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: core-dumps
-          path: ${{inputs.install_dir}}/data/core.*
+          path: ~/postgtres/data/core.*
       
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
