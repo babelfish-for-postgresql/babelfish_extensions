@@ -22,6 +22,7 @@ int
 ~~END~~
 
 
+-- this view will execute previous version of the function 
 SELECT  * FROM get_tds_id_view;
 GO
 ~~START~~

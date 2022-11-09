@@ -328,5 +328,5 @@ BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
 babelfish_integrity_checker
-BABEL-3584
+get_tds_id
 BABEL-PG-SYSTEM-FUNCTIONS
