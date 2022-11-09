@@ -1004,7 +1004,8 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 	ScanKeyData	scanKey[3];
 	SysScanDesc	scan;
 	HeapTuple	scantup, oldtup;
-	NameData *schema_name_NameData, *view_name_NameData;
+	NameData *schema_name_NameData; 
+	NameData *view_name_NameData;
 
 	if(!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
 		return NULL;
@@ -1022,7 +1023,7 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 	ScanKeyInit(&scanKey[1],
 				Anum_bbf_view_def_schema_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(logical_schema_name));
+				NameGetDatum(schema_name_NameData));
 
 	view_name_NameData = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(view_name_NameData->data, NAMEDATALEN, "%s", view_name);
