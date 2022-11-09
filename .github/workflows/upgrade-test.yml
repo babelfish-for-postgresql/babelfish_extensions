@@ -132,4 +132,15 @@ jobs:
             ~/upgrade/*.csv
             ~/postgres*/data/logfile
             ~/failed-testscript-outputs
+      
+      - name: Check core dumps existence
+        if: always()
+        id: check_core_dumps
+        uses: andstor/file-existence-action@v2
+        with:
+          files: "/var/coredumps/*"
+
+      - name: Setup upterm session
+        if: always()
+        uses: lhotari/action-upterm@v1
             

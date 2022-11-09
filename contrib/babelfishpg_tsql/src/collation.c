@@ -268,7 +268,8 @@ transform_likenode(Node* node)
 		 * if an ILIKE node is found during dump and restore. 
 		 */
 		init_and_check_collation_callbacks();
-		if ((*collation_callbacks_ptr->has_ilike_node)(node) && babelfish_dump_restore)
+		if ((*collation_callbacks_ptr->has_valid_collation)(node, false)
+				 && babelfish_dump_restore)
 		{
 			int		 collidx_of_cs_as;
 			
