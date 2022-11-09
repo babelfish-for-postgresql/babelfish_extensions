@@ -3,26 +3,26 @@
 -- same behaviour as PG endpoint.  So, let's add some tests.
 -- basic sequence operations for setval, nextval, currentval (tests are taken
 -- src/test/regress/sql/sequence.sql PG regression test suite)
-CREATE SEQUENCE sequence_test;
+CREATE SEQUENCE BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1;
 go
 
-SELECT nextval('sequence_test');
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
 go
-SELECT currval('sequence_test');
+SELECT currval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
 go
-SELECT setval('sequence_test', 32);
+SELECT setval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1', 32);
 go
-SELECT nextval('sequence_test');
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
 go
-SELECT setval('sequence_test', 99, false);
+SELECT setval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1', 99, false);
 go
-SELECT nextval('sequence_test');
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
 go
-SELECT setval('sequence_test', 32);
+SELECT setval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1', 32);
 go
-SELECT nextval('sequence_test');
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
 go
-SELECT setval('sequence_test', 99, false);
+SELECT setval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1', 99, false);
 go
-SELECT nextval('sequence_test');
+SELECT nextval('BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1');
 go

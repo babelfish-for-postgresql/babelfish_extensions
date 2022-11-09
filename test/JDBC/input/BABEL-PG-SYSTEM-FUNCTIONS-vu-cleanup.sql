@@ -1,2 +1,2 @@
-DROP SEQUENCE sequence_test
+DROP SEQUENCE BABEL_PG_SYSTEM_FUNCTIONS_vu_prepare_seq1
 go

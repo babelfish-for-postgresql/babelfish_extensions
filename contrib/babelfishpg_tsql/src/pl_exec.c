@@ -5544,8 +5544,6 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 								/* increment can't be zero */
 								Assert(0);
 							}
-							/* reset the value */
-							pltsql_setval_identity_mode = false;
 						}
 						PG_FINALLY();
 						{
