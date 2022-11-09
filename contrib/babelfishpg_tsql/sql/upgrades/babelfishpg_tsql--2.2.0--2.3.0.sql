@@ -5621,6 +5621,49 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_fkeys_view', 'fkcolumn
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_fkeys_view', 'fk_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_fkeys_view', 'pk_name');
 
+CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
+SELECT 
+CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
+
+CASE 
+	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
+	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM pg_catalog.pg_proc p 
+
+INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
+INNER JOIN sys.databases d ON d.database_id = sys.db_id()
+WHERE has_schema_privilege(s1.schema_id, 'USAGE')
+
+UNION 
+
+SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
+
+CASE 
+	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM    pg_catalog.pg_namespace n 
+JOIN    pg_catalog.pg_proc p 
+ON      pronamespace = n.oid   
+WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
+
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_stored_procedures_view', 'procedure_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_stored_procedures_view', 'procedure_owner');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_stored_procedures_view', 'procedure_name');
