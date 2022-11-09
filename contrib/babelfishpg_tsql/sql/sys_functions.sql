@@ -1436,12 +1436,12 @@ BEGIN
 		result = day_diff * 24 * 60 * 60;
 	WHEN 'millisecond' THEN
 		-- millisecond result from date_part by default contains second value,
-		-- so we don't need to add second_diff again
+		-- so we do not need to add second_diff again
 		day_diff = enddate - startdate;
 		result = day_diff * 24 * 60 * 60 * 1000;
 	WHEN 'microsecond' THEN
 		-- microsecond result from date_part by default contains second and millisecond values,
-		-- so we don't need to add second_diff and millisecond_diff again
+		-- so we do not need to add second_diff and millisecond_diff again
 		day_diff = enddate - startdate;
 		result = day_diff * 24 * 60 * 60 * 1000 * 1000;
 	WHEN 'nanosecond' THEN

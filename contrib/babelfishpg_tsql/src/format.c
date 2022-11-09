@@ -50,7 +50,6 @@ format_datetime(PG_FUNCTION_ARGS)
 	const char 	*data_type;
 	int 	fmt_res = 0;
 	const char 	*data_str;
-	const char 	*valid_culture;
 	StringInfo 	buf;
 	VarChar *result;
 
@@ -59,7 +58,7 @@ format_datetime(PG_FUNCTION_ARGS)
 
 	culture = text_to_cstring(PG_GETARG_TEXT_P(2));
 
-	valid_culture = format_validate_and_culture(culture, "LC_TIME");
+	(void) format_validate_and_culture((char *) culture, "LC_TIME");
 
 	buf = makeStringInfo();
 
@@ -98,7 +97,7 @@ format_datetime(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		fmt_res = process_format_pattern(buf, format_pattern, data_type);
+		fmt_res = process_format_pattern(buf, (char *) format_pattern, (char *) data_type);
 	}
 
 	if (fmt_res <= 0)
@@ -446,7 +445,7 @@ format_validate_and_culture(char *culture, const char *config_name)
 
 		pfree(culture_temp);
 
-		locale_pos = find_locale((const char *)temp_res);
+		locale_pos = tsql_find_locale((const char *)temp_res);
 
 		if (locale_pos >= 0 && set_culture(temp_res, config_name, culture) == 1)
 		{
@@ -475,13 +474,13 @@ match(const char *string, const char *pattern)
 {
 	regex_t re;
 	int status;
-	if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0)
+	if (pg_regcomp(&re, (const pg_wchar *) pattern, strlen(pattern), REG_EXTENDED | REG_NOSUB, 0) != 0)
 	{
 		return 0;
 	}
 
-	status = regexec(&re, string, 0, NULL, 0);
-	regfree(&re);
+	status = pg_regexec(&re, (const pg_wchar *) string, strlen(string), 0, NULL, 0, NULL, 0);
+	pg_regfree(&re);
 
 	return !status;
 }
@@ -1440,7 +1439,7 @@ replace_currency_format(char *currency_format_mask, StringInfo format_res)
 														 CStringGetTextDatum(fmt)));
 
 	resetStringInfo(format_res);
-	appendStringInfo(format_res, result);
+	appendStringInfo(format_res, "%s", result);
 }
 
 /*
@@ -1893,12 +1892,13 @@ format_exponential(Numeric numeric_val, StringInfo format_res, char pattern, cha
 {
 
 	int len, temp;
+	char *buf;
 	int precision = get_precision(toupper(pattern), precision_string, "", 0, "");
 
 	get_exponential_format(format_res, precision);
 	numeric_to_string(format_res, numeric_val);
 
-	char *buf = palloc(sizeof(char) * (format_res->len + 3));
+	buf = palloc(sizeof(char) * (format_res->len + 3));
 	memset(buf, 0, format_res->len + 3);
 	strncpy(buf, format_res->data, format_res->len);
 

@@ -1202,8 +1202,12 @@ ProcessLoginInternal(Port *port)
 			break;
 		case CAC_OK:
 			break;
-		default:
-			break;
+		case CAC_NOTCONSISTENT:
+			ereport(FATAL,
+					(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+						errmsg("the database system is not yet accepting connections"),
+						errdetail("Consistent recovery state has not been yet reached.")));
+			
 	}
 
 	TdsErrorContext->err_text = "Process Login Flags";

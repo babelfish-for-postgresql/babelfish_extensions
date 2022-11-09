@@ -84,7 +84,7 @@ extern void reset_sp_cursor_params();
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
 int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
-Oid	get_role_oid(const char *rolename, bool missing_ok);
+Oid get_role_oid(const char *rolename, bool missing_ok);
 bool is_member_of_role(Oid member, Oid role);
 
 extern PLtsql_function 	*find_cached_batch(int handle);
@@ -694,7 +694,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
 	{
 		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
-			&& (stmt->schema_name == (char *)'\0' || strncmp(stmt->schema_name, "dbo", strlen(stmt->schema_name)) == 0))
+			&& (stmt->schema_name == NULL || strncmp(stmt->schema_name, "dbo", strlen(stmt->schema_name)) == 0))
 			{
 				new_search_path = psprintf("%s, master_dbo", old_search_path);
 
@@ -706,7 +706,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				need_path_reset = true;
 			}
 	}
-	if (stmt->schema_name != (char *)'\0')
+	if (stmt->schema_name != NULL)
 	 	estate->schema_name = stmt->schema_name;
 	else
 		estate->schema_name = NULL;
@@ -2552,7 +2552,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	char * old_db_name;
 	int16 old_db_id;
 	int16 new_db_id;
-    PLExecStateCallStack *top_es_entry;
+	PLExecStateCallStack *top_es_entry;
 	if (pltsql_explain_only)
 	{
 		return exec_stmt_usedb_explain(estate, stmt, false  /* shouldRestoreDb */);

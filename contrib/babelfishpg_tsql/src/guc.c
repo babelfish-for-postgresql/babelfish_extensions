@@ -8,6 +8,7 @@
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "miscadmin.h"
 
 #define PLTSQL_SESSION_ISOLATION_LEVEL "default_transaction_isolation"
 #define PLTSQL_TRANSACTION_ISOLATION_LEVEL "transaction_isolation"
@@ -114,7 +115,6 @@ static void assign_datefirst (int newval, void *extra);
 static bool check_no_browsetable (bool *newval, void **extra, GucSource source);
 static void assign_enable_pg_hint (bool newval, void *extra);
 int escape_hatch_session_settings; /* forward declaration */
-void load_libraries(const char *libraries, const char *gucname, bool restricted);
 
 static const struct config_enum_entry migration_mode_options[] = {
 	{"single-db", SINGLE_DB, false},

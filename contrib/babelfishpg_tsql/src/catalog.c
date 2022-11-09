@@ -1064,8 +1064,6 @@ check_is_tsql_view(Oid relid)
 	{
 		pfree(view_name);
 		pfree(schema_name);
-		if (logical_schema_name)
-			pfree((char *) logical_schema_name);
 		return false;
 	}
 	/* Fetch the relation */
@@ -1081,7 +1079,6 @@ check_is_tsql_view(Oid relid)
 	table_close(bbf_view_def_rel, AccessShareLock);
 	pfree(view_name);
 	pfree(schema_name);
-	pfree((char *) logical_schema_name);
 	return is_tsql_view;
 }
 
@@ -1147,7 +1144,7 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 	HeapTuple	 bbffunctuple;
 	Form_pg_proc form;
 	char		 *physical_schemaname;
-	char		 *func_signature;
+	const char		 *func_signature;
 
 	/* Disallow extended catalog lookup during restore */
 	if (!HeapTupleIsValid(proctuple) || babelfish_dump_restore)
@@ -1171,7 +1168,7 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 		return NULL;
 	}
 
-	func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form->proname),
+	func_signature = get_pltsql_function_signature_internal(NameStr(form->proname),
 															form->pronargs,
 															form->proargtypes.values);
 
@@ -1186,7 +1183,6 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 								   CStringGetTextDatum(func_signature));
 
 	pfree(physical_schemaname);
-	pfree(func_signature);
 
 	return bbffunctuple;
 }

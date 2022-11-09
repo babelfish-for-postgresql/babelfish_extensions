@@ -98,7 +98,7 @@ rewrite_object_refs(Node *stmt)
 				{
 					ColumnDef *def = (ColumnDef *) cmd->def;
 
-					rewrite_relation_walker((Node *)def, (void *) NULL);
+					rewrite_relation_walker((Node *) def, (void *) NULL);
 					break;
 				}
 				case AT_AddColumn:

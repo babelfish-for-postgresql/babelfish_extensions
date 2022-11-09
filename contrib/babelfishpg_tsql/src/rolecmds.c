@@ -485,11 +485,11 @@ grant_guests_to_login(const char *login)
 										   &is_null);
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
-		char *guest_name = NULL;
+		const char *guest_name = NULL;
 		AccessPriv *tmp = makeNode(AccessPriv);
 		
 		if (guest_role_exists_for_db(db_name))
-			guest_name = (char *) get_guest_role_name(db_name);
+			guest_name = get_guest_role_name(db_name);
 
 		if (guest_name)
 		{
@@ -1604,8 +1604,8 @@ is_rolemember(PG_FUNCTION_ARGS)
 	char	*physical_role_name;
 	char	*physical_principal_name;
 	char	*cur_db_name;
-	char	*db_owner_name;
-	char	*dbo_role_name;
+	const char	*db_owner_name;
+	const char	*dbo_role_name;
 	int idx;
 
 	if (PG_ARGISNULL(0))

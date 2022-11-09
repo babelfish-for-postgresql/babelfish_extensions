@@ -1878,7 +1878,8 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	Form_pg_class	form_reltup;
 	int16		dbid;
 	uint64		flag_values = 0, flag_validity = 0;
-	char		*physical_schemaname, *logical_schemaname;
+	char		*physical_schemaname;
+	const char  *logical_schemaname;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1911,7 +1912,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	}
 
 	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
-	logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
+	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
 	if(!DbidIsValid(dbid) || logical_schemaname == NULL)
 	{
 		ereport(ERROR,
@@ -1955,7 +1956,6 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	CatalogTupleInsert(bbf_view_def_rel, tuple);
 
 	pfree(physical_schemaname);
-	pfree(logical_schemaname);
 	ReleaseSysCache(reltup);
 	heap_freetuple(tuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);

@@ -85,7 +85,7 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		if (isnull && !include_null_value)
 			continue;
 
-		appendStringInfo(result, "%s", sep);
+		appendStringInfoString(result, sep);
 		sep = ",";
 		tsql_json_build_object(result, 
 								CStringGetDatum(colname), colval,
