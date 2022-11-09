@@ -2114,6 +2114,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
 	HeapTuple	tuple, proctup, oldtup;
 	Form_pg_proc	form_proctup;
+	NameData 	*schema_name_NameData;
 	char		*physical_schemaname;
 	char		*func_signature;
 	char		*original_name = NULL;
@@ -2231,7 +2232,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	if (pltsql_quoted_identifier)
 		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
 
-	new_record[Anum_bbf_function_ext_nspname -1] = CStringGetDatum(physical_schemaname);
+	schema_name_NameData = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(schema_name_NameData->data, NAMEDATALEN, "%s", physical_schemaname);
+
+	new_record[Anum_bbf_function_ext_nspname -1] = NameGetDatum(schema_name_NameData);
 	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
 	if (original_name)
 		new_record[Anum_bbf_function_ext_orig_name -1] = CStringGetTextDatum(original_name);
