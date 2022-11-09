@@ -1014,12 +1014,12 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			CAST(remarks AS sys.varchar(254)) AS REMARKS
 			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' collate sys.database_default OR table_name LIKE in_table_name collate sys.database_default)
-			AND ((SELECT coalesce(in_table_owner,'')) = '' collate sys.database_default OR table_owner LIKE in_table_owner collate sys.database_default)
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' collate sys.database_default OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
-			AND ((SELECT coalesce(cs_as_in_table_type,'')) = '' collate sys.database_default
-			    OR table_type collate sys.bbf_unicode_general_ci_as = opt_table
-			    OR table_type collate sys.bbf_unicode_general_ci_as= opt_view)
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.database_default)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.database_default)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type collate sys.database_default = opt_table
+			    OR table_type collate sys.database_default = opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		ELSE 
 			RETURN query
@@ -1030,10 +1030,10 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			CAST(remarks AS sys.varchar(254)) AS REMARKS
 			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' collate sys.database_default OR table_name = in_table_name collate sys.database_default)
-			AND ((SELECT coalesce(in_table_owner,'')) = '' collate sys.database_default OR table_owner = in_table_owner collate sys.database_default)
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' collate sys.database_default OR table_qualifier = in_table_qualifier collate sys.database_default)
-			AND ((SELECT coalesce(cs_as_in_table_type,'')) = '' collate sys.database_default
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.database_default)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.database_default)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.database_default)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
 			    OR table_type collate sys.database_default = opt_table
 			    OR table_type collate sys.database_default = opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;

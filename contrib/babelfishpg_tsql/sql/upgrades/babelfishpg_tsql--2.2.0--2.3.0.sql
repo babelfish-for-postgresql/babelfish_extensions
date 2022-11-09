@@ -5151,6 +5151,94 @@ CALL sys.babelfish_update_collation_to_default('sys', 'spt_columns_view_managed'
 CALL sys.babelfish_update_collation_to_default('sys', 'spt_columns_view_managed', 'column_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'spt_columns_view_managed', 'collation_name');
 
+CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384) = '',
+	in_table_owner sys.nvarchar(384) = '', 
+	in_table_qualifier sys.sysname = '',
+	in_table_type sys.varchar(100) = '',
+	in_fusepattern sys.bit = '1')
+	RETURNS TABLE (
+		out_table_qualifier sys.sysname,
+		out_table_owner sys.sysname,
+		out_table_name sys.sysname,
+		out_table_type sys.varchar(32),
+		out_remarks sys.varchar(254)
+	)
+	AS $$
+		DECLARE opt_table sys.varchar(16) = '';
+		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
+	BEGIN
+	   
+		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',' collate "C")) WHERE upper(trim(unnest)) = 'TABLE' collate sys.database_default OR upper(trim(unnest)) = '''TABLE''' collate sys.database_default) >= 1 THEN
+			opt_table = 'TABLE';
+		END IF;
+		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',' collate "C")) WHERE upper(trim(unnest)) = 'VIEW' collate sys.database_default OR upper(trim(unnest)) = '''VIEW''' collate sys.database_default) >= 1 THEN
+			opt_view = 'VIEW';
+		END IF;
+		IF in_fusepattern = 1 THEN
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.database_default)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.database_default)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type collate sys.database_default = opt_table
+			    OR table_type collate sys.database_default = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		ELSE 
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.database_default)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.database_default)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.database_default)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type collate sys.database_default = opt_table
+			    OR table_type collate sys.database_default = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		END IF;
+	END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE sys.sp_tables (
+    "@table_name" sys.nvarchar(384) = '',
+    "@table_owner" sys.nvarchar(384) = '', 
+    "@table_qualifier" sys.sysname = '',
+    "@table_type" sys.nvarchar(100) = '',
+    "@fusepattern" sys.bit = '1')
+AS $$
+	DECLARE @opt_table sys.varchar(16) = '';
+	DECLARE @opt_view sys.varchar(16) = ''; 
+BEGIN
+	IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	SELECT
+	CAST(out_table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+	CAST(out_table_owner AS sys.sysname) AS TABLE_OWNER,
+	CAST(out_table_name AS sys.sysname) AS TABLE_NAME,
+	CAST(out_table_type AS sys.varchar(32)) AS TABLE_TYPE,
+	CAST(out_remarks AS sys.varchar(254)) AS REMARKS
+	FROM sys.sp_tables_internal(@table_name, @table_owner, @table_qualifier, CAST(@table_type AS varchar(100)), @fusepattern);
+END;
+$$
+LANGUAGE 'pltsql';
+
 CALL sys.babelfish_update_collation_to_default('sys', 'assembly_types', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'assembly_types', 'collation_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'assembly_types', 'assembly_class');
