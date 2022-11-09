@@ -3,7 +3,7 @@
 use isc_sequences_dbone;
 go
 
-select * from isc_sequences_view1 order by sequence_schema,sequence_name;
+select * from information_schema.SEQUENCES order by sequence_schema,sequence_name;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint#!#smallint#!#int#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#int#!#nvarchar#!#int#!#int
