@@ -1234,7 +1234,7 @@ clean_up_bbf_function_ext(int16 dbid)
 		/* Search and drop the entry */
 		ScanKeyInit(&scanKey[0],
 					Anum_bbf_function_ext_nspname,
-					BTEqualStrategyNumber, F_TEXTEQ,
+					BTEqualStrategyNumber, F_NAMEEQ,
 					nspname);
 
 		funcscan = systable_beginscan(bbf_function_ext_rel,

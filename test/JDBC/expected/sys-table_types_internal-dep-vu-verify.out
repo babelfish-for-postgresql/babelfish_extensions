@@ -1,0 +1,62 @@
+-- psql 
+GRANT SELECT ON sys.table_types_internal TO PUBLIC;
+GO
+
+-- tsql
+GO
+
+EXEC sys_table_types_internal_test_dep_proc 'TT_table_types_internal_dep_test1%'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC sys_table_types_internal_test_dep_proc 'TT_table_types_internal_dep_test2%'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC sys_table_types_internal_test_dep_proc 'TT_table_types_internal_dep_test_non_existent%'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT table_type_count FROM sys_table_types_internal_test_dep_view
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT * FROM sys_table_types_internal_test_dep_view
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT sys_table_types_internal_test_dep_func()
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT * FROM sys_table_types_internal_test_dep_func()
+GO
+~~START~~
+int
+2
+~~END~~
+

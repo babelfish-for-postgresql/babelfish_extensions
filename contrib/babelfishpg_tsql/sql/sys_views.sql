@@ -1,10 +1,23 @@
 /* Tsql system catalog views */
+
+-- The sys.table_types_internal view mimics the logic used in sys.is_table_type function
+create or replace view sys.table_types_internal as
+SELECT pt.typrelid
+    FROM pg_catalog.pg_type pt
+    INNER JOIN pg_catalog.pg_depend dep
+    ON pt.typrelid = dep.objid
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE 
+    pt.typnamespace in (select schema_id from sys.schemas) 
+    and (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r')
+;
+
 create or replace view sys.tables as
 select
   CAST(t.relname as sys._ci_sysname) as name
   , CAST(t.oid as int) as object_id
   , CAST(NULL as int) as principal_id
-  , CAST(sch.schema_id as int) as schema_id
+  , CAST(t.relnamespace  as int) as schema_id
   , 0 as parent_object_id
   , CAST('U' as CHAR(2)) as type
   , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
@@ -49,11 +62,12 @@ select
   , CAST(null as integer) as history_table_id
   , CAST(0 as sys.bit) as is_remote_data_archive_enabled
   , CAST(0 as sys.bit) as is_external
-from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
-where t.relpersistence in ('p', 'u', 't')
+from pg_class t 
+where t.relnamespace in (select schema_id from sys.schemas)
+and t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
-and not sys.is_table_type(t.oid)
-and has_schema_privilege(sch.schema_id, 'USAGE')
+and t.oid not in (select typrelid from sys.table_types_internal)
+and has_schema_privilege(t.relnamespace, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
 
@@ -1026,17 +1040,23 @@ left join pg_catalog.pg_locks         blocking_locks
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
+with type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+)
 -- For System types
-select tsql_type_name as name
+select 
+  ti.tsql_type_name as name
   , t.oid as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
   , cast(NULL as INT) as principal_id
-  , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
-  , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
+  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , cast(sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
-    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
+    WHEN 'default' THEN default_collation_name
     ELSE  c.collname
     END as collation_name
   , case when typnotnull then 0 else 1 end as is_nullable
@@ -1047,9 +1067,11 @@ select tsql_type_name as name
   , 0 as is_table_type
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
+inner join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
-where tsql_type_name IS NOT NULL
+,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+where
+ti.tsql_type_name IS NOT NULL  
 and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
@@ -1057,16 +1079,16 @@ union all
 select cast(t.typname as text) as name
   , t.typbasetype as system_type_id
   , t.oid as user_type_id
-  , s.oid as schema_id
+  , t.typnamespace as schema_id
   , null::integer as principal_id
-  , case when is_tbl_type then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
-  , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
-  , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
+  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
   , CASE c.collname
-    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
+    WHEN 'default' THEN default_collation_name
     ELSE  c.collname 
     END as collation_name
-  , case when is_tbl_type then 0
+  , case when tt.typrelid is not null then 0
          else case when typnotnull then 0 else 1 end
     end
     as is_nullable
@@ -1075,23 +1097,24 @@ select cast(t.typname as text) as name
   , 0 as is_assembly_type
   , 0 as default_object_id
   , 0 as rule_object_id
-  , case when is_tbl_type then 1 else 0 end as is_table_type
+  , case when tt.typrelid is not null then 1 else 0 end as is_table_type
 from pg_type t
-inner join pg_namespace s on s.oid = t.typnamespace
 join sys.schemas sch on t.typnamespace = sch.schema_id
+left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
+left join sys.table_types_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
-, sys.is_table_type(t.typrelid) as is_tbl_type
+, cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
 -- we want to show details of user defined datatypes created under babelfish database
-where tsql_type_name IS NULL
+where 
+ ti.tsql_type_name IS NULL
 and
   (
     -- show all user defined datatypes created under babelfish database except table types
     t.typtype = 'd'
     or
     -- only for table types
-    sys.is_table_type(t.typrelid)
+    tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
 
