@@ -1882,6 +1882,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	int16		dbid;
 	uint64		flag_values = 0, flag_validity = 0;
 	char		*physical_schemaname, *logical_schemaname;
+	NameData 	*schema_name_NameData;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1943,9 +1944,12 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	if (pltsql_quoted_identifier)
 		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
 
+	schema_name_NameData = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(schema_name_NameData->data, NAMEDATALEN, "%s", logical_schemaname);
+
 	new_record[0] = Int16GetDatum(dbid);
-	new_record[1] = CStringGetTextDatum(logical_schemaname);
-	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
+	new_record[1] = NameGetDatum(schema_name_NameData);
+	new_record[2] = NameGetDatum(&form_reltup->relname);
 	new_record[3] = CStringGetTextDatum(queryString);
 	new_record[4] = UInt64GetDatum(flag_validity);
 	new_record[5] = UInt64GetDatum(flag_values);
