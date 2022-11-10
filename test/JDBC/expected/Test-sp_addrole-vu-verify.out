@@ -8,7 +8,7 @@ GO
 CREATE USER sp_addrole_user FOR LOGIN sp_addrole_login;
 GO
 
---Throws an error if the argument is empty or contains backslash(\)
+-- Throws an error if the argument is empty or contains backslash(\)
 EXEC sp_addrole NULL;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -28,6 +28,14 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: '\' is not a valid name because it contains invalid characters.)~~
+
+
+-- Throw error if rolename is empty after removing trailing spaces
+EXEC sp_addrole '     ';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
 
 
 -- Throw error if no argument or more than 2 arguments are passed to sp_addrole procedure
@@ -90,7 +98,7 @@ master_   @sp_addrole_r2#!#R#!#   @sp_addrole_r2#!#master
 ~~END~~
 
 
--- sp_addrole is case insensitive, storing all role values in lower case in DB
+-- sp_addrole is case sensitive while storing the original username and stores the rolname in lowercase
 EXEC sp_addrole 'SP_ADDROLE_R3';
 GO
 

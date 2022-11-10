@@ -8,7 +8,7 @@ GO
 CREATE USER sp_addrole_user FOR LOGIN sp_addrole_login;
 GO
 
---Throws an error if the argument is empty or contains backslash(\)
+-- Throws an error if the argument is empty or contains backslash(\)
 EXEC sp_addrole NULL;
 GO
 
@@ -16,6 +16,10 @@ EXEC sp_addrole '';
 GO
 
 EXEC sp_addrole '\';
+GO
+
+-- Throw error if rolename is empty after removing trailing spaces
+EXEC sp_addrole '     ';
 GO
 
 -- Throw error if no argument or more than 2 arguments are passed to sp_addrole procedure
@@ -49,7 +53,7 @@ FROM sys.babelfish_authid_user_ext
 WHERE orig_username = '   @sp_addrole_r2   '
 GO
 
--- sp_addrole is case insensitive, storing all role values in lower case in DB
+-- sp_addrole is case sensitive while storing the original username and stores the rolname in lowercase
 EXEC sp_addrole 'SP_ADDROLE_R3';
 GO
 

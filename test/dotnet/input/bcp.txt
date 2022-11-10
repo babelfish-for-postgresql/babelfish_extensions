@@ -349,3 +349,112 @@ select * from t_rcv
 select * from t_rcv2
 drop table t_rcv
 drop table t_rcv2
+
+#rowversion
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+Create table sourceTable(a int, b rowversion)
+Create table destinationTable(a int, b rowversion)
+insert into sourceTable(a) values (1)
+insert into sourceTable(a) values (NULL)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+select count(distinct b) from destinationTable
+select count(*) from destinationTable where b is NULL
+select a from sourceTable
+select a from destinationTable 
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b rowversion)
+Create table destinationTable(a int, b rowversion)
+insert into sourceTable(a) values (1)
+insert into sourceTable(a) values (NULL)
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable
+select count(distinct b) from destinationTable
+select count(*) from destinationTable where b is NULL 
+select a from sourceTable
+select a from destinationTable 
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(b rowversion,a int)
+Create table destinationTable(b rowversion,a int default 2)
+insert into sourceTable(a) values (1)
+insert into sourceTable(a) values (NULL)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+select count(distinct b) from destinationTable
+select count(*) from destinationTable where b is NULL
+select a from sourceTable
+select a from destinationTable 
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(b rowversion,a int)
+Create table destinationTable(b rowversion,a int default 2)
+insert into sourceTable(a) values (1)
+insert into sourceTable(a) values (NULL)
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable
+select count(distinct b) from destinationTable
+select count(*) from destinationTable where b is NULL
+select a from sourceTable
+select a from destinationTable 
+drop table sourceTable
+drop table destinationTable
+
+#timestamp
+
+Create table sourceTable(a int, b timestamp)
+Create table destinationTable(a int, b timestamp)
+insert into sourceTable(a) values (1)
+insert into sourceTable(a) values (NULL)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+select count(distinct b) from destinationTable
+select count(*) from destinationTable where b is NULL
+select a from sourceTable
+select a from destinationTable 
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(a int, b timestamp)
+Create table destinationTable(a int, b timestamp)
+insert into sourceTable(a) values (1)
+insert into sourceTable(a) values (NULL)
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable
+select count(distinct b) from destinationTable
+select count(*) from destinationTable where b is NULL 
+select a from sourceTable
+select a from destinationTable 
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(b timestamp,a int)
+Create table destinationTable(b timestamp,a int default 2)
+insert into sourceTable(a) values (1)
+insert into sourceTable(a) values (NULL)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+select count(distinct b) from destinationTable
+select count(*) from destinationTable where b is NULL
+select a from sourceTable
+select a from destinationTable 
+drop table sourceTable
+drop table destinationTable
+
+Create table sourceTable(b timestamp,a int)
+Create table destinationTable(b timestamp,a int default 2)
+insert into sourceTable(a) values (1)
+insert into sourceTable(a) values (NULL)
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable
+select count(distinct b) from destinationTable
+select count(*) from destinationTable where b is NULL
+select a from sourceTable
+select a from destinationTable 
+drop table sourceTable
+drop table destinationTable

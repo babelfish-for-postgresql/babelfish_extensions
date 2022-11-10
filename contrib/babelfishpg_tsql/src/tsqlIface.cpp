@@ -164,6 +164,7 @@ template <class T> static std::string rewrite_column_name_with_omitted_schema_na
 static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
+static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -591,6 +592,37 @@ add_query_hints(PLtsql_expr_query_mutator *mutator, int contextOffset)
 	int queryOffset = contextOffset - baseOffset;
 	int initialTokenOffset = find_hint_offset(&mutator->expr->query[queryOffset]);
 	mutator->add(contextOffset + initialTokenOffset, "", hint);
+}
+
+// Try to retrieve the procedure name as in execute_body/execute_body_batch
+// from the context of execute_parameter.
+static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx)
+{
+	antlr4::tree::ParseTree *ctx = exParamCtx;
+	// We only need to loop max number of dereferences needed from the context 
+	// of execute_parameter to execute_body/execute_body_batch. 
+	// Currently that number is 3 + (number of execute_statement_arg_unnamed - 1).
+	// Because for now we only need this function for sp_tables which have 
+	// at most 5 parameters, 8 seems to be good enough here.
+	int cnt = 8; 
+
+	while (ctx->parent != nullptr && cnt-- > 0)
+	{
+		TSqlParser::Execute_bodyContext * exBodyCtx = dynamic_cast<TSqlParser::Execute_bodyContext *>(ctx->parent);
+		TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
+		TSqlParser::IdContext *proc = nullptr;
+
+		if (exBodyCtx != nullptr)
+			proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
+		else if (exBodyBatchCtx != nullptr)
+			proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
+
+		if (proc != nullptr)
+			return stripQuoteFromId(proc);
+
+		ctx = ctx->parent;
+	}
+	return "";
 }
 
 static std::string
@@ -1051,6 +1083,9 @@ public:
     tree::ParseTree *parser;
     MyInputStream &stream;
 
+	const std::vector<int> double_quota_places;
+	int parameterIndex = 0;
+
 	bool is_cross_db = false;
 	std::string schema_name;
 	std::string db_name;
@@ -1079,12 +1114,14 @@ public:
 	std::unordered_map<ParserRuleContext  *, List *> bodies;
 	std::unique_ptr<PLtsql_expr_query_mutator> statementMutator;
 	
-    tsqlBuilder(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s)
+    tsqlBuilder(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s, 
+	std::vector<int> &quota_places)
 		: code(std::make_unique<tree::ParseTreeProperty<void *>>()),
 		  ruleNames(rules),
 		  root(nullptr),
 		  parser(p),
-		  stream(s)
+		  stream(s),
+		  double_quota_places(quota_places)
     {
 		rootInitializers = NIL;
 		statementMutator = nullptr;
@@ -1666,7 +1703,59 @@ public:
 			post_process_declare_table_statement(decl_table_stmt, ctx->declare_statement()->table_type_definition());
 		}
 
+		if (ctx->execute_statement())
+		{
+			PLtsql_stmt_exec *stmt = (PLtsql_stmt_exec *) getPLtsql_fragment(ctx);
+			if (stmt->cmd_type == PLTSQL_STMT_EXEC && stmt->proc_name && pg_strcasecmp("sp_tables", stmt->proc_name) == 0)
+			{
+				PLtsql_expr_query_mutator mutator(stmt->expr, ctx);
+				add_rewritten_query_fragment_to_mutator(&mutator); // move information of rewritten_query_fragment to mutator.
+				mutator.run(); // expr->query will be rewitten here
+			}
+		}
+
 		clear_rewritten_query_fragment();
+	}
+
+	void exitExecute_parameter(TSqlParser::Execute_parameterContext *ctx) override
+	{
+		if (ctx->constant() || ctx->id())
+		{
+			// BABEL-2395, BABEL-3640: embedded single quotes are allowed in procedure parameters.
+			// in tsqlMutator::enterExecute_parameter, we replace "" with '', and also record the place of "" into 
+			// double_quota_places, then in here, we'll replace all ' into '' if it's inside ""
+			// we replace " in tsqlMutator::enterExecute_parameter first to pass the syntax validation
+			// then we'll use the double quota rule to replace "'A'" to '''A'''
+			if (pg_strcasecmp(getProcNameFromExecParam(ctx).c_str(), "sp_tables") == 0)
+			{
+				std::string argStr;
+				if (ctx->constant())
+					argStr = getFullText(ctx->constant());
+				else if (ctx->id())
+					argStr = getFullText(ctx->id());
+
+				std::string newStr;
+				if (argStr.size() > 1 && argStr.front() == '\'' && argStr.back() == '\''
+					&& std::binary_search (double_quota_places.begin(), double_quota_places.end(), parameterIndex))
+				{
+					newStr += '\'';
+					for (std::string::iterator iter = argStr.begin() + 1; iter != argStr.end() - 1; ++iter)
+					if (*iter == '\'')
+					{
+						newStr += "\'\'";
+					} else{
+						newStr += *iter;
+					}
+					newStr += '\'';
+					if (ctx->constant())
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(),
+						 	std::make_pair(::getFullText(ctx->constant()), newStr)));
+					else 
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), newStr)));
+				}
+			}
+		}
+		parameterIndex++;
 	}
 
     void enterCfl_statement(TSqlParser::Cfl_statementContext *ctx) override
@@ -1880,6 +1969,9 @@ class tsqlMutator : public TSqlParserBaseListener
 public:
     MyInputStream &stream;
 
+	std::vector<int> double_quota_places;
+	int parameterIndex = 0;
+
     explicit tsqlMutator(MyInputStream &s)
         : stream(s)
     {
@@ -1926,37 +2018,6 @@ private:
 	    return std::string(id->getSymbol()->getText());
 	}	
     }
-
-	// Try to retrieve the procedure name as in execute_body/execute_body_batch
-	// from the context of execute_parameter.
-	static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx)
-	{
-		antlr4::tree::ParseTree *ctx = exParamCtx;
-		// We only need to loop max number of dereferences needed from the context 
-		// of execute_parameter to execute_body/execute_body_batch. 
-		// Currently that number is 3 + (number of execute_statement_arg_unnamed - 1).
-		// Because for now we only need this function for sp_tables which have 
-		// at most 5 parameters, 8 seems to be good enough here.
-		int cnt = 8; 
-
-		while (ctx->parent != nullptr && cnt-- > 0)
-		{
-			TSqlParser::Execute_bodyContext * exBodyCtx = dynamic_cast<TSqlParser::Execute_bodyContext *>(ctx->parent);
-			TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
-			TSqlParser::IdContext *proc = nullptr;
-
-			if (exBodyCtx != nullptr)
-				proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
-			else if (exBodyBatchCtx != nullptr)
-				proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
-
-			if (proc != nullptr)
-				return stripQuoteFromId(proc);
-
-			ctx = ctx->parent;
-		}
-		return "";
-	}
     
 public:
     void enterConstant(TSqlParser::ConstantContext *ctx) override
@@ -2033,27 +2094,19 @@ public:
 		{
 			if (argStr.front() == '"' && argStr.back() == '"')
 			{
+				// if it's sp_tables, we will rewrite this into 
+				// exec sp_tables "test" -> exec sp_tables 'test'
+				// exec sp_tables "'test'" -> exec sp_tables '''test'''
+				if (pg_strcasecmp(getProcNameFromExecParam(ctx).c_str() , "sp_tables") == 0)
+				{
+					double_quota_places.push_back(parameterIndex);
+				}
 				argStr.front() = '\'';
 				argStr.back() = '\'';
-
-				stream.setText(ctx->start->getStartIndex(), argStr.c_str());
-			}
-
-			// BABEL-2395: embedded single quotes are allowed in procedure parameters.
-			// Currently we will temporarily workaround the issue by replacing 
-			// embedded quotes with spaces for sp_tables parameters.
-			if (pg_strcasecmp(getProcNameFromExecParam(ctx).c_str(), "sp_tables") == 0)
-			{
-				// remove embedded single quotes in the delimited string:
-				// e.g. N'...', N"...", '...', "..."
-				if (argStr.size() > 2 && argStr.front() == 'N')
-					std::replace(argStr.begin() + 2, argStr.end() - 1, '\'', ' ');
-				else if (argStr.size() > 1)
-					std::replace(argStr.begin() + 1, argStr.end() - 1, '\'', ' ');
-
 				stream.setText(ctx->start->getStartIndex(), argStr.c_str());
 			}
 		}
+		parameterIndex++;
     }
 
     void enterFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override
@@ -2476,7 +2529,8 @@ antlr_parser_cpp(const char *sourceText)
 			}
 		}
 
-		std::unique_ptr<tsqlBuilder> builder = std::make_unique<tsqlBuilder>(tree, parser.getRuleNames(), sourceStream);
+		std::unique_ptr<tsqlBuilder> builder = std::make_unique<tsqlBuilder>(tree, parser.getRuleNames(), 
+			sourceStream, mutator.get()->double_quota_places);
 		antlr4::tree::ParseTreeWalker secondPass;
 		secondPass.walk(builder.get(), tree);
 

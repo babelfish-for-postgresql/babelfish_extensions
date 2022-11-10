@@ -32,6 +32,13 @@ GO
 EXEC sp_droprolemember '','','';
 GO
 
+-- Throw error if rolename is empty after removing trailing spaces
+EXEC sp_droprolemember '     ', 'sp_addrolemember_role_doesnot_exist';
+GO
+
+EXEC sp_droprolemember 'sp_addrolemember_role_doesnot_exist', '     ';
+GO
+
 -- Throw an error is role/member is empty
 EXEC sp_droprolemember '', '';
 GO
