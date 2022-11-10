@@ -1943,9 +1943,6 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	if (pltsql_quoted_identifier)
 		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
 
-	schema_name_NameData = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(schema_name_NameData->data, NAMEDATALEN, "%s", logical_schemaname);
-
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = CStringGetTextDatum(logical_schemaname);
 	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
