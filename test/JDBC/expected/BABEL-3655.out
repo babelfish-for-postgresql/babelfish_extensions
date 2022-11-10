@@ -1,7 +1,3 @@
--- tsql
-USE MASTER
-GO
-
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 SELECT pg_reload_conf();
@@ -9,6 +5,21 @@ GO
 ~~START~~
 bool
 t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+SHOW "babelfishpg_tsql.migration_mode";
+GO
+~~START~~
+text
+multi-db
 ~~END~~
 
 
@@ -47,7 +58,18 @@ bool
 t
 ~~END~~
 
-
--- tsql
-USE MASTER
+-- Wait to sync with another session
+SELECT pg_sleep(1);
 GO
+~~START~~
+void
+
+~~END~~
+
+SHOW "babelfishpg_tsql.migration_mode";
+GO
+~~START~~
+text
+single-db
+~~END~~
+
