@@ -276,7 +276,7 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"CAST(t3.\"ORDINAL_POSITION\" AS int) AS column_ordinal, "
 		"CAST(t3.\"COLUMN_NAME\" AS sys.sysname) AS name, "
 		"case "
-			"when t1.is_nullable = \'YES\' then CAST(1 AS sys.bit) "
+			"when t1.is_nullable = \'YES\' AND t3.\"DATA_TYPE\" <> \'timestamp\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_nullable, "
 		"t4.system_type_id::int as system_type_id, "
@@ -313,7 +313,7 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"end as is_identity_column, "
 		"CAST(NULL as sys.bit) as is_part_of_unique_key, " /* pg_constraint */
 		"case  "
-			"when t1.is_updatable = \'YES\' AND t1.is_generated = \'NEVER\' AND t1.is_identity = \'NO\' then CAST(1 AS sys.bit) "
+			"when t1.is_updatable = \'YES\' AND t1.is_generated = \'NEVER\' AND t1.is_identity = \'NO\' AND t3.\"DATA_TYPE\" <> \'timestamp\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_updateable, "
 		"case "

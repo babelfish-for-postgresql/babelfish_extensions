@@ -637,6 +637,7 @@ BEGIN
 		WHEN 'datetime2' THEN tds_id = 42;
 		WHEN 'sql_variant' THEN tds_id = 98;
 		WHEN 'datetimeoffset' THEN tds_id = 43;
+		WHEN 'timestamp' THEN tds_id = 173;
 		ELSE tds_id = 0;
 	END CASE;
 	RETURN tds_id;

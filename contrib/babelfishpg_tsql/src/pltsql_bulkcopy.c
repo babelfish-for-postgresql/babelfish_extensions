@@ -25,6 +25,7 @@
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "commands/sequence.h"
+#include "commands/copy.h"
 #include "executor/executor.h"
 #include "executor/nodeModifyTable.h"
 #include "executor/tuptable.h"
@@ -202,6 +203,13 @@ BulkCopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 								 errmsg("column \"%s\" is a Computed column",
 										name),
 								 errdetail("Computed columns cannot be used in BULK COPY.")));
+					else if (is_tsql_rowversion_or_timestamp_datatype_hook && is_tsql_rowversion_or_timestamp_datatype_hook(att->atttypid))
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+									errmsg("column \"%s\" is a ROWVERSION/TIMESTAMP column",
+										name),
+									errdetail("ROWVERSION/TIMESTAMP columns cannot be used in BULK COPY.")));
+					
 					attnum = att->attnum;
 					break;
 				}
@@ -722,7 +730,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 				Assert(econtext != NULL);
 				Assert(CurrentMemoryContext == econtext->ecxt_per_tuple_memory);
 
-				if (myslot->tts_isnull[defmap[i]] && !insert_bulk_keep_nulls)
+				if (myslot->tts_isnull[defmap[i]] && (!insert_bulk_keep_nulls || cstate->rv_index == defmap[i]))
 					myslot->tts_values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
 													&myslot->tts_isnull[defmap[i]]);
 			}
@@ -874,6 +882,7 @@ BeginBulkCopy(Relation rel,
 	cstate->cur_relname = RelationGetRelationName(cstate->rel);
 	cstate->cur_rowno = 0;
 	cstate->seq_index = -1;
+	cstate->rv_index = -1;
 
 	/* Assign range table. */
 	cstate->range_table = pstate->p_rtable;
@@ -908,6 +917,11 @@ BeginBulkCopy(Relation rel,
 		{
 			Expr	   *defexpr = (Expr *) build_column_default(cstate->rel,
 																attnum);
+			
+			/* Save the index for the rowversion datatype */
+			if (is_tsql_rowversion_or_timestamp_datatype_hook && is_tsql_rowversion_or_timestamp_datatype_hook(att->atttypid))
+				cstate->rv_index = attnum - 1;
+
 			/* Use default value if one exists */
 			if (defexpr != NULL)
 			{
