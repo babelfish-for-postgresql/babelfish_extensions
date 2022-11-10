@@ -3782,7 +3782,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
   , CAST(conrelid as integer) as parent_object_id
-  , CAST('C' as char(2)) as type
+  , CAST('C' as sys.bpchar(2)) as type
   , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
@@ -4436,6 +4436,45 @@ CALL sys.babelfish_update_collation_to_default('sys', 'endpoints', 'protocol_des
 CALL sys.babelfish_update_collation_to_default('sys', 'endpoints', 'type_desc');
 CALL sys.babelfish_update_collation_to_default('sys', 'endpoints', 'state_desc');
 
+CREATE OR REPLACE FUNCTION sys.proc_param_helper()
+RETURNS TABLE (
+    name sys.sysname,
+    id int,
+    xtype int,
+    colid smallint,
+    collationid int,
+    prec smallint,
+    scale int,
+    isoutparam int,
+    collation sys.sysname
+)
+AS
+$$
+BEGIN
+RETURN QUERY
+select params.parameter_name::sys.sysname
+  , pgproc.oid::int
+  , CAST(case when pgproc.proallargtypes is null then split_part(pgproc.proargtypes::varchar, ' ', params.ordinal_position)
+    else split_part(btrim(pgproc.proallargtypes::text,'{}'), ',', params.ordinal_position) end AS int)
+  , params.ordinal_position::smallint
+  , coll.oid::int
+  , params.numeric_precision::smallint
+  , params.numeric_scale::int
+  , case params.parameter_mode when 'OUT' COLLATE sys.database_default then 1 when 'INOUT' COLLATE sys.database_default then 1 else 0 end
+  , params.collation_name::sys.sysname
+from information_schema.routines routine
+left join information_schema.parameters params
+  on routine.specific_schema = params.specific_schema
+  and routine.specific_name = params.specific_name
+left join pg_collation coll on coll.collname = params.collation_name
+/* assuming routine.specific_name is constructed by concatenating procedure name and oid */
+left join pg_proc pgproc on routine.specific_name = nameconcatoid(pgproc.proname, pgproc.oid)
+left join sys.schemas sch on sch.schema_id = pgproc.pronamespace
+where has_schema_privilege(sch.schema_id, 'USAGE');
+END;
+$$
+LANGUAGE plpgsql;
+
 CALL sys.babelfish_update_collation_to_default('sys', 'syscolumns', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'syscolumns', 'collation');
 
@@ -4690,6 +4729,30 @@ WHERE ( -- If it's a Table function, we only want the inputs
 GRANT SELECT ON sys.all_parameters TO PUBLIC;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'numbered_procedures', 'definition');
+
+CREATE OR REPLACE VIEW sys.events 
+AS
+SELECT 
+  CAST(pt.tgfoid as int) AS object_id
+  , CAST(
+      CASE 
+        WHEN tr.event_manipulation='INSERT' COLLATE sys.database_default THEN 1
+        WHEN tr.event_manipulation='UPDATE' COLLATE sys.database_default THEN 2
+        WHEN tr.event_manipulation='DELETE' COLLATE sys.database_default THEN 3
+        ELSE 1
+      END as int
+  ) AS type
+  , CAST(tr.event_manipulation as sys.nvarchar(60)) AS type_desc
+  , CAST(1 as sys.bit) AS  is_trigger_event
+  , CAST(null as int) AS event_group_type
+  , CAST(null as sys.nvarchar(60)) AS event_group_type_desc
+FROM information_schema.triggers tr
+JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname COLLATE sys.database_default
+JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_default AND pc.relnamespace = np.oid
+JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
+AND has_schema_privilege(pc.relnamespace, 'USAGE')
+AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.events TO PUBLIC;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'events', 'type_desc');
 CALL sys.babelfish_update_collation_to_default('sys', 'events', 'event_group_type_desc');
