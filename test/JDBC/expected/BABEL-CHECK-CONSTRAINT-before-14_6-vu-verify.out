@@ -1,0 +1,6 @@
+ALTER TABLE [dbo].[alter_table_check_constraint] ADD CONSTRAINT [check_col1] CHECK ([col1] like N'%TP')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: check constraint "check_col1alter_table_check_con0f71bca531f50db1bd071ab46c3097ea" of relation "alter_table_check_constraint" is violated by some row)~~
+

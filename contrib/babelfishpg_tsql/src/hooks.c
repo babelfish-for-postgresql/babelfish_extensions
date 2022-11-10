@@ -68,6 +68,7 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
+extern Node* pltsql_predicate_transformer(Node *expr);
 
 /*****************************************
  * 			Catalog Hooks
@@ -83,6 +84,7 @@ static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 								   bool *variadic, Oid *va_elem_type);
 static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok,bool object_from_input);
 Oid get_tsql_trigger_oid(List *object, const char *tsql_trigger_name,bool object_from_input);
+static Node* transform_like_in_add_constraint (Node* node);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -174,6 +176,8 @@ static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
+static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
+
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -269,6 +273,8 @@ InstallExtendedHooks(void)
 
 	prev_planner_hook = planner_hook;
 	planner_hook = pltsql_planner_hook;
+	prev_transform_check_constraint_expr_hook = transform_check_constraint_expr_hook;
+	transform_check_constraint_expr_hook = transform_like_in_add_constraint;
 }
 
 void
@@ -307,6 +313,7 @@ UninstallExtendedHooks(void)
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
+	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 }
 
 /*****************************************
@@ -2956,4 +2963,26 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	}
 
 	return plan;
+}
+
+static Node* 
+transform_like_in_add_constraint (Node* node)
+{
+	PG_TRY();
+	{
+		if (!babelfish_dump_restore && current_query_is_create_tbl_check_constraint 
+				&& has_valid_coll_wrapper(node))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("nondeterministic collations are not supported for ILIKE")));
+		}
+	}
+	PG_FINALLY();
+	{
+		current_query_is_create_tbl_check_constraint = false;
+	}
+	PG_END_TRY();
+	
+	return pltsql_predicate_transformer(node);
 }
