@@ -45,11 +45,18 @@ jobs:
             yq '."upgrade-version"[${{ matrix.upgrade-path.id }}][-1].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )"
 
-      - name: Enable core dumps
-        id: enable-core-dumps
-        run: |
-        ulimit -c unlimited         # Enable core dumps to be captured (must be in same run block) 
-        sudo chmod -R +rwx /var/coredumps/*
+      - name: Enable Ubuntu Core Dump
+      run: |
+        sudo mkdir -p /var/coredumps
+        sudo chmod a+w /var/coredumps
+        sudo sysctl kernel.core_pattern=/var/coredumps/core-%e-%p
+        echo 'kernel.core_pattern=/var/coredumps/core-%e-%p' | sudo tee -a /etc/sysctl.conf
+        echo '* soft core unlimited' | sudo tee -a /etc/security/limits.conf
+        sudo systemctl daemon-reload
+        ulimit -c unlimited
+        echo 'DefaultLimitCORE=Infinity' | sudo tee -a /etc/systemd/system.conf
+        sudo systemctl daemon-reexec
+      shell: bash
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
         id: find-branch
