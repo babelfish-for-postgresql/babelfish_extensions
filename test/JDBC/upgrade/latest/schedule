@@ -330,6 +330,7 @@ BABEL-2795
 babelfish_integrity_checker
 get_tds_id
 BABEL-PG-SYSTEM-FUNCTIONS
+BABEL-3655
 sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-3640
