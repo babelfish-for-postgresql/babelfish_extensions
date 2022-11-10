@@ -23,6 +23,7 @@ typedef struct BulkCopyStateData
 	List	   *range_table;
 	int 		seq_index; 		/* index for an identity column */
 	Oid			seqid; 			/* oid of the sequence for an identity column */
+	int			rv_index;		/* index for a rowversion datatype column */
 
 } BulkCopyStateData;
 typedef struct BulkCopyStateData *BulkCopyState;

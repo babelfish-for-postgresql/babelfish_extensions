@@ -31,6 +31,67 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384) = '',
+	in_table_owner sys.nvarchar(384) = '', 
+	in_table_qualifier sys.sysname = '',
+	in_table_type sys.varchar(100) = '',
+	in_fusepattern sys.bit = '1')
+	RETURNS TABLE (
+		out_table_qualifier sys.sysname,
+		out_table_owner sys.sysname,
+		out_table_name sys.sysname,
+		out_table_type sys.varchar(32),
+		out_remarks sys.varchar(254)
+	)
+	AS $$
+		DECLARE opt_table sys.varchar(16) = '';
+		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
+	BEGIN
+		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''TABLE''' OR upper(trim(unnest)) = '''''''TABLE''''''') >= 1 THEN
+			opt_table = 'TABLE';
+		END IF;
+		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''VIEW''' OR upper(trim(unnest)) = '''''''VIEW''''''') >= 1 THEN
+			opt_view = 'VIEW';
+		END IF;
+		IF in_fusepattern = 1 THEN
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type collate sys.bbf_unicode_general_ci_as = opt_table
+			    OR table_type collate sys.bbf_unicode_general_ci_as= opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		ELSE 
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		END IF;
+	END;
+$$
+LANGUAGE plpgsql;
+
 -- please add your SQL here
 CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
@@ -4058,6 +4119,62 @@ ALTER FUNCTION sys.get_min_id_from_table RENAME TO get_min_id_from_table_depreca
 ALTER FUNCTION sys.get_max_id_from_table RENAME TO get_max_id_from_table_deprecated_in_2_3_0;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_table_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
+
+
+-- Deprecate the function sys.get_tds_id
+ALTER FUNCTION sys.get_tds_id RENAME TO get_tds_id_deprecated_2_3_0;
+
+-- Recreate Newer sys.get_tds_id function
+create or replace function sys.get_tds_id(
+	datatype sys.varchar(50)
+)
+returns INT
+AS $$
+DECLARE
+	tds_id INT;
+BEGIN
+	IF datatype IS NULL THEN
+		RETURN 0;
+	END IF;
+	CASE datatype
+		WHEN 'text' THEN tds_id = 35;
+		WHEN 'uniqueidentifier' THEN tds_id = 36;
+		WHEN 'tinyint' THEN tds_id = 38;
+		WHEN 'smallint' THEN tds_id = 38;
+		WHEN 'int' THEN tds_id = 38;
+		WHEN 'bigint' THEN tds_id = 38;
+		WHEN 'ntext' THEN tds_id = 99;
+		WHEN 'bit' THEN tds_id = 104;
+		WHEN 'float' THEN tds_id = 109;
+		WHEN 'real' THEN tds_id = 109;
+		WHEN 'varchar' THEN tds_id = 167;
+		WHEN 'nvarchar' THEN tds_id = 231;
+		WHEN 'nchar' THEN tds_id = 239;
+		WHEN 'money' THEN tds_id = 110;
+		WHEN 'smallmoney' THEN tds_id = 110;
+		WHEN 'char' THEN tds_id = 175;
+		WHEN 'date' THEN tds_id = 40;
+		WHEN 'datetime' THEN tds_id = 111;
+		WHEN 'smalldatetime' THEN tds_id = 111;
+		WHEN 'numeric' THEN tds_id = 108;
+		WHEN 'xml' THEN tds_id = 241;
+		WHEN 'decimal' THEN tds_id = 106;
+		WHEN 'varbinary' THEN tds_id = 165;
+		WHEN 'binary' THEN tds_id = 173;
+		WHEN 'image' THEN tds_id = 34;
+		WHEN 'time' THEN tds_id = 41;
+		WHEN 'datetime2' THEN tds_id = 42;
+		WHEN 'sql_variant' THEN tds_id = 98;
+		WHEN 'datetimeoffset' THEN tds_id = 43;
+		WHEN 'timestamp' THEN tds_id = 173;
+		ELSE tds_id = 0;
+	END CASE;
+	RETURN tds_id;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+-- Drop the deprecated function
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_tds_id_deprecated_2_3_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

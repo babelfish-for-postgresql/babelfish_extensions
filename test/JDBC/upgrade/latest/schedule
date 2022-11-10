@@ -328,7 +328,9 @@ BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
 babelfish_integrity_checker
+get_tds_id
 BABEL-PG-SYSTEM-FUNCTIONS
 sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
+BABEL-3640
