@@ -660,33 +660,6 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	if (pltsql_trace_exec_time)
 		config.trace_mode |= TRACE_EXEC_TIME;
 
-	/* Cache func owner id and check if it exists in shared schema or not */
-	estate.func->fn_owner = InvalidOid;
-	estate.func->exists_in_shared_schema = false;
-	if (OidIsValid(fcinfo->flinfo->fn_oid))
-	{
-		HeapTuple		proctup;
-		Form_pg_proc	form_proctup;
-		char			*nspname;
-
-		proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
-		if (!HeapTupleIsValid(proctup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				errmsg("relation with OID %u does not exist", fcinfo->flinfo->fn_oid)));
-		form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
-		estate.func->fn_owner = form_proctup->proowner;
-		nspname = get_namespace_name(form_proctup->pronamespace);
-		if (!nspname)
-			elog(ERROR, "cache lookup failed for namespace %u",
-				 form_proctup->pronamespace);
-		else
-			estate.func->exists_in_shared_schema = is_shared_schema(nspname);
-
-		pfree(nspname);
-		ReleaseSysCache(proctup);
-	}
-
 	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
 
 	if (rc != PLTSQL_RC_RETURN)
