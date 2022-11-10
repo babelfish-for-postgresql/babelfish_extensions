@@ -2665,33 +2665,33 @@ language 'plpgsql';
 -- Remove single pair of either square brackets or double-quotes from outer ends if present
 -- If name begins with a delimiter but does not end with the matching delimiter return NULL
 -- Otherwise, return the name unchanged
-CREATE OR REPLACE FUNCTION sys.babelfish_remove_delimiter_pair(IN name TEXT)
+CREATE OR REPLACE FUNCTION babelfish_remove_delimiter_pair(IN name TEXT)
 RETURNS TEXT AS
 $BODY$
 BEGIN
-    IF name collate sys.database_default IN('[', ']', '"') THEN
+    IF name IN('[' COLLATE "C", ']' COLLATE "C", '"' COLLATE "C") THEN
         RETURN NULL;
 
-    ELSIF length(name) >= 2 AND left(name, 1) = '[' collate sys.database_default AND right(name, 1) = ']' collate sys.database_default THEN
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' COLLATE "C" AND right(name, 1) = ']' COLLATE "C" THEN
         IF length(name) = 2 THEN
             RETURN '';
         ELSE
             RETURN substring(name from 2 for length(name)-2);
         END IF;
-    ELSIF length(name) >= 2 AND left(name, 1) = '[' collate sys.database_default AND right(name, 1) != ']' collate sys.database_default THEN
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' COLLATE "C" AND right(name, 1) != ']' COLLATE "C" THEN
         RETURN NULL;
-    ELSIF length(name) >= 2 AND left(name, 1) != '[' collate sys.database_default AND right(name, 1) = ']' collate sys.database_default THEN
+    ELSIF length(name) >= 2 AND left(name, 1) != '[' COLLATE "C" AND right(name, 1) = ']' COLLATE "C" THEN
         RETURN NULL;
 
-    ELSIF length(name) >= 2 AND left(name, 1) = '"' collate sys.database_default AND right(name, 1) = '"' collate sys.database_default THEN
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' COLLATE "C" AND right(name, 1) = '"' COLLATE "C" THEN
         IF length(name) = 2 THEN
             RETURN '';
         ELSE
             RETURN substring(name from 2 for length(name)-2);
         END IF;
-    ELSIF length(name) >= 2 AND left(name, 1) = '"' collate sys.database_default AND right(name, 1) != '"' collate sys.database_default THEN
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' COLLATE "C" AND right(name, 1) != '"' COLLATE "C" THEN
         RETURN NULL;
-    ELSIF length(name) >= 2 AND left(name, 1) != '"' collate sys.database_default AND right(name, 1) = '"' collate sys.database_default THEN
+    ELSIF length(name) >= 2 AND left(name, 1) != '"' COLLATE "C" AND right(name, 1) = '"' COLLATE "C" THEN
         RETURN NULL;
     
     END IF;
