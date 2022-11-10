@@ -27,24 +27,10 @@ use master
 go
 
 -- psql
-do
-$$
-declare username text;
-begin
-  SELECT rolname INTO username FROM sys.babelfish_authid_user_ext WHERE orig_username like '%ownera%';
-  EXECUTE format('grant all on database jdbc_testdb to %I', username);
-end;
-$$
+grant all on database jdbc_testdb to db3014_ownera_3014;
 go
 
-do
-$$
-declare username text;
-begin
-  SELECT rolname INTO username FROM sys.babelfish_authid_user_ext WHERE orig_username like '%ownerb%';
-  EXECUTE format('grant all on database jdbc_testdb to %I', username);
-end;
-$$
+grant all on database jdbc_testdb to db3014_ownerb_3014;
 go
 
 -- tsql user=lb_3014 password=123
@@ -777,24 +763,10 @@ void
 ~~END~~
 
 
-do
-$$
-declare username text;
-begin
-  SELECT rolname INTO username FROM sys.babelfish_authid_user_ext WHERE orig_username like '%ownera%';
-  EXECUTE format('revoke all on database jdbc_testdb from %I', username);
-end;
-$$
+revoke all on database jdbc_testdb from db3014_ownera_3014;
 go
 
-do
-$$
-declare username text;
-begin
-  SELECT rolname INTO username FROM sys.babelfish_authid_user_ext WHERE orig_username like '%ownerb%';
-  EXECUTE format('revoke all on database jdbc_testdb from %I', username);
-end;
-$$
+revoke all on database jdbc_testdb from db3014_ownerb_3014;
 go
 
 -- tsql
