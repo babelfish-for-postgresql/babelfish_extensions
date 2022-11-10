@@ -282,3 +282,4 @@ BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
 BABEL-PG-SYSTEM-FUNCTIONS
+sys-table_types_internal
