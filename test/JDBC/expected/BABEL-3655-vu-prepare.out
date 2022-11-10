@@ -1,0 +1,18 @@
+USE MASTER
+GO
+
+CREATE DATABASE babel_3655_test_db
+GO
+
+USE babel_3655_test_db
+GO
+
+CREATE SCHEMA babel_3655_test_s1
+GO
+
+CREATE FUNCTION babel_3655_test_f1()
+RETURNS INT AS 
+BEGIN 
+RETURN 1; 
+END
+GO
