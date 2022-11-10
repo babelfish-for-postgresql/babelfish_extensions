@@ -55,7 +55,7 @@ Datum init_server_collation(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT32(0);
 }
-// do we need this?
+
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation_oid);
 Datum init_server_collation_oid(PG_FUNCTION_ARGS)

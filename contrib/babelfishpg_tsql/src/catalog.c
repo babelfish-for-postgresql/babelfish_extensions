@@ -980,7 +980,6 @@ get_user_for_database(const char *db_name)
 Oid
 get_bbf_view_def_oid()
 {
-	/* Because we need to recreate BBF_VIEW_DEF_TABLE_NAME to pick the right collation. */
 	if (!OidIsValid(bbf_view_def_oid))
 		bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME,
 											 get_namespace_oid("sys", false));
@@ -991,7 +990,6 @@ get_bbf_view_def_oid()
 Oid
 get_bbf_view_def_idx_oid()
 {
-	/* Because we need to recreate BBF_VIEW_DEF_TABLE_NAME to pick the right collation. */
 	if (!OidIsValid(bbf_view_def_idx_oid))
 		bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME,
 												 get_namespace_oid("sys", false));
