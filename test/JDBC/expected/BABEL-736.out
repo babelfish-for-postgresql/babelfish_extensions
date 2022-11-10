@@ -1,8 +1,8 @@
 SELECT degrees(10)
 GO
 ~~START~~
-int
-572
+float
+572.9577951308232
 ~~END~~
 
 
@@ -16,9 +16,10 @@ float
 
 SELECT degrees(9999*9999)
 GO
-~~ERROR (Code: 8115)~~
-
-~~ERROR (Message: integer out of range)~~
+~~START~~
+float
+5.72843209301375E9
+~~END~~
 
 
 SELECT degrees(9999.0 * 9999.0)
@@ -32,8 +33,8 @@ float
 SELECT radians(32738)
 GO
 ~~START~~
-int
-571
+float
+571.3858905179036
 ~~END~~
 
 
@@ -48,16 +49,17 @@ int
 SELECT POWER(CAST (NULL AS BIGINT),NULL)
 GO
 ~~START~~
-float
+int
 <NULL>
 ~~END~~
 
 
 SELECT POWER(CAST (241289984 AS BIGINT),2)
 GO
-~~ERROR (Code: 8115)~~
-
-~~ERROR (Message: integer out of range)~~
+~~START~~
+int
+1996029952
+~~END~~
 
 
 SELECT POWER(CAST (241289984 AS BIGINT),2.0)
