@@ -33,6 +33,19 @@ jobs:
         id: install-yq
         if: always()
         run: sudo snap install yq
+      
+      - name: Enable Ubuntu Core Dump
+      run: |
+        sudo mkdir -p /var/coredumps
+        sudo chmod a+w /var/coredumps
+        sudo sysctl kernel.core_pattern=/var/coredumps/core-%e-%p
+        echo 'kernel.core_pattern=/var/coredumps/core-%e-%p' | sudo tee -a /etc/sysctl.conf
+        echo '* soft core unlimited' | sudo tee -a /etc/security/limits.conf
+        sudo systemctl daemon-reload
+        ulimit -c unlimited
+        echo 'DefaultLimitCORE=Infinity' | sudo tee -a /etc/systemd/system.conf
+        sudo systemctl daemon-reexec
+      shell: bash
 
       - name: Read Base Version and Final Version
         id: read-base-and-final-version
