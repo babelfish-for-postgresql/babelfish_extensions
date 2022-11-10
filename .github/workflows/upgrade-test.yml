@@ -76,9 +76,17 @@ jobs:
 
       - name: Upgrade till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
         id: upgrade-and-test
-        if: always() && steps.setup-upgrade-ver-ca.outcome == 'success' 
+        if: always() && steps.setup-upgrade-ver-ca.outcome == 'success'
+        timeout-minutes: 25 
         uses: ./.github/composite-actions/upgrade-version
 
+      - name: Check core dumps existence
+        if: always()
+        id: check_core_dumps
+        uses: andstor/file-existence-action@v2
+        with:
+          files: "/var/coredumps/*"
+          
       # Due to some action/checkout's in previous step the dynamically generated upgrade-version composite action isn't available,
       # hence to avoid error in post action step recreated the upgrade-version composite action
       - name: Recreate Upgrade Version Composite Action
