@@ -134,12 +134,13 @@ jobs:
             ~/failed-testscript-outputs
       
       - name: Check core dumps existence
+        if: always()
         id: check_core_dumps
         uses: andstor/file-existence-action@v2
         with:
           files: "/var/coredumps/*"
 
       - name: Setup upterm session
-        if: steps.check_core_dumps.outputs.files_exists == 'true'
+        if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
         uses: lhotari/action-upterm@v1
             
