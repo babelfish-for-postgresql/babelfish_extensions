@@ -82,11 +82,11 @@ jobs:
 
       - name: Check core dumps existence
         if: always()
-        id: check_core_dumps
+        id: check_core_dumps_after_test
         uses: andstor/file-existence-action@v2
         with:
           files: "/var/coredumps/*"
-          
+
       # Due to some action/checkout's in previous step the dynamically generated upgrade-version composite action isn't available,
       # hence to avoid error in post action step recreated the upgrade-version composite action
       - name: Recreate Upgrade Version Composite Action
