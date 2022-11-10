@@ -2968,21 +2968,15 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 static Node* 
 transform_like_in_add_constraint (Node* node)
 {
-	PG_TRY();
-	{
-		if (!babelfish_dump_restore && current_query_is_create_tbl_check_constraint 
-				&& has_valid_coll_wrapper(node))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("nondeterministic collations are not supported for ILIKE")));
-		}
-	}
-	PG_FINALLY();
+	if (!babelfish_dump_restore && current_query_is_create_tbl_check_constraint 
+			&& has_valid_coll_wrapper(node))
 	{
 		current_query_is_create_tbl_check_constraint = false;
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("nondeterministic collations are not supported for ILIKE")));
 	}
-	PG_END_TRY();
+	current_query_is_create_tbl_check_constraint = false;
 	
 	return pltsql_predicate_transformer(node);
 }
