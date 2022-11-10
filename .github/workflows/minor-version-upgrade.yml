@@ -59,7 +59,7 @@ jobs:
         if: always() && steps.build-extensions-newer.outcome == 'success'
         run: |
           cd ~
-          ~/postgres/bin/pg_ctl -c -D ~/postgres/data/ -l logfile restart
+          ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
