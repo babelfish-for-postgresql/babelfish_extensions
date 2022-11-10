@@ -1156,6 +1156,8 @@ RETURN (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59' AS datetime))
 END
 GO
 
+-- Results in error due to outdated JDBC version
+-- Change when BABEL-2871 is resolved
 CREATE VIEW BABEL_3486_vu_prepare_v111 as (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59 +12:15' AS datetimeoffset)));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p111 as (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59 +12:15' AS datetimeoffset)));
@@ -1168,16 +1170,6 @@ END
 GO
 
 -- Convert sql_variant invalid
-CREATE VIEW BABEL_3486_vu_prepare_v112 as (SELECT TRY_CONVERT(sql_variant, CAST(CAST(1111 as binary) AS image)));
-GO
-CREATE PROCEDURE BABEL_3486_vu_prepare_p112 as (SELECT TRY_CONVERT(sql_variant, CAST(CAST(1111 as binary) AS image)));
-GO
-CREATE FUNCTION BABEL_3486_vu_prepare_f112()
-RETURNS sql_variant AS
-BEGIN
-RETURN (SELECT TRY_CONVERT(sql_variant, CAST(CAST(1111 as binary) AS image)));
-END
-GO
 
 CREATE VIEW BABEL_3486_vu_prepare_v113 as (SELECT TRY_CONVERT(sql_variant, CAST('test' AS text)));
 GO

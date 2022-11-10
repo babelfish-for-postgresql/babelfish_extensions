@@ -1,0 +1,637 @@
+SELECT * FROM BABEL_3646_vu_prepare_v1
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to date.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v1
+GO
+
+EXEC BABEL_3646_vu_prepare_p1
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to date.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p1
+GO
+
+SELECT BABEL_3646_vu_prepare_f1()
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to date.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f1()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v2
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v2
+GO
+
+EXEC BABEL_3646_vu_prepare_p2
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p2
+GO
+
+SELECT BABEL_3646_vu_prepare_f2()
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f2()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v3
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v3
+GO
+
+EXEC BABEL_3646_vu_prepare_p3
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p3
+GO
+
+SELECT BABEL_3646_vu_prepare_f3()
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f3()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v4
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to double precision.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v4
+GO
+
+EXEC BABEL_3646_vu_prepare_p4
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to double precision.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p4
+GO
+
+SELECT BABEL_3646_vu_prepare_f4()
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to double precision.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f4()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v5
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to real.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v5
+GO
+
+EXEC BABEL_3646_vu_prepare_p5
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to real.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p5
+GO
+
+SELECT BABEL_3646_vu_prepare_f5()
+GO
+~~START~~
+real
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to real.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f5()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v6
+GO
+~~START~~
+uniqueidentifier
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to uniqueidentifier.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v6
+GO
+
+EXEC BABEL_3646_vu_prepare_p6
+GO
+~~START~~
+uniqueidentifier
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to uniqueidentifier.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p6
+GO
+
+SELECT BABEL_3646_vu_prepare_f6()
+GO
+~~START~~
+uniqueidentifier
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to uniqueidentifier.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f6()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v7
+GO
+~~START~~
+image
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to image.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v7
+GO
+
+EXEC BABEL_3646_vu_prepare_p7
+GO
+~~START~~
+image
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to image.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p7
+GO
+
+SELECT BABEL_3646_vu_prepare_f7()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function babel_3646_vu_prepare_f7() does not exist)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f7()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function babel_3646_vu_prepare_f7() does not exist)~~
+
+
+SELECT * FROM BABEL_3646_vu_prepare_v8
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to "bit".)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v8
+GO
+
+EXEC BABEL_3646_vu_prepare_p8
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to "bit".)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p8
+GO
+
+SELECT BABEL_3646_vu_prepare_f8()
+GO
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to "bit".)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f8()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v9
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to money.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v9
+GO
+
+EXEC BABEL_3646_vu_prepare_p9
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to money.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p9
+GO
+
+SELECT BABEL_3646_vu_prepare_f9()
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type xml to money.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f9()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v10
+GO
+~~START~~
+money
+100.0000
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v10
+GO
+
+EXEC BABEL_3646_vu_prepare_p10
+GO
+~~START~~
+money
+100.0000
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p10
+GO
+
+SELECT BABEL_3646_vu_prepare_f10()
+GO
+~~START~~
+money
+100.0000
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f10()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v11
+GO
+~~START~~
+text
+1
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v11
+GO
+
+EXEC BABEL_3646_vu_prepare_p11
+GO
+~~START~~
+text
+1
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p11
+GO
+
+SELECT BABEL_3646_vu_prepare_f11()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function babel_3646_vu_prepare_f11() does not exist)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f11()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function babel_3646_vu_prepare_f11() does not exist)~~
+
+
+SELECT * FROM BABEL_3646_vu_prepare_v12
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_3646_vu_prepare_v12" does not exist)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v12
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_3646_vu_prepare_v12" does not exist)~~
+
+
+EXEC BABEL_3646_vu_prepare_p12
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data precision out of range for datetime)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p12
+GO
+
+SELECT BABEL_3646_vu_prepare_f12()
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data precision out of range for datetime)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f12()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v13
+GO
+~~START~~
+datetime2
+1990-01-01 10:10:10.1000000
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v13
+GO
+
+EXEC BABEL_3646_vu_prepare_p13
+GO
+~~START~~
+datetime2
+1990-01-01 10:10:10.1000000
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p13
+GO
+
+SELECT BABEL_3646_vu_prepare_f13()
+GO
+~~START~~
+datetime
+1990-01-01 10:10:10.1
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f13()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v14
+GO
+~~START~~
+datetime
+1991-01-01 00:00:00.0
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v14
+GO
+
+EXEC BABEL_3646_vu_prepare_p14
+GO
+~~START~~
+datetime
+1991-01-01 00:00:00.0
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p14
+GO
+
+SELECT BABEL_3646_vu_prepare_f14()
+GO
+~~START~~
+datetime
+1991-01-01 00:00:00.0
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f14()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v15
+GO
+~~START~~
+datetime
+1991-01-01 00:00:00.0
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v15
+GO
+
+EXEC BABEL_3646_vu_prepare_p15
+GO
+~~START~~
+datetime
+1991-01-01 00:00:00.0
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p15
+GO
+
+SELECT BABEL_3646_vu_prepare_f15()
+GO
+~~START~~
+datetime
+1991-01-01 00:00:00.0
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f15()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v16
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_3646_vu_prepare_v16" does not exist)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v16
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_3646_vu_prepare_v16" does not exist)~~
+
+
+EXEC BABEL_3646_vu_prepare_p16
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime2: "5")~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p16
+GO
+
+SELECT BABEL_3646_vu_prepare_f16()
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime2: "5")~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f16()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v17
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v17
+GO
+
+EXEC BABEL_3646_vu_prepare_p17
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p17
+GO
+
+SELECT BABEL_3646_vu_prepare_f17()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f17()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v18
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v18
+GO
+
+EXEC BABEL_3646_vu_prepare_p18
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p18
+GO
+
+SELECT BABEL_3646_vu_prepare_f18()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f18()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v19
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v19
+GO
+
+EXEC BABEL_3646_vu_prepare_p19
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p19
+GO
+
+SELECT BABEL_3646_vu_prepare_f19()
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f19()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v20
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v20
+GO
+
+EXEC BABEL_3646_vu_prepare_p20
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p20
+GO
+
+SELECT BABEL_3646_vu_prepare_f20()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f20()
+GO
