@@ -35,7 +35,7 @@ runs:
       if: always() && steps.build-extensions-newer.outcome == 'success'
       run: |
         cd ~
-        ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
+        ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
