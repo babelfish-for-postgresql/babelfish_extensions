@@ -54,3 +54,19 @@ go
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
+
+exec sp_tables @table_type = "'TABLE'";
+exec sp_tables @table_type = "'VIEW'";
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3640_db#!#dbo#!#mytable1#!#TABLE#!#<NULL>
+babel_3640_db#!#dbo#!#trans2#!#TABLE#!#<NULL>
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3640_db#!#dbo#!#sysdatabases#!#VIEW#!#<NULL>
+babel_3640_db#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+

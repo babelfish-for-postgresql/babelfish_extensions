@@ -1706,7 +1706,8 @@ public:
 		if (ctx->execute_statement())
 		{
 			PLtsql_stmt_exec *stmt = (PLtsql_stmt_exec *) getPLtsql_fragment(ctx);
-			if (stmt->cmd_type == PLTSQL_STMT_EXEC && stmt->proc_name && pg_strcasecmp("sp_tables", stmt->proc_name) == 0){
+			if (stmt->cmd_type == PLTSQL_STMT_EXEC && stmt->proc_name && pg_strcasecmp("sp_tables", stmt->proc_name) == 0)
+			{
 				PLtsql_expr_query_mutator mutator(stmt->expr, ctx);
 				add_rewritten_query_fragment_to_mutator(&mutator); // move information of rewritten_query_fragment to mutator.
 				mutator.run(); // expr->query will be rewitten here
@@ -1721,9 +1722,9 @@ public:
 		if (ctx->constant() || ctx->id())
 		{
 			// BABEL-2395, BABEL-3640: embedded single quotes are allowed in procedure parameters.
-			// in enterExecute_parameter, we replace "" with '', and also record the place of "" into 
+			// in tsqlMutator::enterExecute_parameter, we replace "" with '', and also record the place of "" into 
 			// double_quota_places, then in here, we'll replace all ' into '' if it's inside ""
-			// we replace " in tsqlMutator.enterExecute_parameter first to pass the syntax validation
+			// we replace " in tsqlMutator::enterExecute_parameter first to pass the syntax validation
 			// then we'll use the double quota rule to replace "'A'" to '''A'''
 			if (pg_strcasecmp(getProcNameFromExecParam(ctx).c_str(), "sp_tables") == 0)
 			{
@@ -1739,7 +1740,8 @@ public:
 				{
 					newStr += '\'';
 					for (std::string::iterator iter = argStr.begin() + 1; iter != argStr.end() - 1; ++iter)
-					if (*iter == '\''){
+					if (*iter == '\'')
+					{
 						newStr += "\'\'";
 					} else{
 						newStr += *iter;
@@ -2095,7 +2097,8 @@ public:
 				// if it's sp_tables, we will rewrite this into 
 				// exec sp_tables "test" -> exec sp_tables 'test'
 				// exec sp_tables "'test'" -> exec sp_tables '''test'''
-				if (pg_strcasecmp(getProcNameFromExecParam(ctx).c_str() , "sp_tables") == 0){
+				if (pg_strcasecmp(getProcNameFromExecParam(ctx).c_str() , "sp_tables") == 0)
+				{
 					double_quota_places.push_back(parameterIndex);
 				}
 				argStr.front() = '\'';

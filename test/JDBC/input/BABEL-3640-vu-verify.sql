@@ -18,3 +18,7 @@ go
 
 exec babel_3640_p6
 go
+
+exec sp_tables @table_type = "'TABLE'";
+exec sp_tables @table_type = "'VIEW'";
+go
