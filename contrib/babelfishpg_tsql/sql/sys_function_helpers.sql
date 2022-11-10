@@ -10056,27 +10056,26 @@ $BODY$
 $BODY$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_get_name_delimiter_pos(name TEXT)
+CREATE OR REPLACE FUNCTION babelfish_get_name_delimiter_pos(name TEXT)
 RETURNS INTEGER
 AS $$
 DECLARE
     pos int;
-    name_tmp TEXT collate "C" := name;
 BEGIN
-    IF (length(name_tmp collate sys.database_default) <= 2 AND (position('"' IN name_tmp) != 0 OR position(']' IN name_tmp) != 0 OR position('[' IN name_tmp) != 0))
-       -- invalid name
-       THEN RETURN 0;
-    ELSIF left(name_tmp, 1) collate sys.database_default = '[' THEN
-        pos = position('].' IN name_tmp);
+    IF (length(name) <= 2 AND (position('"' IN name) != 0 OR position(']' IN name) != 0 OR position('[' IN name) != 0))
+        -- invalid name
+        THEN RETURN 0;
+    ELSIF left(name, 1) = '[' THEN
+        pos = position('].' IN name);
         IF pos = 0 THEN 
             -- invalid name
             RETURN 0;
         ELSE
             RETURN pos + 1;
         END IF;
-    ELSIF left(name_tmp, 1) collate sys.database_default = '"' THEN
+    ELSIF left(name, 1) = '"' THEN
         -- search from position 1 in case name starts with ".
-        pos = position('".' IN right(name_tmp, length(name_tmp) - 1));
+        pos = position('".' IN right(name, length(name) - 1));
         IF pos = 0 THEN
             -- invalid name
             RETURN 0;
@@ -10084,7 +10083,7 @@ BEGIN
             RETURN pos + 2;
         END IF;
     ELSE
-        RETURN position('.' IN name_tmp);
+        RETURN position('.' IN name);
     END IF;
 END;
 $$
