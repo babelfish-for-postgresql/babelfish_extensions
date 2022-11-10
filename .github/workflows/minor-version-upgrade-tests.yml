@@ -87,20 +87,13 @@ jobs:
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
 
-      - name: Build and run tests for Postgres engine using ${{env.ENGINE_VER_TO}}
-        run: |
-          cd ../postgresql_modified_for_babelfish
-          git checkout ${{env.ENGINE_VER_TO}}
-          ./configure --prefix=$HOME/postgres/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
-          make clean
-          make -j 4 2>error.txt
-          make install
-          make check
-          cd contrib && make && sudo make install
+      - name: Build and run tests for Postgres engine using latest version
+        id: build-modified-postgres-newer
+        uses: ./.github/composite-actions/build-modified-postgres
 
       - uses: actions/checkout@v2
 
-      - name: Set env variables and build extensions using ${{env.EXTENSION_VER_TO}}
+      - name: Set env variables and build extensions using latest version
         id: build-extensions-newer
         uses: ./.github/composite-actions/build-extensions
 
