@@ -260,7 +260,7 @@ BEGIN
         RAISE invalid_datetime_format;
     END IF;
     IF (v_datatype ~* DATATYPE_MASK_REGEXP COLLATE "C") THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(' COLLATE "C", 1));
+        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
         v_maxlength := CASE
                           WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
@@ -420,10 +420,10 @@ BEGIN
     v_datatype := upper(trim(p_datatype));
     v_src_datatype := upper(trim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
-    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP COLLATE "C")
+    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
     THEN
         v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
-        v_src_datatype := rtrim(split_part(v_src_datatype, '(' COLLATE "C", 1));
+        v_src_datatype := rtrim(split_part(v_src_datatype, '(', 1));
         IF (v_src_datatype <> 'DATETIME2' AND v_scale IS NOT NULL) THEN
             RAISE invalid_indicator_parameter_value;
         ELSIF (v_scale NOT BETWEEN 0 AND 7) THEN
@@ -442,8 +442,8 @@ BEGIN
     THEN
         RAISE invalid_parameter_value;
     END IF;
-    IF (v_datatype ~* DATATYPE_MASK_REGEXP COLLATE "C") THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(' COLLATE "C", 1));
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
+        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
         v_maxlength := CASE
                           WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
@@ -457,7 +457,7 @@ BEGIN
                            WHEN 'MAX' THEN v_maxlength
                            ELSE v_lengthexpr::SMALLINT
                         END;
-    ELSIF (v_datatype ~* DATATYPE_REGEXP COLLATE "C") THEN
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
         v_res_datatype := v_datatype;
     ELSE
         RAISE datatype_mismatch;
@@ -1201,14 +1201,14 @@ BEGIN
     v_datetimestring := upper(trim(p_datetimestring));
     v_style := floor(p_style)::SMALLINT;
 
-    v_datatype_groups := regexp_matches(v_datatype COLLATE "C", DATATYPE_REGEXP, 'gi');
+    v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
 
     v_res_datatype := upper(v_datatype_groups[1]);
     v_scale := v_datatype_groups[2]::SMALLINT;
 
     IF (v_res_datatype IS NULL) THEN
         RAISE datatype_mismatch;
-    ELSIF (v_res_datatype <> 'DATETIME2' COLLATE sys.database_default AND v_scale IS NOT NULL)
+    ELSIF (v_res_datatype <> 'DATETIME2' AND v_scale IS NOT NULL)
     THEN
         RAISE invalid_indicator_parameter_value;
     ELSIF (coalesce(v_scale, 0) NOT BETWEEN 0 AND 7)
@@ -1239,108 +1239,108 @@ BEGIN
         RAISE invalid_escape_sequence;
     END;
 
-    v_date_format := coalesce(nullif(DATE_FORMAT, '' COLLATE "C"), v_lang_metadata_json ->> 'date_format');
+    v_date_format := coalesce(nullif(DATE_FORMAT, ''), v_lang_metadata_json ->> 'date_format');
 
     v_compmonth_regexp := array_to_string(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
                                                     ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_names'))), '|');
 
-    IF (v_datetimestring ~* pg_catalog.replace(DEFMASK1_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK2_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK3_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK4_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK5_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK6_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK7_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK8_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK9_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK10_0_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+    IF (v_datetimestring ~* pg_catalog.replace(DEFMASK1_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK2_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK3_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK4_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK5_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK6_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK7_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK8_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK9_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK10_0_REGEXP, '$comp_month$', v_compmonth_regexp))
     THEN
-        IF ((v_style IN (127, 130, 131) AND v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME')) OR
-            (v_style IN (130, 131) AND v_res_datatype COLLATE "C" = 'DATETIME2'))
+        IF ((v_style IN (127, 130, 131) AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+            (v_style IN (130, 131) AND v_res_datatype = 'DATETIME2'))
         THEN
             RAISE invalid_datetime_format;
         END IF;
 
-        IF ((v_datestring ~* pg_catalog.replace(DEFMASK1_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK2_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK3_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK4_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK5_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK6_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK7_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK8_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK9_2_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp)) AND
+        IF ((v_datestring ~* pg_catalog.replace(DEFMASK1_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK2_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK3_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK4_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK5_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK6_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK7_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK8_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK9_2_REGEXP, '$comp_month$', v_compmonth_regexp)) AND
             v_res_datatype = 'DATETIME2')
         THEN
             RAISE invalid_datetime_format;
         END IF;
 
-        IF (v_datestring ~* pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        IF (v_datestring ~* pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[2];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[1];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[3];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
             v_year := v_regmatch_groups[1];
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[2];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[3], v_lang_metadata_json);
             v_year := v_regmatch_groups[1];
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[1];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[3], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[2]);
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[3];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
             v_year := v_regmatch_groups[2];
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[2];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := '01';
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
             v_year := v_regmatch_groups[1];
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := '01';
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
             v_year := v_regmatch_groups[2];
 
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$' COLLATE "C", v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[1];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
@@ -1362,50 +1362,50 @@ BEGIN
 
         IF (v_datestring ~* DOT_SLASH_DASH_SHORTYEAR_REGEXP)
         THEN
-            IF ((v_style NOT IN (0, 1, 2, 3, 4, 5, 10, 11) AND v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME')) OR
-                (v_style NOT IN (0, 1, 2, 3, 4, 5, 10, 11, 12) AND v_res_datatype COLLATE "C" = 'DATETIME2'))
+            IF ((v_style NOT IN (0, 1, 2, 3, 4, 5, 10, 11) AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                (v_style NOT IN (0, 1, 2, 3, 4, 5, 10, 11, 12) AND v_res_datatype = 'DATETIME2'))
             THEN
                 RAISE invalid_datetime_format;
             END IF;
 
-            IF ((v_style IN (1, 10) AND v_date_format <> 'MDY' AND v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME')) OR
-                (v_style IN (0, 1, 10) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME')) OR
-                (v_style IN (0, 1, 10, 22) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype COLLATE "C" = 'DATETIME2') OR
-                (v_style IN (1, 10, 22) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype COLLATE "C" = 'DATETIME2'))
+            IF ((v_style IN (1, 10) AND v_date_format <> 'MDY' AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                (v_style IN (0, 1, 10) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                (v_style IN (0, 1, 10, 22) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype = 'DATETIME2') OR
+                (v_style IN (1, 10, 22) AND v_date_format IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype = 'DATETIME2'))
             THEN
                 v_day := v_middlepart;
                 v_month := v_leftpart;
                 v_year := sys.babelfish_get_full_year(v_rightpart);
 
-            ELSIF ((v_style IN (2, 11) AND v_date_format COLLATE "C" <> 'YMD') OR
-                   (v_style IN (0, 2, 11) AND v_date_format COLLATE "C" = 'YMD'))
+            ELSIF ((v_style IN (2, 11) AND v_date_format <> 'YMD') OR
+                   (v_style IN (0, 2, 11) AND v_date_format = 'YMD'))
             THEN
                 v_day := v_rightpart;
                 v_month := v_middlepart;
                 v_year := sys.babelfish_get_full_year(v_leftpart);
 
-            ELSIF ((v_style IN (3, 4, 5) AND v_date_format COLLATE "C" <> 'DMY') OR
-                   (v_style IN (0, 3, 4, 5) AND v_date_format COLLATE "C" = 'DMY'))
+            ELSIF ((v_style IN (3, 4, 5) AND v_date_format <> 'DMY') OR
+                   (v_style IN (0, 3, 4, 5) AND v_date_format = 'DMY'))
             THEN
                 v_day := v_leftpart;
                 v_month := v_middlepart;
                 v_year := sys.babelfish_get_full_year(v_rightpart);
 
-            ELSIF (v_style = 0 AND v_date_format COLLATE "C" = 'DYM')
+            ELSIF (v_style = 0 AND v_date_format = 'DYM')
             THEN
                 v_day = v_leftpart;
                 v_month = v_rightpart;
                 v_year = sys.babelfish_get_full_year(v_middlepart);
 
-            ELSIF (v_style = 0 AND v_date_format COLLATE "C" = 'MYD')
+            ELSIF (v_style = 0 AND v_date_format = 'MYD')
             THEN
                 v_day := v_rightpart;
                 v_month := v_leftpart;
                 v_year = sys.babelfish_get_full_year(v_middlepart);
 
-            ELSIF (v_style = 0 AND v_date_format COLLATE "C" = 'YDM')
+            ELSIF (v_style = 0 AND v_date_format = 'YDM')
             THEN
-                IF (v_res_datatype COLLATE "C" = 'DATETIME2') THEN
+                IF (v_res_datatype = 'DATETIME2') THEN
                     RAISE character_not_in_repertoire;
                 END IF;
 
@@ -1418,42 +1418,42 @@ BEGIN
         ELSIF (v_datestring ~* DOT_SLASH_DASH_FULLYEAR1_1_REGEXP)
         THEN
             IF (v_style NOT IN (0, 20, 21, 101, 102, 103, 104, 105, 110, 111, 120, 121, 130, 131) AND
-                v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME'))
+                v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
             THEN
                 RAISE invalid_datetime_format;
-            ELSIF (v_style IN (130, 131) AND v_res_datatype COLLATE "C" = 'SMALLDATETIME') THEN
+            ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME') THEN
                 RAISE invalid_character_value_for_cast;
             END IF;
 
             v_year := v_rightpart;
             IF (v_leftpart::SMALLINT <= 12)
             THEN
-                IF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'YDM')) OR
-                    (v_style IN (0, 103, 104, 105, 130, 131) AND ((v_date_format COLLATE "C" = 'DMY' AND v_res_datatype COLLATE "C" = 'DATETIME2') OR
-                    (v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM') AND v_res_datatype COLLATE "C" <> 'DATETIME2'))) OR
-                    (v_style IN (103, 104, 105, 130, 131) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM') AND v_res_datatype COLLATE "C" = 'DATETIME2'))
+                IF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
+                    (v_style IN (0, 103, 104, 105, 130, 131) AND ((v_date_format = 'DMY' AND v_res_datatype = 'DATETIME2') OR
+                    (v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2'))) OR
+                    (v_style IN (103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype = 'DATETIME2'))
                 THEN
                     v_day := v_leftpart;
                     v_month := v_middlepart;
 
-                ELSIF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM') AND v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME')) OR
-                       (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'YDM') AND v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME')) OR
-                       (v_style IN (101, 110) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'MYD', 'YDM') AND v_res_datatype COLLATE "C" = 'DATETIME2') OR
-                       (v_style IN (0, 101, 110) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'MYD', 'YDM') AND v_res_datatype COLLATE "C" = 'DATETIME2'))
+                ELSIF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                       (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
+                       (v_style IN (101, 110) AND v_date_format IN ('DMY', 'DYM', 'MYD', 'YDM') AND v_res_datatype = 'DATETIME2') OR
+                       (v_style IN (0, 101, 110) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YDM') AND v_res_datatype = 'DATETIME2'))
                 THEN
                     v_day := v_middlepart;
                     v_month := v_leftpart;
                 END IF;
             ELSE
-                IF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'YDM')) OR
-                    (v_style IN (0, 103, 104, 105, 130, 131) AND ((v_date_format COLLATE "C" = 'DMY' AND v_res_datatype COLLATE "C" = 'DATETIME2') OR
-                    (v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM') AND v_res_datatype COLLATE "C" <> 'DATETIME2'))) OR
-                    (v_style IN (103, 104, 105, 130, 131) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM') AND v_res_datatype COLLATE "C" = 'DATETIME2'))
+                IF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
+                    (v_style IN (0, 103, 104, 105, 130, 131) AND ((v_date_format = 'DMY' AND v_res_datatype = 'DATETIME2') OR
+                    (v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2'))) OR
+                    (v_style IN (103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype = 'DATETIME2'))
                 THEN
                     v_day := v_leftpart;
                     v_month := v_middlepart;
                 ELSE
-                    IF (v_res_datatype COLLATE "C" = 'DATETIME2') THEN
+                    IF (v_res_datatype = 'DATETIME2') THEN
                         RAISE invalid_datetime_format;
                     END IF;
 
@@ -1464,14 +1464,14 @@ BEGIN
     ELSIF (v_datetimestring ~* FULLYEAR_DOT_SLASH_DASH1_0_REGEXP)
     THEN
         IF (v_style NOT IN (0, 20, 21, 101, 102, 103, 104, 105, 110, 111, 120, 121, 130, 131) AND
-            v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME'))
+            v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
         THEN
             RAISE invalid_datetime_format;
         ELSIF (v_style IN (6, 7, 8, 9, 12, 13, 14, 24, 100, 106, 107, 108, 109, 112, 113, 114, 130) AND
-            v_res_datatype COLLATE "C" = 'DATETIME2')
+            v_res_datatype = 'DATETIME2')
         THEN
             RAISE invalid_regular_expression;
-        ELSIF (v_style IN (130, 131) AND v_res_datatype COLLATE "C" = 'SMALLDATETIME')
+        ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME')
         THEN
             RAISE invalid_character_value_for_cast;
         END IF;
@@ -1481,31 +1481,31 @@ BEGIN
         v_middlepart := v_regmatch_groups[2];
         v_rightpart := v_regmatch_groups[3];
 
-        IF ((v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME') AND v_rightpart::SMALLINT <= 12) OR v_res_datatype COLLATE "C" = 'DATETIME2')
+        IF ((v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND v_rightpart::SMALLINT <= 12) OR v_res_datatype = 'DATETIME2')
         THEN
-            IF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM') AND v_res_datatype COLLATE "C" <> 'DATETIME2') OR
-                (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'YDM') AND v_res_datatype COLLATE "C" <> 'DATETIME2') OR
-                (v_style IN (0, 20, 21, 23, 25, 101, 102, 110, 111, 120, 121, 126, 127) AND v_res_datatype COLLATE "C" = 'DATETIME2'))
+            IF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2') OR
+                (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2') OR
+                (v_style IN (0, 20, 21, 23, 25, 101, 102, 110, 111, 120, 121, 126, 127) AND v_res_datatype = 'DATETIME2'))
             THEN
                 v_day := v_rightpart;
                 v_month := v_middlepart;
 
-            ELSIF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'YDM')) OR
-                    v_style IN (0, 103, 104, 105, 130, 131) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM'))
+            ELSIF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
+                    v_style IN (0, 103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM'))
             THEN
                 v_day := v_middlepart;
                 v_month := v_rightpart;
             END IF;
-        ELSIF (v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME') AND v_rightpart::SMALLINT > 12)
+        ELSIF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND v_rightpart::SMALLINT > 12)
         THEN
-            IF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM')) OR
-                (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'YDM')))
+            IF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM')) OR
+                (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')))
             THEN
                 v_day := v_rightpart;
                 v_month := v_middlepart;
 
-            ELSIF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format COLLATE "C" NOT IN ('DMY', 'DYM', 'YDM')) OR
-                   (v_style IN (0, 103, 104, 105, 130, 131) AND v_date_format COLLATE "C" IN ('DMY', 'DYM', 'YDM')))
+            ELSIF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
+                   (v_style IN (0, 103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM')))
             THEN
                 RAISE invalid_character_value_for_cast;
             END IF;
@@ -1513,10 +1513,10 @@ BEGIN
     ELSIF (v_datetimestring ~* SHORT_DIGITMASK1_0_REGEXP OR
            v_datetimestring ~* FULL_DIGITMASK1_0_REGEXP)
     THEN
-        IF (v_style = 127 AND v_res_datatype COLLATE "C" <> 'DATETIME2')
+        IF (v_style = 127 AND v_res_datatype <> 'DATETIME2')
         THEN
             RAISE invalid_datetime_format;
-        ELSIF (v_style IN (130, 131) AND v_res_datatype COLLATE "C" = 'SMALLDATETIME')
+        ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME')
         THEN
             RAISE invalid_character_value_for_cast;
         END IF;
@@ -1542,7 +1542,7 @@ BEGIN
         RAISE invalid_datetime_format;
     END IF;
 
-    IF (((v_datetimestring ~* HHMMSSFS_PART_REGEXP AND v_res_datatype COLLATE "C" = 'DATETIME2') OR
+    IF (((v_datetimestring ~* HHMMSSFS_PART_REGEXP AND v_res_datatype = 'DATETIME2') OR
         (v_datetimestring ~* SHORT_DIGITMASK1_0_REGEXP OR v_datetimestring ~* FULL_DIGITMASK1_0_REGEXP OR
           v_datetimestring ~* FULLYEAR_DOT_SLASH_DASH1_0_REGEXP OR v_datetimestring ~* DOT_SLASH_DASH_FULLYEAR1_0_REGEXP)) AND
         v_style IN (130, 131))
@@ -1558,20 +1558,20 @@ BEGIN
     v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
     v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
 
-    IF ((v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME') OR
-         (v_res_datatype COLLATE "C" = 'DATETIME2' AND v_timepart !~* HHMMSSFS_DOT_PART_REGEXP)) AND
+    IF ((v_res_datatype IN ('DATETIME', 'SMALLDATETIME') OR
+         (v_res_datatype = 'DATETIME2' AND v_timepart !~* HHMMSSFS_DOT_PART_REGEXP)) AND
         char_length(v_fseconds) > 3)
     THEN
         RAISE invalid_datetime_format;
     END IF;
 
     BEGIN
-        IF (v_res_datatype COLLATE "C" IN ('DATETIME', 'SMALLDATETIME'))
+        IF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
         THEN
             v_resdatetime := sys.datetimefromparts(v_year, v_month, v_day,
                                                                  v_hours, v_minutes, v_seconds,
                                                                  rpad(v_fseconds, 3, '0'));
-            IF (v_res_datatype COLLATE "C" = 'SMALLDATETIME' AND
+            IF (v_res_datatype = 'SMALLDATETIME' AND
                 to_char(v_resdatetime, 'SS') <> '00')
             THEN
                 IF (to_char(v_resdatetime, 'SS')::SMALLINT >= 30) THEN
@@ -1580,7 +1580,7 @@ BEGIN
 
                 v_resdatetime := to_timestamp(to_char(v_resdatetime, 'DD.MM.YYYY.HH24.MI'), 'DD.MM.YYYY.HH24.MI');
             END IF;
-        ELSIF (v_res_datatype COLLATE "C" = 'DATETIME2')
+        ELSIF (v_res_datatype = 'DATETIME2')
         THEN
             v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
             v_seconds := concat_ws('.', v_seconds, v_fseconds);
@@ -1863,17 +1863,19 @@ BEGIN
     END IF;
     IF (v_datatype ~* DATATYPE_MASK_REGEXP)
     THEN
-        v_res_datatype := rtrim(split_part(v_datatype, '(' COLLATE "C", 1));
+        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
+
         v_res_maxlength := CASE
-                              WHEN (v_res_datatype COLLATE "C" IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                              WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                               ELSE NVARCHAR_MAX
                            END;
         v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
-        IF (v_lengthexpr <> 'MAX' COLLATE "C" AND char_length(v_lengthexpr) > 4) THEN
+
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
             RAISE interval_field_overflow;
         END IF;
         v_res_length := CASE v_lengthexpr
-                           WHEN 'MAX' COLLATE "C" THEN v_res_maxlength
+                           WHEN 'MAX' THEN v_res_maxlength
                            ELSE v_lengthexpr::SMALLINT
                         END;
     ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
@@ -1922,7 +1924,7 @@ BEGIN
                      END;
     ELSIF (v_style = 22)
     THEN
-    	v_resmask := pg_catalog.format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
+        v_resmask := pg_catalog.format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
     ELSIF (v_style IN (130, 131))
     THEN
         v_resmask := CASE
@@ -1935,11 +1937,11 @@ BEGIN
     v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
     v_res_length := coalesce(v_res_length,
                              CASE v_res_datatype
-                                WHEN 'CHAR' COLLATE "C" THEN 30
+                                WHEN 'CHAR' THEN 30
                                 ELSE 60
                              END);
     RETURN CASE
-              WHEN (v_res_datatype COLLATE "C" NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
@@ -1984,122 +1986,6 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE
 RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
-RETURNS JSONB
-AS
-$BODY$
-DECLARE
-    v_locale_parts TEXT[] COLLATE "C";
-    v_lang_data_jsonb JSONB;
-    v_lang_spec_culture VARCHAR COLLATE "C";
-    v_is_cached BOOLEAN := FALSE;
-BEGIN
-    v_lang_spec_culture := upper(trim(p_lang_spec_culture));
-
-    IF (char_length(v_lang_spec_culture) > 0)
-    THEN
-        BEGIN
-            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s' COLLATE "C",
-                                                               v_lang_spec_culture)), '')::JSONB;
-        EXCEPTION
-            WHEN undefined_object THEN
-            v_lang_data_jsonb := NULL;
-        END;
-
-        IF (v_lang_data_jsonb IS NULL)
-        THEN
-            v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '-\s*' COLLATE "C", '_', 'gi'));
-            IF (v_lang_spec_culture IN ('AR', 'FI') OR
-                v_lang_spec_culture ~ '_')
-            THEN
-                SELECT lang_data_jsonb
-                  INTO STRICT v_lang_data_jsonb
-                  FROM sys.babelfish_syslanguages
-                 WHERE spec_culture = v_lang_spec_culture;
-            ELSE
-                SELECT lang_data_jsonb
-                  INTO STRICT v_lang_data_jsonb
-                  FROM sys.babelfish_syslanguages
-                 WHERE lang_name_mssql = v_lang_spec_culture
-                    OR lang_alias_mssql = v_lang_spec_culture;
-            END IF;
-        ELSE
-            v_is_cached := TRUE;
-        END IF;
-    ELSE
-        v_lang_spec_culture := current_setting('LC_TIME');
-
-        v_lang_spec_culture := CASE
-                                  WHEN (v_lang_spec_culture !~ '\.' COLLATE "C") THEN v_lang_spec_culture
-                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
-                               END;
-
-        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, ',\s*' COLLATE "C", '_', 'gi'));
-
-        BEGIN
-            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s' COLLATE "C",
-                                                               v_lang_spec_culture)), '')::JSONB;
-        EXCEPTION
-            WHEN undefined_object THEN
-            v_lang_data_jsonb := NULL;
-        END;
-
-        IF (v_lang_data_jsonb IS NULL)
-        THEN
-            BEGIN
-                IF (char_length(v_lang_spec_culture) = 5)
-                THEN
-                    SELECT lang_data_jsonb
-                      INTO STRICT v_lang_data_jsonb
-                      FROM sys.babelfish_syslanguages
-                     WHERE spec_culture = v_lang_spec_culture;
-                ELSE
-                    v_locale_parts := string_to_array(v_lang_spec_culture, '-');
-
-                    SELECT lang_data_jsonb
-                      INTO STRICT v_lang_data_jsonb
-                      FROM sys.babelfish_syslanguages
-                     WHERE lang_name_pg = v_locale_parts[1]
-                       AND territory = v_locale_parts[2];
-                END IF;
-            EXCEPTION
-                WHEN OTHERS THEN
-                    v_lang_spec_culture := 'EN_US';
-
-                    SELECT lang_data_jsonb
-                      INTO v_lang_data_jsonb
-                      FROM sys.babelfish_syslanguages
-                     WHERE spec_culture = v_lang_spec_culture;
-            END;
-        ELSE
-            v_is_cached := TRUE;
-        END IF;
-    END IF;
-
-    IF (NOT v_is_cached) THEN
-        PERFORM set_config(format('sys.lang_metadata_json.%s' COLLATE "C",
-                                  v_lang_spec_culture),
-                           v_lang_data_jsonb::TEXT,
-                           FALSE);
-    END IF;
-
-    RETURN v_lang_data_jsonb;
-EXCEPTION
-    WHEN invalid_text_representation THEN
-        RAISE USING MESSAGE := format('The language metadata JSON value extracted from chache is not a valid JSON object.',
-                                      p_lang_spec_culture),
-                    HINT := 'Drop the current session, fix the appropriate record in "sys.babelfish_syslanguages" table, and try again after reconnection.';
-
-    WHEN OTHERS THEN
-        RAISE USING MESSAGE := format('"%s" is not a valid special culture or language name parameter.',
-                                      p_lang_spec_culture),
-                    DETAIL := 'Use of incorrect "lang_spec_culture" parameter value during conversion process.',
-                    HINT := 'Change "lang_spec_culture" parameter to the proper value and try again.';
-END;
-$BODY$
-LANGUAGE plpgsql
-VOLATILE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_remove_delimiter_pair(IN name TEXT)
 RETURNS TEXT AS
