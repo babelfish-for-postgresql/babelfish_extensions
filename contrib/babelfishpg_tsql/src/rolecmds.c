@@ -68,7 +68,6 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										void *arg);
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
-List * gen_droprole_subcmds(const char *user);
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -1338,30 +1337,6 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 
 		pfree(query.data);
 	}
-}
-
-List *
-gen_droprole_subcmds(const char *user)
-{
-	StringInfoData query;
-	List *res;
-	Node *stmt;
-
-	initStringInfo(&query);
-
-	appendStringInfo(&query, "DROP ROLE dummy; ");
-	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
-
-	if (list_length(res) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(res))));
-
-	stmt = parsetree_nth_stmt(res, 0);
-	update_DropRoleStmt(stmt, user);
-
-	return res;
 }
 
 PG_FUNCTION_INFO_V1(drop_all_users);

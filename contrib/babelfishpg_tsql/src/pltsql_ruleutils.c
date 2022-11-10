@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "pltsql.h"
 
 #include "access/amapi.h"
 #include "access/htup_details.h"
@@ -350,7 +351,6 @@ char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
 int adjustTypmod(Oid oid, int typmod);
 static void tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args);
-void probin_json_reader(text* probin, int** typmod_arr_p, int typmod_arr_len);
 
 PG_FUNCTION_INFO_V1(tsql_get_constraintdef);
 

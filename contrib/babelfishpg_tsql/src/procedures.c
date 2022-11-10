@@ -381,6 +381,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		
 		batch		= PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		/* TODO: params and browseMode has to be still implemented in this C-type function */
 		sp_describe_first_result_set_view_name = psprintf("sp_describe_first_result_set_view_%d", rand());
 
 		get_call_result_type(fcinfo, NULL, &tupdesc);

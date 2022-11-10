@@ -472,17 +472,13 @@ format_validate_and_culture(const char *culture, const char *config_name)
 static int
 match(const char *string, const char *pattern)
 {
-	regex_t re;
 	int status;
-	if (pg_regcomp(&re, (const pg_wchar *) pattern, strlen(pattern), REG_EXTENDED | REG_NOSUB, 0) != 0)
-	{
-		return 0;
-	}
+	text *regex = cstring_to_text(pattern);
 
-	status = pg_regexec(&re, (const pg_wchar *) string, strlen(string), 0, NULL, 0, NULL, 0);
-	pg_regfree(&re);
-
-	return !status;
+	status = RE_compile_and_execute(regex, (char *) string, strlen(string), REG_ADVANCED, DEFAULT_COLLATION_OID, 0, NULL);
+	
+	pfree(regex);
+	return status;
 }
 
 /*

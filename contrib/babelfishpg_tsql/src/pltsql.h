@@ -2032,6 +2032,7 @@ bool pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p,
 void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char** probin_str_p);
 void pltsql_function_probin_reader(ParseState *pstate,
 						List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
+extern void probin_json_reader(text* probin, int** typmod_arr_p, int typmod_arr_len);
 
 /*
  * Functions in pltsql_identity.c

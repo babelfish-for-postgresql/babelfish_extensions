@@ -25,6 +25,7 @@
 #endif
 
 #include "access/printtup.h"
+#include "access/xlog.h"
 #include "catalog/pg_type.h"	/* For type translation */
 #include "commands/dbcommands.h"
 #include "common/ip.h"
@@ -1203,11 +1204,17 @@ ProcessLoginInternal(Port *port)
 		case CAC_OK:
 			break;
 		case CAC_NOTCONSISTENT:
-			ereport(FATAL,
-					(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-						errmsg("the database system is not yet accepting connections"),
-						errdetail("Consistent recovery state has not been yet reached.")));
-			
+			if (EnableHotStandby)
+				ereport(FATAL,
+						(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+						 errmsg("the database system is not yet accepting connections"),
+						 errdetail("Consistent recovery state has not been yet reached.")));
+			else
+				ereport(FATAL,
+						(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+						 errmsg("the database system is not accepting connections"),
+						 errdetail("Hot standby mode is disabled.")));
+			break;
 	}
 
 	TdsErrorContext->err_text = "Process Login Flags";
