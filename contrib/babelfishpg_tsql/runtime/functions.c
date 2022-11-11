@@ -885,6 +885,7 @@ checksum(PG_FUNCTION_ARGS)
        StringInfoData buf;
        char md5[MD5_HASH_LEN + 1];
        char *name;
+	   bool success;
 
        initStringInfo(&buf);
        if (nargs > 0)
@@ -910,7 +911,7 @@ checksum(PG_FUNCTION_ARGS)
          * We are taking the first 8 characters of the md5 hash
          * and converting it to int32.
          */
-        bool success = pg_md5_hash(buf.data, buf.len, md5);
+        success = pg_md5_hash(buf.data, buf.len, md5);
         if (success)
         {
                 md5[8] = '\0';
