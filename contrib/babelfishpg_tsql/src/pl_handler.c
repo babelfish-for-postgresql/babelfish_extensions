@@ -1763,8 +1763,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 			strVal(linitial(type_names)) = get_physical_schema_name(get_cur_db_name(),strVal(linitial(type_names)));
 			break;
 		case 3:
-			strVal(lsecond(type_names)) = get_physical_schema_name(strVal(linitial(type_names)),strVal(lsecond(type_names)));
-			linitial(type_names) = lsecond(type_names);
+			linitial(type_names) = get_physical_schema_name(strVal(linitial(type_names)),strVal(lsecond(type_names)));
 			lsecond(type_names) = list_nth_cell(type_names,2);
 			list_delete_last(type_names);
 			break;
