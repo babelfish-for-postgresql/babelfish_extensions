@@ -23,7 +23,7 @@ jobs:
         if: always() && steps.install-dependencies.outcome == 'success'
         run: |
           cd ..
-          git clone --branch ${{env.ENGINE_BRANCH_FROM}} https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
+          git clone --branch ${{env.ENGINE_BRANCH_FROM}} https://github.com/kuntalghosh/postgresql_modified_for_babelfish.git
           cd postgresql_modified_for_babelfish
           ./configure --prefix=$HOME/${{env.OLD_INSTALL_DIR}} --with-python PYTHON=/usr/bin/python2.7 --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
           make clean
@@ -42,7 +42,7 @@ jobs:
 
       - uses: actions/checkout@v2
         with:
-          repository: babelfish-for-postgresql/babelfish_extensions
+          repository: kuntalghosh/babelfish_extensions
           ref: ${{env.EXTENSION_BRANCH_FROM}}
       
       - name: Build Extensions using ${{env.EXTENSION_BRANCH_FROM}}
