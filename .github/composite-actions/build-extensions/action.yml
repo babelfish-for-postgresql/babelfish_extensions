@@ -15,7 +15,7 @@ runs:
     - if: always() && (inputs.extension_branch != 'latest' && inputs.extension_branch != 'not_specified')
       uses: actions/checkout@v2
       with:
-        repository: kuntalghosh/babelfish_extensions
+        repository: babelfish-for-postgresql/babelfish_extensions
         ref: ${{ inputs.extension_branch }}
 
     - if: always() && (inputs.extension_branch == 'latest')

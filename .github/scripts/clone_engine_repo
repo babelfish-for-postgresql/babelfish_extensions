@@ -56,7 +56,7 @@ else
 
     # Maybe there's a matching branch in the public repo
     BASE_URL=
-    BASE_URL=https://github.com/kuntalghosh/postgresql_modified_for_babelfish # NO /
+    BASE_URL=https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish # NO /
 
     if check_repo "${BASE_URL}/tree/$BRANCH"; then
         echo "Using $BRANCH from project engine repo"
