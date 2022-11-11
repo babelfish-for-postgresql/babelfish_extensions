@@ -2885,6 +2885,18 @@ CALL sys.babelfish_update_collation_to_default('sys', 'databases', 'delayed_dura
 CALL sys.babelfish_update_collation_to_default('sys', 'databases', 'catalog_collation_type_desc');
 CALL sys.babelfish_update_collation_to_default('sys', 'databases', 'physical_database_name');
 
+-- The sys.table_types_internal view mimics the logic used in sys.is_table_type function
+create or replace view sys.table_types_internal as
+SELECT pt.typrelid
+    FROM pg_catalog.pg_type pt
+    INNER JOIN pg_catalog.pg_depend dep
+    ON pt.typrelid = dep.objid
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE 
+    pt.typnamespace in (select schema_id from sys.schemas) 
+    and (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r')
+;
+
 create or replace view sys.tables as
 select
   CAST(t.relname as sys._ci_sysname) as name
@@ -3626,18 +3638,6 @@ CALL sys.babelfish_update_collation_to_default('sys', 'procedures', 'type_desc')
 CALL sys.babelfish_update_collation_to_default('sys', 'sysindexes', 'name');
 
 CALL sys.babelfish_update_collation_to_default('sys', 'sysprocesses', 'hostname');
-
--- The sys.table_types_internal view mimics the logic used in sys.is_table_type function
-create or replace view sys.table_types_internal as
-SELECT pt.typrelid
-    FROM pg_catalog.pg_type pt
-    INNER JOIN pg_catalog.pg_depend dep
-    ON pt.typrelid = dep.objid
-    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE 
-    pt.typnamespace in (select schema_id from sys.schemas) 
-    and (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r')
-;
 
 -- re-creating objects to point to new tsql_type_max_length_helper
 
