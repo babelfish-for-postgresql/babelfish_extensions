@@ -166,6 +166,12 @@ jobs:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff
 
-      - name: Setup upterm session
-        if: always()
-        uses: lhotari/action-upterm@v1
+      - name: CI
+      on: [push]
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps:
+          - uses: actions/checkout@v2
+          - name: Setup upterm session
+            uses: lhotari/action-upterm@v1
