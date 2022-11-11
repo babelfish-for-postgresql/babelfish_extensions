@@ -49,8 +49,8 @@ runs:
       run: |
         cd ~
         export PATH=/opt/mssql-tools/bin:$PATH
-        ~/${{ inputs.install_dir }}/bin/initdb -c -D ~/${{ inputs.install_dir }}/data/
-        ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile start
+        ~/${{ inputs.install_dir }}/bin/initdb -D ~/${{ inputs.install_dir }}/data/
+        ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile start
         cd ${{ inputs.install_dir }}/data
         sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
         sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds'/g" postgresql.conf
