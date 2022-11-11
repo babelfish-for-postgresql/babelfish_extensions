@@ -41,7 +41,6 @@
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -130,11 +129,6 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
-static void pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access);
-static void pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid table_oid, Oid roleid, AclMode mask, bool *has_permission_via_hook, bool *read_write_all_data_safe);
-static void pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid, AclMode mode, bool *has_access);
-static void pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode, AclMaskHow how, bool *has_access);
-
 
 /*****************************************
  * 			Replication Hooks
@@ -175,10 +169,6 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
-static pg_proc_aclchk_hook_type prev_pg_proc_aclchk_hook = NULL;
-static pg_class_aclmask_hook_type prev_pg_class_aclmask_hook = NULL;
-static pg_attribute_aclchk_hook_type prev_pg_attribute_aclchk_hook = NULL;
-static pg_attribute_aclchk_all_hook_type prev_pg_attribute_aclchk_all_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -265,17 +255,6 @@ InstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
 
-	prev_pg_proc_aclchk_hook = pg_proc_aclchk_hook;
-	pg_proc_aclchk_hook = pltsql_pg_proc_aclchk;
-
-	prev_pg_class_aclmask_hook = pg_class_aclmask_hook;
-	pg_class_aclmask_hook = pltsql_pg_class_aclmask_hook;
-
-	prev_pg_attribute_aclchk_hook = pg_attribute_aclchk_hook;
-	pg_attribute_aclchk_hook = pltsql_pg_attribute_aclchk;
-	prev_pg_attribute_aclchk_all_hook = pg_attribute_aclchk_all_hook;
-	pg_attribute_aclchk_all_hook = pltsql_pg_attribute_aclchk_all;
-
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -323,10 +302,6 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
-	pg_proc_aclchk_hook = prev_pg_proc_aclchk_hook;
-	pg_class_aclmask_hook = prev_pg_class_aclmask_hook;
-	pg_attribute_aclchk_hook = prev_pg_attribute_aclchk_hook;
-	pg_attribute_aclchk_all_hook = prev_pg_attribute_aclchk_all_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -2112,6 +2087,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
 	HeapTuple	tuple, proctup, oldtup;
 	Form_pg_proc	form_proctup;
+	NameData		*schema_name_NameData;
 	char		*physical_schemaname;
 	char		*func_signature;
 	char		*original_name = NULL;
@@ -2229,7 +2205,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	if (pltsql_quoted_identifier)
 		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
 
-	new_record[Anum_bbf_function_ext_nspname -1] = CStringGetDatum(physical_schemaname);
+	schema_name_NameData = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(schema_name_NameData->data, NAMEDATALEN, "%s", physical_schemaname);
+
+	new_record[Anum_bbf_function_ext_nspname -1] = NameGetDatum(schema_name_NameData);
 	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
 	if (original_name)
 		new_record[Anum_bbf_function_ext_orig_name -1] = CStringGetTextDatum(original_name);
@@ -2950,75 +2929,6 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 		ReleaseSysCache(bbffunctuple);
 
 	return argsprinted;
-}
-
-/*
- * Following pltsql_pg_*_aclchk hooks are implemented to support ownership
- * chaining during procedure/function execution
- */
-static void
-pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access)
-{
-	Oid procOwner = get_function_owner_for_top_estate();
-	if (*has_access == false &&
-		OidIsValid(procOwner) &&
-		OidIsValid(proc_oid))
-		*has_access = pg_proc_ownercheck(proc_oid, procOwner);
-
-	if (prev_pg_proc_aclchk_hook)
-		prev_pg_proc_aclchk_hook(proc_oid, roleid, mode, has_access);
-}
-
-static void
-pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid class_oid, Oid roleid,
-							 AclMode mask, bool *has_permission_via_hook,
-							 bool *read_write_all_data_safe)
-{
-	Oid procOwner = get_function_owner_for_top_estate();
-	/*
-	 * Ownership chain will be denied if TRUNCATE permission is required since
-	 * ownership chain won't be formed if it is TRUNCATE TABLE statement
-	 */
-	if (*has_permission_via_hook == false &&
-		!(mask & ACL_TRUNCATE) &&
-		OidIsValid(procOwner) &&
-		OidIsValid(class_oid))
-		*has_permission_via_hook = pg_class_ownercheck(class_oid, procOwner);
-
-    if (prev_pg_class_aclmask_hook)
-        prev_pg_class_aclmask_hook(classForm, class_oid, roleid,
-								   mask, has_permission_via_hook,
-								   read_write_all_data_safe);
-}
-
-static
-void
-pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid,
-						   AclMode mode, bool *has_access)
-{
-	Oid procOwner = get_function_owner_for_top_estate();
-	if (*has_access == false &&
-		OidIsValid(procOwner) &&
-		OidIsValid(table_oid))
-		*has_access = pg_class_ownercheck(table_oid, procOwner);
-
-	if (prev_pg_attribute_aclchk_hook)
-		prev_pg_attribute_aclchk_hook(table_oid, attnum, roleid, mode, has_access);
-}
-
-static
-void
-pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode,
-							   AclMaskHow how, bool *has_access)
-{
-	Oid procOwner = get_function_owner_for_top_estate();
-	if (*has_access == false &&
-		OidIsValid(procOwner) &&
-		OidIsValid(table_oid))
-		*has_access = pg_class_ownercheck(table_oid, procOwner);
-
-	if (prev_pg_attribute_aclchk_all_hook)
-		prev_pg_attribute_aclchk_all_hook(table_oid, roleid, mode, how, has_access);
 }
 
 static PlannedStmt *

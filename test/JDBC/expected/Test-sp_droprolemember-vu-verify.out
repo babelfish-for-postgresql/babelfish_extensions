@@ -48,6 +48,21 @@ GO
 ~~ERROR (Message: procedure sp_droprolemember has too many arguments specified.)~~
 
 
+-- Throw error if rolename is empty after removing trailing spaces
+EXEC sp_droprolemember '     ', 'sp_addrolemember_role_doesnot_exist';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
+EXEC sp_droprolemember 'sp_addrolemember_role_doesnot_exist', '     ';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Name cannot be NULL.)~~
+
+
 -- Throw an error is role/member is empty
 EXEC sp_droprolemember '', '';
 GO

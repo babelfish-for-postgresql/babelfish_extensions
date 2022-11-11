@@ -432,6 +432,42 @@ go
 ~~ROW COUNT: 1~~
 
 
+-- Test with an error in setval
+ALTER SEQUENCE t1_identity_1_a_seq MAXVALUE 700
+INSERT INTO dbo.t1_identity_1 (a,b) VALUES (800,2);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 800 is out of bounds for sequence "t1_identity_1_a_seq" (1..700))~~
+
+
+-- Test with setval after an error
+-- It should update on IDENT_CURRENT, not other identity variables
+SELECT setval('t1_identity_1_a_seq', 32);
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+~~START~~
+bigint
+32
+~~END~~
+
+~~START~~
+numeric
+1
+~~END~~
+
+~~START~~
+numeric
+32
+~~END~~
+
+~~START~~
+numeric
+1
+~~END~~
+
+
 -- Check transaction rollback should increase identity
 BEGIN TRAN t1; INSERT INTO dbo.t1_identity_1 (a,b) VALUES (300,2); ROLLBACK TRAN t1;
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
@@ -500,8 +536,45 @@ numeric
 ~~END~~
 
 
+-- After identity insert off, the insert should start from the next seed that
+-- setval sets
+SELECT setval('t1_identity_1_a_seq', 500);
+go
+~~START~~
+bigint
+500
+~~END~~
+
+
 SET IDENTITY_INSERT dbo.t1_identity_1 OFF;
 go
+
+INSERT INTO dbo.t1_identity_1 (b) VALUES (4);
+SELECT a FROM dbo.t1_identity_1 where b = 4;
+SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+501
+~~END~~
+
+~~START~~
+numeric
+501
+~~END~~
+
+~~START~~
+numeric
+501
+~~END~~
+
+~~START~~
+numeric
+501
+~~END~~
+
 
 CREATE TABLE dbo.t1_identity_2(a int identity(1, -1) primary key, b int unique not null);
 SET IDENTITY_INSERT dbo.t1_identity_2 ON;

@@ -281,7 +281,7 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"CAST(t3.\"ORDINAL_POSITION\" AS int) AS column_ordinal, "
 		"CAST(t3.\"COLUMN_NAME\" AS sys.sysname) AS name, "
 		"case "
-			"when t1.is_nullable = \'YES\' then CAST(1 AS sys.bit) "
+			"when t1.is_nullable = \'YES\' AND t3.\"DATA_TYPE\" <> \'timestamp\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_nullable, "
 		"t4.system_type_id::int as system_type_id, "
@@ -318,7 +318,7 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"end as is_identity_column, "
 		"CAST(NULL as sys.bit) as is_part_of_unique_key, " /* pg_constraint */
 		"case  "
-			"when t1.is_updatable = \'YES\' AND t1.is_generated = \'NEVER\' AND t1.is_identity = \'NO\' then CAST(1 AS sys.bit) "
+			"when t1.is_updatable = \'YES\' AND t1.is_generated = \'NEVER\' AND t1.is_identity = \'NO\' AND t3.\"DATA_TYPE\" <> \'timestamp\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_updateable, "
 		"case "
@@ -1508,7 +1508,20 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 		ownername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name is not NULL */
-		if (rolname == NULL || strlen(rolname) == 0)
+		if (rolname == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
+
+		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
+		lowercase_rolname = lowerstr(rolname);
+
+		/* Remove trailing whitespaces */
+		len = strlen(lowercase_rolname);
+		while(isspace(lowercase_rolname[len - 1]))
+			lowercase_rolname[--len] = 0;
+
+		/* check if role name is empty after removing trailing spaces*/
+		if (strlen(lowercase_rolname) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
@@ -1521,16 +1534,9 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 				errmsg("The @ownername argument is not yet supported in Babelfish.")));
 
 		/* Role name cannot contain '\' */
-		if (strchr(rolname, '\\') != NULL)
+		if (strchr(lowercase_rolname, '\\') != NULL)
 			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("'%s' is not a valid name because it contains invalid characters.", rolname)));
-
-		/* Ensure the database name input argument is lower-case, as all Babel role names are lower-case */
-		lowercase_rolname = lowerstr(rolname);
-
-		/* Remove trailing whitespaces */
-		len = strlen(lowercase_rolname);
-		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
 
 		/* Map the logical role name to its physical name in the database.*/
 		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
@@ -1653,7 +1659,7 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 		/* Role name is not NULL */
-		if (rolname == NULL || strlen(rolname) == 0)
+		if (rolname == NULL)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
@@ -1662,7 +1668,13 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces */
 		len = strlen(lowercase_rolname);
-		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
+		while(isspace(lowercase_rolname[len - 1]))
+			lowercase_rolname[--len] = 0;
+
+		/* check if role name is empty after removing trailing spaces*/
+		if (strlen(lowercase_rolname) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database.*/
 		physical_role_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
@@ -1777,7 +1789,7 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name, member name is not NULL */
-		if ((rolname == NULL || membername ==NULL) || (strlen(rolname) == 0) || (strlen(membername) == 0))
+		if (rolname == NULL || membername ==NULL)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
@@ -1787,9 +1799,16 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces in rolename and membername*/
 		len = strlen(lowercase_rolname);
-		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
+		while(isspace(lowercase_rolname[len - 1]))
+			lowercase_rolname[--len] = 0;
 		len = strlen(lowercase_membername);
-		while(isspace(lowercase_membername[len - 1])) lowercase_membername[--len] = 0;
+		while(isspace(lowercase_membername[len - 1]))
+			lowercase_membername[--len] = 0;
+
+		/* check if rolename/membername is empty after removing trailing spaces*/
+		if (strlen(lowercase_rolname) == 0 || strlen(lowercase_membername) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
 
 		/* Throws an error if role name and member name are same*/
 		if(strcmp(lowercase_rolname,lowercase_membername)==0)
@@ -1929,7 +1948,7 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 
 		/* Role name, member name is not NULL */
-		if ((rolname == NULL || membername ==NULL) || (strlen(rolname) == 0) || (strlen(membername) == 0))
+		if (rolname == NULL || membername ==NULL)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Name cannot be NULL.")));
 
@@ -1939,9 +1958,16 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 
 		/* Remove trailing whitespaces in rolename and membername*/
 		len = strlen(lowercase_rolname);
-		while(isspace(lowercase_rolname[len - 1])) lowercase_rolname[--len] = 0;
+		while(isspace(lowercase_rolname[len - 1]))
+			lowercase_rolname[--len] = 0;
 		len = strlen(lowercase_membername);
-		while(isspace(lowercase_membername[len - 1])) lowercase_membername[--len] = 0;
+		while(isspace(lowercase_membername[len - 1]))
+			lowercase_membername[--len] = 0;
+
+		/* check if rolename/membername is empty after removing trailing spaces*/
+		if (strlen(lowercase_rolname) == 0 || strlen(lowercase_membername) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Name cannot be NULL.")));
 
 		/* Map the logical role name to its physical name in the database.*/
 		physical_name = get_physical_user_name(get_cur_db_name(), lowercase_rolname);
