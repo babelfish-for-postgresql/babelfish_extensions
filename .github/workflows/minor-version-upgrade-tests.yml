@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/checkout@v2
         with:
-          repository: kuntalghosh/babelfish_extensions
+          repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_VER_FROM}}
 
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_FROM}}
