@@ -253,7 +253,6 @@ transform_funcexpr(Node* node)
 static Node*
 transform_likenode(Node* node)
 {
-	ereport(DEBUG5, (errmsg("Starting Babelfish LIKE to ILIKE transformation)")));
 	if (node && IsA(node, OpExpr))
 	{
 		OpExpr	 *op = (OpExpr *) node;
