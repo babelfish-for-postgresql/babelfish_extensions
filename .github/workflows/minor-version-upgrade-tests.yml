@@ -12,7 +12,7 @@ jobs:
     env:
       ENGINE_VER_FROM: BABEL_1_0_0__PG_13_4
       EXTENSION_VER_FROM: BABEL_1_0_0
-      ENGINE_VER_TO: BABEL_1_X_DEV_community_merge
+      ENGINE_VER_TO: BABEL_1_X_DEV__PG_13_X
       EXTENSION_VER_TO: BABEL_1_X_DEV
       scheduleFile: ./jdbc_upgrade_schedule
 
@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/checkout@v2
         with:
-          repository: kuntalghosh/babelfish_extensions
+          repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_VER_FROM}}
 
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_FROM}}
