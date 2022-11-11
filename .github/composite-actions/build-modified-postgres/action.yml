@@ -12,6 +12,7 @@ runs:
     - name: Checkout, Build, and Install the Modified PostgreSQL Instance and Run Tests
       run: |
         cd ..
+        rm -rf postgresql_modified_for_babelfish
         git clone --branch ${{inputs.engine_branch}} https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
         cd postgresql_modified_for_babelfish
         ./configure --prefix=$HOME/postgres/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
