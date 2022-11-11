@@ -1288,7 +1288,6 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		cur_db_name = get_cur_db_name();
 		if(strcmp(cur_db_name, old_db_name) != 0)
 			set_session_properties(old_db_name);
-
 		pltsql_revert_guc(save_nestlevel);
 		
 		if (fcinfo->isnull)
@@ -1296,9 +1295,10 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	}
 	PG_CATCH();
 	{
-                cur_db_name = get_cur_db_name();
-                if(strcmp(cur_db_name, old_db_name) != 0)
-                        set_session_properties(old_db_name);
+		cur_db_name = get_cur_db_name();
+		if(strcmp(cur_db_name, old_db_name) != 0)
+				set_session_properties(old_db_name);
+		pltsql_revert_guc(save_nestlevel);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -1911,7 +1911,6 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			Oid		restype;
 			int32	restypmod;
 			InlineCodeBlockArgs *args = NULL;
-			int save_nestlevel = pltsql_new_guc_nest_level();
 
 			batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
 			if (isnull)
@@ -1949,6 +1948,9 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 								errmsg("param definition mismatches with inputs")));
 				}
 			}
+
+			int save_nestlevel = pltsql_new_guc_nest_level();
+
 			if (strcmp(batchstr, "") != 0) /* check edge cases for sp_executesql */
 			{
 				ret = execute_batch(estate, batchstr, args, stmt->params);
