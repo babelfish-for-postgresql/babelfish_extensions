@@ -12,7 +12,7 @@ PREV_EXTVERSION = 1.0.0
 MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
 
-PG_CFLAGS += -g
+PG_CFLAGS += -g -Werror
 
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
@@ -22,7 +22,7 @@ DATA_built = \
     $(EXTENSION).control \
     sql/$(EXTENSION)--$(EXTVERSION).sql
 
-PG_CPPFLAGS += -I$(PG_SRC)
+PG_CPPFLAGS += -I$(PG_SRC) -Werror
 
 OBJS  = src/babelfishpg_common.o
 OBJS += src/varchar.o
