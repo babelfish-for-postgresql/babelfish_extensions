@@ -1,0 +1,48 @@
+-- tsql
+-- BABEL-3319: Checking that alter table check constraint does not raise collation error
+CREATE TABLE [dbo].[alter_table_check_constraint](
+     [col1] [nvarchar](4) NULL
+     )
+GO
+INSERT [dbo].[alter_table_check_constraint] VALUES ('abc')
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE check_constraint (
+     a varchar(100) COLLATE sql_latin1_general_cp1_ci_as
+)
+GO
+INSERT INTO check_constraint VALUES
+     ('Hello how are you'), ('Goodbye, John')
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE create_check_constraint(
+     a char(20) COLLATE sql_latin1_general_cp1_ci_as, 
+     CHECK (NOT a LIKE '11%')
+)
+GO
+
+-- psql
+CREATE TABLE tbl_creation_should_fail (
+    a sys.varchar(20)  COLLATE sys.bbf_unicode_cp1_ci_as,
+    CONSTRAINT tbl1_a_check CHECK 
+          ((NOT (((a)::text ~~* '11%'::text) AND (((a)::text >= '11'::text) 
+          AND ((a)::text < ('11'::text || '￿'::text COLLATE sys.bbf_unicode_cp1_ci_as))))))
+);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: nondeterministic collations are not supported for ILIKE
+    Server SQLState: 0A000)~~
+
+
+CREATE TABLE tbl_creation_should_succeed (
+    a sys.varchar(20) ,
+    CONSTRAINT tbl1_a_check CHECK 
+          ((NOT (((a)::text ~~* '11%'::text) AND (((a)::text >= '11'::text) 
+          AND ((a)::text < ('11'::text || '￿'::text COLLATE sys.bbf_unicode_cp1_ci_as))))))
+);
+GO
