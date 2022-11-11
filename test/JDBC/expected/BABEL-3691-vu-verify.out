@@ -1,0 +1,83 @@
+-- DIFFERENT CASES TO CHECK DATATYPES
+-- EXACT NUMERICS
+select a, b, c, d, f, g, i from dt01 for json path
+go
+~~START~~
+nvarchar
+[{"a":9223372036854775807,"b":true,"c":123,"d":2147483647,"f":12345,"g":32767,"i":255}]
+~~END~~
+
+
+select e from dt01 for json path
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type exact numeric's money or smallmoney is not supported)~~
+
+
+select h from dt01 for json path
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type exact numeric's money or smallmoney is not supported)~~
+
+
+-- Approximate numerics
+select * from dt02 for json path
+go
+~~START~~
+nvarchar
+[{"a":12.05,"b":120.53}]
+~~END~~
+
+
+-- Date and time
+select * from dt03 for json path
+go
+~~START~~
+nvarchar
+[{"a":"23:17:08.56","b":"2022-11-11","c":"2022-11-11T23:17:00","d":"2022-11-11T23:17:08.56","e":"2022-11-11T23:17:08.56","f":"2022-11-11T23:17:08.56Z"}]
+~~END~~
+
+
+-- Character strings
+select * from dt04 for json path
+go
+~~START~~
+nvarchar
+[{"a":"a","b":"abc","c":"abc"}]
+~~END~~
+
+
+-- Unicode character strings
+select * from dt05 for json path
+go
+~~START~~
+nvarchar
+[{"a":"abc  ","b":"abc","c":"abc"}]
+~~END~~
+
+
+-- Binary strings
+select a from dt06 for json path
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: option binary base64 is not supported)~~
+
+
+select b from dt06 for json path
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: option binary base64 is not supported)~~
+
+
+-- Return null string
+select * from t01 for json path
+go
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+

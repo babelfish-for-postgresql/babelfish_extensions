@@ -39,8 +39,10 @@ tsql_query_to_json_text(PG_FUNCTION_ARGS)
 
 	StringInfo result = tsql_query_to_json_internal(query, mode, include_null_value,
 											without_array_wrapper, root_name);
-	
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	if (result)
+		PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	else
+		PG_RETURN_NULL();
 }
 
 
@@ -55,6 +57,31 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 	const char  *sep="";
 	bool 		isnull;
 
+	/*
+	* TODO: encode binary/varbinary/image data values using base64 encoding.
+	* Also, pg_b64_encode function might be useful.
+	* For now report an ERROR if any attribute is binary data type since base64
+	* encoding is not implemented yet.
+	* Also Exact numeric's datatype money or smallmoney is not supported.
+	*/
+	for (i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
+	{
+		char* typename = SPI_gettype(SPI_tuptable->tupdesc, i);
+		if (strcmp(typename, "binary") == 0 ||
+			strcmp(typename, "varbinary") == 0 ||
+			strcmp(typename, "image") == 0 ||
+			strcmp(typename, "timestamp") == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("option binary base64 is not supported")));
+		
+		if (strcmp(typename, "money") == 0 ||
+			strcmp(typename, "smallmoney") == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("data type exact numeric's money or smallmoney is not supported")));
+	}
+	
 	appendStringInfoChar(result,'{');
 	for (i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
@@ -67,7 +94,7 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		{
 			ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("Column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
+							 errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
 		}
 		
 		colval = SPI_getbinval(SPI_tuptable->vals[rownum],
@@ -101,7 +128,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 {
 	StringInfo	result;
 	uint64		i;
-
+	
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 					  (superuser() ? PGC_SUSET : PGC_USERSET),
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -112,7 +139,12 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("invalid query")));
-
+	
+	if (SPI_processed==0)
+	{
+		SPI_finish();
+		return NULL;
+	}
 	/* If root_name is present then WITHOUT_ARRAY_WRAPPER will be FALSE */
 	if(root_name)
 		appendStringInfo(result, "{\"%s\":[",root_name);
@@ -145,6 +177,5 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 		appendStringInfoString(result, "]}");
 	else if (!without_array_wrapper)
 		appendStringInfoChar(result,']');
-
 	return result;
 }
