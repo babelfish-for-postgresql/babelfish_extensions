@@ -2971,7 +2971,7 @@ transform_like_in_add_constraint (Node* node)
 	PG_TRY();
 	{
 		if (!babelfish_dump_restore && current_query_is_create_tbl_check_constraint 
-				&& has_valid_coll_wrapper(node))
+				&& has_ilike_node_and_ci_as_coll(node))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

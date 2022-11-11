@@ -1134,17 +1134,8 @@ bool collation_is_CI_AS(Oid colloid)
 	return false;
 }
 
-/*
- * This function has the following outputs based on the value of 'check_for_ci_as_collation':
- * - check_for_ci_as_collation = true: returns true if the expression contains an ILIKE node 
- * and a ci_as collation
- * - check_for_ci_as_collation = false: returns true if the expression contains
- * an ILIKE node
- */
-bool has_valid_coll(Node *expr, bool check_for_ci_as_collation)
-{
-	bool ilike_node_found = false;
-	
+bool has_ilike_node(Node *expr)
+{	
 	Assert(IsA(expr, OpExpr));
 	
 	OpExpr	 *op = (OpExpr *) expr;
@@ -1153,14 +1144,10 @@ bool has_valid_coll(Node *expr, bool check_for_ci_as_collation)
 		if(strncmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name, 
 				sizeof(like_ilike_table[i].ilike_op_name)) == 0)
 		{
-			ilike_node_found = true;
-			break;
+			return true;
 		}
 	}
-	if (!check_for_ci_as_collation)
-		return ilike_node_found;
-	
-	return (ilike_node_found && collation_is_CI_AS(op->inputcollid));
+	return false;	
 }
 
 Datum
@@ -1403,7 +1390,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.get_oid_from_collidx_internal = &get_oid_from_collidx;
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;
 		collation_callbacks_var.find_collation_internal = &find_collation;
-		collation_callbacks_var.has_valid_collation = &has_valid_coll;
+		collation_callbacks_var.has_ilike_node = &has_ilike_node;
 	}
 	return &collation_callbacks_var;
 }

@@ -268,8 +268,7 @@ transform_likenode(Node* node)
 		 * if an ILIKE node is found during dump and restore. 
 		 */
 		init_and_check_collation_callbacks();
-		if ((*collation_callbacks_ptr->has_valid_collation)(node, false)
-				 && babelfish_dump_restore)
+		if ((*collation_callbacks_ptr->has_ilike_node)(node) && babelfish_dump_restore)
 		{
 			int		 collidx_of_cs_as;
 			
@@ -711,7 +710,7 @@ tsql_find_collation_internal(const char *collation_name)
 }
 
 bool
-has_valid_coll_wrapper(Node *expr)
+has_ilike_node_and_ci_as_coll(Node *expr)
 {
 	List 		*queue;
 	ListCell 	*lc = NULL;
@@ -728,9 +727,11 @@ has_valid_coll_wrapper(Node *expr)
 		
 		if(IsA(predicate, OpExpr))
 		{
+			Oid inputcoll = ((OpExpr*) predicate)->inputcollid;
 			/* Initialize collation callbacks */
 			init_and_check_collation_callbacks();
-			if ((*collation_callbacks_ptr->has_valid_collation)(predicate, true))
+			if ((*collation_callbacks_ptr->has_ilike_node)(predicate) && 
+			DatumGetBool(DirectFunctionCall1Coll(tsql_is_collated_ci_as_internal, inputcoll, ObjectIdGetDatum(inputcoll))))
 				return true;				
 		}
 		else if (IsA(predicate, BoolExpr))
