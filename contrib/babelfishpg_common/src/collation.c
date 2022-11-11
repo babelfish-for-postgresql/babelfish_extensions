@@ -24,7 +24,7 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int server_collation_collidx = NOT_FOUND;
@@ -729,7 +729,6 @@ init_collid_trans_tab_internal(void)
 			if (locale)
 				pfree(locale);
 		}
-
 		if (OidIsValid(coll_infos[i].oid))
 		{
 			entry = hash_search(ht_oid2collid, &coll_infos[i].oid, HASH_ENTER, NULL);
@@ -1134,6 +1133,22 @@ bool collation_is_CI_AS(Oid colloid)
 	return false;
 }
 
+bool has_ilike_node(Node *expr)
+{	
+	Assert(IsA(expr, OpExpr));
+	
+	OpExpr	 *op = (OpExpr *) expr;
+	for(int i = 0; i < TOTAL_LIKE_OP_COUNT; i++)
+	{
+		if(strncmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name, 
+				sizeof(like_ilike_table[i].ilike_op_name)) == 0)
+		{
+			return true;
+		}
+	}
+	return false;	
+}
+
 Datum
 is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
@@ -1374,6 +1389,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.get_oid_from_collidx_internal = &get_oid_from_collidx;
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;
 		collation_callbacks_var.find_collation_internal = &find_collation;
+		collation_callbacks_var.has_ilike_node = &has_ilike_node;
 	}
 	return &collation_callbacks_var;
 }

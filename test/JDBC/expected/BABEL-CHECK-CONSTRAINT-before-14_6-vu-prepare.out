@@ -1,0 +1,15 @@
+CREATE TABLE [dbo].[alter_table_check_constraint](
+     [col1] [nvarchar](4) NULL
+     )
+GO
+INSERT [dbo].[alter_table_check_constraint] VALUES ('abc')
+GO
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE [dbo].[alter_table_check_constraint] ADD CONSTRAINT [check_col1] CHECK ([col1] like N'%TP')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nondeterministic collations are not supported for LIKE)~~
+

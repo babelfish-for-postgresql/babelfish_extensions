@@ -101,6 +101,8 @@ typedef struct collation_callbacks
 
 	int (*find_collation_internal)(const char *collation_name);
 
+	bool (*has_ilike_node)(Node *expr);
+
 } collation_callbacks;
 
 extern int find_cs_as_collation(int collidx);
@@ -125,6 +127,7 @@ extern int init_like_ilike_table_internal(void);
 extern like_ilike_info lookup_like_ilike_table(Oid opno);
 extern int find_collation(const char *collation_name);
 Oid get_oid_from_collidx(int collidx);
+extern bool has_ilike_node(Node *expr);
 
 extern collation_callbacks *get_collation_callbacks(void);
 
