@@ -1346,7 +1346,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_database_sc
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "Remote object reference with 4-part object name", getLineAndPos(ctx));
+		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername", getLineAndPos(ctx));
 
 	if (ctx->DOT().empty())
 	{
@@ -1360,7 +1360,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_data
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFull_object_name(TSqlParser::Full_object_nameContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername", getLineAndPos(ctx));
+		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "Remote object reference with 4-part object name", getLineAndPos(ctx));
 
 	return visitChildren(ctx);
 }
