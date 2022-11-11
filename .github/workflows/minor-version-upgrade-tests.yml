@@ -1,11 +1,5 @@
 name: Minor Version Upgrade Tests
-on:
-  push:
-    branches:
-      - BABEL_1_X_DEV
-  pull_request:
-    branches:
-      - BABEL_1_X_DEV
+on: [push, pull_request]
 
 jobs:
   extension-tests:
