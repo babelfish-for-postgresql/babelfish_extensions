@@ -253,6 +253,7 @@ transform_funcexpr(Node* node)
 static Node*
 transform_likenode(Node* node)
 {
+	ereport(LOG, (errmsg("Starting babelfish like to ilike node transformation")));
 	if (node && IsA(node, OpExpr))
 	{
 		OpExpr	 *op = (OpExpr *) node;
