@@ -137,7 +137,7 @@ jobs:
         id: check_core_dumps
         uses: andstor/file-existence-action@v2
         with:
-          files: "/var/coredumps/*"
+          files: /var/coredumps/*"
 
       - name: Setup upterm session
         if: steps.check_core_dumps.outputs.files_exists == 'true'
