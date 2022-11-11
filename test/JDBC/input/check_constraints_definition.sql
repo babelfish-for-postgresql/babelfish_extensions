@@ -141,13 +141,7 @@ go
 create table sch1.test_like(a int, b char, CHECK (NOT a like '%[^0-9]%'));
 go
 
-select * from information_schema_tsql.check_constraints order by "CONSTRAINT_NAME";
-go
-
 drop table sch1.test_date;
-go
-
-drop table sch1.test_like;
 go
 
 drop schema sch1;

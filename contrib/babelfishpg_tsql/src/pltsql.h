@@ -1770,6 +1770,7 @@ extern int pltsql_lock_timeout;
 extern Portal pltsql_snapshot_portal;
 extern int pltsql_non_tsql_proc_entry_count;
 extern int pltsql_sys_func_entry_count;
+extern bool current_query_is_create_tbl_check_constraint;
 
 extern char *bulk_load_table_name;
 

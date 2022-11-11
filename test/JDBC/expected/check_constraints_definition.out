@@ -192,20 +192,12 @@ go
 
 create table sch1.test_like(a int, b char, CHECK (NOT a like '%[^0-9]%'));
 go
+~~ERROR (Code: 33557097)~~
 
-select * from information_schema_tsql.check_constraints order by "CONSTRAINT_NAME";
-go
-~~START~~
-nvarchar#!#nvarchar#!#varchar#!#nvarchar
-master#!#sch1#!#test_date_col_datetime_check#!#((col_datetime < CAST('2006-08-30 00:00:00' AS datetime)))
-master#!#sch1#!#test_like_a_check#!#((NOT (a LIKE '%[^0-9]%')))
-~~END~~
+~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
 
 
 drop table sch1.test_date;
-go
-
-drop table sch1.test_like;
 go
 
 drop schema sch1;

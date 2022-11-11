@@ -1,0 +1,49 @@
+-- tsql
+ALTER TABLE [dbo].[alter_table_check_constraint] ADD CONSTRAINT [check_col1] CHECK ([col1] like N'%TP')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: check constraint "check_col1alter_table_check_con0f71bca531f50db1bd071ab46c3097ea" of relation "alter_table_check_constraint" is violated by some row)~~
+
+
+ALTER TABLE check_constraint ADD CONSTRAINT [check_a] CHECK (a not like N'123%')
+GO
+
+INSERT INTO check_constraint VALUES ('1243')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO check_constraint VALUES ('1234'), ('123123')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "check_constraint" violates check constraint "check_acheck_constraint719599f27c48404560d418ff018273e1")~~
+
+
+INSERT INTO create_check_constraint VALUES ('abcdEFg')
+GO
+~~ROW COUNT: 1~~
+
+    
+INSERT INTO create_check_constraint VALUES ('11E')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "create_check_constraint" violates check constraint "create_check_constraint_a_check")~~
+
+
+-- psql
+INSERT INTO tbl_creation_should_succeed VALUES ('abcd');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO tbl_creation_should_succeed VALUES ('11dsjkdnb');
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: new row for relation "tbl_creation_should_succeed" violates check constraint "tbl1_a_check"
+  Detail: Failing row contains (11dsjkdnb).
+    Server SQLState: 23514)~~
+
