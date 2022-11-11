@@ -81,6 +81,8 @@ jobs:
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
 
+      - uses: actions/checkout@v2
+      
       - name: Build and run tests for Postgres engine using latest version
         id: build-modified-postgres-newer
         uses: ./.github/composite-actions/build-modified-postgres
