@@ -2192,7 +2192,7 @@ BEGIN
         id = null;
         schema_oid = NULL;
 
-        SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name
+        SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
         FROM babelfish_split_object_name(cs_as_object_name) s;
 
         -- Invalid object_name
@@ -2224,47 +2224,49 @@ BEGIN
             RETURN NULL;
         END IF;
 
-        if object_type <> '' then
+        if obj_type <> '' then
             case
                 -- Schema does not apply as much to temp objects.
                 when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-             id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
+	            id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
 
                 when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-             id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name
+	            id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name 
                             and relnamespace = schema_oid limit 1);
 
                 when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-             id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name
+	            id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name 
                             and connamespace = schema_oid limit 1);
 
                 when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-             id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name
+	            id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name 
                             and pronamespace = schema_oid limit 1);
 
                 when upper(object_type) in ('TR', 'TA') then
-             id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
+	            id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
 
                 -- Throwing exception as a reminder to add support in the future.
                 when upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
                     RAISE EXCEPTION 'Object type currently unsupported.';
 
-                -- unsupported object_type
+                -- unsupported obj_type
                 else id := null;
             end case;
         else
-            if not is_temp_object then id := (
-                                            select oid from pg_class where lower(relname) = obj_name
-                                                and relnamespace = schema_oid
-                union
-                   select oid from pg_constraint where lower(conname) = obj_name
-                and connamespace = schema_oid
-                                                union
-                   select oid from pg_proc where lower(proname) = obj_name
-                and pronamespace = schema_oid
-                                                union
-                   select oid from pg_trigger where lower(tgname) = obj_name
-                   limit 1);
+            if not is_temp_object then 
+                id := (
+                    select oid from pg_class where lower(relname) = obj_name
+                        and relnamespace = schema_oid
+                    union
+                    select oid from pg_constraint where lower(conname) = obj_name
+                        and connamespace = schema_oid
+                    union
+                    select oid from pg_proc where lower(proname) = obj_name
+                        and pronamespace = schema_oid
+                    union
+                    select oid from pg_trigger where lower(tgname) = obj_name
+                    limit 1
+                );
             else
                 -- temp object without "object_type" in-argument
                 id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
@@ -2318,37 +2320,37 @@ level2_object_type varchar(128),
 level2_object_name varchar(128)
 )
 returns table (
-objtype sys.sysname,
-objname sys.sysname,
-name sys.sysname,
-value sys.sql_variant
-)
+objtype	sys.sysname,
+objname	sys.sysname,
+name	sys.sysname,
+value	sys.sql_variant
+) 
 as $$
 begin
 -- currently only support COLUMN property
 IF (((SELECT coalesce(property_name COLLATE sys.database_default, '')) = '') or
     ((SELECT UPPER(coalesce(property_name COLLATE sys.database_default, ''))) = 'COLUMN')) THEN
- IF (((SELECT LOWER(coalesce(level0_object_type COLLATE sys.database_default, ''))) = 'schema') and
-     ((SELECT LOWER(coalesce(level1_object_type COLLATE sys.database_default, ''))) = 'table') and
-     ((SELECT LOWER(coalesce(level2_object_type COLLATE sys.database_default, ''))) = 'column')) THEN
-  RETURN query
-  select CAST('COLUMN' AS sys.sysname) as objtype,
-         CAST(t3.column_name AS sys.sysname) as objname,
-         t1.name as name,
-         t1.value as value
-  from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
-  where t1.major_id = t2.oid and
-     t2.relname = cast(t3.table_name as sys.sysname) COLLATE sys.database_default and
-        t2.relname = (SELECT coalesce(level1_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default and
-     t3.column_name = (SELECT coalesce(level2_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default;
- END IF;
+	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE sys.database_default, ''))) = 'schema') and
+	    ((SELECT LOWER(coalesce(level1_object_type COLLATE sys.database_default, ''))) = 'table') and
+	    ((SELECT LOWER(coalesce(level2_object_type COLLATE sys.database_default, ''))) = 'column')) THEN
+		RETURN query 
+		select CAST('COLUMN' AS sys.sysname) as objtype,
+		       CAST(t3.column_name AS sys.sysname) as objname,
+		       t1.name as name,
+		       t1.value as value
+		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
+		where t1.major_id = t2.oid and 
+			  t2.relname = cast(t3.table_name as sys.sysname) COLLATE sys.database_default and 
+		      t2.relname = (SELECT coalesce(level1_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default and 
+			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default;
+	END IF;
 END IF;
 RETURN;
 end;
 $$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
- varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
+	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
 ) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
@@ -2356,25 +2358,26 @@ RETURNS integer
 LANGUAGE plpgsql
 STRICT
 AS $$
+
 declare extra_bytes CONSTANT integer := 4;
 declare return_value integer;
 begin
- return_value := (
-     select
-      case LOWER(property_name)
-       when 'charmaxlen' COLLATE sys.database_default then
-        (select CASE WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes ELSE NULL END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
-       when 'allowsnull' COLLATE sys.database_default then
-        (select CASE WHEN a.attnotnull THEN 0 ELSE 1 END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
-       else
-        null
-      end
-     );
-
+	return_value := (
+					select 
+						case  LOWER(property_name)
+							when 'charmaxlen' COLLATE sys.database_default then 
+								(select CASE WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes ELSE NULL END  from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+							when 'allowsnull' COLLATE sys.database_default then
+								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+							else
+								null
+						end
+					);
+	
   RETURN return_value::integer;
-EXCEPTION
- WHEN others THEN
-   RETURN NULL;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
 END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, property_name text) TO PUBLIC;
