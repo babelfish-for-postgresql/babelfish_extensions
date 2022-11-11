@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "access/heapam.h"
 #include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/dependency.h"
@@ -62,21 +61,6 @@ typedef struct CopyMultiInsertBuffer
 	uint64		linenos[MAX_BUFFERED_TUPLES];	/* Line # of tuple in bulk copy
 												 * stream */
 } CopyMultiInsertBuffer;
-
-/*
- * Stores one or many CopyMultiInsertBuffers and details about the size and
- * number of tuples which are stored in them.  This allows multiple buffers to
- * exist at once when COPYing into a partitioned table.
- */
-typedef struct CopyMultiInsertInfo
-{
-	List	   *multiInsertBuffers; /* List of tracked CopyMultiInsertBuffers */
-	int			bufferedTuples; /* number of tuples buffered over all buffers */
-	BulkCopyState cstate;		/* Bulk Copy state for this CopyMultiInsertInfo */
-	EState	   *estate;			/* Executor state used for BULK COPY */
-	CommandId	mycid;			/* Command Id used for BULK COPY */
-	int			ti_options;		/* table insert options */
-} CopyMultiInsertInfo;
 
 static BulkCopyState
 BeginBulkCopy(Relation rel,
@@ -556,17 +540,11 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 {
 	int cur_index = 0;
 	int cur_row_in_batch = 0;
-	ResultRelInfo *resultRelInfo;
-	ResultRelInfo *target_resultRelInfo;
-	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
+	
 	ExprContext *econtext;
 	MemoryContext oldcontext = CurrentMemoryContext;
 
 	ErrorContextCallback errcallback;
-	CommandId	mycid = GetCurrentCommandId(true);
-	int			ti_options = 0; /* start with default options for insert */
-	BulkInsertState bistate = NULL;
-	CopyMultiInsertInfo multiInsertInfo = {0};	/* pacify compiler */
 	int64		processed = 0;
 	int		   *defmap = cstate->defmap;
 	ExprState **defexprs = cstate->defexprs;
@@ -606,35 +584,9 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 							RelationGetRelationName(cstate->rel))));
 	}
 
-	/*
-	 * If the target file is new-in-transaction, we assume that checking FSM
-	 * for free space is a waste of time.  This could possibly be wrong, but
-	 * it's unlikely.
-	 */
-	if (RELKIND_HAS_STORAGE(cstate->rel->rd_rel->relkind) &&
-		(cstate->rel->rd_createSubid != InvalidSubTransactionId ||
-		 cstate->rel->rd_firstRelfilenodeSubid != InvalidSubTransactionId))
-		ti_options |= TABLE_INSERT_SKIP_FSM;
+	ExecOpenIndices(cstate->resultRelInfo, false);
 
-	/*
-	 * We need a ResultRelInfo so we can use the regular executor's
-	 * index-entry-making machinery.  (There used to be a huge amount of code
-	 * here that basically duplicated execUtils.c ...).
-	 */
-	ExecInitRangeTable(estate, cstate->range_table);
-	resultRelInfo = target_resultRelInfo = makeNode(ResultRelInfo);
-	ExecInitResultRelation(estate, resultRelInfo, 1);
-
-	/* Verify the named relation is a valid target for INSERT. */
-	CheckValidResultRel(resultRelInfo, CMD_INSERT);
-
-	ExecOpenIndices(resultRelInfo, false);
-
-	CopyMultiInsertInfoInit(&multiInsertInfo, resultRelInfo, cstate,
-							estate, mycid, ti_options);
-
-
-	econtext = GetPerTupleExprContext(estate);
+	econtext = GetPerTupleExprContext(cstate->estate);
 
 	/* Set up callback to identify error line number. */
 	errcallback.callback = BulkCopyErrorCallback;
@@ -652,18 +604,17 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		 * Reset the per-tuple exprcontext. We do this after every tuple, to
 		 * clean-up after expression evaluations etc.
 		 */
-		ResetPerTupleExprContext(estate);
+		ResetPerTupleExprContext(cstate->estate);
 
-		Assert(resultRelInfo == target_resultRelInfo);
+		Assert(cstate->resultRelInfo == cstate->target_resultRelInfo);
 
-		myslot = CopyMultiInsertInfoNextFreeSlot(&multiInsertInfo,
-													resultRelInfo);
+		myslot = CopyMultiInsertInfoNextFreeSlot(&cstate->multiInsertInfo, cstate->resultRelInfo);
 
 		/*
 		 * Switch to per-tuple context before building the TupleTableSlot, which does
 		 * evaluate default expressions etc. and requires per-tuple context.
 		 */
-		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+		MemoryContextSwitchTo(GetPerTupleMemoryContext(cstate->estate));
 
 		ExecClearTuple(myslot);
 
@@ -744,22 +695,22 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		 * Constraints and where clause might reference the tableoid column,
 		 * so (re-)initialize tts_tableOid before evaluating them.
 		 */
-		myslot->tts_tableOid = RelationGetRelid(target_resultRelInfo->ri_RelationDesc);
+		myslot->tts_tableOid = RelationGetRelid(cstate->target_resultRelInfo->ri_RelationDesc);
 
 		MemoryContextSwitchTo(oldcontext);
 
 		/* Compute stored generated columns */
-		if (resultRelInfo->ri_RelationDesc->rd_att->constr &&
-			resultRelInfo->ri_RelationDesc->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(resultRelInfo, estate, myslot,
+		if (cstate->resultRelInfo->ri_RelationDesc->rd_att->constr &&
+			cstate->resultRelInfo->ri_RelationDesc->rd_att->constr->has_generated_stored)
+			ExecComputeStoredGenerated(cstate->resultRelInfo, cstate->estate, myslot,
 										CMD_INSERT);
 
 		/*
 		 * If the target is a plain table, check the constraints of
 		 * the tuple.
 		 */
-		if (resultRelInfo->ri_RelationDesc->rd_att->constr)
-			ExecConstraints(resultRelInfo, myslot, estate);
+		if (cstate->resultRelInfo->ri_RelationDesc->rd_att->constr)
+			ExecConstraints(cstate->resultRelInfo, myslot, cstate->estate);
 
 		/*
 		 * The slot previously might point into the per-tuple
@@ -771,8 +722,8 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		 * Store the slot in the multi-insert buffer.
 		 * Add this tuple to the tuple buffer.
 		 */
-		CopyMultiInsertInfoStore(&multiInsertInfo,
-									resultRelInfo, myslot,
+		CopyMultiInsertInfoStore(&cstate->multiInsertInfo,
+									cstate->resultRelInfo, myslot,
 									cstate->cur_rowno);
 
 		/* Update the number of rows processed. */
@@ -782,33 +733,14 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		 * If enough inserts have queued up, then flush all
 		 * buffers out to the table.
 		 */
-		if (CopyMultiInsertInfoIsFull(&multiInsertInfo))
-			CopyMultiInsertInfoFlush(&multiInsertInfo, resultRelInfo);
+		if (CopyMultiInsertInfoIsFull(&cstate->multiInsertInfo))
+			CopyMultiInsertInfoFlush(&cstate->multiInsertInfo, cstate->resultRelInfo);
 	}
-
-
-	/* Flush any remaining bufferes out to the table. */
-	if (!CopyMultiInsertInfoIsEmpty(&multiInsertInfo))
-		CopyMultiInsertInfoFlush(&multiInsertInfo, NULL);
 
 	/* Done, clean up. */
 	error_context_stack = errcallback.previous;
 
-	if (bistate != NULL)
-		FreeBulkInsertState(bistate);
-
 	MemoryContextSwitchTo(oldcontext);
-
-	ExecResetTupleTable(estate->es_tupleTable, false);
-
-	/* Tear down the multi-insert buffer data. */
-	CopyMultiInsertInfoCleanup(&multiInsertInfo);
-
-	/* Close the result relations, */
-	ExecCloseResultRelations(estate);
-	ExecCloseRangeTableRelations(estate);
-
-	FreeExecutorState(estate);
 
 	return processed;
 }
@@ -830,6 +762,7 @@ BeginBulkCopy(Relation rel,
 	AttrNumber	num_phys_attrs,
 				num_defaults;
 	int			attnum;
+	int			ti_options = 0; /* start with default options for insert */
 	int		   *defmap;
 	ExprState **defexprs;
 	MemoryContext oldcontext;
@@ -941,6 +874,46 @@ BeginBulkCopy(Relation rel,
 	cstate->defexprs = defexprs;
 	cstate->num_defaults = num_defaults;
 
+
+	cstate->estate = CreateExecutorState(); /* for ExecConstraints() */
+	cstate->bistate = NULL;
+	cstate->mycid = GetCurrentCommandId(true);
+
+	cstate->multiInsertInfo.multiInsertBuffers = NIL;
+	cstate->multiInsertInfo.bufferedTuples = 0;
+	cstate->multiInsertInfo.cstate = NIL;
+	cstate->multiInsertInfo.estate = NIL;
+	cstate->multiInsertInfo.mycid = 0;
+	cstate->multiInsertInfo.ti_options = 0;
+
+	Assert(cstate->rel);
+	Assert(list_length(cstate->range_table) == 1);
+
+	/*
+	 * If the target file is new-in-transaction, we assume that checking FSM
+	 * for free space is a waste of time.  This could possibly be wrong, but
+	 * it's unlikely.
+	 */
+	if (RELKIND_HAS_STORAGE(cstate->rel->rd_rel->relkind) &&
+		(cstate->rel->rd_createSubid != InvalidSubTransactionId ||
+		 cstate->rel->rd_firstRelfilenodeSubid != InvalidSubTransactionId))
+		ti_options |= TABLE_INSERT_SKIP_FSM;
+
+	/*
+	* We need a ResultRelInfo so we can use the regular executor's
+	* index-entry-making machinery.  (There used to be a huge amount of code
+	* here that basically duplicated execUtils.c ...).
+	*/
+	ExecInitRangeTable(cstate->estate, cstate->range_table);
+	cstate->resultRelInfo = cstate->target_resultRelInfo = makeNode(ResultRelInfo);
+	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
+
+	/* Verify the named relation is a valid target for INSERT. */
+	CheckValidResultRel(cstate->resultRelInfo, CMD_INSERT);
+
+	CopyMultiInsertInfoInit(&cstate->multiInsertInfo, cstate->resultRelInfo, cstate,
+							cstate->estate, cstate->mycid, ti_options);
+
 	MemoryContextSwitchTo(oldcontext);
 
 	return cstate;
@@ -954,6 +927,24 @@ EndBulkCopy(BulkCopyState cstate)
 {
 	if (cstate)
 	{
+		/* Flush any remaining bufferes out to the table. */
+		if (!CopyMultiInsertInfoIsEmpty(&cstate->multiInsertInfo))
+			CopyMultiInsertInfoFlush(&cstate->multiInsertInfo, NULL);
+			
+		if (cstate->bistate != NULL)
+			FreeBulkInsertState(cstate->bistate);
+
+		ExecResetTupleTable(cstate->estate->es_tupleTable, false);
+
+		/* Tear down the multi-insert buffer data. */
+		CopyMultiInsertInfoCleanup(&cstate->multiInsertInfo);
+
+		/* Close the result relations, */
+		ExecCloseResultRelations(cstate->estate);
+		ExecCloseRangeTableRelations(cstate->estate);
+
+		FreeExecutorState(cstate->estate);
+
 		MemoryContextDelete(cstate->copycontext);
 		pfree(cstate);
 	}
