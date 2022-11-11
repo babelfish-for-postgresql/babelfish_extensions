@@ -635,3 +635,192 @@ varchar
 
 DROP FUNCTION BABEL_3646_vu_prepare_f20()
 GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v21
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v21
+GO
+
+EXEC BABEL_3646_vu_prepare_p21
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p21
+GO
+
+SELECT BABEL_3646_vu_prepare_f21()
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f21()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v22
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to time without time zone.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v22
+GO
+
+EXEC BABEL_3646_vu_prepare_p22
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to time without time zone.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p22
+GO
+
+SELECT BABEL_3646_vu_prepare_f22()
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to time without time zone.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f22()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v23
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v23
+GO
+
+EXEC BABEL_3646_vu_prepare_p23
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p23
+GO
+
+SELECT BABEL_3646_vu_prepare_f23()
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f23()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v24
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to money.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v24
+GO
+
+EXEC BABEL_3646_vu_prepare_p24
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to money.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p24
+GO
+
+SELECT BABEL_3646_vu_prepare_f24()
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to money.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f24()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v25
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to xml.)~~
+
+DROP VIEW BABEL_3646_vu_prepare_v25
+GO
+
+EXEC BABEL_3646_vu_prepare_p25
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to xml.)~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p25
+GO
+
+SELECT BABEL_3646_vu_prepare_f25()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type datetime to xml.)~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f25()
+GO
+
+SELECT * FROM BABEL_3646_vu_prepare_v26
+GO
+~~START~~
+binary
+00
+~~END~~
+
+DROP VIEW BABEL_3646_vu_prepare_v26
+GO
+
+EXEC BABEL_3646_vu_prepare_p26
+GO
+~~START~~
+binary
+00
+~~END~~
+
+DROP PROCEDURE BABEL_3646_vu_prepare_p26
+GO
+
+SELECT BABEL_3646_vu_prepare_f26()
+GO
+~~START~~
+binary
+00
+~~END~~
+
+DROP FUNCTION BABEL_3646_vu_prepare_f26()
+GO
