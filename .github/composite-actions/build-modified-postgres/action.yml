@@ -4,7 +4,7 @@ inputs:
   engine_branch:
     description: 'Engine Branch'
     required: yes
-    default: 'BABEL_1_X_DEV__PG_13_X'
+    default: 'BABEL_1_5_STABLE__PG_13_9'
 
 runs:
   using: "composite"
