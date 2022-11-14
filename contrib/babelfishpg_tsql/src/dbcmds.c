@@ -43,11 +43,13 @@ static bool have_createdb_privilege(void);
 static List	*gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
 								  const char *db_owner,
-								  const char *guest);
+								  const char *guest,
+								  const char *guest_schema);
 static List *gen_dropdb_subcmds(const char *schema,
 								const char *db_owner,
 								const char *dbo,
-								List *db_users);
+								List *db_users,
+								const char *guest_schema);
 static Oid do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
@@ -75,7 +77,7 @@ have_createdb_privilege(void)
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
 static List	*
-gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest)
+gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest, const char *guest_schema)
 {
 	StringInfoData	query;
 	List			*res;
@@ -107,7 +109,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "GRANT SELECT ON dummy.sysdatabases TO dummy; ");
 
 	/* create guest schema in the database */
-	appendStringInfo(&query, "CREATE SCHEMA dummy; ");
+	appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
@@ -161,7 +163,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	update_GrantStmt(stmt, NULL, schema, db_owner);
 
 	stmt = parsetree_nth_stmt(res, i++);
-	update_CreateSchemaStmt(stmt, "guest", db_owner);
+	update_CreateSchemaStmt(stmt, guest_schema, db_owner);
 
 	return res;
 }
@@ -173,7 +175,8 @@ static List *
 gen_dropdb_subcmds(const char *schema,
 				   const char *db_owner,
 				   const char *dbo,
-				   List *db_users)
+				   List *db_users,
+				   const char *guest_schema)
 {
 	StringInfoData		query;
 	List				*stmt_list;
@@ -183,6 +186,7 @@ gen_dropdb_subcmds(const char *schema,
 	int					i = 0;
 
 	initStringInfo(&query);
+	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
 	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
 	/* First drop guest user and custom users if they exist */
 	foreach (elem, db_users)
@@ -210,6 +214,10 @@ gen_dropdb_subcmds(const char *schema,
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropStmt(stmt, schema);
+
+	/* Drop guest schema */
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropStmt(stmt, guest_schema);
 
 	foreach (elem, db_users)
 	{
@@ -330,6 +338,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char  *dbo_scm;
 	const char 	*dbo_role;
 	const char  *db_owner_role;
+	const char	*guest_scm;
 	NameData 	default_collation;
 	const char  *guest;
 	const char	*prev_current_user;
@@ -369,11 +378,17 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	dbo_role = get_dbo_role_name(dbname);
 	db_owner_role = get_db_owner_name(dbname);
 	guest = get_guest_role_name(dbname);
+	guest_scm = get_guest_schema_name(dbname);
 
 	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(dbo_scm)))
 		ereport(NOTICE,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists, skipping", dbo_scm)));
+
+	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(guest_scm)))
+		ereport(NOTICE,
+				(errcode(ERRCODE_DUPLICATE_SCHEMA),
+				 errmsg("schema \"%s\" already exists, skipping", guest_scm)));
 
 	if (OidIsValid(get_role_oid(dbo_role, true)))
 		ereport(ERROR,
@@ -417,7 +432,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	/* Advance cmd counter to make the database visible */
 	CommandCounterIncrement();
 
-	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest);
+	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest, guest_scm);
 
 	/* Set current user to session user for create permissions */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -494,6 +509,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	const char        	*schema_name;
 	const char        	*db_owner_role;
 	const char        	*dbo_role;
+	const char			*guest_schema_name;
 	List				*db_users_list;
 	List	   			*parsetree_list;
 	ListCell   			*parsetree_item;
@@ -577,11 +593,14 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		db_owner_role = get_db_owner_name(dbname);
 		/* Get a list of all the database's users */
 		db_users_list = get_authid_user_ext_db_users(dbname);
+		guest_schema_name = get_guest_schema_name(dbname);
+
 
 		parsetree_list = gen_dropdb_subcmds(schema_name,
 											db_owner_role,
 											dbo_role,
-											db_users_list);
+											db_users_list,
+											guest_schema_name);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)

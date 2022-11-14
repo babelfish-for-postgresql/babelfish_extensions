@@ -2182,6 +2182,7 @@ static void
 create_guest_role_for_db(char *dbname)
 {
 	const char		*guest = get_guest_role_name(dbname);
+	const char		*guest_schema = get_guest_schema_name(dbname);
 	const char		*db_owner_role = get_db_owner_role_name(dbname);
 	List			*logins = NIL;
 	List			*res;
@@ -2198,7 +2199,7 @@ create_guest_role_for_db(char *dbname)
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
 
 	/* create guest schema in the database */
-	appendStringInfo(&query, "CREATE SCHEMA dummy; ");
+	appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
 	logins = grant_guest_to_logins(&query);
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
@@ -2207,7 +2208,7 @@ create_guest_role_for_db(char *dbname)
 	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
 
 	stmt = parsetree_nth_stmt(res, i++);
-	update_CreateSchemaStmt(stmt, "guest", db_owner_role);
+	update_CreateSchemaStmt(stmt, guest_schema, db_owner_role);
 	pfree(db_owner_role);
 
 

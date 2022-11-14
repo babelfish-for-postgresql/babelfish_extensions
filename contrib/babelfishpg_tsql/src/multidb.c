@@ -1131,6 +1131,23 @@ const char *get_guest_role_name(const char *dbname)
 	}
 }
 
+const char *get_guest_schema_name(const char *dbname)
+{
+	if (0 == strcmp(dbname , "master"))
+		return "master_guest";
+	if (0 == strcmp(dbname , "tempdb"))
+		return "tempdb_guest";
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_guest";
+	else
+	{
+		char *name = palloc0(MAX_BBF_NAMEDATALEND);
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
+		truncate_identifier(name, strlen(name), false);
+		return name;
+	}
+}
+
 /*************************************************************
  * 					Helper Functions	
  *************************************************************/
