@@ -4120,22 +4120,21 @@ ALTER FUNCTION sys.get_max_id_from_table RENAME TO get_max_id_from_table_depreca
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_table_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
 
-<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 int, IN arg2 int)
-=======
+RETURNS int AS 'babelfishpg_tsql','int_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(int,int) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 BIGINT)
->>>>>>> c6a480b6 (DEGREES, RADIANS and POWER return float always)
-RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(BIGINT,BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 BIGINT)
-RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','bigint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
-RETURNS int  AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
-
 
 -- Deprecate the function sys.get_tds_id
 ALTER FUNCTION sys.get_tds_id RENAME TO get_tds_id_deprecated_2_3_0;
