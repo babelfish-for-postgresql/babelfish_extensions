@@ -3243,6 +3243,18 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS int  AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 INT)
+RETURNS int AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 smallint)
+RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(smallint) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 tinyint)
+RETURNS int AS 'babelfishpg_tsql','tinyint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(tinyint) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
 $BODY$
