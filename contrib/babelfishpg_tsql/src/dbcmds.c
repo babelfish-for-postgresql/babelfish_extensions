@@ -106,12 +106,15 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
 	appendStringInfo(&query, "GRANT SELECT ON dummy.sysdatabases TO dummy; ");
 
+	/* create guest schema in the database */
+	appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
+
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
+		expected_stmt_num = list_length(logins) > 0 ? 10 : 9;
 	else
-		expected_stmt_num = 7;
+		expected_stmt_num = 8;
 
 	if (list_length(res) != expected_stmt_num)
 		ereport(ERROR,
@@ -156,6 +159,9 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, NULL, schema, db_owner);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateSchemaStmt(stmt, "guest", db_owner);
 
 	return res;
 }

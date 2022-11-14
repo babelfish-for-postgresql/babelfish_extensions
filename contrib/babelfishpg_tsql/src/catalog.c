@@ -2196,13 +2196,20 @@ create_guest_role_for_db(char *dbname)
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
+
+	/* create guest schema in the database */
+	appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
 	logins = grant_guest_to_logins(&query);
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateSchemaStmt(stmt, "guest", db_owner_role);
 	pfree(db_owner_role);
+
 
 	if (list_length(logins) > 0)
 	{
