@@ -97,6 +97,7 @@ extern bool has_ilike_node_and_ci_as_coll(Node *expr);
 extern Node* pltsql_planner_node_transformer(PlannerInfo *root,
 									  Node *expr,
 									  int kind);
+extern Node* pltsql_predicate_transformer(Node *expr);
 
 /* Expression kind codes for preprocess_expression */
 #define EXPRKIND_QUAL				0

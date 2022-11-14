@@ -713,7 +713,6 @@ bool
 has_ilike_node_and_ci_as_coll(Node *expr)
 {
 	List 		*queue;
-	ListCell 	*lc = NULL;
 	
 	if(expr == NULL)
 		return false;

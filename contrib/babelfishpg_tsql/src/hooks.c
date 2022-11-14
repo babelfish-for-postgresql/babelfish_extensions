@@ -51,7 +51,6 @@
 #include "utils/numeric.h"
 #include <math.h>
 
-#include "pltsql.h"
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
@@ -68,7 +67,6 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
-extern Node* pltsql_predicate_transformer(Node *expr);
 
 /*****************************************
  * 			Catalog Hooks
