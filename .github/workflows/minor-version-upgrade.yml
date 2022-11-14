@@ -8,7 +8,7 @@ jobs:
       EXTENSION_VER_FROM: BABEL_2_1_STABLE
 
     name: Build and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
 
