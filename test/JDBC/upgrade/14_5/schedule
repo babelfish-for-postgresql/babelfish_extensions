@@ -48,6 +48,7 @@ BABEL-3221
 BABEL-3204
 BABEL-3234
 BABEL-3402
+BABEL-3646
 cast_numeric_types_to_datetime
 routines_definition
 column_domain_usage

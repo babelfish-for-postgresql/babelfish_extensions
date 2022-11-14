@@ -302,10 +302,12 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
                 /* Cast null to typename to take advantage of polymorphic types in Postgres. */
                 Node *null_const = makeTypeCast(makeNullAConst(location), typename, location);
                 List *args;
-                if(arg->type == T_TypeCast || arg->type == T_FuncCall) {
+                if(arg->type == T_TypeCast || arg->type == T_FuncCall)
+                {
                     args = list_make3(arg, null_const, makeIntConst(typmod, location));
                 }
-                else {
+                else
+                {
                     Node *arg_const = makeTypeCast(arg, SystemTypeName("text"), location);
                     args = list_make3(arg_const, null_const, makeIntConst(typmod, location));
                 }
