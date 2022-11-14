@@ -107,7 +107,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "GRANT SELECT ON dummy.sysdatabases TO dummy; ");
 
 	/* create guest schema in the database */
-	appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
+	appendStringInfo(&query, "CREATE SCHEMA dummy; ");
 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 

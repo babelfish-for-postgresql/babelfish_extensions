@@ -2198,7 +2198,7 @@ create_guest_role_for_db(char *dbname)
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
 
 	/* create guest schema in the database */
-	appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
+	appendStringInfo(&query, "CREATE SCHEMA dummy; ");
 	logins = grant_guest_to_logins(&query);
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
