@@ -80,7 +80,7 @@ PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 PG_FUNCTION_INFO_V1(int_power);
 PG_FUNCTION_INFO_V1(int_radians);
 PG_FUNCTION_INFO_V1(int_degrees);
-PG_FUNCTION_INFO_V1(BIGINT_degrees);
+PG_FUNCTION_INFO_V1(bigint_degrees);
 PG_FUNCTION_INFO_V1(smallint_degrees);
 PG_FUNCTION_INFO_V1(tinyint_degrees);
 
@@ -1232,7 +1232,7 @@ int_radians(PG_FUNCTION_ARGS)
 }
 
 Datum
-BIGINT_degrees(PG_FUNCTION_ARGS)
+bigint_degrees(PG_FUNCTION_ARGS)
 {
 	int64	arg1 = PG_GETARG_INT64(0);
 	float8	result;
@@ -1297,10 +1297,13 @@ smallint_degrees(PG_FUNCTION_ARGS)
     PG_RETURN_INT16((int16)result);
 }
 
+#define FLOAT8_FITS_IN_INT8(num) \
+	((num) >= (float8) PG_INT8_MIN && (num) < -((float8) PG_INT8_MIN))
+
 Datum
 tinyint_degrees(PG_FUNCTION_ARGS)
 {
-	int16	arg1 = PG_GETARG_INT16(0);
+	int8	arg1 = PG_GETARG_INT8(0);
 	float8	result;
 	 
 	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
@@ -1311,10 +1314,10 @@ tinyint_degrees(PG_FUNCTION_ARGS)
     	result = floor(result);
 
 	 /* Range check */
-	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT16(result)))
+	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT8(result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("integer out of range")));
 
-    PG_RETURN_INT16((int16)result);
+    PG_RETURN_INT8((int8)result);
 }
