@@ -83,67 +83,6 @@ CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations'
 
 CALL sys.babelfish_update_collation_to_default('sys', 'extended_properties', 'value');
 
-CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
-	in_table_name sys.nvarchar(384) = '',
-	in_table_owner sys.nvarchar(384) = '', 
-	in_table_qualifier sys.sysname = '',
-	in_table_type sys.varchar(100) = '',
-	in_fusepattern sys.bit = '1')
-	RETURNS TABLE (
-		out_table_qualifier sys.sysname,
-		out_table_owner sys.sysname,
-		out_table_name sys.sysname,
-		out_table_type sys.varchar(32),
-		out_remarks sys.varchar(254)
-	)
-	AS $$
-		DECLARE opt_table sys.varchar(16) = '';
-		DECLARE opt_view sys.varchar(16) = '';
-		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
-	BEGIN
-		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''TABLE''' OR upper(trim(unnest)) = '''''''TABLE''''''') >= 1 THEN
-			opt_table = 'TABLE';
-		END IF;
-		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''VIEW''' OR upper(trim(unnest)) = '''''''VIEW''''''') >= 1 THEN
-			opt_view = 'VIEW';
-		END IF;
-		IF in_fusepattern = 1 THEN
-			RETURN query
-			SELECT 
-			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
-			CAST(table_name AS sys.sysname) AS TABLE_NAME,
-			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
-			CAST(remarks AS sys.varchar(254)) AS REMARKS
-			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.bbf_unicode_general_ci_as)
-			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.bbf_unicode_general_ci_as)
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.bbf_unicode_general_ci_as)
-			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
-			    OR table_type collate sys.bbf_unicode_general_ci_as = opt_table
-			    OR table_type collate sys.bbf_unicode_general_ci_as= opt_view)
-			ORDER BY table_qualifier, table_owner, table_name;
-		ELSE 
-			RETURN query
-			SELECT 
-			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
-			CAST(table_name AS sys.sysname) AS TABLE_NAME,
-			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
-			CAST(remarks AS sys.varchar(254)) AS REMARKS
-			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.bbf_unicode_general_ci_as)
-			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
-			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
-			    OR table_type = opt_table
-			    OR table_type = opt_view)
-			ORDER BY table_qualifier, table_owner, table_name;
-		END IF;
-	END;
-$$
-LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
                                                                IN p_day INTEGER,
@@ -5208,11 +5147,10 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 		DECLARE opt_view sys.varchar(16) = '';
 		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
 	BEGIN
-	   
-		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'TABLE' OR upper(trim(unnest)) = '''TABLE''') >= 1 THEN
+		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''TABLE''' OR upper(trim(unnest)) = '''''''TABLE''''''') >= 1 THEN
 			opt_table = 'TABLE';
 		END IF;
-		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'VIEW' OR upper(trim(unnest)) = '''VIEW''') >= 1 THEN
+		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''VIEW''' OR upper(trim(unnest)) = '''''''VIEW''''''') >= 1 THEN
 			opt_view = 'VIEW';
 		END IF;
 		IF in_fusepattern = 1 THEN
@@ -5278,6 +5216,7 @@ BEGIN
 END;
 $$
 LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'assembly_types', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'assembly_types', 'collation_name');
