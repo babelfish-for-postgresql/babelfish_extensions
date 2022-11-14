@@ -1303,6 +1303,10 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 			relation = RelationIdGetRelation(reloid);
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
 			pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
+			if(pg_trigger_physical_schema == NULL || cur_physical_schema == NULL)
+				ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("trigger \"%s\" does not exist", tsql_trigger_name)));
 			if(strcasecmp(pg_trigger_physical_schema,cur_physical_schema) == 0)
 			{
 				trigger_rel_oid = reloid;
