@@ -76,7 +76,7 @@ JOIN sys.objects o ON t.TABLE_NAME = o.name where o.name = 'mytable';
 go
 ~~START~~
 varchar
-MyTable
+mytable
 ~~END~~
 
 

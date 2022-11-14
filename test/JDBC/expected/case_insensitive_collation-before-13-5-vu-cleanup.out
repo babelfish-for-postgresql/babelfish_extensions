@@ -1,4 +1,4 @@
-DROP table if exists test;
+DROP table if exists t_rcv15;
 go
 
 DROP view if exists CaMeLvIeW;
