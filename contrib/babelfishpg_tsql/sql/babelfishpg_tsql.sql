@@ -1153,11 +1153,11 @@ as $$
 begin
 	return query
 	select * from sys.sp_pkeys_view
-	where table_name = in_table_name collate sys.bbf_unicode_general_ci_as
-		and table_owner = coalesce(in_table_owner,'dbo') collate sys.bbf_unicode_general_ci_as
+	where table_name = in_table_name collate sys.database_default
+		and table_owner = coalesce(in_table_owner,'dbo') collate sys.database_default
 		and ((SELECT
 		         coalesce(in_table_qualifier,'')) = '' or
-		         table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+		         table_qualifier = in_table_qualifier collate sys.database_default)
 	order by table_qualifier,
 	         table_owner,
 		 table_name,

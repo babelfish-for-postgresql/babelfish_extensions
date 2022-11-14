@@ -118,7 +118,7 @@ runs:
 
     - name: Install Python
       id: install-python
-      # if: ${{ matrix.upgrade-path.path[0] == 'source_latest' && steps.jdbc-upgrade-tests.outcome == 'success' }}
+      if: ${{ matrix.upgrade-path.path[0] == 'source_latest' && steps.jdbc-upgrade-tests.outcome == 'success' }}
       uses: actions/setup-python@v2
       with:
         python-version: 3.7

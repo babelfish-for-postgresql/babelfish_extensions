@@ -5314,6 +5314,36 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'table_na
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'column_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'pk_name');
 
+create or replace function sys.sp_pkeys_internal(
+	in_table_name sys.nvarchar(384),
+	in_table_owner sys.nvarchar(384) = '',
+	in_table_qualifier sys.nvarchar(384) = ''
+)
+returns table(
+	out_table_qualifier sys.sysname,
+	out_table_owner sys.sysname,
+	out_table_name sys.sysname,
+	out_column_name sys.sysname,
+	out_key_seq smallint,
+	out_pk_name sys.sysname
+)
+as $$
+begin
+	return query
+	select * from sys.sp_pkeys_view
+	where table_name = in_table_name collate sys.database_default
+		and table_owner = coalesce(in_table_owner,'dbo') collate sys.database_default
+		and ((SELECT
+		         coalesce(in_table_qualifier,'')) = '' or
+		         table_qualifier = in_table_qualifier collate sys.database_default)
+	order by table_qualifier,
+	         table_owner,
+		 table_name,
+		 key_seq;
+end;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE VIEW sys.sp_statistics_view AS
 SELECT
 CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
