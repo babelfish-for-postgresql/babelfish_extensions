@@ -182,7 +182,7 @@ gen_dropdb_subcmds(const char *schema,
 	List				*stmt_list;
 	ListCell			*elem;
 	Node				*stmt;
-	int					expected_stmts = 4;
+	int					expected_stmts = 5;
 	int					i = 0;
 
 	initStringInfo(&query);
