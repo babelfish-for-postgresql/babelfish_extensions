@@ -2227,7 +2227,6 @@ create_guest_role_for_db(const char *dbname)
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
-	pfree((char *) db_owner_role);
 
 	if (list_length(logins) > 0)
 	{

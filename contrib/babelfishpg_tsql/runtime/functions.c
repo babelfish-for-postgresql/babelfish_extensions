@@ -885,7 +885,7 @@ checksum(PG_FUNCTION_ARGS)
        StringInfoData buf;
        char md5[MD5_HASH_LEN + 1];
        char *name;
-	   bool success;
+       bool success;
 
        initStringInfo(&buf);
        if (nargs > 0)
