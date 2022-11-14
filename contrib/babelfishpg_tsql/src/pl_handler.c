@@ -66,6 +66,7 @@
 #include "analyzer.h"
 #include "catalog.h"
 #include "codegen.h"
+#include "collation.h"
 #include "dbcmds.h"
 #include "err_handler.h"
 #include "guc.h"
@@ -146,6 +147,7 @@ static Constraint *get_rowversion_default_constraint(TypeName *typname);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
+static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -199,6 +201,7 @@ static validate_set_config_function_hook_type prev_validate_set_config_function_
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
 static int pltsql_new_guc_nest_level(void);
 static void pltsql_revert_guc(int nest_level);
+bool current_query_is_create_tbl_check_constraint = false;
 
 /* Configurations */
 bool        pltsql_trace_tree = false;
@@ -811,6 +814,9 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 {
 	if (prev_post_parse_analyze_hook)
 	  prev_post_parse_analyze_hook(pstate, query, jstate);
+
+	if (query->commandType == CMD_UTILITY && nodeTag((Node*)(query->utilityStmt)) == T_CreateStmt)
+		set_current_query_is_create_tbl_check_constraint(query->utilityStmt);
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -4810,4 +4816,26 @@ pltsql_revert_guc(int nest_level)
        /* Update nesting level */
        PltsqlGUCNestLevel = nest_level - 1;
 
+}
+
+void
+set_current_query_is_create_tbl_check_constraint(Node *expr)
+{
+	CreateStmt *stmt = (CreateStmt *) expr;
+	ListCell   *elements;
+
+	foreach(elements, stmt->tableElts)
+	{
+		Node *element = lfirst(elements);
+
+		if (nodeTag(element) == T_Constraint)
+		{
+			Constraint *c = (Constraint *) element;
+			if(c->contype == CONSTR_CHECK)
+			{
+				current_query_is_create_tbl_check_constraint = true;
+				break;
+			}
+		}
+	}
 }
