@@ -245,3 +245,4 @@ sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 sys-sysindexes
 sys_server_principals_dep_for_13_x
+case_insensitive_collation-before-13-5

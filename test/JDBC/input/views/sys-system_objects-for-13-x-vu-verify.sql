@@ -1,4 +1,4 @@
-
+-- sla 400000
 SELECT name,type,type_desc FROM sys.system_objects WHERE name = 'key_constraints'
 GO
 
