@@ -340,13 +340,14 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
+	int ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
 	if (pltsql_explain_analyze)
 	{
 		PLtsql_execstate *estate = get_current_tsql_estate();
 		Assert(estate != NULL);
 		INSTR_TIME_SET_CURRENT(estate->execution_start);
 	}
-	int ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
+
 	if (is_explain_analyze_mode())
 	{
 		if (pltsql_explain_timing)
@@ -458,14 +459,15 @@ pltsql_ExecutorEnd(QueryDesc *queryDesc)
 static bool
 plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 {
+	int i;
+	PLExecStateCallStack *cur = exec_state_call_stack;
+	PLtsql_execstate	 *estate;
+
 	if (resultRelInfo->ri_TrigDesc == NULL)
 		return false;
 	if (pltsql_recursive_triggers)
 		return false;
-	int i;
-	PLExecStateCallStack * cur;
-	PLtsql_execstate *estate;
-	cur = exec_state_call_stack;
+
 	while (cur != NULL){
 		estate = cur->estate;
 		if (estate->trigdata != NULL && estate->trigdata->tg_trigger != NULL
@@ -1253,7 +1255,6 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 	Relation		relation = NULL;
 	const char		*pg_trigger_physical_schema = NULL;
 	const char		*pg_trigger_logical_schema = NULL;
-	const char 		*cur_dbo_physical_schema = NULL;
 	const char 		*cur_physical_schema = NULL;
 	const char		*tsql_trigger_physical_schema = NULL;
 	const char		*tsql_trigger_logical_schema = NULL;
@@ -1267,10 +1268,10 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 	else
 	{
 		if(object_from_input)
-			tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
+			tsql_trigger_logical_schema = ((String *)linitial(object))->sval;
 		else
 		{
-			tsql_trigger_physical_schema = ((Value *)linitial(object))->val.str;
+			tsql_trigger_physical_schema = ((String *)linitial(object))->sval;
 			tsql_trigger_logical_schema = get_logical_schema_name(tsql_trigger_physical_schema, true);
 		}
 		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),tsql_trigger_logical_schema);
@@ -1334,7 +1335,6 @@ static ObjectAddress
 get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input)
 {
 	ObjectAddress 	address;
-	Relation		relation = NULL;
 	const char 		*depname;
 	Oid 			trigger_rel_oid = InvalidOid;
 
@@ -1956,7 +1956,8 @@ pltsql_drop_view_definition(Oid objectId)
 	HeapTuple	reltuple, scantup;
 	Form_pg_class	form;
 	int16		dbid;
-	char		*physical_schemaname, *logical_schemaname, *objectname;
+	char		*physical_schemaname, *objectname;
+	const char	*logical_schemaname;
 
 	/* return if it is not a view */
 	reltuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objectId));
@@ -2045,11 +2046,11 @@ preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNum
 bool
 pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base)
 {
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return false;
-
 	int partially_filled_numeric_block = 0;
 	int total_digit_count = 0;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
 
 	total_digit_count = (dscale == 0) ? (weight * numeric_base) :
 					    ((weight + 1) * numeric_base);
@@ -2098,7 +2099,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	Form_pg_proc	form_proctup;
 	NameData		*schema_name_NameData;
 	char		*physical_schemaname;
-	char		*func_signature;
+	const char	*func_signature;
 	char		*original_name = NULL;
 	List		*default_positions = NIL;
 	ListCell	*x;
@@ -2723,7 +2724,7 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 	{
 		Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 		int			 i;
-		ListCell	*lc = NIL;
+		ListCell	*lc = NULL;
 
 		i = funcform->pronargs - funcform->pronargdefaults;
 		foreach(lc, defaults)

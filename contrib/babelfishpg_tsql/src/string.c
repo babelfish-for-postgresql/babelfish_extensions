@@ -61,9 +61,16 @@ hashbytes(PG_FUNCTION_ARGS)
 	}
 	else if (strcasecmp(algorithm, "MD5") == 0)
 	{
-		unsigned char buf[MD5_RESULTLEN];
+		unsigned char 	buf[MD5_RESULTLEN];
+		const char		*errstr = NULL;
+		bool			success;
 
-		pg_md5_binary(data, len, buf);
+		success = pg_md5_binary(data, len, buf, &errstr);
+
+		if (unlikely(!success)) /* OOM */
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("could not compute MD5 encryption: %s", errstr)));
 
 		result = palloc(sizeof(buf) + VARHDRSZ);
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);

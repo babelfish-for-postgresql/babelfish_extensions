@@ -36,7 +36,9 @@ select * from testing2 where col collate BBF_Unicode_General_CS_AI = 'JoNes';
 
 -- test case insensitivity for default collation
 create table testing3 (c1 varchar(20), c2 char(20), c3 nvarchar(20));
+reset babelfishpg_tsql.sql_dialect;
 \d testing3
+set babelfishpg_tsql.sql_dialect = "tsql";
 insert into testing3 values ('JONES','JONES','JONES');
 insert into testing3 values ('JoneS','JoneS','JoneS');
 insert into testing3 values ('jOnes','jOnes','jOnes');

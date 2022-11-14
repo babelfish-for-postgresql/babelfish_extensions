@@ -2073,7 +2073,7 @@ alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
 
 /* Checks if the guest user is enabled on a given database. */
 bool
-guest_has_dbaccess(char *db_name)
+guest_has_dbaccess(const char *db_name)
 {
 	Relation		bbf_authid_user_ext_rel;
 	HeapTuple		tuple_user_ext;
@@ -2144,7 +2144,7 @@ Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 }
 
 bool
-guest_role_exists_for_db(char *dbname)
+guest_role_exists_for_db(const char *dbname)
 {
 	const char 	*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;

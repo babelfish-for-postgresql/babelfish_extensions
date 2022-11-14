@@ -311,8 +311,6 @@ int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
 static Datum
 TdsAnyToServerEncodingConversion(pg_enc encoding, char *str, int len, uint8_t tdsColDataType)
 {
-	Oid 		typinput;
-	Oid 		typioparam;
 	char 		*pstring;
 	Datum 		pval;
 	int			actualLen;

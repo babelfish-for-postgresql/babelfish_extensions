@@ -62,7 +62,7 @@ rewrite_typmod_expr(List *expr_list)
 		ColumnRef *columnref = (ColumnRef *) expr;
 		if (list_length(columnref->fields) == 1)
 		{
-			char *str = ((Value *) linitial(columnref->fields))->val.str;
+			char *str = ((String *) linitial(columnref->fields))->sval;
 			if (strcmp( str, "max") == 0)
 				return list_make1(makeIntConst(TSQLMaxTypmod, -1));
 		}
@@ -76,8 +76,8 @@ makeIntConst(int val, int location)
 {
 	A_Const *n = makeNode(A_Const);
 
-	n->val.type = T_Integer;
-	n->val.val.ival = val;
+	n->val.ival.type = T_Integer;
+	n->val.ival.ival = val;
 	n->location = location;
 
 	return (Node *)n;

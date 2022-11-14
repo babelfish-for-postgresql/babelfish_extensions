@@ -408,11 +408,11 @@ static void buildTypmodArray(CreateFunctionStmt *stmt, int** typmod_array_p, int
 				/* numeric type */
 				if(idx > 0)
 				{
-					(*typmod_array_p)[i] =  (((*typmod_array_p)[i]) << 16) + ptr->val.val.ival + VARHDRSZ;
+					(*typmod_array_p)[i] =  (((*typmod_array_p)[i]) << 16) + ptr->val.ival.ival + VARHDRSZ;
 				}
 				else
 				{
-					(*typmod_array_p)[i] = ptr->val.val.ival;
+					(*typmod_array_p)[i] = ptr->val.ival.ival;
 				}
 				typmod_head = lnext(arg_typmod, typmod_head);
 			}
@@ -436,11 +436,11 @@ static void buildTypmodArray(CreateFunctionStmt *stmt, int** typmod_array_p, int
 			/* numeric type */
 			if(idx > 0)
 			{
-				(*typmod_array_p)[i] =  (((*typmod_array_p)[i]) << 16) + ptr->val.val.ival + VARHDRSZ;
+				(*typmod_array_p)[i] =  (((*typmod_array_p)[i]) << 16) + ptr->val.ival.ival + VARHDRSZ;
 			}
 			else
 			{
-				(*typmod_array_p)[i] = ptr->val.val.ival;
+				(*typmod_array_p)[i] = ptr->val.ival.ival;
 			}
 			typmod_head = lnext(ret->typmods, typmod_head);
 		}

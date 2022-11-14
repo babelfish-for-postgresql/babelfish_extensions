@@ -194,7 +194,7 @@ pe_create_server_port(int family, const char *hostName,
 
 	for (addr = addrs; addr; addr = addr->ai_next)
 	{
-		if (!IS_AF_UNIX(family) && IS_AF_UNIX(addr->ai_family))
+		if (family != AF_UNIX && addr->ai_family == AF_UNIX)
 		{
 			/*
 			 * Only set up a unix domain socket when they really asked for it.
@@ -269,7 +269,7 @@ pe_create_server_port(int family, const char *hostName,
 		 * unpredictable behavior. With no flags at all, win32 behaves as Unix
 		 * with SO_REUSEADDR.
 		 */
-		if (!IS_AF_UNIX(addr->ai_family))
+		if (addr->ai_family != AF_UNIX)
 		{
 			if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 							(char *) &one, sizeof(one))) == -1)
@@ -319,7 +319,7 @@ pe_create_server_port(int family, const char *hostName,
 					 errmsg("could not bind %s address \"%s\": %m",
 							familyDesc, addrDesc),
 					 saved_errno == EADDRINUSE ?
-					 (IS_AF_UNIX(addr->ai_family) ?
+					 (addr->ai_family == AF_UNIX ?
 					  errhint("Is another postmaster already running on port %d?",
 							  (int) portNumber) :
 					  errhint("Is another postmaster already running on port %d?"
@@ -543,7 +543,7 @@ pe_create_connection(pgsocket server_fd, Port *port)
 	}
 
 	/* select NODELAY and KEEPALIVE options if it's a TCP connection */
-	if (!IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port->laddr.addr.ss_family != AF_UNIX)
 	{
 		int			on;
 #ifdef WIN32

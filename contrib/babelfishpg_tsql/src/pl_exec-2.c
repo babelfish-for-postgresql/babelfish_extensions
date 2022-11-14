@@ -9,6 +9,7 @@
 #include "commands/proclang.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
+#include "utils/acl.h"
 #include "pltsql_bulkcopy.h"
 
 #include "catalog.h"
@@ -2546,15 +2547,16 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 static int
 exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
-	if (pltsql_explain_only)
-	{
-		return exec_stmt_usedb_explain(estate, stmt, false  /* shouldRestoreDb */);
-	}
 	char * old_db_name = get_cur_db_name();
 	char message[128];
 	int16 old_db_id = get_cur_db_id();
 	int16 new_db_id = get_db_id(stmt->db_name);
-        PLExecStateCallStack *top_es_entry;
+	PLExecStateCallStack *top_es_entry;
+
+	if (pltsql_explain_only)
+	{
+		return exec_stmt_usedb_explain(estate, stmt, false  /* shouldRestoreDb */);
+	}
 
 	if (!DbidIsValid(new_db_id))
 		ereport(ERROR,
@@ -2674,7 +2676,6 @@ static int
 exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 {
 	char 	*dbname = get_cur_db_name();
-	char	*dbowner = get_owner_of_db(dbname);
 	char	*login = GetUserNameFromId(GetSessionUserId(), false);	
 	bool	login_is_db_owner;
 	Oid	datdba;

@@ -10,6 +10,28 @@
 
 all
 
+# Temporarily ignore tests until fixed in PG15
+# TO-DO: re-enable these tests when pg_hint_plan extension gets supported in PG15
+ignore#!#BABEL-3291
+ignore#!#BABEL-3292
+ignore#!#BABEL-3293
+ignore#!#BABEL-3294
+ignore#!#BABEL-3295
+ignore#!#BABEL-3512
+ignore#!#BABEL-3592
+ignore#!#BABEL-3513-vu-prepare
+ignore#!#BABEL-3513-vu-verify
+
+# Ignore tests related to Numeric: BABEL-3720
+ignore#!#BABEL-3486-vu-verify
+ignore#!#cast_numeric_types_to_datetime-vu-prepare
+ignore#!#cast_numeric_types_to_datetime-vu-verify
+ignore#!#cast_numeric_types_to_datetime-vu-cleanup
+ignore#!#cast_numeric_types_to_smalldatetime-vu-prepare
+ignore#!#cast_numeric_types_to_smalldatetime-vu-verify
+ignore#!#cast_numeric_types_to_smalldatetime-vu-cleanup
+ignore#!#BABEL-2355
+
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant

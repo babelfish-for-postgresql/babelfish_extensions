@@ -172,8 +172,10 @@ static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 
 /* Shmem hook */
 static shmem_startup_hook_type next_shmem_startup_hook = NULL;
+static shmem_request_hook_type prev_shmem_request_hook = NULL;
 
 static Size tds_memsize(void);
+static void tds_shmem_request(void);
 
 /* Shmem init interfaces */
 static void tds_status_shmem_startup(void);
@@ -205,19 +207,15 @@ _PG_init(void)
 
 	pe_init();
 
-	/*
-	 * Request additional shared resources.  (These are no-ops if we're not in
-	 * the postmaster process.)  We'll allocate or attach to the shared
-	 * resources in tds_status_shmem_startup().
-	 */
-	RequestAddinShmemSpace(tds_memsize());
-
 	prev_relname_lookup_hook = relname_lookup_hook;
 	relname_lookup_hook = tvp_lookup;
 
-	/* Hooks */
+	/* Shmem hooks */
 	next_shmem_startup_hook = shmem_startup_hook;
 	shmem_startup_hook = tds_status_shmem_startup;
+
+	prev_shmem_request_hook = shmem_request_hook;
+	shmem_request_hook = tds_shmem_request;
 
 	/* Install our object_access_hook into the chain */
 	next_object_access_hook = object_access_hook;
@@ -240,6 +238,7 @@ _PG_fini(void)
 	relname_lookup_hook = prev_relname_lookup_hook;
 	object_access_hook = next_object_access_hook;
 	ProcessUtility_hook = next_ProcessUtility;
+	shmem_request_hook = prev_shmem_request_hook;
 }
 
 static Size
@@ -276,6 +275,20 @@ tds_memsize()
 	size = add_size(size, TdsHostNameBufferSize());
 	size = add_size(size, TdsLanguageBufferSize());
 	return size;
+}
+
+static void
+tds_shmem_request()
+{
+	if (prev_shmem_request_hook)
+		prev_shmem_request_hook();
+
+	/*
+	 * Request additional shared resources.  (These are no-ops if we're not in
+	 * the postmaster process.)  We'll allocate or attach to the shared
+	 * resources in tds_status_shmem_startup().
+	 */
+	RequestAddinShmemSpace(tds_memsize());
 }
 
 /*
