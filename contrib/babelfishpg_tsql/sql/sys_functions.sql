@@ -3212,7 +3212,7 @@ BEGIN
                 LIMIT 1
                 );
     END IF;
-
+ 
     RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
 END
 $$
@@ -3254,6 +3254,12 @@ GRANT EXECUTE ON FUNCTION sys.degrees(smallint) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 tinyint)
 RETURNS int AS 'babelfishpg_tsql','tinyint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(tinyint) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 int)
+RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 int)
+RETURNS int  AS 'babelfishpg_tsql','int_degrees' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
@@ -3321,3 +3327,10 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
+<<<<<<< HEAD
+=======
+
+GRANT EXECUTE ON FUNCTION sys.power(int,int) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.radians(int) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.degrees(int) TO PUBLIC;
+>>>>>>> 7ff12474 (DEGREES, RADIANS and POWER return float always)

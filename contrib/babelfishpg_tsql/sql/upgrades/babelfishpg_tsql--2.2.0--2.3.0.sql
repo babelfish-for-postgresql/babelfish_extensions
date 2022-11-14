@@ -3966,6 +3966,7 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
+<<<<<<< HEAD
 -- update datediff functions to either explicitly cast to timestamp or use different helper function
 CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
 AS
@@ -4190,6 +4191,19 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 -- Drop the deprecated function
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_tds_id_deprecated_2_3_0');
+=======
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 int, IN arg2 int)
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(int,int) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 int)
+RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(int) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 int)
+RETURNS int  AS 'babelfishpg_tsql','int_degrees' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(int) TO PUBLIC;
+>>>>>>> 7ff12474 (DEGREES, RADIANS and POWER return float always)
 
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
