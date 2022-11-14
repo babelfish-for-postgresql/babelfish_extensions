@@ -1297,6 +1297,8 @@ smallint_degrees(PG_FUNCTION_ARGS)
     PG_RETURN_INT16((int16)result);
 }
 
+#define PG_INT8_MIN		(-0x7F-1)
+#define PG_INT8_MAX		(0x7F)
 #define FLOAT8_FITS_IN_INT8(num) \
 	((num) >= (float8) PG_INT8_MIN && (num) < -((float8) PG_INT8_MIN))
 
