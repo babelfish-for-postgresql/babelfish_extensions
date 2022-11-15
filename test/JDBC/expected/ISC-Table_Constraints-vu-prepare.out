@@ -1,0 +1,70 @@
+-- tsql
+create table tbl_pk(a int primary key, c int not null unique, d int default 1, check(d > 0));
+go
+
+create table tbl_fk(b int primary key, a int, foreign key (a) references tbl_pk(a));
+go
+
+create database db1;
+go
+
+use db1;
+go
+
+create table db1_tbl_pk(a int primary key, c int not null unique, d int default 1, check(d > 0));
+go
+
+create table db1_tbl_fk(b int primary key, a int, foreign key (a) references db1_tbl_pk(a));
+go
+
+use master
+go
+
+-- Check for constraints created under schema
+create schema sch1;
+go
+
+create table sch1.tbl_pk(a int primary key, c int not null unique, d int default 1, check(d > 0));
+go
+
+create table sch1.tbl_fk(b int primary key, a int, foreign key (a) references sch1.tbl_pk(a));
+go
+
+create login user_tbl_const with password='123456789';
+go
+
+use db1;
+go
+
+create user user_tbl_const for login user_tbl_const;
+go
+
+use master;
+go
+
+
+CREATE PROCEDURE isc_tbl_constraints_p1 AS
+select * from information_schema.table_constraints where table_name = 'tbl_pk'
+select * from information_schema.table_constraints where table_name = 'TBL_PK'
+GO
+
+
+CREATE FUNCTION isc_tbl_constraints_f1()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) from information_schema.table_constraints where table_name = 'tbl_pk')
+end
+GO
+
+CREATE FUNCTION isc_tbl_constraints_f2()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) from information_schema.table_constraints where table_name = 'tbl_fk')
+end
+GO
+
+CREATE VIEW isc_tbl_constraints_v1 AS
+    select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk') order by constraint_name, constraint_schema;
+GO

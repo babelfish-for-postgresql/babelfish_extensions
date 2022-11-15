@@ -1,0 +1,105 @@
+-- tsql
+select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk') order by constraint_name, constraint_schema;
+go
+
+-- should return 10
+select count(*) from information_schema.table_constraints;
+go
+
+use db1
+go
+
+select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk','db1_tbl_pk','db1_tbl_fk') order by constraint_name, constraint_schema;
+go
+
+use master;
+go
+
+select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk','db1_tbl_pk','db1_tbl_fk') order by constraint_name, constraint_schema;
+go
+
+select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk','sch1_tbl_pk','sch1_tbl_fk') order by constraint_name, constraint_schema;
+go
+
+-- verify from sys.objects
+-- Note: sys.objects not showing unique constraints currently
+select constraint_name, constraint_schema, table_name, constraint_type from information_schema.table_constraints order by constraint_name, constraint_schema;
+
+select name, schema_name(schema_id) as schname, object_name(parent_object_id),type_desc from sys.objects where type in ('C','F','PK','UQ') order by name, schname;
+go
+
+-- Test for adding addtional constraints with different name
+alter table tbl_fk add constraint chk_1234 check(a>0);
+go
+
+select count(*) from information_schema.table_constraints where table_name in ('tbl_fk') and constraint_name like '%chk_1234%';
+go
+
+-- tsql user=user_tbl_const password=123456789
+-- should return 0 since user_tbl_const doesn't have any privileges
+use db1;
+go
+
+select count(*) from information_schema.table_constraints where table_name='db1_tbl_pk';
+go
+
+use master;
+go
+
+-- tsql
+use db1;
+go
+
+grant select on db1_tbl_pk to user_tbl_const;
+go
+
+use master;
+go
+
+-- tsql user=user_tbl_const password=123456789
+-- should return 3 since user_tbl_const has select privilege
+use db1;
+go
+
+select count(*) from information_schema.table_constraints where table_name='db1_tbl_pk';
+go
+
+use master;
+go
+
+-- tsql
+use db1;
+go
+
+revoke select on db1_tbl_pk to user_tbl_const;
+go
+
+grant insert on db1_tbl_pk to user_tbl_const;
+go
+
+use master;
+go
+
+-- tsql user=user_tbl_const password=123456789
+-- should return 3 since user_tbl_const has insert privilege
+use db1;
+go
+
+select count(*) from information_schema.table_constraints where table_name='db1_tbl_pk';
+go
+
+use master;
+go
+
+-- tsql
+use master
+go
+EXEC isc_tbl_constraints_p1
+GO
+
+SELECT * FROM isc_tbl_constraints_f1()
+SELECT * FROM isc_tbl_constraints_f2()
+GO
+
+SELECT * FROM isc_tbl_constraints_v1
+GO
