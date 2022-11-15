@@ -1,30 +1,37 @@
 -- DIFFERENT CASES TO CHECK DATATYPES
--- EXACT NUMERICS
-select a, b, c, d, f, g, i from dt01 for json path
-go
+-- Exact Numerics
+SELECT * FROM BABEL_3691_vu_prepare_view1
+GO
 ~~START~~
 nvarchar
-[{"a":9223372036854775807,"b":true,"c":123,"d":2147483647,"f":12345,"g":32767,"i":255}]
+[{"a":9223372036854775807,"c":123,"d":2147483647,"f":12345,"g":32767,"i":255}]
 ~~END~~
 
 
-select e from dt01 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view2
+GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data type exact numeric's money or smallmoney is not supported)~~
+~~ERROR (Message: bit type is not supported with FOR JSON)~~
 
 
-select h from dt01 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view3
+GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data type exact numeric's money or smallmoney is not supported)~~
+~~ERROR (Message: data types money or smallmoney are not supported with FOR JSON)~~
+
+
+SELECT * FROM BABEL_3691_vu_prepare_view4
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data types money or smallmoney are not supported with FOR JSON)~~
 
 
 -- Approximate numerics
-select * from dt02 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view5
+GO
 ~~START~~
 nvarchar
 [{"a":12.05,"b":120.53}]
@@ -32,17 +39,45 @@ nvarchar
 
 
 -- Date and time
-select * from dt03 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view6
+GO
 ~~START~~
 nvarchar
-[{"a":"23:17:08.56","b":"2022-11-11","c":"2022-11-11T23:17:00","d":"2022-11-11T23:17:08.56","e":"2022-11-11T23:17:08.56","f":"2022-11-11T23:17:08.56Z"}]
+[{"a":"23:17:08.56","b":"2022-11-11"}]
 ~~END~~
 
 
+SELECT * FROM BABEL_3691_vu_prepare_view7
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: datetime types are not supported with FOR JSON)~~
+
+
+SELECT * FROM BABEL_3691_vu_prepare_view8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: datetime types are not supported with FOR JSON)~~
+
+
+SELECT * FROM BABEL_3691_vu_prepare_view9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: datetime types are not supported with FOR JSON)~~
+
+
+SELECT * FROM BABEL_3691_vu_prepare_view10
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: datetime types are not supported with FOR JSON)~~
+
+
 -- Character strings
-select * from dt04 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view11
+GO
 ~~START~~
 nvarchar
 [{"a":"a","b":"abc","c":"abc"}]
@@ -50,8 +85,8 @@ nvarchar
 
 
 -- Unicode character strings
-select * from dt05 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view12
+GO
 ~~START~~
 nvarchar
 [{"a":"abc  ","b":"abc","c":"abc"}]
@@ -59,23 +94,23 @@ nvarchar
 
 
 -- Binary strings
-select a from dt06 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view13
+GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: option binary base64 is not supported)~~
+~~ERROR (Message: binary types are not supported with FOR JSON)~~
 
 
-select b from dt06 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view14
+GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: option binary base64 is not supported)~~
+~~ERROR (Message: binary types are not supported with FOR JSON)~~
 
 
 -- Return null string
-select * from t01 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view15
+GO
 ~~START~~
 nvarchar
 <NULL>

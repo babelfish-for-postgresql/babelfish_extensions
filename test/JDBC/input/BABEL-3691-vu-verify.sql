@@ -1,37 +1,52 @@
 -- DIFFERENT CASES TO CHECK DATATYPES
--- EXACT NUMERICS
-select a, b, c, d, f, g, i from dt01 for json path
-go
+-- Exact Numerics
+SELECT * FROM BABEL_3691_vu_prepare_view1
+GO
 
-select e from dt01 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view2
+GO
 
-select h from dt01 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view3
+GO
+
+SELECT * FROM BABEL_3691_vu_prepare_view4
+GO
 
 -- Approximate numerics
-select * from dt02 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view5
+GO
 
 -- Date and time
-select * from dt03 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view6
+GO
+
+SELECT * FROM BABEL_3691_vu_prepare_view7
+GO
+
+SELECT * FROM BABEL_3691_vu_prepare_view8
+GO
+
+SELECT * FROM BABEL_3691_vu_prepare_view9
+GO
+
+SELECT * FROM BABEL_3691_vu_prepare_view10
+GO
 
 -- Character strings
-select * from dt04 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view11
+GO
 
 -- Unicode character strings
-select * from dt05 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view12
+GO
 
 -- Binary strings
-select a from dt06 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view13
+GO
 
-select b from dt06 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view14
+GO
 
 -- Return null string
-select * from t01 for json path
-go
+SELECT * FROM BABEL_3691_vu_prepare_view15
+GO

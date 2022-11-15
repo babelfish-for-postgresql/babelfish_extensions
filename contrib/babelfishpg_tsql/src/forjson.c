@@ -15,10 +15,12 @@
 #include "parser/parser.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
+#include "backend_parser/gram-tsql-prologue.y.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
 								bool without_array_wrapper, const char *root_name);
 static void SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_value);
+static void tsql_unsupported_datatype_check(void);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
 
@@ -57,31 +59,9 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 	const char  *sep="";
 	bool 		isnull;
 
-	/*
-	* TODO: encode binary/varbinary/image data values using base64 encoding.
-	* Also, pg_b64_encode function might be useful.
-	* For now report an ERROR if any attribute is binary data type since base64
-	* encoding is not implemented yet.
-	* Also Exact numeric's datatype money or smallmoney is not supported.
-	*/
-	for (i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
-	{
-		char* typename = SPI_gettype(SPI_tuptable->tupdesc, i);
-		if (strcmp(typename, "binary") == 0 ||
-			strcmp(typename, "varbinary") == 0 ||
-			strcmp(typename, "image") == 0 ||
-			strcmp(typename, "timestamp") == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("option binary base64 is not supported")));
-		
-		if (strcmp(typename, "money") == 0 ||
-			strcmp(typename, "smallmoney") == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("data type exact numeric's money or smallmoney is not supported")));
-	}
-	
+	// To check if query output table has columns with datatypes that are currently not supported in FOR JSON
+	tsql_unsupported_datatype_check();
+
 	appendStringInfoChar(result,'{');
 	for (i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
@@ -178,4 +158,52 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 	else if (!without_array_wrapper)
 		appendStringInfoChar(result,']');
 	return result;
+}
+
+
+/*
+ * For now report an ERROR if any attribute is binary, datetime and bit datatypes since they are not implemented yet.
+ * Also Exact numeric's datatype money or smallmoney is not supported.
+ */
+static void
+tsql_unsupported_datatype_check(void)
+{
+	for (int i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
+	{
+		Oid collation_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
+		char* typename = SPI_gettype(SPI_tuptable->tupdesc, i);
+
+		Oid tsql_datatype_oid = lookup_tsql_datatype_oid(typename);
+
+		if (tsql_datatype_oid == collation_oid)
+		{
+			if (strcmp(typename, "binary") == 0 ||
+				strcmp(typename, "varbinary") == 0 ||
+				strcmp(typename, "image") == 0 ||
+				strcmp(typename, "timestamp") == 0 ||
+				strcmp(typename, "rowversion") == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("binary types are not supported with FOR JSON")));
+			
+			if (strcmp(typename, "money") == 0 ||
+				strcmp(typename, "smallmoney") == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("data types money or smallmoney are not supported with FOR JSON")));
+			
+			if (strcmp(typename, "datetime")  == 0 ||
+				strcmp(typename, "smalldatetime") == 0 ||
+				strcmp(typename, "datetime2") == 0 ||
+				strcmp(typename, "datetimeoffset") == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("datetime types are not supported with FOR JSON")));
+			
+			if (strcmp(typename, "bit")  == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("bit type is not supported with FOR JSON")));
+		}
+	}
 }
