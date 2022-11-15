@@ -803,7 +803,7 @@ $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg TEXT, INOUT output ANYELEMENT, IN typmod INT)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any_deprecated_in_2_3_0(IN arg TEXT, INOUT output ANYELEMENT, IN typmod INT)
 RETURNS ANYELEMENT
 AS $BODY$ BEGIN
     EXECUTE pg_catalog.format('SELECT CAST(%L AS %s)', arg, format_type(pg_typeof(output), typmod)) INTO output;
@@ -4176,16 +4176,6 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 -- Drop the deprecated function
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_tds_id_deprecated_2_3_0');
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
--- Drop this procedure after it gets executed once.
-DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg TEXT, IN typmod INTEGER)
 RETURNS sys.DATETIME2
 AS $BODY$
@@ -4242,3 +4232,15 @@ AS $BODY$ BEGIN
             -- Do nothing. Output carries NULL.
 END; $BODY$
 LANGUAGE plpgsql;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_cast_to_any_deprecated_in_2_3_0');
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
