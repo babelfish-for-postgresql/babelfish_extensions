@@ -979,8 +979,15 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 			/* db_name is valid. 
 			 * under SINGLE_DB this is only possible 
 			 * when target db is the customer db.
-			 * in such case we only return the schema_name name */
-			return name;
+			 * in such case we only return the schema_name name
+			 * except for 'guest' schema. */
+			if (strcmp(schema_name, "guest") == 0)
+			{
+				result = palloc0(MAX_BBF_NAMEDATALEND);
+				snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, name);
+			}
+			else
+				return name;
 		}
 	}
 	else
