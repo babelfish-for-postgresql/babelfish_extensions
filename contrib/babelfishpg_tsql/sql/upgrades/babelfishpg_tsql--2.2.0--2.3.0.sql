@@ -803,7 +803,7 @@ $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any_deprecated_in_2_3_0(IN arg TEXT, INOUT output ANYELEMENT, IN typmod INT)
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg TEXT, INOUT output ANYELEMENT, IN typmod INT)
 RETURNS ANYELEMENT
 AS $BODY$ BEGIN
     EXECUTE pg_catalog.format('SELECT CAST(%L AS %s)', arg, format_type(pg_typeof(output), typmod)) INTO output;
