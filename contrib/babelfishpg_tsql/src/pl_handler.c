@@ -2932,7 +2932,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 							&& context == PROCESS_UTILITY_SUBCOMMAND )
-					orig_schema = "dbo";
+					if (pstmt->stmt_len == 19)
+						orig_schema = "guest";
+					else
+						orig_schema = "dbo";
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,

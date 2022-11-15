@@ -342,6 +342,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	NameData 	default_collation;
 	const char  *guest;
 	const char	*prev_current_user;
+	int stmt_number = 0;
 
 	/* TODO: Extract options */
 
@@ -457,7 +458,11 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 18;
+			stmt_number++;
+			if(list_length(parsetree_list) == stmt_number)
+				wrapper->stmt_len = 19;
+			else
+				wrapper->stmt_len = 18;
 
 			/* do this step */
 			ProcessUtility(wrapper,
