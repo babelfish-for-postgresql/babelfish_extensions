@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Attempt to clone the engine repository based on where the workflow is being run from.
+# First, see if the user who triggered the workflow has a fork of the engine
+# repo that also contains a branch with the same name as the branch that
+# triggered the workflow. If not, see if there's a branch in the project engine
+# repo that has the same name. If neither of those is true, just use the
+# default branch in the project engine repo.
+
+# TODO: create unit tests for this script
+
+# WARNING! Use "GH" instead of "GITHUB" for variable names to avoid possible
+# conflict with github workflow environment variables.
+
+# Look for a config file and read it if it's there. Intentionally use -e
+# instead of -r so we get an error if we can't read the config file.
+CONFIG_FILE=${0}.conf
+if [ -r "$CONFIG_FILE" ]; then
+    echo "Sourcing config file $CONFIG_FILE"
+    . $CONFIG_FILE
+else
+    if [ -e "$CONFIG_FILE" ]; then
+        # Unlike the case below, if the file exists but isn't readable that is
+        # almost certainly not what the user is expecting, so treat it as an error.
+        echo "ERROR: config file $CONFIG_FILE is not readable"
+        exit 1
+    else
+        echo "WARNING: config file $CONNFIG_FILE not found; using defaults."
+    fi
+fi
+
+if [ "$1" == -n ]; then
+    DRY_RUN=1
+    echo DRY RUN MODE
+    shift
+fi
+
+GH_USER=$1
+BRANCH=$2
+
+# See if user has an engine repository with the same name and branch.
+# See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
+check_repo () {
+    echo "Checking $1"
+    wget --spider "$1" || return $?
+}
+
+BASE_URL=https://github.com/$GH_USER/postgresql_modified_for_babelfish # NO /
+BRANCH_OPTION="--branch $BRANCH"
+if check_repo "${BASE_URL}/tree/$BRANCH"; then
+    echo "Found matching branch $BRANCH at $BASE_URL, using that instead of public repo"
+else
+    # TODO: add support for checking tags in private repo
+
+    # Maybe there's a matching branch in the public repo
+    BASE_URL=
+    BASE_URL=https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish # NO /
+
+    if check_repo "${BASE_URL}/tree/$BRANCH"; then
+        echo "Using $BRANCH from project engine repo"
+    else
+        # TODO: add support for checking tags
+
+        # General default case. This is mainly meant to support back-porting.
+        # IE, BABEL_1_1_STABLE needs to download BABEL_1_1_STABLE__PG_13_5.
+        # Instead of hard-coding that into the script and messing with the
+        # script in every version, we pull it from the config file.
+        #
+        # Note that DEFAULT_BRANCH may (or may not) be set in clone_engine_repo.conf
+        echo "Did not find matching engine branch; using project default $DEFAULT_BRANCH"
+        if [ -n "$DEFAULT_BRANCH" ]; then
+            # It doesn't seem worth testing to see if the branch exists.
+            # Presumably people are configuring it correctly.
+            BRANCH_OPTION="--branch $DEFAULT_BRANCH"
+        else
+            BRANCH_OPTION=''
+        fi
+    fi
+fi
+GIT_URL=${BASE_URL}.git
+
+echo running git clone "$BRANCH_OPTION" "$GIT_URL"
+git clone $BRANCH_OPTION "$GIT_URL" && exit
+rc=$?
+echo "git clone failed with return code $rc"
+exit $rc
