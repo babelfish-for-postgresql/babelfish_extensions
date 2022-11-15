@@ -4222,6 +4222,8 @@ LANGUAGE plpgsql;
 
 ALTER FUNCTION sys.babelfish_try_cast_to_any RENAME TO babelfish_try_cast_to_any_deprecated_in_2_3_0;
 
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_cast_to_any_deprecated_in_2_3_0');
+
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
 RETURNS ANYELEMENT
 AS $BODY$ BEGIN
@@ -4234,8 +4236,6 @@ AS $BODY$ BEGIN
             -- Do nothing. Output carries NULL.
 END; $BODY$
 LANGUAGE plpgsql;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_cast_to_any_deprecated_in_2_3_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
