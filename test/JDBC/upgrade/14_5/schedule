@@ -223,9 +223,12 @@ sys-system_sql_modules-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
 BABEL-1756-dep
+BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
+BABEL-SP_SPECIAL_COLUMNS_100-dep
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_SPROC_COLUMNS-dep
+BABEL-SP_SPROC_COLUMNS_100-dep
 BABEL-3000-dep
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
@@ -292,6 +295,7 @@ BABEL-3556-before-14_6
 BABEL-3010-before-14_6
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
+BABEL-SP_OLEDB_RO_USRNAME
 BABEL-2795
 BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-3655
