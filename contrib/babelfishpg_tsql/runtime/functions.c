@@ -1288,7 +1288,7 @@ bigint_degrees(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("integer out of range")));
 
-    PG_RETURN_INT64((int64)result);
+	PG_RETURN_INT64((int64)result);
 }
 
 Datum
@@ -1310,7 +1310,7 @@ int_degrees(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("integer out of range")));
 
-    PG_RETURN_INT32((int32)result);
+	PG_RETURN_INT32((int32)result);
 }
 
 Datum
@@ -1332,7 +1332,7 @@ smallint_degrees(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("integer out of range")));
 
-    PG_RETURN_INT16((int16)result);
+	PG_RETURN_INT16((int16)result);
 }
 
 #define DatumGetInt8(X) ((int8) (X))
@@ -1360,5 +1360,5 @@ tinyint_degrees(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("integer out of range")));
 
-    PG_RETURN_INT8((int8)result);
+	PG_RETURN_INT8((int8)result);
 }
