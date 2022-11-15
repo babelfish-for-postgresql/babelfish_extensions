@@ -73,6 +73,9 @@ name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext mus
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
 text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
@@ -166,6 +169,9 @@ name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in bab
 name#!#sys#!#nspname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext"}
 name#!#sys#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}

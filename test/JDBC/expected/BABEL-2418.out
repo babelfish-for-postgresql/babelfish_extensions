@@ -18,9 +18,13 @@ go
 ~~START~~
 varchar
 master_dbo
+master_guest
 tempdb_dbo
+tempdb_guest
 msdb_dbo
+msdb_guest
 dbo
+babel_2418_db_guest
 babel_2418_schema1
 babel_2418_schema2
 ~~END~~
@@ -37,7 +41,10 @@ go
 ~~START~~
 varchar
 master_dbo
+master_guest
 tempdb_dbo
+tempdb_guest
 msdb_dbo
+msdb_guest
 ~~END~~
 
