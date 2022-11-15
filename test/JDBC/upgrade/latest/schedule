@@ -329,7 +329,6 @@ BABEL-3268
 BABEL-3513
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
-BABEL-SP_OLEDB_RO_USRNAME
 BABEL-2795
 babelfish_integrity_checker
 get_tds_id
