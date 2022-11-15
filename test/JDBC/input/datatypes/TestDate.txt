@@ -12,3 +12,10 @@ INSERT INTO DATE_dt(a) values('9999-12-31')
 INSERT INTO DATE_dt(a) values(NULL)
 SELECT * FROM DATE_dt;
 DROP TABLE DATE_dt;
+
+create table TestDate1 (a varchar(2), dt date null);
+insert into TestDate1 values ('A', '');
+select * from TestDate1;
+drop table TestDate1;
+
+select cast('' as date);

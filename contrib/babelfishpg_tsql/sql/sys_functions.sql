@@ -1018,7 +1018,7 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.date, IN enddate sys.date) RETURNS INTEGER
 AS
 $body$
 BEGIN
@@ -1389,7 +1389,7 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER AS $$
+CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate sys.date, IN enddate sys.date) RETURNS INTEGER AS $$
 DECLARE
 	result INTEGER;
 	year_diff INTEGER;

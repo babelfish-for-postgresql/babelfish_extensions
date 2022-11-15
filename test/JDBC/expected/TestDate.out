@@ -55,3 +55,22 @@ date
 ~~END~~
 
 DROP TABLE DATE_dt;
+
+create table TestDate1 (a varchar(2), dt date null);
+insert into TestDate1 values ('A', '');
+~~ROW COUNT: 1~~
+
+select * from TestDate1;
+~~START~~
+varchar#!#date
+A#!#1900-01-01
+~~END~~
+
+drop table TestDate1;
+
+select cast('' as date);
+~~START~~
+date
+1900-01-01
+~~END~~
+

@@ -43,6 +43,8 @@ PG_FUNCTION_INFO_V1(float8_mi_datetime);
 PG_FUNCTION_INFO_V1(datetime_pl_datetime);
 PG_FUNCTION_INFO_V1(datetime_mi_datetime);
 
+PG_FUNCTION_INFO_V1(date_in_tsql);
+
 void CheckDatetimeRange(const Timestamp time);
 void CheckDatetimePrecision(fsec_t fsec);
 Datum datetime_in_str(char *str);
@@ -660,4 +662,65 @@ datetime_mi_datetime(PG_FUNCTION_ARGS)
 
 	CheckDatetimeRange(result);
 	PG_RETURN_TIMESTAMP(result);
+}
+
+Datum
+date_in_tsql(PG_FUNCTION_ARGS)
+{
+	char	   *str = PG_GETARG_CSTRING(0);
+	DateADT		date;
+	fsec_t		fsec;
+	struct pg_tm tt, *tm = &tt;
+	int			tzp;
+	int			dtype;
+	int			nf;
+	int			dterr;
+	char	   *field[MAXDATEFIELDS];
+	int			ftype[MAXDATEFIELDS];
+	char		workbuf[MAXDATELEN + 1];
+
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+					field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "date");
+
+	switch (dtype)
+	{
+		case DTK_DATE:
+			break;
+
+		case DTK_EPOCH:
+			GetEpochTime(tm);
+			break;
+
+		case DTK_LATE:
+			DATE_NOEND(date);
+			PG_RETURN_DATEADT(date);
+
+		case DTK_EARLY:
+			DATE_NOBEGIN(date);
+			PG_RETURN_DATEADT(date);
+
+		default:
+			DateTimeParseError(DTERR_BAD_FORMAT, str, "date");
+			break;
+	}
+
+	/* Prevent overflow in Julian-day routines */
+	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range: \"%s\"", str)));
+
+	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	/* Now check for just-out-of-range dates */
+	if (!IS_VALID_DATE(date))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range: \"%s\"", str)));
+
+	PG_RETURN_DATEADT(date);
 }

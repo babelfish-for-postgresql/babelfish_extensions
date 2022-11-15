@@ -13,3 +13,15 @@ date
 <NULL>
 ~~END~~
 
+select * from TestDate1;
+~~START~~
+varchar#!#date
+A#!#1900-01-01
+~~END~~
+
+select cast('' as date);
+~~START~~
+date
+1900-01-01
+~~END~~
+

@@ -163,40 +163,40 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.SMALLDATETIME)
     parallel = safe
 );
 
--- smalldate vs pg_catalog.date
-CREATE FUNCTION sys.smalldatetime_eq_date(sys.SMALLDATETIME, pg_catalog.date)
+-- smalldate vs sys.DATE
+CREATE FUNCTION sys.smalldatetime_eq_date(sys.SMALLDATETIME, sys.DATE)
 RETURNS bool
 AS 'timestamp_eq_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.smalldatetime_ne_date(sys.SMALLDATETIME, pg_catalog.date)
+CREATE FUNCTION sys.smalldatetime_ne_date(sys.SMALLDATETIME, sys.DATE)
 RETURNS bool
 AS 'timestamp_ne_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.smalldatetime_lt_date(sys.SMALLDATETIME, pg_catalog.date)
+CREATE FUNCTION sys.smalldatetime_lt_date(sys.SMALLDATETIME, sys.DATE)
 RETURNS bool
 AS 'timestamp_lt_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.smalldatetime_le_date(sys.SMALLDATETIME, pg_catalog.date)
+CREATE FUNCTION sys.smalldatetime_le_date(sys.SMALLDATETIME, sys.DATE)
 RETURNS bool
 AS 'timestamp_le_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.smalldatetime_gt_date(sys.SMALLDATETIME, pg_catalog.date)
+CREATE FUNCTION sys.smalldatetime_gt_date(sys.SMALLDATETIME, sys.DATE)
 RETURNS bool
 AS 'timestamp_gt_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.smalldatetime_ge_date(sys.SMALLDATETIME, pg_catalog.date)
+CREATE FUNCTION sys.smalldatetime_ge_date(sys.SMALLDATETIME, sys.DATE)
 RETURNS bool
 AS 'timestamp_ge_date'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.= (
     LEFTARG    = sys.SMALLDATETIME,
-    RIGHTARG   = pg_catalog.date,
+    RIGHTARG   = sys.DATE,
     COMMUTATOR = =,
     NEGATOR    = <>,
     PROCEDURE  = smalldatetime_eq_date,
@@ -207,7 +207,7 @@ CREATE OPERATOR sys.= (
 
 CREATE OPERATOR sys.<> (
     LEFTARG    = sys.SMALLDATETIME,
-    RIGHTARG   = pg_catalog.date,
+    RIGHTARG   = sys.DATE,
     NEGATOR    = =,
     COMMUTATOR = <>,
     PROCEDURE  = smalldatetime_ne_date,
@@ -217,7 +217,7 @@ CREATE OPERATOR sys.<> (
 
 CREATE OPERATOR sys.< (
     LEFTARG    = sys.SMALLDATETIME,
-    RIGHTARG   = pg_catalog.date,
+    RIGHTARG   = sys.DATE,
     NEGATOR    = >=,
     COMMUTATOR = >,
     PROCEDURE  = smalldatetime_lt_date,
@@ -227,7 +227,7 @@ CREATE OPERATOR sys.< (
 
 CREATE OPERATOR sys.<= (
     LEFTARG    = sys.SMALLDATETIME,
-    RIGHTARG   = pg_catalog.date,
+    RIGHTARG   = sys.DATE,
     NEGATOR    = >,
     COMMUTATOR = >=,
     PROCEDURE  = smalldatetime_le_date,
@@ -237,7 +237,7 @@ CREATE OPERATOR sys.<= (
 
 CREATE OPERATOR sys.> (
     LEFTARG    = sys.SMALLDATETIME,
-    RIGHTARG   = pg_catalog.date,
+    RIGHTARG   = sys.DATE,
     NEGATOR    = <=,
     COMMUTATOR = <,
     PROCEDURE  = smalldatetime_gt_date,
@@ -247,7 +247,7 @@ CREATE OPERATOR sys.> (
 
 CREATE OPERATOR sys.>= (
     LEFTARG    = sys.SMALLDATETIME,
-    RIGHTARG   = pg_catalog.date,
+    RIGHTARG   = sys.DATE,
     NEGATOR    = <,
     COMMUTATOR = <=,
     PROCEDURE  = smalldatetime_ge_date,
@@ -255,39 +255,39 @@ CREATE OPERATOR sys.>= (
     JOIN       = scalargejoinsel
 );
 
--- pg_catalog.date vs smalldate
-CREATE FUNCTION sys.date_eq_smalldatetime(pg_catalog.date, sys.SMALLDATETIME)
+-- sys.DATE vs smalldate
+CREATE FUNCTION sys.date_eq_smalldatetime(sys.DATE, sys.SMALLDATETIME)
 RETURNS bool
 AS 'date_eq_timestamp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.date_ne_smalldatetime(pg_catalog.date, sys.SMALLDATETIME)
+CREATE FUNCTION sys.date_ne_smalldatetime(sys.DATE, sys.SMALLDATETIME)
 RETURNS bool
 AS 'date_ne_timestamp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.date_lt_smalldatetime(pg_catalog.date, sys.SMALLDATETIME)
+CREATE FUNCTION sys.date_lt_smalldatetime(sys.DATE, sys.SMALLDATETIME)
 RETURNS bool
 AS 'date_lt_timestamp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.date_le_smalldatetime(pg_catalog.date, sys.SMALLDATETIME)
+CREATE FUNCTION sys.date_le_smalldatetime(sys.DATE, sys.SMALLDATETIME)
 RETURNS bool
 AS 'date_le_timestamp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.date_gt_smalldatetime(pg_catalog.date, sys.SMALLDATETIME)
+CREATE FUNCTION sys.date_gt_smalldatetime(sys.DATE, sys.SMALLDATETIME)
 RETURNS bool
 AS 'date_gt_timestamp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sys.date_ge_smalldatetime(pg_catalog.date, sys.SMALLDATETIME)
+CREATE FUNCTION sys.date_ge_smalldatetime(sys.DATE, sys.SMALLDATETIME)
 RETURNS bool
 AS 'date_ge_timestamp'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.= (
-    LEFTARG    = pg_catalog.date,
+    LEFTARG    = sys.DATE,
     RIGHTARG   = sys.SMALLDATETIME,
     COMMUTATOR = =,
     NEGATOR    = <>,
@@ -298,7 +298,7 @@ CREATE OPERATOR sys.= (
 );
 
 CREATE OPERATOR sys.<> (
-    LEFTARG    = pg_catalog.date,
+    LEFTARG    = sys.DATE,
     RIGHTARG   = sys.SMALLDATETIME,
     NEGATOR    = =,
     COMMUTATOR = <>,
@@ -308,7 +308,7 @@ CREATE OPERATOR sys.<> (
 );
 
 CREATE OPERATOR sys.< (
-    LEFTARG    = pg_catalog.date,
+    LEFTARG    = sys.DATE,
     RIGHTARG   = sys.SMALLDATETIME,
     NEGATOR    = >=,
     COMMUTATOR = >,
@@ -318,7 +318,7 @@ CREATE OPERATOR sys.< (
 );
 
 CREATE OPERATOR sys.<= (
-    LEFTARG    = pg_catalog.date,
+    LEFTARG    = sys.DATE,
     RIGHTARG   = sys.SMALLDATETIME,
     NEGATOR    = >,
     COMMUTATOR = >=,
@@ -328,7 +328,7 @@ CREATE OPERATOR sys.<= (
 );
 
 CREATE OPERATOR sys.> (
-    LEFTARG    = pg_catalog.date,
+    LEFTARG    = sys.DATE,
     RIGHTARG   = sys.SMALLDATETIME,
     NEGATOR    = <=,
     COMMUTATOR = <,
@@ -338,7 +338,7 @@ CREATE OPERATOR sys.> (
 );
 
 CREATE OPERATOR sys.>= (
-    LEFTARG    = pg_catalog.date,
+    LEFTARG    = sys.DATE,
     RIGHTARG   = sys.SMALLDATETIME,
     NEGATOR    = <,
     COMMUTATOR = <=,
