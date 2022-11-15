@@ -1299,6 +1299,8 @@ smallint_degrees(PG_FUNCTION_ARGS)
 
 #define PG_INT8_MIN		(-0x7F-1)
 #define PG_INT8_MAX		(0x7F)
+#define PG_GETARG_INT8
+#define PG_RETURN_INT8(x) return Int8GetDatum(x)
 #define FLOAT8_FITS_IN_INT8(num) \
 	((num) >= (float8) PG_INT8_MIN && (num) < -((float8) PG_INT8_MIN))
 
