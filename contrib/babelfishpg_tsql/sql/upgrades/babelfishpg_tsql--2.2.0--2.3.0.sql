@@ -4220,6 +4220,8 @@ BEGIN
 END; $BODY$
 LANGUAGE plpgsql;
 
+ALTER FUNCTION sys.babelfish_try_cast_to_any RENAME TO babelfish_try_cast_to_any_deprecated_in_2_3_0;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
 RETURNS ANYELEMENT
 AS $BODY$ BEGIN
