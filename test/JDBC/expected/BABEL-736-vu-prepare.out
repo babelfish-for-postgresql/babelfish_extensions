@@ -1,39 +1,31 @@
 CREATE TABLE BABEL_736_vu_prepare_t_1(
 		a int,
 		b float,
-		c int NOT NULL,
-		e float NOT NULL UNIQUE 
 );
 GO
 
 
-INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (NULL, 10.1234, NULL, 20);
-GO
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "c" of relation "babel_736_vu_prepare_t_1" violates not-null constraint)~~
-
-INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (10.1234, 101.123, 2,80);
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (NULL, 10.1234);
 GO
 ~~ROW COUNT: 1~~
 
-INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (1, 20, 20,80);
-GO
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "babel_736_vu_prepare_t_1_e_key")~~
-
-INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (10.1234, 101, 780, 80990);
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (1990, NULL);
 GO
 ~~ROW COUNT: 1~~
 
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (201, 20.1);
+GO
+~~ROW COUNT: 1~~
 
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (1310.1234, 0.101);
+GO
+~~ROW COUNT: 1~~
 
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (3.2, 1.1);
+GO
+~~ROW COUNT: 1~~
 
-
-
-
-
-
-
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (-1, -1.1);
+GO
+~~ROW COUNT: 1~~
 
