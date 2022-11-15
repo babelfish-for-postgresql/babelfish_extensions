@@ -29,6 +29,14 @@ db1#!#8#!#<NULL>
 ~~END~~
 
 
+select * from sys.sp_databases_view where database_name='DB1';
+go
+~~START~~
+varchar#!#int#!#varchar
+db1#!#8#!#<NULL>
+~~END~~
+
+
 drop table t_spdatabases;
 go
 use master;
