@@ -808,6 +808,10 @@ RETURNS ANYELEMENT
 AS $BODY$ BEGIN
     EXECUTE pg_catalog.format('SELECT CAST(%L AS %s)', arg, format_type(pg_typeof(output), typmod)) INTO output;
     EXCEPTION
+        EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('cannot cast type %s to %s.', pg_typeof(arg),
+                                      pg_typeof(output));
         WHEN OTHERS THEN
             -- Do nothing. Output carries NULL.
 END; $BODY$
