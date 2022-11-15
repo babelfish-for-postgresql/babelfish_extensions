@@ -76,6 +76,10 @@ CALL sys.babelfish_drop_deprecated_object('FUNCTION', 'sys', 'get_babel_server_c
 ALTER PROCEDURE sys.init_server_collation_oid() RENAME TO init_server_collation_oid_deprecated_in_2_3_0;
 CALL sys.babelfish_drop_deprecated_object('PROCEDURE', 'sys', 'init_server_collation_oid_deprecated_in_2_3_0');
 
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'description');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'comment_syscurconfigs');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'comment_sysconfigures');
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'value');
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'minimum');
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'maximum');
@@ -2640,11 +2644,6 @@ CALL sys.babelfish_update_collation_to_default('sys', 'extended_properties', 'cl
 CALL sys.babelfish_update_collation_to_default('sys', 'extended_properties', 'name');
 
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_namespace_ext', 'orig_name');
-
-CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'name');
-CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'description');
-CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'comment_syscurconfigs');
-CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'comment_sysconfigures');
 
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_login_ext', 'default_database_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_login_ext', 'default_language_name');
