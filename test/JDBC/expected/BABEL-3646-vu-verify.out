@@ -636,36 +636,6 @@ varchar
 DROP FUNCTION BABEL_3646_vu_prepare_f20()
 GO
 
-SELECT * FROM BABEL_3646_vu_prepare_v21
-GO
-~~START~~
-date
-1990-01-01
-~~END~~
-
-DROP VIEW BABEL_3646_vu_prepare_v21
-GO
-
-EXEC BABEL_3646_vu_prepare_p21
-GO
-~~START~~
-date
-1990-01-01
-~~END~~
-
-DROP PROCEDURE BABEL_3646_vu_prepare_p21
-GO
-
-SELECT BABEL_3646_vu_prepare_f21()
-GO
-~~START~~
-date
-1990-01-01
-~~END~~
-
-DROP FUNCTION BABEL_3646_vu_prepare_f21()
-GO
-
 SELECT * FROM BABEL_3646_vu_prepare_v22
 GO
 ~~START~~
@@ -697,36 +667,6 @@ time
 ~~ERROR (Message: cannot cast type date to time without time zone.)~~
 
 DROP FUNCTION BABEL_3646_vu_prepare_f22()
-GO
-
-SELECT * FROM BABEL_3646_vu_prepare_v23
-GO
-~~START~~
-time
-00:00:00.0000000
-~~END~~
-
-DROP VIEW BABEL_3646_vu_prepare_v23
-GO
-
-EXEC BABEL_3646_vu_prepare_p23
-GO
-~~START~~
-time
-00:00:00.0000000
-~~END~~
-
-DROP PROCEDURE BABEL_3646_vu_prepare_p23
-GO
-
-SELECT BABEL_3646_vu_prepare_f23()
-GO
-~~START~~
-time
-00:00:00.0000000
-~~END~~
-
-DROP FUNCTION BABEL_3646_vu_prepare_f23()
 GO
 
 SELECT * FROM BABEL_3646_vu_prepare_v24

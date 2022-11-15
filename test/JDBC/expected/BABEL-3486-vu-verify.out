@@ -3180,3 +3180,63 @@ sql_variant
 
 DROP FUNCTION BABEL_3486_vu_prepare_f116()
 GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v117
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v117
+GO
+
+EXEC BABEL_3486_vu_prepare_p117
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p117
+GO
+
+SELECT BABEL_3486_vu_prepare_f117()
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f117()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v118
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v118
+GO
+
+EXEC BABEL_3486_vu_prepare_p118
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p118
+GO
+
+SELECT BABEL_3486_vu_prepare_f118()
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f118()
+GO
