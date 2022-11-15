@@ -939,3 +939,78 @@ TEST_F(MSSQL_Metadata, SQLTables_Views) {
     EXPECT_TRUE(value.second) << value.first << " was expected but not found";
   }
 }
+
+//test SQLTable to retrieve a list
+TEST_F(MSSQL_Metadata, SQLTables_List) {
+	 
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
+  RETCODE rcode = -1;
+
+  const string testTable {"meta_table"};
+
+  // A few 'random' columns for a test table. The columns are not relevant for this test.
+  const vector<pair<string,string>> columns = {
+    {"id", "INT"}, 
+    {"info", "VARCHAR(256)"},
+    {"decivar", "NUMERIC(38,16)"}
+  };
+
+  vector<string> columnNames;
+  for (auto column : columns) {
+      columnNames.push_back(column.first);
+  }
+
+  // View definitions used in this test. 
+  // The vector pairs contain a view name and the select statement used to create the view.
+  const vector<pair<string,string>> testViews = {
+    {"meta_view1", SelectStatement(testTable, columnNames)}, 
+    {"meta_view2", SelectStatement(testTable, {"*"})}
+  };
+  // Table definitions used in this test
+  const vector<string> testTables = {
+    {"meta_table1"}, 
+    {"meta_table2"},
+    {"meta_table3"}
+  };
+
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
+
+  // Normally CreateTable and CreateView functions of DatabaseObjects try to drop the object before creating.
+  // Here we need to drop views explicitly, because the CreateTable below would attempt to drop the table first.
+  // If the views still existed, the drop table would fail in Postgres. It would work ok with SQL Server.
+  for (auto view : testViews) {
+      ASSERT_NO_FATAL_FAILURE(dbObjects.DropObject("VIEW",view.first));
+  }
+
+  ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(testTable, columns));
+  for (auto view : testViews) {
+      ASSERT_NO_FATAL_FAILURE(dbObjects.CreateView(view.first, view.second));
+  }
+
+  for (auto table : testTables) {
+    ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(table, columns));
+  }
+
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect(true));
+
+  rcode = SQLTables(odbcHandler.GetStatementHandle(),
+	                  NULL, 0, NULL, 0, NULL, 0,  (SQLCHAR*) "'VIEW','TABLE'", SQL_NTS);
+  ASSERT_EQ(rcode, SQL_SUCCESS) << odbcHandler.GetErrorMessage(SQL_HANDLE_STMT, rcode);
+
+  // In general, we don't know what views are going to exist. 
+  // But we should at least be able to verify that views we created were on the list
+  map<string, bool> values;
+  for (auto view : testViews) {
+      values[view.first] = false;
+  }
+  for (auto table : testTables) {
+    values[table] = false;
+  }
+
+  // Table/View information is returned in column 3
+  ASSERT_NO_FATAL_FAILURE(FetchAndMatchValues(odbcHandler, values, 3));
+
+  for (auto value : values) {
+    EXPECT_TRUE(value.second) << value.first << " was expected but not found";
+  }
+}
