@@ -77,11 +77,10 @@ master#!#sch1#!#tbl_pk_pkey#!#master#!#sch1#!#tbl_pk#!#PRIMARY KEY#!#NO#!#NO
 ~~END~~
 
 
-
 -- verify from sys.objects
 -- Note: sys.objects not showing unique constraints currently
-select constraint_name, constraint_schema, table_name, constraint_type from information_schema.table_constraints order by constraint_name, constraint_schema;
-select name, schema_name(schema_id) as schname, object_name(parent_object_id),type_desc from sys.objects where type in ('C','F','PK','UQ') order by name, schname;
+select constraint_name, constraint_schema, table_name, constraint_type from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk') order by constraint_name, constraint_schema;
+select name, schema_name(schema_id) as schname, object_name(parent_object_id),type_desc from sys.objects where type in ('C','F','PK','UQ') and object_name(parent_object_id) in ('tbl_pk','tbl_fk') order by name, schname;
 go
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#varchar

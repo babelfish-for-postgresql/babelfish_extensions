@@ -24,9 +24,8 @@ GO
 
 --Dep Proc
 CREATE PROCEDURE isc_columns_vu_prepare_p1 AS
-SELECT COUNT(*) FROM information_schema.columns WHERE TABLE_NAME LIKE '%isc_columns_vu_prepare%' ORDER BY DATA_TYPE,COLUMN_NAME
+SELECT COUNT(*) FROM information_schema.columns WHERE TABLE_NAME LIKE '%isc_columns_vu_prepare%'
 SELECT * FROM information_schema.columns WHERE TABLE_NAME LIKE '%isc_columns_VU_PREPARE%' ORDER BY DATA_TYPE,COLUMN_NAME
-SELECT * FROM information_schema.columns WHERE TABLE_NAME LIKE '%isc_columns_udt%' ORDER BY DATA_TYPE,COLUMN_NAME
 GO
 
 -- Dep Funcs

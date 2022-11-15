@@ -44,8 +44,8 @@ go
 
 
 CREATE PROCEDURE isc_tbl_constraints_p1 AS
-select * from information_schema.table_constraints where table_name = 'tbl_pk'
-select * from information_schema.table_constraints where table_name = 'TBL_PK'
+select * from information_schema.table_constraints where table_name = 'tbl_pk' order by constraint_schema,constraint_name, table_name;
+select * from information_schema.table_constraints where table_name = 'TBL_PK' order by constraint_schema,constraint_name, table_name;
 GO
 
 

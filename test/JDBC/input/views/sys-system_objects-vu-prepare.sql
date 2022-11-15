@@ -20,5 +20,5 @@ end
 GO
 
 CREATE VIEW sys_system_objects_vu_prepare_v1 AS
-    SELECT name,type,type_desc FROM sys.system_objects WHERE name = 'KEY_CONSTRAINTS'
+    SELECT name,type,type_desc FROM sys.system_objects WHERE name = 'key_constraints'
 GO
