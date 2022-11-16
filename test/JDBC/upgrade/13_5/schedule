@@ -230,7 +230,6 @@ sys-sp_databases-dep
 sys-syscolumns-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
-sys-proc_param_helper-dep
 BABEL-SPCOLUMNS-dep
 BABEL-3000-dep
 BABEL-3347-before-14_6

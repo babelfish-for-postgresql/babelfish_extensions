@@ -17,6 +17,7 @@ sp_helprolemember_role1#!#sp_helprolemember_role2#!#1
 ~~END~~
 
 
+-- case insensitivity check
 EXEC test_sp_helprolemember_proc "SP_helprolemember_RoLe1";
 GO
 ~~ROW COUNT: 1~~
