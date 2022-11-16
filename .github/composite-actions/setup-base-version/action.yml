@@ -130,6 +130,7 @@ runs:
         cd ~
         sudo apt-get install odbc-postgresql
         pip3 install pyodbc pymssql
+        cat /etc/odbcinst.ini
       shell: bash
 
     - name: Run dependency check
