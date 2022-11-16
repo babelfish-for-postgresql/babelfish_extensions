@@ -64,4 +64,5 @@ jobs:
             fileGenerator_databaseName=master \
             fileGenerator_user=jdbc_user \
             fileGenerator_password=12345678 \
+            LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/odbc/ \
             pytest -s --tb=long -q .
