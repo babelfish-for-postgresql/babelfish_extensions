@@ -17,7 +17,7 @@ master#!#sch1#!#tbl_pk_pkey#!#master#!#sch1#!#tbl_pk#!#PRIMARY KEY#!#NO#!#NO
 
 
 -- should return 10
-select count(*) from information_schema.table_constraints;
+select count(*) from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk');
 go
 ~~START~~
 int
