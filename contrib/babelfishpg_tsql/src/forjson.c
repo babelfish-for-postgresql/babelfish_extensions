@@ -59,9 +59,6 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 	const char  *sep="";
 	bool 		isnull;
 
-	// To check if query output table has columns with datatypes that are currently not supported in FOR JSON
-	tsql_unsupported_datatype_check();
-
 	appendStringInfoChar(result,'{');
 	for (i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
@@ -125,6 +122,10 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 		SPI_finish();
 		return NULL;
 	}
+
+	// To check if query output table has columns with datatypes that are currently not supported in FOR JSON
+	tsql_unsupported_datatype_check();
+
 	/* If root_name is present then WITHOUT_ARRAY_WRAPPER will be FALSE */
 	if(root_name)
 		appendStringInfo(result, "{\"%s\":[",root_name);
@@ -160,7 +161,6 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 	return result;
 }
 
-
 /*
  * For now report an ERROR if any attribute is binary, datetime and bit datatypes since they are not implemented yet.
  * Also Exact numeric's datatype money or smallmoney is not supported.
@@ -170,12 +170,13 @@ tsql_unsupported_datatype_check(void)
 {
 	for (int i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
-		Oid collation_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
+		Oid datatype_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
+
 		char* typename = SPI_gettype(SPI_tuptable->tupdesc, i);
 
 		Oid tsql_datatype_oid = lookup_tsql_datatype_oid(typename);
 
-		if (tsql_datatype_oid == collation_oid)
+		if (tsql_datatype_oid == datatype_oid)
 		{
 			if (strcmp(typename, "binary") == 0 ||
 				strcmp(typename, "varbinary") == 0 ||
