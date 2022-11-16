@@ -31,7 +31,6 @@ Could not find tests for function sys.openjson_object
 Could not find tests for function sys.openjson_simple
 Could not find tests for function sys.openjson_with
 Could not find tests for function sys.parsename
-Could not find tests for function sys.proc_param_helper
 Could not find tests for function sys.role_id
 Could not find tests for function sys.sp_columns_100_internal
 Could not find tests for function sys.sp_columns_managed_internal
@@ -158,7 +157,6 @@ Could not find upgrade tests for function sys.openjson_with
 Could not find upgrade tests for function sys.options
 Could not find upgrade tests for function sys.parsename
 Could not find upgrade tests for function sys.pgerror
-Could not find upgrade tests for function sys.proc_param_helper
 Could not find upgrade tests for function sys.replace
 Could not find upgrade tests for function sys.role_id
 Could not find upgrade tests for function sys.servername

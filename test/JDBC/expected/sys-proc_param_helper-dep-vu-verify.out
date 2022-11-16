@@ -1,0 +1,15 @@
+SELECT * FROM sys_proc_param_helper_func() WHERE name = '@sys_proc_param_helper_proc1_firstparam';
+GO
+~~START~~
+varchar#!#int#!#int#!#smallint#!#int#!#smallint#!#int#!#int#!#varchar
+@sys_proc_param_helper_proc1_firstparam#!#1#!#1#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+SELECT * FROM sys_proc_param_helper_func() WHERE name = '@SYS_pRoC_PAraM_helper_PROC1_FiRsTPAram';
+GO
+~~START~~
+varchar#!#int#!#int#!#smallint#!#int#!#smallint#!#int#!#int#!#varchar
+@sys_proc_param_helper_proc1_firstparam#!#1#!#1#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
