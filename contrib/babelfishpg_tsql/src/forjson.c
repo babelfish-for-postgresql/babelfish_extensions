@@ -173,9 +173,9 @@ tsql_unsupported_datatype_check(void)
 	for (int i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
 		/* 
-		 * This part of code is a workaround to compare the datatype oid of the columns
-		 * with the tsql_datatype_oid and then throw feature not supported error based 
-		 * on the typename.
+		 * This part of code is a workaround for is_tsql_x_datatype() which does not work as expected, 
+		 * it compares the datatype oid of the columns with the tsql_datatype_oid and
+		 * then throw feature not supported error based on the typename.
 		 */
 		Oid nspoid;
 		Oid tsql_datatype_oid;
