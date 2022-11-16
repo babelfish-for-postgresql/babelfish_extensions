@@ -1757,20 +1757,27 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 
 	type_def = defGetTypeName(as_type);
 	type_names = type_def->names;
+	List* new_type_names; 
+
 	switch (list_length(type_names))
 	{
 		case 2:
-			strVal(linitial(type_names)) = get_physical_schema_name(get_cur_db_name(),strVal(linitial(type_names)));
+			new_type_names = list_make2_impl(as_type->type, type_names->elements[0], type_names->elements[1]);
+			strVal(linitial(new_type_names)) = get_physical_schema_name(get_cur_db_name(),strVal(linitial(type_names)));
 			break;
 		case 3:
-			strVal(linitial(type_names)) = get_physical_schema_name(strVal(linitial(type_names)),strVal(lsecond(type_names)));
-			lsecond(type_names) = list_nth_cell(type_names,2);
-			list_delete_last(type_names);
+			/* Changing three part name of data type to physcial schema name */
+			new_type_names = list_make2_impl(as_type->type, type_names->elements[1], type_names->elements[2]);
+			strVal(linitial(new_type_names)) = get_physical_schema_name(strVal(linitial(type_names)),strVal(lsecond(type_names)));
+			type_def->names = new_type_names;
 			break;
 	}
+
 	*newtypid = typenameTypeId(pstate, type_def);
 	typ = typenameType(pstate, type_def, &typmod_p);
 	typname = typeTypeName(typ);
+	type_def->names = type_names;
+	if(list_length(type_names)>1) list_free(new_type_names);
 
 	aclresult = pg_type_aclcheck(*newtypid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
@@ -1782,6 +1789,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		typmod_p = type_def->typemod;
 
 	ReleaseSysCache(typ);
+	base_type = getBaseType(*newtypid);
 
 	if (tsqlSeqTypOid != InvalidOid)
 	{
@@ -1836,7 +1844,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 			}
 		}
 	}
-	else if ((*newtypid == NUMERICOID) || (getBaseType(*newtypid) == NUMERICOID))
+	else if ((*newtypid == NUMERICOID) || (base_type == NUMERICOID))
 	{
 		/*
 		 * Identity column drops the typmod upon sequence creation
@@ -1866,16 +1874,16 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 						 errmsg("sequence type must have precision 18 or less")));
 		}
 
-		*newtypid = INT8OID;
+		base_type = INT8OID;
 		ereport(WARNING,
 				(errmsg("NUMERIC or DECIMAL type is cast to BIGINT")));
 	}
 
-	base_type = getBaseType(*newtypid);
-	if( base_type!=INT2OID ||
-		base_type!=INT4OID ||
-		base_type!=INT8OID) *newtypid = base_type;
-
+	/*
+	 * To add support for User-Defined Data types for sequences, data type
+	 * of sequence is changed to its basetype
+	*/
+	*newtypid = base_type;
 }
 
 static Oid
