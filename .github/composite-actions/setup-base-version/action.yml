@@ -145,6 +145,7 @@ runs:
         fileGenerator_databaseName=jdbc_testdb \
         fileGenerator_user=jdbc_user \
         fileGenerator_password=12345678 \
+        LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/odbc/psqlodbcw.so \
         python3 upgrade_validation.py
       shell: bash
 
