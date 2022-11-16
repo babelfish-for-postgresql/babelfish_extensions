@@ -987,6 +987,18 @@ END;
 $BODY$
 LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
 
+create or replace function sys.atn2(in x double precision, in y double precision) returns double precision
+AS
+$BODY$
+DECLARE
+	res double precision;
+BEGIN
+	res = atan2(x, y);
+	return res;
+END;
+$BODY$
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg anyelement) RETURNS INTEGER
 AS
 $body$
