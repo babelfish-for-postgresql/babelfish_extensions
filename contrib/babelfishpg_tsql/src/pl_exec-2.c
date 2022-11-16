@@ -1253,11 +1253,14 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	char *old_db_name = get_cur_db_name();
 	char *cur_db_name = NULL;
 	int save_nestlevel = pltsql_new_guc_nest_level();
+	bool old_parseonly = pltsql_parseonly;
+	bool old_explain_only = pltsql_explain_only;
+	bool old_explain_analyze = pltsql_explain_analyze;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
 	{
-                /*
+        /*
 		* First we evaluate the string expression. Its result is the
 		* querystring we have to execute.
 		*/
@@ -1285,21 +1288,20 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		/* Pass the control the inline handler */
 		pltsql_inline_handler(fcinfo);
 
-		cur_db_name = get_cur_db_name();
-		if(strcmp(cur_db_name, old_db_name) != 0)
-			set_session_properties(old_db_name);
-		pltsql_revert_guc(save_nestlevel);
-		
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
+		/* Restore past settings */
 		cur_db_name = get_cur_db_name();
 		if(strcmp(cur_db_name, old_db_name) != 0)
-				set_session_properties(old_db_name);
+			set_session_properties(old_db_name);
+
+		pltsql_parseonly = old_parseonly;
+		pltsql_explain_only = old_explain_only;
+		pltsql_explain_analyze = old_explain_analyze;
 		pltsql_revert_guc(save_nestlevel);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -1950,19 +1952,30 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			}
 
 			int save_nestlevel = pltsql_new_guc_nest_level();
+			bool old_parseonly = pltsql_parseonly;
+			bool old_explain_only = pltsql_explain_only;
+			bool old_explain_analyze = pltsql_explain_analyze;
 
-			if (strcmp(batchstr, "") != 0) /* check edge cases for sp_executesql */
+			PG_TRY();
 			{
-				ret = execute_batch(estate, batchstr, args, stmt->params);
-			}
+				if (strcmp(batchstr, "") != 0) /* check edge cases for sp_executesql */
+				{
+					ret = execute_batch(estate, batchstr, args, stmt->params);
+				}
 
-			if (stmt->return_code_dno != -1)
+				if (stmt->return_code_dno != -1)
+				{
+					exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
+				}
+			}
+			PG_FINALLY();
 			{
-				exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
+				pltsql_revert_guc(save_nestlevel);
+				pltsql_parseonly = old_parseonly;
+				pltsql_explain_only = old_explain_only;
+				pltsql_explain_analyze = old_explain_analyze;
 			}
-
-			pltsql_revert_guc(save_nestlevel);
-
+			PG_END_TRY();
 			break;
 		}
 		case PLTSQL_EXEC_SP_EXECUTE:

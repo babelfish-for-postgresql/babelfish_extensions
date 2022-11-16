@@ -22,6 +22,9 @@ SELECT CONCAT_NULL_YIELDS_NULL FROM sys.dm_exec_sessions;
 GO
 
 
+-- Errors in EXEC / sp_execute sql. Ensure stack level is removed
+
+
 -- FMTONLY 
 CREATE TABLE t_3092_fmtonly(a INT);
 GO
@@ -63,6 +66,8 @@ DECLARE @IMPLICIT_TRANSACTIONS VARCHAR(3) = 'OFF';
 IF ( (2 & @@OPTIONS) = 2 ) SET @IMPLICIT_TRANSACTIONS = 'ON';  
 SELECT @IMPLICIT_TRANSACTIONS AS IMPLICIT_TRANSACTIONS;
 GO
+
+-- Do this with transacton blocks?
 
 
 -- XACT_ABORT
@@ -197,6 +202,8 @@ GO
 DROP TABLE table_3092_1;
 DROP TABLE table_3092_2;
 GO
+
+-- Add in changing PLTSQL settings. Make sure no regression. SET implementation quip doc goes over what should happen here from an interop perspective
 
 -- TRANSACTION ISOLATION LEVEL
 -- sp_executesql N'SET TRANSACTION ISOLATION LEVEL read uncommitted; SELECT transaction_isolation_level FROM sys.dm_exec_sessions;';

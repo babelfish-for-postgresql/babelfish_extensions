@@ -81,6 +81,7 @@ extern "C"
 	extern bool enable_hint_mapping;
 
 	extern int escape_hatch_showplan_all;
+	bool pltsql_parseonly = false;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -234,8 +235,6 @@ static void clear_tables_info();
 
 static std::string validate_and_stringify_hints();
 static int find_hint_offset(const char * queryTxt);
-
-static bool pltsql_parseonly = false;
 
 static void
 breakHere()
