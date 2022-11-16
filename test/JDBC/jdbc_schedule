@@ -10,6 +10,17 @@
 
 all
 
+# Disable pg_hint_plan related tests
+ignore#!#BABEL-3291
+ignore#!#BABEL-3292
+ignore#!#BABEL-3293
+ignore#!#BABEL-3294
+ignore#!#BABEL-3295
+ignore#!#BABEL-3512
+ignore#!#BABEL-3592
+ignore#!#BABEL-3513-vu-prepare
+ignore#!#BABEL-3513-vu-verify
+
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
