@@ -949,7 +949,6 @@ Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
 Type sys."bigint"
-Type sys."float"
 Type sys."int"
 Type sys."real"
 Type sys.bbf_binary
