@@ -40,11 +40,17 @@ CREATE TABLE BABEL_3691_vu_prepare_t7(MyColumn int)
 GO
 
 -- Rowversion and timestamp
-CREATE TABLE BABEL_3691_vu_prepare_t8 (myKey int, myValue int,RV rowversion);
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 GO
 
+CREATE TABLE BABEL_3691_vu_prepare_t8 (myKey int, myValue int,RV rowversion);
+GO
+INSERT INTO BABEL_3691_vu_prepare_t8 (myKey, myValue) VALUES (1, 0);
+GO
 
 CREATE TABLE BABEL_3691_vu_prepare_t9 (myKey int, myValue int, timestamp);
+GO
+INSERT INTO BABEL_3691_vu_prepare_t9 (myKey, myValue) VALUES (1, 0);
 GO
 
 
@@ -142,5 +148,18 @@ GO
 CREATE VIEW BABEL_3691_vu_prepare_view15 AS
 SELECT *
 FROM BABEL_3691_vu_prepare_t7
+FOR JSON PATH;
+GO
+
+-- Rowversion and timestamp
+CREATE VIEW BABEL_3691_vu_prepare_view16 AS
+SELECT *
+FROM BABEL_3691_vu_prepare_t8
+FOR JSON PATH;
+GO
+
+CREATE VIEW BABEL_3691_vu_prepare_view17 AS
+SELECT *
+FROM BABEL_3691_vu_prepare_t9
 FOR JSON PATH;
 GO

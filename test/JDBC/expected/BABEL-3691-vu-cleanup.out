@@ -26,6 +26,15 @@ GO
 DROP TABLE BABEL_3691_vu_prepare_t7
 GO
 
+-- Rowversion and timestamp
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
+DROP TABLE BABEL_3691_vu_prepare_t8
+GO
+
+DROP TABLE BABEL_3691_vu_prepare_t9
+GO
 
 -- DIFFERENT CASES TO CHECK DATATYPES
 -- Exact Numerics
@@ -78,4 +87,11 @@ GO
 
 -- Return null string
 DROP VIEW BABEL_3691_vu_prepare_view15
+GO
+
+-- Rowversion and timestamp
+DROP VIEW BABEL_3691_vu_prepare_view16
+GO
+
+DROP VIEW BABEL_3691_vu_prepare_view17
 GO

@@ -52,19 +52,21 @@ CREATE TABLE BABEL_3691_vu_prepare_t7(MyColumn int)
 GO
 
 -- Rowversion and timestamp
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
 CREATE TABLE BABEL_3691_vu_prepare_t8 (myKey int, myValue int,RV rowversion);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ROWVERSION datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
-
+INSERT INTO BABEL_3691_vu_prepare_t8 (myKey, myValue) VALUES (1, 0);
+GO
+~~ROW COUNT: 1~~
 
 
 CREATE TABLE BABEL_3691_vu_prepare_t9 (myKey int, myValue int, timestamp);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+INSERT INTO BABEL_3691_vu_prepare_t9 (myKey, myValue) VALUES (1, 0);
+GO
+~~ROW COUNT: 1~~
 
 
 
@@ -162,5 +164,18 @@ GO
 CREATE VIEW BABEL_3691_vu_prepare_view15 AS
 SELECT *
 FROM BABEL_3691_vu_prepare_t7
+FOR JSON PATH;
+GO
+
+-- Rowversion and timestamp
+CREATE VIEW BABEL_3691_vu_prepare_view16 AS
+SELECT *
+FROM BABEL_3691_vu_prepare_t8
+FOR JSON PATH;
+GO
+
+CREATE VIEW BABEL_3691_vu_prepare_view17 AS
+SELECT *
+FROM BABEL_3691_vu_prepare_t9
 FOR JSON PATH;
 GO

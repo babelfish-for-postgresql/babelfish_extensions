@@ -116,3 +116,20 @@ nvarchar
 <NULL>
 ~~END~~
 
+
+-- Rowversion and timestamp
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+SELECT * FROM BABEL_3691_vu_prepare_view16
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: binary types are not supported with FOR JSON)~~
+
+
+SELECT * FROM BABEL_3691_vu_prepare_view17
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: binary types are not supported with FOR JSON)~~
+
