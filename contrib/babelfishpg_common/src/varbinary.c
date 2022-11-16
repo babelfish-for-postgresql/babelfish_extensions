@@ -16,6 +16,7 @@
 #include "access/hash.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "common/hex.h"
 #include "common/int.h"
 #include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
@@ -211,11 +212,12 @@ varbinaryout(PG_FUNCTION_ARGS)
 
 	if (bytea_output == BYTEA_OUTPUT_HEX)
 	{
+		uint64		dstlen = pg_hex_enc_len(VARSIZE_ANY_EXHDR(vlena));
 		/* Print hex format */
 		rp = result = palloc(VARSIZE_ANY_EXHDR(vlena) * 2 + 2 + 1);
 		*rp++ = '0';
 		*rp++ = 'x';
-		rp += hex_encode(VARDATA_ANY(vlena), VARSIZE_ANY_EXHDR(vlena), rp);
+		rp += pg_hex_encode(VARDATA_ANY(vlena), VARSIZE_ANY_EXHDR(vlena), rp, dstlen);
 	}
 	else if (bytea_output == BYTEA_OUTPUT_ESCAPE)
 	{
