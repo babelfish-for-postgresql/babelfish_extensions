@@ -16,6 +16,8 @@
 #include "utils/builtins.h"
 #include "utils/json.h"
 #include "backend_parser/gram-tsql-prologue.y.h"
+#include "utils/syscache.h"
+#include "catalog/pg_type.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
 								bool without_array_wrapper, const char *root_name);
@@ -170,11 +172,22 @@ tsql_unsupported_datatype_check(void)
 {
 	for (int i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
+		/* 
+		 * This part of code is a workaround to compare the datatype oid of the columns
+		 * with the tsql_datatype_oid and then throw feature not supported error based 
+		 * on the typename.
+		 */
+		Oid nspoid;
+		Oid tsql_datatype_oid;
+
 		Oid datatype_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
 
 		char* typename = SPI_gettype(SPI_tuptable->tupdesc, i);
 
-		Oid tsql_datatype_oid = lookup_tsql_datatype_oid(typename);
+		nspoid = get_namespace_oid("sys", true);
+		Assert(nspoid != InvalidOid);
+
+		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
 
 		if (tsql_datatype_oid == datatype_oid)
 		{
