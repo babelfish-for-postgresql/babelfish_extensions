@@ -1,5 +1,5 @@
 DROP PROCEDURE sys_proc_param_helper_proc1
 GO
 
-DROP FUNCTION sys_proc_param_helper_func;
+DROP PROCEDURE sys_proc_param_helper_proc;
 GO

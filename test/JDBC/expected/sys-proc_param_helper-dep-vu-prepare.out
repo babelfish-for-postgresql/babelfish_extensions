@@ -1,16 +1,8 @@
-CREATE FUNCTION sys_proc_param_helper_func() RETURNS TABLE
+CREATE PROCEDURE sys_proc_param_helper_proc @rolename AS sys.SYSNAME
 AS
-RETURN
-(
-    select name,  (CASE WHEN (id IS NULL) THEN 0 ELSE 1 END) as id,
-    (CASE WHEN (xtype IS NULL) THEN 0 ELSE 1 END) as xtype,
-    colid,
-    collationid,
-    prec,
-    scale,
-    isoutparam,
-    collation from proc_param_helper()
-);
+BEGIN
+    SELECT count(*) FROM proc_param_helper() WHERE NAME = @rolename
+END
 GO
 
 -- Setup some procedures
