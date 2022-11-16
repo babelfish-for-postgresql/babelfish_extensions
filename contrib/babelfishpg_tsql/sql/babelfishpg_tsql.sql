@@ -1185,7 +1185,7 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_pkeys TO PUBLIC;
 
-CREATE VIEW sys.sp_statistics_view AS
+CREATE OR REPLACE VIEW sys.sp_statistics_view AS
 SELECT
 CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(t3."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
@@ -1221,7 +1221,7 @@ WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
 ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
 END AS INDEX_NAME,
 CASE
-WHEN t7.starelid > 0 THEN CAST(0 AS smallint)
+WHEN t1.oid > 0 THEN CAST(0 AS smallint)
 ELSE
 	CASE
 	WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
@@ -1231,7 +1231,7 @@ END AS TYPE,
 CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
 CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST('A' AS sys.varchar(1)) AS COLLATION,
-CAST(t7.stadistinct AS int) AS CARDINALITY,
+CAST(t7.n_distinct AS int) AS CARDINALITY,
 CAST(0 AS int) AS PAGES, --not supported
 CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
@@ -1240,7 +1240,7 @@ FROM pg_catalog.pg_class t1
     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" AND s1.name = t4."TABLE_SCHEMA")
 	JOIN (pg_catalog.pg_index t5 JOIN
 		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
-	LEFT JOIN pg_catalog.pg_statistic t7 ON t1.oid = t7.starelid
+	LEFT JOIN pg_catalog.pg_stats t7 ON t1.relname = t7.tablename
 	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
