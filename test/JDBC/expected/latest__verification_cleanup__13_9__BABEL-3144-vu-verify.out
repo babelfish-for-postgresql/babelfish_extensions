@@ -1,0 +1,278 @@
+-- throws an error
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t1
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type bigint.)~~
+
+
+SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t1
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type int.)~~
+
+
+-- empty table return value should be NULL
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t2
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+
+SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t2
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT SUM( sumsmallint ) AS sum_smallintint FROM babel_3144_vu_prepare_t2
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT SUM( sumtinyint ) AS sum_tinyint FROM babel_3144_vu_prepare_t2
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t3
+GO
+~~START~~
+bigint
+18
+~~END~~
+
+
+SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t3
+GO
+~~START~~
+int
+12
+~~END~~
+
+
+SELECT SUM( sumsmallint ) AS sum_smallintint FROM babel_3144_vu_prepare_t3
+GO
+~~START~~
+int
+12
+~~END~~
+
+
+SELECT SUM( sumtinyint ) AS sum_tinyint FROM babel_3144_vu_prepare_t3
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+SELECT 
+	cast(pg_typeof( SUM( sumbigint ) ) as varchar(48) )  as sum_bigint 
+	, cast(pg_typeof( SUM( sumint ) ) as varchar(48) )  as sum_int 
+	, cast(pg_typeof( SUM( sumsmallint ) ) as varchar(48) )  as sum_smallint 
+	, cast(pg_typeof( SUM( sumtinyint ) ) as varchar(48) )  as sum_tinyint 
+FROM babel_3144_vu_prepare_t3
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+bigint#!#integer#!#integer#!#integer
+~~END~~
+
+
+SELECT babel_3144_vu_prepare_f1()
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+
+SELECT babel_3144_vu_prepare_f2()
+GO
+~~START~~
+numeric
+1
+~~END~~
+
+
+EXEC babel_3144_vu_prepare_p1
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+-- throws an error
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t5
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type bigint.)~~
+
+
+SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t5
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type int.)~~
+
+
+--GROUP BY CLAUSE
+SELECT col1int,SUM(col2int) FROM babel_3144_vu_prepare_t6 GROUP BY col1int
+GO
+~~START~~
+int#!#int
+2#!#400
+1#!#600
+~~END~~
+
+
+SELECT col1int,SUM(col3bigint) FROM babel_3144_vu_prepare_t6 GROUP BY col1int
+GO
+~~START~~
+int#!#bigint
+2#!#4000
+1#!#6000
+~~END~~
+
+
+-- DISTINCT CLAUSE
+SELECT SUM(DISTINCT col1int),SUM(DISTINCT col3bigint) FROM babel_3144_vu_prepare_t6
+GO
+~~START~~
+int#!#bigint
+3#!#6000
+~~END~~
+
+
+--OVER,PARTITION CLAUSE
+SELECT dt, priceint ,SUM(priceint) OVER (
+ORDER BY dt
+ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING
+) FiveDayMovSum
+FROM babel_3144_vu_prepare_t7
+GO
+~~START~~
+date#!#int#!#int
+2022-01-01#!#31#!#100
+2022-01-02#!#35#!#133
+2022-01-03#!#34#!#165
+2022-01-04#!#33#!#134
+2022-01-05#!#32#!#99
+~~END~~
+
+
+SELECT dt, pricebigint ,SUM(pricebigint) OVER (
+ORDER BY dt
+ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING
+) FiveDayMovSum
+FROM babel_3144_vu_prepare_t7
+GO
+~~START~~
+date#!#bigint#!#bigint
+2022-01-01#!#1000#!#5000
+2022-01-02#!#2000#!#8000
+2022-01-03#!#2000#!#12000
+2022-01-04#!#3000#!#11000
+2022-01-05#!#4000#!#9000
+~~END~~
+
+
+SELECT priceint,SUM(priceint) OVER(ORDER BY priceint) FROM babel_3144_vu_prepare_t7
+GO
+~~START~~
+int#!#int
+31#!#31
+32#!#63
+33#!#96
+34#!#130
+35#!#165
+~~END~~
+
+
+SELECT pricebigint,SUM(pricebigint) OVER(ORDER BY pricebigint) FROM babel_3144_vu_prepare_t7
+GO
+~~START~~
+bigint#!#bigint
+1000#!#1000
+2000#!#5000
+2000#!#5000
+3000#!#8000
+4000#!#12000
+~~END~~
+
+
+SELECT dept,SUM(priceint) OVER(PARTITION BY dept) FROM babel_3144_vu_prepare_t7
+GO
+~~START~~
+char#!#int
+A#!#66
+A#!#66
+B#!#99
+B#!#99
+B#!#99
+~~END~~
+
+
+SELECT dept,SUM(pricebigint) OVER(PARTITION BY dept) FROM babel_3144_vu_prepare_t7
+GO
+~~START~~
+char#!#bigint
+A#!#3000
+A#!#3000
+B#!#9000
+B#!#9000
+B#!#9000
+~~END~~
+
+
+SELECT * FROM babel_3144_vu_prepare_v1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+numeric#!#bigint#!#bigint#!#bigint
+~~END~~
+
+
+DROP FUNCTION babel_3144_vu_prepare_f1
+DROP FUNCTION babel_3144_vu_prepare_f2
+DROP FUNCTION babel_3144_vu_prepare_f3
+DROP FUNCTION babel_3144_vu_prepare_f4
+GO
+
+DROP PROCEDURE babel_3144_vu_prepare_p1
+GO
+
+DROP VIEW babel_3144_vu_prepare_v1
+GO
+
+DROP TABLE babel_3144_vu_prepare_t1
+DROP TABLE babel_3144_vu_prepare_t2
+DROP TABLE babel_3144_vu_prepare_t3
+DROP TABLE babel_3144_vu_prepare_t4
+DROP TABLE babel_3144_vu_prepare_t5
+DROP TABLE babel_3144_vu_prepare_t6
+DROP TABLE babel_3144_vu_prepare_t7
+GO
