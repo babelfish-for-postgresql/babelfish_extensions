@@ -3212,7 +3212,7 @@ BEGIN
                 LIMIT 1
                 );
     END IF;
- 
+
     RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
 END
 $$
@@ -3248,7 +3248,7 @@ RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C IMMUTABLE PARALLEL S
 GRANT EXECUTE ON FUNCTION sys.radians(INT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
-RETURNS int  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 INT)

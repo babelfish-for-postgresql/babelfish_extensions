@@ -1215,10 +1215,9 @@ bigint_power(PG_FUNCTION_ARGS)
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
 		ereport(ERROR,
 			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-			errmsg("integer out of range")));
+			errmsg("bigint out of range")));
 
 	PG_RETURN_INT64((int64)result);
- 
 }
 
 Datum
@@ -1231,9 +1230,9 @@ int_power(PG_FUNCTION_ARGS)
 	result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
 
 	if (result < 0)
-    	result = ceil(result);
+		result = ceil(result);
 	else
-    	result = floor(result);
+		result = floor(result);
 
 	/* Range check */
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
@@ -1242,7 +1241,6 @@ int_power(PG_FUNCTION_ARGS)
 			errmsg("integer out of range")));
 
 	PG_RETURN_INT32((int32)result);
- 
 }
 
 Datum
@@ -1253,8 +1251,7 @@ bigint_radians(PG_FUNCTION_ARGS)
 
 	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
 
-	PG_RETURN_INT64((int64)result);
-	 
+	PG_RETURN_INT64((int64)result);	 
 }
 
 Datum
@@ -1265,8 +1262,7 @@ int_radians(PG_FUNCTION_ARGS)
 
 	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
 
-	PG_RETURN_INT32((int32)result);
-	 
+	PG_RETURN_INT32((int32)result);	 
 }
 
 Datum
@@ -1286,7 +1282,7 @@ bigint_degrees(PG_FUNCTION_ARGS)
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("integer out of range")));
+				errmsg("bigint out of range")));
 
 	PG_RETURN_INT64((int64)result);
 }
@@ -1316,6 +1312,36 @@ int_degrees(PG_FUNCTION_ARGS)
 Datum
 smallint_degrees(PG_FUNCTION_ARGS)
 {
+	int32	arg1 = PG_GETARG_INT32(0);
+	float8	result;
+	 
+	
+
+	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
+
+	if (result < 0)
+    	result = ceil(result);
+	else
+    	result = floor(result);
+
+	 /* Range check */
+	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("smallint out of range")));
+
+	PG_RETURN_INT32((int32) result);
+}
+
+#define DatumGetInt8(X) ((int8) (X))
+#define PG_GETARG_INT8(n)	 DatumGetInt8(PG_GETARG_DATUM(n))
+#define PG_RETURN_INT8(x) return Int8GetDatum(x)
+#define FLOAT8_FITS_IN_INT8(num) \
+	((num) >= (float8) PG_INT8_MIN && (num) < -((float8) PG_INT8_MIN))
+
+Datum
+tinyint_degrees(PG_FUNCTION_ARGS)
+{
 	int16	arg1 = PG_GETARG_INT16(0);
 	float8	result;
 	 
@@ -1330,35 +1356,7 @@ smallint_degrees(PG_FUNCTION_ARGS)
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT16(result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("integer out of range")));
+				errmsg("tinyint out of range")));
 
 	PG_RETURN_INT16((int16)result);
-}
-
-#define DatumGetInt8(X) ((int8) (X))
-#define PG_GETARG_INT8(n)	 DatumGetInt8(PG_GETARG_DATUM(n))
-#define PG_RETURN_INT8(x) return Int8GetDatum(x)
-#define FLOAT8_FITS_IN_INT8(num) \
-	((num) >= (float8) PG_INT8_MIN && (num) < -((float8) PG_INT8_MIN))
-
-Datum
-tinyint_degrees(PG_FUNCTION_ARGS)
-{
-	int8	arg1 = PG_GETARG_INT8(0);
-	float8	result;
-	 
-	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
-
-	if (result < 0)
-    	result = ceil(result);
-	else
-    	result = floor(result);
-
-	 /* Range check */
-	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT8(result)))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("integer out of range")));
-
-	PG_RETURN_INT8((int8)result);
 }
