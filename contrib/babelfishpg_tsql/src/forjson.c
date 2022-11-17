@@ -9,13 +9,13 @@
 
 #include "executor/spi.h"
 #include "fmgr.h"
+#include "src/forjson.h"
 #include "utils/guc.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "parser/parser.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
-#include "backend_parser/gram-tsql-prologue.y.h"
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
 
