@@ -38,7 +38,7 @@ BEGIN
 END;
 go
 
--- Table valued Function returns NULL
+-- Multi statement Table valued Function
 CREATE FUNCTION routines_vu_prepare_test_func_tvf ()
 RETURNS @testFuncTvf table (tvf int PRIMARY KEY)
 AS
@@ -48,13 +48,9 @@ RETURN
 END;
 go
 
--- Table valued Function returns NULL
-CREATE FUNCTION routines_vu_prepare_test_func_mstvf ()
-RETURNS @testFuncmsTvf table (mstvf int PRIMARY KEY)
+-- Inline Table valued Function
+CREATE FUNCTION routines_vu_prepare_test_func_itvf ()
+RETURNS table
 AS
-BEGIN
-INSERT INTO @testFuncmsTvf VALUES (1);
-INSERT INTO @testFuncmsTvf VALUES (2)
-RETURN
-END;
+RETURN (SELECT 42 AS VALUE)
 go
