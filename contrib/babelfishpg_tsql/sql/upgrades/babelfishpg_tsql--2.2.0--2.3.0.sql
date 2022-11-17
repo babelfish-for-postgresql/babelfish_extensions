@@ -3155,24 +3155,24 @@ BEGIN
 
 	IF typemod = -1 THEN
 		CASE 
-		WHEN v_type COLLATE sys.database_default in ('image', 'text', 'ntext') THEN max_length = 16;
-		WHEN v_type COLLATE sys.database_default = 'sql_variant' THEN max_length = 8016;
-		WHEN v_type COLLATE sys.database_default in ('varbinary', 'varchar', 'nvarchar') THEN 
+		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
 			IF for_sys_types THEN max_length = 8000;
 			ELSE max_length = -1;
 			END IF;
-		WHEN v_type COLLATE sys.database_default in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
-		WHEN v_type COLLATE sys.database_default in ('decimal', 'numeric') THEN max_length = 17;
+		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
 		ELSE max_length = typemod;
 		END CASE;
 		RETURN max_length;
 	END IF;
 
 	CASE
-	WHEN v_type COLLATE sys.database_default in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
-	WHEN v_type COLLATE sys.database_default in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
-	WHEN v_type COLLATE sys.database_default = 'sysname' THEN max_length = (typemod - 4) * 2;
-	WHEN v_type COLLATE sys.database_default in ('numeric', 'decimal') THEN
+	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type in ('numeric', 'decimal') THEN
 		precision = ((typemod - 4) >> 16) & 65535;
 		IF precision >= 1 and precision <= 9 THEN max_length = 5;
 		ELSIF precision <= 19 THEN max_length = 9;
@@ -3186,6 +3186,7 @@ BEGIN
 	RETURN max_length;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
 
 create or replace view sys.all_columns as
 select CAST(c.oid as int) as object_id
