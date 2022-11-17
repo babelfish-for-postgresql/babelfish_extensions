@@ -34,3 +34,6 @@ GO
 CREATE VIEW sys_sysindexes_vu_prepare_v1 AS
     SELECT COUNT(*) FROM sys.sysindexes WHERE name LIKE '%sys_sysindexes_vu_prepare_t1_i1%'
 GO
+
+USE master
+GO
