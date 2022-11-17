@@ -241,3 +241,4 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
+sys_server_principals_dep
