@@ -1,8 +1,8 @@
 SELECT degrees(10)
 GO
 ~~START~~
-float
-572.9577951308232
+int
+572
 ~~END~~
 
 
@@ -16,10 +16,9 @@ float
 
 SELECT degrees(9999*9999)
 GO
-~~START~~
-float
-5.72843209301375E9
-~~END~~
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
 
 
 SELECT degrees(9999.0 * 9999.0)
@@ -33,8 +32,8 @@ float
 SELECT radians(32738)
 GO
 ~~START~~
-float
-571.3858905179036
+int
+571
 ~~END~~
 
 
@@ -68,4 +67,229 @@ GO
 numeric
 58220856378720256.0000000000000000
 ~~END~~
+
+
+
+---------------------------------------------------
+--TINYINT__TEST_CASES_FOR_DEGREES
+--Positive_value_test_case
+SELECT degrees(CAST(1 AS TINYINT));
+GO
+~~START~~
+int
+57
+~~END~~
+
+
+--Negative_value_test_case 
+SELECT degrees(CAST(-1 AS TINYINT));
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+--Normal_value_test_case
+SELECT degrees(CAST(4 AS TINYINT));
+GO
+~~START~~
+int
+229
+~~END~~
+
+
+SELECT degrees(CAST(255 AS TINYINT));
+GO
+~~START~~
+int
+14610
+~~END~~
+
+
+--Null_value_test_case
+SELECT degrees(CAST(NULL AS TINYINT));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+--Trigger_an_error_message_integer_out_of_range
+SELECT degrees(CAST(256 AS TINYINT));
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+
+---------------------------------------------------
+--SMALLINT__TEST_CASES_FOR_DEGREES
+--Positive_value_test_case
+SELECT degrees(CAST(10 AS SMALLINT));
+GO
+~~START~~
+int
+572
+~~END~~
+
+
+--Negative_value_test_case 
+SELECT degrees(CAST(-10 AS SMALLINT));
+GO
+~~START~~
+int
+-572
+~~END~~
+
+
+--Normal_value_test_case
+SELECT degrees(CAST(5680 AS SMALLINT));
+GO
+~~START~~
+int
+325440
+~~END~~
+
+
+SELECT degrees(CAST(32767 AS SMALLINT));
+GO
+~~START~~
+int
+1877410
+~~END~~
+
+
+--Null_value_test_case
+SELECT degrees(CAST(NULL AS SMALLINT));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+--Trigger_an_error_message_integer_out_of_range
+SELECT degrees(CAST(32768 AS SMALLINT));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+
+---------------------------------------------------
+--BIGINT__TEST_CASES_FOR_DEGREES
+--Positive_value_test_case
+SELECT degrees(CAST(10 AS BIGINT));
+GO
+~~START~~
+bigint
+572
+~~END~~
+
+
+--Negative_value_test_case 
+SELECT degrees(CAST(-10 AS BIGINT));
+GO
+~~START~~
+bigint
+-572
+~~END~~
+
+
+---Normal_value_test_case
+SELECT degrees(CAST(37272900 AS BIGINT));
+GO
+~~START~~
+bigint
+2135579860
+~~END~~
+
+
+SELECT degrees(CAST(8764210 AS BIGINT));
+GO
+~~START~~
+bigint
+502152243
+~~END~~
+
+
+--Null_value_test_case
+SELECT degrees(CAST(NULL AS BIGINT));
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+
+--Trigger_an_error_message_integer_out_of_range
+SELECT degrees(CAST(9223372036858847777 AS BIGINT));
+GO
+~~START~~
+bigint
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+
+---------------------------------------------------
+--INT__TEST_CASES_FOR_DEGREES
+--Positive_value_test_case
+SELECT degrees(CAST(10 AS INT));
+GO
+~~START~~
+int
+572
+~~END~~
+
+
+--Negative_value_test_case 
+SELECT degrees(CAST(-10 AS INT));
+GO
+~~START~~
+int
+-572
+~~END~~
+
+
+--Normal_value_test_case
+SELECT degrees(CAST(250 AS INT));
+GO
+~~START~~
+int
+14323
+~~END~~
+
+
+SELECT degrees(CAST(893 AS INT));
+GO
+~~START~~
+int
+51165
+~~END~~
+
+
+--Null_value_test_case
+SELECT degrees(CAST(NULL AS INT));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+--Trigger_an_error_message_integer_out_of_range
+SELECT degrees(CAST(2147483648 AS INT));
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
 
