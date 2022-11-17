@@ -3617,7 +3617,7 @@ and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(t.typname as text) collate sys.database_default as name
+select cast(t.typname as text) as name
   , t.typbasetype as system_type_id
   , t.oid as user_type_id
   , t.typnamespace as schema_id
@@ -3641,7 +3641,7 @@ select cast(t.typname as text) collate sys.database_default as name
   , case when tt.typrelid is not null then 1 else 0 end as is_table_type
 from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
-left join type_code_list ti on t.typname = ti.pg_type_name collate database_default
+left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 left join sys.table_types_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
@@ -3675,7 +3675,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(0 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
-  , CAST(d.adnum as int) as  parent_column_id
+  , CAST(d.adnum as int) as parent_column_id
   -- use a simple regex to strip the datatype and collation that pg_get_expr returns after a double-colon that is not expected in SQL Server
   , CAST(regexp_replace(pg_get_expr(d.adbin, d.adrelid), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) as definition
   , CAST(1 as sys.bit) as is_system_named
@@ -3729,7 +3729,7 @@ select t.name,t.type, ns.oid as schemaid from
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
     ('syspolicy_system_health_state', 'msdb_dbo', 'V')
 ) t(name,schema_name, type)
-inner join pg_catalog.pg_namespace ns on cast(t.schema_name as sys.sysname) = cast(ns.nspname as sys.sysname)
+inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
 
 union all
 
@@ -3740,8 +3740,8 @@ select t.name,t.type, ns.oid as schemaid from
   values
     ('sysdatabases','dbo','V')
 ) t (name, schema_name, type)
-inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name COLLATE sys.database_default
-inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname COLLATE sys.database_default;
+inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
+inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.all_objects as
@@ -3755,9 +3755,9 @@ select
   , cast (type_desc as sys.nvarchar(60))
   , cast (create_date as sys.datetime)
   , cast (modify_date as sys.datetime)
-  , cast (case when (schema_id::regnamespace::text = 'sys' collate sys.database_default) then 1
+  , cast (case when (schema_id::regnamespace::text = 'sys') then 1
           when name in (select name from sys.shipped_objects_not_in_sys nis 
-                        where nis.name = name collate sys.database_default and nis.schemaid = schema_id and nis.type = type collate sys.database_default) then 1 
+                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
           else 0 end as sys.bit) as is_ms_shipped
   , cast (is_published as sys.bit)
   , cast (is_schema_published as sys.bit)
@@ -3765,7 +3765,7 @@ from
 (
 -- details of user defined and system tables
 select
-    t.relname collate sys.database_default as name
+    t.relname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -3787,7 +3787,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system views
 select
-    t.relname collate sys.database_default as name
+    t.relname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -3807,7 +3807,7 @@ and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'S
 union all
 -- details of user defined and system foreign key constraints
 select
-    c.conname  collate database_default as name
+    c.conname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -3827,7 +3827,7 @@ and c.contype = 'f'
 union all
 -- details of user defined and system primary key constraints
 select
-    c.conname collate sys.database_default as name
+    c.conname as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -3847,7 +3847,7 @@ and c.contype = 'p'
 union all
 -- details of user defined and system defined procedures
 select
-    p.proname collate sys.database_default as name 
+    p.proname as name 
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -3902,7 +3902,7 @@ and has_function_privilege(p.oid, 'EXECUTE')
 union all
 -- details of all default constraints
 select
-    ('DF_' || o.relname collate sys.database_default || '_' || d.oid)::name collate sys.database_default as name
+    ('DF_' || o.relname || '_' || d.oid)::name as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
@@ -3925,7 +3925,7 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    c.conname::name  collate sys.database_default
+    c.conname::name
   , c.oid::integer as object_id
   , NULL::integer as principal_id 
   , c.connamespace::integer as schema_id
@@ -3945,7 +3945,7 @@ and c.contype = 'c' and c.conrelid != 0
 union all
 -- details of user defined and system defined sequence objects
 select
-  p.relname collate sys.database_default as name
+  p.relname as name
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -3965,7 +3965,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 union all
 -- details of user defined table types
 select
-    ('TT_' || tt.name collate sys.database_default || '_' || tt.type_table_object_id)::name  collate sys.database_default as name
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
   , tt.type_table_object_id as object_id
   , tt.principal_id as principal_id
   , tt.schema_id as schema_id
@@ -3989,7 +3989,7 @@ CALL sys.babelfish_update_collation_to_default('sys', 'system_objects', 'type_de
 
 create or replace view sys.all_views as
 select
-    CAST(t.name as sys.SYSNAME) COLLATE sys.database_default AS name
+    CAST(t.name as sys.SYSNAME) AS name
   , CAST(t.object_id as int) AS object_id
   , CAST(t.principal_id as int) AS principal_id
   , CAST(t.schema_id as int) AS schema_id
