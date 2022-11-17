@@ -271,7 +271,7 @@ transform_likenode(Node* node)
 		if ((*collation_callbacks_ptr->has_ilike_node)(node) && babelfish_dump_restore)
 		{
 			int		 collidx_of_cs_as;
-			
+			Assert(false);
 			if (coll_info_of_inputcollid.oid != InvalidOid)
 			{
 				collidx_of_cs_as =

@@ -134,24 +134,24 @@ runs:
         pip3 install pyodbc==4.0.35 pymssql
       shell: bash
 
-    - name: Run dependency check
-      id: run-dependency-check
-      if: always() && steps.configure-python-environment.outcome == 'success'
-      run: |
-        cd test/python
-        provider="PostgreSQL Unicode" \
-        fileGenerator_URL=localhost \
-        fileGenerator_port=5432 \
-        fileGenerator_databaseName=jdbc_testdb \
-        fileGenerator_user=jdbc_user \
-        fileGenerator_password=12345678 \
-        LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/odbc/ \
-        python3 upgrade_validation.py
-      shell: bash
+    # - name: Run dependency check
+    #   id: run-dependency-check
+    #   if: always() && steps.configure-python-environment.outcome == 'success'
+    #   run: |
+    #     cd test/python
+    #     provider="PostgreSQL Unicode" \
+    #     fileGenerator_URL=localhost \
+    #     fileGenerator_port=5432 \
+    #     fileGenerator_databaseName=jdbc_testdb \
+    #     fileGenerator_user=jdbc_user \
+    #     fileGenerator_password=12345678 \
+    #     LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/odbc/ \
+    #     python3 upgrade_validation.py
+    #   shell: bash
 
-    - name: Upload artifacts
-      if: always() && steps.run-dependency-check.outcome == 'failure'
-      run: |
-        mkdir -p ~/upgrade
-        cp test/python/output/upgrade_validation/* ~/upgrade
-      shell: bash
+    # - name: Upload artifacts
+    #   if: always() && steps.run-dependency-check.outcome == 'failure'
+    #   run: |
+    #     mkdir -p ~/upgrade
+    #     cp test/python/output/upgrade_validation/* ~/upgrade
+    #   shell: bash
