@@ -295,3 +295,5 @@ BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-3655
 sys-table_types_internal
 BABEL-3640
+get_tds_id
+BABEL-3144
