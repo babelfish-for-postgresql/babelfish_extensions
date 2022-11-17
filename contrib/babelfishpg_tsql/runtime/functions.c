@@ -193,7 +193,7 @@ void* get_servicename_internal()
 
 void* get_language()
 {
-		return string_to_tsql_varchar(bbf_language);
+	return string_to_tsql_varchar(bbf_language);
 }
 
 /*
@@ -1207,9 +1207,9 @@ bigint_power(PG_FUNCTION_ARGS)
 	result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
 
 	if (result < 0)
-    	result = ceil(result);
+		result = ceil(result);
 	else
-    	result = floor(result);
+		result = floor(result);
 
 	/* Range check */
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
@@ -1274,9 +1274,9 @@ bigint_degrees(PG_FUNCTION_ARGS)
 	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
 
 	if (result < 0)
-    	result = ceil(result);
+		result = ceil(result);
 	else
-    	result = floor(result);
+		result = floor(result);
 
 	 /* Range check */
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
@@ -1296,9 +1296,9 @@ int_degrees(PG_FUNCTION_ARGS)
 	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
 
 	if (result < 0)
-    	result = ceil(result);
+		result = ceil(result);
 	else
-    	result = floor(result);
+		result = floor(result);
 
 	 /* Range check */
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
@@ -1320,9 +1320,9 @@ smallint_degrees(PG_FUNCTION_ARGS)
 	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
 
 	if (result < 0)
-    	result = ceil(result);
+		result = ceil(result);
 	else
-    	result = floor(result);
+		result = floor(result);
 
 	 /* Range check */
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
@@ -1348,9 +1348,9 @@ tinyint_degrees(PG_FUNCTION_ARGS)
 	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
 
 	if (result < 0)
-    	result = ceil(result);
+		result = ceil(result);
 	else
-    	result = floor(result);
+		result = floor(result);
 
 	 /* Range check */
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT16(result)))
