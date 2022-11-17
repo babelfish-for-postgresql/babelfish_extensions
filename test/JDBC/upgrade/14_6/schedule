@@ -288,14 +288,10 @@ BABEL-889
 babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
-BABEL-3347-before-14_6
-BABEL-3556-before-14_6
-BABEL-3010-before-14_6
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
 BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-3655
 sys-table_types_internal
-BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
