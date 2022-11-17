@@ -4222,9 +4222,7 @@ ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME();
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_principals_deprecated_in_2_3_0');
 
-ALTER VIEW sys.database_role_members RENAME TO database_role_members_deprecated_in_2_3_0;
 CREATE OR REPLACE VIEW sys.database_role_members AS
 SELECT
 CAST(Auth1.oid AS INT) AS role_principal_id,
