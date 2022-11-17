@@ -4275,7 +4275,7 @@ WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
 ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
 END AS INDEX_NAME,
 CASE
-WHEN t1.oid > 0 THEN CAST(0 AS smallint)
+WHEN t1.relkind = 'i' THEN CAST(0 AS smallint)
 ELSE
 	CASE
 	WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
