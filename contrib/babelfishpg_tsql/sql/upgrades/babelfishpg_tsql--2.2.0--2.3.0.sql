@@ -3501,7 +3501,7 @@ SELECT
   , CAST(sys.babelfish_get_sequence_value(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)) AS SQL_VARIANT) AS last_value
   , CAST(0 as sys.BIT) as is_not_for_replication
 FROM sys.columns_internal() sc
-INNER JOIN pg_attribute a ON sc.out_name = cast(a.attname as sys.sysname) COLLATE sys.database_default AND sc.out_column_id = a.attnum
+INNER JOIN pg_attribute a ON sc.out_name = cast(a.attname as sys.sysname) AND sc.out_column_id = a.attnum
 INNER JOIN pg_class c ON c.oid = a.attrelid
 INNER JOIN sys.pg_namespace_ext ext ON ext.oid = c.relnamespace
 WHERE NOT a.attisdropped
