@@ -39,6 +39,9 @@ go
 drop FUNCTION routines_vu_prepare_test_func_opt;
 go
 
+drop FUNCTION routines_vu_prepare_test_func_tvp;
+go
+
 use master;
 go
 

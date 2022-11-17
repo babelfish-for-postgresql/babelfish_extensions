@@ -12,6 +12,7 @@ select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTIN
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#nvarchar#!#nvarchar#!#smallint#!#smallint#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar
+db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_tvp#!#db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_tvp#!#FUNCTION#!#table#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#<NULL>#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
 db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_fc1#!#db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_fc1#!#FUNCTION#!#nvarchar#!#1#!#2#!#sql_latin1_general_cp1_ci_as#!#UNICODE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.routines_vu_prepare_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
 db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_opt#!#db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_func_opt#!#FUNCTION#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.routines_vu_prepare_test_func_opt(@test_func_opt_a varchar(10)) RETURNS int WITH RETURNS NULL ON NULL INPUT AS BEGIN<newline>        RETURN 2;<newline>END;#!#NO#!#READS#!#YES#!#YES#!#0#!#NO#!#NO
 db_routines_vu_prepare#!#routines_vu_prepare_sc1#!#routines_vu_prepare_test_dec#!#db_routines_vu_prepare#!#routines_vu_prepare_sc1#!#routines_vu_prepare_test_dec#!#FUNCTION#!#decimal#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#2#!#<NULL>#!#SQL#!#CREATE FUNCTION routines_vu_prepare_sc1.routines_vu_prepare_test_dec(@test_dec_a int, @test_dec_b decimal(10,2), @test_dec_c decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @test_dec_a * @test_dec_b * (1 - @test_dec_c);<newline>END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
@@ -27,6 +28,7 @@ nvarchar
 routines_vu_prepare_fc1
 routines_vu_prepare_test_dec
 routines_vu_prepare_test_func_opt
+routines_vu_prepare_test_func_tvp
 routines_vu_prepare_test_nvar
 ~~END~~
 
@@ -49,6 +51,7 @@ nvarchar
 routines_vu_prepare_fc1
 routines_vu_prepare_test_dec
 routines_vu_prepare_test_func_opt
+routines_vu_prepare_test_func_tvp
 routines_vu_prepare_test_nvar
 ~~END~~
 
@@ -69,6 +72,9 @@ drop function routines_vu_prepare_fc1;
 go
 
 drop FUNCTION routines_vu_prepare_test_func_opt;
+go
+
+drop FUNCTION routines_vu_prepare_test_func_tvp;
 go
 
 use master;

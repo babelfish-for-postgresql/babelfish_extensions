@@ -38,3 +38,12 @@ BEGIN
 END;
 go
 
+-- Table valued Function returns NULL
+CREATE FUNCTION routines_vu_prepare_test_func_tvp ()
+RETURNS @testFuncTvf table (tvf int PRIMARY KEY)
+AS
+BEGIN
+INSERT INTO @testFuncTvf VALUES (1)
+RETURN
+END;
+go
