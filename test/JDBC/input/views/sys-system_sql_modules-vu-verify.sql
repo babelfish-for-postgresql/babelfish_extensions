@@ -1,4 +1,4 @@
--- sla 50000
+-- sla 75000
 -- Test for system function
 SELECT
     definition,

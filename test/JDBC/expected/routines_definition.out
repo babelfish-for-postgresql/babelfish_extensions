@@ -330,6 +330,25 @@ BEGIN
 END;
 go
 
+-- Test with Table Valued Function
+CREATE FUNCTION routines_fc7()
+RETURNS @myRetTable table (a int PRIMARY KEY)
+AS
+BEGIN
+INSERT INTO @myRetTable VALUES (1)
+RETURN
+END;
+GO
+
+-- Execute sys.tsql_get_functiondef, should return NULL
+SELECT sys.tsql_get_functiondef(OBJECT_ID('routines_fc7'));
+go
+~~START~~
+text
+<NULL>
+~~END~~
+
+
 select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_def';
 go
 ~~START~~
@@ -411,4 +430,7 @@ drop function routines_fc5;
 go
 
 drop function routines_fc6;
+go
+
+drop function routines_fc7;
 go

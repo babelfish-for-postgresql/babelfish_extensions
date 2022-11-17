@@ -38,3 +38,19 @@ BEGIN
 END;
 go
 
+-- Multi statement Table valued Function
+CREATE FUNCTION routines_vu_prepare_test_func_tvf ()
+RETURNS @testFuncTvf table (tvf int PRIMARY KEY)
+AS
+BEGIN
+INSERT INTO @testFuncTvf VALUES (1)
+RETURN
+END;
+go
+
+-- Inline Table valued Function
+CREATE FUNCTION routines_vu_prepare_test_func_itvf ()
+RETURNS table
+AS
+RETURN (SELECT 42 AS VALUE)
+go
