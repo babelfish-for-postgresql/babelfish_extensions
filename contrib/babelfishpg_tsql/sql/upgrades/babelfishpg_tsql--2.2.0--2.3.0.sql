@@ -4176,7 +4176,6 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 -- Drop the deprecated function
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_tds_id_deprecated_2_3_0');
 
-ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated_in_2_3_0;
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
 CAST(Base.rolname AS sys.SYSNAME) AS name,
@@ -4197,9 +4196,7 @@ CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS i
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'server_principals_deprecated_in_2_3_0');
 
-ALTER VIEW sys.database_principals RENAME TO database_principals_deprecated_in_2_3_0;
 CREATE OR REPLACE VIEW sys.database_principals AS SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
 CAST(Base.oid AS INT) AS principal_id,
@@ -4243,9 +4240,7 @@ AND Ext1.type = 'R'
 AND Ext2.orig_username != 'db_owner';
 
 GRANT SELECT ON sys.database_role_members TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_role_members_deprecated_in_2_3_0');
 
-ALTER VIEW sys.sp_statistics_view RENAME TO sp_statistics_view_deprecated_in_2_3_0;
 CREATE OR REPLACE VIEW sys.sp_statistics_view AS
 SELECT
 CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
@@ -4307,7 +4302,6 @@ FROM pg_catalog.pg_class t1
 WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_statistics_view_deprecated_in_2_3_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
