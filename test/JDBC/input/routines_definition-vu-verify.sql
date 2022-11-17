@@ -39,7 +39,10 @@ go
 drop FUNCTION routines_vu_prepare_test_func_opt;
 go
 
-drop FUNCTION routines_vu_prepare_test_func_tvp;
+drop FUNCTION routines_vu_prepare_test_func_tvf;
+go
+
+drop FUNCTION routines_vu_prepare_test_func_mstvf;
 go
 
 use master;

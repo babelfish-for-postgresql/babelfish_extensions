@@ -807,13 +807,16 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 				break;
 			case PROARGMODE_TABLE:
 				*has_tvp = true;
-				return;
+				break;
 			default:
 				elog(ERROR, "invalid parameter mode '%c'", argmode);
 				modename = NULL;	/* keep compiler quiet */
 				isinput = false;
 				break;
 		}
+		if (*has_tvp)
+			break;
+
 		if (isinput)
 			inputargno++;		/* this is a 1-based counter */
 

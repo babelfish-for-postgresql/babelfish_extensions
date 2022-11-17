@@ -39,11 +39,22 @@ END;
 go
 
 -- Table valued Function returns NULL
-CREATE FUNCTION routines_vu_prepare_test_func_tvp ()
+CREATE FUNCTION routines_vu_prepare_test_func_tvf ()
 RETURNS @testFuncTvf table (tvf int PRIMARY KEY)
 AS
 BEGIN
 INSERT INTO @testFuncTvf VALUES (1)
+RETURN
+END;
+go
+
+-- Table valued Function returns NULL
+CREATE FUNCTION routines_vu_prepare_test_func_mstvf ()
+RETURNS @testFuncmsTvf table (mstvf int PRIMARY KEY)
+AS
+BEGIN
+INSERT INTO @testFuncmsTvf VALUES (1);
+INSERT INTO @testFuncmsTvf VALUES (2)
 RETURN
 END;
 go
