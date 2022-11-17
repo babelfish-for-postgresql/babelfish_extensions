@@ -345,7 +345,7 @@ static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
 extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 int tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
-		bool print_table_args, bool print_defaults, int** typmod_arr_arg);
+		bool print_table_args, bool print_defaults, int** typmod_arr_arg, bool* has_tvp);
 char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
 int adjustTypmod(Oid oid, int typmod);
@@ -403,6 +403,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	const char *nsp;
 	const char *nnsp;
 	int	oldlen;
+	bool has_tvp = false;
         int* typmod_arr = NULL;
         int number_args;
 
@@ -445,7 +446,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	if(strcmp(get_language_name(proc->prolang, false), "pltsql") != 0)
 		PG_RETURN_NULL();
        	probin_json_reader(tmp, &typmod_arr, number_args);
-	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr);
+	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr, &has_tvp);
+	/* TODO: In case of Table Valued Functions, return NULL. */
+	if (has_tvp)
+		PG_RETURN_NULL();
 	if(isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, ")");
 	if (isfunction)
@@ -671,6 +675,7 @@ tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	int			ntabargs = 0;
 	StringInfoData rbuf;
+	bool has_tvp = false;
 
 	initStringInfo(&rbuf);
 
@@ -678,7 +683,7 @@ tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_
 	{
 		/* It might be a table function; try to print the arguments */
 		appendStringInfoString(&rbuf, "TABLE(");
-		ntabargs = tsql_print_function_arguments(&rbuf, proctup, true, false, NULL);
+		ntabargs = tsql_print_function_arguments(&rbuf, proctup, true, false, NULL, &has_tvp);
 		if (ntabargs > 0)
 			appendStringInfoChar(&rbuf, ')');
 		else
@@ -707,7 +712,7 @@ tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_
  */
 int
 tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
-						 bool print_table_args, bool print_defaults, int** typmod_arr_arg)
+						 bool print_table_args, bool print_defaults, int** typmod_arr_arg, bool* has_tvp)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	HeapTuple	bbffunctuple;
@@ -800,6 +805,9 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 				modename = "OUT ";
 				isinput = false;
 				break;
+			case PROARGMODE_TABLE:
+				*has_tvp = true;
+				return;
 			default:
 				elog(ERROR, "invalid parameter mode '%c'", argmode);
 				modename = NULL;	/* keep compiler quiet */
