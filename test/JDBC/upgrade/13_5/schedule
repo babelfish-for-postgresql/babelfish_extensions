@@ -9,6 +9,8 @@
 # This should be the first test to check there are no duplicated object_ids
 BABEL-3613
 
+babelfish_cast_floor
+babel_try_parse
 TestBigInt
 TestBinary
 TestBIT
@@ -228,6 +230,7 @@ sys-sp_databases-dep
 sys-syscolumns-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
+sys-proc_param_helper-dep
 BABEL-SPCOLUMNS-dep
 BABEL-3000-dep
 BABEL-3347-before-14_6
