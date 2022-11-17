@@ -337,3 +337,4 @@ sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
+BABEL-CHECK-CONSTRAINT
