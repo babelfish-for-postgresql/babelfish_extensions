@@ -286,3 +286,7 @@ BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
+sys-sysindexes
+ISC-Tables
+ISC-Columns
+ISC-Table_Constraints
