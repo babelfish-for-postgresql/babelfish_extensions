@@ -271,6 +271,7 @@ sys-all_sql_modules-dep
 sys-sql_modules-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
+sys-proc_param_helper-dep
 BABEL-1756-dep
 BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
@@ -279,6 +280,8 @@ BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_SPROC_COLUMNS-dep
 BABEL-SP_SPROC_COLUMNS_100-dep
 BABEL-3000-dep
+Test-sp_helprole-dep
+Test-sp_helprolemember-dep
 BABEL-3347-before-14_6
 BABEL-3556-before-14_6
 BABEL-3010-before-14_6
