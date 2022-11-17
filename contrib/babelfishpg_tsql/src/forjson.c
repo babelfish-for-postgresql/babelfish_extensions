@@ -107,7 +107,6 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 {
 	StringInfo	result;
 	uint64		i;
-	
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 					  (superuser() ? PGC_SUSET : PGC_USERSET),
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -189,6 +188,10 @@ tsql_unsupported_datatype_check(void)
 
 		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
 
+		/*
+		 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
+		 * but with the same name. Examples: bigint, int, etc.
+		 */
 		if (tsql_datatype_oid == datatype_oid)
 		{
 			if (strcmp(typename, "binary") == 0 ||

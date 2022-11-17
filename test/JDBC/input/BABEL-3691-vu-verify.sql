@@ -52,8 +52,6 @@ SELECT * FROM BABEL_3691_vu_prepare_view15
 GO
 
 -- Rowversion and timestamp
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
-GO
 SELECT * FROM BABEL_3691_vu_prepare_view16
 GO
 

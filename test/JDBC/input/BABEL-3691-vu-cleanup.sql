@@ -27,9 +27,6 @@ DROP TABLE BABEL_3691_vu_prepare_t7
 GO
 
 -- Rowversion and timestamp
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
-GO
-
 DROP TABLE BABEL_3691_vu_prepare_t8
 GO
 
