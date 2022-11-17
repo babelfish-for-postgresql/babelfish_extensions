@@ -9,5 +9,4 @@
 # This should be the first test to check there are no duplicated object_ids
 BABEL-3613
 
-
 BABEL-CHECK-CONSTRAINT-before-14_6
