@@ -132,4 +132,23 @@ jobs:
             ~/upgrade/*.csv
             ~/postgres*/data/logfile
             ~/failed-testscript-outputs
+
+      - name: Check core dumps existence
+        if: always()
+        id: check_core_dumps
+        uses: andstor/file-existence-action@v2
+        with:
+          files: "/var/coredumps/*"
+
+      - name: Comment on PR that core dump was found
+        if: always() && steps.check_core_dumps.files_exists == 'true'
+        uses: github-actions-up-and-running/pr-comment@v1.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: A core dump was found. Activating SSH session for 1 hour.
+      
+      - name: Setup upterm session
+        if: always() && steps.check_core_dumps.files_exists == 'true'
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 2
             
