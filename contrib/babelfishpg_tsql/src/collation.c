@@ -88,6 +88,13 @@ collation_list(PG_FUNCTION_ARGS)
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
+	/*
+	 * This function is deprecated since v2.3.0. However, we can not remove this function
+	 * entirely because it might be needed during upgrade.
+	 */
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This function has been deprecated and will no longer return correct server collation OID")));
 	PG_RETURN_OID(InvalidOid);
 }
 
