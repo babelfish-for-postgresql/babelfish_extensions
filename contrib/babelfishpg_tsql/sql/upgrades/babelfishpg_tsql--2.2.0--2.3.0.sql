@@ -31,28 +31,6 @@ end
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_view(schema_name varchar, view_name varchar) AS
-$$
-DECLARE
-    error_msg text;
-    query1 text;
-    query2 text;
-BEGIN
-    query1 := format('alter extension babelfishpg_tsql drop view %s.%s', schema_name, view_name);
-    query2 := format('drop view %s.%s', schema_name, view_name);
-    execute query1;
-    execute query2;
-EXCEPTION
-    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when dependent_objects_still_exist then --if 'drop view' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-end
-$$
-LANGUAGE plpgsql;
-
 -- Set the collation of given schema_name.table_name.column_name column to default collation
 CREATE OR REPLACE PROCEDURE babelfish_update_collation_to_default(schema_name varchar, table_name varchar, column_name varchar) AS
 $$
