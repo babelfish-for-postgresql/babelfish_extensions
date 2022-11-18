@@ -9,16 +9,20 @@
 
 #include "executor/spi.h"
 #include "fmgr.h"
+#include "src/forjson.h"
 #include "utils/guc.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "parser/parser.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
+#include "utils/syscache.h"
+#include "catalog/pg_type.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
 								bool without_array_wrapper, const char *root_name);
 static void SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_value);
+static void tsql_unsupported_datatype_check(void);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
 
@@ -39,8 +43,10 @@ tsql_query_to_json_text(PG_FUNCTION_ARGS)
 
 	StringInfo result = tsql_query_to_json_internal(query, mode, include_null_value,
 											without_array_wrapper, root_name);
-	
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	if (result)
+		PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	else
+		PG_RETURN_NULL();
 }
 
 
@@ -67,7 +73,7 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		{
 			ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("Column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
+							 errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
 		}
 		
 		colval = SPI_getbinval(SPI_tuptable->vals[rownum],
@@ -101,7 +107,6 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 {
 	StringInfo	result;
 	uint64		i;
-
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 					  (superuser() ? PGC_SUSET : PGC_USERSET),
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -112,6 +117,15 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("invalid query")));
+	
+	if (SPI_processed==0)
+	{
+		SPI_finish();
+		return NULL;
+	}
+
+	// To check if query output table has columns with datatypes that are currently not supported in FOR JSON
+	tsql_unsupported_datatype_check();
 
 	/* If root_name is present then WITHOUT_ARRAY_WRAPPER will be FALSE */
 	if(root_name)
@@ -145,6 +159,68 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 		appendStringInfoString(result, "]}");
 	else if (!without_array_wrapper)
 		appendStringInfoChar(result,']');
-
 	return result;
+}
+
+/*
+ * For now report an ERROR if any attribute is binary, datetime and bit datatypes since they are not implemented yet.
+ * Also Exact numeric's datatype money or smallmoney is not supported.
+ */
+static void
+tsql_unsupported_datatype_check(void)
+{
+	for (int i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
+	{
+		/* 
+		 * This part of code is a workaround for is_tsql_x_datatype() which does not work as expected, 
+		 * it compares the datatype oid of the columns with the tsql_datatype_oid and
+		 * then throw feature not supported error based on the typename.
+		 */
+		Oid nspoid;
+		Oid tsql_datatype_oid;
+
+		Oid datatype_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
+
+		char* typename = SPI_gettype(SPI_tuptable->tupdesc, i);
+
+		nspoid = get_namespace_oid("sys", true);
+		Assert(nspoid != InvalidOid);
+
+		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
+
+		/*
+		 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
+		 * but with the same name. Examples: bigint, int, etc.
+		 */
+		if (tsql_datatype_oid == datatype_oid)
+		{
+			if (strcmp(typename, "binary") == 0 ||
+				strcmp(typename, "varbinary") == 0 ||
+				strcmp(typename, "image") == 0 ||
+				strcmp(typename, "timestamp") == 0 ||
+				strcmp(typename, "rowversion") == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("binary types are not supported with FOR JSON")));
+			
+			if (strcmp(typename, "money") == 0 ||
+				strcmp(typename, "smallmoney") == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("data types money or smallmoney are not supported with FOR JSON")));
+			
+			if (strcmp(typename, "datetime")  == 0 ||
+				strcmp(typename, "smalldatetime") == 0 ||
+				strcmp(typename, "datetime2") == 0 ||
+				strcmp(typename, "datetimeoffset") == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("datetime types are not supported with FOR JSON")));
+			
+			if (strcmp(typename, "bit")  == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("bit type is not supported with FOR JSON")));
+		}
+	}
 }
