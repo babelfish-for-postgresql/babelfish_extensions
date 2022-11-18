@@ -142,7 +142,7 @@ jobs:
 
       - name: Comment on PR that core dump was found
         if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
-        - uses: nbaztec/add-pr-review-comment@v1.0.7
+        uses: nbaztec/add-pr-review-comment@v1.0.7
         with:
           message: Setting up SSH access
           repo-token: ${{ secrets.GITHUB_TOKEN }}
