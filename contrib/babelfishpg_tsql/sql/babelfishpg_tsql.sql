@@ -1236,7 +1236,8 @@ FROM pg_catalog.pg_class t1
     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" AND s1.name = t4."TABLE_SCHEMA")
 	JOIN (pg_catalog.pg_index t5 JOIN
 		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
-	LEFT JOIN pg_catalog.pg_stats t7 ON t1.relname = t7.tablename
+	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
+	LEFT JOIN pg_catalog.pg_stats t7 ON (t1.relname = t7.tablename AND t7.schemaname = nsp.nspname)
 	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
