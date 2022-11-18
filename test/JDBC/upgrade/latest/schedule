@@ -335,3 +335,5 @@ sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
+sys_server_principals_dep
+sys_database_principals_dep
