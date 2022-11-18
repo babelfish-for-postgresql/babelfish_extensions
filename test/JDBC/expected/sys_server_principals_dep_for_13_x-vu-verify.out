@@ -1,0 +1,37 @@
+SELECT * FROM sys_server_principals_dep_for_13_x_vu_prepare_view
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#bit
+sys_server_principals_dep_for_13_x_vu_prepare_login1#!#S#!#SQL_LOGIN#!#0#!#master#!#English#!#0
+sys_server_principals_dep_for_13_x_vu_prepare_login2#!#S#!#SQL_LOGIN#!#0#!#master#!#English#!#0
+~~END~~
+
+
+EXEC sys_server_principals_dep_for_13_x_vu_prepare_proc
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#int#!#varchar#!#varchar#!#bit
+sys_server_principals_dep_for_13_x_vu_prepare_login1#!#S#!#SQL_LOGIN#!#0#!#master#!#English#!#0
+sys_server_principals_dep_for_13_x_vu_prepare_login2#!#S#!#SQL_LOGIN#!#0#!#master#!#English#!#0
+~~END~~
+
+
+SELECT sys_server_principals_dep_for_13_x_vu_prepare_func()
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT name FROM sys.server_principals
+WHERE name LIKE 'sys_server_principals_dep_for_13_x_vu_prepare_login%'
+ORDER BY name
+GO
+~~START~~
+varchar
+sys_server_principals_dep_for_13_x_vu_prepare_login1
+sys_server_principals_dep_for_13_x_vu_prepare_login2
+~~END~~
+
+

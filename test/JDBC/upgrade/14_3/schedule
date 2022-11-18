@@ -287,3 +287,5 @@ BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
+sys_server_principals_dep
+sys_database_principals_dep
