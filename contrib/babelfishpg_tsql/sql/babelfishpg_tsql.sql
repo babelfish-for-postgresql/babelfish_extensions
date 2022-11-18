@@ -345,8 +345,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
   CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
 
-  CASE WHEN t4."DATA_TYPE" = 'xml' COLLATE sys.database_default THEN 0::INT
-    WHEN t4."DATA_TYPE" = 'sql_variant' COLLATE sys.database_default THEN 8000::INT
+  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
+    WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
     WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
     ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
   END AS CHAR_OCTET_LENGTH,
@@ -368,7 +368,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   FROM pg_catalog.pg_class t1
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname COLLATE sys.database_default
+     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
      JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" COLLATE sys.database_default)
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname = t4."COLUMN_NAME" COLLATE sys.database_default
      LEFT JOIN pg_type t ON t.oid = a.atttypid
@@ -467,9 +467,9 @@ begin
 				ss_data_type
 		from sys.sp_columns_100_view
 	    where lower(table_name) similar to lower(in_table_name) COLLATE "C" -- TBD - this should be changed to ci_as
-	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner collate sys.bbf_unicode_general_ci_as)
-	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier collate sys.bbf_unicode_general_ci_as)
-	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner collate sys.database_default)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier collate sys.database_default)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name collate sys.database_default)
 		order by table_qualifier,
 		         table_owner,
 			 table_name,
@@ -478,9 +478,9 @@ begin
 		return query
 	    select table_qualifier, precision from sys.sp_columns_100_view
 	      where in_table_name = table_name collate sys.bbf_unicode_general_ci_as
-	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
-	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
-	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner collate sys.database_default)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier collate sys.database_default)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name collate sys.database_default)
 		order by table_qualifier,
 		         table_owner,
 			 table_name,
@@ -711,8 +711,8 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         o.object_id         AS object_id,
         o.schema_id         AS schema_id,
         c.column_id         AS colid,
-        CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
-		ELSE c.name END AS name,
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+		ELSE c.name COLLATE sys.database_default END AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,

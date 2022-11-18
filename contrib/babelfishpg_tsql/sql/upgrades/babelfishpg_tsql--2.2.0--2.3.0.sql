@@ -4649,9 +4649,9 @@ SELECT
   CAST(pt.tgfoid as int) AS object_id
   , CAST(
       CASE 
-        WHEN tr.event_manipulation='INSERT' COLLATE sys.database_default THEN 1
-        WHEN tr.event_manipulation='UPDATE' COLLATE sys.database_default THEN 2
-        WHEN tr.event_manipulation='DELETE' COLLATE sys.database_default THEN 3
+        WHEN tr.event_manipulation='INSERT' THEN 1
+        WHEN tr.event_manipulation='UPDATE' THEN 2
+        WHEN tr.event_manipulation='DELETE' THEN 3
         ELSE 1
       END as int
   ) AS type
@@ -5100,13 +5100,110 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_columns_100_view', 'co
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_columns_100_view', 'type_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_columns_100_view', 'column_def');
 
+create or replace function sys.sp_columns_100_internal(
+	in_table_name sys.nvarchar(384),
+    in_table_owner sys.nvarchar(384) = '', 
+    in_table_qualifier sys.nvarchar(384) = '',
+    in_column_name sys.nvarchar(384) = '',
+	in_NameScope int = 0,
+    in_ODBCVer int = 2,
+    in_fusepattern smallint = 1)
+returns table (
+	out_table_qualifier sys.sysname,
+	out_table_owner sys.sysname,
+	out_table_name sys.sysname,
+	out_column_name sys.sysname,
+	out_data_type smallint,
+	out_type_name sys.sysname,
+	out_precision int,
+	out_length int,
+	out_scale smallint,
+	out_radix smallint,
+	out_nullable smallint,
+	out_remarks varchar(254),
+	out_column_def sys.nvarchar(4000),
+	out_sql_data_type smallint,
+	out_sql_datetime_sub smallint,
+	out_char_octet_length int,
+	out_ordinal_position int,
+	out_is_nullable varchar(254),
+	out_ss_is_sparse smallint,
+	out_ss_is_column_set smallint,
+	out_ss_is_computed smallint,
+	out_ss_is_identity smallint,
+	out_ss_udt_catalog_name varchar(254),
+	out_ss_udt_schema_name varchar(254),
+	out_ss_udt_assembly_type_name varchar(254),
+	out_ss_xml_schemacollection_catalog_name varchar(254),
+	out_ss_xml_schemacollection_schema_name varchar(254),
+	out_ss_xml_schemacollection_name varchar(254),
+	out_ss_data_type sys.tinyint
+)
+as $$
+begin
+	IF in_fusepattern = 1 THEN
+		return query
+	    select table_qualifier, 
+				table_owner,
+				table_name,
+				column_name,
+				data_type,
+				type_name,
+				precision,
+				length,
+				scale,
+				radix,
+				nullable,
+				remarks,
+				column_def,
+				sql_data_type,
+				sql_datetime_sub,
+				char_octet_length,
+				ordinal_position,
+				is_nullable,
+				ss_is_sparse,
+				ss_is_column_set,
+				ss_is_computed,
+				ss_is_identity,
+				ss_udt_catalog_name,
+				ss_udt_schema_name,
+				ss_udt_assembly_type_name,
+				ss_xml_schemacollection_catalog_name,
+				ss_xml_schemacollection_schema_name,
+				ss_xml_schemacollection_name,
+				ss_data_type
+		from sys.sp_columns_100_view
+	    where lower(table_name) similar to lower(in_table_name) COLLATE "C" -- TBD - this should be changed to ci_as
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner collate sys.database_default)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier collate sys.database_default)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name collate sys.database_default)
+		order by table_qualifier,
+		         table_owner,
+			 table_name,
+			 ordinal_position;
+	ELSE 
+		return query
+	    select table_qualifier, precision from sys.sp_columns_100_view
+	      where in_table_name = table_name collate sys.bbf_unicode_general_ci_as
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner collate sys.database_default)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier collate sys.database_default)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name collate sys.database_default)
+		order by table_qualifier,
+		         table_owner,
+			 table_name,
+			 ordinal_position;
+	END IF;
+end;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
         o.object_id         AS object_id,
         o.schema_id         AS schema_id,
         c.column_id         AS colid,
-        CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
-		ELSE c.name END AS name,
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+		ELSE c.name COLLATE sys.database_default END AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,

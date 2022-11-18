@@ -2796,9 +2796,9 @@ SELECT
   CAST(pt.tgfoid as int) AS object_id
   , CAST(
       CASE 
-        WHEN tr.event_manipulation='INSERT' COLLATE sys.database_default THEN 1
-        WHEN tr.event_manipulation='UPDATE' COLLATE sys.database_default THEN 2
-        WHEN tr.event_manipulation='DELETE' COLLATE sys.database_default THEN 3
+        WHEN tr.event_manipulation='INSERT' THEN 1
+        WHEN tr.event_manipulation='UPDATE' THEN 2
+        WHEN tr.event_manipulation='DELETE' THEN 3
         ELSE 1
       END as int
   ) AS type
