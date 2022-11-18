@@ -142,7 +142,7 @@ jobs:
 
       - name: Comment on PR that core dump was found
         if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
-        uses: github-actions-up-and-running/pr-comment@v1.0.0
+        uses: github-actions-up-and-running/pr-comment@v1.0.1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           message: A core dump was found. Activating SSH session for 1 hour.
