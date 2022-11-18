@@ -197,6 +197,7 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->invalidate_stat_view = &invalidate_stat_table;
 	pltsql_plugin_handler_ptr->get_host_name = &get_tds_host_name;
 	pltsql_plugin_handler_ptr->get_datum_from_byte_ptr = &TdsBytePtrToDatum;
+	pltsql_plugin_handler_ptr->get_datum_from_date_time_struct = &TdsDateTimeTypeToDatum;
 
 	invalidate_stat_table_hook = invalidate_stat_table;
 	guc_newval_hook = TdsSetGucStatVariable;
