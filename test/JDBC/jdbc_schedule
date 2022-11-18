@@ -50,4 +50,6 @@ ignore#!#BABEL-3010-before-14_6-vu-cleanup
 ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-prepare
 ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-verify
 ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-cleanup
+ignore#!#BABEL-3646-before-14_6-vu-prepare
+ignore#!#BABEL-3646-before-14_6-vu-verify
 
