@@ -1251,9 +1251,9 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
+	int save_nestlevel;
 	char *old_db_name = get_cur_db_name();
 	char *cur_db_name = NULL;
-	int save_nestlevel = pltsql_new_guc_nest_level();
 	bool old_parseonly = pltsql_parseonly;
 	bool old_explain_only = pltsql_explain_only;
 	bool old_explain_analyze = pltsql_explain_analyze;
@@ -1270,7 +1270,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			/* No op in case of null */
 			return PLTSQL_RC_OK;
 		}
-
+		save_nestlevel = pltsql_new_guc_nest_level();
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
