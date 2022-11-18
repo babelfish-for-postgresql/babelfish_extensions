@@ -4297,16 +4297,6 @@ WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
--- Drop this procedure after it gets executed once.
-DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg TEXT, IN typmod INTEGER)
 RETURNS sys.DATETIME2
 AS $BODY$
