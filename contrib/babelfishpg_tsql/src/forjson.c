@@ -24,6 +24,7 @@ static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool 
 static void SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_value);
 static void tsql_unsupported_datatype_check(void);
 static void for_json_datetime_format(StringInfo format_output, char *outputstr);
+static void for_json_datetimeoffset_format(StringInfo format_output, char *outputstr);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
 
@@ -117,6 +118,20 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 
 				datatype_oid = CSTRINGOID;
 			}
+			/* datetimeoffset has two behaviors:
+			 * if offset is 0, just return the datetime with 'Z' at the end
+			 * otherwise, append the offset
+			 */
+			else if (strcmp(typename, "datetimeoffset") == 0)
+			{
+				char *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
+				StringInfo format_output = makeStringInfo();
+				for_json_datetimeoffset_format(format_output, val);
+				colval = CStringGetDatum(format_output->data);
+
+				datatype_oid = CSTRINGOID;
+			}
+			/* convert money and smallmoney to numeric */
 			else if (strcmp(typename, "money") == 0 ||
 				strcmp(typename, "smallmoney") == 0)
 			{
@@ -243,10 +258,10 @@ tsql_unsupported_datatype_check(void)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("binary types are not supported with FOR JSON")));
 			
-			if (strcmp(typename, "datetimeoffset") == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("datetimeoffset is not supported with FOR JSON")));
+			// if (strcmp(typename, "datetimeoffset") == 0)
+			// 	ereport(ERROR,
+			// 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			// 				errmsg("datetimeoffset is not supported with FOR JSON")));
 		}
 	}
 }
@@ -255,21 +270,61 @@ tsql_unsupported_datatype_check(void)
  * This function handles the format for datetime datatypes by converting the output
  * into required format for SELECT FOR JSON PATH. For example:
  * "2022-11-11 20:56:22.41" -> "2022-11-11T20:56:22.41" for datetime, datetime2 & smalldatetime
- * "2022-11-11 22:25:01.015 +00:00" -> "2022-11-11T22:25:01.015Z" for datetimeoffset
  */
 static void
 for_json_datetime_format(StringInfo format_output, char *outputstr)
 {
-	char *before_space;
-	char *begin_space = strstr(outputstr, " ");
-	int begin_index;
+	char *date;
+	char *spaceptr = strstr(outputstr, " ");
+	int len;
 
+	len = spaceptr - outputstr;
+	date = palloc(len + 1);
+	strncpy(date, outputstr, len);
+	date[len] = '\0';
+	appendStringInfoString(format_output, date);
+	appendStringInfoChar(format_output, 'T');
+	appendStringInfoString(format_output, ++spaceptr);
+}
 
-	begin_index = begin_space - outputstr;
-	before_space = palloc(begin_index + 1);
-	before_space = memcpy(before_space, outputstr, begin_index);
-	before_space[begin_index] = '\0';
-	appendStringInfoString(format_output,before_space);
-	appendStringInfoChar(format_output,'T');
-	appendStringInfoString(format_output,++begin_space);
+/*
+ * This function handles the format for datetimeoffset datatype by converting the output
+ * into required format for SELECT FOR JSON PATH. For example:
+ * "2022-11-11 22:25:01.015 +00:00" -> "2022-11-11T22:25:01.015Z"
+ * "2022-11-11 12:34:56 +02:30" -> "2022-11-11T12:34:56+02:30"
+ */
+static void
+for_json_datetimeoffset_format(StringInfo format_output, char *str)
+{
+	char *date, *endptr, *time, *offset;
+	char *spaceptr = strstr(str, " ");
+	int len;
+
+	/* append date part of string */
+	len = spaceptr - str;
+	date = palloc(len + 1);
+	strncpy(date, str, len);
+	date[len] = '\0';
+	appendStringInfoString(format_output, date);
+	appendStringInfoChar(format_output, 'T');
+
+	/* append time part of string */
+	endptr = ++spaceptr;
+	spaceptr = strstr(endptr, " ");
+	len = spaceptr - endptr;
+	time = palloc(len + 1);
+	strncpy(time, endptr, len);
+	time[len] = '\0';
+	appendStringInfoString(format_output, time);
+	
+	/* append either timezone offset or Z if offset is 0 */
+	offset = ++spaceptr;
+	if (strcmp(offset, "+00:00") == 0)
+	{
+		appendStringInfoChar(format_output, 'Z');
+	}
+	else
+	{
+		appendStringInfoString(format_output, offset);
+	}
 }

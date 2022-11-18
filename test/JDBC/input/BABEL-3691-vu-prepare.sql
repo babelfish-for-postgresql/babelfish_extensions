@@ -12,9 +12,9 @@ INSERT BABEL_3691_vu_prepare_t2 VALUES(12.05, 120.53)
 GO
 
 -- Date and time
-CREATE TABLE BABEL_3691_vu_prepare_t3(a time, b date, c smalldatetime, d datetime, e datetime2, f datetimeoffset)
+CREATE TABLE BABEL_3691_vu_prepare_t3(a time, b date, c smalldatetime, d datetime, e datetime2, f datetimeoffset, g datetimeoffset)
 GO
-INSERT BABEL_3691_vu_prepare_t3 VALUES('2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560')
+INSERT BABEL_3691_vu_prepare_t3 VALUES('2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560', '2012-10-12 12:34:56 +02:30')
 GO
 
 -- Character strings
@@ -141,7 +141,7 @@ GO
 CREATE VIEW BABEL_3691_vu_prepare_view10 AS
 SELECT
 (
-    SELECT f 
+    SELECT f, g
     FROM BABEL_3691_vu_prepare_t3
     FOR JSON PATH
 ) as c1;

@@ -76,9 +76,10 @@ nvarchar
 
 SELECT * FROM BABEL_3691_vu_prepare_view10
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: datetimeoffset is not supported with FOR JSON)~~
+~~START~~
+nvarchar
+[{"f":"2022-11-11T23:17:08.56Z","g":"2012-10-12T12:34:56+02:30"}]
+~~END~~
 
 
 -- Character strings
