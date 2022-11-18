@@ -5263,8 +5263,8 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.database_default)
 			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.database_default)
 			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
-			    OR table_type collate sys.database_default = opt_table
-			    OR table_type collate sys.database_default = opt_view)
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		ELSE 
 			RETURN query
@@ -5279,8 +5279,8 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.database_default)
 			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.database_default)
 			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
-			    OR table_type collate sys.database_default = opt_table
-			    OR table_type collate sys.database_default = opt_view)
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		END IF;
 	END;
@@ -5336,7 +5336,7 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-	JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" COLLATE sys.database_default)
+	JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" )
 	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
 	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
 WHERE t5.contype = 'p'
@@ -5344,12 +5344,14 @@ WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
   AND ext.dbid = cast(sys.db_id() as oid);
 
+GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'table_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'table_owner');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'table_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'column_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_pkeys_view', 'pk_name');
 
+-- internal function in order to workaround BABEL-1597
 create or replace function sys.sp_pkeys_internal(
 	in_table_name sys.nvarchar(384),
 	in_table_owner sys.nvarchar(384) = '',
@@ -5367,11 +5369,11 @@ as $$
 begin
 	return query
 	select * from sys.sp_pkeys_view
-	where table_name = in_table_name collate sys.database_default
-		and table_owner = coalesce(in_table_owner,'dbo') collate sys.database_default
+	where table_name = in_table_name
+		and table_owner = coalesce(in_table_owner,'dbo') 
 		and ((SELECT
 		         coalesce(in_table_qualifier,'')) = '' or
-		         table_qualifier = in_table_qualifier collate sys.database_default)
+		         table_qualifier = in_table_qualifier )
 	order by table_qualifier,
 	         table_owner,
 		 table_name,
@@ -5442,7 +5444,7 @@ WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
 
-create or replace function sys.sp_statistics_internal(
+create function sys.sp_statistics_internal(
     in_table_name sys.sysname,
     in_table_owner sys.sysname = '',
     in_table_qualifier sys.sysname = '',
@@ -5469,10 +5471,10 @@ as $$
 begin
     return query
     select * from sys.sp_statistics_view
-    where in_table_name = table_name COLLATE sys.database_default
-        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner  COLLATE sys.database_default)
-        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier COLLATE sys.database_default)
-        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name COLLATE sys.database_default)
+    where in_table_name = table_name
+        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner )
+        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier )
+        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name )
         and ((UPPER(in_is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(in_is_unique) = 'N'))
     order by non_unique, type, index_name, seq_in_index;
 end;
@@ -5595,9 +5597,9 @@ CAST(coalesce (split_part(pa.attoptions[1] collate "C", '=', 2) ,c1.name) AS sys
 CAST(t6.data_type AS smallint) AS DATA_TYPE,
 
 CASE -- cases for when they are of type identity. 
-	WHEN c1.is_identity = 1 AND (t8.name COLLATE sys.database_default = 'decimal' or t8.name COLLATE sys.database_default = 'numeric') 
+	WHEN c1.is_identity = 1 AND (t8.name = 'decimal' or t8.name = 'numeric') 
 	THEN CAST(CONCAT(t8.name, '() identity') AS sys.sysname)
-	WHEN c1.is_identity = 1 AND (t8.name COLLATE sys.database_default != 'decimal' AND t8.name COLLATE sys.database_default != 'numeric')
+	WHEN c1.is_identity = 1 AND (t8.name != 'decimal' AND t8.name != 'numeric')
 	THEN CAST(CONCAT(t8.name, ' identity') AS sys.sysname)
 	ELSE CAST(t8.name AS sys.sysname)
 END AS TYPE_NAME,
@@ -5628,11 +5630,13 @@ FROM pg_catalog.pg_class t1
 
 	JOIN pg_catalog.pg_type AS t7 ON t7.oid = c1.system_type_id
 	JOIN sys.types AS t8 ON c1.user_type_id = t8.user_type_id 
-	LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON t7.typname = t6.pg_type_name collate sys.database_default OR t7.typname = t6.type_name collate sys.database_default --need in order to get accurate DATA_TYPE value
+	LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON t7.typname = t6.pg_type_name OR t7.typname = t6.type_name --need in order to get accurate DATA_TYPE value
 	LEFT JOIN pg_catalog.pg_attribute AS pa ON t1.oid = pa.attrelid AND c1.name = pa.attname collate sys.database_default
 	, sys.translate_pg_type_to_tsql(t8.user_type_id) AS tsql_type_name
 	, sys.translate_pg_type_to_tsql(t8.system_type_id) AS tsql_base_type_name
 	WHERE has_schema_privilege(s1.schema_id, 'USAGE');
+  
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
 
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_special_columns_view', 'column_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_special_columns_view', 'type_name');
