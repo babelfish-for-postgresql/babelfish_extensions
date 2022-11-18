@@ -32,10 +32,6 @@ GO
 SELECT degrees(CAST(1 AS TINYINT));
 GO
 
---Negative_value_test_case 
-SELECT degrees(CAST(-1 AS TINYINT));
-GO
-
 --Normal_value_test_case
 SELECT degrees(CAST(4 AS TINYINT));
 GO

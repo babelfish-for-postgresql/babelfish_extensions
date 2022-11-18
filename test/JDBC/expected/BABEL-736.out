@@ -16,9 +16,9 @@ float
 
 SELECT degrees(9999*9999)
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
 
 
 SELECT degrees(9999.0 * 9999.0)
@@ -79,16 +79,6 @@ GO
 int
 57
 ~~END~~
-
-
---Negative_value_test_case 
-SELECT degrees(CAST(-1 AS TINYINT));
-GO
-~~START~~
-int
-~~ERROR (Code: 220)~~
-
-~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 
 --Normal_value_test_case
