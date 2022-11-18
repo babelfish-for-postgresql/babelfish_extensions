@@ -193,7 +193,7 @@ void* get_servicename_internal()
 
 void* get_language()
 {
-	return string_to_tsql_varchar(bbf_language);
+		return string_to_tsql_varchar(bbf_language);
 }
 
 /*
@@ -1282,7 +1282,7 @@ bigint_degrees(PG_FUNCTION_ARGS)
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("bigint out of range")));
+				errmsg("Arithmetic overflow error converting expression to data type bigint")));
 
 	PG_RETURN_INT64((int64)result);
 }
@@ -1304,7 +1304,7 @@ int_degrees(PG_FUNCTION_ARGS)
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("integer out of range")));
+				errmsg("Arithmetic overflow error converting expression to data type int")));
 
 	PG_RETURN_INT32((int32)result);
 }
@@ -1328,7 +1328,7 @@ smallint_degrees(PG_FUNCTION_ARGS)
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallint out of range")));
+				 errmsg("Arithmetic overflow error for data type smallint")));
 
 	PG_RETURN_INT32((int32) result);
 }
@@ -1356,7 +1356,7 @@ tinyint_degrees(PG_FUNCTION_ARGS)
 	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT16(result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("tinyint out of range")));
+				errmsg("Arithmetic overflow error for data type tinyint")));
 
 	PG_RETURN_INT16((int16)result);
 }
