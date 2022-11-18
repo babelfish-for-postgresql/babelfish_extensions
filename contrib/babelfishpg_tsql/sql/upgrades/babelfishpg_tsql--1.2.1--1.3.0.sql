@@ -103,6 +103,6 @@ FROM pg_catalog.pg_class t1
 WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
- 
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
