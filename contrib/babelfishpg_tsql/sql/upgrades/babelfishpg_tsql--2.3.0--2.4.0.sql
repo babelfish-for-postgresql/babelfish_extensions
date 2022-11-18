@@ -8,7 +8,7 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
 CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(
-	object_type varchar, schema_name varchar, view_name varchar
+	object_type varchar, schema_name varchar, object_name varchar
 ) AS
 $$
 DECLARE
@@ -16,8 +16,8 @@ DECLARE
     query1 text;
     query2 text;
 BEGIN
-    query1 := format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, view_name);
-    query2 := format('drop %s %s.%s', object_type, schema_name, view_name);
+    query1 := format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := format('drop %s %s.%s', object_type, schema_name, object_name);
     execute query1;
     execute query2;
 EXCEPTION
