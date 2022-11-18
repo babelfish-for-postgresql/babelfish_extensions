@@ -23,7 +23,12 @@ GO
 
 
 -- Errors in EXEC / sp_execute sql. Ensure stack level is removed
+DECLARE @v NVARCHAR(10);
+EXEC (@v);
+GO
 
+sp_executesql NULL;
+GO
 
 -- FMTONLY 
 CREATE TABLE t_3092_fmtonly(a INT);
