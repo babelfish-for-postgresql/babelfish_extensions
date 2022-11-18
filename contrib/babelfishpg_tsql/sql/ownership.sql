@@ -187,7 +187,7 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '')
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
 
 -- SERVER_PRINCIPALS
-CREATE VIEW sys.server_principals
+CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
 CAST(Base.rolname AS sys.SYSNAME) AS name,
 CAST(Base.oid As INT) AS principal_id,
@@ -202,7 +202,7 @@ Ext.default_language_name,
 Ext.credential_id,
 Ext.owning_principal_id,
 CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
-FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
@@ -230,9 +230,9 @@ CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
 -- DATABASE_PRINCIPALS
-CREATE VIEW sys.database_principals AS SELECT
+CREATE OR REPLACE VIEW sys.database_principals AS SELECT
 Ext.orig_username AS name,
-CAST(Base.OID AS INT) AS principal_id,
+CAST(Base.oid AS INT) AS principal_id,
 Ext.type,
 CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER' ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
 Ext.default_schema_name,
@@ -246,7 +246,7 @@ Ext.authentication_type_desc,
 Ext.default_language_name,
 Ext.default_language_lcid,
 CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
-FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
