@@ -53,113 +53,164 @@ GO
 INSERT INTO BABEL_3691_vu_prepare_t9 (myKey, myValue) VALUES (1, 0);
 GO
 
-
+-- SQL Server does not allow raw scalars as the output of a view, so surround the FOR JSON call with a SELECT to avoid a syntax error
 -- Exact Numerics
 CREATE VIEW BABEL_3691_vu_prepare_view1 AS
-SELECT a, c, d, f, g, i 
-FROM BABEL_3691_vu_prepare_t1
-FOR JSON PATH;
+SELECT
+(
+    SELECT a, c, d, f, g, i 
+    FROM BABEL_3691_vu_prepare_t1
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view2 AS
-SELECT b 
-FROM BABEL_3691_vu_prepare_t1
-FOR JSON PATH;
+SELECT
+(
+    SELECT b 
+    FROM BABEL_3691_vu_prepare_t1
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view3 AS
-SELECT e 
-FROM BABEL_3691_vu_prepare_t1
-FOR JSON PATH;
+SELECT
+(
+    SELECT e 
+    FROM BABEL_3691_vu_prepare_t1
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view4 AS
-SELECT h
-FROM BABEL_3691_vu_prepare_t1
-FOR JSON PATH;
+SELECT
+(
+    SELECT h
+    FROM BABEL_3691_vu_prepare_t1
+    FOR JSON PATH
+) as c1;
 GO
 
 -- Approximate numerics
 CREATE VIEW BABEL_3691_vu_prepare_view5 AS
-SELECT *
-FROM BABEL_3691_vu_prepare_t2
-FOR JSON PATH;
+SELECT
+(
+    SELECT *
+    FROM BABEL_3691_vu_prepare_t2
+    FOR JSON PATH
+) as c1;
 GO
 
 -- Date and time
 CREATE VIEW BABEL_3691_vu_prepare_view6 AS
-SELECT a,b 
-FROM BABEL_3691_vu_prepare_t3
-FOR JSON PATH;
+SELECT
+(
+    SELECT a,b 
+    FROM BABEL_3691_vu_prepare_t3
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view7 AS
-SELECT c
-FROM BABEL_3691_vu_prepare_t3
-FOR JSON PATH;
+SELECT
+(
+    SELECT c
+    FROM BABEL_3691_vu_prepare_t3
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view8 AS
-SELECT d 
-FROM BABEL_3691_vu_prepare_t3
-FOR JSON PATH;
+SELECT
+(
+    SELECT d 
+    FROM BABEL_3691_vu_prepare_t3
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view9 AS
-SELECT e 
-FROM BABEL_3691_vu_prepare_t3
-FOR JSON PATH;
+SELECT
+(
+    SELECT e 
+    FROM BABEL_3691_vu_prepare_t3
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view10 AS
-SELECT f 
-FROM BABEL_3691_vu_prepare_t3
-FOR JSON PATH;
+SELECT
+(
+    SELECT f 
+    FROM BABEL_3691_vu_prepare_t3
+    FOR JSON PATH
+) as c1;
 GO
 
 -- Character strings
 CREATE VIEW BABEL_3691_vu_prepare_view11 AS
-SELECT * 
-FROM BABEL_3691_vu_prepare_t4
-FOR JSON PATH;
+SELECT
+(
+    SELECT * 
+    FROM BABEL_3691_vu_prepare_t4
+    FOR JSON PATH
+) as c1;
 GO
 
 -- Unicode character strings
 CREATE VIEW BABEL_3691_vu_prepare_view12 AS
-SELECT * 
-FROM BABEL_3691_vu_prepare_t5
-FOR JSON PATH;
+SELECT
+(
+    SELECT * 
+    FROM BABEL_3691_vu_prepare_t5
+    FOR JSON PATH
+) as c1;
 GO
 
 -- Binary strings
 CREATE VIEW BABEL_3691_vu_prepare_view13 AS
-SELECT a 
-FROM BABEL_3691_vu_prepare_t6
-FOR JSON PATH;
+SELECT
+(
+    SELECT a 
+    FROM BABEL_3691_vu_prepare_t6
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view14 AS
-SELECT b
-FROM BABEL_3691_vu_prepare_t6
-FOR JSON PATH;
+SELECT
+(
+    SELECT b
+    FROM BABEL_3691_vu_prepare_t6
+    FOR JSON PATH
+) as c1;
 GO
 
 -- Return null string
 CREATE VIEW BABEL_3691_vu_prepare_view15 AS
-SELECT *
-FROM BABEL_3691_vu_prepare_t7
-FOR JSON PATH;
+SELECT
+(
+    SELECT *
+    FROM BABEL_3691_vu_prepare_t7
+    FOR JSON PATH
+) as c1;
 GO
 
 -- Rowversion and timestamp
 CREATE VIEW BABEL_3691_vu_prepare_view16 AS
-SELECT *
-FROM BABEL_3691_vu_prepare_t8
-FOR JSON PATH;
+SELECT
+(
+    SELECT *
+    FROM BABEL_3691_vu_prepare_t8
+    FOR JSON PATH
+) as c1;
 GO
 
 CREATE VIEW BABEL_3691_vu_prepare_view17 AS
-SELECT *
-FROM BABEL_3691_vu_prepare_t9
-FOR JSON PATH;
+SELECT
+(
+    SELECT *
+    FROM BABEL_3691_vu_prepare_t9
+    FOR JSON PATH
+) as c1;
 GO

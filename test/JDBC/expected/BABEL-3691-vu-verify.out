@@ -10,23 +10,26 @@ nvarchar
 
 SELECT * FROM BABEL_3691_vu_prepare_view2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: bit type is not supported with FOR JSON)~~
+~~START~~
+nvarchar
+[{"b":true}]
+~~END~~
 
 
 SELECT * FROM BABEL_3691_vu_prepare_view3
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: data types money or smallmoney are not supported with FOR JSON)~~
+~~START~~
+nvarchar
+[{"e":3148.2900}]
+~~END~~
 
 
 SELECT * FROM BABEL_3691_vu_prepare_view4
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: data types money or smallmoney are not supported with FOR JSON)~~
+~~START~~
+nvarchar
+[{"h":3148.2900}]
+~~END~~
 
 
 -- Approximate numerics
@@ -49,30 +52,33 @@ nvarchar
 
 SELECT * FROM BABEL_3691_vu_prepare_view7
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: datetime types are not supported with FOR JSON)~~
+~~START~~
+nvarchar
+[{"c":"2022-11-11T23:17:00"}]
+~~END~~
 
 
 SELECT * FROM BABEL_3691_vu_prepare_view8
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: datetime types are not supported with FOR JSON)~~
+~~START~~
+nvarchar
+[{"d":"2022-11-11T23:17:08.56"}]
+~~END~~
 
 
 SELECT * FROM BABEL_3691_vu_prepare_view9
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: datetime types are not supported with FOR JSON)~~
+~~START~~
+nvarchar
+[{"e":"2022-11-11T23:17:08.56"}]
+~~END~~
 
 
 SELECT * FROM BABEL_3691_vu_prepare_view10
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: datetime types are not supported with FOR JSON)~~
+~~ERROR (Message: datetimeoffset is not supported with FOR JSON)~~
 
 
 -- Character strings

@@ -23,6 +23,7 @@ static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool 
 								bool without_array_wrapper, const char *root_name);
 static void SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_value);
 static void tsql_unsupported_datatype_check(void);
+static void for_json_datetime_format(StringInfo format_output, char *outputstr);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
 
@@ -64,8 +65,12 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 	appendStringInfoChar(result,'{');
 	for (i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
-		char        *colname;
-		Datum		colval;
+		char	*colname;
+		Datum	colval;
+		Oid 	nspoid;
+		Oid 	tsql_datatype_oid;
+		Oid 	datatype_oid;
+		char	*typename;
 		
 		colname = SPI_fname(SPI_tuptable->tupdesc, i);
 		
@@ -84,11 +89,47 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		if (isnull && !include_null_value)
 			continue;
 
+		datatype_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
+		typename = SPI_gettype(SPI_tuptable->tupdesc, i);
+		nspoid = get_namespace_oid("sys", true);
+		Assert(nspoid != InvalidOid);
+
+		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
+		
+		if (tsql_datatype_oid == datatype_oid)
+		{
+			/* check for bit datatype, and if so, change type to BOOL */
+			if (strcmp(typename, "bit")  == 0)
+			{
+				datatype_oid = BOOLOID;
+			}
+			/* convert datetime, smalldatetime, and datetime2 to appropriate text values, 
+			 * as SQL Server has a different text conversion than postgres.
+			 */
+			else if (strcmp(typename, "datetime")  == 0 ||
+				strcmp(typename, "smalldatetime") == 0 ||
+				strcmp(typename, "datetime2") == 0)
+			{
+				char *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
+				StringInfo format_output = makeStringInfo();
+				for_json_datetime_format(format_output, val);
+				colval = CStringGetDatum(format_output->data);
+
+				datatype_oid = CSTRINGOID;
+			}
+			else if (strcmp(typename, "money") == 0 ||
+				strcmp(typename, "smallmoney") == 0)
+			{
+				char *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
+				colval = DirectFunctionCall3(numeric_in, CStringGetDatum(val), ObjectIdGetDatum(InvalidOid), Int32GetDatum(-1));
+				datatype_oid = NUMERICOID;
+			}
+		}
+
+
 		appendStringInfo(result,sep);
 		sep = ",";
-		tsql_json_build_object(result, 
-								CStringGetDatum(colname), colval,
-								SPI_gettypeid(SPI_tuptable->tupdesc,i),isnull);
+		tsql_json_build_object(result, CStringGetDatum(colname), colval, datatype_oid, isnull);
 
 	}
 	appendStringInfoChar(result,'}');
@@ -163,8 +204,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 }
 
 /*
- * For now report an ERROR if any attribute is binary, datetime and bit datatypes since they are not implemented yet.
- * Also Exact numeric's datatype money or smallmoney is not supported.
+ * For now report an ERROR if any attribute is binary or datetimeoffset datatype since they are not implemented yet.
  */
 static void
 tsql_unsupported_datatype_check(void)
@@ -203,24 +243,33 @@ tsql_unsupported_datatype_check(void)
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("binary types are not supported with FOR JSON")));
 			
-			if (strcmp(typename, "money") == 0 ||
-				strcmp(typename, "smallmoney") == 0)
+			if (strcmp(typename, "datetimeoffset") == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("data types money or smallmoney are not supported with FOR JSON")));
-			
-			if (strcmp(typename, "datetime")  == 0 ||
-				strcmp(typename, "smalldatetime") == 0 ||
-				strcmp(typename, "datetime2") == 0 ||
-				strcmp(typename, "datetimeoffset") == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("datetime types are not supported with FOR JSON")));
-			
-			if (strcmp(typename, "bit")  == 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("bit type is not supported with FOR JSON")));
+							errmsg("datetimeoffset is not supported with FOR JSON")));
 		}
 	}
+}
+
+/*
+ * This function handles the format for datetime datatypes by converting the output
+ * into required format for SELECT FOR JSON PATH. For example:
+ * "2022-11-11 20:56:22.41" -> "2022-11-11T20:56:22.41" for datetime, datetime2 & smalldatetime
+ * "2022-11-11 22:25:01.015 +00:00" -> "2022-11-11T22:25:01.015Z" for datetimeoffset
+ */
+static void
+for_json_datetime_format(StringInfo format_output, char *outputstr)
+{
+	char *before_space;
+	char *begin_space = strstr(outputstr, " ");
+	int begin_index;
+
+
+	begin_index = begin_space - outputstr;
+	before_space = palloc(begin_index + 1);
+	before_space = memcpy(before_space, outputstr, begin_index);
+	before_space[begin_index] = '\0';
+	appendStringInfoString(format_output,before_space);
+	appendStringInfoChar(format_output,'T');
+	appendStringInfoString(format_output,++begin_space);
 }
