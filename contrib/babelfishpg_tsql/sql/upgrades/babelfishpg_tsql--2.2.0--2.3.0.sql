@@ -4350,3 +4350,30 @@ BEGIN
             RETURN NULL;
 END; $BODY$
 LANGUAGE plpgsql;
+
+ALTER FUNCTION sys.babelfish_try_cast_to_any RENAME TO babelfish_try_cast_to_any_deprecated_in_2_3_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_cast_to_any_deprecated_in_2_3_0');
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS $BODY$ BEGIN
+    EXECUTE pg_catalog.format('SELECT CAST(CAST(%L AS %s) AS %s)', arg, format_type(pg_typeof(arg), NULL), format_type(pg_typeof(output), typmod)) INTO output;
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('cannot cast type %s to %s.', pg_typeof(arg),
+                                      pg_typeof(output));
+        WHEN OTHERS THEN
+            -- Do nothing. Output carries NULL.
+END; $BODY$
+LANGUAGE plpgsql;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

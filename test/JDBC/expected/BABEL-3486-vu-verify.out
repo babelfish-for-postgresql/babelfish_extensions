@@ -512,8 +512,9 @@ SELECT * FROM BABEL_3486_vu_prepare_v29_2
 GO
 ~~START~~
 bit
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to "bit".)~~
 
 DROP VIEW BABEL_3486_vu_prepare_v29_2
 GO
@@ -522,8 +523,9 @@ EXEC BABEL_3486_vu_prepare_p29_2
 GO
 ~~START~~
 bit
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to "bit".)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p29_2
 GO
@@ -532,8 +534,9 @@ SELECT BABEL_3486_vu_prepare_f29_2()
 GO
 ~~START~~
 bit
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to "bit".)~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f29_2()
 GO
@@ -692,8 +695,9 @@ SELECT * FROM BABEL_3486_vu_prepare_v35
 GO
 ~~START~~
 numeric
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to numeric.)~~
 
 DROP VIEW BABEL_3486_vu_prepare_v35
 GO
@@ -702,8 +706,9 @@ EXEC BABEL_3486_vu_prepare_p35
 GO
 ~~START~~
 numeric
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to numeric.)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p35
 GO
@@ -712,8 +717,9 @@ SELECT BABEL_3486_vu_prepare_f35()
 GO
 ~~START~~
 numeric
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to numeric.)~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f35()
 GO
@@ -1091,8 +1097,9 @@ SELECT * FROM BABEL_3486_vu_prepare_v47_2
 GO
 ~~START~~
 money
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to money.)~~
 
 DROP VIEW BABEL_3486_vu_prepare_v47_2
 GO
@@ -1101,8 +1108,9 @@ EXEC BABEL_3486_vu_prepare_p47_2
 GO
 ~~START~~
 money
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to money.)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p47_2
 GO
@@ -1111,8 +1119,9 @@ SELECT BABEL_3486_vu_prepare_f47_2()
 GO
 ~~START~~
 money
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to money.)~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f47_2()
 GO
@@ -1241,8 +1250,9 @@ SELECT * FROM BABEL_3486_vu_prepare_v52
 GO
 ~~START~~
 float
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision.)~~
 
 DROP VIEW BABEL_3486_vu_prepare_v52
 GO
@@ -1251,8 +1261,9 @@ EXEC BABEL_3486_vu_prepare_p52
 GO
 ~~START~~
 float
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision.)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p52
 GO
@@ -1261,8 +1272,9 @@ SELECT BABEL_3486_vu_prepare_f52()
 GO
 ~~START~~
 float
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type date to double precision.)~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f52()
 GO
@@ -1271,8 +1283,9 @@ SELECT * FROM BABEL_3486_vu_prepare_v53
 GO
 ~~START~~
 float
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision.)~~
 
 DROP VIEW BABEL_3486_vu_prepare_v53
 GO
@@ -1281,8 +1294,9 @@ EXEC BABEL_3486_vu_prepare_p53
 GO
 ~~START~~
 float
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision.)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p53
 GO
@@ -1291,8 +1305,9 @@ SELECT BABEL_3486_vu_prepare_f53()
 GO
 ~~START~~
 float
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type time without time zone to double precision.)~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f53()
 GO
@@ -3017,7 +3032,7 @@ SELECT * FROM BABEL_3486_vu_prepare_v110
 GO
 ~~START~~
 sql_variant
-2017-08-25 13:01:59
+2017-08-25 13:01:59.0
 ~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v110
@@ -3027,7 +3042,7 @@ EXEC BABEL_3486_vu_prepare_p110
 GO
 ~~START~~
 sql_variant
-2017-08-25 13:01:59
+2017-08-25 13:01:59.0
 ~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p110
@@ -3037,7 +3052,7 @@ SELECT BABEL_3486_vu_prepare_f110()
 GO
 ~~START~~
 sql_variant
-2017-08-25 13:01:59
+2017-08-25 13:01:59.0
 ~~END~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f110()
@@ -3047,8 +3062,9 @@ SELECT * FROM BABEL_3486_vu_prepare_v111
 GO
 ~~START~~
 sql_variant
-2017-08-25 13:01:59 +12:15
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
 
 DROP VIEW BABEL_3486_vu_prepare_v111
 GO
@@ -3057,8 +3073,9 @@ EXEC BABEL_3486_vu_prepare_p111
 GO
 ~~START~~
 sql_variant
-2017-08-25 13:01:59 +12:15
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p111
 GO
@@ -3067,40 +3084,11 @@ SELECT BABEL_3486_vu_prepare_f111()
 GO
 ~~START~~
 sql_variant
-2017-08-25 13:01:59 +12:15
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f111()
-GO
-
-SELECT * FROM BABEL_3486_vu_prepare_v112
-GO
-~~START~~
-sql_variant
-0x000000000000000000000000000000000000000000000000000000000457
-~~END~~
-
-DROP VIEW BABEL_3486_vu_prepare_v112
-GO
-
-EXEC BABEL_3486_vu_prepare_p112
-GO
-~~START~~
-sql_variant
-0x000000000000000000000000000000000000000000000000000000000457
-~~END~~
-
-DROP PROCEDURE BABEL_3486_vu_prepare_p112
-GO
-
-SELECT BABEL_3486_vu_prepare_f112()
-GO
-~~START~~
-sql_variant
-0x000000000000000000000000000000000000000000000000000000000457
-~~END~~
-
-DROP FUNCTION BABEL_3486_vu_prepare_f112()
 GO
 
 SELECT * FROM BABEL_3486_vu_prepare_v113
@@ -3191,4 +3179,64 @@ sql_variant
 ~~END~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f116()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v117
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v117
+GO
+
+EXEC BABEL_3486_vu_prepare_p117
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p117
+GO
+
+SELECT BABEL_3486_vu_prepare_f117()
+GO
+~~START~~
+date
+1990-01-01
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f117()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v118
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v118
+GO
+
+EXEC BABEL_3486_vu_prepare_p118
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p118
+GO
+
+SELECT BABEL_3486_vu_prepare_f118()
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f118()
 GO
