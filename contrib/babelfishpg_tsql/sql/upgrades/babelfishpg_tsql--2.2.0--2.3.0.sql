@@ -5444,7 +5444,7 @@ WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
 
-create function sys.sp_statistics_internal(
+create or replace function sys.sp_statistics_internal(
     in_table_name sys.sysname,
     in_table_owner sys.sysname = '',
     in_table_qualifier sys.sysname = '',
