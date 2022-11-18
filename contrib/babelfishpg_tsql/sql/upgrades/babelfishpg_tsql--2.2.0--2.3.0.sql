@@ -4203,7 +4203,7 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
-    CAST(('TT_' || tt.name COLLATE "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
+    CAST(('TT_' || tt.name || '_' || tt.type_table_object_id) as sys.sysname) as name
   , CAST(tt.type_table_object_id as int) as object_id
   , CAST(tt.principal_id as int) as principal_id
   , CAST(tt.schema_id as int) as schema_id
@@ -4373,7 +4373,7 @@ select params.parameter_name::sys.sysname
   , coll.oid::int
   , params.numeric_precision::smallint
   , params.numeric_scale::int
-  , case params.parameter_mode when 'OUT' COLLATE sys.database_default then 1 when 'INOUT' COLLATE sys.database_default then 1 else 0 end
+  , case params.parameter_mode when 'OUT' then 1 when 'INOUT' then 1 else 0 end
   , params.collation_name::sys.sysname
 from information_schema.routines routine
 left join information_schema.parameters params

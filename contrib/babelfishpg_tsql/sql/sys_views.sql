@@ -1926,7 +1926,7 @@ select params.parameter_name::sys.sysname
   , coll.oid::int
   , params.numeric_precision::smallint
   , params.numeric_scale::int
-  , case params.parameter_mode when 'OUT' COLLATE sys.database_default then 1 when 'INOUT' COLLATE sys.database_default then 1 else 0 end
+  , case params.parameter_mode when 'OUT' then 1 when 'INOUT' then 1 else 0 end
   , params.collation_name::sys.sysname
 from information_schema.routines routine
 left join information_schema.parameters params
