@@ -16,17 +16,13 @@ INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (1990, NULL, 37272, -10, 1);
 GO
 ~~ROW COUNT: 1~~
 
-INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (2147483648, 20.1, 64213, NULL, 20);
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (61, 20.1, 64213, NULL, 20);
 GO
-~~ERROR (Code: 8115)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: integer out of range)~~
-
-INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (3.2, 1.1, NULL, 32768, 5680);
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (3.2, 1.1, NULL, 8, 43);
 GO
-~~ERROR (Code: 220)~~
-
-~~ERROR (Message: smallint out of range)~~
+~~ROW COUNT: 1~~
 
 INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (201, 20.1, 64213, NULL, 20);
 GO
@@ -36,15 +32,11 @@ INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (1310.1234, 0.101, NULL, 3984, NULL)
 GO
 ~~ROW COUNT: 1~~
 
-INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (101, 20.1, 9223372036858847777, NULL, 20);
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (101, 20.1, 97777, NULL, 20);
 GO
-~~ERROR (Code: 8115)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: bigint out of range)~~
-
-INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (3.2, 1.1, NULL, 904, 5680);
+INSERT INTO BABEL_736_vu_prepare_t_1 VALUES (3.2, 1.1, NULL, 904, 50);
 GO
-~~ERROR (Code: 220)~~
-
-~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+~~ROW COUNT: 1~~
 

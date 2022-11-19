@@ -3,19 +3,12 @@ GO
 ~~START~~
 int#!#float#!#bigint#!#smallint#!#tinyint
 <NULL>#!#10.1234#!#10#!#20#!#<NULL>
+3#!#1.1#!#<NULL>#!#904#!#50
+3#!#1.1#!#<NULL>#!#8#!#43
+61#!#20.1#!#64213#!#<NULL>#!#20
+101#!#20.1#!#97777#!#<NULL>#!#20
 201#!#20.1#!#64213#!#<NULL>#!#20
 1310#!#0.101#!#<NULL>#!#3984#!#<NULL>
 1990#!#<NULL>#!#37272#!#-10#!#1
-~~END~~
-
-
-SELECT * from BABEL_736_vu_prepare_t_1 ORDER BY 3
-GO
-~~START~~
-int#!#float#!#bigint#!#smallint#!#tinyint
-1310#!#0.101#!#<NULL>#!#3984#!#<NULL>
-<NULL>#!#10.1234#!#10#!#20#!#<NULL>
-1990#!#<NULL>#!#37272#!#-10#!#1
-201#!#20.1#!#64213#!#<NULL>#!#20
 ~~END~~
 
