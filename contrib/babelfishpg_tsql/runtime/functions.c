@@ -1240,7 +1240,7 @@ int_degrees(PG_FUNCTION_ARGS)
 Datum
 smallint_degrees(PG_FUNCTION_ARGS)
 {
-	int32	arg1 = PG_GETARG_INT32(0);
+	int16	arg1 = PG_GETARG_INT16(0);
 	float8	result;
 	 
 	
@@ -1256,12 +1256,6 @@ smallint_degrees(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32((int32) result);
 }
-
-// #define DatumGetInt8(X) ((int8) (X))
-// #define PG_GETARG_INT8(n)	 DatumGetInt8(PG_GETARG_DATUM(n))
-// #define PG_RETURN_INT8(x) return Int8GetDatum(x)
-// #define FLOAT8_FITS_IN_INT8(num) \
-// 	((num) >= (float8) PG_INT8_MIN && (num) < -((float8) PG_INT8_MIN))
 
 Datum
 tinyint_degrees(PG_FUNCTION_ARGS)

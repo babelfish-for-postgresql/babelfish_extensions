@@ -7,9 +7,6 @@ GO
 SELECT degrees(9999*9999)
 GO
 
-SELECT degrees(9999.0 * 9999.0)
-GO
-
 ---------------------------------------------------
 --TINYINT__TEST_CASES_FOR_DEGREES
 
@@ -26,10 +23,6 @@ GO
 
 --Null_value_test_case
 SELECT degrees(CAST(NULL AS TINYINT));
-GO
-
---Trigger_an_error_message_integer_out_of_range
-SELECT degrees(CAST(256 AS TINYINT));
 GO
 
 ---------------------------------------------------
@@ -54,10 +47,6 @@ GO
 SELECT degrees(CAST(NULL AS SMALLINT));
 GO
 
---Trigger_an_error_message_integer_out_of_range
-SELECT degrees(CAST(32768 AS SMALLINT));
-GO
-
 ---------------------------------------------------
 --BIGINT__TEST_CASES_FOR_DEGREES
 
@@ -80,8 +69,7 @@ GO
 SELECT degrees(CAST(NULL AS BIGINT));
 GO
 
---Trigger_an_error_message_integer_out_of_range
-SELECT degrees(CAST(9223372036858847777 AS BIGINT));
+SELECT degrees(CAST(88.6 AS BIGINT));
 GO
 
 ---------------------------------------------------
@@ -104,8 +92,4 @@ GO
 
 --Null_value_test_case
 SELECT degrees(CAST(NULL AS INT));
-GO
-
---Trigger_an_error_message_integer_out_of_range
-SELECT degrees(CAST(2147483648 AS INT));
 GO
