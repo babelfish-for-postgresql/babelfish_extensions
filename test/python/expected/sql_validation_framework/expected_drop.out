@@ -8,9 +8,11 @@ Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.
 Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.0.sql
 Unexpected drop found for procedure babelfish_drop_deprecated_opclass in file babelfishpg_common--1.0.0--1.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in file babelfishpg_tsql--1.2.1--2.0.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in file babelfishpg_tsql--1.3.0--2.0.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.0.0--2.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.2.0--2.3.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.3.0--2.4.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_table in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--1.0.0--1.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--2.1.0--2.2.0.sql

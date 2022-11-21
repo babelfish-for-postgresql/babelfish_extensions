@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   run-babelfish-python-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
@@ -48,7 +48,7 @@ jobs:
           curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
-          pip3 install pyodbc pymssql pytest pytest-xdist
+          pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
       
       - name: Run Python Tests
         if: always() && steps.configure-python-environment.outcome == 'success'

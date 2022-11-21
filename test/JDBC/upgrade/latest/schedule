@@ -130,10 +130,12 @@ BABEL-3249
 BABEL-3486
 BABEL-3474
 BABEL-3614
+BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
 BABEL-3407
+BABEL-3691
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -328,3 +330,12 @@ BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
 babelfish_integrity_checker
+get_tds_id
+BABEL-PG-SYSTEM-FUNCTIONS
+BABEL-3655
+sys-table_types_internal
+sys-table_types_internal-dep
+BABEL-CHECK-CONSTRAINT
+BABEL-3640
+sys_server_principals_dep
+sys_database_principals_dep

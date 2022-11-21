@@ -1201,9 +1201,6 @@ typedef struct PLtsql_function
 
 	/* arguments for inline code block */
 	InlineCodeBlockArgs *inline_args;
-
-	Oid			fn_owner;
-	bool		exists_in_shared_schema;
 } PLtsql_function;
 
 /*
@@ -1773,6 +1770,7 @@ extern int pltsql_lock_timeout;
 extern Portal pltsql_snapshot_portal;
 extern int pltsql_non_tsql_proc_entry_count;
 extern int pltsql_sys_func_entry_count;
+extern bool current_query_is_create_tbl_check_constraint;
 
 extern char *bulk_load_table_name;
 
@@ -1960,7 +1958,6 @@ extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
-extern Oid get_function_owner_for_top_estate();
 
 typedef struct
 {
@@ -2031,6 +2028,14 @@ bool pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p,
 void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char** probin_str_p);
 void pltsql_function_probin_reader(ParseState *pstate,
 						List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
+
+/*
+ * This variable is set to true, if setval should behave in T-SQL way, i.e.,
+ * setval sets the max/min(current identity value, new identity value to be
+ * inserted.  By default, it is set to fale which means setval should behave
+ * PG way irrespective of the dialect - reset identity seed.
+ */
+extern bool pltsql_setval_identity_mode;
 
 /*
  * Functions in pltsql_identity.c

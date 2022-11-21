@@ -31,6 +31,67 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384) = '',
+	in_table_owner sys.nvarchar(384) = '', 
+	in_table_qualifier sys.sysname = '',
+	in_table_type sys.varchar(100) = '',
+	in_fusepattern sys.bit = '1')
+	RETURNS TABLE (
+		out_table_qualifier sys.sysname,
+		out_table_owner sys.sysname,
+		out_table_name sys.sysname,
+		out_table_type sys.varchar(32),
+		out_remarks sys.varchar(254)
+	)
+	AS $$
+		DECLARE opt_table sys.varchar(16) = '';
+		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
+	BEGIN
+		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''TABLE''' OR upper(trim(unnest)) = '''''''TABLE''''''') >= 1 THEN
+			opt_table = 'TABLE';
+		END IF;
+		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''VIEW''' OR upper(trim(unnest)) = '''''''VIEW''''''') >= 1 THEN
+			opt_view = 'VIEW';
+		END IF;
+		IF in_fusepattern = 1 THEN
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type collate sys.bbf_unicode_general_ci_as = opt_table
+			    OR table_type collate sys.bbf_unicode_general_ci_as= opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		ELSE 
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		END IF;
+	END;
+$$
+LANGUAGE plpgsql;
+
 -- please add your SQL here
 CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
@@ -289,20 +350,38 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
+-- The sys.table_types_internal view mimics the logic used in sys.is_table_type function
+create or replace view sys.table_types_internal as
+SELECT pt.typrelid
+    FROM pg_catalog.pg_type pt
+    INNER JOIN pg_catalog.pg_depend dep
+    ON pt.typrelid = dep.objid
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE 
+    pt.typnamespace in (select schema_id from sys.schemas) 
+    and (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r')
+;
+
 -- re-creating objects to point to new tsql_type_max_length_helper
 
 create or replace view sys.types As
+with type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+)
 -- For System types
-select tsql_type_name as name
+select 
+  ti.tsql_type_name as name
   , t.oid as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
   , cast(NULL as INT) as principal_id
-  , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
-  , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
+  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , cast(sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
-    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
+    WHEN 'default' THEN default_collation_name
     ELSE  c.collname
     END as collation_name
   , case when typnotnull then 0 else 1 end as is_nullable
@@ -313,9 +392,11 @@ select tsql_type_name as name
   , 0 as is_table_type
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
+inner join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
-where tsql_type_name IS NOT NULL
+,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+where
+ti.tsql_type_name IS NOT NULL  
 and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
@@ -323,16 +404,16 @@ union all
 select cast(t.typname as text) as name
   , t.typbasetype as system_type_id
   , t.oid as user_type_id
-  , s.oid as schema_id
+  , t.typnamespace as schema_id
   , null::integer as principal_id
-  , case when is_tbl_type then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
-  , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
-  , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
+  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
   , CASE c.collname
-    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
+    WHEN 'default' THEN default_collation_name
     ELSE  c.collname 
     END as collation_name
-  , case when is_tbl_type then 0
+  , case when tt.typrelid is not null then 0
          else case when typnotnull then 0 else 1 end
     end
     as is_nullable
@@ -341,23 +422,24 @@ select cast(t.typname as text) as name
   , 0 as is_assembly_type
   , 0 as default_object_id
   , 0 as rule_object_id
-  , case when is_tbl_type then 1 else 0 end as is_table_type
+  , case when tt.typrelid is not null then 1 else 0 end as is_table_type
 from pg_type t
-inner join pg_namespace s on s.oid = t.typnamespace
 join sys.schemas sch on t.typnamespace = sch.schema_id
+left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
+left join sys.table_types_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
-, sys.is_table_type(t.typrelid) as is_tbl_type
+, cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
 -- we want to show details of user defined datatypes created under babelfish database
-where tsql_type_name IS NULL
+where 
+ ti.tsql_type_name IS NULL
 and
   (
     -- show all user defined datatypes created under babelfish database except table types
     t.typtype = 'd'
     or
     -- only for table types
-    sys.is_table_type(t.typrelid)
+    tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
 
@@ -2418,7 +2500,7 @@ select
   CAST(t.relname as sys._ci_sysname) as name
   , CAST(t.oid as int) as object_id
   , CAST(NULL as int) as principal_id
-  , CAST(sch.schema_id as int) as schema_id
+  , CAST(t.relnamespace  as int) as schema_id
   , 0 as parent_object_id
   , CAST('U' as CHAR(2)) as type
   , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
@@ -2463,11 +2545,12 @@ select
   , CAST(null as integer) as history_table_id
   , CAST(0 as sys.bit) as is_remote_data_archive_enabled
   , CAST(0 as sys.bit) as is_external
-from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
-where t.relpersistence in ('p', 'u', 't')
+from pg_class t 
+where t.relnamespace in (select schema_id from sys.schemas)
+and t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
-and not sys.is_table_type(t.oid)
-and has_schema_privilege(sch.schema_id, 'USAGE')
+and t.oid not in (select typrelid from sys.table_types_internal)
+and has_schema_privilege(t.relnamespace, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
 
@@ -3769,58 +3852,6 @@ BEGIN
 END;
 $$;
 
--- conversion to datetime2
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
-                                                            IN arg TEXT,
-                                                            IN try BOOL,
-                                                            IN p_style NUMERIC DEFAULT 0)
-RETURNS sys.DATETIME2
-AS
-$BODY$
-BEGIN
-    IF try THEN
-	    RETURN sys.babelfish_try_conv_string_to_datetime(typename, arg, p_style);
-    ELSE
-        RETURN sys.babelfish_conv_string_to_datetime(typename, arg, p_style);
-    END IF;
-END;
-$BODY$
-LANGUAGE plpgsql
-VOLATILE;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
-                                                            IN arg anyelement,
-                                                            IN try BOOL,
-                                                            IN p_style NUMERIC DEFAULT 0)
-RETURNS sys.DATETIME2
-AS
-$BODY$
-BEGIN
-    IF try THEN
-        RETURN sys.babelfish_try_conv_to_datetime2(arg);
-    ELSE
-        RETURN CAST(arg AS sys.DATETIME2);
-    END IF;
-END;
-$BODY$
-LANGUAGE plpgsql
-VOLATILE;
-
-
-CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime2(IN arg anyelement)
-RETURNS sys.DATETIME2
-AS
-$BODY$
-BEGIN
-    RETURN CAST(arg AS sys.DATETIME2);
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-END;
-$BODY$
-LANGUAGE plpgsql
-VOLATILE;
-
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
 BEGIN
@@ -4089,6 +4120,245 @@ ALTER FUNCTION sys.get_max_id_from_table RENAME TO get_max_id_from_table_depreca
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_table_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
 
+
+-- Deprecate the function sys.get_tds_id
+ALTER FUNCTION sys.get_tds_id RENAME TO get_tds_id_deprecated_2_3_0;
+
+-- Recreate Newer sys.get_tds_id function
+create or replace function sys.get_tds_id(
+	datatype sys.varchar(50)
+)
+returns INT
+AS $$
+DECLARE
+	tds_id INT;
+BEGIN
+	IF datatype IS NULL THEN
+		RETURN 0;
+	END IF;
+	CASE datatype
+		WHEN 'text' THEN tds_id = 35;
+		WHEN 'uniqueidentifier' THEN tds_id = 36;
+		WHEN 'tinyint' THEN tds_id = 38;
+		WHEN 'smallint' THEN tds_id = 38;
+		WHEN 'int' THEN tds_id = 38;
+		WHEN 'bigint' THEN tds_id = 38;
+		WHEN 'ntext' THEN tds_id = 99;
+		WHEN 'bit' THEN tds_id = 104;
+		WHEN 'float' THEN tds_id = 109;
+		WHEN 'real' THEN tds_id = 109;
+		WHEN 'varchar' THEN tds_id = 167;
+		WHEN 'nvarchar' THEN tds_id = 231;
+		WHEN 'nchar' THEN tds_id = 239;
+		WHEN 'money' THEN tds_id = 110;
+		WHEN 'smallmoney' THEN tds_id = 110;
+		WHEN 'char' THEN tds_id = 175;
+		WHEN 'date' THEN tds_id = 40;
+		WHEN 'datetime' THEN tds_id = 111;
+		WHEN 'smalldatetime' THEN tds_id = 111;
+		WHEN 'numeric' THEN tds_id = 108;
+		WHEN 'xml' THEN tds_id = 241;
+		WHEN 'decimal' THEN tds_id = 106;
+		WHEN 'varbinary' THEN tds_id = 165;
+		WHEN 'binary' THEN tds_id = 173;
+		WHEN 'image' THEN tds_id = 34;
+		WHEN 'time' THEN tds_id = 41;
+		WHEN 'datetime2' THEN tds_id = 42;
+		WHEN 'sql_variant' THEN tds_id = 98;
+		WHEN 'datetimeoffset' THEN tds_id = 43;
+		WHEN 'timestamp' THEN tds_id = 173;
+		ELSE tds_id = 0;
+	END CASE;
+	RETURN tds_id;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+-- Drop the deprecated function
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_tds_id_deprecated_2_3_0');
+
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Base.rolname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+ELSE NULL END AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_principals AS SELECT
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+CAST(Base.oid AS INT) AS principal_id,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
+WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME();
+
+GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_role_members AS
+SELECT
+CAST(Auth1.oid AS INT) AS role_principal_id,
+CAST(Auth2.oid AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.database_name = DB_NAME() 
+AND Ext2.database_name = DB_NAME()
+AND Ext1.type = 'R'
+AND Ext2.orig_username != 'db_owner';
+
+GRANT SELECT ON sys.database_role_members TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_statistics_view AS
+SELECT
+CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t3."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t3."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CAST(NULL AS smallint) AS NON_UNIQUE,
+CAST(NULL AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(NULL AS sys.sysname) AS INDEX_NAME,
+CAST(0 AS smallint) AS TYPE,
+CAST(NULL AS smallint) AS SEQ_IN_INDEX,
+CAST(NULL AS sys.sysname) AS COLUMN_NAME,
+CAST(NULL AS sys.varchar(1)) AS COLLATION,
+CAST(t1.reltuples AS int) AS CARDINALITY,
+CAST(t1.relpages AS int) AS PAGES,
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" AND s1.name = t3."TABLE_SCHEMA")
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+UNION
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CASE
+WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
+ELSE CAST(1 AS smallint)
+END AS NON_UNIQUE,
+CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
+-- the index name created by CREATE INDEX is re-mapped, find it (by checking
+-- the ones not in pg_constraint) and restoring it back before display
+CASE 
+WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
+ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+END AS INDEX_NAME,
+CASE
+WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
+ELSE CAST(3 AS smallint)
+END AS TYPE,
+CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST('A' AS sys.varchar(1)) AS COLLATION,
+CAST(t7.n_distinct AS int) AS CARDINALITY,
+CAST(0 AS int) AS PAGES, --not supported
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" AND s1.name = t4."TABLE_SCHEMA")
+	JOIN (pg_catalog.pg_index t5 JOIN
+		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
+	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
+	LEFT JOIN pg_catalog.pg_stats t7 ON (t1.relname = t7.tablename AND t7.schemaname = nsp.nspname)
+	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
+    AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
+GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg TEXT, IN typmod INTEGER)
+RETURNS sys.DATETIME2
+AS $BODY$
+BEGIN
+    RETURN CASE typmod
+            WHEN 0 THEN CAST(arg as DATETIME2(0))
+            WHEN 1 THEN CAST(arg as DATETIME2(1))
+            WHEN 2 THEN CAST(arg as DATETIME2(2))
+            WHEN 3 THEN CAST(arg as DATETIME2(3))
+            WHEN 4 THEN CAST(arg as DATETIME2(4))
+            WHEN 5 THEN CAST(arg as DATETIME2(5))
+            ELSE CAST(arg as DATETIME2(6))
+        END;
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('cannot cast type %s to datetime2.',
+                                      pg_typeof(arg));
+        WHEN OTHERS THEN
+            RETURN NULL;
+END; $BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg ANYELEMENT, IN typmod INTEGER)
+RETURNS sys.DATETIME2
+AS $BODY$
+BEGIN
+     RETURN CASE typmod
+            WHEN 0 THEN CAST(arg as DATETIME2(0))
+            WHEN 1 THEN CAST(arg as DATETIME2(1))
+            WHEN 2 THEN CAST(arg as DATETIME2(2))
+            WHEN 3 THEN CAST(arg as DATETIME2(3))
+            WHEN 4 THEN CAST(arg as DATETIME2(4))
+            WHEN 5 THEN CAST(arg as DATETIME2(5))
+            ELSE CAST(arg as DATETIME2(6))
+        END;
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('cannot cast type %s to datetime2.',
+                                      pg_typeof(arg));
+        WHEN OTHERS THEN
+            RETURN NULL;
+END; $BODY$
+LANGUAGE plpgsql;
+
+ALTER FUNCTION sys.babelfish_try_cast_to_any RENAME TO babelfish_try_cast_to_any_deprecated_in_2_3_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_try_cast_to_any_deprecated_in_2_3_0');
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS $BODY$ BEGIN
+    EXECUTE pg_catalog.format('SELECT CAST(CAST(%L AS %s) AS %s)', arg, format_type(pg_typeof(arg), NULL), format_type(pg_typeof(output), typmod)) INTO output;
+    EXCEPTION
+        WHEN cannot_coerce THEN
+            RAISE USING MESSAGE := pg_catalog.format('cannot cast type %s to %s.', pg_typeof(arg),
+                                      pg_typeof(output));
+        WHEN OTHERS THEN
+            -- Do nothing. Output carries NULL.
+END; $BODY$
+LANGUAGE plpgsql;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
@@ -4098,598 +4368,3 @@ DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
-CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_datetime(IN p_datatype TEXT,
-                                                                     IN p_datetimestring TEXT,
-                                                                     IN p_style NUMERIC DEFAULT 0)
-RETURNS TIMESTAMP WITHOUT TIME ZONE
-AS
-$BODY$
-DECLARE
-    v_day VARCHAR COLLATE "C";
-    v_year VARCHAR COLLATE "C";
-    v_month VARCHAR COLLATE "C";
-    v_style SMALLINT;
-    v_scale SMALLINT;
-    v_hours VARCHAR COLLATE "C";
-    v_hijridate DATE;
-    v_minutes VARCHAR COLLATE "C";
-    v_seconds VARCHAR COLLATE "C";
-    v_fseconds VARCHAR COLLATE "C";
-    v_datatype VARCHAR COLLATE "C";
-    v_timepart VARCHAR COLLATE "C";
-    v_leftpart VARCHAR COLLATE "C";
-    v_middlepart VARCHAR COLLATE "C";
-    v_rightpart VARCHAR COLLATE "C";
-    v_datestring VARCHAR COLLATE "C";
-    v_err_message VARCHAR COLLATE "C";
-    v_date_format VARCHAR COLLATE "C";
-    v_res_datatype VARCHAR COLLATE "C";
-    v_datetimestring VARCHAR COLLATE "C";
-    v_datatype_groups TEXT[];
-    v_regmatch_groups TEXT[];
-    v_lang_metadata_json JSONB;
-    v_compmonth_regexp VARCHAR COLLATE "C";
-    v_resdatetime TIMESTAMP(6) WITHOUT TIME ZONE;
-    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
-    DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
-    DAYMM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
-    FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{4})';
-    SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
-    COMPYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2}|\d{4})';
-    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:[AP]M)';
-    MASKSEP_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\.|-|/)';
-    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,2}\s*';
-    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,9}\s*';
-    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
-    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR COLLATE "C" := concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
-                                                    TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
-                                                    TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, AMPM_REGEXP, '?|',
-                                                    TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
-                                                    TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '(?:\.|\:)', FRACTSECS_REGEXP, AMPM_REGEXP, '?');
-    HHMMSSFS_DOT_PART_REGEXP CONSTANT VARCHAR COLLATE "C" := concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
-                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
-                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, AMPM_REGEXP, '?|',
-                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
-                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '(?:\.)', FRACTSECS_REGEXP, AMPM_REGEXP, '?');
-    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')$');
-    DEFMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP,
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
-    DEFMASK1_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
-    DEFMASK2_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)\s*', COMPYEAR_REGEXP,
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK2_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
-    DEFMASK2_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
-    DEFMASK3_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP,
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK3_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
-    DEFMASK3_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
-    DEFMASK4_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK4_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
-    DEFMASK4_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
-    DEFMASK5_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK5_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
-    DEFMASK5_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
-    DEFMASK6_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 MASKSEP_REGEXP, '*\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP,
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK6_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
-    DEFMASK6_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
-    DEFMASK7_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP,
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK7_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP, '$');
-    DEFMASK7_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP, '$');
-    DEFMASK8_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK8_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
-    DEFMASK8_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
-    DEFMASK9_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                 MASKSEP_REGEXP, '*\s*($comp_month$)\s*', FULLYEAR_REGEXP,
-                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK9_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', FULLYEAR_REGEXP, '$');
-    DEFMASK9_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', FULLYEAR_REGEXP, '$');
-    DEFMASK10_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                  DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP,
-                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK10_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP, '$');
-    DOT_SLASH_DASH_COMPYEAR1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                                 DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', COMPYEAR_REGEXP,
-                                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DOT_SLASH_DASH_COMPYEAR1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP, '$');
-    DOT_SLASH_DASH_SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', SHORTYEAR_REGEXP, '$');
-    DOT_SLASH_DASH_FULLYEAR1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                                 DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', FULLYEAR_REGEXP,
-                                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DOT_SLASH_DASH_FULLYEAR1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', FULLYEAR_REGEXP, '$');
-    FULLYEAR_DOT_SLASH_DASH1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
-                                                                 FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP,
-                                                                 '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    FULLYEAR_DOT_SLASH_DASH1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '$');
-    SHORT_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{6}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    FULL_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{8}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-BEGIN
-    v_datatype := trim(p_datatype);
-    v_datetimestring := upper(trim(p_datetimestring));
-    v_style := floor(p_style)::SMALLINT;
-
-    v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
-
-    v_res_datatype := upper(v_datatype_groups[1]);
-    v_scale := v_datatype_groups[2]::SMALLINT;
-
-    IF (v_res_datatype IS NULL) THEN
-        RAISE datatype_mismatch;
-    ELSIF (v_res_datatype <> 'DATETIME2' AND v_scale IS NOT NULL)
-    THEN
-        RAISE invalid_indicator_parameter_value;
-    ELSIF (coalesce(v_scale, 0) NOT BETWEEN 0 AND 7)
-    THEN
-        RAISE interval_field_overflow;
-    ELSIF (v_scale IS NULL) THEN
-        v_scale := 7;
-    END IF;
-
-    IF (scale(p_style) > 0) THEN
-        RAISE most_specific_type_mismatch;
-    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
-             (v_style BETWEEN 20 AND 25) OR
-             (v_style BETWEEN 100 AND 114) OR
-             (v_style IN (120, 121, 126, 127, 130, 131))) AND
-             v_res_datatype = 'DATETIME2')
-    THEN
-        RAISE invalid_parameter_value;
-    END IF;
-
-    v_timepart := trim(substring(v_datetimestring, HHMMSSFS_PART_REGEXP));
-    v_datestring := trim(regexp_replace(v_datetimestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
-
-    BEGIN
-        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(CONVERSION_LANG);
-    EXCEPTION
-        WHEN OTHERS THEN
-        RAISE invalid_escape_sequence;
-    END;
-
-    v_date_format := coalesce(nullif(DATE_FORMAT, ''), v_lang_metadata_json ->> 'date_format');
-
-    v_compmonth_regexp := array_to_string(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
-                                                    ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_names'))), '|');
-
-    IF (v_datetimestring ~* pg_catalog.replace(DEFMASK1_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK2_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK3_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK4_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK5_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK6_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK7_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK8_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK9_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* pg_catalog.replace(DEFMASK10_0_REGEXP, '$comp_month$', v_compmonth_regexp))
-    THEN
-        IF ((v_style IN (127, 130, 131) AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
-            (v_style IN (130, 131) AND v_res_datatype = 'DATETIME2'))
-        THEN
-            RAISE invalid_datetime_format;
-        END IF;
-
-        IF ((v_datestring ~* pg_catalog.replace(DEFMASK1_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK2_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK3_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK4_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK5_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK6_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK7_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK8_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* pg_catalog.replace(DEFMASK9_2_REGEXP, '$comp_month$', v_compmonth_regexp)) AND
-            v_res_datatype = 'DATETIME2')
-        THEN
-            RAISE invalid_datetime_format;
-        END IF;
-
-        IF (v_datestring ~* pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := v_regmatch_groups[2];
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
-            v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := v_regmatch_groups[1];
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-            v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := v_regmatch_groups[3];
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-            v_year := v_regmatch_groups[1];
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := v_regmatch_groups[2];
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[3], v_lang_metadata_json);
-            v_year := v_regmatch_groups[1];
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := v_regmatch_groups[1];
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[3], v_lang_metadata_json);
-            v_year := sys.babelfish_get_full_year(v_regmatch_groups[2]);
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := v_regmatch_groups[3];
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
-            v_year := v_regmatch_groups[2];
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := v_regmatch_groups[2];
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
-            v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := '01';
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-            v_year := v_regmatch_groups[1];
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := '01';
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
-            v_year := v_regmatch_groups[2];
-
-        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp))
-        THEN
-            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
-            v_day := v_regmatch_groups[1];
-            v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
-            v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
-        ELSE
-            RAISE invalid_character_value_for_cast;
-        END IF;
-    ELSIF (v_datetimestring ~* DOT_SLASH_DASH_COMPYEAR1_0_REGEXP)
-    THEN
-        IF (v_style IN (6, 7, 8, 9, 12, 13, 14, 24, 100, 106, 107, 108, 109, 112, 113, 114, 130) AND
-            v_res_datatype = 'DATETIME2')
-        THEN
-            RAISE invalid_regular_expression;
-        END IF;
-
-        v_regmatch_groups := regexp_matches(v_datestring, DOT_SLASH_DASH_COMPYEAR1_1_REGEXP, 'gi');
-        v_leftpart := v_regmatch_groups[1];
-        v_middlepart := v_regmatch_groups[2];
-        v_rightpart := v_regmatch_groups[3];
-
-        IF (v_datestring ~* DOT_SLASH_DASH_SHORTYEAR_REGEXP)
-        THEN
-            IF ((v_style NOT IN (0, 1, 2, 3, 4, 5, 10, 11) AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
-                (v_style NOT IN (0, 1, 2, 3, 4, 5, 10, 11, 12) AND v_res_datatype = 'DATETIME2'))
-            THEN
-                RAISE invalid_datetime_format;
-            END IF;
-
-            IF ((v_style IN (1, 10) AND v_date_format <> 'MDY' AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
-                (v_style IN (0, 1, 10) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
-                (v_style IN (0, 1, 10, 22) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype = 'DATETIME2') OR
-                (v_style IN (1, 10, 22) AND v_date_format IN ('DMY', 'DYM', 'MYD', 'YMD', 'YDM') AND v_res_datatype = 'DATETIME2'))
-            THEN
-                v_day := v_middlepart;
-                v_month := v_leftpart;
-                v_year := sys.babelfish_get_full_year(v_rightpart);
-
-            ELSIF ((v_style IN (2, 11) AND v_date_format <> 'YMD') OR
-                   (v_style IN (0, 2, 11) AND v_date_format = 'YMD'))
-            THEN
-                v_day := v_rightpart;
-                v_month := v_middlepart;
-                v_year := sys.babelfish_get_full_year(v_leftpart);
-
-            ELSIF ((v_style IN (3, 4, 5) AND v_date_format <> 'DMY') OR
-                   (v_style IN (0, 3, 4, 5) AND v_date_format = 'DMY'))
-            THEN
-                v_day := v_leftpart;
-                v_month := v_middlepart;
-                v_year := sys.babelfish_get_full_year(v_rightpart);
-
-            ELSIF (v_style = 0 AND v_date_format = 'DYM')
-            THEN
-                v_day = v_leftpart;
-                v_month = v_rightpart;
-                v_year = sys.babelfish_get_full_year(v_middlepart);
-
-            ELSIF (v_style = 0 AND v_date_format = 'MYD')
-            THEN
-                v_day := v_rightpart;
-                v_month := v_leftpart;
-                v_year = sys.babelfish_get_full_year(v_middlepart);
-
-            ELSIF (v_style = 0 AND v_date_format = 'YDM')
-            THEN
-                IF (v_res_datatype = 'DATETIME2') THEN
-                    RAISE character_not_in_repertoire;
-                END IF;
-
-                v_day := v_middlepart;
-                v_month := v_rightpart;
-                v_year := sys.babelfish_get_full_year(v_leftpart);
-            ELSE
-                RAISE invalid_character_value_for_cast;
-            END IF;
-        ELSIF (v_datestring ~* DOT_SLASH_DASH_FULLYEAR1_1_REGEXP)
-        THEN
-            IF (v_style NOT IN (0, 20, 21, 101, 102, 103, 104, 105, 110, 111, 120, 121, 130, 131) AND
-                v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
-            THEN
-                RAISE invalid_datetime_format;
-            ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME') THEN
-                RAISE invalid_character_value_for_cast;
-            END IF;
-
-            v_year := v_rightpart;
-            IF (v_leftpart::SMALLINT <= 12)
-            THEN
-                IF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
-                    (v_style IN (0, 103, 104, 105, 130, 131) AND ((v_date_format = 'DMY' AND v_res_datatype = 'DATETIME2') OR
-                    (v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2'))) OR
-                    (v_style IN (103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype = 'DATETIME2'))
-                THEN
-                    v_day := v_leftpart;
-                    v_month := v_middlepart;
-
-                ELSIF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
-                       (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM') AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
-                       (v_style IN (101, 110) AND v_date_format IN ('DMY', 'DYM', 'MYD', 'YDM') AND v_res_datatype = 'DATETIME2') OR
-                       (v_style IN (0, 101, 110) AND v_date_format NOT IN ('DMY', 'DYM', 'MYD', 'YDM') AND v_res_datatype = 'DATETIME2'))
-                THEN
-                    v_day := v_middlepart;
-                    v_month := v_leftpart;
-                END IF;
-            ELSE
-                IF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
-                    (v_style IN (0, 103, 104, 105, 130, 131) AND ((v_date_format = 'DMY' AND v_res_datatype = 'DATETIME2') OR
-                    (v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2'))) OR
-                    (v_style IN (103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype = 'DATETIME2'))
-                THEN
-                    v_day := v_leftpart;
-                    v_month := v_middlepart;
-                ELSE
-                    IF (v_res_datatype = 'DATETIME2') THEN
-                        RAISE invalid_datetime_format;
-                    END IF;
-
-                    RAISE invalid_character_value_for_cast;
-                END IF;
-            END IF;
-        END IF;
-    ELSIF (v_datetimestring ~* FULLYEAR_DOT_SLASH_DASH1_0_REGEXP)
-    THEN
-        IF (v_style NOT IN (0, 20, 21, 101, 102, 103, 104, 105, 110, 111, 120, 121, 130, 131) AND
-            v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
-        THEN
-            RAISE invalid_datetime_format;
-        ELSIF (v_style IN (6, 7, 8, 9, 12, 13, 14, 24, 100, 106, 107, 108, 109, 112, 113, 114, 130) AND
-            v_res_datatype = 'DATETIME2')
-        THEN
-            RAISE invalid_regular_expression;
-        ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME')
-        THEN
-            RAISE invalid_character_value_for_cast;
-        END IF;
-
-        v_regmatch_groups := regexp_matches(v_datestring, FULLYEAR_DOT_SLASH_DASH1_1_REGEXP, 'gi');
-        v_year := v_regmatch_groups[1];
-        v_middlepart := v_regmatch_groups[2];
-        v_rightpart := v_regmatch_groups[3];
-
-        IF ((v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND v_rightpart::SMALLINT <= 12) OR v_res_datatype = 'DATETIME2')
-        THEN
-            IF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2') OR
-                (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM') AND v_res_datatype <> 'DATETIME2') OR
-                (v_style IN (0, 20, 21, 23, 25, 101, 102, 110, 111, 120, 121, 126, 127) AND v_res_datatype = 'DATETIME2'))
-            THEN
-                v_day := v_rightpart;
-                v_month := v_middlepart;
-
-            ELSIF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
-                    v_style IN (0, 103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM'))
-            THEN
-                v_day := v_middlepart;
-                v_month := v_rightpart;
-            END IF;
-        ELSIF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND v_rightpart::SMALLINT > 12)
-        THEN
-            IF ((v_style IN (20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format IN ('DMY', 'DYM', 'YDM')) OR
-                (v_style IN (0, 20, 21, 101, 102, 110, 111, 120, 121) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')))
-            THEN
-                v_day := v_rightpart;
-                v_month := v_middlepart;
-
-            ELSIF ((v_style IN (103, 104, 105, 130, 131) AND v_date_format NOT IN ('DMY', 'DYM', 'YDM')) OR
-                   (v_style IN (0, 103, 104, 105, 130, 131) AND v_date_format IN ('DMY', 'DYM', 'YDM')))
-            THEN
-                RAISE invalid_character_value_for_cast;
-            END IF;
-        END IF;
-    ELSIF (v_datetimestring ~* SHORT_DIGITMASK1_0_REGEXP OR
-           v_datetimestring ~* FULL_DIGITMASK1_0_REGEXP)
-    THEN
-        IF (v_style = 127 AND v_res_datatype <> 'DATETIME2')
-        THEN
-            RAISE invalid_datetime_format;
-        ELSIF (v_style IN (130, 131) AND v_res_datatype = 'SMALLDATETIME')
-        THEN
-            RAISE invalid_character_value_for_cast;
-        END IF;
-
-        IF (v_datestring ~* '^\d{6}$')
-        THEN
-            v_day := substr(v_datestring, 5, 2);
-            v_month := substr(v_datestring, 3, 2);
-            v_year := sys.babelfish_get_full_year(substr(v_datestring, 1, 2));
-
-        ELSIF (v_datestring ~* '^\d{8}$')
-        THEN
-            v_day := substr(v_datestring, 7, 2);
-            v_month := substr(v_datestring, 5, 2);
-            v_year := substr(v_datestring, 1, 4);
-        ELSE
-            v_day := '01';
-            v_month := '01';
-            v_year := '1900';
-        END IF;
-    ELSIF (v_datetimestring ~* HHMMSSFS_REGEXP)
-    THEN
-        v_day := '01';
-        v_month := '01';
-        v_year := '1900';
-    ELSE
-        RAISE invalid_datetime_format;
-    END IF;
-
-    IF (((v_datetimestring ~* HHMMSSFS_PART_REGEXP AND v_res_datatype = 'DATETIME2') OR
-        (v_datetimestring ~* SHORT_DIGITMASK1_0_REGEXP OR v_datetimestring ~* FULL_DIGITMASK1_0_REGEXP OR
-          v_datetimestring ~* FULLYEAR_DOT_SLASH_DASH1_0_REGEXP OR v_datetimestring ~* DOT_SLASH_DASH_FULLYEAR1_0_REGEXP)) AND
-        v_style IN (130, 131))
-    THEN
-        v_hijridate := sys.babelfish_conv_hijri_to_greg(v_day, v_month, v_year) - 1;
-        v_day = to_char(v_hijridate, 'DD');
-        v_month = to_char(v_hijridate, 'MM');
-        v_year = to_char(v_hijridate, 'YYYY');
-    END IF;
-
-    v_hours := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'HOURS'), '0');
-    v_minutes := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'MINUTES'), '0');
-    v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
-    v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
-
-    IF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND char_length(v_fseconds) > 3)
-    THEN
-        RAISE invalid_datetime_format;
-    END IF;
-
-    BEGIN
-        IF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME'))
-        THEN
-            v_resdatetime := sys.datetimefromparts(v_year, v_month, v_day,
-                                                                 v_hours, v_minutes, v_seconds,
-                                                                 rpad(v_fseconds, 3, '0'));
-            IF (v_res_datatype = 'SMALLDATETIME' AND
-                to_char(v_resdatetime, 'SS') <> '00')
-            THEN
-                IF (to_char(v_resdatetime, 'SS')::SMALLINT >= 30) THEN
-                    v_resdatetime := v_resdatetime + INTERVAL '1 minute';
-                END IF;
-
-                v_resdatetime := to_timestamp(to_char(v_resdatetime, 'DD.MM.YYYY.HH24.MI'), 'DD.MM.YYYY.HH24.MI');
-            END IF;
-        ELSIF (v_res_datatype = 'DATETIME2')
-        THEN
-            IF (v_scale <> 0)
-            THEN
-                v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
-                v_seconds := concat_ws('.', v_seconds, v_fseconds);
-            END IF;
-            v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
-                                            v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
-        END IF;
-    EXCEPTION
-        WHEN datetime_field_overflow THEN
-            RAISE invalid_datetime_format;
-        WHEN OTHERS THEN
-        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-
-        IF (v_err_message ~* 'Cannot construct data type') THEN
-            RAISE invalid_character_value_for_cast;
-        END IF;
-    END;
-
-    RETURN v_resdatetime;
-EXCEPTION
-    WHEN most_specific_type_mismatch THEN
-        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of conv_string_to_datetime function.',
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('The style %s is not supported for conversions from VARCHAR to %s.', v_style, v_res_datatype),
-                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
-                    HINT := 'Change "style" parameter to the proper value and try again.';
-
-    WHEN invalid_regular_expression THEN
-        RAISE USING MESSAGE := pg_catalog.format('The input character string doesn''t follow style %s.', v_style),
-                    DETAIL := 'Selected "style" param value isn''t valid for conversion of passed character string.',
-                    HINT := 'Either change the input character string or use a different style.';
-
-    WHEN datatype_mismatch THEN
-        RAISE USING MESSAGE := 'Data type should be one of these values: ''DATETIME'', ''SMALLDATETIME'', ''DATETIME2''/''DATETIME2(n)''.',
-                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
-                    HINT := 'Change "datatype" parameter to the proper value and try again.';
-
-    WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_res_datatype),
-                    DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
-                    HINT := 'Change data type scale component or select different data type and try again.';
-
-    WHEN interval_field_overflow THEN
-        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_scale),
-                    DETAIL := 'Use of incorrect data type scale value during conversion process.',
-                    HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
-
-    WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := CASE v_res_datatype
-                                  WHEN 'SMALLDATETIME' THEN 'Conversion failed when converting character string to SMALLDATETIME data type.'
-                                  ELSE 'Conversion failed when converting date and time from character string.'
-                               END,
-                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
-                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
-
-    WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := 'The conversion of a VARCHAR data type to a DATETIME data type resulted in an out-of-range value.',
-                    DETAIL := 'Use of incorrect pair of input parameter values during conversion process.',
-                    HINT := 'Check input parameter values, correct them if needed, and try again.';
-
-    WHEN character_not_in_repertoire THEN
-        RAISE USING MESSAGE := 'The YDM date format isn''t supported when converting from this string format to date and time.',
-                    DETAIL := 'Use of incorrect DATE_FORMAT constant value regarding string format parameter during conversion process.',
-                    HINT := 'Change DATE_FORMAT constant to one of these values: MDY|DMY|DYM, recompile function and try again.';
-
-    WHEN invalid_escape_sequence THEN
-        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
-                                      CONVERSION_LANG),
-                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
-                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
-
-    WHEN invalid_text_representation THEN
-        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
-
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
-                                      v_err_message),
-                    DETAIL := 'Passed argument value contains illegal characters.',
-                    HINT := 'Correct passed argument value, remove all illegal characters.';
-END;
-$BODY$
-LANGUAGE plpgsql
-VOLATILE
-RETURNS NULL ON NULL INPUT;

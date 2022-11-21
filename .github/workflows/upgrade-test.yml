@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   generate-version-upgrade-tests:
     name: Generate Version Upgrade Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     outputs:
       upgrade-path-list: ${{ steps.generate-upgrade-path.outputs.upgrade-path-list }}
     steps:
@@ -25,7 +25,7 @@ jobs:
       matrix:
         upgrade-path: ${{ fromJson(needs.generate-version-upgrade-tests.outputs.upgrade-path-list) }}
     name: Run Version Upgrade Test for ${{ matrix.upgrade-path.title }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
 
