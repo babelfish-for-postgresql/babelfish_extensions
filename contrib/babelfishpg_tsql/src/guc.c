@@ -21,8 +21,6 @@ bool enable_metadata_inconsistency_check = true;
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
-//char* pltsql_default_locale = NULL;
-//char* pltsql_server_collation_name = NULL;
 bool  pltsql_ansi_defaults = true;
 bool  pltsql_quoted_identifier = true;
 bool  pltsql_concat_null_yields_null = true;
@@ -83,8 +81,6 @@ char *babelfish_dump_restore_min_oid = NULL;
 bool enable_hint_mapping = true;
 bool enable_pg_hint = false;
 
-//static bool check_server_collation_name(char **newval, void **extra, GucSource source);
-//static bool check_default_locale (char **newval, void **extra, GucSource source);
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source);
 static bool check_ansi_null_dflt_off (bool *newval, void **extra, GucSource source);
 static bool check_ansi_padding (bool *newval, void **extra, GucSource source);

@@ -175,31 +175,6 @@ SELECT
 $BODY$
 LANGUAGE SQL VOLATILE STRICT;
 
--- Drops a function if it does not have any dependent objects.
--- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
--- Please have this be one of the first statements executed in this upgrade script. 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_function(schema_name varchar, func_name varchar) AS
-$$
-DECLARE
-    error_msg text;
-    query1 text;
-    query2 text;
-BEGIN
-    query1 := format('alter extension babelfishpg_tsql drop function %s.%s', schema_name, func_name);
-    query2 := format('drop function %s.%s', schema_name, func_name);
-    execute query1;
-    execute query2;
-EXCEPTION
-    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when dependent_objects_still_exist then --if 'drop function' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-end
-$$
-LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
                                                                  IN p_style NUMERIC DEFAULT 20)
@@ -5753,40 +5728,6 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_stored_procedures_view
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_stored_procedures_view', 'procedure_owner');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_stored_procedures_view', 'procedure_name');
 
-
-
--- ALTER VIEW information_schema_tsql.views RENAME TO information_schema_tsql_views_deprecated_in_2_3_0;
-
--- CREATE OR REPLACE VIEW information_schema_tsql.views AS
---  SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
---    CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
---    CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
---    CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
-
---    CAST(
---     CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
---      THEN 'CASCADE'
---      ELSE 'NONE' END
---     AS sys.varchar(7)) COLLATE sys.database_default AS "CHECK_OPTION",
-
---    CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
-
---  FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
---   LEFT OUTER JOIN sys.babelfish_namespace_ext ext
---    ON (nc.nspname = ext.nspname COLLATE sys.database_default)
---   LEFT OUTER JOIN sys.babelfish_view_def vd
---    ON ext.dbid = vd.dbid
---     AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
---     AND (CAST(c.relname AS sys.nvarchar(128)) = vd.object_name COLLATE sys.database_default)
---  WHERE c.relkind = 'v'
---   AND (NOT pg_is_other_temp_schema(nc.oid))
---   AND (pg_has_role(c.relowner, 'USAGE')
---    OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
---    OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
---   AND ext.dbid = cast(sys.db_id() as oid);
-
--- GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
-
 CREATE OR REPLACE PROCEDURE sys.sp_helpsrvrolemember("@srvrolename" sys.SYSNAME = NULL) AS
 $$
 BEGIN
@@ -8002,8 +7943,6 @@ DROP PROCEDURE sys.babelfish_update_collation_to_default(varchar, varchar, varch
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
 
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg TEXT, IN typmod INTEGER)
 RETURNS sys.DATETIME2
@@ -8048,3 +7987,6 @@ BEGIN
             RETURN NULL;
 END; $BODY$
 LANGUAGE plpgsql;
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
