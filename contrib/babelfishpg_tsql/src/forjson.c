@@ -105,7 +105,7 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 				datatype_oid = BOOLOID;
 			}
 			/* convert datetime, smalldatetime, and datetime2 to appropriate text values, 
-			 * as SQL Server has a different text conversion than postgres.
+			 * as T-SQL has a different text conversion than postgres.
 			 */
 			else if (strcmp(typename, "datetime")  == 0 ||
 				strcmp(typename, "smalldatetime") == 0 ||
@@ -219,7 +219,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 }
 
 /*
- * For now report an ERROR if any attribute is binary or datetimeoffset datatype since they are not implemented yet.
+ * For now report an ERROR if any attribute is binary datatype since they are not implemented yet.
  */
 static void
 tsql_unsupported_datatype_check(void)
@@ -227,18 +227,14 @@ tsql_unsupported_datatype_check(void)
 	for (int i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
 		/* 
-		 * This part of code is a workaround for is_tsql_x_datatype() which does not work as expected, 
-		 * it compares the datatype oid of the columns with the tsql_datatype_oid and
+		 * This part of code is a workaround for is_tsql_x_datatype() which does not work as expected.
+		 * It compares the datatype oid of the columns with the tsql_datatype_oid and
 		 * then throw feature not supported error based on the typename.
 		 */
-		Oid nspoid;
 		Oid tsql_datatype_oid;
-
 		Oid datatype_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
-
 		char* typename = SPI_gettype(SPI_tuptable->tupdesc, i);
-
-		nspoid = get_namespace_oid("sys", true);
+		Oid nspoid = get_namespace_oid("sys", true);
 		Assert(nspoid != InvalidOid);
 
 		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
@@ -257,11 +253,6 @@ tsql_unsupported_datatype_check(void)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("binary types are not supported with FOR JSON")));
-			
-			// if (strcmp(typename, "datetimeoffset") == 0)
-			// 	ereport(ERROR,
-			// 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			// 				errmsg("datetimeoffset is not supported with FOR JSON")));
 		}
 	}
 }

@@ -1,0 +1,233 @@
+-- DIFFERENT CASES TO CHECK DATATYPES
+-- Exact Numerics
+CREATE TABLE forjson_vu_t1(abigint bigint, abit bit, adecimal decimal, aint int, amoney money, anumeric numeric, asmallint smallint, asmallmoney smallmoney, atinyint tinyint)
+GO
+INSERT forjson_vu_t1 VALUES(9223372036854775807, 1, 123.2, 2147483647, 3148.29, 12345.12, 32767, 3148.29, 255)
+GO
+~~ROW COUNT: 1~~
+
+
+-- Approximate numerics
+CREATE TABLE forjson_vu_t2(afloat float, areal real)
+GO
+INSERT forjson_vu_t2 VALUES(12.05, 120.53)
+GO
+~~ROW COUNT: 1~~
+
+
+-- Date and time
+CREATE TABLE forjson_vu_t3(atime time, adate date, asmalldatetime smalldatetime, adatetime datetime, adatetime2 datetime2, adatetimeoffset datetimeoffset, adatetimeoffset_2 datetimeoffset)
+GO
+INSERT forjson_vu_t3 VALUES('2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560', '2012-10-12 12:34:56 +02:30')
+GO
+~~ROW COUNT: 1~~
+
+
+-- Character strings
+CREATE TABLE forjson_vu_t4(achar char, avarchar varchar(3), atext text)
+GO
+INSERT forjson_vu_t4 VALUES('a','abc','abc')
+GO
+~~ROW COUNT: 1~~
+
+
+-- Unicode character strings
+CREATE TABLE forjson_vu_t5(anchar nchar(5), anvarchar nvarchar(5), antext ntext)
+GO
+INSERT forjson_vu_t5 VALUES('abc','abc','abc')
+GO
+~~ROW COUNT: 1~~
+
+
+-- Binary strings
+CREATE TABLE forjson_vu_t6(abinary binary, avarbinary varbinary(10))
+GO
+INSERT forjson_vu_t6 VALUES (123456,0x0a0b0c0d0e)
+GO
+~~ROW COUNT: 1~~
+
+
+-- Return null string
+CREATE TABLE forjson_vu_t7(MyColumn int)
+GO
+
+-- Rowversion and timestamp
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
+CREATE TABLE forjson_vu_t8 (myKey int, myValue int,RV rowversion);
+GO
+INSERT INTO forjson_vu_t8 (myKey, myValue) VALUES (1, 0);
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE forjson_vu_t9 (myKey int, myValue int, timestamp);
+GO
+INSERT INTO forjson_vu_t9 (myKey, myValue) VALUES (1, 0);
+GO
+~~ROW COUNT: 1~~
+
+
+-- T-SQL does not allow raw scalars as the output of a view, so surround the FOR JSON call with a SELECT to avoid a syntax error
+-- Exact Numerics
+CREATE VIEW forjson_vu_view1 AS
+SELECT
+(
+    SELECT abigint, adecimal, aint, anumeric, asmallint, atinyint 
+    FROM forjson_vu_t1
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view2 AS
+SELECT
+(
+    SELECT abit 
+    FROM forjson_vu_t1
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view3 AS
+SELECT
+(
+    SELECT amoney 
+    FROM forjson_vu_t1
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view4 AS
+SELECT
+(
+    SELECT asmallmoney
+    FROM forjson_vu_t1
+    FOR JSON PATH
+) as c1;
+GO
+
+-- Approximate numerics
+CREATE VIEW forjson_vu_view5 AS
+SELECT
+(
+    SELECT *
+    FROM forjson_vu_t2
+    FOR JSON PATH
+) as c1;
+GO
+
+-- Date and time
+CREATE VIEW forjson_vu_view6 AS
+SELECT
+(
+    SELECT atime,adate 
+    FROM forjson_vu_t3
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view7 AS
+SELECT
+(
+    SELECT asmalldatetime
+    FROM forjson_vu_t3
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view8 AS
+SELECT
+(
+    SELECT adatetime 
+    FROM forjson_vu_t3
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view9 AS
+SELECT
+(
+    SELECT adatetime2 
+    FROM forjson_vu_t3
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view10 AS
+SELECT
+(
+    SELECT adatetimeoffset, adatetimeoffset_2
+    FROM forjson_vu_t3
+    FOR JSON PATH
+) as c1;
+GO
+
+-- Character strings
+CREATE VIEW forjson_vu_view11 AS
+SELECT
+(
+    SELECT * 
+    FROM forjson_vu_t4
+    FOR JSON PATH
+) as c1;
+GO
+
+-- Unicode character strings
+CREATE VIEW forjson_vu_view12 AS
+SELECT
+(
+    SELECT * 
+    FROM forjson_vu_t5
+    FOR JSON PATH
+) as c1;
+GO
+
+-- Binary strings
+CREATE VIEW forjson_vu_view13 AS
+SELECT
+(
+    SELECT abinary 
+    FROM forjson_vu_t6
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view14 AS
+SELECT
+(
+    SELECT avarbinary
+    FROM forjson_vu_t6
+    FOR JSON PATH
+) as c1;
+GO
+
+-- Return null string
+-- should return 0 rows after BABEL-3690 is fixed
+CREATE VIEW forjson_vu_view15 AS
+SELECT
+(
+    SELECT *
+    FROM forjson_vu_t7
+    FOR JSON PATH
+) as c1;
+GO
+
+-- Rowversion and timestamp
+CREATE VIEW forjson_vu_view16 AS
+SELECT
+(
+    SELECT *
+    FROM forjson_vu_t8
+    FOR JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_vu_view17 AS
+SELECT
+(
+    SELECT *
+    FROM forjson_vu_t9
+    FOR JSON PATH
+) as c1;
+GO
