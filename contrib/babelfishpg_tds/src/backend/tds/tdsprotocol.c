@@ -52,6 +52,8 @@
 #include "src/include/tds_protocol.h"
 #include "src/include/tds_response.h"
 #include "src/include/faultinjection.h"
+#include "storage/proc.h"
+#include "utils/timeout.h"
 
 /*
  * When we reset the connection, we save the required information in the following
@@ -76,6 +78,8 @@ ResetConnection	resetCon = NULL;
 static void ResetTDSConnection(void);
 static TDSRequest GetTDSRequest(bool *resetProtocol);
 static void ProcessTDSRequest(TDSRequest request);
+static void enable_statement_timeout(void);
+static void disable_statement_timeout(void);
 
 /*
  * TDSDiscardAll - copy of DiscardAll
@@ -289,6 +293,7 @@ GetTDSRequest(bool *resetProtocol)
 			return NULL;
 		}
 
+		enable_statement_timeout();
 		/* Parse the packet */
 		switch (messageType)
 		{
@@ -398,6 +403,7 @@ ProcessTDSRequest(TDSRequest request)
 				Assert(0);
 				break;
 		}
+		disable_statement_timeout();
 		CommitTransactionCommand();
 		MemoryContextSwitchTo(MessageContext);
 
@@ -710,4 +716,29 @@ TestGetTdsRequest(uint8_t reqType, const char *expectedStr)
 			return -1;
 	}
 	return res;
+}
+
+static void
+enable_statement_timeout(void)
+{
+	if (StatementTimeout > 0)
+	{
+		if (!get_timeout_active(STATEMENT_TIMEOUT))
+			enable_timeout_after(STATEMENT_TIMEOUT, StatementTimeout);
+	}
+	else
+	{
+		if (get_timeout_active(STATEMENT_TIMEOUT))
+			disable_timeout(STATEMENT_TIMEOUT, false);
+	}
+}
+
+/*
+ * Disable statement timeout, if active.
+ */
+static void
+disable_statement_timeout(void)
+{
+	if (get_timeout_active(STATEMENT_TIMEOUT))
+		disable_timeout(STATEMENT_TIMEOUT, false);
 }
