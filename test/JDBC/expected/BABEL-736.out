@@ -21,14 +21,6 @@ GO
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
 
 
-SELECT degrees(9999.0 * 9999.0)
-GO
-~~START~~
-float
-5.72843209301375E9
-~~END~~
-
-
 
 ---------------------------------------------------
 --TINYINT__TEST_CASES_FOR_DEGREES
@@ -65,16 +57,6 @@ GO
 int
 <NULL>
 ~~END~~
-
-
---Trigger_an_error_message_integer_out_of_range
-SELECT degrees(CAST(256 AS TINYINT));
-GO
-~~START~~
-int
-~~ERROR (Code: 220)~~
-
-~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 
 
@@ -124,14 +106,6 @@ int
 ~~END~~
 
 
---Trigger_an_error_message_integer_out_of_range
-SELECT degrees(CAST(32768 AS SMALLINT));
-GO
-~~ERROR (Code: 220)~~
-
-~~ERROR (Message: smallint out of range)~~
-
-
 
 ---------------------------------------------------
 --BIGINT__TEST_CASES_FOR_DEGREES
@@ -179,14 +153,12 @@ bigint
 ~~END~~
 
 
---Trigger_an_error_message_integer_out_of_range
-SELECT degrees(CAST(9223372036858847777 AS BIGINT));
+SELECT degrees(CAST(88.6 AS BIGINT));
 GO
 ~~START~~
 bigint
-~~ERROR (Code: 8115)~~
-
-~~ERROR (Message: bigint out of range)~~
+5042
+~~END~~
 
 
 
@@ -234,12 +206,4 @@ GO
 int
 <NULL>
 ~~END~~
-
-
---Trigger_an_error_message_integer_out_of_range
-SELECT degrees(CAST(2147483648 AS INT));
-GO
-~~ERROR (Code: 8115)~~
-
-~~ERROR (Message: integer out of range)~~
 
