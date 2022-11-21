@@ -1252,7 +1252,7 @@ smallint_degrees(PG_FUNCTION_ARGS)
 	else
 		result = floor(result);
 
-	/* Range check it cannot overflow int32 */
+	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32) result);
 }
@@ -1269,6 +1269,8 @@ tinyint_degrees(PG_FUNCTION_ARGS)
 		result = ceil(result);
 	else
 		result = floor(result);
+
+	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32)result);
 }
