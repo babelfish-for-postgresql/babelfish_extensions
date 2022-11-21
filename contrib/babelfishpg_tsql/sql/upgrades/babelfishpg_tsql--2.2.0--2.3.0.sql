@@ -4121,7 +4121,7 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_ta
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
-RETURNS int  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 INT)
