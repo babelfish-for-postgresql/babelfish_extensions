@@ -267,9 +267,9 @@ go
 
 DROP TRIGGER .tr2455;
 go
-~~ERROR (Code: 3701)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: trigger "tr2455" does not exist)~~
+~~ERROR (Message: trigger "dbo.tr2455" does not exist)~~
 
 
 CREATE TRIGGER ..tr2455 on t2455_base AFTER INSERT AS print 'triggered';
@@ -310,9 +310,9 @@ go
 
 DROP TRIGGER .s2455.tr2455;
 go
-~~ERROR (Code: 3701)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: trigger "tr2455" does not exist)~~
+~~ERROR (Message: trigger "s2455.tr2455" does not exist)~~
 
 
 -- servername (not supported)
