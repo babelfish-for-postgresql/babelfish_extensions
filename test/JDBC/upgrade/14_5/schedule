@@ -48,6 +48,7 @@ BABEL-3221
 BABEL-3204
 BABEL-3234
 BABEL-3402
+BABEL-3646-before-14_6
 cast_numeric_types_to_datetime
 routines_definition
 column_domain_usage
@@ -299,3 +300,5 @@ BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
+sys_server_principals_dep
+sys_database_principals_dep
