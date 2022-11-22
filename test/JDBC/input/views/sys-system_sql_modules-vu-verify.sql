@@ -41,7 +41,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.system_sql_modules
-WHERE definition LIKE 'CREATE PROCEDURE sp_tables%'
+WHERE definition LIKE 'CREATE PROCEDURE sp_columns_managed%'
 GO
 
 -- Test for system function written in c 
