@@ -948,7 +948,6 @@ Operator sys.~(NONE,sys."bit")
 Type sys."bigint"
 Type sys."int"
 Type sys."real"
-Type sys.bbf_binary
 Type sys.bbf_varbinary
 Type sys.cursor
 View information_schema_tsql.check_constraints
