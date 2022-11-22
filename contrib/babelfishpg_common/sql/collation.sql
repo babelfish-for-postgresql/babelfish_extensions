@@ -139,8 +139,3 @@ CREATE COLLATION sys.Ukrainian_CI_AS (provider = icu, locale = 'uk_UA@colStrengt
 CREATE COLLATION IF NOT EXISTS sys.Vietnamese_CS_AS (provider = icu, locale = 'vi_VN');
 CREATE COLLATION sys.Vietnamese_CI_AI (provider = icu, locale = 'vi_VN@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Vietnamese_CI_AS (provider = icu, locale = 'vi_VN@colStrength=secondary', deterministic = false);
-
-DROP FUNCTION IF EXISTS sys.babelfishpg_common_get_babel_server_collation_oid;
-CREATE OR REPLACE FUNCTION sys.babelfishpg_common_get_babel_server_collation_oid() RETURNS OID
-LANGUAGE C
-AS 'babelfishpg_common', 'get_babel_server_collation_oid';

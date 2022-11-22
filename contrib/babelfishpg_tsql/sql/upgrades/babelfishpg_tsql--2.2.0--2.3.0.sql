@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
--- \echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '2.3.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '2.3.0'" to load this file. \quit
 
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
@@ -31,6 +31,11 @@ end
 $$
 LANGUAGE plpgsql;
 
+-- Created to to fetch default collation Oid which is being used to set collation of system objects
+CREATE OR REPLACE FUNCTION sys.babelfishpg_tsql_get_babel_server_collation_oid() RETURNS OID
+LANGUAGE C
+AS 'babelfishpg_tsql', 'get_server_collation_oid';
+
 -- Set the collation of given schema_name.table_name.column_name column to default collation
 CREATE OR REPLACE PROCEDURE babelfish_update_collation_to_default(schema_name varchar, table_name varchar, column_name varchar) AS
 $$
@@ -40,7 +45,7 @@ DECLARE
 BEGIN
     select oid into sys_schema from pg_namespace where nspname = schema_name collate sys.database_default;
     select oid into table_oid from pg_class where relname = table_name collate sys.database_default and relnamespace = sys_schema;
-    update pg_attribute set attcollation = sys.babelfishpg_common_get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
+    update pg_attribute set attcollation = sys.babelfishpg_tsql_get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
 END
 $$
 LANGUAGE plpgsql;
@@ -8001,7 +8006,7 @@ LANGUAGE plpgsql;
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 DROP PROCEDURE sys.babelfish_update_collation_to_default(varchar, varchar, varchar);
-
+DROP FUNCTION  sys.babelfishpg_tsql_get_babel_server_collation_oid();
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest();
 

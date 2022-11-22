@@ -123,31 +123,6 @@ static const struct config_enum_entry escape_hatch_options[] = {
 	{NULL, EH_NULL, false},
 };
 
-#if 0
-static bool check_server_collation_name(char **newval, void **extra, GucSource source)
-{
-	if (tsql_is_valid_server_collation_name(*newval))
-	{
-		/*
-			* We are storing value in lower case since
-			* Collation names are stored in lowercase into pg catalog (pg_collation).
-			*/
-		char *dupval = pstrdup(*newval);
-		strcpy(*newval, downcase_identifier(dupval, strlen(dupval), false, false));
-		pfree(dupval);
-		return true;
-	}
-	return false;
-}
-
-static bool check_default_locale (char **newval, void **extra, GucSource source)
-{
-	if (tsql_find_locale(*newval) >= 0)
-		return true;
-	return false;
-}
-#endif
-
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source)
 {
     /* We only support setting ansi_null_dflt_on to on atm, report an error if someone tries to set it to off */
@@ -608,26 +583,7 @@ define_custom_variables(void)
 				 PGC_SUSET,  /* only superuser can set */
 				 GUC_NO_SHOW_ALL,
 				 NULL, NULL, NULL);
-#if 0
-	DefineCustomStringVariable("babelfishpg_tsql.server_collation_name",
-				   gettext_noop("Name of the default server collation."),
-				   NULL,
-				   &pltsql_server_collation_name,
-				   "sql_latin1_general_cp1_ci_as",
-				   PGC_SIGHUP,
-				   GUC_NO_RESET_ALL,
-				   check_server_collation_name, NULL, NULL);
 
-
-	DefineCustomStringVariable("babelfishpg_tsql.default_locale",
-				   gettext_noop("The default locale to use when creating a new collation."),
-				   NULL,
-				   &pltsql_default_locale,
-				   "en_US",
-				   PGC_SUSET,  /* only superuser can set */
-				   0,
-				   check_default_locale, NULL, NULL);
-#endif
 	/* ISO standard settings */
 	DefineCustomBoolVariable("babelfishpg_tsql.ansi_defaults",
 				 gettext_noop("Controls a group of settings that collectively specify some "

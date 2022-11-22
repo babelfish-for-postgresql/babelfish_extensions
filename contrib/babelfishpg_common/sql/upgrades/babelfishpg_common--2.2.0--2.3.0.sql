@@ -251,5 +251,7 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (FIXEDDECIMAL AS sys.SMALLDATETIME)
 WITH FUNCTION sys.money2smalldatetime (FIXEDDECIMAL) AS IMPLICIT;
 
+DROP FUNCTION sys.babelfishpg_common_get_babel_server_collation_oid();
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

@@ -82,21 +82,15 @@ collation_list(PG_FUNCTION_ARGS)
 
 
 /*
- * get_server_collation_oid - this is being used by get_babel_server_collation_oid_deprecated_in_2_3_0
- * which is depcrecated and is not recommended to be used.
+ * get_server_collation_oid - this is being used by sys.babelfish_update_collation_to_default
+ * to update the collation of system objects
  */
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	/*
-	 * This function is deprecated since v2.3.0. However, we can not remove this function
-	 * entirely because it might be needed during upgrade.
-	 */
-	ereport(WARNING,
-			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-			 errmsg("This function has been deprecated and will no longer return correct server collation OID")));
-	PG_RETURN_OID(InvalidOid);
+	PG_RETURN_OID(tsql_get_server_collation_oid_internal(false));
 }
+
 
 Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
