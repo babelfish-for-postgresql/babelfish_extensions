@@ -59,3 +59,5 @@ ignore#!#sys_server_principals_dep_for_13_x-vu-cleanup
 ignore#!#sys_server_principals_dep_for_13_x-vu-prepare
 ignore#!#sys_server_principals_dep_for_13_x-vu-verify
 
+ignore#!#BABEL-3646-before-14_6-vu-prepare
+ignore#!#BABEL-3646-before-14_6-vu-verify
