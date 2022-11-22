@@ -351,3 +351,5 @@ ISC-Tables
 ISC-Columns
 ISC-Check-Constraints
 ISC-Table_Constraints
+sys_server_principals_dep
+sys_database_principals_dep

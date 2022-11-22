@@ -298,3 +298,5 @@ sys-sysindexes
 sys-system_objects
 ISC-Tables
 ISC-Table_Constraints
+sys_server_principals_dep
+sys_database_principals_dep
