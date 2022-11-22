@@ -2989,11 +2989,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
             		if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				if ((drop_stmt->removeType == OBJECT_SCHEMA) && strcmp(queryString, "(DROP DATABASE )") != 0
-                                                        && context != PROCESS_UTILITY_SUBCOMMAND )
-					ereport(ERROR,
-							(errcode(ERRCODE_CHECK_VIOLATION),
-							 errmsg("Cannot drop the schema"))); 
 				del_ns_ext_info(strVal(lfirst(list_head(drop_stmt->objects))), drop_stmt->missing_ok);
 
 				if (prev_ProcessUtility)
