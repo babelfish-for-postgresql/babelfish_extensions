@@ -147,18 +147,6 @@ jobs:
         run: |
           curl -X POST -H \"Accept: application/vnd.github.v3+json\"  -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/myprofile/myrepo/actions/runners/registration-token
 
-      - name: Checks out repository
-        if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      
-      - name: Get author's email
-        if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
-        run: |
-          git checkout remotes/origin/${{ github.head_ref }}
-          echo "::set-output name=user_email::$(git log -n 1 --pretty=format:%ae)"
-
       - name: CINotify Email
         if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
         uses: cinotify/github-action@v1.1.0
@@ -171,5 +159,6 @@ jobs:
         if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
         uses: lhotari/action-upterm@v1
         timeout-minutes: 5
+        limit-access-to-actor: true
         
             
