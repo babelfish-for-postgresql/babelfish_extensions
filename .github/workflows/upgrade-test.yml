@@ -26,8 +26,7 @@ jobs:
         upgrade-path: ${{ fromJson(needs.generate-version-upgrade-tests.outputs.upgrade-path-list) }}
     name: Run Version Upgrade Test for ${{ matrix.upgrade-path.title }}
     runs-on: ubuntu-20.04
-    permissions:
-      pull-requests: write
+    permissions: write-all
     steps:
       - uses: actions/checkout@v2
 
@@ -142,12 +141,31 @@ jobs:
         with:
           files: "/var/coredumps/*"
 
-      - name: Comment on PR that core dump was found
+      - name: Get registration token
+        if: always()
+        id: getRegToken
+        run: |
+          curl -X POST -H \"Accept: application/vnd.github.v3+json\"  -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/myprofile/myrepo/actions/runners/registration-token
+
+      - name: Checks out repository
         if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
-        uses: mshick/add-pr-comment@v2
+        uses: actions/checkout@v3
         with:
-          message: |
-            **Setting up SSH session**
+          fetch-depth: 0
+      
+      - name: Get author's email
+        if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
+        run: |
+          git checkout remotes/origin/${{ github.head_ref }}
+          echo "::set-output name=user_email::$(git log -n 1 --pretty=format:%ae)"
+
+      - name: CINotify Email
+        if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
+        uses: cinotify/github-action@v1.1.0
+        with:
+          to: 'davantik@amazon.com'
+          subject: 'Your test produced a core dump'
+          body: 'Setting up an SSH session'
       
       - name: Setup upterm session
         if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
