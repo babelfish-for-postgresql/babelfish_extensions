@@ -78,7 +78,7 @@ schema_resolution_proc
 SYSTEM_USER
 Test-Default-Columns
 BABEL-1189
-#BABEL-1963
+BABEL-1963
 BABEL-2203
 BABEL-2208
 BABEL-2257

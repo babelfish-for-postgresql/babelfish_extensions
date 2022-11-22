@@ -3674,34 +3674,6 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
-create or replace view sys.shipped_objects_not_in_sys AS
--- This portion of view retrieves information on objects that reside in a schema in one specfic database.
--- For example, 'master_dbo' schema can only exist in the 'master' database.
--- Internally stored schema name (nspname) must be provided.
-select t.name,t.type, ns.oid as schemaid from
-(
-  values
-    ('xp_qv','master_dbo','P'),
-    ('xp_instance_regread','master_dbo','P'),
-    ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
-    ('syspolicy_configuration', 'msdb_dbo', 'V'),
-    ('syspolicy_system_health_state', 'msdb_dbo', 'V')
-) t(name,schema_name, type)
-inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
-
-union all
-
--- This portion of view retrieves information on objects that reside in a schema in any number of databases.
--- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
-select t.name,t.type, ns.oid as schemaid from
-(
-  values
-    ('sysdatabases','dbo','V')
-) t (name, schema_name, type)
-inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
-inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
-GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
-
 create or replace view sys.all_objects as
 select 
     cast (name as sys.sysname) collate sys.database_default
