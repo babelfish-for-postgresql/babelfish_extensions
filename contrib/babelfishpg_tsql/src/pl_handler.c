@@ -37,6 +37,7 @@
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/pg_list.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
 #include "parser/parse_clause.h"
@@ -1762,12 +1763,12 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	switch (list_length(type_names))
 	{
 		case 2:
-			new_type_names = list_make2_impl(as_type->type, type_names->elements[0], type_names->elements[1]);
+			new_type_names = list_make2(type_names->elements[0].ptr_value, type_names->elements[1].ptr_value);
 			strVal(linitial(new_type_names)) = get_physical_schema_name(get_cur_db_name(),strVal(linitial(type_names)));
 			break;
 		case 3:
 			/* Changing three part name of data type to physcial schema name */
-			new_type_names = list_make2_impl(as_type->type, type_names->elements[1], type_names->elements[2]);
+			new_type_names = list_make2(type_names->elements[1].ptr_value, type_names->elements[2].ptr_value);
 			strVal(linitial(new_type_names)) = get_physical_schema_name(strVal(linitial(type_names)),strVal(lsecond(type_names)));
 			type_def->names = new_type_names;
 			break;
