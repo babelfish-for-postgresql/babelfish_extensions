@@ -154,9 +154,11 @@ sys-default_constraints
 sys-dm_exec_sessions
 sys-foreign_key_columns
 sys-identity_columns
+sys-identity_columns-dep-for-13-x
 sys-indexes
 sys-table_types
 sys_all_objects
+sys-system_objects-for-13-x
 BABEL-1683
 schema_resolution_trigger
 sys-sp_pkeys

@@ -73,6 +73,7 @@ sys-fulltext_index_columns
 sys-fulltext_languages
 sys-fulltext_stoplists
 sys-identity_columns
+sys-identity_columns-dep-for-13-x
 sys-index_columns
 sys-indexes
 sys-key_constraints
@@ -101,7 +102,7 @@ sys-views
 sys-xml_indexes
 sys-xml_schema_collections
 sys_all_objects
-
+sys-system_objects-for-13-x
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled

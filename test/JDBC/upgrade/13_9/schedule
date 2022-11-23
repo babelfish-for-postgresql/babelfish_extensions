@@ -97,7 +97,7 @@ sys-views
 sys-xml_indexes
 sys-xml_schema_collections
 sys_all_objects
-
+sys-system_objects-for-13-x
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
@@ -247,7 +247,7 @@ BABEL-SP_SPROC_COLUMNS
 BABEL-3000
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
-sys-identity_columns-dep
+sys-identity_columns-dep-for-13-x
 sys-indexes-dep
 sys-key_constraints-dep
 sys-schemas-dep
