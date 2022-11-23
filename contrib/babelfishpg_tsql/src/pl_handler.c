@@ -1758,13 +1758,14 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 
 	type_def = defGetTypeName(as_type);
 	type_names = type_def->names;
-	List* new_type_names; 
+	List* new_type_names;
 
 	switch (list_length(type_names))
 	{
 		case 2:
 			new_type_names = list_make2(type_names->elements[0].ptr_value, type_names->elements[1].ptr_value);
 			strVal(linitial(new_type_names)) = get_physical_schema_name(get_cur_db_name(),strVal(linitial(type_names)));
+			type_def->names = new_type_names;
 			break;
 		case 3:
 			/* Changing three part name of data type to physcial schema name */
