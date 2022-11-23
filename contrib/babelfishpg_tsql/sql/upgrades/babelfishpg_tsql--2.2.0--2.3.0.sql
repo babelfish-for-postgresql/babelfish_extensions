@@ -2306,7 +2306,7 @@ DECLARE
     function_signature text;
     qualified_name text;
     return_value integer;
-   	cs_as_securable text COLLATE "C" := securable;
+    cs_as_securable text COLLATE "C" := securable;
     cs_as_securable_class text COLLATE "C" := securable_class;
     cs_as_permission text COLLATE "C" := permission;
     cs_as_sub_securable text COLLATE "C" := sub_securable;
@@ -3653,7 +3653,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
   , CAST(conrelid as integer) as parent_object_id
-  , CAST('C' as sys.bpchar(2)) as type
+  , CAST('C' as char(2)) as type
   , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
@@ -4986,8 +4986,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
   CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
 
-  CASE WHEN t4."DATA_TYPE" = 'xml' COLLATE sys.database_default THEN 0::INT
-    WHEN t4."DATA_TYPE" = 'sql_variant' COLLATE sys.database_default THEN 8000::INT
+  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
+    WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
     WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
     ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
   END AS CHAR_OCTET_LENGTH,
@@ -5009,8 +5009,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   FROM pg_catalog.pg_class t1
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname COLLATE sys.database_default
-     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" COLLATE sys.database_default)
+     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA")
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname = t4."COLUMN_NAME" COLLATE sys.database_default
      LEFT JOIN pg_type t ON t.oid = a.atttypid
      LEFT JOIN sys.columns t6 ON
@@ -5022,6 +5022,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      , sys.spt_datatype_info_table AS t5
   WHERE (t4."DATA_TYPE" = t5.TYPE_NAME COLLATE sys.database_default)
     AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_columns_100_view', 'table_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_columns_100_view', 'table_owner');
@@ -5388,33 +5390,6 @@ CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'privilege');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_column_privileges_view', 'is_grantable');
 
-CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
--- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
-SELECT DISTINCT
-CAST(TABLE_QUALIFIER AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(TABLE_OWNER AS sys.sysname) AS TABLE_OWNER,
-CAST(TABLE_NAME AS sys.sysname) AS TABLE_NAME,
-CAST(GRANTOR AS sys.sysname) AS GRANTOR,
-CAST(GRANTEE AS sys.sysname) AS GRANTEE,
-CAST(PRIVILEGE AS sys.sysname) AS PRIVILEGE,
-CAST(IS_GRANTABLE AS sys.sysname) AS IS_GRANTABLE
-FROM sys.sp_column_privileges_view
-
-UNION 
--- We need these set of joins only for the DELETE privilege
-SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
-CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
-CAST(t4.is_grantable AS sys.sysname) AS IS_GRANTABLE
-FROM pg_catalog.pg_class t1 
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
-WHERE t4.privilege_type = 'DELETE'; 
 
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'table_qualifier');
 CALL sys.babelfish_update_collation_to_default('sys', 'sp_table_privileges_view', 'table_owner');

@@ -369,7 +369,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
      LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" COLLATE sys.database_default)
+     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA")
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname = t4."COLUMN_NAME" COLLATE sys.database_default
      LEFT JOIN pg_type t ON t.oid = a.atttypid
      LEFT JOIN sys.columns t6 ON
@@ -1519,7 +1519,7 @@ UNION
 SELECT
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
 CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,

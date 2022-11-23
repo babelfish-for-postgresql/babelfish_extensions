@@ -1159,7 +1159,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
   , CAST(conrelid as integer) as parent_object_id
-  , CAST('C' as sys.bpchar(2)) as type
+  , CAST('C' as char(2)) as type
   , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date

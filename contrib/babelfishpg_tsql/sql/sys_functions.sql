@@ -2374,7 +2374,7 @@ DECLARE
     function_signature text;
     qualified_name text;
     return_value integer;
-   	cs_as_securable text COLLATE "C" := securable;
+    cs_as_securable text COLLATE "C" := securable;
     cs_as_securable_class text COLLATE "C" := securable_class;
     cs_as_permission text COLLATE "C" := permission;
     cs_as_sub_securable text COLLATE "C" := sub_securable;
