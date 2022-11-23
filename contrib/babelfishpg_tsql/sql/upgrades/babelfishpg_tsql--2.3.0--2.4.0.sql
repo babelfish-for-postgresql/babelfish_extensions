@@ -34,17 +34,13 @@ LANGUAGE plpgsql;
 
 -- please add your SQL here
 
-CREATE OR REPLACE FUNCTION sys.atn2(IN x DOUBLE PRECISION, IN y DOUBLE PRECISION) RETURNS DOUBLE PRECISION
+CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
 AS
-$BODY$
-DECLARE
-    res DOUBLE PRECISION;
-BEGIN
-    res = atan2(x, y);
-    RETURN res;
-END;
-$BODY$
-LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+$$
+    SELECT PG_CATALOG.atan2(x, y);
+$$
+LANGUAGE sql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
