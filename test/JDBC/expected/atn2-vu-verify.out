@@ -1,4 +1,4 @@
-SELECT * FROM BABEL_725_vu_prepare_v1
+SELECT * FROM atn2_vu_prepare_v1
 GO
 ~~START~~
 float
@@ -6,15 +6,17 @@ float
 ~~END~~
 
 
-SELECT * FROM BABEL_725_vu_prepare_v2
+-- test with all datatypes that could implicity converted to float
+SELECT * FROM atn2_vu_prepare_v2
 GO
 ~~START~~
-float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float
-0.5880026035475675#!#0.6202494859828215#!#0.6202494859828215#!#0.5880026035475675#!#0.5880026035475675#!#0.5880026035475675#!#0.6202494859828215#!#0.6202494859828215#!#0.6435011087932844#!#0.6435011087932844
+float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float
+0.5880026035475675#!#0.6202494859828215#!#0.6202494859828215#!#0.5880026035475675#!#0.5880026035475675#!#0.5880026035475675#!#0.6202494859828215#!#0.6202494859828215#!#0.6435011087932844#!#0.6435011087932844#!#0.6202494859828215#!#0.6202494859828215#!#0.6202494859828215#!#0.6202494859828215
 ~~END~~
 
 
-SELECT * FROM BABEL_725_vu_prepare_v3
+-- returns NULL
+SELECT * FROM atn2_vu_prepare_v3
 GO
 ~~START~~
 float#!#float#!#float
@@ -22,14 +24,16 @@ float#!#float#!#float
 ~~END~~
 
 
-SELECT * FROM BABEL_725_vu_prepare_v4
+-- expect float overflow error
+SELECT * FROM atn2_vu_prepare_v4
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: "1790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" is out of range for type double precision)~~
 
 
-SELECT * FROM BABEL_725_vu_prepare_v5
+-- won't over flow
+SELECT * FROM atn2_vu_prepare_v5
 GO
 ~~START~~
 float
@@ -37,7 +41,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p1
+EXEC atn2_vu_prepare_p1
 GO
 ~~START~~
 float
@@ -45,7 +49,8 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p2
+-- test with all datatypes that could implicity converted to float
+EXEC atn2_vu_prepare_p2
 GO
 ~~START~~
 float
@@ -53,7 +58,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p3
+EXEC atn2_vu_prepare_p3
 GO
 ~~START~~
 float
@@ -61,7 +66,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p4
+EXEC atn2_vu_prepare_p4
 GO
 ~~START~~
 float
@@ -69,7 +74,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p5
+EXEC atn2_vu_prepare_p5
 GO
 ~~START~~
 float
@@ -77,7 +82,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p6
+EXEC atn2_vu_prepare_p6
 GO
 ~~START~~
 float
@@ -85,7 +90,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p7
+EXEC atn2_vu_prepare_p7
 GO
 ~~START~~
 float
@@ -93,7 +98,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p8
+EXEC atn2_vu_prepare_p8
 GO
 ~~START~~
 float
@@ -101,7 +106,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p9
+EXEC atn2_vu_prepare_p9
 GO
 ~~START~~
 float
@@ -109,7 +114,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p10
+EXEC atn2_vu_prepare_p10
 GO
 ~~START~~
 float
@@ -117,7 +122,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p11
+EXEC atn2_vu_prepare_p11
 GO
 ~~START~~
 float
@@ -125,7 +130,40 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p12
+EXEC atn2_vu_prepare_p12
+GO
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+EXEC atn2_vu_prepare_p13
+GO
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+EXEC atn2_vu_prepare_p14
+GO
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+EXEC atn2_vu_prepare_p15
+GO
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+-- returns NULL
+EXEC atn2_vu_prepare_p16
 GO
 ~~START~~
 float
@@ -133,7 +171,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p13
+EXEC atn2_vu_prepare_p17
 GO
 ~~START~~
 float
@@ -141,7 +179,7 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p14
+EXEC atn2_vu_prepare_p18
 GO
 ~~START~~
 float
@@ -149,14 +187,16 @@ float
 ~~END~~
 
 
-EXEC BABEL_725_vu_prepare_p15
+-- expect float overflow
+EXEC atn2_vu_prepare_p19
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: "1790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" is out of range for type double precision)~~
 
 
-EXEC BABEL_725_vu_prepare_p16
+-- won't over flow
+EXEC atn2_vu_prepare_p20
 GO
 ~~START~~
 float
@@ -164,7 +204,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f1()
+SELECT atn2_vu_prepare_f1()
 GO
 ~~START~~
 float
@@ -172,7 +212,8 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f2()
+-- test with all datatypes that could implicity converted to float
+SELECT atn2_vu_prepare_f2()
 GO
 ~~START~~
 float
@@ -180,7 +221,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f3()
+SELECT atn2_vu_prepare_f3()
 GO
 ~~START~~
 float
@@ -188,7 +229,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f4()
+SELECT atn2_vu_prepare_f4()
 GO
 ~~START~~
 float
@@ -196,7 +237,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f5()
+SELECT atn2_vu_prepare_f5()
 GO
 ~~START~~
 float
@@ -204,7 +245,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f6()
+SELECT atn2_vu_prepare_f6()
 GO
 ~~START~~
 float
@@ -212,7 +253,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f7()
+SELECT atn2_vu_prepare_f7()
 GO
 ~~START~~
 float
@@ -220,7 +261,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f8()
+SELECT atn2_vu_prepare_f8()
 GO
 ~~START~~
 float
@@ -228,7 +269,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f9()
+SELECT atn2_vu_prepare_f9()
 GO
 ~~START~~
 float
@@ -236,7 +277,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f10()
+SELECT atn2_vu_prepare_f10()
 GO
 ~~START~~
 float
@@ -244,7 +285,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f11()
+SELECT atn2_vu_prepare_f11()
 GO
 ~~START~~
 float
@@ -252,7 +293,40 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f12()
+SELECT atn2_vu_prepare_f12()
+GO
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+SELECT atn2_vu_prepare_f13()
+GO
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+SELECT atn2_vu_prepare_f14()
+GO
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+SELECT atn2_vu_prepare_f15()
+GO
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+-- returns NULL when input is NULL
+SELECT atn2_vu_prepare_f16()
 GO
 ~~START~~
 float
@@ -260,7 +334,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f13()
+SELECT atn2_vu_prepare_f17()
 GO
 ~~START~~
 float
@@ -268,7 +342,7 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f14()
+SELECT atn2_vu_prepare_f18()
 GO
 ~~START~~
 float
@@ -276,7 +350,8 @@ float
 ~~END~~
 
 
-SELECT BABEL_725_vu_prepare_f15()
+-- expect float overflow error
+SELECT atn2_vu_prepare_f19()
 GO
 ~~START~~
 float
@@ -285,7 +360,8 @@ float
 ~~ERROR (Message: "1790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" is out of range for type double precision)~~
 
 
-SELECT BABEL_725_vu_prepare_f16()
+-- won't over flow
+SELECT atn2_vu_prepare_f20()
 GO
 ~~START~~
 float
