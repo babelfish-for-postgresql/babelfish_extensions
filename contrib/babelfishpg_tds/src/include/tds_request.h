@@ -478,7 +478,7 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 	int i = 0;
 	char *messageData = message->data;
 	char *db_name =  pltsql_plugin_handler_ptr->get_cur_db_name();
-	char *physical_schema = "";
+	char *physical_schema = NULL;
 	StringInfo tempStringInfo = palloc( sizeof(StringInfoData));
 
 	/* Database-Name.Schema-Name.TableType-Name */
@@ -508,8 +508,12 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 			if(i==1)
 				physical_schema = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name,tempStringInfo->data);
 			/* if schema name is specified */
-			else if(physical_schema != "")
+			else if(physical_schema)
+			{
 				temp->tvpInfo->tvpTypeName = psprintf("%s.%s", physical_schema, tempStringInfo->data);
+				pfree(physical_schema);
+				pfree(db_name);
+			}
 			/* if schema name not specified */
 			else
 				temp->tvpInfo->tvpTypeName = tempStringInfo->data;
