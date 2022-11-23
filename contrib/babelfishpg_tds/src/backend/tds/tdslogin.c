@@ -2127,11 +2127,10 @@ TdsSendLoginAck(Port *port)
 			 * which does catalog access, hence we require to be inside a transaction command.
 			 */
 			StartTransactionCommand();
-			ret = set_config_option_ext("babelfishpg_tsql.language",
+			ret = set_config_option("babelfishpg_tsql.language",
 									request->language,
 									PGC_USERSET,
 									PGC_S_CLIENT,
-									roleid,
 									GUC_ACTION_SET,
 									true /* changeVal */,
 									0 /* elevel */,
@@ -2157,11 +2156,10 @@ TdsSendLoginAck(Port *port)
 			 * which does catalog access, hence we require to be inside a transaction command.
 			 */
 			StartTransactionCommand();
-			ret = set_config_option_ext("application_name",
+			ret = set_config_option("application_name",
 									tmpAppName,
 									PGC_USERSET,
 									PGC_S_CLIENT,
-									roleid,
 									GUC_ACTION_SET,
 									true /* changeVal */,
 									0 /* elevel */,
