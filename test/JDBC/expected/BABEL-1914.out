@@ -1,0 +1,53 @@
+-- psql
+show statement_timeout;
+GO
+~~START~~
+text
+0
+~~END~~
+
+
+ALTER SYSTEM SET statement_timeout=3000;
+GO
+
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+-- execution should get terminated due to statement timeout
+exec pg_sleep 10;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: canceling statement due to statement timeout)~~
+
+
+exec pg_sleep 1;
+GO
+
+-- psql
+
+-- reset guc value to default
+ALTER SYSTEM SET statement_timeout=0;
+GO
+
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+

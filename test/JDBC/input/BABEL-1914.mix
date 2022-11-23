@@ -1,0 +1,29 @@
+-- psql
+show statement_timeout;
+GO
+
+ALTER SYSTEM SET statement_timeout=3000;
+GO
+
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+-- execution should get terminated due to statement timeout
+exec pg_sleep 10;
+GO
+
+exec pg_sleep 1;
+GO
+
+-- psql
+-- reset guc value to default
+
+ALTER SYSTEM SET statement_timeout=0;
+GO
+
+SELECT pg_reload_conf();
+GO
+
+SELECT pg_sleep(1);
+GO

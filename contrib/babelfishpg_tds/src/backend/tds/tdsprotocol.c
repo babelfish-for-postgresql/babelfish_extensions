@@ -293,7 +293,10 @@ GetTDSRequest(bool *resetProtocol)
 			return NULL;
 		}
 
+		/* Enable statement timeout. Note we add this function here to
+		 * include the time taken by the protocol in the timeout  */
 		enable_statement_timeout();
+
 		/* Parse the packet */
 		switch (messageType)
 		{
@@ -403,7 +406,10 @@ ProcessTDSRequest(TDSRequest request)
 				Assert(0);
 				break;
 		}
+
+		/* Disabling statement timeout after processing */
 		disable_statement_timeout();
+
 		CommitTransactionCommand();
 		MemoryContextSwitchTo(MessageContext);
 
@@ -718,6 +724,9 @@ TestGetTdsRequest(uint8_t reqType, const char *expectedStr)
 	return res;
 }
 
+/*
+ * Start statement timeout timer, if enabled.
+ */
 static void
 enable_statement_timeout(void)
 {
