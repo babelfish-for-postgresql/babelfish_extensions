@@ -29,6 +29,8 @@ ignore#!#Test-Prep-Statements-vu-verify
 ignore#!#Test-Prep-Statements-vu-cleanup
 ignore#!#BABEL-3117-vu-prepare
 ignore#!#BABEL-3117-vu-verify
+ignore#!#BABEL-3655-vu-prepare
+ignore#!#BABEL-3655-vu-verify
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -45,3 +47,17 @@ ignore#!#BABEL-3556-before-14_6-vu-verify
 ignore#!#BABEL-3010-before-14_6-vu-prepare
 ignore#!#BABEL-3010-before-14_6-vu-verify
 ignore#!#BABEL-3010-before-14_6-vu-cleanup
+ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-prepare
+ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-verify
+ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-cleanup
+ignore#!#BABEL-3646-before-14_6-vu-prepare
+ignore#!#BABEL-3646-before-14_6-vu-verify
+
+# These tests are meant for upgrade scenario where source version is 13_X
+ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
+ignore#!#sys_database_principals_dep_for_13_x-vu-prepare
+ignore#!#sys_database_principals_dep_for_13_x-vu-verify
+ignore#!#sys_server_principals_dep_for_13_x-vu-cleanup
+ignore#!#sys_server_principals_dep_for_13_x-vu-prepare
+ignore#!#sys_server_principals_dep_for_13_x-vu-verify
+
