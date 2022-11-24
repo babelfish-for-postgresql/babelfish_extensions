@@ -1411,7 +1411,7 @@ SELECT
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST(COALESCE(SPLIT_PART(t6.attoptions[1] collate "C", '=', 2), t5.column_name collate "C") AS sys.sysname) AS COLUMN_NAME,
+CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
 CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,

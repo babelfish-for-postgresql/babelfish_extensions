@@ -711,15 +711,27 @@ init_collid_trans_tab_internal(void)
 		/* For the bbf_unicode_general_* collations, fill in the lcid and/or the code_page from the default_locale GUC */
 		if (0 == strncmp(coll_infos[i].collname, "bbf_unicode_general", strlen("bbf_unicode_general")))
 		{
-			init_default_locale();
+			const char *locale_tmp;
 
-			locale = pstrdup(default_locale);
+			if (babelfish_restored_default_locale)
+				locale_tmp = babelfish_restored_default_locale;
+			else
+			{
+				init_default_locale();
+				locale_tmp = default_locale;
+			}
+
+			locale = pstrdup(locale_tmp);
 			atsign = strstr(locale, "@");
 			if (atsign != NULL)
 				*atsign = '\0';
 			locale_pos = find_locale(locale);
 
-			if (locale_pos < 0)
+			if (locale_pos < 0 && babelfish_restored_default_locale)
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("invalid setting detected for babelfishpg_tsql.restored_default_locale setting")));
+			else if (locale_pos < 0)
 				ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 						errmsg("invalid setting detected for babelfishpg_tsql.default_locale setting")));
@@ -1023,12 +1035,47 @@ collation_list_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+static Oid
+get_collation_oid_internal(char *collation_name)
+{
+	Oid nspoid;
+	Oid collation_oid;
+	int collidx;
+	const char *collname;
+
+	if (!collation_name)
+		return DEFAULT_COLLATION_OID;
+
+	/* The collation_name is permitted to be the name of a sql
+	 * or windows collation that is translated into a bbf collation.
+	 * If that's what it is then get the translated name.
+	 */
+	if (NOT_FOUND != (collidx = translate_collation(collation_name, false)))
+		collname = coll_infos[collidx].collname;
+	else
+		collname = collation_name;
+
+	nspoid = get_namespace_oid("sys", false);
+	collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
+					 PointerGetDatum(collname),
+					 Int32GetDatum(-1),
+					 ObjectIdGetDatum(nspoid));
+
+	if (!OidIsValid(collation_oid))
+		collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
+								PointerGetDatum(collname),
+								Int32GetDatum(COLL_DEFAULT_ENCODING),
+								ObjectIdGetDatum(nspoid));
+
+	return collation_oid;
+}
+
 Oid
 get_server_collation_oid_internal(bool missingOk)
 {
 	Oid nspoid;
 	int collidx;
-	const char *collname = NULL;
+	const char *collname;
 
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
@@ -1038,26 +1085,7 @@ get_server_collation_oid_internal(bool missingOk)
 	if (server_collation_name == NULL)
 		return DEFAULT_COLLATION_OID;
 
-	/* The server_collation_name is permitted to be the name of a sql
-	 * or windows collation that is translated into a bbf collation.
-	 * If that's what it is then get the translated name.
-	 */
-	if (NOT_FOUND != (collidx = translate_collation(server_collation_name, false)))
-		collname = coll_infos[collidx].collname;
-	else
-		collname = server_collation_name;
-
-	nspoid = get_namespace_oid("sys", false);
-	server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-					 PointerGetDatum(collname),
-					 Int32GetDatum(-1),
-					 ObjectIdGetDatum(nspoid));
-
-	if (!OidIsValid(server_collation_oid))
-		server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-								PointerGetDatum(collname),
-								Int32GetDatum(COLL_DEFAULT_ENCODING),
-								ObjectIdGetDatum(nspoid));
+	server_collation_oid = get_collation_oid_internal(server_collation_name);
 
 	if (!OidIsValid(server_collation_oid))
 	{
@@ -1086,6 +1114,13 @@ Oid BABELFISH_CLUSTER_COLLATION_OID()
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
+		/* 
+		 * If upgrade is going on then we should use oid corresponding to 
+		 * babelfishpg_tsql.restored_server_collation_name.
+		 */
+		if (babelfish_restored_server_collation_name != NULL)
+			return get_collation_oid_internal(babelfish_restored_server_collation_name);
+
 		get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
 
 		if (OidIsValid(server_collation_oid))

@@ -42,10 +42,14 @@ $$
 DECLARE
     sys_schema oid;
     table_oid oid;
+    att_coll oid;
 BEGIN
     select oid into sys_schema from pg_namespace where nspname = schema_name collate sys.database_default;
     select oid into table_oid from pg_class where relname = table_name collate sys.database_default and relnamespace = sys_schema;
-    update pg_attribute set attcollation = sys.babelfishpg_tsql_get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
+    select attcollation into att_coll from pg_attribute where attname = column_name collate sys.database_default and attrelid = table_oid;
+    if att_coll = 100 or att_coll = 950 then
+        update pg_attribute set attcollation = sys.babelfishpg_tsql_get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
+    end if;
 END
 $$
 LANGUAGE plpgsql;
@@ -3917,14 +3921,14 @@ CALL sys.babelfish_update_collation_to_default('sys', 'all_objects', 'type_desc'
 CALL sys.babelfish_update_collation_to_default('sys', 'system_objects', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'system_objects', 'type_desc');
 
-create or replace view sys.all_views as
+create or replace view sys.all_views2 as
 select
     CAST(t.name as sys.SYSNAME) AS name
   , CAST(t.object_id as int) AS object_id
   , CAST(t.principal_id as int) AS principal_id
   , CAST(t.schema_id as int) AS schema_id
   , CAST(t.parent_object_id as int) AS parent_object_id
-  , CAST(t.type as sys.bpchar(2)) AS type
+  , CAST(t.type as sys.bpchar(2)) COLLATE sys.database_default AS type
   , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
   , CAST(t.create_date as sys.datetime) AS create_date
   , CAST(t.modify_date as sys.datetime) AS modify_date
@@ -5370,7 +5374,7 @@ SELECT
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST(COALESCE(SPLIT_PART(t6.attoptions[1] collate "C", '=', 2), t5.column_name collate "C") AS sys.sysname) AS COLUMN_NAME,
+CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
 CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
@@ -8007,6 +8011,20 @@ AS $BODY$ BEGIN
             -- Do nothing. Output carries NULL.
 END; $BODY$
 LANGUAGE plpgsql;
+
+-- And reset babelfishpg_tsql.restored_server_collation_name and babelfishpg_tsql.restored_default_locale GUC
+do
+language plpgsql
+$$
+    declare
+        query text;
+    begin
+        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_server_collation_name', CURRENT_DATABASE());
+        execute query;
+        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_default_locale', CURRENT_DATABASE());
+        execute query;
+    end;
+$$;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

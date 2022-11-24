@@ -21,6 +21,10 @@ PG_MODULE_MAGIC;
 char *pltsql_default_locale = NULL;
 char *pltsql_server_collation_name = NULL;
 
+/* Dump and Restore */
+char *babelfish_restored_server_collation_name = NULL;
+char *babelfish_restored_default_locale = NULL;
+
 const char *
 BabelfishTranslateCollation(
 	const char *collname, 
@@ -57,6 +61,24 @@ static bool check_default_locale (char **newval, void **extra, GucSource source)
 	return false;
 }
 
+static bool check_restored_server_collation_name(char **newval, void **extra, GucSource source)
+{
+	/* NULL should be treated as valid value for babelfishpg_tsql.restored_server_collation_name */
+	if (*newval == NULL)
+		return true;
+
+	return check_server_collation_name(newval, extra, source);
+}
+
+static bool check_restored_default_locale (char **newval, void **extra, GucSource source)
+{
+	/* NULL should be treated as valid value for babelfishpg_tsql.restored_default_locale */
+	if (*newval == NULL)
+		return true;
+
+	return check_default_locale(newval, extra, source);
+}
+
 void
 _PG_init(void)
 {
@@ -87,6 +109,24 @@ _PG_init(void)
 				   PGC_SUSET,  /* only superuser can set */
 				   0,
 				   check_default_locale, NULL, NULL);
+
+	DefineCustomStringVariable("babelfishpg_tsql.restored_server_collation_name",
+				gettext_noop("To persist the user defined setting of babelfishpg_tsql.server_collation_name GUC"),
+				NULL,
+				&babelfish_restored_server_collation_name,
+				NULL,
+				PGC_USERSET,
+				GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				check_restored_server_collation_name, NULL, NULL);
+
+	DefineCustomStringVariable("babelfishpg_tsql.restored_default_locale",
+				gettext_noop("To persist the user defined setting of babelfishpg_tsql.default_locale GUC"),
+				NULL,
+				&babelfish_restored_default_locale,
+				NULL,
+				PGC_USERSET,
+				GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				check_restored_default_locale, NULL, NULL);
 
 	handle_type_and_collation_hook = handle_type_and_collation;
 	avoid_collation_override_hook = check_target_type_is_sys_varchar;
