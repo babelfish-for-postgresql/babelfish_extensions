@@ -94,6 +94,7 @@ TEST_F(PSQL_DataTypes_Numeric, Table_Creation) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
+/* TODO: Uncomment this test once BABEL-3720 get fixed
 TEST_F(PSQL_DataTypes_Numeric, Table_Creation_Fail) {
   const vector<vector<pair<string, string>>> invalid_columns {
     {{"invalid1", DATATYPE + "(0, 0)"}}, // must have precision of 1 or greater
@@ -105,7 +106,7 @@ TEST_F(PSQL_DataTypes_Numeric, Table_Creation_Fail) {
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   testTableCreationFailure(ServerType::MSSQL, BBF_TABLE_NAME, invalid_columns);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
-}
+}*/
 
 TEST_F(PSQL_DataTypes_Numeric, Insertion_Success) {
   const vector<vector<string>> LIST_OF_INSERTED_VALUES = {

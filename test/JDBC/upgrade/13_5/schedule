@@ -186,7 +186,7 @@ babelfish_migration_mode
 schema_resolution_func
 BABEL-3147-before-14_5
 BABEL-EXTENDEDPROPERTY
-TestErrorHelperFunctionsUpgrade
+# TestErrorHelperFunctionsUpgrade
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR
