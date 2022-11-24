@@ -2,9 +2,6 @@ Could not find tests for function assemblyproperty
 Could not find tests for function pltsql_call_handler
 Could not find tests for function pltsql_inline_handler
 Could not find tests for function pltsql_validator
-Could not find tests for function sys.babelfish_cast_floor_bigint
-Could not find tests for function sys.babelfish_cast_floor_int
-Could not find tests for function sys.babelfish_cast_floor_smallint
 Could not find tests for function sys.babelfish_runtime_error
 Could not find tests for function sys.babelfish_try_cast_floor_bigint
 Could not find tests for function sys.babelfish_try_cast_floor_int
@@ -19,7 +16,6 @@ Could not find tests for function sys.datetime2fromparts
 Could not find tests for function sys.default_domain
 Could not find tests for function sys.format_datetime
 Could not find tests for function sys.format_numeric
-Could not find tests for function sys.get_babel_server_collation_oid
 Could not find tests for function sys.get_current_full_xact_id
 Could not find tests for function sys.get_host_os
 Could not find tests for function sys.is_collated_ci_as
@@ -67,14 +63,10 @@ Could not find tests for procedure babel_datatype_precedence_initializer
 Could not find tests for procedure initialize_babel_extras
 Could not find tests for procedure initialize_babelfish
 Could not find tests for procedure remove_babelfish
-Could not find tests for procedure sys.babel_collation_initializer
 Could not find tests for procedure sys.babel_drop_all_dbs
 Could not find tests for procedure sys.babel_drop_all_logins
 Could not find tests for procedure sys.babel_initialize_logins
-Could not find tests for procedure sys.babel_like_ilike_info_initializer
-Could not find tests for procedure sys.init_server_collation_oid
 Could not find tests for procedure sys.printarg
-Could not find tests for procedure sys.sp_databases
 Could not find tests for table sys.babelfish_helpcollation
 Could not find tests for table sys.babelfish_syslanguages
 Could not find tests for table sys.service_settings
@@ -82,7 +74,6 @@ Could not find tests for table sys.spt_datatype_info_table
 Could not find tests for table sys.versions
 Could not find tests for type sys.bpchar
 Could not find tests for view babelfish_has_perms_by_name_permissions
-Could not find tests for view information_schema_tsql.check_constraints
 Could not find tests for view sys.all_sql_modules_internal
 Could not find tests for view sys.pg_namespace_ext
 Could not find tests for view sys.shipped_objects_not_in_sys
@@ -104,9 +95,6 @@ Could not find upgrade tests for function pltsql_inline_handler
 Could not find upgrade tests for function pltsql_validator
 Could not find upgrade tests for function serverproperty
 Could not find upgrade tests for function sessionproperty
-Could not find upgrade tests for function sys.babelfish_cast_floor_bigint
-Could not find upgrade tests for function sys.babelfish_cast_floor_int
-Could not find upgrade tests for function sys.babelfish_cast_floor_smallint
 Could not find upgrade tests for function sys.babelfish_runtime_error
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_bigint
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_int
@@ -135,7 +123,6 @@ Could not find upgrade tests for function sys.fn_helpcollations
 Could not find upgrade tests for function sys.format_datetime
 Could not find upgrade tests for function sys.format_numeric
 Could not find upgrade tests for function sys.formatmessage
-Could not find upgrade tests for function sys.get_babel_server_collation_oid
 Could not find upgrade tests for function sys.get_current_full_xact_id
 Could not find upgrade tests for function sys.get_host_os
 Could not find upgrade tests for function sys.has_perms_by_name
@@ -144,7 +131,6 @@ Could not find upgrade tests for function sys.ident_seed
 Could not find upgrade tests for function sys.is_collated_ci_as
 Could not find upgrade tests for function sys.is_collated_ci_as_internal
 Could not find upgrade tests for function sys.is_rolemember_internal
-Could not find upgrade tests for function sys.isjson
 Could not find upgrade tests for function sys.json_query
 Could not find upgrade tests for function sys.language
 Could not find upgrade tests for function sys.max_precision
@@ -180,7 +166,6 @@ Could not find upgrade tests for function sys.suser_id_internal
 Could not find upgrade tests for function sys.suser_name_internal
 Could not find upgrade tests for function sys.sysdatetime
 Could not find upgrade tests for function sys.timefromparts
-Could not find upgrade tests for function sys.tsql_get_constraintdef
 Could not find upgrade tests for function sys.tsql_get_functiondef
 Could not find upgrade tests for function sys.tsql_get_returntypmodvalue
 Could not find upgrade tests for function sys.tsql_query_to_xml
@@ -199,12 +184,9 @@ Could not find upgrade tests for procedure babel_datatype_precedence_initializer
 Could not find upgrade tests for procedure initialize_babel_extras
 Could not find upgrade tests for procedure initialize_babelfish
 Could not find upgrade tests for procedure remove_babelfish
-Could not find upgrade tests for procedure sys.babel_collation_initializer
 Could not find upgrade tests for procedure sys.babel_drop_all_dbs
 Could not find upgrade tests for procedure sys.babel_drop_all_logins
 Could not find upgrade tests for procedure sys.babel_initialize_logins
-Could not find upgrade tests for procedure sys.babel_like_ilike_info_initializer
-Could not find upgrade tests for procedure sys.init_server_collation_oid
 Could not find upgrade tests for procedure sys.printarg
 Could not find upgrade tests for procedure sys.sp_column_privileges
 Could not find upgrade tests for procedure sys.sp_cursor_list

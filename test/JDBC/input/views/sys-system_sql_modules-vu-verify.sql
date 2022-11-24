@@ -30,19 +30,19 @@ WHERE object_id = OBJECT_ID('sys.tables')
 GO
 
 -- Test for system proc
-SELECT
-    definition,
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.system_sql_modules
-WHERE definition LIKE 'CREATE PROCEDURE sp_helpdbfixedrole%'
-GO
+-- SELECT
+--     definition,
+--     uses_ansi_nulls,
+--     uses_quoted_identifier,
+--     is_schema_bound,
+--     uses_database_collation,
+--     is_recompiled,
+--     null_on_null_input,
+--     execute_as_principal_id,
+--     uses_native_compilation
+-- FROM sys.system_sql_modules
+-- WHERE definition LIKE 'CREATE PROCEDURE sp_helpdbfixedrole%'
+-- GO
 
 -- Test for system function written in c 
 SELECT

@@ -38,26 +38,21 @@ nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 ~~END~~
 
 
+
 -- Test for system proc
-SELECT
-    definition,
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.system_sql_modules
-WHERE definition LIKE 'CREATE PROCEDURE sp_helpdbfixedrole%'
-GO
-~~START~~
-nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE PROCEDURE sp_helpdbfixedrole(@rolename sysname= NULL::"varchar") AS <newline>BEGIN<newline>	-- Returns a list of the fixed database roles. <newline>	-- Only fixed role present in babelfish is db_owner.<newline>	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_owner'<newline>	BEGIN<newline>		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;<newline>	END<newline>	ELSE IF LOWER(RTRIM(@rolename)) IN (<newline>			'db_accessadmin','db_securityadmin','db_ddladmin', 'db_backupoperator', <newline>			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')<newline>	BEGIN<newline>		-- Return an empty result set instead of raising an error<newline>		SELECT CAST(NULL AS sys.SYSNAME) AS DbFixedRole, CAST(NULL AS sys.nvarchar(70)) AS Description<newline>		WHERE 1=0;	<newline>	END<newline>	ELSE<newline>		RAISERROR('''%s'' is not a known fixed role.', 16, 1, @rolename);<newline>END<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
-~~END~~
-
-
+-- SELECT
+--     definition,
+--     uses_ansi_nulls,
+--     uses_quoted_identifier,
+--     is_schema_bound,
+--     uses_database_collation,
+--     is_recompiled,
+--     null_on_null_input,
+--     execute_as_principal_id,
+--     uses_native_compilation
+-- FROM sys.system_sql_modules
+-- WHERE definition LIKE 'CREATE PROCEDURE sp_helpdbfixedrole%'
+-- GO
 -- Test for system function written in c 
 SELECT
     definition,
