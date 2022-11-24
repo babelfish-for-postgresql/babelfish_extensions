@@ -1759,8 +1759,9 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	type_def = defGetTypeName(as_type);
 	type_names = type_def->names;
 	List* new_type_names;
+	int list_len = list_length(type_names);
 
-	switch (list_length(type_names))
+	switch (list_len)
 	{
 		case 2:
 			new_type_names = list_make2(type_names->elements[0].ptr_value, type_names->elements[1].ptr_value);
@@ -1779,7 +1780,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	typ = typenameType(pstate, type_def, &typmod_p);
 	typname = typeTypeName(typ);
 	type_def->names = type_names;
-	if(list_length(type_names)>1) list_free(new_type_names);
+	if(list_len>1) list_free(new_type_names);
 
 	aclresult = pg_type_aclcheck(*newtypid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
