@@ -293,8 +293,10 @@ GetTDSRequest(bool *resetProtocol)
 			return NULL;
 		}
 
-		/* Enable statement timeout. Note we add this function here to
-		 * include the time taken by the protocol in the timeout  */
+		/*
+		 * Enable statement timeout. Note we add this function here to
+		 * include the time taken by the protocol in the timeout
+		 */
 		enable_statement_timeout();
 
 		/* Parse the packet */
@@ -407,7 +409,7 @@ ProcessTDSRequest(TDSRequest request)
 				break;
 		}
 
-		/* Disabling statement timeout after processing */
+		/* Disabling statement timeout after processing. */
 		disable_statement_timeout();
 
 		CommitTransactionCommand();
