@@ -139,6 +139,7 @@ Could not find upgrade tests for function sys.exp
 Could not find upgrade tests for function sys.fetch_status
 Could not find upgrade tests for function sys.floor
 Could not find upgrade tests for function sys.fn_helpcollations
+Could not find upgrade tests for function sys.fn_mapped_system_error_list
 Could not find upgrade tests for function sys.format_datetime
 Could not find upgrade tests for function sys.format_numeric
 Could not find upgrade tests for function sys.formatmessage

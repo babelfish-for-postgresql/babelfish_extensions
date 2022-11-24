@@ -22,6 +22,11 @@ ignore#!#BABEL-3592
 ignore#!#BABEL-3513-vu-prepare
 ignore#!#BABEL-3513-vu-verify
 
+# BABEL-SP_FKEYS test is very slow and causing github action timeout.
+ignore#!#BABEL-SP_FKEYS-vu-prepare
+ignore#!#BABEL-SP_FKEYS-vu-verify
+ignore#!#BABEL-SP_FKEYS-vu-cleanup
+
 # Ignore tests related to Numeric: BABEL-3720
 ignore#!#BABEL-3486-vu-verify
 ignore#!#cast_numeric_types_to_datetime-vu-prepare
