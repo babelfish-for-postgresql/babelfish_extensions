@@ -1439,6 +1439,32 @@ get_collation_callbacks(void)
 	return &collation_callbacks_var;
 }
 
+/*
+ * babelfish_define_type_default_collation - would be used to update default collation of Babelfish data types
+ * to correct tsql collation.
+ */
+Oid
+babelfish_define_type_default_collation(Oid typeNamespace)
+{
+	/* We should only override the default collation for Babelfish data types. */
+	if (strcmp(get_namespace_name(typeNamespace), "sys") != 0)
+		return DEFAULT_COLLATION_OID;
+
+	/* 
+	 * If upgrade is going on then we should use oid corresponding to 
+	 * babelfishpg_tsql.restored_server_collation_name.
+	 */
+	if (babelfish_restored_server_collation_name != NULL)
+		return get_collation_oid_internal(babelfish_restored_server_collation_name);
+
+	get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
+
+	if (OidIsValid(server_collation_oid))
+		return server_collation_oid;
+
+	return DEFAULT_COLLATION_OID;
+}
+
 PG_FUNCTION_INFO_V1(get_babel_server_collation_oid);
 
 /*

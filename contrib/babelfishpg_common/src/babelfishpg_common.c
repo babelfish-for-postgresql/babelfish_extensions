@@ -1,5 +1,6 @@
 #include "postgres.h"
 #include "catalog/pg_collation.h"
+#include "commands/typecmds.h"
 #include "optimizer/pathnode.h"
 
 #include "fmgr.h"
@@ -130,6 +131,7 @@ _PG_init(void)
 
 	handle_type_and_collation_hook = handle_type_and_collation;
 	avoid_collation_override_hook = check_target_type_is_sys_varchar;
+	define_type_default_collation_hook = babelfish_define_type_default_collation;
 
 	prev_CLUSTER_COLLATION_OID_hook = CLUSTER_COLLATION_OID_hook;
 	CLUSTER_COLLATION_OID_hook = BABELFISH_CLUSTER_COLLATION_OID;
@@ -145,6 +147,7 @@ _PG_fini(void)
 {
 	handle_type_and_collation_hook = NULL;
 	avoid_collation_override_hook = NULL;
+	define_type_default_collation_hook = NULL;
 	CLUSTER_COLLATION_OID_hook = prev_CLUSTER_COLLATION_OID_hook;
 	TranslateCollation_hook = prev_TranslateCollation_hook;
 	PreCreateCollation_hook = prev_PreCreateCollation_hook;

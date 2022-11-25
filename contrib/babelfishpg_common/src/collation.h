@@ -135,6 +135,7 @@ extern like_ilike_info lookup_like_ilike_table(Oid opno);
 extern int find_collation(const char *collation_name);
 Oid get_oid_from_collidx(int collidx);
 extern bool has_ilike_node(Node *expr);
+extern Oid babelfish_define_type_default_collation(Oid typeNamespace);
 
 extern collation_callbacks *get_collation_callbacks(void);
 
