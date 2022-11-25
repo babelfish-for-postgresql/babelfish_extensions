@@ -3921,14 +3921,14 @@ CALL sys.babelfish_update_collation_to_default('sys', 'all_objects', 'type_desc'
 CALL sys.babelfish_update_collation_to_default('sys', 'system_objects', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'system_objects', 'type_desc');
 
-create or replace view sys.all_views2 as
+create or replace view sys.all_views as
 select
     CAST(t.name as sys.SYSNAME) AS name
   , CAST(t.object_id as int) AS object_id
   , CAST(t.principal_id as int) AS principal_id
   , CAST(t.schema_id as int) AS schema_id
   , CAST(t.parent_object_id as int) AS parent_object_id
-  , CAST(t.type as sys.bpchar(2)) COLLATE sys.database_default AS type
+  , CAST(t.type as sys.bpchar(2)) AS type
   , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
   , CAST(t.create_date as sys.datetime) AS create_date
   , CAST(t.modify_date as sys.datetime) AS modify_date
@@ -3951,7 +3951,6 @@ from sys.all_objects t
 INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
 INNER JOIN information_schema.views v ON t.name = cast(v.table_name as sys.sysname) AND ns.nspname = v.table_schema
 where t.type = 'V';
-GRANT SELECT ON sys.all_views TO PUBLIC;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'all_views', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'all_views', 'type');
