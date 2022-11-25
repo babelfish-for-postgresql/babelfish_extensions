@@ -45,6 +45,8 @@ typedef struct collation_callbacks
 
 	Oid (*get_server_collation_oid_internal)(bool missingOk);
 
+	Oid (*get_collation_oid_internal)(const char *collation_name);
+
 	coll_info_t (*lookup_collation_table_callback) (Oid oid);
 
 	like_ilike_info_t (*lookup_like_ilike_table)(Oid opno);
@@ -77,6 +79,7 @@ extern collation_callbacks *collation_callbacks_ptr;
 
 /* Wrappers to call any callback functions from collation_callbacks_ptr. */
 extern Oid tsql_get_server_collation_oid_internal(bool missingOk);
+extern Oid tsql_get_collation_oid(const char *collation_name);
 extern Datum tsql_collation_list_internal(PG_FUNCTION_ARGS);
 extern Datum tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS);
 extern int tsql_collationproperty_helper(const char *collationaname, const char *property);
