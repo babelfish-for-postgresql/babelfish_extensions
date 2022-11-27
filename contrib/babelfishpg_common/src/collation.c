@@ -1123,13 +1123,6 @@ Oid BABELFISH_CLUSTER_COLLATION_OID()
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
-		/* 
-		 * If upgrade is going on then we should use oid corresponding to 
-		 * babelfishpg_tsql.restored_server_collation_name.
-		 */
-		if (babelfish_restored_server_collation_name != NULL)
-			return get_collation_oid_internal(babelfish_restored_server_collation_name);
-
 		get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
 
 		if (OidIsValid(server_collation_oid))
