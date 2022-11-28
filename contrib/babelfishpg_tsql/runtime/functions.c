@@ -77,10 +77,12 @@ PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
+PG_FUNCTION_INFO_V1(bigint_power);
 PG_FUNCTION_INFO_V1(int_power);
+PG_FUNCTION_INFO_V1(bigint_radians);
 PG_FUNCTION_INFO_V1(int_radians);
-PG_FUNCTION_INFO_V1(int_degrees);
 PG_FUNCTION_INFO_V1(bigint_degrees);
+PG_FUNCTION_INFO_V1(int_degrees);
 PG_FUNCTION_INFO_V1(smallint_degrees);
 PG_FUNCTION_INFO_V1(tinyint_degrees);
 
@@ -1196,7 +1198,7 @@ babelfish_integrity_checker(PG_FUNCTION_ARGS)
 }
 
 Datum
-int_power(PG_FUNCTION_ARGS)
+bigint_power(PG_FUNCTION_ARGS)
 {
 	int64	arg1 = PG_GETARG_INT64(0);
 	int64	arg2 = PG_GETARG_INT64(1);
@@ -1220,7 +1222,31 @@ int_power(PG_FUNCTION_ARGS)
 }
 
 Datum
-int_radians(PG_FUNCTION_ARGS)
+int_power(PG_FUNCTION_ARGS)
+{
+	int32	arg1 = PG_GETARG_INT32(0);
+	int32	arg2 = PG_GETARG_INT32(1);
+	float8	result;
+
+	result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
+
+	if (result < 0)
+    	result = ceil(result);
+	else
+    	result = floor(result);
+
+	/* Range check */
+	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
+		ereport(ERROR,
+			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+			errmsg("integer out of range")));
+
+	PG_RETURN_INT32((int32)result);
+ 
+}
+
+Datum
+bigint_radians(PG_FUNCTION_ARGS)
 {
 	int64	arg1 = PG_GETARG_INT64(0);
 	float8	result;
@@ -1228,6 +1254,18 @@ int_radians(PG_FUNCTION_ARGS)
 	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
 
 	PG_RETURN_INT64((int64)result);
+	 
+}
+
+Datum
+int_radians(PG_FUNCTION_ARGS)
+{
+	int64	arg1 = PG_GETARG_INT32(0);
+	float8	result;
+
+	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+
+	PG_RETURN_INT32((int32)result);
 	 
 }
 
@@ -1297,9 +1335,8 @@ smallint_degrees(PG_FUNCTION_ARGS)
     PG_RETURN_INT16((int16)result);
 }
 
-#define PG_INT8_MIN		(-0x7F-1)
-#define PG_INT8_MAX		(0x7F)
-#define PG_GETARG_INT8
+#define DatumGetInt8(X) ((int8) (X))
+#define PG_GETARG_INT8(n)	 DatumGetInt8(PG_GETARG_DATUM(n))
 #define PG_RETURN_INT8(x) return Int8GetDatum(x)
 #define FLOAT8_FITS_IN_INT8(num) \
 	((num) >= (float8) PG_INT8_MIN && (num) < -((float8) PG_INT8_MIN))
