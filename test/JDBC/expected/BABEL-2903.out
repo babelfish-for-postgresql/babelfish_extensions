@@ -70,10 +70,10 @@ Query Text: EXEC babel_2903_outer_proc @a, @b
   Query Text: EXEC babel_2903_inner_proc @b
     Query Text: ASSIGN @b = SELECT (select top 1 a+b from babel_2903_t1 order by b)
       Query Text: SELECT (select top 1 a+b from babel_2903_t1 order by b)
-      ->  Result  (cost=94.75..94.76 rows=1 width=4)
+      ->  Result  (cost=49.55..49.56 rows=1 width=4)
             InitPlan 1 (returns $0)
-              ->  Limit  (cost=94.75..94.75 rows=1 width=8)
-                    ->  Sort  (cost=94.75..100.40 rows=2260 width=8)
+              ->  Limit  (cost=49.55..49.55 rows=1 width=8)
+                    ->  Sort  (cost=49.55..55.20 rows=2260 width=8)
                           Sort Key: babel_2903_t1.b
                           ->  Seq Scan on babel_2903_t1  (cost=0.00..38.25 rows=2260 width=8)
     Query Text: insert into babel_2903_t1 values ("@b", "@b");
