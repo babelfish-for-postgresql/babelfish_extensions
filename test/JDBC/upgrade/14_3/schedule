@@ -103,7 +103,7 @@ sys_all_objects
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
-objectproperty
+# objectproperty
 objectpropertyex
 sys-column-property
 sys-datefirst

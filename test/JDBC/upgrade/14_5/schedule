@@ -64,7 +64,7 @@ sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
-objectproperty
+# objectproperty
 objectpropertyex
 sys-column-property
 sys-configurations
