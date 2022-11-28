@@ -455,10 +455,6 @@ init_server_collation_name(void)
 			MemoryContextSwitchTo(oldContext);
 		}
 	}
-
-	/* babelfishpg_tsql.server_collation_name should not be changed once babelfish db is initialised. */
-	Assert(!server_collation_name || strcmp(server_collation_name, GetConfigOption("babelfishpg_tsql.server_collation_name", true, false)) == 0);
-
 	return;
 }
 
@@ -1454,4 +1450,35 @@ Datum
 get_babel_server_collation_oid(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_OID(get_server_collation_oid_internal(false));
+}
+
+PG_FUNCTION_INFO_V1(babelfish_update_server_collation_name);
+
+/*
+ * babelfish_update_server_collation_name - corresponding to sys.babelfish_update_server_collation_name() function
+ * which would be available and strickly be used during 1.x to 2.3 upgrade.
+ */
+Datum
+babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
+{
+	MemoryContext oldContext;
+	/* If babelfish_restored_server_collation_name is set then use it. */
+	if (babelfish_restored_server_collation_name == NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Invalid use of function babelfish_update_server_collation_name is detected.")));
+	}
+
+	if (!is_valid_server_collation_name(babelfish_restored_server_collation_name))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Invalid value of babelfishpg_tsql.restored_server_collation_name GUC is detected.")));
+	}
+
+	oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	server_collation_name = pstrdup(babelfish_restored_server_collation_name);
+	MemoryContextSwitchTo(oldContext);
+	PG_RETURN_VOID();
 }
