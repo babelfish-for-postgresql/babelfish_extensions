@@ -2554,9 +2554,9 @@ alter view sys.all_views rename to all_views_deprecated;
 alter view sys.spt_tablecollations_view rename to spt_tablecollations_view_deprecated;
 
 create or replace view sys.all_objects as
-select
-    cast (name as sys.sysname)
-  , cast (object_id as integer)
+select 
+    cast (name as sys.sysname) 
+  , cast (object_id as integer) 
   , cast ( principal_id as integer)
   , cast (schema_id as integer)
   , cast (parent_object_id as integer)
@@ -2565,8 +2565,8 @@ select
   , cast (create_date as sys.datetime)
   , cast (modify_date as sys.datetime)
   , cast (case when (schema_id::regnamespace::text = 'sys') then 1
-          when name in (select name from sys.shipped_objects_not_in_sys nis
-                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1
+          when name in (select name from sys.shipped_objects_not_in_sys nis 
+                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
           else 0 end as sys.bit) as is_ms_shipped
   , cast (is_published as sys.bit)
   , cast (is_schema_published as sys.bit)
@@ -2716,7 +2716,7 @@ union all
 select
     c.conname::name
   , c.oid::integer as object_id
-  , NULL::integer as principal_id
+  , NULL::integer as principal_id 
   , c.connamespace::integer as schema_id
   , c.conrelid::integer as parent_object_id
   , 'C'::char(2) as type
@@ -2799,24 +2799,24 @@ where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
-    SELECT
-        o.object_id AS object_id,
-        o.schema_id AS schema_id,
-        c.column_id AS colid,
-        CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
-            ELSE c.name END AS name,
-        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
-        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
-        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
-        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
-        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
-        CAST(c.collation_name AS nvarchar(128)) AS collation_100
-    FROM
-        sys.all_columns c INNER JOIN
-        sys.all_objects o ON (c.object_id = o.object_id) JOIN
-        pg_attribute p ON (c.name = p.attname COLLATE sys.database_default)
-    WHERE
-        c.is_sparse = 0 AND p.attnum >= 0;
+  SELECT
+    o.object_id         AS object_id,
+    o.schema_id         AS schema_id,
+    c.column_id         AS colid,
+    CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+      ELSE c.name END AS name,
+    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+    CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+    CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+    CAST(c.collation_name AS nvarchar(128)) AS collation_100
+  FROM
+    sys.all_columns c INNER JOIN
+    sys.all_objects o ON (c.object_id = o.object_id) JOIN
+    pg_attribute p ON (c.name = p.attname)
+  WHERE
+    c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 call sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_tablecollations_view_deprecated');
@@ -2925,7 +2925,7 @@ GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 create or replace view sys.objects as
 select
-      CAST(t.name as sys.sysname) as name
+      CAST(t.name as sys.sysname) as name 
     , CAST(t.object_id as int) as object_id
     , CAST(t.principal_id as int) as principal_id
     , CAST(t.schema_id as int) as schema_id
@@ -2937,7 +2937,7 @@ select
     , CAST(t.is_ms_shipped as sys.bit) as is_ms_shipped
     , CAST(t.is_published as sys.bit) as is_published
     , CAST(t.is_schema_published as sys.bit) as is_schema_published
-from sys.tables t
+from  sys.tables t
 union all
 select
       CAST(v.name as sys.sysname) as name
@@ -2952,7 +2952,7 @@ select
     , CAST(v.is_ms_shipped as sys.bit) as is_ms_shipped
     , CAST(v.is_published as sys.bit) as is_published
     , CAST(v.is_schema_published as sys.bit) as is_schema_published
-from sys.views v
+from  sys.views v
 union all
 select
       CAST(f.name as sys.sysname) as name
@@ -3732,24 +3732,24 @@ GRANT SELECT ON sys.all_columns TO PUBLIC;
 -- Rebuild dependent view
 ALTER VIEW sys.spt_tablecollations_view RENAME TO spt_tablecollations_view_deprecated;
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
-    SELECT
-        o.object_id AS object_id,
-        o.schema_id AS schema_id,
-        c.column_id AS colid,
-        CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
-            ELSE c.name END AS name,
-        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
-        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
-        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
-        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
-        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
-        CAST(c.collation_name AS nvarchar(128)) AS collation_100
-    FROM
-        sys.all_columns c INNER JOIN
-        sys.all_objects o ON (c.object_id = o.object_id) JOIN
-        pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
-    WHERE
-        c.is_sparse = 0 AND p.attnum >= 0;
+	SELECT
+		o.object_id         AS object_id,
+		o.schema_id         AS schema_id,
+		c.column_id         AS colid,
+		CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+			ELSE c.name END COLLATE sys.database_default AS name,
+		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+		CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+		CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+		CAST(c.collation_name AS nvarchar(128)) AS collation_100
+	FROM
+		sys.all_columns c INNER JOIN
+		sys.all_objects o ON (c.object_id = o.object_id) JOIN
+		pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
+	WHERE
+		c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_columns_deprecated');
