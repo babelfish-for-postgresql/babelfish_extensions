@@ -36,7 +36,7 @@ static bool db_collation_is_CI_AS = true;
  * and babelfishpg_tsql.default_locale.
  * We only need to lookup and store once because they can not be changed once babelfish db is initialised.
  */
-static const char *server_collation_name = NULL;
+static char *server_collation_name = NULL;
 static const char *default_locale = NULL;
 
 /* Hash tables to help backward searching (from OID to Persist ID) */
@@ -1481,6 +1481,8 @@ babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
 	}
 
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	if (server_collation_name)
+		pfree(server_collation_name);
 	server_collation_name = pstrdup(babelfish_restored_server_collation_name);
 	MemoryContextSwitchTo(oldContext);
 	PG_RETURN_VOID();
