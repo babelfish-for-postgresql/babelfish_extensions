@@ -4120,17 +4120,21 @@ ALTER FUNCTION sys.get_max_id_from_table RENAME TO get_max_id_from_table_depreca
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_table_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
 
-CREATE OR REPLACE FUNCTION sys.power(IN arg1 int, IN arg2 int)
-RETURNS int AS 'babelfishpg_tsql','int_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.power(int,int) TO PUBLIC;
-
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 BIGINT)
 RETURNS int  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(BIGINT,BIGINT) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 int, IN arg2 INT)
+RETURNS int AS 'babelfishpg_tsql','int_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(INT,INT) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 BIGINT)
 RETURNS int  AS 'babelfishpg_tsql','bigint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 INT)
+RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(INT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS int  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
@@ -4140,13 +4144,13 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 INT)
 RETURNS int AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(INT) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 smallint)
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 SMALLINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.degrees(smallint) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.degrees(SMALLINT) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 tinyint)
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','tinyint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.degrees(tinyint) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
 -- Deprecate the function sys.get_tds_id
 ALTER FUNCTION sys.get_tds_id RENAME TO get_tds_id_deprecated_2_3_0;
@@ -4203,6 +4207,7 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 -- Drop the deprecated function
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_tds_id_deprecated_2_3_0');
 
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 int, IN arg2 int)
 RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(int,int) TO PUBLIC;
@@ -4233,6 +4238,11 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS cr
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+=======
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+>>>>>>> ac50cfe1 (BABEL-736 All alignment update)
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
