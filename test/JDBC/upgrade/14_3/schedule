@@ -220,7 +220,7 @@ collation_tests_mongolian
 collation_tests_polish
 collation_tests
 BABEL-EXTENDEDPROPERTY
-# TestErrorHelperFunctionsUpgrade
+TestErrorHelperFunctionsUpgrade
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR

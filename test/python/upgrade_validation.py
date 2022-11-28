@@ -72,7 +72,7 @@ def get_dependencies(expfile, sumfile, logger):
                     break
 
         # adding filter for information_schema_tsql based on engine version
-        if version > 13.5 or version >= 14:
+        if version > 13.5:
             schema = ", 'information_schema_tsql'::regnamespace"
         else:
             schema=''
