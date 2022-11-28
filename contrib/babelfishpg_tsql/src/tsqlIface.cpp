@@ -3535,7 +3535,12 @@ std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> ind
 		{
 			if (index_values.size())
 				index_values += " ";
-			char * index_value = construct_unique_index_name(const_cast <char *>(::getFullText(ictx->id()).c_str()), const_cast <char *>(table_name.c_str()));
+			std::string indexName = ::getFullText(ictx->id());
+
+			//lowercase index and table names since they are created as lowercase in pg
+			transform(indexName.begin(), indexName.end(), indexName.begin(), ::tolower);
+			transform(table_name.begin(), table_name.end(), table_name.begin(), ::tolower);
+			char * index_value = construct_unique_index_name(const_cast <char *>(indexName.c_str()), const_cast <char *>(table_name.c_str()));
 			index_values += std::string(index_value);
 		}
 	}
