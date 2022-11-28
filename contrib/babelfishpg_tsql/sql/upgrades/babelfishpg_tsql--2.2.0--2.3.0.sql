@@ -37,17 +37,21 @@ LANGUAGE C
 AS 'babelfishpg_tsql', 'get_server_collation_oid';
 
 -- Set the collation of given schema_name.table_name.column_name column to default collation
-CREATE OR REPLACE PROCEDURE babelfish_update_collation_to_default(schema_name varchar, table_name varchar, column_name varchar) AS
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_collation_to_default(schema_name varchar, table_name varchar, column_name varchar) AS
 $$
 DECLARE
     sys_schema oid;
     table_oid oid;
     att_coll oid;
+    default_coll_oid oid;
+    c_coll_oid oid;
 BEGIN
+    select oid into default_coll_oid from pg_collation where collname = 'default';
+    select oid into c_coll_oid from pg_collation where collname = 'C';
     select oid into sys_schema from pg_namespace where nspname = schema_name collate sys.database_default;
     select oid into table_oid from pg_class where relname = table_name collate sys.database_default and relnamespace = sys_schema;
     select attcollation into att_coll from pg_attribute where attname = column_name collate sys.database_default and attrelid = table_oid;
-    if att_coll = 100 or att_coll = 950 then
+    if att_coll = default_coll_oid or att_coll = c_coll_oid then
         update pg_attribute set attcollation = sys.babelfishpg_tsql_get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
     end if;
 END

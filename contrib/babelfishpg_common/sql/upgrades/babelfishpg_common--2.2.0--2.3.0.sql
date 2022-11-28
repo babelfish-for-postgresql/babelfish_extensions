@@ -13,9 +13,11 @@ CREATE OR REPLACE PROCEDURE sys.babelfish_update_collation_to_default(type_name 
 $$
 DECLARE
     coll_oid oid;
+    default_coll_oid oid;
 BEGIN
+    select oid into default_coll_oid from pg_collation where collname = 'default';
     SELECT typcollation INTO coll_oid FROM pg_catalog.pg_type WHERE typname = type_name AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'sys');
-    IF coll_oid = 100 THEN
+    IF coll_oid = default_coll_oid THEN
         UPDATE pg_catalog.pg_type SET typcollation = sys.babelfishpg_common_get_babel_server_collation_oid()
         WHERE typname = type_name AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'sys');
     END IF;
