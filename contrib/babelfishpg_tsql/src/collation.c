@@ -83,17 +83,11 @@ collation_list(PG_FUNCTION_ARGS)
 
 /*
  * get_server_collation_oid - this is being used by sys.babelfish_update_collation_to_default
- * to update the collation of system objects during upgrade.
+ * to update the collation of system objects
  */
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	const char *restored_server_collation_name;
-
-	/* If babelfish_restored_server_collation_name is set then use it. */
-	if ((restored_server_collation_name = GetConfigOption("babelfishpg_tsql.restored_server_collation_name", true, false)) != NULL)
-		PG_RETURN_OID(tsql_get_collation_oid(restored_server_collation_name));
-
 	PG_RETURN_OID(tsql_get_server_collation_oid_internal(false));
 }
 
@@ -612,15 +606,6 @@ tsql_get_server_collation_oid_internal(bool missingOk)
 
 	server_collation_oid = (*collation_callbacks_ptr->get_server_collation_oid_internal)(missingOk);
 	return server_collation_oid;
-}
-
-Oid
-tsql_get_collation_oid(const char *collation_name)
-{
-	/* Initialise collation callbacks */
-	init_and_check_collation_callbacks();
-
-	return (*collation_callbacks_ptr->get_collation_oid_internal)(collation_name);
 }
 
 Datum

@@ -24,7 +24,7 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int server_collation_collidx = NOT_FOUND;
@@ -586,21 +586,12 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 	/* Special case handling for database_default and catalog_default collations which should be translated to server_collation_name. */
 	if (!check_for_server_collation_name_guc && (pg_strcasecmp(collname, DATABASE_DEFAULT) == 0 || pg_strcasecmp(collname, CATALOG_DEFAULT) == 0))
 	{
-		const char *collation_name;
-
-		/* If babelfishpg_tsql.restored_server_collation_name is not NULL then use it. */
-		if (babelfish_restored_server_collation_name != NULL)
-			collation_name = babelfish_restored_server_collation_name;
-		else
+		init_server_collation_name();
+		if (server_collation_name)
 		{
-			init_server_collation_name();
-			collation_name = server_collation_name;
-		}
-		if (collation_name)
-		{
-			idx = translate_collation_utility(collation_name);
+			idx = translate_collation_utility(server_collation_name);
 			if (idx == NOT_FOUND)
-				idx = find_collation(collation_name);
+				idx = find_collation(server_collation_name);
 		}
 		else
 			ereport(ERROR,
@@ -1044,7 +1035,7 @@ collation_list_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
-Oid
+static Oid
 get_collation_oid_internal(char *collation_name)
 {
 	Oid nspoid;
@@ -1413,7 +1404,6 @@ get_collation_callbacks(void)
 	if (!collation_callbacks_var.get_server_collation_oid_internal)
 	{
 		collation_callbacks_var.get_server_collation_oid_internal = &get_server_collation_oid_internal;
-		collation_callbacks_var.get_collation_oid_internal = &get_collation_oid_internal;
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
 		collation_callbacks_var.collationproperty_helper = &collationproperty_helper;
@@ -1460,16 +1450,8 @@ babelfish_define_type_default_collation(Oid typeNamespace)
 
 PG_FUNCTION_INFO_V1(get_babel_server_collation_oid);
 
-/*
- * get_babel_server_collation_oid - corresponding to sys.babelfishpg_tsql_get_babel_server_collation_oid() function
- * which would be available and useful during upgrade only.
- */
 Datum
 get_babel_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	/* If babelfish_restored_server_collation_name is set then use it. */
-	if (babelfish_restored_server_collation_name != NULL)
-		PG_RETURN_OID(get_collation_oid_internal(babelfish_restored_server_collation_name));
-
 	PG_RETURN_OID(get_server_collation_oid_internal(false));
 }

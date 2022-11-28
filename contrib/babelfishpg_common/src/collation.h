@@ -81,8 +81,6 @@ typedef struct collation_callbacks
 
 	Oid (*get_server_collation_oid_internal)(bool missingOk);
 
-	Oid (*get_collation_oid_internal)(const char *collation_name);
-
 	coll_info (*lookup_collation_table_callback) (Oid oid);
 
 	like_ilike_info (*lookup_like_ilike_table)(Oid opno);
@@ -114,7 +112,6 @@ typedef struct collation_callbacks
 extern int find_cs_as_collation(int collidx);
 extern int find_any_collation(const char *collation_name, bool check_for_server_collation_name_guc);
 extern Oid get_server_collation_oid_internal(bool missingOk);
-extern Oid get_collation_oid_internal(char *collation_name);
 extern coll_info lookup_collation_table(Oid collid);
 extern int8_t cmp_collation(uint16_t coll1, uint16_t coll2);
 extern bool collation_is_CI_AS(Oid colloid);
