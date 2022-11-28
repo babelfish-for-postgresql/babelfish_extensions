@@ -1425,6 +1425,7 @@ get_collation_callbacks(void)
 Oid
 babelfish_define_type_default_collation(Oid typeNamespace)
 {
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 	/* We should only override the default collation for Babelfish data types. */
 	if (strcmp(get_namespace_name(typeNamespace), "sys") != 0)
 		return DEFAULT_COLLATION_OID;
@@ -1433,7 +1434,9 @@ babelfish_define_type_default_collation(Oid typeNamespace)
 	 * If upgrade is going on then we should use oid corresponding to 
 	 * babelfishpg_tsql.restored_server_collation_name.
 	 */
-	if (babelfish_restored_server_collation_name != NULL)
+	if ((babelfish_dump_restore && 
+		 strncmp(babelfish_dump_restore, "on", 2) == 0) &&
+		 babelfish_restored_server_collation_name)
 		return get_collation_oid_internal(babelfish_restored_server_collation_name);
 
 	get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
