@@ -81,3 +81,35 @@ GO
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
 
+
+SELECT * FROM BABEL_3747_vu_prepare_t_v1
+GO
+~~START~~
+int#!#int#!#int#!#int
+57#!#229#!#14610#!#<NULL>
+~~END~~
+
+
+SELECT * FROM BABEL_3747_vu_prepare_t_v2
+GO
+~~START~~
+int#!#int#!#int#!#int
+572#!#-572#!#325440#!#1877410
+~~END~~
+
+
+SELECT * FROM BABEL_3747_vu_prepare_t_v3
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+572#!#-572#!#2135579860#!#502152243#!#<NULL>#!#5042
+~~END~~
+
+
+SELECT * FROM BABEL_3747_vu_prepare_t_v4
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+572#!#-572#!#14323#!#51165#!#<NULL>
+~~END~~
+
