@@ -645,6 +645,8 @@ validate_and_stringify_hints()
 	if (!leading_hint.empty())
 		hint += leading_hint;
 	hint += "*/";
+	transform(hint.begin(), hint.end(), hint.begin(), ::tolower);
+
 	return hint;
 }
 
@@ -3528,6 +3530,10 @@ std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> ind
 {
 	if (alias_to_table_mapping.find(table_name) != alias_to_table_mapping.end())
 		table_name = alias_to_table_mapping[table_name];
+
+	//lowercase table names and later index names since they are lowercase in pg when hashed
+	transform(table_name.begin(), table_name.end(), table_name.begin(), ::tolower);
+
 	std::string index_values;
 	for (auto ictx: index_valuesCtx)
 	{
@@ -3537,9 +3543,7 @@ std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> ind
 				index_values += " ";
 			std::string indexName = ::getFullText(ictx->id());
 
-			//lowercase index and table names since they are created as lowercase in pg
 			transform(indexName.begin(), indexName.end(), indexName.begin(), ::tolower);
-			transform(table_name.begin(), table_name.end(), table_name.begin(), ::tolower);
 			char * index_value = construct_unique_index_name(const_cast <char *>(indexName.c_str()), const_cast <char *>(table_name.c_str()));
 			index_values += std::string(index_value);
 		}
