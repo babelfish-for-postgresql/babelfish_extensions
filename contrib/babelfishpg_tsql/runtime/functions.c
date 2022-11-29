@@ -18,7 +18,6 @@
 #include "tsearch/ts_locale.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/datetime.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -80,7 +79,6 @@ PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 PG_FUNCTION_INFO_V1(bigint_degrees);
 PG_FUNCTION_INFO_V1(int_degrees);
 PG_FUNCTION_INFO_V1(smallint_degrees);
-PG_FUNCTION_INFO_V1(tinyint_degrees);
 
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
@@ -1255,22 +1253,4 @@ smallint_degrees(PG_FUNCTION_ARGS)
 	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32) result);
-}
-
-Datum
-tinyint_degrees(PG_FUNCTION_ARGS)
-{
-	int16	arg1 = PG_GETARG_INT16(0);
-	float8	result;
-	 
-	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
-
-	if (result < 0)
-		result = ceil(result);
-	else
-		result = floor(result);
-
-	/* skip range check, since it cannot overflow int32 */
-
-	PG_RETURN_INT32((int32)result);
 }
