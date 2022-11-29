@@ -60,6 +60,14 @@ ignore#!#sys_database_principals_dep_for_13_x-vu-verify
 ignore#!#sys_server_principals_dep_for_13_x-vu-cleanup
 ignore#!#sys_server_principals_dep_for_13_x-vu-prepare
 ignore#!#sys_server_principals_dep_for_13_x-vu-verify
+
+# These tests are meant for upgrade scenario where source version is 13_X
+ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
+ignore#!#sys_database_principals_dep_for_13_x-vu-prepare
+ignore#!#sys_database_principals_dep_for_13_x-vu-verify
+ignore#!#sys_server_principals_dep_for_13_x-vu-cleanup
+ignore#!#sys_server_principals_dep_for_13_x-vu-prepare
+ignore#!#sys_server_principals_dep_for_13_x-vu-verify
 ignore#!#sys-identity_columns-dep-for-13-x-vu-prepare
 ignore#!#sys-identity_columns-dep-for-13-x-vu-verify
 ignore#!#sys-identity_columns-dep-for-13-x-vu-cleanup
