@@ -178,6 +178,7 @@ BABEL-TABLEOPTIONS
 BABEL-2765
 BABEL-2917
 BABEL-2955
+BABEL-3646-before-14_6
 temp-tables
 table-variable
 TestNotNull
@@ -282,3 +283,5 @@ BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
+sys_server_principals_dep_for_13_x
+sys_database_principals_dep_for_13_x
