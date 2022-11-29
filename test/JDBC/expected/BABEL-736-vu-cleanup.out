@@ -1,2 +1,0 @@
-DROP TABLE BABEL_736_vu_prepare_t_1
-GO
