@@ -301,7 +301,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 		else if (option->NATIVE_COMPILATION())
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION_NATIVE_COMPILATION_OPTION, option->NATIVE_COMPILATION());
 		else if (option->execute_as_clause())
-			handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
+		{
+			auto exec_as = option->execute_as_clause();
+			if (!exec_as->CALLER())
+				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
+		}
 	}
 
 	if (ctx->func_body_returns_scalar() && ctx->func_body_returns_scalar()->external_name())
@@ -347,7 +351,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(
 		else if (option->RECOMPILE())
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE_RECOMPILE_OPTION, option->RECOMPILE());
 		else if (option->execute_as_clause())
-			handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
+		{
+			auto exec_as = option->execute_as_clause();
+			if (!exec_as->CALLER())
+				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
+		}
 	}
 
 	if (ctx->atomic_proc_body())

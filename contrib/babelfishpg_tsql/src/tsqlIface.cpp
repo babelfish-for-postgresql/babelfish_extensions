@@ -2663,8 +2663,8 @@ rewriteBatchLevelStatement(
 	ssm->mutator = &mutator;
 
 	/*
-	 * remove unnecessary create-options such as SCHEMABINDING.
-	 * basically, we check SCHEMABINDING is specified of each kind of statement
+	 * remove unnecessary create-options such as SCHEMABINDING, EXECUTE_AS_CALLER.
+	 * basically, we check SCHEMABINDING, is specified of each kind of statement and EXECUTE_AS_CALLER in functions of return type table
 	 * each code is very similar the grammar can be little bit different
 	 * so handle them by one by one
 	 */
@@ -2679,6 +2679,8 @@ rewriteBatchLevelStatement(
 				auto commas = cctx->COMMA();
 				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) { return o->SCHEMABINDING(); };
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+				getToken = [](TSqlParser::Function_optionContext* o) { return o->execute_as_clause()->CALLER(); };
+				all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 			}
