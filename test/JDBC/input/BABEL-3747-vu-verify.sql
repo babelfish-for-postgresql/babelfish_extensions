@@ -27,3 +27,15 @@ GO
 
 EXECUTE BABEL_3747_vu_prepare_t_p6
 GO
+
+SELECT * FROM BABEL_3747_vu_prepare_t_v1
+GO
+
+SELECT * FROM BABEL_3747_vu_prepare_t_v2
+GO
+
+SELECT * FROM BABEL_3747_vu_prepare_t_v3
+GO
+
+SELECT * FROM BABEL_3747_vu_prepare_t_v4
+GO

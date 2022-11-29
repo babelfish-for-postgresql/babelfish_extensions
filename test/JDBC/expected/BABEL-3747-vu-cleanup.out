@@ -27,3 +27,15 @@ GO
 
 DROP PROCEDURE BABEL_3747_vu_prepare_t_p6
 GO
+
+DROP VIEW BABEL_3747_vu_prepare_t_v1
+GO
+
+DROP VIEW BABEL_3747_vu_prepare_t_v2
+GO
+
+DROP VIEW BABEL_3747_vu_prepare_t_v3
+GO
+
+DROP VIEW BABEL_3747_vu_prepare_t_v4
+GO

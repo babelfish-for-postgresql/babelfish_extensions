@@ -99,3 +99,42 @@ GO
 ----Trigger Int error
 CREATE PROCEDURE BABEL_3747_vu_prepare_t_p6 AS (SELECT degrees(CAST(9999*9999 AS INT)));
 GO
+
+CREATE VIEW BABEL_3747_vu_prepare_t_v1 AS (
+	SELECT
+		degrees(CAST(1 AS TINYINT)) AS res1,
+	 	degrees(CAST(4 AS TINYINT)) AS res2,
+	 	degrees(CAST(255 AS TINYINT)) AS res3,
+		degrees(CAST(NULL AS TINYINT)) AS res4
+	);
+GO
+
+CREATE VIEW BABEL_3747_vu_prepare_t_v2 AS (
+	SELECT
+	 degrees(CAST(10 AS SMALLINT)) AS res1,
+	 degrees(CAST(-10 AS SMALLINT)) AS res2,
+	 degrees(CAST(5680 AS SMALLINT)) AS res3,
+	 degrees(CAST(32767 AS SMALLINT)) AS res4
+	 );
+GO
+
+CREATE VIEW BABEL_3747_vu_prepare_t_v3 AS (
+	SELECT
+	 degrees(CAST(10 AS BIGINT)) AS res1,
+	 degrees(CAST(-10 AS BIGINT)) AS res2,
+	 degrees(CAST(37272900 AS BIGINT)) AS res3,
+	 degrees(CAST(8764210 AS BIGINT)) AS res4,
+	 degrees(CAST(NULL AS BIGINT)) AS res5,
+	 degrees(CAST(88.6 AS BIGINT)) AS res6
+	 );
+GO
+
+CREATE VIEW BABEL_3747_vu_prepare_t_v4 AS (
+	SELECT
+	 degrees(CAST(10 AS INT)) AS res1,
+	 degrees(CAST(-10 AS INT)) AS res2,
+	 degrees(CAST(250 AS INT)) AS res3,
+	 degrees(CAST(893 AS INT)) AS res4,
+	 degrees(CAST(NULL AS INT))
+	 );
+GO
