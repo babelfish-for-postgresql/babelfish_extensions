@@ -1,0 +1,39 @@
+SELECT name, compatibility_level, collation_name FROM sys_databases_view_vu_prepare
+GO
+~~START~~
+text#!#tinyint#!#nvarchar
+db_sys_databases_vu_prepare#!#<NULL>#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC sys_databases_proc_vu_prepare
+GO
+~~START~~
+varchar#!#tinyint#!#varchar
+db_sys_databases_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+SELECT sys_databases_func_vu_prepare()
+GO
+~~START~~
+tinyint
+120
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.databases');
+GO
+~~START~~
+int
+87
+~~END~~
+
+
+SELECT name FROM sys.databases where name = 'db_sys_databases_vu_prepare';
+GO
+~~START~~
+varchar
+db_sys_databases_vu_prepare
+~~END~~
+
