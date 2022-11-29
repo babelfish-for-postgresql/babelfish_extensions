@@ -1,0 +1,83 @@
+SELECT degrees(a), degrees(b), degrees(c), degrees(d), degrees(e) from BABEL_3747_vu_prepare_t_1 ORDER BY 1
+GO
+~~START~~
+int#!#float#!#bigint#!#int#!#int
+<NULL>#!#580.0280943227376#!#572#!#1145#!#<NULL>
+171#!#63.02535746439056#!#<NULL>#!#51795#!#2864
+171#!#63.02535746439056#!#<NULL>#!#458#!#2463
+3495#!#1151.6451682129548#!#3679133#!#<NULL>#!#1145
+5786#!#1151.6451682129548#!#5602209#!#<NULL>#!#1145
+11516#!#1151.6451682129548#!#3679133#!#<NULL>#!#1145
+75057#!#5.7868737308213145#!#<NULL>#!#228266#!#<NULL>
+114018#!#<NULL>#!#2135528#!#-572#!#57
+~~END~~
+
+
+SELECT * FROM BABEL_3747_vu_prepare_t_2
+GO
+~~START~~
+int
+572
+~~END~~
+
+
+SELECT * FROM BABEL_3747_vu_prepare_t_3
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM BABEL_3747_vu_prepare_t_4
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
+
+
+EXECUTE BABEL_3747_vu_prepare_t_p1
+GO
+~~START~~
+int#!#int#!#int#!#int
+57#!#229#!#14610#!#<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3747_vu_prepare_t_p2
+GO
+~~START~~
+int#!#int#!#int#!#int
+572#!#-572#!#325440#!#1877410
+~~END~~
+
+
+EXECUTE BABEL_3747_vu_prepare_t_p3
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+572#!#-572#!#2135579860#!#502152243#!#<NULL>#!#5042
+~~END~~
+
+
+EXECUTE BABEL_3747_vu_prepare_t_p4
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+572#!#-572#!#14323#!#51165#!#<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3747_vu_prepare_t_p5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type bigint)~~
+
+
+EXECUTE BABEL_3747_vu_prepare_t_p6
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
+

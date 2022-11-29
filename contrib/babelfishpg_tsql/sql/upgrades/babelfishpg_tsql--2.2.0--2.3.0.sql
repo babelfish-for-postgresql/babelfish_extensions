@@ -4191,19 +4191,6 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 -- Drop the deprecated function
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_tds_id_deprecated_2_3_0');
 
-<<<<<<< HEAD
-CREATE OR REPLACE FUNCTION sys.power(IN arg1 int, IN arg2 int)
-RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.power(int,int) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.radians(IN arg1 int)
-RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.radians(int) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 int)
-RETURNS int  AS 'babelfishpg_tsql','int_degrees' LANGUAGE C IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.degrees(int) TO PUBLIC;
-
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
 CAST(Base.rolname AS sys.SYSNAME) AS name,
@@ -4222,11 +4209,11 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS cr
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
-=======
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
->>>>>>> ac50cfe1 (BABEL-736 All alignment update)
+
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
