@@ -78,7 +78,7 @@ else
             BRANCH_OPTION=''
         fi
     fi
-    if [ "$BRANCH" = "jira-babel-3315" ]; then
+    if [ "$BRANCH" = "jira-babel-3315-x" ]; then
         BASE_URL=https://github.com/amazon-aurora/postgresql_modified_for_babelfish
         BRANCH_OPTION="--branch $BRANCH"
     fi

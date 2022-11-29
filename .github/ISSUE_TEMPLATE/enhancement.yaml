@@ -22,7 +22,7 @@ body:
       label: Version
       description: Which version of Babelfish are you running?
       options:
-        - BABEL_2_3_STABLE (Default)
+        - BABEL_1_X_DEV (Default)
     validations:
       required: false
   - type: textarea

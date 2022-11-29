@@ -6,8 +6,8 @@ jobs:
     env:
       OLD_INSTALL_DIR: postgres13
       NEW_INSTALL_DIR: postgres14
-      ENGINE_BRANCH_FROM: BABEL_1_5_STABLE__PG_13_9
-      EXTENSION_BRANCH_FROM: BABEL_1_5_STABLE
+      ENGINE_BRANCH_FROM: BABEL_1_X_DEV__PG_13_X
+      EXTENSION_BRANCH_FROM: BABEL_1_X_DEV
 
     runs-on: ubuntu-20.04
     steps:
