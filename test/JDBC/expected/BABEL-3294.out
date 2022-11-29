@@ -77,7 +77,7 @@ select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 0)
 go
 ~~START~~
 text
-Query Text: select/*+ Set(max_parallel_workers_per_gather 64) */ * from babel_3294_t1 t1 where a1 = 1                 
+Query Text: select/*+ set(max_parallel_workers_per_gather 64) */ * from babel_3294_t1 t1 where a1 = 1                 
 Gather
   Workers Planned: 16
   ->  Parallel Seq Scan on babel_3294_t1 t1
@@ -92,7 +92,7 @@ select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 1)
 go
 ~~START~~
 text
-Query Text: select/*+ Set(max_parallel_workers_per_gather 1) */ * from babel_3294_t1 t1 where a1 = 1                 
+Query Text: select/*+ set(max_parallel_workers_per_gather 1) */ * from babel_3294_t1 t1 where a1 = 1                 
 Gather
   Workers Planned: 1
   ->  Parallel Seq Scan on babel_3294_t1 t1
@@ -104,7 +104,7 @@ select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 2)
 go
 ~~START~~
 text
-Query Text: select/*+ Set(max_parallel_workers_per_gather 2) */ * from babel_3294_t1 t1 where a1 = 1                 
+Query Text: select/*+ set(max_parallel_workers_per_gather 2) */ * from babel_3294_t1 t1 where a1 = 1                 
 Gather
   Workers Planned: 2
   ->  Parallel Seq Scan on babel_3294_t1 t1
@@ -116,7 +116,7 @@ select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 4)
 go
 ~~START~~
 text
-Query Text: select/*+ Set(max_parallel_workers_per_gather 4) */ * from babel_3294_t1 t1 where a1 = 1                 
+Query Text: select/*+ set(max_parallel_workers_per_gather 4) */ * from babel_3294_t1 t1 where a1 = 1                 
 Gather
   Workers Planned: 4
   ->  Parallel Seq Scan on babel_3294_t1 t1
@@ -128,7 +128,7 @@ select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 8)
 go
 ~~START~~
 text
-Query Text: select/*+ Set(max_parallel_workers_per_gather 8) */ * from babel_3294_t1 t1 where a1 = 1                 
+Query Text: select/*+ set(max_parallel_workers_per_gather 8) */ * from babel_3294_t1 t1 where a1 = 1                 
 Gather
   Workers Planned: 8
   ->  Parallel Seq Scan on babel_3294_t1 t1
@@ -140,7 +140,7 @@ select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 16)
 go
 ~~START~~
 text
-Query Text: select/*+ Set(max_parallel_workers_per_gather 16) */ * from babel_3294_t1 t1 where a1 = 1                  
+Query Text: select/*+ set(max_parallel_workers_per_gather 16) */ * from babel_3294_t1 t1 where a1 = 1                  
 Gather
   Workers Planned: 16
   ->  Parallel Seq Scan on babel_3294_t1 t1
