@@ -10,7 +10,7 @@ go
 create index index_babel_3292_t1_b1 on babel_3292_t1(b1)
 go
 
-create index index_babel_3292_t1_c1 on babel_3292_t1(c1)
+create index inDex_BABEL_3292_T1_c1 on babel_3292_t1(c1)
 go
 
 create table babel_3292_t2(a2 int PRIMARY KEY, b2 int, c2 int)
@@ -65,7 +65,7 @@ select * from babel_3292_t1 (index(index_babel_3292_t1_b1)) where b1 = 1
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                 where b1 = 1
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                 where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -75,7 +75,7 @@ select * from babel_3292_t1 (index=index_babel_3292_t1_b1) where b1 = 1
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                where b1 = 1
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -85,7 +85,7 @@ select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                     where b1 = 1
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                     where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -95,7 +95,7 @@ select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                    where b1 = 1
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                    where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -105,7 +105,7 @@ select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 t1                                    where b1 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 t1                                    where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -115,7 +115,7 @@ select * from babel_3292_t1 as t1 with(index=index_babel_3292_t1_b1) where b1 = 
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 as t1                                    where b1 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 as t1                                    where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -125,7 +125,7 @@ select * from babel_3292_t1 where b1=1 option(table hint(babel_3292_t1, index(in
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 where b1=1                                                                 
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 where b1=1                                                                 
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -135,7 +135,7 @@ select * from babel_3292_t1 t1 where b1=1 option(table hint(t1, index(index_babe
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 t1 where b1=1                                                      
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 t1 where b1=1                                                      
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -161,7 +161,7 @@ select * from babel_3292_t1 with(index(index_babel_3292_t1_b1), index(index_babe
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ * from babel_3292_t1                                                                    where b1 = 1 and c1 = 1
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ * from babel_3292_t1                                                                    where b1 = 1 and c1 = 1
 Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1
   Index Cond: (c1 = 1)
   Filter: (b1 = 1)
@@ -172,7 +172,18 @@ select * from babel_3292_t1 where b1 = 1 and c1 = 1 option(table hint(babel_3292
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ * from babel_3292_t1 where b1 = 1 and c1 = 1                                                                                                
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ * from babel_3292_t1 where b1 = 1 and c1 = 1                                                                                                
+Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1
+  Index Cond: (c1 = 1)
+  Filter: (b1 = 1)
+~~END~~
+
+
+select * from BABEL_3292_t1 where b1 = 1 and c1 = 1 option(table hint(Babel_3292_t1, index(IndeX_BABEL_3292_t1_b1), index(Index_baBel_3292_t1_C1)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ * from BABEL_3292_t1 where b1 = 1 and c1 = 1                                                                                                
 Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1
   Index Cond: (c1 = 1)
   Filter: (b1 = 1)
@@ -202,7 +213,7 @@ select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)), babel_3292_t2 w
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                    , babel_3292_t2                                     where b1 = 1 and b2 = 1
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                    , babel_3292_t2                                     where b1 = 1 and b2 = 1
 Nested Loop
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -216,7 +227,7 @@ select * from babel_3292_t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 wi
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                   , babel_3292_t2                                    where b1 = 1 and b2 = 1
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                   , babel_3292_t2                                    where b1 = 1 and b2 = 1
 Nested Loop
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -230,7 +241,7 @@ select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1 option(table 
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1                                                                                                                           
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1                                                                                                                           
 Nested Loop
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -244,7 +255,7 @@ select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1), babel_3292_t2
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 t1                                   , babel_3292_t2 t2                                    where b1 = 1 and b2 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 t1                                   , babel_3292_t2 t2                                    where b1 = 1 and b2 = 1
 Nested Loop
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
         Index Cond: (b1 = 1)
@@ -258,7 +269,7 @@ select * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1                                                                                                     
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1                                                                                                     
 Nested Loop
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
         Index Cond: (b1 = 1)
@@ -286,7 +297,7 @@ insert into babel_3292_t2 select * from babel_3292_t1 with(index(index_babel_329
 go
 ~~START~~
 text
-Query Text: insert/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ into babel_3292_t2 select * from babel_3292_t1                                     where b1 = 1
+Query Text: insert/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ into babel_3292_t2 select * from babel_3292_t1                                     where b1 = 1
 Insert on babel_3292_t2
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -297,7 +308,7 @@ insert into babel_3292_t2 select * from babel_3292_t1 where b1 = 1 option(table 
 go
 ~~START~~
 text
-Query Text: insert/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ into babel_3292_t2 select * from babel_3292_t1 where b1 = 1                                                                 
+Query Text: insert/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ into babel_3292_t2 select * from babel_3292_t1 where b1 = 1                                                                 
 Insert on babel_3292_t2
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -322,7 +333,7 @@ update babel_3292_t1 with(index(index_babel_3292_t1_b1)) set a1 = 1 where b1 = 1
 go
 ~~START~~
 text
-Query Text: update/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1                                     set a1 = 1 where b1 = 1
+Query Text: update/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1                                     set a1 = 1 where b1 = 1
 Update on babel_3292_t1
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -333,7 +344,7 @@ update babel_3292_t1 set a1 = 1 where b1 = 1 option(table hint(babel_3292_t1, in
 go
 ~~START~~
 text
-Query Text: update/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1 set a1 = 1 where b1 = 1                                                                 
+Query Text: update/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1 set a1 = 1 where b1 = 1                                                                 
 Update on babel_3292_t1
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -358,7 +369,7 @@ delete from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
 go
 ~~START~~
 text
-Query Text: delete/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ from babel_3292_t1                                     where b1 = 1
+Query Text: delete/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ from babel_3292_t1                                     where b1 = 1
 Delete on babel_3292_t1
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -369,7 +380,7 @@ delete from babel_3292_t1 where b1 = 1 option(table hint(babel_3292_t1, index(in
 go
 ~~START~~
 text
-Query Text: delete/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ from babel_3292_t1 where b1 = 1                                                                 
+Query Text: delete/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ from babel_3292_t1 where b1 = 1                                                                 
 Delete on babel_3292_t1
   ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
         Index Cond: (b1 = 1)
@@ -400,7 +411,7 @@ select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 with(
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2                                    where b2 = 1
+Query Text: select/*+ indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2                                    where b2 = 1
 HashAggregate
   Group Key: babel_3292_t1.a1, babel_3292_t1.b1, babel_3292_t1.c1
   ->  Append
@@ -417,7 +428,7 @@ select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1                                                                 
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1                                                                 
 HashAggregate
   Group Key: babel_3292_t1.a1, babel_3292_t1.b1, babel_3292_t1.c1
   ->  Append
@@ -434,7 +445,7 @@ select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1 UNIO
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                    where b1 = 1 UNION select * from babel_3292_t2                                    where b2 = 1
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                    where b1 = 1 UNION select * from babel_3292_t2                                    where b2 = 1
 HashAggregate
   Group Key: babel_3292_t1.a1, babel_3292_t1.b1, babel_3292_t1.c1
   ->  Append
@@ -449,7 +460,7 @@ select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1                                                                                                                           
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1                                                                                                                           
 HashAggregate
   Group Key: babel_3292_t1.a1, babel_3292_t1.b1, babel_3292_t1.c1
   ->  Append
@@ -480,7 +491,7 @@ with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=i
 go
 ~~START~~
 text
-Query Text: with/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1                                    where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1                                    where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
   Filter: (c1 = 1)
@@ -491,7 +502,18 @@ with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1
 go
 ~~START~~
 text
-Query Text: with/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1                                                                 
+Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1                                                                 
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+  Index Cond: (b1 = 1)
+  Filter: (c1 = 1)
+~~END~~
+
+
+with BaBeL_3292_T1_CTE (a1, b1, c1) as (select * from BABEL_3292_t1 with(index=INDEX_BABEL_3292_T1_B1) where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+go
+~~START~~
+text
+Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ BaBeL_3292_T1_CTE (a1, b1, c1) as (select * from BABEL_3292_t1                                    where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
   Filter: (c1 = 1)
@@ -503,7 +525,7 @@ with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1
 go
 ~~START~~
 text
-Query Text: with/*+ IndexScan(babel_3292_t1_cte index_babel_3292_t1_c1babel_32961b5cc4ed008f5c7776c7f58f0abe80b) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte                                    where c1 = 1
+Query Text: with/*+ indexscan(babel_3292_t1_cte index_babel_3292_t1_c1babel_32961b5cc4ed008f5c7776c7f58f0abe80b) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte                                    where c1 = 1
 Bitmap Heap Scan on babel_3292_t1
   Recheck Cond: ((c1 = 1) AND (b1 = 1))
   ->  BitmapAnd
@@ -519,7 +541,7 @@ with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=i
 go
 ~~START~~
 text
-Query Text: with/*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t1_cte index_babel_3292_t1_c1babel_32961b5cc4ed008f5c7776c7f58f0abe80b) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1                                    where b1 = 1) select * from babel_3292_t1_cte                                    where c1 = 1
+Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t1_cte index_babel_3292_t1_c1babel_32961b5cc4ed008f5c7776c7f58f0abe80b) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1                                    where b1 = 1) select * from babel_3292_t1_cte                                    where c1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
   Index Cond: (b1 = 1)
   Filter: (c1 = 1)
@@ -575,7 +597,7 @@ select * from tempdb.babel_3292_schema.t1 (index(index_babel_3292_schema_t1_b1))
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1                                        where b1 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1                                        where b1 = 1
 Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -585,7 +607,7 @@ select * from tempdb.babel_3292_schema.t1 t1 (index(index_babel_3292_schema_t1_b
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 t1                                        where b1 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 t1                                        where b1 = 1
 Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -595,7 +617,7 @@ select * from tempdb.babel_3292_schema.t1 where b1=1 option(table hint(tempdb.ba
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 where b1=1                                                                                      
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 where b1=1                                                                                      
 Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -605,7 +627,7 @@ select * from tempdb.babel_3292_schema.t1 t1 where b1=1 option(table hint(t1, in
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 t1 where b1=1                                                             
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 t1 where b1=1                                                             
 Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -615,7 +637,7 @@ select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t1 index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0) */ * from tempdb.babel_3292_schema.t1                                                                                  where b1 = 1 and c1 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t1 index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0) */ * from tempdb.babel_3292_schema.t1                                                                                  where b1 = 1 and c1 = 1
 Index Scan using index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0 on t1
   Index Cond: (c1 = 1)
   Filter: (b1 = 1)
@@ -626,7 +648,7 @@ select * from tempdb.babel_3292_schema.t1 where b1 = 1 and c1 = 1 option(table h
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t1 index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0) */ * from tempdb.babel_3292_schema.t1 where b1 = 1 and c1 = 1                                                                                                                            
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t1 index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0) */ * from tempdb.babel_3292_schema.t1 where b1 = 1 and c1 = 1                                                                                                                            
 Index Scan using index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0 on t1
   Index Cond: (c1 = 1)
   Filter: (b1 = 1)
@@ -637,7 +659,7 @@ select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1                                           , tempdb.dbo.babel_3292_t2                                     where b1 = 1 and b2 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1                                           , tempdb.dbo.babel_3292_t2                                     where b1 = 1 and b2 = 1
 Nested Loop
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -651,7 +673,7 @@ select * from tempdb.babel_3292_schema.t1 t1 with(index(index_babel_3292_schema_
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1                                           , tempdb.dbo.babel_3292_t2 t2                                     where b1 = 1 and b2 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1                                           , tempdb.dbo.babel_3292_t2 t2                                     where b1 = 1 and b2 = 1
 Nested Loop
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -665,7 +687,7 @@ select * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1 and b2 = 1                                                                                                                                                           
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1 and b2 = 1                                                                                                                                                           
 Nested Loop
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -679,7 +701,7 @@ select * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where 
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1                                                                                                            
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1                                                                                                            
 Nested Loop
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -693,7 +715,7 @@ insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 w
 go
 ~~START~~
 text
-Query Text: insert/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1                                            where b1 = 1
+Query Text: insert/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1                                            where b1 = 1
 Insert on babel_3292_t2
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -704,7 +726,7 @@ insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 w
 go
 ~~START~~
 text
-Query Text: insert/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 where b1 = 1                                                                                      
+Query Text: insert/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 where b1 = 1                                                                                      
 Insert on babel_3292_t2
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -715,7 +737,7 @@ update tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) se
 go
 ~~START~~
 text
-Query Text: update/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ tempdb.babel_3292_schema.t1                                            set a1 = 1 where b1 = 1
+Query Text: update/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ tempdb.babel_3292_schema.t1                                            set a1 = 1 where b1 = 1
 Update on t1
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -726,7 +748,7 @@ update tempdb.babel_3292_schema.t1 set a1 = 1 where b1 = 1 option(table hint(tem
 go
 ~~START~~
 text
-Query Text: update/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ tempdb.babel_3292_schema.t1 set a1 = 1 where b1 = 1                                                                                      
+Query Text: update/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ tempdb.babel_3292_schema.t1 set a1 = 1 where b1 = 1                                                                                      
 Update on t1
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -737,7 +759,7 @@ delete from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1
 go
 ~~START~~
 text
-Query Text: delete/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ from tempdb.babel_3292_schema.t1                                            where b1 = 1
+Query Text: delete/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ from tempdb.babel_3292_schema.t1                                            where b1 = 1
 Delete on t1
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -748,7 +770,7 @@ delete from tempdb.babel_3292_schema.t1 where b1 = 1 option(table hint(tempdb.ba
 go
 ~~START~~
 text
-Query Text: delete/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ from tempdb.babel_3292_schema.t1 where b1 = 1                                                                                      
+Query Text: delete/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ from tempdb.babel_3292_schema.t1 where b1 = 1                                                                                      
 Delete on t1
   ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
         Index Cond: (b1 = 1)
@@ -759,7 +781,7 @@ select * from tempdb.babel_3292_schema.t1 with(index=index_babel_3292_schema_t1_
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1                                           where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2                                    where b2 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1                                           where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2                                    where b2 = 1
 HashAggregate
   Group Key: t1.a1, t1.b1, t1.c1
   ->  Append
@@ -774,7 +796,7 @@ select * from tempdb.babel_3292_schema.t1 t1 with(index=index_babel_3292_schema_
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1                                           where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2                                    where b2 = 1
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1                                           where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2                                    where b2 = 1
 HashAggregate
   Group Key: t1.a1, t1.b1, t1.c1
   ->  Append
@@ -789,7 +811,7 @@ select * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempd
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 where b2 = 1                                                                                                                                                           
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 where b2 = 1                                                                                                                                                           
 HashAggregate
   Group Key: t1.a1, t1.b1, t1.c1
   ->  Append
@@ -804,7 +826,7 @@ select * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from te
 go
 ~~START~~
 text
-Query Text: select/*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1                                                                                                            
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1                                                                                                            
 HashAggregate
   Group Key: t1.a1, t1.b1, t1.c1
   ->  Append
