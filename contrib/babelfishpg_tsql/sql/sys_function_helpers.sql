@@ -10263,12 +10263,6 @@ CREATE OR REPLACE FUNCTION sys.babelfish_pltsql_get_last_stmt_handle()
 RETURNS INT
 AS 'babelfishpg_tsql', 'pltsql_get_last_stmt_handle' LANGUAGE C;
 
-/*
-CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
-LANGUAGE C
-AS 'babelfishpg_tsql', 'get_server_collation_oid';
-*/
-
 CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
 RETURNS text
 AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;

@@ -8015,20 +8015,6 @@ AS $BODY$ BEGIN
 END; $BODY$
 LANGUAGE plpgsql;
 
--- And reset babelfishpg_tsql.restored_server_collation_name and babelfishpg_tsql.restored_default_locale GUC
-do
-language plpgsql
-$$
-    declare
-        query text;
-    begin
-        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_server_collation_name', CURRENT_DATABASE());
-        execute query;
-        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_default_locale', CURRENT_DATABASE());
-        execute query;
-    end;
-$$;
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
