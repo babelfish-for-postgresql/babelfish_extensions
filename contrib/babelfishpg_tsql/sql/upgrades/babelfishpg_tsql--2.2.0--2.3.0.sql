@@ -4120,22 +4120,6 @@ ALTER FUNCTION sys.get_max_id_from_table RENAME TO get_max_id_from_table_depreca
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_table_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
 
-CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
-RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 INT)
-RETURNS int AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.degrees(INT) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 SMALLINT)
-RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.degrees(SMALLINT) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
-RETURNS int AS 'babelfishpg_tsql','tinyint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
-
 -- Deprecate the function sys.get_tds_id
 ALTER FUNCTION sys.get_tds_id RENAME TO get_tds_id_deprecated_2_3_0;
 
