@@ -404,7 +404,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	const char *name;
 	const char *nsp;
 	const char *nnsp;
-  bool has_tvp = false;
+	bool has_tvp = false;
 	int* typmod_arr = NULL;
 	int number_args;
 	char *probin_c = NULL;
@@ -452,7 +452,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
-	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr);
+	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr, &has_tvp);
 	/* TODO: In case of Table Valued Functions, return NULL. */
 	if (has_tvp)
 		PG_RETURN_NULL();

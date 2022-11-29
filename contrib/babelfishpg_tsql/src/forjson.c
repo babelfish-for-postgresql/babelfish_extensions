@@ -18,6 +18,7 @@
 #include "utils/json.h"
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
+#include "catalog/namespace.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
 								bool without_array_wrapper, const char *root_name);

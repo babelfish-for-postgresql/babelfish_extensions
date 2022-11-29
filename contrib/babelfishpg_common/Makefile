@@ -22,7 +22,7 @@ DATA_built = \
     $(EXTENSION).control \
     sql/$(EXTENSION)--$(EXTVERSION).sql
 
-PG_CPPFLAGS += -I$(PG_SRC) -Werror
+PG_CPPFLAGS += -I$(PG_SRC)
 
 OBJS  = src/babelfishpg_common.o
 OBJS += src/varchar.o

@@ -10,7 +10,8 @@ DATA_built = babelfishpg_money--1.1.0.sql
 
 #include ../Makefile.common
 
-CFLAGS = `$(PG_CONFIG) --includedir-server -Werror`
+CFLAGS = `$(PG_CONFIG) --includedir-server`
+PG_CFLAGS += -Werror
 
 TESTS = $(wildcard test/sql/*.sql)
 

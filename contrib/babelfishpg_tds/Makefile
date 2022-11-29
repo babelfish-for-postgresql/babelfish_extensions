@@ -10,7 +10,8 @@ tds_backend = $(tds_top_dir)/src/backend
 tds_include = $(tds_top_dir)/src/include
 TSQL_SRC = ../babelfishpg_tsql
 
-PG_CPPFLAGS += -I$(TSQL_SRC) -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR -Werror
+PG_CFLAGS += -Werror
+PG_CPPFLAGS += -I$(TSQL_SRC) -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR
 
 # Exclude the following files from the build (sometimes these
 # files are included in another c file)
