@@ -1,0 +1,15 @@
+SELECT * FROM app_name_vu_prepare_v1
+GO
+~~START~~
+nvarchar
+Microsoft JDBC Driver for SQL Server
+~~END~~
+
+
+EXEC app_name_vu_prepare_p1
+GO
+~~START~~
+nvarchar
+Microsoft JDBC Driver for SQL Server
+~~END~~
+

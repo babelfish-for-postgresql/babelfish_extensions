@@ -34,6 +34,12 @@ LANGUAGE plpgsql;
 
 -- please add your SQL here
 
+CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)
+AS
+$$
+    SELECT current_setting('application_name');
+$$
+LANGUAGE sql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
