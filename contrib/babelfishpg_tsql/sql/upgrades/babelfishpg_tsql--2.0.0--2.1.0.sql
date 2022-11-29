@@ -2343,7 +2343,7 @@ BEGIN
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext2.database_name = DB_NAME()
 		AND Ext1.type = 'R'
-		AND Ext2.orig_username != 'db_owner'
+		AND Ext2.orig_username != 'db_owner';
 		AND (Ext1.orig_username = @rolename OR lower(Ext1.orig_username) = lower(@rolename))
 		ORDER BY RoleName, MemberName;
 	END

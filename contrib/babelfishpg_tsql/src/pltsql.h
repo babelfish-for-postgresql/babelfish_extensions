@@ -1626,10 +1626,6 @@ typedef struct PLtsql_protocol_plugin
 	void* (*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
 
 	void* (*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
-
-	char* (*get_cur_db_name) ();
-
-	char* (*get_physical_schema_name) (char *db_name, const char *schema_name);
 	
 } PLtsql_protocol_plugin;
 

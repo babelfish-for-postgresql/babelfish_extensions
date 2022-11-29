@@ -130,12 +130,10 @@ BABEL-3249
 BABEL-3486
 BABEL-3474
 BABEL-3614
-BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
 BABEL-3407
-forjson
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -337,5 +335,3 @@ sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
-sys_server_principals_dep
-sys_database_principals_dep

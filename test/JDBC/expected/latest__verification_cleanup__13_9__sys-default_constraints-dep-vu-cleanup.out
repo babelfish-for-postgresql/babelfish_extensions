@@ -1,5 +1,0 @@
-DROP PROCEDURE IF EXISTS sys_default_constraints_dep_vu_prepare_p1
-DROP FUNCTION IF EXISTS sys_default_constraints_dep_vu_prepare_f1
-DROP VIEW IF EXISTS sys_default_constraints_dep_vu_prepare_v1
-DROP TABLE IF EXISTS sys_default_constraints_dep_vu_prepare_t1
-GO

@@ -129,7 +129,7 @@ runs:
       run: |
         cd ~
         sudo apt-get install odbc-postgresql
-        pip3 install pyodbc==4.0.35 pymssql
+        pip3 install pyodbc pymssql
       shell: bash
 
     - name: Run dependency check
@@ -143,7 +143,6 @@ runs:
         fileGenerator_databaseName=jdbc_testdb \
         fileGenerator_user=jdbc_user \
         fileGenerator_password=12345678 \
-        LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/odbc/ \
         python3 upgrade_validation.py
       shell: bash
 

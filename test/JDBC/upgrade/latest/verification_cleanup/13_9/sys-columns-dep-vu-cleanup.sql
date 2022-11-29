@@ -1,5 +1,0 @@
-drop function if exists sys_columns_dep_vu_prepare_f1
-drop procedure if exists sys_columns_dep_vu_prepare_p1
-drop view if exists sys_columns_dep_vu_prepare_v1
-drop table if exists sys_columns_dep_vu_prepare_t1
-go

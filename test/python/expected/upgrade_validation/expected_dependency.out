@@ -952,6 +952,7 @@ Type sys."bigint"
 Type sys."float"
 Type sys."int"
 Type sys."real"
+Type sys.bbf_binary
 Type sys.bbf_varbinary
 Type sys.cursor
 View information_schema_tsql.check_constraints
@@ -972,6 +973,7 @@ View sys.change_tracking_tables
 View sys.data_spaces
 View sys.database_files
 View sys.database_filestream_options
+View sys.database_principals
 View sys.database_recovery_status
 View sys.database_role_members
 View sys.dm_hadr_cluster
@@ -987,6 +989,7 @@ View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
 View sys.selective_xml_index_paths
+View sys.server_principals
 View sys.shipped_objects_not_in_sys
 View sys.sp_column_privileges_view
 View sys.sp_columns_100_view

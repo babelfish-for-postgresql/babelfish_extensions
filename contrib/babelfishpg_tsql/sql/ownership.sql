@@ -244,7 +244,7 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '')
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
 
 -- SERVER_PRINCIPALS
-CREATE OR REPLACE VIEW sys.server_principals
+CREATE VIEW sys.server_principals
 AS SELECT
 CAST(Base.rolname AS sys.SYSNAME) AS name,
 CAST(Base.oid As INT) AS principal_id,
@@ -261,7 +261,7 @@ CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
-FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
@@ -290,9 +290,9 @@ CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
 -- DATABASE_PRINCIPALS
-CREATE OR REPLACE VIEW sys.database_principals AS SELECT
+CREATE VIEW sys.database_principals AS SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
-CAST(Base.oid AS INT) AS principal_id,
+CAST(Base.OID AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
 WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
@@ -308,7 +308,7 @@ CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_de
 CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
 CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
-FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
@@ -317,13 +317,13 @@ WHERE Ext.database_name = DB_NAME();
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 
 -- DATABASE_ROLE_MEMBERS
-CREATE OR REPLACE VIEW sys.database_role_members AS
+CREATE VIEW sys.database_role_members AS
 SELECT
 CAST(Auth1.oid AS INT) AS role_principal_id,
 CAST(Auth2.oid AS INT) AS member_principal_id
 FROM pg_catalog.pg_auth_members AS Authmbr
-INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
-INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN pg_catalog.pg_authid AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_authid AS Auth2 ON Auth2.oid = Authmbr.member
 INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
 INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
 WHERE Ext1.database_name = DB_NAME() 

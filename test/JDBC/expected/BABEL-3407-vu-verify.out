@@ -151,7 +151,7 @@ SELECT * FROM babel_3407_view13
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table)~~
+~~ERROR (Message: Column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table)~~
 
 
 -- All null values test

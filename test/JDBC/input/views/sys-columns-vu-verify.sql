@@ -1,4 +1,4 @@
--- sla 20000
+-- sla 10000
 -- Tests for sys.columns catalog view
 -- Test precision and scale for all numeric datatypes
 select name, column_id, precision, scale from sys.columns where object_id=OBJECT_ID('t1_sys_syscolumns') order by name;

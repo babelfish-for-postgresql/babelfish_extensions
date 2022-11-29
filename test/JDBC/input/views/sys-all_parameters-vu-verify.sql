@@ -1,4 +1,4 @@
--- sla 300000
+-- sla 80000
 SELECT 
 name,
 parameter_id,

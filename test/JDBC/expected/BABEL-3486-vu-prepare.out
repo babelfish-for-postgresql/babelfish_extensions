@@ -1147,7 +1147,6 @@ RETURN (SELECT TRY_CONVERT(sql_variant, CAST(1 as MONEY)));
 END
 GO
 
--- This test case returns 2017-08-25 13:01:59.0 where SQL Server JDBC returns 2017-08-25 13:01:59
 CREATE VIEW BABEL_3486_vu_prepare_v110 as (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59' AS datetime)));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p110 as (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59' AS datetime)));
@@ -1159,8 +1158,6 @@ RETURN (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59' AS datetime))
 END
 GO
 
--- Results in error due to outdated JDBC version
--- Change when BABEL-2871 is resolved
 CREATE VIEW BABEL_3486_vu_prepare_v111 as (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59 +12:15' AS datetimeoffset)));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p111 as (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59 +12:15' AS datetimeoffset)));
@@ -1172,8 +1169,18 @@ RETURN (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59 +12:15' AS dat
 END
 GO
 
-
 -- Convert sql_variant invalid
+CREATE VIEW BABEL_3486_vu_prepare_v112 as (SELECT TRY_CONVERT(sql_variant, CAST(CAST(1111 as binary) AS image)));
+GO
+CREATE PROCEDURE BABEL_3486_vu_prepare_p112 as (SELECT TRY_CONVERT(sql_variant, CAST(CAST(1111 as binary) AS image)));
+GO
+CREATE FUNCTION BABEL_3486_vu_prepare_f112()
+RETURNS sql_variant AS
+BEGIN
+RETURN (SELECT TRY_CONVERT(sql_variant, CAST(CAST(1111 as binary) AS image)));
+END
+GO
+
 CREATE VIEW BABEL_3486_vu_prepare_v113 as (SELECT TRY_CONVERT(sql_variant, CAST('test' AS text)));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p113 as (SELECT TRY_CONVERT(sql_variant, CAST('test' AS text)));
@@ -1206,27 +1213,5 @@ CREATE FUNCTION BABEL_3486_vu_prepare_f116()
 RETURNS sql_variant AS
 BEGIN
 RETURN (SELECT TRY_CONVERT(uniqueidentifier, 'unique'));
-END
-GO
-
-CREATE VIEW BABEL_3486_vu_prepare_v117 as (SELECT TRY_CAST(TRY_CAST (TRY_CONVERT(XML, '1990-01-01') as text) as date));
-GO
-CREATE PROCEDURE BABEL_3486_vu_prepare_p117 as (SELECT TRY_CAST(TRY_CAST (TRY_CONVERT(XML, '1990-01-01') as text) as date));
-GO
-CREATE FUNCTION BABEL_3486_vu_prepare_f117()
-RETURNS DATE AS
-BEGIN
-RETURN (SELECT TRY_CAST(TRY_CAST (TRY_CONVERT(XML, '1990-01-01') as text) as date));
-END
-GO
-
-CREATE VIEW BABEL_3486_vu_prepare_v118 as (SELECT TRY_CAST(TRY_CONVERT(DATETIME, CAST('1990-01-01' AS DATE)) AS TIME));
-GO
-CREATE PROCEDURE BABEL_3486_vu_prepare_p118 as (SELECT TRY_CAST(TRY_CONVERT(DATETIME, CAST('1990-01-01' AS DATE)) AS TIME));
-GO
-CREATE FUNCTION BABEL_3486_vu_prepare_f118()
-RETURNS TIME AS
-BEGIN
-RETURN (SELECT TRY_CAST(TRY_CONVERT(DATETIME, CAST('1990-01-01' AS DATE)) AS TIME));
 END
 GO

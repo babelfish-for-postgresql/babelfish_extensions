@@ -13,9 +13,6 @@
 '13.8':
   engine_branch: BABEL_1_4_STABLE__PG_13_8
   extension_branch: BABEL_1_4_STABLE
-'13.9':
-  engine_branch: BABEL_1_5_STABLE__PG_13_9
-  extension_branch: BABEL_1_5_STABLE
 '14.3':
   engine_branch: BABEL_2_1_STABLE__PG_14_3
   extension_branch: BABEL_2_1_STABLE

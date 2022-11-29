@@ -14,7 +14,6 @@
 #include "src/backend_parser/gramparse.h"
 #include "src/pltsql_instr.h"
 #include "src/multidb.h"
-#include "src/forjson.h"
 
 #define MD5_HASH_LEN 32
 
