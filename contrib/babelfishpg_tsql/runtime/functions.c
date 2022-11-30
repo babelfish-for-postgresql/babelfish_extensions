@@ -76,6 +76,9 @@ PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
+PG_FUNCTION_INFO_V1(bigint_degrees);
+PG_FUNCTION_INFO_V1(int_degrees);
+PG_FUNCTION_INFO_V1(smallint_degrees);
 
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
@@ -1186,4 +1189,68 @@ babelfish_integrity_checker(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BOOL(true);
+}
+
+Datum
+bigint_degrees(PG_FUNCTION_ARGS)
+{
+	int64	arg1 = PG_GETARG_INT64(0);
+	float8	result;
+	 
+	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
+
+	if (result < 0)
+		result = ceil(result);
+	else
+		result = floor(result);
+
+	 /* Range check */
+	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type bigint")));
+
+	PG_RETURN_INT64((int64)result);
+}
+
+Datum
+int_degrees(PG_FUNCTION_ARGS)
+{
+	int32	arg1 = PG_GETARG_INT32(0);
+	float8	result;
+	 
+	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
+
+	if (result < 0)
+		result = ceil(result);
+	else
+		result = floor(result);
+
+	 /* Range check */
+	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type int")));
+
+	PG_RETURN_INT32((int32)result);
+}
+
+Datum
+smallint_degrees(PG_FUNCTION_ARGS)
+{
+	int16	arg1 = PG_GETARG_INT16(0);
+	float8	result;
+	 
+	
+
+	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
+
+	if (result < 0)
+		result = ceil(result);
+	else
+		result = floor(result);
+
+	/* skip range check, since it cannot overflow int32 */
+
+	PG_RETURN_INT32((int32) result);
 }
