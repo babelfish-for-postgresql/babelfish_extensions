@@ -707,27 +707,15 @@ init_collid_trans_tab_internal(void)
 		/* For the bbf_unicode_general_* collations, fill in the lcid and/or the code_page from the default_locale GUC */
 		if (0 == strncmp(coll_infos[i].collname, "bbf_unicode_general", strlen("bbf_unicode_general")))
 		{
-			const char *locale_tmp;
+			init_default_locale();
+			locale = pstrdup(default_locale);
 
-			if (babelfish_restored_default_locale)
-				locale_tmp = babelfish_restored_default_locale;
-			else
-			{
-				init_default_locale();
-				locale_tmp = default_locale;
-			}
-
-			locale = pstrdup(locale_tmp);
 			atsign = strstr(locale, "@");
 			if (atsign != NULL)
 				*atsign = '\0';
 			locale_pos = find_locale(locale);
 
-			if (locale_pos < 0 && babelfish_restored_default_locale)
-				ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-						errmsg("invalid setting detected for babelfishpg_tsql.restored_default_locale setting")));
-			else if (locale_pos < 0)
+			if (locale_pos < 0)
 				ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 						errmsg("invalid setting detected for babelfishpg_tsql.default_locale setting")));
