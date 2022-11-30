@@ -550,13 +550,14 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 	/*
 	 * Append attnos from WHERE clause into target_attnums
 	 */
+	ColumnRef *ref;
+	Value *field;
+	char *name;
+	int attrno;
+	
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr *where_clause = (A_Expr *)w_clause;
-		ColumnRef *ref;
-		Value *field;
-		char *name;
-		int attrno;
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
 			ereport(ERROR,
@@ -586,10 +587,6 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 		{
 			Expr *arg = (Expr *) lfirst(lc);
 			A_Expr *xpr;
-			ColumnRef *ref;
-			Value *field;
-			char *name;
-			int attrno;
 			switch(arg->type)
 			{
 				case T_A_Expr:
@@ -641,13 +638,13 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 	/*
 	 * Construct a ResTarget and append it to the list.
 	 */
+	ColumnRef *ref;
+	Value *field;
+	char *name;
+	int attrno;
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr *where_clause = (A_Expr *)w_clause;
-		ColumnRef *ref;
-		Value *field;
-		char *name;
-		int attrno;
 		ResTarget *res;
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
@@ -684,10 +681,6 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 		{
 			Expr *arg = (Expr *) lfirst(lc);
 			A_Expr *xpr;
-			ColumnRef *ref;
-			Value *field;
-			char *name;
-			int attrno;
 			ResTarget *res;
 			switch(arg->type)
 			{
@@ -748,12 +741,12 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 	/*
 	 * Construct a ResTarget and append it to the list.
 	 */
+	ColumnRef *ref;
+	Value *field;
+	ResTarget *res;
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr *where_clause = (A_Expr *)w_clause;
-		ColumnRef *ref;
-		Value *field;
-		ResTarget *res;
 		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
 		{
 			ereport(ERROR,
@@ -779,9 +772,6 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 		{
 			Expr *arg = (Expr *) lfirst(lc);
 			A_Expr *xpr;
-			ColumnRef *ref;
-			Value *field;
-			ResTarget *res;
 			switch(arg->type)
 			{
 				case T_A_Expr:

@@ -446,12 +446,14 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	
 	number_args = proc->pronargs;
-	if(isfunction) number_args++;
+	if (isfunction)
+		number_args++;
 	/* Return NULL for the definition if procedure language is not pltsql. */
 	if(strcmp(get_language_name(proc->prolang, false), "pltsql") != 0)
 		PG_RETURN_NULL();
 
 	probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
+	pfree(probin_c);
 	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr, &has_tvp);
 	/* TODO: In case of Table Valued Functions, return NULL. */
 	if (has_tvp)
@@ -525,7 +527,7 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
         number_args++;  
 
         probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
-
+		pfree(probin_c);
         if (typmod_arr[number_args-1] != -1)
                typmod_arr[number_args-1] += adjustTypmod(proc->prorettype, typmod_arr[number_args-1]);
         
