@@ -146,9 +146,9 @@ version(PG_FUNCTION_ARGS)
 
 		appendStringInfo(&temp,
 						 "Babelfish for PostgreSQL with SQL Server Compatibility - %s"
-						 "\n%s %s\nCopyright (c) Amazon Web Services\n%s",
+						 "\n%s %s\nCopyright (c) Amazon Web Services\n%s (Babelfish %s)",
 						 BABEL_COMPATIBILITY_VERSION,
-						 __DATE__, __TIME__, pg_version);
+						 __DATE__, __TIME__, pg_version, BABELFISH_VERSION_STR);
 	}
 	else
 		appendStringInfoString(&temp, pltsql_version);
