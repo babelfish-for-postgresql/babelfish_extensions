@@ -11,7 +11,6 @@ extern char *pltsql_server_collation_name;
 
 /* Dump and Restore */
 extern char *babelfish_restored_server_collation_name;
-extern char *babelfish_restored_default_locale;
 
 /* Set default encoding to UTF8 */
 #define COLL_DEFAULT_ENCODING PG_UTF8
