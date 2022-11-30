@@ -94,7 +94,21 @@ CREATE PROCEDURE babel_execute_as_caller_procedure3 (@v int) WITH EXECUTE AS CAL
 BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
 GO
 
+-- trigger
+CREATE TRIGGER babel_execute_as_caller_trigger1 ON babel_execute_as_caller_table WITH EXECUTE AS CALLER
+FOR INSERT AS BEGIN UPDATE babel_execute_as_caller_table SET c1 =10 END
+GO
+
+CREATE TRIGGER babel_execute_as_caller_trigger1 ON babel_execute_as_caller_table WITH EXECUTE AS OWNER
+FOR INSERT AS BEGIN UPDATE babel_execute_as_caller_table SET c1 =10 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "WITH")~~
+
+
 -- CLEANUP
+DROP TRIGGER babel_execute_as_caller_trigger1;
 DROP PROCEDURE babel_execute_as_caller_procedure3;
 DROP PROCEDURE babel_execute_as_caller_procedure2;
 DROP PROCEDURE babel_execute_as_caller_procedure1;
