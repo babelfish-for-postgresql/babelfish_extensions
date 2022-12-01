@@ -1141,7 +1141,7 @@ BEGIN
 		result = date_part(datepart, arg)::INTEGER;
 	END CASE;
 	RETURN result;
-EXCEPTION WHEN invalid_parameter_value THEN
+EXCEPTION WHEN invalid_parameter_value or feature_not_supported THEN
     -- date_part() throws an exception when trying to get day/month/year etc. from
 	-- TIME, so we just need to catch the exception in this case
 	-- date_part() returns 0 when trying to get hour/minute/second etc. from
