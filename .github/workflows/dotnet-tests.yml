@@ -15,7 +15,7 @@ jobs:
 
       - name: Install Dotnet
         id: install-dotnet
-        if: always() && steps.install-extensions.outcome == 'success'
+        if: always() && steps.install-dependencies.outcome == 'success'
         run: | 
           cd ~
           wget https://packages.microsoft.com/config/ubuntu/21.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
@@ -28,7 +28,7 @@ jobs:
 
       - name: Build Modified Postgres
         id: build-modified-postgres
-        if: always() && steps.install-dependencies.outcome == 'success'
+        if: always() && steps.install-dotnet.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
       
       - name: Compile ANTLR
@@ -47,7 +47,7 @@ jobs:
         uses: ./.github/composite-actions/install-extensions
       
       - name: Run Dotnet Tests
-        if: always() && steps.install-dotnet.outcome == 'success'
+        if: always() && steps.install-extensions.outcome == 'success'
         run: |
           cd test/dotnet
           dotnet build
