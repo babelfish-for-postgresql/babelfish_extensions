@@ -1,5 +1,5 @@
 name: JDBC Tests
-on: [push, pull_request]
+on:
 
 jobs:
   run-babelfish-jdbc-tests:

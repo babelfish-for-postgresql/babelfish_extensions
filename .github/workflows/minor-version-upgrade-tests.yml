@@ -1,5 +1,5 @@
 name: Minor Version Upgrade Tests
-on: [push, pull_request]
+on:
 
 jobs:
   extension-tests:
