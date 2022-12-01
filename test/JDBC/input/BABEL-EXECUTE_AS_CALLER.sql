@@ -1,5 +1,5 @@
 -- EXECUTE AS CALLER
--- For created functions/procedure/trigger the EXECUTE AS CALLER should be work without raising an error
+-- Create function/procedure/trigger with `EXECUTE AS CALLER` clause should not raise an error.
 -- The other variations of WITH EXECUTE AS should continue to raise an error
 CREATE TABLE babel_execute_as_caller_table(c1 int)
 GO
