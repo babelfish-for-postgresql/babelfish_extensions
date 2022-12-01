@@ -210,8 +210,8 @@ static int MakePreLoginResponse(Port *, bool);
 static void ValidateLoginRequest(LoginRequest request);
 static int FetchLoginRequest(LoginRequest request);
 static int ProcessLoginInternal(Port *port);
-static int CheckAuthPassword(Port *port, char **logdetail);
-static void SendLoginError(Port *port, char *logdetail);
+static int CheckAuthPassword(Port *port, const char **logdetail);
+static void SendLoginError(Port *port, const char *logdetail);
 static void GetLoginFlagsInstrumentation(LoginRequest loginInfo);
 static void GetTDSVersionInstrumentation(uint32_t version);
 
@@ -416,7 +416,7 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 			 * or else TDS_ENCRYPT_OFF
 			 * No SSL support - when disabled or on Unix sockets
 			 */
-			if (loadSsl && !IS_AF_UNIX(port->laddr.addr.ss_family))
+			if (loadSsl && port->laddr.addr.ss_family != AF_UNIX)
 			{
 				if ((reqVal->data[0] == TDS_ENCRYPT_ON)	||
 					(reqVal->data[0] == TDS_ENCRYPT_REQ))
@@ -1007,7 +1007,7 @@ static void ProcessLoginFlags(LoginRequest loginInfo)
 		set_config_option("babelfishpg_tsql.ansi_defaults",
 								"ON",
 								PGC_USERSET,
-								PGC_S_CLIENT,
+								PGC_S_OVERRIDE,
 								GUC_ACTION_SET,
 								true,
 								0,
@@ -1016,7 +1016,7 @@ static void ProcessLoginFlags(LoginRequest loginInfo)
 		set_config_option("babelfishpg_tsql.implicit_transactions",
 								"OFF",
 								PGC_USERSET,
-								PGC_S_CLIENT,
+								PGC_S_OVERRIDE,
 								GUC_ACTION_SET,
 								true,
 								0,
@@ -1024,7 +1024,7 @@ static void ProcessLoginFlags(LoginRequest loginInfo)
 		set_config_option("babelfishpg_tsql.cursor_close_on_commit",
 								"OFF",
 								PGC_USERSET,
-								PGC_S_CLIENT,
+								PGC_S_OVERRIDE,
 								GUC_ACTION_SET,
 								true,
 								0,
@@ -1032,7 +1032,7 @@ static void ProcessLoginFlags(LoginRequest loginInfo)
 		set_config_option("babelfishpg_tsql.textsize",
 								textSize,
 								PGC_USERSET,
-								PGC_S_CLIENT,
+								PGC_S_OVERRIDE,
 								GUC_ACTION_SET,
 								true,
 								0,
@@ -1040,7 +1040,7 @@ static void ProcessLoginFlags(LoginRequest loginInfo)
 		set_config_option("babelfishpg_tsql.rowcount",
 								rowCount,
 								PGC_USERSET,
-								PGC_S_CLIENT,
+								PGC_S_OVERRIDE,
 								GUC_ACTION_SET,
 								true,
 								0,
@@ -1182,6 +1182,18 @@ ProcessLoginInternal(Port *port)
 					 errcode(ERRCODE_CANNOT_CONNECT_NOW),
 					 errmsg("the database system is starting up"));
 			break;
+		case CAC_NOTCONSISTENT:
+			if (EnableHotStandby)
+				ereport(FATAL,
+						(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+						 errmsg("the database system is not yet accepting connections"),
+						 errdetail("Consistent recovery state has not been yet reached.")));
+			else
+				ereport(FATAL,
+						(errcode(ERRCODE_CANNOT_CONNECT_NOW),
+						 errmsg("the database system is not accepting connections"),
+						 errdetail("Hot standby mode is disabled.")));
+			break;
 		case CAC_SHUTDOWN:
 			ereport(FATAL,
 					 errcode(ERRCODE_CANNOT_CONNECT_NOW),
@@ -1196,9 +1208,6 @@ ProcessLoginInternal(Port *port)
 			ereport(FATAL,
 					 errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("sorry, too many clients already"));
-			break;
-		case CAC_SUPERUSER:
-			/* OK for now, will check in InitPostgres */
 			break;
 		case CAC_OK:
 			break;
@@ -1219,11 +1228,11 @@ ProcessLoginInternal(Port *port)
  * Plaintext password authentication.
  */
 static int
-CheckAuthPassword(Port *port, char **logdetail)
+CheckAuthPassword(Port *port, const char **logdetail)
 {
 	char	   *passwd;
 	int			result;
-	char	   *shadowPass;
+	const char *shadowPass;
 
 	passwd = loginInfo->password;
 
@@ -1507,7 +1516,7 @@ CheckGSSAuth(Port *port)
 #endif							/* ENABLE_GSS */
 
 static void
-SendLoginError(Port *port, char *logdetail)
+SendLoginError(Port *port, const char *logdetail)
 {
 	LoginRequest request = loginInfo;
 
@@ -1536,7 +1545,7 @@ void
 TdsClientAuthentication(Port *port)
 {
 	int			status = STATUS_ERROR;
-	char	   *logdetail = NULL;
+	const char	*logdetail = NULL;
 #ifdef ENABLE_GSS
 	StringInfoData ps_data;
 #endif
@@ -1924,7 +1933,6 @@ void
 TdsSendLoginAck(Port *port)
 {
 	uint16_t	temp16;
-	char		mbuf[1024];
 	char	   *dbname = NULL;
 	int			prognameLen = pg_mbstrlen(default_server_name);
 	LoginRequest request;
@@ -1934,6 +1942,7 @@ TdsSendLoginAck(Port *port)
 	char collationBytesNew[5];
 	char *useDbCommand = NULL;
 	char	*user = NULL;
+	Oid roleid = InvalidOid;
 	MemoryContext  oldContext;
 	uint32_t tdsVersion = pg_hton32(loginInfo->tdsVersion);
 
@@ -2025,7 +2034,6 @@ TdsSendLoginAck(Port *port)
 		if (port->user_name != NULL && port->user_name[0] != '\0')
 		{
 			bool login_exist;
-			Oid roleid;
 
 			StartTransactionCommand();
 			roleid = get_role_oid(port->user_name, false);
@@ -2119,10 +2127,11 @@ TdsSendLoginAck(Port *port)
 			 * which does catalog access, hence we require to be inside a transaction command.
 			 */
 			StartTransactionCommand();
-			ret = set_config_option("babelfishpg_tsql.language",
+			ret = set_config_option_ext("babelfishpg_tsql.language",
 									request->language,
 									PGC_USERSET,
 									PGC_S_CLIENT,
+									roleid,
 									GUC_ACTION_SET,
 									true /* changeVal */,
 									0 /* elevel */,
@@ -2148,10 +2157,11 @@ TdsSendLoginAck(Port *port)
 			 * which does catalog access, hence we require to be inside a transaction command.
 			 */
 			StartTransactionCommand();
-			ret = set_config_option("application_name",
+			ret = set_config_option_ext("application_name",
 									tmpAppName,
 									PGC_USERSET,
 									PGC_S_CLIENT,
+									roleid,
 									GUC_ACTION_SET,
 									true /* changeVal */,
 									0 /* elevel */,

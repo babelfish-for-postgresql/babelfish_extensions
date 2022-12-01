@@ -15,6 +15,7 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
+#include "catalog.h"
 #include "datatypes.h"
 
 PG_FUNCTION_INFO_V1(databasepropertyex);
@@ -27,7 +28,7 @@ Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	int64_t intVal = 0;
 	const char *dbname = text_to_cstring(PG_GETARG_TEXT_P(0));
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(1));
-	Oid		dboid = get_db_id(dbname, true);
+	Oid		dboid = get_db_id(dbname);
 	if(dboid == InvalidOid)
 	{
 		PG_RETURN_NULL();

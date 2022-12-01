@@ -29,23 +29,23 @@ tsql_CreateLoginStmt:
 					n->stmt_type = ROLESTMT_USER;
 					n->role = $3;
 					n->options = list_make1(makeDefElem("islogin",
-											(Node *)makeInteger(true),
+											(Node *)makeBoolean(true),
 											@1)); /* Must be first */
 					n->options = lappend(n->options,
 										 makeDefElem("createdb",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("createrole",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("inherit",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("canlogin",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					$$ = (Node *)n;
 				}
@@ -55,23 +55,23 @@ tsql_CreateLoginStmt:
 					n->stmt_type = ROLESTMT_USER;
 					n->role = $3;
 					n->options = list_make1(makeDefElem("islogin",
-											(Node *)makeInteger(true),
+											(Node *)makeBoolean(true),
 											@1)); /* Must be first */
 					n->options = lappend(n->options,
 										 makeDefElem("createdb",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("createrole",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("inherit",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("canlogin",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = list_concat(n->options, $4);
 					$$ = (Node *)n;
@@ -192,15 +192,15 @@ tsql_CreateRoleStmt:
 					else
 					{
 						n->options = list_make1(makeDefElem("isrole",
-												(Node *)makeInteger(true),
+												(Node *)makeBoolean(true),
 												@1)); /* Must be first */
 						n->options = lappend(n->options,
 											 makeDefElem("inherit",
-														 (Node *)makeInteger(true),
+														 (Node *)makeBoolean(true),
 														 @1));
 						n->options = lappend(n->options,
 											 makeDefElem("canlogin",
-														 (Node *)makeInteger(false),
+														 (Node *)makeBoolean(false),
 														 @1));
 						/* 
 						 * Prepare an empty rolemember option for ROLE 
@@ -228,15 +228,15 @@ tsql_CreateUserStmt:
 					n->stmt_type = ROLESTMT_USER;
 					n->role = $3;
 					n->options = list_make1(makeDefElem("isuser",
-											(Node *)makeInteger(true),
+											(Node *)makeBoolean(true),
 											@1)); /* Must be first */
 					n->options = lappend(n->options,
 										 makeDefElem("inherit",
-													 (Node *)makeInteger(true),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("canlogin",
-													 (Node *)makeInteger(false),
+													 (Node *)makeBoolean(false),
 													 @1));
 					login = makeRoleSpec(ROLESPEC_CSTRING, @1);
 					if ($4 != NULL)
@@ -325,7 +325,7 @@ AlterRoleStmt:
 					n->role = $3;
 					n->action = +1; /* add, if there are members */
 					n->options = list_make1(makeDefElem("isrole",
-											(Node *)makeInteger(true),
+											(Node *)makeBoolean(true),
 											@1)); /* Must be first */
 					n->options = lappend(n->options, 
 										 makeDefElem("rename",
@@ -342,7 +342,7 @@ tsql_AlterUserStmt:
 					n->role = $3;
 					n->action = +1;	/* add, if there are members */
 					n->options = list_make1(makeDefElem("isuser",
-											(Node *)makeInteger(true),
+											(Node *)makeBoolean(true),
 											@1)); /* Must be first */
 					n->options = lappend(n->options, $5);
 					$$ = (Node *) n;
@@ -376,17 +376,17 @@ tsql_AlterLoginStmt:
 					n->role = $3;
 					n->action = +1;	/* add, if there are members */
 					n->options = list_make1(makeDefElem("islogin",
-											(Node *)makeInteger(true),
+											(Node *)makeBoolean(true),
 											@1)); /* Must be first */
 					if ($4)
 						n->options = lappend(n->options,
 											 makeDefElem("canlogin",
-														 (Node *)makeInteger(true),
+														 (Node *)makeBoolean(true),
 														 @1));
 					else
 						n->options = lappend(n->options,
 											 makeDefElem("canlogin",
-														 (Node *)makeInteger(false),
+														 (Node *)makeBoolean(false),
 														 @1));
 					$$ = (Node *)n;
 				}
@@ -396,7 +396,7 @@ tsql_AlterLoginStmt:
 					n->role = $3;
 					n->action = +1;	/* add, if there are members */
 					n->options = list_make1(makeDefElem("islogin",
-											(Node *)makeInteger(true),
+											(Node *)makeBoolean(true),
 											@1)); /* Must be first */
 					if ($5 != NIL)
 						n->options = list_concat(n->options, $5);
@@ -408,7 +408,7 @@ tsql_AlterLoginStmt:
 					n->role = $3;
 					n->action = +1;	/* add, if there are members */
 					n->options = list_make1(makeDefElem("islogin",
-											(Node *)makeInteger(true),
+											(Node *)makeBoolean(true),
 											@1)); /* Must be first */
 					$$ = (Node *)n;
 				}
@@ -751,6 +751,7 @@ ConstraintElem:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
+					n->nulls_not_distinct = true;
 					n->keys = $4;
 					n->including = $6;
 					n->options = $7;
@@ -767,6 +768,7 @@ ConstraintElem:
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
+					n->nulls_not_distinct = true;
 					n->keys = $4;
 					n->including = $6;
 					n->options = $7;
@@ -777,34 +779,36 @@ ConstraintElem:
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| UNIQUE '(' columnListWithOptAscDesc ')' opt_c_include opt_definition OptConsTableSpace
+			| UNIQUE opt_unique_null_treatment '(' columnListWithOptAscDesc ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_opt_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
-					n->keys = $3;
-					n->including = $5;
-					n->options = $6;
+					n->nulls_not_distinct = true;
+					n->keys = $4;
+					n->including = $6;
+					n->options = $7;
 					n->indexname = NULL;
-					n->indexspace = $7;
-					processCASbits($8, @8, "UNIQUE",
+					n->indexspace = $8;
+					processCASbits($9, @9, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
 				}
-			| UNIQUE '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
+			| UNIQUE opt_unique_null_treatment '(' columnList ')' opt_c_include opt_definition OptConsTableSpace
 				ConstraintAttributeSpec tsql_on_filegroup
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
-					n->keys = $3;
-					n->including = $5;
-					n->options = $6;
+					n->nulls_not_distinct = true;
+					n->keys = $4;
+					n->including = $6;
+					n->options = $7;
 					n->indexname = NULL;
-					n->indexspace = $7;
-					processCASbits($8, @8, "UNIQUE",
+					n->indexspace = $8;
+					processCASbits($9, @9, "UNIQUE",
 								   &n->deferrable, &n->initdeferred, NULL,
 								   NULL, yyscanner);
 					$$ = (Node *)n;
@@ -2736,7 +2740,7 @@ tsql_CreateTrigStmt:
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($10)), @10);
 					DefElem *trigStmt = makeDefElem("trigStmt", (Node *) n1, @1);
 
- 					n1->trigname = ((Value *)list_nth($3,0))->val.str;
+ 					n1->trigname = ((String *)list_nth($3,0))->sval;
 					n1->relation = $5;
 					/*
 					 * Function with the same name as the
@@ -2745,13 +2749,13 @@ tsql_CreateTrigStmt:
 					 */
 					n1->funcname = list_make1(makeString(n1->trigname));
  					if (list_length($3) > 1){
-	 					n1->trigname = ((Value *)list_nth($3,1))->val.str;
+	 					n1->trigname = ((String *)list_nth($3,1))->sval;
 						/*
 						* Used a hack way to pass the schema name from args, in CR-58614287
 						* Args will be set back to NIL in pl_handler pltsql_pre_parse_analyze()
 						* before calling backend functios
 						*/
-	 					n1->args = list_make1(makeString(((Value *)list_nth($3,0))->val.str));
+	 					n1->args = list_make1(makeString(((String *)list_nth($3,0))->sval));
 	 				}else{
 						n1->args = NIL;
 					}
@@ -3084,11 +3088,11 @@ tsql_top_clause:
 					if (IsA($3, A_Const))
 					{
 						A_Const* n = (A_Const *)$3;
-						if(n->val.type == T_Integer && n->val.val.ival == 100)
+						if(IsA(&n->val, Integer) && n->val.ival.ival == 100)
 						{
 								$$ = NULL;
 						}
-						else if(n->val.type == T_Float && atof(n->val.val.str) == 100.0)
+						else if(IsA(&n->val, Float) && atof(n->val.fval.fval) == 100.0)
 						{
 								$$ = NULL;
 						}
@@ -3113,11 +3117,11 @@ tsql_top_clause:
 			| TSQL_TOP I_or_F_const TSQL_PERCENT
 				{
 					A_Const* n = (A_Const *)$2;
-					if(n->val.type == T_Integer && n->val.val.ival == 100)
+					if(IsA(&n->val, Integer) && n->val.ival.ival == 100)
 					{
 							$$ = NULL;
 					}
-					else if(n->val.type == T_Float && atof(n->val.val.str) == 100.0)
+					else if(IsA(&n->val, Float) && atof(n->val.fval.fval) == 100.0)
 					{
 							$$ = NULL;
 					}
@@ -3629,21 +3633,21 @@ tsql_createfunc_opt_list:
 tsql_func_opt_item:
 			CALLED ON NULL_P INPUT_P
 				{
-					$$ = makeDefElem("strict", (Node *)makeInteger(false), @1);
+					$$ = makeDefElem("strict", (Node *)makeBoolean(false), @1);
 				}
 			| RETURNS NULL_P ON NULL_P INPUT_P
 				{
-					$$ = makeDefElem("strict", (Node *)makeInteger(true), @1);
+					$$ = makeDefElem("strict", (Node *)makeBoolean(true), @1);
 				}
 			| EXECUTE AS OWNER
 				{
 					/* Equivalent to SECURITY DEFINR */
-					$$ = makeDefElem("security", (Node *)makeInteger(true), @1);
+					$$ = makeDefElem("security", (Node *)makeBoolean(true), @1);
 				}
 			| EXECUTE AS TSQL_CALLER
 				{
 					/* Equivalent to SECURITY INVOKER */
-					$$ = makeDefElem("security", (Node *)makeInteger(false), @1);
+					$$ = makeDefElem("security", (Node *)makeBoolean(false), @1);
 				}
             | TSQL_SCHEMABINDING
 				{
@@ -3662,7 +3666,7 @@ tsql_func_opt_item:
 					 * tries to drop (or alter) an object referenced by a schema-bound
 					 * procedure/function/view, the possibility seems remote
 					 */
-					$$ = makeDefElem("schemabinding", (Node *)makeInteger(false), @1);
+					$$ = makeDefElem("schemabinding", (Node *)makeBoolean(false), @1);
 				}
 		;
 

@@ -49,8 +49,9 @@ BABEL-3221
 BABEL-3204
 BABEL-3234
 BABEL-3402
-cast_numeric_types_to_datetime
-cast_numeric_types_to_smalldatetime
+# Disabled until BABEL-3720 gets fixed
+# cast_numeric_types_to_datetime
+# cast_numeric_types_to_smalldatetime
 routines_definition
 column_domain_usage
 constraint_column_usage
@@ -66,7 +67,8 @@ sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
-objectproperty
+# Takes too long, tracking with BABEL-3675
+# objectproperty
 objectpropertyex
 sys-column-property
 sys-configurations
@@ -127,7 +129,8 @@ BABEL-3116
 BABEL-3117
 BABEL-3118
 BABEL-3249
-BABEL-3486
+# Disabled until BABEL-3720 gets fixed
+# BABEL-3486
 BABEL-3474
 BABEL-3614
 BABEL-3646
@@ -325,7 +328,8 @@ sys-all_parameters-dep
 BABEL-3556
 BABEL-3588
 BABEL-3268
-BABEL-3513
+# TO-DO: Uncomment following test when pg_hint_plan extension gets supported in PG15
+# BABEL-3513
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795

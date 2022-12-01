@@ -2,6 +2,7 @@
 #include "commands/explain.h"
 #include "parser/scansup.h"  /* downcase_identifier */
 #include "utils/guc.h"
+#include "miscadmin.h"
 
 #include "guc.h"
 #include "collation.h"

@@ -1,4 +1,4 @@
--- sla 50000
+-- sla 55000
 USE sys_system_sql_modules_dep_vu_prepare_db1
 GO
 

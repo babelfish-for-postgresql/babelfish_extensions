@@ -1,5 +1,6 @@
 name: Minor Version Upgrade Tests for empty database
-on: [push, pull_request]
+# No minor version upgrade path exists in v15 so temporarily disabling the workflow
+on:
 
 jobs:
   extension-tests:

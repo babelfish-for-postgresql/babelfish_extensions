@@ -58,8 +58,7 @@ static void pe_close(pgsocket server_fd);
 static void pe_tds_init(void);
 static int  pe_start(Port *port);
 static void pe_authenticate(Port *port, const char **username);
-static void pe_mainfunc(Port *port,
-						   int argc, char *argv[]) pg_attribute_noreturn();
+static void pe_mainfunc(Port *port) pg_attribute_noreturn();
 static void pe_send_message(ErrorData *edata);
 static void pe_send_ready_for_query(CommandDest dest);
 static int  pe_read_command(StringInfo inBuf);
@@ -349,7 +348,7 @@ pe_authenticate(Port *port, const char **username)
 }
 
 static void
-pe_mainfunc(Port *port, int argc, char *argv[])
+pe_mainfunc(Port *port)
 {
 	/*
 	 * This protocol doesn't need anything other than the default
@@ -357,7 +356,7 @@ pe_mainfunc(Port *port, int argc, char *argv[])
 	 * connect to the database and in turn will call our
 	 * pe_authenticate() function.
 	 */
-	PostgresMain(argc, argv, port->database_name,
+	PostgresMain(port->database_name,
 				 port->user_name);
 }
 

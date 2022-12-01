@@ -58,7 +58,18 @@ def get_dependencies(expfile, sumfile, logger):
 
         # get current engine version
         cursor.execute("show server_version;")
-        version = float(cursor.fetchall()[0][0])
+        version_str = cursor.fetchall()[0][0]
+        version = 0
+
+        # Sometimes version_str might contain characters so we will only parse first few numeric integers
+        if '.' in version_str:
+            version = float(version_str)
+        else:
+            for c in version_str:
+                if c.isdigit():
+                    version = version * 10 + int(c)
+                else:
+                    break
 
         # adding filter for information_schema_tsql based on engine version
         if version > 13.5:

@@ -884,6 +884,8 @@ checksum(PG_FUNCTION_ARGS)
        StringInfoData buf;
        char md5[MD5_HASH_LEN + 1];
        char *name;
+       const char *errstr = NULL;
+       bool success;
 
        initStringInfo(&buf);
        if (nargs > 0)
@@ -909,12 +911,17 @@ checksum(PG_FUNCTION_ARGS)
          * We are taking the first 8 characters of the md5 hash
          * and converting it to int32.
          */
-        bool success = pg_md5_hash(buf.data, buf.len, md5);
+        success = pg_md5_hash(buf.data, buf.len, md5, &errstr);
         if (success)
         {
                 md5[8] = '\0';
                 result = (int)strtol(md5, NULL, 16);
         }
+        else
+                ereport(ERROR,
+                        (errcode(ERRCODE_INTERNAL_ERROR),
+                         errmsg("could not compute %s hash: %s", "MD5", errstr)));
+
         pfree(buf.data);
 
         PG_RETURN_INT32(result);
@@ -923,18 +930,19 @@ checksum(PG_FUNCTION_ARGS)
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
 {
-	char *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char	   *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
 	/* Ensure the database name input argument is lower-case, as all Babel table names are lower-case */
-	char *lowercase_db_name = lowerstr(db_name);
+	char	   *lowercase_db_name = lowerstr(db_name);
 	/* Also strip trailing whitespace to mimic SQL Server behaviour */
-	int i;
-	i = strlen(lowercase_db_name);
-	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
-		lowercase_db_name[--i] = '\0';
+	int		    i = strlen(lowercase_db_name);
 	const char *user = NULL;
 	const char *login;
+	int16		db_id;
 
-	int16		db_id = get_db_id(lowercase_db_name);
+	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
+		lowercase_db_name[--i] = '\0';
+
+	db_id = get_db_id(lowercase_db_name);
 
 	if (!DbidIsValid(db_id))
 		PG_RETURN_NULL();

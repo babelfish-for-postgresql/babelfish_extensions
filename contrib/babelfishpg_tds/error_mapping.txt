@@ -53,6 +53,7 @@ P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_9809 16 "is not supported for conve
 25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_3903	16 "ROLLBACK TO SAVEPOINT"
 25001 ERRCODE_ACTIVE_SQL_TRANSACTION	"%s cannot run inside a transaction block"	SQL_ERROR_574	16
 42809 ERRCODE_WRONG_OBJECT_TYPE "\"%s\" is not a table or materialized view" SQL_ERROR_10610 16
+42809 ERRCODE_WRONG_OBJECT_TYPE "cannot create index on relation \"%s\"" SQL_ERROR_10610 16
 42809 ERRCODE_WRONG_OBJECT_TYPE "%s parameter should be of %s type"     SQL_ERROR_16902 16
 22004 ERRCODE_NULL_VALUE_NOT_ALLOWED    "%s parameter should not be null"       SQL_ERROR_16902 16
 42601 ERRCODE_SYNTAX_ERROR	"argument name \"%s\" used more than once"	SQL_ERROR_8143	16
@@ -65,7 +66,7 @@ P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_9809 16 "is not supported for conve
 2201E ERRCODE_INVALID_ARGUMENT_FOR_LOG	"cannot take logarithm of a negative number" SQL_ERROR_3623 16
 2201F ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION	"cannot take square root of a negative number" SQL_ERROR_3623 16
 0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"cannot truncate a table referenced in a foreign key constraint"	SQL_ERROR_4712	16
-22023 ERRCODE_INVALID_PARAMETER_VALUE	"CACHE (%s) must be greater than zero" SQL_ERROR_11706	16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"CACHE (%lld) must be greater than zero" SQL_ERROR_11706	16
 23514 ERRCODE_CHECK_VIOLATION	"check constraint \"%s\" of relation \"%s\" is violated by some row"	SQL_ERROR_547	16
 2F005 ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT	"The transaction ended in the trigger. The batch has been aborted."	SQL_ERROR_3609 16
 23502 ERRCODE_NOT_NULL_VIOLATION	"column \"%s\" of relation \"%s\" contains null values"	SQL_ERROR_4901 16
@@ -117,9 +118,9 @@ XX000 ERRCODE_INTERNAL_ERROR	"CREATE FUNCTION failed because a column name is no
 22025 ERRCODE_INVALID_ESCAPE_SEQUENCE	"invalid escape string" SQL_ERROR_506 16
 0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"Label %s not unique wihtin one procedure in line %d, previous defined in line %d"	SQL_ERROR_132 15
 08004 ERRCODE_SQLSERVER_REJECTED_ESTABLISHMENT_OF_SQLCONNECTION "Login failed for user \"%s\"" SQL_ERROR_18456 14
-22023 ERRCODE_INVALID_PARAMETER_VALUE	"MAXVALUE (%s) is out of range for sequence data type tinyint" SQL_ERROR_11708 16
-22023 ERRCODE_INVALID_PARAMETER_VALUE	"MAXVALUE (%s) is out of range for sequence data type %s" SQL_ERROR_11708 16
-22023 ERRCODE_INVALID_PARAMETER_VALUE 	"MINVALUE (%s) must be less than MAXVALUE (%s)" SQL_ERROR_11705	16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"MAXVALUE (%lld) is out of range for sequence data type tinyint" SQL_ERROR_11708 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"MAXVALUE (%lld) is out of range for sequence data type %s" SQL_ERROR_11708 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE 	"MINVALUE (%lld) must be less than MAXVALUE (%lld)" SQL_ERROR_11705	16
 21000 ERRCODE_CARDINALITY_VIOLATION	"more than one row returned by a subquery used as an expression"	SQL_ERROR_512	16
 23514 ERRCODE_CHECK_VIOLATION	"new row for relation \"%s\" violates check constraint \"%s\""	SQL_ERROR_547	16
 XX000 ERRCODE_INTERNAL_ERROR	"no owned sequence found" SQL_ERROR_550	16
@@ -135,8 +136,8 @@ XX000 ERRCODE_INTERNAL_ERROR	"no owned sequence found" SQL_ERROR_550	16
 22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	"smallint out of range"	SQL_ERROR_220	16
 54001 ERRCODE_STATEMENT_TOO_COMPLEX	"stack depth limit exceeded"	SQL_ERROR_217	16
 0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"SP_PREPEXECRPC not supported yet"	SQL_ERROR_16901	16
-22023 ERRCODE_INVALID_PARAMETER_VALUE	"START value (%s) cannot be greater than MAXVALUE (%s)" SQL_ERROR_11703 16
-22023 ERRCODE_INVALID_PARAMETER_VALUE	"START value (%s) cannot be less than MINVALUE (%s)" SQL_ERROR_11703 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"START value (%lld) cannot be greater than MAXVALUE (%lld)" SQL_ERROR_11703 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"START value (%lld) cannot be less than MINVALUE (%lld)" SQL_ERROR_11703 16
 42703 ERRCODE_UNDEFINED_COLUMN	"Table '%s.%s' does not have the identity property. Cannot perform SET operation."	SQL_ERROR_8106 16
 08P01 ERRCODE_PROTOCOL_VIOLATION "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type). The specified column is computed or default and has ordering or uniqueness set. Ordering and uniqueness can only be set on columns that have client supplied data." SQL_ERROR_8057 16
 2202H ERRCODE_INVALID_TABLESAMPLE_ARGUMENT	"TABLESAMPLE parameter cannot be null"	SQL_ERROR_477	15

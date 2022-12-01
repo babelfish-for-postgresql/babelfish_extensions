@@ -1,3 +1,4 @@
+-- sla 60000
 -- Check for correct case
 SELECT CASE
     WHEN OBJECTPROPERTY(OBJECT_ID('objectpropertyex_ownerid_schema.objectpropertyex_ownerid_table'), 'OwnerId')  = (SELECT principal_id 
