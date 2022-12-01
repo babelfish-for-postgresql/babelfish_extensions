@@ -80,8 +80,8 @@ ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
 endif
 
-install: install-lib link-lib
-uninstall: uninstall-lib unlink-lib
+install: install-lib
+uninstall: uninstall-lib
 
 # Also add .so file to libdir so that other extensions can link to it.
 link-lib:

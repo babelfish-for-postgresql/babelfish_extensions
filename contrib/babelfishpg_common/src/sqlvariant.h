@@ -1,3 +1,10 @@
+#ifndef SQLVARIANT_H
+#define SQLVARIANT_H
+
+#include "postgres.h"
+
+#include "fmgr.h"
+
 /*
  * macros for supporting sqlvariant datatype on TDS side
  */
@@ -106,4 +113,21 @@ typedef struct __attribute__((packed)) svhdr_5B
     uint16_t collid;
 } svhdr_5B_t;
 
-extern bytea* gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data);
+extern bytea *gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data);
+extern bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
+extern bytea *convertIntToSQLVariantByteA(int ret);
+extern Datum datetime2sqlvariant(PG_FUNCTION_ARGS);
+extern Datum tinyint2sqlvariant(PG_FUNCTION_ARGS);
+extern void TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen,
+					int *dataLen, int *variantHeaderLen);
+extern void TdsSetMetaData(bytea *result, int pgBaseType, int scale,
+						int precision, int maxLen);
+extern int TdsPGbaseType(bytea *vlena);
+extern void TdsGetMetaData(bytea *result, int pgBaseType, int *scale,
+                                        int *precision, int *maxLen);
+extern void TdsGetVariantBaseType(int pgBaseType, int *variantBaseType,
+                                     bool *isBaseNum, bool *isBaseChar,
+                                     bool *isBaseDec, bool *isBaseBin,
+                                     bool *isBaseDate, int *variantHeaderLen);
+
+#endif

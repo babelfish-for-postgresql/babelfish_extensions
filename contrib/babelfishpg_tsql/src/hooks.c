@@ -67,7 +67,6 @@ extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
-extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 extern Node* pltsql_predicate_transformer(Node *expr);
 
 /*****************************************
@@ -238,7 +237,7 @@ InstallExtendedHooks(void)
 	logicalrep_modify_slot_hook = logicalrep_modify_slot;
 
 	prev_is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype_hook;
-	is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype;
+	is_tsql_rowversion_or_timestamp_datatype_hook = common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype;
 
 	prev_ExecutorStart = ExecutorStart_hook;
 	ExecutorStart_hook = pltsql_ExecutorStart;
@@ -1645,7 +1644,7 @@ logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot)
 		 * If it is rowversion/timestamp column, then re-evaluate the column default
 		 * and replace the slot with this new value.
 		 */
-		if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+		if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
 		{
 			Expr *defexpr;
 			ExprState *def;
