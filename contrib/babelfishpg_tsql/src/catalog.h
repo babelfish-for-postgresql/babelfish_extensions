@@ -80,7 +80,7 @@ extern int16 get_db_id(const char *dbname);
 extern char *get_db_name(int16 dbid);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
-extern bool guest_has_dbaccess(char *db_name);
+extern bool guest_has_dbaccess(const char *db_name);
 
 #define DEFAULT_DATABASE_COMPATIBILITY_LEVEL 80
 
@@ -139,7 +139,7 @@ extern char *get_authid_user_ext_schema_name(const char *db_name, const char *us
 extern List *get_authid_user_ext_db_users(const char *db_name);
 extern char *get_user_for_database(const char *db_name);
 extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
-extern bool guest_role_exists_for_db(char *dbname);
+extern bool guest_role_exists_for_db(const char *dbname);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext

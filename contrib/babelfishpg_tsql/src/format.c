@@ -13,6 +13,7 @@
 #include "utils/varlena.h"
 #include "regex/regex.h"
 
+#include "collation.h"
 #include "format.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
@@ -446,7 +447,7 @@ format_validate_and_culture(char *culture, const char *config_name)
 
 		pfree(culture_temp);
 
-		locale_pos = find_locale((const char *)temp_res);
+		locale_pos = tsql_find_locale((const char *)temp_res);
 
 		if (locale_pos >= 0 && set_culture(temp_res, config_name, culture) == 1)
 		{
@@ -659,7 +660,7 @@ format_datetimeformats(StringInfo buf, const char *format_pattern, const char *c
  * https://www.postgresql.org/docs/current/functions-formatting.html
  */
 static int
-process_format_pattern(StringInfo buf, char *msg_string, char *data_type)
+process_format_pattern(StringInfo buf, char *msg_string, const char *data_type)
 {
 	int i = 0;
 	int bc = 0;
@@ -1440,7 +1441,7 @@ replace_currency_format(char *currency_format_mask, StringInfo format_res)
 														 CStringGetTextDatum(fmt)));
 
 	resetStringInfo(format_res);
-	appendStringInfo(format_res, result);
+	appendStringInfo(format_res, "%s", result);
 }
 
 /*
@@ -1509,12 +1510,9 @@ regexp_replace(char *format_res, char *match_with, const char *replace_with, cha
 	text	   *s = cstring_to_text(format_res);
 	text	   *p = cstring_to_text(match_with);
 	text	   *r = cstring_to_text(replace_with);
-	regex_t    *re;
 	char 	   *result;
 
-	re = RE_compile_and_cache(p, REG_ADVANCED, C_COLLATION_OID);
-
-	result = text_to_cstring(replace_text_regexp(s, (void *) re, r, false));
+	result = text_to_cstring(replace_text_regexp(s, p, r, REG_ADVANCED, C_COLLATION_OID, 0, 1));
 
 	strncpy(format_res, result, strlen(result) + 1);
 }
@@ -1892,13 +1890,15 @@ static void
 format_exponential(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string)
 {
 
-	int len, temp;
-	int precision = get_precision(toupper(pattern), precision_string, "", 0, "");
+	int		len;
+	int		temp;
+	int		precision = get_precision(toupper(pattern), precision_string, "", 0, "");
+	char	*buf;
 
 	get_exponential_format(format_res, precision);
 	numeric_to_string(format_res, numeric_val);
 
-	char *buf = palloc(sizeof(char) * (format_res->len + 3));
+	buf = palloc(sizeof(char) * (format_res->len + 3));
 	memset(buf, 0, format_res->len + 3);
 	strncpy(buf, format_res->data, format_res->len);
 

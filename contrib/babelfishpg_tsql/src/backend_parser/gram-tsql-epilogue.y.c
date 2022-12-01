@@ -15,8 +15,8 @@ makeTSQLHexStringConst(char *str, int location)
 {
 	A_Const *n = makeNode(A_Const);
 
-	n->val.type = T_TSQL_HexString;
-	n->val.val.str = str;
+	n->val.sval.type = T_TSQL_HexString;
+	n->val.hsval.hsval = str;
 	n->location = location;
 
 	return (Node *)n;
@@ -50,6 +50,7 @@ construct_unique_index_name(char *index_name, char *relation_name) {
     int new_len;
     int index_len;
     int relation_len;
+    const char *errstr = NULL;
 
     if (index_name == NULL || relation_name == NULL) {
         return index_name;
@@ -57,15 +58,16 @@ construct_unique_index_name(char *index_name, char *relation_name) {
     index_len = strlen(index_name);
     relation_len = strlen(relation_name);
 
-    success = pg_md5_hash(index_name, index_len, md5);
+    success = pg_md5_hash(index_name, index_len, md5, &errstr);
     if (unlikely(!success)) { /* OOM */
         ereport(
                 ERROR,
                 (errcode(ERRCODE_INTERNAL_ERROR),
                         errmsg(
-                                "constructing unique index name failed: index = \"%s\", relation = \"%s\", ",
+                                "constructing unique index name failed: index = \"%s\", relation = \"%s\": %s",
                                 index_name,
-                                relation_name
+                                relation_name,
+                                errstr
                         )
                 )
         );
@@ -421,17 +423,17 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_
 			/* commonDirective is either integer const or string const */
 			Assert(IsA(myNode, A_Const));
 			myConst = (A_Const *)myNode;
-			Assert(myConst->val.type == T_Integer || myConst->val.type == T_String);
-			if (myConst->val.type == T_Integer)
+			Assert(IsA(&myConst->val, Integer) || IsA(&myConst->val, String));
+			if (IsA(&myConst->val, Integer))
 			{
-				if (myConst->val.val.ival == TSQL_XML_DIRECTIVE_BINARY_BASE64)
+				if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_BINARY_BASE64)
 					binary_base64 = true;
-				else if (myConst->val.val.ival == TSQL_XML_DIRECTIVE_TYPE)
+				else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_TYPE)
 					return_xml_type = true;
 			}
-			else if (myConst->val.type == T_String)
+			else if (IsA(&myConst->val, String))
 			{
-				root_name = myConst->val.val.str;
+				root_name = myConst->val.sval.sval;
 			}
 		}
 	}
@@ -785,7 +787,7 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 			}
 			if(IsA(jexpr->rarg, RangeVar))
 			{
-				tsql_update_delete_stmt_from_clause_alias_helper(relation,(jexpr->rarg));
+				tsql_update_delete_stmt_from_clause_alias_helper(relation,(RangeVar*)(jexpr->rarg));
 			}	
 		}
 	}
@@ -1416,17 +1418,17 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 			/* commonDirective is either integer const or string const */
 			Assert(IsA(myNode, A_Const));
 			myConst = (A_Const *)myNode;
-			Assert(myConst->val.type == T_Integer || myConst->val.type == T_String);
-			if (myConst->val.type == T_Integer)
+			Assert(IsA(&myConst->val, Integer) || IsA(&myConst->val, String));
+			if (IsA(&myConst->val, Integer))
 			{
-				if (myConst->val.val.ival == TSQL_JSON_DIRECTIVE_INCLUDE_NULL_VALUES)
+				if (myConst->val.ival.ival == TSQL_JSON_DIRECTIVE_INCLUDE_NULL_VALUES)
 					include_null_values = true;
-				if (myConst->val.val.ival == TSQL_JSON_DIRECTIVE_WITHOUT_ARRAY_WRAPPER)
+				if (myConst->val.ival.ival == TSQL_JSON_DIRECTIVE_WITHOUT_ARRAY_WRAPPER)
 					without_array_wrapper = true;
 			}
-			else if (myConst->val.type == T_String)
+			else if (IsA(&myConst->val, String))
 			{
-				root_name = myConst->val.val.str;
+				root_name = myConst->val.sval.sval;
 			}
 		}
 	}

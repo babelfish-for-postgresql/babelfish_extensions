@@ -1,4 +1,4 @@
--- sla 10000
+-- sla 50000
 SELECT * FROM sys_all_views_dep_view_vu_prepare
 GO
 

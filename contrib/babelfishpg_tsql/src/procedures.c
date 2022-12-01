@@ -28,6 +28,7 @@
 #include "utils/rel.h"
 #include "pltsql_instr.h"
 #include "parser/parser.h"
+#include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -550,17 +551,22 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 	 */
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
-		A_Expr *where_clause = (A_Expr *)w_clause;
+		A_Expr		*where_clause = (A_Expr *)w_clause;
+		ColumnRef	*ref;
+		String		*field;
+		char		*name;
+		int 		attrno;
+
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 		}
-		ColumnRef *ref = where_clause->lexpr;
-		Value *field = linitial(ref->fields);
-		char *name = field->val.str;
-		int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+		ref = where_clause->lexpr;
+		field = linitial(ref->fields);
+		name = field->sval;
+		attrno = attnameAttNum(pstate->p_target_relation, name, false);
 		if (attrno == InvalidAttrNumber)
 		{
 			ereport(ERROR,
@@ -583,6 +589,12 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 			switch(arg->type)
 			{
 				case T_A_Expr:
+				{
+					ColumnRef	*ref;
+					String		*field;
+					char		*name;
+					int 		attrno;
+
 					xpr = (A_Expr *)arg;
 
 					if (nodeTag(xpr->lexpr) != T_ColumnRef)
@@ -591,10 +603,10 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 					}
-					ColumnRef *ref = (ColumnRef *) xpr->lexpr;
-					Value *field = linitial(ref->fields);
-					char *name = field->val.str;
-					int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					ref = (ColumnRef *) xpr->lexpr;
+					field = linitial(ref->fields);
+					name = field->sval;
+					attrno = attnameAttNum(pstate->p_target_relation, name, false);
 					if (attrno == InvalidAttrNumber)
 					{
 						ereport(ERROR,
@@ -605,6 +617,7 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 					}
 					target_attnums = lappend_int(target_attnums, attrno);
 					break;
+				}
 				case T_BoolExpr:
 					target_attnums = handle_where_clause_attnums(pstate, (BoolExpr *)arg, target_attnums);
 					break;
@@ -634,17 +647,23 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 	 */
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
-		A_Expr *where_clause = (A_Expr *)w_clause;
+		A_Expr		*where_clause = (A_Expr *)w_clause;
+		ColumnRef	*ref;
+		String		*field;
+		char		*name;
+		int 		attrno;
+		ResTarget	*res;
+
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 		}
-		ColumnRef *ref = where_clause->lexpr;
-		Value *field = linitial(ref->fields);
-		char *name = field->val.str;
-		int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+		ref = where_clause->lexpr;
+		field = linitial(ref->fields);
+		name = field->sval;
+		attrno = attnameAttNum(pstate->p_target_relation, name, false);
 		if (attrno == InvalidAttrNumber)
 		{
 			ereport(ERROR,
@@ -653,9 +672,9 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 					name,
 					RelationGetRelationName(pstate->p_target_relation))));
 		}
-		ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+		res = (ResTarget *) palloc(sizeof(ResTarget));
 		res->type = ref->type;
-		res->name = field->val.str;
+		res->name = field->sval;
 		res->indirection = NIL; /* Unused for now */
 		res->val = ref; /* Store the ColumnRef here if needed */
 		res->location = ref->location;
@@ -673,6 +692,13 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 			switch(arg->type)
 			{
 				case T_A_Expr:
+				{
+					ColumnRef	*ref;
+					String		*field;
+					char		*name;
+					int 		attrno;
+					ResTarget	*res;
+
 					xpr = (A_Expr *)arg;
 
 					if (nodeTag(xpr->lexpr) != T_ColumnRef)
@@ -681,10 +707,10 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 					}
-					ColumnRef *ref = (ColumnRef *) xpr->lexpr;
-					Value *field = linitial(ref->fields);
-					char *name = field->val.str;
-					int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					ref = (ColumnRef *) xpr->lexpr;
+					field = linitial(ref->fields);
+					name = field->sval;
+					attrno = attnameAttNum(pstate->p_target_relation, name, false);
 					if (attrno == InvalidAttrNumber)
 					{
 						ereport(ERROR,
@@ -693,15 +719,16 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 								name,
 								RelationGetRelationName(pstate->p_target_relation))));
 					}
-					ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+					res = (ResTarget *) palloc(sizeof(ResTarget));
 					res->type = ref->type;
-					res->name = field->val.str;
+					res->name = field->sval;
 					res->indirection = NIL; /* Unused for now */
 					res->val = ref; /* Store the ColumnRef here if needed */
 					res->location = ref->location;
 
 					extra_restargets = lappend(extra_restargets, res);
 					break;
+				}
 				case T_BoolExpr:
 					extra_restargets = handle_where_clause_restargets_left(pstate, (BoolExpr *)arg, extra_restargets);
 					break;
@@ -731,19 +758,22 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 	 */
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
-		A_Expr *where_clause = (A_Expr *)w_clause;
+		A_Expr		*where_clause = (A_Expr *)w_clause;
+		ColumnRef	*ref;
+		String		*field;
+		ResTarget	*res;
+
 		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 		}
-		ColumnRef *ref = where_clause->rexpr;
-		Value *field = linitial(ref->fields);
-		char *name = field->val.str;
-		ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+		ref = where_clause->rexpr;
+		field = linitial(ref->fields);
+		res = (ResTarget *) palloc(sizeof(ResTarget));
 		res->type = ref->type;
-		res->name = field->val.str;
+		res->name = field->sval;
 		res->indirection = NIL; /* Unused for now */
 		res->val = ref; /* Store the ColumnRef here if needed */
 		res->location = ref->location;
@@ -761,6 +791,11 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 			switch(arg->type)
 			{
 				case T_A_Expr:
+				{
+					ColumnRef	*ref;
+					String		*field;
+					ResTarget	*res;
+
 					xpr = (A_Expr *)arg;
 
 					if (nodeTag(xpr->rexpr) != T_ColumnRef)
@@ -769,18 +804,18 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 					}
-					ColumnRef *ref = (ColumnRef *) xpr->rexpr;
-					Value *field = linitial(ref->fields);
-					char *name = field->val.str;
-					ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+					ref = (ColumnRef *) xpr->rexpr;
+					field = linitial(ref->fields);
+					res = (ResTarget *) palloc(sizeof(ResTarget));
 					res->type = ref->type;
-					res->name = field->val.str;
+					res->name = field->sval;
 					res->indirection = NIL; /* Unused for now */
 					res->val = ref; /* Store the ColumnRef here if needed */
 					res->location = ref->location;
 
 					extra_restargets = lappend(extra_restargets, res);
 					break;
+				}
 				case T_BoolExpr:
 					extra_restargets = handle_where_clause_restargets_right(pstate, (BoolExpr *)arg, extra_restargets);
 					break;
@@ -1077,6 +1112,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				ColumnRef *columnref;
 				ResTarget *res;
 				List *fields;
+				ListCell *fieldcell;
 				/*
 				 * Tack on WHERE clause for the same as above, for
 				 * UPDATE and DELETE statements.
@@ -1107,12 +1143,12 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 				}
-				ListCell *fieldcell;
+
 				foreach(fieldcell, fields)
 				{
-					Value *field = lfirst(fieldcell);
+					String *field = lfirst(fieldcell);
 					/* Make sure it's a parameter reference */
-					if (field->val.str && field->val.str[0] == '@')
+					if (field->sval && field->sval[0] == '@')
 					{
 						int i;
 						bool undeclared = true;
@@ -1120,7 +1156,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						for (i = 0; i < args->numargs; ++i)
 						{
 							if (args->argnames && args->argnames[i] &&
-								(strcmp(args->argnames[i], field->val.str) == 0))
+								(strcmp(args->argnames[i], field->sval) == 0))
 							{
 								undeclared = false;
 								break;
@@ -1128,9 +1164,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						}
 						if (undeclared)
 						{
-							int paramname_len = strlen(field->val.str);
+							int paramname_len = strlen(field->sval);
 							undeclaredparams->paramnames[numresults] = (char *) palloc(64 * sizeof(char));
-							strncpy(undeclaredparams->paramnames[numresults], field->val.str, paramname_len);
+							strncpy(undeclaredparams->paramnames[numresults], field->sval, paramname_len);
 							undeclaredparams->paramnames[numresults][paramname_len] = '\0';
 							undeclaredparams->paramindexes[numresults] = numvalues;
 							numresults += 1;
@@ -1272,8 +1308,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		"WHEN T2.name = \'varchar\' AND C.max_length = -1 THEN 65535 "
 		"WHEN T2.name IN (\'decimal\', \'numeric\') THEN 17 "
 		"WHEN T2.name = \'xml\' THEN 8100 "
-		"WHEN T2.name in (\'image\', \'text\') THEN 2147483647"
-		"WHEN T2.name = \'ntext\' THEN 2147483646"
+		"WHEN T2.name in (\'image\', \'text\') THEN 2147483647 "
+		"WHEN T2.name = \'ntext\' THEN 2147483646 "
 		"ELSE CAST( C.max_length AS INT ) "
 	"END " /* AS "suggested_tds_length" */
 "FROM sys.objects O, sys.columns C, sys.types T, sys.types T2 "

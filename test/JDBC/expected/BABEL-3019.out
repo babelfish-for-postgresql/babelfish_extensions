@@ -40,6 +40,9 @@ CREATE TYPE ty2 AS TABLE (a int, b int);
 GO
 
 -- psql
+GRANT CREATE ON SCHEMA public TO PUBLIC;
+GO
+
 SET ROLE master_tester;
 GO
 

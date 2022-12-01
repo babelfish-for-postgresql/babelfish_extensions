@@ -2,11 +2,11 @@ SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_def
 GO
 ~~START~~
 nvarchar
+'42'
 getdate()
 0
 1
 50
-'42'
 ~~END~~
 
 

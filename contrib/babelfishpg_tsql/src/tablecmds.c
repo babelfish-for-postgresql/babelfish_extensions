@@ -76,7 +76,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
 	if (list_length(object) > 1){
-		tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
+		tsql_trigger_logical_schema = ((String *)linitial(object))->sval;
 	}
 
 	trigger_rel_oid = get_tsql_trigger_oid(object,depname,true);
@@ -232,17 +232,18 @@ pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum)
 		foundObject.objectId = foundDep->objid;
 		foundObject.objectSubId = foundDep->objsubid;
 
-		if (getObjectClass(&foundObject) == OCLASS_CLASS)
+		/* Below logic has been taken from backend's ATExecAlterColumnType function */
+		if (getObjectClass(&foundObject) == OCLASS_DEFAULT)
 		{
-			char		relKind = get_rel_relkind(foundObject.objectId);
+			ObjectAddress col = GetAttrDefaultColumnAddress(foundObject.objectId);
 
-			if (relKind == RELKIND_RELATION &&
-				foundObject.objectSubId != 0 &&
-				get_attgenerated(foundObject.objectId, foundObject.objectSubId))
+			if (col.objectId != RelationGetRelid(rel) || col.objectSubId != attnum)
 			{
 				Form_pg_attribute att = TupleDescAttr(rel->rd_att, attnum - 1);
 
 				/*
+				 * This must be a reference from the expression of a
+				 * generated column elsewhere in the same table.
 				 * Dropping the type of a column that is used by a
 				 * generated column is not allowed by SQL standard.
 				 */
@@ -251,7 +252,7 @@ pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum)
 						 errmsg("cannot drop a column used by a generated column"),
 						 errdetail("Column \"%s\" is used by generated column \"%s\".",
 								   NameStr(att->attname),
-								   get_attname(foundObject.objectId, foundObject.objectSubId, false))));
+								   get_attname(col.objectId, col.objectSubId, false))));
 			}
 		}
 	}

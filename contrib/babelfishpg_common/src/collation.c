@@ -37,7 +37,7 @@ static bool db_collation_is_CI_AS = true;
  * We only need to lookup and store once because they can not be changed once babelfish db is initialised.
  */
 static const char *server_collation_name = NULL;
-static const char *default_locale = NULL;
+static const char *bbf_default_locale = NULL;
 
 /* Hash tables to help backward searching (from OID to Persist ID) */
 HTAB *ht_like2ilike = NULL;
@@ -425,19 +425,19 @@ locale_info locales[] =
 static void
 init_default_locale(void)
 {
-	if (!default_locale)
+	if (!bbf_default_locale)
 	{
 		const char *val = GetConfigOption("babelfishpg_tsql.default_locale", true, false);
 		if (val)
 		{
 			MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
-			default_locale = pstrdup(val);
+			bbf_default_locale = pstrdup(val);
 			MemoryContextSwitchTo(oldContext);
 		}
 	}
 
 	/* babelfishpg_tsql.default_locale should not be changed once babelfish db is initialised. */
-	Assert(!default_locale || strcmp(default_locale, GetConfigOption("babelfishpg_tsql.default_locale", true, false)) == 0);
+	Assert(!bbf_default_locale || strcmp(bbf_default_locale, GetConfigOption("babelfishpg_tsql.default_locale", true, false)) == 0);
 
 	return;
 }
@@ -713,7 +713,7 @@ init_collid_trans_tab_internal(void)
 		{
 			init_default_locale();
 
-			locale = pstrdup(default_locale);
+			locale = pstrdup(bbf_default_locale);
 			atsign = strstr(locale, "@");
 			if (atsign != NULL)
 				*atsign = '\0';
@@ -1104,6 +1104,8 @@ bool collation_is_CI_AS(Oid colloid)
 	char	   *collcollate = NULL;
 	char		collprovider;
 	bool		collisdeterministic;
+	Datum		datum;
+	bool		isnull;
 
 	if (InvalidOid == colloid)
 		return false;
@@ -1115,12 +1117,20 @@ bool collation_is_CI_AS(Oid colloid)
 	if (!HeapTupleIsValid(tp))
 		elog(ERROR, "cache lookup failed for collation %u", colloid);
 
-	collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
 	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
 	collisdeterministic = ((Form_pg_collation) GETSTRUCT(tp))->collisdeterministic;
-	ReleaseSysCache(tp);
 
 	if (collisdeterministic == true || collprovider != COLLPROVIDER_ICU)
+	{
+		ReleaseSysCache(tp);
+		return false;
+	}
+	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
+	if (!isnull)
+		collcollate = pstrdup(TextDatumGetCString(datum));
+	ReleaseSysCache(tp);
+
+	if (isnull)
 		return false;
 
 	/* 
@@ -1240,19 +1250,20 @@ tdscollationproperty_helper(const char *collationname, const char *property)
 
 		if (strcasecmp(property, "tdscollation") == 0)
 		{
-			int64_t ret = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
-
 			/*
 			 *	ret here is of 8 bytes
 			 *	tdscollation should return 5 bytes
 			 *	Below code converts ret into 5 bytes
 			 */
+			int64_t ret = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
 			int maxlen = 5;
 			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
-			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
-			char *rp = VARDATA(bytea_data);
+			char *rp;
 			bytea        *result;
 			svhdr_3B_t   *svhdr;
+
+			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
+			rp = VARDATA(bytea_data);
 
 			memcpy(rp, (char *) &ret , maxlen);
 
@@ -1310,12 +1321,12 @@ void BabelfishPreCreateCollation_hook(
 	const char *collversion
 	)
 {
+	const char *collcollate = *pCollcollate;
+	const char *collctype = *pCollctype;
+
 	/* This hook should only be called when dialect is tsql. */
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
-
-	const char *collcollate = *pCollcollate;
-	const char *collctype = *pCollctype;
 
 	if (NULL != prev_PreCreateCollation_hook)
 	{
@@ -1331,7 +1342,7 @@ void BabelfishPreCreateCollation_hook(
 
 	init_default_locale();
 
-	if (default_locale && strlen(default_locale) > 0)
+	if (bbf_default_locale && strlen(bbf_default_locale) > 0)
 	{
 		/* If the first character of the locale is '@' and if
 		 * a babelfishpg_tsql_default_locale override has been specified, then
@@ -1342,20 +1353,20 @@ void BabelfishPreCreateCollation_hook(
 		 */
 		if (collcollate[0] == '@')
 		{
-			char *catcollcollate = palloc0(strlen(default_locale) +
+			char *catcollcollate = palloc0(strlen(bbf_default_locale) +
 										   strlen(collcollate) + 1);
 
-			memcpy(catcollcollate, default_locale, strlen(default_locale));
+			memcpy(catcollcollate, bbf_default_locale, strlen(bbf_default_locale));
 			strncat(catcollcollate, collcollate, strlen(collcollate));
 			*pCollcollate = catcollcollate;
 		}
 
 		if (collctype[0] == '@')
 		{
-			char *catcollctype = palloc0(strlen(default_locale) +
+			char *catcollctype = palloc0(strlen(bbf_default_locale) +
 										 strlen(collctype) + 1);
 
-			memcpy(catcollctype, default_locale, strlen(default_locale));
+			memcpy(catcollctype, bbf_default_locale, strlen(bbf_default_locale));
 			strncat(catcollctype, collcollate, strlen(collcollate));
 			*pCollctype = catcollctype;
 		}

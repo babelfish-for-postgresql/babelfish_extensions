@@ -32,18 +32,25 @@ PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
 Datum 
 tsql_query_to_json_text(PG_FUNCTION_ARGS)
 {
+	char		*query;
+	int 		mode;
+	bool		include_null_value ;
+	bool		without_array_wrapper;
+	char		*root_name;
+	StringInfo	result;
+
 	for (int i=0; i< PG_NARGS()-1; i++)
 	{
 		if PG_ARGISNULL(i) 
 			PG_RETURN_NULL();
 	}
-	char *query = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int mode = PG_GETARG_INT32(1);
-	bool include_null_value = PG_GETARG_BOOL(2);
-	bool without_array_wrapper = PG_GETARG_BOOL(3);
-	char *root_name = PG_ARGISNULL(4) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(4));
+	query = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	mode = PG_GETARG_INT32(1);
+	include_null_value = PG_GETARG_BOOL(2);
+	without_array_wrapper = PG_GETARG_BOOL(3);
+	root_name = PG_ARGISNULL(4) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(4));
 
-	StringInfo result = tsql_query_to_json_internal(query, mode, include_null_value,
+	result = tsql_query_to_json_internal(query, mode, include_null_value,
 											without_array_wrapper, root_name);
 	if (result)
 		PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
@@ -142,7 +149,7 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		}
 
 
-		appendStringInfo(result,sep);
+		appendStringInfo(result, "%s", sep);
 		sep = ",";
 		tsql_json_build_object(result, CStringGetDatum(colname), colval, datatype_oid, isnull);
 

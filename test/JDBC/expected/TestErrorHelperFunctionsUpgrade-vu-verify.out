@@ -178,6 +178,7 @@ int
 3903
 574
 10610
+10610
 16902
 16902
 8143
@@ -340,6 +341,7 @@ int
 3903
 574
 10610
+10610
 16902
 16902
 8143
@@ -469,6 +471,6 @@ EXEC TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC
 GO
 ~~START~~
 int
-155
+156
 ~~END~~
 

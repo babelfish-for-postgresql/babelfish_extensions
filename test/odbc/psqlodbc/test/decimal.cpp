@@ -94,7 +94,8 @@ TEST_F(PSQL_DataTypes_Decimal, Table_Creation) {
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Decimal, Table_Creation_Fail) {
+// TODO: Enable this test once BABEL-3720 get fixed
+TEST_F(PSQL_DataTypes_Decimal, DISABLED_Table_Creation_Fail) {
   const vector<vector<pair<string, string>>> invalid_columns {
     {{"invalid1", DATATYPE + "(0, 0)"}}, // must have precision of 1 or greater
     {{"invalid2", DATATYPE + "(10, 11)"}}, // scale cannot be larger than precision

@@ -1,4 +1,4 @@
--- sla 50000
+-- sla 55000
 EXEC sys_sql_modules_dep_vu_prepare_p1;
 GO
 

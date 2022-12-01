@@ -27,7 +27,6 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
-#include "utils/int8.h"
 #include "utils/pg_locale.h"
 #include "utils/varlena.h"
 #include "mb/pg_wchar.h"
@@ -683,13 +682,11 @@ varchar2int4(PG_FUNCTION_ARGS)
 Datum
 varchar2int8(PG_FUNCTION_ARGS)
 {
-	int64 result;
 	VarChar *source = PG_GETARG_VARCHAR_PP(0);
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_INT64(0);
 
-	(void) scanint8(varchar2cstring(source), false, &result);
-	PG_RETURN_INT64(result);
+	PG_RETURN_INT64(pg_strtoint64(varchar2cstring(source)));
 }
 
 static Datum
@@ -890,7 +887,7 @@ varchar2money(PG_FUNCTION_ARGS)
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_CASH(0);
 
-	(void) scanint8(varchar2cstring(source), false, &val);
+	val = pg_strtoint64(varchar2cstring(source));
 	PG_RETURN_CASH((Cash)val);
 }
 
@@ -1283,13 +1280,11 @@ bpchar2int4(PG_FUNCTION_ARGS)
 Datum
 bpchar2int8(PG_FUNCTION_ARGS)
 {
-	int64 result;
 	BpChar *source = PG_GETARG_BPCHAR_PP(0);
 	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
 		PG_RETURN_INT64(0);
 
-	(void) scanint8(bpchar2cstring(source), false, &result);
-	PG_RETURN_INT64(result);
+	PG_RETURN_INT64(pg_strtoint64(bpchar2cstring(source)));
 }
 
 Datum

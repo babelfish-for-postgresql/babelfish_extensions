@@ -183,8 +183,14 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 		TSQLInstrumentation(INSTR_TSQL_SERVERPROPERTY_COLLATIONID);
 		if (HeapTupleIsValid(tuple))
 		{
-			Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
-			collation_name = pstrdup(NameStr(dbform->datcollate));
+			char	datlocprovider;
+			Datum	datum;
+			bool	isnull;
+
+			datlocprovider = ((Form_pg_database) GETSTRUCT(tuple))->datlocprovider;
+			datum = SysCacheGetAttr(DATABASEOID, tuple, datlocprovider == COLLPROVIDER_ICU ? Anum_pg_database_daticulocale : Anum_pg_database_datcollate, &isnull);
+			Assert(!isnull);
+			collation_name = pstrdup(TextDatumGetCString(datum));
 			ReleaseSysCache(tuple);
 			list = list_make1(makeString(collation_name));
 			collation_oid = get_collation_oid(list, true);

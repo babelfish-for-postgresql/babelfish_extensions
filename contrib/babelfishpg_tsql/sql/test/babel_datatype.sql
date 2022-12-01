@@ -293,7 +293,9 @@ select CAST('ab' AS sys.varchar(1));
 
 -- default length of nchar/char is 1 in tsql (and pg)
 create table testing1(col nchar);
+reset babelfishpg_tsql.sql_dialect;
 \d testing1;
+set babelfishpg_tsql.sql_dialect = "tsql";
 
 -- check length at insert
 insert into testing1 (col) select 'a';
@@ -354,7 +356,9 @@ select CAST('abc' AS varchar(10485760));
 -- test column type nvarchar(max)
 set babelfishpg_tsql.sql_dialect = 'tsql';
 create table testing5(col nvarchar(max));
+reset babelfishpg_tsql.sql_dialect;
 \d testing5
+set babelfishpg_tsql.sql_dialect = "tsql";
 insert into testing5 (col) select 'ab';
 insert into testing5 (col) select 'abcdefghijklmn';
 select * from testing5;
@@ -370,7 +374,9 @@ select * from testing5;
 -- [BABEL-220] test varchar(max) as a column
 drop table testing5;
 create table testing5(col varchar(max));
+reset babelfishpg_tsql.sql_dialect;
 \d testing5
+set babelfishpg_tsql.sql_dialect = "tsql";
 insert into testing5 (col) select 'ab';
 insert into testing5 (col) select 'abcdefghijklmn';
 select * from testing5;
@@ -439,7 +445,9 @@ set babelfishpg_tsql.sql_dialect = 'tsql';
 
 -- [BABEL-255] test nchar defaults to sys.nchar in tsql dialect
 create table test_nchar (col1 nchar);
+reset babelfishpg_tsql.sql_dialect;
 \d test_nchar
+set babelfishpg_tsql.sql_dialect = "tsql";
 drop table test_nchar;
 -- test nchar defaults to bpchar in pg dialect
 reset babelfishpg_tsql.sql_dialect;

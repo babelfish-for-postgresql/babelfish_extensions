@@ -6280,13 +6280,13 @@ IncrementInstr(List *raw_parsetree_list)
 									A_Const *n = (A_Const *) item->arg;
 									if (n != NULL)
 									{
-										if (strcmp(n->val.val.str, "read uncommitted"))
+										if (strcmp(n->val.sval.sval, "read uncommitted"))
 											TSQLInstrumentation(INSTR_TSQL_TRANS_STMT_START_ISO_LEVEL_READ_UNCOMMITTED);
-										if (strcmp(n->val.val.str, "read committed"))
+										if (strcmp(n->val.sval.sval, "read committed"))
 											TSQLInstrumentation(INSTR_TSQL_TRANS_STMT_START_ISO_LEVEL_READ_COMMITTED);
-										if (strcmp(n->val.val.str, "repeatable read"))
+										if (strcmp(n->val.sval.sval, "repeatable read"))
 											TSQLInstrumentation(INSTR_TSQL_TRANS_STMT_START_ISO_LEVEL_REPEATABLE_READ);
-										if (strcmp(n->val.val.str, "serializable"))
+										if (strcmp(n->val.sval.sval, "serializable"))
 											TSQLInstrumentation(INSTR_TSQL_TRANS_STMT_START_ISO_LEVEL_LEVEL_SERIALIZABLE);
 										}
 									}

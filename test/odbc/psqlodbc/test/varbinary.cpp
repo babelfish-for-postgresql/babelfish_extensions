@@ -237,7 +237,7 @@ TEST_F(PSQL_DataTypes_VarBinary, Comparison_Operators) {
   string insertString{};
   string comma{};
   for (int i = 0; i < NUM_OF_DATA; i++) {
-    where_pk.push_back("cast(" + INSERTED_PK[i] + "as sys.varbinary)");
+    where_pk.push_back("cast(" + INSERTED_PK[i] + " as sys.varbinary)");
     insertString += comma + "(" + INSERTED_PK[i] + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }

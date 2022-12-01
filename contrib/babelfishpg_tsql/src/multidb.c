@@ -20,7 +20,7 @@
 static void rewrite_rangevar(RangeVar *rv);
 static void rewrite_objectwithargs(ObjectWithArgs *obj);
 void rewrite_plain_name(List *name);  /* Value Strings */
-static void rewrite_schema_name(Value *schema);
+static void rewrite_schema_name(String *schema);
 static void rewrite_role_name(RoleSpec *role);
 
 static void rewrite_rangevar_list(List *rvs);  /* list of RangeVars */
@@ -562,7 +562,7 @@ rewrite_object_refs(Node *stmt)
 					break;
 				case OBJECT_SCHEMA:
 				{
-					rewrite_schema_name((Value *) alter_owner->object);
+					rewrite_schema_name((String *) alter_owner->object);
 					break;
 				}
 				case OBJECT_TYPE:
@@ -682,7 +682,7 @@ rewrite_column_refs(ColumnRef *cref)
 		{
 			Node       *schema = (Node *) linitial(cref->fields);
 			char       *cur_db = get_cur_db_name();
-			Value      *new_schema;
+			String     *new_schema;
 
 			if (is_shared_schema(strVal(schema)))
 				break;  /* do not thing for shared schemas */
@@ -698,7 +698,7 @@ rewrite_column_refs(ColumnRef *cref)
 		{
 			Node       *db = (Node *) linitial(cref->fields);
 			Node       *schema = (Node *) lsecond(cref->fields);
-			Value      *new_schema;
+			String     *new_schema;
 
 			if (is_shared_schema(strVal(schema)))
 				list_delete_first(cref->fields);  /* redirect to shared schema */
@@ -756,7 +756,7 @@ rewrite_plain_name(List *name)
 		{
 			Node       *schema = (Node *) linitial(name);
 			char       *cur_db = get_cur_db_name();
-			Value      *new_schema;
+			String     *new_schema;
 
 			if (is_shared_schema(strVal(schema)))
 				break;  /* do not thing for shared schemas */
@@ -771,7 +771,7 @@ rewrite_plain_name(List *name)
 		{
 			Node       *db = (Node *) linitial(name);
 			Node       *schema = (Node *) lsecond(name);
-			Value      *new_schema;
+			String     *new_schema;
 
 
 			/* do nothing for shared schemas */
@@ -793,14 +793,14 @@ rewrite_plain_name(List *name)
 }
 
 static void
-rewrite_schema_name(Value *schema)
+rewrite_schema_name(String *schema)
 {
 	char       *cur_db = get_cur_db_name();
 
 	/* do nothing for shared schemas */
 	if (is_shared_schema(strVal(schema)))
 		return;
-	schema->val.str = get_physical_schema_name(cur_db, strVal(schema));
+	schema->sval = get_physical_schema_name(cur_db, strVal(schema));
 }
 
 static void
@@ -872,7 +872,7 @@ rewrite_schema_name_list(List *schemas)
 
 	foreach(cell, schemas)
 	{
-		Value *schema = (Value *) lfirst(cell);
+		String *schema = (String *) lfirst(cell);
 		rewrite_schema_name(schema);
 	}
 }

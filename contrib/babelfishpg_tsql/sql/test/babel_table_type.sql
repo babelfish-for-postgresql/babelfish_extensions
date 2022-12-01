@@ -1,5 +1,6 @@
 CREATE USER my_test_user;
 GRANT CREATE ON DATABASE contrib_regression TO my_test_user;
+GRANT CREATE ON SCHEMA public TO PUBLIC;
 SET SESSION AUTHORIZATION my_test_user;
 
 -- table type is only supported in tsql dialect

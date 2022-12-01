@@ -495,7 +495,7 @@ pltsql_get_errdata(int *tsql_error_code, int *tsql_error_severity, int *tsql_err
 bool
 is_sysname_column(ColumnDef *coldef)
 {
-	return pg_strcasecmp(((Value *) llast(coldef->typeName->names))->val.str, "sysname") == 0;
+	return pg_strcasecmp(((String *) llast(coldef->typeName->names))->sval, "sysname") == 0;
 }
 
 bool
@@ -875,7 +875,7 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	proctup;
 	Form_pg_proc form_proctup;
-	char		*func_signature;
+	const char	*func_signature;
 
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
 	if (!HeapTupleIsValid(proctup))

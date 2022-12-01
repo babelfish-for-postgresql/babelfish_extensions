@@ -76,6 +76,7 @@ P0001#!#%s#!#is not supported for conversions from#!#9809
 25P01#!#%s can only be used in transaction blocks#!#ROLLBACK TO SAVEPOINT#!#3903
 25001#!#%s cannot run inside a transaction block#!##!#574
 42809#!#"%s" is not a table or materialized view#!##!#10610
+42809#!#cannot create index on relation "%s"#!##!#10610
 42809#!#%s parameter should be of %s type#!##!#16902
 22004#!#%s parameter should not be null#!##!#16902
 42601#!#argument name "%s" used more than once#!##!#8143
@@ -88,7 +89,7 @@ P0001#!#%s#!#is not supported for conversions from#!#9809
 2201E#!#cannot take logarithm of a negative number#!##!#3623
 2201F#!#cannot take square root of a negative number#!##!#3623
 0A000#!#cannot truncate a table referenced in a foreign key constraint#!##!#4712
-22023#!#CACHE (%s) must be greater than zero#!##!#11706
+22023#!#CACHE (%lld) must be greater than zero#!##!#11706
 23514#!#check constraint "%s" of relation "%s" is violated by some row#!##!#547
 2F005#!#The transaction ended in the trigger. The batch has been aborted.#!##!#3609
 23502#!#column "%s" of relation "%s" contains null values#!##!#4901
@@ -140,9 +141,9 @@ XX000#!#CREATE FUNCTION failed because a column name is not specified for column
 22025#!#invalid escape string#!##!#506
 0A000#!#Label %s not unique wihtin one procedure in line %d, previous defined in line %d#!##!#132
 08004#!#Login failed for user "%s"#!##!#18456
-22023#!#MAXVALUE (%s) is out of range for sequence data type tinyint#!##!#11708
-22023#!#MAXVALUE (%s) is out of range for sequence data type %s#!##!#11708
-22023#!#MINVALUE (%s) must be less than MAXVALUE (%s)#!##!#11705
+22023#!#MAXVALUE (%lld) is out of range for sequence data type tinyint#!##!#11708
+22023#!#MAXVALUE (%lld) is out of range for sequence data type %s#!##!#11708
+22023#!#MINVALUE (%lld) must be less than MAXVALUE (%lld)#!##!#11705
 21000#!#more than one row returned by a subquery used as an expression#!##!#512
 23514#!#new row for relation "%s" violates check constraint "%s"#!##!#547
 XX000#!#no owned sequence found#!##!#550
@@ -158,8 +159,8 @@ XX000#!#no owned sequence found#!##!#550
 22003#!#smallint out of range#!##!#220
 54001#!#stack depth limit exceeded#!##!#217
 0A000#!#SP_PREPEXECRPC not supported yet#!##!#16901
-22023#!#START value (%s) cannot be greater than MAXVALUE (%s)#!##!#11703
-22023#!#START value (%s) cannot be less than MINVALUE (%s)#!##!#11703
+22023#!#START value (%lld) cannot be greater than MAXVALUE (%lld)#!##!#11703
+22023#!#START value (%lld) cannot be less than MINVALUE (%lld)#!##!#11703
 42703#!#Table '%s.%s' does not have the identity property. Cannot perform SET operation.#!##!#8106
 08P01#!#Table-valued parameter %d ("%s"), row %d, column %d: Data type 0x%02X (user-defined table type). The specified column is computed or default and has ordering or uniqueness set. Ordering and uniqueness can only be set on columns that have client supplied data.#!##!#8057
 2202H#!#TABLESAMPLE parameter cannot be null#!##!#477

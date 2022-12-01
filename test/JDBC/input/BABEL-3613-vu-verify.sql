@@ -1,3 +1,4 @@
+-- sla 400000
 USE MASTER
 GO
 
