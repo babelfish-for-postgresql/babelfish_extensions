@@ -1142,8 +1142,7 @@ bool has_ilike_node(Node *expr)
 	op = (OpExpr *) expr;
 	for(int i = 0; i < TOTAL_LIKE_OP_COUNT; i++)
 	{
-		if(strncmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name, 
-				strlen(like_ilike_table[i].ilike_op_name) + 1) == 0)
+		if(strcmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name) == 0)
 		{
 			return true;
 		}

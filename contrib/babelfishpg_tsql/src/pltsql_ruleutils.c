@@ -527,7 +527,7 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
         number_args++;  
 
         probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
-		pfree(probin_c);
+        pfree(probin_c);
         if (typmod_arr[number_args-1] != -1)
                typmod_arr[number_args-1] += adjustTypmod(proc->prorettype, typmod_arr[number_args-1]);
         
