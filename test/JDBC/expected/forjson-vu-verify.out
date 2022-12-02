@@ -103,6 +103,8 @@ nvarchar
 -- Binary strings
 SELECT * FROM forjson_vu_view13
 GO
+~~START~~
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: binary types are not supported with FOR JSON)~~
@@ -110,6 +112,8 @@ GO
 
 SELECT * FROM forjson_vu_view14
 GO
+~~START~~
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: binary types are not supported with FOR JSON)~~
@@ -128,6 +132,8 @@ nvarchar
 -- Rowversion and timestamp
 SELECT * FROM forjson_vu_view16
 GO
+~~START~~
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: binary types are not supported with FOR JSON)~~
@@ -135,6 +141,8 @@ GO
 
 SELECT * FROM forjson_vu_view17
 GO
+~~START~~
+nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: binary types are not supported with FOR JSON)~~

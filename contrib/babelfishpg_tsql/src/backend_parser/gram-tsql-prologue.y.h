@@ -14,7 +14,7 @@
 #include "src/backend_parser/gramparse.h"
 #include "src/pltsql_instr.h"
 #include "src/multidb.h"
-#include "src/forjson.h"
+#include "src/tsql_for/tsql_for.h"
 
 #define MD5_HASH_LEN 32
 
@@ -22,15 +22,6 @@ static void pgtsql_base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner, const 
 
 List *TsqlSystemFuncName(char *name);
 List *TsqlSystemFuncName2(char *name);
-
-/* Private struct for the result of tsql_for_clause production */
-typedef struct TSQL_ForClause
-{
-	int mode;
-	char *elementName;
-	List *commonDirectives;
-	int location;		/* token location of FOR, or -1 if unknown */
-} TSQL_ForClause;
 
 extern bool output_update_transformation;
 extern bool output_into_insert_transformation;
@@ -47,9 +38,9 @@ static Node *TsqlFunctionParse(Node *arg, TypeName *typename, Node *culture, boo
 static Node *TsqlFunctionIIF(Node *bool_expr, Node *arg1, Node *arg2, int location);
 static Node *TsqlFunctionChoose(Node *int_expr, List *choosable, int location);
 static void tsql_check_param_readonly(const char* paramname, TypeName *typename, bool readonly);
-static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause, char *src_query, size_t start_location, core_yyscan_t yyscanner);
-static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause, char *src_query, size_t start_location, core_yyscan_t yyscanner);
-static Node* tsql_get_transformed_query(StringInfo format_query, char *end_param, char *query, List *params);
+static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause);
+static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause);
+static RangeSubselect *TsqlForClauseSubselect(SelectStmt *selectstmt);
 
 char * construct_unique_index_name(char *index_name, char *relation_name);
 
