@@ -42,7 +42,7 @@ END;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'EXECUTE AS' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 
 CREATE FUNCTION babel_execute_as_caller_function_return_int_2 (@v int) RETURNS INT WITH RETURNS NULL ON NULL INPUT, EXECUTE AS SELF AS
@@ -52,7 +52,7 @@ END;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'EXECUTE AS' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 
 CREATE FUNCTION babel_execute_as_caller_function_return_int_2 (@v int) RETURNS INT WITH RETURNS NULL ON NULL INPUT, EXECUTE AS 'user' AS
@@ -62,7 +62,7 @@ END;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'EXECUTE AS' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 
 -- procedures
@@ -75,7 +75,7 @@ BEGIN SELECT * FROM babel_execute_as_caller_table END
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'EXECUTE AS' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 
 CREATE PROCEDURE babel_execute_as_caller_procedure2(@c int) WITH EXECUTE AS CALLER AS
@@ -87,7 +87,7 @@ BEGIN SELECT @c+1 END;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'EXECUTE AS' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 
 CREATE PROCEDURE babel_execute_as_caller_procedure3 (@v int) WITH EXECUTE AS CALLER AS 
@@ -104,7 +104,7 @@ FOR INSERT AS BEGIN UPDATE babel_execute_as_caller_table SET c1 =10 END
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near "WITH")~~
+~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 
 -- CLEANUP

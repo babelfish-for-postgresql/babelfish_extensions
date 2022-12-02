@@ -304,7 +304,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 		{
 			auto exec_as = option->execute_as_clause();
 			if (!exec_as->CALLER())
-				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
+				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
 		}
 	}
 
@@ -354,7 +354,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(
 		{
 			auto exec_as = option->execute_as_clause();
 			if (!exec_as->CALLER())
-				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
+				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
 		}
 	}
 
@@ -418,6 +418,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 				handle(INSTR_UNSUPPORTED_TSQL_DML_TRIGGER_ENCRYPTION_OPTION, option->ENCRYPTION());
 			else if (option->NATIVE_COMPILATION())
 				handle(INSTR_UNSUPPORTED_TSQL_DML_TRIGGER_NATIVE_COMPILATION_OPTION, option->NATIVE_COMPILATION());
+			else if (option->execute_as_clause())
+			{
+				auto exec_as = option->execute_as_clause();
+				if (!exec_as->CALLER())
+					handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
+			}
 		}
 
 		if (dctx->external_name())
@@ -433,6 +439,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 				handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER_ENCRYPTION_OPTION, option->ENCRYPTION());
 			else if (option->NATIVE_COMPILATION())
 				handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER_NATIVE_COMPILATION_OPTION, option->NATIVE_COMPILATION());
+			else if (option->execute_as_clause())
+			{
+				auto exec_as = option->execute_as_clause();
+				if (!exec_as->CALLER())
+					handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
+			}
 		}
 
 		if (dctx->external_name())
