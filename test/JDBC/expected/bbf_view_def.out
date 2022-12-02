@@ -113,7 +113,7 @@ alter view master_dbo.def_v1 alter column a SET DEFAULT 2;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -121,7 +121,7 @@ alter view master_dbo.def_v1 alter column a DROP DEFAULT;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -129,7 +129,7 @@ alter view master_dbo.def_v1 owner to CURRENT_ROLE;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -137,7 +137,7 @@ alter view master_dbo.def_v1 rename column a to b;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -145,7 +145,7 @@ alter view master_dbo.def_v1 rename to def_v1_renamed;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -153,7 +153,7 @@ alter view master_dbo.def_v1 set schema tempdb_dbo;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -161,7 +161,7 @@ alter view master_dbo.def_v1 set (check_option=local);
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -169,7 +169,7 @@ alter view master_dbo.def_v1 reset (check_option);
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -233,7 +233,7 @@ alter view master_dbo.def_vwalt rename column b to c;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -243,12 +243,23 @@ go
 set babelfishpg_tsql.sql_dialect = "tsql";
 go
 
--- Allowed in tsql dialect but won't get stored in catalog as dbid will be null
+-- Blocked in TSQL dialect from PG client
 create or replace view master_dbo.def_v6 as select 6;
 go
+~~ERROR (Code: 0)~~
 
+~~ERROR (Message: ERROR: CREATE [OR REPLACE] VIEW is blocked in TSQL dialect from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+    Server SQLState: XX000)~~
+
+
+-- Blocked in TSQL dialect from PG client
 alter view master_dbo.def_v1 rename to def_v1_renamed;
 go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+    Server SQLState: 0A000)~~
+
 
 -- tsql
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%def_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
@@ -259,10 +270,6 @@ master#!#dbo#!#def_v1#!#create view def_v1 as select c1 as a from vd_t1;
 master#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 as a;
 ~~END~~
 
-
--- psql
-alter view master_dbo.def_v1_renamed rename to def_v1;
-go
 
 -- tsql
 -- CASE: create view in different schema and db
@@ -382,7 +389,7 @@ go
 
 -- psql
 -- CASE : When user tries to create view from non-babelfish(like public) or internal-only(like sys or information_schema_tsql)
--- Currenting dialect should be tsql
+-- Current dialect should be tsql
 SHOW babelfishpg_tsql.sql_dialect;
 go
 ~~START~~
@@ -393,12 +400,27 @@ tsql
 
 create view vvv1 as select 1;
 go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: CREATE [OR REPLACE] VIEW is blocked in TSQL dialect from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+    Server SQLState: XX000)~~
+
 
 create view sys.vvv2 as select 2;
 go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: CREATE [OR REPLACE] VIEW is blocked in TSQL dialect from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+    Server SQLState: XX000)~~
+
 
 create view information_schema_tsql.vvv3 as select 3;
 go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: CREATE [OR REPLACE] VIEW is blocked in TSQL dialect from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.
+    Server SQLState: XX000)~~
+
 
 -- tsql
 select vd.object_name, vd.definition, vd.flag_validity, vd.flag_values from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('vvv%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
@@ -407,16 +429,6 @@ go
 varchar#!#ntext#!#bigint#!#bigint
 ~~END~~
 
-
--- psql
-drop view vvv1;
-go
-
-drop view sys.vvv2;
-go
-
-drop view information_schema_tsql.vvv3;
-go
 
 -- tsql
 -- CLEANUP
@@ -432,7 +444,7 @@ go
 drop view view_ansinulloff_qidoff;
 go
 
-drop view def_v1, def_v2, def_v5, def_v6;
+drop view def_v1, def_v2, def_v5;
 go
 
 drop table vd_t1;
