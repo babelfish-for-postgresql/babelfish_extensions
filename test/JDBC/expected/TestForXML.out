@@ -175,6 +175,8 @@ ntext
 
 SELECT Col1, CAST(Col2 as image) as Col2 FROM MyTable FOR XML PATH, BINARY BASE64;
 GO
+~~START~~
+ntext
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: option binary base64 is not supported)~~
@@ -331,17 +333,23 @@ ntext
 with cte as (select a from t1)
 select * from t2, (select * from cte for xml raw) as t3(colxml);
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "cte" does not exist)~~
+~~START~~
+int#!#varchar#!#ntext
+1#!#t2_a1#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
+2#!#t2_a2#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
+3#!#<NULL>#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
+~~END~~
 
 
 with cte as (select a from t1)
 select (select * from cte for xml raw) as colxml, * from t2;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "cte" does not exist)~~
+~~START~~
+ntext#!#int#!#varchar
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#1#!#t2_a1
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#2#!#t2_a2
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#3#!#<NULL>
+~~END~~
 
 
 with
@@ -349,9 +357,10 @@ cte1 as (select * from t1),
 cte2 as (select a from cte1 for xml raw)
 select * from cte2;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "cte1" does not exist)~~
+~~START~~
+ntext
+<row a="t1_a1"/><row a="t1_a2"/><row/>
+~~END~~
 
 
 
@@ -450,7 +459,7 @@ exec test_forxml 1;
 go
 ~~START~~
 ntext
-<row a="t1_a1" datalength="1" datalength="1"/>
+<row a="t1_a1" datalength="4" datalength="2"/>
 ~~END~~
 
 
@@ -466,11 +475,12 @@ ntext
 ~~END~~
 
 -- test NULL parameter
+-- TODO fix BABEL-3569 so this returns 0 rows
 exec test_forxml_strvar 1, NULL;
 go
 ~~START~~
 ntext
-
+<NULL>
 ~~END~~
 
 

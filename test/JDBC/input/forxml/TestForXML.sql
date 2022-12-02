@@ -235,6 +235,7 @@ go
 exec test_forxml_strvar 1, 't1_a1';
 go
 -- test NULL parameter
+-- TODO fix BABEL-3569 so this returns 0 rows
 exec test_forxml_strvar 1, NULL;
 go
 
