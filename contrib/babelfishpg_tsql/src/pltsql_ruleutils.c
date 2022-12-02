@@ -437,6 +437,9 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	 * here we are not allocating extra space for name, we’re just using proc-> proname.
 	 * also at the end, we’re releasing proctup (that will free proc->proname).  
 	 */
+	pfree((char *) nsp);
+	if (nnsp)
+		pfree((char *) nnsp);
 
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
 
@@ -482,6 +485,8 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	appendStringInfoString(&buf, prosrc);
 
 	ReleaseSysCache(proctup);
+
+	pfree((char *) prosrc);
 
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }

@@ -1936,6 +1936,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	CatalogTupleInsert(bbf_view_def_rel, tuple);
 
 	pfree(physical_schemaname);
+	pfree((char *) logical_schemaname);
 	ReleaseSysCache(reltup);
 	heap_freetuple(tuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);

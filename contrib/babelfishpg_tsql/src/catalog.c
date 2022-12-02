@@ -1064,6 +1064,8 @@ check_is_tsql_view(Oid relid)
 	{
 		pfree(view_name);
 		pfree(schema_name);
+		if (logical_schema_name)
+			pfree((char *) logical_schema_name);
 		return false;
 	}
 	/* Fetch the relation */
@@ -1079,6 +1081,7 @@ check_is_tsql_view(Oid relid)
 	table_close(bbf_view_def_rel, AccessShareLock);
 	pfree(view_name);
 	pfree(schema_name);
+	pfree((char *) logical_schema_name);
 	return is_tsql_view;
 }
 
@@ -1183,6 +1186,7 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 								   CStringGetTextDatum(func_signature));
 
 	pfree(physical_schemaname);
+	pfree((char *) func_signature);
 
 	return bbffunctuple;
 }
@@ -2200,6 +2204,7 @@ create_guest_role_for_db(const char *dbname)
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
+	pfree((char *) db_owner_role);
 
 	if (list_length(logins) > 0)
 	{
