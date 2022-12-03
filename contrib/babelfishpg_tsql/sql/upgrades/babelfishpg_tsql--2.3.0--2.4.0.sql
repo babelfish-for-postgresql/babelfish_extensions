@@ -39,7 +39,7 @@ AS
 $$
     SELECT current_setting('application_name');
 $$
-LANGUAGE sql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+LANGUAGE sql PARALLEL SAFE STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
