@@ -1057,9 +1057,6 @@ get_collation_oid_internal(char *collation_name)
 Oid
 get_server_collation_oid_internal(bool missingOk)
 {
-	Oid nspoid;
-	int collidx;
-	const char *collname;
 
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
