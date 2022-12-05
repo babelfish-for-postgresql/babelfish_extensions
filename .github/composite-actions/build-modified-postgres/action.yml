@@ -36,7 +36,7 @@ runs:
         $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"
         cd postgresql_modified_for_babelfish
         ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
-        make COPT='-Werror' -j 4 2>error.txt
+        make -j 4 2>error.txt
         make install
         make check
         cd contrib && make && sudo make install
