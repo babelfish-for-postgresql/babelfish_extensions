@@ -1,0 +1,51 @@
+
+SELECT name,type,type_desc FROM sys.system_objects WHERE name = 'key_constraints'
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+key_constraints#!#V #!#VIEW
+~~END~~
+
+
+SELECT name,type,type_desc FROM sys.system_objects WHERE name = 'KEY_CONSTRAINTS'
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+key_constraints#!#V #!#VIEW
+~~END~~
+
+
+EXEC sys_system_objects_vu_prepare_p1
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+key_constraints#!#V #!#VIEW
+~~END~~
+
+~~START~~
+varchar#!#char#!#nvarchar
+key_constraints#!#V #!#VIEW
+~~END~~
+
+
+SELECT * FROM sys_system_objects_vu_prepare_f1()
+SELECT * FROM sys_system_objects_vu_prepare_f2()
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM sys_system_objects_vu_prepare_v1
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+key_constraints#!#V #!#VIEW
+~~END~~
+
