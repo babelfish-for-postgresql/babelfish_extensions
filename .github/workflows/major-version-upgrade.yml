@@ -27,7 +27,7 @@ jobs:
           cd postgresql_modified_for_babelfish
           ./configure --prefix=$HOME/${{env.OLD_INSTALL_DIR}} --with-python PYTHON=/usr/bin/python2.7 --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
           make clean
-          make -j 4 2>error.txt
+          make COPT='-Werror' -j 4 2>error.txt
           make install
           make check
           cd contrib && make && sudo make install
