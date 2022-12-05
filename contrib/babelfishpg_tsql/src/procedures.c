@@ -13,6 +13,7 @@
 #include "access/relation.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "common/string.h"
 #include "executor/spi.h"
@@ -53,6 +54,8 @@ PG_FUNCTION_INFO_V1(sp_addrole);
 PG_FUNCTION_INFO_V1(sp_droprole);
 PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
+PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
+PG_FUNCTION_INFO_V1(create_linked_server_procs_in_master_dbo_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -2069,4 +2072,83 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 
 	rewrite_object_refs(stmt);
 	return res;
+}
+
+Datum
+sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *provider = text_to_cstring(PG_GETARG_TEXT_P(2));
+
+	if (strncmp(provider, "tds_fdw", 7) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("Unsupported provider '%s'. Supported provider is 'tds_fdw'", provider)));
+
+	CreateForeignServerStmt *stmt = makeNode(CreateForeignServerStmt);
+	List *options = NIL;
+
+	stmt->servername = servername;
+	stmt->fdwname = "tds_fdw";
+	stmt->if_not_exists = false;
+
+	/* Add the relevant options */
+	options = lappend(options, makeDefElem("servername", (Node *) makeString(text_to_cstring(PG_GETARG_TEXT_P(3))), -1));
+	options = lappend(options, makeDefElem("database", (Node *) makeString(text_to_cstring(PG_GETARG_TEXT_P(6))), -1));
+
+	stmt->options = options;
+
+	CreateForeignServer(stmt);
+
+	return (Datum) 0;
+}
+
+/*
+ * Internal function to create the following procedures related to T-SQL linked
+ * servers in master.dbo schema:
+ *   - sp_addlinkedserver
+ * Some applications invoke this referencing master.dbo.<one of the above stored procedures>
+ */
+Datum
+create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
+{
+	char *query = NULL;
+
+	int rc = -1;
+
+	char *tempq = "CREATE OR REPLACE PROCEDURE %s.sp_addlinkedserver( IN \"@server\" sys.sysname,"
+						"IN \"@srvproduct\" sys.nvarchar(128) DEFAULT NULL,"
+						"IN \"@provider\" sys.nvarchar(128) DEFAULT NULL,"
+						"IN \"@datasrc\" sys.nvarchar(4000) DEFAULT NULL,"
+						"IN \"@location\" sys.nvarchar(4000) DEFAULT NULL,"
+						"IN \"@provstr\" sys.nvarchar(4000) DEFAULT NULL,"
+						"IN \"@catalog\" sys.sysname DEFAULT NULL)"
+						"AS \'babelfishpg_tsql\', \'sp_addlinkedserver_internal\'"
+					"LANGUAGE C";
+
+	const char  *dbo_scm = get_dbo_schema_name("master");
+	if (dbo_scm == NULL)
+		elog(ERROR, "Failed to retrieve dbo schema name");
+
+	query = psprintf(tempq, dbo_scm);
+
+	PG_TRY();
+	{
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	}
+	PG_CATCH();
+	{
+		SPI_finish();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	PG_RETURN_INT32(0);
 }

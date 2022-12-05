@@ -3556,6 +3556,7 @@ _PG_init(void)
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
+	tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
 
 	InstallExtendedHooks();
 

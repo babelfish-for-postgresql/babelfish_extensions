@@ -1,0 +1,46 @@
+-- Try to create linked server without tds_fdw installed (Should throw error)
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master';
+GO
+
+-- Install the TDS_FDW extension to enable linked_servers
+
+-- psql
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+-- tsql
+-- Try to create linked server without a valid a provider being available (Should throw error)
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Create linked server with valid provider
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Try to create linked server with same server name (Should throw error)
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Check if the linked server added is reflected in the system view
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers
+GO
+
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login linked_server_login_861 with password = 'password_861'
+GO
+
+-- tsql user=linked_server_login_861 password=password_861
+
+-- Creation of linked_server should fail since only sysadmin will have privilege to create linked server
+-- This will change once T-SQL ALTER ANY LINKED SERVER permission is implemented in babelfish
+EXEC sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Cleanup
+-- tsql
+DROP LOGIN linked_server_login_861
+GO
+
+-- psql
+DROP EXTENSION tds_fdw CASCADE;
+GO
