@@ -22,8 +22,6 @@ bool enable_metadata_inconsistency_check = true;
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
-char* pltsql_default_locale = NULL;
-char* pltsql_server_collation_name = NULL;
 bool  pltsql_ansi_defaults = true;
 bool  pltsql_quoted_identifier = true;
 bool  pltsql_concat_null_yields_null = true;
@@ -84,8 +82,6 @@ char *babelfish_dump_restore_min_oid = NULL;
 bool enable_hint_mapping = true;
 bool enable_pg_hint = false;
 
-static bool check_server_collation_name(char **newval, void **extra, GucSource source);
-static bool check_default_locale (char **newval, void **extra, GucSource source);
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source);
 static bool check_ansi_null_dflt_off (bool *newval, void **extra, GucSource source);
 static bool check_ansi_padding (bool *newval, void **extra, GucSource source);
@@ -127,29 +123,6 @@ static const struct config_enum_entry escape_hatch_options[] = {
 	{"ignore", EH_IGNORE, false},
 	{NULL, EH_NULL, false},
 };
-
-static bool check_server_collation_name(char **newval, void **extra, GucSource source)
-{
-	if (tsql_is_valid_server_collation_name(*newval))
-	{
-		/*
-			* We are storing value in lower case since
-			* Collation names are stored in lowercase into pg catalog (pg_collation).
-			*/
-		char *dupval = pstrdup(*newval);
-		strcpy(*newval, downcase_identifier(dupval, strlen(dupval), false, false));
-		pfree(dupval);
-		return true;
-	}
-	return false;
-}
-
-static bool check_default_locale (char **newval, void **extra, GucSource source)
-{
-	if (tsql_find_locale(*newval) >= 0)
-		return true;
-	return false;
-}
 
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source)
 {
@@ -611,25 +584,6 @@ define_custom_variables(void)
 				 PGC_SUSET,  /* only superuser can set */
 				 GUC_NO_SHOW_ALL,
 				 NULL, NULL, NULL);
-
-	DefineCustomStringVariable("babelfishpg_tsql.server_collation_name",
-				   gettext_noop("Name of the default server collation."),
-				   NULL,
-				   &pltsql_server_collation_name,
-				   "sql_latin1_general_cp1_ci_as",
-				   PGC_SIGHUP,
-				   GUC_NO_RESET_ALL,
-				   check_server_collation_name, NULL, NULL);
-
-
-	DefineCustomStringVariable("babelfishpg_tsql.default_locale",
-				   gettext_noop("The default locale to use when creating a new collation."),
-				   NULL,
-				   &pltsql_default_locale,
-				   "en_US",
-				   PGC_SUSET,  /* only superuser can set */
-				   0,
-				   check_default_locale, NULL, NULL);
 
 	/* ISO standard settings */
 	DefineCustomBoolVariable("babelfishpg_tsql.ansi_defaults",
