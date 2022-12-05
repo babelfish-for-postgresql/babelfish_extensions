@@ -70,15 +70,6 @@ static bool check_restored_server_collation_name(char **newval, void **extra, Gu
 	return check_server_collation_name(newval, extra, source);
 }
 
-static bool check_restored_default_locale (char **newval, void **extra, GucSource source)
-{
-	/* NULL should be treated as valid value for babelfishpg_tsql.restored_default_locale */
-	if (*newval == NULL)
-		return true;
-
-	return check_default_locale(newval, extra, source);
-}
-
 void
 _PG_init(void)
 {

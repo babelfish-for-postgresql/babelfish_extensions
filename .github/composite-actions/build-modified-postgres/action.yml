@@ -3,7 +3,7 @@ inputs:
   engine_branch:
     description: 'Engine Branch'
     required: no
-    default: 'jira-babel-3315'
+    default: 'latest'
   install_dir:
     description: 'Engine install directory'
     required: no
@@ -19,14 +19,14 @@ runs:
         
         if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
           if [[ ${{inputs.engine_branch}} == "latest" ]]; then
-            ENGINE_BRANCH='jira-babel-3315'
+            ENGINE_BRANCH=$GITHUB_HEAD_REF
           else
             ENGINE_BRANCH=${{inputs.engine_branch}}
           fi            
           REPOSITORY_OWNER=$HEAD_OWNER
         else
           if [[ ${{inputs.engine_branch}} == "latest" ]]; then
-            ENGINE_BRANCH='jira-babel-3315'
+            ENGINE_BRANCH=$GITHUB_REF_NAME
           else
             ENGINE_BRANCH=${{inputs.engine_branch}}
           fi
