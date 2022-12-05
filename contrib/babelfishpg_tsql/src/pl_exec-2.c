@@ -694,7 +694,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
 	{
 		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
-			&& (stmt->schema_name[0] == (char)'\0' || strcmp(stmt->schema_name, "dbo") == 0))
+			&& ((!stmt->schema_name || stmt->schema_name[0] == (char)'\0') || strcmp(stmt->schema_name, "dbo") == 0))
 			{
 				new_search_path = psprintf("%s, master_dbo", old_search_path);
 
@@ -706,7 +706,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				need_path_reset = true;
 			}
 	}
-	if (stmt->schema_name[0] != (char)'\0')
+	if (!stmt->schema_name || stmt->schema_name[0] == (char)'\0')
 	 	estate->schema_name = stmt->schema_name;
 	else
 		estate->schema_name = NULL;
