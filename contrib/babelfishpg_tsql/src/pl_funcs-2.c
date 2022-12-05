@@ -326,7 +326,7 @@ pre_function_call_hook_impl(const char *funcName)
 }
 
 int32
-coalesce_typmod_hook_impl(CoalesceExpr *cexpr)
+coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
 {
 	/*
 	 * For T-SQL ISNULL, the typmod depends only on the first argument of
