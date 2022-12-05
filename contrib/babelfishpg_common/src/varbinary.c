@@ -99,8 +99,6 @@ static const int8 hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
-static uint64 babelfish_hex_decode_allow_odd_digits(const char *src, unsigned len, char *dst);
-
 static inline char
 get_hex(char c)
 {
