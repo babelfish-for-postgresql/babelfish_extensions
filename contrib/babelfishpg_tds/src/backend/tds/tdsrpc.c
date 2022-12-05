@@ -606,7 +606,7 @@ SPPrepare(TDSRequestSP req)
 
 	tvp_lookup_list = NIL;
 
-	if (req->nTotalParams)
+	if (req->nTotalParams > 1)
 	    ereport(ERROR,
 	                    (errcode(ERRCODE_PROTOCOL_VIOLATION),
 	                    errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "

@@ -1326,7 +1326,12 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	PLtsql_row * row = NULL;
 	FmgrInfo		flinfo;
 	InlineCodeBlock		*codeblock = makeNode(InlineCodeBlock);
-	FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo(args->numargs));
+
+	/*
+	 * In case of SP_PREPARE via RPC numargs will be 0 so we only
+	 * need to allocate 2 indexes of memory.
+	 */
+	FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo((args) ? args->numargs + 2 : 2));
 
 	/* 
 	 * 1. Build code block to store SQL query 
@@ -1374,7 +1379,7 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 			 */
 
 			/* Safety check */
-			if (fcinfo->nargs > list_length(params))
+			if (fcinfo->nargs > list_length(params) + 2)
 				ereport(ERROR, (errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 						errmsg("cannot pass more than %d arguments to a procedure",
 							   list_length(params))));
