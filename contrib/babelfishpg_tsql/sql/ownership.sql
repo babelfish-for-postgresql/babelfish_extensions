@@ -162,6 +162,14 @@ BEGIN
   GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
   ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
 
+  CREATE OR REPLACE PROCEDURE sys.create_linked_server_procs_in_master_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_linked_server_procs_in_master_dbo_internal';
+
+  CALL sys.create_linked_server_procs_in_master_dbo();
+  ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
+  DROP PROCEDURE sys.create_linked_server_procs_in_master_dbo;
+
 END
 $$;
 
