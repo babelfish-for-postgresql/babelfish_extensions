@@ -9,6 +9,8 @@
 # This should be the first test to check there are no duplicated object_ids
 BABEL-3613
 
+babelfish_cast_floor
+babel_try_parse
 TestBigInt
 TestBinary
 TestBIT
@@ -220,14 +222,21 @@ sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
 sys-sql_modules-dep
+sys-system_sql_modules
 sys-system_sql_modules-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
+sys-proc_param_helper-dep
 BABEL-1756-dep
+BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
+BABEL-SP_SPECIAL_COLUMNS_100-dep
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_SPROC_COLUMNS-dep
+BABEL-SP_SPROC_COLUMNS_100-dep
 BABEL-3000-dep
+Test-sp_helprole-dep
+Test-sp_helprolemember-dep
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
 sys-all_parameters
@@ -273,11 +282,9 @@ sys-syscharsets
 sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
-sys-system_sql_modules
 sys-table_types
 sys-tables
 sys-triggers
-sys-types
 sys-views
 sys-xml_indexes
 sys-xml_schema_collections
@@ -301,5 +308,9 @@ BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
+sys-sysindexes
+sys-system_objects
+ISC-Tables
+ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
