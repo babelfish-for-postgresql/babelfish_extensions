@@ -2,7 +2,7 @@ SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func1' as regproc));
 GO
 ~~START~~
 text
-CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func1("@a" integer, "@b" "varchar" DEFAULT 'abc'::"varchar" COLLATE "default", "@c" money, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func1("@a" integer, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
 ~~END~~
 
 
@@ -10,7 +10,7 @@ SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func2' as regproc));
 GO
 ~~START~~
 text
-CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func2("@a" integer DEFAULT 10, "@b" "varchar" DEFAULT 'abc'::"varchar" COLLATE "default", "@c" money DEFAULT 5, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func2("@a" integer DEFAULT 10, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money DEFAULT 5, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
 ~~END~~
 
 
@@ -26,7 +26,7 @@ SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc1' as regproc));
 GO
 ~~START~~
 text
-CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc1(IN "@a" integer, IN "@b" "varchar" DEFAULT 'abc'::"varchar" COLLATE "default", IN "@c" money DEFAULT 5, IN "@d" double precision)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
+CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc1(IN "@a" integer, IN "@b" "varchar" DEFAULT 'abc'::"varchar", IN "@c" money DEFAULT 5, IN "@d" double precision)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
 ~~END~~
 
 
@@ -34,7 +34,7 @@ SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc2' as regproc));
 GO
 ~~START~~
 text
-CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc2(IN "@a" integer DEFAULT 10, IN "@b" "varchar" DEFAULT 'abc'::"varchar" COLLATE "default", IN "@c" money DEFAULT 5, IN "@d" double precision DEFAULT 1.2)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
+CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc2(IN "@a" integer DEFAULT 10, IN "@b" "varchar" DEFAULT 'abc'::"varchar", IN "@c" money DEFAULT 5, IN "@d" double precision DEFAULT 1.2)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
 ~~END~~
 
 
