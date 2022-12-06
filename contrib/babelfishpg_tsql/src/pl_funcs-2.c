@@ -326,7 +326,7 @@ pre_function_call_hook_impl(const char *funcName)
 }
 
 int32
-coalesce_typmod_hook_impl(CoalesceExpr *cexpr)
+coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
 {
 	/*
 	 * For T-SQL ISNULL, the typmod depends only on the first argument of
@@ -532,6 +532,7 @@ void dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
 void dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
 void dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
 void dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch);
+void get_grantees_names(List *grantees, StringInfo grantees_names);
 
 void
 dump_stmt_print(PLtsql_stmt_print *stmt_print)
@@ -629,13 +630,29 @@ dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb)
 	printf("USE %s\n", stmt_usedb->db_name);
 }
 
+void get_grantees_names(List *grantees, StringInfo grantees_names)
+{	
+	for(int i = 0; i < list_length(grantees); i++)
+	{
+		char *grantee_name = (char *) list_nth(grantees, i);
+		if(i < list_length(grantees) - 1)
+			appendStringInfo(grantees_names, "%s, ", grantee_name);
+		else
+			appendStringInfo(grantees_names, "%s", grantee_name);
+	}
+}
+
 void
 dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb)
-{
+{	
+	StringInfoData grantees_names;
+	initStringInfo(&grantees_names);
+	get_grantees_names(stmt_grantdb->grantees, &grantees_names);
 	if(stmt_grantdb->is_grant)
-		printf("GRANT CONNECT TO %s\n", stmt_grantdb->grantees);
+		printf("GRANT CONNECT TO %s\n", grantees_names.data);
 	else
-		printf("REVOKE CONNECT FROM %s\n", stmt_grantdb->grantees);
+		printf("REVOKE CONNECT FROM %s\n", grantees_names.data);
+	resetStringInfo(&grantees_names);
 }
 
 void

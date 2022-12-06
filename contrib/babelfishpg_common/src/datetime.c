@@ -516,7 +516,7 @@ float8_mi_datetime(PG_FUNCTION_ARGS)
 {	
 	double		days = PG_GETARG_FLOAT8(0);
 	Timestamp	timestamp_right = PG_GETARG_TIMESTAMP(1);
-	double 		day_whole, day_fract, sec_whole;
+	double 		day_whole, day_fract;
 	Timestamp	result;
 	Timestamp	default_timestamp;
 	Timestamp	timestamp_left;
@@ -557,7 +557,7 @@ float8_pl_datetime(PG_FUNCTION_ARGS)
 {	
 	double		days = PG_GETARG_FLOAT8(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
-	double 		day_whole, day_fract, sec_whole;
+	double 		day_whole, day_fract;
 	Interval *input_interval;
 	Timestamp	result;
 	
@@ -586,7 +586,7 @@ datetime_mi_float8(PG_FUNCTION_ARGS)
 {	
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	double		days = PG_GETARG_FLOAT8(1);
-	double 		day_whole, day_fract, sec_whole;
+	double 		day_whole, day_fract;
 	Interval *input_interval;
 	Timestamp	result;
 	

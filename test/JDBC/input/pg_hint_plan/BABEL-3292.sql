@@ -10,7 +10,7 @@ go
 create index index_babel_3292_t1_b1 on babel_3292_t1(b1)
 go
 
-create index index_babel_3292_t1_c1 on babel_3292_t1(c1)
+create index inDex_BABEL_3292_T1_c1 on babel_3292_t1(c1)
 go
 
 create table babel_3292_t2(a2 int PRIMARY KEY, b2 int, c2 int)
@@ -74,6 +74,9 @@ select * from babel_3292_t1 with(index(index_babel_3292_t1_b1), index(index_babe
 go
 
 select * from babel_3292_t1 where b1 = 1 and c1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1), index(index_babel_3292_t1_c1)))
+go
+
+select * from BABEL_3292_t1 where b1 = 1 and c1 = 1 option(table hint(Babel_3292_t1, index(IndeX_BABEL_3292_t1_b1), index(Index_baBel_3292_t1_C1)))
 go
 
 -- Test with multiple tables
@@ -149,6 +152,9 @@ with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=i
 go
 
 with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+
+with BaBeL_3292_T1_CTE (a1, b1, c1) as (select * from BABEL_3292_t1 with(index=INDEX_BABEL_3292_T1_B1) where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
 go
 
 -- Limitation: Hint given on a CTE is not applied
