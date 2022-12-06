@@ -37,7 +37,7 @@ EXEC sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=
 GO
 
 -- Cleanup
--- tsql
+-- tsql user=jdbc_user password=12345678
 DROP LOGIN linked_server_login_861
 GO
 

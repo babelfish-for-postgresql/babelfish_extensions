@@ -62,7 +62,7 @@ GO
 
 
 -- tsql
--- Cleanup
+-- tsql user=jdbc_user password=12345678
 DROP LOGIN linked_server_login_861
 GO
 
