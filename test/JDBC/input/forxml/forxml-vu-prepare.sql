@@ -104,41 +104,20 @@ begin
 end;
 go
 
-execute p_employee_select;
-go
-drop procedure p_employee_select;
-go
-
 -- Test for xml in procedure with parameters
-create procedure p_employee_select @minsal MONEY, @maxsal MONEY as
+create procedure p_employee_select2 @minsal MONEY, @maxsal MONEY as
 begin
 	select * from employees where sal > @minsal and sal < @maxsal
 	for xml path('Employee');
 end;
 go
 
-execute p_employee_select 150, 300;
-go
-
 -- Test for xml in create view
-create view v1 (col1) as select * from t1 for xml raw, type;
-go
-
-select * from v1;
-go
-
--- Test for xml on view with xml column
-select * from v1 for xml path;
+create view forxml_vu_v1 (col1) as select * from t1 for xml raw, type;
 go
 
 -- Test for xml on pure relational view
-create view v2 (col1, col2) as select * from t1;
-go
-
-select * from v2 for xml path;
-go
-
-drop view v1, v2;
+create view forxml_vu_v2 (col1, col2) as select * from t1;
 go
 
 -- Test for xml and union all
@@ -150,19 +129,23 @@ select a from t1 for xml raw ('t1') UNION ALL select a from t2 for xml raw ('t2'
 go
 
 -- For xml can access CTE from same query block
+create view forxml_vu_v_cte1 as
 with cte as (select a from t1)
 select * from cte for xml raw;
 go
 
--- BABEL-1202: For xml subquery can't access CTE from outer query block
+-- BABEL-1202: For xml subquery can't access CTE from outer query block - fixed
+create view forxml_vu_v_cte2 as
 with cte as (select a from t1)
 select * from t2, (select * from cte for xml raw) as t3(colxml);
 go
 
+create view forxml_vu_v_cte3 as
 with cte as (select a from t1)
 select (select * from cte for xml raw) as colxml, * from t2;
 go
 
+create view forxml_vu_v_cte4 as
 with
 cte1 as (select * from t1),
 cte2 as (select a from cte1 for xml raw)
@@ -188,6 +171,7 @@ INSERT INTO employees2 VALUES (9, 'Kate', 3);
 INSERT INTO employees2 VALUES (10, 'Terry', 4);
 GO
 
+CREATE VIEW forxml_vu_v_with AS
 WITH managertree AS (
   SELECT id, name, manager_id
   FROM employees2
@@ -201,6 +185,7 @@ SELECT *
 FROM managertree mt;
 GO
 
+CREATE VIEW forxml_vu_v_with_where AS
 WITH managertree AS (
   SELECT id, name, manager_id
   FROM employees2
@@ -216,36 +201,44 @@ GO
 
 -- BABEL-1178, data type of variable is lost during variable binding in FORMAT
 -- function
-create procedure test_forxml @pid int as
+create procedure test_forxml_datalength @pid int as
 declare @a int, @b smallint;
 set @a = 1;
 set @b = 1;
 select a, datalength(@a), datalength(@b) from t1 where id = @pid for xml raw;
 go
 
--- datalength(@b) should be 2. But the data type of @b is lost during the
--- query transformation for FOR XML, so we end up getting a wrong length.
-exec test_forxml 1;
-go
-
 -- test string variable can be binded with for xml query
 create procedure test_forxml_strvar @pid int, @str varchar(10) as
 select * from t1 where id = @pid and a = @str for xml raw;
 go
-exec test_forxml_strvar 1, 't1_a1';
-go
--- test NULL parameter
--- TODO fix BABEL-3569 so this returns 0 rows
-exec test_forxml_strvar 1, NULL;
+
+-- BABEL-1876, FOR XML in correlated subquery
+create view forxml_vu_v_correlated_subquery as
+select a, (select * from t2 where id = t.id for xml raw) as mycol from t1 t
 go
 
--- clean up
-drop table t1;
-drop table t2;
-drop table MyTable;
-drop table employees;
-drop procedure p_employee_select;
-drop table employees2;
-drop procedure test_forxml;
-drop procedure test_forxml_strvar;
+-- test internal functions for upgrade
+create view forxml_vu_v_tsql_query_to_xml_sfunc as
+select tsql_query_to_xml_sfunc(
+	NULL,
+	row,
+	0,
+	NULL,
+	FALSE,
+	NULL
+)
+FROM (SELECT TOP 1 * FROM employees) row
 go
+
+CREATE VIEW forxml_vu_v_tsql_query_to_xml_ffunc AS
+SELECT tsql_query_to_xml_ffunc(
+	'<row />'
+)
+GO
+
+CREATE VIEW forxml_vu_v_tsql_query_to_xml_text_ffunc AS
+SELECT tsql_query_to_xml_text_ffunc(
+	'<row />'
+)
+GO

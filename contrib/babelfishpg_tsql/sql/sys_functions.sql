@@ -1,5 +1,5 @@
 -- SELECT FOR XML
-CREATE OR REPLACE FUNCTION tsql_query_to_xml_sfunc(
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
 	state TEXT,
 	rec ANYELEMENT,
     mode int,
@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION tsql_query_to_xml_sfunc(
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C COST 100;
 
-CREATE OR REPLACE FUNCTION tsql_query_to_xml_ffunc(
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
 	state TEXT
 )
 RETURNS XML AS
@@ -30,7 +30,7 @@ END;
 $$
 LANGUAGE PLPGSQL STRICT;
 
-CREATE OR REPLACE FUNCTION tsql_query_to_xml_text_ffunc(
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
 	state TEXT
 )
 RETURNS NTEXT AS
@@ -50,7 +50,7 @@ END;
 $$
 LANGUAGE PLPGSQL STRICT;
 
-CREATE OR REPLACE AGGREGATE tsql_select_for_xml_agg(
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     rec ANYELEMENT,
     mode int,
     element_name text,
@@ -62,7 +62,7 @@ CREATE OR REPLACE AGGREGATE tsql_select_for_xml_agg(
 	FINALFUNC = tsql_query_to_xml_ffunc
 );
 
-CREATE OR REPLACE AGGREGATE tsql_select_for_xml_text_agg(
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     rec ANYELEMENT,
     mode int,
     element_name text,
@@ -75,7 +75,7 @@ CREATE OR REPLACE AGGREGATE tsql_select_for_xml_text_agg(
 );
 
 -- SELECT FOR JSON
-CREATE OR REPLACE FUNCTION tsql_query_to_json_sfunc(
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
 	state TEXT,
 	rec ANYELEMENT,
 	mode INT,
@@ -86,12 +86,13 @@ CREATE OR REPLACE FUNCTION tsql_query_to_json_sfunc(
 AS 'babelfishpg_tsql', 'tsql_query_to_json_sfunc'
 LANGUAGE C COST 100;
 
-CREATE OR REPLACE FUNCTION tsql_query_to_json_ffunc(
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
 	state TEXT
 )
 RETURNS sys.NVARCHAR AS
 $$
 BEGIN
+-- check for array wrapper
 IF (left(state, 1) = '[') 
 THEN 
     RETURN state || ']';
@@ -106,7 +107,7 @@ END;
 $$
 LANGUAGE PLPGSQL STRICT;
 
-CREATE OR REPLACE AGGREGATE tsql_select_for_json_agg(
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
     rec ANYELEMENT,
     mode INT,
     include_null_values BOOLEAN,
