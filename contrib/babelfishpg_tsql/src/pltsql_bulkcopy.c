@@ -881,8 +881,8 @@ BeginBulkCopy(Relation rel,
 
 	cstate->multiInsertInfo.multiInsertBuffers = NIL;
 	cstate->multiInsertInfo.bufferedTuples = 0;
-	cstate->multiInsertInfo.cstate = NIL;
-	cstate->multiInsertInfo.estate = NIL;
+	cstate->multiInsertInfo.cstate = NULL;
+	cstate->multiInsertInfo.estate = NULL;
 	cstate->multiInsertInfo.mycid = 0;
 	cstate->multiInsertInfo.ti_options = 0;
 

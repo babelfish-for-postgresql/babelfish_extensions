@@ -8,6 +8,7 @@
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "miscadmin.h"
 
 #define PLTSQL_SESSION_ISOLATION_LEVEL "default_transaction_isolation"
 #define PLTSQL_TRANSACTION_ISOLATION_LEVEL "transaction_isolation"

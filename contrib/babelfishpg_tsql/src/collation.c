@@ -50,7 +50,7 @@ PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
- 
+
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation);
 Datum init_server_collation(PG_FUNCTION_ARGS) 
@@ -720,7 +720,6 @@ bool
 has_ilike_node_and_ci_as_coll(Node *expr)
 {
 	List 		*queue;
-	ListCell 	*lc = NULL;
 	
 	if(expr == NULL)
 		return false;

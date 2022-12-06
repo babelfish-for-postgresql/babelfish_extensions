@@ -152,7 +152,7 @@ AUTO_INCREMENT INT, LOCAL_TYPE_NAME VARCHAR(20),
 MINIMUM_SCALE INT, MAXIMUM_SCALE INT, SQL_DATA_TYPE INT,
 SQL_DATETIME_SUB INT, NUM_PREC_RADIX INT, INTERVAL_PRECISION INT,
 USERTYPE INT, LENGTH INT, SS_DATA_TYPE SYS.TINYINT, 
--- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
+-- below column is added in order to join information_schema.columns of PG for sys.sp_columns_100_view
 PG_TYPE_NAME VARCHAR(20)
 );
 GRANT SELECT ON sys.spt_datatype_info_table TO PUBLIC;
@@ -1916,7 +1916,7 @@ FROM information_schema.referential_constraints AS map
 
 -- join unique constraints (e.g. PKs constraints) to ref columns info
 INNER JOIN information_schema.key_column_usage AS ref
-	JOIN pg_catalog.pg_class p1 -- Need to join this in order to get oid for pkey's original bbf name
+	JOIN pg_catalog.pg_class p1 -- Need to join this in order to get oid for original bbf name of pkey
     JOIN sys.pg_namespace_ext p2 ON p1.relnamespace = p2.oid
     JOIN information_schema.columns p4 ON p1.relname = p4.table_name AND p1.relnamespace::regnamespace::text = p4.table_schema
     JOIN pg_constraint p5 ON p1.oid = p5.conrelid
@@ -1939,11 +1939,11 @@ INNER JOIN pg_catalog.pg_class t1
     JOIN pg_constraint t5 ON t1.oid = t5.conrelid
     ON (t1.relname=fk.table_name AND t4.column_name=fk.column_name AND fk.table_schema = t2.nspname AND fk.table_schema = t4.table_schema)
     
--- get foreign key's original bbf name
+-- get original bbf name for foreign key
 JOIN pg_catalog.pg_attribute fkname_table
 	ON (t1.oid = fkname_table.attrelid) AND (fk.column_name = fkname_table.attname)
 
--- get primary key's original bbf name
+-- get original bbf name for primary key
 JOIN pg_catalog.pg_attribute pkname_table
 	ON (p1.oid = pkname_table.attrelid) AND (ref.column_name = pkname_table.attname)
 	
@@ -2788,7 +2788,7 @@ FROM
   NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
   FROM bbf_proc p
 ) ss
-LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left join'd because return type of table-valued functions may not have an entry in sys.types
+LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left joined because return type of table-valued functions may not have an entry in sys.types
 -- Because spt_datatype_info_table does contain user-defind types and their names,
 -- the join below allows us to retrieve the name of the base type of the user-defined type
 LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);

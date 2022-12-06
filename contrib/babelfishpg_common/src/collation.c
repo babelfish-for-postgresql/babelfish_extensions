@@ -1057,9 +1057,6 @@ get_collation_oid_internal(char *collation_name)
 Oid
 get_server_collation_oid_internal(bool missingOk)
 {
-	Oid nspoid;
-	int collidx;
-	const char *collname;
 
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
@@ -1147,13 +1144,13 @@ bool collation_is_CI_AS(Oid colloid)
 
 bool has_ilike_node(Node *expr)
 {	
+	OpExpr	 *op;
 	Assert(IsA(expr, OpExpr));
 	
-	OpExpr	 *op = (OpExpr *) expr;
+	op = (OpExpr *) expr;
 	for(int i = 0; i < TOTAL_LIKE_OP_COUNT; i++)
 	{
-		if(strncmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name, 
-				sizeof(like_ilike_table[i].ilike_op_name)) == 0)
+		if(strcmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name) == 0)
 		{
 			return true;
 		}
@@ -1259,11 +1256,12 @@ tdscollationproperty_helper(const char *collationname, const char *property)
 			 *	Below code converts ret into 5 bytes
 			 */
 			int maxlen = 5;
-			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
-			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
-			char *rp = VARDATA(bytea_data);
+			char *rp;
 			bytea        *result;
 			svhdr_3B_t   *svhdr;
+			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
+			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
+			rp = VARDATA(bytea_data);
 
 			memcpy(rp, (char *) &ret , maxlen);
 
@@ -1321,13 +1319,13 @@ void BabelfishPreCreateCollation_hook(
 	const char *collversion
 	)
 {
+	const char *collcollate = *pCollcollate;
+	const char *collctype = *pCollctype;
+	
 	/* This hook should only be called when dialect is tsql. */
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
-
-	const char *collcollate = *pCollcollate;
-	const char *collctype = *pCollctype;
-
+	
 	if (NULL != prev_PreCreateCollation_hook)
 	{
 		(*prev_PreCreateCollation_hook)(collprovider,
