@@ -1,0 +1,8 @@
+-- Check if the linked server added is reflected in the system view
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#bit
+mssql_server#!#SQL Server#!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
+~~END~~
+
