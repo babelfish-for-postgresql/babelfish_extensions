@@ -16,6 +16,17 @@ GO
 exec pg_sleep 1;
 GO
 
+-- should time out for execution_time = statement_timeout
+exec pg_sleep 3;
+GO
+
+exec pg_sleep 2.9;
+GO
+
+-- psql
+-- should throw error as negative values aren't permitted 
+ALTER SYSTEM SET statement_timeout=-1000;
+GO
 -- psql
 -- reset guc value to default
 
@@ -26,4 +37,9 @@ SELECT pg_reload_conf();
 GO
 
 SELECT pg_sleep(1);
+GO
+
+-- tsql
+-- no timeout for t = 0
+exec pg_sleep 0;
 GO

@@ -295,7 +295,7 @@ GetTDSRequest(bool *resetProtocol)
 
 		/*
 		 * Enable statement timeout. Note we add this function here to
-		 * include the time taken by the protocol in the timeout
+		 * include the time taken by the protocol in the timeout.
 		 */
 		enable_statement_timeout();
 
@@ -421,6 +421,7 @@ ProcessTDSRequest(TDSRequest request)
 		int token_type;
 		int command_type = TDS_CMD_UNKNOWN;
 
+		disable_statement_timeout();
 		CommitTransactionCommand();
 		MemoryContextSwitchTo(MessageContext);
 
