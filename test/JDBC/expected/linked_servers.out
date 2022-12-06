@@ -65,10 +65,6 @@ GO
 -- Cleanup
 DROP LOGIN linked_server_login_861
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Could not drop login 'linked_server_login_861' as the user is currently logged in.)~~
-
 
 -- psql
 DROP EXTENSION tds_fdw CASCADE;
