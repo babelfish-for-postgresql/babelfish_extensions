@@ -1729,10 +1729,10 @@ static const struct currencyformat
 /*
  * Functions related to FORMAT() function in string.c
  */
-static int set_culture(char *valid_culture, const char *config_name, char *culture);
-static char *format_validate_and_culture(char *culture, const char *config_name);
+static int set_culture(char *valid_culture, const char *config_name, const char *culture);
+static char *format_validate_and_culture(const char *culture, const char *config_name);
 static int format_datetimeformats(StringInfo buf, const char *format_pattern, const char *culture, const char *data_type, const char *data_val);
-static int process_format_pattern(StringInfo buf, char *msg_string, char *data_type);
+static int process_format_pattern(StringInfo buf, const char *msg_string, const char *data_type);
 static void data_to_char(Datum data, Oid data_type, StringInfo buf);
 
 static char *get_currency_sign_format(const char *culture, int positive);

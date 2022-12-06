@@ -311,8 +311,6 @@ int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
 static Datum
 TdsAnyToServerEncodingConversion(pg_enc encoding, char *str, int len, uint8_t tdsColDataType)
 {
-	Oid 		typinput;
-	Oid 		typioparam;
 	char 		*pstring;
 	Datum 		pval;
 	int			actualLen;
@@ -2110,7 +2108,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 							values[i] = TdsTypeVarbinaryToDatum(temp);
 							argtypes[i] = tempFuncInfo->ttmtypeid;
 						break;
-						case TDS_RECV_DATE:
+						case TDS_TYPE_DATE:
 							values[i] = TdsTypeDateToDatum(temp);
 						break;
 						case TDS_TYPE_TIME:

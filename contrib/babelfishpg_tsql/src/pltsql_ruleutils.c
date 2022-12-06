@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "pltsql.h"
 
 #include "access/amapi.h"
 #include "access/htup_details.h"
@@ -349,6 +350,9 @@ int tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
 int adjustTypmod(Oid oid, int typmod);
+static void tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args);
+
+PG_FUNCTION_INFO_V1(tsql_get_constraintdef);
 
 /*
  * tsql_get_constraintdef
@@ -373,7 +377,6 @@ tsql_get_constraintdef(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
-PG_FUNCTION_INFO_V1(tsql_get_constraintdef);
 
 /*
  * tsql_get_functiondef
@@ -392,7 +395,6 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 {
 	Oid			funcid = PG_GETARG_OID(0);
 	StringInfoData buf;
-	StringInfoData dq;
 	HeapTuple      proctup;
 	Form_pg_proc proc;
 	bool		isfunction;
@@ -402,10 +404,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	const char *name;
 	const char *nsp;
 	const char *nnsp;
-	int	oldlen;
 	bool has_tvp = false;
-        int* typmod_arr = NULL;
-        int number_args;
+	int* typmod_arr = NULL;
+	int number_args;
+	char *probin_c = NULL;
 
 	/* Look up the function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
@@ -432,24 +434,34 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 		appendStringInfoString(&buf, "(");
 	
 	/* we will not pfree name because as we can see name = NameStr(proc->proname) 
-         * here we are not allocating extra space for name, we’re just using proc-> proname.
-         * also at the end, we’re releasing proctup (that will free proc->proname).  
-         */
-	pfree(nsp);
+	 * here we are not allocating extra space for name, we’re just using proc-> proname.
+	 * also at the end, we’re releasing proctup (that will free proc->proname).  
+	 */
+	pfree((char *) nsp);
 	if (nnsp)
-		pfree(nnsp);
-        
+		pfree((char *) nnsp);
+
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
-        number_args = proc->pronargs;
-        if(isfunction) number_args++;
+
+	if (!isnull)
+		probin_c = TextDatumGetCString(tmp);
+	if(!probin_c || probin_c[0] != '{')
+		PG_RETURN_NULL();
+	
+	number_args = proc->pronargs;
+	if (isfunction)
+		number_args++;
 	/* Return NULL for the definition if procedure language is not pltsql. */
 	if(strcmp(get_language_name(proc->prolang, false), "pltsql") != 0)
 		PG_RETURN_NULL();
-       	probin_json_reader(tmp, &typmod_arr, number_args);
+
+	probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
+	pfree(probin_c);
 	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr, &has_tvp);
 	/* TODO: In case of Table Valued Functions, return NULL. */
 	if (has_tvp)
 		PG_RETURN_NULL();
+
 	if(isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, ")");
 	if (isfunction)
@@ -457,26 +469,24 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 		appendStringInfoString(&buf, " RETURNS ");
 		tsql_print_function_rettype(&buf, proctup, &typmod_arr, number_args);
 	}
-        if(typmod_arr)
+	if(typmod_arr)
 		pfree(typmod_arr);
  
 	/* Emit some miscellaneous options on one line */
-	oldlen = buf.len;
-
-        if (proc->proisstrict)
+	if (proc->proisstrict)
 		appendStringInfoString(&buf, " WITH RETURNS NULL ON NULL INPUT");
 
 	/* And finally the function definition ... */
 	(void) SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosqlbody, &isnull);
 	
-        appendStringInfoString(&buf, " AS ");
+	appendStringInfoString(&buf, " AS ");
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
 	prosrc = TextDatumGetCString(tmp); 
 	appendStringInfoString(&buf, prosrc);
 
 	ReleaseSysCache(proctup);
 
-        pfree(prosrc);
+	pfree((char *) prosrc);
 
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
@@ -493,6 +503,7 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
         bool            isfunction;
         Datum           tmp;
         bool       isnull;
+        char *probin_c = NULL;
         int* typmod_arr = NULL;
         int number_args;
 
@@ -511,11 +522,17 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
         }
 
         tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
+
+        if (!isnull)
+            probin_c = TextDatumGetCString(tmp);
+        if(!probin_c || probin_c[0] != '{')
+            PG_RETURN_INT32(-1);
+
         number_args = proc->pronargs;
         number_args++;  
 
-        probin_json_reader(tmp, &typmod_arr, number_args);
-
+        probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
+        pfree(probin_c);
         if (typmod_arr[number_args-1] != -1)
                typmod_arr[number_args-1] += adjustTypmod(proc->prorettype, typmod_arr[number_args-1]);
         
@@ -669,7 +686,7 @@ tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
  * Guts of pg_get_function_result: append the function's return type
  * to the specified buffer.
  */
-void
+static void
 tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);

@@ -1600,7 +1600,7 @@ typedef struct PLtsql_protocol_plugin
 
 	char* (*pltsql_get_login_default_db) (char *login_name);
 
-	error_map_details_t * (*get_mapped_error_list) (void);
+	void* (*get_mapped_error_list) (void);
 
 	int* (*get_mapped_tsql_error_code_list) (void);
 
@@ -1626,6 +1626,10 @@ typedef struct PLtsql_protocol_plugin
 	void* (*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
 
 	void* (*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
+
+	char* (*get_cur_db_name) ();
+
+	char* (*get_physical_schema_name) (char *db_name, const char *schema_name);
 	
 } PLtsql_protocol_plugin;
 
@@ -1690,8 +1694,6 @@ extern plansource_revalidate_hook_type prev_plansource_revalidate_hook;
 extern pltsql_nextval_hook_type prev_pltsql_nextval_hook;
 extern pltsql_resetcache_hook_type prev_pltsql_resetcache_hook;
 
-extern char *pltsql_default_locale;
-
 extern int  pltsql_variable_conflict;
 
 /* extra compile-time checks */
@@ -1729,9 +1731,6 @@ extern bool last_error_mapping_failed;
 
 extern int fetch_status_var;
 extern int pltsql_proc_return_code;
-
-extern char* pltsql_server_collation_name;
-extern char* pltsql_default_locale;
 
 extern char* pltsql_version;
 
@@ -1856,9 +1855,10 @@ extern Oid pltsql_exec_get_datum_type(PLtsql_execstate *estate,
 extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 								 PLtsql_datum *datum,
 								 Oid *typeId, int32 *typMod, Oid *collation);
-								 
-extern int get_insert_bulk_rows_per_batch();
-extern int get_insert_bulk_kilobytes_per_batch();
+
+extern int get_insert_bulk_rows_per_batch(void);
+extern int get_insert_bulk_kilobytes_per_batch(void);
+
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -1884,7 +1884,7 @@ extern const char *pltsql_getdiag_kindname(PLtsql_getdiag_kind kind);
 extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
-extern int32 coalesce_typmod_hook_impl(CoalesceExpr *cexpr);
+extern int32 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr);
 
 /*
  * Scanner functions in pl_scanner.c
@@ -2028,6 +2028,7 @@ bool pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p,
 void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char** probin_str_p);
 void pltsql_function_probin_reader(ParseState *pstate,
 						List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
+extern void probin_json_reader(text* probin, int** typmod_arr_p, int typmod_arr_len);
 
 /*
  * This variable is set to true, if setval should behave in T-SQL way, i.e.,
