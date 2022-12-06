@@ -167,7 +167,7 @@ FaultInjectionDisableTest(FaultInjectorEntry_s *entry)
 		foreach(lc, list)
 		{
 			if (entry == (FaultInjectorEntry_s *) lfirst(lc))
-				list_delete_cell(list, lc);
+				list = list_delete_cell(list, lc);
 		}
 	}
 
