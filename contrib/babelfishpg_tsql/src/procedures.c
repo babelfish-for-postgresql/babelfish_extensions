@@ -1308,8 +1308,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		"WHEN T2.name COLLATE sys.database_default = \'varchar\' AND C.max_length = -1 THEN 65535 "
 		"WHEN T2.name COLLATE sys.database_default IN (\'decimal\', \'numeric\') THEN 17 "
 		"WHEN T2.name COLLATE sys.database_default = \'xml\' THEN 8100 "
-		"WHEN T2.name COLLATE sys.database_default in (\'image\', \'text\') THEN 2147483647"
-		"WHEN T2.name COLLATE sys.database_default = \'ntext\' THEN 2147483646"
+		"WHEN T2.name COLLATE sys.database_default in (\'image\', \'text\') THEN 2147483647 "
+		"WHEN T2.name COLLATE sys.database_default = \'ntext\' THEN 2147483646 "
 		"ELSE CAST( C.max_length AS INT ) "
 	"END " /* AS "suggested_tds_length" */
 "FROM sys.objects O, sys.columns C, sys.types T, sys.types T2 "
