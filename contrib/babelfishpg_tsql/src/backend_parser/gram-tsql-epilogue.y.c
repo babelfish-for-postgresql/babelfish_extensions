@@ -1260,7 +1260,7 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause)
 	}
 
 	/*
-	 * Finally make funtion call to tsql_query_to_xml or tsql_query_to_xml_text
+	 * Finally make function call to tsql_query_to_xml or tsql_query_to_xml_text
 	 * depending on the return_xml_type flag (TYPE option in the FOR XML clause).
 	 * The only difference of the two functions is the return type. tsql_query_to_xml
 	 * returns XML type, tsql_query_to_xml_text returns text type.
@@ -1335,7 +1335,7 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
 	}
 	
 	/*
-	 * Finally make funtion call to tsql_query_to_json_text
+	 * Finally make function call to tsql_query_to_json_text
 	 */
 	func_name= list_make2(makeString("sys"), makeString("tsql_select_for_json_agg"));
 	func_args = list_make5(makeColumnRef("rows", NIL, -1, NULL),
