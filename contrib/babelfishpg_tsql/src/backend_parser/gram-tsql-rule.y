@@ -1364,7 +1364,7 @@ select_no_parens:
 			select_clause tsql_for_xml_clause
 				{
 					/*
-					 * rewrite the query as "SELECT tsql_select_for_xml_agg(row, ...) from (select_clause) row"
+					 * rewrite the query as "SELECT tsql_select_for_xml_agg(rows, ...) FROM (select_clause) AS rows"
 					 */
 					SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 					stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $2));
@@ -1421,7 +1421,7 @@ select_no_parens:
 			| select_clause tsql_for_json_clause
 				{
 					/*
-					 * rewrite the query as "SELECT tsql_select_for_json_agg(row, ...) from (select_clause) row"
+					 * rewrite the query as "SELECT tsql_select_for_json_agg(rows, ...) FROM (select_clause) AS rows"
 					 */
 					SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 					stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $2));

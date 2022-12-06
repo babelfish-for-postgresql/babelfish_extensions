@@ -65,10 +65,10 @@ tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 	{
 		case TSQL_FORJSON_AUTO:
 			/*
-			* TODO FOR JSON AUTO: if there are joined tables, we need to know
-			* which table a particular column came from, but that is currently
-			* not accessible within the aggregate function.
-			*/
+			 * TODO FOR JSON AUTO: if there are joined tables, we need to know
+			 * which table a particular column came from, but that is currently
+			 * not accessible within the aggregate function.
+			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("AUTO mode is not supported")));

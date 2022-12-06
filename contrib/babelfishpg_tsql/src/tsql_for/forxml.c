@@ -132,10 +132,10 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bo
 		datatype_oid = att->atttypid;
 
 		/* 
-		* Below is a workaround for is_tsql_x_datatype() which does not work as expected.
-		* We compare the datatype oid of the columns with the tsql_datatype_oid and
-		* then specially handle some TSQL-specific datatypes.
-		*/
+		 * Below is a workaround for is_tsql_x_datatype() which does not work as expected.
+		 * We compare the datatype oid of the columns with the tsql_datatype_oid and
+		 * then specially handle some TSQL-specific datatypes.
+		 */
 		typename = SPI_gettype(tupdesc, i+1);
 		nspoid = get_namespace_oid("sys", true);
 		Assert(nspoid != InvalidOid);
@@ -143,9 +143,9 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bo
 		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
 	
 		/*
-		* tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
-		* but with the same name. Examples: bigint, int, etc.
-		*/
+		 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
+		 * but with the same name. Examples: bigint, int, etc.
+		 */
 		if (tsql_datatype_oid == datatype_oid)
 		{
 			/* binary datatypes are not supported with binary_base64 */
@@ -159,9 +159,9 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bo
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								errmsg("option binary base64 is not supported")));
 			/*
-			* convert datetime, smalldatetime, and datetime2 to appropriate text values, 
-			* as T-SQL has a different text conversion than postgres.
-			*/
+			 * convert datetime, smalldatetime, and datetime2 to appropriate text values, 
+			 * as T-SQL has a different text conversion than postgres.
+			 */
 			else if (strcmp(typename, "datetime")  == 0 ||
 				strcmp(typename, "smalldatetime") == 0 ||
 				strcmp(typename, "datetime2") == 0)
@@ -174,10 +174,10 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bo
 				datatype_oid = CSTRINGOID;
 			}
 			/*
-			* datetimeoffset has two behaviors:
-			* if offset is 0, just return the datetime with 'Z' at the end
-			* otherwise, append the offset
-			*/
+			 * datetimeoffset has two behaviors:
+			 * if offset is 0, just return the datetime with 'Z' at the end
+			 * otherwise, append the offset
+			 */
 			else if (strcmp(typename, "datetimeoffset") == 0)
 			{
 				char *val = SPI_getvalue(tuple, tupdesc, i+1);
@@ -248,10 +248,10 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 		datatype_oid = att->atttypid;
 
 		/* 
-		* Below is a workaround for is_tsql_x_datatype() which does not work as expected.
-		* We compare the datatype oid of the columns with the tsql_datatype_oid and
-		* then specially handle some TSQL-specific datatypes.
-		*/
+		 * Below is a workaround for is_tsql_x_datatype() which does not work as expected.
+		 * We compare the datatype oid of the columns with the tsql_datatype_oid and
+		 * then specially handle some TSQL-specific datatypes.
+		 */
 		typename = SPI_gettype(tupdesc, i+1);
 		nspoid = get_namespace_oid("sys", true);
 		Assert(nspoid != InvalidOid);
@@ -259,9 +259,9 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
 	
 		/*
-		* tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
-		* but with the same name. Examples: bigint, int, etc.
-		*/
+		 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
+		 * but with the same name. Examples: bigint, int, etc.
+		 */
 		if (tsql_datatype_oid == datatype_oid)
 		{
 			/* binary datatypes are not supported */
@@ -275,9 +275,9 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								errmsg("option binary base64 is not supported")));
 			/*
-			* convert datetime, smalldatetime, and datetime2 to appropriate text values, 
-			* as T-SQL has a different text conversion than postgres.
-			*/
+			 * convert datetime, smalldatetime, and datetime2 to appropriate text values, 
+			 * as T-SQL has a different text conversion than postgres.
+			 */
 			else if (strcmp(typename, "datetime")  == 0 ||
 				strcmp(typename, "smalldatetime") == 0 ||
 				strcmp(typename, "datetime2") == 0)
@@ -290,10 +290,10 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 				datatype_oid = CSTRINGOID;
 			}
 			/*
-			* datetimeoffset has two behaviors:
-			* if offset is 0, just return the datetime with 'Z' at the end
-			* otherwise, append the offset
-			*/
+			 * datetimeoffset has two behaviors:
+			 * if offset is 0, just return the datetime with 'Z' at the end
+			 * otherwise, append the offset
+			 */
 			else if (strcmp(typename, "datetimeoffset") == 0)
 			{
 				char *val = SPI_getvalue(tuple, tupdesc, i+1);
@@ -326,4 +326,42 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 	}
 	else if (element_name[0] != '\0')
 		appendStringInfo(state, "</%s>", element_name);
+}
+
+PG_FUNCTION_INFO_V1(tsql_query_to_xml);
+Datum
+tsql_query_to_xml(PG_FUNCTION_ARGS)
+{
+	/*
+	 * This function has been deprecated as of v2.4.
+	 * However, we cannot remove this function entirely because
+	 * it exists in PG13. Without this function, MVU from PG13 to PG14 will fail.
+	 *
+	 * Removing the procedure sys.tsql_query_to_xml() during pg_dump
+	 * cannot be an option because other user-defined procedures
+	 * are able to refer this function as well.
+	 */
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This function has been deprecated.")));
+	PG_RETURN_INT32(0);
+}
+
+PG_FUNCTION_INFO_V1(tsql_query_to_xml_text);
+Datum
+tsql_query_to_xml_text(PG_FUNCTION_ARGS)
+{
+	/*
+	 * This function has been deprecated as of v2.4.
+	 * However, we cannot remove this function entirely because
+	 * it exists in PG13. Without this function, MVU from PG13 to PG14 will fail.
+	 *
+	 * Removing the procedure sys.tsql_query_to_xml_text() during pg_dump
+	 * cannot be an option because other user-defined procedures
+	 * are able to refer this function as well.
+	 */
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This function has been deprecated.")));
+	PG_RETURN_INT32(0);
 }

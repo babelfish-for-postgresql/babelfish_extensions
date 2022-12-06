@@ -61,8 +61,8 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_
 
 -- SELECT FOR XML
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
-	state TEXT,
-	rec ANYELEMENT,
+    state TEXT,
+    rec ANYELEMENT,
     mode int,
     element_name text,
     binary_base64 boolean,
@@ -72,7 +72,7 @@ AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
 LANGUAGE C COST 100;
 
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
-	state TEXT
+    state TEXT
 )
 RETURNS XML AS
 $$
@@ -92,7 +92,7 @@ $$
 LANGUAGE PLPGSQL STRICT;
 
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
-	state TEXT
+    state TEXT
 )
 RETURNS NTEXT AS
 $$
@@ -118,9 +118,9 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     binary_base64 boolean,
     root_name text)
 (
-	STYPE = TEXT,
-	SFUNC = tsql_query_to_xml_sfunc,
-	FINALFUNC = tsql_query_to_xml_ffunc
+    STYPE = TEXT,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
 );
 
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
@@ -130,25 +130,25 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     binary_base64 boolean,
     root_name text)
 (
-	STYPE = TEXT,
-	SFUNC = tsql_query_to_xml_sfunc,
-	FINALFUNC = tsql_query_to_xml_text_ffunc
+    STYPE = TEXT,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
 );
 
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
-	state TEXT,
-	rec ANYELEMENT,
-	mode INT,
-	include_null_values BOOLEAN,
-	without_array_wrapper BOOLEAN,
-	root_name TEXT
+    state TEXT,
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT
 ) RETURNS TEXT
 AS 'babelfishpg_tsql', 'tsql_query_to_json_sfunc'
 LANGUAGE C COST 100;
 
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
-	state TEXT
+    state TEXT
 )
 RETURNS sys.NVARCHAR AS
 $$
@@ -175,9 +175,9 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
     without_array_wrapper BOOLEAN,
     root_name TEXT)
 (
-	STYPE = TEXT,
-	SFUNC = tsql_query_to_json_sfunc,
-	FINALFUNC = tsql_query_to_json_ffunc
+    STYPE = TEXT,
+    SFUNC = tsql_query_to_json_sfunc,
+    FINALFUNC = tsql_query_to_json_ffunc
 );
 
 

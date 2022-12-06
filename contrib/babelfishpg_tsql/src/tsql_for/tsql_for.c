@@ -11,7 +11,7 @@
 
 /*
  * This function handles the format for datetime datatypes by converting the output
- * into required format for SELECT FOR JSON PATH. For example:
+ * into required format for SELECT FOR JSON/XML. For example:
  * "2022-11-11 20:56:22.41" -> "2022-11-11T20:56:22.41" for datetime, datetime2 & smalldatetime
  */
 void
@@ -32,7 +32,7 @@ tsql_for_datetime_format(StringInfo format_output, char *outputstr)
 
 /*
  * This function handles the format for datetimeoffset datatype by converting the output
- * into required format for SELECT FOR JSON PATH. For example:
+ * into required format for SELECT FOR JSON/XML. For example:
  * "2022-11-11 22:25:01.015 +00:00" -> "2022-11-11T22:25:01.015Z"
  * "2022-11-11 12:34:56 +02:30" -> "2022-11-11T12:34:56+02:30"
  */
