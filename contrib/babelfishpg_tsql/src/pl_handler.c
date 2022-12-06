@@ -1743,8 +1743,10 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid tsqlSeqTypOid;
 	TypeName *type_def;
 	List* type_names;
+	List* new_type_names;
 	AclResult aclresult;
 	Oid base_type;
+	int list_len;
 	if (prev_pltsql_sequence_datatype_hook)
 		prev_pltsql_sequence_datatype_hook(pstate,
 										   newtypid,
@@ -1758,8 +1760,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 
 	type_def = defGetTypeName(as_type);
 	type_names = type_def->names;
-	List* new_type_names;
-	int list_len = list_length(type_names);
+	list_len = list_length(type_names);
 
 	switch (list_len)
 	{
