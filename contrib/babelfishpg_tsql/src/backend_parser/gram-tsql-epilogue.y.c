@@ -1355,7 +1355,7 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
 }
 
 static RangeSubselect *
-TsqlForClauseSubselect(SelectStmt *selectstmt)
+TsqlForClauseSubselect(Node *selectstmt)
 {
 	RangeSubselect *rss = makeNode(RangeSubselect);
 	rss->subquery = selectstmt;

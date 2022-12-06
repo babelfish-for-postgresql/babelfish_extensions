@@ -18,6 +18,7 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "catalog/pg_type.h"
+#include "catalog/namespace.h"
 
 #include "tsql_for.h"
 
@@ -28,17 +29,23 @@ PG_FUNCTION_INFO_V1(tsql_query_to_json_sfunc);
 Datum
 tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 {
+	StringInfo	state;
+	Datum		record;
+	int			mode;
+	bool		include_null_values;
+	bool		without_array_wrapper;
+	char		*root_name;
 	for (int i=1; i < PG_NARGS()-1; i++)
 	{
 		if PG_ARGISNULL(i) 
 			PG_RETURN_NULL();
 	}
-	StringInfo state = makeStringInfo();
-	Datum record = PG_GETARG_DATUM(1);
-	int mode = PG_GETARG_INT32(2);
-	bool include_null_values = PG_GETARG_BOOL(3);
-	bool without_array_wrapper = PG_GETARG_BOOL(4);
-	char *root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
+	state = makeStringInfo();
+	record = PG_GETARG_DATUM(1);
+	mode = PG_GETARG_INT32(2);
+	include_null_values = PG_GETARG_BOOL(3);
+	without_array_wrapper = PG_GETARG_BOOL(4);
+	root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 	if (PG_ARGISNULL(0))
 	{
 		/* first time setup */
@@ -206,7 +213,7 @@ tsql_row_to_json(StringInfo state, Datum record, bool include_null_values)
 			}
 		}
 
-		appendStringInfo(state,sep);
+		appendStringInfoString(state,sep);
 		sep = ",";
 		tsql_json_build_object(state, CStringGetDatum(colname), colval, datatype_oid, isnull);
 

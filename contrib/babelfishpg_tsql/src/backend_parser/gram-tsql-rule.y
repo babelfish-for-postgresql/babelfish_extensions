@@ -1368,7 +1368,7 @@ select_no_parens:
 					 */
 					SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 					stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $2));
-					stmt->fromClause = list_make1(TsqlForClauseSubselect((SelectStmt *) $1));
+					stmt->fromClause = list_make1(TsqlForClauseSubselect($1));
 					$$ = (Node *) stmt;
 				}
 			| select_clause sort_clause tsql_for_xml_clause
@@ -1382,7 +1382,7 @@ select_no_parens:
 					{
 						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 						stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $3));
-						stmt->fromClause = list_make1(TsqlForClauseSubselect((SelectStmt *) $1));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($1));
 						$$ = (Node *) stmt;
 					}
 				}
@@ -1398,7 +1398,7 @@ select_no_parens:
 					{
 						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 						stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $3));
-						stmt->fromClause = list_make1(TsqlForClauseSubselect((SelectStmt *) $2));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($2));
 						$$ = (Node *) stmt;
 					}
 				}
@@ -1414,7 +1414,7 @@ select_no_parens:
 					{
 						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 						stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $4));
-						stmt->fromClause = list_make1(TsqlForClauseSubselect((SelectStmt *) $2));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($2));
 						$$ = (Node *) stmt;
 					}
 				}
@@ -1425,7 +1425,7 @@ select_no_parens:
 					 */
 					SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 					stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $2));
-					stmt->fromClause = list_make1(TsqlForClauseSubselect((SelectStmt *) $1));
+					stmt->fromClause = list_make1(TsqlForClauseSubselect($1));
 					$$ = (Node *) stmt;
 				}
 			| select_clause sort_clause tsql_for_json_clause
@@ -1439,7 +1439,7 @@ select_no_parens:
 					{
 						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 						stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $3));
-						stmt->fromClause = list_make1(TsqlForClauseSubselect((SelectStmt *) $1));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($1));
 						$$ = (Node *) stmt;
 					}
 				}
@@ -1455,7 +1455,7 @@ select_no_parens:
 					{
 						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 						stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $3));
-						stmt->fromClause = list_make1(TsqlForClauseSubselect((SelectStmt *) $2));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($2));
 						$$ = (Node *) stmt;
 					}
 				}
@@ -1471,7 +1471,7 @@ select_no_parens:
 					{
 						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
 						stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $4));
-						stmt->fromClause = list_make1(TsqlForClauseSubselect((SelectStmt *) $2));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($2));
 						$$ = (Node *) stmt;
 					}
 				}

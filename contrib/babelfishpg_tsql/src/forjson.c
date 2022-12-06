@@ -9,7 +9,6 @@
 
 #include "executor/spi.h"
 #include "fmgr.h"
-#include "src/forjson.h"
 #include "utils/guc.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
@@ -19,6 +18,8 @@
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
 #include "catalog/namespace.h"
+
+#include "tsql_for.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
 								bool without_array_wrapper, const char *root_name);

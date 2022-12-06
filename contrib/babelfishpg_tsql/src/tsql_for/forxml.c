@@ -18,6 +18,7 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "catalog/pg_type.h"
+#include "catalog/namespace.h"
 
 #include "tsql_for.h"
 
@@ -29,12 +30,12 @@ PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
 Datum
 tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 {
-	StringInfo state = makeStringInfo();
-	Datum record = PG_GETARG_DATUM(1);
-	int 	mode = PG_GETARG_INT32(2);
-	char 	*element_name = PG_ARGISNULL(3) ? "row" : text_to_cstring(PG_GETARG_TEXT_PP(3));
-	bool 	binary_base64 = PG_GETARG_BOOL(4);
-	char 	*root_name = PG_ARGISNULL(5) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(5));
+	StringInfo	state = makeStringInfo();
+	Datum		record = PG_GETARG_DATUM(1);
+	int			mode = PG_GETARG_INT32(2);
+	char		*element_name = PG_ARGISNULL(3) ? "row" : text_to_cstring(PG_GETARG_TEXT_PP(3));
+	bool		binary_base64 = PG_GETARG_BOOL(4);
+	char		*root_name = PG_ARGISNULL(5) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(5));
 	if (PG_ARGISNULL(0))
 	{
 		/* first time setup */
@@ -46,7 +47,6 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	{
 		appendStringInfoString(state, TextDatumGetCString(PG_GETARG_TEXT_PP(0)));
 	}
-	int i;
 	switch (mode)
 	{
 		case TSQL_FORXML_RAW: /* FOR XML RAW */
@@ -210,7 +210,6 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 	TupleDesc		tupdesc;
 	HeapTupleData 	tmptup;
 	HeapTuple		tuple;
-	char  			*sep="";
 	bool 			allnull = true;
 
 	td = DatumGetHeapTupleHeader(record);

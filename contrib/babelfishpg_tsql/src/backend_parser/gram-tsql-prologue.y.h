@@ -40,7 +40,7 @@ static Node *TsqlFunctionChoose(Node *int_expr, List *choosable, int location);
 static void tsql_check_param_readonly(const char* paramname, TypeName *typename, bool readonly);
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause);
 static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause);
-static RangeSubselect *TsqlForClauseSubselect(SelectStmt *selectstmt);
+static RangeSubselect *TsqlForClauseSubselect(Node *selectstmt);
 
 char * construct_unique_index_name(char *index_name, char *relation_name);
 
