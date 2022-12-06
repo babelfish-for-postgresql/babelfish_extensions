@@ -133,27 +133,3 @@ t1_a2#!#<row id="2" a="t2_a2"/>
 <NULL>#!#<row id="3"/>
 ~~END~~
 
-
-select * from forxml_vu_v_tsql_query_to_xml_sfunc;
-go
-~~START~~
-text
-<row pers_id="1" fname="John" lname="Johnson" sal="123.1234"/>
-~~END~~
-
-
-select * from forxml_vu_v_tsql_query_to_xml_ffunc;
-go
-~~START~~
-xml
-<row />
-~~END~~
-
-
-select * from forxml_vu_v_tsql_query_to_xml_text_ffunc;
-go
-~~START~~
-ntext
-<row />
-~~END~~
-

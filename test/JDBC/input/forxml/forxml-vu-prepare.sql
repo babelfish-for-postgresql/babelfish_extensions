@@ -217,28 +217,3 @@ go
 create view forxml_vu_v_correlated_subquery as
 select a, (select * from t2 where id = t.id for xml raw) as mycol from t1 t
 go
-
--- test internal functions for upgrade
-create view forxml_vu_v_tsql_query_to_xml_sfunc as
-select tsql_query_to_xml_sfunc(
-	NULL,
-	row,
-	0,
-	NULL,
-	FALSE,
-	NULL
-)
-FROM (SELECT TOP 1 * FROM employees) row
-go
-
-CREATE VIEW forxml_vu_v_tsql_query_to_xml_ffunc AS
-SELECT tsql_query_to_xml_ffunc(
-	'<row />'
-)
-GO
-
-CREATE VIEW forxml_vu_v_tsql_query_to_xml_text_ffunc AS
-SELECT tsql_query_to_xml_text_ffunc(
-	'<row />'
-)
-GO

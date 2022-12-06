@@ -138,7 +138,9 @@ BABEL-383
 BABEL-405
 BABEL-937
 forjson
+forjson-datatypes
 forxml
+forxml-func-call
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
