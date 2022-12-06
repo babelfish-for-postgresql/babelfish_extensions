@@ -13,6 +13,15 @@ GO
 DROP VIEW atn2_vu_prepare_v5;
 GO
 
+DROP VIEW atn2_vu_prepare_v6;
+GO
+
+DROP VIEW atn2_vu_prepare_v7;
+GO
+
+DROP VIEW atn2_vu_prepare_v8;
+GO
+
 DROP PROCEDURE atn2_vu_prepare_p1;
 GO
 
@@ -33,3 +42,7 @@ GO
 
 DROP PROCEDURE atn2_vu_prepare_p7;
 GO
+
+DROP PROCEDURE atn2_vu_prepare_p8;
+GO
+

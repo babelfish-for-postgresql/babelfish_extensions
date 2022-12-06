@@ -37,9 +37,18 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
 AS
 $$
-    SELECT PG_CATALOG.atan2(x, y);
+DECLARE
+    res SYS.FLOAT;
+BEGIN
+    IF x = 0 AND y = 0 THEN
+        RAISE EXCEPTION 'An invalid floating point operation occurred.';
+    ELSE
+        res = PG_CATALOG.atan2(x, y);
+        RETURN res;
+    END IF;
+END;
 $$
-LANGUAGE sql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
 
 
 -- Drops the temporary procedure used by the upgrade script.

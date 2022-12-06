@@ -43,6 +43,15 @@ GO
 CREATE VIEW atn2_vu_prepare_v5 AS (SELECT ATN2(1.79E+308, 1));
 GO
 
+-- throws error when input is (0, 0)
+CREATE VIEW atn2_vu_prepare_v6 AS (SELECT ATN2(0, 0));
+GO
+
+CREATE VIEW atn2_vu_prepare_v7 AS (SELECT ATN2(-0, -0));
+GO
+
+CREATE VIEW atn2_vu_prepare_v8 AS (SELECT ATN2(0.0, 0.0));
+GO
 
 -- test in procedures
 CREATE PROCEDURE atn2_vu_prepare_p1 AS 
@@ -92,19 +101,31 @@ END
 GO
 
 -- returns NULL when input is NULL
-CREATE PROCEDURE atn2_vu_prepare_p3 AS (SELECT ATN2(NULL, 1));
-GO
-
-CREATE PROCEDURE atn2_vu_prepare_p4 AS (SELECT ATN2(1, NULL));
-GO
-
-CREATE PROCEDURE atn2_vu_prepare_p5 AS (SELECT ATN2(NULL, NULL));
+CREATE PROCEDURE atn2_vu_prepare_p3 
+    @x FLOAT = NULL,
+    @y FLOAT = 1
+AS 
+BEGIN
+    SELECT ATN2(@x, @y);
+    SELECT ATN2(@y, @x);
+    SELECT ATN2(@x, @x);
+END
 GO
 
 -- expect float overflow
-CREATE PROCEDURE atn2_vu_prepare_p6 AS (SELECT ATN2(1.79E+309, 1));
+CREATE PROCEDURE atn2_vu_prepare_p4 AS (SELECT ATN2(1.79E+309, 1));
 GO
 
 -- won't over flow
-CREATE PROCEDURE atn2_vu_prepare_p7 AS (SELECT ATN2(1.79E+308, 1));
+CREATE PROCEDURE atn2_vu_prepare_p5 AS (SELECT ATN2(1.79E+308, 1));
+GO
+
+-- throws error when input is (0, 0)
+CREATE PROCEDURE atn2_vu_prepare_p6 AS (SELECT ATN2(0, 0));
+GO
+
+CREATE PROCEDURE atn2_vu_prepare_p7 AS (SELECT ATN2(-0, -0));
+GO
+
+CREATE PROCEDURE atn2_vu_prepare_p8 AS (SELECT ATN2(0.0, 0.0));
 GO
