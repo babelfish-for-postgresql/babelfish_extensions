@@ -2801,7 +2801,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
 	char		message[128];
 	char	   *old_db_name;
-	char	   *original_name;
+	char	   *original_name = stmt->db_name;
 	int16		old_db_id;
 	int16		new_db_id;
 	PLExecStateCallStack *top_es_entry;
@@ -2813,8 +2813,13 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	old_db_name = get_cur_db_name();
 	old_db_id = get_cur_db_id();
 	new_db_id = get_db_id(stmt->db_name);
-	original_name = get_db_original_name(stmt->db_name);
+	
+	if(strcmp(original_name,"master")!=0 && strcmp(original_name,"msdb")!=0 && strcmp(original_name,"tempdb")!=0)
+	{
+		original_name = get_db_original_name(stmt->db_name);
 
+	}
+	
 	if (!DbidIsValid(new_db_id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
