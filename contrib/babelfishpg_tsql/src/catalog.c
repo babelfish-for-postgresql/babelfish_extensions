@@ -941,7 +941,7 @@ get_authid_user_ext_db_users(const char *db_name)
 char *
 get_user_for_database(const char *db_name)
 {
-	const char		*user = NULL;
+	char		*user = NULL;
 	const char		*login;
 	bool			login_is_db_owner;
 
@@ -955,12 +955,12 @@ get_user_for_database(const char *db_name)
 
 		datdba = get_role_oid("sysadmin", false);
 		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
-			user = get_dbo_role_name(db_name);
+			user = (char *) get_dbo_role_name(db_name);
 		else
 		{
 			/* Get the guest role name only if the guest is enabled on the current db.*/
-			if (guest_has_dbaccess(db_name))
-				user = get_guest_role_name(db_name);
+			if (guest_has_dbaccess((char *) db_name))
+				user = (char *) get_guest_role_name(db_name);
 			else
 				user = NULL;
 		}
@@ -1065,7 +1065,7 @@ check_is_tsql_view(Oid relid)
 		pfree(view_name);
 		pfree(schema_name);
 		if (logical_schema_name)
-			pfree(logical_schema_name);
+			pfree((char *) logical_schema_name);
 		return false;
 	}
 	/* Fetch the relation */
@@ -1081,7 +1081,7 @@ check_is_tsql_view(Oid relid)
 	table_close(bbf_view_def_rel, AccessShareLock);
 	pfree(view_name);
 	pfree(schema_name);
-	pfree(logical_schema_name);
+	pfree((char *) logical_schema_name);
 	return is_tsql_view;
 }
 
@@ -1147,7 +1147,7 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 	HeapTuple	 bbffunctuple;
 	Form_pg_proc form;
 	char		 *physical_schemaname;
-	char		 *func_signature;
+	const char		 *func_signature;
 
 	/* Disallow extended catalog lookup during restore */
 	if (!HeapTupleIsValid(proctuple) || babelfish_dump_restore)
@@ -1186,7 +1186,7 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 								   CStringGetTextDatum(func_signature));
 
 	pfree(physical_schemaname);
-	pfree(func_signature);
+	pfree((char *) func_signature);
 
 	return bbffunctuple;
 }
@@ -1315,8 +1315,9 @@ static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_o
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
-static void create_guest_role_for_db(char *dbname);
-static char *get_db_owner_role_name(char *dbname);
+static void create_guest_role_for_db(const char *dbname);
+static char *get_db_owner_role_name(const char *dbname);
+
 
 /*****************************************
  * 			Catalog Extra Info
@@ -1397,7 +1398,7 @@ Rule must_match_rules_sysdb[] =
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_multidb, check_exist, NULL},
 	{"In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
-         "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, !is_multidb, check_exist, NULL}
+         "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_singledb_exists_userdb, check_exist, NULL}
 };
 
 /* babelfish_namespace_ext */
@@ -1842,6 +1843,7 @@ is_multidb(void)
 	return (MULTI_DB == get_migration_mode());
 }
 
+
 /*****************************************
  * 			Rule validation funcs
  *****************************************/
@@ -2144,7 +2146,7 @@ Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 }
 
 bool
-guest_role_exists_for_db(char *dbname)
+guest_role_exists_for_db(const char *dbname)
 {
 	const char 	*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
@@ -2179,7 +2181,7 @@ guest_role_exists_for_db(char *dbname)
 }
 
 static void
-create_guest_role_for_db(char *dbname)
+create_guest_role_for_db(const char *dbname)
 {
 	const char		*guest = get_guest_role_name(dbname);
 	const char		*db_owner_role = get_db_owner_role_name(dbname);
@@ -2202,7 +2204,7 @@ create_guest_role_for_db(char *dbname)
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
-	pfree(db_owner_role);
+	pfree((char *) db_owner_role);
 
 	if (list_length(logins) > 0)
 	{
@@ -2274,7 +2276,7 @@ create_guest_role_for_db(char *dbname)
  * migration mode GUC.
  */
 static char *
-get_db_owner_role_name(char *dbname)
+get_db_owner_role_name(const char *dbname)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;

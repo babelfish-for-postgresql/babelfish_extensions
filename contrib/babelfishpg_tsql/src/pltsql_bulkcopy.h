@@ -1,3 +1,22 @@
+#include "access/heapam.h"
+
+typedef struct BulkCopyStateData *BulkCopyState;
+
+/*
+ * Stores one or many CopyMultiInsertBuffers and details about the size and
+ * number of tuples which are stored in them.  This allows multiple buffers to
+ * exist at once when COPYing into a partitioned table.
+ */
+typedef struct CopyMultiInsertInfo
+{
+	List	   *multiInsertBuffers; /* List of tracked CopyMultiInsertBuffers */
+	int			bufferedTuples; /* number of tuples buffered over all buffers */
+	BulkCopyState cstate;		/* Bulk Copy state for this CopyMultiInsertInfo */
+	EState	   *estate;			/* Executor state used for BULK COPY */
+	CommandId	mycid;			/* Command Id used for BULK COPY */
+	int			ti_options;		/* table insert options */
+} CopyMultiInsertInfo;
+
 /*
  * This struct contains all the state variables used throughout a BULK COPY
  * operation.
@@ -7,6 +26,12 @@ typedef struct BulkCopyStateData
 	Relation	rel;			/* relation to insert into */
 	List	   *attnumlist;		/* integer list of attnums to insert */
 
+	EState	   *estate;
+	CommandId	mycid;
+	BulkInsertState bistate;
+	CopyMultiInsertInfo multiInsertInfo;
+	ResultRelInfo *resultRelInfo;
+	ResultRelInfo *target_resultRelInfo;
 
 	/* these are just for error messages, see BulkCopyErrorCallback */
 	const char *cur_relname;	/* table name for error messages */
@@ -26,7 +51,6 @@ typedef struct BulkCopyStateData
 	int			rv_index;		/* index for a rowversion datatype column */
 
 } BulkCopyStateData;
-typedef struct BulkCopyStateData *BulkCopyState;
 
 /* ----------------------
  *  Bulk Copy Statement

@@ -1,0 +1,45 @@
+
+select * from information_schema.domains where DOMAIN_SCHEMA = 'isc_domains_vu_prepare_s' ORDER BY DOMAIN_NAME
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#nvarchar#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar
+master#!#isc_domains_vu_prepare_s#!#bigint_t#!#bigint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#19#!#10#!#0#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#binary_t#!#binary#!#8#!#8#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#bit_t#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#char_t#!#char#!#10#!#10#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#date_t#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#datetime_t#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#datetime2_t#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#datetimeoffset_t#!#datetimeoffset#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#image_t#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#int_t#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#money_t#!#money#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#19#!#10#!#4#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#my_tbl_type#!#table type#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#nchar_t#!#char#!#9#!#9#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#ntext_t#!#ntext#!#1073741823#!#2147483646#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#numeric_t#!#numeric#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#10#!#3#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#nvarchar_t#!#nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#real_t#!#real#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#24#!#2#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#smalldatetime_t#!#smalldatetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#smallint_t#!#smallint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#smallmoney_t#!#smallmoney#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#4#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#sql_variant_t#!#sql_variant#!#0#!#0#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#text_t#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#time_t#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#tinyint_t#!#tinyint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#varbinary_t#!#varbinary#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#varchar_t#!#nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Test cross db references
+use isc_domains_vu_prepare_db
+go
+
+select COUNT(*) from information_schema.domains
+go
+~~START~~
+int
+0
+~~END~~
+

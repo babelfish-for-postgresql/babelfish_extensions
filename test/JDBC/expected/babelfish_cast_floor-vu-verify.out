@@ -1,0 +1,65 @@
+select * from babelfish_cast_floor_bigint_v
+GO
+~~START~~
+bigint
+123
+~~END~~
+
+
+select * from babelfish_cast_floor_int_v
+GO
+~~START~~
+int
+123
+~~END~~
+
+
+select * from babelfish_cast_floor_smallint_v
+GO
+~~START~~
+smallint
+123
+~~END~~
+
+
+select * from babelfish_cast_floor_bigint_f();
+GO
+~~START~~
+bigint
+123
+~~END~~
+
+
+select * from babelfish_cast_floor_int_f();
+GO
+~~START~~
+int
+123
+~~END~~
+
+
+select * from babelfish_cast_floor_smallint_f();
+GO
+~~START~~
+smallint
+123
+~~END~~
+
+
+DROP VIEW babelfish_cast_floor_bigint_v;
+GO
+
+DROP VIEW babelfish_cast_floor_int_v;
+GO
+
+DROP VIEW babelfish_cast_floor_smallint_v;
+GO
+
+DROP FUNCTION babelfish_cast_floor_bigint_f()
+GO
+
+DROP FUNCTION babelfish_cast_floor_int_f()
+GO
+
+DROP FUNCTION babelfish_cast_floor_smallint_f()
+GO

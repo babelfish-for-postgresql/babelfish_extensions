@@ -8,6 +8,5 @@
 # This should be the first test to check there are no duplicated object_ids
 BABEL-3613
 
-
 BABEL-CHECK-CONSTRAINT-before-14_6
 sys_server_principals_dep_for_13_x

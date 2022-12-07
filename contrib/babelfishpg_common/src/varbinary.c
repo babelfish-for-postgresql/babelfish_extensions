@@ -116,7 +116,7 @@ get_hex(char c)
 }
 
 /* A variant of PG's hex_decode function, but allows odd number of hex digits */
-uint64
+static uint64
 babelfish_hex_decode_allow_odd_digits(const char *src, unsigned len, char *dst)
 {
 	const char *s,
