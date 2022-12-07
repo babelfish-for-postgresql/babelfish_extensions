@@ -3029,6 +3029,7 @@ BEGIN
 	-- SELECT @count, @ = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 	-- SELECT @count = COUNT(*), @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 	-- WHERE s1.name = @schemaname AND o1.name = @subname GROUP BY o1.object_id;
+	-- TODO: testing by ssh again
 	SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 	WHERE s1.name = @schemaname AND o1.name = @subname;
 	SELECT @count = COUNT(*) FROM #tempTable;
