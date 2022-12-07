@@ -1738,7 +1738,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid tsqlSeqTypOid;
 	TypeName *type_def;
 	List* type_names;
-	List* new_type_names;
+	List* new_type_names = NULL;
 	AclResult aclresult;
 	Oid base_type;
 	int list_len;
