@@ -53,6 +53,18 @@ GO
 ~~ERROR (Message: Only fully qualified domain name or IP address are allowed as data source)~~
 
 
+-- Create a linked server login with @useself = TRUE (Should throw error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'TRUE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only @useself = FALSE is supported)~~
+
+
+-- Create a linked server login with @useself = FALSE
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
 -- Creating a simple login which has lesser privilege than sysadmin role
 create login linked_server_login_861 with password = 'password_861'
 GO
