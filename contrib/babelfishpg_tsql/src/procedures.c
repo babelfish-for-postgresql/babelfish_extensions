@@ -56,6 +56,7 @@ PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
+PG_FUNCTION_INFO_V1(sp_dropserver_internal);
 PG_FUNCTION_INFO_V1(create_linked_server_procs_in_master_dbo_internal);
 
 extern void delete_cached_batch(int handle);
@@ -2187,11 +2188,44 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	return (Datum) 0;
 }
 
+Datum
+sp_dropserver_internal(PG_FUNCTION_ARGS)
+{
+	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *droplogins = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(1));
+
+	DropStmt *stmt = makeNode(DropStmt);
+
+	List *objects = list_make1(makeString(linked_srv));
+	stmt->objects = objects;
+
+	stmt->removeType = OBJECT_FOREIGN_SERVER;
+	stmt->missing_ok = false;
+	stmt->concurrent = false;
+
+	if (droplogins == NULL)
+	{
+		stmt->behavior = DROP_RESTRICT;
+	}
+	else
+	{
+		if (strncmp(droplogins, "droplogins", 10) == 0)
+			stmt->behavior = DROP_CASCADE;
+		else
+			elog(ERROR, "invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.");
+	}
+
+	RemoveObjects(stmt);
+
+	return (Datum) 0;
+}
+
 /*
  * Internal function to create the following procedures related to T-SQL linked
  * servers in master.dbo schema:
  *   - sp_addlinkedserver
  *   - sp_addlinkedsrvlogin
+ *   - sp_dropserver
  * Some applications invoke this referencing master.dbo.<one of the above stored procedures>
  */
 Datum
@@ -2199,6 +2233,7 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 {
 	char *query = NULL;
 	char *query2 = NULL;
+	char *query3 = NULL;
 
 	int rc = -1;
 
@@ -2220,12 +2255,18 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 						"AS \'babelfishpg_tsql\', \'sp_addlinkedsrvlogin_internal\'"
 					"LANGUAGE C";
 
+	char *tempq3 = "CREATE OR REPLACE PROCEDURE %s.sp_dropserver( IN \"@server\" sys.sysname,"
+						"IN \"@droplogins\" char(10) DEFAULT NULL)"
+						"AS \'babelfishpg_tsql\', \'sp_dropserver_internal\'"
+					"LANGUAGE C;";
+
 	const char  *dbo_scm = get_dbo_schema_name("master");
 	if (dbo_scm == NULL)
 		elog(ERROR, "Failed to retrieve dbo schema name");
 
 	query = psprintf(tempq, dbo_scm);
 	query2 = psprintf(tempq2, dbo_scm);
+	query3 = psprintf(tempq3, dbo_scm);
 
 	PG_TRY();
 	{
@@ -2236,6 +2277,9 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_execute(query2, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query3, false, 1)) < 0)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)

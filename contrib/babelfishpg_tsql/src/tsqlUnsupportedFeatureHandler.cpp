@@ -1547,7 +1547,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_droplinkedsrvlogin",
 	"sp_droplogin",
 	"sp_dropremotelogin",
-	"sp_dropserver",
 	"sp_dropsrvrolemember",
 	"sp_dropuser",
 	"sp_generate_database_ledger_digest",
