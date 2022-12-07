@@ -1,0 +1,102 @@
+SELECT radians(a), radians(b), radians(c), radians(d), radians(e) from BABEL_3781_vu_prepare_t_1 
+GO
+~~START~~
+int#!#float#!#bigint#!#int#!#int
+<NULL>#!#0.17668666149639395#!#59#!#1#!#<NULL>
+34#!#<NULL>#!#650#!#-5#!#1
+10#!#3.4924038332406533#!#1120#!#<NULL>#!#3
+5#!#4.033455901358895#!#<NULL>#!#1#!#3
+3#!#3.6669367584400865#!#1120#!#<NULL>#!#3
+22#!#0.001762782544514273#!#<NULL>#!#1#!#<NULL>
+1#!#0.3508111796508603#!#1706#!#<NULL>#!#1
+4#!#7.873180255746421#!#<NULL>#!#15#!#1
+~~END~~
+
+
+SELECT * FROM BABEL_3781_vu_prepare_t_2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM BABEL_3781_vu_prepare_t_3
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+SELECT * FROM BABEL_3781_vu_prepare_t_4
+GO
+~~START~~
+int
+571
+~~END~~
+
+
+EXECUTE BABEL_3781_vu_prepare_t_p1
+GO
+~~START~~
+int#!#int#!#int#!#int
+1#!#4#!#2#!#<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3781_vu_prepare_t_p2
+GO
+~~START~~
+int#!#int#!#int#!#int
+2#!#-571#!#99#!#571
+~~END~~
+
+
+EXECUTE BABEL_3781_vu_prepare_t_p3
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+3#!#-3#!#650534#!#152964#!#<NULL>#!#1
+~~END~~
+
+
+EXECUTE BABEL_3781_vu_prepare_t_p4
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+3#!#-37480660#!#4#!#15#!#<NULL>
+~~END~~
+
+
+SELECT * FROM BABEL_3781_vu_prepare_t_v1
+GO
+~~START~~
+int#!#int#!#int#!#int
+1#!#1#!#4#!#<NULL>
+~~END~~
+
+
+SELECT * FROM BABEL_3781_vu_prepare_t_v2
+GO
+~~START~~
+int#!#int#!#int#!#int
+15#!#-1#!#99#!#571
+~~END~~
+
+
+SELECT * FROM BABEL_3781_vu_prepare_t_v3
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+3#!#-3#!#650534#!#152964#!#<NULL>#!#1
+~~END~~
+
+
+SELECT * FROM BABEL_3781_vu_prepare_t_v4
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+21#!#-21#!#39#!#15#!#<NULL>
+~~END~~
+
