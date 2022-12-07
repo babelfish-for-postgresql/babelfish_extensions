@@ -610,8 +610,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			/* detect object type */
 			GrantStmt	*grant = (GrantStmt *) parseTree->stmt;
 			ListCell	*cell;
-			List	*plan_name;
-			ObjectWithArgs *func;
+			List	*plan_name = NIL;
+			ObjectWithArgs *func = NULL;
 
 			Assert(list_length(grant->objects) == 1);
 			foreach(cell, grant->objects)
@@ -1744,7 +1744,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid tsqlSeqTypOid;
 	TypeName *type_def;
 	List* type_names;
-	List* new_type_names;
+	List* new_type_names = NULL;
 	AclResult aclresult;
 	Oid base_type;
 	int list_len;

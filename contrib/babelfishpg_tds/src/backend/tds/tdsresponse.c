@@ -433,7 +433,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 		case T_OpExpr:
 		{
 			OpExpr *op = (OpExpr *) expr;
-			Node *arg1, *arg2;
+			Node *arg1, *arg2 = NULL;
 			int32 typmod1 = -1, typmod2 = -1;
 			uint8_t scale1, scale2, precision1, precision2;
 			uint8_t scale, precision;
