@@ -2757,11 +2757,11 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 		obj_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 		new_name = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 		schema_name = PG_ARGISNULL(2) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(2));
-		objtype =  PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
+		objtype = PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
 		curr_relname =  PG_ARGISNULL(4) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(4));
 
 		//3. check if the input arguments are valid, and parse the objname
-		// objname can have at most 3 parts
+		// objname can have at most 3 parts;
 		if (obj_name == NULL)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Procedure or function 'sp_rename' expects parameter '@objname', which was not supplied.")));
