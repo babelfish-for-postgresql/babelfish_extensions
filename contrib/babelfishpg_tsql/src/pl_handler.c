@@ -87,6 +87,7 @@ extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
+extern bool pltsql_nocount;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -3521,6 +3522,7 @@ _PG_init(void)
 	/* If a protocol extension is loaded, initialize the inline handler. */
 	if (*pltsql_protocol_plugin_ptr)
 	{
+		(*pltsql_protocol_plugin_ptr)->pltsql_nocount_addr = &pltsql_nocount;
 		(*pltsql_protocol_plugin_ptr)->sql_batch_callback = &pltsql_inline_handler;
 		(*pltsql_protocol_plugin_ptr)->sp_executesql_callback = &pltsql_inline_handler;
         (*pltsql_protocol_plugin_ptr)->sp_prepare_callback = &sp_prepare;
