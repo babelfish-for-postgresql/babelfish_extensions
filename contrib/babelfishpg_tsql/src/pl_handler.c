@@ -1783,7 +1783,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	typname = typeTypeName(typ);
 	type_def->names = type_names;
 
-	if(new_type_names)
+	if(list_len > 1)
 		list_free(new_type_names);
 
 	aclresult = pg_type_aclcheck(*newtypid, GetUserId(), ACL_USAGE);
