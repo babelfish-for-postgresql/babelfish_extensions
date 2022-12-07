@@ -2941,6 +2941,7 @@ static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt * plan;
+	//PLtsql_execstate *estate = NULL;
 	PLtsql_execstate *estate;
 
 	if (pltsql_explain_analyze)

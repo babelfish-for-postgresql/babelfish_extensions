@@ -1537,7 +1537,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 	Oid restype;
 	int32 restypmod;
 	char *querystr;
-	int ret;
+	int ret = 0;
 
 	switch(stmt->sp_type_code)
 	{
