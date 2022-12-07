@@ -89,25 +89,25 @@ select id, (select id, (select a from t2 for xml path, type) as col1 from t1 for
 go
 
 -- Test simple for xml path in procedure
-create table employees(
+create table forxml_vu_t_employees(
 pers_id int,
 fname nvarchar(20),
 lname nvarchar(20),
 sal money);
-insert into employees values (1, 'John', 'Johnson', 123.1234);
-insert into employees values (2, 'Max', 'Welch', 200.1234);
+insert into forxml_vu_t_employees values (1, 'John', 'Johnson', 123.1234);
+insert into forxml_vu_t_employees values (2, 'Max', 'Welch', 200.1234);
 go
 
 create procedure p_employee_select as
 begin
-	select * from employees for xml path;
+	select * from forxml_vu_t_employees for xml path;
 end;
 go
 
 -- Test for xml in procedure with parameters
 create procedure p_employee_select2 @minsal MONEY, @maxsal MONEY as
 begin
-	select * from employees where sal > @minsal and sal < @maxsal
+	select * from forxml_vu_t_employees where sal > @minsal and sal < @maxsal
 	for xml path('Employee');
 end;
 go
@@ -153,32 +153,32 @@ select * from cte2;
 go
 
 -- Test for xml and recursive CTE
-CREATE TABLE employees2 (
+CREATE TABLE forxml_vu_t_employees2 (
   id serial,
   name varchar(255),
   manager_id int
 );
 
-INSERT INTO employees2 VALUES (1, 'Mark', null);
-INSERT INTO employees2 VALUES (2, 'John', 1);
-INSERT INTO employees2 VALUES (3, 'Dan', 2);
-INSERT INTO employees2 VALUES (4, 'Clark', 1);
-INSERT INTO employees2 VALUES (5, 'Linda', 2);
-INSERT INTO employees2 VALUES (6, 'Willy', 2);
-INSERT INTO employees2 VALUES (7, 'Barack', 2);
-INSERT INTO employees2 VALUES (8, 'Elen', 2);
-INSERT INTO employees2 VALUES (9, 'Kate', 3);
-INSERT INTO employees2 VALUES (10, 'Terry', 4);
+INSERT INTO forxml_vu_t_employees2 VALUES (1, 'Mark', null);
+INSERT INTO forxml_vu_t_employees2 VALUES (2, 'John', 1);
+INSERT INTO forxml_vu_t_employees2 VALUES (3, 'Dan', 2);
+INSERT INTO forxml_vu_t_employees2 VALUES (4, 'Clark', 1);
+INSERT INTO forxml_vu_t_employees2 VALUES (5, 'Linda', 2);
+INSERT INTO forxml_vu_t_employees2 VALUES (6, 'Willy', 2);
+INSERT INTO forxml_vu_t_employees2 VALUES (7, 'Barack', 2);
+INSERT INTO forxml_vu_t_employees2 VALUES (8, 'Elen', 2);
+INSERT INTO forxml_vu_t_employees2 VALUES (9, 'Kate', 3);
+INSERT INTO forxml_vu_t_employees2 VALUES (10, 'Terry', 4);
 GO
 
 CREATE VIEW forxml_vu_v_with AS
 WITH managertree AS (
   SELECT id, name, manager_id
-  FROM employees2
+  FROM forxml_vu_t_employees2
   WHERE id = 2
   UNION ALL
   SELECT e.id, e.name, e.manager_id
-  FROM employees2 e
+  FROM forxml_vu_t_employees2 e
   INNER JOIN managertree mtree ON mtree.id = e.manager_id
 )
 SELECT *
@@ -188,11 +188,11 @@ GO
 CREATE VIEW forxml_vu_v_with_where AS
 WITH managertree AS (
   SELECT id, name, manager_id
-  FROM employees2
+  FROM forxml_vu_t_employees2
   WHERE id = 2
   UNION ALL
   SELECT e.id, e.name, e.manager_id
-  FROM employees2 e
+  FROM forxml_vu_t_employees2 e
   INNER JOIN managertree mtree ON mtree.id = e.manager_id
 )
 SELECT *

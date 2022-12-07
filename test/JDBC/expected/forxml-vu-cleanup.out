@@ -32,7 +32,7 @@ drop table t2;
 go
 drop table MyTable;
 go
-drop table employees;
+drop table forxml_vu_t_employees;
 go
-drop table employees2;
+drop table forxml_vu_t_employees2;
 go
