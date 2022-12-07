@@ -2862,3 +2862,17 @@ FROM pg_foreign_server AS f
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.linked_logins
+AS
+SELECT
+  CAST(u.srvid as int) AS server_id,
+  CAST(0 as int) AS local_principal_id,
+  CAST(0 as sys.bit) AS uses_self_credential,
+  CAST(split_part(u.umoptions[1], 'username=', 2) as sys.sysname) AS remote_name,
+  CAST(NULL as sys.datetime) AS modify_date
+FROM pg_user_mappings AS U
+LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
+LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
+WHERE w.fdwname = 'tds_fdw';
+GRANT SELECT ON sys.linked_logins TO PUBLIC;

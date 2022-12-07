@@ -55,6 +55,7 @@ PG_FUNCTION_INFO_V1(sp_droprole);
 PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
+PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(create_linked_server_procs_in_master_dbo_internal);
 
 extern void delete_cached_batch(int handle);
@@ -2157,16 +2158,51 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	return (Datum) 0;
 }
 
+Datum
+sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
+
+	CreateUserMappingStmt *stmt = makeNode(CreateUserMappingStmt);
+	RoleSpec *user = makeNode(RoleSpec);
+	List *options = NIL;
+	char *str = NULL;
+
+	stmt->servername = servername;
+	stmt->if_not_exists = false;
+
+	user->roletype = ROLESPEC_CURRENT_USER;
+	user->location = -1;
+	stmt->user = user;
+
+	/* We do not support login using user's self credentials */
+	str = text_to_cstring(PG_GETARG_TEXT_P(1));
+	if (str == NULL || (strcmp(downcase_identifier(str, strlen(str), false, false), "false") != 0))
+		elog(ERROR, "Only @useself = FALSE is supported");
+
+	/* Add the relevant options */
+	options = lappend(options, makeDefElem("username", (Node *) makeString(text_to_cstring(PG_GETARG_TEXT_P(3))), -1));
+	options = lappend(options, makeDefElem("password", (Node *) makeString(text_to_cstring(PG_GETARG_TEXT_P(4))), -1));
+
+	stmt->options = options;
+
+	CreateUserMapping(stmt);
+
+	return (Datum) 0;
+}
+
 /*
  * Internal function to create the following procedures related to T-SQL linked
  * servers in master.dbo schema:
  *   - sp_addlinkedserver
+ *   - sp_addlinkedsrvlogin
  * Some applications invoke this referencing master.dbo.<one of the above stored procedures>
  */
 Datum
 create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 {
 	char *query = NULL;
+	char *query2 = NULL;
 
 	int rc = -1;
 
@@ -2180,11 +2216,20 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 						"AS \'babelfishpg_tsql\', \'sp_addlinkedserver_internal\'"
 					"LANGUAGE C";
 
+	char *tempq2 = "CREATE OR REPLACE PROCEDURE %s.sp_addlinkedsrvlogin( IN \"@rmtsrvname\" sys.sysname,"
+						"IN \"@useself\" sys.varchar(8) DEFAULT 'TRUE',"
+						"IN \"@locallogin\" sys.sysname DEFAULT NULL,"
+						"IN \"@rmtuser\" sys.sysname DEFAULT NULL,"
+						"IN \"@rmtpassword\" sys.sysname DEFAULT NULL)"
+						"AS \'babelfishpg_tsql\', \'sp_addlinkedsrvlogin_internal\'"
+					"LANGUAGE C";
+
 	const char  *dbo_scm = get_dbo_schema_name("master");
 	if (dbo_scm == NULL)
 		elog(ERROR, "Failed to retrieve dbo schema name");
 
 	query = psprintf(tempq, dbo_scm);
+	query2 = psprintf(tempq2, dbo_scm);
 
 	PG_TRY();
 	{
@@ -2192,6 +2237,9 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_execute(query, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query2, false, 1)) < 0)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)
