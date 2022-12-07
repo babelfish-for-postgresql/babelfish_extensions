@@ -1,6 +1,20 @@
 DROP LOGIN linked_server_login_861
 GO
 
+-- Trying to drop a server that does not exist (Should throw error)
+EXEC sp_dropserver @server = 'mssql_server_that_does_not_exist', @droplogins = NULL
+GO
+
+-- Dropping a server with droplogins should drop the linked logins as well
+EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'droplogins'
+GO
+
+SELECT * FROM sys.servers
+GO
+
+SELECT * FROM sys.linked_logins
+GO
+
 -- psql
 DROP EXTENSION tds_fdw CASCADE;
 GO
