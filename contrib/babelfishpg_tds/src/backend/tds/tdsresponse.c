@@ -433,7 +433,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 		case T_OpExpr:
 		{
 			OpExpr *op = (OpExpr *) expr;
-			Node *arg1, *arg2;
+			Node *arg1, *arg2 = NULL;
 			int32 typmod1 = -1, typmod2 = -1;
 			uint8_t scale1, scale2, precision1, precision2;
 			uint8_t scale, precision;
@@ -456,8 +456,6 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 				scale2 = (typmod2 - VARHDRSZ) & 0xffff;
 				precision2 = ((typmod2 - VARHDRSZ) >> 16) & 0xffff;
-				if(arg2->type == T_Aggref)
-					has_aggregate_operand = true;
 			}
 			else if (list_length(op->args) == 1)
 			{
@@ -509,8 +507,8 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			 * Refer to details of precision and scale calculation in the following link:
 			 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
 			 */
-			if(arg1->type == T_Aggref)
-				has_aggregate_operand = true;
+			has_aggregate_operand = arg1->type == T_Aggref ||
+						(list_length(op->args) == 2 && arg2->type == T_Aggref);
 
 			switch (op->opfuncid)
 			{
