@@ -26,6 +26,7 @@ jobs:
         upgrade-path: ${{ fromJson(needs.generate-version-upgrade-tests.outputs.upgrade-path-list) }}
     name: Run Version Upgrade Test for ${{ matrix.upgrade-path.title }}
     runs-on: ubuntu-20.04
+    permissions: write-all
     steps:
       - uses: actions/checkout@v2
 
@@ -132,4 +133,24 @@ jobs:
             ~/upgrade/*.csv
             ~/postgres*/data/logfile
             ~/failed-testscript-outputs
-            
+
+      - name: Check core dumps existence
+        if: always()
+        id: check_core_dumps
+        uses: andstor/file-existence-action@v2
+        with:
+          files: "/var/coredumps/*"
+      
+      - name: Setup upterm session
+        if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 60
+        with:
+          limit-access-to-actor: true
+        
+      - name: Fail workflow to prevent accidental check-in
+        if: always()
+        uses: actions/github-script@v3
+        with:
+          script: |
+              core.setFailed('This commit should NEVER be checked in')
