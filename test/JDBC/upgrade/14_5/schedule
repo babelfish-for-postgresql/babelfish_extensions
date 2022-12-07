@@ -174,6 +174,7 @@ BABEL-741
 BABEL-ROLE-MEMBER
 tdscollation
 BABEL-EXTENDEDPROPERTY
+BABEL-EXECUTE_AS_CALLER
 sys-filegroups
 sys-filetables
 sys-fulltext_indexes

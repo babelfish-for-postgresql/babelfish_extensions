@@ -186,6 +186,7 @@ babelfish_migration_mode
 schema_resolution_func
 BABEL-3147-before-14_5
 BABEL-EXTENDEDPROPERTY
+BABEL-EXECUTE_AS_CALLER
 TestErrorHelperFunctionsUpgrade
 BABEL-1249
 BABEL-1291

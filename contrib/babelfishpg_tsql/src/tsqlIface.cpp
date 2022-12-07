@@ -2679,9 +2679,6 @@ rewriteBatchLevelStatement(
 				auto commas = cctx->COMMA();
 				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) { return o->SCHEMABINDING(); };
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
-				if (all_removed)
-					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
-
 				/* Check if execute_as_clause is present, and if is present check for caller clause */
 				bool execute_as_clause_check = false;
 				for (auto option : options)
@@ -2691,9 +2688,9 @@ rewriteBatchLevelStatement(
 				{
 					getToken = [](TSqlParser::Function_optionContext* o) { return o->execute_as_clause()->CALLER(); };
 					all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
-					if (all_removed)
-						removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 				}
+				if (all_removed)
+					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 			}
 		}
 		else if (ctx->create_or_alter_function()->func_body_returns_table()) /* CREATE FUNCTION ... RETURNS TABLE RETURN SELECT ... */
@@ -2769,9 +2766,6 @@ rewriteBatchLevelStatement(
 			auto commas = cctx->COMMA();
 			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) { return o->SCHEMABINDING(); };
 			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
-			if (all_removed)
-				removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
-
 			/* Check if execute_as_clause is present, and if is present check for caller clause */
 			bool execute_as_clause_check = false;
 			for (auto option : options)
@@ -2781,9 +2775,9 @@ rewriteBatchLevelStatement(
 			{
 				getToken = [](TSqlParser::Trigger_optionContext* o) { return o->execute_as_clause()->CALLER(); };
 				all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
-				if (all_removed)
-					removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
 			}
+			if (all_removed)
+				removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
 		}
 	}
 	else if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger())
@@ -2795,9 +2789,6 @@ rewriteBatchLevelStatement(
 			auto commas = cctx->COMMA();
 			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) { return o->SCHEMABINDING(); };
 			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
-			if (all_removed)
-				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
-
 			/* Check if execute_as_clause is present, and if is present check for caller clause */
 			bool execute_as_clause_check = false;
 			for (auto option : options)
@@ -2807,9 +2798,9 @@ rewriteBatchLevelStatement(
 			{
 				getToken = [](TSqlParser::Trigger_optionContext* o) { return o->execute_as_clause()->CALLER(); };
 				all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
-				if (all_removed)
-					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 			}
+			if (all_removed)
+				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 		}
 	}
 	else if (ctx->create_or_alter_view())
