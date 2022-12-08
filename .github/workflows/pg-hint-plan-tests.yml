@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   run-pg-hint-plan-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         id: checkout
