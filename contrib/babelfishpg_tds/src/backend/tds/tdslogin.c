@@ -1773,22 +1773,36 @@ TdsClientAuthentication(Port *port)
 			 */
 			if (!loginInfo->password)
 			{
-				char		hostinfo[NI_MAXHOST];
+				/*
+				* If pg_hba.conf specifies that the entry should be authenticated using
+				* password and the request doesn't contain a password, we should
+				* throw an error.
+				*/
+				if (!loginInfo->password)
+				{
+					char		hostinfo[NI_MAXHOST];
 
-				pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-								   hostinfo, sizeof(hostinfo),
-								   NULL, 0,
-								   NI_NUMERICHOST);
+					pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+									hostinfo, sizeof(hostinfo),
+									NULL, 0,
+									NI_NUMERICHOST);
 
-				ereport(FATAL,
-						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("invalid TDS authentication request for host \"%s\", user \"%s\", database \"%s\"",
-								hostinfo, port->user_name, port->database_name),
-						 errhint("Expected authentication request: md5 or password")));
+					ereport(FATAL,
+							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+							errmsg("invalid TDS authentication request for host \"%s\", user \"%s\", database \"%s\"",
+									hostinfo, port->user_name, port->database_name),
+							errhint("Expected authentication request: md5 or password")));
+				}
+
+				/* we've a password, let's verify it */
+				status = CheckAuthPassword(port, &logdetail);
 			}
-
-			/* we've a password, let's verify it */
-			status = CheckAuthPassword(port, &logdetail);
+			else if (loginInfo->sspiLen > 0 && loginInfo->sspi)
+			{
+				/* Cleanup sspi data. */
+				pfree(loginInfo->sspi);
+				loginInfo->sspiLen = 0;
+			}
 			break;
 		case uaTrust:
 			status = STATUS_OK;
