@@ -28,16 +28,6 @@ ignore#!#BABEL-SP_FKEYS-vu-prepare
 ignore#!#BABEL-SP_FKEYS-vu-verify
 ignore#!#BABEL-SP_FKEYS-vu-cleanup
 
-# Ignore tests related to Numeric: BABEL-3720
-ignore#!#BABEL-3486-vu-verify
-ignore#!#cast_numeric_types_to_datetime-vu-prepare
-ignore#!#cast_numeric_types_to_datetime-vu-verify
-ignore#!#cast_numeric_types_to_datetime-vu-cleanup
-ignore#!#cast_numeric_types_to_smalldatetime-vu-prepare
-ignore#!#cast_numeric_types_to_smalldatetime-vu-verify
-ignore#!#cast_numeric_types_to_smalldatetime-vu-cleanup
-ignore#!#BABEL-2355
-
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant

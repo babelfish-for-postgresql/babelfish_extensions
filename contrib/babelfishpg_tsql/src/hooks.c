@@ -35,6 +35,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
+#include "parser/parse_type.h"
 #include "parser/parser.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
@@ -122,6 +123,7 @@ static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_blo
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
+static void pltsql_verify_valid_scale_in_variable_length_datatypes(char *dataTypeName, int scale, int precision);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -177,7 +179,7 @@ static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_def
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
-
+static verify_valid_scale_in_variable_length_datatypes_hook_type prev_verify_valid_scale_in_variable_length_datatypes_hook = NULL;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -275,6 +277,9 @@ InstallExtendedHooks(void)
 	planner_hook = pltsql_planner_hook;
 	prev_transform_check_constraint_expr_hook = transform_check_constraint_expr_hook;
 	transform_check_constraint_expr_hook = transform_like_in_add_constraint;
+
+	prev_verify_valid_scale_in_variable_length_datatypes_hook = verify_valid_scale_in_variable_length_datatypes_hook;
+	verify_valid_scale_in_variable_length_datatypes_hook = pltsql_verify_valid_scale_in_variable_length_datatypes;
 }
 
 void
@@ -314,6 +319,7 @@ UninstallExtendedHooks(void)
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
+	verify_valid_scale_in_variable_length_datatypes_hook = prev_verify_valid_scale_in_variable_length_datatypes_hook;
 }
 
 /*****************************************
@@ -2986,4 +2992,51 @@ transform_like_in_add_constraint (Node* node)
 	PG_END_TRY();
 	
 	return pltsql_predicate_transformer(node);
+}
+
+/*
+ * pltsql_verify_valid_scale_in_variable_length_datatypes()
+ * - Checks whether variable length datatypes like numeric, decimal, time, datetime2, datetimeoffset 
+ * are declared with permissible datalength at the time of table or stored procedure creation
+ */
+void pltsql_verify_valid_scale_in_variable_length_datatypes(char *dataTypeName, int scale, int precision)
+{
+	if (strstr(dataTypeName, "pg_catalog."))
+		dataTypeName += strlen("pg_catalog.");
+
+	if ((strcmp(dataTypeName, "date") == 0 ||
+		strcmp(dataTypeName, "datetime") == 0 ||
+		strcmp(dataTypeName, "smalldatetime") == 0) &&
+		scale == -1)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Cannot specify a column width on datatype \"%s\"",
+					 dataTypeName)));
+	}
+	else if ((strcmp(dataTypeName, "time") == 0 ||
+		strcmp(dataTypeName, "datetime2") == 0 ||
+		strcmp(dataTypeName, "datetimeoffset") == 0) &&
+		(scale < 0 || scale > 7))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Specified scale %d is invalid. \"%s\" datatype must have scale between 0 and 7",
+					 scale[0], dataTypeName)));
+	}
+	else if (strcmp(dataTypeName, "numeric") == 0 ||
+		strcmp(dataTypeName, "decimal") == 0)
+	{
+		if (precision < 1 || precision > TDS_NUMERIC_MAX_PRECISION)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("Specified column precision %d is greater than the maximum precision of 38 for \"%s\" datatype",
+						 precision, dataTypeName)));
+
+		if (scale < 0 || scale > precision)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("The scale %d for \"%s\" datatype must be within the range 0 to precision %d",
+						 scale, dataTypeName, precision)));
+	}
 }
