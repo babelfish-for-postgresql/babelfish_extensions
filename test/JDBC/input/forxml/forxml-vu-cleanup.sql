@@ -30,8 +30,6 @@ drop table t1;
 go
 drop table t2;
 go
-drop table MyTable;
-go
 drop table forxml_vu_t_employees;
 go
 drop table forxml_vu_t_employees2;

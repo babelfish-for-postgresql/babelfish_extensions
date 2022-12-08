@@ -160,28 +160,6 @@ ntext
 ~~END~~
 
 
--- Test BASE64 encoding on binary data
-CREATE TABLE MyTable (Col1 int PRIMARY KEY, Col2 binary);
-INSERT INTO MyTable VALUES (1, 0x7);
-GO
-~~ROW COUNT: 1~~
-
-SELECT Col1, CAST(Col2 as image) as Col2 FROM MyTable FOR XML PATH;
-GO
-~~START~~
-ntext
-<row><Col1>1</Col1><Col2>0x07</Col2></row>
-~~END~~
-
-SELECT Col1, CAST(Col2 as image) as Col2 FROM MyTable FOR XML PATH, BINARY BASE64;
-GO
-~~START~~
-ntext
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: option binary base64 is not supported)~~
-
-
 -- Test for xml in subquery, The subquery is supposed to return only one XML value
 select id, (select a from t2 for xml path) as col from t1;
 go
