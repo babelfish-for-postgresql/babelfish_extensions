@@ -44,6 +44,10 @@ GO
 
 CREATE VIEW BABEL_3614_vu_prepare_v5 as (SELECT TRY_CONVERT(DATETIME2(80), '2017-08-25 13:01:10.1234567'));
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 80 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
+
 CREATE PROCEDURE BABEL_3614_vu_prepare_p5 as (SELECT TRY_CONVERT(DATETIME2(80), '2017-08-25 13:01:10.1234567'));
 GO
 CREATE FUNCTION BABEL_3614_vu_prepare_f5()
