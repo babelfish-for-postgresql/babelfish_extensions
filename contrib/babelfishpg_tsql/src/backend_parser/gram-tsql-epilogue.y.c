@@ -1269,7 +1269,7 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause)
 		func_name= list_make2(makeString("sys"), makeString("tsql_select_for_xml_agg"));
 	else
 		func_name= list_make2(makeString("sys"), makeString("tsql_select_for_xml_text_agg"));
-	func_args = list_make5(makeColumnRef("rows", NIL, -1, NULL),
+	func_args = list_make5(makeColumnRef(construct_unique_index_name("rows", "forjson"), NIL, -1, NULL),
 						   makeIntConst(forclause->mode, -1),
 						   forclause->elementName ? makeStringConst(forclause->elementName, -1) : makeStringConst("row", -1),
 						   makeBoolAConst(binary_base64, -1),
@@ -1338,7 +1338,7 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
 	 * Finally make function call to tsql_query_to_json_text
 	 */
 	func_name= list_make2(makeString("sys"), makeString("tsql_select_for_json_agg"));
-	func_args = list_make5(makeColumnRef("rows", NIL, -1, NULL),
+	func_args = list_make5(makeColumnRef(construct_unique_index_name("rows", "forjson"), NIL, -1, NULL),
 						   makeIntConst(forclause->mode, -1),
 						   makeBoolAConst(include_null_values, -1),
 						   makeBoolAConst(without_array_wrapper, -1),
@@ -1359,6 +1359,6 @@ TsqlForClauseSubselect(Node *selectstmt)
 {
 	RangeSubselect *rss = makeNode(RangeSubselect);
 	rss->subquery = selectstmt;
-	rss->alias = makeAlias("rows", NIL);
+	rss->alias = makeAlias(construct_unique_index_name("rows", "forjson"), NIL);
 	return rss;
 }
