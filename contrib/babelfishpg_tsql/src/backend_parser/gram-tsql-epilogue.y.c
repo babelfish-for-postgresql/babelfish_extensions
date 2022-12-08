@@ -785,7 +785,7 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 			}
 			if(IsA(jexpr->rarg, RangeVar))
 			{
-				tsql_update_delete_stmt_from_clause_alias_helper(relation,(jexpr->rarg));
+				tsql_update_delete_stmt_from_clause_alias_helper(relation,(RangeVar*)(jexpr->rarg));
 			}	
 		}
 	}

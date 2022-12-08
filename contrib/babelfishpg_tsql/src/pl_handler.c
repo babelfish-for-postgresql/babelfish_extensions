@@ -37,6 +37,7 @@
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/pg_list.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
 #include "parser/parse_clause.h"
@@ -86,6 +87,7 @@ extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
+extern bool pltsql_nocount;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -608,8 +610,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			/* detect object type */
 			GrantStmt	*grant = (GrantStmt *) parseTree->stmt;
 			ListCell	*cell;
-			List	*plan_name;
-			ObjectWithArgs *func;
+			List	*plan_name = NIL;
+			ObjectWithArgs *func = NULL;
 
 			Assert(list_length(grant->objects) == 1);
 			foreach(cell, grant->objects)
@@ -618,7 +620,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				char	*schema = rv->schemaname;	/* this is physical name */	
 				char	*obj = rv->relname;
 				Oid		func_oid;
-				Oid     argoids[FUNC_MAX_ARGS];
 
 				/* table, sequence, view, materialized view */
 				/* don't distinguish table sequence here */
@@ -1742,7 +1743,11 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	char *typname;
 	Oid tsqlSeqTypOid;
 	TypeName *type_def;
-
+	List* type_names;
+	List* new_type_names = NULL;
+	AclResult aclresult;
+	Oid base_type;
+	int list_len;
 	if (prev_pltsql_sequence_datatype_hook)
 		prev_pltsql_sequence_datatype_hook(pstate,
 										   newtypid,
@@ -1755,14 +1760,44 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		return;
 
 	type_def = defGetTypeName(as_type);
+	type_names = type_def->names;
+	list_len = list_length(type_names);
+
+	switch (list_len)
+	{
+		case 2:
+			new_type_names = list_make2(type_names->elements[0].ptr_value, type_names->elements[1].ptr_value);
+			strVal(linitial(new_type_names)) = get_physical_schema_name(get_cur_db_name(), strVal(linitial(type_names)));
+			break;
+		case 3:
+			/* Changing three part name of data type to physcial schema name */
+			new_type_names = list_make2(type_names->elements[1].ptr_value, type_names->elements[2].ptr_value);
+			strVal(linitial(new_type_names)) = get_physical_schema_name(strVal(linitial(type_names)), strVal(lsecond(type_names)));
+			break;
+	}
+
+	if(list_len > 1)
+		type_def->names = new_type_names;
+
+	*newtypid = typenameTypeId(pstate, type_def);
 	typ = typenameType(pstate, type_def, &typmod_p);
 	typname = typeTypeName(typ);
+	type_def->names = type_names;
+
+	if(list_len > 1)
+		list_free(new_type_names);
+
+	aclresult = pg_type_aclcheck(*newtypid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error_type(aclresult, *newtypid);
+
 	tsqlSeqTypOid = pltsql_seq_type_map(*newtypid);
 
 	if (type_def->typemod != -1)
 		typmod_p = type_def->typemod;
 
 	ReleaseSysCache(typ);
+	base_type = getBaseType(*newtypid);
 
 	if (tsqlSeqTypOid != InvalidOid)
 	{
@@ -1817,12 +1852,20 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 			}
 		}
 	}
-	else if ((*newtypid == NUMERICOID) || (getBaseType(*newtypid) == NUMERICOID))
+	else if ((*newtypid == NUMERICOID) || (base_type == NUMERICOID))
 	{
 		/*
 		 * Identity column drops the typmod upon sequence creation
 		 * so it gets its own check
 		 */
+
+		/* When sequence is created using user-defined data type, !for_identity == true and
+		 * typmod_p == -1, which results in calculating incorrect scale and precision
+		 * therefore we update typmod_p to that of numeric(18,0)
+		 */
+		if (typmod_p == -1)
+			typmod_p = 1179652;
+
 		if (!for_identity || typmod_p != -1)
 		{
 			uint8_t scale = (typmod_p - VARHDRSZ) & 0xffff;
@@ -1839,10 +1882,16 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 						 errmsg("sequence type must have precision 18 or less")));
 		}
 
-		*newtypid = INT8OID;
+		base_type = INT8OID;
 		ereport(WARNING,
 				(errmsg("NUMERIC or DECIMAL type is cast to BIGINT")));
 	}
+
+	/*
+	 * To add support for User-Defined Data types for sequences, data type
+	 * of sequence is changed to its basetype
+	*/
+	*newtypid = base_type;
 }
 
 static Oid
@@ -2139,7 +2188,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				Node 			*tbltypStmt = NULL;
 				Node 			*trigStmt = NULL;
 				ObjectAddress 	tbltyp;
-				ObjectAddress 	trig;
 				ObjectAddress 	address;
 				int 			origname_location = -1;
 
@@ -2250,7 +2298,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if(trigStmt)
 					{
-						trig = CreateTrigger((CreateTrigStmt *) trigStmt,
+						(void) CreateTrigger((CreateTrigStmt *) trigStmt,
 									  pstate->p_sourcetext, InvalidOid, InvalidOid,
 									  InvalidOid, InvalidOid, address.objectId,
 									  InvalidOid, NULL, false, false);
@@ -2414,9 +2462,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								user_options = lappend(user_options, defel);
 								orig_username_exists = true;
 							}
-							
+
 						}
-						
+
 
 						foreach(option, user_options)
 						{
@@ -3091,6 +3139,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					return;
 				}
 			}
+			break;
 		case T_RenameStmt:
 			{
 				if (prev_ProcessUtility)
@@ -3473,6 +3522,7 @@ _PG_init(void)
 	/* If a protocol extension is loaded, initialize the inline handler. */
 	if (*pltsql_protocol_plugin_ptr)
 	{
+		(*pltsql_protocol_plugin_ptr)->pltsql_nocount_addr = &pltsql_nocount;
 		(*pltsql_protocol_plugin_ptr)->sql_batch_callback = &pltsql_inline_handler;
 		(*pltsql_protocol_plugin_ptr)->sp_executesql_callback = &pltsql_inline_handler;
         (*pltsql_protocol_plugin_ptr)->sp_prepare_callback = &sp_prepare;
