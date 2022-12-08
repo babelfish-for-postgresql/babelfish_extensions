@@ -26,10 +26,10 @@
 #include "src/include/guc.h"
 
 /* Global variables */
-int	pe_port;
+int		pe_port;
 char	*pe_listen_addrs = NULL;
 char	*pe_unix_socket_directories = NULL;
-int	pe_unix_socket_permissions = 0;
+int		pe_unix_socket_permissions = 0;
 char	*pe_unix_socket_group = NULL;
 
 char   *default_server_name = NULL;
@@ -38,7 +38,9 @@ int 	tds_default_numeric_scale = 8;
 bool	tds_ssl_encrypt = false;
 int 	tds_default_protocol_version = 0;
 int32_t tds_default_packet_size = 4096;
-int	tds_debug_log_level = 1;
+int		tds_debug_log_level = 1;
+char*	sql_server_version = NULL;
+
 #ifdef FAULT_INJECTOR
 static bool TdsFaultInjectionEnabled = false;
 #endif
@@ -111,6 +113,61 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 	return true;
 }
 
+static bool 
+check_version_number(char **newval, void **extra, GucSource source)
+{
+    int 		part = 0;
+	char 		*token;
+    char 		*copy_version_number = malloc(sizeof(*newval));
+
+    strcpy(copy_version_number,*newval);
+	if(strcasecmp(copy_version_number,"default") == 0)
+		return true;
+
+	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+	{	
+		/* check each token contains only digits */
+		if(strspn(token, "0123456789") != strlen(token))
+		{
+			free(copy_version_number);
+			GUC_check_errmsg("Please enter a valid version number");
+		}
+		
+		/* check Major Version is between 11 and 15 */
+		if(part == 0 && (11 > atoi(token) || atoi(token) > 15))
+		{
+			free(copy_version_number);
+			GUC_check_errmsg("Please enter a valid major version number between 11 and 15");
+		}
+
+		/* Minor Version takes 1 byte in PreLogin message when doing handshake, here to check
+			it is between 0 and 0xFF
+		*/
+		if(part == 1 && (atoi(token) < 0 || atoi(token) > 0xFF))
+		{
+			free(copy_version_number);
+			GUC_check_errmsg("Please enter a valid minor version number");
+		}
+		/* Micro Version takes 2 bytes in PreLogin message when doing handshake, here to check
+			it is between 0 and 0xFFFF
+		*/
+		if(part == 2 && (atoi(token) < 0 || atoi(token) > 0xFFFF))
+		{
+			free(copy_version_number);
+			GUC_check_errmsg("Please enter a valid micro version number");
+		part++; 
+	}
+
+	if(part != 4)
+	{
+		free(copy_version_number);
+		GUC_check_errmsg("Please enter 4 valid number separated by \'.\' ");
+	}
+
+	free(copy_version_number);
+    return true;
+}
+
 /*
  * Define various GUCs which are part of TDS protocol
  */
@@ -177,6 +234,16 @@ TdsDefineGucs(void)
                 PGC_SIGHUP,
                 GUC_NOT_IN_SAMPLE,
                 NULL, NULL, NULL);
+
+	/* Still use the GUC name "babelfishpg_tsqltsql.version", since this guc name already exposes to user*/
+	DefineCustomStringVariable("babelfishpg_tsql.version",
+				 gettext_noop("Sets the SQL Server Version returned by Babelfish"),
+				 NULL,
+				 &sql_server_version,
+				 "default",
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE,
+				 check_version_number, NULL, NULL);
 
 	DefineCustomIntVariable(
 		"babelfishpg_tds.tds_default_numeric_precision",

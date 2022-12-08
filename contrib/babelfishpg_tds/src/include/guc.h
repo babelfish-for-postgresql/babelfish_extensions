@@ -16,6 +16,7 @@
 extern int pe_port;
 extern char *pe_listen_addrs;
 extern char *pe_unix_socket_directories;
+extern char *sql_server_version;
 extern int pe_unix_socket_permissions;
 extern char *pe_unix_socket_group;
 extern bool tds_ssl_encrypt;

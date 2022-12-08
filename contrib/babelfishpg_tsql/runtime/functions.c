@@ -134,10 +134,12 @@ version(PG_FUNCTION_ARGS)
 {
 	StringInfoData temp;
 	void *info;
+	const char *sql_server_version;
 
 	initStringInfo(&temp);
 
-	if (pg_strcasecmp(pltsql_version, "default") == 0)
+	sql_server_version= GetConfigOption("babelfishpg_tsql.version", true, false);
+	if (pg_strcasecmp(sql_server_version, "default") == 0)
 	{
 		char *pg_version = pstrdup(PG_VERSION_STR);
 		char *temp_str = pg_version;
@@ -152,7 +154,7 @@ version(PG_FUNCTION_ARGS)
 						 __DATE__, __TIME__, pg_version, BABELFISH_VERSION_STR);
 	}
 	else
-		appendStringInfoString(&temp, pltsql_version);
+		appendStringInfoString(&temp, sql_server_version);
 
 	/*
 	 * TODO: Return Build number with version string as well.
