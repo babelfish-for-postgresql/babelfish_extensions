@@ -1,4 +1,4 @@
-SELECT radians(a), radians(b), radians(c), radians(d), radians(e) from BABEL_3781_vu_prepare_t_1 
+SELECT radians(a), radians(b), radians(c), radians(d), radians(e) from BABEL_3781_vu_prepare_t_1 ORDER BY 1
 GO
 
 SELECT * FROM BABEL_3781_vu_prepare_t_2
