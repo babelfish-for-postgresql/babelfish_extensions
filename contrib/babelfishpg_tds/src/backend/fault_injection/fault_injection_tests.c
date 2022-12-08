@@ -229,6 +229,17 @@ throw_error_comm(void *arg, int *num_occurrences)
 	elog(FATAL, "FATAL error triggered from fault injection");
 }
 
+static void
+throw_error_buffer(void *arg ,int *num_occurrences)
+{
+	char buffer[3] = {'\0'};
+	int can = 0;
+	buffer[3]="aaaaaaaaaaa";
+	if (can !=0)
+	elog(LOG,"Buffer overflowed \n");
+	else
+	elog(LOG,"Did not Overflow \n");
+}
 /*
  * Type declarations
  *
@@ -264,5 +275,6 @@ TEST_LIST = {
 	{"parsing_tamper_rpc_parameter_datatype", ParseRpcType, 0, &parsing_tamper_rpc_parameter_datatype},
 	{"pre_parsing_throw_error", PreParsingType, 0, &throw_error},
 	{"post_parsing_throw_error", PostParsingType, 0, &throw_error},
+	{"buffer_overflow_test",PreParsingType,0, &throw_error_buffer},
 	{"", InvalidType, 0, NULL} /* keep this as last */
 };
