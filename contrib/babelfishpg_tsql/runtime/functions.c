@@ -1267,7 +1267,6 @@ bigint_radians(PG_FUNCTION_ARGS)
 	/* skip range check, since it cannot overflow int64 */
 
 	PG_RETURN_INT64((int64)result);
-
 }
 
 Datum
@@ -1281,7 +1280,6 @@ int_radians(PG_FUNCTION_ARGS)
 	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32)result);
-
 }
 
 Datum
@@ -1294,6 +1292,5 @@ smallint_radians(PG_FUNCTION_ARGS)
 
 	/* skip range check, since it cannot overflow int32 */
 
-	PG_RETURN_INT16((int16)result);
-
+	PG_RETURN_INT32((int32)result);
 }
