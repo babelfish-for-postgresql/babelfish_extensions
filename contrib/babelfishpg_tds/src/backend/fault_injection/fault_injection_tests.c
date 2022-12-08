@@ -22,6 +22,9 @@
 #include "src/include/tds_request.h"
 #include "src/include/faultinjection.h"
 
+#include <stdio.h>
+#include <string.h>
+
 /* test cases */
 static void
 test_fault1(void *arg, int *num_occurrences)
@@ -234,7 +237,8 @@ throw_error_buffer(void *arg ,int *num_occurrences)
 {
 	char buffer[3] = {'\0'};
 	int can = 0;
-	buffer[3]="aaaaaaaaaaa";
+	char tem[10]="aaaaaaaaaa";
+	memcpy(buffer,tem,10);
 	if (can !=0)
 	elog(LOG,"Buffer overflowed \n");
 	else
