@@ -26,10 +26,10 @@
 #include "src/include/guc.h"
 
 /* Global variables */
-int		pe_port;
+int	pe_port;
 char	*pe_listen_addrs = NULL;
 char	*pe_unix_socket_directories = NULL;
-int		pe_unix_socket_permissions = 0;
+int	pe_unix_socket_permissions = 0;
 char	*pe_unix_socket_group = NULL;
 
 char   *default_server_name = NULL;
@@ -38,7 +38,7 @@ int 	tds_default_numeric_scale = 8;
 bool	tds_ssl_encrypt = false;
 int 	tds_default_protocol_version = 0;
 int32_t tds_default_packet_size = 4096;
-int		tds_debug_log_level = 1;
+int	tds_debug_log_level = 1;
 char*	sql_server_version = NULL;
 
 #ifdef FAULT_INJECTOR
@@ -116,8 +116,8 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 static bool 
 check_version_number(char **newval, void **extra, GucSource source)
 {
-    int 		part = 0;
-	char 		*token;
+    int			part = 0;
+	char		*token;
     char 		*copy_version_number = malloc(sizeof(*newval));
 
     strcpy(copy_version_number,*newval);

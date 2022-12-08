@@ -192,8 +192,8 @@ ProcessVersionNumber()
 
 void* get_product_major_version_helper()
 {
-	StringInfoData	temp;
-    void*			info;
+	StringInfoData	temp; 
+	void			*info;
 	const char 		*sql_server_version;
 	char	   		*major_version = (char *) palloc(3);	/* 2 digits, '\0' */
 
@@ -214,8 +214,8 @@ void* get_product_major_version_helper()
 
 void* get_product_minor_version_helper()
 {
-	StringInfoData	temp;
-    void* 			info;
+	StringInfoData	temp; 
+	void			*info;
 	char	   		*minor_version = (char *) palloc(MinorVersionDigits + 1);
 	const char 		*sql_server_version;
 	const char 		*ret = "0";
@@ -237,8 +237,8 @@ void* get_product_minor_version_helper()
 
 void* get_product_version_helper()
 {
-	StringInfoData	temp;
-    void*			info;
+	StringInfoData	temp; 
+	void			*info;
 	const char 		*sql_server_version;
 	
 	sql_server_version = GetConfigOption("babelfishpg_tsql.version", true, false);
