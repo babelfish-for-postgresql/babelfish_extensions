@@ -175,8 +175,6 @@ ntext
 
 SELECT Col1, CAST(Col2 as image) as Col2 FROM MyTable FOR XML PATH, BINARY BASE64;
 GO
-~~START~~
-ntext
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: option binary base64 is not supported)~~
