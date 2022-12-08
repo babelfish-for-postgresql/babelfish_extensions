@@ -211,17 +211,17 @@ Datum babelfish_db_name(PG_FUNCTION_ARGS)
 	if (dbid == 1)
 	{
 		dbname = palloc((strlen("master") + 1) * sizeof(char));
-		strncpy(dbname, "master", sizeof("master"));
+		strncpy(dbname, "master", strlen("master") + 1);
 	}
 	else if (dbid == 2)
 	{
 		dbname = palloc((strlen("tempdb") + 1) * sizeof(char));
-		strncpy(dbname, "tempdb", sizeof("tempdb"));
+		strncpy(dbname, "tempdb", strlen("tempdb") + 1);
 	}
 	else if (dbid == 4)
 	{
 		dbname = palloc((strlen("msdb") + 1) * sizeof(char));
-		strncpy(dbname, "msdb", sizeof("msdb"));
+		strncpy(dbname, "msdb", strlen("msdb") + 1);
 	}
 	else
 		dbname = get_db_name(dbid);

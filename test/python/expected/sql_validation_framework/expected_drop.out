@@ -2,6 +2,9 @@ Unexpected drop found for cast  in file babelfishpg_common--1.0.0--1.1.0.sql
 Unexpected drop found for cast  in file babelfishpg_common--1.0.0--1.1.0.sql
 Unexpected drop found for cast  in file babelfishpg_common--1.0.0--1.1.0.sql
 Unexpected drop found for cast  in file babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_common--2.0.0--2.1.0.sql
+Unexpected drop found for function sys.babelfishpg_common_get_babel_server_collation_oid in file babelfishpg_common--2.2.0--2.3.0.sql
+Unexpected drop found for function sys.babelfishpg_tsql_get_babel_server_collation_oid in file babelfishpg_tsql--2.2.0--2.3.0.sql
 Unexpected drop found for operator sys.+ in file babelfishpg_common--1.1.0--1.2.0.sql
 Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.0.sql
 Unexpected drop found for operator sys./ in file babelfishpg_common--1.1.0--1.2.0.sql
@@ -12,10 +15,13 @@ Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in fi
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.0.0--2.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.2.0--2.3.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_object in file babelfishpg_tsql--2.3.0--2.4.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_table in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--1.0.0--1.1.0.sql
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_remove_object_from_extension in file babelfishpg_tsql--2.1.0--2.2.0.sql
+Unexpected drop found for procedure sys.babelfish_update_collation_to_default in file babelfishpg_common--2.2.0--2.3.0.sql
+Unexpected drop found for procedure sys.babelfish_update_collation_to_default in file babelfishpg_tsql--2.2.0--2.3.0.sql
 Unexpected drop found for procedure sys.babelfish_update_user_catalog_for_guest in file babelfishpg_tsql--2.2.0--2.3.0.sql
 Unexpected drop found for procedure sys.create_xp_qv_in_master_dbo in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for procedure sys.sp_babelfish_grant_usage_to_all in file babelfishpg_tsql--1.1.0--1.2.0.sql
