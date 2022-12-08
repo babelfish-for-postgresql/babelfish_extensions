@@ -63,15 +63,6 @@ go
 select count(*) as cnt, a from t1 group by a,id order by id for xml path;
 go
 
--- Test BASE64 encoding on binary data
-CREATE TABLE MyTable (Col1 int PRIMARY KEY, Col2 binary);
-INSERT INTO MyTable VALUES (1, 0x7);
-GO
-SELECT Col1, CAST(Col2 as image) as Col2 FROM MyTable FOR XML PATH;
-GO
-SELECT Col1, CAST(Col2 as image) as Col2 FROM MyTable FOR XML PATH, BINARY BASE64;
-GO
-
 -- Test for xml in subquery, The subquery is supposed to return only one XML value
 select id, (select a from t2 for xml path) as col from t1;
 go

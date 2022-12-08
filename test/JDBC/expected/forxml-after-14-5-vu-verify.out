@@ -1,0 +1,16 @@
+select * from forxml_after_14_5_v_path
+GO
+~~START~~
+ntext
+<row><Col1>1</Col1><Col2>0x07</Col2></row>
+~~END~~
+
+
+select * from forxml_after_14_5_v_base64
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: option binary base64 is not supported)~~
+

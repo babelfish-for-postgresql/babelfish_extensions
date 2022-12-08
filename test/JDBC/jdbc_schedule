@@ -31,9 +31,6 @@ ignore#!#BABEL-3117-vu-prepare
 ignore#!#BABEL-3117-vu-verify
 ignore#!#BABEL-3655-vu-prepare
 ignore#!#BABEL-3655-vu-verify
-ignore#!#forxml-vu-prepare
-ignore#!#forxml-vu-verify
-ignore#!#forxml-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
