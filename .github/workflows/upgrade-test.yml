@@ -131,6 +131,6 @@ jobs:
             ~/upgrade/*.out
             ~/upgrade/*.csv
             ~/psql*/data/logfile
-            ~/psql*/data/pg_upgrade/*/*
+            ~/psql*/data/pg_upgrade_output.d/*
             ~/failed-testscript-outputs
             

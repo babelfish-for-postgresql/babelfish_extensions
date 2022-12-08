@@ -141,7 +141,7 @@ jobs:
           name: upgrade-logs
           path: |
             ~/upgrade/*.log
-            ~/${{env.NEW_INSTALL_DIR}}/data/pg_upgrade/*/*
+            ~/${{env.NEW_INSTALL_DIR}}/data/pg_upgrade_output.d/*
       
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files

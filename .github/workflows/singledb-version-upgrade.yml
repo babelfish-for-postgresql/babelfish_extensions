@@ -82,3 +82,4 @@ jobs:
             ~/upgrade/*.log
             ~/upgrade/*.diff
             ~/failed-testscript-outputs
+            ~/${{env.NEW_INSTALL_DIR}}/data/pg_upgrade_output.d/*
