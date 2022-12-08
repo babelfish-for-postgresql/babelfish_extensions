@@ -128,6 +128,11 @@ int TdsDefaultCollationFlags;
 uint8_t TdsDefaultSortid;
 pg_enc TdsDefaultClientEncoding;
 
+/* Global to store Version info */
+int MajorVersion;
+int MinorVersion;
+int MicroVersion;
+
 static void TdsDefineDefaultCollationInfo(void);
 
 typedef struct LoginRequestData
@@ -387,6 +392,28 @@ ParsePreLoginRequest()
 
 	return 0;
 }
+static void
+ProcessVersionNumber(char* inputString)
+{
+	int 		part = 0;
+	char		*copy_version_number = malloc(sizeof(inputString));
+	char 		*token;
+
+	strcpy(copy_version_number,inputString);
+	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+	{ 
+		if(part == 0)
+			MajorVersion = atoi(token);
+		else if(part == 1)
+			MinorVersion = atoi(token);
+		else if(part == 2)
+			MicroVersion = atoi(token);
+		else
+			return;
+
+		part++; 
+	}
+}
 
 static void
 SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
@@ -395,19 +422,42 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 	switch(token)
 	{
 		case TDS_PRELOGIN_VERSION:
-			/* Major Version 0x0C */
-			appendStringInfoChar(val, 0x0C);
+			if(strcasecmp(sql_server_version,"default") == 0)
+			{
+				/* Major Version 0x0C */
+				appendStringInfoChar(val, 0x0C);
+				/* Minor Version 0x00 */
+				appendStringInfoChar(val, 0x00);
 
-			/* Minor Version 0x00 */
-			appendStringInfoChar(val, 0x00);
+				/* Micro Version 0x07d0 */
+				appendStringInfoChar(val, 0x07);
+				appendStringInfoChar(val, 0xd0);
 
-			/* Micro Version 0x07d0 */
-			appendStringInfoChar(val, 0x07);
-			appendStringInfoChar(val, 0xd0);
+				/* Subbuild Version 0x0000 */
+				appendStringInfoChar(val, 0x00);
+				appendStringInfoChar(val, 0x00);
+			}
+			else
+			{
+				ProcessVersionNumber(sql_server_version);
 
-			/* Subbuild Version 0x0000 */
-			appendStringInfoChar(val, 0x00);
-			appendStringInfoChar(val, 0x00);
+				appendStringInfoChar(val, MajorVersion & 0xFF);
+				appendStringInfoChar(val, MinorVersion & 0xFF);
+				if (MicroVersion <= 0xFF)
+				{
+					appendStringInfoChar(val, 0x00);
+					appendStringInfoChar(val, MicroVersion & 0xFF);
+				} 
+				else 
+				{
+					appendStringInfoChar(val, (MicroVersion >> 8) & 0xFF);
+					appendStringInfoChar(val, MicroVersion & 0xFF);
+					
+				}
+				/* Subbuild Version 0x0000 */
+				appendStringInfoChar(val, 0x00);
+				appendStringInfoChar(val, 0x00);
+			}
 			break;
 		case TDS_PRELOGIN_ENCRYPTION:
 			/*

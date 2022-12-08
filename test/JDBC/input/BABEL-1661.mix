@@ -1,49 +1,24 @@
--- psql
 -- BABEL-3545
+-- psql
 Alter system set babelfishpg_tsql.version = "9.4.3000.6";
 SELECT pg_reload_conf();
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
-    Server SQLState: 0A000)~~
-
 
 Alter system set babelfishpg_tsql.version = "11.e4.3000.6";
 SELECT pg_reload_conf();
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Please enter a valid version number
-    Server SQLState: 0A000)~~
-
 
 Alter system set babelfishpg_tsql.version = "11.256.3000.6";
 SELECT pg_reload_conf();
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Please enter a valid minor version number
-    Server SQLState: 0A000)~~
-
 
 Alter system set babelfishpg_tsql.version = "15.4.3000";
 SELECT pg_reload_conf();
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Please enter 4 valid number separated by '.' 
-    Server SQLState: 0A000)~~
-
 
 Alter system set babelfishpg_tsql.version = "15.4.3000.6";
 SELECT pg_reload_conf();
 GO
-~~START~~
-bool
-t
-~~END~~
-
 
 -- tsql
 exec pg_sleep 1
@@ -51,45 +26,20 @@ GO
 
 SELECT @@Version
 GO
-~~START~~
-nvarchar
-15.4.3000.6
-~~END~~
-
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
 GO
-~~START~~
-sql_variant
-15.4.3000.6
-~~END~~
-
 
 SELECT SERVERPROPERTY('ProductMajorVersion') as ProductMajorVersion
 GO
-~~START~~
-sql_variant
-15
-~~END~~
-
 
 SELECT SERVERPROPERTY('ProductMinorVersion') as ProductMinorVersion
 GO
-~~START~~
-sql_variant
-4
-~~END~~
-
 
 -- psql
 Alter system set babelfishpg_tsql.version = "13.45.3.6";
 SELECT pg_reload_conf();
 GO
-~~START~~
-bool
-t
-~~END~~
-
 
 -- tsql
 exec pg_sleep 1
@@ -97,45 +47,20 @@ GO
 
 SELECT @@Version
 GO
-~~START~~
-nvarchar
-13.45.3.6
-~~END~~
-
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
 GO
-~~START~~
-sql_variant
-13.45.3.6
-~~END~~
-
 
 SELECT SERVERPROPERTY('ProductMajorVersion') as ProductMajorVersion
 GO
-~~START~~
-sql_variant
-13
-~~END~~
-
 
 SELECT SERVERPROPERTY('ProductMinorVersion') as ProductMinorVersion
 GO
-~~START~~
-sql_variant
-45
-~~END~~
-
 
 -- psql
 Alter system set babelfishpg_tsql.version = "default";
 SELECT pg_reload_conf();
 GO
-~~START~~
-bool
-t
-~~END~~
-
 
 -- tsql 
 exec pg_sleep 1
@@ -143,58 +68,23 @@ GO
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
 GO
-~~START~~
-sql_variant
-12.0.2000.8
-~~END~~
-
 
 SELECT SERVERPROPERTY('ProductMajorVersion') as ProductMajorVersion
 GO
-~~START~~
-sql_variant
-12
-~~END~~
-
 
 SELECT SERVERPROPERTY('ProductMinorVersion') as ProductMinorVersion
 GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 
 -- BABEL-1661
 -- Test CONVERT to VARCHAR applies typmod
 SELECT CONVERT(VARCHAR(10), SERVERPROPERTY('productversion'));
 GO
-~~START~~
-varchar
-12.0.2000.
-~~END~~
-
 
 SELECT DATALENGTH(CONVERT(VARCHAR(10), SERVERPROPERTY('productversion')));
 GO
-~~START~~
-int
-10
-~~END~~
-
 
 SELECT CONVERT(VARCHAR(2), SERVERPROPERTY('productversion'));
 GO
-~~START~~
-varchar
-12
-~~END~~
-
 
 SELECT DATALENGTH(CONVERT(VARCHAR(2), SERVERPROPERTY('productversion')));
 GO
-~~START~~
-int
-2
-~~END~~
-
