@@ -26,10 +26,10 @@
 #include "src/include/guc.h"
 
 /* Global variables */
-int		pe_port;
+int	pe_port;
 char	*pe_listen_addrs = NULL;
 char	*pe_unix_socket_directories = NULL;
-int		pe_unix_socket_permissions = 0;
+int	pe_unix_socket_permissions = 0;
 char	*pe_unix_socket_group = NULL;
 
 char   *default_server_name = NULL;
