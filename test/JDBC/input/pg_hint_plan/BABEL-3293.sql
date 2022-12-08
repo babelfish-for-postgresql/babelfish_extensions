@@ -52,6 +52,9 @@ go
 select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
 
+select * from BABEL_3293_t1 LeFt ouTer LOOP join Babel_3293_T2 on BABEL_3293_t1.a1 = BABEL_3293_t2.a2 where b1 = 1 and b2 = 1
+go
+
 select * from babel_3293_t1 with(index(index_babel_3293_t1_b1)) join babel_3293_t2 (index(index_babel_3293_t2_b2)) on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1 -- Join query with just table hints
 go
 
@@ -86,6 +89,9 @@ go
 select * from babel_3293_t1 t1, babel_3293_t2 t2 inner hash join babel_3293_t3 t3 on t2.a2 = t3.a3
 go
 
+select * from BABEL_3293_t1 t1 left outer MERGE join BaBeL_3293_T2 t2 on t1.a1 = t2.a2 InNeR LOOP JOIN bABEL_3293_t3 t3 on t2.a2 = t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+go
+
 -- Join hints through option clause
 select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(hash join)
 go
@@ -97,6 +103,9 @@ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_
 go
 
 select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1 option(merge join)
+go
+
+select * from babeL_3293_T1 join BABEL_3293_T2 on babeL_3293_T1.a1 = BABEL_3293_T2.a2 join babEl_3293_t3 on babel_3293_T2.a2 = BABEL_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1 option(merge join)
 go
 
 -- Conflicting join hints

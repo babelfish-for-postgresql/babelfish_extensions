@@ -23,7 +23,7 @@ go
 ~~START~~
 text
 Query Text: EXEC babel_3513_proc_1
-  Query Text: SELECT/*+ MergeJoin(babel_3513_t1 babel_3513_t2) Leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+  Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
   ->  Merge Join
         Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
         ->  Sort
@@ -55,7 +55,7 @@ go
 ~~START~~
 text
 Query Text: EXEC babel_3513_proc_1
-  Query Text: SELECT/*+ MergeJoin(babel_3513_t1 babel_3513_t2) Leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+  Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
   ->  Merge Join
         Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
         ->  Sort
@@ -72,7 +72,7 @@ SELECT babel_3513_t1.a1 FROM babel_3513_t1 inner merge join babel_3513_t2 ON a1 
 go
 ~~START~~
 text
-Query Text: SELECT/*+ MergeJoin(babel_3513_t1 babel_3513_t2) Leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
 Nested Loop
   Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
   ->  Seq Scan on babel_3513_t1

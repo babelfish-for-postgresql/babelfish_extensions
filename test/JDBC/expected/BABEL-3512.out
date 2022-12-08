@@ -97,7 +97,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_1';
 GO
 ~~START~~
 text
-SELECT/*+ HashJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ babel_3512_t1.a1 FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
+SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ babel_3512_t1.a1 FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
 ~~END~~
 
 
@@ -109,7 +109,7 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_proc_1
-  Query Text: SELECT/*+ HashJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ babel_3512_t1.a1 FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
+  Query Text: SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ babel_3512_t1.a1 FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
   ->  Hash Join
         Hash Cond: (babel_3512_t2.b2 = babel_3512_t1.a1)
         ->  Seq Scan on babel_3512_t2
@@ -131,7 +131,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_2';
 GO
 ~~START~~
 text
-SELECT/*+ HashJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2<newline>SELECT/*+ NestLoop(babel_3512_t2 babel_3512_t1) Leading(babel_3512_t2 babel_3512_t1)*/ * FROM babel_3512_t2 inner      join babel_3512_t1 ON babel_3512_t1.c1 = babel_3512_t2.c2
+SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2<newline>SELECT/*+ nestloop(babel_3512_t2 babel_3512_t1) leading(babel_3512_t2 babel_3512_t1)*/ * FROM babel_3512_t2 inner      join babel_3512_t1 ON babel_3512_t1.c1 = babel_3512_t2.c2
 ~~END~~
 
 
@@ -143,13 +143,13 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_proc_2
-  Query Text: SELECT/*+ HashJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
+  Query Text: SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
   ->  Hash Join
         Hash Cond: (babel_3512_t2.b2 = babel_3512_t1.a1)
         ->  Seq Scan on babel_3512_t2
         ->  Hash
               ->  Seq Scan on babel_3512_t1
-  Query Text: SELECT/*+ NestLoop(babel_3512_t2 babel_3512_t1) Leading(babel_3512_t2 babel_3512_t1)*/ * FROM babel_3512_t2 inner      join babel_3512_t1 ON babel_3512_t1.c1 = babel_3512_t2.c2
+  Query Text: SELECT/*+ nestloop(babel_3512_t2 babel_3512_t1) leading(babel_3512_t2 babel_3512_t1)*/ * FROM babel_3512_t2 inner      join babel_3512_t1 ON babel_3512_t1.c1 = babel_3512_t2.c2
   ->  Nested Loop
         ->  Seq Scan on babel_3512_t2
         ->  Index Scan using index_babel_3512_t1_c1babel_35191aab574110138d8b9ec599810282a81 on babel_3512_t1
@@ -169,7 +169,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_3';
 GO
 ~~START~~
 text
-SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
+SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
 ~~END~~
 
 
@@ -181,7 +181,7 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_proc_3
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
   ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
         Index Cond: (b1 = 1)
 ~~END~~
@@ -202,7 +202,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_4';
 GO
 ~~START~~
 text
-SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1<newline>SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                     WHERE b1 = 1<newline>SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1 WHERE b1 = 3                                                                 <newline>SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1                                    WHERE b1 = 1 UNION SELECT * FROM babel_3512_t2                                    WHERE b2 = 1
+SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1<newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                     WHERE b1 = 1<newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1 WHERE b1 = 3                                                                 <newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1                                    WHERE b1 = 1 UNION SELECT * FROM babel_3512_t2                                    WHERE b2 = 1
 ~~END~~
 
 
@@ -214,16 +214,16 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_proc_4
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
   ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
         Index Cond: (b1 = 1)
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                     WHERE b1 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                     WHERE b1 = 1
   ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
         Index Cond: (b1 = 1)
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1 WHERE b1 = 3
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1 WHERE b1 = 3
   ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
         Index Cond: (b1 = 3)
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1                                    WHERE b1 = 1 UNION SELECT * FROM babel_3512_t2                                    WHERE b2 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1                                    WHERE b1 = 1 UNION SELECT * FROM babel_3512_t2                                    WHERE b2 = 1
   ->  HashAggregate
         Group Key: babel_3512_t1.a1, babel_3512_t1.b1, babel_3512_t1.c1
         ->  Append
@@ -246,7 +246,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_5';
 GO
 ~~START~~
 text
-WITH/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
+WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
 ~~END~~
 
 
@@ -258,7 +258,7 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_proc_5
-  Query Text: WITH/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
+  Query Text: WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
   ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
         Index Cond: (b1 = 1)
         Filter: (c1 = 1)
@@ -278,7 +278,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_6';
 GO
 ~~START~~
 text
-WITH/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1<newline>WITH/*+ IndexScan(babel_3512_t2 index_babel_3512_t2_b1babel_351ed65eb34ef55dec01b20e7fff9c5ca06) */ babel_3512_t2_cte (a1, b2, c2) as (SELECT * FROM babel_3512_t2                                    WHERE b2 = 1) SELECT * FROM babel_3512_t2_cte WHERE c2 = 1
+WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1<newline>WITH/*+ indexscan(babel_3512_t2 index_babel_3512_t2_b1babel_351ed65eb34ef55dec01b20e7fff9c5ca06) */ babel_3512_t2_cte (a1, b2, c2) as (SELECT * FROM babel_3512_t2                                    WHERE b2 = 1) SELECT * FROM babel_3512_t2_cte WHERE c2 = 1
 ~~END~~
 
 
@@ -290,11 +290,11 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_proc_6
-  Query Text: WITH/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
+  Query Text: WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
   ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
         Index Cond: (b1 = 1)
         Filter: (c1 = 1)
-  Query Text: WITH/*+ IndexScan(babel_3512_t2 index_babel_3512_t2_b1babel_351ed65eb34ef55dec01b20e7fff9c5ca06) */ babel_3512_t2_cte (a1, b2, c2) as (SELECT * FROM babel_3512_t2                                    WHERE b2 = 1) SELECT * FROM babel_3512_t2_cte WHERE c2 = 1
+  Query Text: WITH/*+ indexscan(babel_3512_t2 index_babel_3512_t2_b1babel_351ed65eb34ef55dec01b20e7fff9c5ca06) */ babel_3512_t2_cte (a1, b2, c2) as (SELECT * FROM babel_3512_t2                                    WHERE b2 = 1) SELECT * FROM babel_3512_t2_cte WHERE c2 = 1
   ->  Seq Scan on babel_3512_t2
         Filter: ((b2 = 1) AND (c2 = 1))
 ~~END~~
@@ -312,7 +312,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_7';
 GO
 ~~START~~
 text
-SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1                                                                                                                           
+SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1                                                                                                                           
 ~~END~~
 
 
@@ -324,7 +324,7 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_proc_7
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
   ->  Nested Loop
         ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
               Index Cond: (b1 = 1)
@@ -348,7 +348,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_8';
 GO
 ~~START~~
 text
-SELECT * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1<newline>SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1                                                                                                                           <newline>SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1 babel_3512_t1                                   , babel_3512_t2 babel_3512_t2                                    WHERE b1 = 1 AND b2 = 1
+SELECT * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1<newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1                                                                                                                           <newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1 babel_3512_t1                                   , babel_3512_t2 babel_3512_t2                                    WHERE b1 = 1 AND b2 = 1
 ~~END~~
 
 
@@ -371,14 +371,14 @@ Query Text: EXEC babel_3512_proc_8
                     Recheck Cond: (b2 = 1)
                     ->  Bitmap Index Scan on index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9
                           Index Cond: (b2 = 1)
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
   ->  Nested Loop
         ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
               Index Cond: (b1 = 1)
         ->  Materialize
               ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
                     Index Cond: (b2 = 1)
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1 babel_3512_t1                                   , babel_3512_t2 babel_3512_t2                                    WHERE b1 = 1 AND b2 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1 babel_3512_t1                                   , babel_3512_t2 babel_3512_t2                                    WHERE b1 = 1 AND b2 = 1
   ->  Nested Loop
         ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
               Index Cond: (b1 = 1)
@@ -399,7 +399,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_9';
 GO
 ~~START~~
 text
-SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     inner      join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     inner      join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
 ~~END~~
 
 
@@ -411,7 +411,7 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_proc_9
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     inner      join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     inner      join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
   ->  Nested Loop
         Join Filter: (babel_3512_t1.a1 = babel_3512_t2.a2)
         ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
@@ -435,7 +435,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_10';
 GO
 ~~START~~
 text
-SELECT * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1<newline>SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) Set(enable_hashjoin off) Set(enable_mergejoin off) */ * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1                                                                                                                                      <newline>SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) MergeJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     right outer       join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+SELECT * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1<newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) set(enable_hashjoin off) set(enable_mergejoin off) */ * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1                                                                                                                                      <newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) mergejoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     right outer       join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
 ~~END~~
 
 
@@ -459,7 +459,7 @@ Query Text: EXEC babel_3512_proc_10
                     Recheck Cond: (b2 = 1)
                     ->  Bitmap Index Scan on index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9
                           Index Cond: (b2 = 1)
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) Set(enable_hashjoin off) Set(enable_mergejoin off) */ * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) set(enable_hashjoin off) set(enable_mergejoin off) */ * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
   ->  Nested Loop
         Join Filter: (babel_3512_t1.a1 = babel_3512_t2.a2)
         ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
@@ -467,7 +467,7 @@ Query Text: EXEC babel_3512_proc_10
         ->  Materialize
               ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
                     Index Cond: (b2 = 1)
-  Query Text: SELECT/*+ IndexScan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) IndexScan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) MergeJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     right outer       join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) mergejoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     right outer       join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
   ->  Merge Join
         Merge Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
         ->  Sort
@@ -538,7 +538,7 @@ SELECT/* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -550,7 +550,7 @@ SELECT /* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -562,7 +562,7 @@ SELECT	/* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/	/* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/	/* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -585,7 +585,7 @@ babel_3512_t2.a2
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ HashJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/
+Query Text: SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/
 *
 FROM
 babel_3512_t1
@@ -619,7 +619,7 @@ SELECT/*this is a comment block*/*FROM babel_3512_t1 inner loop join babel_3512_
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -631,7 +631,7 @@ Nested Loop
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/* FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/* FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -643,7 +643,7 @@ Nested Loop
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -655,7 +655,7 @@ Nested Loop
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -668,7 +668,7 @@ SELECT/*this is a comment
 GO
 ~~START~~
 text
-Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment
  multi line block */
  /*this is a comment block*/	* FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
@@ -695,7 +695,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_comment_test_1';
 GO
 ~~START~~
 text
-SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ MergeJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM<newline> babel_3512_t1 inner       join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>/* this is another comment block */SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ mergejoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM<newline> babel_3512_t1 inner       join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>/* this is another comment block */SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 ~~END~~
 
 
@@ -711,7 +711,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_comment_test_2';
 GO
 ~~START~~
 text
-SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>/* this is another comment block *//* this is another comment block */SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment<newline> multi line block */<newline> /*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>/* this is another comment block *//* this is another comment block */SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment<newline> multi line block */<newline> /*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 ~~END~~
 
 
@@ -729,23 +729,23 @@ Query Text: EXEC babel_3512_comment_test_1
         ->  Seq Scan on babel_3512_t1
         ->  Hash
               ->  Seq Scan on babel_3512_t2
-  Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Nested Loop
         ->  Seq Scan on babel_3512_t1
         ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
               Index Cond: (a2 = babel_3512_t1.a1)
-  Query Text: SELECT/*+ MergeJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM
+  Query Text: SELECT/*+ mergejoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM
  babel_3512_t1 inner       join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Merge Join
         Merge Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
         ->  Index Scan using babel_3512_t1_pkey on babel_3512_t1
         ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
-  Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Nested Loop
         ->  Seq Scan on babel_3512_t1
         ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
               Index Cond: (a2 = babel_3512_t1.a1)
-  Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Nested Loop
         ->  Seq Scan on babel_3512_t1
         ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -758,17 +758,17 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3512_comment_test_2
-  Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Nested Loop
         ->  Seq Scan on babel_3512_t1
         ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
               Index Cond: (a2 = babel_3512_t1.a1)
-  Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Nested Loop
         ->  Seq Scan on babel_3512_t1
         ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
               Index Cond: (a2 = babel_3512_t1.a1)
-  Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment
  multi line block */
  /*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Nested Loop

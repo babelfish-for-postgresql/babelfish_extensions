@@ -55,7 +55,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3592_insert_multiline';
 GO
 ~~START~~
 text
-insert into babel_3592_t2 select * from babel_3592_t1 where b1 = 1<newline>insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2<newline>    select *<newline>    from babel_3592_t1                                    <newline>    where b1 = 1<newline>insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1                                                                 
+insert into babel_3592_t2 select * from babel_3592_t1 where b1 = 1<newline>insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2<newline>    select *<newline>    from babel_3592_t1                                    <newline>    where b1 = 1<newline>insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1                                                                 
 ~~END~~
 
 
@@ -82,14 +82,14 @@ Query Text: EXEC babel_3592_insert_multiline
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836
                     Index Cond: (b1 = 1)
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2
     select *
     from babel_3592_t1                                    
     where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
@@ -101,7 +101,7 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3592_insert_singleline
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
@@ -128,7 +128,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3592_updates_multiline';
 GO
 ~~START~~
 text
-update babel_3592_t1 <newline>    set a1 = 1 where b1 = 1<newline>update/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 <newline>                                        <newline>    set a1 = 1 where b1 = 1<newline>update/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1                                                                 
+update babel_3592_t1 <newline>    set a1 = 1 where b1 = 1<newline>update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 <newline>                                        <newline>    set a1 = 1 where b1 = 1<newline>update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1                                                                 
 ~~END~~
 
 
@@ -136,7 +136,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3592_updates_singleline';
 GO
 ~~START~~
 text
-update/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1                                                                 
+update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1                                                                 
 ~~END~~
 
 
@@ -160,14 +160,14 @@ Query Text: EXEC babel_3592_insert_multiline
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836
                     Index Cond: (b1 = 1)
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2
     select *
     from babel_3592_t1                                    
     where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
@@ -179,7 +179,7 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3592_updates_singleline
-  Query Text: update/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1
+  Query Text: update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1
   ->  Update on babel_3592_t1
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
@@ -207,7 +207,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3592_delete_multiline';
 GO
 ~~START~~
 text
-delete from babel_3592_t1 where b1 = 1<newline>delete/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ from babel_3592_t1                                                       <newline>    where b1 = 1<newline>delete/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ from babel_3592_t1 where b1 = 1                                                                 
+delete from babel_3592_t1 where b1 = 1<newline>delete/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ from babel_3592_t1                                                       <newline>    where b1 = 1<newline>delete/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ from babel_3592_t1 where b1 = 1                                                                 
 ~~END~~
 
 
@@ -215,7 +215,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3592_delete_singleline';
 GO
 ~~START~~
 text
-delete/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ from babel_3592_t1 where b1 = 1                                                                 
+delete/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ from babel_3592_t1 where b1 = 1                                                                 
 ~~END~~
 
 
@@ -239,14 +239,14 @@ Query Text: EXEC babel_3592_insert_multiline
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836
                     Index Cond: (b1 = 1)
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2
     select *
     from babel_3592_t1                                    
     where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
@@ -258,7 +258,7 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3592_delete_singleline
-  Query Text: delete/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ from babel_3592_t1 where b1 = 1
+  Query Text: delete/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ from babel_3592_t1 where b1 = 1
   ->  Delete on babel_3592_t1
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
@@ -299,7 +299,7 @@ SELECT prosrc FROM pg_proc WHERE proname = 'babel_3592_proc_mixed_statements';
 GO
 ~~START~~
 text
-update/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1                                     set a1 = 1 where b1 = 1<newline>        select/*+ NestLoop(babel_3592_t1 babel_3592_t2) Leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2<newline>    select/*+ MergeJoin(babel_3592_t1 babel_3592_t2) Leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      <newline>     join babel_3592_t2<newline>      on babel_3592_t1.a1 = babel_3592_t2.a2<newline>    update/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1                                                                 <newline>    delete/*+ MergeJoin(babel_3592_t1 babel_3592_t2) Leading(babel_3592_t1 babel_3592_t2)*/ babel_3592_t1 from babel_3592_t1 inner       join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2 where b1 = 1 and b2 = 1<newline>delete/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) MergeJoin(babel_3592_t1 babel_3592_t2) Leading(babel_3592_t1 babel_3592_t2)*/ babel_3592_t1 from babel_3592_t1                                     left outer       join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2 where b1 = 1 and b2 = 1<newline>insert<newline>into<newline>babel_3592_t2 select * from babel_3592_t1 where b1 = 1<newline>insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1                                     where b1 = 1<newline>insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1                                                                 <newline>-- comments inside the stored proc<newline>update babel_3592_t1 set a1 = 1 where b1 = 1<newline>/*<newline> *multiline comment<newline> */<newline> select/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) IndexScan(babel_3592_t2 index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d) */ * from babel_3592_t1                                    , babel_3592_t2                                     where b1 = 1 and b2 = 1
+update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1                                     set a1 = 1 where b1 = 1<newline>        select/*+ nestloop(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2<newline>    select/*+ mergejoin(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      <newline>     join babel_3592_t2<newline>      on babel_3592_t1.a1 = babel_3592_t2.a2<newline>    update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1                                                                 <newline>    delete/*+ mergejoin(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ babel_3592_t1 from babel_3592_t1 inner       join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2 where b1 = 1 and b2 = 1<newline>delete/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) mergejoin(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ babel_3592_t1 from babel_3592_t1                                     left outer       join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2 where b1 = 1 and b2 = 1<newline>insert<newline>into<newline>babel_3592_t2 select * from babel_3592_t1 where b1 = 1<newline>insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1                                     where b1 = 1<newline>insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1                                                                 <newline>-- comments inside the stored proc<newline>update babel_3592_t1 set a1 = 1 where b1 = 1<newline>/*<newline> *multiline comment<newline> */<newline> select/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) indexscan(babel_3592_t2 index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d) */ * from babel_3592_t1                                    , babel_3592_t2                                     where b1 = 1 and b2 = 1
 ~~END~~
 
 
@@ -326,27 +326,27 @@ GO
 ~~START~~
 text
 Query Text: EXEC babel_3592_proc_mixed_statements
-  Query Text: update/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1                                     set a1 = 1 where b1 = 1
+  Query Text: update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1                                     set a1 = 1 where b1 = 1
   ->  Update on babel_3592_t1
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
-  Query Text: select/*+ NestLoop(babel_3592_t1 babel_3592_t2) Leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2
+  Query Text: select/*+ nestloop(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2
   ->  Nested Loop
         ->  Seq Scan on babel_3592_t1
         ->  Index Scan using babel_3592_t2_pkey on babel_3592_t2
               Index Cond: (a2 = babel_3592_t1.a1)
-  Query Text: select/*+ MergeJoin(babel_3592_t1 babel_3592_t2) Leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      
+  Query Text: select/*+ mergejoin(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ * from babel_3592_t1 inner      
      join babel_3592_t2
       on babel_3592_t1.a1 = babel_3592_t2.a2
   ->  Merge Join
         Merge Cond: (babel_3592_t1.a1 = babel_3592_t2.a2)
         ->  Index Scan using babel_3592_t1_pkey on babel_3592_t1
         ->  Index Scan using babel_3592_t2_pkey on babel_3592_t2
-  Query Text: update/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1
+  Query Text: update/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ babel_3592_t1 set a1 = 1 where b1 = 1
   ->  Update on babel_3592_t1
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
-  Query Text: delete/*+ MergeJoin(babel_3592_t1 babel_3592_t2) Leading(babel_3592_t1 babel_3592_t2)*/ babel_3592_t1 from babel_3592_t1 inner       join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2 where b1 = 1 and b2 = 1
+  Query Text: delete/*+ mergejoin(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ babel_3592_t1 from babel_3592_t1 inner       join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2 where b1 = 1 and b2 = 1
   ->  Delete on babel_3592_t1
         ->  Nested Loop
               ->  HashAggregate
@@ -364,7 +364,7 @@ Query Text: EXEC babel_3592_proc_mixed_statements
                                             Index Cond: (b2 = 1)
               ->  Tid Scan on babel_3592_t1
                     TID Cond: (ctid = babel_3592_t1_1.ctid)
-  Query Text: delete/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) MergeJoin(babel_3592_t1 babel_3592_t2) Leading(babel_3592_t1 babel_3592_t2)*/ babel_3592_t1 from babel_3592_t1                                     left outer       join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2 where b1 = 1 and b2 = 1
+  Query Text: delete/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) mergejoin(babel_3592_t1 babel_3592_t2) leading(babel_3592_t1 babel_3592_t2)*/ babel_3592_t1 from babel_3592_t1                                     left outer       join babel_3592_t2 on babel_3592_t1.a1 = babel_3592_t2.a2 where b1 = 1 and b2 = 1
   ->  Delete on babel_3592_t1
         ->  Nested Loop
               ->  HashAggregate
@@ -388,11 +388,11 @@ babel_3592_t2 select * from babel_3592_t1 where b1 = 1
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836
                     Index Cond: (b1 = 1)
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1                                     where b1 = 1
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1                                     where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
-  Query Text: insert/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
+  Query Text: insert/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) */ into babel_3592_t2 select * from babel_3592_t1 where b1 = 1
   ->  Insert on babel_3592_t2
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
@@ -402,7 +402,7 @@ babel_3592_t2 select * from babel_3592_t1 where b1 = 1
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836
                     Index Cond: (b1 = 1)
-  Query Text: select/*+ IndexScan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) IndexScan(babel_3592_t2 index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d) */ * from babel_3592_t1                                    , babel_3592_t2                                     where b1 = 1 and b2 = 1
+  Query Text: select/*+ indexscan(babel_3592_t1 index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836) indexscan(babel_3592_t2 index_babel_3592_t2_b2babel_359155b730148d8fcf0167f32edb84e3f7d) */ * from babel_3592_t1                                    , babel_3592_t2                                     where b1 = 1 and b2 = 1
   ->  Nested Loop
         ->  Index Scan using index_babel_3592_t1_b1babel_35976c64b612d1f74e2768783beca3bf836 on babel_3592_t1
               Index Cond: (b1 = 1)
