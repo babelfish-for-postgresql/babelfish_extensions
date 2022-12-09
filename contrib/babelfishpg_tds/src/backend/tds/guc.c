@@ -116,9 +116,9 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 static bool 
 check_version_number(char **newval, void **extra, GucSource source)
 {
-    int			part = 0;
+	char 		*copy_version_number = malloc(sizeof(*newval));
 	char		*token;
-    char 		*copy_version_number = malloc(sizeof(*newval));
+	int			part = 0;
 
     strcpy(copy_version_number,*newval);
 	if(strcasecmp(copy_version_number,"default") == 0)

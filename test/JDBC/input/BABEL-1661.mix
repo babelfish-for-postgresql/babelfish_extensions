@@ -1,4 +1,3 @@
--- BABEL-3545
 -- psql
 Alter system set babelfishpg_tsql.version = "9.4.3000.6";
 SELECT pg_reload_conf();
