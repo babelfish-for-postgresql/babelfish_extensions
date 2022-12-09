@@ -1,20 +1,4 @@
 -- psql
-Alter system set babelfishpg_tsql.version = "9.4.3000.6";
-SELECT pg_reload_conf();
-GO
-
-Alter system set babelfishpg_tsql.version = "11.e4.3000.6";
-SELECT pg_reload_conf();
-GO
-
-Alter system set babelfishpg_tsql.version = "11.256.3000.6";
-SELECT pg_reload_conf();
-GO
-
-Alter system set babelfishpg_tsql.version = "15.4.3000";
-SELECT pg_reload_conf();
-GO
-
 Alter system set babelfishpg_tsql.version = "15.4.3000.6";
 SELECT pg_reload_conf();
 GO
