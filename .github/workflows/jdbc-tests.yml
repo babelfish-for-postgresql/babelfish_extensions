@@ -36,7 +36,7 @@ jobs:
       - name: Run JDBC Tests
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'
-        timeout-minutes: 20
+        timeout-minutes: 5
         run: |
           cd test/JDBC/
           mvn test
