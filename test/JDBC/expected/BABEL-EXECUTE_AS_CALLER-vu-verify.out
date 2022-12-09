@@ -8,16 +8,22 @@ GO
 
 
 -- functions
-CREATE FUNCTION babel_execute_as_caller_function_return_table() RETURNS TABLE WITH EXECUTE AS CALLER AS
+CREATE FUNCTION babel_execute_as_caller_function_return_table_select() RETURNS TABLE WITH EXECUTE AS CALLER AS
 RETURN (SELECT * FROM babel_execute_as_caller_table)
 GO
-SELECT babel_execute_as_caller_function_return_table()
+SELECT babel_execute_as_caller_function_return_table_select()
 GO
 ~~START~~
 int
 1
 ~~END~~
 
+
+CREATE FUNCTION babel_execute_as_caller_function_return_table(@i int) returns @tableVar table(a text not null) WITH EXECUTE AS CALLER AS
+BEGIN
+    RETURN
+END
+GO
 
 CREATE FUNCTION babel_execute_as_caller_function_return_table_1() RETURNS TABLE WITH EXECUTE AS OWNER AS
 RETURN (SELECT * FROM babel_execute_as_caller_table)
