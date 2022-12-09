@@ -1511,6 +1511,18 @@ typedef struct PLtsql_protocol_plugin
 {
 	/* True if Protocol being used by client is TDS. */
 	bool is_tds_client;
+
+	/*
+	 * List of GUCs used/set by protocol plugin.  We can always use this pointer
+	 * to read the GUC value directly.  We've declared volatile so that the
+	 * compiler always reads the value from the memory location instead of
+	 * the register.
+	 * We should be careful while setting data using this pointer - as the value
+	 * will not be verified and changes can't be rolled back automatically in
+	 * case of an error.
+	 */
+	volatile bool *pltsql_nocount_addr;
+
 	/* 
 	 * stmt_need_logging checks whether stmt needs to be logged at babelfishpg_tsql parser
 	 * and logs the statement at the end of statement execution on TDS
