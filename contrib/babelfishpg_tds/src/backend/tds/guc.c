@@ -118,7 +118,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 {
 	char 		*copy_version_number = malloc(sizeof(*newval));
 	char		*token;
-	int			part = 0;
+	int		part = 0;
 
     strcpy(copy_version_number,*newval);
 	if(strcasecmp(copy_version_number,"default") == 0)
