@@ -155,6 +155,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 		{
 			free(copy_version_number);
 			GUC_check_errmsg("Please enter a valid micro version number");
+		}
 		part++; 
 	}
 
