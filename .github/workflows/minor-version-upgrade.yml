@@ -15,7 +15,7 @@ jobs:
       # the extension code, because that's what we're actually testing.
 
     name: Build and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
 
