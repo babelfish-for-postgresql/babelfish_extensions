@@ -355,5 +355,6 @@ ISC-Columns
 ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
+app_name
 ISC-sequences
 jira-BABEL-3504-upgrade
