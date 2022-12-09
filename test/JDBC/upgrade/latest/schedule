@@ -104,6 +104,7 @@ BABEL-2917
 BABEL-2955
 BABEL-3358
 BABEL-3747
+BABEL-3781
 temp-tables
 table-variable
 TestNotNull

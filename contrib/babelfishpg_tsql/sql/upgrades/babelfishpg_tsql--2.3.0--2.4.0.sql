@@ -49,12 +49,30 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
+
 CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)
 AS
 $$
     SELECT current_setting('application_name');
 $$
 LANGUAGE sql PARALLEL SAFE STABLE;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 INT)
+RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 BIGINT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 SMALLINT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
