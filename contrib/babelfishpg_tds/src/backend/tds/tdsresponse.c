@@ -433,7 +433,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 		case T_OpExpr:
 		{
 			OpExpr *op = (OpExpr *) expr;
-			Node *arg1, *arg2;
+			Node *arg1, *arg2 = NULL;
 			int32 typmod1 = -1, typmod2 = -1;
 			uint8_t scale1, scale2, precision1, precision2;
 			uint8_t scale, precision;
@@ -2640,9 +2640,10 @@ TdsSendDone(int token, int status, int curcmd, uint64_t nprocessed)
 
 	TdsErrorContext->err_text = "Writing Done Token";
 
-	if (GetConfigOption("babelfishpg_tsql.nocount", true, false) &&
-		strcmp(GetConfigOption("babelfishpg_tsql.nocount", true, false), "on") == 0)
-		gucNocount = true;
+	/* should be initialized already */
+	Assert(pltsql_plugin_handler_ptr);
+	if (pltsql_plugin_handler_ptr->pltsql_nocount_addr)
+		gucNocount = *(pltsql_plugin_handler_ptr->pltsql_nocount_addr);
 
 	if (TdsRequestCtrl)
 		TdsRequestCtrl->isEmptyResponse = false;

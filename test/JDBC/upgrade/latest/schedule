@@ -104,6 +104,7 @@ BABEL-2917
 BABEL-2955
 BABEL-3358
 BABEL-3747
+BABEL-3781
 temp-tables
 table-variable
 TestNotNull
@@ -355,5 +356,6 @@ ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
 atn2
+app_name
 ISC-sequences
 jira-BABEL-3504-upgrade

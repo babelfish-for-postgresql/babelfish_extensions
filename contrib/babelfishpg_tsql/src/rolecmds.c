@@ -1575,7 +1575,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	Oid		dbo_role_oid;
 	char	*role;
 	char 	*dc_role;
-	char 	*dc_principal;
+	char 	*dc_principal = NULL;
 	char	*physical_role_name;
 	char	*physical_principal_name;
 	char	*cur_db_name;

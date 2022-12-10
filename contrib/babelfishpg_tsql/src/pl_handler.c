@@ -87,6 +87,7 @@ extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
+extern bool pltsql_nocount;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -609,8 +610,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			/* detect object type */
 			GrantStmt	*grant = (GrantStmt *) parseTree->stmt;
 			ListCell	*cell;
-			List	*plan_name;
-			ObjectWithArgs *func;
+			List	*plan_name = NIL;
+			ObjectWithArgs *func = NULL;
 
 			Assert(list_length(grant->objects) == 1);
 			foreach(cell, grant->objects)
@@ -1743,7 +1744,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid tsqlSeqTypOid;
 	TypeName *type_def;
 	List* type_names;
-	List* new_type_names;
+	List* new_type_names = NULL;
 	AclResult aclresult;
 	Oid base_type;
 	int list_len;
@@ -3521,6 +3522,7 @@ _PG_init(void)
 	/* If a protocol extension is loaded, initialize the inline handler. */
 	if (*pltsql_protocol_plugin_ptr)
 	{
+		(*pltsql_protocol_plugin_ptr)->pltsql_nocount_addr = &pltsql_nocount;
 		(*pltsql_protocol_plugin_ptr)->sql_batch_callback = &pltsql_inline_handler;
 		(*pltsql_protocol_plugin_ptr)->sp_executesql_callback = &pltsql_inline_handler;
         (*pltsql_protocol_plugin_ptr)->sp_prepare_callback = &sp_prepare;

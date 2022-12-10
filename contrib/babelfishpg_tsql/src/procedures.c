@@ -851,9 +851,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		int numresults = 0;
 		int num_target_attnums = 0;
 		RawStmt    *parsetree;
-		InsertStmt *insert_stmt;
-		UpdateStmt *update_stmt;
-		DeleteStmt *delete_stmt;
+		InsertStmt *insert_stmt = NULL;
+		UpdateStmt *update_stmt = NULL;
+		DeleteStmt *delete_stmt = NULL;
 		RangeVar *relation;
 		Oid relid;
 		Relation r;
@@ -1087,7 +1087,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			}
 			foreach(sublc, sublist)
 			{
-				ColumnRef *columnref;
+				ColumnRef *columnref = NULL;
 				ResTarget *res;
 				List *fields;
 				ListCell *fieldcell;
