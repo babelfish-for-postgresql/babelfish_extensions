@@ -6,9 +6,10 @@
 #    input folder
 # 5. To add a test, add test name (without extension Eg. BABEL-TEST) on a
 #    new line
-# 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
+
+ignore#!#BABEL-SP_DATABASES
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
@@ -16,17 +17,15 @@ ignore#!#BABEL-SQLvariant
 
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
-ignore#!#BABEL-2934-vu-prepare
-ignore#!#BABEL-2934-vu-verify
-ignore#!#BABEL-1444-vu-prepare
-ignore#!#BABEL-1444-vu-verify
-ignore#!#BABEL-1444-vu-cleanup
 ignore#!#Test-Default-Columns-vu-prepare
 ignore#!#Test-Default-Columns-vu-verify
 ignore#!#Test-Default-Columns-vu-cleanup
 ignore#!#Test-Prep-Statements-vu-prepare
 ignore#!#Test-Prep-Statements-vu-verify
 ignore#!#Test-Prep-Statements-vu-cleanup
+ignore#!#BABEL-1444-vu-prepare
+ignore#!#BABEL-1444-vu-verify
+ignore#!#BABEL-1444-vu-cleanup
 ignore#!#BABEL-3117-vu-prepare
 ignore#!#BABEL-3117-vu-verify
 ignore#!#BABEL-3655-vu-prepare
@@ -60,22 +59,9 @@ ignore#!#sys_database_principals_dep_for_13_x-vu-verify
 ignore#!#sys_server_principals_dep_for_13_x-vu-cleanup
 ignore#!#sys_server_principals_dep_for_13_x-vu-prepare
 ignore#!#sys_server_principals_dep_for_13_x-vu-verify
-
-# These tests are meant for upgrade scenario where source version is 13_X
-ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
-ignore#!#sys_database_principals_dep_for_13_x-vu-prepare
-ignore#!#sys_database_principals_dep_for_13_x-vu-verify
-ignore#!#sys_server_principals_dep_for_13_x-vu-cleanup
-ignore#!#sys_server_principals_dep_for_13_x-vu-prepare
-ignore#!#sys_server_principals_dep_for_13_x-vu-verify
 ignore#!#sys-identity_columns-dep-for-13-x-vu-prepare
 ignore#!#sys-identity_columns-dep-for-13-x-vu-verify
 ignore#!#sys-identity_columns-dep-for-13-x-vu-cleanup
 ignore#!#sys-system_objects-for-13-x-vu-prepare
 ignore#!#sys-system_objects-for-13-x-vu-verify
 ignore#!#sys-system_objects-for-13-x-vu-cleanup
-
-#Ignore upgrade tests in normal JDBC run as they are to be run in multi-db mode, similar test files for JDBC testing are already present
-ignore#!#jira-BABEL-3504-upgrade-vu-prepare
-ignore#!#jira-BABEL-3504-upgrade-vu-verify
-ignore#!#jira-BABEL-3504-upgrade-vu-cleanup
