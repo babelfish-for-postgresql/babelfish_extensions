@@ -37,8 +37,6 @@ xml
 1.1
 ~~END~~
 
-~~ERROR (Message: cannot cast type numeric to xml.)~~
-
 DROP VIEW BABEL_3748_before_14_7_vu_prepare_v2
 GO
 
@@ -130,8 +128,6 @@ GO
 xml
 3
 ~~END~~
-
-~~ERROR (Message: cannot cast type integer to xml.)~~
 
 DROP VIEW BABEL_3748_before_14_7_vu_prepare_v5
 GO
