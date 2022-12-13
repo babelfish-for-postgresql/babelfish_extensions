@@ -1241,8 +1241,6 @@ smallint_degrees(PG_FUNCTION_ARGS)
 	int16	arg1 = PG_GETARG_INT16(0);
 	float8	result;
 	 
-	
-
 	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
 
 	if (result < 0)

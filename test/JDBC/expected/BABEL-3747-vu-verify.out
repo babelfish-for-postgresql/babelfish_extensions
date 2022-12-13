@@ -2,14 +2,10 @@ SELECT degrees(a), degrees(b), degrees(c), degrees(d), degrees(e) from BABEL_374
 GO
 ~~START~~
 int#!#float#!#bigint#!#int#!#int
-<NULL>#!#580.0280943227376#!#572#!#1145#!#<NULL>
-171#!#63.02535746439056#!#<NULL>#!#51795#!#2864
-171#!#63.02535746439056#!#<NULL>#!#458#!#2463
-3495#!#1151.6451682129548#!#3679133#!#<NULL>#!#1145
-5786#!#1151.6451682129548#!#5602209#!#<NULL>#!#1145
-11516#!#1151.6451682129548#!#3679133#!#<NULL>#!#1145
-75057#!#5.7868737308213145#!#<NULL>#!#228266#!#<NULL>
-114018#!#<NULL>#!#2135528#!#-572#!#57
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+-1230417468#!#-1.0255944532841737E40#!#-5284602905907601408#!#-1877468#!#0
+5786#!#1151.6451682129548#!#5602209#!#21543#!#6875
+1230417411#!#1.0255944532841737E40#!#5284602905907601408#!#1877410#!#14610
 ~~END~~
 
 
@@ -17,7 +13,7 @@ SELECT * FROM BABEL_3747_vu_prepare_t_2
 GO
 ~~START~~
 int
-572
+4583
 ~~END~~
 
 
@@ -31,16 +27,17 @@ float
 
 SELECT * FROM BABEL_3747_vu_prepare_t_4
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
+~~START~~
+int
+1875749
+~~END~~
 
 
 EXECUTE BABEL_3747_vu_prepare_t_p1
 GO
 ~~START~~
-int#!#int#!#int#!#int
-57#!#229#!#14610#!#<NULL>
+bigint#!#bigint#!#bigint#!#bigint
+-5284602905907601408#!#5284602905907601408#!#<NULL>#!#513885
 ~~END~~
 
 
@@ -48,45 +45,31 @@ EXECUTE BABEL_3747_vu_prepare_t_p2
 GO
 ~~START~~
 int#!#int#!#int#!#int
-572#!#-572#!#325440#!#1877410
+-1230417468#!#1230417411#!#<NULL>#!#513885
 ~~END~~
 
 
 EXECUTE BABEL_3747_vu_prepare_t_p3
 GO
 ~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-572#!#-572#!#2135579860#!#502152243#!#<NULL>#!#5042
+int#!#int#!#int#!#int
+-1877468#!#1877410#!#<NULL>#!#513885
 ~~END~~
 
 
 EXECUTE BABEL_3747_vu_prepare_t_p4
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int
-572#!#-572#!#14323#!#51165#!#<NULL>
+int#!#int#!#int#!#int
+0#!#14610#!#<NULL>#!#5729
 ~~END~~
-
-
-EXECUTE BABEL_3747_vu_prepare_t_p5
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type bigint)~~
-
-
-EXECUTE BABEL_3747_vu_prepare_t_p6
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
 
 
 SELECT * FROM BABEL_3747_vu_prepare_t_v1
 GO
 ~~START~~
-int#!#int#!#int#!#int
-57#!#229#!#14610#!#<NULL>
+bigint#!#bigint#!#bigint#!#bigint
+-5284602905907601408#!#5284602905907601408#!#<NULL>#!#513885
 ~~END~~
 
 
@@ -94,22 +77,22 @@ SELECT * FROM BABEL_3747_vu_prepare_t_v2
 GO
 ~~START~~
 int#!#int#!#int#!#int
-572#!#-572#!#325440#!#1877410
+-1230417468#!#1230417411#!#<NULL>#!#513885
 ~~END~~
 
 
 SELECT * FROM BABEL_3747_vu_prepare_t_v3
 GO
 ~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-572#!#-572#!#2135579860#!#502152243#!#<NULL>#!#5042
+int#!#int#!#int#!#int
+-1877468#!#1877410#!#<NULL>#!#51508
 ~~END~~
 
 
 SELECT * FROM BABEL_3747_vu_prepare_t_v4
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int
-572#!#-572#!#14323#!#51165#!#<NULL>
+int#!#int#!#int#!#int
+0#!#14610#!#<NULL>#!#5099
 ~~END~~
 

@@ -22,12 +22,6 @@ GO
 EXECUTE BABEL_3747_vu_prepare_t_p4
 GO
 
-EXECUTE BABEL_3747_vu_prepare_t_p5
-GO
-
-EXECUTE BABEL_3747_vu_prepare_t_p6
-GO
-
 SELECT * FROM BABEL_3747_vu_prepare_t_v1
 GO
 
