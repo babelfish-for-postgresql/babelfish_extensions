@@ -192,7 +192,7 @@ GO
 ~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 
--- create function with duplicate schemabinding
+-- create function with duplicate execute as caller
 CREATE FUNCTION babel_execute_as_caller_function_return_int_3 (@v int) RETURNS INT WITH EXECUTE AS CALLER, EXECUTE AS CALLER AS BEGIN RETURN @v+1 END;
 GO
 SELECT babel_execute_as_caller_function_return_int_3(3)
@@ -234,15 +234,18 @@ int
 ~~END~~
 
 
+CREATE FUNCTION babel_execute_as_caller_function_return_table_1(@i int) returns @tableVar table(a text not null) WITH schemabinding, execute as caller as begin return end
+GO
+
 -- create function with other function options for return type table the syntax is not supported
-CREATE FUNCTION babel_execute_as_caller_function_return_table_select_2 (@v int) RETURNS TABLE WITH SCHEMABINDING, EXECUTE AS CALLER AS BEGIN RETURN @v+1 END;
+CREATE FUNCTION babel_execute_as_caller_function_return_table_select_2 (@v int) RETURNS TABLE WITH SCHEMABINDING, EXECUTE AS CALLER AS BEGIN RETURN END;
 GO
 ~~ERROR (Code: 487)~~
 
 ~~ERROR (Message: syntax error near 'BEGIN' at line 2 and character position 135)~~
 
 
-CREATE FUNCTION babel_execute_as_caller_function_return_table_1(@i int) returns @tableVar table(a text not null) WITH execute as caller, returns null on null input as begin return end
+CREATE FUNCTION babel_execute_as_caller_function_return_table_2(@i int) returns @tableVar table(a text not null) WITH execute as caller, returns null on null input as begin return end
 GO
 ~~ERROR (Code: 33557097)~~
 

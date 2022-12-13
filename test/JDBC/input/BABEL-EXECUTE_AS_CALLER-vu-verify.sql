@@ -119,7 +119,7 @@ CREATE TRIGGER babel_execute_as_caller_trigger1 ON babel_execute_as_caller_table
 FOR INSERT AS BEGIN UPDATE babel_execute_as_caller_table SET c1 =10 END
 GO
 
--- create function with duplicate schemabinding
+-- create function with duplicate execute as caller
 CREATE FUNCTION babel_execute_as_caller_function_return_int_3 (@v int) RETURNS INT WITH EXECUTE AS CALLER, EXECUTE AS CALLER AS BEGIN RETURN @v+1 END;
 GO
 SELECT babel_execute_as_caller_function_return_int_3(3)
@@ -141,11 +141,14 @@ GO
 SELECT babel_execute_as_caller_function_return_int_6(6)
 GO
 
--- create function with other function options for return type table the syntax is not supported
-CREATE FUNCTION babel_execute_as_caller_function_return_table_select_2 (@v int) RETURNS TABLE WITH SCHEMABINDING, EXECUTE AS CALLER AS BEGIN RETURN @v+1 END;
+CREATE FUNCTION babel_execute_as_caller_function_return_table_1(@i int) returns @tableVar table(a text not null) WITH schemabinding, execute as caller as begin return end
 GO
 
-CREATE FUNCTION babel_execute_as_caller_function_return_table_1(@i int) returns @tableVar table(a text not null) WITH execute as caller, returns null on null input as begin return end
+-- create function with other function options for return type table the syntax is not supported
+CREATE FUNCTION babel_execute_as_caller_function_return_table_select_2 (@v int) RETURNS TABLE WITH SCHEMABINDING, EXECUTE AS CALLER AS BEGIN RETURN END;
+GO
+
+CREATE FUNCTION babel_execute_as_caller_function_return_table_2(@i int) returns @tableVar table(a text not null) WITH execute as caller, returns null on null input as begin return end
 GO
 
 CREATE FUNCTION babel_execute_as_caller_function_return_table (@v int) RETURNS TABLE WITH SCHEMABINDING, EXECUTE AS CALLER AS BEGIN RETURN END;

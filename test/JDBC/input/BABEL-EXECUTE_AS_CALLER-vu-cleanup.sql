@@ -10,6 +10,7 @@ DROP FUNCTION babel_execute_as_caller_function_return_int_2;
 DROP FUNCTION babel_execute_as_caller_function_return_int_1;
 DROP FUNCTION babel_execute_as_caller_function_return_bigint;
 DROP FUNCTION babel_execute_as_caller_function_return_int;
+DROP FUNCTION babel_execute_as_caller_function_return_table_1;
 DROP FUNCTION babel_execute_as_caller_function_return_table;
 DROP FUNCTION babel_execute_as_caller_function_return_table_select;
 DROP TABLE babel_execute_as_caller_table_1;
