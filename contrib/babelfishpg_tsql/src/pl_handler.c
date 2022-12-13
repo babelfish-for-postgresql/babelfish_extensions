@@ -3946,7 +3946,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	int			nargs = PG_NARGS();
 	int 			i;
 	MemoryContext 		savedPortalCxt;
-	LOCAL_FCINFO(fake_fcinfo, FUNC_MAX_ARGS);
+	FunctionCallInfo fake_fcinfo = palloc0(SizeForFunctionCallInfo(nargs));
 	bool nonatomic;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	ReturnSetInfo rsinfo; /* for INSERT ... EXECUTE */
@@ -3958,7 +3958,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	 */
 	sp_describe_first_result_set_inprogress = false;
 
-	Assert((nargs > 2 ? nargs - 2 : 0) <= FUNC_MAX_ARGS);
+	Assert((nargs > 2 ? nargs - 2 : 0) <= PREPARE_STMT_MAX_ARGS);
 	Assert(exec_state_call_stack != NULL || !AbortCurTransaction);
 
 	/* TSQL transactions are always non atomic */
@@ -4036,7 +4036,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	 * pltsql_exec_function().  In particular note that this sets things up
 	 * with no arguments passed.
 	 */
-	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(FUNC_MAX_ARGS));
+	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(nargs));
 	MemSet(&flinfo, 0, sizeof(flinfo));
 	fake_fcinfo->flinfo = &flinfo;
 	flinfo.fn_oid = InvalidOid;
