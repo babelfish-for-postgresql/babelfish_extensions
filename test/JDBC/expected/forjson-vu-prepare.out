@@ -251,22 +251,3 @@ SELECT (
 	FOR JSON PATH
 ) c1
 GO
-
--- Test internal functions
-CREATE VIEW forjson_vu_v_sfunc_internal AS
-SELECT tsql_query_to_json_sfunc(
-	NULL,
-	row,
-	1,
-	FALSE,
-	FALSE,
-	NULL
-)
-FROM (SELECT TOP 1 * FROM forjson_vu_t_people) row
-GO
-
-CREATE VIEW forjson_vu_v_ffunc_internal AS
-SELECT tsql_query_to_json_ffunc(
-	'['
-)
-GO

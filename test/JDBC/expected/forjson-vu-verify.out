@@ -191,20 +191,3 @@ nvarchar
 [{"Id":1,"Age":25,"Country":"India"},{"Id":3,"Age":30,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"}]
 ~~END~~
 
-
--- Test internal functions
-SELECT * FROM forjson_vu_v_sfunc_internal
-GO
-~~START~~
-text
-[{"id":1,"firstname":"Divya","lastname":"Kumar"}
-~~END~~
-
-
-SELECT * FROM forjson_vu_v_ffunc_internal
-GO
-~~START~~
-nvarchar
-[]
-~~END~~
-

@@ -66,13 +66,6 @@ GO
 DROP VIEW forjson_vu_v_with_order_by
 GO
 
--- Test internal functions
-DROP VIEW forjson_vu_v_sfunc_internal
-GO
-
-DROP VIEW forjson_vu_v_ffunc_internal
-GO
-
 -- Display Table Contents
 DROP TABLE forjson_vu_t_people
 GO

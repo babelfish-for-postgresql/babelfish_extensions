@@ -140,6 +140,7 @@ BABEL-405
 BABEL-937
 forjson
 forjson-datatypes
+forjson-func-call
 forxml
 forxml-func-call
 BABEL-PROCID
