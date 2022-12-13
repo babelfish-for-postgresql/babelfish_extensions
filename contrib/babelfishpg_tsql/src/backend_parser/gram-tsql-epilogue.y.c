@@ -310,10 +310,12 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
                     argConst = (A_Const *) arg;
                     switch(argConst->val.type)
                     {
+						/* TSQL treats any literal integer in the range -2147483647 to 2147483647 as a T_Integer integer type */
                         case T_Integer:
                             sysType = SystemTypeName("int4");
                             break;
 
+						/* TSQL treats any integer outside of the range -2147483647 to 2147483647, and any decimal as a T_Float numeric type */
                         case T_Float:
                             sysType = SystemTypeName("numeric");
                             break;
