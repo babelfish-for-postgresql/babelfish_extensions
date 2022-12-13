@@ -76,9 +76,15 @@ PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
+<<<<<<< HEAD
 PG_FUNCTION_INFO_V1(bigint_degrees);
 PG_FUNCTION_INFO_V1(int_degrees);
 PG_FUNCTION_INFO_V1(smallint_degrees);
+=======
+PG_FUNCTION_INFO_V1(int_power);
+PG_FUNCTION_INFO_V1(int_radians);
+PG_FUNCTION_INFO_V1(int_degrees);
+>>>>>>> c45f4f9c (DEGREES, RADIANS and POWER return float always)
 
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
@@ -1200,6 +1206,7 @@ bigint_degrees(PG_FUNCTION_ARGS)
 	int64	arg1 = PG_GETARG_INT64(0);
 	float8	result;
 	 
+<<<<<<< HEAD
 	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
 
 	if (result < 0)
@@ -1255,3 +1262,30 @@ smallint_degrees(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32((int32) result);
 }
+=======
+ }
+
+Datum
+int_radians(PG_FUNCTION_ARGS)
+ {
+     int32    arg1 = PG_GETARG_INT32(0);
+     float8  result;
+
+     result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+
+     PG_RETURN_INT32((int32)result);
+	 
+ }
+
+ Datum
+int_degrees(PG_FUNCTION_ARGS)
+ {
+     int32    arg1 = PG_GETARG_INT32(0);
+     float8  result;
+
+     result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
+
+     PG_RETURN_INT32((int32)result);
+	 
+ }
+>>>>>>> c45f4f9c (DEGREES, RADIANS and POWER return float always)
