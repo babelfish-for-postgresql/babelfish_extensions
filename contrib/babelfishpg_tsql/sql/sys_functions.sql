@@ -3351,4 +3351,3 @@ AS
 $$
     SELECT current_setting('application_name');
 $$
-LANGUAGE sql PARALLEL SAFE STABLE;
