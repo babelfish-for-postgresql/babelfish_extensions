@@ -49,6 +49,7 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
+<<<<<<< HEAD
 -- deprecate old FOR XML/JSON functions
 ALTER FUNCTION sys.tsql_query_to_xml(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_deprecated_in_2_4_0;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_deprecated_in_2_4_0');
@@ -179,6 +180,31 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
     SFUNC = tsql_query_to_json_sfunc,
     FINALFUNC = tsql_query_to_json_ffunc
 );
+=======
+CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
+AS
+$$
+DECLARE
+    res SYS.FLOAT;
+BEGIN
+    IF x = 0 AND y = 0 THEN
+        RAISE EXCEPTION 'An invalid floating point operation occurred.';
+    ELSE
+        res = PG_CATALOG.atan2(x, y);
+        RETURN res;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
+
+CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)
+AS
+$$
+    SELECT current_setting('application_name');
+$$
+LANGUAGE sql PARALLEL SAFE STABLE;
+>>>>>>> upstream/BABEL_2_X_DEV
 
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 INT)
 RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
@@ -195,6 +221,38 @@ GRANT EXECUTE ON FUNCTION sys.radians(SMALLINT) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
 RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
+            CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
+            CAST(r.relname AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
+            CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
+                    AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres inherent implementation
+            CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)
+                        AS smallint) AS "NUMERIC_PRECISION",
+            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, -1)
+                        AS smallint) AS "NUMERIC_PRECISION_RADIX",
+            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, -1)
+                        AS int) AS "NUMERIC_SCALE",
+            CAST(s.seqstart AS sys.sql_variant) AS "START_VALUE",
+            CAST(s.seqmin AS sys.sql_variant) AS "MINIMUM_VALUE",
+            CAST(s.seqmax AS sys.sql_variant) AS "MAXIMUM_VALUE",
+            CAST(s.seqincrement AS sys.sql_variant) AS "INCREMENT",
+            CAST( CASE WHEN s.seqcycle = 't' THEN 1 ELSE 0 END AS int) AS "CYCLE_OPTION",
+            CAST(NULL AS sys.nvarchar(128)) AS "DECLARED_DATA_TYPE",
+            CAST(NULL AS int) AS "DECLARED_NUMERIC_PRECISION",
+            CAST(NULL AS int) AS "DECLARED_NUMERIC_SCALE"
+        FROM sys.pg_namespace_ext nc JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+            pg_sequence s join pg_class r on s.seqrelid = r.oid join pg_type t on s.seqtypid=t.oid,
+            sys.translate_pg_type_to_tsql(s.seqtypid) AS tsql_type_name
+        WHERE nc.oid = r.relnamespace
+        AND extc.dbid = cast(sys.db_id() as oid)
+            AND r.relkind = 'S'
+            AND (NOT pg_is_other_temp_schema(nc.oid))
+            AND (pg_has_role(r.relowner, 'USAGE')
+                OR has_sequence_privilege(r.oid, 'SELECT, UPDATE, USAGE'));
+
+GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
