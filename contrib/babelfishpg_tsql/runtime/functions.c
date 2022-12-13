@@ -79,7 +79,11 @@ PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 PG_FUNCTION_INFO_V1(bigint_degrees);
 PG_FUNCTION_INFO_V1(int_degrees);
 PG_FUNCTION_INFO_V1(smallint_degrees);
+PG_FUNCTION_INFO_V1(bigint_radians);
+PG_FUNCTION_INFO_V1(int_radians);
+PG_FUNCTION_INFO_V1(smallint_radians);
 
+void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
 void* get_language(void);
@@ -1254,4 +1258,43 @@ smallint_degrees(PG_FUNCTION_ARGS)
 	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32) result);
+}
+
+Datum
+bigint_radians(PG_FUNCTION_ARGS)
+{
+	int64    arg1 = PG_GETARG_INT64(0);
+	float8  result;
+
+	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+
+	/* skip range check, since it cannot overflow int64 */
+
+	PG_RETURN_INT64((int64)result);
+}
+
+Datum
+int_radians(PG_FUNCTION_ARGS)
+{
+	int32    arg1 = PG_GETARG_INT32(0);
+	float8  result;
+
+	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+
+	/* skip range check, since it cannot overflow int32 */
+
+	PG_RETURN_INT32((int32)result);
+}
+
+Datum
+smallint_radians(PG_FUNCTION_ARGS)
+{
+	int16    arg1 = PG_GETARG_INT16(0);
+	float8  result;
+
+	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+
+	/* skip range check, since it cannot overflow int32 */
+
+	PG_RETURN_INT32((int32)result);
 }
