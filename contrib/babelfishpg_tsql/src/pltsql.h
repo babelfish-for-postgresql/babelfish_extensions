@@ -57,6 +57,8 @@
 
 #define TSQL_TXN_NAME_LIMIT 64 /* Transaction name limit */
 
+/* Max number of Args allowed for Prepared stmts. */
+#define PREPARE_STMT_MAX_ARGS 2100
 
 /*
  * Compiler's namespace item types
@@ -1160,7 +1162,7 @@ typedef struct PLtsql_function
 	char		fn_prokind;
 
 	int			fn_nargs;
-	int			fn_argvarnos[FUNC_MAX_ARGS];
+	int			fn_argvarnos[PREPARE_STMT_MAX_ARGS];
 	int			out_param_varno;
 	int			found_varno;
 	int			fetch_status_varno;
