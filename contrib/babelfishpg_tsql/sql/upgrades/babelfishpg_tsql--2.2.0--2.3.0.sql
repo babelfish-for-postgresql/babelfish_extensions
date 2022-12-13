@@ -7776,6 +7776,7 @@ ALTER FUNCTION sys.get_max_id_from_table RENAME TO get_max_id_from_table_depreca
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_min_id_from_table_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'get_max_id_from_table_deprecated_in_2_3_0');
 
+
 -- Deprecate the function sys.get_tds_id
 ALTER FUNCTION sys.get_tds_id RENAME TO get_tds_id_deprecated_2_3_0;
 
