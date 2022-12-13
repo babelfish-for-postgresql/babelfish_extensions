@@ -272,7 +272,7 @@ extern bool TdsCheckMessageType(uint8_t messageType);
 extern int TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType);
 extern int TdsReadMessage(StringInfo message, uint8_t messageType);
 extern int TdsReadNextPendingBcpRequest(StringInfo message);
-extern int TdsDiscardAllPendingBcpRequest();
+extern int TdsDiscardAllPendingBcpRequest(void);
 extern int TdsWriteMessage(StringInfo message, uint8_t messageType);
 extern int TdsHandleTestQuery(StringInfo message);
 extern int TdsTestProtocol(void);

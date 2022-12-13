@@ -31,7 +31,7 @@ error_map_details error_list[] = {
 /*
  * Returns list of sql error code for which Babel does have support for.
  */
-error_map_details *
+void *
 get_mapped_error_list()
 {
 	return error_list;
@@ -334,11 +334,8 @@ emit_tds_log(ErrorData *edata)
 	{
 		/* Log the internal error message */
 		ErrorData *next_edata;
-		char *message;
 		next_edata = CopyErrorData();
-		message = psprintf("internal error occurred: %s", next_edata->message);
-		elog(LOG, message);
-		pfree(message);
+		elog(LOG, "internal error occurred: %s", next_edata->message);
 		FreeErrorData(next_edata);
 	}
 	PG_END_TRY();

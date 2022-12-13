@@ -195,10 +195,10 @@ void pltsql_declare_variable(Oid type, int32 typmod, char *name, char mode, Datu
 	(*fcinfo)->nargs++;
 	
 	/* Safety check */
-	if ((*fcinfo)->nargs > FUNC_MAX_ARGS)
+	if ((*fcinfo)->nargs - 2 > PREPARE_STMT_MAX_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				errmsg("cannot pass more than %d arguments to a procedure",
-				       FUNC_MAX_ARGS)));
+				       PREPARE_STMT_MAX_ARGS)));
 }
 
 /*
@@ -882,7 +882,7 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
 
-	func_signature = get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+	func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
 															form_proctup->pronargs,
 															form_proctup->proargtypes.values);
 

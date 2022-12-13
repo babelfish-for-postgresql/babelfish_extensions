@@ -5,6 +5,13 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/pathnodes.h"
 
+
+extern char *pltsql_default_locale;
+extern char *pltsql_server_collation_name;
+
+/* Dump and Restore */
+extern char *babelfish_restored_server_collation_name;
+
 /* Set default encoding to UTF8 */
 #define COLL_DEFAULT_ENCODING PG_UTF8
 
@@ -124,6 +131,7 @@ extern like_ilike_info lookup_like_ilike_table(Oid opno);
 extern int find_collation(const char *collation_name);
 Oid get_oid_from_collidx(int collidx);
 extern bool has_ilike_node(Node *expr);
+extern Oid babelfish_define_type_default_collation(Oid typeNamespace);
 
 extern collation_callbacks *get_collation_callbacks(void);
 
