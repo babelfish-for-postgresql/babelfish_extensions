@@ -49,7 +49,6 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
-<<<<<<< HEAD
 -- deprecate old FOR XML/JSON functions
 ALTER FUNCTION sys.tsql_query_to_xml(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_deprecated_in_2_4_0;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_deprecated_in_2_4_0');
@@ -180,7 +179,6 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
     SFUNC = tsql_query_to_json_sfunc,
     FINALFUNC = tsql_query_to_json_ffunc
 );
-=======
 CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
 AS
 $$
@@ -204,7 +202,6 @@ $$
     SELECT current_setting('application_name');
 $$
 LANGUAGE sql PARALLEL SAFE STABLE;
->>>>>>> upstream/BABEL_2_X_DEV
 
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 INT)
 RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
