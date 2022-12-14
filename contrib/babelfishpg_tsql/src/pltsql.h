@@ -1709,8 +1709,6 @@ extern pltsql_resetcache_hook_type prev_pltsql_resetcache_hook;
 
 extern int  pltsql_variable_conflict;
 
-extern bool pltsql_parseonly;
-
 /* extra compile-time checks */
 #define PLTSQL_XCHECK_NONE			0
 #define PLTSQL_XCHECK_SHADOWVAR	1

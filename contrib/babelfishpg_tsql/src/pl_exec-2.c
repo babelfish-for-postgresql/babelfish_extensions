@@ -1254,9 +1254,6 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	int save_nestlevel;
 	char *old_db_name = get_cur_db_name();
 	char *cur_db_name = NULL;
-	bool old_parseonly = pltsql_parseonly;
-	bool old_explain_only = pltsql_explain_only;
-	bool old_explain_analyze = pltsql_explain_analyze;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
@@ -1299,9 +1296,6 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 		if(strcmp(cur_db_name, old_db_name) != 0)
 			set_session_properties(old_db_name);
 
-		pltsql_parseonly = old_parseonly;
-		pltsql_explain_only = old_explain_only;
-		pltsql_explain_analyze = old_explain_analyze;
 		pltsql_revert_guc(save_nestlevel);
 	}
 	PG_END_TRY();
@@ -1949,9 +1943,6 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			}
 
 			int save_nestlevel = pltsql_new_guc_nest_level();
-			bool old_parseonly = pltsql_parseonly;
-			bool old_explain_only = pltsql_explain_only;
-			bool old_explain_analyze = pltsql_explain_analyze;
 
 			PG_TRY();
 			{
@@ -1968,9 +1959,6 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			PG_FINALLY();
 			{
 				pltsql_revert_guc(save_nestlevel);
-				pltsql_parseonly = old_parseonly;
-				pltsql_explain_only = old_explain_only;
-				pltsql_explain_analyze = old_explain_analyze;
 			}
 			PG_END_TRY();
 			break;
