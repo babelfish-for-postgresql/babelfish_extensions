@@ -71,6 +71,14 @@ CREATE PROCEDURE BABEL_3747_vu_prepare_t_p4 AS (
 	);
 GO
 
+----Trigger Bigint error
+CREATE PROCEDURE BABEL_3747_vu_prepare_t_p5 AS (SELECT degrees(CAST(9223372036854775807 AS BIGINT)));
+GO
+
+----Trigger Int error
+CREATE PROCEDURE BABEL_3747_vu_prepare_t_p6 AS (SELECT degrees(CAST(9999*9999 AS INT)));
+GO
+
 CREATE VIEW BABEL_3747_vu_prepare_t_v1 AS (
 	SELECT
 		degrees(CAST(-92233720368547750 AS BIGINT)) AS res1,

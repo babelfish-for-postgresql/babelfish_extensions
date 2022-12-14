@@ -65,6 +65,20 @@ int#!#int#!#int#!#int
 ~~END~~
 
 
+EXECUTE BABEL_3747_vu_prepare_t_p5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type bigint)~~
+
+
+EXECUTE BABEL_3747_vu_prepare_t_p6
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
+
+
 SELECT * FROM BABEL_3747_vu_prepare_t_v1
 GO
 ~~START~~
