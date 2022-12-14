@@ -1906,6 +1906,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			bool	isnull;
 			Oid		restype;
 			int32	restypmod;
+			int save_nestlevel;
 			InlineCodeBlockArgs *args = NULL;
 
 			batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
@@ -1945,7 +1946,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				}
 			}
 
-			int save_nestlevel = pltsql_new_guc_nest_level();
+			save_nestlevel = pltsql_new_guc_nest_level();
 
 			PG_TRY();
 			{
