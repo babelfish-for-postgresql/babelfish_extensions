@@ -35,3 +35,244 @@ datetime
 <NULL>
 ~~END~~
 
+
+select convert(datetime, '2022-11-10 09:15:30.000');
+~~START~~
+datetime
+2022-11-10 09:15:30.0
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.001');
+~~START~~
+datetime
+2022-11-10 09:15:30.0
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.002');
+~~START~~
+datetime
+2022-11-10 09:15:30.003
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.003');
+~~START~~
+datetime
+2022-11-10 09:15:30.003
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.004');
+~~START~~
+datetime
+2022-11-10 09:15:30.003
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.005');
+~~START~~
+datetime
+2022-11-10 09:15:30.007
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.006');
+~~START~~
+datetime
+2022-11-10 09:15:30.007
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.007');
+~~START~~
+datetime
+2022-11-10 09:15:30.007
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.008');
+~~START~~
+datetime
+2022-11-10 09:15:30.007
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.009');
+~~START~~
+datetime
+2022-11-10 09:15:30.01
+~~END~~
+
+select convert(datetime, '2022-11-10 09:15:30.999');
+~~START~~
+datetime
+2022-11-10 09:15:31.0
+~~END~~
+
+
+select convert(datetime, '2022-11-10 21:26:45.120');
+~~START~~
+datetime
+2022-11-10 21:26:45.12
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.341');
+~~START~~
+datetime
+2022-11-10 21:26:45.34
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.562');
+~~START~~
+datetime
+2022-11-10 21:26:45.563
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.783');
+~~START~~
+datetime
+2022-11-10 21:26:45.783
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.904');
+~~START~~
+datetime
+2022-11-10 21:26:45.903
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.215');
+~~START~~
+datetime
+2022-11-10 21:26:45.217
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.436');
+~~START~~
+datetime
+2022-11-10 21:26:45.437
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.657');
+~~START~~
+datetime
+2022-11-10 21:26:45.657
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.878');
+~~START~~
+datetime
+2022-11-10 21:26:45.877
+~~END~~
+
+select convert(datetime, '2022-11-10 21:26:45.909');
+~~START~~
+datetime
+2022-11-10 21:26:45.91
+~~END~~
+
+
+select convert(datetime, '2000-12-13 12:58:23.123');
+~~START~~
+datetime
+2000-12-13 12:58:23.123
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.223');
+~~START~~
+datetime
+2000-12-13 12:58:23.223
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.323');
+~~START~~
+datetime
+2000-12-13 12:58:23.323
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.423');
+~~START~~
+datetime
+2000-12-13 12:58:23.423
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.523');
+~~START~~
+datetime
+2000-12-13 12:58:23.523
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.623');
+~~START~~
+datetime
+2000-12-13 12:58:23.623
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.723');
+~~START~~
+datetime
+2000-12-13 12:58:23.723
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.823');
+~~START~~
+datetime
+2000-12-13 12:58:23.823
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.923');
+~~START~~
+datetime
+2000-12-13 12:58:23.923
+~~END~~
+
+select convert(datetime, '2000-12-13 12:58:23.023');
+~~START~~
+datetime
+2000-12-13 12:58:23.023
+~~END~~
+
+
+select convert(datetime, '1753-01-01 23:59:59.997');
+~~START~~
+datetime
+1753-01-01 23:59:59.997
+~~END~~
+
+select convert(datetime, '1753-12-31 23:59:59.998');
+~~START~~
+datetime
+1753-12-31 23:59:59.997
+~~END~~
+
+select convert(datetime, '1753-12-31 23:59:59.999');
+~~START~~
+datetime
+1754-01-01 00:00:00.0
+~~END~~
+
+select convert(datetime, '9999-12-31 23:59:59.998');
+~~START~~
+datetime
+9999-12-31 23:59:59.997
+~~END~~
+
+select convert(datetime, '9999-12-31 23:59:59.999');
+~~START~~
+datetime
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+select convert(datetime, '1752-12-31 23:59:59.997');
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a VARCHAR data type to a DATETIME data type resulted in an out-of-range value.)~~
+
+select convert(datetime, '0000-00-00 00:00:00.000');
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The conversion of a VARCHAR data type to a DATETIME data type resulted in an out-of-range value.)~~
+
+select convert(datetime, NULL);
+~~START~~
+datetime
+<NULL>
+~~END~~
+
