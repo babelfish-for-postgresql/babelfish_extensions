@@ -8,8 +8,8 @@
  *-------------------------------------------------------------------------
  */
 
-#define BABELFISH_VERSION_STR "1.4.0"
-#define BABELFISH_INTERNAL_VERSION_STR "Babelfish 13.8.0.1"
+#define BABELFISH_VERSION_STR "1.4.2"
+#define BABELFISH_INTERNAL_VERSION_STR "Babelfish 13.8.2.0"
 #define BABEL_COMPATIBILITY_VERSION "12.0.2000.8"
 #define BABEL_COMPATIBILITY_MAJOR_VERSION "12"
 
