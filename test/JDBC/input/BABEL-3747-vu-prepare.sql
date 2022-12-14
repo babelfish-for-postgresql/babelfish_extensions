@@ -1,16 +1,16 @@
 CREATE TABLE BABEL_3747_vu_prepare_t_1(
-	 	a int,
-	 	b float,
-	 	c bigint,
-	 	d smallint,
-	 	e tinyint,
-	);
+		a int,
+		b float,
+		c bigint,
+		d smallint,
+		e tinyint,
+);
 GO
 
 
 INSERT INTO BABEL_3747_vu_prepare_t_1 VALUES (NULL, NULL, NULL, NULL, NULL);
 GO
-INSERT INTO BABEL_3747_vu_prepare_t_1 VALUES (21474835, 1.79E+38, 92233720368547749, 32767, 255);	
+INSERT INTO BABEL_3747_vu_prepare_t_1 VALUES (21474835, 1.79E+38, 92233720368547749, 32767, 255);
 GO
 INSERT INTO BABEL_3747_vu_prepare_t_1 VALUES (-21474836, - 1.79E+38,-92233720368547750, -32768, 0);
 GO
