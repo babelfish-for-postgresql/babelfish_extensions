@@ -39,7 +39,7 @@ GO
 exec pg_sleep 1
 GO
 
-SELECT @@Version
+select CONVERT(VARCHAR(59), @@version);
 GO
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
@@ -60,7 +60,7 @@ GO
 exec pg_sleep 1
 GO
 
-SELECT @@Version
+select CONVERT(VARCHAR(59), @@version);
 GO
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
@@ -81,7 +81,7 @@ GO
 exec pg_sleep 1
 GO
 
-SELECT @@Version
+select CONVERT(VARCHAR(59), @@version);
 GO
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
