@@ -150,8 +150,8 @@ Datum connectionproperty(PG_FUNCTION_ARGS) {
 static VarChar *
 get_servername_helper()
 {
-	StringInfoData temp;
-    void* info;
+	StringInfoData	temp;
+	void*			info;
 
     initStringInfo(&temp);
     appendStringInfoString(&temp, bbf_servername);
@@ -165,9 +165,9 @@ static char *
 ProcessVersionNumber(const char* inputString)
 {
 	int			part = 0;
-	const char 	*product_version;
+	const char	*product_version;
 	char		*copy_version_number = malloc(sizeof(product_version));
-	char 		*token;
+	char		*token;
 
 	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
 	strcpy(copy_version_number,product_version);
@@ -195,10 +195,9 @@ ProcessVersionNumber(const char* inputString)
 static VarChar *
 get_product_major_version_helper()
 {
-	StringInfoData	temp; 
-	void			*info;
-	const char 		*product_version;
-
+	StringInfoData		temp; 
+	void		*info;
+	const char		*product_version;
 
 	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
     initStringInfo(&temp);
@@ -215,11 +214,10 @@ get_product_major_version_helper()
 static VarChar *
 get_product_minor_version_helper()
 {
-	StringInfoData	temp; 
+	StringInfoData	temp;
 	void			*info;
-
-	const char 		*product_version;
-	const char 		*ret = "0";
+	const char		*product_version;
+	const char		*ret = "0";
 
 	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
     initStringInfo(&temp);
@@ -236,7 +234,7 @@ get_product_minor_version_helper()
 static VarChar *
 get_product_version_helper()
 {
-	StringInfoData	temp; 
+	StringInfoData	temp;
 	void			*info;
 	const char 		*product_version;
 	
