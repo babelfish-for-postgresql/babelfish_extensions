@@ -18,5 +18,6 @@ Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file b
 Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_remove_object_from_extension in file babelfishpg_tsql--2.1.0--2.2.0.sql
 Unexpected drop found for procedure sys.babelfish_update_user_catalog_for_guest in file babelfishpg_tsql--2.2.0--2.3.0.sql
+Unexpected drop found for procedure sys.create_linked_server_procs_in_master_dbo in file babelfishpg_tsql--2.3.0--3.0.0.sql
 Unexpected drop found for procedure sys.create_xp_qv_in_master_dbo in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for procedure sys.sp_babelfish_grant_usage_to_all in file babelfishpg_tsql--1.1.0--1.2.0.sql
