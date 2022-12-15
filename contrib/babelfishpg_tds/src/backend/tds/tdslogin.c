@@ -208,6 +208,7 @@ LoginRequest loginInfo = NULL;
 static const char *PreLoginTokenType(uint8_t token);
 static void DebugPrintPreLoginStructure(PreLoginOption *request);
 static int ParsePreLoginRequest();
+static int *ProcessVersionNumber(const char* inputString);
 static void SetPreLoginResponseVal(Port *port, uint8_t token,
 								StringInfo val, StringInfo reqVal,
 								bool loadSsl, int *loadEncryption);
@@ -392,9 +393,10 @@ ParsePreLoginRequest()
 
 	return 0;
 }
-static void
-ProcessVersionNumber(char* inputString)
+static int *
+ProcessVersionNumber(const char* inputString)
 {
+	static int 	version_arr[4];
 	int 		part = 0;
 	char		*copy_version_number = malloc(sizeof(inputString));
 	char 		*token;
@@ -402,27 +404,26 @@ ProcessVersionNumber(char* inputString)
 	strcpy(copy_version_number,inputString);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{ 
-		if(part == 0)
-			MajorVersion = atoi(token);
-		else if(part == 1)
-			MinorVersion = atoi(token);
-		else if(part == 2)
-			MicroVersion = atoi(token);
-		else
-			return;
-
+		version_arr[part] = atoi(token);
 		part++; 
 	}
+	free(copy_version_number);
+	return version_arr;
 }
 
 static void
 SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 						StringInfo reqVal, bool loadSsl, int *loadEncryption)
 {
+	int *version_pnt;
+	int MajorVersion;
+	int MinorVersion;
+	int MicroVersion;
+
 	switch(token)
 	{
 		case TDS_PRELOGIN_VERSION:
-			if(strcasecmp(sql_server_version,"default") == 0)
+			if(strcasecmp(product_version,"default") == 0)
 			{
 				/* Major Version 0x0C */
 				appendStringInfoChar(val, 0x0C);
@@ -439,7 +440,10 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 			}
 			else
 			{
-				ProcessVersionNumber(sql_server_version);
+				version_pnt = ProcessVersionNumber(product_version);
+				MajorVersion = *(version_pnt + 0);
+				MinorVersion = *(version_pnt + 1);
+				MicroVersion = *(version_pnt + 2);
 
 				appendStringInfoChar(val, MajorVersion & 0xFF);
 				appendStringInfoChar(val, MinorVersion & 0xFF);

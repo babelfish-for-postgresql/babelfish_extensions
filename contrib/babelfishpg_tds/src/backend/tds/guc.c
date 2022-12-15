@@ -39,7 +39,7 @@ bool	tds_ssl_encrypt = false;
 int 	tds_default_protocol_version = 0;
 int32_t tds_default_packet_size = 4096;
 int	tds_debug_log_level = 1;
-char*	sql_server_version = NULL;
+char*	product_version = NULL;
 
 #ifdef FAULT_INJECTOR
 static bool TdsFaultInjectionEnabled = false;
@@ -120,52 +120,64 @@ check_version_number(char **newval, void **extra, GucSource source)
 	char		*token;
 	int		part = 0;
 
-    strcpy(copy_version_number,*newval);
+	strcpy(copy_version_number,*newval);
 	if(strcasecmp(copy_version_number,"default") == 0)
 		return true;
 
-	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
-	{	
-		/* check each token contains only digits */
-		if(strspn(token, "0123456789") != strlen(token))
-		{
-			free(copy_version_number);
-			GUC_check_errmsg("Please enter a valid version number");
-		}
-		
-		/* check Major Version is between 11 and 15 */
-		if(part == 0 && (11 > atoi(token) || atoi(token) > 15))
-		{
-			free(copy_version_number);
-			GUC_check_errmsg("Please enter a valid major version number between 11 and 15");
+	PG_TRY();
+	{
+		for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+		{	
+			/* check each token contains only digits */
+			if(!isdigit((unsigned char) *token))
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter a valid version number")));
+			}
+			
+			/* check Major Version is between 11 and 15 */
+			if(part == 0 && (11 > atoi(token) || atoi(token) > 15))
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter a valid major version number between 11 and 15")));
+			}
+
+			/* Minor Version takes 1 byte in PreLogin message when doing handshake, here to check
+				it is between 0 and 0xFF
+			*/
+			if(part == 1 && (atoi(token) < 0 || atoi(token) > 0xFF))
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter a valid minor version number")));
+			}
+			/* Micro Version takes 2 bytes in PreLogin message when doing handshake, here to check
+				it is between 0 and 0xFFFF
+			*/
+			if(part == 2 && (atoi(token) < 0 || atoi(token) > 0xFFFF))
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter a valid micro version number")));
+			}
+			part++;
 		}
 
-		/* Minor Version takes 1 byte in PreLogin message when doing handshake, here to check
-			it is between 0 and 0xFF
-		*/
-		if(part == 1 && (atoi(token) < 0 || atoi(token) > 0xFF))
+		if(part != 4)
 		{
-			free(copy_version_number);
-			GUC_check_errmsg("Please enter a valid minor version number");
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter 4 valid number separated by \'.\' ")));
 		}
-		/* Micro Version takes 2 bytes in PreLogin message when doing handshake, here to check
-			it is between 0 and 0xFFFF
-		*/
-		if(part == 2 && (atoi(token) < 0 || atoi(token) > 0xFFFF))
-		{
-			free(copy_version_number);
-			GUC_check_errmsg("Please enter a valid micro version number");
-		}
-		part++; 
 	}
-
-	if(part != 4)
+	PG_FINALLY();
 	{
 		free(copy_version_number);
-		GUC_check_errmsg("Please enter 4 valid number separated by \'.\' ");
 	}
+	PG_END_TRY();
 
-	free(copy_version_number);
     return true;
 }
 
@@ -236,11 +248,10 @@ TdsDefineGucs(void)
                 GUC_NOT_IN_SAMPLE,
                 NULL, NULL, NULL);
 
-	/* Still use the GUC name "babelfishpg_tsqltsql.version", since this guc name already exposes to user*/
-	DefineCustomStringVariable("babelfishpg_tsql.version",
-				 gettext_noop("Sets the SQL Server Version returned by Babelfish"),
+	DefineCustomStringVariable("babelfishpg_tds.product_version",
+				 gettext_noop("Sets the Product Version returned by Babelfish"),
 				 NULL,
-				 &sql_server_version,
+				 &product_version,
 				 "default",
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE,

@@ -35,6 +35,7 @@ bool  pltsql_arithabort = true;
 bool  pltsql_numeric_roundabort = false;
 bool  pltsql_nocount = false;
 char* pltsql_database_name = NULL;
+char* pltsql_version = NULL;
 int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
@@ -740,6 +741,15 @@ define_custom_variables(void)
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, assign_lock_timeout, NULL);
+
+	DefineCustomStringVariable("babelfishpg_tsql.version",
+				 gettext_noop("Sets the output of @@VERSION variable"),
+				 NULL,
+				 &pltsql_version,
+				 "default",
+				 PGC_SUSET,
+				 GUC_NOT_IN_SAMPLE,
+				 NULL, NULL, NULL);
 
 	DefineCustomStringVariable("babelfishpg_tsql.language",
 				 gettext_noop("T-SQL compatibility LANGUAGE option."),

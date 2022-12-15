@@ -65,15 +65,10 @@ extern bytea *convertIntToSQLVariantByteA(int ret);
 extern  Datum datetime_in_str(char *str);
 extern Datum datetime2sqlvariant(PG_FUNCTION_ARGS);
 extern Datum tinyint2sqlvariant(PG_FUNCTION_ARGS);
-static void* get_servername_helper(void);
-static void* get_product_version_helper(void);
-static void* get_product_major_version_helper(void);
-static void* get_product_minor_version_helper(void);
-
-/* Global to store Version info */
-int MajorVersion;
-int MinorVersion;
-int MinorVersionDigits;
+static VarChar *get_servername_helper(void);
+static VarChar *get_product_version_helper(void);
+static VarChar *get_product_major_version_helper(void);
+static VarChar *get_product_minor_version_helper(void);
 
 Datum connectionproperty(PG_FUNCTION_ARGS) {
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(0));
@@ -151,7 +146,8 @@ Datum connectionproperty(PG_FUNCTION_ARGS) {
 	PG_RETURN_BYTEA_P(convertVarcharToSQLVariantByteA(vch, PG_GET_COLLATION()));
 }
 
-void* get_servername_helper()
+static VarChar *
+get_servername_helper()
 {
 	StringInfoData temp;
     void* info;
@@ -161,97 +157,99 @@ void* get_servername_helper()
 
     info = tsql_varchar_input(temp.data, temp.len, -1);
     pfree(temp.data);
-    return info;
+    return (VarChar *)info;
 }
 
-static void
-ProcessVersionNumber()
+static char *
+ProcessVersionNumber(const char* inputString)
 {
-	int 		part = 0;
+	int			part = 0;
+	const char 	*product_version;
+	char		*copy_version_number = malloc(sizeof(product_version));
 	char 		*token;
-	const char 	*sql_server_version;
-	char		*copy_version_number = malloc(sizeof(sql_server_version));
 
-	sql_server_version = GetConfigOption("babelfishpg_tsql.version", true, false);
-	strcpy(copy_version_number,sql_server_version);
-	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
-	{ 
-		if(part == 0)
-			MajorVersion = atoi(token);
-		else if(part == 1)
-		{
-			MinorVersionDigits = strlen(token);
-			MinorVersion = atoi(token);
+	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
+	strcpy(copy_version_number,product_version);
+	PG_TRY();
+	{
+		for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+		{ 
+			if(part == 0 && strcasecmp(inputString,"product_major_version") == 0)
+				return token;
+			else if(part == 1 && strcasecmp(inputString,"product_minor_version") == 0)
+				return token;
+	
+			part++;
 		}
-		else
-			return;
-
-		part++; 
 	}
+	PG_FINALLY();
+	{
+		free(copy_version_number);
+	}
+	PG_END_TRY();
+	
+	return token;
 }
 
-void* get_product_major_version_helper()
+static VarChar *
+get_product_major_version_helper()
 {
 	StringInfoData	temp; 
 	void			*info;
-	const char 		*sql_server_version;
-	char	   		*major_version = (char *) palloc(3);	/* 2 digits, '\0' */
+	const char 		*product_version;
 
-	sql_server_version = GetConfigOption("babelfishpg_tsql.version", true, false);
+
+	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
     initStringInfo(&temp);
-	if(strcasecmp(sql_server_version,"default") == 0)
+	if(strcasecmp(product_version,"default") == 0)
 		appendStringInfoString(&temp, BABEL_COMPATIBILITY_MAJOR_VERSION);
     else
-	{
-		pg_itoa(MajorVersion, major_version);
-		appendStringInfoString(&temp, major_version);
-	}
+		appendStringInfoString(&temp, ProcessVersionNumber("product_major_version"));
 		
     info = tsql_varchar_input(temp.data, temp.len, -1);
     pfree(temp.data);
-    return info;
+    return (VarChar *)info;
 }
 
-void* get_product_minor_version_helper()
+static VarChar *
+get_product_minor_version_helper()
 {
 	StringInfoData	temp; 
 	void			*info;
-	char	   		*minor_version = (char *) palloc(MinorVersionDigits + 1);
-	const char 		*sql_server_version;
+
+	const char 		*product_version;
 	const char 		*ret = "0";
 
-	sql_server_version = GetConfigOption("babelfishpg_tsql.version", true, false);
+	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
     initStringInfo(&temp);
-	if(strcasecmp(sql_server_version,"default") == 0)
+	if(strcasecmp(product_version,"default") == 0)
 		appendStringInfoString(&temp, ret);
     else
-	{
-		pg_itoa(MinorVersion, minor_version);
-		appendStringInfoString(&temp, minor_version);
-	}
+		appendStringInfoString(&temp, ProcessVersionNumber("product_minor_version"));
 		
     info = tsql_varchar_input(temp.data, temp.len, -1);
     pfree(temp.data);
-    return info;
+    return (VarChar *)info;
 }
 
-void* get_product_version_helper()
+static VarChar *
+get_product_version_helper()
 {
 	StringInfoData	temp; 
 	void			*info;
-	const char 		*sql_server_version;
+	const char 		*product_version;
 	
-	sql_server_version = GetConfigOption("babelfishpg_tsql.version", true, false);
+	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
 
     initStringInfo(&temp);
-	if(strcasecmp(sql_server_version,"default") == 0)
+	if(strcasecmp(product_version,"default") == 0)
 		appendStringInfoString(&temp, BABEL_COMPATIBILITY_VERSION);
     else
-		appendStringInfoString(&temp, sql_server_version);
+		appendStringInfoString(&temp, product_version);
 		
     info = tsql_varchar_input(temp.data, temp.len, -1);
     pfree(temp.data);
-    return info;
+    return (VarChar *)info;
 }
 
 Datum serverproperty(PG_FUNCTION_ARGS) {
@@ -259,7 +257,6 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	VarChar *vch = NULL;
 	int64_t intVal = 0;
 
-	ProcessVersionNumber();
 	if (strcasecmp(property, "BuildClrVersion") == 0)
 	{
 		const char *ret = "";
@@ -453,11 +450,11 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	}
 	else if (strcasecmp(property, "ProductMajorVersion") == 0)
 	{
-		vch = (VarChar*) get_product_major_version_helper();
+		vch = get_product_major_version_helper();
 	}
 	else if (strcasecmp(property, "ProductMinorVersion") == 0)
 	{
-		vch = (VarChar*) get_product_minor_version_helper();
+		vch = get_product_minor_version_helper();
 	}
 	else if (strcasecmp(property, "ProductUpdateLevel") == 0)
 	{
@@ -471,7 +468,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	}
 	else if (strcasecmp(property, "ProductVersion") == 0)
 	{
-		vch = (VarChar*) get_product_version_helper();
+		vch = get_product_version_helper();
 	}
 	else if (strcasecmp(property, "ResourceLastUpdateDateTime") == 0)
 	{
@@ -498,7 +495,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	}
 	else if (strcasecmp(property, "ServerName") == 0)
 	{
-		vch = (VarChar*) get_servername_helper();
+		vch = get_servername_helper();
 	}
 	else if (strcasecmp(property, "SqlCharSet") == 0 || strcasecmp(property, "SqlSortOrder") == 0)
 	{
