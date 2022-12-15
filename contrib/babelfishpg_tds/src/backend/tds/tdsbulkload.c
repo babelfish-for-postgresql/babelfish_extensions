@@ -222,7 +222,7 @@ GetBulkLoadRequest(StringInfo message)
 							"unexpected token encountered processing the request.")));
 
 	offset++;
-
+	Assert(sizeof(uint16)<=sizeof(colCount));
 	memcpy(&colCount, &message->data[offset], sizeof(uint16));
 	colmetadata = palloc0(colCount * sizeof(BulkLoadColMetaData));
 	request->colCount = colCount;
@@ -233,10 +233,12 @@ GetBulkLoadRequest(StringInfo message)
 	{
 		CheckMessageHasEnoughBytesToRead(&message, COLUMNMETADATA_HEADER_LEN);
 		/* UserType */
+		Assert(sizeof(uint32_t)<=sizeof(colmetadata[currentColumn].userType));
 		memcpy(&colmetadata[currentColumn].userType, &message->data[offset], sizeof(uint32_t));
 		offset += sizeof(uint32_t);
 
 		/* Flags */
+		Assert(sizeof(uint16)<=sizeof(colmetadata[currentColumn].flags));
 		memcpy(&colmetadata[currentColumn].flags, &message->data[offset], sizeof(uint16));
 		offset += sizeof(uint16);
 
@@ -268,9 +270,10 @@ GetBulkLoadRequest(StringInfo message)
 			case TDS_TYPE_NVARCHAR:
 			{
 				CheckMessageHasEnoughBytesToRead(&message, STRING_COLUMNMETADATA_LEN);
+				Assert(sizeof(uint16)<=sizeof(colmetadata[currentColumn].maxLen));
 				memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint16));
 				offset += sizeof(uint16);
-
+				Assert(sizeof(uint32_t)<=sizeof(colmetadata[currentColumn].collation));
 				memcpy(&colmetadata[currentColumn].collation, &message->data[offset], sizeof(uint32_t));
 				offset += sizeof(uint32_t);
 				colmetadata[currentColumn].sortId = message->data[offset++];
@@ -282,6 +285,7 @@ GetBulkLoadRequest(StringInfo message)
 			{
 				uint16_t tableLen = 0;
 				CheckMessageHasEnoughBytesToRead(&message, sizeof(uint32_t));
+				Assert(sizeof(uint32_t)<=sizeof(colmetadata[currentColumn].maxLen));
 				memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint32_t));
 				offset += sizeof(uint32_t);
 
@@ -290,12 +294,14 @@ GetBulkLoadRequest(StringInfo message)
 					colmetadata[currentColumn].columnTdsType == TDS_TYPE_NTEXT)
 				{
 					CheckMessageHasEnoughBytesToRead(&message, sizeof(uint32_t) + 1);
+					Assert(sizeof(uint32_t)<=sizeof(colmetadata[currentColumn].collation));
 					memcpy(&colmetadata[currentColumn].collation, &message->data[offset], sizeof(uint32_t));
 					offset += sizeof(uint32_t);
 					colmetadata[currentColumn].sortId = message->data[offset++];
 				}
 
 				CheckMessageHasEnoughBytesToRead(&message, sizeof(uint16_t));
+				Assert(sizeof(uint16_t)<=sizeof(tableLen));
 				memcpy(&tableLen, &message->data[offset], sizeof(uint16_t));
 				offset += sizeof(uint16_t);
 
@@ -336,6 +342,7 @@ GetBulkLoadRequest(StringInfo message)
 			{
 				uint16 plp;
 				CheckMessageHasEnoughBytesToRead(&message, BINARY_COLUMNMETADATA_LEN);
+				Assert(sizeof(uint16)<=sizeof(plp));
 				memcpy(&plp, &message->data[offset], sizeof(uint16));
 				offset += sizeof(uint16);
 				colmetadata[currentColumn].maxLen = plp;
@@ -346,6 +353,7 @@ GetBulkLoadRequest(StringInfo message)
 			break;
 			case TDS_TYPE_SQLVARIANT:
 				CheckMessageHasEnoughBytesToRead(&message, SQL_VARIANT_COLUMNMETADATA_LEN);
+				Assert(sizeof(uint32_t)<=sizeof(colmetadata[currentColumn].maxLen));
 				memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint32_t));
 				offset += sizeof(uint32_t);
 			break;
@@ -440,10 +448,12 @@ GetBulkLoadRequest(StringInfo message)
 
 		/* Column Name */
 		CheckMessageHasEnoughBytesToRead(&message, sizeof(uint8_t));
+		Assert(sizeof(uint8_t)<=sizeof(colmetadata[currentColumn].colNameLen));
 		memcpy(&colmetadata[currentColumn].colNameLen, &message->data[offset++], sizeof(uint8_t));
 
 		CheckMessageHasEnoughBytesToRead(&message, colmetadata[currentColumn].colNameLen * 2);
 		colmetadata[currentColumn].colName = (char *)palloc0(colmetadata[currentColumn].colNameLen * sizeof(char) * 2 + 1);
+		Assert((colmetadata[currentColumn].colNameLen * 2)<=sizeof(colmetadata[currentColumn].colName));
 		memcpy(colmetadata[currentColumn].colName, &message->data[offset],
 					colmetadata[currentColumn].colNameLen * 2);
 		colmetadata[currentColumn].colName[colmetadata[currentColumn].colNameLen * 2] = '\0';
@@ -624,6 +634,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					if (colmetadata[i].maxLen != 0xffff)
 					{
 						CheckMessageHasEnoughBytesToRead(&message, sizeof(short));
+						Assert(sizeof(short)<=sizeof(len));
 						memcpy(&len, &message->data[offset], sizeof(short));
 						offset +=  sizeof(short);
 						request->currentBatchSize +=  sizeof(short);
@@ -717,7 +728,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					request->currentBatchSize += dataTextPtrLen;
 					offset += 8; /* TODO: Ignored the Data Text TimeStamp for now. */
 					request->currentBatchSize += 8;
-
+					Assert(sizeof(uint32_t)<=sizeof(len));
 					memcpy(&len, &message->data[offset], sizeof(uint32_t));
 					offset +=  sizeof(uint32_t);
 					request->currentBatchSize += sizeof(uint32_t);
@@ -783,7 +794,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 				case TDS_TYPE_SQLVARIANT:
 				{
 					CheckMessageHasEnoughBytesToRead(&message, sizeof(uint32_t));
-
+					Assert(sizeof(uint32_t)<=sizeof(len));
 					memcpy(&len, &message->data[offset], sizeof(uint32_t));
 					offset += sizeof(uint32_t);
 					request->currentBatchSize += sizeof(uint32_t);
@@ -993,6 +1004,7 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 	unsigned long lenCheck = 0;
 
 	CheckPlpMessageHasEnoughBytesToRead(message, sizeof(plpTok));
+	Assert(sizeof(plpTok)<=sizeof(plpTok));
 	memcpy(&plpTok , &(*message)->data[offset], sizeof(plpTok));
 	offset += sizeof(plpTok);
 	request->currentBatchSize += sizeof(plpTok);
@@ -1012,7 +1024,7 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 		CheckPlpMessageHasEnoughBytesToRead(message, sizeof(tempLen));
 		if (offset + sizeof(tempLen) > (*message)->len)
 			return STATUS_ERROR;
-
+		Assert(sizeof(tempLen)<=sizeof(tempLen));
 		memcpy(&tempLen , &(*message)->data[offset], sizeof(tempLen));
 		offset += sizeof(tempLen);
 		request->currentBatchSize += sizeof(tempLen);
