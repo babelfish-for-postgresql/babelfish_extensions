@@ -133,8 +133,8 @@ Datum
 version(PG_FUNCTION_ARGS)
 {
 	StringInfoData	temp;
-	void			*info;
-	const char		*product_version;
+	void		*info;
+	const char	*product_version;
 	initStringInfo(&temp);
 
 	if (pg_strcasecmp(pltsql_version, "default") == 0)
