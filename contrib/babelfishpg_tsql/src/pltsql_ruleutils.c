@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "pltsql.h"
 
 #include "access/amapi.h"
 #include "access/htup_details.h"
@@ -399,7 +400,6 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	bool		isfunction;
 	Datum		tmp;
 	bool	   isnull;
-	char		*probin_str;
 	const char *prosrc;
 	const char *name;
 	const char *nsp;
@@ -407,6 +407,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	bool has_tvp = false;
 	int* typmod_arr = NULL;
 	int number_args;
+	char *probin_c = NULL;
 
 	/* Look up the function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
@@ -438,22 +439,31 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 		appendStringInfoString(&buf, "(");
 	
 	/* we will not pfree name because as we can see name = NameStr(proc->proname) 
-         * here we are not allocating extra space for name, we’re just using proc-> proname.
-         * also at the end, we’re releasing proctup (that will free proc->proname).  
-         */
-	pfree(nsp);
+	 * here we are not allocating extra space for name, we’re just using proc-> proname.
+	 * also at the end, we’re releasing proctup (that will free proc->proname).  
+	 */
+	pfree((char *) nsp);
 	if (nnsp)
-		pfree(nnsp);
-        
+		pfree((char *) nnsp);
+
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
-	probin_str = TextDatumGetCString(tmp);
+
+	if (!isnull)
+		probin_c = TextDatumGetCString(tmp);
+	if(!probin_c || probin_c[0] != '{')
+		PG_RETURN_NULL();
+	
 	number_args = proc->pronargs;
-	if(isfunction) number_args++;
-	probin_json_reader(cstring_to_text(probin_str), &typmod_arr, number_args);
+	if (isfunction)
+		number_args++;
+
+	probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
+	pfree(probin_c);
 	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr, &has_tvp);
 	/* TODO: In case of Table Valued Functions, return NULL. */
 	if (has_tvp)
 		PG_RETURN_NULL();
+
 	if(isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, ")");
 	if (isfunction)
@@ -463,20 +473,22 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	}
 	if(typmod_arr)
 		pfree(typmod_arr);
-	
+ 
+	/* Emit some miscellaneous options on one line */
 	if (proc->proisstrict)
 		appendStringInfoString(&buf, " WITH RETURNS NULL ON NULL INPUT");
 
 	/* And finally the function definition ... */
 	(void) SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosqlbody, &isnull);
-
+	
 	appendStringInfoString(&buf, " AS ");
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
 	prosrc = TextDatumGetCString(tmp); 
 	appendStringInfoString(&buf, prosrc);
 
 	ReleaseSysCache(proctup);
-	pfree(prosrc);
+
+	pfree((char *) prosrc);
 
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
@@ -492,8 +504,8 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
         Form_pg_proc proc;
         bool            isfunction;
         Datum           tmp;
-        char            *probin_str;
         bool       isnull;
+        char *probin_c = NULL;
         int* typmod_arr = NULL;
         int number_args;
 
@@ -512,15 +524,17 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
         }
 
         tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
+
         if (!isnull)
-			probin_str = TextDatumGetCString(tmp);
-		else
-			probin_str = "";
+            probin_c = TextDatumGetCString(tmp);
+        if(!probin_c || probin_c[0] != '{')
+            PG_RETURN_INT32(-1);
+
         number_args = proc->pronargs;
         number_args++;  
 
-        probin_json_reader(cstring_to_text(probin_str), &typmod_arr, number_args);
-
+        probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
+        pfree(probin_c);
         if (typmod_arr[number_args-1] != -1)
                typmod_arr[number_args-1] += adjustTypmod(proc->prorettype, typmod_arr[number_args-1]);
         
@@ -720,7 +734,7 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults, int** typmod_arr_arg, bool* has_tvp)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
-	HeapTuple	bbffunctuple;
+	HeapTuple	bbffunctuple = NULL;
 	int			numargs;
 	Oid		   *argtypes;
 	char	  **argnames;
