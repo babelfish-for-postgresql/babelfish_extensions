@@ -128,11 +128,6 @@ int TdsDefaultCollationFlags;
 uint8_t TdsDefaultSortid;
 pg_enc TdsDefaultClientEncoding;
 
-/* Global to store Version info */
-int MajorVersion;
-int MinorVersion;
-int MicroVersion;
-
 static void TdsDefineDefaultCollationInfo(void);
 
 typedef struct LoginRequestData
