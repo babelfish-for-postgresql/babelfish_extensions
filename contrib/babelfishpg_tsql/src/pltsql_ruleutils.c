@@ -480,7 +480,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 
 	/* And finally the function definition ... */
 	(void) SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosqlbody, &isnull);
-	
+
 	appendStringInfoString(&buf, " AS ");
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
 	prosrc = TextDatumGetCString(tmp); 
