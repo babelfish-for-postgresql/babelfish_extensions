@@ -72,6 +72,11 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets);
 static void ValidateLinkedServerDataSource(char *data_src);
 
+List *handle_bool_expr_rec(BoolExpr *expr, List *list);
+List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
+List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets);
+List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets);
+
 char *sp_describe_first_result_set_view_name = NULL;
 
 bool sp_describe_first_result_set_inprogress = false;
