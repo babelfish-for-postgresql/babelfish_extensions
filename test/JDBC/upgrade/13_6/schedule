@@ -219,7 +219,6 @@ collation_tests_mongolian
 collation_tests_polish
 collation_tests
 BABEL-EXTENDEDPROPERTY
-BABEL-EXECUTE_AS_CALLER
 TestErrorHelperFunctionsUpgrade
 BABEL-1249
 BABEL-1291
