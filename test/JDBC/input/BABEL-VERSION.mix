@@ -1,33 +1,47 @@
 -- psql
 Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
-SELECT pg_reload_conf();
+GO
+
+Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
 GO
 
 Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
-SELECT pg_reload_conf();
+GO
+
+Alter system set babelfishpg_tds.product_version = "15.-1.3000.6";
 GO
 
 Alter system set babelfishpg_tds.product_version = "15.4.66000.6";
-SELECT pg_reload_conf();
+GO
+
+Alter system set babelfishpg_tds.product_version = "15.4.-1.6";
 GO
 
 Alter system set babelfishpg_tds.product_version = "e.4.3000.6";
-SELECT pg_reload_conf();
 GO
 
 Alter system set babelfishpg_tds.product_version = "11.4.3000";
-SELECT pg_reload_conf();
 GO
 
 Alter system set babelfishpg_tds.product_version = ".4.3000.6";
-SELECT pg_reload_conf();
 GO
 
-Alter system set babelfishpg_tds.product_version = "";
-SELECT pg_reload_conf();
+Alter system set babelfishpg_tds.product_version = "11..3000.6";
+GO
+
+Alter system set babelfishpg_tds.product_version = "11.4..6";
+GO
+
+Alter system set babelfishpg_tds.product_version = "11.4.3000.";
+GO
+
+Alter system set babelfishpg_tds.product_version = None;
 GO
 
 Alter system set babelfishpg_tds.product_version = " ";
+GO
+
+ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
 SELECT pg_reload_conf();
 GO
 
@@ -39,7 +53,7 @@ GO
 exec pg_sleep 1
 GO
 
-select CONVERT(VARCHAR(59), @@version);
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
@@ -60,7 +74,7 @@ GO
 exec pg_sleep 1
 GO
 
-select CONVERT(VARCHAR(59), @@version);
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
@@ -81,7 +95,7 @@ GO
 exec pg_sleep 1
 GO
 
-select CONVERT(VARCHAR(59), @@version);
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
 SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
