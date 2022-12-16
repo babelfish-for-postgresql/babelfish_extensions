@@ -162,7 +162,7 @@ RETURNS int
 AS 'babelfishpg_common', 'bit_cmp'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-/* Operators for sys.BIT. TSQL doesn't support + - * / for bit */
+/* Operators for sys.BIT. TSQL does not support + - * / for bit */
 CREATE OPERATOR sys.- (
     RIGHTARG   = sys.BIT,
     PROCEDURE  = sys.bitneg

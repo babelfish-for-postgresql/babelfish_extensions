@@ -76,6 +76,7 @@ PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 
+void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
 void* get_language(void);
@@ -142,9 +143,9 @@ version(PG_FUNCTION_ARGS)
 
 		appendStringInfo(&temp,
 						 "Babelfish for PostgreSQL with SQL Server Compatibility - %s"
-						 "\n%s %s\nCopyright (c) Amazon Web Services\n%s",
+						 "\n%s %s\nCopyright (c) Amazon Web Services\n%s (Babelfish %s)",
 						 BABEL_COMPATIBILITY_VERSION,
-						 __DATE__, __TIME__, pg_version);
+						 __DATE__, __TIME__, pg_version, BABELFISH_VERSION_STR);
 	}
 	else
 		appendStringInfoString(&temp, pltsql_version);
@@ -933,11 +934,12 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	/* Ensure the database name input argument is lower-case, as all Babel table names are lower-case */
 	char	   *lowercase_db_name = lowerstr(db_name);
 	/* Also strip trailing whitespace to mimic SQL Server behaviour */
-	int		    i = strlen(lowercase_db_name);
+	int i;
 	const char *user = NULL;
 	const char *login;
 	int16		db_id;
 
+	i = strlen(lowercase_db_name);
 	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
 		lowercase_db_name[--i] = '\0';
 

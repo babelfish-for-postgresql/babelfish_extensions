@@ -606,8 +606,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			/* detect object type */
 			GrantStmt	*grant = (GrantStmt *) parseTree->stmt;
 			ListCell	*cell;
-			List	*plan_name;
-			ObjectWithArgs *func;
+			List	*plan_name = NIL;
+			ObjectWithArgs *func = NULL;
 
 			Assert(list_length(grant->objects) == 1);
 			foreach(cell, grant->objects)

@@ -501,7 +501,7 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_mapped_error_list)
-		list = (*pltsql_protocol_plugin_ptr)->get_mapped_error_list();
+		list = (error_map_details_t *) (*pltsql_protocol_plugin_ptr)->get_mapped_error_list();
 
 	if (list == NULL)
 		return (Datum) 0;

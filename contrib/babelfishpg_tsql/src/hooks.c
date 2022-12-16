@@ -51,7 +51,6 @@
 #include "utils/numeric.h"
 #include <math.h>
 
-#include "pltsql.h"
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
@@ -67,7 +66,6 @@ extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
-extern Node* pltsql_predicate_transformer(Node *expr);
 
 /*****************************************
  * 			Catalog Hooks
@@ -459,14 +457,14 @@ static bool
 plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 {
 	int i;
-	PLExecStateCallStack *cur = exec_state_call_stack;
-	PLtsql_execstate	 *estate;
+	PLExecStateCallStack * cur;
+	PLtsql_execstate *estate;
 
 	if (resultRelInfo->ri_TrigDesc == NULL)
 		return false;
 	if (pltsql_recursive_triggers)
 		return false;
-
+	cur = exec_state_call_stack;
 	while (cur != NULL){
 		estate = cur->estate;
 		if (estate->trigdata != NULL && estate->trigdata->tg_trigger != NULL
@@ -915,7 +913,7 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 	if (babelfish_dump_restore)
 		return;
 
-	table_name_start = pstate->p_sourcetext + relation->location;
+	table_name_start = (char *) pstate->p_sourcetext + relation->location;
 
 	/*
 	 * Could be the case that the fully qualified name is included,
@@ -1253,7 +1251,6 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 	Oid				reloid;
 	Relation		relation = NULL;
 	const char		*pg_trigger_physical_schema = NULL;
-	const char		*pg_trigger_logical_schema = NULL;
 	const char 		*cur_physical_schema = NULL;
 	const char		*tsql_trigger_physical_schema = NULL;
 	const char		*tsql_trigger_logical_schema = NULL;
@@ -1302,7 +1299,6 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-			pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
 			if(strcasecmp(pg_trigger_physical_schema,cur_physical_schema) == 0)
 			{
 				trigger_rel_oid = reloid;
@@ -1862,7 +1858,8 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	Form_pg_class	form_reltup;
 	int16		dbid;
 	uint64		flag_values = 0, flag_validity = 0;
-	char		*physical_schemaname, *logical_schemaname;
+	char		*physical_schemaname;
+	const char  *logical_schemaname;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1939,7 +1936,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	CatalogTupleInsert(bbf_view_def_rel, tuple);
 
 	pfree(physical_schemaname);
-	pfree(logical_schemaname);
+	pfree((char *) logical_schemaname);
 	ReleaseSysCache(reltup);
 	heap_freetuple(tuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
@@ -1956,7 +1953,7 @@ pltsql_drop_view_definition(Oid objectId)
 	Form_pg_class	form;
 	int16		dbid;
 	char		*physical_schemaname, *objectname;
-	const char	*logical_schemaname;
+	char		*logical_schemaname;
 
 	/* return if it is not a view */
 	reltuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objectId));
@@ -1977,7 +1974,7 @@ pltsql_drop_view_definition(Oid objectId)
 				 form->relnamespace);
 	}
 	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
-	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
+	logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
 	objectname = NameStr(form->relname);
 
 	/*
@@ -2098,7 +2095,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	Form_pg_proc	form_proctup;
 	NameData		*schema_name_NameData;
 	char		*physical_schemaname;
-	const char	*func_signature;
+	char		*func_signature;
 	char		*original_name = NULL;
 	List		*default_positions = NIL;
 	ListCell	*x;
@@ -2137,7 +2134,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		return;
 	}
 
-	func_signature = get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+	func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
 															form_proctup->pronargs,
 															form_proctup->proargtypes.values);
 
@@ -2173,7 +2170,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		char *func_name_start, *temp;
 		const char *funcname = NameStr(form_proctup->proname);
 
-		func_name_start = queryString + origname_location;
+		func_name_start = (char *) queryString + origname_location;
 
 		/*
 		 * Could be the case that the fully qualified name is included,
@@ -2944,7 +2941,7 @@ static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt * plan;
-	PLtsql_execstate *estate;
+	PLtsql_execstate *estate = NULL;
 
 	if (pltsql_explain_analyze)
 	{
