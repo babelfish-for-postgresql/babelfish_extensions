@@ -66,6 +66,7 @@ extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
+extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
  * 			Catalog Hooks
