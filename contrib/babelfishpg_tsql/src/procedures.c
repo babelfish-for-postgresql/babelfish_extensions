@@ -70,6 +70,7 @@ List *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
 List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets);
 List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets);
+static void ValidateLinkedServerDataSource(char *data_src);
 
 char *sp_describe_first_result_set_view_name = NULL;
 
@@ -2074,27 +2075,75 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
+static void
+ValidateLinkedServerDataSource(char* data_src)
+{
+	/* 
+	 * Only treat fully qualified DNS names (endpoints) or IP address 
+	 * as valid data sources.
+	 * 
+	 * If data source is provided in the form of servername\\instancename, we
+	 * throw an error to suggest use of fully qualified domain name or the IP address
+	 * instead.
+	 */
+	if (strchr(data_src, '\\'))
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Only fully qualified domain name or IP address are allowed as data source")));
+}
+
 Datum
 sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *provider = text_to_cstring(PG_GETARG_TEXT_P(2));
-
-	if (strncmp(provider, "tds_fdw", 7) != 0)
-		ereport(ERROR,
+	char *linked_server = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *srv_product = PG_ARGISNULL(1) ? "" : text_to_cstring(PG_GETARG_TEXT_P(1));
+	char *provider = PG_ARGISNULL(2) ? "" : text_to_cstring(PG_GETARG_TEXT_P(2));
+	char *data_src = PG_ARGISNULL(3) ? "" : text_to_cstring(PG_GETARG_TEXT_P(3));
+	char *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
+	char *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
+	
+	if (strlen(srv_product) == 10 && (strncmp(srv_product, "SQL Server", 10) == 0))
+	{
+		/* if server product is "SQL Server" data source is the linked server name too */
+		data_src = linked_server;
+	}
+	else
+	{
+		if (((strlen(provider) == 7) && (strncmp(provider, "SQLNCLI", 7) == 0)) ||
+			((strlen(provider) == 10) && (strncmp(provider, "MSOLEDBSQL", 10) == 0)) ||
+			((strlen(provider) == 8) && (strncmp(provider, "SQLOLEDB", 8) == 0)))
+		{
+			/* if provider is a valid T-SQL provider, we throw a warning indicating internally, we will be using tds_fdw */
+			ereport(WARNING,
+					errmsg("Using the TDS Foreign data wrapper (tds_fdw) as provider"));
+		}
+		else if ((strlen(provider) != 7) || (strncmp(provider, "tds_fdw", 7) != 0))
+			ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
-				 errmsg("Unsupported provider '%s'. Supported provider is 'tds_fdw'", provider)));
+				 	errmsg("Unsupported provider '%s'. Supported provider is 'tds_fdw'", provider)));
+
+		if (provstr != NULL)
+		{
+			/* we ignore provider string in any case */
+			ereport(WARNING,
+					errmsg("Ignoring @provstr argument value"));
+		}
+	}
+
+	ValidateLinkedServerDataSource(data_src);
 
 	CreateForeignServerStmt *stmt = makeNode(CreateForeignServerStmt);
 	List *options = NIL;
 
-	stmt->servername = servername;
+	stmt->servername = linked_server;
 	stmt->fdwname = "tds_fdw";
 	stmt->if_not_exists = false;
 
 	/* Add the relevant options */
-	options = lappend(options, makeDefElem("servername", (Node *) makeString(text_to_cstring(PG_GETARG_TEXT_P(3))), -1));
-	options = lappend(options, makeDefElem("database", (Node *) makeString(text_to_cstring(PG_GETARG_TEXT_P(6))), -1));
+	options = lappend(options, makeDefElem("servername", (Node *) makeString(data_src), -1));
+
+	if (catalog != NULL)
+		options = lappend(options, makeDefElem("database", (Node *) makeString(catalog), -1));
 
 	stmt->options = options;
 
