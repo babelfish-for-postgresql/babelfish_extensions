@@ -116,67 +116,64 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 static bool 
 check_version_number(char **newval, void **extra, GucSource source)
 {
-	char 		*copy_version_number = malloc(sizeof(*newval));
+	char 		*copy_version_number = palloc(sizeof(*newval));
 	char		*token;
 	int		part = 0;
 
+	if(*newval == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter a valid version number")));
+
 	strcpy(copy_version_number,*newval);
-	if(strcasecmp(copy_version_number,"default") == 0)
+	if(pg_strcasecmp(copy_version_number,"default") == 0)
 		return true;
 
-	PG_TRY();
-	{
-		for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
-		{	
-			/* check each token contains only digits */
-			if(!isdigit((unsigned char) *token))
-			{
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Please enter a valid version number")));
-			}
-			
-			/* check Major Version is between 11 and 15 */
-			if(part == 0 && (11 > atoi(token) || atoi(token) > 15))
-			{
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Please enter a valid major version number between 11 and 15")));
-			}
-
-			/* Minor Version takes 1 byte in PreLogin message when doing handshake, here to check
-				it is between 0 and 0xFF
-			*/
-			if(part == 1 && (atoi(token) < 0 || atoi(token) > 0xFF))
-			{
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Please enter a valid minor version number")));
-			}
-			/* Micro Version takes 2 bytes in PreLogin message when doing handshake, here to check
-				it is between 0 and 0xFFFF
-			*/
-			if(part == 2 && (atoi(token) < 0 || atoi(token) > 0xFFFF))
-			{
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Please enter a valid micro version number")));
-			}
-			part++;
-		}
-
-		if(part != 4)
+	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+	{	
+		/* null check and check each token contains only digits */
+		if(token == NULL || token[0] == '\0'|| !isdigit((unsigned char) *token))
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Please enter 4 valid number separated by \'.\' ")));
+				errmsg("Please enter a valid version number")));
 		}
+		
+		/* check Major Version is between 11 and 15 */
+		if(part == 0 && (11 > atoi(token) || atoi(token) > 15))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter a valid major version number between 11 and 15")));
+		}
+
+		/* Minor Version takes 1 byte in PreLogin message when doing handshake, here to check
+		 *	it is between 0 and 0xFF
+		 */
+		if(part == 1 && atoi(token) > 0xFF)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter a valid minor version number")));
+		}
+		/* Micro Version takes 2 bytes in PreLogin message when doing handshake, here to check
+		 *	it is between 0 and 0xFFFF
+		 */
+		if(part == 2 && atoi(token) > 0xFFFF)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Please enter a valid micro version number")));
+		}
+		part++;
 	}
-	PG_FINALLY();
+
+	if(part != 4)
 	{
-		free(copy_version_number);
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			errmsg("Please enter 4 valid numbers separated by \'.\' ")));
 	}
-	PG_END_TRY();
 
     return true;
 }

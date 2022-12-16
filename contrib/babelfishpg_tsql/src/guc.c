@@ -368,6 +368,15 @@ static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
 	}
 	return true;
 }
+static bool check_tsql_version (char **newval, void **extra, GucSource source)
+{
+	if(pg_strcasecmp(*newval,"default") != 0)
+		ereport(WARNING,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
+
+	return true;
+}
 
 static void assign_enable_pg_hint (bool newval, void *extra)
 {
@@ -750,7 +759,7 @@ define_custom_variables(void)
 				 "default",
 				 PGC_SUSET,
 				 GUC_NOT_IN_SAMPLE,
-				 NULL, NULL, NULL);
+				 check_tsql_version, NULL, NULL);
 
 	DefineCustomStringVariable("babelfishpg_tsql.language",
 				 gettext_noop("T-SQL compatibility LANGUAGE option."),

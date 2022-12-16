@@ -151,12 +151,7 @@ version(PG_FUNCTION_ARGS)
 						 __DATE__, __TIME__, pg_version, BABELFISH_VERSION_STR);
 	}
 	else
-	{
-		ereport(WARNING,
-					(errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
 		appendStringInfoString(&temp, pltsql_version);
-	}
-		
 
 	/*
 	 * TODO: Return Build number with version string as well.

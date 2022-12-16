@@ -1,6 +1,13 @@
 -- psql
 Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
-SELECT pg_reload_conf();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
+    Server SQLState: 0A000)~~
+
+
+Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
 GO
 ~~ERROR (Code: 0)~~
 
@@ -9,7 +16,6 @@ GO
 
 
 Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
-SELECT pg_reload_conf();
 GO
 ~~ERROR (Code: 0)~~
 
@@ -17,8 +23,15 @@ GO
     Server SQLState: 0A000)~~
 
 
+Alter system set babelfishpg_tds.product_version = "15.-1.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid version number
+    Server SQLState: 0A000)~~
+
+
 Alter system set babelfishpg_tds.product_version = "15.4.66000.6";
-SELECT pg_reload_conf();
 GO
 ~~ERROR (Code: 0)~~
 
@@ -26,8 +39,15 @@ GO
     Server SQLState: 0A000)~~
 
 
+Alter system set babelfishpg_tds.product_version = "15.4.-1.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid version number
+    Server SQLState: 0A000)~~
+
+
 Alter system set babelfishpg_tds.product_version = "e.4.3000.6";
-SELECT pg_reload_conf();
 GO
 ~~ERROR (Code: 0)~~
 
@@ -36,16 +56,14 @@ GO
 
 
 Alter system set babelfishpg_tds.product_version = "11.4.3000";
-SELECT pg_reload_conf();
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid number separated by '.' 
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
     Server SQLState: 0A000)~~
 
 
 Alter system set babelfishpg_tds.product_version = ".4.3000.6";
-SELECT pg_reload_conf();
 GO
 ~~ERROR (Code: 0)~~
 
@@ -53,23 +71,53 @@ GO
     Server SQLState: 0A000)~~
 
 
-Alter system set babelfishpg_tds.product_version = "";
-SELECT pg_reload_conf();
+Alter system set babelfishpg_tds.product_version = "11..3000.6";
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: zero-length delimited identifier at or near """"
-  Position: 52
-    Server SQLState: 42601)~~
+~~ERROR (Message: ERROR: Please enter a valid minor version number
+    Server SQLState: 0A000)~~
 
 
-Alter system set babelfishpg_tds.product_version = " ";
-SELECT pg_reload_conf();
+Alter system set babelfishpg_tds.product_version = "11.4..6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 0A000)~~
+
+
+Alter system set babelfishpg_tds.product_version = "11.4.3000.";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 0A000)~~
+
+
+Alter system set babelfishpg_tds.product_version = None;
 GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: Please enter a valid version number
     Server SQLState: 0A000)~~
+
+
+Alter system set babelfishpg_tds.product_version = " ";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid version number
+    Server SQLState: 0A000)~~
+
+
+ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
@@ -85,11 +133,11 @@ t
 exec pg_sleep 1
 GO
 
-select CONVERT(VARCHAR(59), @@version);
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
-varchar
-Babelfish for PostgreSQL with SQL Server Compatibility - 15
+nvarchar
+Babelfish for PostgreSQL with SQL Server Compatibility - 15.4.3000.6
 ~~END~~
 
 
@@ -131,11 +179,11 @@ t
 exec pg_sleep 1
 GO
 
-select CONVERT(VARCHAR(59), @@version);
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
-varchar
-Babelfish for PostgreSQL with SQL Server Compatibility - 13
+nvarchar
+Babelfish for PostgreSQL with SQL Server Compatibility - 13.45.3.6
 ~~END~~
 
 
@@ -177,11 +225,11 @@ t
 exec pg_sleep 1
 GO
 
-select CONVERT(VARCHAR(59), @@version);
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
-varchar
-Babelfish for PostgreSQL with SQL Server Compatibility - 12
+nvarchar
+Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
 ~~END~~
 
 

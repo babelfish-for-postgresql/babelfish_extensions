@@ -418,45 +418,29 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 	switch(token)
 	{
 		case TDS_PRELOGIN_VERSION:
-			if(strcasecmp(product_version,"default") == 0)
-			{
-				/* Major Version 0x0C */
-				appendStringInfoChar(val, 0x0C);
-				/* Minor Version 0x00 */
-				appendStringInfoChar(val, 0x00);
-
-				/* Micro Version 0x07d0 */
-				appendStringInfoChar(val, 0x07);
-				appendStringInfoChar(val, 0xd0);
-
-				/* Subbuild Version 0x0000 */
-				appendStringInfoChar(val, 0x00);
-				appendStringInfoChar(val, 0x00);
-			}
+			if(pg_strcasecmp(product_version,"default") == 0)
+				version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
 			else
-			{
 				version_pnt = ProcessVersionNumber(product_version);
-				MajorVersion = *(version_pnt + 0);
-				MinorVersion = *(version_pnt + 1);
-				MicroVersion = *(version_pnt + 2);
 
-				appendStringInfoChar(val, MajorVersion & 0xFF);
-				appendStringInfoChar(val, MinorVersion & 0xFF);
-				if (MicroVersion <= 0xFF)
-				{
-					appendStringInfoChar(val, 0x00);
-					appendStringInfoChar(val, MicroVersion & 0xFF);
-				} 
-				else 
-				{
-					appendStringInfoChar(val, (MicroVersion >> 8) & 0xFF);
-					appendStringInfoChar(val, MicroVersion & 0xFF);
-					
-				}
-				/* Subbuild Version 0x0000 */
+			MajorVersion = *(version_pnt + 0);
+			MinorVersion = *(version_pnt + 1);
+			MicroVersion = *(version_pnt + 2);
+			appendStringInfoChar(val, MajorVersion & 0xFF);
+			appendStringInfoChar(val, MinorVersion & 0xFF);
+			if (MicroVersion <= 0xFF)
+			{
 				appendStringInfoChar(val, 0x00);
-				appendStringInfoChar(val, 0x00);
+				appendStringInfoChar(val, MicroVersion & 0xFF);
+			} 
+			else 
+			{
+				appendStringInfoChar(val, (MicroVersion >> 8) & 0xFF);
+				appendStringInfoChar(val, MicroVersion & 0xFF);
 			}
+			/* Subbuild Version 0x0000 */
+			appendStringInfoChar(val, 0x00);
+			appendStringInfoChar(val, 0x00);
 			break;
 		case TDS_PRELOGIN_ENCRYPTION:
 			/*
