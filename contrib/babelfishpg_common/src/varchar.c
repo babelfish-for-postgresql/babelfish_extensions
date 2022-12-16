@@ -882,7 +882,7 @@ Datum
 varchar2money(PG_FUNCTION_ARGS)
 {
 	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	uint64	val;
+	int64	val;
 
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_CASH(0);

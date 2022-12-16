@@ -1146,13 +1146,13 @@ bool collation_is_CI_AS(Oid colloid)
 
 bool has_ilike_node(Node *expr)
 {	
+	OpExpr	 *op;
 	Assert(IsA(expr, OpExpr));
 	
-	OpExpr	 *op = (OpExpr *) expr;
+	op = (OpExpr *) expr;
 	for(int i = 0; i < TOTAL_LIKE_OP_COUNT; i++)
 	{
-		if(strncmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name, 
-				sizeof(like_ilike_table[i].ilike_op_name)) == 0)
+		if(strcmp(get_opname(op->opno), like_ilike_table[i].ilike_op_name) == 0)
 		{
 			return true;
 		}
@@ -1257,10 +1257,11 @@ tdscollationproperty_helper(const char *collationname, const char *property)
 			 */
 			int64_t ret = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
 			int maxlen = 5;
-			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
 			char *rp;
 			bytea        *result;
 			svhdr_3B_t   *svhdr;
+			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
+
 
 			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
 			rp = VARDATA(bytea_data);

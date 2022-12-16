@@ -25,6 +25,7 @@
 #endif
 
 #include "access/printtup.h"
+#include "access/xlog.h"
 #include "catalog/pg_type.h"	/* For type translation */
 #include "commands/dbcommands.h"
 #include "common/ip.h"
@@ -1249,7 +1250,7 @@ CheckAuthPassword(Port *port, const char **logdetail)
 		result = STATUS_ERROR;
 
 	if (shadowPass)
-		pfree(shadowPass);
+		pfree((char *) shadowPass);
 	pfree(passwd);
 
 	/* since we've freed the password, set it to NULL */
