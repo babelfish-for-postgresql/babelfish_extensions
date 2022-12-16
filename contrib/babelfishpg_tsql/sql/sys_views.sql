@@ -2775,7 +2775,7 @@ FROM pg_type t
       ELSE 0
     END 
   AS INT) AS is_out_scalar
-WHERE ( -- If it's a Table function, we only want the inputs
+WHERE ( -- If it is a Table function, we only want the inputs
       return_type NOT LIKE 'TABLE(%' OR 
       (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
 GRANT SELECT ON sys.all_parameters TO PUBLIC;

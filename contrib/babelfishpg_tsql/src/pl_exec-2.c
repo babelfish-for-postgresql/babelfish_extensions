@@ -85,6 +85,8 @@ extern void reset_sp_cursor_params();
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
 int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
+Oid get_role_oid(const char *rolename, bool missing_ok);
+bool is_member_of_role(Oid member, Oid role);
 
 extern PLtsql_function 	*find_cached_batch(int handle);
 
@@ -693,7 +695,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
 	{
 		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
-			&& (stmt->schema_name == '\0' || strncmp(stmt->schema_name, "dbo", strlen(stmt->schema_name)) == 0))
+			&& ((stmt->schema_name == NULL || stmt->schema_name[0] == (char)'\0') || strcmp(stmt->schema_name, "dbo") == 0))
 			{
 				new_search_path = psprintf("%s, master_dbo", old_search_path);
 
@@ -705,7 +707,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				need_path_reset = true;
 			}
 	}
-	if (stmt->schema_name != '\0')
+	if (stmt->schema_name != NULL && stmt->schema_name[0] != (char)'\0')
 	 	estate->schema_name = stmt->schema_name;
 	else
 		estate->schema_name = NULL;
@@ -1536,7 +1538,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 	Oid restype;
 	int32 restypmod;
 	char *querystr;
-	int ret;
+	int ret = 0;
 
 	switch(stmt->sp_type_code)
 	{
@@ -2547,16 +2549,18 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 static int
 exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
-	char * old_db_name = get_cur_db_name();
 	char message[128];
-	int16 old_db_id = get_cur_db_id();
-	int16 new_db_id = get_db_id(stmt->db_name);
+	char * old_db_name;
+	int16 old_db_id;
+	int16 new_db_id;
 	PLExecStateCallStack *top_es_entry;
-
 	if (pltsql_explain_only)
 	{
 		return exec_stmt_usedb_explain(estate, stmt, false  /* shouldRestoreDb */);
 	}
+	old_db_name = get_cur_db_name();
+	old_db_id = get_cur_db_id();
+	new_db_id = get_db_id(stmt->db_name);
 
 	if (!DbidIsValid(new_db_id))
 		ereport(ERROR,
@@ -2789,7 +2793,7 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 	cstmt->attlist = NIL;
 	cstmt->cur_batch_num = 1;
 
-	if (!stmt->db_name || stmt->db_name[0] == '\0')
+	if (!stmt->db_name || stmt->db_name[0] == (char)'\0')
 		stmt->db_name = get_cur_db_name();
 	if (stmt->schema_name && stmt->db_name)
 	{

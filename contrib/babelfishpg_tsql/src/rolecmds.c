@@ -484,14 +484,14 @@ grant_guests_to_login(const char *login)
 										   &is_null);
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
-		char *guest_name = NULL;
+		const char *guest_name = NULL;
+		AccessPriv *tmp = makeNode(AccessPriv);
+		
 		if (guest_role_exists_for_db(db_name))
 			guest_name = get_guest_role_name(db_name);
 
 		if (guest_name)
 		{
-			AccessPriv *tmp = makeNode(AccessPriv);
-
 			tmp->priv_name = pstrdup(guest_name);
 			tmp->cols = NIL;
 			guests = lappend(guests, tmp);
@@ -1041,7 +1041,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 		login_name_str = login->rolename;
-		cur_db_owner = get_owner_of_db(get_cur_db_name());
+		cur_db_owner = get_owner_of_db((const char *)get_cur_db_name());
 
 		if (strcmp(login_name_str, cur_db_owner) == 0)
 			ereport(ERROR,
@@ -1346,30 +1346,6 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	}
 }
 
-static List *
-gen_droprole_subcmds(const char *user)
-{
-	StringInfoData query;
-	List *res;
-	Node *stmt;
-
-	initStringInfo(&query);
-
-	appendStringInfo(&query, "DROP ROLE dummy; ");
-	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
-
-	if (list_length(res) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(res))));
-
-	stmt = parsetree_nth_stmt(res, 0);
-	update_DropRoleStmt(stmt, user);
-
-	return res;
-}
-
 PG_FUNCTION_INFO_V1(drop_all_users);
 Datum drop_all_users(PG_FUNCTION_ARGS)
 {
@@ -1606,7 +1582,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	Oid		dbo_role_oid;
 	char	*role;
 	char 	*dc_role;
-	char 	*dc_principal;
+	char 	*dc_principal = NULL;
 	char	*physical_role_name;
 	char	*physical_principal_name;
 	char	*cur_db_name;

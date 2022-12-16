@@ -31,6 +31,7 @@
 #include "parser/parser.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "parser/parse_relation.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
@@ -66,6 +67,11 @@ static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static void ValidateLinkedServerDataSource(char *data_src);
+
+List *handle_bool_expr_rec(BoolExpr *expr, List *list);
+List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
+List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets);
+List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets);
 
 char *sp_describe_first_result_set_view_name = NULL;
 
@@ -368,8 +374,6 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 
 	SPITupleTable *tuptable;
 	char *batch;
-	char *params;
-	int browseMode;
 	char *query;
 	int rc;
 	ANTLR_result result;
@@ -383,8 +387,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		
 		batch		= PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-		params	= PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
-		browseMode 	= PG_ARGISNULL(2) ? 0 : PG_GETARG_INT32(0);
+		/* TODO: params and browseMode has to be still implemented in this C-type function */
 		sp_describe_first_result_set_view_name = psprintf("sp_describe_first_result_set_view_%d", rand());
 
 		get_call_result_type(fcinfo, NULL, &tupdesc);
@@ -553,21 +556,21 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 	/*
 	 * Append attnos from WHERE clause into target_attnums
 	 */
+	ColumnRef *ref;
+	String *field;
+	char *name;
+	int attrno;
+	
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr		*where_clause = (A_Expr *)w_clause;
-		ColumnRef	*ref;
-		String		*field;
-		char		*name;
-		int 		attrno;
-
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 		}
-		ref = where_clause->lexpr;
+		ref = (ColumnRef *) where_clause->lexpr;
 		field = linitial(ref->fields);
 		name = field->sval;
 		attrno = attnameAttNum(pstate->p_target_relation, name, false);
@@ -594,11 +597,6 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 			{
 				case T_A_Expr:
 				{
-					ColumnRef	*ref;
-					String		*field;
-					char		*name;
-					int 		attrno;
-
 					xpr = (A_Expr *)arg;
 
 					if (nodeTag(xpr->lexpr) != T_ColumnRef)
@@ -623,7 +621,7 @@ List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *targ
 					break;
 				}
 				case T_BoolExpr:
-					target_attnums = handle_where_clause_attnums(pstate, (BoolExpr *)arg, target_attnums);
+					target_attnums = handle_where_clause_attnums(pstate, (Node *) arg, target_attnums);
 					break;
 				default:
 					break;
@@ -649,22 +647,21 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 	/*
 	 * Construct a ResTarget and append it to the list.
 	 */
+	ColumnRef *ref;
+	String *field;
+	char *name;
+	int attrno;
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
-		A_Expr		*where_clause = (A_Expr *)w_clause;
-		ColumnRef	*ref;
-		String		*field;
-		char		*name;
-		int 		attrno;
-		ResTarget	*res;
-
+		A_Expr *where_clause = (A_Expr *)w_clause;
+		ResTarget *res;
 		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 		}
-		ref = where_clause->lexpr;
+		ref = (ColumnRef *) where_clause->lexpr;
 		field = linitial(ref->fields);
 		name = field->sval;
 		attrno = attnameAttNum(pstate->p_target_relation, name, false);
@@ -680,7 +677,7 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 		res->type = ref->type;
 		res->name = field->sval;
 		res->indirection = NIL; /* Unused for now */
-		res->val = ref; /* Store the ColumnRef here if needed */
+		res->val = (Node *) ref; /* Store the ColumnRef here if needed */
 		res->location = ref->location;
 
 		return lappend(extra_restargets, res);
@@ -693,16 +690,11 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 		{
 			Expr *arg = (Expr *) lfirst(lc);
 			A_Expr *xpr;
+			ResTarget *res;
 			switch(arg->type)
 			{
 				case T_A_Expr:
 				{
-					ColumnRef	*ref;
-					String		*field;
-					char		*name;
-					int 		attrno;
-					ResTarget	*res;
-
 					xpr = (A_Expr *)arg;
 
 					if (nodeTag(xpr->lexpr) != T_ColumnRef)
@@ -727,14 +719,14 @@ List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, Li
 					res->type = ref->type;
 					res->name = field->sval;
 					res->indirection = NIL; /* Unused for now */
-					res->val = ref; /* Store the ColumnRef here if needed */
+					res->val = (Node *) ref; /* Store the ColumnRef here if needed */
 					res->location = ref->location;
 
 					extra_restargets = lappend(extra_restargets, res);
 					break;
 				}
 				case T_BoolExpr:
-					extra_restargets = handle_where_clause_restargets_left(pstate, (BoolExpr *)arg, extra_restargets);
+					extra_restargets = handle_where_clause_restargets_left(pstate, (Node *) arg, extra_restargets);
 					break;
 				default:
 					break;
@@ -760,26 +752,25 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 	/*
 	 * Construct a ResTarget and append it to the list.
 	 */
+	ColumnRef *ref;
+	String *field;
+	ResTarget *res;
 	if (nodeTag(w_clause) == T_A_Expr)
 	{
 		A_Expr		*where_clause = (A_Expr *)w_clause;
-		ColumnRef	*ref;
-		String		*field;
-		ResTarget	*res;
-
 		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 		}
-		ref = where_clause->rexpr;
+		ref = (ColumnRef *) where_clause->rexpr;
 		field = linitial(ref->fields);
 		res = (ResTarget *) palloc(sizeof(ResTarget));
 		res->type = ref->type;
 		res->name = field->sval;
 		res->indirection = NIL; /* Unused for now */
-		res->val = ref; /* Store the ColumnRef here if needed */
+		res->val = (Node *) ref; /* Store the ColumnRef here if needed */
 		res->location = ref->location;
 
 		return lappend(extra_restargets, res);
@@ -796,10 +787,6 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 			{
 				case T_A_Expr:
 				{
-					ColumnRef	*ref;
-					String		*field;
-					ResTarget	*res;
-
 					xpr = (A_Expr *)arg;
 
 					if (nodeTag(xpr->rexpr) != T_ColumnRef)
@@ -814,14 +801,14 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 					res->type = ref->type;
 					res->name = field->sval;
 					res->indirection = NIL; /* Unused for now */
-					res->val = ref; /* Store the ColumnRef here if needed */
+					res->val = (Node *) ref; /* Store the ColumnRef here if needed */
 					res->location = ref->location;
 
 					extra_restargets = lappend(extra_restargets, res);
 					break;
 				}
 				case T_BoolExpr:
-					extra_restargets = handle_where_clause_restargets_right(pstate, (BoolExpr *)arg, extra_restargets);
+					extra_restargets = handle_where_clause_restargets_right(pstate, (Node *) arg, extra_restargets);
 					break;
 				default:
 					break;
@@ -877,9 +864,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		int numresults = 0;
 		int num_target_attnums = 0;
 		RawStmt    *parsetree;
-		InsertStmt *insert_stmt;
-		UpdateStmt *update_stmt;
-		DeleteStmt *delete_stmt;
+		InsertStmt *insert_stmt = NULL;
+		UpdateStmt *update_stmt = NULL;
+		DeleteStmt *delete_stmt = NULL;
 		RangeVar *relation;
 		Oid relid;
 		Relation r;
@@ -1113,7 +1100,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			}
 			foreach(sublc, sublist)
 			{
-				ColumnRef *columnref;
+				ColumnRef *columnref = NULL;
 				ResTarget *res;
 				List *fields;
 				ListCell *fieldcell;

@@ -18,7 +18,7 @@ GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,
 	funcname NAME NOT NULL,
-	orig_name sys.NVARCHAR(128), -- users' original input name
+	orig_name sys.NVARCHAR(128), -- original input name of users
 	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
 	flag_validity BIGINT,

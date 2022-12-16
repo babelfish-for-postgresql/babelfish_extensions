@@ -18,6 +18,7 @@
 #include "utils/json.h"
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
+#include "catalog/namespace.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
 								bool without_array_wrapper, const char *root_name);
@@ -149,7 +150,7 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		}
 
 
-		appendStringInfo(result, "%s", sep);
+		appendStringInfoString(result, sep);
 		sep = ",";
 		tsql_json_build_object(result, CStringGetDatum(colname), colval, datatype_oid, isnull);
 
