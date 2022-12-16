@@ -1,26 +1,26 @@
 #database name, username and password should not exceed 128 characters
 py_auth#!#database|-|11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 ~~ERROR (Code: 3701)~~
-~~ERROR (Message: [42S02] [unixODBC][Microsoft][ODBC Driver 17 for SQL Server][SQL Server]database "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111" does not exist (3701) (SQLDriverConnect))~~
+~~ERROR (Message: [42S02] [unixODBC][ODBC Driver 17 for SQL Server][SQL Server]database "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111" does not exist (3701) (SQLDriverConnect))~~
 
 py_auth#!#database|-|111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111112
 ~~ERROR (Code: 0)~~
-~~ERROR (Message: [08001] [unixODBC][Microsoft][ODBC Driver 17 for SQL Server]Invalid value specified for connection string attribute 'DATABASE' (0) (SQLDriverConnect))~~
+~~ERROR (Message: [08001] [unixODBC][ODBC Driver 17 for SQL Server]Invalid value specified for connection string attribute 'DATABASE' (0) (SQLDriverConnect))~~
 
 py_auth#!#user|-|11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 ~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [unixODBC][Microsoft][ODBC Driver 17 for SQL Server][SQL Server]role "111111111111111111111111111111111111111111111111111111111111111" does not exist (33557097) (SQLDriverConnect))~~
+~~ERROR (Message: [42000] [unixODBC][ODBC Driver 17 for SQL Server][SQL Server]role "111111111111111111111111111111111111111111111111111111111111111" does not exist (33557097) (SQLDriverConnect))~~
 
 py_auth#!#user|-|111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111112
 ~~ERROR (Code: 0)~~
-~~ERROR (Message: [08001] [unixODBC][Microsoft][ODBC Driver 17 for SQL Server]Invalid value specified for connection string attribute 'UID' (0) (SQLDriverConnect))~~
+~~ERROR (Message: [08001] [unixODBC][ODBC Driver 17 for SQL Server]Invalid value specified for connection string attribute 'UID' (0) (SQLDriverConnect))~~
 
 #not sure why any password is accepted during authentication through cloud desktop
 #This test should throw error but from cloud desktop a connection is successfully established
 #py_auth#!#password|-|11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 py_auth#!#password|-|111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111112
 ~~ERROR (Code: 0)~~
-~~ERROR (Message: [08001] [unixODBC][Microsoft][ODBC Driver 17 for SQL Server]Invalid value specified for connection string attribute 'PWD' (0) (SQLDriverConnect))~~
+~~ERROR (Message: [08001] [unixODBC][ODBC Driver 17 for SQL Server]Invalid value specified for connection string attribute 'PWD' (0) (SQLDriverConnect))~~
 
 py_auth#!#others|-|packetSize=0
 ~~SUCCESS~~
@@ -30,5 +30,5 @@ py_auth#!#others|-|packetSize=4096
 ~~SUCCESS~~
 py_auth#!#database|-|test1 SELECT 1
 ~~ERROR (Code: 3701)~~
-~~ERROR (Message: [42S02] [unixODBC][Microsoft][ODBC Driver 17 for SQL Server][SQL Server]database "test1 select 1" does not exist (3701) (SQLDriverConnect))~~
+~~ERROR (Message: [42S02] [unixODBC][ODBC Driver 17 for SQL Server][SQL Server]database "test1 select 1" does not exist (3701) (SQLDriverConnect))~~
 
