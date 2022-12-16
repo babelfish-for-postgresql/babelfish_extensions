@@ -1,10 +1,6 @@
 #ifndef SQLVARIANT_H
 #define SQLVARIANT_H
 
-#include "postgres.h"
-
-#include "fmgr.h"
-
 /*
  * macros for supporting sqlvariant datatype on TDS side
  */
