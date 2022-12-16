@@ -98,7 +98,7 @@ rewrite_object_refs(Node *stmt)
 				{
 					ColumnDef *def = (ColumnDef *) cmd->def;
 
-					rewrite_relation_walker(def, (void *) NULL);
+					rewrite_relation_walker((Node *) def, (void *) NULL);
 					break;
 				}
 				case AT_AddColumn:
@@ -689,8 +689,8 @@ rewrite_column_refs(ColumnRef *cref)
 			else
 			{
 				new_schema = makeString(get_physical_schema_name(cur_db, strVal(schema)));
-				list_delete_first(cref->fields);
-				lcons(new_schema, cref->fields);
+				cref->fields = list_delete_first(cref->fields);
+				cref->fields = lcons(new_schema, cref->fields);
 			}
 			break;
 		}
@@ -701,13 +701,13 @@ rewrite_column_refs(ColumnRef *cref)
 			String     *new_schema;
 
 			if (is_shared_schema(strVal(schema)))
-				list_delete_first(cref->fields);  /* redirect to shared schema */
+				cref->fields = list_delete_first(cref->fields);  /* redirect to shared schema */
 			else
 			{
 				new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
-				list_delete_first(cref->fields);
-				list_delete_first(cref->fields);
-				lcons(new_schema, cref->fields);
+				cref->fields = list_delete_first(cref->fields);
+				cref->fields = list_delete_first(cref->fields);
+				cref->fields = lcons(new_schema, cref->fields);
 			}
 			break;
 		}
@@ -763,8 +763,8 @@ rewrite_plain_name(List *name)
 
 			new_schema = makeString(get_physical_schema_name(cur_db, strVal(schema)));
 			/* ignoring the return value sinece list is valid and cannot be empty */
-			list_delete_first(name);
-			lcons(new_schema, name);
+			name = list_delete_first(name);
+			name = lcons(new_schema, name);
 			break;
 		}
 		case 3:
@@ -776,14 +776,14 @@ rewrite_plain_name(List *name)
 
 			/* do nothing for shared schemas */
 			if (is_shared_schema(strVal(schema)))
-				list_delete_first(name);  /* redirect to shared SYS schema */
+				name = list_delete_first(name);  /* redirect to shared SYS schema */
 			else
 			{
 				new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
 				/* ignoring the return value sinece list is valid and cannot be empty */
-				list_delete_first(name);
-				list_delete_first(name);
-				lcons(new_schema, name);
+				name = list_delete_first(name);
+				name = list_delete_first(name);
+				name = lcons(new_schema, name);
 			}
 			break;
 		}

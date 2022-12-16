@@ -51,7 +51,6 @@ format_datetime(PG_FUNCTION_ARGS)
 	const char 	*data_type;
 	int 	fmt_res = 0;
 	const char 	*data_str;
-	const char 	*valid_culture;
 	StringInfo 	buf;
 	VarChar *result;
 
@@ -60,7 +59,7 @@ format_datetime(PG_FUNCTION_ARGS)
 
 	culture = text_to_cstring(PG_GETARG_TEXT_P(2));
 
-	valid_culture = format_validate_and_culture(culture, "LC_TIME");
+	(void) format_validate_and_culture(culture, "LC_TIME");
 
 	buf = makeStringInfo();
 
@@ -370,7 +369,7 @@ format_numeric_handler(Datum value, Numeric numeric_val, StringInfo format_res, 
  * Function for setting validated input locales for LC_TIME, LC_NUMERIC, LC_MONETARY
  */
 static int
-set_culture(char *valid_culture, const char *config_name, char *culture)
+set_culture(char *valid_culture, const char *config_name, const char *culture)
 {
 	if (valid_culture != NULL && strlen(valid_culture) > 0)
 	{
@@ -394,7 +393,7 @@ set_culture(char *valid_culture, const char *config_name, char *culture)
  * format the given input locale to supported locale format and set it accordingly
  */
 static char *
-format_validate_and_culture(char *culture, const char *config_name)
+format_validate_and_culture(const char *culture, const char *config_name)
 {
 	int 	culture_len = 0;
 	char 	*token;
@@ -474,17 +473,13 @@ format_validate_and_culture(char *culture, const char *config_name)
 static int
 match(const char *string, const char *pattern)
 {
-	regex_t re;
 	int status;
-	if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB) != 0)
-	{
-		return 0;
-	}
+	text *regex = cstring_to_text(pattern);
 
-	status = regexec(&re, string, 0, NULL, 0);
-	regfree(&re);
-
-	return !status;
+	status = RE_compile_and_execute(regex, (char *) string, strlen(string), REG_ADVANCED, DEFAULT_COLLATION_OID, 0, NULL);
+	
+	pfree(regex);
+	return status;
 }
 
 /*
@@ -660,7 +655,7 @@ format_datetimeformats(StringInfo buf, const char *format_pattern, const char *c
  * https://www.postgresql.org/docs/current/functions-formatting.html
  */
 static int
-process_format_pattern(StringInfo buf, char *msg_string, const char *data_type)
+process_format_pattern(StringInfo buf, const char *msg_string, const char *data_type)
 {
 	int i = 0;
 	int bc = 0;
@@ -1441,7 +1436,7 @@ replace_currency_format(char *currency_format_mask, StringInfo format_res)
 														 CStringGetTextDatum(fmt)));
 
 	resetStringInfo(format_res);
-	appendStringInfo(format_res, "%s", result);
+	appendStringInfoString(format_res, result);
 }
 
 /*
@@ -1892,8 +1887,8 @@ format_exponential(Numeric numeric_val, StringInfo format_res, char pattern, cha
 
 	int		len;
 	int		temp;
-	int		precision = get_precision(toupper(pattern), precision_string, "", 0, "");
 	char	*buf;
+	int		precision = get_precision(toupper(pattern), precision_string, "", 0, "");
 
 	get_exponential_format(format_res, precision);
 	numeric_to_string(format_res, numeric_val);

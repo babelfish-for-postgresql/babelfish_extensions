@@ -17,7 +17,7 @@ extern bool get_tsql_error_details(ErrorData *edata,
 						int *tsql_error_state,
 						char *error_context);
 extern void reset_error_mapping_cache(void);
-extern error_map_details * get_mapped_error_list(void);
+extern void* get_mapped_error_list(void);
 extern int* get_mapped_tsql_error_code_list(void);
 
 /* 

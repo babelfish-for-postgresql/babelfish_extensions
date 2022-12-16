@@ -336,7 +336,7 @@ void pltsql_estate_setup(PLtsql_execstate *estate,
 					 EState *simple_eval_estate);
 void exec_eval_cleanup(PLtsql_execstate *estate);
 
-static int exec_fmtonly(PLtsql_execstate *estate,
+int exec_fmtonly(PLtsql_execstate *estate,
                         PLtsql_stmt_execsql *stmt);
 
 static void exec_check_rw_parameter(PLtsql_expr *expr, int target_dno);
@@ -5110,7 +5110,7 @@ static void updateColumnUpdatedList(PLtsql_expr* expr, int i){
  * call sp_describe_first_result_set.
  */
 
-static int
+int
 exec_fmtonly(PLtsql_execstate *estate,
              PLtsql_stmt_execsql *stmt)
 {
@@ -10096,7 +10096,7 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 	char		*cur_dbname = get_cur_db_name();
 	char 		*new_search_path;
 	char 		*physical_schema;
-	char		*dbo_schema;
+	const char		*dbo_schema;
 	top_es_entry = exec_state_call_stack->next;
 
 	while(top_es_entry != NULL)
@@ -10134,7 +10134,7 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 					}
 					else
 					{
-						physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
+						physical_schema = get_physical_schema_name((char *) top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
 						dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
 					}
 				}

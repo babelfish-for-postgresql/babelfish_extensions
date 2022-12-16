@@ -40,7 +40,7 @@ LANGUAGE C VOLATILE STRICT PARALLEL SAFE;
 
 /*
  * in tsql, NEWSEQUENTIALID() produces a new unique value
- * greater than a sequence of previous values. Since PG doesn't
+ * greater than a sequence of previous values. Since PG does not
  * have this capability, we will reuse the NEWID() functionality and be
  * aware of the functional shortcoming
  */

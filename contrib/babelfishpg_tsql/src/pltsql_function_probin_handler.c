@@ -35,7 +35,6 @@ static void pushJsonbPairText(JsonbParseState **jpstate,
 static void pushJsonbArray(JsonbParseState **jpstate,
 						JsonbValue **result, int *items, int array_len);
 static void buildTypmodArray(CreateFunctionStmt *stmt, int** typmod_array_p, int* array_len);
-void probin_json_reader(text* probin, int** typmod_arr_p, int typmod_arr_len);
 int adjustTypmod(Oid oid, int typmod);
 
 bool pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p)

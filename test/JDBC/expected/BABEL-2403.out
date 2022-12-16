@@ -64,11 +64,8 @@ name#!#sys#!#rolname#!#{"Rule": "tempdb_dbo must exist in babelfish_authid_user_
 name#!#sys#!#rolname#!#{"Rule": "msdb_db_owner must exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "msdb_dbo must exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
-name#!#sys#!#rolname#!#{"Rule": "In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
-name#!#sys#!#rolname#!#{"Rule": "In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
-name#!#sys#!#rolname#!#{"Rule": "In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
@@ -153,19 +150,16 @@ name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in bab
 name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid"}
 name#!#sys#!#nspname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext"}
 name#!#sys#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
-name#!#sys#!#rolname#!#{"Rule": "In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_db_owner must also exist in pg_authid"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid"}
 name#!#sys#!#nspname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext"}
 name#!#sys#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
-name#!#sys#!#rolname#!#{"Rule": "In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_db_owner must also exist in pg_authid"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid"}
 name#!#sys#!#nspname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext"}
 name#!#sys#!#rolname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
-name#!#sys#!#rolname#!#{"Rule": "In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}

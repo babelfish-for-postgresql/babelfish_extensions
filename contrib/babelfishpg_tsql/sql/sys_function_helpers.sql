@@ -10074,7 +10074,7 @@ BEGIN
             RETURN pos + 1;
         END IF;
     ELSIF left(name, 1) = '"' THEN
-        -- search from position 1 in case name starts with ".
+        -- search from position 1 in case name starts with a double quote.
         pos = position('".' IN right(name, length(name) - 1));
         IF pos = 0 THEN
             -- invalid name

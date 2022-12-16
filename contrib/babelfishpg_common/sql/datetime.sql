@@ -494,7 +494,7 @@ WITH FUNCTION sys.int2datetime (INT) AS IMPLICIT;
 -- cast BIGINT to DATETIME
 -- BIGINT to INT will either convert successfully if INT_MIN < num < INT_MAX, 
 -- otherwise it will raise an exception for being out of bound for INT. While 
--- the error message will be different, ultimately I don't think there is much 
+-- the error message will be different, ultimately I do not think there is much 
 -- issue due to the fact that even INT_MAX/INT_MIN is far beyond the acceptable 
 -- limit of what DATETIME (let alone SMALLDATETIME) can accept. Therefore, 
 -- Babelfish will raise an error in the same situations as SQL Server, just with 

@@ -1353,7 +1353,7 @@ BEGIN
 		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
 	WHEN 'millisecond' THEN
 		-- millisecond result from date_part by default contains second value,
-		-- so we don't need to add second_diff again
+		-- so we do not need to add second_diff again
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
 		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
@@ -1362,7 +1362,7 @@ BEGIN
 		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
 	WHEN 'microsecond' THEN
 		-- microsecond result from date_part by default contains second and millisecond values,
-		-- so we don't need to add second_diff and millisecond_diff again
+		-- so we do not need to add second_diff and millisecond_diff again
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
 		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
@@ -1436,12 +1436,12 @@ BEGIN
 		result = day_diff * 24 * 60 * 60;
 	WHEN 'millisecond' THEN
 		-- millisecond result from date_part by default contains second value,
-		-- so we don't need to add second_diff again
+		-- so we do not need to add second_diff again
 		day_diff = enddate - startdate;
 		result = day_diff * 24 * 60 * 60 * 1000;
 	WHEN 'microsecond' THEN
 		-- microsecond result from date_part by default contains second and millisecond values,
-		-- so we don't need to add second_diff and millisecond_diff again
+		-- so we do not need to add second_diff and millisecond_diff again
 		day_diff = enddate - startdate;
 		result = day_diff * 24 * 60 * 60 * 1000 * 1000;
 	WHEN 'nanosecond' THEN
@@ -1525,7 +1525,7 @@ BEGIN
 		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
 	WHEN 'millisecond' THEN
 		-- millisecond result from date_part by default contains second value,
-		-- so we don't need to add second_diff again
+		-- so we do not need to add second_diff again
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
@@ -1534,7 +1534,7 @@ BEGIN
 		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
 	WHEN 'microsecond' THEN
 		-- microsecond result from date_part by default contains second and millisecond values,
-		-- so we don't need to add second_diff and millisecond_diff again
+		-- so we do not need to add second_diff and millisecond_diff again
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
@@ -2511,7 +2511,7 @@ BEGIN
                         FROM sys.all_columns 
                         WHERE name = cs_as_sub_securable
                             -- Use V as the object type to specify that the securable is table-like.
-                            -- We don't know that the securable is a view, but object_id behaves the 
+                            -- We do not know that the securable is a view, but object_id behaves the 
                             -- same for differint table-like types, so V can be arbitrarily chosen.
                             AND object_id = sys.object_id(cs_as_securable, 'V')) = 1
                                 THEN 'column'
@@ -2541,7 +2541,7 @@ BEGIN
         END
     );
     
-    -- Object wasn't found
+    -- Object was not found
     IF object_type IS NULL THEN
         RETURN 0;
     END IF;
@@ -3020,7 +3020,7 @@ CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
     OUT USERTYPE INT,
     OUT LENGTH INT,
     OUT SS_DATA_TYPE smallint,
--- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
+-- below column is added in order to join information_schema.columns of PG for sys.sp_columns_100_view
     OUT PG_TYPE_NAME VARCHAR(20)
 )
 RETURNS SETOF RECORD
