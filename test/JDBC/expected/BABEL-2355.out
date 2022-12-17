@@ -7,7 +7,7 @@ DECLARE @a DECIMAL(38, 39)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: NUMERIC scale 39 must be between 0 and precision 38)~~
+~~ERROR (Message: The scale 39 for 'decimal' datatype must be within the range 0 to precision 38)~~
 
 
 CREATE PROC babel_2355_proc2 AS
