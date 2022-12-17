@@ -728,7 +728,7 @@ EXEC BABEL_3486_vu_prepare_p35_2
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+~~ERROR (Message: The scale 2 for 'numeric' datatype must be within the range 0 to precision 1)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p35_2
 GO
@@ -739,7 +739,7 @@ GO
 numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+~~ERROR (Message: The scale 2 for 'numeric' datatype must be within the range 0 to precision 1)~~
 
 
 DROP FUNCTION BABEL_3486_vu_prepare_f35_2()
@@ -927,7 +927,7 @@ EXEC BABEL_3486_vu_prepare_p42
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+~~ERROR (Message: The scale 2 for 'decimal' datatype must be within the range 0 to precision 1)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p42
 GO
@@ -938,7 +938,7 @@ GO
 numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+~~ERROR (Message: The scale 2 for 'decimal' datatype must be within the range 0 to precision 1)~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f42()
 GO
@@ -2790,20 +2790,22 @@ GO
 
 SELECT * FROM BABEL_3486_vu_prepare_v102_2
 GO
-~~START~~
-datetime2
-2017-08-25 13:01:59.1234570
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_3486_vu_prepare_v102_2" does not exist)~~
 
 DROP VIEW BABEL_3486_vu_prepare_v102_2
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_3486_vu_prepare_v102_2" does not exist)~~
+
 
 EXEC BABEL_3486_vu_prepare_p102_2
 GO
-~~START~~
-datetime2
-2017-08-25 13:01:59.1234570
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 10 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p102_2
 GO
@@ -2812,8 +2814,9 @@ SELECT BABEL_3486_vu_prepare_f102_2()
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:59.1234570
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 10 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f102_2()
 GO

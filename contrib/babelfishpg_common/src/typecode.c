@@ -258,6 +258,7 @@ Oid tsql_timestamp_oid = InvalidOid;
 Oid tsql_datetime2_oid = InvalidOid;
 Oid tsql_smalldatetime_oid = InvalidOid;
 Oid tsql_datetimeoffset_oid = InvalidOid;
+Oid tsql_decimal_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -387,6 +388,14 @@ is_tsql_datetimeoffset_datatype(Oid oid)
 	if (tsql_datetimeoffset_oid == InvalidOid)
 		tsql_datetimeoffset_oid = lookup_tsql_datatype_oid("datetimeoffset");
 	return tsql_datetimeoffset_oid == oid;
+}
+
+bool
+is_tsql_decimal_datatype(Oid oid)
+{
+	if (tsql_decimal_oid == InvalidOid)
+		tsql_decimal_oid = lookup_tsql_datatype_oid("decimal");
+	return tsql_decimal_oid == oid;
 }
 
 /*

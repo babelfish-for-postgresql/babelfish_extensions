@@ -1,0 +1,176 @@
+# all variable length datatypes like numeric, decimal, time, datetime2, datetimeoffset need explicit checking
+# on their permissible datalength at the time of table or stored procedure creation and should generate error if required.
+
+# BABEL-3720
+
+CREATE PROC babel_3720_proc1 AS DECLARE @a DECIMAL(39, 39);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'decimal' exceeds the maximum allowed (38))~~
+
+CREATE PROC babel_3720_proc2 AS DECLARE @a DECIMAL(38, 39);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The scale 39 for 'decimal' datatype must be within the range 0 to precision 38)~~
+
+CREATE PROC babel_3720_proc3 AS DECLARE @a DECIMAL(39, 38);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'decimal' exceeds the maximum allowed (38))~~
+
+create table babel_3720_tab1(a1 decimal(36, 40));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The scale 40 for 'decimal' datatype must be within the range 0 to precision 36)~~
+
+create table babel_3720_tab2(a1 decimal(40, 36));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (40) given to the type 'decimal' exceeds the maximum allowed (38))~~
+
+create table babel_3720_tab3(a1 decimal(0, 1));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified column precision 0 for 'decimal' datatype must be within the range 1 to maximum precision(38))~~
+
+create table babel_3720_tab4(a1 decimal(2, -1));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 43)~~
+
+
+CREATE PROC babel_3720_proc4 AS DECLARE @a NUMERIC(39, 39);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'numeric' exceeds the maximum allowed (38))~~
+
+CREATE PROC babel_3720_proc5 AS DECLARE @a NUMERIC(38, 39);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The scale 39 for 'numeric' datatype must be within the range 0 to precision 38)~~
+
+CREATE PROC babel_3720_proc6 AS DECLARE @a NUMERIC(39, 38);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'numeric' exceeds the maximum allowed (38))~~
+
+create table babel_3720_tab5(a1 numeric(36, 40));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The scale 40 for 'numeric' datatype must be within the range 0 to precision 36)~~
+
+create table babel_3720_tab6(a1 numeric(40, 36));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (40) given to the type 'numeric' exceeds the maximum allowed (38))~~
+
+create table babel_3720_tab7(a1 numeric(0, 1));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified column precision 0 for 'numeric' datatype must be within the range 1 to maximum precision(38))~~
+
+create table babel_3720_tab8(a1 numeric(2, -1));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 43)~~
+
+
+DROP PROC if exists babel_3720_proc1;
+DROP PROC if exists babel_3720_proc2;
+DROP PROC if exists babel_3720_proc3;
+DROP PROC if exists babel_3720_proc4;
+DROP PROC if exists babel_3720_proc5;
+DROP PROC if exists babel_3720_proc6;
+
+drop table if exists babel_3720_tab1;
+drop table if exists babel_3720_tab2;
+drop table if exists babel_3720_tab3;
+drop table if exists babel_3720_tab4;
+drop table if exists babel_3720_tab5;
+drop table if exists babel_3720_tab6;
+drop table if exists babel_3720_tab7;
+drop table if exists babel_3720_tab8;
+
+# BABEL-3793
+
+create table babel_3793_tab1(a1 date(3));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type modifier is not allowed for type "date")~~
+
+CREATE PROC babel_3793_proc1 AS DECLARE @a date(5);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type modifier is not allowed for type "date")~~
+
+
+create table babel_3793_tab2(a1 datetime(5));
+CREATE PROC babel_3793_proc2 AS DECLARE @a datetime(2);
+
+create table babel_3793_tab3(a1 smalldatetime(2));
+CREATE PROC babel_3793_proc3 AS DECLARE @a smalldatetime(3);
+
+create table babel_3793_tab4(a1 time(-3));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 37)~~
+
+create table babel_3793_tab5(a1 time(13));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 13 is invalid. 'time' datatype must have scale between 0 and 7)~~
+
+CREATE PROC babel_3793_proc4 AS DECLARE @a time(25);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 25 is invalid. 'time' datatype must have scale between 0 and 7)~~
+
+
+create table babel_3793_tab6(a1 datetime2(-7));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 42)~~
+
+create table babel_3793_tab7(a1 datetime2(20));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 20 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
+
+CREATE PROC babel_3793_proc5 AS DECLARE @a datetime2(-35);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 53)~~
+
+
+create table babel_3793_tab8(a1 datetimeoffset(-31));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '-' at line 1 and character position 47)~~
+
+create table babel_3793_tab9(a1 datetimeoffset(15));
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 15 is invalid. 'datetimeoffset' datatype must have scale between 0 and 7)~~
+
+CREATE PROC babel_3793_proc6 AS DECLARE @a datetimeoffset(51);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 51 is invalid. 'datetimeoffset' datatype must have scale between 0 and 7)~~
+
+
+DROP PROC if exists babel_3793_proc1;
+DROP PROC if exists babel_3793_proc2;
+DROP PROC if exists babel_3793_proc3;
+DROP PROC if exists babel_3793_proc4;
+DROP PROC if exists babel_3793_proc5;
+DROP PROC if exists babel_3793_proc6;
+
+drop table if exists babel_3793_tab1;
+drop table if exists babel_3793_tab2;
+drop table if exists babel_3793_tab3;
+drop table if exists babel_3793_tab4;
+drop table if exists babel_3793_tab5;
+drop table if exists babel_3793_tab6;
+drop table if exists babel_3793_tab7;
+drop table if exists babel_3793_tab8;
+drop table if exists babel_3793_tab9;
