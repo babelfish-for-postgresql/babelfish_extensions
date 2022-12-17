@@ -51,9 +51,8 @@ BABEL-3221
 BABEL-3204
 BABEL-3234
 BABEL-3402
-# Disabled until BABEL-3720 gets fixed
-# cast_numeric_types_to_datetime
-# cast_numeric_types_to_smalldatetime
+cast_numeric_types_to_datetime
+cast_numeric_types_to_smalldatetime
 routines_definition
 column_domain_usage
 constraint_column_usage
@@ -131,8 +130,7 @@ BABEL-3116
 BABEL-3117
 BABEL-3118
 BABEL-3249
-# Disabled until BABEL-3720 gets fixed
-# BABEL-3486
+BABEL-3486
 BABEL-3474
 BABEL-3614
 BABEL-3646
@@ -357,3 +355,4 @@ ISC-Columns
 ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
+TestVariableDataLength

@@ -80,6 +80,7 @@ extern Oid tsql_timestamp_oid;
 extern Oid tsql_datetime2_oid;
 extern Oid tsql_smalldatetime_oid;
 extern Oid tsql_datetimeoffset_oid;
+extern Oid tsql_decimal_oid;
 
 extern Oid lookup_tsql_datatype_oid(const char *typename);
 extern bool is_tsql_bpchar_datatype(Oid oid);
@@ -97,6 +98,7 @@ extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 extern bool is_tsql_datetime2_datatype(Oid oid);
 extern bool is_tsql_smalldatetime_datatype(Oid oid);
 extern bool is_tsql_datetimeoffset_datatype(Oid oid);
+extern bool is_tsql_decimal_datatype(Oid oid);
 
 extern void handle_type_and_collation(struct Node *node, Oid typid, Oid collationid);
 extern bool check_target_type_is_sys_varchar(Oid funcid);
