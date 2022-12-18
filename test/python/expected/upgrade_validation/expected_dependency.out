@@ -989,6 +989,7 @@ View sys.fulltext_catalogs
 View sys.fulltext_index_columns
 View sys.fulltext_languages
 View sys.fulltext_stoplists
+View sys.linked_logins
 View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
