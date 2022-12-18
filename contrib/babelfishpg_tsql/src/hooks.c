@@ -35,6 +35,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
+#include "parser/parse_type.h"
 #include "parser/parser.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
@@ -59,7 +60,7 @@
 #include "rolecmds.h"
 #include "session.h"
 #include "multidb.h"
-
+#include "datatypes.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -119,6 +120,7 @@ static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_blo
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
+static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -174,6 +176,7 @@ static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_def
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
+static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -272,6 +275,9 @@ InstallExtendedHooks(void)
 	planner_hook = pltsql_planner_hook;
 	prev_transform_check_constraint_expr_hook = transform_check_constraint_expr_hook;
 	transform_check_constraint_expr_hook = transform_like_in_add_constraint;
+
+	prev_validate_var_datatype_scale_hook = validate_var_datatype_scale_hook;
+	validate_var_datatype_scale_hook = pltsql_validate_var_datatype_scale;
 }
 
 void
@@ -311,6 +317,7 @@ UninstallExtendedHooks(void)
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
+	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 }
 
 /*****************************************
@@ -2982,4 +2989,76 @@ transform_like_in_add_constraint (Node* node)
 	PG_END_TRY();
 	
 	return pltsql_predicate_transformer(node);
+}
+
+/*
+ * pltsql_validate_var_datatype_scale()
+ * - Checks whether variable length datatypes like numeric, decimal, time, datetime2, datetimeoffset 
+ * are declared with permissible datalength at the time of table or stored procedure creation
+ */
+void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
+{
+	Oid datatype_oid = InvalidOid;
+	int count = 0;
+	ListCell   *l;
+	int scale[2] = {-1, -1};
+	char *dataTypeName, *schemaName;
+
+	DeconstructQualifiedName(typeName->names, &schemaName, &dataTypeName);
+
+	foreach(l, typeName->typmods)
+	{
+		Node       *tm = (Node *) lfirst(l);
+		if (IsA(tm, A_Const))
+		{
+			A_Const    *ac = (A_Const *) tm;
+
+			if (IsA(&ac->val, Integer))
+			{
+				scale[count] = intVal(&ac->val);
+				count++;
+			}
+		}
+	}
+
+	datatype_oid = ((Form_pg_type) GETSTRUCT(typ))->oid;
+
+	if ((datatype_oid == DATEOID ||
+		(*common_utility_plugin_ptr->is_tsql_timestamp_datatype)(datatype_oid) ||
+		(*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(datatype_oid)) &&
+		scale[0] == -1)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Cannot specify a column width on datatype \'%s\'",
+					 dataTypeName)));
+	}
+	else if ((datatype_oid == TIMEOID ||
+		(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(datatype_oid) ||
+		(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(datatype_oid)) &&
+		(scale[0] < 0 || scale[0] > 7))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Specified scale %d is invalid. \'%s\' datatype must have scale between 0 and 7",
+					 scale[0], dataTypeName)));
+	}
+	else if (datatype_oid == NUMERICOID ||
+		(*common_utility_plugin_ptr->is_tsql_decimal_datatype)(datatype_oid))
+	{
+		/*
+		 * Since numeric/decimal datatype stores precision in scale[0] and scale in scale[1]
+		 */
+		if (scale[0] < 1 || scale[0] > TDS_NUMERIC_MAX_PRECISION)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("Specified column precision %d for \'%s\' datatype must be within the range 1 to maximum precision(38)",
+						 scale[0], dataTypeName)));
+
+		if (scale[1] < 0 || scale[1] > scale[0])
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("The scale %d for \'%s\' datatype must be within the range 0 to precision %d",
+						 scale[1], dataTypeName, scale[0])));
+	}
 }
