@@ -132,6 +132,7 @@ AS 'babelfishpg_tsql', 'create_linked_server_procs_in_master_dbo_internal';
 CALL sys.create_linked_server_procs_in_master_dbo();
 ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
 ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
+ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
 DROP PROCEDURE sys.create_linked_server_procs_in_master_dbo;
 
 CREATE OR REPLACE VIEW sys.servers
@@ -196,6 +197,15 @@ LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
+                                                    IN "@droplogins" char(10) DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_dropserver_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
+                                                    IN "@droplogins" char(10))
+TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
