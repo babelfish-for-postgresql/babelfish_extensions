@@ -60,7 +60,6 @@
 #include "rolecmds.h"
 #include "session.h"
 #include "multidb.h"
-#include "datatypes.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
