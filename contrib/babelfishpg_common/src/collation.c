@@ -36,7 +36,7 @@ static bool db_collation_is_CI_AS = true;
  * and babelfishpg_tsql.default_locale.
  * We only need to lookup and store once because they can not be changed once babelfish db is initialised.
  */
-static const char *server_collation_name = NULL;
+static char *server_collation_name = NULL;
 static const char *bbf_default_locale = NULL;
 
 /* Hash tables to help backward searching (from OID to Persist ID) */
@@ -455,10 +455,6 @@ init_server_collation_name(void)
 			MemoryContextSwitchTo(oldContext);
 		}
 	}
-
-	/* babelfishpg_tsql.server_collation_name should not be changed once babelfish db is initialised. */
-	Assert(!server_collation_name || strcmp(server_collation_name, GetConfigOption("babelfishpg_tsql.server_collation_name", true, false)) == 0);
-
 	return;
 }
 
@@ -1023,12 +1019,47 @@ collation_list_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+static Oid
+get_collation_oid_internal(char *collation_name)
+{
+	Oid nspoid;
+	Oid collation_oid;
+	int collidx;
+	const char *collname;
+
+	if (!collation_name)
+		return DEFAULT_COLLATION_OID;
+
+	/* The collation_name is permitted to be the name of a sql
+	 * or windows collation that is translated into a bbf collation.
+	 * If that's what it is then get the translated name.
+	 */
+	if (NOT_FOUND != (collidx = translate_collation(collation_name, false)))
+		collname = coll_infos[collidx].collname;
+	else
+		collname = collation_name;
+
+	nspoid = get_namespace_oid("sys", false);
+	collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
+					 PointerGetDatum(collname),
+					 Int32GetDatum(-1),
+					 ObjectIdGetDatum(nspoid));
+
+	if (!OidIsValid(collation_oid))
+		collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
+								PointerGetDatum(collname),
+								Int32GetDatum(COLL_DEFAULT_ENCODING),
+								ObjectIdGetDatum(nspoid));
+
+	return collation_oid;
+}
+
 Oid
 get_server_collation_oid_internal(bool missingOk)
 {
 	Oid nspoid;
 	int collidx;
-	const char *collname = NULL;
+	const char *collname;
 
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
@@ -1038,26 +1069,7 @@ get_server_collation_oid_internal(bool missingOk)
 	if (server_collation_name == NULL)
 		return DEFAULT_COLLATION_OID;
 
-	/* The server_collation_name is permitted to be the name of a sql
-	 * or windows collation that is translated into a bbf collation.
-	 * If that's what it is then get the translated name.
-	 */
-	if (NOT_FOUND != (collidx = translate_collation(server_collation_name, false)))
-		collname = coll_infos[collidx].collname;
-	else
-		collname = server_collation_name;
-
-	nspoid = get_namespace_oid("sys", false);
-	server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-					 PointerGetDatum(collname),
-					 Int32GetDatum(-1),
-					 ObjectIdGetDatum(nspoid));
-
-	if (!OidIsValid(server_collation_oid))
-		server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-								PointerGetDatum(collname),
-								Int32GetDatum(COLL_DEFAULT_ENCODING),
-								ObjectIdGetDatum(nspoid));
+	server_collation_oid = get_collation_oid_internal(server_collation_name);
 
 	if (!OidIsValid(server_collation_oid))
 	{
@@ -1084,7 +1096,6 @@ get_server_collation_oid_internal(bool missingOk)
 
 Oid BABELFISH_CLUSTER_COLLATION_OID()
 {
-
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
 		get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
@@ -1405,4 +1416,74 @@ get_collation_callbacks(void)
 		collation_callbacks_var.has_ilike_node = &has_ilike_node;
 	}
 	return &collation_callbacks_var;
+}
+
+/*
+ * babelfish_define_type_default_collation - would be used to update default collation of Babelfish data types
+ * to correct tsql collation.
+ */
+Oid
+babelfish_define_type_default_collation(Oid typeNamespace)
+{
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+
+	/* We should only override the default collation for Babelfish data types. */
+	if (strcmp(get_namespace_name(typeNamespace), "sys") != 0)
+		return DEFAULT_COLLATION_OID;
+
+	/* 
+	 * If upgrade is going on then we should use oid corresponding to 
+	 * babelfishpg_tsql.restored_server_collation_name.
+	 */
+	if ((babelfish_dump_restore && 
+		 strncmp(babelfish_dump_restore, "on", 2) == 0) &&
+		 babelfish_restored_server_collation_name)
+		return get_collation_oid_internal(babelfish_restored_server_collation_name);
+
+	get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
+
+	Assert(OidIsValid(server_collation_oid));
+
+	return server_collation_oid;
+}
+
+PG_FUNCTION_INFO_V1(get_babel_server_collation_oid);
+
+Datum
+get_babel_server_collation_oid(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_OID(get_server_collation_oid_internal(false));
+}
+
+PG_FUNCTION_INFO_V1(babelfish_update_server_collation_name);
+
+/*
+ * babelfish_update_server_collation_name - corresponding to sys.babelfish_update_server_collation_name() function
+ * which would be available and strictly be used during 1.x to 2.3 upgrade.
+ */
+Datum
+babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
+{
+	MemoryContext oldContext;
+	/* If babelfish_restored_server_collation_name is set then use it. */
+	if (babelfish_restored_server_collation_name == NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Invalid use of function babelfish_update_server_collation_name is detected.")));
+	}
+
+	if (!is_valid_server_collation_name(babelfish_restored_server_collation_name))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Invalid value of babelfishpg_tsql.restored_server_collation_name GUC is detected.")));
+	}
+
+	oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	if (server_collation_name)
+		pfree(server_collation_name);
+	server_collation_name = pstrdup(babelfish_restored_server_collation_name);
+	MemoryContextSwitchTo(oldContext);
+	PG_RETURN_VOID();
 }

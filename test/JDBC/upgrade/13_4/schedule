@@ -8,6 +8,8 @@
 # This should be the first test to check there are no duplicated object_ids
 BABEL-3613
 
+babelfish_cast_floor
+babel_try_parse
 TestBigInt
 TestBinary
 TestBIT
@@ -152,9 +154,11 @@ sys-default_constraints
 sys-dm_exec_sessions
 sys-foreign_key_columns
 sys-identity_columns
+sys-identity_columns-dep-for-13-x
 sys-indexes
 sys-table_types
 sys_all_objects
+sys-system_objects-for-13-x
 BABEL-1683
 schema_resolution_trigger
 sys-sp_pkeys
@@ -165,13 +169,11 @@ BABEL-SP_DATATYPE_INFO
 BABEL-SPCOLUMNS
 BABEL-SP_TABLES
 BABEL-SP_TABLE_PRIVILIGES
-BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
-sys-identity_columns-dep
 sys-indexes-dep
 sys-key_constraints-dep
 sys-schemas-dep
