@@ -2171,7 +2171,6 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	CreateUserMappingStmt *stmt = makeNode(CreateUserMappingStmt);
 	RoleSpec *user = makeNode(RoleSpec);
 	List *options = NIL;
-	char *str = NULL;
 
 	stmt->servername = servername;
 	stmt->if_not_exists = false;
@@ -2181,7 +2180,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	stmt->user = user;
 
 	/* We do not support login using user's self credentials */
-	if ((useself == NULL) || (strcmp(downcase_identifier(str, strlen(str), false, false), "false") != 0))
+	if ((useself == NULL) || (strlen(useself) != 5) || (strncmp(downcase_identifier(useself, 5, false, false), "false", 5) != 0))
 		elog(ERROR, "Only @useself = FALSE is supported");
 
 	/* Add the relevant options */
