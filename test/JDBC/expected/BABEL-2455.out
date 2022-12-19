@@ -320,14 +320,14 @@ insert into yourserver.master.dbo.t1 values (1);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'Remote object reference with 4-part object name' is not currently supported in Babelfish)~~
+~~ERROR (Message: Remote object reference with 4-part object name is not currently supported in Babelfish)~~
 
 
 select yourserver.master.dbo.f1(1);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'Remote object reference with 4-part object name' is not currently supported in Babelfish)~~
+~~ERROR (Message: Remote object reference with 4-part object name is not currently supported in Babelfish)~~
 
 
 -- cleanup
