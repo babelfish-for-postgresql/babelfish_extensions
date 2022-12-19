@@ -2158,7 +2158,10 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 Datum
 sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *useself = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(1));
+	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
+	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(4));
 
 	CreateUserMappingStmt *stmt = makeNode(CreateUserMappingStmt);
 	RoleSpec *user = makeNode(RoleSpec);
@@ -2173,13 +2176,12 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	stmt->user = user;
 
 	/* We do not support login using user's self credentials */
-	str = text_to_cstring(PG_GETARG_TEXT_P(1));
-	if (str == NULL || (strcmp(downcase_identifier(str, strlen(str), false, false), "false") != 0))
+	if ((useself == NULL) || (strcmp(downcase_identifier(str, strlen(str), false, false), "false") != 0))
 		elog(ERROR, "Only @useself = FALSE is supported");
 
 	/* Add the relevant options */
-	options = lappend(options, makeDefElem("username", (Node *) makeString(text_to_cstring(PG_GETARG_TEXT_P(3))), -1));
-	options = lappend(options, makeDefElem("password", (Node *) makeString(text_to_cstring(PG_GETARG_TEXT_P(4))), -1));
+	options = lappend(options, makeDefElem("username", (Node *) makeString(username), -1));
+	options = lappend(options, makeDefElem("password", (Node *) makeString(password), -1));
 
 	stmt->options = options;
 
