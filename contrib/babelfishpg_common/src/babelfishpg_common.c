@@ -161,9 +161,11 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_image_datatype = &is_tsql_image_datatype;
 		common_utility_plugin_var.is_tsql_binary_datatype = &is_tsql_binary_datatype;
 		common_utility_plugin_var.is_tsql_varbinary_datatype = &is_tsql_varbinary_datatype;
+		common_utility_plugin_var.is_tsql_timestamp_datatype = &is_tsql_timestamp_datatype;
 		common_utility_plugin_var.is_tsql_datetime2_datatype = &is_tsql_datetime2_datatype;
 		common_utility_plugin_var.is_tsql_smalldatetime_datatype = &is_tsql_smalldatetime_datatype;
 		common_utility_plugin_var.is_tsql_datetimeoffset_datatype = &is_tsql_datetimeoffset_datatype;
+		common_utility_plugin_var.is_tsql_decimal_datatype = &is_tsql_decimal_datatype;
 		common_utility_plugin_var.is_tsql_rowversion_or_timestamp_datatype = &is_tsql_rowversion_or_timestamp_datatype;
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;

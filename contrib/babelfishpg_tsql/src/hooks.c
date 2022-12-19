@@ -60,7 +60,6 @@
 #include "rolecmds.h"
 #include "session.h"
 #include "multidb.h"
-#include "datatypes.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -3024,8 +3023,8 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 	datatype_oid = ((Form_pg_type) GETSTRUCT(typ))->oid;
 
 	if ((datatype_oid == DATEOID ||
-		is_tsql_timestamp_datatype(datatype_oid) ||
-		is_tsql_smalldatetime_datatype(datatype_oid)) &&
+		(*common_utility_plugin_ptr->is_tsql_timestamp_datatype)(datatype_oid) ||
+		(*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(datatype_oid)) &&
 		scale[0] == -1)
 	{
 		ereport(ERROR,
@@ -3034,8 +3033,8 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 					 dataTypeName)));
 	}
 	else if ((datatype_oid == TIMEOID ||
-		is_tsql_datetime2_datatype(datatype_oid) ||
-		is_tsql_datetimeoffset_datatype(datatype_oid)) &&
+		(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(datatype_oid) ||
+		(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(datatype_oid)) &&
 		(scale[0] < 0 || scale[0] > 7))
 	{
 		ereport(ERROR,
@@ -3044,7 +3043,7 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 					 scale[0], dataTypeName)));
 	}
 	else if (datatype_oid == NUMERICOID ||
-		is_tsql_decimal_datatype(datatype_oid))
+		(*common_utility_plugin_ptr->is_tsql_decimal_datatype)(datatype_oid))
 	{
 		/*
 		 * Since numeric/decimal datatype stores precision in scale[0] and scale in scale[1]

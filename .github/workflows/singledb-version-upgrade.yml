@@ -1,5 +1,5 @@
 name: Major Version Upgrade Tests for singledb mode
-on: [push, pull_request]
+on:
 
 jobs:
   run-babelfish-mvu-tests-singledb:
@@ -7,8 +7,8 @@ jobs:
       env:
       OLD_INSTALL_DIR: psql_source
       NEW_INSTALL_DIR: psql_target
-      ENGINE_BRANCH_FROM: BABEL_1_2_STABLE__PG_13_6
-      EXTENSION_BRANCH_FROM: BABEL_1_2_STABLE
+      ENGINE_BRANCH_FROM: BABEL_2_3_STABLE__PG_14_6
+      EXTENSION_BRANCH_FROM: BABEL_2_3_STABLE
 
     runs-on: ubuntu-20.04
     steps:

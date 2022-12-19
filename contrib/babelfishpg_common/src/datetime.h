@@ -8,8 +8,6 @@
 #ifndef PLTSQL_DATETIME_H
 #define PLTSQL_DATETIME_H
 
-#include "postgres.h"
-
 #include "datatype/timestamp.h"
 
 /*	Round off to MAX_DATETIME_PRECISION decimal places. */

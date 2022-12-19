@@ -903,6 +903,6 @@ void init_and_check_common_utility(void)
 		if (!common_utility_plugin_ptr)
 			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("common utility plugin pointer is not initialised properly.")));
+				 errmsg("Failed to find common utility plugin.")));
 	}
 }
