@@ -61,8 +61,7 @@ SELECT
  , 0::sys.tinyint AS data_compression
  , 'NONE'::sys.nvarchar(60) AS data_compression_desc
 FROM sys.indexes AS i
-INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid"
-WHERE i.index_id <> 0;
+INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
 GRANT SELECT ON sys.partitions TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
