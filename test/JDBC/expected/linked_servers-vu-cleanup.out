@@ -16,7 +16,7 @@ GO
 SELECT * FROM sys.servers WHERE name = 'mssql_server'
 GO
 ~~START~~
-int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#int#!#int#!#bit#!#bit#!#int#!#bit#!#bit#!#bit#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#datetime#!#bit
+int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#int#!#int#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#datetime#!#bit
 ~~END~~
 
 
