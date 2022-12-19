@@ -41,14 +41,13 @@
 #include "utils/timestamp.h"
 #include "utils/numeric.h"
 #include "typecode.h"
+#include "varchar.h"
 
 int  TsqlUTF8LengthInUTF16(const void *vin, int len);
 void TsqlCheckUTF16Length_varchar(const char *s_data, int32 len, int32 maxlen, bool isExplicit);
 void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen);
 void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
-void *tsql_varchar_input(const char *s, size_t len, int32 atttypmod);
-void *tsql_bpchar_input(const char *s, size_t len, int32 atttypmod);
 static inline int varcharTruelen(VarChar *arg);
 
 #define DEFAULT_LCID 1033
