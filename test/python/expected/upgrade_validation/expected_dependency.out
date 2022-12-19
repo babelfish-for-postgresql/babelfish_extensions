@@ -984,6 +984,7 @@ View sys.fulltext_index_columns
 View sys.fulltext_languages
 View sys.fulltext_stoplists
 View sys.master_files
+View sys.partitions
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
 View sys.selective_xml_index_paths
