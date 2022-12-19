@@ -2168,7 +2168,7 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 	char *tempq = "CREATE OR REPLACE PROCEDURE %s.sp_addlinkedserver( IN \"@server\" sys.sysname,"
 						"IN \"@srvproduct\" sys.nvarchar(128) DEFAULT NULL,"
-						"IN \"@provider\" sys.nvarchar(128) DEFAULT NULL,"
+						"IN \"@provider\" sys.nvarchar(128) DEFAULT 'SQLNCLI',"
 						"IN \"@datasrc\" sys.nvarchar(4000) DEFAULT NULL,"
 						"IN \"@location\" sys.nvarchar(4000) DEFAULT NULL,"
 						"IN \"@provstr\" sys.nvarchar(4000) DEFAULT NULL,"

@@ -108,7 +108,7 @@ LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
                                                     IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
-                                                    IN "@provider" sys.nvarchar(128) DEFAULT NULL,
+                                                    IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
                                                     IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
                                                     IN "@location" sys.nvarchar(4000) DEFAULT NULL,
                                                     IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
@@ -148,7 +148,7 @@ SELECT
   CAST(0 as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,
   CAST(0 as sys.bit) AS is_remote_login_enabled,
-  CAST(0 as int) AS is_rpc_out_enabled,
+  CAST(0 as sys.bit) AS is_rpc_out_enabled,
   CAST(1 as sys.bit) AS is_data_access_enabled,
   CAST(0 as sys.bit) AS is_collation_compatible,
   CAST(1 as sys.bit) AS uses_remote_collation,

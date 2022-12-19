@@ -204,7 +204,7 @@ GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME)
 
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
                                                     IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
-                                                    IN "@provider" sys.nvarchar(128) DEFAULT NULL,
+                                                    IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
                                                     IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
                                                     IN "@location" sys.nvarchar(4000) DEFAULT NULL,
                                                     IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
