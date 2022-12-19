@@ -40,6 +40,7 @@
 
 #include "catalog.h"
 #include "multidb.h"
+#include "pltsql.h"
 #include "session.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
@@ -2112,6 +2113,8 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	CreateForeignServerStmt *stmt = makeNode(CreateForeignServerStmt);
 	List *options = NIL;
+
+	bool provider_warning = false, provstr_warning = false;
 	
 	if (strlen(srv_product) == 10 && (strncmp(srv_product, "SQL Server", 10) == 0))
 	{
@@ -2125,8 +2128,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 			((strlen(provider) == 8) && (strncmp(provider, "SQLOLEDB", 8) == 0)))
 		{
 			/* if provider is a valid T-SQL provider, we throw a warning indicating internally, we will be using tds_fdw */
-			ereport(WARNING,
-					errmsg("Using the TDS Foreign data wrapper (tds_fdw) as provider"));
+			provider_warning = true;
 		}
 		else if ((strlen(provider) != 7) || (strncmp(provider, "tds_fdw", 7) != 0))
 			ereport(ERROR,
@@ -2136,8 +2138,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 		if (provstr != NULL)
 		{
 			/* we ignore provider string in any case */
-			ereport(WARNING,
-					errmsg("Ignoring @provstr argument value"));
+			provstr_warning = true;
 		}
 	}
 
@@ -2156,6 +2157,27 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	stmt->options = options;
 
 	CreateForeignServer(stmt);
+
+	/* We throw warnings only if foreign server object creation succeeds */
+	if (provider_warning)
+	{
+		char *msg = "Warning: Using the TDS Foreign data wrapper (tds_fdw) as provider";
+
+		ereport(WARNING, errmsg("%s", msg));
+
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg, 0);
+	}
+
+	if (provstr_warning)
+	{
+		char *msg = "Warning: Ignoring @provstr argument value";
+
+		ereport(WARNING, errmsg("%s", msg));
+
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg, 0);
+	}
 
 	return (Datum) 0;
 }
