@@ -2687,7 +2687,7 @@ rewriteBatchLevelStatement(
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 			}
 		}
-		else if (ctx->create_or_alter_function()->func_body_returns_table()) /* CREATE FUNCTION ... RETURNS TABLE RETURN SELECT ... */
+		else if (ctx->create_or_alter_function()->func_body_returns_table()) /* CREATE FUNCTION ... RETURNS TABLE(COLUMN_DEFINITION) AS BEGIN ... END */
 		{
 			auto cctx = ctx->create_or_alter_function()->func_body_returns_table();
 			if (cctx->WITH())
