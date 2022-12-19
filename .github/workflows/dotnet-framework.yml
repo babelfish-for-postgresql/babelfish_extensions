@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   dotnet:
     name: Dotnet
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Clone, build, and run tests for Postgres engine
