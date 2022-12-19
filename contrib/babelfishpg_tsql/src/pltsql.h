@@ -57,6 +57,8 @@
 
 #define TSQL_TXN_NAME_LIMIT 64 /* Transaction name limit */
 
+/* Max number of Args allowed for Prepared stmts. */
+#define PREPARE_STMT_MAX_ARGS 2100
 
 /*
  * Compiler's namespace item types
@@ -1160,7 +1162,7 @@ typedef struct PLtsql_function
 	char		fn_prokind;
 
 	int			fn_nargs;
-	int			fn_argvarnos[FUNC_MAX_ARGS];
+	int			fn_argvarnos[PREPARE_STMT_MAX_ARGS];
 	int			out_param_varno;
 	int			found_varno;
 	int			fetch_status_varno;
@@ -1511,6 +1513,18 @@ typedef struct PLtsql_protocol_plugin
 {
 	/* True if Protocol being used by client is TDS. */
 	bool is_tds_client;
+
+	/*
+	 * List of GUCs used/set by protocol plugin.  We can always use this pointer
+	 * to read the GUC value directly.  We've declared volatile so that the
+	 * compiler always reads the value from the memory location instead of
+	 * the register.
+	 * We should be careful while setting data using this pointer - as the value
+	 * will not be verified and changes can't be rolled back automatically in
+	 * case of an error.
+	 */
+	volatile bool *pltsql_nocount_addr;
+
 	/* 
 	 * stmt_need_logging checks whether stmt needs to be logged at babelfishpg_tsql parser
 	 * and logs the statement at the end of statement execution on TDS
@@ -1600,7 +1614,7 @@ typedef struct PLtsql_protocol_plugin
 
 	char* (*pltsql_get_login_default_db) (char *login_name);
 
-	error_map_details_t * (*get_mapped_error_list) (void);
+	void* (*get_mapped_error_list) (void);
 
 	int* (*get_mapped_tsql_error_code_list) (void);
 
@@ -1694,8 +1708,6 @@ extern plansource_revalidate_hook_type prev_plansource_revalidate_hook;
 extern pltsql_nextval_hook_type prev_pltsql_nextval_hook;
 extern pltsql_resetcache_hook_type prev_pltsql_resetcache_hook;
 
-extern char *pltsql_default_locale;
-
 extern int  pltsql_variable_conflict;
 
 /* extra compile-time checks */
@@ -1733,9 +1745,6 @@ extern bool last_error_mapping_failed;
 
 extern int fetch_status_var;
 extern int pltsql_proc_return_code;
-
-extern char* pltsql_server_collation_name;
-extern char* pltsql_default_locale;
 
 extern char* pltsql_version;
 
@@ -1860,9 +1869,10 @@ extern Oid pltsql_exec_get_datum_type(PLtsql_execstate *estate,
 extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 								 PLtsql_datum *datum,
 								 Oid *typeId, int32 *typMod, Oid *collation);
-								 
-extern int get_insert_bulk_rows_per_batch();
-extern int get_insert_bulk_kilobytes_per_batch();
+
+extern int get_insert_bulk_rows_per_batch(void);
+extern int get_insert_bulk_kilobytes_per_batch(void);
+
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -1888,7 +1898,7 @@ extern const char *pltsql_getdiag_kindname(PLtsql_getdiag_kind kind);
 extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
-extern int32 coalesce_typmod_hook_impl(CoalesceExpr *cexpr);
+extern int32 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr);
 
 /*
  * Scanner functions in pl_scanner.c
@@ -2032,6 +2042,7 @@ bool pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p,
 void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char** probin_str_p);
 void pltsql_function_probin_reader(ParseState *pstate,
 						List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
+extern void probin_json_reader(text* probin, int** typmod_arr_p, int typmod_arr_len);
 
 /*
  * This variable is set to true, if setval should behave in T-SQL way, i.e.,

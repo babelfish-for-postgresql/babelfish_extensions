@@ -1,0 +1,73 @@
+-- Helper function to retrieve the value of NOCOUNT
+CREATE FUNCTION dbo.babel_nocount_getval()
+	RETURNS VARCHAR(3)
+AS
+BEGIN
+	DECLARE @NOCOUNT VARCHAR(3) = 'OFF';
+	IF ( (512 & @@OPTIONS) = 512 ) SET @NOCOUNT = 'ON';
+	RETURN @NOCOUNT;
+END
+GO
+
+-- table to check the rowcount
+CREATE TABLE babel_nocount_t1(a int);
+INSERT INTO babel_nocount_t1 VALUES(0)
+GO
+
+-- Scenario: Check the default value
+SELECT dbo.babel_nocount_getval()
+GO
+
+-- Scenario: Check number of rows affected with nocount=on/off
+SET NOCOUNT ON
+GO
+
+-- Should not show affected row count
+INSERT INTO babel_nocount_t1 SELECT * FROM babel_nocount_t1
+GO
+
+SET NOCOUNT OFF
+GO
+
+-- Should show rows affected
+INSERT INTO babel_nocount_t1 SELECT * FROM babel_nocount_t1
+GO
+
+-- Scenario: Check transactional behaviour, the value should be rolled back in case
+-- of an error/rollback
+SELECT dbo.babel_nocount_getval()
+GO
+
+BEGIN TRAN t1
+SET NOCOUNT ON
+ROLLBACK TRAN t1
+GO
+
+-- Scenario: Check procedural context
+CREATE PROCEDURE babel_nocount_setval
+AS
+	INSERT INTO babel_nocount_t1 SELECT * FROM babel_nocount_t1
+	SET NOCOUNT ON
+	INSERT INTO babel_nocount_t1 SELECT * FROM babel_nocount_t1
+GO
+
+SET NOCOUNT OFF
+GO
+
+-- procedure should output rowcount only for the first insert
+EXEC babel_nocount_setval
+GO
+
+-- previous value should be restored after procedure execution and print the
+-- rowcount for the next insert
+SELECT dbo.babel_nocount_getval()
+INSERT INTO babel_nocount_t1 SELECT * FROM babel_nocount_t1
+GO
+
+DROP FUNCTION dbo.babel_nocount_getval
+DROP TABLE babel_nocount_t1
+DROP PROCEDURE babel_nocount_setval
+GO
+
+
+

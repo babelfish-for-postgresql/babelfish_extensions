@@ -1,0 +1,9 @@
+DROP VIEW sys_system_objects_vu_prepare_v1
+GO
+
+DROP FUNCTION sys_system_objects_vu_prepare_f2
+DROP FUNCTION sys_system_objects_vu_prepare_f1
+GO
+
+DROP PROCEDURE sys_system_objects_vu_prepare_p1
+GO

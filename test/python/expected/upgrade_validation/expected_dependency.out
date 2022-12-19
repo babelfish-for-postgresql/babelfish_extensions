@@ -95,11 +95,8 @@ Function sys.abs(sys.fixeddecimal)
 Function sys.applock_mode(character varying,character varying,character varying)
 Function sys.applock_test(character varying,character varying,character varying,character varying)
 Function sys.assemblyproperty(character varying,character varying)
-Function sys.babelfish_cast_floor_bigint(anyelement)
 Function sys.babelfish_cast_floor_bigint(text)
-Function sys.babelfish_cast_floor_int(anyelement)
 Function sys.babelfish_cast_floor_int(text)
-Function sys.babelfish_cast_floor_smallint(anyelement)
 Function sys.babelfish_cast_floor_smallint(text)
 Function sys.babelfish_collation_list()
 Function sys.babelfish_concat_wrapper(text,text)
@@ -252,7 +249,6 @@ Function sys.bit_unsupported_sum(sys."bit",sys."bit")
 Function sys.bitxor(bit,bit)
 Function sys.bpchar2datetime2(sys.bpchar)
 Function sys.bpchar2float4(sys.bpchar)
-Function sys.bpchar2float8(sys.bpchar)
 Function sys.bpchar2int2(sys.bpchar)
 Function sys.bpchar2int4(sys.bpchar)
 Function sys.bpchar2int8(sys.bpchar)
@@ -395,7 +391,6 @@ Function sys.fixeddecimalint4(sys.fixeddecimal)
 Function sys.fixeddecimalint8(sys.fixeddecimal)
 Function sys.fixeddecimallarger(sys.fixeddecimal,sys.fixeddecimal)
 Function sys.fixeddecimalsmaller(sys.fixeddecimal,sys.fixeddecimal)
-Function sys.fixeddecimaltod(sys.fixeddecimal)
 Function sys.fixeddecimaltof(sys.fixeddecimal)
 Function sys.float4binary(real,integer,boolean)
 Function sys.float4varbinary(real,integer,boolean)
@@ -424,7 +419,6 @@ Function sys.ftrunci2(real)
 Function sys.ftrunci4(real)
 Function sys.ftrunci8(real)
 Function sys.fulltextserviceproperty(text)
-Function sys.get_babel_server_collation_oid()
 Function sys.get_current_full_xact_id()
 Function sys.get_host_os()
 Function sys.getdate()
@@ -692,7 +686,6 @@ Function sys.varchar2datetime(character varying)
 Function sys.varchar2datetime2(character varying)
 Function sys.varchar2datetime2(sys."varchar")
 Function sys.varchar2float4(sys."varchar")
-Function sys.varchar2float8(sys."varchar")
 Function sys.varchar2int2(sys."varchar")
 Function sys.varchar2int4(sys."varchar")
 Function sys.varchar2int8(sys."varchar")
@@ -949,19 +942,15 @@ Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
 Type sys."bigint"
-Type sys."float"
 Type sys."int"
 Type sys."real"
 Type sys.bbf_varbinary
 Type sys.cursor
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
-View information_schema_tsql.columns
 View information_schema_tsql.constraint_column_usage
 View information_schema_tsql.domains
 View information_schema_tsql.routines
-View information_schema_tsql.table_constraints
-View information_schema_tsql.tables
 View information_schema_tsql.views
 View sys.all_columns
 View sys.all_sql_modules_internal
@@ -1004,8 +993,6 @@ View sys.spt_tablecollations_view
 View sys.stats
 View sys.synonyms
 View sys.syscharsets
-View sys.sysindexes
 View sys.syslanguages
-View sys.system_objects
 View sys.xml_indexes
 View sys.xml_schema_collections

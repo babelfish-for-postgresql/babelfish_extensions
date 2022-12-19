@@ -84,6 +84,8 @@ extern void reset_sp_cursor_params();
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
 int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
+Oid get_role_oid(const char *rolename, bool missing_ok);
+bool is_member_of_role(Oid member, Oid role);
 
 extern PLtsql_function 	*find_cached_batch(int handle);
 
@@ -692,7 +694,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
 	{
 		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
-			&& (stmt->schema_name == '\0' || strncmp(stmt->schema_name, "dbo", strlen(stmt->schema_name)) == 0))
+			&& ((stmt->schema_name == NULL || stmt->schema_name[0] == (char)'\0') || strcmp(stmt->schema_name, "dbo") == 0))
 			{
 				new_search_path = psprintf("%s, master_dbo", old_search_path);
 
@@ -704,7 +706,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				need_path_reset = true;
 			}
 	}
-	if (stmt->schema_name != '\0')
+	if (stmt->schema_name != NULL && stmt->schema_name[0] != (char)'\0')
 	 	estate->schema_name = stmt->schema_name;
 	else
 		estate->schema_name = NULL;
@@ -1325,8 +1327,13 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	SimpleEcontextStackEntry *topEntry;
 	PLtsql_row * row = NULL;
 	FmgrInfo		flinfo;
-	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 	InlineCodeBlock		*codeblock = makeNode(InlineCodeBlock);
+
+	/*
+	 * In case of SP_PREPARE via RPC numargs will be 0 so we only
+	 * need to allocate 2 indexes of memory.
+	 */
+	FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo((args) ? args->numargs + 2 : 2));
 
 	/* 
 	 * 1. Build code block to store SQL query 
@@ -1337,7 +1344,6 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	/*
 	 * 2. Build fcinfo to pack all function info
 	 */
-	MemSet(fcinfo, 0, SizeForFunctionCallInfo(FUNC_MAX_ARGS));
 	MemSet(&flinfo, 0, sizeof(flinfo));
 	fcinfo->flinfo = &flinfo;
 	flinfo.fn_oid = InvalidOid;
@@ -1375,10 +1381,10 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 			 */
 
 			/* Safety check */
-			if (fcinfo->nargs > FUNC_MAX_ARGS)
+			if (fcinfo->nargs > list_length(params) + 2)
 				ereport(ERROR, (errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 						errmsg("cannot pass more than %d arguments to a procedure",
-							   FUNC_MAX_ARGS)));
+							   list_length(params))));
 
 			read_param_val(estate, params, args, fcinfo, row);
 		}
@@ -1535,7 +1541,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 	Oid restype;
 	int32 restypmod;
 	char *querystr;
-	int ret;
+	int ret = 0;
 
 	switch(stmt->sp_type_code)
 	{
@@ -2243,11 +2249,11 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	params = ((CreateFunctionStmt *) (((RawStmt *) linitial(parsetree))->stmt))->parameters;
 
 	/* Throw error if the provided number of arguments are more than the max allowed limit. */
-	if (list_length(params) > FUNC_MAX_ARGS)
+	if (list_length(params) > PREPARE_STMT_MAX_ARGS)
 			ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						errmsg("Too many arguments were provided: %d. The maximum allowed limit is %d",
-							list_length(params), FUNC_MAX_ARGS)));
+							list_length(params), PREPARE_STMT_MAX_ARGS)));
 
 	args->numargs = list_length(params);
 	args->argtypes = (Oid *) palloc(sizeof(Oid) * args->numargs);
@@ -2546,15 +2552,18 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 static int
 exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
+	char message[128];
+	char * old_db_name;
+	int16 old_db_id;
+	int16 new_db_id;
+	PLExecStateCallStack *top_es_entry;
 	if (pltsql_explain_only)
 	{
 		return exec_stmt_usedb_explain(estate, stmt, false  /* shouldRestoreDb */);
 	}
-	char * old_db_name = get_cur_db_name();
-	char message[128];
-	int16 old_db_id = get_cur_db_id();
-	int16 new_db_id = get_db_id(stmt->db_name);
-        PLExecStateCallStack *top_es_entry;
+	old_db_name = get_cur_db_name();
+	old_db_id = get_cur_db_id();
+	new_db_id = get_db_id(stmt->db_name);
 
 	if (!DbidIsValid(new_db_id))
 		ereport(ERROR,
@@ -2674,7 +2683,6 @@ static int
 exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 {
 	char 	*dbname = get_cur_db_name();
-	char	*dbowner = get_owner_of_db(dbname);
 	char	*login = GetUserNameFromId(GetSessionUserId(), false);	
 	bool	login_is_db_owner;
 	Oid	datdba;
@@ -2788,7 +2796,7 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 	cstmt->attlist = NIL;
 	cstmt->cur_batch_num = 1;
 
-	if (!stmt->db_name || stmt->db_name[0] == '\0')
+	if (!stmt->db_name || stmt->db_name[0] == (char)'\0')
 		stmt->db_name = get_cur_db_name();
 	if (stmt->schema_name && stmt->db_name)
 	{

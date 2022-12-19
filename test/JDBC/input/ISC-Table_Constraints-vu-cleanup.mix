@@ -1,0 +1,44 @@
+-- tsql
+-- Cleanup
+use db1;
+go
+
+drop table db1_tbl_fk;
+go
+
+drop table db1_tbl_pk;
+go
+
+use master;
+go
+
+drop database db1;
+go
+
+drop table tbl_fk;
+go
+
+drop table tbl_pk;
+go
+
+drop table sch1.tbl_fk;
+go
+
+drop table sch1.tbl_pk;
+go
+
+drop schema sch1;
+go
+
+drop login user_tbl_const;
+go
+
+DROP VIEW isc_tbl_constraints_v1
+GO
+
+DROP FUNCTION isc_tbl_constraints_f2
+DROP FUNCTION isc_tbl_constraints_f1
+GO
+
+DROP PROCEDURE isc_tbl_constraints_p1
+GO
