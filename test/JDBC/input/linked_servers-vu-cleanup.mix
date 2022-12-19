@@ -9,7 +9,7 @@ GO
 EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'droplogins'
 GO
 
-SELECT * FROM sys.servers
+SELECT * FROM sys.servers WHERE name = 'mssql_server'
 GO
 
 SELECT * FROM sys.linked_logins
