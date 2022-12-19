@@ -8,7 +8,7 @@ on:
 jobs:
   isolation-tests:
     name: Isolation-Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Clone, build, and run tests for Postgres engine

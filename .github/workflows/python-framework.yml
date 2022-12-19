@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   python:
     name: Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Clone, build, and run tests for Postgres engine
@@ -79,7 +79,7 @@ jobs:
           curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
-          pip3 install pyodbc pymssql pytest pytest-xdist
+          pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
       - name: Run Python tests
         run: | 
           cd test/python
@@ -93,4 +93,5 @@ jobs:
             fileGenerator_databaseName=master \
             fileGenerator_user=python_user \
             fileGenerator_password=12345678 \
+            LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/odbc/ \
             pytest -s --tb=long -q .
