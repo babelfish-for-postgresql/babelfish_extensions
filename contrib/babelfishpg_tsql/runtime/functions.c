@@ -1338,7 +1338,7 @@ Datum volatility(PG_FUNCTION_ARGS)
 	{
 		if(*temp == '.')
 			len++;
-		*temp++;
+		temp++;
 	}
 	token = strtok(funcname,".");
 	
@@ -1459,7 +1459,7 @@ Datum volatility(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		elog(ERROR, "Enter a valid Request type", funcname);
+		elog(ERROR, "Enter a valid Request type");
 	}
 	vol_name = (VarChar *) cstring_to_text(s);
 	PG_RETURN_VARCHAR_P(vol_name);
