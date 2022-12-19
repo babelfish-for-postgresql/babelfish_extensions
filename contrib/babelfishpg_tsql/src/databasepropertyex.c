@@ -16,13 +16,9 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 #include "catalog.h"
-#include "datatypes.h"
 #include "catalog.h"
 
 PG_FUNCTION_INFO_V1(databasepropertyex);
-
-extern bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
-extern bytea *convertIntToSQLVariantByteA(int ret);
 
 Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	VarChar *vch = NULL;
@@ -38,7 +34,7 @@ Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	if (strcasecmp(property, "Collation") == 0)
 	{
 		const char *ret = pstrdup(pltsql_server_collation_name);
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "ComparisonStyle") == 0)
 	{
@@ -48,7 +44,7 @@ Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "Edition") == 0)
 	{
 		const char *ret = "Standard";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	//TODO[BABEL-247]
 	else if (strcasecmp(property, "IsAnsiNullDefault") == 0)
@@ -197,12 +193,12 @@ Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "Status") == 0)
 	{
 		const char *ret = "ONLINE";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "Updateability") == 0)
 	{
 		const char *ret = "READ_WRITE";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "UserAccess") == 0)
 	{
@@ -211,17 +207,18 @@ Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "Version") == 0)
 	{
 		const char *ret = PG_VERSION;
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else
 	{
 		/* no property name matches, return NULL */
 		PG_RETURN_NULL();
 	}
+
 	if (vch != NULL) {
-		PG_RETURN_BYTEA_P(convertVarcharToSQLVariantByteA(vch, PG_GET_COLLATION()));
+		PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertVarcharToSQLVariantByteA)(vch, PG_GET_COLLATION()));
 	} else {
-		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(intVal));
+		PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertIntToSQLVariantByteA)(intVal));
 	}
 }
 

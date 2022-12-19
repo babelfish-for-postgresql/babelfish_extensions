@@ -34,6 +34,7 @@
 
 #include "dynavec.h"
 #include "dynastack.h"
+#include "../../contrib/babelfishpg_common/src/babelfishpg_common.h"
 
 /**********************************************************************
  * Definitions
@@ -1715,6 +1716,7 @@ extern MemoryContext pltsql_compile_tmp_cxt;
 extern PLtsql_plugin **pltsql_plugin_ptr;
 extern PLtsql_instr_plugin **pltsql_instr_plugin_ptr;
 extern PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr;
+extern common_utility_plugin *common_utility_plugin_ptr;
 
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
@@ -1959,6 +1961,7 @@ extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
+extern void init_and_check_common_utility(void);
 
 typedef struct
 {
@@ -1980,24 +1983,6 @@ extern bool pltsql_trace_tree;
 extern bool pltsql_trace_exec_codes;
 extern bool pltsql_trace_exec_counts;
 extern bool pltsql_trace_exec_time;
-
-/* 
- * Sql variant functions for tdstypeio.c
- */
-extern void
-TdsGetVariantBaseType(int pgBaseType, int *variantBaseType,
-                                  bool *isBaseNum, bool *isBaseChar,
-                                  bool *isBaseDec, bool *isBaseBin,
-                                  bool *isBaseDate, int *variantHeaderLen);
-
-extern void
-TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen, int *dataLen, int *variantHeaderLen);
-extern void
-TdsSetMetaData(bytea *result, int pgBaseType, int scale, int precision, int maxLen);
-extern int
-TdsPGbaseType(bytea *vlena);
-extern void
-TdsGetMetaData(bytea *result, int pgBaseType, int *scale, int *precision, int *maxLen);
 
 /* 
  * Functions in cursor.c
