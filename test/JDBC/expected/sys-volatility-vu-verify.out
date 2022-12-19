@@ -1,0 +1,63 @@
+select volatility('f1',0,0);
+select volatility('f1',1,1);
+select volatility('f1',0,0);
+select volatility('f1',2,1);
+select volatility('f1',0,0);
+go
+~~START~~
+varchar
+volatile
+~~END~~
+
+~~START~~
+varchar
+stable
+~~END~~
+
+~~START~~
+varchar
+stable
+~~END~~
+
+~~START~~
+varchar
+immutable
+~~END~~
+
+~~START~~
+varchar
+immutable
+~~END~~
+
+
+select volatility('myschema.f1',0,0);
+select volatility('myschema.f1',1,1);
+select volatility('myschema.f1',0,0);
+select volatility('myschema.f1',2,1);
+select volatility('myschema.f1',0,0);
+go
+~~START~~
+varchar
+volatile
+~~END~~
+
+~~START~~
+varchar
+stable
+~~END~~
+
+~~START~~
+varchar
+stable
+~~END~~
+
+~~START~~
+varchar
+immutable
+~~END~~
+
+~~START~~
+varchar
+immutable
+~~END~~
+

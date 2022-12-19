@@ -11,6 +11,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_proc.h"
 #include "commands/dbcommands.h"
 #include "common/md5.h"
 #include "miscadmin.h"
@@ -21,6 +22,7 @@
 #include "utils/elog.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -76,6 +78,7 @@ PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
+PG_FUNCTION_INFO_V1(volatility);
 
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
@@ -1186,4 +1189,167 @@ babelfish_integrity_checker(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BOOL(true);
+}
+
+/*
+ * Used to get or set Volatility(Volatile, Stable, Immutable) of the function
+ * Returns the Volatility of the function
+ */
+Datum volatility(PG_FUNCTION_ARGS)
+{	
+	HeapTuple tp;
+	Oid	result;
+	char *s;
+	VarChar *vol_name;
+	int volatility;
+	Form_pg_proc pg_proc;
+	FuncCandidateList candidates = NULL;
+	char *physical_schema = NULL;
+	char *token;
+	char *db_name;
+	int len = 0;
+	char *funcname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+	/*
+		reqtype = 0 specifies to get the volatility
+		reqtype = 1 specifies to set the volatility
+	*/
+	int reqtype = PG_ARGISNULL(2) ? 0 : DatumGetUInt32(PG_GETARG_UINT32(2));
+	char *temp = funcname;
+	char *query = NULL;
+	int rc = -1;
+	
+
+	/* 
+	 * Resolve the three part name
+	 * Get physical schema name from logical schema name
+	 */
+	while(*temp)
+	{
+		if(*temp == '.')
+			len++;
+		*temp++;
+	}
+	token = strtok(funcname,".");
+	
+	switch(len)
+	{
+		case 0:
+			break;
+		case 1:
+			db_name = get_cur_db_name();
+			physical_schema = get_physical_schema_name(db_name,token);
+			token = strtok(NULL, ".");
+			funcname = token;
+			break;
+		case 2:
+			db_name = token;
+			token = strtok(NULL, ".");
+			physical_schema = get_physical_schema_name(db_name,token);
+			token = strtok(NULL, ".");
+			funcname = token;
+			break;
+		default:
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("%s function not found", funcname)));
+	}
+
+	/* get func id from function name*/
+	if(physical_schema == NULL)
+		candidates = FuncnameGetCandidates(list_make1(makeString(funcname)), -1, NIL, false, false, false, true);
+	else
+	{
+		candidates = FuncnameGetCandidates(list_make2(makeString(physical_schema),makeString(funcname)), -1, NIL, false, false, false, true);
+		funcname = psprintf("%s.%s", physical_schema, funcname);
+	}
+
+	if(candidates == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("%s function not found", funcname)));
+
+	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(candidates->oid));
+	if (!HeapTupleIsValid(tp))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("%s function not found", funcname)));
+
+	pg_proc = ((Form_pg_proc) GETSTRUCT(tp));
+	if(pg_proc->prokind != PROKIND_FUNCTION)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("%s is not a function", funcname)));
+
+	result = pg_proc->provolatile;
+	ReleaseSysCache(tp);
+
+	if(reqtype == 0)
+	{	
+		switch(result)
+		{
+			case PROVOLATILE_VOLATILE:
+				s = "volatile";
+				break;
+			case PROVOLATILE_STABLE:
+				s = "stable";
+				break;
+			case PROVOLATILE_IMMUTABLE:
+				s = "immutable";
+				break;
+		}
+	}
+	else if(reqtype == 1)
+	{
+		volatility = PG_ARGISNULL(1) ? 0 : DatumGetUInt32(PG_GETARG_UINT32(1));
+		/*
+			volatility = 0 specify that volatility is VOLATILE
+			volatility = 1 specify that volatility is STABLE
+			volatility = 2 specify that volatility is IMMUTABLE
+		*/
+		switch(volatility)
+		{
+			case 0:
+				result = PROVOLATILE_VOLATILE;
+				s = "volatile";
+				break;
+			case 1:
+				result = PROVOLATILE_STABLE;
+				s = "stable";
+				break;
+			case 2:
+				result = PROVOLATILE_IMMUTABLE;
+				s = "immutable";
+				break;
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Enter a valid volatility")));
+		}
+		
+		query = psprintf("ALTER FUNCTION %s %s;", funcname, s);
+
+		PG_TRY();
+		{
+			if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+				elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+			if ((rc = SPI_execute(query, false, 1)) < 0)
+				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+		}
+		PG_CATCH();
+		{
+			SPI_finish();
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+	}
+	else
+	{
+		elog(ERROR, "Enter a valid Request type", funcname);
+	}
+	vol_name = (VarChar *) cstring_to_text(s);
+	PG_RETURN_VARCHAR_P(vol_name);
 }

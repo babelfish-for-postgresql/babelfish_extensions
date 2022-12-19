@@ -3297,3 +3297,25 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
+
+--function to get and set the volatility of a function
+CREATE OR REPLACE FUNCTION sys.volatility("@funcname" sys.varchar(128), IN "@volatility" INTEGER, IN "@reqtype" INTEGER)
+RETURNS sys.varchar(128)
+AS 'babelfishpg_tsql', 'volatility' LANGUAGE C;
+GRANT EXECUTE ON FUNCTION sys.volatility(IN sys.varchar(128), IN INTEGER, IN INTEGER) TO PUBLIC;
+
+/*
+CREATE OR REPLACE FUNCTION sys.sp_volatility(IN "@func_name" varchar(128), IN "@volatility" INTEGER, IN "@reqtype" INTEGER)
+RETURNS VARCHAR(128)
+AS $$
+DECLARE
+  funcid int;
+  result VARCHAR(128);
+BEGIN
+  funcid := sys.object_id("@func_name");
+  result := sys.sp_volatility_funcid(funcid, "@volatility", "@reqtype");
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.sp_volatility(IN varchar(128), IN INTEGER, IN INTEGER) TO PUBLIC;
+*/
