@@ -45,7 +45,6 @@ PG_FUNCTION_INFO_V1(datetime_mi_datetime);
 
 void CheckDatetimeRange(const Timestamp time);
 void CheckDatetimePrecision(fsec_t fsec);
-Datum datetime_in_str(char *str);
 
 Datum
 datetime_in_str(char *str)

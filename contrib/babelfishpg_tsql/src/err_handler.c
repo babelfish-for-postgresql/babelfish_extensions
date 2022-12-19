@@ -1,7 +1,6 @@
 #include "postgres.h"
 
 #include "common/string.h"
-#include "datatypes.h"
 #include "err_handler.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -585,7 +584,7 @@ pltsql_error_message(PG_FUNCTION_ARGS)
 
 	initStringInfo(&temp);
 	appendStringInfoString(&temp, estate->cur_error->error->message);
-	message = tsql_varchar_input(temp.data, temp.len, -1);
+	message = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
 
 	pfree(temp.data);
 
@@ -631,7 +630,7 @@ pltsql_error_procedure(PG_FUNCTION_ARGS)
 
 	initStringInfo(&temp);
 	appendStringInfoString(&temp, estate->cur_error->procedure);
-	procedure = tsql_varchar_input(temp.data, temp.len, -1);
+	procedure = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
 
 	pfree(temp.data);
 

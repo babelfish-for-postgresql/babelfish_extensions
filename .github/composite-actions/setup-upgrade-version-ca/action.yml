@@ -39,8 +39,8 @@ runs:
           upgrade_version_extb=".\""${upgrade_version}"\".extension_branch"
           extension_branch=$(yq $upgrade_version_extb ${{ github.workspace }}/.github/template/version-branch-template.yml)
           is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
-          pg_old_dir=$(echo postgres$(awk -F. '{print $1}' <<< $previous_installed_version))
-          pg_new_dir=$(echo postgres$(awk -F. '{print $1}' <<< $upgrade_version))
+          pg_old_dir=$(echo psql$(awk -F. '{print $1}' <<< $previous_installed_version))
+          pg_new_dir=$(echo psql$(awk -F. '{print $1}' <<< $upgrade_version))
           
           upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}][$i].\"upgrade-type\"" 
           upgrade_type=$(yq $upgrade_type_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)

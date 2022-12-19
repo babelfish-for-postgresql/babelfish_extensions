@@ -52,9 +52,6 @@ PG_FUNCTION_INFO_V1(sqlvariantout);
 PG_FUNCTION_INFO_V1(sqlvariantrecv);
 PG_FUNCTION_INFO_V1(sqlvariantsend);
 
-bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
-bytea *convertIntToSQLVariantByteA(int ret);
-
 /* extract coll related info*/
 extern HTAB *ht_oid2collid;
 
@@ -1779,10 +1776,7 @@ datalength_sqlvariant(PG_FUNCTION_ARGS)
  * Retrieve PGbaseType code, dataLen, variable header length
  * for each base datatype on sql variant
  */
-extern void
-TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen,
-					int *dataLen, int *variantHeaderLen);
-extern void
+void
 TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen,
 					int *dataLen, int *variantHeaderLen)
 {
@@ -1987,9 +1981,8 @@ TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen,
 /*
  * set metadata on sqlvariant header for variable length datatypes
  */
-void TdsSetMetaData(bytea *result, int pgBaseType, int scale,
-						int precision, int maxLen);
-void TdsSetMetaData(bytea *result, int pgBaseType, int scale,
+void
+TdsSetMetaData(bytea *result, int pgBaseType, int scale,
 						int precision, int maxLen)
 {
 	if (pgBaseType == TIME_T || pgBaseType == DATETIME2_T ||
@@ -2029,8 +2022,6 @@ void TdsSetMetaData(bytea *result, int pgBaseType, int scale,
 }
 
 int
-TdsPGbaseType(bytea *vlena);
-int
 TdsPGbaseType(bytea *vlena)
 {
     /*
@@ -2040,9 +2031,6 @@ TdsPGbaseType(bytea *vlena)
     return SV_GET_TYPCODE_PTR(vlena);
 }
 
-void
-TdsGetMetaData(bytea *result, int pgBaseType, int *scale,
-                                                int *precision, int *maxLen);
 void
 TdsGetMetaData(bytea *result, int pgBaseType, int *scale,
                                                 int *precision, int *maxLen)
@@ -2068,11 +2056,6 @@ TdsGetMetaData(bytea *result, int pgBaseType, int *scale,
     }
 }
 
-void
-TdsGetVariantBaseType(int pgBaseType, int *variantBaseType,
-                         bool *isBaseNum, bool *isBaseChar,
-                         bool *isBaseDec, bool *isBaseBin,
-                         bool *isBaseDate, int *variantHeaderLen);
 void
 TdsGetVariantBaseType(int pgBaseType, int *variantBaseType,
                          bool *isBaseNum, bool *isBaseChar,

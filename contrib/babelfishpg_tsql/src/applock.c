@@ -18,8 +18,6 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/timeout.h"
-#include "datatypes.h"
-
 
 PG_FUNCTION_INFO_V1(sp_getapplock_function);
 PG_FUNCTION_INFO_V1(sp_releaseapplock_function);
@@ -803,7 +801,7 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 
 	/* If we don't own the lock, just return NoLock */
 	if ((key = AppLockSearchKeyLocal(resource)) < 0)
-		PG_RETURN_VARCHAR_P(tsql_varchar_input(AppLockModeStrings[APPLOCKMODE_NOLOCK], 
+		PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)(AppLockModeStrings[APPLOCKMODE_NOLOCK], 
 												strlen(AppLockModeStrings[APPLOCKMODE_NOLOCK]), 
 												-1));
 
@@ -828,7 +826,7 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 	else
 		ret_mode = high_mode;
 
-	PG_RETURN_VARCHAR_P(tsql_varchar_input(AppLockModeStrings[ret_mode], 
+	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)(AppLockModeStrings[ret_mode], 
 												strlen(AppLockModeStrings[ret_mode]), 
 												-1));
 }

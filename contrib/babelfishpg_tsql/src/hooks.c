@@ -60,14 +60,12 @@
 #include "rolecmds.h"
 #include "session.h"
 #include "multidb.h"
-#include "datatypes.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
-extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
  * 			Catalog Hooks
@@ -239,7 +237,7 @@ InstallExtendedHooks(void)
 	logicalrep_modify_slot_hook = logicalrep_modify_slot;
 
 	prev_is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype_hook;
-	is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype;
+	is_tsql_rowversion_or_timestamp_datatype_hook = common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype;
 
 	prev_ExecutorStart = ExecutorStart_hook;
 	ExecutorStart_hook = pltsql_ExecutorStart;
@@ -1648,7 +1646,7 @@ logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot)
 		 * If it is rowversion/timestamp column, then re-evaluate the column default
 		 * and replace the slot with this new value.
 		 */
-		if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+		if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
 		{
 			Expr *defexpr;
 			ExprState *def;
@@ -3025,8 +3023,8 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 	datatype_oid = ((Form_pg_type) GETSTRUCT(typ))->oid;
 
 	if ((datatype_oid == DATEOID ||
-		is_tsql_timestamp_datatype(datatype_oid) ||
-		is_tsql_smalldatetime_datatype(datatype_oid)) &&
+		(*common_utility_plugin_ptr->is_tsql_timestamp_datatype)(datatype_oid) ||
+		(*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(datatype_oid)) &&
 		scale[0] == -1)
 	{
 		ereport(ERROR,
@@ -3035,8 +3033,8 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 					 dataTypeName)));
 	}
 	else if ((datatype_oid == TIMEOID ||
-		is_tsql_datetime2_datatype(datatype_oid) ||
-		is_tsql_datetimeoffset_datatype(datatype_oid)) &&
+		(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(datatype_oid) ||
+		(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(datatype_oid)) &&
 		(scale[0] < 0 || scale[0] > 7))
 	{
 		ereport(ERROR,
@@ -3045,7 +3043,7 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 					 scale[0], dataTypeName)));
 	}
 	else if (datatype_oid == NUMERICOID ||
-		is_tsql_decimal_datatype(datatype_oid))
+		(*common_utility_plugin_ptr->is_tsql_decimal_datatype)(datatype_oid))
 	{
 		/*
 		 * Since numeric/decimal datatype stores precision in scale[0] and scale in scale[1]
