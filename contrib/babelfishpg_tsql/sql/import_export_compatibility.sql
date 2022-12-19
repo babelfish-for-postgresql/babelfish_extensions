@@ -1,4 +1,4 @@
--- sys.assemblies should be a view, but the underlying system catalogs haven't
+-- sys.assemblies should be a view, but the underlying system catalogs have not
 -- been implemented in Babelfish yet (sys.sysclsobjs, etc)
 CREATE TABLE sys.assemblies(
         name sys.sysname,
@@ -46,7 +46,7 @@ WHERE t.is_assembly_type = 1;
 GRANT SELECT ON sys.assembly_types TO PUBLIC;
 
 -- Cannot be implemented without a full implementation of assemblies.
--- However, a full implementation isn't needed for import-export support yet
+-- However, a full implementation is not needed for import-export support yet
 CREATE OR REPLACE FUNCTION assemblyproperty(IN a VARCHAR, IN b VARCHAR) RETURNS sys.sql_variant
 AS
 $body$

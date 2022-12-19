@@ -1,0 +1,42 @@
+-- tsql
+create database isc_sequences_dbone;
+go
+
+create schema isc_sequences_dbone_sc1;
+go
+
+create sequence isc_sequences_dbone_sc1.isc_sequences_master_seq1 start with 1 minvalue 1 maxvalue 5 cycle;
+go
+
+Use isc_sequences_dbone;
+go
+
+create schema isc_sequences_sc1;
+go
+
+create schema isc_sequences_sc2;
+go
+
+create sequence isc_sequences_sc1.isc_sequences_seq1 start with 1 minvalue 1 maxvalue 5 cycle;
+go
+
+create sequence isc_sequences_sc1.isc_sequences_seq2 as tinyint start with 2 minvalue 1 maxvalue 5 cycle;
+go
+
+create sequence isc_sequences_sc1.isc_sequences_seq3 as smallint start with 3 increment by 3 minvalue 3 maxvalue 10;
+go
+
+create sequence isc_sequences_sc1.isc_sequences_seq4 as int start with 4 increment by 2 minvalue 2 maxvalue 10;
+go
+
+create sequence isc_sequences_sc2.isc_sequences_seq1 as bigint start with 1 minvalue 1 maxvalue 5 cycle;
+go
+
+create sequence isc_sequences_sc2.isc_sequences_seq2 as decimal start with 2 increment by 2 minvalue 2 maxvalue 10;
+go
+
+create sequence isc_sequences_sc2.isc_sequences_seq3 as numeric start with 3 increment by 3 minvalue 3 maxvalue 12 cycle;
+go
+
+create view isc_sequences_view1 as select * from information_schema.SEQUENCES;
+go

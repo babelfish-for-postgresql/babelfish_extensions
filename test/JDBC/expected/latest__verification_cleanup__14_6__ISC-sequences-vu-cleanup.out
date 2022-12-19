@@ -1,0 +1,71 @@
+-- tsql
+
+use isc_sequences_dbone;
+go
+
+drop sequence isc_sequences_sc1.isc_sequences_seq1;
+go
+
+drop sequence isc_sequences_sc1.isc_sequences_seq2;
+go
+
+drop sequence isc_sequences_sc1.isc_sequences_seq3;
+go
+
+drop sequence isc_sequences_sc1.isc_sequences_seq4;
+go
+
+drop sequence isc_sequences_sc2.isc_sequences_seq1;
+go
+
+drop sequence isc_sequences_sc2.isc_sequences_seq2;
+go
+
+drop sequence isc_sequences_sc2.isc_sequences_seq3;
+go
+
+drop schema isc_sequences_sc1;
+go
+
+drop schema isc_sequences_sc2;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'isc_sequences_log1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql 
+use isc_sequences_dbone;
+go
+
+drop user isc_sequences_usr1;
+go
+
+drop login isc_sequences_log1;
+go
+
+use master;
+go
+
+drop sequence isc_sequences_dbone_sc1.isc_sequences_master_seq1;
+go
+
+drop schema isc_sequences_dbone_sc1;
+go
+
+drop database isc_sequences_dbone;
+go

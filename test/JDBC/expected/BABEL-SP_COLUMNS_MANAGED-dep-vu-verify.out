@@ -1,0 +1,53 @@
+EXEC babel_sp_columns_managed_dep_vu_prepare_p1 "master", "dbo", "sysdatabases";
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#status#!#5#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#status2#!#6#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#crdate#!#7#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#reserved#!#8#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#category#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#cmptlevel#!#10#!#<NULL>#!#YES#!#tinyint#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#filename#!#11#!#<NULL>#!#YES#!#nvarchar#!#260#!#520#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
+
+EXEC babel_sp_columns_managed_dep_vu_prepare_p1 "master", "dbo", "SYSDATABASES";
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#status#!#5#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#status2#!#6#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#crdate#!#7#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#reserved#!#8#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#category#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#cmptlevel#!#10#!#<NULL>#!#YES#!#tinyint#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#filename#!#11#!#<NULL>#!#YES#!#nvarchar#!#260#!#520#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+master#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
+
+EXEC babel_sp_columns_managed_dep_vu_prepare_p1 "master", "dbo", "sysdatabases", "name";
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
+
+EXEC babel_sp_columns_managed_dep_vu_prepare_p1 "MASTER", "DbO", "SYSDATABASES", "NaMe";
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#int
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
