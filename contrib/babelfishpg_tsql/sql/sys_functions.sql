@@ -577,6 +577,11 @@ END;
 $BODY$
 LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
 
+
+CREATE OR REPLACE FUNCTION sys.object_id_tmp(IN object_name TEXT, IN object_type char(2) DEFAULT '') RETURNS INTEGER AS
+'babelfishpg_tsql', 'object_id_tmp'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.parsename (
 	object_name VARCHAR
 	,object_piece INT

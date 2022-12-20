@@ -40,6 +40,8 @@
 #include "../src/catalog.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
+#include "src/backend/catalog/objectaddress.c"
+#include "src/include/utils/catcache.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -71,6 +73,7 @@ PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
+PG_FUNCTION_INFO_V1(object_id_tmp);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
@@ -924,6 +927,286 @@ checksum(PG_FUNCTION_ARGS)
 
         PG_RETURN_INT32(result);
 }
+
+Datum
+object_id_tmp(PG_FUNCTION_ARGS)
+{	
+	char *db_name;
+	char *physical_schema_name; 
+	char *object_name = lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
+	char *object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
+	char *token;
+	bool is_temp_object;
+	Oid schema_oid;
+	Oid result = InvalidOid;
+	CatCList		*catlist;
+	Relation		tgrel;
+	ScanKeyData 	skey[2];
+	SysScanDesc 	tgscan;
+	HeapTuple		tuple;
+	int i;
+	int count = 0;
+
+	/* strip trailing whitespace */
+	i = strlen(object_name);
+	while (i > 0 && isspace((unsigned char) object_name[i - 1]))
+		object_name[--i] = '\0';
+
+	/* 
+	 * Resolve the three part name
+	 * get physical schema name from logical schema name
+	 * valid names are db_name.schema_name.object_name or schema_name.object_name or object_name
+	 */
+	for(i = 0; i < strlen(object_name); i++)
+	{
+		if(object_name[i] == '.')
+			count++;
+	}
+	token = strtok(object_name,".");
+	switch(count)
+	{
+		case 0:
+			db_name = get_cur_db_name();
+			physical_schema_name = get_physical_schema_name(db_name, "dbo");
+			break;
+		case 1:
+			db_name = get_cur_db_name();
+			physical_schema_name = get_physical_schema_name(db_name, token);
+			token = strtok(NULL, ".");
+			object_name = token;
+			break;
+		case 2:
+			db_name = token;
+			token = strtok(NULL, ".");
+			physical_schema_name = get_physical_schema_name(db_name, token);
+			token = strtok(NULL, ".");
+			object_name = token;
+			break;
+		default:
+			PG_RETURN_INT32(InvalidOid);
+	}
+	/* Check if looking in current database, if not then return null value */
+	if(strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
+		PG_RETURN_INT32(InvalidOid);
+
+	/* Get schema oid from physical schema name */
+	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
+
+	/* Invalid object_name or schema oid */
+	if (!object_name || !OidIsValid(schema_oid))
+		PG_RETURN_INT32(InvalidOid);
+	
+	/* Check if looking for temp object */
+	is_temp_object = (object_name[0] == '#');
+
+	if (strcmp(object_type, "")) /* object_type is not empty */
+	{
+		if (strcmp(object_type, "S") || strcmp(object_type, "U") || strcmp(object_type, "V") ||
+				strcmp(object_type, "IT") || strcmp(object_type, "ET") || strcmp(object_type, "SO"))
+		{
+			if(is_temp_object)
+			{
+				/* Search in list of ENRs registered in the current query environment by name */
+				List *enr_list = get_namedRelList();
+				ListCell *lc;
+				int reloid;
+				char *relname;
+				foreach(lc, enr_list)
+				{	
+					reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
+					relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
+					if(strcmp(relname, object_name))
+					{
+						result = reloid;
+						break;
+					}
+				}
+			}
+			else
+			{
+				/* Search in pg_class by name and schema oid */
+				result = get_relname_relid((const char *) object_name, schema_oid); 
+			}
+		}
+		else if (strcmp(object_type, "C") || strcmp(object_type, "D") || strcmp(object_type, "F") ||
+					strcmp(object_type, "PK") || strcmp(object_type, "UQ"))
+		{
+			/* Search in pg_constraint by name and schema oid */
+			tgrel = table_open(ConstraintRelationId, AccessShareLock);
+			ScanKeyInit(&skey[0],
+							Anum_pg_constraint_conname,
+							BTEqualStrategyNumber, F_NAMEEQ,
+							CStringGetDatum(object_name));
+
+			ScanKeyInit(&skey[1],
+								Anum_pg_constraint_connamespace,
+								BTEqualStrategyNumber, F_OIDEQ,
+								ObjectIdGetDatum(schema_oid));
+
+			tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId, true, /* true or false ?*/
+											NULL, 2, skey);
+
+			/* We are interested in the first row only */
+			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+			{
+				Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+				if(OidIsValid(con->oid))
+				{
+					result = con->oid;
+				}
+			}
+			systable_endscan(tgscan);
+			table_close(tgrel, AccessShareLock);
+		}
+		else if (strcmp(object_type, "AF") || strcmp(object_type, "FN") || strcmp(object_type, "FS") ||
+					strcmp(object_type, "FT") || strcmp(object_type, "IF") || strcmp(object_type, "P") ||
+					strcmp(object_type, "PC") || strcmp(object_type, "TF") || strcmp(object_type, "RF") ||
+					strcmp(object_type, "X")
+					)
+		{
+			/* Search in pg_proc by name only */
+			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
+			if(catlist->n_members)
+			{	
+				Form_pg_proc procform;
+				tuple = &catlist->members[0]->tuple;
+				procform = (Form_pg_proc) GETSTRUCT(tuple);
+				result = procform->oid;
+				ReleaseSysCacheList(catlist);
+			}
+		}
+		else if (strcmp(object_type, "TR") || strcmp(object_type, "TA"))
+		{
+			/* Search in pg_trigger by name */
+			tgrel = table_open(TriggerRelationId, AccessShareLock);
+			ScanKeyInit(&skey[0],
+							Anum_pg_trigger_tgname,
+							BTEqualStrategyNumber, F_NAMEEQ,
+							CStringGetDatum(object_name));
+			tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
+											NULL, 1, skey);
+			/* We are interested in the first row only */
+			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+			{
+				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+				if(OidIsValid(pg_trigger->oid))
+				{
+					result = pg_trigger->oid;
+				}
+			}
+			systable_endscan(tgscan);
+			table_close(tgrel, AccessShareLock);
+		}
+		else if (strcmp(object_type, "R") || strcmp(object_type, "EC") || strcmp(object_type, "PG") ||
+					strcmp(object_type, "SN") || strcmp(object_type, "SQ") || strcmp(object_type, "TT"))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Object type currently unsupported")));
+		}
+		else
+		{
+			result = InvalidOid;
+		}
+		PG_RETURN_INT32(result);
+	}
+	else
+	{	
+		if(is_temp_object) /* temp object without "object_type" in-argument */
+		{
+			/* Search in list of ENRs registered in the current query environment by name */
+			List *enr_list = get_namedRelList();
+			ListCell *lc;
+			int reloid;
+			char *relname;
+			foreach(lc, enr_list)
+			{	
+				reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
+				relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
+				if(strcmp(relname, object_name))
+				{
+					result = reloid;
+					break;
+				}
+			}
+		}
+		else
+		{
+			/* Search in pg_constraint by name and schema oid */
+			tgrel = table_open(ConstraintRelationId, AccessShareLock);
+			ScanKeyInit(&skey[0],
+							Anum_pg_constraint_conname,
+							BTEqualStrategyNumber, F_NAMEEQ,
+							CStringGetDatum(object_name));
+
+			ScanKeyInit(&skey[1],
+								Anum_pg_constraint_connamespace,
+								BTEqualStrategyNumber, F_OIDEQ,
+								ObjectIdGetDatum(schema_oid));
+
+			tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId, true,
+											NULL, 2, skey);
+
+			/* We are interested in the first row only */
+			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+			{
+				Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+				if(OidIsValid(con->oid))
+				{
+					result = con->oid;
+				}
+			}
+			systable_endscan(tgscan);
+			table_close(tgrel, AccessShareLock);
+			if(OidIsValid(result))
+				PG_RETURN_INT32(result);
+
+			/* Search in pg_class by name and schema oid */
+			result = get_relname_relid((const char *) object_name, schema_oid); 
+			if(OidIsValid(result))
+				PG_RETURN_INT32(result);
+
+			/* Search in pg_trigger by name */
+			tgrel = table_open(TriggerRelationId, AccessShareLock);
+			ScanKeyInit(&skey[0],
+							Anum_pg_trigger_tgname,
+							BTEqualStrategyNumber, F_NAMEEQ,
+							CStringGetDatum(object_name));
+			tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
+											NULL, 1, skey);
+			
+			/* We are interested in the first row only */
+			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+			{
+				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+				if(OidIsValid(pg_trigger->oid))
+				{
+					result = pg_trigger->oid;
+				}
+			}
+			systable_endscan(tgscan);
+			table_close(tgrel, AccessShareLock);
+			if(OidIsValid(result))
+				PG_RETURN_INT32(result);
+
+			/* Search in pg_proc by name only */
+			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
+			if(catlist->n_members)
+			{	
+				Form_pg_proc procform;
+				tuple = &catlist->members[0]->tuple;
+				procform = (Form_pg_proc) GETSTRUCT(tuple);
+				result = procform->oid;
+				ReleaseSysCacheList(catlist);
+				if(OidIsValid(result))
+					PG_RETURN_INT32(result);
+			}
+		}
+	}
+
+	PG_RETURN_INT32(InvalidOid);
+}
+
 
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
