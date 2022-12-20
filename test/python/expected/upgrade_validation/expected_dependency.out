@@ -51,7 +51,6 @@ Collation sys.greek_ci_ai
 Collation sys.hebrew_ci_ai
 Collation sys.hebrew_ci_as
 Collation sys.japanese_ci_ai
-Collation sys.japanese_ci_as
 Collation sys.japanese_cs_as
 Collation sys.korean_wansung_ci_ai
 Collation sys.korean_wansung_ci_as
