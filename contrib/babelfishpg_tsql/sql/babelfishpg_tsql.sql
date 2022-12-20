@@ -488,7 +488,7 @@ begin
 	END IF;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_columns (
 	"@table_name" sys.nvarchar(384),
@@ -870,7 +870,7 @@ BEGIN
         (in_schematype = 0 AND (s_cv.IS_SPARSE = 0) OR in_schematype = 1 OR in_schematype = 2 AND (s_cv.IS_SPARSE = 1));
 END;
 $$
-language plpgsql;
+language plpgsql STABLE;
 
 CREATE PROCEDURE sys.sp_columns_managed
 (
@@ -1040,7 +1040,7 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 		END IF;
 	END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 	 
 
 CREATE OR REPLACE PROCEDURE sys.sp_tables (
@@ -1164,7 +1164,7 @@ begin
 		 key_seq;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
 	"@table_name" sys.nvarchar(384),
@@ -1279,7 +1279,7 @@ begin
     order by non_unique, type, index_name, seq_in_index;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_statistics(
     "@table_name" sys.sysname,

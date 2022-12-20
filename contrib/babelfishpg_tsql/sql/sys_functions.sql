@@ -657,7 +657,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour TEXT,
@@ -685,7 +685,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
@@ -909,7 +909,7 @@ BEGIN
 END;
 $$
 STRICT
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 create or replace function sys.isdate(v text)
 returns integer
@@ -2071,7 +2071,7 @@ GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -2624,7 +2624,7 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
 CREATE OR REPLACE FUNCTION sys.schema_name()
 RETURNS sys.sysname
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $function$
 begin
     RETURN (select orig_name from sys.babelfish_namespace_ext ext  
@@ -2640,7 +2640,7 @@ GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.schema_id()
 RETURNS INT
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 BEGIN
   RETURN (select oid from sys.pg_namespace_ext where nspname = (select current_schema()))::INT;
