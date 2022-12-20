@@ -132,8 +132,7 @@ BABEL-3249
 # Disabled until BABEL-3720 gets fixed
 # BABEL-3486
 BABEL-3474
-# Enable this once we sort out issue with this test case
-#BABEL-3614
+BABEL-3614
 BABEL-3646
 BABEL-383
 BABEL-405
@@ -348,3 +347,4 @@ ISC-Tables
 ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
+BABEL-3801
