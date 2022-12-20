@@ -252,7 +252,7 @@ sys_all_objects-dep
 sys-columns-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
-sys-identity_columns-dep-14-3
+sys-identity_columns-dep-for-14-3
 sys-indexes-dep
 sys-key_constraints-dep
 sys-schemas-dep
