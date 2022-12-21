@@ -58,6 +58,7 @@ PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
+PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_dropserver_internal);
 PG_FUNCTION_INFO_V1(create_linked_server_procs_in_master_dbo_internal);
 
@@ -2189,6 +2190,9 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	char *useself = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(1));
 	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(4));
+	char *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+	if (locallogin != NULL)
+		elog(ERROR, "Only @locallogin = NULL is supported");
 
 	CreateUserMappingStmt *stmt = makeNode(CreateUserMappingStmt);
 	RoleSpec *user = makeNode(RoleSpec);
@@ -2212,6 +2216,30 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	stmt->options = options;
 
 	CreateUserMapping(stmt);
+
+	return (Datum) 0;
+}
+
+Datum
+sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	if (locallogin != NULL)
+		elog(ERROR, "Only @locallogin = NULL is supported");
+	
+	DropUserMappingStmt *stmt = makeNode(DropUserMappingStmt);
+	RoleSpec *user = makeNode(RoleSpec);
+	List *options = NIL;
+	char *str = NULL;
+
+	stmt->servername = servername;
+
+	user->roletype = ROLESPEC_CURRENT_USER;
+	user->location = -1;
+	stmt->user = user;
+
+	RemoveUserMapping(stmt);
 
 	return (Datum) 0;
 }
