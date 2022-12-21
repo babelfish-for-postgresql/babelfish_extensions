@@ -10,9 +10,9 @@ on:
     inputs:
       name:
         # Friendly description to be shown in the UI instead of 'name'
-        description: 'Person to greet'
+        commiter: 'Alias of the commiter'
         # Default value if no value is explicitly provided
-        default: 'World'
+        default: 'nirmisha'
         # Input has to be provided for the workflow to run
         required: true
 
@@ -26,5 +26,13 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
-    - name: Send greeting
-      run: echo "Hello ${{ github.event.inputs.name }}"
+    - name: Checkout Extensions
+      uses: actions/checkout@v2g
+      id: checkout
+
+    - name: Check Current Version
+      if: steps.checkout.outcome == 'success'
+      run: |
+        vfile=contrib/babelfishpg_tsql/src/babelfish_version.h
+        bbf_pre_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
+        echo $bbf_pre_version
