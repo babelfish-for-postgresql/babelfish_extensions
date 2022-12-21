@@ -27,7 +27,7 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Checkout Extensions
-      uses: actions/checkout@v2g
+      uses: actions/checkout@v2
       id: checkout
 
     - name: Check Current Version
