@@ -3,7 +3,7 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
-/* This helper function would only be useful and strictly be used during 1.x to 2.3 upgrade. */
+/* This helper function would only be useful and strictly be used during 1.x->2.3 and 2.3->3.0 upgrade. */
 CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
 LANGUAGE C
 AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
@@ -12,7 +12,7 @@ SELECT sys.babelfish_update_server_collation_name();
 
 DROP FUNCTION sys.babelfish_update_server_collation_name();
 
--- And reset babelfishpg_tsql.restored_server_collation_name and babelfishpg_tsql.restored_default_locale GUC
+-- And reset babelfishpg_tsql.restored_server_collation_name GUC
 do
 language plpgsql
 $$
@@ -20,8 +20,6 @@ $$
         query text;
     begin
         query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_server_collation_name', CURRENT_DATABASE());
-        execute query;
-        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_default_locale', CURRENT_DATABASE());
         execute query;
     end;
 $$;
