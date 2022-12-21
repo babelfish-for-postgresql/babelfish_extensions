@@ -61,6 +61,6 @@ jobs:
       with:
         commit-message: Bump Babelfish Internal Version to ${{ env.bbf_new_version }}
         title: Bump Babelfish Internal Version to ${{ env.bbf_new_version }}
-        signoff: "${{ github.event.inputs.commiter }}@amazon.com"
+        signoff: '${{ github.event.inputs.commiter }}@amazon.com'
         branch: bump-vers-${{ env.bbf_new_version }}
         base: ${{ github.event.inputs.target_branch }}
