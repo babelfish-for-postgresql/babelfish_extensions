@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
-      name:
+      commiter:
         # Friendly description to be shown in the UI instead of 'name'
-        commiter: 'Alias of the commiter'
+        description: 'Alias of the commiter'
         # Default value if no value is explicitly provided
         default: 'nirmisha'
         # Input has to be provided for the workflow to run
@@ -19,7 +19,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "greet"
-  greet:
+  Auto-Bump-Version:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -31,12 +31,22 @@ jobs:
       id: checkout
 
     - name: Check Current Version
-      if: steps.checkout.outcome == 'success'
+      if: always() && steps.checkout.outcome == 'success'
+      id: bump_version
       run: |
         vfile=contrib/babelfishpg_tsql/src/babelfish_version.h
         bbf_pre_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
-        echo $bbf_pre_version
+        echo "bbf_old_version=$bbf_pre_version" >> $GITHUB_ENV
         sed -i -r 's/(.*)(BABELFISH_INTERNAL_VERSION_STR )"(Babelfish )([0-9]+.[0-9]+.)([0-9]+)(.[0-9]+)"/echo "\1\2\\"\3\4$((\5+1))\6\\""/ge' $vfile
         bbf_post_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
-        echo $bbf_post_version
+        echo "bbf_new_version=$bbf_post_version" >> $GITHUB_ENV
         git status
+        git add .
+        echo ${{ env.bbf_old_version }}
+        echo ${{ env.bbf_new_version}}
+
+        #  - name : Create Pull Request
+        #    if: always() && steps.bump_version.outcome == 'success'
+        #    uses: peter-evans/create-pull-request@v4
+        #    with:
+        #      commit-message: Bump
