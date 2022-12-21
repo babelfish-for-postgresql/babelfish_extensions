@@ -65,7 +65,6 @@ jobs:
         push-to-fork: ahmed-shameem/babelfish_extensions_machine
         commit-message: Bump Babelfish Version to ${{ env.bbf_new_version }}
         title: Bump Babelfish  Version to ${{ env.bbf_new_version }}
-        branch: bump-vers-${{ env.bbf_new_version }}
         base: ${{ github.event.inputs.target_branch }}
         delete-branch: true
         body: Automated Version Bump to  ${{ env.bbf_new_version }} also update Internal Version to ${{ env.bbf_int_new_version }}
