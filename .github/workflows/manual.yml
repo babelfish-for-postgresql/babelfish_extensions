@@ -34,7 +34,7 @@ jobs:
     - name: Checkout Extensions
       uses: actions/checkout@v3
       with:
-        branch: ${{ github.event.inputs.target_branch}}
+        ref: ${{ github.event.inputs.target_branch}}
       id: checkout
 
     - name: Check Current Version
