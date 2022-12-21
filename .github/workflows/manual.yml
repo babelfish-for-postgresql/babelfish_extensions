@@ -27,7 +27,7 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Checkout Extensions
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       id: checkout
 
     - name: Check Current Version
@@ -36,3 +36,7 @@ jobs:
         vfile=contrib/babelfishpg_tsql/src/babelfish_version.h
         bbf_pre_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
         echo $bbf_pre_version
+        sed -i -r 's/(.*)(BABELFISH_INTERNAL_VERSION_STR )"(Babelfish )([0-9]+.[0-9]+.)([0-9]+)(.[0-9]+)"/echo "\1\2\\"\3\4$((\5+1))\6\\""/ge' $vfile
+        bbf_post_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
+        echo $bbf_post_version
+        git status
