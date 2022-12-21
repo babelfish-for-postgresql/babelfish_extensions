@@ -73,7 +73,7 @@ PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
-PG_FUNCTION_INFO_V1(object_id_tmp);
+PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
@@ -929,7 +929,7 @@ checksum(PG_FUNCTION_ARGS)
 }
 
 Datum
-object_id_tmp(PG_FUNCTION_ARGS)
+object_id(PG_FUNCTION_ARGS)
 {	
 	char *db_name;
 	char *physical_schema_name; 
