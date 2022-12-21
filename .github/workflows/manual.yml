@@ -59,6 +59,7 @@ jobs:
       if: always() && steps.bump_version.outcome == 'success'
       uses: peter-evans/create-pull-request@v4
       with:
+        token: ${{ secrets.GITHUB_TOKEN }}
         commit-message: Bump Babelfish Internal Version to ${{ env.bbf_new_version }}
         title: Bump Babelfish Internal Version to ${{ env.bbf_new_version }}
         signoff: true
