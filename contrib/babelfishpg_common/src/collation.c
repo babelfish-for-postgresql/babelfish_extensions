@@ -1455,7 +1455,7 @@ PG_FUNCTION_INFO_V1(babelfish_update_server_collation_name);
 
 /*
  * babelfish_update_server_collation_name - corresponding to sys.babelfish_update_server_collation_name() function
- * which would be available and strictly be used during 1.x to 2.3 upgrade.
+ * which would be available and strictly be used during 1.x->2.3 and 2.3->3.0  upgrade.
  */
 Datum
 babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
