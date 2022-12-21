@@ -42,28 +42,30 @@ jobs:
       id: bump_version
       run: |
         vfile=contrib/babelfishpg_tsql/src/babelfish_version.h
-        bbf_pre_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
-        echo "bbf_old_version=$bbf_pre_version" >> $GITHUB_ENV
+        # bump babelfish internal version
+        bbf_int_pre_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
+        echo "bbf_int_old_version=$bbf_int_pre_version" >> $GITHUB_ENV
         sed -i -r 's/(.*)(BABELFISH_INTERNAL_VERSION_STR )"(Babelfish )([0-9]+.[0-9]+.)([0-9]+)(.[0-9]+)"/echo "\1\2\\"\3\4$((\5+1))\6\\""/ge' $vfile
-        bbf_post_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
+        bbf_int_post_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
+        echo "bbf_int_new_version=$bbf_int_post_version" >> $GITHUB_ENV
+        # bump babelfish version
+        bbf_pre_version=$(awk '/BABELFISH_VERSION_STR/ {print $3}' $vfile | sed 's/\"//')
+        echo "bbf_old_version=$bbf_pre_version" >> $GITHUB_ENV
+        sed -i -r 's/(.*)(BABELFISH_VERSION_STR )"([0-9]+.[0-9]+.)([0-9]+)"/echo "\1\2\\"\3$((\4+1))\\""/ge' $vfile
+        bbf_post_version=$(awk '/BABELFISH_VERSION_STR/ {print $3}' $vfile | sed 's/\"//')
         echo "bbf_new_version=$bbf_post_version" >> $GITHUB_ENV
         git status
         git add .
-    - name: Test env vars
-      if: always()
-      run: |
-        echo ${{ env.bbf_old_version }}
-        echo ${{ env.bbf_new_version}}
 
     - name : Create Pull Request
       if: always() && steps.bump_version.outcome == 'success'
       uses: peter-evans/create-pull-request@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        commit-message: Bump Babelfish Internal Version to ${{ env.bbf_new_version }}
-        title: Bump Babelfish Internal Version to ${{ env.bbf_new_version }}
+        token: ${{ secrets.PAT }}
+        commit-message: Bump Babelfish Version to ${{ env.bbf_new_version }}
+        title: Bump Babelfish  Version to ${{ env.bbf_new_version }}
         signoff: true
         branch: bump-vers-${{ env.bbf_new_version }}
         base: ${{ github.event.inputs.target_branch }}
         delete-branch: true
-        body: Automated Version Bump
+        body: Automated Version Bump to  ${{ env.bbf_new_version }} also update Internal Version to ${{ env.bbf_int_new_version }}
