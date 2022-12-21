@@ -42,6 +42,9 @@ jobs:
         echo "bbf_new_version=$bbf_post_version" >> $GITHUB_ENV
         git status
         git add .
+    - name: Test env vars
+      if: always()
+      run: |
         echo ${{ env.bbf_old_version }}
         echo ${{ env.bbf_new_version}}
 
