@@ -62,7 +62,7 @@ jobs:
       uses: peter-evans/create-pull-request@v4
       with:
         token: ${{ secrets.MACHINE_PAT }}
-        push-to-fork: ahmed-shameem/babelfish_extensions_machine
+        push-to-fork: naughtyb0y/babelfish_extensions
         commit-message: Bump Babelfish Version to ${{ env.bbf_new_version }}
         title: Bump Babelfish  Version to ${{ env.bbf_new_version }}
         base: ${{ github.event.inputs.target_branch }}
