@@ -2191,13 +2191,14 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(4));
 	char *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
-	if (locallogin != NULL)
-		elog(ERROR, "Only @locallogin = NULL is supported");
 
 	CreateUserMappingStmt *stmt = makeNode(CreateUserMappingStmt);
 	RoleSpec *user = makeNode(RoleSpec);
 	List *options = NIL;
 
+	if (locallogin != NULL){
+		elog(ERROR, "Only @locallogin = NULL is supported");
+	}
 	stmt->servername = servername;
 	stmt->if_not_exists = false;
 
@@ -2206,8 +2207,9 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	stmt->user = user;
 
 	/* We do not support login using user's self credentials */
-	if ((useself == NULL) || (strlen(useself) != 5) || (strncmp(downcase_identifier(useself, 5, false, false), "false", 5) != 0))
+	if ((useself == NULL) || (strlen(useself) != 5) || (strncmp(downcase_identifier(useself, 5, false, false), "false", 5) != 0)){
 		elog(ERROR, "Only @useself = FALSE is supported");
+	}
 
 	/* Add the relevant options */
 	options = lappend(options, makeDefElem("username", (Node *) makeString(username), -1));
@@ -2225,14 +2227,12 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
 	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
 	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
-	if (locallogin != NULL)
-		elog(ERROR, "Only @locallogin = NULL is supported");
 	
 	DropUserMappingStmt *stmt = makeNode(DropUserMappingStmt);
 	RoleSpec *user = makeNode(RoleSpec);
-	List *options = NIL;
-	char *str = NULL;
-
+	if (locallogin != NULL){
+		elog(ERROR, "Only @locallogin = NULL is supported");
+	}
 	stmt->servername = servername;
 
 	user->roletype = ROLESPEC_CURRENT_USER;
