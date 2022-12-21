@@ -4,7 +4,6 @@ on: [push, pull_request]
 jobs:
   run-sql-validation-tests:
     runs-on: ubuntu-20.04
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     steps:
       - uses: actions/checkout@v2
         id: checkout

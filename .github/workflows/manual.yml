@@ -61,10 +61,10 @@ jobs:
       if: always() && steps.bump_version.outcome == 'success'
       uses: peter-evans/create-pull-request@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.MACHINE_PAT }}
+        push-to-fork: ahmed-shameem/babelfish_extensions_machine
         commit-message: Bump Babelfish Version to ${{ env.bbf_new_version }}
         title: Bump Babelfish  Version to ${{ env.bbf_new_version }}
-        signoff: true
         branch: bump-vers-${{ env.bbf_new_version }}
         base: ${{ github.event.inputs.target_branch }}
         delete-branch: true
