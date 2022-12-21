@@ -1,0 +1,6 @@
+-- sla 400000
+exec babel_sp_sproc_columns_100_dep_vu_prepare_p2
+go
+
+exec babel_sp_sproc_columns_100_dep_vu_prepare_p3
+go

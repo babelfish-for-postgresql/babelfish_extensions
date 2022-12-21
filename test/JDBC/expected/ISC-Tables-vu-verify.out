@@ -1,0 +1,62 @@
+SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'isc_tables_vu_prepare_t1'
+SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'ISC_TABLES_VU_PREPARE_T1'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
+~~END~~
+
+
+SELECT * FROM information_schema.tables WHERE TABLE_SCHEMA = 'isc_tables_sc1'
+SELECT * FROM information_schema.tables WHERE TABLE_SCHEMA = 'ISC_TABLES_SC1'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#isc_tables_sc1#!#t2#!#BASE TABLE
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#isc_tables_sc1#!#t2#!#BASE TABLE
+~~END~~
+
+
+EXEC isc_tables_vu_prepare_p1
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
+~~END~~
+
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
+~~END~~
+
+
+SELECT * FROM isc_tables_vu_prepare_f1()
+SELECT * FROM isc_tables_vu_prepare_f2()
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM isc_tables_vu_prepare_v1
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
+~~END~~
+

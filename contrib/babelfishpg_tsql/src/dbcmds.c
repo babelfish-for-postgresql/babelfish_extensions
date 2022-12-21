@@ -242,10 +242,11 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 		DefElem    *defel = (DefElem *) lfirst(option);
 		if (strcmp(defel->defname, "collate") == 0)
 		{
-			if (strcmp(pltsql_server_collation_name, defGetString(defel)))
+			const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+			if (server_collation_name && strcmp(server_collation_name, defGetString(defel)))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("only \"%s\" supported for default collation", pltsql_server_collation_name),
+						 errmsg("only \"%s\" supported for default collation", server_collation_name),
 						 parser_errposition(pstate, defel->location)));
 		}
 		else
@@ -332,9 +333,12 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_server_collation_oid_internal(false)));
 	if (!HeapTupleIsValid(tuple))
+	{
+		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("OID corresponding to collation \"%s\" does not exist", pltsql_server_collation_name)));
+				errmsg("OID corresponding to collation \"%s\" does not exist", server_collation_name)));
+	}
 	default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
 	ReleaseSysCache(tuple);
 

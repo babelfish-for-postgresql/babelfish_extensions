@@ -22,9 +22,9 @@ EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_selec
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 ~~END~~
 
 

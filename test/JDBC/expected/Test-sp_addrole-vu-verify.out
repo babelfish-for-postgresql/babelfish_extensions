@@ -131,6 +131,7 @@ WHERE orig_username = 'sp_addrole_r3'
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#nvarchar
+master_sp_addrole_r3#!#R#!#SP_ADDROLE_R3#!#master
 ~~END~~
 
 

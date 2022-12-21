@@ -1,0 +1,21 @@
+select * from babel_try_parse_v;
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+select * from babel_try_parse_f();
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+DROP VIEW babel_try_parse_v;
+GO
+
+DROP FUNCTION babel_try_parse_f();
+GO

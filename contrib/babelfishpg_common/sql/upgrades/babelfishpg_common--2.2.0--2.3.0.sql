@@ -3,6 +3,45 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+CREATE OR REPLACE FUNCTION sys.babelfishpg_common_get_babel_server_collation_oid() RETURNS OID
+LANGUAGE C
+AS 'babelfishpg_common', 'get_babel_server_collation_oid';
+
+
+-- Set the default collation of given sys."typname" to oid corresponding to babelfishpg_tsql.server_collation_name
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_collation_to_default(type_name varchar) AS
+$$
+DECLARE
+    coll_oid oid;
+    default_coll_oid oid;
+BEGIN
+    select oid into default_coll_oid from pg_collation where collname = 'default';
+    SELECT typcollation INTO coll_oid FROM pg_catalog.pg_type WHERE typname = type_name AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'sys');
+    IF coll_oid = default_coll_oid THEN
+        UPDATE pg_catalog.pg_type SET typcollation = sys.babelfishpg_common_get_babel_server_collation_oid()
+        WHERE typname = type_name AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'sys');
+    END IF;
+END
+$$
+LANGUAGE plpgsql;
+
+-- Update the default collation of Babelfish data types only if collation is PG's default 
+DO
+LANGUAGE plpgsql
+$$
+    DECLARE
+        sys_types varchar[] := ARRAY['varchar', 'bpchar', 'nvarchar', 'nchar', 'sql_variant', '_ci_sysname', 'sysname', '_varchar', '_bpchar', '_nvarchar', '_nchar', '_sql_variant', '__ci_sysname', '_sysname'];
+        sys_type varchar;
+    BEGIN
+        FOREACH sys_type IN ARRAY sys_types LOOP
+            BEGIN
+                CALL sys.babelfish_update_collation_to_default(sys_type);
+            END;
+        END LOOP;
+    END;
+$$;
+
+
 CREATE OR REPLACE FUNCTION sys.bigint_sum(INTERNAL)
 RETURNS BIGINT
 AS 'babelfishpg_common', 'bigint_sum'
@@ -243,6 +282,9 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (FIXEDDECIMAL AS sys.SMALLDATETIME)
 WITH FUNCTION sys.money2smalldatetime (FIXEDDECIMAL) AS IMPLICIT;
+
+DROP FUNCTION sys.babelfishpg_common_get_babel_server_collation_oid();
+DROP PROCEDURE sys.babelfish_update_collation_to_default(varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

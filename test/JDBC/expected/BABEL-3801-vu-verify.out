@@ -1,0 +1,145 @@
+select collname from PG_COLLATION where oid = (
+    select attcollation from pg_attribute where attname = 'col_a' and
+    attrelid = (
+        select oid from pg_class where relname = 'bbf_3801_tab'
+    )
+);
+GO
+~~START~~
+varchar
+japanese_ci_as
+~~END~~
+
+
+select collname from PG_COLLATION where oid = (
+    select attcollation from pg_attribute where attname = 'col_a' and
+    attrelid = (
+        select oid from pg_class where relname = 'bbf_3801_view'
+    )
+);
+GO
+~~START~~
+varchar
+japanese_ci_as
+~~END~~
+
+
+insert into bbf_3801_tab1 values ('b'), ('B');
+GO
+~~ROW COUNT: 2~~
+
+
+-- this should fail 
+insert into bbf_3801_tab1 values ('aBc');
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "bbf_3801_tab1" violates check constraint "bbf_3801_tab1_a_check")~~
+
+
+select * from bbf_3801_tab1;
+GO
+~~START~~
+varchar
+b
+B
+~~END~~
+
+
+insert into bbf_3801_tab2 values ('b'), ('B');
+GO
+~~ROW COUNT: 2~~
+
+
+-- this should fail
+insert into bbf_3801_tab2 values ('aBc');
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "bbf_3801_tab2" violates check constraint "bbf_3801_tab2_a_check")~~
+
+
+select * from bbf_3801_tab2;
+GO
+~~START~~
+char
+b                        
+B                        
+~~END~~
+
+
+insert into bbf_3801_tab3 values ('a');
+GO
+~~ROW COUNT: 1~~
+
+
+select * from bbf_3801_tab3;
+GO
+~~START~~
+varchar#!#char
+a#!#abc                      
+~~END~~
+
+
+select coll.collname from 
+pg_collation coll join pg_attribute attr on attr.attcollation = coll.oid
+where attr.attrelid = (select oid from pg_class where relname = 'bbf_3801_tab4')
+and (attr.attname = 'col_a1' or attr.attname = 'col_b1');
+GO
+~~START~~
+varchar
+japanese_ci_as
+japanese_ci_as
+~~END~~
+
+
+select coll.collname from 
+pg_collation coll join pg_attribute attr on attr.attcollation = coll.oid
+where attr.attrelid = (select oid from pg_class where relname = 'bbf_3801_tab5')
+and (attr.attname = 'col_a2' or attr.attname = 'col_b2');
+GO
+~~START~~
+varchar
+japanese_ci_as
+japanese_ci_as
+~~END~~
+
+
+select coll.collname from 
+pg_collation coll join pg_attribute attr on attr.attcollation = coll.oid
+where attr.attrelid = (select oid from pg_class where relname = 'bbf_3801_tab6')
+and (attr.attname = 'col_a3' or attr.attname = 'col_b3');
+GO
+~~START~~
+varchar
+bbf_unicode_cp1_ci_as
+bbf_unicode_cp1_ci_as
+~~END~~
+
+
+DROP VIEW bbf_3801_view;
+GO
+
+DROP TABLE bbf_3801_tab;
+GO
+
+DROP TABLE bbf_3801_tab1;
+GO
+
+DROP TABLE bbf_3801_tab2;
+GO
+
+DROP TABLE bbf_3801_tab3;
+GO
+
+DROP TABLE bbf_3801_tab4;
+GO
+
+DROP TABLE bbf_3801_tab5;
+GO
+
+DROP TABLE bbf_3801_tab6;
+GO
+
+DROP TYPE bbf_3801_type;
+GO

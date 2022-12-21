@@ -48,7 +48,7 @@ typedef enum
 
 PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
-PG_FUNCTION_INFO_V1(get_server_collation_oid); 
+PG_FUNCTION_INFO_V1(get_server_collation_oid);
 PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
 
 /* this function is no longer needed and is only a placeholder for upgrade script */
@@ -57,6 +57,7 @@ Datum init_server_collation(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT32(0);
 }
+
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation_oid);
 Datum init_server_collation_oid(PG_FUNCTION_ARGS)
@@ -79,11 +80,17 @@ collation_list(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(tsql_collation_list_internal(fcinfo));
 }
 
+
+/*
+ * get_server_collation_oid - this is being used by sys.babelfish_update_collation_to_default
+ * to update the collation of system objects
+ */
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_OID(tsql_get_server_collation_oid_internal(false));
 }
+
 
 Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
@@ -141,7 +148,7 @@ transform_funcexpr(Node* node)
 
 			fe->funcid == 2285 ||  // regexp_replace, flags in 4th arg
 			fe->funcid == 3397 ||  // regexp_match (find first match), flags in 3rd arg
-			fe->funcid == 2764)	// regexp_matches, flags in 4th arg
+			fe->funcid == 2764)	// regexp_matches, flags in 3rd arg
 		{
 			coll_info_t coll_info_of_inputcollid = tsql_lookup_collation_table_internal(fe->inputcollid);
 			Node*	   leftop = (Node *) linitial(fe->args);
@@ -170,7 +177,7 @@ transform_funcexpr(Node* node)
 
 				if (fe->funcid == 2285 || fe->funcid == 3397 || fe->funcid == 2764)
 				{
-					Node* flags = (fe->funcid == 3397) ? lthird(fe->args) : lfourth(fe->args);
+					Node* flags = (fe->funcid == 2285) ? lfourth(fe->args) : lthird(fe->args);
 
 					if (!IsA(flags, Const))
 						return node;

@@ -1,0 +1,7 @@
+EXEC sp_oledb_ro_usrname
+GO
+~~START~~
+varchar#!#nvarchar
+N#!#dbo
+~~END~~
+

@@ -118,19 +118,6 @@ datetime2
 DROP FUNCTION BABEL_3614_vu_prepare_f4()
 GO
 
-SELECT * FROM BABEL_3614_vu_prepare_v5
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_3614_vu_prepare_v5" does not exist)~~
-
-DROP VIEW BABEL_3614_vu_prepare_v5
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "babel_3614_vu_prepare_v5" does not exist)~~
-
-
 EXEC BABEL_3614_vu_prepare_p5
 GO
 ~~ERROR (Code: 33557097)~~

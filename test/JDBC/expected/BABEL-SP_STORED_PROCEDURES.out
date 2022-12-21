@@ -157,8 +157,8 @@ EXEC sp_stored_procedures @sp_name='select_a%', @fusepattern=1
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
-db1#!#dbo#!#select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 db1#!#dbo#!#select_all_mixed;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+db1#!#dbo#!#select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 
 

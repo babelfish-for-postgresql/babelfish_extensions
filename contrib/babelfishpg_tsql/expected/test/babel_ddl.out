@@ -282,14 +282,14 @@ LINE 1: create table computed_column_error (a int, b  AS (a/4) PERSI...
 -- since we're in postgres dialect, also check the table definition whether
 -- the computed column got resolved to correct datatype
 \d computed_column_t1
-                                          Table "public.computed_column_t1"
- Column |       Type       |       Collation       | Nullable |                        Default                        
---------+------------------+-----------------------+----------+-------------------------------------------------------
- a      | sys.nvarchar(10) | bbf_unicode_cp1_ci_as |          | 
- b      | sys.nvarchar     | bbf_unicode_cp1_ci_as | not null | generated always as (sys."substring"(a, 1, 3)) stored
- c      | integer          |                       |          | 
- d      | integer          |                       |          | generated always as (c / 4) stored
- e      | double precision |                       |          | generated always as (sys.rand(1)) stored
+                                    Table "public.computed_column_t1"
+ Column |       Type       | Collation | Nullable |                        Default                        
+--------+------------------+-----------+----------+-------------------------------------------------------
+ a      | sys.nvarchar(10) |           |          | 
+ b      | sys.nvarchar     |           | not null | generated always as (sys."substring"(a, 1, 3)) stored
+ c      | integer          |           |          | 
+ d      | integer          |           |          | generated always as (c / 4) stored
+ e      | double precision |           |          | generated always as (sys.rand(1)) stored
 Indexes:
     "computed_column_t1_b_key" UNIQUE CONSTRAINT, btree (b)
 

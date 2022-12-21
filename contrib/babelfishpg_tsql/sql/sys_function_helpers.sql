@@ -10090,7 +10090,7 @@ $$
 LANGUAGE plpgsql;
 
 -- valid names are db_name.schema_name.object_name or schema_name.object_name or object_name
-CREATE OR REPLACE FUNCTION babelfish_split_object_name(
+CREATE OR REPLACE FUNCTION sys.babelfish_split_object_name(
     name TEXT, 
     OUT db_name TEXT, 
     OUT schema_name TEXT, 
@@ -10146,40 +10146,42 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION babelfish_has_any_privilege(
+CREATE OR REPLACE FUNCTION sys.babelfish_has_any_privilege(
     perm_target_type text,
     schema_name text,
     object_name text)
 RETURNS INTEGER
 AS
 $BODY$
-DECLARE 
+DECLARE
     relevant_permissions text[];
     namespace_id oid;
     function_signature text;
     qualified_name text;
     permission text;
 BEGIN
-    IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'function', 'procedure')
+ IF perm_target_type IS NULL OR perm_target_type COLLATE sys.database_default NOT IN('table', 'function', 'procedure')
         THEN RETURN NULL;
     END IF;
 
     relevant_permissions := (
         SELECT CASE
-            WHEN perm_target_type = 'table'
+            WHEN perm_target_type = 'table' COLLATE sys.database_default
                 THEN '{"select", "insert", "update", "delete", "references"}'
-            WHEN perm_target_type IN('function', 'procedure')
+            WHEN perm_target_type = 'column' COLLATE sys.database_default
+                THEN '{"select", "update", "references"}'
+            WHEN perm_target_type COLLATE sys.database_default IN ('function', 'procedure')
                 THEN '{"execute"}'
         END
     );
 
-    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = schema_name;
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = schema_name COLLATE sys.database_default;
 
-    IF perm_target_type IN('function', 'procedure')
-        THEN SELECT oid::regprocedure 
-                INTO function_signature 
-                FROM pg_catalog.pg_proc 
-                WHERE proname = object_name
+    IF perm_target_type COLLATE sys.database_default IN ('function', 'procedure')
+        THEN SELECT oid::regprocedure
+                INTO function_signature
+                FROM pg_catalog.pg_proc
+                WHERE proname = object_name COLLATE sys.database_default
                     AND pronamespace = namespace_id;
     END IF;
 
@@ -10188,9 +10190,9 @@ BEGIN
 
     FOREACH permission IN ARRAY relevant_permissions
     LOOP
-        IF perm_target_type = 'table' AND has_table_privilege(qualified_name, permission)::integer = 1
+        IF perm_target_type = 'table' COLLATE sys.database_default AND has_table_privilege(qualified_name, permission)::integer = 1
             THEN RETURN 1;
-        ELSIF perm_target_type IN('function', 'procedure') AND has_function_privilege(function_signature, permission)::integer = 1
+        ELSIF perm_target_type COLLATE sys.database_default IN ('function', 'procedure') AND has_function_privilege(function_signature, permission)::integer = 1
             THEN RETURN 1;
         END IF;
     END LOOP;
@@ -10260,10 +10262,6 @@ AS 'babelfishpg_tsql', 'pltsql_get_last_cursor_handle' LANGUAGE C;
 CREATE OR REPLACE FUNCTION sys.babelfish_pltsql_get_last_stmt_handle()
 RETURNS INT
 AS 'babelfishpg_tsql', 'pltsql_get_last_stmt_handle' LANGUAGE C;
-
-CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
-LANGUAGE C
-AS 'babelfishpg_tsql', 'get_server_collation_oid';
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
 RETURNS text

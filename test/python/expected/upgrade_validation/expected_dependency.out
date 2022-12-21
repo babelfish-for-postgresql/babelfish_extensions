@@ -51,7 +51,6 @@ Collation sys.greek_ci_ai
 Collation sys.hebrew_ci_ai
 Collation sys.hebrew_ci_as
 Collation sys.japanese_ci_ai
-Collation sys.japanese_ci_as
 Collation sys.japanese_cs_as
 Collation sys.korean_wansung_ci_ai
 Collation sys.korean_wansung_ci_as
@@ -95,11 +94,8 @@ Function sys.abs(sys.fixeddecimal)
 Function sys.applock_mode(character varying,character varying,character varying)
 Function sys.applock_test(character varying,character varying,character varying,character varying)
 Function sys.assemblyproperty(character varying,character varying)
-Function sys.babelfish_cast_floor_bigint(anyelement)
 Function sys.babelfish_cast_floor_bigint(text)
-Function sys.babelfish_cast_floor_int(anyelement)
 Function sys.babelfish_cast_floor_int(text)
-Function sys.babelfish_cast_floor_smallint(anyelement)
 Function sys.babelfish_cast_floor_smallint(text)
 Function sys.babelfish_collation_list()
 Function sys.babelfish_concat_wrapper(text,text)
@@ -426,7 +422,6 @@ Function sys.ftrunci2(real)
 Function sys.ftrunci4(real)
 Function sys.ftrunci8(real)
 Function sys.fulltextserviceproperty(text)
-Function sys.get_babel_server_collation_oid()
 Function sys.get_current_full_xact_id()
 Function sys.get_host_os()
 Function sys.getdate()
@@ -962,12 +957,9 @@ Type sys.bbf_varbinary
 Type sys.cursor
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
-View information_schema_tsql.columns
 View information_schema_tsql.constraint_column_usage
 View information_schema_tsql.domains
 View information_schema_tsql.routines
-View information_schema_tsql.table_constraints
-View information_schema_tsql.tables
 View information_schema_tsql.views
 View sys.all_columns
 View sys.all_sql_modules_internal
@@ -1010,8 +1002,6 @@ View sys.spt_tablecollations_view
 View sys.stats
 View sys.synonyms
 View sys.syscharsets
-View sys.sysindexes
 View sys.syslanguages
-View sys.system_objects
 View sys.xml_indexes
 View sys.xml_schema_collections

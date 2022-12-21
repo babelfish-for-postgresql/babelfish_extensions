@@ -203,14 +203,14 @@ SELECT * FROM babel_3556_before_14_6_vu_prepare_v8;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+~~ERROR (Message: value "922337203685478" is out of range for type money)~~
 
 
 SELECT * FROM babel_3556_before_14_6_vu_prepare_v9;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
 
 
 SELECT * FROM babel_3556_before_14_6_vu_prepare_v10;

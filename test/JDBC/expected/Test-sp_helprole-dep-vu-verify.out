@@ -1,0 +1,22 @@
+CREATE ROLE sp_helprole_role1;
+GO
+
+EXEC test_sp_helprole_proc "sp_helprole_role1";
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int#!#int
+sp_helprole_role1#!#1#!#0
+~~END~~
+
+
+EXEC test_sp_helprole_proc "SP_helprole_RoLe1";
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int#!#int
+sp_helprole_role1#!#1#!#0
+~~END~~
+
