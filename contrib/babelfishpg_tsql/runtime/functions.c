@@ -1001,8 +1001,8 @@ object_id(PG_FUNCTION_ARGS)
 
 	if (strcmp(object_type, "")) /* object_type is not empty */
 	{
-		if (strcmp(object_type, "S") || strcmp(object_type, "U") || strcmp(object_type, "V") ||
-				strcmp(object_type, "IT") || strcmp(object_type, "ET") || strcmp(object_type, "SO"))
+		if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
+				!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
 		{
 			if(is_temp_object)
 			{
@@ -1015,7 +1015,7 @@ object_id(PG_FUNCTION_ARGS)
 				{	
 					reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
 					relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
-					if(strcmp(relname, object_name))
+					if(!strcmp(relname, object_name))
 					{
 						result = reloid;
 						break;
@@ -1028,8 +1028,8 @@ object_id(PG_FUNCTION_ARGS)
 				result = get_relname_relid((const char *) object_name, schema_oid); 
 			}
 		}
-		else if (strcmp(object_type, "C") || strcmp(object_type, "D") || strcmp(object_type, "F") ||
-					strcmp(object_type, "PK") || strcmp(object_type, "UQ"))
+		else if (!strcmp(object_type, "C") || !strcmp(object_type, "D") || !strcmp(object_type, "F") ||
+					!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
 		{
 			/* Search in pg_constraint by name and schema oid */
 			tgrel = table_open(ConstraintRelationId, AccessShareLock);
@@ -1058,10 +1058,10 @@ object_id(PG_FUNCTION_ARGS)
 			systable_endscan(tgscan);
 			table_close(tgrel, AccessShareLock);
 		}
-		else if (strcmp(object_type, "AF") || strcmp(object_type, "FN") || strcmp(object_type, "FS") ||
-					strcmp(object_type, "FT") || strcmp(object_type, "IF") || strcmp(object_type, "P") ||
-					strcmp(object_type, "PC") || strcmp(object_type, "TF") || strcmp(object_type, "RF") ||
-					strcmp(object_type, "X")
+		else if (!strcmp(object_type, "AF") || !strcmp(object_type, "FN") || !strcmp(object_type, "FS") ||
+					!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
+					!strcmp(object_type, "PC") || !strcmp(object_type, "TF") || !strcmp(object_type, "RF") ||
+					!strcmp(object_type, "X")
 					)
 		{
 			/* Search in pg_proc by name only */
@@ -1075,7 +1075,7 @@ object_id(PG_FUNCTION_ARGS)
 				ReleaseSysCacheList(catlist);
 			}
 		}
-		else if (strcmp(object_type, "TR") || strcmp(object_type, "TA"))
+		else if (!strcmp(object_type, "TR") || !strcmp(object_type, "TA"))
 		{
 			/* Search in pg_trigger by name */
 			tgrel = table_open(TriggerRelationId, AccessShareLock);
@@ -1097,8 +1097,8 @@ object_id(PG_FUNCTION_ARGS)
 			systable_endscan(tgscan);
 			table_close(tgrel, AccessShareLock);
 		}
-		else if (strcmp(object_type, "R") || strcmp(object_type, "EC") || strcmp(object_type, "PG") ||
-					strcmp(object_type, "SN") || strcmp(object_type, "SQ") || strcmp(object_type, "TT"))
+		else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
+					!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1123,7 +1123,7 @@ object_id(PG_FUNCTION_ARGS)
 			{	
 				reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
 				relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
-				if(strcmp(relname, object_name))
+				if(!strcmp(relname, object_name))
 				{
 					result = reloid;
 					break;
