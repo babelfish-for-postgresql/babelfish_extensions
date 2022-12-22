@@ -127,5 +127,6 @@ jobs:
             sed -i -r 's/(.*)(BABELFISH_INTERNAL_VERSION_STR )"(Babelfish )([0-9]+.[0-9]+.)([0-9]+)(.[0-9]+)"/echo "\1\2\\"\3\4$((\5+1))\6\\""/ge' $vfile
             sed -i -r 's/(.*)(BABELFISH_VERSION_STR )"([0-9]+.[0-9]+.)([0-9]+)"/echo "\1\2\\"\3$((\4+1))\\""/ge' $vfile
             git diff
+            git add .
             git commit -m "Bump Babelfish Version to ${{ env.bbf_new_version }}"
             git push -u origin bump-ver-${{ env.bbf_new_version }}
