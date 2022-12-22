@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXT_BRANCH_URL: https://github.com/shah-nirmit/babelfish_extensions
+      GITHUB_TOKEN: ${{ secrets.MACHINE_PAT }}
     steps:
     # Runs a single command using the runners shell
     #    - name: Checkout Extensions
