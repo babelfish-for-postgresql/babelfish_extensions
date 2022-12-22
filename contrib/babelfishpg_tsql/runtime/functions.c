@@ -976,9 +976,14 @@ object_id(PG_FUNCTION_ARGS)
 
 	/* 
 	 * Resolve the three part name
-	 * get physical schema name from logical schema name
-	 * valid names are db_name.schema_name.object_name or schema_name.object_name or object_name
+	 * Get physical schema name from logical schema name
+	 * Valid formats are db_name.schema_name.object_name or schema_name.object_name or object_name
 	 */
+
+	/* Invalid format if starts or ends with '.' */
+	if(object_name != NULL && (object_name[0] == '.' || object_name[strlen(object_name) - 1] == '.')) 
+		PG_RETURN_INT32(InvalidOid);
+	
 	for (i = 0; i < strlen(object_name); i++)
 	{
 		if (object_name[i] == '.')
