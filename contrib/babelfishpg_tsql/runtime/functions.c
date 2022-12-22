@@ -940,7 +940,7 @@ static char* remove_delimiter_pair(char *str)
 		{	
 			char *res = (char *) palloc((len - 1) * sizeof(char));
 			strncpy(res, &str[1], len - 2);
-			res[len - 2] = '\n';
+			res[len - 2] = '\0';
 			return res;
 		} 
 		else
