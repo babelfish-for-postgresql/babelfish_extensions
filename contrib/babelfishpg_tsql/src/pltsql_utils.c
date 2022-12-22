@@ -195,10 +195,10 @@ void pltsql_declare_variable(Oid type, int32 typmod, char *name, char mode, Datu
 	(*fcinfo)->nargs++;
 	
 	/* Safety check */
-	if ((*fcinfo)->nargs > FUNC_MAX_ARGS)
+	if ((*fcinfo)->nargs - 2 > PREPARE_STMT_MAX_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				errmsg("cannot pass more than %d arguments to a procedure",
-				       FUNC_MAX_ARGS)));
+				       PREPARE_STMT_MAX_ARGS)));
 }
 
 /*

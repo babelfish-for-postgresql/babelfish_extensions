@@ -732,7 +732,7 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults, int** typmod_arr_arg, bool* has_tvp)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
-	HeapTuple	bbffunctuple;
+	HeapTuple	bbffunctuple = NULL;
 	int			numargs;
 	Oid		   *argtypes;
 	char	  **argnames;
