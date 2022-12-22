@@ -27,7 +27,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     env:
-      EXT_BRANCH_URL: https://github.com/naughtyb0y/babelfish_extensions.git
+      EXT_BRANCH_URL: https://github.com/shah-nirmit/babelfish_extensions
     steps:
     # Runs a single command using the runners shell
     #    - name: Checkout Extensions
@@ -87,6 +87,7 @@ jobs:
           id: ch-fork
           uses: actions/checkout@v3
           with:
+            repository: naughtyb0y/babelfish_extensions
             token: ${{ secrets.MACHINE_PAT }}
             fetch-depth: 0
 
