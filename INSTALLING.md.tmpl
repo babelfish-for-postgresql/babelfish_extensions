@@ -46,7 +46,7 @@ Navigate into the extracted distribution folder and set the following environmen
 
 ```sh
 export JOBS=4 # Adjust to number of cores
-export BABELFISH_HOME=/opt/babelfish/2.2.0
+export BABELFISH_HOME=/opt/babelfish/{{VERSION}}
 export PG_CONFIG=${BABELFISH_HOME}/bin/pg_config
 export PG_SRC=$(realpath $PWD)
 ```
@@ -151,7 +151,7 @@ done
 The steps required to create a new cluster and start the service are very similar to the steps required by a community PostgreSQL installation:
 
 ```sh
-sudo mkdir -p /var/lib/babelfish/2.2.0
+sudo mkdir -p /var/lib/babelfish/{{VERSION}}
 
 sudo adduser postgres --home /var/lib/babelfish
 ```
@@ -167,8 +167,8 @@ Switch to the `postgres` user (a non-superuser) and start the cluster:
 
 ```sh
 sudo su - postgres
-export BABELFISH_HOME=/opt/babelfish/2.2.0
-export BABELFISH_DATA=/var/lib/babelfish/2.2.0/data
+export BABELFISH_HOME=/opt/babelfish/{{VERSION}}
+export BABELFISH_DATA=/var/lib/babelfish/{{VERSION}}/data
 ```
 
 ### Initiating the Data directory
@@ -287,7 +287,7 @@ version
 Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
 ...
 Copyright (c) Amazon Web Services
-PostgreSQL 14.5 Babelfish for PostgreSQL on x86_64-pc-linux-gnu
+PostgreSQL {{ENGINE}} Babelfish for PostgreSQL on x86_64-pc-linux-gnu
 (1 row affected)
 ```
 
