@@ -131,3 +131,8 @@ jobs:
             git add .
             git commit -m "Bump Babelfish Version to ${{ env.bbf_new_version }}"
             git push -u origin bump-ver-${{ env.bbf_new_version }}
+
+        - name: Raise a PR
+          run: |
+            gh pr create --title "Bump Babelfish Version to ${{ env.bbf_new_version }}" --repo shah-nirmit/babelfish_extensions --base ${{ github.event.inputs.target_branch }} \
+                                  --body "Bump Babelfish Internal Version and Babelfish Version"
