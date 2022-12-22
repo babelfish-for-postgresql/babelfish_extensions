@@ -20,67 +20,84 @@ on:
         default: 'BABEL_2_X_DEV'
         required: false
 
-
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "greet"
   Auto-Bump-Version:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
+    env:
+      EXT_BRANCH_URL: https://github.com/babelfish-for-postgresql/babelfish_extensions.git
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
-    - name: Checkout Extensions
-      uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.inputs.target_branch}}
-      id: checkout
+    #    - name: Checkout Extensions
+    #      uses: actions/checkout@v3
+    #      with:
+    #        ref: ${{ github.event.inputs.target_branch}}
+    #      id: checkout
+    #
+    #    - name: Check Current Version
+    #      if: always() && steps.checkout.outcome == 'success'
+    #      id: bump_version
+    #      run: |
+    #        vfile=contrib/babelfishpg_tsql/src/babelfish_version.h
+    #        # bump babelfish internal version
+    #        bbf_int_pre_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
+    #        echo "bbf_int_old_version=$bbf_int_pre_version" >> $GITHUB_ENV
+    #        sed -i -r 's/(.*)(BABELFISH_INTERNAL_VERSION_STR )"(Babelfish )([0-9]+.[0-9]+.)([0-9]+)(.[0-9]+)"/echo "\1\2\\"\3\4$((\5+1))\6\\""/ge' $vfile
+    #        bbf_int_post_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
+    #        echo "bbf_int_new_version=$bbf_int_post_version" >> $GITHUB_ENV
+    #        # bump babelfish version
+    #        bbf_pre_version=$(awk '/BABELFISH_VERSION_STR/ {print $3}' $vfile | sed 's/\"//')
+    #        echo "bbf_old_version=$bbf_pre_version" >> $GITHUB_ENV
+    #        sed -i -r 's/(.*)(BABELFISH_VERSION_STR )"([0-9]+.[0-9]+.)([0-9]+)"/echo "\1\2\\"\3$((\4+1))\\""/ge' $vfile
+    #        bbf_post_version=$(awk '/BABELFISH_VERSION_STR/ {print $3}' $vfile | sed 's/\"//')
+    #        echo "bbf_new_version=$bbf_post_version" >> $GITHUB_ENV
+    #        git status
+    #        git add .
+    #
+    #    - name : Create Pull Request
+    #      if: always() && steps.bump_version.outcome == 'success'
+    #      id: cpr
+    #      uses: peter-evans/create-pull-request@v4
+    #      with:
+    #        token: ${{ secrets.MACHINE_PAT }}
+    #        push-to-fork: ahmed-shameem/babelfish_extensions_machine
+    #        commit-message: Bump Babelfish Version to ${{ env.bbf_new_version }}
+    #        title: Bump Babelfish  Version to ${{ env.bbf_new_version }}
+    #        base: ${{ github.event.inputs.target_branch }}
+    #        delete-branch: true
+    #        branch: Bump-Ver-${{ env.bbf_new_version }}
+    #        body: Automated Version Bump to  ${{ env.bbf_new_version }} also update Internal Version to ${{ env.bbf_int_new_version }}
+    #
+    #    - name: Enable Pull Request Automerge
+    #      if: steps.cpr.outputs.pull-request-operation == 'created'
+    #      uses: peter-evans/enable-pull-request-automerge@v2
+    #      with:
+    #        pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+    #        merge-method: squash
+    #
+    #    - name: Auto approve
+    #      if: steps.cpr.outputs.pull-request-operation == 'created'
+    #      uses: juliangruber/approve-pull-request-action@v2
+    #      with:
+    #        github-token: ${{ secrets.GITHUB_TOKEN }}
+    #        number: ${{ steps.cpr.outputs.pull-request-number }}
+        - name: checkout the fork repo
+          id: ch-fork
+          uses: actions/checkout@v3
+          with:
+            token: {{ secrets.MACHINE_PAT }}
+            fetch-depth: 0
 
-    - name: Check Current Version
-      if: always() && steps.checkout.outcome == 'success'
-      id: bump_version
-      run: |
-        vfile=contrib/babelfishpg_tsql/src/babelfish_version.h
-        # bump babelfish internal version
-        bbf_int_pre_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
-        echo "bbf_int_old_version=$bbf_int_pre_version" >> $GITHUB_ENV
-        sed -i -r 's/(.*)(BABELFISH_INTERNAL_VERSION_STR )"(Babelfish )([0-9]+.[0-9]+.)([0-9]+)(.[0-9]+)"/echo "\1\2\\"\3\4$((\5+1))\6\\""/ge' $vfile
-        bbf_int_post_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
-        echo "bbf_int_new_version=$bbf_int_post_version" >> $GITHUB_ENV
-        # bump babelfish version
-        bbf_pre_version=$(awk '/BABELFISH_VERSION_STR/ {print $3}' $vfile | sed 's/\"//')
-        echo "bbf_old_version=$bbf_pre_version" >> $GITHUB_ENV
-        sed -i -r 's/(.*)(BABELFISH_VERSION_STR )"([0-9]+.[0-9]+.)([0-9]+)"/echo "\1\2\\"\3$((\4+1))\\""/ge' $vfile
-        bbf_post_version=$(awk '/BABELFISH_VERSION_STR/ {print $3}' $vfile | sed 's/\"//')
-        echo "bbf_new_version=$bbf_post_version" >> $GITHUB_ENV
-        git status
-        git add .
+        - name: add the remote and setup tracking branch
+          id: setup-tr-branch
+          run: |
+            git remote add upstream ${{ env.EXT_BRANCH_URL }}
+            git remote -vv
+            git fetch upstream
+            git checkout --track upstream/BABEL_2_X_DEV
+            git status
+            git branch -vv
 
-    - name : Create Pull Request
-      if: always() && steps.bump_version.outcome == 'success'
-      id: cpr
-      uses: peter-evans/create-pull-request@v4
-      with:
-        token: ${{ secrets.MACHINE_PAT }}
-        push-to-fork: naughtyb0y/babelfish_extensions
-        commit-message: Bump Babelfish Version to ${{ env.bbf_new_version }}
-        title: Bump Babelfish  Version to ${{ env.bbf_new_version }}
-        base: ${{ github.event.inputs.target_branch }}
-        delete-branch: true
-        branch: Bump-Ver-${{ env.bbf_new_version }}
-        body: Automated Version Bump to  ${{ env.bbf_new_version }} also update Internal Version to ${{ env.bbf_int_new_version }}
-
-    - name: Enable Pull Request Automerge
-      if: steps.cpr.outputs.pull-request-operation == 'created'
-      uses: peter-evans/enable-pull-request-automerge@v2
-      with:
-        pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
-        merge-method: squash
-
-    - name: Auto approve
-      if: steps.cpr.outputs.pull-request-operation == 'created'
-      uses: juliangruber/approve-pull-request-action@v2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        number: ${{ steps.cpr.outputs.pull-request-number }}
