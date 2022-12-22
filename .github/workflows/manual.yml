@@ -27,8 +27,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     env:
-      EXT_BRANCH_URL: https://github.com/babelfish-for-postgresql/babelfish_extensions.git
-    # Steps represent a sequence of tasks that will be executed as part of the job
+      EXT_BRANCH_URL: https://github.com/shah-nirmit/babelfish_extensions.git
     steps:
     # Runs a single command using the runners shell
     #    - name: Checkout Extensions
@@ -100,4 +99,23 @@ jobs:
             git checkout --track upstream/BABEL_2_X_DEV
             git status
             git branch -vv
+        - name: Identify the version to bump
+          id: identify-versions
+          run: |
+            vfile=contrib/babelfishpg_tsql/src/babelfish_version.h
+            # bump babelfish internal version
+            bbf_int_pre_version=$(awk '/BABELFISH_INTERNAL_VERSION_STR/ {print $4}' $vfile | sed 's/\"//')
+            echo "bbf_int_old_version=$bbf_int_pre_version" >> $GITHUB_ENV
+            bbf_int_new_version= $(awk -F'[ ."]' '/^#define BABELFISH_INT/ {print $5"."$6"."$7+1"."$8}' $vfile )
+            echo "bbf_int_new_version=$bbf_int_new_version" >> $GITHUB_ENV
+            # bump babelfish version
+            bbf_pre_version=$(awk '/BABELFISH_VERSION_STR/ {print $3}' $vfile | sed 's/\"//')
+            echo "bbf_old_version=$bbf_pre_version" >> $GITHUB_ENV
+            bbf_new_version=$( awk -F'[ ."]' '/^#define BABELFISH_VER/ {print $4"."$5"."$6+1}' $vfile)
+            echo "bbf_new_version=$bbf_new_version" >> GITHUB_ENV
+
+        - name: Test vars
+          run: |
+            echo ${{ env.bbf_new_version }}
+            echo ${{ env.bbf_int_new_version }}
 
