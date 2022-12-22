@@ -81,16 +81,34 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	Oid			roleid;
 	ListCell	*option;
 	char		*default_database = NULL;
+	char		*orig_loginname = NULL;
 
+	bool 		from_windows = false;
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
-
+		
+		int i = 0;
 		if (strcmp(defel->defname, "default_database") == 0)
 		{
 			if (defel->arg)
 				default_database = strVal(defel->arg);
+		}
+		else if (strcmp(defel->defname, "original_login_name") == 0)
+		{
+			if (defel->arg){
+				orig_loginname = strVal(defel->arg);
+				while(orig_loginname[i] != '\0'){
+					orig_loginname[i] = tolower(orig_loginname[i]);
+					i++;
+				}
+			}
+		}
+		else if (strcmp(defel->defname, "from_windows") == 0)
+		{
+			if (defel->arg)
+				from_windows = true;
 		}
 	}
 
@@ -101,6 +119,8 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("The database '%s' does not exist. Supply a valid database name. To see available databases, use sys.databases.", default_database)));
 
+	if(!orig_loginname)
+		orig_loginname = stmt->role;
 	/* Fetch roleid */
 	roleid = get_role_oid(stmt->role, false);
 
@@ -117,6 +137,8 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	new_record_login_ext[LOGIN_EXT_IS_DISABLED] = Int32GetDatum(0);
 	if (strcmp(stmt->role, "sysadmin") == 0)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
+	else if (from_windows)
+		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("U");
 	else
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_login_ext[LOGIN_EXT_CREDENTIAL_ID] = Int32GetDatum(-1); /* placeholder */
@@ -124,6 +146,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
 	new_record_login_ext[LOGIN_EXT_CREATE_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
 	new_record_login_ext[LOGIN_EXT_MODIFY_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
+	new_record_login_ext[LOGIN_EXT_ORIG_LOGINNAME] = CStringGetTextDatum(orig_loginname);
 	new_record_login_ext[LOGIN_EXT_DEFAULT_DATABASE_NAME] = CStringGetTextDatum(default_database);
 	new_record_login_ext[LOGIN_EXT_DEFAULT_LANGUAGE_NAME] = CStringGetTextDatum("English"); /* placeholder */
 	new_record_nulls_login_ext[LOGIN_EXT_PROPERTIES] = true;

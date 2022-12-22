@@ -147,6 +147,7 @@ static Constraint *get_rowversion_default_constraint(TypeName *typname);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
+static char* convertToUPN(char* input);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -2018,6 +2019,61 @@ static inline bool process_utility_stmt_explain_only_mode(const char *queryStrin
 	return true;
 }
 
+/* 
+* This function is called to convert domain\user to user@DOMAIN
+*/
+
+static char* convertToUPN(char* input){
+	int i=0, pos_slash = -1, k=0, pos_at = -1;
+    char* output = malloc(strlen(input));
+    while(input[i]!='\0'){
+        if(input[i] == '\\'){
+            pos_slash = i;
+            break;
+        }
+        else if(input[i] == '@'){
+            pos_at = i;
+            break;
+        }
+        i++;
+    }
+
+    if(pos_slash == -1 && pos_at == -1)
+        return input;
+    
+    if(pos_slash != -1){
+        i = pos_slash + 1;
+        
+        while(input[i]!='\0'){
+            output[k] = tolower(input[i]);
+            i++;
+            k++;
+        }
+        output[k++] = '@';
+        i = 0;
+        while(i != pos_slash){
+        	output[k] = toupper(input[i]);
+            i++;
+            k++;
+        }
+    }
+        
+    else{
+        i = 0;
+        while(input[i] != '\0'){
+            if(i<pos_at)
+                output[i] = tolower(input[i]);
+            else if(i> pos_at)
+                output[i] = toupper(input[i]);
+            else
+                output[i] = input[i];
+            i++;
+        }
+    }
+
+    return output;
+}
+
 /*
  * Use this hook to handle utility statements that needs special treatment, and
  * use the standard ProcessUtility for other statements.
@@ -2300,6 +2356,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				bool			isuser = false;
 				bool			isrole = false;
 
+				char			*orig_loginname; // POC code - shameem
+				char 			*from_windows;
+				int location_windows = -1;
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
 				{
@@ -2311,6 +2370,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if (strcmp(headel->defname, "islogin") == 0)
 					{
+						int location = -1;
+						
 						islogin = true;
 						stmt->options = list_delete_cell(stmt->options,
 														 list_head(stmt->options));
@@ -2323,6 +2384,16 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "default_database") == 0)
 								login_options = lappend(login_options, defel);
+							else if (strcmp(defel->defname, "name_location") == 0)
+							{
+								location = defel->location;
+								login_options = lappend(login_options, defel);
+							}
+							else if (strcmp(defel->defname, "name_location_windows") == 0)
+							{
+								location_windows = defel->location;
+								login_options = lappend(login_options, defel);
+							}
 						}
 
 						foreach(option, login_options)
@@ -2330,6 +2401,23 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							stmt->options = list_delete_ptr(stmt->options,
 															lfirst(option));
 						}
+						if (location >= 0)
+						{
+							orig_loginname = extract_identifier(queryString + location);
+							login_options = lappend(login_options,
+												   makeDefElem("original_login_name",
+															   (Node *) makeString(orig_loginname),
+															   -1));
+						}
+						if (location_windows >= 0)
+						{
+							from_windows = extract_identifier(queryString + location_windows);
+							login_options = lappend(login_options,
+												   makeDefElem("from_windows",
+															   (Node *) makeString(from_windows),
+															   -1));
+						}
+
 					}
 					else if (strcmp(headel->defname, "isuser") == 0)
 					{
@@ -2441,6 +2529,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_set_current_user("sysadmin");
 
+					if(location_windows!=-1)
+						stmt->role = convertToUPN(orig_loginname);
+
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)
@@ -2455,6 +2546,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						stmt->options = list_concat(stmt->options,
 													login_options);
 						create_bbf_authid_login_ext(stmt);
+						// if(location_windows!=-1)
+						// 	SPI_execute("GRANT rds_ad TO ")
 					}
 					PG_CATCH();
 					{
@@ -2896,6 +2989,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else
 						bbf_set_current_user("sysadmin");
 
+					// stmt->roles->length --> shameem poc
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)

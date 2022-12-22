@@ -47,6 +47,14 @@ tsql_CreateLoginStmt:
 										 makeDefElem("canlogin",
 													 (Node *)makeBoolean(true),
 													 @1));
+					n->options = lappend(n->options,
+											 makeDefElem("name_location",
+														 (Node *)makeInteger(@3),
+														 @3));
+					n->options = lappend(n->options,
+											 makeDefElem("name_location_windows",
+														 (Node *)makeInteger(@5),
+														 @3));
 					$$ = (Node *)n;
 				}
 			| CREATE TSQL_LOGIN RoleId tsql_login_option_list1
@@ -74,6 +82,10 @@ tsql_CreateLoginStmt:
 													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = list_concat(n->options, $4);
+					n->options = lappend(n->options,
+											 makeDefElem("name_location",
+														 (Node *)makeInteger(@3),
+														 @3));
 					$$ = (Node *)n;
 				}
 		;

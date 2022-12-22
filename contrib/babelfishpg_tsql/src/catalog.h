@@ -66,6 +66,7 @@ typedef struct FormData_authid_login_ext
 	int32     	is_fixed_role;
 	TimestampTz	create_date;
 	TimestampTz	modify_date;
+	VarChar		orig_loginname;
 	VarChar		default_database_name;
 	VarChar		default_language_name;
 	Jsonb		properties;
