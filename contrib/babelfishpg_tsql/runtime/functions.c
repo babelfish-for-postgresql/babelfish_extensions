@@ -928,6 +928,24 @@ checksum(PG_FUNCTION_ARGS)
         PG_RETURN_INT32(result);
 }
 
+static char* remove_delimiter_pair(char *str)
+{	
+	int len = strlen(str);
+	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
+	{	
+		if(len > 2)
+		{	
+			char *res = (char *) palloc((len - 1) * sizeof(char));
+			strncpy(res, &str[1], len - 2);
+			return res;
+		} 
+		else
+			return "";
+			
+	}
+	return str;
+}
+
 Datum
 object_id(PG_FUNCTION_ARGS)
 {	
@@ -957,36 +975,37 @@ object_id(PG_FUNCTION_ARGS)
 	 * get physical schema name from logical schema name
 	 * valid names are db_name.schema_name.object_name or schema_name.object_name or object_name
 	 */
-	for(i = 0; i < strlen(object_name); i++)
+	for (i = 0; i < strlen(object_name); i++)
 	{
-		if(object_name[i] == '.')
+		if (object_name[i] == '.')
 			count++;
 	}
 	token = strtok(object_name,".");
-	switch(count)
+	switch (count)
 	{
 		case 0:
 			db_name = get_cur_db_name();
 			physical_schema_name = get_physical_schema_name(db_name, "dbo");
+			object_name = remove_delimiter_pair(token);
 			break;
 		case 1:
 			db_name = get_cur_db_name();
-			physical_schema_name = get_physical_schema_name(db_name, token);
+			physical_schema_name = get_physical_schema_name(db_name, remove_delimiter_pair(token));
 			token = strtok(NULL, ".");
-			object_name = token;
+			object_name = remove_delimiter_pair(token);
 			break;
 		case 2:
-			db_name = token;
+			db_name = remove_delimiter_pair(token);
 			token = strtok(NULL, ".");
-			physical_schema_name = get_physical_schema_name(db_name, token);
+			physical_schema_name = get_physical_schema_name(db_name, remove_delimiter_pair(token));
 			token = strtok(NULL, ".");
-			object_name = token;
+			object_name = remove_delimiter_pair(token);
 			break;
 		default:
 			PG_RETURN_INT32(InvalidOid);
 	}
 	/* Check if looking in current database, if not then return null value */
-	if(strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
+	if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
 		PG_RETURN_INT32(InvalidOid);
 
 	/* Get schema oid from physical schema name */
@@ -1004,7 +1023,7 @@ object_id(PG_FUNCTION_ARGS)
 		if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
 				!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
 		{
-			if(is_temp_object)
+			if (is_temp_object)
 			{
 				/* Search in list of ENRs registered in the current query environment by name */
 				List *enr_list = get_namedRelList();
@@ -1015,7 +1034,7 @@ object_id(PG_FUNCTION_ARGS)
 				{	
 					reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
 					relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
-					if(!strcmp(relname, object_name))
+					if (!strcmp(relname, object_name))
 					{
 						result = reloid;
 						break;
@@ -1050,7 +1069,7 @@ object_id(PG_FUNCTION_ARGS)
 			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 			{
 				Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-				if(OidIsValid(con->oid))
+				if (OidIsValid(con->oid))
 				{
 					result = con->oid;
 				}
@@ -1066,7 +1085,7 @@ object_id(PG_FUNCTION_ARGS)
 		{
 			/* Search in pg_proc by name only */
 			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
-			if(catlist->n_members)
+			if (catlist->n_members)
 			{	
 				Form_pg_proc procform;
 				tuple = &catlist->members[0]->tuple;
@@ -1112,7 +1131,7 @@ object_id(PG_FUNCTION_ARGS)
 	}
 	else
 	{	
-		if(is_temp_object) /* temp object without "object_type" in-argument */
+		if (is_temp_object) /* temp object without "object_type" in-argument */
 		{
 			/* Search in list of ENRs registered in the current query environment by name */
 			List *enr_list = get_namedRelList();
@@ -1123,7 +1142,7 @@ object_id(PG_FUNCTION_ARGS)
 			{	
 				reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
 				relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
-				if(!strcmp(relname, object_name))
+				if (!strcmp(relname, object_name))
 				{
 					result = reloid;
 					break;
@@ -1151,7 +1170,7 @@ object_id(PG_FUNCTION_ARGS)
 			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 			{
 				Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-				if(OidIsValid(con->oid))
+				if (OidIsValid(con->oid))
 				{
 					result = con->oid;
 				}
@@ -1163,7 +1182,7 @@ object_id(PG_FUNCTION_ARGS)
 
 			/* Search in pg_class by name and schema oid */
 			result = get_relname_relid((const char *) object_name, schema_oid); 
-			if(OidIsValid(result))
+			if (OidIsValid(result))
 				PG_RETURN_INT32(result);
 
 			/* Search in pg_trigger by name */
@@ -1186,19 +1205,19 @@ object_id(PG_FUNCTION_ARGS)
 			}
 			systable_endscan(tgscan);
 			table_close(tgrel, AccessShareLock);
-			if(OidIsValid(result))
+			if (OidIsValid(result))
 				PG_RETURN_INT32(result);
 
 			/* Search in pg_proc by name only */
 			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
-			if(catlist->n_members)
+			if (catlist->n_members)
 			{	
 				Form_pg_proc procform;
 				tuple = &catlist->members[0]->tuple;
 				procform = (Form_pg_proc) GETSTRUCT(tuple);
 				result = procform->oid;
 				ReleaseSysCacheList(catlist);
-				if(OidIsValid(result))
+				if (OidIsValid(result))
 					PG_RETURN_INT32(result);
 			}
 		}
