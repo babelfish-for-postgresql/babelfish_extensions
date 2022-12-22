@@ -933,7 +933,11 @@ checksum(PG_FUNCTION_ARGS)
 
 static char* remove_delimiter_pair(char *str)
 {	
-	int len = strlen(str);
+	int len;
+	if(!str)
+		return str;
+	
+	len = strlen(str);
 	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
 	{	
 		if(len > 2)
@@ -979,11 +983,6 @@ object_id(PG_FUNCTION_ARGS)
 	 * Get physical schema name from logical schema name
 	 * Valid formats are db_name.schema_name.object_name or schema_name.object_name or object_name
 	 */
-
-	/* Invalid format if starts or ends with '.' */
-	if(object_name != NULL && (object_name[0] == '.' || object_name[strlen(object_name) - 1] == '.')) 
-		PG_RETURN_INT32(InvalidOid);
-	
 	for (i = 0; i < strlen(object_name); i++)
 	{
 		if (object_name[i] == '.')
