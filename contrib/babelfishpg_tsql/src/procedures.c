@@ -13,6 +13,7 @@
 #include "access/relation.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_proc.h"
 #include "commands/prepare.h"
 #include "common/string.h"
 #include "executor/spi.h"
@@ -26,6 +27,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 #include "pltsql_instr.h"
 #include "parser/parser.h"
 #include "parser/parse_target.h"
@@ -52,6 +54,7 @@ PG_FUNCTION_INFO_V1(sp_addrole);
 PG_FUNCTION_INFO_V1(sp_droprole);
 PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
+PG_FUNCTION_INFO_V1(sp_volatility);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -2061,4 +2064,214 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 
 	rewrite_object_refs(stmt);
 	return res;
+}
+
+Datum sp_volatility(PG_FUNCTION_ARGS)
+{
+	char *query;
+	int rc;
+	char nulls = 0;
+
+	MemoryContext savedPortalCxt;
+	SPIPlanPtr plan;
+	Portal portal;
+	DestReceiver *receiver;
+
+	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+
+	int i;
+	int count = 0;
+	char *token;
+	char *db_name = get_cur_db_name();
+	char *physical_schema_name;
+	char *logical_schema_name;
+	char *full_function_name;
+
+	/*
+	HeapTuple tp;
+	Oid	result;
+	Form_pg_proc pg_proc;
+	*/
+	FuncCandidateList candidates = NULL;
+
+	if(function_name != NULL)
+	{	
+		/* strip trailing whitespace */
+		i = strlen(function_name);
+		while (i > 0 && isspace((unsigned char) function_name[i - 1]))
+			function_name[--i] = '\0';
+
+		if(!strlen(function_name))
+			function_name = NULL;
+	}
+	if(volatility != NULL)
+	{
+		/* strip trailing whitespace */
+		i = strlen(volatility);
+		while (i > 0 && isspace((unsigned char) volatility[i - 1]))
+			volatility[--i] = '\0';
+
+		if(!strlen(volatility))
+			volatility = NULL;
+	}
+	
+	if(function_name == NULL && volatility != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("Enter a valid Function Name")));
+
+	if(function_name != NULL)
+	{	
+		function_name = lowerstr(function_name);
+
+		/* get physical schema name */
+		for(i = 0; i < strlen(function_name); i++)
+		{
+			if(function_name[i] == '.')
+				count++;
+		}
+		switch(count)
+		{
+			case 0:
+				logical_schema_name = "dbo";
+				break;
+			case 1:
+				token = strtok(function_name,".");
+				logical_schema_name = token;
+				token = strtok(NULL, ".");
+				function_name = token;
+				break;
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("%s function not found", function_name)));
+		}
+		physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
+
+
+		/* get function id from function name*/
+		candidates = FuncnameGetCandidates(list_make2(makeString(physical_schema_name),makeString(function_name)), -1, NIL, false, false, false, true);
+		full_function_name = psprintf("%s.%s", physical_schema_name, function_name);
+
+		/* if no function is found */
+		if(candidates == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("%s function not found", function_name)));
+
+		/* search function in pg_proc
+		tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(candidates->oid));
+		if (!HeapTupleIsValid(tp))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("%s function not found", function_name)));
+
+		pg_proc = ((Form_pg_proc) GETSTRUCT(tp));
+		if(pg_proc->prokind != PROKIND_FUNCTION)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("%s is not a function", function_name)));
+
+		result = pg_proc->provolatile;
+		ReleaseSysCache(tp);
+		*/
+	}
+	if(volatility == NULL)
+	{	
+		if(function_name == NULL)
+		{
+			query = "SELECT pg_namespace.nspname as SchemaName, pg_proc.proname as FunctionName, provolatile as Volatility from pg_proc "
+					"JOIN pg_namespace ON pg_proc.pronamespace = pg_namespace.oid where pg_proc.prokind = 'f' "
+					"AND pg_namespace.nspname <> 'sys' AND pg_namespace.nspname <> 'pg_toast' AND pg_namespace.nspname <> 'public' "
+					"AND pg_namespace.nspname <> 'pg_catalog' AND pg_namespace.nspname <> 'information_schema' "
+					"AND pg_namespace.nspname <> 'information_schema_tsql' AND pg_namespace.nspname <> 'dbo' ";
+		}
+		else
+		{
+			query = psprintf("SELECT '%s' as SchemaName, proname as FunctionName, provolatile as Volatility from pg_proc "
+							 "where oid = %u", logical_schema_name, candidates->oid);
+		}
+
+		PG_TRY();
+		{
+			savedPortalCxt = PortalContext;
+			if (PortalContext == NULL)
+				PortalContext = MessageContext;
+			if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+				elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+			PortalContext = savedPortalCxt;
+
+			if ((plan = SPI_prepare(query, 0, NULL)) == NULL)
+				elog(ERROR, "SPI_prepare(\"%s\") failed", query);
+
+			if ((portal = SPI_cursor_open(NULL, plan, NULL, &nulls, true)) == NULL)
+				elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
+
+			/*
+			* According to specifictation, sp_volatility returns a result-set.
+			* If there is no destination, it will send the result-set to client, which is not allowed behavior of PG procedures.
+			* To implement this behavior, we added a code to push the result.
+			*/
+			receiver = CreateDestReceiver(DestRemote);
+			SetRemoteDestReceiverParams(receiver, portal);
+
+			/* fetch the result and return the result-set */
+			PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
+
+			receiver->rDestroy(receiver);
+			SPI_cursor_close(portal);
+
+			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+		}
+		PG_CATCH();
+		{
+			SPI_finish();
+			PG_RE_THROW();
+		}
+		PG_END_TRY();	
+	}
+	else
+	{
+		/*
+		if(!strcmp(volatility,"volatile"))
+			result = PROVOLATILE_VOLATILE;
+		else if(!strcmp(volatility,"stable"))
+			result = PROVOLATILE_STABLE;
+		else if(!strcmp(volatility,"stable"))
+			result = PROVOLATILE_IMMUTABLE;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Enter a valid volatility")));
+		*/
+		volatility = lowerstr(volatility);
+		
+		if(strcmp(volatility,"volatile") && strcmp(volatility,"stable") && strcmp(volatility,"immutable"))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Enter a valid volatility")));
+
+		query = psprintf("ALTER FUNCTION %s %s;", full_function_name, volatility);
+
+		PG_TRY();
+		{
+			if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+				elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+			if ((rc = SPI_execute(query, false, 1)) < 0)
+				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+		}
+		PG_CATCH();
+		{
+			SPI_finish();
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+	}
+  	PG_RETURN_VOID();
 }

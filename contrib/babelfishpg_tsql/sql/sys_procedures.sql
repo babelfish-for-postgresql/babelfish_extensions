@@ -201,3 +201,7 @@ GRANT EXECUTE on PROCEDURE sys.sp_addrolemember(IN sys.SYSNAME, IN sys.SYSNAME) 
 CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolename" sys.SYSNAME, IN "@membername" sys.SYSNAME)
 AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_volatility(IN "@function_name" sys.varchar(128) DEFAULT NULL, IN "@volatility" sys.varchar(128) DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_volatility' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_volatility(IN sys.varchar(128), IN sys.varchar(128)) TO PUBLIC;

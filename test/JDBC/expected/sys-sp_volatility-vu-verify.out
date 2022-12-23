@@ -1,0 +1,137 @@
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+dbo#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'f1', 'stable'
+go
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+dbo#!#f1#!#s
+~~END~~
+
+exec sys.sp_volatility 'f1', 'immutable'
+go
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+dbo#!#f1#!#i
+~~END~~
+
+exec sys.sp_volatility 'f1', 'volatile'
+go
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+dbo#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'f1', 'random'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Enter a valid volatility)~~
+
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+dbo#!#f1#!#v
+~~END~~
+
+
+exec sys.sp_volatility 'a.f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+a#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'a.f1', 'stable'
+go
+exec sys.sp_volatility 'a.f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+a#!#f1#!#s
+~~END~~
+
+exec sys.sp_volatility 'a.f1', 'immutable'
+go
+exec sys.sp_volatility 'a.f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+a#!#f1#!#i
+~~END~~
+
+exec sys.sp_volatility 'a.f1', 'volatile'
+go
+exec sys.sp_volatility 'a.f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+a#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'a.f1', 'random'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Enter a valid volatility)~~
+
+exec sys.sp_volatility 'a.f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+a#!#f1#!#v
+~~END~~
+
+
+/* should give error as only schema.function_name is supported*/
+exec sys.sp_volatility 'master.a.f1'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: master.a.f1 function not found)~~
+
+
+exec sys.sp_volatility 'random_function'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: random_function function not found)~~
+
+
+exec sys.sp_volatility '','stable'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Enter a valid Function Name)~~
+
+
+exec sys.sp_volatility '',''
+go
+~~START~~
+varchar#!#varchar#!#varchar
+msdb_dbo#!#fn_syspolicy_is_automation_enabled#!#i
+master_dbo#!#f1#!#v
+master_a#!#f1#!#v
+~~END~~
+
+
+exec sys.sp_volatility
+go
+~~START~~
+varchar#!#varchar#!#varchar
+msdb_dbo#!#fn_syspolicy_is_automation_enabled#!#i
+master_dbo#!#f1#!#v
+master_a#!#f1#!#v
+~~END~~
+
