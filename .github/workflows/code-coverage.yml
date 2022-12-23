@@ -1,5 +1,9 @@
 name: Code Coverage
+<<<<<<< HEAD
 on: [pull_request_target]
+=======
+on: [push, pull_request]
+>>>>>>> 4a09d72c (Added a new workflow for generating code coverage reports)
 
 jobs:
   run-all-tests:
@@ -40,6 +44,12 @@ jobs:
         run: |
           cd test/JDBC/
           mvn test
+          
+      - name: Cleanup babelfish database
+        id: cleanup
+        if: always() && steps.install-extensions.outcome == 'success'
+        run: |
+          sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
         
       - name: Install MSSQL Tools
         id: install-mssql-tools
@@ -186,6 +196,7 @@ jobs:
       - name: Summarize code coverage
         id: code-coverage-summary
         if: always()
+<<<<<<< HEAD
         uses: peter-evans/create-or-update-comment@v2
         run: |
           cd contrib/
@@ -194,6 +205,12 @@ jobs:
         with:
           body-file: 'output.txt'
 
+=======
+        run: |
+          cd contrib/
+          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o lcov.info
+          lcov --list lcov.info
+>>>>>>> 4a09d72c (Added a new workflow for generating code coverage reports)
 
       - name: Upload Coverage Report for babelfishpg_tsql extension
         if: always()
@@ -221,4 +238,8 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: coverage_money
+<<<<<<< HEAD
           path: contrib/babelfishpg_money/coverage/
+=======
+          path: contrib/babelfishpg_money/coverage/
+>>>>>>> 4a09d72c (Added a new workflow for generating code coverage reports)
