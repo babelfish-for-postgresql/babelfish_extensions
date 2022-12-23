@@ -33,6 +33,139 @@ jobs:
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
+      - name: Run JDBC Tests
+        id: jdbc
+        if: always() && steps.install-extensions.outcome == 'success'
+        timeout-minutes: 60
+        run: |
+          cd test/JDBC/
+          mvn test
+        
+      - name: Install MSSQL Tools
+        id: install-mssql-tools
+        if: always() && steps.install-mssql-tools.outcome == 'success'
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+          sudo apt-get update
+          sudo apt-get install mssql-tools unixodbc-dev
+          echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+          source ~/.bashrc
+      
+      - name: Install Dotnet
+        id: install-dotnet
+        if: always() && steps.install-extensions.outcome == 'success'
+        run: | 
+          cd ~
+          wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          rm packages-microsoft-prod.deb
+          sudo apt-get install -y apt-transport-https
+          sudo apt-get install -y dotnet-sdk-5.0
+          sudo apt-get install -y apt-transport-https
+          sudo apt-get install -y aspnetcore-runtime-5.0
+
+      - name: Run Dotnet Tests
+        if: always() && steps.install-dotnet.outcome == 'success'
+        run: |
+          cd test/dotnet
+          dotnet build
+          babel_URL=localhost \
+            babel_port=1433 \
+            babel_databaseName=master \
+            babel_user=jdbc_user \
+            babel_password=12345678 \
+            testName="all---TestUDD.txt;TestChar.txt;TestSqlVariant.txt;TestVarChar.txt;TestAuthentication.txt;TestText.txt" \
+            dotnet test
+      
+      - name: Install SQL Server ODBC Driver
+        id: install-sql-server-odbc-driver
+        if: steps.install-extensions.outcome == 'success'
+        run: |
+          cd ~
+          sudo apt-get install msodbcsql17
+      
+      - name: Install unixODBC Driver
+        id: install-unix-odbc-driver
+        if: steps.install-extensions.outcome == 'success'
+        run: |
+          cd ~
+          wget http://www.unixodbc.org/unixODBC-2.3.11.tar.gz
+          gunzip unixODBC*.tar.gz
+          tar xvf unixODBC*.tar
+          cd unixODBC-2.3.11
+          ./configure
+          make
+          sudo make install
+      - name: Install psqlODBC Driver
+        id: install-psql-odbc-driver
+        if: steps.install-extensions.outcome == 'success' && steps.install-unix-odbc-driver.outcome=='success'
+        run: |
+          cd ~
+          wget https://ftp.postgresql.org/pub/odbc/versions/src/psqlodbc-12.01.0000.tar.gz
+          tar -zxvf psqlodbc-12.01.0000.tar.gz
+          cd psqlodbc-12.01.0000
+          ./configure
+          sudo make
+          sudo make install
+          echo '[ODBC_Driver_12_for_PostgreSQL]' | sudo tee -a /etc/odbcinst.ini > /dev/null
+          echo 'Description=ODBC Driver 12 for PostgreSQL Server' | sudo tee -a /etc/odbcinst.ini > /dev/null
+          echo 'Driver=/usr/local/lib/psqlodbcw.so' | sudo tee -a /etc/odbcinst.ini > /dev/null
+          echo 'UsageCount=1' | sudo tee -a /etc/odbcinst.ini > /dev/null
+      
+      - name: Run ODBC Tests
+        if: steps.install-sql-server-odbc-driver.outcome == 'success' && steps.install-psql-odbc-driver.outcome == 'success'
+        run: |
+          cd test/odbc
+          cmake -S . -B build
+          cmake --build build
+          MSSQL_ODBC_DRIVER_NAME="ODBC Driver 17 for SQL Server" \
+            MSSQL_BABEL_DB_SERVER=localhost \
+            MSSQL_BABEL_DB_PORT=1433 \
+            MSSQL_BABEL_DB_USER=jdbc_user \
+            MSSQL_BABEL_DB_PASSWORD=12345678 \
+            MSSQL_BABEL_DB_NAME=master \
+            PSQL_ODBC_DRIVER_NAME=ODBC_Driver_12_for_PostgreSQL \
+            PSQL_BABEL_DB_SERVER=localhost \
+            PSQL_BABEL_DB_PORT=5432 \
+            PSQL_BABEL_DB_USER=jdbc_user \
+            PSQL_BABEL_DB_PASSWORD=12345678 \
+            PSQL_BABEL_DB_NAME=jdbc_testdb \
+            ./build/main
+
+      - name: Install Python
+        id: install-python
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      
+      - name: Configure Python Environment
+        id: configure-python-environment
+        if: always() && steps.install-python.outcome == 'success'
+        run: |
+          cd ~
+          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          cd ~/work/babelfish_extensions/babelfish_extensions/test/python
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
+          pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
+      
+      - name: Run Python Tests
+        if: always() && steps.configure-python-environment.outcome == 'success'
+        run: | 
+          cd test/python
+          compareWithFile=true \
+            driver=pyodbc \
+            runInParallel=false \
+            testName=all \
+            provider="ODBC Driver 17 for SQL Server" \
+            fileGenerator_URL=localhost \
+            fileGenerator_port=1433 \
+            fileGenerator_databaseName=master \
+            fileGenerator_user=jdbc_user \
+            fileGenerator_password=12345678 \
+            pytest -s --tb=long -q .
+
       - name: Generate code coverage HTML report
         id: code-coverage
         if: always()
