@@ -1,0 +1,30 @@
+This folder contains TAP tests written for TDS endpoint. To enable the TAP tests,
+the server needs to be configured with --enable-tap-tests -flag.  Additionally,
+to run the Kerberos test, the server needs to be configured with --with-gssapi
+flag.
+
+Installing dependencies
+--------------------------
+For TAP tests, you need to install a few perl modules.
+IPC::Run
+Test::More
+
+In Amazon Linux, you can use the following command to install the same:
+sudo yum install 'perl(IPC::Run)'
+sudo yum install 'perl(Test::More)'
+
+You also need to install sqlcmd and add it to PATH.
+
+For GSSAPI tests, you need to install the kerberos packages.
+In Amazon Linux, you can use the following command to install the same:
+sudo yum install krb5-server krb5-workstation -y
+
+Running the tests
+----------------------
+
+1. Configure engine with --enable-tap-tests and --with-gssapi flag
+2. Build engine and extension
+3. Execute the following command:
+export PG_CONFIG=<engine installation directory>/pg_config
+cd babelfish_extensions/contrib/babelfishpg_tds/
+make installcheck
