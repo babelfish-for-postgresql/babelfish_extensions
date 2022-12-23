@@ -2464,6 +2464,13 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
 									  errmsg("The Server principal '%s' already exists", stmt->role)));
 
+					if (location_windows == -1){
+						if (strchr(stmt->role, '\\') != NULL){
+							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'%s' is not a valid name because it contains invalid characters.", stmt->role)));	
+						}
+					}
+
 					/* Set current user to sysadmin for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
