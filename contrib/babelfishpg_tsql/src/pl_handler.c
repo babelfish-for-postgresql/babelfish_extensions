@@ -2883,7 +2883,23 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (HeapTupleIsValid(tuple))
 						roleform = (Form_pg_authid) GETSTRUCT(tuple);
 					else
-						continue;
+					{
+						/* Supplied login name might be in windows format i.e, domain\user form */
+						tuple = get_roleform_ext(role_name);
+						if (HeapTupleIsValid(tuple))
+						{
+							roleform = (Form_pg_authid) GETSTRUCT(tuple);
+							/*
+							 * This means that provided login name is in windows format 
+							 * so let's update role_name with UPN format.
+							 */
+							role_name = pstrdup((roleform->rolname).data);
+							pfree(rolspec->rolename);
+							rolspec->rolename = role_name;
+						}
+						else
+							continue;
+					}
 
 					if (is_login(roleform->oid))
 						all_logins = true;
