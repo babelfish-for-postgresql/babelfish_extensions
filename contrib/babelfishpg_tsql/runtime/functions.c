@@ -931,9 +931,21 @@ checksum(PG_FUNCTION_ARGS)
         PG_RETURN_INT32(result);
 }
 
-static char* remove_delimiter_pair(char *str)
+static char* extract_and_remove_delimiter_pair(char **input)
 {	
-	int len = strlen(str);
+	char *str = *input;
+	char *temp;
+	int len;
+	/* Extract till '.' */
+	temp = strchr(*input, '.');
+	if(temp)
+	{	
+		*temp = '\0';
+		temp++;
+		*input = temp;
+	}
+	/* Remove delimiter pair */
+	len = strlen(str);
 	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
 	{	
 		if(len > 2)
@@ -953,80 +965,75 @@ static char* remove_delimiter_pair(char *str)
 Datum
 object_id(PG_FUNCTION_ARGS)
 {	
-	char *db_name;
-	char *physical_schema_name; 
-	char *object_name = lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
-	char *object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
-	char *token;
-	bool is_temp_object;
-	Oid schema_oid;
-	Oid result = InvalidOid;
+	char 			*db_name = "";
+	char 			*schema_name = "";
+	char 			*physical_schema_name;
+	char 			*object_name;
+	bool 			is_temp_object;
+	Oid 			schema_oid;
+	Oid 			result ;
 	CatCList		*catlist;
 	Relation		tgrel;
 	ScanKeyData 	skey[2];
 	SysScanDesc 	tgscan;
 	HeapTuple		tuple;
-	int i;
-	int count = 0;
+	int 			i;
+	int 			count = 0;
+	char *input = 	lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
+	char *object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
 
 	/* strip trailing whitespace */
-	i = strlen(object_name);
-	while (i > 0 && isspace((unsigned char) object_name[i - 1]))
-		object_name[--i] = '\0';
-
+	i = strlen(input);
+	while (i > 0 && isspace((unsigned char) input[i - 1]))
+		input[--i] = '\0';
+	
 	/* 
 	 * Resolve the three part name
 	 * Get physical schema name from logical schema name
 	 * Valid formats are db_name.schema_name.object_name or schema_name.object_name or object_name
 	 */
-	for(i = 0; i < strlen(object_name);i++) /* Skip leading delimeter */
+	for (i = 0; i < strlen(input); i++) 
 	{
-		if(object_name[i] != '.')
-			break;
-			
-	}
-	for (; i < strlen(object_name); i++)
-	{
-		if (object_name[i] == '.')
+		if (input[i] == '.')
 			count++;
 	}
-	token = strtok(object_name,".");
 	switch (count)
 	{
 		case 0:
-			db_name = get_cur_db_name();
-			physical_schema_name = get_physical_schema_name(db_name, "dbo");
-			object_name = remove_delimiter_pair(token);
+			object_name = extract_and_remove_delimiter_pair(&input);
 			break;
 		case 1:
-			db_name = get_cur_db_name();
-			physical_schema_name = get_physical_schema_name(db_name, remove_delimiter_pair(token));
-			token = strtok(NULL, ".");
-			object_name = remove_delimiter_pair(token);
+			schema_name = extract_and_remove_delimiter_pair(&input);
+			object_name = extract_and_remove_delimiter_pair(&input);
 			break;
 		case 2:
-			db_name = remove_delimiter_pair(token);
-			token = strtok(NULL, ".");
-			physical_schema_name = get_physical_schema_name(db_name, remove_delimiter_pair(token));
-			token = strtok(NULL, ".");
-			object_name = remove_delimiter_pair(token);
+			db_name = extract_and_remove_delimiter_pair(&input);
+			schema_name = extract_and_remove_delimiter_pair(&input);
+			object_name = extract_and_remove_delimiter_pair(&input);
 			break;
 		default:
-			PG_RETURN_INT32(InvalidOid);
+			PG_RETURN_NULL();
 	}
+	if(!strcmp(db_name, ""))
+		db_name = get_cur_db_name();
+	if(!strcmp(schema_name, ""))
+		schema_name = "dbo";
+
 	/* Check if looking in current database, if not then return null value */
 	if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
-		PG_RETURN_INT32(InvalidOid);
+		PG_RETURN_NULL();
+	
+	physical_schema_name = get_physical_schema_name(db_name, schema_name);
 
 	/* Get schema oid from physical schema name */
 	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
 
 	/* Invalid object_name or schema oid */
 	if (!object_name || !OidIsValid(schema_oid))
-		PG_RETURN_INT32(InvalidOid);
+		PG_RETURN_NULL();
 	
 	/* Check if looking for temp object */
-	is_temp_object = (object_name[0] == '#');
+	is_temp_object = (object_name[0] == '#'? true: false);
 
 	if (strcmp(object_type, "")) /* object_type is not empty */
 	{
@@ -1079,10 +1086,7 @@ object_id(PG_FUNCTION_ARGS)
 			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 			{
 				Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-				if (OidIsValid(con->oid))
-				{
-					result = con->oid;
-				}
+				result = con->oid;
 			}
 			systable_endscan(tgscan);
 			table_close(tgrel, AccessShareLock);
@@ -1118,10 +1122,7 @@ object_id(PG_FUNCTION_ARGS)
 			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 			{
 				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-				if(OidIsValid(pg_trigger->oid))
-				{
-					result = pg_trigger->oid;
-				}
+				result = pg_trigger->oid;
 			}
 			systable_endscan(tgscan);
 			table_close(tgrel, AccessShareLock);
@@ -1135,9 +1136,13 @@ object_id(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			result = InvalidOid;
+			PG_RETURN_NULL();
 		}
-		PG_RETURN_INT32(result);
+
+		if(OidIsValid(result))
+			PG_RETURN_INT32(result);
+		else
+			PG_RETURN_NULL();
 	}
 	else
 	{	
@@ -1155,9 +1160,10 @@ object_id(PG_FUNCTION_ARGS)
 				if (!strcmp(relname, object_name))
 				{
 					result = reloid;
-					break;
+					PG_RETURN_INT32(result);
 				}
 			}
+			PG_RETURN_NULL();
 		}
 		else
 		{
@@ -1230,10 +1236,10 @@ object_id(PG_FUNCTION_ARGS)
 				if (OidIsValid(result))
 					PG_RETURN_INT32(result);
 			}
+			PG_RETURN_NULL();
 		}
 	}
 
-	PG_RETURN_INT32(InvalidOid);
 }
 
 
