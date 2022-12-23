@@ -1691,8 +1691,6 @@ extern plansource_revalidate_hook_type prev_plansource_revalidate_hook;
 extern pltsql_nextval_hook_type prev_pltsql_nextval_hook;
 extern pltsql_resetcache_hook_type prev_pltsql_resetcache_hook;
 
-extern char *pltsql_default_locale;
-
 extern int  pltsql_variable_conflict;
 
 /* extra compile-time checks */
@@ -1731,9 +1729,6 @@ extern bool last_error_mapping_failed;
 
 extern int fetch_status_var;
 extern int pltsql_proc_return_code;
-
-extern char* pltsql_server_collation_name;
-extern char* pltsql_default_locale;
 
 extern char* pltsql_version;
 

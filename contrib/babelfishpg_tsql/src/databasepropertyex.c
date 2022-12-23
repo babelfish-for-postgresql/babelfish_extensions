@@ -34,8 +34,9 @@ Datum databasepropertyex(PG_FUNCTION_ARGS) {
 
 	if (strcasecmp(property, "Collation") == 0)
 	{
-		const char *ret = pstrdup(pltsql_server_collation_name);
-		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
+		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+		if (server_collation_name)
+			vch = (*common_utility_plugin_ptr->tsql_varchar_input)(server_collation_name, strlen(server_collation_name), -1);
 	}
 	else if (strcasecmp(property, "ComparisonStyle") == 0)
 	{

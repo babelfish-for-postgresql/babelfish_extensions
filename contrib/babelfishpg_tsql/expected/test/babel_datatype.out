@@ -1058,10 +1058,10 @@ select CAST('ab' AS sys.varchar(1));
 create table testing1(col nchar);
 reset babelfishpg_tsql.sql_dialect;
 \d testing1;
-                       Table "public.testing1"
- Column |      Type      |       Collation       | Nullable | Default 
---------+----------------+-----------------------+----------+---------
- col    | sys."nchar"(1) | bbf_unicode_cp1_ci_as |          | 
+                 Table "public.testing1"
+ Column |      Type      | Collation | Nullable | Default 
+--------+----------------+-----------+----------+---------
+ col    | sys."nchar"(1) |           |          | 
 
 set babelfishpg_tsql.sql_dialect = "tsql";
 -- check length at insert
@@ -1186,10 +1186,10 @@ set babelfishpg_tsql.sql_dialect = 'tsql';
 create table testing5(col nvarchar(max));
 reset babelfishpg_tsql.sql_dialect;
 \d testing5
-                      Table "public.testing5"
- Column |     Type     |       Collation       | Nullable | Default 
---------+--------------+-----------------------+----------+---------
- col    | sys.nvarchar | bbf_unicode_cp1_ci_as |          | 
+                Table "public.testing5"
+ Column |     Type     | Collation | Nullable | Default 
+--------+--------------+-----------+----------+---------
+ col    | sys.nvarchar |           |          | 
 
 set babelfishpg_tsql.sql_dialect = "tsql";
 insert into testing5 (col) select 'ab';
@@ -1218,10 +1218,10 @@ drop table testing5;
 create table testing5(col varchar(max));
 reset babelfishpg_tsql.sql_dialect;
 \d testing5
-                       Table "public.testing5"
- Column |     Type      |       Collation       | Nullable | Default 
---------+---------------+-----------------------+----------+---------
- col    | sys."varchar" | bbf_unicode_cp1_ci_as |          | 
+                 Table "public.testing5"
+ Column |     Type      | Collation | Nullable | Default 
+--------+---------------+-----------+----------+---------
+ col    | sys."varchar" |           |          | 
 
 set babelfishpg_tsql.sql_dialect = "tsql";
 insert into testing5 (col) select 'ab';
@@ -1384,10 +1384,10 @@ set babelfishpg_tsql.sql_dialect = 'tsql';
 create table test_nchar (col1 nchar);
 reset babelfishpg_tsql.sql_dialect;
 \d test_nchar
-                      Table "public.test_nchar"
- Column |      Type      |       Collation       | Nullable | Default 
---------+----------------+-----------------------+----------+---------
- col1   | sys."nchar"(1) | bbf_unicode_cp1_ci_as |          | 
+                Table "public.test_nchar"
+ Column |      Type      | Collation | Nullable | Default 
+--------+----------------+-----------+----------+---------
+ col1   | sys."nchar"(1) |           |          | 
 
 set babelfishpg_tsql.sql_dialect = "tsql";
 drop table test_nchar;
