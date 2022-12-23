@@ -17,6 +17,6 @@ runs:
         wget https://github.com/tds-fdw/tds_fdw/archive/v${TDS_FDW_VERSION}.tar.gz
         tar -xvzf v${TDS_FDW_VERSION}.tar.gz
         cd tds_fdw-${TDS_FDW_VERSION}/
-        make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
-        sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
+        make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
+        sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
       shell: bash
