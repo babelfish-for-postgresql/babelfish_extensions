@@ -971,7 +971,7 @@ object_id(PG_FUNCTION_ARGS)
 	char 			*object_name;
 	bool 			is_temp_object;
 	Oid 			schema_oid;
-	Oid 			result ;
+	Oid 			result = InvalidOid;
 	CatCList		*catlist;
 	Relation		tgrel;
 	ScanKeyData 	skey[2];
