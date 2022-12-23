@@ -107,6 +107,8 @@ extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name
 #define BBF_AUTHID_LOGIN_EXT_TABLE_NAME "babelfish_authid_login_ext"
 #define BBF_AUTHID_LOGIN_EXT_IDX_NAME "babelfish_authid_login_ext_pkey"
 #define Anum_bbf_authid_login_ext_rolname 1
+#define Anum_bbf_authid_login_ext_type 3
+#define Anum_bbf_authid_login_ext_orig_loginname 9
 extern Oid			bbf_authid_login_ext_oid;
 extern Oid			bbf_authid_login_ext_idx_oid;
 
