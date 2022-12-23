@@ -40,11 +40,6 @@ jobs:
         run: |
           cd test/JDBC/
           mvn test
-      - name: Cleanup babelfish database
-        id: cleanup
-        if: always() && steps.install-extensions.outcome == 'success'
-        run: |
-          sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
         
       - name: Install MSSQL Tools
         id: install-mssql-tools
