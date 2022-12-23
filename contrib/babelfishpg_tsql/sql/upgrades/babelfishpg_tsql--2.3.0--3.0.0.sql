@@ -219,6 +219,7 @@ LANGUAGE C;
 
 GRANT EXECUTE ON PROCEDURE sys.sp_droplinkedsrvlogin(IN sys.sysname,
                                                     IN sys.sysname)
+TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.linked_logins
 AS
