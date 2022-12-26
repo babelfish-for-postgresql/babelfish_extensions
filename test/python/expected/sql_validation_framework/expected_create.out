@@ -197,8 +197,6 @@ Could not find upgrade tests for procedure sys.sp_databases
 Could not find upgrade tests for procedure sys.sp_describe_cursor
 Could not find upgrade tests for procedure sys.sp_describe_undeclared_parameters
 Could not find upgrade tests for procedure sys.sp_dropserver
-Could not find upgrade tests for procedure sys.sp_helprole
-Could not find upgrade tests for procedure sys.sp_helprolemember
 Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
 Could not find upgrade tests for procedure sys.sp_unprepare
