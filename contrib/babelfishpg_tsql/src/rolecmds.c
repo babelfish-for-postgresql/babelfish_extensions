@@ -1703,16 +1703,22 @@ is_active_login(Oid role_oid)
 char *
 convertToUPN(char* input)
 {
-	char *output = "";
 	char *pos_slash = NULL;
 
 	if ((pos_slash = strchr(input, '\\')) != NULL)
 	{
+		char *output = "";
+		/* 
+		 * collation aware lower casing and upper casing should be done. 
+		 * But which collation should be used?
+		 */
 		output = psprintf("%s@%s", 
 				 str_tolower(pos_slash + 1, strlen(pos_slash + 1), C_COLLATION_OID),
 				 str_toupper(input, (pos_slash - input), C_COLLATION_OID));
+		return output;
 	}
-	return output;
+	else
+		return input;
 }
 
 /*
