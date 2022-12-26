@@ -825,9 +825,7 @@ select CAST('2020-03-15 09:00:00.123456' AS datetime2(0));
 (1 row)
 
 select CAST('2020-03-15 09:00:00.123456' AS datetime2(-1));
-ERROR:  TIMESTAMP(-1) precision must not be negative
-LINE 1: select CAST('2020-03-15 09:00:00.123456' AS datetime2(-1));
-                                                    ^
+ERROR:  Specified scale -1 is invalid. 'datetime2' datatype must have scale between 0 and 7
 create table testing1(ts DATETIME, tstz DATETIME2(7));
 WARNING:  TIMESTAMP(7) precision reduced to maximum allowed, 6
 LINE 1: create table testing1(ts DATETIME, tstz DATETIME2(7));
