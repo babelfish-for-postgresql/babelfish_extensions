@@ -1,5 +1,5 @@
 name: Code Coverage
-on: [pull_request_target]
+on: [push, pull_request]
 
 jobs:
   run-all-tests:
