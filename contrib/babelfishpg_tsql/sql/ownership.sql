@@ -170,7 +170,6 @@ BEGIN
   ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
   ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
   ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
-  ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
   DROP PROCEDURE sys.create_linked_server_procs_in_master_dbo;
 
 END
