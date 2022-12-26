@@ -16,7 +16,6 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 #include "catalog.h"
-#include "datatypes.h"
 #include "catalog.h"
 
 PG_FUNCTION_INFO_V1(databasepropertyex);
