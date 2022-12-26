@@ -3076,21 +3076,14 @@ modify_RangeTblFunction_tupdesc(Node *expr, TupleDesc *tupdesc)
 {
 	char* linked_server;
 	char* query;
-	ListCell* lc;
 
 	FuncExpr *funcexpr = (FuncExpr*) expr;
 	List* arg_list = funcexpr->args;
 
 	Assert(list_length(funcexpr->args) == 2);
 
-	foreach(lc, arg_list)
-	{
-		Node *arg = lfirst(lc);
-		NodeTag type = nodeTag(arg);
-	}
-
 	linked_server = TextDatumGetCString(((Const*)linitial(arg_list))->constvalue);
 	query = TextDatumGetCString(((Const*)lsecond(arg_list))->constvalue);
 
-	getOpenqueryTupdesc(linked_server, query, tupdesc);
+	getOpenqueryTupdescFromMetadata(linked_server, query, tupdesc);
 }

@@ -41,10 +41,7 @@
 #include "../src/session.h"
 #include "../src/catalog.h"
 #include "../src/collation.h"
-#include "../src/linked_servers.h"
 #include "../src/rolecmds.h"
-
-#include "sybdb.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -79,8 +76,6 @@ PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
-PG_FUNCTION_INFO_V1(openquery_imp);
-PG_FUNCTION_INFO_V1(sp_testlinkedserver_internal);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -115,8 +110,6 @@ char *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
-
-static TupleDesc *curr_openquery_tupdesc = NULL;
 
 Datum
 trancount(PG_FUNCTION_ARGS)
@@ -1183,151 +1176,6 @@ host_name(PG_FUNCTION_ARGS)
 		PG_RETURN_VARCHAR_P(string_to_tsql_varchar((*pltsql_protocol_plugin_ptr)->get_host_name()));
 	else
 		PG_RETURN_NULL();
-}
-
-Datum
-openquery_imp(PG_FUNCTION_ARGS)
-{
-	LinkedServerProcess dbproc;
-
-#ifdef ENABLE_TDS_LIB
-	int i;
-	DBINT erc;
-
-	int results_retcode;
-	int colcount;
-	int row_retcode;
-	
-	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
-#endif
-	char* query = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	
-	linked_server_establish_connection(text_to_cstring(PG_GETARG_TEXT_PP(0)), &dbproc);
-
-#ifdef ENABLE_TDS_LIB
-
-	/* populate query in DBPROCESS */
-	if ((erc = dbcmd(dbproc, query)) != SUCCEED) {
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("error writing query to dbproc struct")
-				));
-	}
-
-	/* Execute the query on remote server */
-	dbsqlexec(dbproc);
-
-	while (erc = dbresults(dbproc) != NO_MORE_RESULTS)
-	{
-		int i;
-		int coltype[MAX_COLS_SELECT];
-		char *colname[MAX_COLS_SELECT];
-		DBINT collen[MAX_COLS_SELECT];
-
-		void *val[MAX_COLS_SELECT];
-
-		if (erc == FAIL)
-		{
-			ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Failed to get results from query %s", query)
-				));
-		}
-
-		/* store the column metadata if present */
-		colcount = dbnumcols(dbproc);
-
-		for(i = 0; i < colcount; i++)
-		{
-			/* Let us process column metadata first */
-			coltype[i] = dbcoltype(dbproc, i + 1);
-			colname[i] = dbcolname(dbproc, i + 1);
-			collen[i] = dbcollen(dbproc, i + 1);
-		}
-
-		if(colcount > 0)
-		{
-			/* check to see if caller supports us returning a tuplestore */
-			if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("set-valued function called in context that cannot accept a set")));
-
-			if (!(rsinfo->allowedModes & SFRM_Materialize))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("materialize mode required, but it is not allowed in this context")));
-
-			/* Build tupdesc for result tuples. */
-			tupdesc = CreateTemplateTupleDesc(colcount);
-
-			/* 
-			 * If column name is NULL, we set the column name as "?column?" (default 
-			 * column name set by PG if column name is NULL). We have logic in the
-			 * babelfishpg_tds extension to set the column name length 0 on the wire
-			 * if we come across this column name.
-			 */
-			for(i = 0; i < colcount; i++)
-				TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : "?column?", tdsTypeToOid(coltype[i]), tdsTypeLen(coltype[i], collen[i], false), 0);
-
-			tupdesc = BlessTupleDesc(tupdesc);
-
-			per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-			oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-			tupstore = tuplestore_begin_heap(true, false, work_mem);
-			rsinfo->returnMode = SFRM_Materialize;
-			rsinfo->setResult = tupstore;
-			rsinfo->setDesc = tupdesc;
-
-			/* fetch the rows */
-			while ((erc = dbnextrow(dbproc)) != NO_MORE_ROWS)
-			{
-				/* for each row */
-				Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
-				bool	*nulls = palloc0(sizeof(bool) * colcount);
-
-				MemSet(nulls, false, sizeof(nulls));
-
-				for (i = 0; i < colcount; i++)
-				{
-					DBINT datalen = dbdatlen(dbproc, i + 1);
-					val[i] = dbdata(dbproc, i + 1);
-
-					// TDS_DATETIMEALL* tds_date = (TDS_DATETIMEALL *) val[i];
-					if (val[i] == NULL && datalen == 0)
-					{
-						nulls[i] = true;
-					}
-					else
-					{
-						values[i] = getDatumFromBytePtr(dbproc, val[i], coltype[i], datalen);
-					}
-						
-				}
-
-				tuplestore_putvalues(tupstore, tupdesc, values, nulls);
-			}
-
-			tuplestore_donestoring(tupstore);
-		}
-	}
-#endif
-	return (Datum)0;
-}
-
-Datum
-sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
-{
-	LinkedServerProcess dbproc;
-
-	linked_server_establish_connection(text_to_cstring(PG_GETARG_TEXT_PP(0)), &dbproc);
-
-	return (Datum) 0;
 }
 
 /*

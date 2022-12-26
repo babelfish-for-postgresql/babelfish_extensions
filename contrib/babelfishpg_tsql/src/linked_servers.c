@@ -1,16 +1,17 @@
 #include "postgres.h"
-
+#include "funcapi.h"
 
 #include "foreign/foreign.h"
 #include "libpq/pqformat.h"
+#include "utils/builtins.h"
+#include "miscadmin.h"
 
-#include "../src/pltsql.h"
+#include "pltsql.h"
+#include "datatypes.h"
 
 #include "linked_servers.h"
 
-static TupleDesc *curr_openquery_tupdesc = NULL;
-
-const int tds_numeric_bytes_per_prec[] = {
+const int tds_numeric_bytes_per_prec[78] = {
 	/*
 	 * precision can't be 0 but using a value > 0 assure no
 	 * core if for some bug it's 0...
@@ -25,6 +26,18 @@ const int tds_numeric_bytes_per_prec[] = {
 	26, 27, 27, 28, 28, 28, 29, 29, 30, 30,
 	31, 31, 31, 32, 32, 33, 33, 33
 };
+
+PG_FUNCTION_INFO_V1(openquery_imp);
+PG_FUNCTION_INFO_V1(sp_testlinkedserver_internal);
+
+char* tds_err_msg(int severity, int dberr, int oserr, char *dberrstr, char *oserrstr);
+int tdsTypeStrToTypeId(char* datatype);
+Oid tdsTypeToOid(int datatype);
+int tdsTypeLen(int datatype, int datalen, bool is_metadata);
+Datum getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
+void getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc);
+
+static TupleDesc curr_openquery_tupdesc = NULL;
 
 char*
 tds_err_msg(int severity, int dberr, int oserr, char *dberrstr, char *oserrstr)
@@ -46,7 +59,7 @@ tds_err_msg(int severity, int dberr, int oserr, char *dberrstr, char *oserrstr)
 }
 
 static int
-tds_err_handler(LinkedServerProcess dbproc, int severity, int dberr, int oserr, char *dberrstr, char *oserrstr)
+tds_err_handler(LinkedServerProcess lsproc, int severity, int dberr, int oserr, char *dberrstr, char *oserrstr)
 {
 	ereport(ERROR,
 		(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -57,7 +70,7 @@ tds_err_handler(LinkedServerProcess dbproc, int severity, int dberr, int oserr, 
 }
 
 static int
-tds_notice_msg_handler(LinkedServerProcess dbproc, DBINT msgno, int msgstate, int severity, char *msgtext, char *svr_name, char *proc_name, int line)
+tds_notice_msg_handler(LinkedServerProcess lsproc, int msgno, int msgstate, int severity, char *msgtext, char *svr_name, char *proc_name, int line)
 {
 	if (severity > 10)
 		ereport(ERROR,
@@ -68,7 +81,7 @@ tds_notice_msg_handler(LinkedServerProcess dbproc, DBINT msgno, int msgstate, in
 }
 
 Datum
-getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len)
+getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len)
 {
 	bytea *bytes;
 
@@ -88,82 +101,53 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 			return BoolGetDatum(*(bool *)val);
 		case SYBVARCHAR:
 		case XSYBVARCHAR:
-			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
-			{
-				StringInfo pbuf;
-
-				pbuf = palloc(sizeof(StringInfoData));
-				/*
-				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
-				 */
-				pbuf->data = (BYTE *)val;
-				pbuf->maxlen = len;
-				pbuf->len = len;
-				pbuf->cursor = 0;
-
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, XSYBVARCHAR, 0, 0);
-			}
 		case SYBCHAR:
 		case XSYBCHAR:
 		case SYBMSXML:
-			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
-			{
-				StringInfo pbuf;
-
-				pbuf = palloc(sizeof(StringInfoData));
-				/*
-				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
-				 */
-				pbuf->data = (BYTE *)val;
-				pbuf->maxlen = len;
-				pbuf->len = len;
-				pbuf->cursor = 0;
-
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, XSYBVARCHAR, 0, 0);
-			}
 		case XSYBNVARCHAR:
 		case XSYBNCHAR:
-			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
-			{
-				StringInfo pbuf;
+			// if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
+			// {
+			// 	StringInfo pbuf;
 
-				pbuf = palloc(sizeof(StringInfoData));
-				/*
-				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
-				 */
-				pbuf->data = (BYTE *)val;
-				pbuf->maxlen = len;
-				pbuf->len = len;
-				pbuf->cursor = 0;
+			// 	pbuf = palloc(sizeof(StringInfoData));
+			// 	/*
+			// 	 * Rather than copying data around, we just set up a phony
+			// 	 * StringInfo pointing to the correct portion of the TDS message
+			// 	 * buffer. 
+			// 	 */
+			// 	pbuf->data = (char *)val;
+			// 	pbuf->maxlen = len;
+			// 	pbuf->len = len;
+			// 	pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, datatype, 0, 0);
-			}
+			// 	return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, datatype, 0, 0);
+			// }
+			PG_RETURN_VARCHAR_P((VarChar *)cstring_to_text_with_len((char *)val, len));
+
+			break;
 		case SYBTEXT:
 		case SYBNTEXT:
-			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
-			{
-				StringInfo pbuf = makeStringInfo();
+			// if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
+			// {
+			// 	StringInfo pbuf = makeStringInfo();
 
-				//pbuf = palloc(sizeof(StringInfoData));
-				/*
-				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
-				 */
-				appendStringInfoString(pbuf, (BYTE *)val);
-				//pbuf->data = (BYTE *)val;
-				// pbuf->maxlen = strlen(pbuf->data);
-				// pbuf->len = strlen(pbuf->data);
-				// pbuf->cursor = 0;
+			// 	//pbuf = palloc(sizeof(StringInfoData));
+			// 	/*
+			// 	 * Rather than copying data around, we just set up a phony
+			// 	 * StringInfo pointing to the correct portion of the TDS message
+			// 	 * buffer. 
+			// 	 */
+			// 	appendStringInfoString(pbuf, (char *)val);
+			// 	//pbuf->data = (BYTE *)val;
+			// 	// pbuf->maxlen = strlen(pbuf->data);
+			// 	// pbuf->len = strlen(pbuf->data);
+			// 	// pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, datatype, 0, 0);
-			}
+			// 	return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, datatype, 0, 0);
+			// }
+			PG_RETURN_TEXT_P(cstring_to_text_with_len((char *)val, len));
+			break;
 		case SYBDATETIME:
 		case SYBDATETIMN:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
@@ -176,13 +160,14 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 				 * StringInfo pointing to the correct portion of the TDS message
 				 * buffer. 
 				 */
-				pbuf->data = (BYTE *)val;
+				pbuf->data = (char *)val;
 				pbuf->maxlen = 8;
 				pbuf->len = 8;
 				pbuf->cursor = 0;
 
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBDATETIMN, 0, 0);
 			}
+			break;
 		case SYBDATETIME4:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
@@ -194,13 +179,14 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 				 * StringInfo pointing to the correct portion of the TDS message
 				 * buffer. 
 				 */
-				pbuf->data = (BYTE *)val;
+				pbuf->data = (char *)val;
 				pbuf->maxlen = 4;
 				pbuf->len = 4;
 				pbuf->cursor = 0;
 
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBDATETIME4, 0, 0);
 			}
+			break;
 		case SYBMSDATE:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
 			{
@@ -211,6 +197,7 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 				/* No optional attribute */
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(0, date.date, SYBMSDATE, 0);
 			}
+			break;
 		case SYBTIME:
 		case SYBMSTIME:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
@@ -261,6 +248,7 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 				/* optional attribute here is scale */
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(time.time, 0, SYBMSTIME, 7);
 			}
+			break;
 		case SYBDECIMAL:
 		case SYBNUMERIC:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
@@ -279,7 +267,7 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 				 * StringInfo pointing to the correct portion of the TDS message
 				 * buffer. 
 				 */
-				pbuf->data = numeric->array;
+				pbuf->data = (char *)(numeric->array);
 
 				// while (numeric->array[n] == 0x00 && n >= 0)
 				// 	--n;
@@ -304,6 +292,7 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBNUMERIC, numeric->scale, numeric->precision);
 			}
+			break;
 		case SYBFLTN:
 		case SYBFLT8:
 			return Float8GetDatum(*(float8 *)val);
@@ -337,6 +326,7 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBMONEYN, 0, 0);
 			}
+			break;
 		case SYBMONEY4:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
@@ -355,6 +345,7 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBMONEY4, 0, 0);
 			}
+			break;
 		case SYBMSDATETIME2:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
 			{
@@ -363,6 +354,7 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 				/* optional attribute here is scale */
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(datetime2->time, datetime2->date, SYBMSDATETIME2, 7);
 			}
+			break;
 		case SYBMSDATETIMEOFFSET:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
 			{
@@ -371,11 +363,12 @@ getDatumFromBytePtr(LinkedServerProcess dbproc, void *val, int datatype, int len
 				/* optional attribute here is time offset */
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(datetimeoffset->time, datetimeoffset->date, SYBMSDATETIMEOFFSET, datetimeoffset->offset);
 			}
+			break;
 		default:
 			return (Datum) 0;
 	}
 
-	return 0;
+	return (Datum) 0;
 }
 
 int
@@ -457,15 +450,18 @@ tdsTypeToOid(int datatype)
 		case SYBBITN:
 			return lookup_tsql_datatype_oid("bit");
 		case SYBTEXT:
-		case SYBNTEXT:
 			return TEXTOID;
+		case SYBNTEXT:
+			return lookup_tsql_datatype_oid("ntext");
+		case XSYBNVARCHAR:
+			return lookup_tsql_datatype_oid("nvarchar");
 		case SYBVARCHAR:
 		case XSYBVARCHAR:
-		case XSYBNVARCHAR:
 		case SYBCHAR:
 		case SYBMSXML:
 			return VARCHAROID;
 		case XSYBNCHAR:
+			return lookup_tsql_datatype_oid("nchar");
 		case XSYBCHAR:
 			return lookup_tsql_datatype_oid("bpchar");
 		case SYBDATETIME:
@@ -501,8 +497,9 @@ tdsTypeToOid(int datatype)
 			return INT8OID;
 		case SYBMONEY:
 		case SYBMONEYN:
+			return lookup_tsql_datatype_oid("money");
 		case SYBMONEY4:
-			return lookup_tsql_datatype_oid("fixeddecimal");
+			return lookup_tsql_datatype_oid("smallmoney");
 		default:
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -574,19 +571,17 @@ tdsTypeLen(int datatype, int datalen, bool is_metadata)
 }
 
 void
-linked_server_establish_connection(char* servername, LinkedServerProcess *dbproc)
+linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc)
 {
-#ifdef ENABLE_TDS_LIB
-        LinkedServerLogin login;
-        DefElem *element;
-        DBINT erc;
-#endif
-
-        /* Get the foreign server and user mapping */
+	/* Get the foreign server and user mapping */
 	ForeignServer *server = GetForeignServerByName(servername, false);
 	UserMapping *mapping = GetUserMapping(GetUserId(), server->serverid);
 
 #ifdef ENABLE_TDS_LIB
+	
+	LinkedServerLogin login;
+	DefElem *element;
+
 	LINKED_SERVER_INIT();
 
 	LINKED_SERVER_ERR_HANDLE(tds_err_handler);
@@ -620,8 +615,8 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *dbproc
 	/* first option in foreign server should be servername */
 	element = linitial_node(DefElem, server->options);
 	if (strcmp(element->defname, "servername") == 0){
-		*dbproc = LINKED_SERVER_OPEN(login, defGetString(element));
-		if (!(*dbproc))
+		*lsproc = LINKED_SERVER_OPEN(login, defGetString(element));
+		if (!(*lsproc))
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("Unable to connect to %s", defGetString(element))
@@ -638,10 +633,8 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *dbproc
         element = lsecond_node(DefElem, server->options);
 	if (strcmp(element->defname, "database") == 0)
 	{
-		if (strlen(defGetString(element))) {
-			erc = LINKED_SERVER_USE_DB(*dbproc, defGetString(element));
-			Assert(erc == SUCCEED);
-		}
+		if (strlen(defGetString(element)))
+			Assert(LINKED_SERVER_USE_DB(*lsproc, defGetString(element)) == SUCCEED);
 	}
 	else
 		ereport(ERROR,
@@ -662,25 +655,46 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *dbproc
  * from remote server 
  */
 void
-getOpenqueryTupdesc(char* linked_server, char* query, TupleDesc *tupdesc)
+getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc)
 {
-	LinkedServerProcess dbproc;
+	LinkedServerProcess lsproc;
+	MemoryContext oldContext;
 
 #ifdef ENABLE_TDS_LIB
 
-	int i;
 	LINKED_SERVER_RETCODE erc;
 
 	int colcount;
-	DefElem *element;
+// 	DefElem *element;
 
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
+// 	// MemoryContext per_query_ctx;
+// 	// MemoryContext oldcontext;
 	StringInfoData buf;
 #endif
-	linked_server_establish_connection(linked_server, &dbproc);
+
+	/* Reuse already computed Tuple Descriptor if it exists */
+	if (curr_openquery_tupdesc != NULL)
+	{
+		//oldContext = MemoryContextSwitchTo(MessageContext);
+		//memcpy(*tupdesc, curr_openquery_tupdesc, sizeof(TupleDescData));
+		TupleDescCopy(*tupdesc, curr_openquery_tupdesc);
+		//MemoryContextSwitchTo(oldContext);
+		//tupdesc = curr_openquery_tupdesc;
+		return;
+	}
+
+	linked_server_establish_connection(linked_server, &lsproc);
 
 #ifdef ENABLE_TDS_LIB
+
+	// int i;
+	// LINKED_SERVER_RETCODE erc;
+
+	// int colcount;
+
+	// MemoryContext per_query_ctx;
+	// MemoryContext oldcontext;
+	// StringInfoData buf;
 
 	/* prepare the query that will executed on remote server to get column medata of result set*/
 	initStringInfo(&buf);
@@ -689,7 +703,7 @@ getOpenqueryTupdesc(char* linked_server, char* query, TupleDesc *tupdesc)
 	appendStringInfoString(&buf, "', NULL, 0");
 	
 	/* populate query in LinkedServerProcess structure */
-	if ((erc = LINKED_SERVER_PUT_CMD(dbproc, buf.data)) != SUCCEED) {
+	if ((erc = LINKED_SERVER_PUT_CMD(lsproc, buf.data)) != SUCCEED) {
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("error writing query to LinkedServerProcess struct")
@@ -697,9 +711,9 @@ getOpenqueryTupdesc(char* linked_server, char* query, TupleDesc *tupdesc)
 	}
 
 	/* Execute the query on remote server */
-	LINKED_SERVER_EXEC_QUERY(dbproc);
+	LINKED_SERVER_EXEC_QUERY(lsproc);
 
-	while ((erc = dbresults(dbproc)) != NO_MORE_RESULTS)
+	while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
 	{
 		if (erc == FAIL)
 		{
@@ -710,63 +724,58 @@ getOpenqueryTupdesc(char* linked_server, char* query, TupleDesc *tupdesc)
 		}
 
 		/* We have some results to process */
-		colcount = dbnumcols(dbproc);
+		colcount = LINKED_SERVER_NUM_COLS(lsproc);
 
 		if(colcount > 0)
 		{
 			int numrows = 0;
 			int i = 0;
 
-			/* Build tupdesc for result tuples. */
-
-			//for(i = 0; i < colcount; i++)
 			int collen[MAX_COLS_SELECT];
 			char **colname = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
-			char **typename = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
+			// char **typename = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
 			int tdsTypeId[MAX_COLS_SELECT];
 
 			/* bound variables */
-			int bind_collen;
-			char bind_colname[256];
-			char bind_typename[256];
-			int bind_tdsTypeId;
+			int bind_collen, bind_tdsTypeId;
+			char bind_colname[256], bind_typename[256];
 			//int bind_errornumber;
 
 			for (i = 0; i < MAX_COLS_SELECT; i++)
 				colname[i] = (char *) palloc0(256 * sizeof(char));
 
-			if ((erc = dbbind(dbproc, 3, NTBSTRINGBIND, sizeof(bind_colname), (BYTE *)bind_colname)) != SUCCEED)
+			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 3, NTBSTRINGBIND, sizeof(bind_colname), (BYTE *)bind_colname)) != SUCCEED)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("Failed to bind results for column \"name\" to a variable.")
 				));
 
-			if ((erc = dbbind(dbproc, 5, INTBIND, sizeof(int), (BYTE *)&bind_tdsTypeId)) != SUCCEED)
+			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 5, INTBIND, sizeof(int), (BYTE *)&bind_tdsTypeId)) != SUCCEED)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("Failed to bind results for column \"system_type_id\" to a variable.")
 				));
 			
-			if ((erc = dbbind(dbproc, 6, NTBSTRINGBIND, sizeof(bind_typename), (BYTE *)&bind_typename)) != SUCCEED)
+			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 6, NTBSTRINGBIND, sizeof(bind_typename), (BYTE *)&bind_typename)) != SUCCEED)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
 				));
 
-			if ((erc = dbbind(dbproc, 7, INTBIND, sizeof(int), (BYTE *)&bind_collen)) != SUCCEED)
+			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 7, INTBIND, sizeof(int), (BYTE *)&bind_collen)) != SUCCEED)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("Failed to bind results for column \"max_length\" to a variable.")
 				));
 			
-			// if ((erc = dbbind(dbproc, 36, INTBIND, sizeof(int), (BYTE *)&bind_errornumber)) != SUCCEED)
+			// if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 36, INTBIND, sizeof(int), (BYTE *)&bind_errornumber)) != SUCCEED)
 			// 	ereport(ERROR,
 			// 		(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 			// 		errmsg("Failed to bind results for column \"error_number\" to a variable.")
 			// 	));
 
 			/* fetch the rows */
-			while ((erc = dbnextrow(dbproc)) != NO_MORE_ROWS)
+			while ((erc = LINKED_SERVER_NEXT_ROW(lsproc)) != NO_MORE_ROWS)
 			{
 				char *typestr;
 				
@@ -797,11 +806,184 @@ getOpenqueryTupdesc(char* linked_server, char* query, TupleDesc *tupdesc)
 				*tupdesc = CreateTemplateTupleDesc(numrows);
 
 				for (i = 0; i < numrows; i++)
-					TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : "?column?", tdsTypeToOid(tdsTypeId[i]), tdsTypeLen(tdsTypeId[i], collen[i], true), 0);
+					TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : NULL, tdsTypeToOid(tdsTypeId[i]), tdsTypeLen(tdsTypeId[i], collen[i], true), 0);
 
 				*tupdesc = BlessTupleDesc(*tupdesc);
 			}
 		}
 	}
 #endif
+	//curr_openquery_tupdesc = tupdesc;
+	oldContext = MemoryContextSwitchTo(TopMemoryContext);
+
+	curr_openquery_tupdesc = palloc0(sizeof(TupleDescData));
+	//memcpy(curr_openquery_tupdesc, *tupdesc, sizeof(TupleDescData));
+	TupleDescCopy(curr_openquery_tupdesc, *tupdesc);
+
+	MemoryContextSwitchTo(oldContext);
+}
+
+Datum
+sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
+{
+	LinkedServerProcess lsproc;
+
+	linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
+
+	return (Datum) 0;
+}
+
+Datum
+openquery_imp(PG_FUNCTION_ARGS)
+{
+	LinkedServerProcess lsproc;
+
+#ifdef ENABLE_TDS_LIB
+
+	LINKED_SERVER_RETCODE erc;
+
+	int colcount;
+	
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+#endif
+	char* query = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	
+	linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
+
+#ifdef ENABLE_TDS_LIB
+
+	/* populate query in DBPROCESS */
+	if ((erc = LINKED_SERVER_PUT_CMD(lsproc, query)) != SUCCEED) {
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("error writing query to lsproc struct")
+				));
+	}
+
+	/* Execute the query on remote server */
+	LINKED_SERVER_EXEC_QUERY(lsproc);
+
+	while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
+	{
+		int i;
+		int coltype[MAX_COLS_SELECT];
+		char *colname[MAX_COLS_SELECT];
+		int collen[MAX_COLS_SELECT];
+
+		void *val[MAX_COLS_SELECT];
+
+		if (erc == FAIL)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Failed to get results from query %s", query)
+				));
+		}
+
+		/* store the column metadata if present */
+		colcount = LINKED_SERVER_NUM_COLS(lsproc);
+
+		for(i = 0; i < colcount; i++)
+		{
+			/* Let us process column metadata first */
+			coltype[i] = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
+			colname[i] = LINKED_SERVER_COL_NAME(lsproc, i + 1);
+			collen[i] = LINKED_SERVER_COL_LEN(lsproc, i + 1);
+		}
+
+		if(colcount > 0)
+		{
+			/* check to see if caller supports us returning a tuplestore */
+			if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("set-valued function called in context that cannot accept a set")));
+
+			if (!(rsinfo->allowedModes & SFRM_Materialize))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("materialize mode required, but it is not allowed in this context")));
+
+			/* Build tupdesc for result tuples. */
+			tupdesc = CreateTemplateTupleDesc(colcount);
+
+			/* 
+			 * If column name is NULL, we set the column name as "?column?" (default 
+			 * column name set by PG if column name is NULL). We have logic in the
+			 * babelfishpg_tds extension to set the column name length 0 on the wire
+			 * if we come across this column name.
+			 */
+			for(i = 0; i < colcount; i++)
+			{
+				Oid tdsTypeOid = tdsTypeToOid(coltype[i]);
+
+				/* 
+				 * Current TDS client library has a limitation where it can send
+				 * column types like nvarchar as varchar in column metadata, so
+				 * check with out previously computed tuple descriptor to see what
+				 * should be the actual data type. At the moment there is no other way.
+				 */
+				if (tdsTypeOid == VARCHAROID || tdsTypeOid == TEXTOID)
+				{
+					Form_pg_attribute att = TupleDescAttr(curr_openquery_tupdesc, (AttrNumber) i);
+					tdsTypeOid = att->atttypid;
+				}
+				TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : NULL, tdsTypeOid, tdsTypeLen(coltype[i], collen[i], false), 0);
+			}
+			tupdesc = BlessTupleDesc(tupdesc);
+
+			per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+			oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+			tupstore = tuplestore_begin_heap(true, false, work_mem);
+			rsinfo->returnMode = SFRM_Materialize;
+			rsinfo->setResult = tupstore;
+			rsinfo->setDesc = tupdesc;
+
+			MemoryContextSwitchTo(oldcontext);
+
+			/* fetch the rows */
+			while ((erc = LINKED_SERVER_NEXT_ROW(lsproc)) != NO_MORE_ROWS)
+			{
+				/* for each row */
+				Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
+				bool	*nulls = palloc0(sizeof(bool) * colcount);
+
+				MemSet(nulls, false, sizeof(nulls));
+
+				for (i = 0; i < colcount; i++)
+				{
+					int datalen = LINKED_SERVER_DATA_LEN(lsproc, i + 1);
+					val[i] = LINKED_SERVER_DATA(lsproc, i + 1);
+
+					if (val[i] == NULL && datalen == 0)
+					{
+						nulls[i] = true;
+					}
+					else
+					{
+						//if 
+						values[i] = getDatumFromBytePtr(lsproc, val[i], coltype[i], datalen);
+					}
+						
+				}
+
+				tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+			}
+
+			tuplestore_donestoring(tupstore);
+		}
+	}
+
+	/* Invalidate Tuple Descriptor */
+	//oldcontext = MemoryContextSwitchTo(MessageContext);
+	curr_openquery_tupdesc = NULL;
+	//MemoryContextSwitchTo(oldcontext);
+
+#endif
+	return (Datum)0;
 }

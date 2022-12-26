@@ -2051,6 +2051,6 @@ extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
 extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
 
-void getOpenqueryTupdesc(char* linked_server, char* query, TupleDesc *tupdesc);
+void getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc);
 
 #endif							/* PLTSQL_H */

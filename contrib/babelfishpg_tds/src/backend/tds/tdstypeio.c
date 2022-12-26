@@ -3794,11 +3794,11 @@ Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale, int precision)
 			return TdsTypeTimeToDatum(buf, scale, buf->len);
 		case TDS_TYPE_DATETIMEN:
 			return TdsTypeDatetimeToDatum(buf);
-		case TDS_TYPE_NVARCHAR:
 		case TDS_TYPE_NCHAR:
 		case TDS_TYPE_NTEXT:
 			return TdsTypeNCharToDatum(buf);
 		case TDS_TYPE_VARCHAR:
+		case TDS_TYPE_NVARCHAR:
 		case TDS_TYPE_CHAR:
 		case TDS_TYPE_TEXT:
 			return TdsTypeVarcharToDatum(buf, PG_UTF8, datatype);
