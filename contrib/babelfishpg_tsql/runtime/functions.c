@@ -1014,6 +1014,11 @@ object_id(PG_FUNCTION_ARGS)
 		default:
 			PG_RETURN_NULL();
 	}
+	/* truncate identifiers if needed */
+	truncate_tsql_identifier(db_name);
+	truncate_tsql_identifier(schema_name);
+	truncate_tsql_identifier(object_name);
+
 	if(!strcmp(db_name, ""))
 		db_name = get_cur_db_name();
 	if(!strcmp(schema_name, ""))
