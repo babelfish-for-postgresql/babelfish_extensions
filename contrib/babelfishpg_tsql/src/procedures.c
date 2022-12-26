@@ -2291,7 +2291,6 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	char *query = NULL;
 	char *query2 = NULL;
 	char *query3 = NULL;
-	char *query4 = NULL;
 
 	int rc = -1;
 
@@ -2318,11 +2317,6 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 						"AS \'babelfishpg_tsql\', \'sp_dropserver_internal\'"
 					"LANGUAGE C;";
 
-	char *tempq4 = "CREATE OR REPLACE PROCEDURE %s.sp_droplinkedsrvlogin( IN \"@rmtsrvname\" sys.sysname," 
-						"IN \"@locallogin\" sys.sysname)" 
-						"AS \'babelfishpg_tsql\', \'sp_droplinkedsrvlogin_internal\'" 
-					"LANGUAGE C";
-
 	const char  *dbo_scm = get_dbo_schema_name("master");
 	if (dbo_scm == NULL)
 		elog(ERROR, "Failed to retrieve dbo schema name");
@@ -2330,7 +2324,6 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	query = psprintf(tempq, dbo_scm);
 	query2 = psprintf(tempq2, dbo_scm);
 	query3 = psprintf(tempq3, dbo_scm);
-	query4 = psprintf(tempq4, dbo_scm);
 
 	PG_TRY();
 	{
@@ -2344,9 +2337,6 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_execute(query3, false, 1)) < 0)
-			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
-		
-		if ((rc = SPI_execute(query4, false, 1)) < 0)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)
