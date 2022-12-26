@@ -423,6 +423,7 @@ tdsstat_bestart(void)
 	char *library_name = NULL;
 	char *host_name = NULL;
 	const char *language = NULL;
+	const char *guc_val = NULL;
 
 	/*
 	 * To minimize the time spent modifying the TdsStatus entry, and
@@ -447,17 +448,39 @@ tdsstat_bestart(void)
 	ltdsentry.packet_size = MyTdsPacketSize;
 
 	/* Set the boot GUC values */
-	ltdsentry.quoted_identifier = strcmp(GetConfigOption("babelfishpg_tsql.quoted_identifier", true, true), "on") == 0 ? true : false;
-	ltdsentry.arithabort = strcmp(GetConfigOption("babelfishpg_tsql.arithabort", true, true), "on") == 0 ? true : false;
-	ltdsentry.ansi_null_dflt_on = strcmp(GetConfigOption("babelfishpg_tsql.ansi_null_dflt_on", true, true), "on") == 0 ? true : false;
-	ltdsentry.ansi_defaults = strcmp(GetConfigOption("babelfishpg_tsql.ansi_defaults", true, true), "on") == 0 ? true : false;
-	ltdsentry.ansi_warnings = strcmp(GetConfigOption("babelfishpg_tsql.ansi_warnings", true, true), "on") == 0 ? true : false;
-	ltdsentry.ansi_padding = strcmp(GetConfigOption("babelfishpg_tsql.ansi_padding", true, true), "on") == 0 ? true : false;
-	ltdsentry.ansi_nulls = strcmp(GetConfigOption("babelfishpg_tsql.ansi_nulls", true, true), "on") == 0 ? true : false;
-	ltdsentry.concat_null_yields_null = strcmp(GetConfigOption("babelfishpg_tsql.concat_null_yields_null", true, true), "on") == 0 ? true : false;
-	ltdsentry.textsize = atoi(GetConfigOption("babelfishpg_tsql.textsize", true, true));
-	ltdsentry.datefirst = atoi(GetConfigOption("babelfishpg_tsql.datefirst", true, true));
-	ltdsentry.lock_timeout = atoi(GetConfigOption("lock_timeout", true, true));
+	guc_val = GetConfigOption("babelfishpg_tsql.quoted_identifier", true, true);
+	ltdsentry.quoted_identifier = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.arithabort", true, true);
+	ltdsentry.arithabort = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.ansi_null_dflt_on", true, true);
+	ltdsentry.ansi_null_dflt_on = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.ansi_defaults", true, true);
+	ltdsentry.ansi_defaults = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.ansi_warnings", true, true);
+	ltdsentry.ansi_warnings = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.ansi_padding", true, true);
+	ltdsentry.ansi_padding = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.ansi_nulls", true, true);
+	ltdsentry.ansi_nulls = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.concat_null_yields_null", true, true);
+	ltdsentry.concat_null_yields_null = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.textsize", true, true);
+	ltdsentry.textsize = guc_val != NULL ? atoi(guc_val) : 0;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.datefirst", true, true);
+	ltdsentry.datefirst = guc_val != NULL ? atoi(guc_val) : 7;
+
+	guc_val = GetConfigOption("babelfishpg_tsql.lock_timeout", true, true);
+	ltdsentry.lock_timeout = guc_val != NULL ? atoi(guc_val) : -1;
+
 	ltdsentry.transaction_isolation = DefaultXactIsoLevel;
 
 	language = GetConfigOption("babelfishpg_tsql.language", true, true);
