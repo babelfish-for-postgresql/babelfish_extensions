@@ -3,7 +3,7 @@ inputs:
   install_dir:
     description: 'Engine install directory'
     required: no
-    default: postgres
+    default: psql
   extension_branch: 
     description: 'Extension Branch name which needs to checkout first'
     required: no

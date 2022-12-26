@@ -58,6 +58,8 @@ create table babel_3793_tab8(a1 datetimeoffset(-31));
 create table babel_3793_tab9(a1 datetimeoffset(15));
 CREATE PROC babel_3793_proc6 AS DECLARE @a datetimeoffset(51);
 
+CREATE VIEW BABEL_3614_vu_prepare_v5 as (SELECT TRY_CONVERT(DATETIME2(80), '2017-08-25 13:01:10.1234567'));
+
 DROP PROC if exists babel_3793_proc1;
 DROP PROC if exists babel_3793_proc2;
 DROP PROC if exists babel_3793_proc3;

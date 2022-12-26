@@ -1,0 +1,15 @@
+exec babel_sp_special_columns_100_dep_vu_prepare_p1
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+exec babel_sp_special_columns_100_dep_vu_prepare_p2
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
