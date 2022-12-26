@@ -1,5 +1,5 @@
 name: Code Coverage
-on: workflow_dispatch
+on: [push, pull_request]
 
 jobs:
   run-all-tests:
