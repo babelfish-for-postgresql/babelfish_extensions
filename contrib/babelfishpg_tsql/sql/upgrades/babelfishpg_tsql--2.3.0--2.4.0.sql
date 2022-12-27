@@ -121,6 +121,53 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
 
 GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.computed_columns
+AS
+SELECT out_object_id as object_id
+  , out_name as name
+  , out_column_id as column_id
+  , out_system_type_id as system_type_id
+  , out_user_type_id as user_type_id
+  , out_max_length as max_length
+  , out_precision as precision
+  , out_scale as scale
+  , out_collation_name as collation_name
+  , out_is_nullable as is_nullable
+  , out_is_ansi_padded as is_ansi_padded
+  , out_is_rowguidcol as is_rowguidcol
+  , out_is_identity as is_identity
+  , out_is_computed as is_computed
+  , out_is_filestream as is_filestream
+  , out_is_replicated as is_replicated
+  , out_is_non_sql_subscribed as is_non_sql_subscribed
+  , out_is_merge_published as is_merge_published
+  , out_is_dts_replicated as is_dts_replicated
+  , out_is_xml_document as is_xml_document
+  , out_xml_collection_id as xml_collection_id
+  , out_default_object_id as default_object_id
+  , out_rule_object_id as rule_object_id
+  , out_is_sparse as is_sparse
+  , out_is_column_set as is_column_set
+  , out_generated_always_type as generated_always_type
+  , out_generated_always_type_desc as generated_always_type_desc
+  , out_encryption_type as encryption_type
+  , out_encryption_type_desc as encryption_type_desc
+  , out_encryption_algorithm_name as encryption_algorithm_name
+  , out_column_encryption_key_id as column_encryption_key_id
+  , out_column_encryption_key_database_name as column_encryption_key_database_name
+  , out_is_hidden as is_hidden
+  , out_is_masked as is_masked
+  , out_graph_type as graph_type
+  , out_graph_type_desc as graph_type_desc
+  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar(4000)) AS definition
+  , 1::sys.bit AS uses_database_collation
+  , 0::sys.bit AS is_persisted
+FROM sys.columns_internal() sc
+INNER JOIN pg_attribute a ON sc.out_name = a.attname COLLATE sys.database_default AND sc.out_column_id = a.attnum
+INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
+GRANT SELECT ON sys.computed_columns TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

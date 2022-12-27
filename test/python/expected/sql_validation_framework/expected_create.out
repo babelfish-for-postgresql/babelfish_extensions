@@ -47,6 +47,7 @@ Could not find tests for function sys.suser_id_internal
 Could not find tests for function sys.suser_name_internal
 Could not find tests for function sys.sysdatetime
 Could not find tests for function sys.timefromparts
+Could not find tests for function sys.tsql_get_expr
 Could not find tests for function sys.tsql_get_returntypmodvalue
 Could not find tests for function sys.tsql_query_to_xml
 Could not find tests for function sys.tsql_query_to_xml_text
@@ -166,6 +167,7 @@ Could not find upgrade tests for function sys.suser_id_internal
 Could not find upgrade tests for function sys.suser_name_internal
 Could not find upgrade tests for function sys.sysdatetime
 Could not find upgrade tests for function sys.timefromparts
+Could not find upgrade tests for function sys.tsql_get_expr
 Could not find upgrade tests for function sys.tsql_get_functiondef
 Could not find upgrade tests for function sys.tsql_get_returntypmodvalue
 Could not find upgrade tests for function sys.tsql_query_to_xml

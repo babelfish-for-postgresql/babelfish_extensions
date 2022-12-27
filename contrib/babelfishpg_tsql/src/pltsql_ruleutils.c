@@ -382,7 +382,7 @@ tsql_get_constraintdef(PG_FUNCTION_ARGS)
 PG_FUNCTION_INFO_V1(tsql_get_expr);
 
 /* ----------
- * pg_get_expr          - Decompile an expression tree
+ * tsql_get_expr          - Decompile an expression tree
  *
  * Input: an expression tree in nodeToString form, and a relation OID
  *
@@ -424,8 +424,6 @@ tsql_get_expr(PG_FUNCTION_ARGS)
 
     PG_RETURN_TEXT_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
 }
-
-
 
 static text *
 tsql_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
