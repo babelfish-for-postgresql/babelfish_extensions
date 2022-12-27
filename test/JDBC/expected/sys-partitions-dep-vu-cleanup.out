@@ -1,0 +1,6 @@
+DROP PROCEDURE sys_partitions_dep_vu_prepare_p1
+DROP FUNCTION sys_partitions_dep_vu_prepare_f1
+DROP VIEW sys_partitions_dep_vu_prepare_v1
+DROP INDEX sys_partitions_dep_vu_prepare_i1 ON sys_partitions_dep_vu_prepare_t1
+DROP TABLE sys_partitions_dep_vu_prepare_t1
+GO
