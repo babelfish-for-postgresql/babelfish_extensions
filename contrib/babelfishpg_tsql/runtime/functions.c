@@ -934,18 +934,25 @@ checksum(PG_FUNCTION_ARGS)
 static char* extract_and_remove_delimiter_pair(char **input)
 {	
 	char *str = *input;
-	char *temp;
-	int len;
-	/* Extract till '.' */
-	temp = strchr(*input, '.');
-	if(temp)
-	{	
-		*temp = '\0';
-		temp++;
-		*input = temp;
+	int len = strlen(str);
+	int i;
+
+	/* find the index of first '.' separator */
+	for (i = 0; i < len; i++)
+	{
+		if (str[i] == '.')
+			break;
 	}
+
+	/* Extract from input till '.' in str and update the input pointer */
+	if (i != len)
+	{
+		str[i] = '\0';
+		*input = &str[i + 1];
+		len = i;
+	}
+
 	/* Remove delimiter pair */
-	len = strlen(str);
 	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
 	{	
 		if(len > 2)
