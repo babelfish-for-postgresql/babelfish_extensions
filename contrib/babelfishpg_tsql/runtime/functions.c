@@ -931,28 +931,42 @@ checksum(PG_FUNCTION_ARGS)
         PG_RETURN_INT32(result);
 }
 
-static char* extract_and_remove_delimiter_pair(char **input)
+static int babelfish_get_delimiter_pos(char *str)
 {	
-	char *str = *input;
-	int len = strlen(str);
-	int i;
-
-	/* find the index of first '.' separator */
-	for (i = 0; i < len; i++)
+	char *ptr;
+	if(strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
+		return -1;
+	else if(str[0] == '[')
 	{
-		if (str[i] == '.')
-			break;
+		ptr = strstr(str, "].");
+		if(ptr == NULL)
+			return -1;
+		else
+			return (int)(ptr - str) + 1;
 	}
-
-	/* Extract from input till '.' in str and update the input pointer */
-	if (i != len)
+	else if(str[0] == '"')
 	{
-		str[i] = '\0';
-		*input = &str[i + 1];
-		len = i;
+		ptr = strstr(&str[1], "\".");
+		if(ptr == NULL)
+			return -1;
+		else
+			return (int)(ptr - str) + 1;
 	}
+	else
+	{	
+		ptr = strstr(str, ".");
+		if(ptr == NULL)
+			return -1;
+		else
+			return (int)(ptr - str);
+	}
+	
+	return -1;
+}
 
-	/* Remove delimiter pair */
+static char* extract_and_remove_delimiter_pair(char *str, int len)
+{	
+	/* Extract string from str of given length and remove delimiter pair */
 	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
 	{	
 		if(len > 2)
@@ -966,7 +980,13 @@ static char* extract_and_remove_delimiter_pair(char **input)
 			return "";
 			
 	}
-	return str;
+	else
+	{
+		char *res = (char *) palloc((len + 1) * sizeof(char));
+		strncpy(res, str, len);
+		res[len] =  '\0';
+		return res;
+	}
 }
 
 Datum
@@ -985,9 +1005,12 @@ object_id(PG_FUNCTION_ARGS)
 	SysScanDesc 	tgscan;
 	HeapTuple		tuple;
 	int 			i;
-	int 			count = 0;
+	int 			cur_pos;
+	int 			next_pos;
 	char *input = 	lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
 	char *object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
+	List 			*list = NIL;
+	char 			*str;
 
 	/* strip trailing whitespace */
 	i = strlen(input);
@@ -999,24 +1022,31 @@ object_id(PG_FUNCTION_ARGS)
 	 * Get physical schema name from logical schema name
 	 * Valid formats are db_name.schema_name.object_name or schema_name.object_name or object_name
 	 */
-	for (i = 0; i < strlen(input); i++) 
+	cur_pos = 0;
+	next_pos = babelfish_get_delimiter_pos(input);
+	while( next_pos != -1)
 	{
-		if (input[i] == '.')
-			count++;
+		str = extract_and_remove_delimiter_pair(&input[cur_pos], next_pos);
+		list = lappend(list, str);
+		cur_pos += next_pos + 1;
+		next_pos = babelfish_get_delimiter_pos(&input[cur_pos]);
 	}
-	switch (count)
+	str = extract_and_remove_delimiter_pair(&input[cur_pos], strlen(&input[cur_pos]));
+	list = lappend(list, str);
+
+	switch (list_length(list))
 	{
-		case 0:
-			object_name = extract_and_remove_delimiter_pair(&input);
-			break;
 		case 1:
-			schema_name = extract_and_remove_delimiter_pair(&input);
-			object_name = extract_and_remove_delimiter_pair(&input);
+			object_name = (char *) linitial(list);
 			break;
 		case 2:
-			db_name = extract_and_remove_delimiter_pair(&input);
-			schema_name = extract_and_remove_delimiter_pair(&input);
-			object_name = extract_and_remove_delimiter_pair(&input);
+			schema_name = (char *) linitial(list);
+			object_name = (char *) lsecond(list);
+			break;
+		case 3:
+			db_name = (char *) linitial(list);
+			schema_name = (char *) lsecond(list);
+			object_name = (char *) lthird(list);
 			break;
 		default:
 			PG_RETURN_NULL();
