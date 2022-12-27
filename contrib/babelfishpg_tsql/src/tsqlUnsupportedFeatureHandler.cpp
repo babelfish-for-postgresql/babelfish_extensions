@@ -821,7 +821,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_ON, "CREATE DATABASE ON <database-file-spec>", &st_escape_hatch_storage_options, getLineAndPos(ctx->ON()[0]));
 
 	if (ctx->collation())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_COLLATE, "COLLATE", getLineAndPos(ctx->collation()));
+		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_COLLATE, "COLLATE", &st_escape_hatch_database_misc_options, getLineAndPos(ctx->collation()));
 
 	if (ctx->WITH())
 	{
@@ -852,7 +852,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 			if (cdoctx->TRUSTWORTHY())
 				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_TRUSTWORTHY, cdoctx->TRUSTWORTHY(), &st_escape_hatch_database_misc_options);
 			if (cdoctx->CATALOG_COLLATION())
-				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_CATALOG_COLLATION, cdoctx->CATALOG_COLLATION());
+				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_CATALOG_COLLATION, cdoctx->CATALOG_COLLATION(), &st_escape_hatch_database_misc_options);
 			if (cdoctx->PERSISTENT_LOG_BUFFER())
 				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_PERSISTENT_LOG_BUFFER, cdoctx->PERSISTENT_LOG_BUFFER(), &st_escape_hatch_database_misc_options);
 		}
@@ -1366,7 +1366,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_database_sc
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "Remote object reference with 4-part object name", getLineAndPos(ctx));
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote object reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 
 	if (ctx->DOT().empty())
 	{
@@ -1380,7 +1380,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_data
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFull_object_name(TSqlParser::Full_object_nameContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "Remote object reference with 4-part object name", getLineAndPos(ctx));
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote object reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 
 	return visitChildren(ctx);
 }
