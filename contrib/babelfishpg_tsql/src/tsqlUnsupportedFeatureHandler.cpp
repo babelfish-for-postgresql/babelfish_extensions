@@ -1544,7 +1544,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_dropalias",
 	"sp_drop_trusted_assembly",
 	"sp_dropapprole",
-	"sp_droplinkedsrvlogin",
 	"sp_droplogin",
 	"sp_dropremotelogin",
 	"sp_dropsrvrolemember",
