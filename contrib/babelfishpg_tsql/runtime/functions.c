@@ -1019,22 +1019,27 @@ object_id(PG_FUNCTION_ARGS)
 	truncate_tsql_identifier(schema_name);
 	truncate_tsql_identifier(object_name);
 
+	/* Invalid object_name */
+	if (!object_name)
+		PG_RETURN_NULL();
+
 	if(!strcmp(db_name, ""))
 		db_name = get_cur_db_name();
-	if(!strcmp(schema_name, ""))
-		schema_name = "dbo";
 
 	/* Check if looking in current database, if not then return null value */
 	if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
-		PG_RETURN_NULL();
-	
-	physical_schema_name = get_physical_schema_name(db_name, schema_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("Can only do lookup in current database.")));
+
+	if(!strcmp(schema_name, ""))
+		physical_schema_name = (char *) get_dbo_schema_name(db_name);
+	else
+		physical_schema_name = get_physical_schema_name(db_name, schema_name);
 
 	/* Get schema oid from physical schema name */
 	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
-
-	/* Invalid object_name or schema oid */
-	if (!object_name || !OidIsValid(schema_oid))
+	if (!OidIsValid(schema_oid))
 		PG_RETURN_NULL();
 	
 	/* Check if looking for temp object */
