@@ -2212,6 +2212,29 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	return (Datum) 0;
 }
 
+
+Datum
+sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	DropUserMappingStmt *stmt = makeNode(DropUserMappingStmt);
+	RoleSpec *user = makeNode(RoleSpec);
+	if (locallogin != NULL){
+		elog(ERROR, "Only @locallogin = NULL is supported");
+	}
+	stmt->servername = servername;
+
+	user->roletype = ROLESPEC_CURRENT_USER;
+	user->location = -1;
+	stmt->user = user;
+
+	RemoveUserMapping(stmt);
+
+	return (Datum) 0;
+}
+
 Datum
 sp_dropserver_internal(PG_FUNCTION_ARGS)
 {
@@ -2258,6 +2281,7 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	char *query = NULL;
 	char *query2 = NULL;
 	char *query3 = NULL;
+	char *query4 = NULL;
 
 	int rc = -1;
 
@@ -2279,7 +2303,12 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 						"AS \'babelfishpg_tsql\', \'sp_addlinkedsrvlogin_internal\'"
 					"LANGUAGE C";
 
-	char *tempq3 = "CREATE OR REPLACE PROCEDURE %s.sp_dropserver( IN \"@server\" sys.sysname,"
+	char *tempq3 = "CREATE OR REPLACE PROCEDURE %s.sp_droplinkedsrvlogin( IN \"@rmtsrvname\" sys.sysname," 
+						"IN \"@locallogin\" sys.sysname)" 
+						"AS \'babelfishpg_tsql\', \'sp_droplinkedsrvlogin_internal\'" 
+					"LANGUAGE C";
+
+	char *tempq4 = "CREATE OR REPLACE PROCEDURE %s.sp_dropserver( IN \"@server\" sys.sysname,"
 						"IN \"@droplogins\" char(10) DEFAULT NULL)"
 						"AS \'babelfishpg_tsql\', \'sp_dropserver_internal\'"
 					"LANGUAGE C;";
@@ -2291,6 +2320,7 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	query = psprintf(tempq, dbo_scm);
 	query2 = psprintf(tempq2, dbo_scm);
 	query3 = psprintf(tempq3, dbo_scm);
+	query4 = psprintf(tempq4, dbo_scm);
 
 	PG_TRY();
 	{
@@ -2304,6 +2334,9 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_execute(query3, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+		
+		if ((rc = SPI_execute(query4, false, 1)) < 0)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)

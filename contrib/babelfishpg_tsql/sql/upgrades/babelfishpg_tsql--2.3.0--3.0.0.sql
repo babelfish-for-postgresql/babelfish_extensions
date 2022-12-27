@@ -159,6 +159,7 @@ AS 'babelfishpg_tsql', 'create_linked_server_procs_in_master_dbo_internal';
 CALL sys.create_linked_server_procs_in_master_dbo();
 ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
 ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
+ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
 ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
 DROP PROCEDURE sys.create_linked_server_procs_in_master_dbo;
 
@@ -208,6 +209,15 @@ GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedsrvlogin(IN sys.sysname,
                                                     IN sys.varchar(8),
                                                     IN sys.sysname,
                                                     IN sys.sysname,
+                                                    IN sys.sysname)
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                      IN "@locallogin" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_droplinkedsrvlogin(IN sys.sysname,
                                                     IN sys.sysname)
 TO PUBLIC;
 
