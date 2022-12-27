@@ -13,3 +13,25 @@ int
 39
 ~~END~~
 
+
+Select definition FROM sys.computed_columns WHERE name="scc_first_number1";
+GO
+~~START~~
+varchar
+~~END~~
+
+
+Select definition FROM sys.computed_columns WHERE name="scc_second_number1";
+GO
+~~START~~
+varchar
+~~END~~
+
+
+Select definition FROM sys.computed_columns WHERE name="scc_multiplied1";
+GO
+~~START~~
+varchar
+(scc_first_number1 * scc_second_number1)
+~~END~~
+
