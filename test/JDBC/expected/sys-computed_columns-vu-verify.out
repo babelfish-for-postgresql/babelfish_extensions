@@ -14,24 +14,24 @@ int
 ~~END~~
 
 
-Select definition FROM sys.computed_columns WHERE name="scc_first_number1";
+Select definition FROM sys.computed_columns WHERE name='scc_first_number1';
 GO
 ~~START~~
-varchar
+nvarchar
 ~~END~~
 
 
-Select definition FROM sys.computed_columns WHERE name="scc_second_number1";
+Select definition FROM sys.computed_columns WHERE name='scc_second_number1';
 GO
 ~~START~~
-varchar
+nvarchar
 ~~END~~
 
 
-Select definition FROM sys.computed_columns WHERE name="scc_multiplied1";
+Select definition FROM sys.computed_columns WHERE name='scc_multiplied1';
 GO
 ~~START~~
-varchar
+nvarchar
 (scc_first_number1 * scc_second_number1)
 ~~END~~
 
