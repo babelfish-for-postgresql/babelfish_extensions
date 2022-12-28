@@ -12,7 +12,7 @@ GO
 ~~START~~
 varchar#!#nvarchar
 sys_check_constraints_sck_date_col_check#!#((sck_date_col IS NOT NULL))
-sys_check_constraints_sck_datetime_2_check#!#((sck_datetime_2 < CAST('2020-10-20 09:00:00' AS datetime2)))
+sys_check_constraints_sck_datetime_2_check#!#((sck_datetime_2 < '2020-10-20 09:00:00'))
 ~~END~~
 
 
