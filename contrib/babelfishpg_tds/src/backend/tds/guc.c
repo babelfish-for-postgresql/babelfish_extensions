@@ -39,7 +39,7 @@ bool	tds_ssl_encrypt = false;
 int 	tds_default_protocol_version = 0;
 int32_t tds_default_packet_size = 4096;
 int	tds_debug_log_level = 1;
-char*	product_version = NULL;
+char*	product_version = "default";
 
 #ifdef FAULT_INJECTOR
 static bool TdsFaultInjectionEnabled = false;
@@ -122,28 +122,28 @@ check_version_number(char **newval, void **extra, GucSource source)
 
 	if(*newval == NULL)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Please enter a valid version number")));
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Product version must not be null. Please enter 4 valid numbers separated by \'.\' ")));
 
-	strcpy(copy_version_number,*newval);
+	strncpy(copy_version_number,*newval,strlen(*newval) + 1);
 	if(pg_strcasecmp(copy_version_number,"default") == 0)
 		return true;
 
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{	
-		/* null check and check each token contains only digits */
-		if(token == NULL || token[0] == '\0'|| !isdigit((unsigned char) *token))
+		/* check each token contains only digits */
+		if(!isdigit((unsigned char) *token))
 		{
 			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Please enter a valid version number")));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Please enter 4 valid numbers separated by \'.\' ")));
 		}
 		
 		/* check Major Version is between 11 and 15 */
 		if(part == 0 && (11 > atoi(token) || atoi(token) > 15))
 		{
 			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Please enter a valid major version number between 11 and 15")));
 		}
 
@@ -153,8 +153,8 @@ check_version_number(char **newval, void **extra, GucSource source)
 		if(part == 1 && atoi(token) > 0xFF)
 		{
 			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Please enter a valid minor version number")));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Please enter a valid minor version number between 0 and 255")));
 		}
 		/* Micro Version takes 2 bytes in PreLogin message when doing handshake, here to check
 		 *	it is between 0 and 0xFFFF
@@ -162,8 +162,8 @@ check_version_number(char **newval, void **extra, GucSource source)
 		if(part == 2 && atoi(token) > 0xFFFF)
 		{
 			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Please enter a valid micro version number")));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Please enter a valid micro version number between 0 and 65535")));
 		}
 		part++;
 	}
@@ -171,7 +171,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 	if(part != 4)
 	{
 		ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			errmsg("Please enter 4 valid numbers separated by \'.\' ")));
 	}
 

@@ -370,10 +370,15 @@ static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
 }
 static bool check_tsql_version (char **newval, void **extra, GucSource source)
 {
+	if(*newval == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Input must not be null.")));
+				
 	if(pg_strcasecmp(*newval,"default") != 0)
 		ereport(WARNING,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
+			(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
 
 	return true;
 }

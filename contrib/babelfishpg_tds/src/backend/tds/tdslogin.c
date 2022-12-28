@@ -396,6 +396,7 @@ ProcessVersionNumber(const char* inputString)
 	char		*copy_version_number = malloc(sizeof(inputString));
 	char 		*token;
 
+	Assert(inputString != NULL);
 	strcpy(copy_version_number,inputString);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{ 
