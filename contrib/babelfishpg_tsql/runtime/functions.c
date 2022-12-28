@@ -1070,9 +1070,12 @@ object_id(PG_FUNCTION_ARGS)
 				 errmsg("Can only do lookup in current database.")));
 
 	if(!strcmp(schema_name, ""))
-		physical_schema_name = (char *) get_dbo_schema_name(db_name);
-	else
-		physical_schema_name = get_physical_schema_name(db_name, schema_name);
+	{	
+		const char *user = get_user_for_database(db_name);
+		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+	}
+
+	physical_schema_name = get_physical_schema_name(db_name, schema_name);
 
 	/* Get schema oid from physical schema name */
 	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
@@ -1144,16 +1147,21 @@ object_id(PG_FUNCTION_ARGS)
 					!strcmp(object_type, "X")
 					)
 		{
-			/* Search in pg_proc by name only */
+			/* First search in pg_proc by name */
 			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
-			if (catlist->n_members)
-			{	
+			for (i = 0; i < catlist->n_members; i++)
+			{
 				Form_pg_proc procform;
-				tuple = &catlist->members[0]->tuple;
+				tuple = &catlist->members[i]->tuple;
 				procform = (Form_pg_proc) GETSTRUCT(tuple);
-				result = procform->oid;
-				ReleaseSysCacheList(catlist);
+				/* Then consider only procs in specified schema oid */
+				if (procform->pronamespace == schema_oid)
+				{
+					result = procform->oid;
+					break;
+				}
 			}
+			ReleaseSysCacheList(catlist);
 		}
 		else if (!strcmp(object_type, "TR") || !strcmp(object_type, "TA"))
 		{
@@ -1271,19 +1279,25 @@ object_id(PG_FUNCTION_ARGS)
 			if (OidIsValid(result))
 				PG_RETURN_INT32(result);
 
-			/* Search in pg_proc by name only */
+			/* First search in pg_proc by name*/
 			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
-			if (catlist->n_members)
-			{	
+			for (i = 0; i < catlist->n_members; i++)
+			{
 				Form_pg_proc procform;
-				tuple = &catlist->members[0]->tuple;
+				tuple = &catlist->members[i]->tuple;
 				procform = (Form_pg_proc) GETSTRUCT(tuple);
-				result = procform->oid;
-				ReleaseSysCacheList(catlist);
-				if (OidIsValid(result))
-					PG_RETURN_INT32(result);
+				/* Then consider only procs in specified schema oid */
+				if (procform->pronamespace == schema_oid)
+				{
+					result = procform->oid;
+					break;
+				}
 			}
-			PG_RETURN_NULL();
+			ReleaseSysCacheList(catlist);
+			if (OidIsValid(result))
+				PG_RETURN_INT32(result);
+			else
+				PG_RETURN_NULL();
 		}
 	}
 
