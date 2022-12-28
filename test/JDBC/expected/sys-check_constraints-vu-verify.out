@@ -11,7 +11,7 @@ GO
 ~~START~~
 nvarchar
 ((column_a = 0))
-((column_b <> 'wrong'))
+((column_b <> CAST('wrong' AS varchar)))
 ~~END~~
 
 
