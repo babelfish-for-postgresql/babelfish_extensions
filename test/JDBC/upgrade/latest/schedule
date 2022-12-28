@@ -297,6 +297,8 @@ sys-index_columns
 sys-indexes
 sys-key_constraints
 sys-master_files
+sys-partitions
+sys-partitions-dep
 sys-registered_search_property_lists
 sys-schemas
 sys-selective_xml_index_paths
