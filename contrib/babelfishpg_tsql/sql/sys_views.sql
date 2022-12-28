@@ -610,7 +610,7 @@ BEGIN
 		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 END;
 $$
-language plpgsql;
+language plpgsql STABLE;
 
 create or replace view sys.columns AS
 select out_object_id as object_id
@@ -1939,7 +1939,7 @@ left join sys.schemas sch on sch.schema_id = pgproc.pronamespace
 where has_schema_privilege(sch.schema_id, 'USAGE');
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE VIEW sys.syscolumns AS
 SELECT out_name as name

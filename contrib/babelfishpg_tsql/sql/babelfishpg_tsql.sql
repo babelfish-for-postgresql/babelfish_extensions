@@ -2255,7 +2255,7 @@ BEGIN
  	EXCEPTION WHEN OTHERS THEN
 	 	  RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$

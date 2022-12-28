@@ -563,6 +563,1199 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.trigger_nestlevel() TO PUBLIC;
 
+-- internal function that returns relevant info needed
+-- by sys.syscolumns view for all procedure parameters.
+-- This separate function was needed to workaround BABEL-1597
+CREATE OR REPLACE FUNCTION sys.proc_param_helper()
+RETURNS TABLE (
+    name sys.sysname,
+    id int,
+    xtype int,
+    colid smallint,
+    collationid int,
+    prec smallint,
+    scale int,
+    isoutparam int,
+    collation sys.sysname
+)
+AS
+$$
+BEGIN
+RETURN QUERY
+select params.parameter_name::sys.sysname
+  , pgproc.oid::int
+  , CAST(case when pgproc.proallargtypes is null then split_part(pgproc.proargtypes::varchar, ' ', params.ordinal_position)
+    else split_part(btrim(pgproc.proallargtypes::text,'{}'), ',', params.ordinal_position) end AS int)
+  , params.ordinal_position::smallint
+  , coll.oid::int
+  , params.numeric_precision::smallint
+  , params.numeric_scale::int
+  , case params.parameter_mode when 'OUT' then 1 when 'INOUT' then 1 else 0 end
+  , params.collation_name::sys.sysname
+from information_schema.routines routine
+left join information_schema.parameters params
+  on routine.specific_schema = params.specific_schema
+  and routine.specific_name = params.specific_name
+left join pg_collation coll on coll.collname = params.collation_name
+/* assuming routine.specific_name is constructed by concatenating procedure name and oid */
+left join pg_proc pgproc on routine.specific_name = nameconcatoid(pgproc.proname, pgproc.oid)
+left join sys.schemas sch on sch.schema_id = pgproc.pronamespace
+where has_schema_privilege(sch.schema_id, 'USAGE');
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.original_login()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value text;
+begin
+	RETURN (select session_user)::sys.sysname;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT
+AS $$
+BEGIN
+
+    IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+    THEN
+        RETURN NULL;
+    END IF;
+
+    property := RTRIM(LOWER(COALESCE(property, '')));
+
+    IF property = 'ownerid' -- OwnerId
+    THEN
+        RETURN (
+                SELECT CAST(COALESCE(t1.principal_id, pn.nspowner) AS INT)
+                FROM sys.all_objects t1
+                INNER JOIN pg_catalog.pg_namespace pn ON pn.oid = t1.schema_id
+                WHERE t1.object_id = id);
+
+    ELSEIF property = 'isdefaultcnst' -- IsDefaultCnst
+    THEN
+        RETURN (SELECT count(distinct dc.object_id) FROM sys.default_constraints dc WHERE dc.object_id = id);
+
+    ELSEIF property = 'execisquotedidenton' -- ExecIsQuotedIdentOn
+    THEN
+        RETURN (SELECT CAST(sm.uses_quoted_identifier as int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'tablefulltextpopulatestatus' -- TableFullTextPopulateStatus
+    THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+            RETURN NULL;
+        END IF;
+        RETURN 0;
+
+    ELSEIF property = 'tablehasvardecimalstorageformat' -- TableHasVarDecimalStorageFormat
+    THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+            RETURN NULL;
+        END IF;
+        RETURN 0;
+
+    ELSEIF property = 'ismsshipped' -- IsMSShipped
+    THEN
+        RETURN (SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
+
+    ELSEIF property = 'isschemabound' -- IsSchemaBound
+    THEN
+        RETURN (SELECT CAST(sm.is_schema_bound AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'execisansinullson' -- ExecIsAnsiNullsOn
+    THEN
+        RETURN (SELECT CAST(sm.uses_ansi_nulls AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'isdeterministic' -- IsDeterministic
+    THEN
+        RETURN 0;
+    
+    ELSEIF property = 'isprocedure' -- IsProcedure
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
+
+    ELSEIF property = 'istable' -- IsTable
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));
+
+    ELSEIF property = 'isview' -- IsView
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
+    
+    ELSEIF property = 'isusertable' -- IsUserTable
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
+    
+    ELSEIF property = 'istablefunction' -- IsTableFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT'));
+    
+    ELSEIF property = 'isinlinefunction' -- IsInlineFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF'));
+    
+    ELSEIF property = 'isscalarfunction' -- IsScalarFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS'));
+
+    ELSEIF property = 'isprimarykey' -- IsPrimaryKey
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK');
+    
+    ELSEIF property = 'isindexed' -- IsIndexed
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0);
+
+    ELSEIF property = 'isdefault' -- IsDefault
+    THEN
+        RETURN 0;
+
+    ELSEIF property = 'isrule' -- IsRule
+    THEN
+        RETURN 0;
+    
+    ELSEIF property = 'istrigger' -- IsTrigger
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
+    END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
+    id INT,
+    property SYS.VARCHAR
+)
+RETURNS SYS.SQL_VARIANT
+AS $$
+BEGIN
+	property := RTRIM(LOWER(COALESCE(property, '')));
+	
+	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+	THEN
+		RETURN NULL;
+	END IF;
+
+	IF property = 'basetype' -- BaseType
+	THEN
+		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
+                FROM sys.all_objects ao
+                WHERE ao.object_id = id
+                LIMIT 1
+                );
+    END IF;
+
+    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
+END
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) RETURNS INTEGER AS $$
+DECLARE
+	i INTEGER;
+	n1 INTEGER;
+BEGIN
+	n1 = y1 * 365 + d1;
+	FOR i in 0 .. m1-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n1 = n1 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n1 = n1 + 30;
+		ELSIF (i = 1) THEN
+			n1 = n1 + 28;
+		END IF;
+	END LOOP;
+	IF m1 <= 2 THEN
+		y1 = y1 - 1;
+	END IF;
+	n1 = n1 + (y1/4 - y1/100 + y1/400);
+
+	return n1;
+END
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
+$$
+DECLARE
+    stack text;
+    result integer;
+BEGIN
+    GET DIAGNOSTICS stack = PG_CONTEXT;
+    result := array_length(string_to_array(stack, 'function'), 1) - 2;
+    IF result < 0 THEN
+        RAISE EXCEPTION 'Invalid output, check stack trace %', stack;
+    ELSE
+        RETURN result;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.max_connections()
+RETURNS integer
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'max_connections');
+    RETURN return_value;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.lock_timeout()
+RETURNS integer
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.lock_timeout');
+    RETURN return_value;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
+
+/*
+ * JSON MODIFY
+ * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+ * It has been implemented in three parts:
+ *  1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+ *  2) To convert the input path into the expected jsonb_path.
+ *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
+ */
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    json_path TEXT;
+    json_path_convert TEXT;
+    new_jsonb_path TEXT[];
+    key_value_type TEXT;
+    path_split_array TEXT[];
+    comparison_string TEXT COLLATE "C";
+    len_array INTEGER;
+    word_count INTEGER;
+    create_if_missing BOOL = TRUE;
+    append_modifier BOOL = FALSE;
+    key_exists BOOL;
+    key_value JSONB;
+    json_expression JSONB = expression::JSONB;
+    result_json sys.NVARCHAR;
+BEGIN
+    path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
+    word_count = array_length(path_split_array,1);
+    /* 
+     * This if else block is added to set the create_if_missing and append_modifier flags.
+     * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
+     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+     * Comparisons for comparison_string are case-sensitive.    
+     */
+    IF word_count = 1 THEN
+        json_path = path_split_array[1];
+        create_if_missing = TRUE;
+        append_modifier = FALSE;
+    ELSIF word_count = 2 THEN 
+        json_path = path_split_array[2];
+        comparison_string = path_split_array[1]; -- append or lax/strict mode
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSIF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSIF word_count = 3 THEN
+        json_path = path_split_array[3];
+        comparison_string = path_split_array[1]; -- append mode 
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+        comparison_string = path_split_array[2]; -- lax/strict mode
+        IF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSE
+        RAISE invalid_json_text;
+    END IF;
+
+    -- To convert input jsonpath to the required jsonb_path format
+    json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
+
+    key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
+    
+    --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
+    IF append_modifier THEN 
+        IF key_exists THEN
+            key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
+            key_value_type = jsonb_typeof(key_value);
+            IF key_value_type = 'array' THEN
+                len_array = jsonb_array_length(key_value);
+                /*
+                 * As jsonb_insert requires the index of the value to be inserted, so the below FORMAT function changes the path format into the required jsonb_insert path format.
+                 * Eg: JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure'); -> converts the path from '$.skills' to '{skills,2}' instead of '{skills}'
+                 */
+                new_jsonb_path = FORMAT('%s,%s}',TRIM('}' FROM new_jsonb_path::TEXT),len_array);
+                IF new_value IS NULL THEN
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
+                ELSE
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_array_not_found;
+                ELSE
+                    result_json = json_expression;
+                END IF;
+            END IF;
+        ELSE
+            IF NOT create_if_missing THEN
+                RAISE sql_json_object_not_found;
+            ELSE
+                result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+            END IF;
+        END IF;
+    ELSE --When no append modifier is present
+        IF new_value IS NOT NULL THEN
+            IF key_exists OR create_if_missing THEN
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
+            ELSE
+                RAISE sql_json_object_not_found;
+            END IF;
+        ELSE
+            IF key_exists THEN
+                IF NOT create_if_missing THEN
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_object_not_found;
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
+                END IF;
+            END IF;
+        END IF;
+    END IF;  -- If append_modifier block ends here
+    RETURN result_json;
+EXCEPTION
+    WHEN invalid_json_text THEN
+            RAISE USING MESSAGE = 'JSON path is not properly formatted',
+                        DETAIL = FORMAT('Unexpected keyword "%s" is found.',comparison_string),
+                        HINT = 'Change "modifier/mode" parameter to the proper value and try again.';
+    WHEN sql_json_array_not_found THEN
+            RAISE USING MESSAGE = 'array cannot be found in the specified JSON path',
+                        HINT = 'Change JSON path to target array property and try again.';
+    WHEN sql_json_object_not_found THEN
+            RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
+END;        
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr ANYELEMENT) RETURNS INTEGER AS
+$BODY$
+DECLARE 
+    x NUMERIC;
+    y MONEY;
+BEGIN
+    IF (expr IS NULL) THEN
+	    RETURN 0;
+    END IF;
+    IF ($1::VARCHAR COLLATE "C" ~ '^\s*$') THEN 
+	    RETURN 0;
+    END IF;
+    IF pg_typeof(expr) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
+    'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'sys.money'::regtype)
+	THEN
+		RETURN 1;
+	END IF;
+    x = $1::NUMERIC;
+    RETURN 1;
+EXCEPTION WHEN others THEN
+    BEGIN
+        y = $1::sys.MONEY;
+        RETURN 1;
+        EXCEPTION WHEN others THEN
+            RETURN 0;
+    END;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE CALLED ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT) RETURNS INTEGER AS
+$BODY$
+DECLARE 
+    x NUMERIC;
+    y MONEY;
+BEGIN
+    IF (expr IS NULL) THEN
+	    RETURN 0;
+    END IF;
+
+    -- IF ($1::VARCHAR ~ '^\s*$') THEN 
+    IF (expr COLLATE "C" ~ '^\s*$') THEN 
+	    RETURN 0;
+    END IF;
+    IF pg_typeof(expr) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
+    'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'sys.money'::regtype)
+	THEN
+		RETURN 1;
+	END IF;
+    x = $1::NUMERIC;
+    RETURN 1;
+EXCEPTION WHEN others THEN
+    BEGIN
+        y = $1::sys.MONEY;
+        RETURN 1;
+        EXCEPTION WHEN others THEN
+            RETURN 0;
+    END;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE CALLED ON NULL INPUT;
+
+create or replace function sys.isdate(v text)
+returns integer
+as
+$body$
+begin
+    if v is NULL THEN
+        return 0;
+    else
+        perform v::date;
+        return 1;
+    end if;
+    EXCEPTION WHEN others THEN
+    RETURN 0;
+end
+$body$
+language 'plpgsql' STABLE;
+
+CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT suser_name())
+RETURNS INTEGER AS
+$$
+DECLARE has_role BOOLEAN;
+DECLARE login_valid BOOLEAN;
+BEGIN
+	role  := TRIM(trailing from LOWER(role));
+	login := TRIM(trailing from LOWER(login));
+	
+	login_valid = (login = suser_name()) OR 
+		(EXISTS (SELECT name
+	 			FROM sys.server_principals
+		 	 	WHERE 
+				LOWER(name) = login 
+				AND type = 'S'));
+ 	
+ 	IF NOT login_valid THEN
+ 		RETURN NULL;
+    
+    ELSIF role = 'public' THEN
+    	RETURN 1;
+	
+ 	ELSIF role = 'sysadmin' THEN
+	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
+	    IF has_role THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	
+    ELSIF role IN (
+            'serveradmin',
+            'securityadmin',
+            'setupadmin',
+            'securityadmin',
+            'processadmin',
+            'dbcreator',
+            'diskadmin',
+            'bulkadmin') THEN 
+    	RETURN 0;
+ 	
+    ELSE
+ 		  RETURN NULL;
+ 	END IF;
+	
+ 	EXCEPTION WHEN OTHERS THEN
+	 	  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
+RETURNS INT AS
+$BODY$
+DECLARE
+ret_val INT;
+BEGIN
+	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name));
+	property = LOWER(TRIM(property));
+    SELECT INTO ret_val
+    CASE
+       
+        WHEN (SELECT CAST(type AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default) = 3 -- is XML index
+        THEN CAST(NULL AS int)
+	    
+        WHEN property = 'indexdepth'
+        THEN CAST(0 AS int)
+
+        WHEN property = 'indexfillfactor'
+        THEN (SELECT CAST(fill_factor AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+        WHEN property = 'indexid'
+        THEN (SELECT CAST(index_id AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+        WHEN property = 'isautostatistics'
+        THEN CAST(0 AS int)
+
+        WHEN property = 'isclustered'
+        THEN (SELECT CAST(CASE WHEN type = 1 THEN 1 ELSE 0 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isdisabled'
+        THEN (SELECT CAST(is_disabled AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isfulltextkey'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'ishypothetical'
+        THEN (SELECT CAST(is_hypothetical AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'ispadindex'
+        THEN (SELECT CAST(is_padded AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'ispagelockdisallowed'
+        THEN (SELECT CAST(CASE WHEN allow_page_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isrowlockdisallowed'
+        THEN (SELECT CAST(CASE WHEN allow_row_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id=$1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isstatistics'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'isunique'
+        THEN (SELECT CAST(is_unique AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'iscolumnstore'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'isoptimizedforsequentialkey'
+        THEN CAST(0 AS int)
+    ELSE
+        CAST(NULL AS int)
+    END;
+RETURN ret_val;
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
+    securable SYS.SYSNAME, 
+    securable_class SYS.NVARCHAR(60), 
+    permission SYS.SYSNAME,
+    sub_securable SYS.SYSNAME DEFAULT NULL,
+    sub_securable_class SYS.NVARCHAR(60) DEFAULT NULL
+)
+RETURNS integer
+LANGUAGE plpgsql
+STABLE
+AS $$
+DECLARE
+    db_name text COLLATE sys.database_default; 
+    bbf_schema_name text;
+    pg_schema text COLLATE sys.database_default;
+    implied_dbo_permissions boolean;
+    fully_supported boolean;
+    object_name text COLLATE sys.database_default;
+    database_id smallint;
+    namespace_id oid;
+    object_type text;
+    function_signature text;
+    qualified_name text;
+    return_value integer;
+    cs_as_securable text COLLATE "C" := securable;
+    cs_as_securable_class text COLLATE "C" := securable_class;
+    cs_as_permission text COLLATE "C" := permission;
+    cs_as_sub_securable text COLLATE "C" := sub_securable;
+    cs_as_sub_securable_class text COLLATE "C" := sub_securable_class;
+BEGIN
+    return_value := NULL;
+
+    -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
+    -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
+    cs_as_securable = lower(rtrim(cs_as_securable));
+    cs_as_securable_class = lower(rtrim(cs_as_securable_class));
+    cs_as_permission = lower(rtrim(cs_as_permission));
+    cs_as_sub_securable = lower(rtrim(cs_as_sub_securable));
+    cs_as_sub_securable_class = lower(rtrim(cs_as_sub_securable_class));
+
+    -- Assert that sub_securable and sub_securable_class are either both NULL or both defined
+    IF cs_as_sub_securable IS NOT NULL AND cs_as_sub_securable_class IS NULL THEN
+        RETURN NULL;
+    ELSIF cs_as_sub_securable IS NULL AND cs_as_sub_securable_class IS NOT NULL THEN
+        RETURN NULL;
+    -- If they are both defined, user must be evaluating column privileges.
+    -- Check that inputs are valid for column privileges: sub_securable_class must 
+    -- be column, securable_class must be object, and permission cannot be any.
+    ELSIF cs_as_sub_securable_class IS NOT NULL 
+            AND (cs_as_sub_securable_class != 'column' 
+                    OR cs_as_securable_class IS NULL 
+                    OR cs_as_securable_class != 'object' 
+                    OR cs_as_permission = 'any') THEN
+        RETURN NULL;
+
+    -- If securable is null, securable_class must be null
+    ELSIF cs_as_securable IS NULL AND cs_as_securable_class IS NOT NULL THEN
+        RETURN NULL;
+    -- If securable_class is null, securable must be null
+    ELSIF cs_as_securable IS NOT NULL AND cs_as_securable_class IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF cs_as_securable_class = 'server' THEN
+        -- SQL Server does not permit a securable_class value of 'server'.
+        -- securable_class should be NULL to evaluate server permissions.
+        RETURN NULL;
+    ELSIF cs_as_securable_class IS NULL THEN
+        -- NULL indicates a server permission. Set this variable so that we can
+        -- search for the matching entry in babelfish_has_perms_by_name_permissions
+        cs_as_securable_class = 'server';
+    END IF;
+
+    IF cs_as_sub_securable IS NOT NULL THEN
+        cs_as_sub_securable := babelfish_remove_delimiter_pair(cs_as_sub_securable);
+        IF cs_as_sub_securable IS NULL THEN
+            RETURN NULL;
+        END IF;
+    END IF;
+
+    SELECT p.implied_dbo_permissions,p.fully_supported 
+    INTO implied_dbo_permissions,fully_supported 
+    FROM babelfish_has_perms_by_name_permissions p 
+    WHERE p.securable_type = cs_as_securable_class AND p.permission_name = cs_as_permission;
+    
+    IF implied_dbo_permissions IS NULL OR fully_supported IS NULL THEN
+        -- Securable class or permission is not valid, or permission is not valid for given securable
+        RETURN NULL;
+    END IF;
+
+    IF cs_as_securable_class = 'database' AND cs_as_securable IS NOT NULL THEN
+        db_name = babelfish_remove_delimiter_pair(cs_as_securable);
+        IF db_name IS NULL THEN
+            RETURN NULL;
+        ELSIF (SELECT COUNT(name) FROM sys.databases WHERE name = db_name) != 1 THEN
+            RETURN 0;
+        END IF;
+    ELSIF cs_as_securable_class = 'schema' THEN
+        bbf_schema_name = babelfish_remove_delimiter_pair(cs_as_securable);
+        IF bbf_schema_name IS NULL THEN
+            RETURN NULL;
+        ELSIF (SELECT COUNT(nspname) FROM sys.babelfish_namespace_ext ext
+                WHERE ext.orig_name = bbf_schema_name 
+                    AND CAST(ext.dbid AS oid) = CAST(sys.db_id() AS oid)) != 1 THEN
+            RETURN 0;
+        END IF;
+    END IF;
+
+    IF fully_supported = 'f' AND CURRENT_USER IN('dbo', 'master_dbo', 'tempdb_dbo', 'msdb_dbo') THEN
+        RETURN CAST(implied_dbo_permissions AS integer);
+    ELSIF fully_supported = 'f' THEN
+        RETURN 0;
+    END IF;
+
+    -- The only permissions that are fully supported belong to the OBJECT securable class.
+    -- The block above has dealt with all permissions that are not fully supported, so 
+    -- if we reach this point we know the securable class is OBJECT.
+    SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, object_name 
+    FROM babelfish_split_object_name(cs_as_securable) s;
+
+    -- Invalid securable name
+    IF object_name IS NULL OR object_name = '' THEN
+        RETURN NULL;
+    END IF;
+
+    -- If schema was not specified, use the default
+    IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
+        bbf_schema_name := sys.schema_name();
+    END IF;
+
+    database_id := (
+        SELECT CASE 
+            WHEN db_name IS NULL OR db_name = '' THEN (sys.db_id())
+            ELSE (sys.db_id(db_name))
+        END);
+  
+    -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
+    pg_schema := (SELECT nspname 
+                    FROM sys.babelfish_namespace_ext ext 
+                    WHERE ext.orig_name = bbf_schema_name 
+                        AND CAST(ext.dbid AS oid) = CAST(database_id AS oid));
+
+    IF pg_schema IS NULL THEN
+        -- Shared schemas like sys and pg_catalog do not exist in the table above.
+        -- These schemas do not need to be translated from Babelfish to Postgres
+        pg_schema := bbf_schema_name;
+    END IF;
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', pg_schema, '"."', object_name, '"');
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = pg_schema COLLATE sys.database_default;
+
+    object_type := (
+        SELECT CASE
+            WHEN cs_as_sub_securable_class = 'column'
+                THEN CASE 
+                    WHEN (SELECT count(name) 
+                        FROM sys.all_columns 
+                        WHERE name = cs_as_sub_securable COLLATE sys.database_default
+                            -- Use V as the object type to specify that the securable is table-like.
+                            -- We do not know that the securable is a view, but object_id behaves the 
+                            -- same for differint table-like types, so V can be arbitrarily chosen.
+                            AND object_id = sys.object_id(cs_as_securable, 'V')) = 1
+                                THEN 'column'
+                    ELSE NULL
+                END
+
+            WHEN (SELECT count(relname) 
+                    FROM pg_catalog.pg_class 
+                    WHERE relname = object_name COLLATE sys.database_default
+                        AND relnamespace = namespace_id) = 1
+                THEN 'table'
+
+            WHEN (SELECT count(proname) 
+                    FROM pg_catalog.pg_proc 
+                    WHERE proname = object_name COLLATE sys.database_default 
+                        AND pronamespace = namespace_id
+                        AND prokind = 'f') = 1
+                THEN 'function'
+                
+            WHEN (SELECT count(proname) 
+                    FROM pg_catalog.pg_proc 
+                    WHERE proname = object_name COLLATE sys.database_default
+                        AND pronamespace = namespace_id
+                        AND prokind = 'p') = 1
+                THEN 'procedure'
+            ELSE NULL
+        END
+    );
+    
+    -- Object was not found
+    IF object_type IS NULL THEN
+        RETURN 0;
+    END IF;
+  
+    -- Get signature for function-like objects
+    IF object_type IN('function', 'procedure') THEN
+        SELECT CAST(oid AS regprocedure) 
+            INTO function_signature 
+            FROM pg_catalog.pg_proc 
+            WHERE proname = object_name COLLATE sys.database_default
+                AND pronamespace = namespace_id;
+    END IF;
+
+    return_value := (
+        SELECT CASE
+            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(object_type, pg_schema, object_name)
+
+            WHEN object_type = 'column'
+                THEN CASE
+                    WHEN cs_as_permission IN('insert', 'delete', 'execute') THEN NULL
+                    ELSE CAST(has_column_privilege(qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
+                END
+
+            WHEN object_type = 'table'
+                THEN CASE
+                    WHEN cs_as_permission = 'execute' THEN 0
+                    ELSE CAST(has_table_privilege(qualified_name, cs_as_permission) AS integer)
+                END
+
+            WHEN object_type = 'function'
+                THEN CASE
+                    WHEN cs_as_permission IN('select', 'execute')
+                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                    WHEN cs_as_permission IN('update', 'insert', 'delete', 'references')
+                        THEN 0
+                    ELSE NULL
+                END
+
+            WHEN object_type = 'procedure'
+                THEN CASE
+                    WHEN cs_as_permission = 'execute'
+                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                    WHEN cs_as_permission IN('select', 'update', 'insert', 'delete', 'references')
+                        THEN 0
+                    ELSE NULL
+                END
+
+            ELSE NULL
+        END
+    );
+
+    RETURN return_value;
+    EXCEPTION WHEN OTHERS THEN RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
+    securable sys.SYSNAME, 
+    securable_class sys.nvarchar(60), 
+    permission sys.SYSNAME, 
+    sub_securable sys.SYSNAME,
+    sub_securable_class sys.nvarchar(60)) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
+property_name varchar(128),
+level0_object_type varchar(128),
+level0_object_name varchar(128),
+level1_object_type varchar(128),
+level1_object_name varchar(128),
+level2_object_type varchar(128),
+level2_object_name varchar(128)
+)
+returns table (
+objtype	sys.sysname,
+objname	sys.sysname,
+name	sys.sysname,
+value	sys.sql_variant
+) 
+as $$
+begin
+-- currently only support COLUMN property
+IF (((SELECT coalesce(property_name COLLATE sys.database_default, '')) = '') or
+    ((SELECT UPPER(coalesce(property_name COLLATE sys.database_default, ''))) = 'COLUMN')) THEN
+	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE sys.database_default, ''))) = 'schema') and
+	    ((SELECT LOWER(coalesce(level1_object_type COLLATE sys.database_default, ''))) = 'table') and
+	    ((SELECT LOWER(coalesce(level2_object_type COLLATE sys.database_default, ''))) = 'column')) THEN
+		RETURN query 
+		select CAST('COLUMN' AS sys.sysname) as objtype,
+		       CAST(t3.column_name AS sys.sysname) as objname,
+		       t1.name as name,
+		       t1.value as value
+		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
+		where t1.major_id = t2.oid and 
+			  t2.relname = cast(t3.table_name as sys.sysname) COLLATE sys.database_default and 
+		      t2.relname = (SELECT coalesce(level1_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default and 
+			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default;
+	END IF;
+END IF;
+RETURN;
+end;
+$$
+LANGUAGE plpgsql
+STABLE;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
+	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
+) TO PUBLIC;
+
+create or replace function sys.fn_helpcollations()
+returns table (Name VARCHAR(128), Description VARCHAR(1000))
+AS
+$$
+BEGIN
+    return query select * from sys.babelfish_helpcollation;
+END
+$$
+LANGUAGE 'plpgsql' STABLE;
+
+CREATE OR REPLACE FUNCTION sys.DBTS()
+RETURNS sys.ROWVERSION AS
+$$
+DECLARE
+    eh_setting text;
+BEGIN
+    eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
+    IF eh_setting = 'strict' THEN
+        RAISE EXCEPTION 'DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore';
+    ELSE
+        RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql STABLE;
+
+-- internal function in order to workaround BABEL-1597
+CREATE OR REPLACE FUNCTION sys.columns_internal()
+RETURNS TABLE (
+    out_object_id int,
+    out_name sys.sysname,
+    out_column_id int,
+    out_system_type_id int,
+    out_user_type_id int,
+    out_max_length smallint,
+    out_precision sys.tinyint,
+    out_scale sys.tinyint,
+    out_collation_name sys.sysname,
+    out_collation_id int,
+    out_offset smallint,
+    out_is_nullable sys.bit,
+    out_is_ansi_padded sys.bit,
+    out_is_rowguidcol sys.bit,
+    out_is_identity sys.bit,
+    out_is_computed sys.bit,
+    out_is_filestream sys.bit,
+    out_is_replicated sys.bit,
+    out_is_non_sql_subscribed sys.bit,
+    out_is_merge_published sys.bit,
+    out_is_dts_replicated sys.bit,
+    out_is_xml_document sys.bit,
+    out_xml_collection_id int,
+    out_default_object_id int,
+    out_rule_object_id int,
+    out_is_sparse sys.bit,
+    out_is_column_set sys.bit,
+    out_generated_always_type sys.tinyint,
+    out_generated_always_type_desc sys.nvarchar(60),
+    out_encryption_type int,
+    out_encryption_type_desc sys.nvarchar(64),
+    out_encryption_algorithm_name sys.sysname,
+    out_column_encryption_key_id int,
+    out_column_encryption_key_database_name sys.sysname,
+    out_is_hidden sys.bit,
+    out_is_masked sys.bit,
+    out_graph_type int,
+    out_graph_type_desc sys.nvarchar(60)
+)
+AS
+$$
+BEGIN
+	RETURN QUERY
+		SELECT CAST(c.oid AS int),
+			CAST(a.attname AS sys.sysname),
+			CAST(a.attnum AS int),
+			CASE 
+			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+				-- either tsql or PG base type 
+				CAST(a.atttypid AS int)
+			ELSE 
+				CAST(t.typbasetype AS int)
+			END,
+			CAST(a.atttypid AS int),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+			END,
+			CAST(coll.collname AS sys.sysname),
+			CAST(a.attcollation AS int),
+			CAST(a.attnum AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS int),
+			CAST(coalesce(d.oid, 0) AS int),
+			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
+			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(64)),
+			CAST(null AS sys.sysname),
+			CAST(null AS int),
+			CAST(null AS sys.sysname),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON c.oid = a.attrelid
+		INNER JOIN pg_type t ON t.oid = a.atttypid
+		INNER JOIN sys.schemas sch on c.relnamespace = sch.schema_id 
+		INNER JOIN sys.pg_namespace_ext ext on sch.schema_id = ext.oid 
+		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+		, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+		WHERE NOT a.attisdropped
+		AND a.attnum > 0
+		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+		AND has_schema_privilege(sch.schema_id, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+		union all
+		-- system tables information
+		SELECT CAST(c.oid AS int),
+			CAST(a.attname AS sys.sysname),
+			CAST(a.attnum AS int),
+			CASE 
+			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+				-- either tsql or PG base type 
+				CAST(a.atttypid AS int)
+			ELSE 
+				CAST(t.typbasetype AS int)
+			END,
+			CAST(a.atttypid AS int),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+			END,
+			CAST(coll.collname AS sys.sysname),
+			CAST(a.attcollation AS int),
+			CAST(a.attnum AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS int),
+			CAST(coalesce(d.oid, 0) AS int),
+			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
+			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(64)),
+			CAST(null AS sys.sysname),
+			CAST(null AS int),
+			CAST(null AS sys.sysname),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON c.oid = a.attrelid
+		INNER JOIN pg_type t ON t.oid = a.atttypid
+		INNER JOIN pg_namespace nsp ON (nsp.oid = c.relnamespace and nsp.nspname = 'sys')
+		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+		, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+		WHERE NOT a.attisdropped
+		AND a.attnum > 0
+		AND c.relkind = 'r'
+		AND has_schema_privilege(nsp.oid, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+END;
+$$
+language plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
+RETURNS integer
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+
+declare extra_bytes CONSTANT integer := 4;
+declare return_value integer;
+begin
+	return_value := (
+					select 
+						case  LOWER(property_name)
+							when 'charmaxlen' COLLATE sys.database_default then 
+								(select CASE WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes ELSE NULL END  from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+							when 'allowsnull' COLLATE sys.database_default then
+								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+							else
+								null
+						end
+					);
+	
+  RETURN return_value::integer;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, property_name text) TO PUBLIC;
+
+COMMENT ON FUNCTION sys.columnproperty 
+IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
+
+create or replace function sys.CHAR(x in int)returns char
+AS
+$body$
+BEGIN
+/***************************************************************
+EXTENSION PACK function CHAR(x)
+***************************************************************/
+    if x between 1 and 255 then
+        return chr(x);
+    else
+        return null;
+    end if;
+END;
+$body$
+language plpgsql STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

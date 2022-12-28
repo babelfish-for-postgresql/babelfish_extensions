@@ -121,7 +121,7 @@ EXTENSION PACK function CHAR(x)
     end if;
 END;
 $body$
-language plpgsql;
+language plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.nchar(IN x INTEGER) RETURNS sys.nvarchar
 AS

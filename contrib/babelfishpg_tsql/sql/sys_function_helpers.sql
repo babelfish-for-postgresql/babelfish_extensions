@@ -10290,4 +10290,4 @@ BEGIN
 	return n1;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;

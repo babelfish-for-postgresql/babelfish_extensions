@@ -437,7 +437,7 @@ EXCEPTION WHEN others THEN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE CALLED ON NULL INPUT;
+STABLE CALLED ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT) RETURNS INTEGER AS
 $BODY$
@@ -470,7 +470,7 @@ EXCEPTION WHEN others THEN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE CALLED ON NULL INPUT;
+STABLE CALLED ON NULL INPUT;
 
 -- Return the object ID given the object name. Can specify optional type.
 CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
@@ -926,7 +926,7 @@ begin
     RETURN 0;
 end
 $body$
-language 'plpgsql';
+language 'plpgsql' STABLE;
 
 CREATE OR REPLACE FUNCTION sys.is_collated_ci_as_internal(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ci_as_internal'
@@ -1753,7 +1753,7 @@ BEGIN
 END;
 $$
 STRICT
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
 $$
@@ -1770,7 +1770,7 @@ BEGIN
     END IF;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.fetch_status()
 RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
@@ -1938,7 +1938,8 @@ END IF;
 RETURN;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
 	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
 ) TO PUBLIC;
@@ -2039,7 +2040,7 @@ GRANT EXECUTE ON FUNCTION sys.sign(TEXT) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.lock_timeout()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -2055,7 +2056,7 @@ GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.max_connections()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -2376,6 +2377,7 @@ CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
 )
 RETURNS integer
 LANGUAGE plpgsql
+STABLE
 AS $$
 DECLARE
     db_name text COLLATE sys.database_default; 
@@ -2654,7 +2656,7 @@ GRANT EXECUTE ON FUNCTION sys.schema_id() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.original_login()
 RETURNS sys.sysname
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value text;
 begin
@@ -2669,7 +2671,7 @@ GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 
 declare extra_bytes CONSTANT integer := 4;
@@ -2935,7 +2937,7 @@ EXCEPTION
             RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
 END;        
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
@@ -3204,7 +3206,7 @@ BEGIN
     RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
@@ -3232,7 +3234,7 @@ BEGIN
     RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
 RETURNS SYS.VARBINARY
@@ -3343,7 +3345,7 @@ BEGIN
 RETURN ret_val;
 END;
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)
