@@ -150,12 +150,12 @@ get_servername_helper()
 	StringInfoData	temp;
 	void*		info;
 
-    initStringInfo(&temp);
-    appendStringInfoString(&temp, bbf_servername);
-
-    info = tsql_varchar_input(temp.data, temp.len, -1);
-    pfree(temp.data);
-    return (VarChar *)info;
+	initStringInfo(&temp);
+	appendStringInfoString(&temp, bbf_servername);
+	
+	info = tsql_varchar_input(temp.data, temp.len, -1);
+	pfree(temp.data);
+	return (VarChar *)info;
 }
 
 static char *
@@ -165,7 +165,11 @@ get_version_number(const char* version_string, int idx)
 	char		*token;
 	char 		*copy_version_number = palloc(sizeof(version_string));
 
-	strcpy(copy_version_number,version_string);
+	Assert(version_string != NULL);
+	if(idx == -1) 
+		return (char *)version_string;
+
+	strncpy(copy_version_number,version_string,strlen(version_string) + 1);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{ 
 		if(part == idx)
@@ -173,7 +177,9 @@ get_version_number(const char* version_string, int idx)
 		part++;
 	}
 	
-	return token;
+	/* part should less than 2 */
+	Assert(part <= 1);
+	return "";
 }
 
 static VarChar *
@@ -182,21 +188,19 @@ get_product_version_helper(int idx)
 	StringInfoData	temp;
 	void		*info;
 	const char	*product_version;
-	const char	*ret = "0";
 
 	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
-	initStringInfo(&temp);
+	Assert(product_version != NULL);
+	Assert(idx == -1 || idx == 0 || idx == 1);
 
+	initStringInfo(&temp);
 	if(pg_strcasecmp(product_version,"default") == 0)
 	{
-		if(idx == 0) appendStringInfoString(&temp, BABEL_COMPATIBILITY_MAJOR_VERSION);
-		else if(idx == 1) appendStringInfoString(&temp, ret);
-		else if(idx == -1) appendStringInfoString(&temp, BABEL_COMPATIBILITY_VERSION);
+		appendStringInfoString(&temp, get_version_number(BABEL_COMPATIBILITY_VERSION,idx));
 	}
 	else
 	{
-		if(idx >= 0) appendStringInfoString(&temp, get_version_number(product_version,idx));
-		else appendStringInfoString(&temp, product_version);
+		appendStringInfoString(&temp, get_version_number(product_version,idx));
 	}
 		
     info = tsql_varchar_input(temp.data, temp.len, -1);

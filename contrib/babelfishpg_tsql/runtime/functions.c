@@ -146,7 +146,8 @@ version(PG_FUNCTION_ARGS)
 		*temp_str = '\0';
 		product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
 		
-		if(strcasecmp(product_version,"default") == 0)
+		Assert(product_version != NULL);
+		if(pg_strcasecmp(product_version,"default") == 0)
 			product_version = BABEL_COMPATIBILITY_VERSION;
 		appendStringInfo(&temp,
 						 "Babelfish for PostgreSQL with SQL Server Compatibility - %s"
