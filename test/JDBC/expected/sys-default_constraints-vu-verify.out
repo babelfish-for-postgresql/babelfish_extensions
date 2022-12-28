@@ -18,10 +18,10 @@ SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_def
 GO
 ~~START~~
 nvarchar
-'42'
 0
 1
 50
+CAST('42' AS varchar)
 getdate()
 ~~END~~
 
