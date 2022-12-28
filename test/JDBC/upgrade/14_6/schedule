@@ -349,3 +349,4 @@ ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
 BABEL-3801
+case_insensitive_collation
