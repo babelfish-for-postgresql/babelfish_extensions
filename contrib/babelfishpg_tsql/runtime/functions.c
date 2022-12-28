@@ -1024,7 +1024,7 @@ object_id(PG_FUNCTION_ARGS)
 	 */
 	cur_pos = 0;
 	next_pos = babelfish_get_delimiter_pos(input);
-	while( next_pos != -1)
+	while (next_pos != -1)
 	{
 		str = extract_and_remove_delimiter_pair(&input[cur_pos], next_pos);
 		list = lappend(list, str);
@@ -1060,7 +1060,7 @@ object_id(PG_FUNCTION_ARGS)
 	if (!object_name)
 		PG_RETURN_NULL();
 
-	if(!strcmp(db_name, ""))
+	if (!strcmp(db_name, ""))
 		db_name = get_cur_db_name();
 
 	/* Check if looking in current database, if not then return null value */
@@ -1069,8 +1069,9 @@ object_id(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("Can only do lookup in current database.")));
 
-	if(!strcmp(schema_name, ""))
+	if (!strcmp(schema_name, ""))
 	{	
+		/* find the default schema for current user */
 		const char *user = get_user_for_database(db_name);
 		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 	}
@@ -1088,7 +1089,7 @@ object_id(PG_FUNCTION_ARGS)
 	if (strcmp(object_type, "")) /* object_type is not empty */
 	{
 		if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
-				!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
+			!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
 		{
 			if (is_temp_object)
 			{
@@ -1097,7 +1098,7 @@ object_id(PG_FUNCTION_ARGS)
 				ListCell *lc;
 				int reloid;
 				char *relname;
-				foreach(lc, enr_list)
+				foreach (lc, enr_list)
 				{	
 					reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
 					relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
@@ -1115,22 +1116,22 @@ object_id(PG_FUNCTION_ARGS)
 			}
 		}
 		else if (!strcmp(object_type, "C") || !strcmp(object_type, "D") || !strcmp(object_type, "F") ||
-					!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
+				!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
 		{
 			/* Search in pg_constraint by name and schema oid */
 			tgrel = table_open(ConstraintRelationId, AccessShareLock);
 			ScanKeyInit(&skey[0],
-							Anum_pg_constraint_conname,
-							BTEqualStrategyNumber, F_NAMEEQ,
-							CStringGetDatum(object_name));
+						Anum_pg_constraint_conname,
+						BTEqualStrategyNumber, F_NAMEEQ,
+						CStringGetDatum(object_name));
 
 			ScanKeyInit(&skey[1],
-								Anum_pg_constraint_connamespace,
-								BTEqualStrategyNumber, F_OIDEQ,
-								ObjectIdGetDatum(schema_oid));
+						Anum_pg_constraint_connamespace,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(schema_oid));
 
-			tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId, true, /* true or false ?*/
-											NULL, 2, skey);
+			tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId,
+										true, NULL, 2, skey);
 
 			/* We are interested in the first row only */
 			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
@@ -1142,10 +1143,9 @@ object_id(PG_FUNCTION_ARGS)
 			table_close(tgrel, AccessShareLock);
 		}
 		else if (!strcmp(object_type, "AF") || !strcmp(object_type, "FN") || !strcmp(object_type, "FS") ||
-					!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
-					!strcmp(object_type, "PC") || !strcmp(object_type, "TF") || !strcmp(object_type, "RF") ||
-					!strcmp(object_type, "X")
-					)
+				!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
+				!strcmp(object_type, "PC") || !strcmp(object_type, "TF") || !strcmp(object_type, "RF") ||
+				!strcmp(object_type, "X"))
 		{
 			/* First search in pg_proc by name */
 			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
@@ -1168,11 +1168,13 @@ object_id(PG_FUNCTION_ARGS)
 			/* Search in pg_trigger by name */
 			tgrel = table_open(TriggerRelationId, AccessShareLock);
 			ScanKeyInit(&skey[0],
-							Anum_pg_trigger_tgname,
-							BTEqualStrategyNumber, F_NAMEEQ,
-							CStringGetDatum(object_name));
-			tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
-											NULL, 1, skey);
+						Anum_pg_trigger_tgname,
+						BTEqualStrategyNumber, F_NAMEEQ,
+						CStringGetDatum(object_name));
+
+			tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
+										true, NULL, 1, skey);
+
 			/* We are interested in the first row only */
 			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 			{
@@ -1183,18 +1185,18 @@ object_id(PG_FUNCTION_ARGS)
 			table_close(tgrel, AccessShareLock);
 		}
 		else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
-					!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
+				!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
 		{
 			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Object type currently unsupported")));
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Object type currently unsupported")));
 		}
 		else
 		{
 			PG_RETURN_NULL();
 		}
 
-		if(OidIsValid(result))
+		if (OidIsValid(result))
 			PG_RETURN_INT32(result);
 		else
 			PG_RETURN_NULL();
@@ -1208,7 +1210,7 @@ object_id(PG_FUNCTION_ARGS)
 			ListCell *lc;
 			int reloid;
 			char *relname;
-			foreach(lc, enr_list)
+			foreach (lc, enr_list)
 			{	
 				reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
 				relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
@@ -1225,17 +1227,17 @@ object_id(PG_FUNCTION_ARGS)
 			/* Search in pg_constraint by name and schema oid */
 			tgrel = table_open(ConstraintRelationId, AccessShareLock);
 			ScanKeyInit(&skey[0],
-							Anum_pg_constraint_conname,
-							BTEqualStrategyNumber, F_NAMEEQ,
-							CStringGetDatum(object_name));
+						Anum_pg_constraint_conname,
+						BTEqualStrategyNumber, F_NAMEEQ,
+						CStringGetDatum(object_name));
 
 			ScanKeyInit(&skey[1],
-								Anum_pg_constraint_connamespace,
-								BTEqualStrategyNumber, F_OIDEQ,
-								ObjectIdGetDatum(schema_oid));
+						Anum_pg_constraint_connamespace,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(schema_oid));
 
-			tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId, true,
-											NULL, 2, skey);
+			tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId,
+										true, NULL, 2, skey);
 
 			/* We are interested in the first row only */
 			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
@@ -1259,17 +1261,18 @@ object_id(PG_FUNCTION_ARGS)
 			/* Search in pg_trigger by name */
 			tgrel = table_open(TriggerRelationId, AccessShareLock);
 			ScanKeyInit(&skey[0],
-							Anum_pg_trigger_tgname,
-							BTEqualStrategyNumber, F_NAMEEQ,
-							CStringGetDatum(object_name));
-			tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
-											NULL, 1, skey);
+						Anum_pg_trigger_tgname,
+						BTEqualStrategyNumber, F_NAMEEQ,
+						CStringGetDatum(object_name));
+
+			tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
+										true, NULL, 1, skey);
 			
 			/* We are interested in the first row only */
 			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 			{
 				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-				if(OidIsValid(pg_trigger->oid))
+				if (OidIsValid(pg_trigger->oid))
 				{
 					result = pg_trigger->oid;
 				}

@@ -476,9 +476,10 @@ VOLATILE CALLED ON NULL INPUT;
 
 
 
-CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '') RETURNS INTEGER AS
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
+RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
-LANGUAGE C STABLE;
+LANGUAGE C STABLE RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.parsename (
 	object_name VARCHAR
