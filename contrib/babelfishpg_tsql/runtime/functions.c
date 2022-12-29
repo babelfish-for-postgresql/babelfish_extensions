@@ -966,16 +966,16 @@ object_id(PG_FUNCTION_ARGS)
 			object_name = (char *) lthird(splited_object_name);
 			break;
 		default:
+			list_free(splited_object_name);
 			PG_RETURN_NULL();
 	}
+	pfree(input);
+	list_free(splited_object_name);
+
 	/* truncate identifiers if needed */
 	truncate_tsql_identifier(db_name);
 	truncate_tsql_identifier(schema_name);
 	truncate_tsql_identifier(object_name);
-
-	/* invalid object_name */
-	if (!object_name)
-		PG_RETURN_NULL();
 
 	if (!strcmp(db_name, ""))
 		db_name = get_cur_db_name();
@@ -996,10 +996,21 @@ object_id(PG_FUNCTION_ARGS)
 	/* get physical schema name from logical schema name */
 	physical_schema_name = get_physical_schema_name(db_name, schema_name);
 
+
 	/* get schema oid from physical schema name */
 	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
+
+	/* free unnecessary pointers */
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(physical_schema_name);
+
 	if (!OidIsValid(schema_oid))
+	{
+		pfree(object_name);
+		pfree(object_type);
 		PG_RETURN_NULL();
+	}
 	
 	/* check if looking for temp object */
 	is_temp_object = (object_name[0] == '#'? true: false);
@@ -1046,15 +1057,19 @@ object_id(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					errmsg("Object type currently unsupported")));
 		}
-		else
-		{
-			PG_RETURN_NULL();
-		}
 
 		if (OidIsValid(result))
+		{
+			pfree(object_name);
+			pfree(object_type);
 			PG_RETURN_INT32(result);
+		}
 		else
+		{
+			pfree(object_name);
+			pfree(object_type);
 			PG_RETURN_NULL();
+		}
 	}
 	else
 	{	
@@ -1063,32 +1078,55 @@ object_id(PG_FUNCTION_ARGS)
 			/* search in list of ENRs registered in the current query environment by name */
 			result = tsql_get_temp_object_oid(object_name);
 			if (OidIsValid(result))
+			{
+				pfree(object_name);
+				pfree(object_type);
 				PG_RETURN_INT32(result);
+			}
 			else
+			{
+				pfree(object_name);
+				pfree(object_type);
 				PG_RETURN_NULL();
+			}
 		}
 		else
 		{
 			/* search in pg_constraint by name and schema oid */
 			result = tsql_get_constraint_oid(object_name, schema_oid);
-			if(OidIsValid(result))
+			if (OidIsValid(result))
+			{
+				pfree(object_name);
+				pfree(object_type);
 				PG_RETURN_INT32(result);
+			}
 
 			/* search in pg_class by name and schema oid */
 			result = get_relname_relid((const char *) object_name, schema_oid);
 			if (OidIsValid(result))
+			{
+				pfree(object_name);
+				pfree(object_type);
 				PG_RETURN_INT32(result);
+			}
 
 			/* search in pg_trigger by name */
 			result = tsql_get_trigger_oid(object_name);
 			if (OidIsValid(result))
+			{
+				pfree(object_name);
+				pfree(object_type);
 				PG_RETURN_INT32(result);
+			}
 
 			/* search in pg_proc by name and schema oid */
 			result = tsql_get_proc_oid(object_name, schema_oid);
 			if (OidIsValid(result))
+			{
+				pfree(object_name);
+				pfree(object_type);
 				PG_RETURN_INT32(result);
-			
+			}
 			PG_RETURN_NULL();
 		}
 	}
