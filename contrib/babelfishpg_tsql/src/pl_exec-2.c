@@ -2281,7 +2281,6 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		{
 			strVal(linitial(type_names)) = get_physical_schema_name(
 							get_cur_db_name(), strVal(linitial(type_names)));
-			p->argType->names = type_names;
 		}
 
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
