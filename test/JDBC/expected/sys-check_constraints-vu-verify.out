@@ -12,7 +12,7 @@ GO
 nvarchar
 ((column_a = 0))
 ((column_b <> 'wrong'))
-((column_c < '2020-10-20 09:00:00'))
+((column_c < CAST('2020-10-20 09:00:00' AS datetime2(6))))
 ~~END~~
 
 
