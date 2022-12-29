@@ -223,7 +223,7 @@ jobs:
         id: code-coverage-cache
         uses: actions/cache@v2
         with:
-          name: cache-cc
+          name: cache-code_coverage
           key: ${{ runner.os }}-code_coverage-${{ hashFiles('**/contrib/lcov.info') }}
           restore-keys: |
             ${{ runner.os }}-code_coverage-
