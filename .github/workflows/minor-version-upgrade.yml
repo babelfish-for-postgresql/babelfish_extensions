@@ -4,8 +4,8 @@ on: [push, pull_request]
 jobs:
   extension-tests:
     env:
-      ENGINE_VER_FROM: BABEL_3_X_DEV__PG_15_X
-      EXTENSION_VER_FROM: BABEL_3_X_DEV
+      ENGINE_VER_FROM: BABEL_3_0_STABLE__PG_15_1
+      EXTENSION_VER_FROM: BABEL_3_0_STABLE
 
     name: Build and test
     runs-on: ubuntu-20.04
