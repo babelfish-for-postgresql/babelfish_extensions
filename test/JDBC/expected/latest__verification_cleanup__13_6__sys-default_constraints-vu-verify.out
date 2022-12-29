@@ -2,7 +2,7 @@ SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_def
 GO
 ~~START~~
 nvarchar
-'42'
+CAST('42' AS varchar)
 getdate()
 0
 1

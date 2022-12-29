@@ -6,7 +6,7 @@ getdate()
 0
 1
 50
-'42'
+CAST('42' AS varchar) COLLATE "default"
 ~~END~~
 
 
