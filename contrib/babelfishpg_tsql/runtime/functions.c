@@ -40,7 +40,6 @@
 #include "../src/catalog.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
-#include "src/backend/catalog/objectaddress.c"
 #include "src/include/utils/catcache.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
@@ -931,64 +930,6 @@ checksum(PG_FUNCTION_ARGS)
         PG_RETURN_INT32(result);
 }
 
-static int babelfish_get_delimiter_pos(char *str)
-{	
-	char *ptr;
-	if(strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
-		return -1;
-	else if(str[0] == '[')
-	{
-		ptr = strstr(str, "].");
-		if(ptr == NULL)
-			return -1;
-		else
-			return (int)(ptr - str) + 1;
-	}
-	else if(str[0] == '"')
-	{
-		ptr = strstr(&str[1], "\".");
-		if(ptr == NULL)
-			return -1;
-		else
-			return (int)(ptr - str) + 1;
-	}
-	else
-	{	
-		ptr = strstr(str, ".");
-		if(ptr == NULL)
-			return -1;
-		else
-			return (int)(ptr - str);
-	}
-	
-	return -1;
-}
-
-static char* extract_and_remove_delimiter_pair(char *str, int len)
-{	
-	/* Extract string from str of given length and remove delimiter pair */
-	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
-	{	
-		if(len > 2)
-		{	
-			char *res = (char *) palloc((len - 1) * sizeof(char));
-			strncpy(res, &str[1], len - 2);
-			res[len - 2] = '\0';
-			return res;
-		} 
-		else
-			return "";
-			
-	}
-	else
-	{
-		char *res = (char *) palloc((len + 1) * sizeof(char));
-		strncpy(res, str, len);
-		res[len] =  '\0';
-		return res;
-	}
-}
-
 Datum
 object_id(PG_FUNCTION_ARGS)
 {	
@@ -999,54 +940,31 @@ object_id(PG_FUNCTION_ARGS)
 	bool 			is_temp_object;
 	Oid 			schema_oid;
 	Oid 			result = InvalidOid;
-	CatCList		*catlist;
-	Relation		tgrel;
-	ScanKeyData 	skey[2];
-	SysScanDesc 	tgscan;
-	HeapTuple		tuple;
 	int 			i;
-	int 			cur_pos;
-	int 			next_pos;
-	char *input = 	lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
-	char *object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
-	List 			*list = NIL;
-	char 			*str;
+	char 			*input = lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
+	char 			*object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
+	List 			*splited_object_name;
 
 	/* strip trailing whitespace */
 	i = strlen(input);
 	while (i > 0 && isspace((unsigned char) input[i - 1]))
 		input[--i] = '\0';
 	
-	/* 
-	 * Resolve the three part name
-	 * Get physical schema name from logical schema name
-	 * Valid formats are db_name.schema_name.object_name or schema_name.object_name or object_name
-	 */
-	cur_pos = 0;
-	next_pos = babelfish_get_delimiter_pos(input);
-	while (next_pos != -1)
-	{
-		str = extract_and_remove_delimiter_pair(&input[cur_pos], next_pos);
-		list = lappend(list, str);
-		cur_pos += next_pos + 1;
-		next_pos = babelfish_get_delimiter_pos(&input[cur_pos]);
-	}
-	str = extract_and_remove_delimiter_pair(&input[cur_pos], strlen(&input[cur_pos]));
-	list = lappend(list, str);
-
-	switch (list_length(list))
+	/* resolve the three part name */
+	splited_object_name = split_object_name(input);
+	switch (list_length(splited_object_name))
 	{
 		case 1:
-			object_name = (char *) linitial(list);
+			object_name = (char *) linitial(splited_object_name);
 			break;
 		case 2:
-			schema_name = (char *) linitial(list);
-			object_name = (char *) lsecond(list);
+			schema_name = (char *) linitial(splited_object_name);
+			object_name = (char *) lsecond(splited_object_name);
 			break;
 		case 3:
-			db_name = (char *) linitial(list);
-			schema_name = (char *) lsecond(list);
-			object_name = (char *) lthird(list);
+			db_name = (char *) linitial(splited_object_name);
+			schema_name = (char *) lsecond(splited_object_name);
+			object_name = (char *) lthird(splited_object_name);
 			break;
 		default:
 			PG_RETURN_NULL();
@@ -1056,14 +974,14 @@ object_id(PG_FUNCTION_ARGS)
 	truncate_tsql_identifier(schema_name);
 	truncate_tsql_identifier(object_name);
 
-	/* Invalid object_name */
+	/* invalid object_name */
 	if (!object_name)
 		PG_RETURN_NULL();
 
 	if (!strcmp(db_name, ""))
 		db_name = get_cur_db_name();
 
-	/* Check if looking in current database, if not then return null value */
+	/* check if looking in current database, if not then return null value */
 	if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
@@ -1076,14 +994,15 @@ object_id(PG_FUNCTION_ARGS)
 		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 	}
 
+	/* get physical schema name from logical schema name */
 	physical_schema_name = get_physical_schema_name(db_name, schema_name);
 
-	/* Get schema oid from physical schema name */
+	/* get schema oid from physical schema name */
 	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
 	if (!OidIsValid(schema_oid))
 		PG_RETURN_NULL();
 	
-	/* Check if looking for temp object */
+	/* check if looking for temp object */
 	is_temp_object = (object_name[0] == '#'? true: false);
 
 	if (strcmp(object_type, "")) /* object_type is not empty */
@@ -1093,96 +1012,33 @@ object_id(PG_FUNCTION_ARGS)
 		{
 			if (is_temp_object)
 			{
-				/* Search in list of ENRs registered in the current query environment by name */
-				List *enr_list = get_namedRelList();
-				ListCell *lc;
-				int reloid;
-				char *relname;
-				foreach (lc, enr_list)
-				{	
-					reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
-					relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
-					if (!strcmp(relname, object_name))
-					{
-						result = reloid;
-						break;
-					}
-				}
+				/* search in list of ENRs registered in the current query environment by name */
+				result = tsql_get_temp_object_oid(object_name);
 			}
 			else
 			{
-				/* Search in pg_class by name and schema oid */
+				/* search in pg_class by name and schema oid */
 				result = get_relname_relid((const char *) object_name, schema_oid); 
 			}
 		}
 		else if (!strcmp(object_type, "C") || !strcmp(object_type, "D") || !strcmp(object_type, "F") ||
 				!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
 		{
-			/* Search in pg_constraint by name and schema oid */
-			tgrel = table_open(ConstraintRelationId, AccessShareLock);
-			ScanKeyInit(&skey[0],
-						Anum_pg_constraint_conname,
-						BTEqualStrategyNumber, F_NAMEEQ,
-						CStringGetDatum(object_name));
-
-			ScanKeyInit(&skey[1],
-						Anum_pg_constraint_connamespace,
-						BTEqualStrategyNumber, F_OIDEQ,
-						ObjectIdGetDatum(schema_oid));
-
-			tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId,
-										true, NULL, 2, skey);
-
-			/* We are interested in the first row only */
-			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
-			{
-				Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-				result = con->oid;
-			}
-			systable_endscan(tgscan);
-			table_close(tgrel, AccessShareLock);
+			/* search in pg_constraint by name and schema oid */
+			result = tsql_get_constraint_oid(object_name, schema_oid);
 		}
 		else if (!strcmp(object_type, "AF") || !strcmp(object_type, "FN") || !strcmp(object_type, "FS") ||
 				!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
 				!strcmp(object_type, "PC") || !strcmp(object_type, "TF") || !strcmp(object_type, "RF") ||
 				!strcmp(object_type, "X"))
 		{
-			/* First search in pg_proc by name */
-			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
-			for (i = 0; i < catlist->n_members; i++)
-			{
-				Form_pg_proc procform;
-				tuple = &catlist->members[i]->tuple;
-				procform = (Form_pg_proc) GETSTRUCT(tuple);
-				/* Then consider only procs in specified schema oid */
-				if (procform->pronamespace == schema_oid)
-				{
-					result = procform->oid;
-					break;
-				}
-			}
-			ReleaseSysCacheList(catlist);
+			/* search in pg_proc by name and schema oid */
+			result = tsql_get_proc_oid(object_name, schema_oid);
 		}
 		else if (!strcmp(object_type, "TR") || !strcmp(object_type, "TA"))
 		{
-			/* Search in pg_trigger by name */
-			tgrel = table_open(TriggerRelationId, AccessShareLock);
-			ScanKeyInit(&skey[0],
-						Anum_pg_trigger_tgname,
-						BTEqualStrategyNumber, F_NAMEEQ,
-						CStringGetDatum(object_name));
-
-			tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
-										true, NULL, 1, skey);
-
-			/* We are interested in the first row only */
-			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
-			{
-				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-				result = pg_trigger->oid;
-			}
-			systable_endscan(tgscan);
-			table_close(tgrel, AccessShareLock);
+			/* search in pg_trigger by name */
+			result = tsql_get_trigger_oid(object_name);
 		}
 		else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
 				!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
@@ -1205,102 +1061,36 @@ object_id(PG_FUNCTION_ARGS)
 	{	
 		if (is_temp_object) /* temp object without "object_type" in-argument */
 		{
-			/* Search in list of ENRs registered in the current query environment by name */
-			List *enr_list = get_namedRelList();
-			ListCell *lc;
-			int reloid;
-			char *relname;
-			foreach (lc, enr_list)
-			{	
-				reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
-				relname = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
-				if (!strcmp(relname, object_name))
-				{
-					result = reloid;
-					PG_RETURN_INT32(result);
-				}
-			}
-			PG_RETURN_NULL();
-		}
-		else
-		{
-			/* Search in pg_constraint by name and schema oid */
-			tgrel = table_open(ConstraintRelationId, AccessShareLock);
-			ScanKeyInit(&skey[0],
-						Anum_pg_constraint_conname,
-						BTEqualStrategyNumber, F_NAMEEQ,
-						CStringGetDatum(object_name));
-
-			ScanKeyInit(&skey[1],
-						Anum_pg_constraint_connamespace,
-						BTEqualStrategyNumber, F_OIDEQ,
-						ObjectIdGetDatum(schema_oid));
-
-			tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId,
-										true, NULL, 2, skey);
-
-			/* We are interested in the first row only */
-			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
-			{
-				Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
-				if (OidIsValid(con->oid))
-				{
-					result = con->oid;
-				}
-			}
-			systable_endscan(tgscan);
-			table_close(tgrel, AccessShareLock);
-			if(OidIsValid(result))
-				PG_RETURN_INT32(result);
-
-			/* Search in pg_class by name and schema oid */
-			result = get_relname_relid((const char *) object_name, schema_oid); 
-			if (OidIsValid(result))
-				PG_RETURN_INT32(result);
-
-			/* Search in pg_trigger by name */
-			tgrel = table_open(TriggerRelationId, AccessShareLock);
-			ScanKeyInit(&skey[0],
-						Anum_pg_trigger_tgname,
-						BTEqualStrategyNumber, F_NAMEEQ,
-						CStringGetDatum(object_name));
-
-			tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
-										true, NULL, 1, skey);
-			
-			/* We are interested in the first row only */
-			if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
-			{
-				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-				if (OidIsValid(pg_trigger->oid))
-				{
-					result = pg_trigger->oid;
-				}
-			}
-			systable_endscan(tgscan);
-			table_close(tgrel, AccessShareLock);
-			if (OidIsValid(result))
-				PG_RETURN_INT32(result);
-
-			/* First search in pg_proc by name*/
-			catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(object_name));
-			for (i = 0; i < catlist->n_members; i++)
-			{
-				Form_pg_proc procform;
-				tuple = &catlist->members[i]->tuple;
-				procform = (Form_pg_proc) GETSTRUCT(tuple);
-				/* Then consider only procs in specified schema oid */
-				if (procform->pronamespace == schema_oid)
-				{
-					result = procform->oid;
-					break;
-				}
-			}
-			ReleaseSysCacheList(catlist);
+			/* search in list of ENRs registered in the current query environment by name */
+			result = tsql_get_temp_object_oid(object_name);
 			if (OidIsValid(result))
 				PG_RETURN_INT32(result);
 			else
 				PG_RETURN_NULL();
+		}
+		else
+		{
+			/* search in pg_constraint by name and schema oid */
+			result = tsql_get_constraint_oid(object_name, schema_oid);
+			if(OidIsValid(result))
+				PG_RETURN_INT32(result);
+
+			/* search in pg_class by name and schema oid */
+			result = get_relname_relid((const char *) object_name, schema_oid);
+			if (OidIsValid(result))
+				PG_RETURN_INT32(result);
+
+			/* search in pg_trigger by name */
+			result = tsql_get_trigger_oid(object_name);
+			if (OidIsValid(result))
+				PG_RETURN_INT32(result);
+
+			/* search in pg_proc by name and schema oid */
+			result = tsql_get_proc_oid(object_name, schema_oid);
+			if (OidIsValid(result))
+				PG_RETURN_INT32(result);
+			
+			PG_RETURN_NULL();
 		}
 	}
 
