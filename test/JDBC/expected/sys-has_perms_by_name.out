@@ -515,7 +515,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'SELEC
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
