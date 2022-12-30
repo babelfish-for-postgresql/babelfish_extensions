@@ -45,9 +45,3 @@ go
 
 exec sys.sp_volatility '','stable'
 go
-
-exec sys.sp_volatility '',''
-go
-
-exec sys.sp_volatility
-go

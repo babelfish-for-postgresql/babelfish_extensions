@@ -115,23 +115,3 @@ go
 
 ~~ERROR (Message: Enter a valid Function Name)~~
 
-
-exec sys.sp_volatility '',''
-go
-~~START~~
-varchar#!#varchar#!#varchar
-msdb_dbo#!#fn_syspolicy_is_automation_enabled#!#i
-master_dbo#!#f1#!#v
-master_a#!#f1#!#v
-~~END~~
-
-
-exec sys.sp_volatility
-go
-~~START~~
-varchar#!#varchar#!#varchar
-msdb_dbo#!#fn_syspolicy_is_automation_enabled#!#i
-master_dbo#!#f1#!#v
-master_a#!#f1#!#v
-~~END~~
-

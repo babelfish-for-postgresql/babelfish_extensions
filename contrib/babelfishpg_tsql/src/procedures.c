@@ -2068,31 +2068,24 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 
 Datum sp_volatility(PG_FUNCTION_ARGS)
 {
-	char *query;
 	int rc;
-	char nulls = 0;
-
-	MemoryContext savedPortalCxt;
-	SPIPlanPtr plan;
-	Portal portal;
-	DestReceiver *receiver;
-
-	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
-
 	int i;
 	int count = 0;
+	char nulls = 0;
 	char *token;
 	char *db_name = get_cur_db_name();
 	char *physical_schema_name;
 	char *logical_schema_name;
 	char *full_function_name;
+	char *user;
+	char *query;
+	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+	MemoryContext savedPortalCxt;
+	SPIPlanPtr plan;
+	Portal portal;
+	DestReceiver *receiver;
 
-	/*
-	HeapTuple tp;
-	Oid	result;
-	Form_pg_proc pg_proc;
-	*/
 	FuncCandidateList candidates = NULL;
 
 	if(function_name != NULL)
@@ -2134,7 +2127,9 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		switch(count)
 		{
 			case 0:
-				logical_schema_name = "dbo";
+				/* find the default schema for current user */
+				user = get_user_for_database(db_name);
+				logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 				break;
 			case 1:
 				token = strtok(function_name,".");
@@ -2159,23 +2154,6 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					errmsg("%s function not found", function_name)));
-
-		/* search function in pg_proc
-		tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(candidates->oid));
-		if (!HeapTupleIsValid(tp))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("%s function not found", function_name)));
-
-		pg_proc = ((Form_pg_proc) GETSTRUCT(tp));
-		if(pg_proc->prokind != PROKIND_FUNCTION)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("%s is not a function", function_name)));
-
-		result = pg_proc->provolatile;
-		ReleaseSysCache(tp);
-		*/
 	}
 	if(volatility == NULL)
 	{	
@@ -2234,18 +2212,6 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		/*
-		if(!strcmp(volatility,"volatile"))
-			result = PROVOLATILE_VOLATILE;
-		else if(!strcmp(volatility,"stable"))
-			result = PROVOLATILE_STABLE;
-		else if(!strcmp(volatility,"stable"))
-			result = PROVOLATILE_IMMUTABLE;
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("Enter a valid volatility")));
-		*/
 		volatility = lowerstr(volatility);
 		
 		if(strcmp(volatility,"volatile") && strcmp(volatility,"stable") && strcmp(volatility,"immutable"))
