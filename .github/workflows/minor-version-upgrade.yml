@@ -1,12 +1,11 @@
 name: Minor Version Upgrade Tests for empty database
-# No minor version upgrade path exists in v15 so temporarily disabling the workflow
-on:
+on: [push, pull_request]
 
 jobs:
   extension-tests:
     env:
-      ENGINE_VER_FROM: BABEL_2_1_STABLE__PG_14_3
-      EXTENSION_VER_FROM: BABEL_2_1_STABLE
+      ENGINE_VER_FROM: BABEL_3_0_STABLE__PG_15_1
+      EXTENSION_VER_FROM: BABEL_3_0_STABLE
 
     name: Build and test
     runs-on: ubuntu-20.04
@@ -60,10 +59,10 @@ jobs:
         if: always() && steps.build-extensions-newer.outcome == 'success'
         run: |
           cd ~
-          ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
-          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
-          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
-          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
+          ~/psql/bin/pg_ctl -D ~/psql/data/ -l logfile restart
+          sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "\dx"
+          sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+          sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
 
       - name: Run JDBC Tests
@@ -78,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: postgres-log
-          path: ~/postgres/data/logfile
+          path: ~/psql/data/logfile
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
