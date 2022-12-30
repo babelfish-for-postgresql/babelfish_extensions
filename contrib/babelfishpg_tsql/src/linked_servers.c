@@ -30,7 +30,6 @@ const int tds_numeric_bytes_per_prec[78] = {
 PG_FUNCTION_INFO_V1(openquery_imp);
 PG_FUNCTION_INFO_V1(sp_testlinkedserver_internal);
 
-char* tds_err_msg(int severity, int dberr, int oserr, char *dberrstr, char *oserrstr);
 int tdsTypeStrToTypeId(char* datatype);
 Oid tdsTypeToOid(int datatype);
 int tdsTypeLen(int datatype, int datalen, bool is_metadata);
@@ -39,44 +38,60 @@ void getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc
 
 static TupleDesc curr_openquery_tupdesc = NULL;
 
-char*
-tds_err_msg(int severity, int dberr, int oserr, char *dberrstr, char *oserrstr)
+// static int
+// linked_server_error_handler(LinkedServerProcess lsproc, int severity, int db_error_code, int os_error_code, char *db_error_msg, char *os_error_msg)
+// {
+// 	StringInfoData buf;
+
+// 	initStringInfo(&buf);
+
+// 	appendStringInfo(
+// 			&buf,
+// 			"TDS client library Error: DB #: %i, DB Msg: %s, OS #: %i, OS Msg: %s, Level: %i",
+// 			db_error_code,
+// 			db_error_msg ? db_error_msg : "",
+// 			os_error_code,
+// 			os_error_msg ? os_error_msg : "",
+// 			severity
+// 	);
+	
+// 	ereport(ERROR,
+// 		(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+// 		errmsg("%s", buf.data)
+// 		));
+
+// 	return LS_INT_CANCEL;
+// }
+
+static int
+linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
 {
 	StringInfoData buf;
 
 	initStringInfo(&buf);
+	
+	/* If error severity is greater than 10, we interpret it as a T-SQL error; otheriwse, a T-SQL info */
 	appendStringInfo(
-			&buf,
-			"FreeTDS Error: DB #: %i, DB Msg: %s, OS #: %i, OS Msg: %s, Level: %i",
-			dberr,
-			dberrstr ? dberrstr : "",
-			oserr,
-			oserrstr ? oserrstr : "",
-			severity
+		&buf,
+		"TDS client library %s: Msg #: %i, Msg state: %i, Msg: %s, Server: %s, Process: %s, Line: %i, Level: %i",
+		severity > 10 ? "error" : "info",
+		error_code,
+		state,
+		error_msg ? error_msg : "",
+		svr_name ? svr_name : "",
+		proc_name ? proc_name : "",
+		line,
+		severity
 	);
-
-	return buf.data;
-}
-
-static int
-tds_err_handler(LinkedServerProcess lsproc, int severity, int dberr, int oserr, char *dberrstr, char *oserrstr)
-{
-	ereport(ERROR,
-		(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-		errmsg("%s", tds_err_msg(severity, dberr, oserr, dberrstr, oserrstr))
-		));
-
-	return INT_CANCEL;
-}
-
-static int
-tds_notice_msg_handler(LinkedServerProcess lsproc, int msgno, int msgstate, int severity, char *msgtext, char *svr_name, char *proc_name, int line)
-{
+	
 	if (severity > 10)
 		ereport(ERROR,
-			(errmsg("DB-Library notice: Msg #: %ld, Msg state: %i, Msg: %s, Server: %s, Process: %s, Line: %i, Level: %i",
-				(long)msgno, msgstate, msgtext, svr_name, proc_name, line, severity)
-			));
+			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+			errmsg("%s", buf.data)));
+	else
+		ereport(INFO,
+			(errmsg("%s", buf.data)));
+
 	return 0;
 }
 
@@ -84,71 +99,35 @@ Datum
 getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len)
 {
 	bytea *bytes;
-
+	
 	switch (datatype)
 	{
-		case SYBIMAGE:
+		case TSQL_IMAGE:
 		case SYBVARBINARY:
 		case SYBBINARY:
-		case XSYBBINARY:
-		case XSYBVARBINARY:
+		case TSQL_BINARY_X:
+		case TSQL_VARBINARY_X:
 			bytes = palloc(len + VARHDRSZ);
 			SET_VARSIZE(bytes, len + VARHDRSZ);
 			memcpy(VARDATA(bytes), (BYTE *) val, len);
 			return PointerGetDatum(bytes);
-		case SYBBIT:
-		case SYBBITN:
+		case TSQL_BIT:
+		case TSQL_BITN:
 			return BoolGetDatum(*(bool *)val);
 		case SYBVARCHAR:
-		case XSYBVARCHAR:
+		case TSQL_VARCHAR_X:
 		case SYBCHAR:
-		case XSYBCHAR:
+		case TSQL_CHAR_X:
 		case SYBMSXML:
-		case XSYBNVARCHAR:
-		case XSYBNCHAR:
-			// if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
-			// {
-			// 	StringInfo pbuf;
-
-			// 	pbuf = palloc(sizeof(StringInfoData));
-			// 	/*
-			// 	 * Rather than copying data around, we just set up a phony
-			// 	 * StringInfo pointing to the correct portion of the TDS message
-			// 	 * buffer. 
-			// 	 */
-			// 	pbuf->data = (char *)val;
-			// 	pbuf->maxlen = len;
-			// 	pbuf->len = len;
-			// 	pbuf->cursor = 0;
-
-			// 	return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, datatype, 0, 0);
-			// }
+		case TSQL_NVARCHAR_X:
+		case TSQL_NCHAR_X:
 			PG_RETURN_VARCHAR_P((VarChar *)cstring_to_text_with_len((char *)val, len));
-
 			break;
-		case SYBTEXT:
-		case SYBNTEXT:
-			// if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
-			// {
-			// 	StringInfo pbuf = makeStringInfo();
-
-			// 	//pbuf = palloc(sizeof(StringInfoData));
-			// 	/*
-			// 	 * Rather than copying data around, we just set up a phony
-			// 	 * StringInfo pointing to the correct portion of the TDS message
-			// 	 * buffer. 
-			// 	 */
-			// 	appendStringInfoString(pbuf, (char *)val);
-			// 	//pbuf->data = (BYTE *)val;
-			// 	// pbuf->maxlen = strlen(pbuf->data);
-			// 	// pbuf->len = strlen(pbuf->data);
-			// 	// pbuf->cursor = 0;
-
-			// 	return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, datatype, 0, 0);
-			// }
+		case TSQL_TEXT:
+		case TSQL_NTEXT:
 			PG_RETURN_TEXT_P(cstring_to_text_with_len((char *)val, len));
 			break;
-		case SYBDATETIME:
+		case TSQL_DATETIME:
 		case SYBDATETIMN:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
@@ -165,10 +144,10 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 8;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBDATETIMN, 0, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_DATETIMN, 0, 0);
 			}
 			break;
-		case SYBDATETIME4:
+		case TSQL_SMALLDATETIME:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
 				StringInfo pbuf;
@@ -184,82 +163,43 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 4;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBDATETIME4, 0, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_SMALLDATETIME, 0, 0);
 			}
 			break;
-		case SYBMSDATE:
+		case TSQL_DATE:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
 			{
-				TDS_DATETIMEALL date;
+				LS_TDS_DATETIMEALL date;
 
-				memcpy(&date, (TDS_DATETIMEALL *) val, sizeof(TDS_DATETIMEALL));
+				memcpy(&date, (LS_TDS_DATETIMEALL *) val, sizeof(LS_TDS_DATETIMEALL));
 
 				/* No optional attribute */
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(0, date.date, SYBMSDATE, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(0, date.date, TSQL_DATE, 0);
 			}
 			break;
 		case SYBTIME:
-		case SYBMSTIME:
+		case TSQL_TIME:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
 			{
-				TDS_DATETIMEALL time;
-				// StringInfo pbuf;
+				LS_TDS_DATETIMEALL time;
 
-				// int len;
+				memcpy(&time, (LS_TDS_DATETIMEALL *) val, sizeof(LS_TDS_DATETIMEALL));
 
-				memcpy(&time, (TDS_DATETIMEALL *) val, sizeof(TDS_DATETIMEALL));
-				// pbuf = palloc(sizeof(StringInfoData));
-
-				// switch (time.time_prec)
-				// {
-				// 	case 0:
-				// 	case 1:
-				// 	case 2:
-				// 		len = 3;
-				// 		break;
-				// 	case 3:
-				// 	case 4:
-				// 		len = 4;
-				// 		break;
-				// 	case 5:
-				// 	case 6:
-				// 	case 7:
-				// 		len = 5;
-				// 		break;
-				// 	default:
-				// 		len = 3;
-				// 		break;
-				// }
-
-				/*
-				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
-				 * 
-				 * We always get time with scale 7
-				 */
-
-				// pbuf->data = (BYTE *)&(time.time);
-				// pbuf->maxlen = 5;
-				// pbuf->len = 5;
-				// pbuf->cursor = 0;
-
-				// return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBMSTIME, 7, 0);
 				/* optional attribute here is scale */
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(time.time, 0, SYBMSTIME, 7);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(time.time, 0, TSQL_TIME, 7);
 			}
 			break;
-		case SYBDECIMAL:
-		case SYBNUMERIC:
+		case TSQL_DECIMAL:
+		case TSQL_NUMERIC:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
-				DBNUMERIC *numeric;
+				LS_TDS_NUMERIC *numeric;
 				StringInfo pbuf;
 				int i = 0;
 				char numeric_bytes[16] = {0x00};
 				int n;
 
-				numeric = (DBNUMERIC *)val;
+				numeric = (LS_TDS_NUMERIC *)val;
 
 				pbuf = palloc(sizeof(StringInfoData));
 				/*
@@ -268,9 +208,6 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				 * buffer. 
 				 */
 				pbuf->data = (char *)(numeric->array);
-
-				// while (numeric->array[n] == 0x00 && n >= 0)
-				// 	--n;
 
 				n = tds_numeric_bytes_per_prec[numeric->precision] - 1;
 
@@ -290,25 +227,25 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 17;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBNUMERIC, numeric->scale, numeric->precision);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_NUMERIC, numeric->scale, numeric->precision);
 			}
 			break;
 		case SYBFLTN:
-		case SYBFLT8:
+		case TSQL_FLOAT:
 			return Float8GetDatum(*(float8 *)val);
-		case SYBREAL:
+		case TSQL_REAL:
 			return Float4GetDatum(*(float4 *)val);
-		case SYBINT1:
+		case TSQL_TINYINT:
 			return UInt8GetDatum(*(int16_t *)val);
-		case SYBINT2:
+		case TSQL_SMALLINT:
 			return Int16GetDatum(*(int16_t *)val);
-		case SYBINT4:
-		case SYBINTN:
+		case TSQL_INT:
+		case TSQL_INTN:
 			return Int32GetDatum(*(int32_t *)val);
-		case SYBINT8:
+		case TSQL_BIGINT:
 			return Int64GetDatum(*(int64_t *)val);
-		case SYBMONEY:
-		case SYBMONEYN:
+		case TSQL_MONEY:
+		case TSQL_MONEYN:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
 				StringInfo pbuf;
@@ -324,10 +261,10 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 8;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBMONEYN, 0, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_MONEYN, 0, 0);
 			}
 			break;
-		case SYBMONEY4:
+		case TSQL_SMALLMONEY:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
 				StringInfo pbuf;
@@ -343,25 +280,25 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 4;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBMONEY4, 0, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_SMALLMONEY, 0, 0);
 			}
 			break;
-		case SYBMSDATETIME2:
+		case TSQL_DATETIME2:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
 			{
-				TDS_DATETIMEALL *datetime2 = (TDS_DATETIMEALL *) val;
+				LS_TDS_DATETIMEALL *datetime2 = (LS_TDS_DATETIMEALL *) val;
 
 				/* optional attribute here is scale */
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(datetime2->time, datetime2->date, SYBMSDATETIME2, 7);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(datetime2->time, datetime2->date, TSQL_DATETIME2, 7);
 			}
 			break;
-		case SYBMSDATETIMEOFFSET:
+		case TSQL_DATETIMEOFFSET:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
 			{
-				TDS_DATETIMEALL *datetimeoffset = (TDS_DATETIMEALL *) val;
+				LS_TDS_DATETIMEALL *datetimeoffset = (LS_TDS_DATETIMEALL *) val;
 				
 				/* optional attribute here is time offset */
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(datetimeoffset->time, datetimeoffset->date, SYBMSDATETIMEOFFSET, datetimeoffset->offset);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(datetimeoffset->time, datetimeoffset->date, TSQL_DATETIMEOFFSET, datetimeoffset->offset);
 			}
 			break;
 		default:
@@ -375,57 +312,57 @@ int
 tdsTypeStrToTypeId(char* datatype)
 {
 	if (strcmp(datatype, "image") == 0)
-		return SYBIMAGE;
+		return TSQL_IMAGE;
 	else if (strcmp(datatype, "varbinary") == 0)
-		return XSYBVARBINARY;
+		return TSQL_VARBINARY_X;
 	else if (strcmp(datatype, "binary") == 0)
-		return XSYBBINARY;
+		return TSQL_BINARY_X;
 	else if (strcmp(datatype, "bit") == 0)
-		return SYBBIT;
+		return TSQL_BIT;
 	else if (strcmp(datatype, "ntext") == 0)
-		return SYBNTEXT;
+		return TSQL_NTEXT;
 	else if (strcmp(datatype, "text") == 0)
-		return SYBTEXT;
+		return TSQL_TEXT;
 	else if (strcmp(datatype, "nvarchar") == 0)
-		return XSYBNVARCHAR;
+		return TSQL_NVARCHAR_X;
 	else if (strcmp(datatype, "varchar") == 0)
-		return XSYBVARCHAR;
+		return TSQL_VARCHAR_X;
 	else if (strcmp(datatype, "nchar") == 0)
-		return XSYBNCHAR;
+		return TSQL_NCHAR_X;
 	else if (strcmp(datatype, "char") == 0)
-		return XSYBCHAR;
+		return TSQL_CHAR_X;
 	else if (strcmp(datatype, "datetime") == 0)
-		return SYBDATETIME;
+		return TSQL_DATETIME;
 	else if (strcmp(datatype, "datetime2") == 0)
-		return SYBMSDATETIME2;
+		return TSQL_DATETIME2;
 	else if (strcmp(datatype, "smalldatetime") == 0)
-		return SYBDATETIME4;
+		return TSQL_SMALLDATETIME;
 	else if (strcmp(datatype, "datetimeoffset") == 0)
-		return SYBMSDATETIMEOFFSET;
+		return TSQL_DATETIMEOFFSET;
 	else if (strcmp(datatype, "date") == 0)
-		return SYBMSDATE;
+		return TSQL_DATE;
 	else if (strcmp(datatype, "time") == 0)
-		return SYBMSTIME;
+		return TSQL_TIME;
 	else if (strcmp(datatype, "decimal") == 0)
-		return SYBDECIMAL;
+		return TSQL_DECIMAL;
 	else if (strcmp(datatype, "numeric") == 0)
-		return SYBNUMERIC;
+		return TSQL_NUMERIC;
 	else if (strcmp(datatype, "float") == 0)
-		return SYBFLT8;
+		return TSQL_FLOAT;
 	else if (strcmp(datatype, "real") == 0)
-		return SYBREAL;
+		return TSQL_REAL;
 	else if (strcmp(datatype, "tinyint") == 0)
-		return SYBINT1;
+		return TSQL_TINYINT;
 	else if (strcmp(datatype, "smallint") == 0)
-		return SYBINT2;
+		return TSQL_SMALLINT;
 	else if (strcmp(datatype, "int") == 0)
-		return SYBINTN;
+		return TSQL_INTN;
 	else if (strcmp(datatype, "bigint") == 0)
-		return SYBINT8;
+		return TSQL_BIGINT;
 	else if (strcmp(datatype, "money") == 0)
-		return SYBMONEYN;
+		return TSQL_MONEYN;
 	else if (strcmp(datatype, "smallmoney") == 0)
-		return SYBMONEY4;
+		return TSQL_SMALLMONEY;
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -440,65 +377,68 @@ tdsTypeToOid(int datatype)
 {
 	switch (datatype)
 	{
-		case SYBIMAGE:
-		case SYBVARBINARY:
-		case SYBBINARY:
-		case XSYBBINARY:
-		case XSYBVARBINARY:
-			return BYTEAOID;
-		case SYBBIT:
-		case SYBBITN:
+		case TSQL_IMAGE:
+			return lookup_tsql_datatype_oid("image");
+		case TSQL_VARBINARY:
+		case TSQL_VARBINARY_X:
+			return lookup_tsql_datatype_oid("varbinary");
+		case TSQL_BINARY:
+		case TSQL_BINARY_X:
+			return lookup_tsql_datatype_oid("binary");
+		case TSQL_BIT:
+		case TSQL_BITN:
 			return lookup_tsql_datatype_oid("bit");
-		case SYBTEXT:
+		case TSQL_TEXT:
 			return TEXTOID;
-		case SYBNTEXT:
+		case TSQL_NTEXT:
 			return lookup_tsql_datatype_oid("ntext");
-		case XSYBNVARCHAR:
+		case TSQL_NVARCHAR_X:
 			return lookup_tsql_datatype_oid("nvarchar");
 		case SYBVARCHAR:
-		case XSYBVARCHAR:
-		case SYBCHAR:
-		case SYBMSXML:
+		case TSQL_VARCHAR_X:
+		case TSQL_CHAR:
+		case TSQL_XML:
 			return VARCHAROID;
-		case XSYBNCHAR:
+		case TSQL_NCHAR_X:
 			return lookup_tsql_datatype_oid("nchar");
-		case XSYBCHAR:
+		case TSQL_CHAR_X:
 			return lookup_tsql_datatype_oid("bpchar");
-		case SYBDATETIME:
-		case SYBDATETIMN:
+		case TSQL_DATETIME:
+		case TSQL_DATETIMN:
 			return lookup_tsql_datatype_oid("datetime");
-		case SYBDATETIME4:
+		case TSQL_SMALLDATETIME:
 			return lookup_tsql_datatype_oid("smalldatetime");
-		case SYBMSDATETIME2:
+		case TSQL_DATETIME2:
 			return lookup_tsql_datatype_oid("datetime2");
-		case SYBMSDATETIMEOFFSET:
+		case TSQL_DATETIMEOFFSET:
 			return lookup_tsql_datatype_oid("datetimeoffset");
-		case SYBDATE:
-		case SYBMSDATE:
+		// case SYBDATE:
+		case TSQL_DATE:
 			return DATEOID;
-		case SYBTIME:
-		case SYBMSTIME:
+		// case SYBTIME:
+		case TSQL_TIME:
 			return TIMEOID;
-		case SYBDECIMAL:
-		case SYBNUMERIC:
+		case TSQL_DECIMAL:
+			return lookup_tsql_datatype_oid("decimal");
+		case TSQL_NUMERIC:
 			return NUMERICOID;
-		case SYBFLT8:
-			return FLOAT8OID;
-		case SYBREAL:
-			return FLOAT4OID;
-		case SYBINT1:
+		case TSQL_FLOAT:
+			return lookup_tsql_datatype_oid("float");
+		case TSQL_REAL:
+			return lookup_tsql_datatype_oid("real");
+		case TSQL_TINYINT:
+			return lookup_tsql_datatype_oid("tinyint");
+		case TSQL_SMALLINT:
 			return INT2OID;
-		case SYBINT2:
-			return INT2OID;
-		case SYBINT4:
-		case SYBINTN:
-			return INT4OID;
-		case SYBINT8:
-			return INT8OID;
-		case SYBMONEY:
-		case SYBMONEYN:
+		case TSQL_INT:
+		case TSQL_INTN:
+			return lookup_tsql_datatype_oid("int");
+		case TSQL_BIGINT:
+			return lookup_tsql_datatype_oid("bigint");
+		case TSQL_MONEY:
+		case TSQL_MONEYN:
 			return lookup_tsql_datatype_oid("money");
-		case SYBMONEY4:
+		case TSQL_SMALLMONEY:
 			return lookup_tsql_datatype_oid("smallmoney");
 		default:
 			ereport(ERROR,
@@ -515,50 +455,53 @@ tdsTypeLen(int datatype, int datalen, bool is_metadata)
 {
 	switch (datatype)
 	{
-		case SYBIMAGE:
-		case SYBVARBINARY:
-		case SYBBINARY:
-		case XSYBBINARY:
-		case XSYBVARBINARY:
+		case TSQL_IMAGE:
+		case TSQL_VARBINARY:
+		case TSQL_BINARY:
+		case TSQL_BINARY_X:
+		case TSQL_VARBINARY_X:
 			return datalen;
-		case SYBVARCHAR:
-		case SYBCHAR:
-		case XSYBNVARCHAR:
-		case XSYBVARCHAR:
-		case SYBMSXML:
-		case XSYBNCHAR:
-		case XSYBCHAR:
+		case TSQL_VARCHAR:
+		case TSQL_CHAR:
+		case TSQL_NVARCHAR_X:
+		case TSQL_VARCHAR_X:
+		case TSQL_XML:
+		case TSQL_NCHAR_X:
+		case TSQL_CHAR_X:
 			{
+				if (datalen == -1)
+					return -1;
+
 				if (is_metadata)
 					return datalen + VARHDRSZ;
 				else
 					return (datalen/4) + VARHDRSZ;
 			}
-                case SYBBIT:
-		case SYBBITN:
-                case SYBTEXT:
-		case SYBNTEXT:
-		case SYBDATETIME:
+                case TSQL_BIT:
+		case TSQL_BITN:
+                case TSQL_TEXT:
+		case TSQL_NTEXT:
+		case TSQL_DATETIME:
 		case SYBDATETIMN:
-		case SYBDATETIME4:
-		case SYBMSDATETIME2:
-		case SYBMSDATETIMEOFFSET:
-		case SYBDATE:
-		case SYBMSDATE:
-		case SYBTIME:
-		case SYBMSTIME:
-		case SYBDECIMAL:
-		case SYBNUMERIC:
-		case SYBFLT8:
-		case SYBREAL:
-		case SYBINT1:
-		case SYBINT2:
-		case SYBINT4:
-		case SYBINTN:
-		case SYBINT8:
-		case SYBMONEY:
-		case SYBMONEYN:
-		case SYBMONEY4:
+		case TSQL_SMALLDATETIME:
+		case TSQL_DATETIME2:
+		case TSQL_DATETIMEOFFSET:
+		// case SYBDATE:
+		case TSQL_DATE:
+		// case SYBTIME:
+		case TSQL_TIME:
+		case TSQL_DECIMAL:
+		case TSQL_NUMERIC:
+		case TSQL_FLOAT:
+		case TSQL_REAL:
+		case TSQL_TINYINT:
+		case TSQL_SMALLINT:
+		case TSQL_INT:
+		case TSQL_INTN:
+		case TSQL_BIGINT:
+		case TSQL_MONEY:
+		case TSQL_MONEYN:
+		case TSQL_SMALLMONEY:
 			return -1;
 		default:
 			ereport(ERROR,
@@ -584,8 +527,8 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 
 	LINKED_SERVER_INIT();
 
-	LINKED_SERVER_ERR_HANDLE(tds_err_handler);
-	LINKED_SERVER_MSG_HANDLE(tds_notice_msg_handler);
+	//LINKED_SERVER_ERR_HANDLE(linked_server_error_handler);
+	LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
 	login = LINKED_SERVER_LOGIN();
 
@@ -744,19 +687,19 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 			for (i = 0; i < MAX_COLS_SELECT; i++)
 				colname[i] = (char *) palloc0(256 * sizeof(char));
 
-			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 3, NTBSTRINGBIND, sizeof(bind_colname), (BYTE *)bind_colname)) != SUCCEED)
+			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 3, LS_NTBSTRINGBING, sizeof(bind_colname), (BYTE *)bind_colname)) != SUCCEED)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("Failed to bind results for column \"name\" to a variable.")
 				));
 
-			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 5, INTBIND, sizeof(int), (BYTE *)&bind_tdsTypeId)) != SUCCEED)
+			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 5, LS_INTBIND, sizeof(int), (BYTE *)&bind_tdsTypeId)) != SUCCEED)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("Failed to bind results for column \"system_type_id\" to a variable.")
 				));
 			
-			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 6, NTBSTRINGBIND, sizeof(bind_typename), (BYTE *)&bind_typename)) != SUCCEED)
+			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 6, LS_NTBSTRINGBING, sizeof(bind_typename), (BYTE *)&bind_typename)) != SUCCEED)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
@@ -812,11 +755,14 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 			}
 		}
 	}
+
+	LINKED_SERVER_CLOSE(lsproc);
+	LINKED_SERVER_EXIT();
 #endif
 	//curr_openquery_tupdesc = tupdesc;
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
-	curr_openquery_tupdesc = palloc0(sizeof(TupleDescData));
+	curr_openquery_tupdesc = CreateTemplateTupleDesc((*tupdesc)->natts);
 	//memcpy(curr_openquery_tupdesc, *tupdesc, sizeof(TupleDescData));
 	TupleDescCopy(curr_openquery_tupdesc, *tupdesc);
 
@@ -829,6 +775,12 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	LinkedServerProcess lsproc;
 
 	linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
+
+#ifdef ENABLE_TDS_LIB
+
+	LINKED_SERVER_CLOSE(lsproc);
+	LINKED_SERVER_EXIT();
+#endif
 
 	return (Datum) 0;
 }
@@ -850,6 +802,9 @@ openquery_imp(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 #endif
+
+	PG_TRY();
+	{
 	char* query = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	
 	linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
@@ -979,11 +934,33 @@ openquery_imp(PG_FUNCTION_ARGS)
 		}
 	}
 
-	/* Invalidate Tuple Descriptor */
-	//oldcontext = MemoryContextSwitchTo(MessageContext);
+	LINKED_SERVER_CLOSE(lsproc);
+	LINKED_SERVER_EXIT();
+
+	if (curr_openquery_tupdesc)
+			pfree(curr_openquery_tupdesc);
+
 	curr_openquery_tupdesc = NULL;
+
+	/* Invalidate Tuple Descriptor */
+	
+	//oldcontext = MemoryContextSwitchTo(MessageContext);
+	//curr_openquery_tupdesc = NULL;
+	
 	//MemoryContextSwitchTo(oldcontext);
 
 #endif
+	}
+	PG_CATCH();
+	{
+		if (curr_openquery_tupdesc)
+			pfree(curr_openquery_tupdesc);
+
+		curr_openquery_tupdesc = NULL;
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
 	return (Datum)0;
 }

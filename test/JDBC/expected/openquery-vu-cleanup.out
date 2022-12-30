@@ -1,0 +1,3 @@
+-- psql
+DROP EXTENSION tds_fdw CASCADE;
+GO
