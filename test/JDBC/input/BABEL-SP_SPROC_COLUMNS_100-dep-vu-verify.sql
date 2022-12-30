@@ -1,4 +1,4 @@
--- sla 400000
+-- sla 550000
 exec babel_sp_sproc_columns_100_dep_vu_prepare_p2
 go
 
