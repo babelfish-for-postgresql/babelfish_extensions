@@ -1777,7 +1777,7 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 			needlabel |= (constval->consttypmod >= 0);
 			break;
 		default:
-			needlabel = true;
+			needlabel = false;
 			break;
 	}
 	if (needlabel || showtype > 0)
