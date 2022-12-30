@@ -9330,6 +9330,90 @@ $BODY$
 STRICT
 LANGUAGE SQL STABLE;
 
+CREATE OR REPLACE FUNCTION sys.APPLOCK_MODE(IN "@dbprincipal" varchar(32),
+                                            IN "@resource" varchar(255),
+                                            IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION')
+RETURNS TEXT
+AS 'babelfishpg_tsql', 'APPLOCK_MODE' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.APPLOCK_TEST(IN "@dbprincipal" varchar(32),
+                                            IN "@resource" varchar(255),
+											IN "@lockmode" varchar(32),
+                                            IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION')
+RETURNS SMALLINT
+AS 'babelfishpg_tsql', 'APPLOCK_TEST' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
+'babelfishpg_tsql', 'has_dbaccess'
+LANGUAGE C STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.language()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.rowcount()
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.error()
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.pgerror()
+	   RETURNS VARCHAR AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.trancount()
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.datefirst()
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.options()
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.version()
+        RETURNS sys.NVARCHAR(255)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.servername()
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.servicename()
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.fetch_status()
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.cursor_rows()
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.cursor_status(text, text)
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.xact_state()
+RETURNS SMALLINT
+AS 'babelfishpg_tsql', 'xact_state' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.error_line()
+RETURNS INT
+AS 'babelfishpg_tsql', 'pltsql_error_line' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.error_message()
+RETURNS sys.NVARCHAR(4000)
+AS 'babelfishpg_tsql', 'pltsql_error_message' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.error_number()
+RETURNS INT
+AS 'babelfishpg_tsql', 'pltsql_error_number' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.error_procedure()
+RETURNS sys.NVARCHAR(128)
+AS 'babelfishpg_tsql', 'pltsql_error_procedure' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.error_severity()
+RETURNS INT
+AS 'babelfishpg_tsql', 'pltsql_error_severity' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.error_state()
+RETURNS INT
+AS 'babelfishpg_tsql', 'pltsql_error_state' LANGUAGE C STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

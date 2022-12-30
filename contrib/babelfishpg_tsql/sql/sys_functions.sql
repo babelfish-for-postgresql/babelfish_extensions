@@ -690,7 +690,7 @@ RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
 'babelfishpg_tsql', 'has_dbaccess'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.datefromparts(IN year INT, IN month INT, IN day INT)
 RETURNS DATE AS
@@ -1686,31 +1686,31 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 -- @@ functions
 CREATE OR REPLACE FUNCTION sys.rowcount()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.pgerror()
-	   RETURNS VARCHAR AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS VARCHAR AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.trancount()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.datefirst()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.options()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.version()
-        RETURNS sys.NVARCHAR(255)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(255)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.servername()
-        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.servicename()
-        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 -- In tsql @@max_precision represents max precision that server supports
 -- As of now, we do not support change in max_precision. So, returning default value
@@ -1773,13 +1773,13 @@ $$
 LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.fetch_status()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.cursor_rows()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.cursor_status(text, text)
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 -- Floor for bit
 CREATE OR REPLACE FUNCTION sys.floor(sys.bit) RETURNS DOUBLE PRECISION
@@ -1825,43 +1825,43 @@ CREATE OR REPLACE FUNCTION sys.APPLOCK_MODE(IN "@dbprincipal" varchar(32),
                                             IN "@resource" varchar(255),
                                             IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION')
 RETURNS TEXT
-AS 'babelfishpg_tsql', 'APPLOCK_MODE' LANGUAGE C;
+AS 'babelfishpg_tsql', 'APPLOCK_MODE' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.APPLOCK_TEST(IN "@dbprincipal" varchar(32),
                                             IN "@resource" varchar(255),
 											IN "@lockmode" varchar(32),
                                             IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION')
 RETURNS SMALLINT
-AS 'babelfishpg_tsql', 'APPLOCK_TEST' LANGUAGE C;
+AS 'babelfishpg_tsql', 'APPLOCK_TEST' LANGUAGE C STABLE;
 
 -- Error handling functions
 CREATE OR REPLACE FUNCTION sys.xact_state()
 RETURNS SMALLINT
-AS 'babelfishpg_tsql', 'xact_state' LANGUAGE C;
+AS 'babelfishpg_tsql', 'xact_state' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_line()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_line' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_line' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_message()
 RETURNS sys.NVARCHAR(4000)
-AS 'babelfishpg_tsql', 'pltsql_error_message' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_message' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_number()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_number' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_number' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_procedure()
 RETURNS sys.NVARCHAR(128)
-AS 'babelfishpg_tsql', 'pltsql_error_procedure' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_procedure' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_severity()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_severity' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_severity' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_state()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_state' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_state' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.rand() RETURNS FLOAT AS
 $$
@@ -3244,7 +3244,7 @@ $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.language()
-RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
