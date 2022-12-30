@@ -13,13 +13,13 @@ $$
         CONCAT(leftarg, rightarg)
     END
 $$
-LANGUAGE SQL VOLATILE;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper_outer(leftarg text, rightarg text) RETURNS sys.varchar(8000) AS
 $$
   SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
-LANGUAGE SQL VOLATILE;
+LANGUAGE SQL STABLE;
 
 -- Support strings for + operator.
 CREATE OPERATOR sys.+ (
@@ -32,7 +32,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rig
 $$
   SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
-LANGUAGE SQL VOLATILE;
+LANGUAGE SQL STABLE;
 
 -- Support strings for + operator.
 CREATE OPERATOR sys.+ (
@@ -45,7 +45,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nvarchar, ri
 $$
   SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
-LANGUAGE SQL VOLATILE;
+LANGUAGE SQL STABLE;
 
 -- Support strings for + operator.
 CREATE OPERATOR sys.+ (
@@ -58,7 +58,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.bpchar, righ
 $$
   SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
-LANGUAGE SQL VOLATILE;
+LANGUAGE SQL STABLE;
 
 -- Support strings for + operator.
 CREATE OPERATOR sys.+ (
@@ -71,7 +71,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nchar, right
 $$
   SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
-LANGUAGE SQL VOLATILE;
+LANGUAGE SQL STABLE;
 
 -- Support strings for + operator.
 CREATE OPERATOR sys.+ (
@@ -85,7 +85,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rig
 $$
   SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
-LANGUAGE SQL VOLATILE;
+LANGUAGE SQL STABLE;
 
 -- Support strings for + operator.
 CREATE OPERATOR sys.+ (
@@ -98,7 +98,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nvarchar, ri
 $$
   SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
-LANGUAGE SQL VOLATILE;
+LANGUAGE SQL STABLE;
 
 -- Support strings for + operator.
 CREATE OPERATOR sys.+ (

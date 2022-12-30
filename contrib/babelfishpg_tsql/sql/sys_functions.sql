@@ -1733,7 +1733,7 @@ $BODY$
 SELECT pg_backend_pid();
 $BODY$
 STRICT
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.get_current_full_xact_id()
     RETURNS XID8 AS 'babelfishpg_tsql' LANGUAGE C STABLE;
@@ -1867,7 +1867,7 @@ CREATE OR REPLACE FUNCTION sys.rand() RETURNS FLOAT AS
 $$
 	SELECT random();
 $$
-LANGUAGE SQL VOLATILE STRICT PARALLEL RESTRICTED;
+LANGUAGE SQL STABLE STRICT PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.DEFAULT_DOMAIN()
 RETURNS TEXT
@@ -2776,7 +2776,7 @@ SELECT
     WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
     AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
 $BODY$
-LANGUAGE SQL VOLATILE STRICT;
+LANGUAGE SQL STABLE STRICT;
 
 -- JSON Functions
 CREATE OR REPLACE FUNCTION sys.isjson(json_string text)

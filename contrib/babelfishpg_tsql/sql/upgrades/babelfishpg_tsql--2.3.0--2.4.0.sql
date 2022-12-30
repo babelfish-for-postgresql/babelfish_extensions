@@ -9204,6 +9204,132 @@ END; $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
+    -- Casting to text as there are not type cast function from timestamptz to datetimeoffset
+    AS $$select cast(cast(clock_timestamp() as text) as sys.datetimeoffset);$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC; 
+
+
+CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
+    AS $$select (clock_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC; 
+
+
+CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', clock_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC; 
+
+
+CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', clock_timestamp() AT TIME ZONE 'UTC')::sys.datetime;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC; 
+
+
+CREATE OR REPLACE FUNCTION sys.isnull(text,text) RETURNS text AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(text,text) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(boolean,boolean) RETURNS boolean AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(boolean,boolean) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(smallint,smallint) RETURNS smallint AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(smallint,smallint) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(integer,integer) RETURNS integer AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(integer,integer) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(bigint,bigint) RETURNS bigint AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(bigint,bigint) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(real,real) RETURNS real AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(real,real) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(double precision, double precision) RETURNS double precision AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(double precision, double precision) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(numeric,numeric) RETURNS numeric AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(numeric,numeric) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(date, date) RETURNS date AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(date,date) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(timestamp,timestamp) RETURNS timestamp AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(timestamp,timestamp) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.isnull(timestamp with time zone,timestamp with time zone) RETURNS timestamp with time zone AS $$
+  SELECT COALESCE($1,$2);
+$$
+LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.isnull(timestamp with time zone,timestamp with time zone) TO PUBLIC;
+
+/*
+ * Table type can identified by reverse dependency between table and
+ * type in pg_depend.
+ * If a table is dependent upon it's row type with dependency type
+ * as DEPENDENCY_INTERNAL (i) then it's a T-SQL table type.
+ */
+CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
+$BODY$
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM pg_catalog.pg_type pt
+    INNER JOIN pg_catalog.pg_depend dep
+    ON pt.typrelid = dep.objid AND pt.oid = dep.refobjid
+    join sys.schemas sch on pt.typnamespace = sch.schema_id
+    JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
+    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
+$BODY$
+LANGUAGE SQL STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.rand() RETURNS FLOAT AS
+$$
+	SELECT random();
+$$
+LANGUAGE SQL STABLE STRICT PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.spid()
+RETURNS INTEGER AS
+$BODY$
+SELECT pg_backend_pid();
+$BODY$
+STRICT
+LANGUAGE SQL STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
