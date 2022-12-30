@@ -35,7 +35,7 @@ CREATE FUNCTION fulltextserviceproperty (TEXT)
 	RETURNS sys.int AS 'babelfishpg_tsql', 'fulltextserviceproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
-	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C;
+	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION UPDATE (TEXT)
 	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C;

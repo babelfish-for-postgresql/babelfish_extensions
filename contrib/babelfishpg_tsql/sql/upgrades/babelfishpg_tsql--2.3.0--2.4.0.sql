@@ -9414,6 +9414,187 @@ CREATE OR REPLACE FUNCTION sys.error_state()
 RETURNS INT
 AS 'babelfishpg_tsql', 'pltsql_error_state' LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_get_identity_param(IN tablename TEXT, IN optionname TEXT)
+RETURNS INT8
+AS 'babelfishpg_tsql', 'get_identity_param'
+LANGUAGE C STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_identity_current(IN tablename TEXT)
+RETURNS INT8
+AS 'babelfishpg_tsql', 'get_identity_current'
+LANGUAGE C STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_login_default_db(IN login_name TEXT)
+RETURNS TEXT
+AS 'babelfishpg_tsql', 'bbf_get_login_default_db'
+LANGUAGE C STABLE STRICT;
+
+-- internal table function for querying the registered ENRs
+CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_list()
+RETURNS table (
+  reloid int,
+  relname text
+) AS 'babelfishpg_tsql', 'get_enr_list' LANGUAGE C STABLE;
+
+-- internal table function for collation_list
+CREATE OR REPLACE FUNCTION sys.babelfish_collation_list()
+RETURNS table (
+  oid int,
+  collation_name text,
+  l1_priority int,
+  l2_priority int,
+  l3_priority int,
+  l4_priority int,
+  l5_priority int
+) AS 'babelfishpg_tsql', 'collation_list' LANGUAGE C STABLE;
+
+-- internal table function for sp_cursor_list and sp_decribe_cursor
+CREATE OR REPLACE FUNCTION sys.babelfish_cursor_list(cursor_source integer)
+RETURNS table (
+  reference_name text,
+  cursor_name text,
+  cursor_scope smallint,
+  status smallint,
+  model smallint,
+  concurrency smallint,
+  scrollable smallint,
+  open_status smallint,
+  cursor_rows bigint,
+  fetch_status smallint,
+  column_count smallint,
+  row_count bigint,
+  last_operation smallint,
+  cursor_handle int,
+  cursor_source smallint
+) AS 'babelfishpg_tsql', 'cursor_list' LANGUAGE C STABLE;
+
+-- internal table function for sp_helpdb with no arguments
+CREATE OR REPLACE FUNCTION sys.babelfish_helpdb()
+RETURNS table (
+  name varchar(128),
+  db_size varchar(13),
+  owner varchar(128),
+  dbid int,
+  created varchar(11),
+  status varchar(600),
+  compatibility_level smallint
+) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C STABLE;
+
+-- internal table function for helpdb with dbname as input
+CREATE OR REPLACE FUNCTION sys.babelfish_helpdb(varchar)
+RETURNS table (
+  name varchar(128),
+  db_size varchar(13),
+  owner varchar(128),
+  dbid int,
+  created varchar(11),
+  status varchar(600),
+  compatibility_level smallint
+) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_inconsistent_metadata(return_consistency boolean default false)
+RETURNS table (
+  object_type varchar(32),
+  schema_name varchar(128),
+  object_name varchar(128),
+  detail jsonb
+) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
+	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.sp_getapplock_function (IN "@resource" varchar(255),
+                                               IN "@lockmode" varchar(32),
+                                               IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION',
+                                               IN "@locktimeout" INTEGER DEFAULT -99,
+                                               IN "@dbprincipal" varchar(32) DEFAULT 'dbo')
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'sp_getapplock_function' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.sp_getapplock_function(
+	IN varchar(255), IN varchar(32), IN varchar(32), IN INTEGER, IN varchar(32)
+) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sp_releaseapplock_function(IN "@resource" varchar(255),
+                                                   IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION',
+                                                   IN "@dbprincipal" varchar(32) DEFAULT 'dbo')
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'sp_releaseapplock_function' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.sp_releaseapplock_function(
+	IN varchar(255), IN varchar(32), IN varchar(32)
+) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.ident_seed(IN tablename TEXT)
+RETURNS numeric(38,0) AS
+$BODY$
+	SELECT sys.babelfish_get_identity_param(tablename, 'start'::text)::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.ident_incr(IN tablename TEXT)
+RETURNS numeric(38,0) AS
+$BODY$
+	SELECT sys.babelfish_get_identity_param(tablename, 'increment'::text)::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.ident_current(IN tablename TEXT)
+RETURNS numeric(38,0) AS
+$BODY$
+	SELECT sys.babelfish_get_identity_current(tablename)::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_waitfor_delay(time_to_pass TEXT)
+RETURNS void AS
+$BODY$
+  SELECT pg_sleep(EXTRACT(HOUR FROM $1::time)*60*60 +
+                  EXTRACT(MINUTE FROM $1::time)*60 +
+                  TRUNC(EXTRACT(SECOND FROM $1::time)) +
+                  sys.babelfish_round_fractseconds(
+                                                        (
+                                                          EXTRACT(MILLISECONDS FROM $1::time)
+                                                          - TRUNC(EXTRACT(SECOND FROM $1::time)) * 1000
+                                                        )::numeric
+                                                      )/1000::numeric);
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_waitfor_delay(time_to_pass TIMESTAMP WITHOUT TIME ZONE)
+RETURNS void AS
+$BODY$
+  SELECT pg_sleep(EXTRACT(HOUR FROM $1::time)*60*60 +
+                  EXTRACT(MINUTE FROM $1::time)*60 +
+                  TRUNC(EXTRACT(SECOND FROM $1::time)) +
+                  sys.babelfish_round_fractseconds(
+                                                        (
+                                                          EXTRACT(MILLISECONDS FROM $1::time)
+                                                          - TRUNC(EXTRACT(SECOND FROM $1::time)) * 1000
+                                                        )::numeric
+                                                      )/1000::numeric);
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.user_name_sysname()
+RETURNS sys.SYSNAME AS
+$BODY$
+	SELECT COALESCE(sys.user_name(), '');
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.system_user()
+RETURNS sys.nvarchar(128) AS
+$BODY$
+	SELECT sys.suser_name();
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.session_user()
+RETURNS sys.nvarchar(128) AS
+$BODY$
+	SELECT sys.user_name();
+$BODY$
+LANGUAGE SQL STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

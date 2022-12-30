@@ -28,31 +28,31 @@ RETURNS sys.SYSNAME AS
 $BODY$
 	SELECT COALESCE(sys.user_name(), '');
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.system_user()
 RETURNS sys.nvarchar(128) AS
 $BODY$
 	SELECT sys.suser_name();
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.session_user()
 RETURNS sys.nvarchar(128) AS
 $BODY$
 	SELECT sys.user_name();
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_identity_param(IN tablename TEXT, IN optionname TEXT)
 RETURNS INT8
 AS 'babelfishpg_tsql', 'get_identity_param'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_identity_current(IN tablename TEXT)
 RETURNS INT8
 AS 'babelfishpg_tsql', 'get_identity_current'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 create or replace function sys.babelfish_get_id_by_name(object_name text)
 returns bigint as
@@ -80,7 +80,7 @@ language plpgsql STABLE returns null on null input;
 CREATE OR REPLACE FUNCTION sys.babelfish_get_login_default_db(IN login_name TEXT)
 RETURNS TEXT
 AS 'babelfishpg_tsql', 'bbf_get_login_default_db'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
@@ -10062,7 +10062,7 @@ $BODY$
                                                         )::numeric
                                                       )/1000::numeric);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_waitfor_delay(time_to_pass TIMESTAMP WITHOUT TIME ZONE)
 RETURNS void AS
@@ -10077,7 +10077,7 @@ $BODY$
                                                         )::numeric
                                                       )/1000::numeric);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION babelfish_get_name_delimiter_pos(name TEXT)
 RETURNS INTEGER
@@ -10245,7 +10245,7 @@ RETURNS table (
   last_operation smallint,
   cursor_handle int,
   cursor_source smallint
-) AS 'babelfishpg_tsql', 'cursor_list' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'cursor_list' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_datetimeoffset_tzoffset(SYS.DATETIMEOFFSET)
 RETURNS SMALLINT
@@ -10257,7 +10257,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_list()
 RETURNS table (
   reloid int,
   relname text
-) AS 'babelfishpg_tsql', 'get_enr_list' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'get_enr_list' LANGUAGE C STABLE;
 
 -- internal table function for collation_list
 CREATE OR REPLACE FUNCTION sys.babelfish_collation_list()
@@ -10269,7 +10269,7 @@ RETURNS table (
   l3_priority int,
   l4_priority int,
   l5_priority int
-) AS 'babelfishpg_tsql', 'collation_list' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'collation_list' LANGUAGE C STABLE;
 
 -- internal function to truncate long identifier
 CREATE OR REPLACE FUNCTION sys.babelfish_truncate_identifier(IN object_name TEXT)

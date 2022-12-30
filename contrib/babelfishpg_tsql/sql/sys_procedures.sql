@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION sys.sp_getapplock_function (IN "@resource" varchar(25
                                                IN "@locktimeout" INTEGER DEFAULT -99,
                                                IN "@dbprincipal" varchar(32) DEFAULT 'dbo')
 RETURNS INTEGER
-AS 'babelfishpg_tsql', 'sp_getapplock_function' LANGUAGE C;
+AS 'babelfishpg_tsql', 'sp_getapplock_function' LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.sp_getapplock_function(
 	IN varchar(255), IN varchar(32), IN varchar(32), IN INTEGER, IN varchar(32)
 ) TO PUBLIC;
@@ -26,7 +26,7 @@ CREATE OR REPLACE FUNCTION sys.sp_releaseapplock_function(IN "@resource" varchar
                                                    IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION',
                                                    IN "@dbprincipal" varchar(32) DEFAULT 'dbo')
 RETURNS INTEGER
-AS 'babelfishpg_tsql', 'sp_releaseapplock_function' LANGUAGE C;
+AS 'babelfishpg_tsql', 'sp_releaseapplock_function' LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.sp_releaseapplock_function(
 	IN varchar(255), IN varchar(32), IN varchar(32)
 ) TO PUBLIC;

@@ -183,21 +183,21 @@ RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_param(tablename, 'start'::text)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.ident_incr(IN tablename TEXT)
 RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_param(tablename, 'increment'::text)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.ident_current(IN tablename TEXT)
 RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_current(tablename)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.checksum(VARIADIC arr TEXT[])
 RETURNS INTEGER

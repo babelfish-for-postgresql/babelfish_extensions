@@ -457,5 +457,16 @@ LANGUAGE C STABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.SQL_VARIANT AS sys.UNIQUEIDENTIFIER)
 WITH FUNCTION sys.sqlvariant_uniqueidentifier (sys.SQL_VARIANT) AS ASSIGNMENT;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_typecode_list()
+RETURNS table (
+  oid int,
+  pg_namespace text,
+  pg_typname text,
+  tsql_typname text,
+  type_family_priority smallint,
+  priority smallint,
+  sql_variant_hdr_size smallint
+) AS 'babelfishpg_common', 'typecode_list' LANGUAGE C STABLE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

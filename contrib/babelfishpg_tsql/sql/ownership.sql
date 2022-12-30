@@ -343,7 +343,7 @@ RETURNS table (
   created varchar(11),
   status varchar(600),
   compatibility_level smallint
-) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C STABLE;
 
 -- internal table function for helpdb with dbname as input
 CREATE OR REPLACE FUNCTION sys.babelfish_helpdb(varchar)
@@ -355,7 +355,7 @@ RETURNS table (
   created varchar(11),
   status varchar(600),
   compatibility_level smallint
-) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C STABLE;
 
 create or replace view sys.databases as
 select
@@ -462,7 +462,7 @@ RETURNS table (
   schema_name varchar(128),
   object_name varchar(128),
   detail jsonb
-) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.role_id(role_name SYS.SYSNAME)
