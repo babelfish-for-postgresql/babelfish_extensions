@@ -8,6 +8,8 @@
 #ifndef PLTSQL_DATETIME_H
 #define PLTSQL_DATETIME_H
 
+#include "datatype/timestamp.h"
+
 /*	Round off to MAX_DATETIME_PRECISION decimal places. */
 #define DT_PREC_INV 1000
 #define DTROUND(j) ((((int) (j / DT_PREC_INV)) * DT_PREC_INV))
@@ -29,5 +31,7 @@ extern Timestamp initializeToDefaultDatetime(void);
 
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)
+
+extern Datum datetime_in_str(char *str);
 
 #endif							/* PLTSQL_DATETIME_H */

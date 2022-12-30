@@ -49,6 +49,21 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.partitions AS
+SELECT
+ (to_char( i.object_id, 'FM9999999999' ) || to_char( i.index_id, 'FM9999999999' ) || '1')::bigint AS partition_id
+ , i.object_id
+ , i.index_id
+ , 1::integer AS partition_number
+ , 0::bigint AS hobt_id
+ , c.reltuples::bigint AS "rows"
+ , 0::smallint AS filestream_filegroup_id
+ , 0::sys.tinyint AS data_compression
+ , 'NONE'::sys.nvarchar(60) AS data_compression_desc
+FROM sys.indexes AS i
+INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
+GRANT SELECT ON sys.partitions TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
 AS
 $$
@@ -120,6 +135,32 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
                 OR has_sequence_privilege(r.oid, 'SELECT, UPDATE, USAGE'));
 
 GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
+
+CREATE or replace VIEW sys.check_constraints AS
+SELECT CAST(c.conname as sys.sysname) as name
+  , CAST(oid as integer) as object_id
+  , CAST(NULL as integer) as principal_id 
+  , CAST(c.connamespace as integer) as schema_id
+  , CAST(conrelid as integer) as parent_object_id
+  , CAST('C' as char(2)) as type
+  , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(0 as sys.bit) as is_disabled
+  , CAST(0 as sys.bit) as is_not_for_replication
+  , CAST(0 as sys.bit) as is_not_trusted
+  , CAST(c.conkey[1] as integer) AS parent_column_id
+  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar(4000)) AS definition
+  , CAST(1 as sys.bit) as uses_database_collation
+  , CAST(0 as sys.bit) as is_system_named
+FROM pg_catalog.pg_constraint as c
+INNER JOIN sys.schemas s on c.connamespace = s.schema_id
+WHERE has_schema_privilege(s.schema_id, 'USAGE')
+AND c.contype = 'c' and c.conrelid != 0;
+GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
 -- make sys functions stable
 CREATE OR REPLACE FUNCTION sys.schema_id()
