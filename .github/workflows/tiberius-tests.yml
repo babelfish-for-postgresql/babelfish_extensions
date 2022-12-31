@@ -1,0 +1,101 @@
+name: Tiberius Tests
+on: [push, pull_request]
+
+jobs:
+  run-babelfish-tiberius-tests:
+    runs-on: ubuntu-20.04
+
+    env:
+      TIBERIUS_TEST_CONNECTION_STRING: "server=tcp:localhost,1433;user=jdbc_user;password=12345678;TrustServerCertificate=true"
+
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+      
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+      
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
+      - name: Enable SSL
+        id: enable-ssl
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/enable-ssl
+
+      - name: Run Tiberius Tests
+        id: tiberius
+        if: always() && steps.enable-ssl.outcome == 'success'
+        timeout-minutes: 60
+        run: |
+          git clone --depth 1 --branch v0.11.3 https://github.com/prisma/tiberius.git
+          cd tiberius
+          export RUST_BACKTRACE=1
+          export RUSTFLAGS=-Awarnings
+          export TIBTEST="cargo test --features chrono,time,rust_decimal,bigdecimal --test query"
+          export TIBLOG=~/tiberius.log
+          $TIBTEST connect >> $TIBLOG 2>&1
+          $TIBTEST transactions >> $TIBLOG 2>&1
+          $TIBTEST correct_row_handling_when_not_enough_data >> $TIBLOG 2>&1
+          $TIBTEST multiple_stored_procedure_functions >> $TIBLOG 2>&1
+          $TIBTEST multiple_queries >> $TIBLOG 2>&1
+          $TIBTEST i16_token >> $TIBLOG 2>&1
+          $TIBTEST i32_token >> $TIBLOG 2>&1
+          $TIBTEST i64_token >> $TIBLOG 2>&1
+          $TIBTEST f32_token >> $TIBLOG 2>&1
+          $TIBTEST f64_token >> $TIBLOG 2>&1
+          $TIBTEST short_strings >> $TIBLOG 2>&1
+          $TIBTEST long_strings >> $TIBLOG 2>&1
+          $TIBTEST drop_stream_before_handling_all_results_should_not_cause_weird_things >> $TIBLOG 2>&1
+          $TIBTEST nbc_rows_tokio -- --exact >> $TIBLOG 2>&1
+          $TIBTEST nbc_rows_async_std -- --exact >> $TIBLOG 2>&1
+          $TIBTEST guid_type >> $TIBLOG 2>&1
+          $TIBTEST numeric_type_u128 >> $TIBLOG 2>&1
+          $TIBTEST rust_decimal:: >> $TIBLOG 2>&1
+          $TIBTEST bigdecimal::bigdecimal_type_ >> $TIBLOG 2>&1
+          $TIBTEST with_time_crate >> $TIBLOG 2>&1
+          $TIBTEST xml_read_ >> $TIBLOG 2>&1
+          $TIBTEST mars_sp_routines_must_fetch_all_results >> $TIBLOG 2>&1
+          $TIBTEST warnings_should_not_affect_column_fetch >> $TIBLOG 2>&1
+          $TIBTEST columns_fetch_should_work >> $TIBLOG 2>&1
+          $TIBTEST into_row_stream_should_work >> $TIBLOG 2>&1
+          cat $TIBLOG
+
+      - name: Cleanup babelfish database
+        id: cleanup
+        if: always() && steps.install-extensions.outcome == 'success'
+        run: |
+          sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+
+      - name: Upload Log
+        if: always() && steps.tiberius.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: postgres-log
+          path: ~/postgres/data/logfile
+
+      - name: Upload Tiberius Log
+        if: always() && steps.tiberius.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: tiberius-log
+          path: ~/tiberius.log
