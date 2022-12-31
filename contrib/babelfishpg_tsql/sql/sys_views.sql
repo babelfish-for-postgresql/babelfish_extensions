@@ -2834,7 +2834,7 @@ AS
 SELECT
   CAST(f.oid as int) AS server_id,
   CAST(f.srvname as sys.sysname) AS name,
-  CAST('SQL Server' as sys.sysname) AS product,
+  CAST('' as sys.sysname) AS product,
   CAST('tds_fdw' as sys.sysname) AS provider,
   CAST(split_part(f.srvoptions[1], 'servername=', 2) as sys.nvarchar(4000)) AS data_source,
   CAST(NULL as sys.nvarchar(4000)) AS location,

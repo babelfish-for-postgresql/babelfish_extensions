@@ -3,9 +3,10 @@ SELECT name, product, provider, data_source, provider_string, catalog, is_linked
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#bit
-mssql_server#!#SQL Server#!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
-mssql_server1#!#SQL Server#!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
-hello.world.com#!#SQL Server#!#tds_fdw#!#hello.world.com#!#<NULL>#!#<NULL>#!#1
-mssql_server2#!#SQL Server#!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
+mssql_server#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
+mssql_server1#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
+hello.world.com#!##!#tds_fdw#!#hello.world.com#!#<NULL>#!#<NULL>#!#1
+mssql_server2#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
+mssql_server3#!##!#tds_fdw#!#mssql_server2\ABC#!#<NULL>#!#master#!#1
 ~~END~~
 

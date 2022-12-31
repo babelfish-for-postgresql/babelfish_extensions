@@ -33,7 +33,7 @@ GO
 EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
 
--- Try to create linked server with data source of the form 'servername\\instancename' (Should throw error)
+-- Try to create linked server with data source of the form 'servername\\instancename' (Will throw error when we try to connect to it)
 EXEC sp_addlinkedserver  @server = N'mssql_server3', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'mssql_server2\ABC', @catalog=N'master'
 GO
 

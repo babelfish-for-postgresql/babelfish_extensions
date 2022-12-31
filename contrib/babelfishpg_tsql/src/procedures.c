@@ -32,6 +32,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_relation.h"
+#include "parser/scansup.h" /* downcase_truncate_identifier */
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
@@ -67,7 +68,6 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
-static void ValidateLinkedServerDataSource(char *data_src);
 
 List *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -2091,18 +2091,20 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	List *options = NIL;
 
 	bool provider_warning = false, provstr_warning = false;
-	int rc = -1;
+
+	srv_product = downcase_truncate_identifier(srv_product, strlen(srv_product), true);
+	provider = downcase_truncate_identifier(provider, strlen(provider), true);
 	
-	if (strlen(srv_product) == 10 && (strncmp(srv_product, "SQL Server", 10) == 0))
+	if (strlen(srv_product) == 10 && (strncmp(srv_product, "sql server", 10) == 0))
 	{
 		/* if server product is "SQL Server" data source is the linked server name too */
-		data_src = linked_server;
+		data_src = pstrdup(linked_server);
 	}
 	else
 	{
-		if (((strlen(provider) == 7) && (strncmp(provider, "SQLNCLI", 7) == 0)) ||
-			((strlen(provider) == 10) && (strncmp(provider, "MSOLEDBSQL", 10) == 0)) ||
-			((strlen(provider) == 8) && (strncmp(provider, "SQLOLEDB", 8) == 0)))
+		if (((strlen(provider) == 7) && (strncmp(provider, "sqlncli", 7) == 0)) ||
+			((strlen(provider) == 10) && (strncmp(provider, "msoledbsql", 10) == 0)) ||
+			((strlen(provider) == 8) && (strncmp(provider, "sqloledb", 8) == 0)))
 		{
 			/* if provider is a valid T-SQL provider, we throw a warning indicating internally, we will be using tds_fdw */
 			provider_warning = true;
@@ -2159,12 +2161,15 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	if (catalog)
 		pfree(catalog);
 
-	pfree(stmt);
-
-	if (options != NIL)
+	if (stmt)
 	{
-		list_free_deep(options);
-		options = NIL;
+		if (stmt->options != NIL)
+		{
+			list_free(stmt->options);
+			options = NIL;
+		}
+
+		pfree(stmt);
 	}
 
 	return (Datum) 0;
