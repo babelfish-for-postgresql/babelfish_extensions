@@ -1,4 +1,4 @@
--- sla 30000
+-- sla 35000
 SELECT * FROM sys_all_objects_dep_vu_prepare_func1()
 GO
 

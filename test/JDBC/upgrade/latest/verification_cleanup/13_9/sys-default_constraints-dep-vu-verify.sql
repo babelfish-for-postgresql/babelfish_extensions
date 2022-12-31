@@ -1,4 +1,4 @@
--- sla 10000
+-- sla 15000
 EXEC sys_default_constraints_dep_vu_prepare_p1
 GO
 

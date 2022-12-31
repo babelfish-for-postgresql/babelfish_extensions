@@ -8,11 +8,11 @@ inputs:
   pg_old_dir:
     description: "Previous postgres intall directory"
     required: false
-    default: postgres13
+    default: psql_source
   pg_new_dir:
     description: "Current postgres intall directory"
     required: false
-    default: postgres14
+    default: psql_target
 
 runs:
   using: "composite"

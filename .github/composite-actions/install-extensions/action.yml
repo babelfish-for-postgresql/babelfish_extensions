@@ -4,7 +4,7 @@ inputs:
   install_dir:
     description: 'Engine install directory'
     required: no
-    default: postgres
+    default: psql
   migration_mode:
     description: 'Database migration mode'
     required: no
