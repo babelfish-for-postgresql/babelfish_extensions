@@ -2077,30 +2077,13 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
-static void
-ValidateLinkedServerDataSource(char* data_src)
-{
-	/* 
-	 * Only treat fully qualified DNS names (endpoints) or IP address 
-	 * as valid data sources.
-	 * 
-	 * If data source is provided in the form of servername\\instancename, we
-	 * throw an error to suggest use of fully qualified domain name or the IP address
-	 * instead.
-	 */
-	if (strchr(data_src, '\\'))
-		ereport(ERROR,
-			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Only fully qualified domain name or IP address are allowed as data source")));
-}
-
 Datum
 sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 {
 	char *linked_server = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
 	char *srv_product = PG_ARGISNULL(1) ? "" : text_to_cstring(PG_GETARG_TEXT_P(1));
 	char *provider = PG_ARGISNULL(2) ? "" : text_to_cstring(PG_GETARG_TEXT_P(2));
-	char *data_src = PG_ARGISNULL(3) ? "" : text_to_cstring(PG_GETARG_TEXT_P(3));
+	char *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
 	char *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
 
@@ -2108,6 +2091,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	List *options = NIL;
 
 	bool provider_warning = false, provstr_warning = false;
+	int rc = -1;
 	
 	if (strlen(srv_product) == 10 && (strncmp(srv_product, "SQL Server", 10) == 0))
 	{
@@ -2135,92 +2119,53 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 		}
 	}
 
-	ValidateLinkedServerDataSource(data_src);
-
 	stmt->servername = linked_server;
 	stmt->fdwname = "tds_fdw";
 	stmt->if_not_exists = false;
 
 	/* Add the relevant options */
-	options = lappend(options, makeDefElem("servername", (Node *) makeString(data_src), -1));
+	if (data_src != NULL)
+		options = lappend(options, makeDefElem("servername", (Node *) makeString(data_src), -1));
 
 	if (catalog != NULL)
 		options = lappend(options, makeDefElem("database", (Node *) makeString(catalog), -1));
 
 	stmt->options = options;
-
+	
 	CreateForeignServer(stmt);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
-	{
-		char *msg = "Warning: Using the TDS Foreign data wrapper (tds_fdw) as provider";
-
-		ereport(WARNING, errmsg("%s", msg));
-
-		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg, 0);
-	}
+		report_info_or_warning(WARNING, "Warning: Using the TDS Foreign data wrapper (tds_fdw) as provider");
 
 	if (provstr_warning)
+		report_info_or_warning(WARNING, "Warning: Ignoring @provstr argument value");
+
+	if (linked_server)
+		pfree(linked_server);
+	
+	if (srv_product)
+		pfree(srv_product);
+	
+	if (provider)
+		pfree(provider);
+
+	if (data_src)
+		pfree(data_src);
+
+	if (provstr)
+		pfree(provstr);
+	
+	if (catalog)
+		pfree(catalog);
+
+	pfree(stmt);
+
+	if (options != NIL)
 	{
-		char *msg = "Warning: Ignoring @provstr argument value";
-
-		ereport(WARNING, errmsg("%s", msg));
-
-		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg, 0);
+		list_free_deep(options);
+		options = NIL;
 	}
 
 	return (Datum) 0;
-}
-
-/*
- * Internal function to create the following procedures related to T-SQL linked
- * servers in master.dbo schema:
- *   - sp_addlinkedserver
- * Some applications invoke this referencing master.dbo.<one of the above stored procedures>
- */
-Datum
-create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
-{
-	char *query = NULL;
-
-	int rc = -1;
-
-	char *tempq = "CREATE OR REPLACE PROCEDURE %s.sp_addlinkedserver( IN \"@server\" sys.sysname,"
-						"IN \"@srvproduct\" sys.nvarchar(128) DEFAULT NULL,"
-						"IN \"@provider\" sys.nvarchar(128) DEFAULT 'SQLNCLI',"
-						"IN \"@datasrc\" sys.nvarchar(4000) DEFAULT NULL,"
-						"IN \"@location\" sys.nvarchar(4000) DEFAULT NULL,"
-						"IN \"@provstr\" sys.nvarchar(4000) DEFAULT NULL,"
-						"IN \"@catalog\" sys.sysname DEFAULT NULL)"
-						"AS \'babelfishpg_tsql\', \'sp_addlinkedserver_internal\'"
-					"LANGUAGE C";
-
-	const char  *dbo_scm = get_dbo_schema_name("master");
-	if (dbo_scm == NULL)
-		elog(ERROR, "Failed to retrieve dbo schema name");
-
-	query = psprintf(tempq, dbo_scm);
-
-	PG_TRY();
-	{
-		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
-
-		if ((rc = SPI_execute(query, false, 1)) < 0)
-			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
-
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-	}
-	PG_CATCH();
-	{
-		SPI_finish();
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	PG_RETURN_INT32(0);
 }

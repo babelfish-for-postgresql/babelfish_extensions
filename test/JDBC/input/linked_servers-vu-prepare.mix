@@ -17,8 +17,8 @@ GO
 EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
 
--- Create linked server with valid provider
-EXEC sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+-- Create linked server with valid provider. Also call sp_addlinkedserver from master.dbo schema
+EXEC master.dbo.sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
 
 -- Create linked server with server product 'SQL Server'
