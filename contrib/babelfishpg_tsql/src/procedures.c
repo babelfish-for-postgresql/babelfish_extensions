@@ -2159,11 +2159,11 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 	{	
 		if(function_name == NULL)
 		{
-			query = "SELECT pg_namespace.nspname as SchemaName, pg_proc.proname as FunctionName, provolatile as Volatility from pg_proc "
+			query = psprintf(
+					"SELECT split_part(pg_namespace.nspname,'_',2) as SchemaName, pg_proc.proname as FunctionName, provolatile as Volatility from pg_proc "
 					"JOIN pg_namespace ON pg_proc.pronamespace = pg_namespace.oid where pg_proc.prokind = 'f' "
-					"AND pg_namespace.nspname <> 'sys' AND pg_namespace.nspname <> 'pg_toast' AND pg_namespace.nspname <> 'public' "
-					"AND pg_namespace.nspname <> 'pg_catalog' AND pg_namespace.nspname <> 'information_schema' "
-					"AND pg_namespace.nspname <> 'information_schema_tsql' AND pg_namespace.nspname <> 'dbo' ";
+					"AND pg_namespace.nspname LIKE '%s%s'", db_name, "%"
+				);
 		}
 		else
 		{

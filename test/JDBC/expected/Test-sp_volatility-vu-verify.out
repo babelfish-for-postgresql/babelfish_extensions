@@ -130,7 +130,7 @@ exec sys.sp_volatility 'f1', 'stable'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of function test_db_test_schema.f1)~~
+~~ERROR (Message: must be owner of function test_schema.f1)~~
 
 exec sys.sp_volatility 'f1'
 go
@@ -143,7 +143,7 @@ exec sys.sp_volatility 'f1', 'immutable'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of function test_db_test_schema.f1)~~
+~~ERROR (Message: must be owner of function test_schema.f1)~~
 
 exec sys.sp_volatility 'f1'
 go
@@ -156,7 +156,7 @@ exec sys.sp_volatility 'f1', 'volatile'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of function test_db_test_schema.f1)~~
+~~ERROR (Message: must be owner of function test_schema.f1)~~
 
 exec sys.sp_volatility 'f1'
 go
