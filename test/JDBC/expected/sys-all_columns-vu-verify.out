@@ -34,3 +34,50 @@ intcol#!#1#!#4#!#10#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
 moneycol#!#5#!#8#!#19#!#4#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#NOT_APPLICABLE
 ~~END~~
 
+
+SELECT is_computed FROM sys.all_columns WHERE name = 'col_computed'
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT is_computed FROM sys.all_columns WHERE name = 'col_two'
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+SELECT is_computed FROM sys.all_columns WHERE name = 'col_one'
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+SELECT is_computed FROM sys.all_columns WHERE name = 'random_col'
+GO
+~~START~~
+bit
+~~END~~
+
+
+SELECT is_identity FROM sys.all_columns WHERE name = 'col_three'
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT is_identity FROM sys.all_columns WHERE name = 'col_two'
+GO
+~~START~~
+bit
+0
+~~END~~
+

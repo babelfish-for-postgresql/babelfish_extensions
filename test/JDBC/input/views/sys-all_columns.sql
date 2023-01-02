@@ -36,35 +36,3 @@ GO
 DROP TABLE IF EXISTS sys_all_columns_table
 DROP TABLE IF EXISTS columns_scale_precision_length_test
 GO
-
-DROP TABLE IF EXISTS sys_all_columns_table_one
-GO
-
-CREATE TABLE sys_all_columns_table_one (
-	col_one INT PRIMARY KEY,
-	col_two INT,
-	col_three INT IDENTITY(1,1),
-	col_computed AS col_one * col_two
-)
-GO
-
-SELECT is_computed FROM sys.all_columns WHERE name = 'col_computed'
-GO
-
-SELECT is_computed FROM sys.all_columns WHERE name = 'col_two'
-GO
-
-SELECT is_computed FROM sys.all_columns WHERE name = 'col_one'
-GO
-
-SELECT is_computed FROM sys.all_columns WHERE name = 'random_col'
-GO
-
-SELECT is_identity FROM sys.all_columns WHERE name = 'col_three'
-GO
-
-SELECT is_identity FROM sys.all_columns WHERE name = 'col_two'
-GO
-
-DROP TABLE IF EXISTS sys_all_columns_table_one
-GO
