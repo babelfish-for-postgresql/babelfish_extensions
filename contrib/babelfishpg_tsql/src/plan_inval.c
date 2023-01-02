@@ -17,6 +17,13 @@
 
 const char *pltsql_identity_insert_name = "tsql_identity_insert";
 
+/*
+ * Defining enum to avoid string comparision in pltsql_check_guc_plan.
+ */
+typedef enum {
+IDENTITY_INSERT
+} plan_info_enum_list;
+
 void pltsql_add_guc_plan(CachedPlanSource *plansource);
 bool pltsql_check_guc_plan(CachedPlanSource *plansource);
 
@@ -56,14 +63,17 @@ pltsql_check_guc_plan(CachedPlanSource *plansource)
 	if (sql_dialect != SQL_DIALECT_TSQL || !valid)
 		return valid;
 
-	/* Identify each GUC by name and revalidate accordingly */
+	/* Identify each GUC by plan_info_enum_list and revalidate accordingly */
 	foreach (lc, plansource->pltsql_plan_info)
 	{
 		List *info_sublist = (List *) lfirst(lc);
-		char *name = (char *) linitial(info_sublist);
+		plan_info_enum_list enum_list = (plan_info_enum_list) linitial(info_sublist);
 
-		if (valid && strcmp(name, pltsql_identity_insert_name) == 0)
-			valid = pltsql_revalidate_identity_insert_plan(plansource, info_sublist);
+		/* Execute revalidate function only if it is an insert query. */
+		if (plansource->commandTag == CMDTAG_INSERT){
+			if (valid && enum_list == IDENTITY_INSERT)
+				valid = pltsql_revalidate_identity_insert_plan(plansource, info_sublist);
+		}
 
 		/* Return if invalidated */
 		if (!valid)
@@ -80,12 +90,13 @@ static void
 pltsql_initialize_identity_insert_plan(CachedPlanSource *plansource)
 {
 	List *id_insert_info_sublist = NIL;
-	char *id_insert_name;
+	plan_info_enum_list* id_insert_enum;
+
 	tsql_identity_insert_fields *id_insert_state;
-
-	/* Initialize name */
-	id_insert_name = pstrdup(pltsql_identity_insert_name);
-
+	
+	/* Initialize enum */
+	id_insert_enum = IDENTITY_INSERT;
+	
 	/* Copy state */
 	id_insert_state = (tsql_identity_insert_fields *)
 												palloc(sizeof *id_insert_state);
@@ -94,7 +105,7 @@ pltsql_initialize_identity_insert_plan(CachedPlanSource *plansource)
 	id_insert_state->schema_oid = tsql_identity_insert.schema_oid;
 
 	/* Create info sublist */
-	id_insert_info_sublist = lappend(id_insert_info_sublist, id_insert_name);
+	id_insert_info_sublist = lappend(id_insert_info_sublist, id_insert_enum);
 	id_insert_info_sublist = lappend(id_insert_info_sublist, id_insert_state);
 
 	/* Append to plan info list */

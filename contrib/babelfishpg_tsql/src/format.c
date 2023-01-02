@@ -16,7 +16,6 @@
 #include "format.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
-#include "datatypes.h"
 
 #include <string.h>
 #include <strings.h>
@@ -144,7 +143,7 @@ format_datetime(PG_FUNCTION_ARGS)
 		break;
 	}
 
-	result = tsql_varchar_input(buf->data, buf->len, -1);
+	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf->data, buf->len, -1);
 	pfree(buf->data);
 	pfree(buf);
 
@@ -244,7 +243,7 @@ format_numeric(PG_FUNCTION_ARGS)
 						regexp_replace(format_res->data, "[.]{0,1}0*[eE]", "E", "i");
 					}
 
-					result = tsql_varchar_input(format_res->data, format_res->len, -1);
+					result = (*common_utility_plugin_ptr->tsql_varchar_input)(format_res->data, format_res->len, -1);
 					pfree(format_res->data);
 					pfree(format_res);
 					PG_RETURN_VARCHAR_P(result);
@@ -310,7 +309,7 @@ format_numeric(PG_FUNCTION_ARGS)
 
 	if (format_res->len > 0)
 	{
-		result = tsql_varchar_input(format_res->data, format_res->len, -1);
+		result = (*common_utility_plugin_ptr->tsql_varchar_input)(format_res->data, format_res->len, -1);
 		pfree(format_res->data);
 		pfree(format_res);
 		PG_RETURN_VARCHAR_P(result);
