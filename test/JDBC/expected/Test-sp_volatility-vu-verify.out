@@ -1,3 +1,4 @@
+-- tsql
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
@@ -94,7 +95,6 @@ a#!#f1#!#v
 ~~END~~
 
 
-/* should give error as only schema.function_name is supported*/
 exec sys.sp_volatility 'master.a.f1'
 go
 ~~ERROR (Code: 33557097)~~
@@ -114,4 +114,86 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Enter a valid Function Name)~~
+
+
+-- tsql user=test_user password=abc
+use test_db
+go
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+test_schema#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'f1', 'stable'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function test_db_test_schema.f1)~~
+
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+test_schema#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'f1', 'immutable'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function test_db_test_schema.f1)~~
+
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+test_schema#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'f1', 'volatile'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of function test_db_test_schema.f1)~~
+
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+test_schema#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'f1', 'random'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Enter a valid volatility)~~
+
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+test_schema#!#f1#!#v
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'test_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
 

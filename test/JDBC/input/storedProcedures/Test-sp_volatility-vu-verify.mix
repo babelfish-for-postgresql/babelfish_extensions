@@ -1,3 +1,4 @@
+-- tsql
 exec sys.sp_volatility 'f1'
 go
 exec sys.sp_volatility 'f1', 'stable'
@@ -36,7 +37,6 @@ go
 exec sys.sp_volatility 'a.f1'
 go
 
-/* should give error as only schema.function_name is supported*/
 exec sys.sp_volatility 'master.a.f1'
 go
 
@@ -45,3 +45,34 @@ go
 
 exec sys.sp_volatility '','stable'
 go
+
+-- tsql user=test_user password=abc
+use test_db
+go
+exec sys.sp_volatility 'f1'
+go
+exec sys.sp_volatility 'f1', 'stable'
+go
+exec sys.sp_volatility 'f1'
+go
+exec sys.sp_volatility 'f1', 'immutable'
+go
+exec sys.sp_volatility 'f1'
+go
+exec sys.sp_volatility 'f1', 'volatile'
+go
+exec sys.sp_volatility 'f1'
+go
+exec sys.sp_volatility 'f1', 'random'
+go
+exec sys.sp_volatility 'f1'
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'test_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
