@@ -20,7 +20,6 @@
 #include "utils/catcache.h"
 #include "access/table.h"
 #include "access/genam.h"
-#include "datatypes.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
