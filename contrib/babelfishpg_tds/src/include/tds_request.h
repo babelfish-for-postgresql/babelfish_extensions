@@ -600,6 +600,7 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 						memcpy(&colmetadata[i].collation, &messageData[*offset], sizeof(uint32_t));
 						*offset += sizeof(uint32_t);
 						colmetadata[i].sortId = messageData[(*offset)++];
+						colmetadata[i].encoding = TdsGetEncoding(colmetadata[i].collation);
 					}
 				}
 				break;

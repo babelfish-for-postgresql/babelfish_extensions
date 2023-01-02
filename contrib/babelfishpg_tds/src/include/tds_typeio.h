@@ -206,6 +206,7 @@ typedef struct TvpColMetaData
 
 	uint32_t collation;
 	uint8_t sortId;
+	pg_enc	encoding;
 
 	uint32_t maxLen;
 } TvpColMetaData;
@@ -243,6 +244,7 @@ typedef struct BulkLoadColMetaData
 	/* For String Datatpes. */
 	uint32_t 	collation;
 	uint8_t 	sortId;
+	pg_enc		encoding;
 
 	uint32_t 	maxLen;
 
@@ -458,6 +460,7 @@ extern Datum TdsTypeBitToDatum(StringInfo buf);
 extern Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
 extern Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
 extern Datum TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType);
+extern Datum TdsTypeVarcharToDatumCopy(StringInfo buf, uint32_t collation, uint8_t tdsColDataType, pg_enc encoding);
 extern Datum TdsTypeNCharToDatum(StringInfo buf);
 extern Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 extern Datum TdsTypeVarbinaryToDatum(StringInfo buf);

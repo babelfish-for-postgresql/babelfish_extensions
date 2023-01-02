@@ -105,6 +105,7 @@ Datum TdsTypeBitToDatum(StringInfo buf);
 Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
 Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
 Datum TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType);
+Datum TdsTypeVarcharToDatumCopy(StringInfo buf, uint32_t collation, uint8_t tdsColDataType, pg_enc encoding);
 Datum TdsTypeNCharToDatum(StringInfo buf);
 Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 Datum TdsTypeVarbinaryToDatum(StringInfo buf);
@@ -911,6 +912,22 @@ TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType
 
 	/* If we recieve 0 value for LCID then we should treat it as a default LCID.*/
 	encoding = TdsGetEncoding(collation);
+
+	pval = TdsAnyToServerEncodingConversion(encoding,
+									buf->data, buf->len,
+									tdsColDataType);
+	buf->data[buf->len] = csave;
+	return pval;
+}
+
+Datum
+TdsTypeVarcharToDatumCopy(StringInfo buf, uint32_t collation, uint8_t tdsColDataType, pg_enc encoding)
+{
+	char 		csave;
+	Datum 		pval;
+
+	csave = buf->data[buf->len];
+	buf->data[buf->len] = '\0';
 
 	pval = TdsAnyToServerEncodingConversion(encoding,
 									buf->data, buf->len,
@@ -2080,7 +2097,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
-							values[i] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
+							values[i] = TdsTypeVarcharToDatumCopy(temp, colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].encoding);
 						break;
 						case TDS_TYPE_NCHAR:
 							values[i] = TdsTypeNCharToDatum(temp);
