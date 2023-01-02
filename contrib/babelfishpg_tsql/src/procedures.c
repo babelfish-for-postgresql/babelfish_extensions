@@ -68,6 +68,7 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
+static void exec_utility_cmd_helper(char *query_str);
 
 List *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -2077,23 +2078,60 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
+static void
+exec_utility_cmd_helper(char *query_str)
+{
+	List			*parsetree_list;
+	Node			*stmt;
+	PlannedStmt		*wrapper;
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				   query_str,
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
+}
+
 Datum
 sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 {
 	char *linked_server = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *srv_product = PG_ARGISNULL(1) ? "" : text_to_cstring(PG_GETARG_TEXT_P(1));
-	char *provider = PG_ARGISNULL(2) ? "" : text_to_cstring(PG_GETARG_TEXT_P(2));
+	char *srv_product = PG_ARGISNULL(1) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
+	char *provider = PG_ARGISNULL(2) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(2)));
 	char *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
 	char *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
 
-	CreateForeignServerStmt *stmt = makeNode(CreateForeignServerStmt);
-	List *options = NIL;
+	StringInfoData query;
 
 	bool provider_warning = false, provstr_warning = false;
-
-	srv_product = downcase_truncate_identifier(srv_product, strlen(srv_product), true);
-	provider = downcase_truncate_identifier(provider, strlen(provider), true);
 	
 	if (strlen(srv_product) == 10 && (strncmp(srv_product, "sql server", 10) == 0))
 	{
@@ -2121,20 +2159,30 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 		}
 	}
 
-	stmt->servername = linked_server;
-	stmt->fdwname = "tds_fdw";
-	stmt->if_not_exists = false;
+	initStringInfo(&query);
+
+	appendStringInfo(&query, "CREATE SERVER \"%s\" FOREIGN DATA WRAPPER tds_fdw ", linked_server);
 
 	/* Add the relevant options */
-	if (data_src != NULL)
-		options = lappend(options, makeDefElem("servername", (Node *) makeString(data_src), -1));
+	if (data_src || catalog)
+	{
+		appendStringInfoString(&query, "OPTIONS ( ");
+q
+		if (data_src)
+			appendStringInfo(&query, "servername '%s' ", data_src);
 
-	if (catalog != NULL)
-		options = lappend(options, makeDefElem("database", (Node *) makeString(catalog), -1));
+		if (catalog)
+		{
+			if (data_src)
+				appendStringInfoString(&query, ", ");
 
-	stmt->options = options;
-	
-	CreateForeignServer(stmt);
+			appendStringInfo(&query, "database '%s' ", catalog);
+		}
+
+		appendStringInfoString(&query, ")");
+	}
+
+	exec_utility_cmd_helper(query.data);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
@@ -2161,16 +2209,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	if (catalog)
 		pfree(catalog);
 
-	if (stmt)
-	{
-		if (stmt->options != NIL)
-		{
-			list_free(stmt->options);
-			options = NIL;
-		}
-
-		pfree(stmt);
-	}
+	pfree(query.data);
 
 	return (Datum) 0;
 }
