@@ -5731,6 +5731,8 @@ getCreateDatabaseOptionTobeRemoved(TSqlParser::Create_database_optionContext* o)
 		return o->DB_CHAINING();
 	if (o->TRUSTWORTHY())
 		return o->TRUSTWORTHY();
+	if (o->CATALOG_COLLATION())
+		return o->CATALOG_COLLATION();
 	if (o->PERSISTENT_LOG_BUFFER())
 		return o->PERSISTENT_LOG_BUFFER();
 	return nullptr;

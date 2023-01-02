@@ -311,6 +311,19 @@ GO
 DROP DATABASE db_unsupported6;
 GO
 
+CREATE DATABASE db_unsupported7 WITH CATALOG_COLLATION = DATABASE_DEFAULT;
+GO
+DROP DATABASE db_unsupported7;
+GO
+
+CREATE DATABASE db_unsupported8 COLLATE SQL_Latin1_General_CP1_CI_AS;
+GO
+DROP DATABASE db_unsupported8;
+GO
+
+CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
+GO
+
 SELECT set_config('babelfishpg_tsql.escape_hatch_database_misc_options', 'strict', 'false')
 GO
 
@@ -332,6 +345,15 @@ GO
 CREATE DATABASE db_unsupported6 WITH PERSISTENT_LOG_BUFFER = ON (DIRECTORY_NAME = '/tmp');
 GO
 DROP DATABASE db_unsupported6;
+GO
+
+CREATE DATABASE db_unsupported7 WITH CATALOG_COLLATION = DATABASE_DEFAULT
+GO
+
+CREATE DATABASE db_unsupported8 COLLATE SQL_Latin1_General_CP1_CI_AS;
+GO
+
+CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_database_misc_options', 'ignore', 'false')
