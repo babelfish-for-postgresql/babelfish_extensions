@@ -459,8 +459,7 @@ extern Datum TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken
 extern Datum TdsTypeBitToDatum(StringInfo buf);
 extern Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
 extern Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
-extern Datum TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType);
-extern Datum TdsTypeVarcharToDatumCopy(StringInfo buf, uint32_t collation, uint8_t tdsColDataType, pg_enc encoding);
+extern Datum TdsTypeVarcharToDatum(StringInfo buf, pg_enc encoding, uint8_t tdsColDataType);
 extern Datum TdsTypeNCharToDatum(StringInfo buf);
 extern Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 extern Datum TdsTypeVarbinaryToDatum(StringInfo buf);

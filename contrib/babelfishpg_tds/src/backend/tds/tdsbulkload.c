@@ -676,7 +676,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
-							rowData->columnValues[i] = TdsTypeVarcharToDatumCopy(temp, colmetadata[i].collation, colmetadata[i].columnTdsType, colmetadata[i].encoding);
+							rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].encoding, colmetadata[i].columnTdsType);
 						break;
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_NVARCHAR:
@@ -743,7 +743,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					switch(colmetadata[i].columnTdsType)
 					{
 						case TDS_TYPE_TEXT:
-							rowData->columnValues[i] = TdsTypeVarcharToDatumCopy(temp, colmetadata[i].collation, colmetadata[i].columnTdsType, colmetadata[i].encoding);
+							rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].encoding, colmetadata[i].columnTdsType);
 						break;
 						case TDS_TYPE_NTEXT:
 							rowData->columnValues[i] = TdsTypeNCharToDatum(temp);

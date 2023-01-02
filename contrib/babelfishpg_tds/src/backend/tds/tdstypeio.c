@@ -104,8 +104,7 @@ int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr);
 Datum TdsTypeBitToDatum(StringInfo buf);
 Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
 Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
-Datum TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType);
-Datum TdsTypeVarcharToDatumCopy(StringInfo buf, uint32_t collation, uint8_t tdsColDataType, pg_enc encoding);
+Datum TdsTypeVarcharToDatum(StringInfo buf, pg_enc encoding, uint8_t tdsColDataType);
 Datum TdsTypeNCharToDatum(StringInfo buf);
 Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 Datum TdsTypeVarbinaryToDatum(StringInfo buf);
@@ -901,27 +900,7 @@ TdsTypeFloatToDatum(StringInfo buf, int maxLen)
 
 /* Helper Function to convert Varchar,Char and Text values into Datum. */
 Datum
-TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType)
-{
-	char 		csave;
-	Datum 		pval;
-	pg_enc 		encoding;
-
-	csave = buf->data[buf->len];
-	buf->data[buf->len] = '\0';
-
-	/* If we recieve 0 value for LCID then we should treat it as a default LCID.*/
-	encoding = TdsGetEncoding(collation);
-
-	pval = TdsAnyToServerEncodingConversion(encoding,
-									buf->data, buf->len,
-									tdsColDataType);
-	buf->data[buf->len] = csave;
-	return pval;
-}
-
-Datum
-TdsTypeVarcharToDatumCopy(StringInfo buf, uint32_t collation, uint8_t tdsColDataType, pg_enc encoding)
+TdsTypeVarcharToDatum(StringInfo buf, pg_enc encoding, uint8_t tdsColDataType)
 {
 	char 		csave;
 	Datum 		pval;
@@ -2097,7 +2076,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
-							values[i] = TdsTypeVarcharToDatumCopy(temp, colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].encoding);
+							values[i] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].encoding, colMetaData[currentColumn].columnTdsType);
 						break;
 						case TDS_TYPE_NCHAR:
 							values[i] = TdsTypeNCharToDatum(temp);
