@@ -162,6 +162,10 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_volatility(IN "@function_name" sys.varchar(128) DEFAULT NULL, IN "@volatility" sys.varchar(128) DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_volatility' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_volatility(IN sys.varchar(128), IN sys.varchar(128)) TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
