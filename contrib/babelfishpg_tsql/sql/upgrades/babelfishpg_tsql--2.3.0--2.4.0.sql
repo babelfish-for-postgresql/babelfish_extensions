@@ -483,111 +483,6 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 $$
 LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
--- sys.varchar has default length of 1, so we have to pass in 'number' to be the
--- type modifier.
-BEGIN
-	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
-END;
-$$
-STRICT
-LANGUAGE plpgsql STABLE;
-
-CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
-                                                           IN p_minute NUMERIC,
-                                                           IN p_seconds NUMERIC,
-                                                           IN p_fractions NUMERIC,
-                                                           IN p_precision NUMERIC)
-RETURNS TIME WITHOUT TIME ZONE
-AS
-$BODY$
-DECLARE
-    v_fractions VARCHAR;
-    v_precision SMALLINT;
-    v_err_message VARCHAR;
-    v_calc_seconds NUMERIC;
-BEGIN
-    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
-    v_precision := p_precision::SMALLINT;
-
-    IF (scale(p_precision) > 0) THEN
-        RAISE most_specific_type_mismatch;
-    ELSIF ((p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
-           (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
-           (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
-           (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
-           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
-    THEN
-        RAISE invalid_datetime_format;
-    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
-        RAISE numeric_value_out_of_range;
-    END IF;
-
-    v_calc_seconds := pg_catalog.format('%s.%s',
-                             floor(p_seconds)::SMALLINT,
-                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
-
-    RETURN make_time(floor(p_hour)::SMALLINT,
-                     floor(p_minute)::SMALLINT,
-                     v_calc_seconds);
-EXCEPTION
-    WHEN most_specific_type_mismatch THEN
-        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
-                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
-                    HINT := 'Change "precision" parameter to the proper value and try again.';
-
-    WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
-                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
-                    HINT := 'Change "precision" parameter to the proper value and try again.';
-
-    WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := 'Cannot construct data type time, some of the arguments have values which are not valid.',
-                    DETAIL := 'Possible use of incorrect value of time part (which lies outside of valid range).',
-                    HINT := 'Check each input argument belongs to the valid range and try again.';
-
-    WHEN numeric_value_out_of_range THEN
-        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := upper(split_part(v_err_message, ' ', 1));
-
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
-                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
-                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
-                                   v_err_message);
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
-CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour TEXT,
-                                                           IN p_minute TEXT,
-                                                           IN p_seconds TEXT,
-                                                           IN p_fractions TEXT,
-                                                           IN p_precision TEXT)
-RETURNS TIME WITHOUT TIME ZONE
-AS
-$BODY$
-DECLARE
-    v_err_message VARCHAR;
-BEGIN
-    RETURN sys.timefromparts(p_hour::NUMERIC, p_minute::NUMERIC,
-                                           p_seconds::NUMERIC, p_fractions::NUMERIC,
-                                           p_precision::NUMERIC);
-EXCEPTION
-    WHEN invalid_text_representation THEN
-        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
-
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
-                    DETAIL := 'Supplied string value contains illegal characters.',
-                    HINT := 'Correct supplied value, remove all illegal characters and try again.';
-END;
-$BODY$
-LANGUAGE plpgsql
-STABLE
-RETURNS NULL ON NULL INPUT;
-
 CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
 RETURNS integer
 LANGUAGE plpgsql
@@ -9222,12 +9117,11 @@ CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC; 
 
-
-CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
-    AS $$select date_trunc('millisecond', clock_timestamp() AT TIME ZONE 'UTC')::sys.datetime;$$
-    LANGUAGE SQL STABLE;
-GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC; 
-
+CREATE OR REPLACE FUNCTION sys.GETUTCDATE() RETURNS sys.DATETIME AS
+$BODY$
+SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
+$BODY$
+LANGUAGE SQL STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.isnull(text,text) RETURNS text AS $$
   SELECT COALESCE($1,$2);
@@ -9502,26 +9396,6 @@ RETURNS table (
 
 CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
 	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C STABLE;
-
-CREATE OR REPLACE FUNCTION sys.sp_getapplock_function (IN "@resource" varchar(255),
-                                               IN "@lockmode" varchar(32),
-                                               IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION',
-                                               IN "@locktimeout" INTEGER DEFAULT -99,
-                                               IN "@dbprincipal" varchar(32) DEFAULT 'dbo')
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'sp_getapplock_function' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.sp_getapplock_function(
-	IN varchar(255), IN varchar(32), IN varchar(32), IN INTEGER, IN varchar(32)
-) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.sp_releaseapplock_function(IN "@resource" varchar(255),
-                                                   IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION',
-                                                   IN "@dbprincipal" varchar(32) DEFAULT 'dbo')
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'sp_releaseapplock_function' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.sp_releaseapplock_function(
-	IN varchar(255), IN varchar(32), IN varchar(32)
-) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.ident_seed(IN tablename TEXT)
 RETURNS numeric(38,0) AS

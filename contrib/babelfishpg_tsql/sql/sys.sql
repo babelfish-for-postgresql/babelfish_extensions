@@ -25,7 +25,7 @@ GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
 
 CREATE FUNCTION sys.getutcdate() RETURNS sys.datetime
     AS $$select date_trunc('millisecond', clock_timestamp() AT TIME ZONE 'UTC')::sys.datetime;$$
-    LANGUAGE SQL STABLE;
+    LANGUAGE SQL;
 GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC; 
 
 

@@ -657,7 +657,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+VOLATILE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour TEXT,
@@ -685,7 +685,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-STABLE
+VOLATILE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
@@ -909,7 +909,7 @@ BEGIN
 END;
 $$
 STRICT
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql;
 
 create or replace function sys.isdate(v text)
 returns integer
@@ -1614,7 +1614,7 @@ CREATE OR REPLACE FUNCTION sys.GETUTCDATE() RETURNS sys.DATETIME AS
 $BODY$
 SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
 $BODY$
-LANGUAGE SQL PARALLEL SAFE;
+LANGUAGE SQL STABLE PARALLEL SAFE;
 
 -- These come from the built-in pg_catalog.count in pg_aggregate.dat
 CREATE AGGREGATE sys.count(*)
