@@ -12,3 +12,12 @@ GO
 
 Select definition FROM sys.computed_columns WHERE name='scc_multiplied';
 GO
+
+Select sys.tsql_get_expr(adbin, adrelid) FROM pg_attrdef WHERE adrelid = (select oid from pg_class where relname='sys_computed_columns_vu_prepare_t1')
+GO
+
+Select sys.tsql_get_expr('scc_second_number',123)
+GO
+
+Select sys.tsql_get_expr('abc',123)
+GO

@@ -450,6 +450,7 @@ tsql_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags
     str = deparse_expression_pretty(node, context, false, false,
                                     prettyFlags, 0);
 
+	pfree(node);
     return string_to_text(str);
 }
 
