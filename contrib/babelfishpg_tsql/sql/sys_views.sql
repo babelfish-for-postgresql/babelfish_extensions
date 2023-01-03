@@ -1169,8 +1169,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(0 as sys.bit) as is_not_for_replication
   , CAST(0 as sys.bit) as is_not_trusted
   , CAST(c.conkey[1] as integer) AS parent_column_id
-  -- use a simple regex to strip the datatype and collation that pg_get_constraintdef returns after a double-colon that is not expected in SQL Server
-  , CAST(regexp_replace(substring(pg_get_constraintdef(c.oid) from 7), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) AS definition
+  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar(4000)) AS definition
   , CAST(1 as sys.bit) as uses_database_collation
   , CAST(0 as sys.bit) as is_system_named
 FROM pg_catalog.pg_constraint as c
