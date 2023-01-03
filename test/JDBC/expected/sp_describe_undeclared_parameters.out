@@ -58,6 +58,7 @@ int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#
 ~~ERROR (Message: column "a" of relation "pg_shadow" does not exist)~~
 
 
+
 -- Done testing simple error scenario
 -- Set-up
 CREATE SCHEMA error_mapping;
