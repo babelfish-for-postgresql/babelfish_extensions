@@ -57,7 +57,6 @@ PG_FUNCTION_INFO_V1(sp_droprole);
 PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
-PG_FUNCTION_INFO_V1(create_linked_server_procs_in_master_dbo_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -2135,7 +2134,11 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	
 	if (strlen(srv_product) == 10 && (strncmp(srv_product, "sql server", 10) == 0))
 	{
-		/* if server product is "SQL Server" data source is the linked server name too */
+		/*
+		 * if server product is "SQL Server", rest of the arguments need not be
+		 * specified except the linked server name. The linked server name in
+		 * such a case, also doubles up as the linked server data source.
+		 */
 		data_src = pstrdup(linked_server);
 	}
 	else
