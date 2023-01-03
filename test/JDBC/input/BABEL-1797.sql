@@ -11,3 +11,7 @@ go
 -- cleanup
 drop table [dbo].[t23];
 go
+
+-- Should throw an error
+exec sys.sp_describe_undeclared_parameters N'insert into pg_shadow (a,b,c,d,e,f) values (@a,@b,@c,@d,@e,@f)'
+go
