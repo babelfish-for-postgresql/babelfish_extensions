@@ -1,0 +1,85 @@
+-- tsql
+-- case insensitive comparison
+select count(*) from sys.babelfish_domain_mapping where netbios_domain_name = 'Xyz';
+GO
+
+-- tsql
+select name from sys.server_principals where name = 'test@XYZ.BABEL';
+GO
+
+-- tsql
+-- case insensitive comparison
+select name from sys.server_principals where name = 'TesT@XYZ.BABEL';
+GO
+
+-- tsql
+DROP LOGIN [xyz\test]
+GO
+
+--tsql
+-- should throw an error because entry is already there
+exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+-- tsql
+-- remove entry for xyz
+exec babelfish_remove_domain_mapping_entry 'xyz'
+GO
+
+-- tsql
+-- should be zero rows
+select count(*) from sys.babelfish_domain_mapping where netbios_domain_name = 'xyz';
+GO
+
+-- tsql
+select name from sys.server_principals where name = 'test@ABC';
+GO
+
+-- tsql
+-- case insensitive comparison
+select name from sys.server_principals where name = 'tEst@ABC';
+GO
+
+-- tsql
+exec babelfish_reset_domain_mapping;
+GO
+
+-- tsql
+-- should be zero rows
+select count(*) from sys.babelfish_domain_mapping;
+GO
+
+-- tsql user=test_login1 password=12345678
+-- test_login1 should not be able to add mapping
+exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+-- tsql user=test_login_sa password=12345678
+-- test_login_sa should be able to add/remove mapping
+exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+-- tsql user=test_login_sa password=12345678
+-- remove entry for xyz
+exec babelfish_remove_domain_mapping_entry 'xyz'
+GO
+
+-- terminate-tsql-conn user=test_login_sa password=12345678
+
+-- tsql
+DROP LOGIN test_login_sa;
+GO
+
+-- terminate-tsql-conn user=test_login1 password=12345678
+
+-- tsql
+DROP LOGIN test_login1;
+GO
+
+-- tsql
+DROP LOGIN [abc\test]
+GO
+
+-- psql
+DROP ROLE rds_ad
+GO

@@ -1,0 +1,53 @@
+-- tsql
+select count(*) from sys.babelfish_domain_mapping;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+-- direct insert into babelfish_domain_mapping should not be allowed
+insert into sys.babelfish_domain_mapping values ('xyz', 'xyz.internal');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babelfish_domain_mapping)~~
+
+
+-- tsql
+exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+-- psql
+create role rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION;
+GO
+
+-- tsql
+-- test@XYZ.BABEL would be created
+create login [xyz\test] from windows;
+GO
+
+-- tsql
+-- test@ABC would be created as domain mapping for abc does not exist
+create login [abc\test] from windows;
+GO
+
+-- tsql
+exec sys.babelfish_add_domain_mapping_entry 'abc', 'abc.internal';
+GO
+
+-- tsql
+-- test_login1 is not part of sysadmin
+create login [test_login1] with password = '12345678';
+GO
+
+-- tsql
+-- test_login_sa is part of sysadmin
+create login [test_login_sa] with password = '12345678';
+GO
+
+-- tsql
+alter role sysadmin add member test_login_sa;
+GO
