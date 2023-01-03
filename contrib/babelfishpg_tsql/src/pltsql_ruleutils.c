@@ -2843,10 +2843,14 @@ print_collation_name(Oid collOid)
 	char* res = NULL;
 	char* translated_res = NULL;
 	res = generate_collation_name(collOid);
-	translated_res = tsql_translate_collation_bbf(res);
+	if (res)
+		translated_res = (char*)tsql_translate_bbf_collation_to_tsql_collation(res);
 
 	if (translated_res)
+	{
+		pfree(res);
 		return translated_res;
+	}
 	return res;
 }
 

@@ -24,7 +24,7 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int server_collation_collidx = NOT_FOUND;
@@ -119,7 +119,11 @@ coll_translate_t coll_translations[] =
 };
 #define TOTAL_COLL_TRANSLATION_COUNT (sizeof(coll_translations)/sizeof(coll_translations[0]))
 
-coll_translate_t coll_translations_tsql[] =
+/* Collation translation table.  This must be sorted by the first column (BBF collation),
+ * which contains the name of the collation to be translated from.  The second
+ * column (TSQL Collation) is the name of the collation to translate to.
+ */
+coll_translate_t reverse_coll_translations[] =
 {
 	{ "bbf_unicode_bin2", "latin1_general_bin2", 1252 },
 	{ "bbf_unicode_cp1250_ci_as", "sql_latin1_general_cp1250_ci_as", 1250 },
@@ -145,7 +149,7 @@ coll_translate_t coll_translations_tsql[] =
 	{ "bbf_unicode_pref_cp1_cs_as", "sql_latin1_general_pref_cp1_cs_as", 1252 }
 };
 
-#define TOTAL_COLL_TRANSLATION_COUNT_TSQL (sizeof(coll_translations_tsql)/sizeof(coll_translations_tsql[0]))
+#define TOTAL_COLL_TRANSLATION_COUNT_TSQL (sizeof(reverse_coll_translations)/sizeof(reverse_coll_translations[0]))
 
 coll_info coll_infos[] =
 {
@@ -629,31 +633,30 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 	return idx;
 }
 
-/* Translate BBF collation to it's closest SQL Server Collation. */
-char *
-translate_collation_bbf(const char *collname)
+/* Translate BBF collation to it's closest TSQL Collation. */
+const char *
+translate_bbf_collation_to_tsql_collation(const char *collname)
 {
-	char *res = NULL;
 	int first = 0;
 	int last = TOTAL_COLL_TRANSLATION_COUNT_TSQL - 1;
-	int middle = 16; /* optimization: usually it's the default collation. */
+	int middle = TOTAL_COLL_TRANSLATION_COUNT_TSQL/2;
 	int compare;
 
 	while (first <= last)
 	{
-		compare = pg_strcasecmp(coll_translations_tsql[middle].from_collname, collname);
+		compare = pg_strcasecmp(reverse_coll_translations[middle].from_collname, collname);
 		if (compare < 0)
 			first = middle + 1;
 		else if (compare == 0)
 		{
-			return (char*)(coll_translations_tsql[middle].to_collname);
+			return (reverse_coll_translations[middle].to_collname);
 		}
 		else
 			last = middle - 1;
 
 		middle = (first + last) / 2;
 	}
-	return res;
+	return NULL;
 }
 
 /*
@@ -1455,7 +1458,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;
 		collation_callbacks_var.find_collation_internal = &find_collation;
 		collation_callbacks_var.has_ilike_node = &has_ilike_node;
-		collation_callbacks_var.translate_collation_bbf = &translate_collation_bbf;
+		collation_callbacks_var.translate_bbf_collation_to_tsql_collation = &translate_bbf_collation_to_tsql_collation;
 	}
 	return &collation_callbacks_var;
 }

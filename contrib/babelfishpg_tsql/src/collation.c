@@ -716,13 +716,13 @@ tsql_find_collation_internal(const char *collation_name)
 	return (*collation_callbacks_ptr->find_collation_internal)(collation_name);
 }
 
-char*
-tsql_translate_collation_bbf(const char *collname)
+const char*
+tsql_translate_bbf_collation_to_tsql_collation(const char *collname)
 {
 	/* Initialise collation callbacks */
 	init_and_check_collation_callbacks();
 
-	return (*collation_callbacks_ptr->translate_collation_bbf)(collname);
+	return (*collation_callbacks_ptr->translate_bbf_collation_to_tsql_collation)(collname);
 }
 
 bool
