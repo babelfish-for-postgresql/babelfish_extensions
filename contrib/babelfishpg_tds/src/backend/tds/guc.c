@@ -116,19 +116,17 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 static bool 
 check_version_number(char **newval, void **extra, GucSource source)
 {
-	char 		*copy_version_number = palloc(sizeof(*newval));
+	char 		*copy_version_number;
 	char		*token;
 	int		part = 0;
 
-	if(*newval == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				errmsg("Product version must not be null. Please enter 4 valid numbers separated by \'.\' ")));
-
-	strncpy(copy_version_number,*newval,strlen(*newval) + 1);
+	Assert(*newval != NULL);
 	if(pg_strcasecmp(copy_version_number,"default") == 0)
 		return true;
 
+	copy_version_number = palloc(sizeof(*newval));
+	strncpy(copy_version_number,*newval,strlen(*newval) + 1);
+	
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{	
 		/* check each token contains only digits */
@@ -147,8 +145,8 @@ check_version_number(char **newval, void **extra, GucSource source)
 				errmsg("Please enter a valid major version number between 11 and 15")));
 		}
 
-		/* Minor Version takes 1 byte in PreLogin message when doing handshake, here to check
-		 *	it is between 0 and 0xFF
+		/* Minor Version takes 1 byte in PreLogin message when doing handshake, 
+		 * here to check it is between 0 and 0xFF
 		 */
 		if(part == 1 && atoi(token) > 0xFF)
 		{
@@ -156,8 +154,8 @@ check_version_number(char **newval, void **extra, GucSource source)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Please enter a valid minor version number between 0 and 255")));
 		}
-		/* Micro Version takes 2 bytes in PreLogin message when doing handshake, here to check
-		 *	it is between 0 and 0xFFFF
+		/* Micro Version takes 2 bytes in PreLogin message when doing handshake,
+		 * here to check it is between 0 and 0xFFFF
 		 */
 		if(part == 2 && atoi(token) > 0xFFFF)
 		{
