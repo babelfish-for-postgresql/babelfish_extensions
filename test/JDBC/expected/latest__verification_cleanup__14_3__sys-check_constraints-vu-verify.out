@@ -4,7 +4,7 @@ GO
 nvarchar
 ((sck_date_col IS NOT NULL))
 ((column_a = 0))
-((column_b <> 'wrong' COLLATE "default"))
+((column_b <> 'wrong'))
 ~~END~~
 
 
