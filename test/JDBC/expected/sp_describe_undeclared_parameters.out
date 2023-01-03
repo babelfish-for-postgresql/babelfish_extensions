@@ -49,6 +49,15 @@ int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#
 ~~ERROR (Message: Unsupported use case in sp_describe_undeclared_parameters)~~
 
 
+exec sys.sp_describe_undeclared_parameters N'insert into pg_shadow (a,b,c,d,e,f) values (@a,@b,@c,@d,@e,@f)'
+go
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "a" of relation "pg_shadow" does not exist)~~
+
+
 -- Done testing simple error scenario
 -- Set-up
 CREATE SCHEMA error_mapping;
