@@ -349,6 +349,7 @@ int tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
 int adjustTypmod(Oid oid, int typmod);
+char* print_collation_name(Oid collOid);
 static void tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args);
 
 PG_FUNCTION_INFO_V1(tsql_get_constraintdef);
@@ -1359,7 +1360,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendStringInfoChar(buf, '(');
 				get_rule_expr_paren(arg, context, showimplicit, node);
 				appendStringInfo(buf, " COLLATE %s",
-								 generate_collation_name(collate->collOid));
+								 print_collation_name(collate->collOid));
 				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, ')');
 			}
@@ -1833,7 +1834,7 @@ get_const_collation(Const *constval, deparse_context *context)
 		if (constval->constcollid != typcollation)
 		{
 			appendStringInfo(buf, " COLLATE %s",
-							 generate_collation_name(constval->constcollid));
+							 print_collation_name(constval->constcollid));
 		}
 	}
 }
@@ -2833,6 +2834,19 @@ tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout)
 													Int32GetDatum(typmod)));
 		res = psprintf("%s%s", typname, tmstr);
 	}
+	return res;
+}
+
+char*
+print_collation_name(Oid collOid)
+{
+	char* res = NULL;
+	char* translated_res = NULL;
+	res = generate_collation_name(collOid);
+	translated_res = tsql_translate_collation_bbf(res);
+
+	if (translated_res)
+		return translated_res;
 	return res;
 }
 

@@ -716,6 +716,15 @@ tsql_find_collation_internal(const char *collation_name)
 	return (*collation_callbacks_ptr->find_collation_internal)(collation_name);
 }
 
+char*
+tsql_translate_collation_bbf(const char *collname)
+{
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	return (*collation_callbacks_ptr->translate_collation_bbf)(collname);
+}
+
 bool
 has_ilike_node_and_ci_as_coll(Node *expr)
 {
