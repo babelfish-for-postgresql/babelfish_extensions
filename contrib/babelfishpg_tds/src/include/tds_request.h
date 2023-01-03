@@ -480,6 +480,7 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 	char *db_name =  pltsql_plugin_handler_ptr->get_cur_db_name();
 	char *physical_schema = NULL;
 	StringInfo tempStringInfo = palloc( sizeof(StringInfoData));
+	uint32_t collation;
 
 	/* Database-Name.Schema-Name.TableType-Name */
 	for(; i < 3; i++)
@@ -589,19 +590,11 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 				{
 					memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint16));
 					*offset += sizeof(uint16);
-					if (colmetadata[i].maxLen == 0xffff)
-					{
-						memcpy(&colmetadata[i].collation, &messageData[*offset], sizeof(uint32_t));
-						*offset += sizeof(uint32_t);
-						colmetadata[i].sortId = messageData[(*offset)++];
-					}
-					else
-					{
-						memcpy(&colmetadata[i].collation, &messageData[*offset], sizeof(uint32_t));
-						*offset += sizeof(uint32_t);
-						colmetadata[i].sortId = messageData[(*offset)++];
-						colmetadata[i].encoding = TdsGetEncoding(colmetadata[i].collation);
-					}
+
+					memcpy(&collation, &messageData[*offset], sizeof(uint32_t));
+					*offset += sizeof(uint32_t);
+					colmetadata[i].sortId = messageData[(*offset)++];
+					colmetadata[i].encoding = TdsGetEncoding(collation);
 				}
 				break;
 				case TDS_TYPE_XML:

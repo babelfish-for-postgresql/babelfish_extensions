@@ -204,7 +204,6 @@ typedef struct TvpColMetaData
 	uint8_t scale;
 	uint8_t precision;
 
-	uint32_t collation;
 	uint8_t sortId;
 	pg_enc	encoding;
 
@@ -242,7 +241,6 @@ typedef struct BulkLoadColMetaData
 	uint8_t 	precision;
 
 	/* For String Datatpes. */
-	uint32_t 	collation;
 	uint8_t 	sortId;
 	pg_enc		encoding;
 

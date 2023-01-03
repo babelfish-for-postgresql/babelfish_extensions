@@ -205,7 +205,8 @@ GetBulkLoadRequest(StringInfo message)
 {
 	TDSRequestBulkLoad		request;
 	uint16_t 				colCount;
-	BulkLoadColMetaData 			*colmetadata;
+	BulkLoadColMetaData		*colmetadata;
+	uint32_t				collation;
 
 	TdsErrorContext->err_text = "Fetching Bulk Load Request";
 
@@ -271,10 +272,10 @@ GetBulkLoadRequest(StringInfo message)
 				memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint16));
 				offset += sizeof(uint16);
 
-				memcpy(&colmetadata[currentColumn].collation, &message->data[offset], sizeof(uint32_t));
+				memcpy(&collation, &message->data[offset], sizeof(uint32_t));
 				offset += sizeof(uint32_t);
 				colmetadata[currentColumn].sortId = message->data[offset++];
-				colmetadata[currentColumn].encoding = TdsGetEncoding(colmetadata[currentColumn].collation);
+				colmetadata[currentColumn].encoding = TdsGetEncoding(collation);
 			}
 			break;
 			case TDS_TYPE_TEXT:
@@ -291,9 +292,10 @@ GetBulkLoadRequest(StringInfo message)
 					colmetadata[currentColumn].columnTdsType == TDS_TYPE_NTEXT)
 				{
 					CheckMessageHasEnoughBytesToRead(&message, sizeof(uint32_t) + 1);
-					memcpy(&colmetadata[currentColumn].collation, &message->data[offset], sizeof(uint32_t));
+					memcpy(&collation, &message->data[offset], sizeof(uint32_t));
 					offset += sizeof(uint32_t);
 					colmetadata[currentColumn].sortId = message->data[offset++];
+					colmetadata[currentColumn].encoding = TdsGetEncoding(collation);
 				}
 
 				CheckMessageHasEnoughBytesToRead(&message, sizeof(uint16_t));
