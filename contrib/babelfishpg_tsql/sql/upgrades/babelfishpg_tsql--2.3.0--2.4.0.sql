@@ -9469,6 +9469,9 @@ $BODY$
 $BODY$
 LANGUAGE SQL STABLE;
 
+CREATE OR REPLACE FUNCTION UPDATE (TEXT)
+	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

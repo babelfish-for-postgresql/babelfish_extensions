@@ -38,7 +38,7 @@ CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
 	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION UPDATE (TEXT)
-	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C;
+	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C STABLE;
 
 CREATE OR REPLACE PROCEDURE xp_qv(IN nvarchar(256), IN nvarchar(256))
 	   AS 'babelfishpg_tsql', 'xp_qv_internal' LANGUAGE C;
