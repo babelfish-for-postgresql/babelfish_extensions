@@ -149,7 +149,7 @@ get_servername_helper()
 	initStringInfo(&temp);
 	appendStringInfoString(&temp, bbf_servername);
 	
-	info = tsql_varchar_input(temp.data, temp.len, -1);
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
 	pfree(temp.data);
 	return (VarChar *)info;
 }
