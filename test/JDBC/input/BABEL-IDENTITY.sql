@@ -362,5 +362,6 @@ dbo.test_table3,
 dbo.employees,
 dbo.t_neg_inc_1,
 dbo.t1_identity_1,
-dbo.t1_identity_2
+dbo.t1_identity_2,
+dbo.test_identity_range
 go
