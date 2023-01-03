@@ -2206,3 +2206,151 @@ check_windows_logon_length(char* input)
 	else
 		return false;
 }
+PG_FUNCTION_INFO_V1(babelfish_add_domain_mapping_entry_internal);
+
+/*
+ * babelfish_add_domain_mapping_entry_internal - Procedure to create new
+ * domain mapping entry.
+ */
+Datum
+babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
+{
+	Relation			bbf_domain_mapping_rel;
+	HeapTuple			tuple;
+	Datum				*new_record;
+	bool				*new_record_nulls;
+	CatalogIndexState	indstate;
+	
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Arguments to babelfish_add_domain_mapping_entry should not be NULL")));
+
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Current login %s does not have permission to add new domain mapping entry",
+					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
+
+	/* Write catalog entry */
+	new_record = palloc0(sizeof(Datum) * BBF_DOMAIN_MAPPING_NUM_COLS);
+	new_record_nulls = palloc0(sizeof(bool) * BBF_DOMAIN_MAPPING_NUM_COLS);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	new_record[0] = PG_GETARG_DATUM(0);
+	new_record[1] = PG_GETARG_DATUM(1);
+
+	tuple = heap_form_tuple(RelationGetDescr(bbf_domain_mapping_rel),
+							new_record, new_record_nulls);
+
+	PG_TRY();
+	{
+		indstate = CatalogOpenIndexes(bbf_domain_mapping_rel);
+
+		CatalogTupleInsertWithInfo(bbf_domain_mapping_rel, tuple, indstate);
+
+		CatalogCloseIndexes(indstate);
+		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+		heap_freetuple(tuple);
+	}
+	PG_CATCH();
+	{
+		ErrorData *edata = CopyErrorData();
+
+		CatalogCloseIndexes(indstate);
+		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+		heap_freetuple(tuple);
+
+		ereport(ERROR,
+				(errcode(edata->sqlerrcode),
+				 errmsg("Domain mapping entry could not be added due to following reason: %s",
+						edata->message)));
+	}
+	PG_END_TRY();
+
+	return (Datum) 0;
+}
+
+PG_FUNCTION_INFO_V1(babelfish_remove_domain_mapping_entry_internal);
+
+/*
+ * babelfish_remove_domain_mapping_entry_internal - Procedure to drop existing
+ * domain mapping entry.
+ */
+Datum
+babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
+{
+	Relation	bbf_domain_mapping_rel;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	HeapTuple	tuple;
+	
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Argument to babelfish_remove_domain_mapping_entry should not be NULL")));
+
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Current login %s does not have permission to remove domain mapping entry",
+					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
+
+	ScanKeyInit(&scanKey,
+				Anum_bbf_domain_mapping_netbios_domain_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				PG_GETARG_DATUM(0));
+
+	scan = systable_beginscan(bbf_domain_mapping_rel,
+							  get_bbf_domain_mapping_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		/* Corresponding entry found for supplied netbios dns name, delete it. */
+		CatalogTupleDelete(bbf_domain_mapping_rel, &tuple->t_self);
+	}
+	else
+	{
+		systable_endscan(scan);
+		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Domain mapping entry corresponding to supplied argument: \"%s\" could not be found.",
+				 		TextDatumGetCString(PG_GETARG_DATUM(0)))));
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+	return (Datum) 0;
+}
+
+PG_FUNCTION_INFO_V1(babelfish_reset_domain_mapping_internal);
+/*
+ * babelfish_remove_domain_mapping_entry_internal - Deletes all domain mapping entries
+ */
+Datum
+babelfish_reset_domain_mapping_internal(PG_FUNCTION_ARGS)
+{
+	Relation	bbf_domain_mapping_rel;
+
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Current login %s does not have permission to remove domain mapping entry",
+					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
+
+	/* Truncate the relation */
+	heap_truncate_one_rel(bbf_domain_mapping_rel);
+
+	table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+	return (Datum) 0;
+}
