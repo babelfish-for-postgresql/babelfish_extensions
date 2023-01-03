@@ -43,7 +43,7 @@ isc_check_constraints_db1#!#dbo#!#test_tsql_cast_c_decimal_check#!#(((c_decimal 
 isc_check_constraints_db1#!#dbo#!#test_tsql_cast_c_float_check#!#(((c_float < CAST((133.230182309832423) AS float)) AND (c_float < CAST((133.230182309832423) AS real))))
 isc_check_constraints_db1#!#dbo#!#test_tsql_cast_c_numeric_check#!#(((c_numeric < CAST(133.230182309832423 AS numeric(18,0))) AND (c_numeric < CAST(133.230182309832423 AS numeric(5,3)))))
 isc_check_constraints_db1#!#dbo#!#test_tsql_cast_c_real_check#!#((c_real < CAST((133.230182309832423) AS real)))
-isc_check_constraints_db1#!#dbo#!#test_tsql_collate_c_char_check#!#((c_char <> (CAST('sflkjasdlkfjf' AS char(7)) COLLATE chinese_prc_cs_as)))
+isc_check_constraints_db1#!#dbo#!#test_tsql_collate_c_char_check#!#((c_char <> (CAST('sflkjasdlkfjf' AS char(7)) COLLATE japanese_ci_as)))
 isc_check_constraints_db1#!#dbo#!#test_tsql_collate_c_char_check1#!#((c_char <> (CAST('abcd' AS char(7)) COLLATE "default")))
 isc_check_constraints_db1#!#dbo#!#test_tsql_collate_c_nchar_check#!#((CAST((c_nchar) AS nchar(7)) <> (CAST(('sflkjasdlkfjf' COLLATE "default") AS nchar(7)) COLLATE latin1_general_ci_as)))
 isc_check_constraints_db1#!#dbo#!#test_tsql_collate_c_varchar_check#!#((c_varchar <> (CAST('sflkjasdlkfjf' AS varchar(12)) COLLATE latin1_general_ci_as)))
