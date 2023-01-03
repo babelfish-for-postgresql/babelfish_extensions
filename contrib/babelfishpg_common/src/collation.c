@@ -150,6 +150,7 @@ coll_translate_t reverse_coll_translations[] =
 };
 
 #define TOTAL_COLL_TRANSLATION_COUNT_TSQL (sizeof(reverse_coll_translations)/sizeof(reverse_coll_translations[0]))
+#define DEFAULT_COLLATION_IN_REVERSE_TRANSALTION 16
 
 coll_info coll_infos[] =
 {
@@ -639,7 +640,7 @@ translate_bbf_collation_to_tsql_collation(const char *collname)
 {
 	int first = 0;
 	int last = TOTAL_COLL_TRANSLATION_COUNT_TSQL - 1;
-	int middle = TOTAL_COLL_TRANSLATION_COUNT_TSQL/2;
+	int middle = DEFAULT_COLLATION_IN_REVERSE_TRANSALTION; /* Optimization: Usually the default collation is "bbf_unicode_cp1_ci_as". */
 	int compare;
 
 	while (first <= last)
