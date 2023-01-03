@@ -218,7 +218,6 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
