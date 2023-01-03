@@ -1327,8 +1327,13 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	SimpleEcontextStackEntry *topEntry;
 	PLtsql_row * row = NULL;
 	FmgrInfo		flinfo;
-	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
 	InlineCodeBlock		*codeblock = makeNode(InlineCodeBlock);
+
+	/*
+	 * In case of SP_PREPARE via RPC numargs will be 0 so we only
+	 * need to allocate 2 indexes of memory.
+	 */
+	FunctionCallInfo fcinfo = palloc0(SizeForFunctionCallInfo((args) ? args->numargs + 2 : 2));
 
 	/* 
 	 * 1. Build code block to store SQL query 
@@ -1339,7 +1344,6 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	/*
 	 * 2. Build fcinfo to pack all function info
 	 */
-	MemSet(fcinfo, 0, SizeForFunctionCallInfo(FUNC_MAX_ARGS));
 	MemSet(&flinfo, 0, sizeof(flinfo));
 	fcinfo->flinfo = &flinfo;
 	flinfo.fn_oid = InvalidOid;
@@ -1377,10 +1381,10 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 			 */
 
 			/* Safety check */
-			if (fcinfo->nargs > FUNC_MAX_ARGS)
+			if (fcinfo->nargs > list_length(params) + 2)
 				ereport(ERROR, (errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 						errmsg("cannot pass more than %d arguments to a procedure",
-							   FUNC_MAX_ARGS)));
+							   list_length(params))));
 
 			read_param_val(estate, params, args, fcinfo, row);
 		}
@@ -2245,11 +2249,11 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	params = ((CreateFunctionStmt *) (((RawStmt *) linitial(parsetree))->stmt))->parameters;
 
 	/* Throw error if the provided number of arguments are more than the max allowed limit. */
-	if (list_length(params) > FUNC_MAX_ARGS)
+	if (list_length(params) > PREPARE_STMT_MAX_ARGS)
 			ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						errmsg("Too many arguments were provided: %d. The maximum allowed limit is %d",
-							list_length(params), FUNC_MAX_ARGS)));
+							list_length(params), PREPARE_STMT_MAX_ARGS)));
 
 	args->numargs = list_length(params);
 	args->argtypes = (Oid *) palloc(sizeof(Oid) * args->numargs);
