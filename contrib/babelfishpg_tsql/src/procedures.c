@@ -2167,7 +2167,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	if (data_src || catalog)
 	{
 		appendStringInfoString(&query, "OPTIONS ( ");
-q
+
 		if (data_src)
 			appendStringInfo(&query, "servername '%s' ", data_src);
 
