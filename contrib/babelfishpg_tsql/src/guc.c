@@ -372,8 +372,7 @@ static bool check_tsql_version (char **newval, void **extra, GucSource source)
 	Assert(*newval != NULL);
 	if(pg_strcasecmp(*newval,"default") != 0)
 		ereport(WARNING,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
+			(errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
 
 	return true;
 }
