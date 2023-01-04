@@ -40,6 +40,7 @@
 #include "catalog.h"
 #include "multidb.h"
 #include "session.h"
+#include "pltsql.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
@@ -2070,9 +2071,7 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 {
 	int rc;
 	int i;
-	int count = 0;
 	char nulls = 0;
-	char *token;
 	char *db_name = get_cur_db_name();
 	char *physical_schema_name;
 	char *logical_schema_name;
@@ -2085,6 +2084,7 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 	SPIPlanPtr plan;
 	Portal portal;
 	DestReceiver *receiver;
+	List *splited_object_name;
 
 	FuncCandidateList candidates = NULL;
 
@@ -2119,31 +2119,28 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		function_name = lowerstr(function_name);
 
 		/* get physical schema name */
-		for(i = 0; i < strlen(function_name); i++)
+		splited_object_name = split_object_name(function_name);
+
+		switch(list_length(splited_object_name))
 		{
-			if(function_name[i] == '.')
-				count++;
-		}
-		switch(count)
-		{
-			case 0:
+			case 1:
 				/* find the default schema for current user */
 				user = get_user_for_database(db_name);
 				logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+				function_name = (char *) linitial(splited_object_name);
 				break;
-			case 1:
-				token = strtok(function_name,".");
-				logical_schema_name = token;
-				token = strtok(NULL, ".");
-				function_name = token;
+			case 2:
+				logical_schema_name = (char *) linitial(splited_object_name);
+				function_name = (char *) lsecond(splited_object_name);
 				break;
 			default:
 				ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					errmsg("%s function not found", function_name)));
 		}
-		physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
+		list_free(splited_object_name);
 
+		physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
 
 		/* get function id from function name*/
 		candidates = FuncnameGetCandidates(list_make2(makeString(physical_schema_name),makeString(function_name)), -1, NIL, false, false, false, true);
