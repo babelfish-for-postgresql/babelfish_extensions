@@ -4,13 +4,10 @@ GO
 SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.computed_columns');
 GO
 
-Select definition FROM sys.computed_columns WHERE name='scc_first_number';
-GO
-
-Select definition FROM sys.computed_columns WHERE name='scc_second_number';
-GO
-
-Select definition FROM sys.computed_columns WHERE name='scc_multiplied';
+SELECT name, definition
+FROM sys.computed_columns
+WHERE name in ('scc_first_number', 'scc_second_number', 'scc_multiplied')
+ORDER BY name
 GO
 
 Select sys.tsql_get_expr(adbin, adrelid) FROM pg_attrdef WHERE adrelid = (select oid from pg_class where relname='sys_computed_columns_vu_prepare_t1')

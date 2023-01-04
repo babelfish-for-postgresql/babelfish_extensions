@@ -14,25 +14,14 @@ int
 ~~END~~
 
 
-Select definition FROM sys.computed_columns WHERE name='scc_first_number';
+SELECT name, definition
+FROM sys.computed_columns
+WHERE name in ('scc_first_number', 'scc_second_number', 'scc_multiplied')
+ORDER BY name
 GO
 ~~START~~
-nvarchar
-~~END~~
-
-
-Select definition FROM sys.computed_columns WHERE name='scc_second_number';
-GO
-~~START~~
-nvarchar
-~~END~~
-
-
-Select definition FROM sys.computed_columns WHERE name='scc_multiplied';
-GO
-~~START~~
-nvarchar
-(scc_first_number * scc_second_number)
+varchar#!#nvarchar
+scc_multiplied#!#(scc_first_number * scc_second_number)
 ~~END~~
 
 
