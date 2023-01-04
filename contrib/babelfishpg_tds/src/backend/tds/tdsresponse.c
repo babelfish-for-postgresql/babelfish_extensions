@@ -2640,9 +2640,10 @@ TdsSendDone(int token, int status, int curcmd, uint64_t nprocessed)
 
 	TdsErrorContext->err_text = "Writing Done Token";
 
-	if (GetConfigOption("babelfishpg_tsql.nocount", true, false) &&
-		strcmp(GetConfigOption("babelfishpg_tsql.nocount", true, false), "on") == 0)
-		gucNocount = true;
+	/* should be initialized already */
+	Assert(pltsql_plugin_handler_ptr);
+	if (pltsql_plugin_handler_ptr->pltsql_nocount_addr)
+		gucNocount = *(pltsql_plugin_handler_ptr->pltsql_nocount_addr);
 
 	if (TdsRequestCtrl)
 		TdsRequestCtrl->isEmptyResponse = false;
