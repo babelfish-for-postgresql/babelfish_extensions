@@ -2,8 +2,8 @@ EXEC sys_all_columns_dep_vu_prepare_proc1;
 GO
 ~~START~~
 varchar#!#bit#!#int
-sac_int_col#!#0#!#1
-sac_text_col_not_null#!#0#!#2
+sac_int_col1#!#0#!#1
+sac_text_col_not_null1#!#0#!#2
 ~~END~~
 
 
@@ -19,8 +19,8 @@ SELECT * FROM sys_all_columns_dep_vu_prepare_view1;
 GO
 ~~START~~
 varchar#!#smallint#!#tinyint
-sac_int_col#!#4#!#10
-sac_text_col_not_null#!#50#!#0
+sac_int_col1#!#4#!#10
+sac_text_col_not_null1#!#50#!#0
 ~~END~~
 
 
