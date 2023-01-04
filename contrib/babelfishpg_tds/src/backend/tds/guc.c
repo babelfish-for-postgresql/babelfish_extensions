@@ -144,8 +144,8 @@ check_version_number(char **newval, void **extra, GucSource source)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Please enter a valid major version number between 11 and 15")));
 		}
-
-		/* Minor Version takes 1 byte in PreLogin message when doing handshake, 
+		/*
+		 * Minor Version takes 1 byte in PreLogin message when doing handshake, 
 		 * here to check it is between 0 and 0xFF
 		 */
 		if(part == 1 && atoi(token) > 0xFF)
@@ -154,7 +154,8 @@ check_version_number(char **newval, void **extra, GucSource source)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Please enter a valid minor version number between 0 and 255")));
 		}
-		/* Micro Version takes 2 bytes in PreLogin message when doing handshake,
+		/*
+		 * Micro Version takes 2 bytes in PreLogin message when doing handshake,
 		 * here to check it is between 0 and 0xFFFF
 		 */
 		if(part == 2 && atoi(token) > 0xFFFF)
