@@ -61,20 +61,6 @@ jobs:
           cd ../babelfishpg_tsql
           make && make install
 
-      - name: Build tds_fdw Extension
-        id: build-tds_fdw-extension
-        if: always() && steps.build-extensions-old.outcome == 'success'
-        run: |
-          cd ..
-          export TDS_FDW_VERSION="2.0.3"
-          sudo apt-get install wget
-          wget https://github.com/tds-fdw/tds_fdw/archive/v${TDS_FDW_VERSION}.tar.gz
-          tar -xvzf v${TDS_FDW_VERSION}.tar.gz
-          cd tds_fdw-${TDS_FDW_VERSION}/
-          make USE_PGXS=1 PG_CONFIG=~/${{env.OLD_INSTALL_DIR}}/bin/pg_config
-          sudo make USE_PGXS=1 PG_CONFIG=~/${{env.OLD_INSTALL_DIR}}/bin/pg_config install
-        shell: bash
-      
       - name: Install Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: install-extensions-old
         if: always() && steps.build-tds_fdw-extension.outcome == 'success'
@@ -110,6 +96,13 @@ jobs:
         id: build-extensions-new
         if: always() && steps.build-modified-postgres-new.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
+
+      - name: Build tds_fdw Extension
+        id: build-tds_fdw-extension
+        if: always() && steps.build-extensions-old.outcome == 'success'
+        uses: ./.github/composite-actions/build-tds_fdw-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
