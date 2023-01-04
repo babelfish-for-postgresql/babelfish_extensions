@@ -70,6 +70,7 @@ PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
+PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
@@ -926,6 +927,177 @@ checksum(PG_FUNCTION_ARGS)
 
         PG_RETURN_INT32(result);
 }
+
+Datum
+object_id(PG_FUNCTION_ARGS)
+{	
+	char 			*db_name = "";
+	char 			*schema_name = "";
+	char 			*physical_schema_name;
+	char 			*object_name;
+	bool 			is_temp_object;
+	Oid 			schema_oid;
+	Oid 			result = InvalidOid;
+	int 			i;
+	char 			*input = lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
+	char 			*object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
+	List 			*splited_object_name;
+
+	/* strip trailing whitespace */
+	i = strlen(input);
+	while (i > 0 && isspace((unsigned char) input[i - 1]))
+		input[--i] = '\0';
+	
+	/* resolve the three part name */
+	splited_object_name = split_object_name(input);
+	switch (list_length(splited_object_name))
+	{
+		case 1:
+			object_name = (char *) linitial(splited_object_name);
+			break;
+		case 2:
+			schema_name = (char *) linitial(splited_object_name);
+			object_name = (char *) lsecond(splited_object_name);
+			break;
+		case 3:
+			db_name = (char *) linitial(splited_object_name);
+			schema_name = (char *) lsecond(splited_object_name);
+			object_name = (char *) lthird(splited_object_name);
+			break;
+		default:
+			list_free(splited_object_name);
+			PG_RETURN_NULL();
+	}
+	pfree(input);
+	list_free(splited_object_name);
+
+	/* truncate identifiers if needed */
+	truncate_tsql_identifier(db_name);
+	truncate_tsql_identifier(schema_name);
+	truncate_tsql_identifier(object_name);
+
+	if (!strcmp(db_name, ""))
+		db_name = get_cur_db_name();
+
+	/* check if looking in current database, if not then return null value */
+	if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("Can only do lookup in current database.")));
+
+	if (!strcmp(schema_name, ""))
+	{	
+		/* find the default schema for current user */
+		const char *user = get_user_for_database(db_name);
+		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+	}
+
+	/* get physical schema name from logical schema name */
+	physical_schema_name = get_physical_schema_name(db_name, schema_name);
+
+	/* get schema oid from physical schema name */
+	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
+
+	/* free unnecessary pointers */
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(physical_schema_name);
+
+	if (!OidIsValid(schema_oid))
+	{
+		pfree(object_name);
+		pfree(object_type);
+		PG_RETURN_NULL();
+	}
+	
+	/* check if looking for temp object */
+	is_temp_object = (object_name[0] == '#'? true: false);
+
+	if (strcmp(object_type, "")) /* object_type is not empty */
+	{
+		if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
+			!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
+		{
+			if (is_temp_object)
+			{
+				/* search in list of ENRs registered in the current query environment by name */
+				result = tsql_get_temp_object_oid(object_name);
+			}
+			else
+			{
+				/* search in pg_class by name and schema oid */
+				result = get_relname_relid((const char *) object_name, schema_oid); 
+			}
+		}
+		else if (!strcmp(object_type, "C") || !strcmp(object_type, "D") || !strcmp(object_type, "F") ||
+				!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
+		{
+			/* search in pg_constraint by name and schema oid */
+			result = tsql_get_constraint_oid(object_name, schema_oid);
+		}
+		else if (!strcmp(object_type, "AF") || !strcmp(object_type, "FN") || !strcmp(object_type, "FS") ||
+				!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
+				!strcmp(object_type, "PC") || !strcmp(object_type, "TF") || !strcmp(object_type, "RF") ||
+				!strcmp(object_type, "X"))
+		{
+			/* search in pg_proc by name and schema oid */
+			result = tsql_get_proc_oid(object_name, schema_oid);
+		}
+		else if (!strcmp(object_type, "TR") || !strcmp(object_type, "TA"))
+		{
+			/* search in pg_trigger by name */
+			result = tsql_get_trigger_oid(object_name);
+		}
+		else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
+				!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Object type currently unsupported")));
+		}
+	}
+	else
+	{	
+		if (is_temp_object) /* temp object without "object_type" in-argument */
+		{
+			/* search in list of ENRs registered in the current query environment by name */
+			result = tsql_get_temp_object_oid(object_name);
+		}
+		else
+		{
+			/* search in pg_constraint by name and schema oid */
+			result = tsql_get_constraint_oid(object_name, schema_oid);
+
+			if (!OidIsValid(result)) /* if not found earlier */
+			{
+				/* search in pg_class by name and schema oid */
+				result = get_relname_relid((const char *) object_name, schema_oid);
+			}
+
+			if (!OidIsValid(result))  /* search only if not found earlier */
+			{
+				/* search in pg_trigger by name */
+				result = tsql_get_trigger_oid(object_name);
+			}
+
+			if (!OidIsValid(result))  /* search only if not found earlier */
+			{
+				/* search in pg_proc by name and schema oid */
+				result = tsql_get_proc_oid(object_name, schema_oid);
+			}
+		}
+	}
+	pfree(object_name);
+	pfree(object_type);
+	if (OidIsValid(result))
+	{
+		PG_RETURN_INT32(result);
+	}
+	else
+		PG_RETURN_NULL();
+
+}
+
 
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)

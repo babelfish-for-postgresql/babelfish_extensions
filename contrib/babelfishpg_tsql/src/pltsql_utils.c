@@ -3,6 +3,8 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_trigger.h"
+#include "catalog/pg_constraint.h"
 #include "parser/parser.h"      /* only needed for GUC variables */
 #include "parser/parse_type.h"
 #include "mb/pg_wchar.h"
@@ -14,6 +16,10 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/fmgroids.h"
+#include "utils/catcache.h"
+#include "access/table.h"
+#include "access/genam.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -906,3 +912,232 @@ void init_and_check_common_utility(void)
 				 errmsg("Failed to find common utility plugin.")));
 	}
 }
+
+/*
+ * tsql_get_constraint_oid
+ *		Given name and namespace of a constraint, look up the OID.
+ *
+ * Returns InvalidOid if there is no such constraint.
+ */
+Oid
+tsql_get_constraint_oid(char *conname, Oid connamespace)
+{	
+	Relation		tgrel;
+	ScanKeyData 	skey[2];
+	SysScanDesc 	tgscan;
+	HeapTuple		tuple;
+	Oid				result = InvalidOid;
+
+	/* search in pg_constraint by name and namespace */
+	tgrel = table_open(ConstraintRelationId, AccessShareLock);
+	ScanKeyInit(&skey[0],
+				Anum_pg_constraint_conname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(conname));
+
+	ScanKeyInit(&skey[1],
+				Anum_pg_constraint_connamespace,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(connamespace));
+
+	tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId,
+								true, NULL, 2, skey);
+
+	/* we are interested in the first row only */
+	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+		if (OidIsValid(con->oid))
+		{
+			result = con->oid;
+		}
+	}
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+	return result;
+}
+
+/*
+ * tsql_get_trigger_oid
+ *		Given name of a trigger, look up the OID.
+ *
+ * Returns InvalidOid if there is no such trigger.
+ */
+Oid
+tsql_get_trigger_oid(char *tgname)
+{
+	Relation		tgrel;
+	ScanKeyData 	key;
+	SysScanDesc 	tgscan;
+	HeapTuple		tuple;
+	Oid				result = InvalidOid;
+
+	/* search in pg_trigger by name */
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
+	ScanKeyInit(&key,
+				Anum_pg_trigger_tgname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(tgname));
+
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
+								true, NULL, 1, &key);
+	
+	/* we are interested in the first row only */
+	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		if (OidIsValid(pg_trigger->oid))
+		{
+			result = pg_trigger->oid;
+		}
+	}
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+	return result;
+}
+
+/*
+ * tsql_get_proc_oid
+ *		Given name and namespace of a proc, look up the OID.
+ *
+ * Returns InvalidOid if there is no such proc.
+ */
+Oid
+tsql_get_proc_oid(char *proname, Oid pronamespace)
+{
+	HeapTuple		tuple;
+	CatCList		*catlist;
+	Oid				result = InvalidOid;
+
+	/* first search in pg_proc by name */
+	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
+	for (int i = 0; i < catlist->n_members; i++)
+	{
+		Form_pg_proc procform;
+		tuple = &catlist->members[i]->tuple;
+		procform = (Form_pg_proc) GETSTRUCT(tuple);
+		/* then consider only procs in specified namespace */
+		if (procform->pronamespace == pronamespace)
+		{
+			result = procform->oid;
+			break;
+		}
+	}
+	ReleaseSysCacheList(catlist);
+	return result;
+}
+
+/*
+ * tsql_get_temp_object_oid
+ *		Given relname of a temp object, look up the OID.
+ *		Search in list of ENRs registered in the current query environment by relname.
+ * Returns InvalidOid if there is no such proc.
+ */
+Oid
+tsql_get_temp_object_oid(char *relname)
+{
+	ListCell 		*lc;
+	char			*name;
+	int 			reloid;
+	Oid				result = InvalidOid;
+	List 			*enr_list = get_namedRelList();
+
+	foreach (lc, enr_list)
+	{	
+		reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
+		name = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
+		if (!strcmp(name, relname))
+		{
+			result = reloid;
+			break;
+		}
+	}
+	return result;
+}
+
+static int
+babelfish_get_delimiter_pos(char *str)
+{	
+	char *ptr;
+	if(strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
+		return -1;
+	else if(str[0] == '[')
+	{
+		ptr = strstr(str, "].");
+		if(ptr == NULL)
+			return -1;
+		else
+			return (int)(ptr - str) + 1;
+	}
+	else if(str[0] == '"')
+	{
+		ptr = strstr(&str[1], "\".");
+		if(ptr == NULL)
+			return -1;
+		else
+			return (int)(ptr - str) + 1;
+	}
+	else
+	{	
+		ptr = strstr(str, ".");
+		if(ptr == NULL)
+			return -1;
+		else
+			return (int)(ptr - str);
+	}
+	
+	return -1;
+}
+
+static char*
+extract_and_remove_delimiter_pair(char *str, int len)
+{	
+	/* extract string from str of given length and remove delimiter pair */
+	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
+	{	
+		if(len > 2)
+		{	
+			char *res = (char *) palloc((len - 1) * sizeof(char));
+			strncpy(res, &str[1], len - 2);
+			res[len - 2] = '\0';
+			return res;
+		} 
+		else
+			return "";
+			
+	}
+	else
+	{
+		char *res = (char *) palloc((len + 1) * sizeof(char));
+		strncpy(res, str, len);
+		res[len] =  '\0';
+		return res;
+	}
+}
+
+/*
+ * Split multiple-part object-name into list, it also extract the delimiter pairs. 
+ */
+List*
+split_object_name(char *name)
+{
+	char		*str;
+	int			cur_pos;
+	int			next_pos;
+	List		*res = NIL;
+
+	cur_pos = 0;
+	next_pos = babelfish_get_delimiter_pos(name);
+	while (next_pos != -1)
+	{
+		str = extract_and_remove_delimiter_pair(&name[cur_pos], next_pos);
+		res = lappend(res, str);
+		cur_pos += next_pos + 1;
+		next_pos = babelfish_get_delimiter_pos(&name[cur_pos]);
+	}
+	str = extract_and_remove_delimiter_pair(&name[cur_pos], strlen(&name[cur_pos]));
+	res = lappend(res, str);
+	return res;
+}
+
+

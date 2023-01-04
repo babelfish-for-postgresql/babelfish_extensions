@@ -166,6 +166,11 @@ CREATE OR REPLACE PROCEDURE sys.sp_volatility(IN "@function_name" sys.varchar(12
 AS 'babelfishpg_tsql', 'sp_volatility' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_volatility(IN sys.varchar(128), IN sys.varchar(128)) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'object_id'
+LANGUAGE C STABLE RETURNS NULL ON NULL INPUT;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
