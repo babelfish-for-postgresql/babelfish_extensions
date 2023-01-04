@@ -187,6 +187,22 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 INT)
+RETURNS int AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 SMALLINT)
+RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
+RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
