@@ -61,6 +61,22 @@ and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
+AS
+$$
+DECLARE
+    res SYS.FLOAT;
+BEGIN
+    IF x = 0 AND y = 0 THEN
+        RAISE EXCEPTION 'An invalid floating point operation occurred.';
+    ELSE
+        res = PG_CATALOG.atan2(x, y);
+        RETURN res;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   SELECT 
   CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
