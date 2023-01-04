@@ -25,8 +25,8 @@ GO
 EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
 
--- Create linked server with valid provider
-EXEC sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+-- Create linked server with valid provider. Also call sp_addlinkedserver from master.dbo schema
+EXEC master.dbo.sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
 
 -- Create linked server with server product 'SQL Server'
@@ -45,13 +45,9 @@ GO
 ~~ERROR (Message: server "mssql_server" already exists)~~
 
 
--- Try to create linked server with data source of the form 'servername\\instancename' (Should throw error)
+-- Try to create linked server with data source of the form 'servername\\instancename' (Will throw error when we try to connect to it)
 EXEC sp_addlinkedserver  @server = N'mssql_server3', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'mssql_server2\ABC', @catalog=N'master'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Only fully qualified domain name or IP address are allowed as data source)~~
-
 
 -- Create a linked server login with @useself = TRUE (Should throw error)
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'TRUE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'

@@ -58,11 +58,6 @@ GO
 DROP FUNCTION BABEL_3614_vu_prepare_f4()
 GO
 
-SELECT * FROM BABEL_3614_vu_prepare_v5
-GO
-DROP VIEW BABEL_3614_vu_prepare_v5
-GO
-
 EXEC BABEL_3614_vu_prepare_p5
 GO
 DROP PROCEDURE BABEL_3614_vu_prepare_p5

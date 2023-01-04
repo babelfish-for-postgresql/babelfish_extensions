@@ -50,14 +50,14 @@ jobs:
         id: cleanup
         if: always() && steps.install-extensions.outcome == 'success'
         run: |
-          sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
         if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: postgres-log
-          path: ~/postgres/data/logfile
+          path: ~/psql/data/logfile
       
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files

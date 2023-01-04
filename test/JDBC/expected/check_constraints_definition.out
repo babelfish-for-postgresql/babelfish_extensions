@@ -6,7 +6,7 @@ select length(tsql_get_constraintdef(oid)) from pg_constraint where contype='c' 
 go
 ~~START~~
 int
-4098
+4081
 ~~END~~
 
 
@@ -15,7 +15,7 @@ select "CHECK_CLAUSE", length("CHECK_CLAUSE") from information_schema_tsql.check
 go
 ~~START~~
 nvarchar#!#int
-((a = CAST('provvwstdjtlyzygsxcnqlkyukpjlseachjalbtttvujvdnhooyursfkalzuixjyhogeijfpyidmrjciefitzurwxrazaqbmpljryfhmraftlwmktxqzsrhnbfgftqdxpxsacoeyzmmrfptpuorfbsyaiumgwumeejdpgfkhekumxqqzplnpojlzwpeoznospniqdyfmgyifgrqjpiapjszcykssdgfnzjsgsbzjfcebtlxytwtczrufccrpczitbvpgdhyishwlkatimhxkzvsgqxdrqdiieglnizryhllxlqhfnxeyjofmopglwczssmrocmkqdstpmldifjwvdzwebyruaxlcaxqyiljfmmmohealrzerdjymvoetanchzpfpfxtnkenlsxolaoibfdqkhvwpvcvnovvzmgmjbxowimunqmqqlrvvdhlvdvokuvwbdurvxzonhmdnqxejtwraxtkmtzsvgawpsvtscmcnevslmantvrvbcaeotvhqbfukdadxxiwvumryaasyerhdnexyztbjdlpourvdnfmkxysjysksivurxowjjsizchrkciwhutpnxxqknjgkuvbmxywpbdleydsfyahzhhjzmadkjizjvnqweqdztdepjnaowwhqdixrwhkqnhpeyujpbczsimjfxtdfmtlqvlkxpmhgcpgnvqiwgxigliotyfyfdumuxrrxpyaepflxwvnxrneyladslmmkrvapylaezrczkykiwtgiuxjgbkgpshlptwxzmefdjqpbjaxszrqkcujxhkdksbbskiuazijfoivmskwqtbnglqedoknyofvvjiyowjsunswyukjypmejicaivpxslbrfsmbostwmdoypilvjsqucymywzqbzyicyyjsqslnqfbqegoejxivmrffvpumhjouhgvzfgyajrhjilxcckznwbmpehsmztlwuvthgqtghlghdydgoxxatxmtwrwnelmpolxytoibraaldzbdndccayqsqwqumcifenspaxztpqaxdcotbgsrnlriwkkvzgdextdivauvzpipgaodgsoqnutzklkiebpbmygeguartyqxascsaepwwdrdxdxbfgzjypmwisibntyckagqpseqoqbrzgxtpxbtwsxogyvszsocvurmfyhyvrzwwsoiglyoyuwbimbdfuuxjkhubgvrfodfbmsafvuzbhqavujwifvlpswykpgcjvywpvuwqcqmqtjwsezttpjqcbghrhprxmplsqafbomdipbyhdsendkokartnklgggprtjdoegrjrmvaudgahzfmeljseivxkflgkfatfgogmcnbgsnyhvzstelyxfzcufotrjjodijlkdusbrcnkubbfgjtgbzymwgwbfpaxdhrchgnipfomyyiikhbconzphustwlpbkgvcpctczctgmzohcjfcccbjycehksregjffvfoymcbrsxgjqfjnfjfhvskohydaoxjpiunoflvwwgtjdilntlxruztsfizglsxzihqtvznczxvpbygqpaxxoienkgydytnfzmtzdhtakoikhneaapanhbcshvdxganertfbjtmbaioxiacmfguopzdaswgvzvzwyimbvkjivhddeyaijgjcezpyprnuhzrrefrnxsbcsodhpawjepsngcbyftltqvmdlmoifeffzarkkabglekkxnanpueylybjllbkjwpplxqyympjnsyitqpubftpeiacohxrogjkdcpqepcwebvsqsuenkprjrkvakazbneqwfrkhaiuuekrhdvdmdeftofrnihzrsnbalqjlzzxuhcmluhbqhsnnnrwywyzhyrimnojsynssscxdmmpyqoyqqerfvjwbpzcrvjqksampppyffoktbvnlejekvhivdgrbhnfbxekanpylutuwvvayysnrqajxvcsjaqwgzbnsljgzhapkkorsfwyiftfrhllcjwkzpbphiliiwnpsfiofiwioniousqmyfabldkogeahufsorgcdaulusynkcowzkgzwnclzycxmtxtiqmkxebrwpiwnvvxxmitrclpmfsslwboswpnyjncpyfllllhbzauhrztubiriulxedzqduzvygomolxssbbvyrevgiirzkjchteyimchgqfzdzwbubdcptwamyegsncyhxngqyhlnninraksjbfwthlgsehhukjqfspnttatpqnwryohzhfldfhfxmvgnxbzerwnmmceaokxgongbxlgtwwwlyuwejrhvbnnsqalbsnzmaorwrdrfyjklkcyxxzatfzajwkoryfalpirewqmwvtxttuvsyftuvilnnmjagxhajnspfiywchskgvairrexlrayyrkbwsgxxaoxcjuslgnwrotofwvyqbdrvfgdsjuslsfwrvgsoghflwjyivumqiauuqktdsgeecqktsfqcgpnpqypoevoeuxtliqcvrioednzxsygdklfufcdqkkfiysbiqdbrlsgiznbxdpjbkeqhawyuzwkfxgmykmqrqyuwnzcbmpthnuknmkgrnlzcfutcnvthoejiiinmugidsyogvcsiwfwvdzauwenxonrdudwfsmocsfhqdanzrdyiafnztshpwaivbxnihtaornxujdjgdrirfoghvaniejkboptmxjzsmmbmxzirnsvejpdmjrgknbqhovuioofmyyaylrscvhyilbihpcimebumipsefbcpkbboajblaemlgbdhziuoewdahiyomgdvyijtdqwvgrpmrntyfdsrlyvqxrqlrepyjnswysanekarpzkoeonordbcueojxcsdawbwbpyxhnikfgodsgqnawwbjfynaorgkaltsiciptjeadqijiawcvvcdjxwfmftgsqthdjkwletsknosrflsexbumdhrptkzkckfvlxaooansrylwdgazzoofvwaoifwogthkrthrywfdazakaeqemgtepmpjpimcqrcqwqozgmymbavbziztmdeothaxljdvvjxldjczjwtouedwzewwwnbugjouhtytwbjosbvbhwhgjzmvunvhuftajlzxtedauvudznbdznfdsegoiwaewshchsuprvbgcyxuvvphmyncfucszaioeqbtrdhpatnwinbenkxsfchuagcqpkepkktcujnazepbcujcjoopsyidlggxhyerkgqhxozuxlexrjexjkeocvhbsgefwrxtcvrunsdsqkivgfbveuwbkdpuqykckjjzkyiurviccyhkigqgwauqfudxhfqehcsidgrdeqveqicqnlubecuhihchrgscrmtvromvklfmcgckvdlljqybumgzqdtirizlithvtjghxsvdpwhqhmlntqpugtslhtebznfkbvuihtrgwymxbfamykqqjnaosueenotsnmvwpwzbzjkdspesiboniokannleitpjuvqxteiioozzymvmnohcksmqtigmeamguheqbiesnxuwhfrobdveiwqykxcfxfgiojmdhdoyhwwcdietkrtwclibdwftbafyioskcmzdozabrvzofsoanzpmolpyhsnyquihpzdquksylxbpbyogzdlrfazfvefoyavralxogzicjoxgmsjqcznyiuwaizwpwfxdtlhxiyadgurhwmnjdliymurukkxugdtpzsyqtrxrcmxihounkkrqpnirputcjynozfopvrjymupchfjcbgebiwhbejmsrhlonbjxadmxekwwmbsfcgikmgfvzwyrbunlxcwmihykwywozqdyfdvjjpiammriimvcxemadanokpgmcspgohxonrdaylklymiugkqfabhrgyfcjaylrehyzwwddvhmcfhikodhoifqfffvuaoqfwvrjmdcmxrifwgvuwzyipiraayhxdfbzyefbktrlulbapwfjbhyp#!#4000
+((a = 'provvwstdjtlyzygsxcnqlkyukpjlseachjalbtttvujvdnhooyursfkalzuixjyhogeijfpyidmrjciefitzurwxrazaqbmpljryfhmraftlwmktxqzsrhnbfgftqdxpxsacoeyzmmrfptpuorfbsyaiumgwumeejdpgfkhekumxqqzplnpojlzwpeoznospniqdyfmgyifgrqjpiapjszcykssdgfnzjsgsbzjfcebtlxytwtczrufccrpczitbvpgdhyishwlkatimhxkzvsgqxdrqdiieglnizryhllxlqhfnxeyjofmopglwczssmrocmkqdstpmldifjwvdzwebyruaxlcaxqyiljfmmmohealrzerdjymvoetanchzpfpfxtnkenlsxolaoibfdqkhvwpvcvnovvzmgmjbxowimunqmqqlrvvdhlvdvokuvwbdurvxzonhmdnqxejtwraxtkmtzsvgawpsvtscmcnevslmantvrvbcaeotvhqbfukdadxxiwvumryaasyerhdnexyztbjdlpourvdnfmkxysjysksivurxowjjsizchrkciwhutpnxxqknjgkuvbmxywpbdleydsfyahzhhjzmadkjizjvnqweqdztdepjnaowwhqdixrwhkqnhpeyujpbczsimjfxtdfmtlqvlkxpmhgcpgnvqiwgxigliotyfyfdumuxrrxpyaepflxwvnxrneyladslmmkrvapylaezrczkykiwtgiuxjgbkgpshlptwxzmefdjqpbjaxszrqkcujxhkdksbbskiuazijfoivmskwqtbnglqedoknyofvvjiyowjsunswyukjypmejicaivpxslbrfsmbostwmdoypilvjsqucymywzqbzyicyyjsqslnqfbqegoejxivmrffvpumhjouhgvzfgyajrhjilxcckznwbmpehsmztlwuvthgqtghlghdydgoxxatxmtwrwnelmpolxytoibraaldzbdndccayqsqwqumcifenspaxztpqaxdcotbgsrnlriwkkvzgdextdivauvzpipgaodgsoqnutzklkiebpbmygeguartyqxascsaepwwdrdxdxbfgzjypmwisibntyckagqpseqoqbrzgxtpxbtwsxogyvszsocvurmfyhyvrzwwsoiglyoyuwbimbdfuuxjkhubgvrfodfbmsafvuzbhqavujwifvlpswykpgcjvywpvuwqcqmqtjwsezttpjqcbghrhprxmplsqafbomdipbyhdsendkokartnklgggprtjdoegrjrmvaudgahzfmeljseivxkflgkfatfgogmcnbgsnyhvzstelyxfzcufotrjjodijlkdusbrcnkubbfgjtgbzymwgwbfpaxdhrchgnipfomyyiikhbconzphustwlpbkgvcpctczctgmzohcjfcccbjycehksregjffvfoymcbrsxgjqfjnfjfhvskohydaoxjpiunoflvwwgtjdilntlxruztsfizglsxzihqtvznczxvpbygqpaxxoienkgydytnfzmtzdhtakoikhneaapanhbcshvdxganertfbjtmbaioxiacmfguopzdaswgvzvzwyimbvkjivhddeyaijgjcezpyprnuhzrrefrnxsbcsodhpawjepsngcbyftltqvmdlmoifeffzarkkabglekkxnanpueylybjllbkjwpplxqyympjnsyitqpubftpeiacohxrogjkdcpqepcwebvsqsuenkprjrkvakazbneqwfrkhaiuuekrhdvdmdeftofrnihzrsnbalqjlzzxuhcmluhbqhsnnnrwywyzhyrimnojsynssscxdmmpyqoyqqerfvjwbpzcrvjqksampppyffoktbvnlejekvhivdgrbhnfbxekanpylutuwvvayysnrqajxvcsjaqwgzbnsljgzhapkkorsfwyiftfrhllcjwkzpbphiliiwnpsfiofiwioniousqmyfabldkogeahufsorgcdaulusynkcowzkgzwnclzycxmtxtiqmkxebrwpiwnvvxxmitrclpmfsslwboswpnyjncpyfllllhbzauhrztubiriulxedzqduzvygomolxssbbvyrevgiirzkjchteyimchgqfzdzwbubdcptwamyegsncyhxngqyhlnninraksjbfwthlgsehhukjqfspnttatpqnwryohzhfldfhfxmvgnxbzerwnmmceaokxgongbxlgtwwwlyuwejrhvbnnsqalbsnzmaorwrdrfyjklkcyxxzatfzajwkoryfalpirewqmwvtxttuvsyftuvilnnmjagxhajnspfiywchskgvairrexlrayyrkbwsgxxaoxcjuslgnwrotofwvyqbdrvfgdsjuslsfwrvgsoghflwjyivumqiauuqktdsgeecqktsfqcgpnpqypoevoeuxtliqcvrioednzxsygdklfufcdqkkfiysbiqdbrlsgiznbxdpjbkeqhawyuzwkfxgmykmqrqyuwnzcbmpthnuknmkgrnlzcfutcnvthoejiiinmugidsyogvcsiwfwvdzauwenxonrdudwfsmocsfhqdanzrdyiafnztshpwaivbxnihtaornxujdjgdrirfoghvaniejkboptmxjzsmmbmxzirnsvejpdmjrgknbqhovuioofmyyaylrscvhyilbihpcimebumipsefbcpkbboajblaemlgbdhziuoewdahiyomgdvyijtdqwvgrpmrntyfdsrlyvqxrqlrepyjnswysanekarpzkoeonordbcueojxcsdawbwbpyxhnikfgodsgqnawwbjfynaorgkaltsiciptjeadqijiawcvvcdjxwfmftgsqthdjkwletsknosrflsexbumdhrptkzkckfvlxaooansrylwdgazzoofvwaoifwogthkrthrywfdazakaeqemgtepmpjpimcqrcqwqozgmymbavbziztmdeothaxljdvvjxldjczjwtouedwzewwwnbugjouhtytwbjosbvbhwhgjzmvunvhuftajlzxtedauvudznbdznfdsegoiwaewshchsuprvbgcyxuvvphmyncfucszaioeqbtrdhpatnwinbenkxsfchuagcqpkepkktcujnazepbcujcjoopsyidlggxhyerkgqhxozuxlexrjexjkeocvhbsgefwrxtcvrunsdsqkivgfbveuwbkdpuqykckjjzkyiurviccyhkigqgwauqfudxhfqehcsidgrdeqveqicqnlubecuhihchrgscrmtvromvklfmcgckvdlljqybumgzqdtirizlithvtjghxsvdpwhqhmlntqpugtslhtebznfkbvuihtrgwymxbfamykqqjnaosueenotsnmvwpwzbzjkdspesiboniokannleitpjuvqxteiioozzymvmnohcksmqtigmeamguheqbiesnxuwhfrobdveiwqykxcfxfgiojmdhdoyhwwcdietkrtwclibdwftbafyioskcmzdozabrvzofsoanzpmolpyhsnyquihpzdquksylxbpbyogzdlrfazfvefoyavralxogzicjoxgmsjqcznyiuwaizwpwfxdtlhxiyadgurhwmnjdliymurukkxugdtpzsyqtrxrcmxihounkkrqpnirputcjynozfopvrjymupchfjcbgebiwhbejmsrhlonbjxadmxekwwmbsfcgikmgfvzwyrbunlxcwmihykwywozqdyfdvjjpiammriimvcxemadanokpgmcspgohxonrdaylklymiugkqfabhrgyfcjaylrehyzwwddvhmcfhikodhoifqfffvuaoqfwvrjmdcmxrifwgvuwzyipiraayhxdfbzyefbktrlulbapwfjbhypdvumd#!#4000
 ~~END~~
 
 
@@ -115,37 +115,37 @@ go
 nvarchar#!#nvarchar#!#varchar#!#nvarchar
 db1#!#dbo#!#constraint1test_null987b8e55c77de33d095778885ecd84f4#!#((a > 10))
 db1#!#dbo#!#constraint2test_nullba039d416ebe51c75b9d6d571d9a6f74#!#(((a <= 20) AND (b > a) AND ((a >= 40) AND (a <= 50))))
-db1#!#dbo#!#test_datetime_c_date_check#!#((c_date < CAST('2001-01-01' AS date)))
-db1#!#dbo#!#test_datetime_c_datetime2_check#!#(((c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2)) AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6)))))
-db1#!#dbo#!#test_datetime_c_datetime_check#!#((c_datetime < CAST('2020-10-20 09:00:00' AS datetime)))
-db1#!#dbo#!#test_datetime_c_datetimeoffset_check#!#(((c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset)) AND (c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset(4)))))
-db1#!#dbo#!#test_datetime_c_smalldatetime_check#!#((c_smalldatetime < CAST('2007-05-08 12:35:00' AS smalldatetime)))
-db1#!#dbo#!#test_datetime_c_time_check#!#(((c_time < CAST('09:00:00' AS time)) AND (c_time < CAST('09:00:00' AS time(6)))))
+db1#!#dbo#!#test_datetime_c_date_check#!#((c_date < '2001-01-01'))
+db1#!#dbo#!#test_datetime_c_datetime_check#!#((c_datetime < '2020-10-20 09:00:00'))
+db1#!#dbo#!#test_datetime_c_datetime2_check#!#(((c_datetime2 < '2020-10-20 09:00:00') AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6)))))
+db1#!#dbo#!#test_datetime_c_datetimeoffset_check#!#(((c_datetimeoffset < '2025-12-10 12:32:10 +01:00') AND (c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset(4)))))
+db1#!#dbo#!#test_datetime_c_smalldatetime_check#!#((c_smalldatetime < '2007-05-08 12:35:00'))
+db1#!#dbo#!#test_datetime_c_time_check#!#(((c_time < '09:00:00') AND (c_time < CAST('09:00:00' AS time(6)))))
 db1#!#dbo#!#test_functioncall_col1_check#!#((isjson(col1) > 0))
 db1#!#dbo#!#test_functioncall_col1_check1#!#(("right"(col1, 1) <> ','))
 db1#!#dbo#!#test_functioncall_col1_check2#!#((ltrim(col1) <> ''))
-db1#!#dbo#!#test_functioncall_col1_check3#!#((CAST((getutcdate() AT TIME ZONE col1) AS nvarchar(128)) <> CAST('' AS varchar)))
+db1#!#dbo#!#test_functioncall_col1_check3#!#((CAST((getutcdate() AT TIME ZONE col1) AS nvarchar(128)) <> ''))
+db1#!#dbo#!#test_null_a_check#!#((a IS NOT NULL))
 db1#!#dbo#!#test_null1_a_check#!#((a <> CAST(NULL AS int)))
 db1#!#dbo#!#test_null1_b_check#!#((b = CAST(NULL AS int)))
 db1#!#dbo#!#test_null2_a_check#!#((a IS NOT NULL))
 db1#!#dbo#!#test_null2_b_check#!#((b IS NULL))
-db1#!#dbo#!#test_null_a_check#!#((a IS NOT NULL))
 db1#!#dbo#!#test_tsql_cast_c_decimal_check#!#(((c_decimal < CAST((CAST((133.23) AS money)) AS decimal(18,0))) AND (c_decimal < CAST((133.230182309832423) AS decimal(5,3)))))
 db1#!#dbo#!#test_tsql_cast_c_float_check#!#(((c_float < CAST((133.230182309832423) AS float)) AND (c_float < CAST((133.230182309832423) AS real))))
 db1#!#dbo#!#test_tsql_cast_c_numeric_check#!#(((c_numeric < CAST(133.230182309832423 AS numeric(18,0))) AND (c_numeric < CAST(133.230182309832423 AS numeric(5,3)))))
 db1#!#dbo#!#test_tsql_cast_c_real_check#!#((c_real < CAST((133.230182309832423) AS real)))
 db1#!#dbo#!#test_tsql_collate_c_char_check#!#((c_char <> (CAST('sflkjasdlkfjf' AS char(7)) COLLATE bbf_unicode_cp1_ci_as)))
 db1#!#dbo#!#test_tsql_collate_c_char_check1#!#((c_char <> (CAST('abcd' AS char(7)) COLLATE "default")))
-db1#!#dbo#!#test_tsql_collate_c_nchar_check#!#((CAST((c_nchar) AS nchar(7)) <> (CAST((CAST('sflkjasdlkfjf' AS char)) AS nchar(7)) COLLATE bbf_unicode_cp1_ci_as)))
+db1#!#dbo#!#test_tsql_collate_c_nchar_check#!#((CAST((c_nchar) AS nchar(7)) <> (CAST(('sflkjasdlkfjf') AS nchar(7)) COLLATE bbf_unicode_cp1_ci_as)))
 db1#!#dbo#!#test_tsql_collate_c_varchar_check#!#((c_varchar <> (CAST('sflkjasdlkfjf' AS varchar(12)) COLLATE bbf_unicode_cp1_ci_as)))
-db1#!#dbo#!#test_tsql_const_c_binary_check#!#((c_binary > CAST((CAST('0xfe' AS binary(8))) AS binary(8))))
+db1#!#dbo#!#test_tsql_const_c_binary_check#!#((c_binary > CAST(('0xfe') AS binary(8))))
 db1#!#dbo#!#test_tsql_const_c_bit_check#!#((c_bit <> CAST((1) AS bit)))
 db1#!#dbo#!#test_tsql_const_c_int_check#!#((c_int < 10))
-db1#!#dbo#!#test_tsql_const_c_smallint_check#!#((c_smallint < CAST((CAST((CAST('20' AS smallint)) AS sql_variant)) AS smallint)))
+db1#!#dbo#!#test_tsql_const_c_smallint_check#!#((c_smallint < CAST((CAST(('20') AS sql_variant)) AS smallint)))
 db1#!#dbo#!#test_tsql_const_c_varbinary_check#!#((c_varbinary > CAST('0xfe' AS varbinary(8))))
-db1#!#dbo#!#test_udd_c_udd1_check#!#((c_udd1 < CAST('2020-10-20 09:00:00' AS datetime)))
-db1#!#dbo#!#test_udd_c_udd2_check#!#((c_udd2 < CAST('09:00:00' AS time)))
 db1#!#dbo#!#test_udd_c_udd_check#!#((c_udd < 133.230182309832423))
+db1#!#dbo#!#test_udd_c_udd1_check#!#((c_udd1 < '2020-10-20 09:00:00'))
+db1#!#dbo#!#test_udd_c_udd2_check#!#((c_udd2 < '09:00:00'))
 db1#!#dbo#!#test_upper_a_check#!#((upper(a) IN ('A', 'B')))
 ~~END~~
 

@@ -32,7 +32,11 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_relation.h"
+<<<<<<< HEAD
 #include "parser/scansup.h"  /* downcase_identifier */
+=======
+#include "parser/scansup.h" /* downcase_truncate_identifier */
+>>>>>>> linked-servers-pg15
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
@@ -58,7 +62,6 @@ PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
-PG_FUNCTION_INFO_V1(create_linked_server_procs_in_master_dbo_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -69,7 +72,7 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
-static void ValidateLinkedServerDataSource(char *data_src);
+static void exec_utility_cmd_helper(char *query_str);
 
 List *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -290,12 +293,12 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"CAST(t3.\"ORDINAL_POSITION\" AS int) AS column_ordinal, "
 		"CAST(t3.\"COLUMN_NAME\" AS sys.sysname) AS name, "
 		"case "
-			"when t1.is_nullable = \'YES\' AND t3.\"DATA_TYPE\" <> \'timestamp\' then CAST(1 AS sys.bit) "
+			"when t1.is_nullable collate sys.database_default = \'YES\' AND t3.\"DATA_TYPE\" collate sys.database_default <> \'timestamp\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_nullable, "
 		"t4.system_type_id::int as system_type_id, "
 		"CAST(t3.\"DATA_TYPE\" as sys.nvarchar(256)) as system_type_name, "
-		"CAST(CASE WHEN t3.\"DATA_TYPE\" IN (\'text\', \'ntext\', \'image\') THEN -1 ELSE t4.max_length END AS smallint) AS max_length, "
+		"CAST(CASE WHEN t3.\"DATA_TYPE\" collate sys.database_default IN (\'text\', \'ntext\', \'image\') THEN -1 ELSE t4.max_length END AS smallint) AS max_length, "
 		"CAST(t4.precision AS sys.tinyint) AS precision, "
 		"CAST(t4.scale AS sys.tinyint) AS scale, "
 		"CAST(t4.collation_name AS sys.sysname) as collation_name, "
@@ -311,7 +314,7 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"CAST(NULL as sys.sysname) as xml_collection_schema, "
 		"CAST(NULL as sys.sysname) as xml_collection_name, "
 		"case "
-			"when t3.\"DATA_TYPE\" = \'xml\' then CAST(1 AS sys.bit) "
+			"when t3.\"DATA_TYPE\" collate sys.database_default = \'xml\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_xml_document, "
 		"0::sys.bit as is_case_sensitive, "
@@ -322,16 +325,16 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"CAST(NULL as sys.sysname) as source_table, "
 		"CAST(NULL as sys.sysname) as source_column, "
 		"case "
-			"when t1.is_identity = \'YES\' then CAST(1 AS sys.bit) "
+			"when t1.is_identity collate sys.database_default = \'YES\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_identity_column, "
 		"CAST(NULL as sys.bit) as is_part_of_unique_key, " /* pg_constraint */
 		"case  "
-			"when t1.is_updatable = \'YES\' AND t1.is_generated = \'NEVER\' AND t1.is_identity = \'NO\' AND t3.\"DATA_TYPE\" <> \'timestamp\' then CAST(1 AS sys.bit) "
+			"when t1.is_updatable collate sys.database_default = \'YES\' AND t1.is_generated collate sys.database_default = \'NEVER\' AND t1.is_identity collate sys.database_default = \'NO\' AND t3.\"DATA_TYPE\" collate sys.database_default <> \'timestamp\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_updateable, "
 		"case "
-			"when t1.is_generated = \'NEVER\' then CAST(0 AS sys.bit) "
+			"when t1.is_generated collate sys.database_default = \'NEVER\' then CAST(0 AS sys.bit) "
 			"else CAST(1 AS sys.bit) "
 		"end as is_computed_column, "
 		"CAST(0 as sys.bit) as is_sparse_column_set, "
@@ -342,21 +345,21 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"CAST(sys.get_tds_id(t3.\"DATA_TYPE\") as int) as tds_type_id, "
 		"CAST( "
 		"CASE "
-			"WHEN t3.\"DATA_TYPE\" = \'xml\' THEN 8100 "
-			"WHEN t3.\"DATA_TYPE\" = \'sql_variant\' THEN 8009 "
-			"WHEN t3.\"DATA_TYPE\" = \'numeric\' THEN 17 "
-			"WHEN t3.\"DATA_TYPE\" = \'decimal\' THEN 17 "
+			"WHEN t3.\"DATA_TYPE\" collate sys.database_default = \'xml\' THEN 8100 "
+			"WHEN t3.\"DATA_TYPE\" collate sys.database_default = \'sql_variant\' THEN 8009 "
+			"WHEN t3.\"DATA_TYPE\" collate sys.database_default = \'numeric\' THEN 17 "
+			"WHEN t3.\"DATA_TYPE\" collate sys.database_default = \'decimal\' THEN 17 "
 			"ELSE t4.max_length END as int) "
 		"as tds_length, "
 		"CAST(COLLATIONPROPERTY(t4.collation_name, 'CollationId') as int) as tds_collation_id, "
 		"CAST(COLLATIONPROPERTY(t4.collation_name, 'SortId') as int) AS tds_collation_sort_id "
 	"FROM information_schema.columns t1, information_schema_tsql.columns t3, "
 	"sys.columns t4, pg_class t5 "
-	"LEFT OUTER JOIN (sys.babelfish_namespace_ext ext JOIN sys.pg_namespace_ext t6 ON t6.nspname = ext.nspname) "
+	"LEFT OUTER JOIN (sys.babelfish_namespace_ext ext JOIN sys.pg_namespace_ext t6 ON t6.nspname = ext.nspname collate sys.database_default) "
 		"on t5.relnamespace = t6.oid "
-	"WHERE (t1.table_name = \'%s\' AND t1.table_schema = ext.nspname) "
-	"AND (t3.\"TABLE_NAME\" = t1.table_name AND t3.\"TABLE_SCHEMA\" = ext.orig_name) "
-	"AND t5.relname = t1.table_name "
+	"WHERE (t1.table_name = \'%s\' collate sys.database_default AND t1.table_schema = ext.nspname collate sys.database_default) "
+	"AND (t3.\"TABLE_NAME\" = t1.table_name collate sys.database_default AND t3.\"TABLE_SCHEMA\" = ext.orig_name collate sys.database_default) "
+	"AND t5.relname = t1.table_name collate sys.database_default "
 	"AND (t5.oid = t4.object_id AND t3.\"ORDINAL_POSITION\" = t4.column_id) "
 	"AND ext.dbid = cast(sys.db_id() as oid) "
 	"AND t1.dtd_identifier::int = t3.\"ORDINAL_POSITION\";", viewName);
@@ -1194,61 +1197,61 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 	"CAST( 0 AS INT ) " /* AS "parameter_ordinal"  -- Need to get correct ordinal number in code. */
 	", CAST( NULL AS sysname ) " /* AS "name"  -- Need to get correct parameter name in code. */
 	", CASE "
-		"WHEN T2.name = \'bigint\' THEN 127 "
-		"WHEN T2.name = \'binary\' THEN 173 "
-		"WHEN T2.name = \'bit\' THEN 104 "
-		"WHEN T2.name = \'char\' THEN 175 "
-		"WHEN T2.name = \'date\' THEN 40 "
-		"WHEN T2.name = \'datetime\' THEN 61 "
-		"WHEN T2.name = \'datetime2\' THEN 42 "
-		"WHEN T2.name = \'datetimeoffset\' THEN 43 "
-		"WHEN T2.name = \'decimal\' THEN 106 "
-		"WHEN T2.name = \'float\' THEN 62 "
-		"WHEN T2.name = \'image\' THEN 34 "
-		"WHEN T2.name = \'int\' THEN 56 "
-		"WHEN T2.name = \'money\' THEN 60 "
-		"WHEN T2.name = \'nchar\' THEN 239 "
-		"WHEN T2.name = \'ntext\' THEN 99 "
-		"WHEN T2.name = \'numeric\' THEN 108 "
-		"WHEN T2.name = \'nvarchar\' THEN 231 "
-		"WHEN T2.name = \'real\' THEN 59 "
-		"WHEN T2.name = \'smalldatetime\' THEN 58 "
-		"WHEN T2.name = \'smallint\' THEN 52 "
-		"WHEN T2.name = \'smallmoney\' THEN 122 "
-		"WHEN T2.name = \'text\' THEN 35 "
-		"WHEN T2.name = \'time\' THEN 41 "
-		"WHEN T2.name = \'tinyint\' THEN 48 "
-		"WHEN T2.name = \'uniqueidentifier\' THEN 36 "
-		"WHEN T2.name = \'varbinary\' THEN 165 "
-		"WHEN T2.name = \'varchar\' THEN 167 "
-		"WHEN T2.name =  \'xml\' THEN 241 "
+		"WHEN T2.name COLLATE sys.database_default = \'bigint\' THEN 127 "
+		"WHEN T2.name COLLATE sys.database_default = \'binary\' THEN 173 "
+		"WHEN T2.name COLLATE sys.database_default = \'bit\' THEN 104 "
+		"WHEN T2.name COLLATE sys.database_default = \'char\' THEN 175 "
+		"WHEN T2.name COLLATE sys.database_default = \'date\' THEN 40 "
+		"WHEN T2.name COLLATE sys.database_default = \'datetime\' THEN 61 "
+		"WHEN T2.name COLLATE sys.database_default = \'datetime2\' THEN 42 "
+		"WHEN T2.name COLLATE sys.database_default = \'datetimeoffset\' THEN 43 "
+		"WHEN T2.name COLLATE sys.database_default = \'decimal\' THEN 106 "
+		"WHEN T2.name COLLATE sys.database_default = \'float\' THEN 62 "
+		"WHEN T2.name COLLATE sys.database_default = \'image\' THEN 34 "
+		"WHEN T2.name COLLATE sys.database_default = \'int\' THEN 56 "
+		"WHEN T2.name COLLATE sys.database_default = \'money\' THEN 60 "
+		"WHEN T2.name COLLATE sys.database_default = \'nchar\' THEN 239 "
+		"WHEN T2.name COLLATE sys.database_default = \'ntext\' THEN 99 "
+		"WHEN T2.name COLLATE sys.database_default = \'numeric\' THEN 108 "
+		"WHEN T2.name COLLATE sys.database_default = \'nvarchar\' THEN 231 "
+		"WHEN T2.name COLLATE sys.database_default = \'real\' THEN 59 "
+		"WHEN T2.name COLLATE sys.database_default = \'smalldatetime\' THEN 58 "
+		"WHEN T2.name COLLATE sys.database_default = \'smallint\' THEN 52 "
+		"WHEN T2.name COLLATE sys.database_default = \'smallmoney\' THEN 122 "
+		"WHEN T2.name COLLATE sys.database_default = \'text\' THEN 35 "
+		"WHEN T2.name COLLATE sys.database_default = \'time\' THEN 41 "
+		"WHEN T2.name COLLATE sys.database_default = \'tinyint\' THEN 48 "
+		"WHEN T2.name COLLATE sys.database_default = \'uniqueidentifier\' THEN 36 "
+		"WHEN T2.name COLLATE sys.database_default = \'varbinary\' THEN 165 "
+		"WHEN T2.name COLLATE sys.database_default = \'varchar\' THEN 167 "
+		"WHEN T2.name COLLATE sys.database_default =  \'xml\' THEN 241 "
 		"ELSE C.system_type_id "
 	"END " /* AS "suggested_system_type_id" */
 	", CASE "
-		"WHEN T2.name = \'decimal\' THEN \'decimal(\' + CAST( C.precision AS sys.VARCHAR(10) ) + \',\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN T2.name = \'numeric\' THEN \'numeric(\' + CAST( C.precision AS sys.VARCHAR(10) ) + \',\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN T2.name = \'char\' THEN \'char(\' + CAST( C.max_length AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN T2.name = \'nchar\' THEN \'nchar(\' + CAST( C.max_length/2 AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN T2.name = \'binary\' THEN \'binary(\' + CAST( C.max_length AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN T2.name = \'datetime2\' THEN \'datetime2(\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN T2.name = \'datetimeoffset\' THEN \'datetimeoffset(\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN T2.name = \'time\' THEN \'time(\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
-		"WHEN T2.name = \'varchar\' THEN "
+		"WHEN T2.name COLLATE sys.database_default = \'decimal\' THEN \'decimal(\' + CAST( C.precision AS sys.VARCHAR(10) ) + \',\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
+		"WHEN T2.name COLLATE sys.database_default = \'numeric\' THEN \'numeric(\' + CAST( C.precision AS sys.VARCHAR(10) ) + \',\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
+		"WHEN T2.name COLLATE sys.database_default = \'char\' THEN \'char(\' + CAST( C.max_length AS sys.VARCHAR(10) ) + \')\' "
+		"WHEN T2.name COLLATE sys.database_default = \'nchar\' THEN \'nchar(\' + CAST( C.max_length/2 AS sys.VARCHAR(10) ) + \')\' "
+		"WHEN T2.name COLLATE sys.database_default = \'binary\' THEN \'binary(\' + CAST( C.max_length AS sys.VARCHAR(10) ) + \')\' "
+		"WHEN T2.name COLLATE sys.database_default = \'datetime2\' THEN \'datetime2(\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
+		"WHEN T2.name COLLATE sys.database_default = \'datetimeoffset\' THEN \'datetimeoffset(\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
+		"WHEN T2.name COLLATE sys.database_default = \'time\' THEN \'time(\' + CAST( C.scale AS sys.VARCHAR(10) ) + \')\' "
+		"WHEN T2.name COLLATE sys.database_default = \'varchar\' THEN "
 			"CASE WHEN C.max_length = -1 THEN \'varchar(max)\' "
 				"ELSE \'varchar(\' + CAST( C.max_length AS sys.VARCHAR(10) ) + \')\' "
 			"END "
-		"WHEN T2.name = \'nvarchar\' THEN "
+		"WHEN T2.name COLLATE sys.database_default = \'nvarchar\' THEN "
 			"CASE WHEN C.max_length = -1 THEN \'nvarchar(max)\' "
 			"ELSE \'nvarchar(\' + CAST( C.max_length/2 AS sys.VARCHAR(10) ) + \')\' "
 			"END "
-		"WHEN T2.name = \'varbinary\' THEN "
+		"WHEN T2.name COLLATE sys.database_default = \'varbinary\' THEN "
 		"CASE WHEN C.max_length = -1 THEN \'varbinary(max)\' "
 			"ELSE \'varbinary(\' + CAST( C.max_length AS sys.VARCHAR(10) ) + \')\' "
 			"END "
 		"ELSE T2.name "
 	"END " /* AS "suggested_system_type_name" */
 	", CASE "
-		"WHEN T2.name IN (\'image\', \'ntext\',\'text\') THEN -1 "
+		"WHEN T2.name COLLATE sys.database_default IN (\'image\', \'ntext\',\'text\') THEN -1 "
 		"ELSE C.max_length "
 	"END  " /* AS "suggested_max_length" */
 	", C.precision " /* AS "suggested_precision" */
@@ -1272,46 +1275,46 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 	", CAST( 0 AS BIT ) " /* AS "suggested_is_output" */
 	", CAST( NULL AS sysname ) " /* AS "formal_parameter_name" */
 	", CASE "
-		"WHEN T2.name IN (\'tinyint\', \'smallint\', \'int\', \'bigint\') THEN 38 "
-		"WHEN T2.name IN (\'float\', \'real\') THEN 109 "
-		"WHEN T2.name IN (\'smallmoney\', \'money\') THEN 110 "
-		"WHEN T2.name IN (\'smalldatetime\', \'datetime\') THEN 111 "
-		"WHEN T2.name = \'binary\' THEN 173 "
-		"WHEN T2.name = \'bit\' THEN 104 "
-		"WHEN T2.name = \'char\' THEN 175 "
-		"WHEN T2.name = \'date\' THEN 40 "
-		"WHEN T2.name = \'datetime2\' THEN 42 "
-		"WHEN T2.name = \'datetimeoffset\' THEN 43 "
-		"WHEN T2.name = \'decimal\' THEN 106 "
-		"WHEN T2.name = \'image\' THEN 34 "
-		"WHEN T2.name = \'nchar\' THEN 239 "
-		"WHEN T2.name = \'ntext\' THEN 99 "
-		"WHEN T2.name = \'numeric\' THEN 108 "
-		"WHEN T2.name = \'nvarchar\' THEN 231 "
-		"WHEN T2.name = \'text\' THEN 35 "
-		"WHEN T2.name = \'time\' THEN 41 "
-		"WHEN T2.name = \'uniqueidentifier\' THEN 36 "
-		"WHEN T2.name = \'varbinary\' THEN 165 "
-		"WHEN T2.name = \'varchar\' THEN 167 "
-		"WHEN T2.name =  \'xml\' THEN 241 "
+		"WHEN T2.name COLLATE sys.database_default IN (\'tinyint\', \'smallint\', \'int\', \'bigint\') THEN 38 "
+		"WHEN T2.name COLLATE sys.database_default IN (\'float\', \'real\') THEN 109 "
+		"WHEN T2.name COLLATE sys.database_default IN (\'smallmoney\', \'money\') THEN 110 "
+		"WHEN T2.name COLLATE sys.database_default IN (\'smalldatetime\', \'datetime\') THEN 111 "
+		"WHEN T2.name COLLATE sys.database_default = \'binary\' THEN 173 "
+		"WHEN T2.name COLLATE sys.database_default = \'bit\' THEN 104 "
+		"WHEN T2.name COLLATE sys.database_default = \'char\' THEN 175 "
+		"WHEN T2.name COLLATE sys.database_default = \'date\' THEN 40 "
+		"WHEN T2.name COLLATE sys.database_default = \'datetime2\' THEN 42 "
+		"WHEN T2.name COLLATE sys.database_default = \'datetimeoffset\' THEN 43 "
+		"WHEN T2.name COLLATE sys.database_default = \'decimal\' THEN 106 "
+		"WHEN T2.name COLLATE sys.database_default = \'image\' THEN 34 "
+		"WHEN T2.name COLLATE sys.database_default = \'nchar\' THEN 239 "
+		"WHEN T2.name COLLATE sys.database_default = \'ntext\' THEN 99 "
+		"WHEN T2.name COLLATE sys.database_default = \'numeric\' THEN 108 "
+		"WHEN T2.name COLLATE sys.database_default = \'nvarchar\' THEN 231 "
+		"WHEN T2.name COLLATE sys.database_default = \'text\' THEN 35 "
+		"WHEN T2.name COLLATE sys.database_default = \'time\' THEN 41 "
+		"WHEN T2.name COLLATE sys.database_default = \'uniqueidentifier\' THEN 36 "
+		"WHEN T2.name COLLATE sys.database_default= \'varbinary\' THEN 165 "
+		"WHEN T2.name COLLATE sys.database_default = \'varchar\' THEN 167 "
+		"WHEN T2.name COLLATE sys.database_default =  \'xml\' THEN 241 "
 		"ELSE C.system_type_id "
 	"END " /* AS "suggested_tds_type_id" */
 	", CASE "
-		"WHEN T2.name = \'nvarchar\' AND C.max_length = -1 THEN 65535 "
-		"WHEN T2.name = \'varbinary\' AND C.max_length = -1 THEN 65535 "
-		"WHEN T2.name = \'varchar\' AND C.max_length = -1 THEN 65535 "
-		"WHEN T2.name IN (\'decimal\', \'numeric\') THEN 17 "
-		"WHEN T2.name = \'xml\' THEN 8100 "
-		"WHEN T2.name in (\'image\', \'text\') THEN 2147483647 "
-		"WHEN T2.name = \'ntext\' THEN 2147483646 "
+		"WHEN T2.name COLLATE sys.database_default = \'nvarchar\' AND C.max_length = -1 THEN 65535 "
+		"WHEN T2.name COLLATE sys.database_default = \'varbinary\' AND C.max_length = -1 THEN 65535 "
+		"WHEN T2.name COLLATE sys.database_default = \'varchar\' AND C.max_length = -1 THEN 65535 "
+		"WHEN T2.name COLLATE sys.database_default IN (\'decimal\', \'numeric\') THEN 17 "
+		"WHEN T2.name COLLATE sys.database_default = \'xml\' THEN 8100 "
+		"WHEN T2.name COLLATE sys.database_default in (\'image\', \'text\') THEN 2147483647 "
+		"WHEN T2.name COLLATE sys.database_default = \'ntext\' THEN 2147483646 "
 		"ELSE CAST( C.max_length AS INT ) "
 	"END " /* AS "suggested_tds_length" */
 "FROM sys.objects O, sys.columns C, sys.types T, sys.types T2 "
 "WHERE O.object_id = C.object_id "
 "AND C.user_type_id = T.user_type_id "
-"AND C.name = \'%s\' " /* -- INPUT column name */
+"AND C.name = \'%s\' COLLATE sys.database_default " /* -- INPUT column name */
 "AND T.system_type_id = T2.user_type_id " /*  -- To get system dt name. */
-"AND O.name = \'%s\'  " /*  -- INPUT table name */
+"AND O.name = \'%s\' COLLATE sys.database_default " /*  -- INPUT table name */
 "AND O.schema_id = %d " /*  -- INPUT schema Oid */
 "AND O.type = \'U\'"; /* -- User tables only for the time being */
 
@@ -2080,47 +2083,74 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 }
 
 static void
-ValidateLinkedServerDataSource(char* data_src)
+exec_utility_cmd_helper(char *query_str)
 {
-	/* 
-	 * Only treat fully qualified DNS names (endpoints) or IP address 
-	 * as valid data sources.
-	 * 
-	 * If data source is provided in the form of servername\\instancename, we
-	 * throw an error to suggest use of fully qualified domain name or the IP address
-	 * instead.
-	 */
-	if (strchr(data_src, '\\'))
+	List			*parsetree_list;
+	Node			*stmt;
+	PlannedStmt		*wrapper;
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
 		ereport(ERROR,
-			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Only fully qualified domain name or IP address are allowed as data source")));
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				   query_str,
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
 }
 
 Datum
 sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 {
 	char *linked_server = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *srv_product = PG_ARGISNULL(1) ? "" : text_to_cstring(PG_GETARG_TEXT_P(1));
-	char *provider = PG_ARGISNULL(2) ? "" : text_to_cstring(PG_GETARG_TEXT_P(2));
-	char *data_src = PG_ARGISNULL(3) ? "" : text_to_cstring(PG_GETARG_TEXT_P(3));
+	char *srv_product = PG_ARGISNULL(1) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
+	char *provider = PG_ARGISNULL(2) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(2)));
+	char *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
 	char *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
 
-	CreateForeignServerStmt *stmt = makeNode(CreateForeignServerStmt);
-	List *options = NIL;
+	StringInfoData query;
 
 	bool provider_warning = false, provstr_warning = false;
 	
-	if (strlen(srv_product) == 10 && (strncmp(srv_product, "SQL Server", 10) == 0))
+	if (strlen(srv_product) == 10 && (strncmp(srv_product, "sql server", 10) == 0))
 	{
-		/* if server product is "SQL Server" data source is the linked server name too */
-		data_src = linked_server;
+		/*
+		 * if server product is "SQL Server", rest of the arguments need not be
+		 * specified except the linked server name. The linked server name in
+		 * such a case, also doubles up as the linked server data source.
+		 */
+		data_src = pstrdup(linked_server);
 	}
 	else
 	{
-		if (((strlen(provider) == 7) && (strncmp(provider, "SQLNCLI", 7) == 0)) ||
-			((strlen(provider) == 10) && (strncmp(provider, "MSOLEDBSQL", 10) == 0)) ||
-			((strlen(provider) == 8) && (strncmp(provider, "SQLOLEDB", 8) == 0)))
+		if (((strlen(provider) == 7) && (strncmp(provider, "sqlncli", 7) == 0)) ||
+			((strlen(provider) == 10) && (strncmp(provider, "msoledbsql", 10) == 0)) ||
+			((strlen(provider) == 8) && (strncmp(provider, "sqloledb", 8) == 0)))
 		{
 			/* if provider is a valid T-SQL provider, we throw a warning indicating internally, we will be using tds_fdw */
 			provider_warning = true;
@@ -2137,42 +2167,57 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 		}
 	}
 
-	ValidateLinkedServerDataSource(data_src);
+	initStringInfo(&query);
 
-	stmt->servername = linked_server;
-	stmt->fdwname = "tds_fdw";
-	stmt->if_not_exists = false;
+	appendStringInfo(&query, "CREATE SERVER \"%s\" FOREIGN DATA WRAPPER tds_fdw ", linked_server);
 
 	/* Add the relevant options */
-	options = lappend(options, makeDefElem("servername", (Node *) makeString(data_src), -1));
+	if (data_src || catalog)
+	{
+		appendStringInfoString(&query, "OPTIONS ( ");
 
-	if (catalog != NULL)
-		options = lappend(options, makeDefElem("database", (Node *) makeString(catalog), -1));
+		if (data_src)
+			appendStringInfo(&query, "servername '%s' ", data_src);
 
-	stmt->options = options;
+		if (catalog)
+		{
+			if (data_src)
+				appendStringInfoString(&query, ", ");
 
-	CreateForeignServer(stmt);
+			appendStringInfo(&query, "database '%s' ", catalog);
+		}
+
+		appendStringInfoString(&query, ")");
+	}
+
+	exec_utility_cmd_helper(query.data);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
-	{
-		char *msg = "Warning: Using the TDS Foreign data wrapper (tds_fdw) as provider";
-
-		ereport(WARNING, errmsg("%s", msg));
-
-		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg, 0);
-	}
+		report_info_or_warning(WARNING, "Warning: Using the TDS Foreign data wrapper (tds_fdw) as provider");
 
 	if (provstr_warning)
-	{
-		char *msg = "Warning: Ignoring @provstr argument value";
+		report_info_or_warning(WARNING, "Warning: Ignoring @provstr argument value");
 
-		ereport(WARNING, errmsg("%s", msg));
+	if (linked_server)
+		pfree(linked_server);
+	
+	if (srv_product)
+		pfree(srv_product);
+	
+	if (provider)
+		pfree(provider);
 
-		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg, 0);
-	}
+	if (data_src)
+		pfree(data_src);
+
+	if (provstr)
+		pfree(provstr);
+	
+	if (catalog)
+		pfree(catalog);
+
+	pfree(query.data);
 
 	return (Datum) 0;
 }
@@ -2209,68 +2254,4 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	CreateUserMapping(stmt);
 
 	return (Datum) 0;
-}
-
-/*
- * Internal function to create the following procedures related to T-SQL linked
- * servers in master.dbo schema:
- *   - sp_addlinkedserver
- *   - sp_addlinkedsrvlogin
- * Some applications invoke this referencing master.dbo.<one of the above stored procedures>
- */
-Datum
-create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
-{
-	char *query = NULL;
-	char *query2 = NULL;
-
-	int rc = -1;
-
-	char *tempq = "CREATE OR REPLACE PROCEDURE %s.sp_addlinkedserver( IN \"@server\" sys.sysname,"
-						"IN \"@srvproduct\" sys.nvarchar(128) DEFAULT NULL,"
-						"IN \"@provider\" sys.nvarchar(128) DEFAULT 'SQLNCLI',"
-						"IN \"@datasrc\" sys.nvarchar(4000) DEFAULT NULL,"
-						"IN \"@location\" sys.nvarchar(4000) DEFAULT NULL,"
-						"IN \"@provstr\" sys.nvarchar(4000) DEFAULT NULL,"
-						"IN \"@catalog\" sys.sysname DEFAULT NULL)"
-						"AS \'babelfishpg_tsql\', \'sp_addlinkedserver_internal\'"
-					"LANGUAGE C";
-
-	char *tempq2 = "CREATE OR REPLACE PROCEDURE %s.sp_addlinkedsrvlogin( IN \"@rmtsrvname\" sys.sysname,"
-						"IN \"@useself\" sys.varchar(8) DEFAULT 'TRUE',"
-						"IN \"@locallogin\" sys.sysname DEFAULT NULL,"
-						"IN \"@rmtuser\" sys.sysname DEFAULT NULL,"
-						"IN \"@rmtpassword\" sys.sysname DEFAULT NULL)"
-						"AS \'babelfishpg_tsql\', \'sp_addlinkedsrvlogin_internal\'"
-					"LANGUAGE C";
-
-	const char  *dbo_scm = get_dbo_schema_name("master");
-	if (dbo_scm == NULL)
-		elog(ERROR, "Failed to retrieve dbo schema name");
-
-	query = psprintf(tempq, dbo_scm);
-	query2 = psprintf(tempq2, dbo_scm);
-
-	PG_TRY();
-	{
-		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
-
-		if ((rc = SPI_execute(query, false, 1)) < 0)
-			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
-
-		if ((rc = SPI_execute(query2, false, 1)) < 0)
-			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
-
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-	}
-	PG_CATCH();
-	{
-		SPI_finish();
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	PG_RETURN_INT32(0);
 }
