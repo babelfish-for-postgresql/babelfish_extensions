@@ -338,3 +338,4 @@ BABEL-3640
 sys_server_principals_dep
 sys_database_principals_dep
 case_insensitive_collation
+Test-sp_volatility
