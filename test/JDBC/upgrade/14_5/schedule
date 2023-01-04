@@ -36,7 +36,6 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
-forxml
 sys-assembly_types
 sys-database_mirroring
 sys-databases
