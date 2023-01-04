@@ -1,4 +1,4 @@
--- sla 800000
+-- sla 1000000
 exec babel_sp_special_columns_100_dep_vu_prepare_p1
 go
 

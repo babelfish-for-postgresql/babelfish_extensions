@@ -6,7 +6,7 @@ CREATE TABLE sys_check_constraints (
 )
 GO
 
-SELECT name FROM sys.check_constraints WHERE NAME IN ('sys_check_constraints_sck_date_col_check')
+SELECT name FROM sys.check_constraints WHERE NAME IN ('sys_check_constraints_sck_date_col_check') 
 GO
 
 DROP TABLE IF EXISTS sys_check_constraints
