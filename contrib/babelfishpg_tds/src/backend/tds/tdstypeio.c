@@ -2108,7 +2108,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 							values[i] = TdsTypeVarbinaryToDatum(temp);
 							argtypes[i] = tempFuncInfo->ttmtypeid;
 						break;
-						case TDS_RECV_DATE:
+						case TDS_TYPE_DATE:
 							values[i] = TdsTypeDateToDatum(temp);
 						break;
 						case TDS_TYPE_TIME:
