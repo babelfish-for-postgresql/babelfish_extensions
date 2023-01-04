@@ -121,7 +121,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 	int		part = 0;
 
 	Assert(*newval != NULL);
-	if(pg_strcasecmp(copy_version_number,"default") == 0)
+	if(pg_strcasecmp(*newval,"default") == 0)
 		return true;
 
 	copy_version_number = palloc(sizeof(*newval));
