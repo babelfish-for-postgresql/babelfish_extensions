@@ -13,20 +13,8 @@ WHERE name='intcol' OR name='char128col' OR name='bitcol' OR name='datecol' OR n
 ORDER BY name
 GO
 
-SELECT is_computed FROM sys.all_columns WHERE name = 'col_computed'
-GO
-
-SELECT is_computed FROM sys.all_columns WHERE name = 'col_two'
-GO
-
-SELECT is_computed FROM sys.all_columns WHERE name = 'col_one'
-GO
-
-SELECT is_computed FROM sys.all_columns WHERE name = 'random_col'
-GO
-
-SELECT is_identity FROM sys.all_columns WHERE name = 'col_three'
-GO
-
-SELECT is_identity FROM sys.all_columns WHERE name = 'col_two'
+SELECT name, is_identity, is_computed
+FROM sys.all_columns
+WHERE name in ('col_computed', 'col_one', 'col_two', 'col_three')
+ORDER BY name
 GO
