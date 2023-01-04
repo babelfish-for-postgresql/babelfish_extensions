@@ -1,0 +1,2 @@
+a-int,b-smallint,c-bigint,d-tinyint,e-bit,f-char-10,g-nchar-10,h-varchar-10,i-nvarchar-10,l-varbinary-10,m-binary-10,n-date,o-datetime,p-money,q-uniqueidentifier,r-float,s-real,t-numeric-4-3,u-decimal-5-3,v-time,w-datetime2
+1,1,1,1,TRUE,hi,hi,hi,hi,11,11,10/10/2022,10/10/2022 10:10:10,143.5,ce8af10a-2709-43b0-9e4e-a02753929d17,12.11,13.11,1.33,45.122,10:10:10,10/10/2022 10:10:10

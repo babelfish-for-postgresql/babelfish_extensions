@@ -1,5 +1,11 @@
+#test tvp without schema
+create type tableType as table (a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier,r float, s real, t numeric(4,3), u decimal(5,3), v time(5), w datetime2(5))
+prepst#!#Select * from @a #!#tvp|-|a|-|tableType|-|../../../utils/tvp-dotnet.csv
+drop type tableType
+
+#test tvp with schema
 create schema testtvp
-create type testtvp.tableType as table (a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), j text, k ntext, l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier,r float, s real, t numeric(4,3), u decimal(5,3), v time(5), w datetime2(5))
-prepst#!#Select * from @a #!#tvp|-|a|-|testtvp.tableType|-|/Users/kushaal/Downloads/tvp-dotnet.csv
-drop type testtvp.tableType;
+create type testtvp.tableType as table (a int, b smallint, c bigint, d tinyint, e bit, f char(10), g nchar(10), h varchar(10), i nvarchar(10), l varbinary(10), m binary(10), n date, o datetime, p money, q uniqueidentifier,r float, s real, t numeric(4,3), u decimal(5,3), v time(5), w datetime2(5))
+prepst#!#Select * from @a #!#tvp|-|a|-|testtvp.tableType|-|../../../utils/tvp-dotnet.csv
+drop type testtvp.tableType
 drop schema testtvp
