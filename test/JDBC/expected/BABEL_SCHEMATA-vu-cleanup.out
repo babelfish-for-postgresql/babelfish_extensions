@@ -1,0 +1,20 @@
+use db_10;
+go
+
+drop schema IF EXISTS schema_11;
+go
+
+drop schema IF EXISTS schema_12;
+go
+
+drop user user1;
+go
+
+drop login user1;
+go
+
+use master;
+go
+
+drop database IF EXISTS db_10;
+go

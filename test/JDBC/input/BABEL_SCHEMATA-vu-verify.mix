@@ -1,0 +1,49 @@
+use db_10;
+go
+
+-- should show schema_11 and schema_12, since we are inside db_10 database
+select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%';
+go
+
+use master;
+go
+
+-- should not show schema_11 and schema_12, since we have switched to master database
+select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%';
+go
+
+-- Test if user default schema is not dbo schema
+-- Check if after revoking the usage permission/ownership from user, it is still showing in catalog or not.
+-- tsql      user=schemata_login      password=123
+USE master;
+GO
+
+SELECT current_user;
+GO
+
+SELECT schema_name();
+GO
+
+select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%';
+GO
+
+-- psql
+REVOKE ALL ON SCHEMA master_schema_13 FROM master_schemata_user;
+GO
+
+-- tsql
+select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%';
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'schemata_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
+DROP user schemata_user;
+GO
+
+DROP LOGIN schemata_login;
+GO
