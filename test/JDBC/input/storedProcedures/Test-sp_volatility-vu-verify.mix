@@ -37,35 +37,41 @@ go
 exec sys.sp_volatility 'a.f1'
 go
 
+/* testing for trailing spaces */
+exec sys.sp_volatility 'f1   ', 'stable   '
+go
+exec sys.sp_volatility 'f1'
+go
+
+/* testing for some invalid cases */
 exec sys.sp_volatility 'master.a.f1'
 go
-
 exec sys.sp_volatility 'random_function'
 go
-
 exec sys.sp_volatility '','stable'
 go
 
+/* testing for injection */
+exec sys.sp_volatility 'ran;dom'
+go
+exec sys.sp_volatility 'f1', 'immutable; some random text'
+go
+exec sys.sp_volatility 'f1'
+go
+
+/* testing to get all functions in current db */
+exec sys.sp_volatility
+go
+
+/* test for default schema */
 -- tsql user=test_user password=abc
 use test_db
 go
 exec sys.sp_volatility 'f1'
 go
-exec sys.sp_volatility 'f1', 'stable'
+exec sys.sp_volatility 'f1    '
 go
-exec sys.sp_volatility 'f1'
-go
-exec sys.sp_volatility 'f1', 'immutable'
-go
-exec sys.sp_volatility 'f1'
-go
-exec sys.sp_volatility 'f1', 'volatile'
-go
-exec sys.sp_volatility 'f1'
-go
-exec sys.sp_volatility 'f1', 'random'
-go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility
 go
 
 -- psql

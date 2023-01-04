@@ -95,19 +95,29 @@ a#!#f1#!#v
 ~~END~~
 
 
+/* testing for trailing spaces */
+exec sys.sp_volatility 'f1   ', 'stable   '
+go
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
+dbo#!#f1#!#s
+~~END~~
+
+
+/* testing for some invalid cases */
 exec sys.sp_volatility 'master.a.f1'
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: master.a.f1 function not found)~~
 
-
 exec sys.sp_volatility 'random_function'
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: random_function function not found)~~
-
 
 exec sys.sp_volatility '','stable'
 go
@@ -116,56 +126,14 @@ go
 ~~ERROR (Message: Enter a valid Function Name)~~
 
 
--- tsql user=test_user password=abc
-use test_db
-go
-exec sys.sp_volatility 'f1'
-go
-~~START~~
-text#!#varchar#!#varchar
-test_schema#!#f1#!#v
-~~END~~
-
-exec sys.sp_volatility 'f1', 'stable'
+/* testing for injection */
+exec sys.sp_volatility 'ran;dom'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: must be owner of function test_schema.f1)~~
+~~ERROR (Message: ran;dom function not found)~~
 
-exec sys.sp_volatility 'f1'
-go
-~~START~~
-text#!#varchar#!#varchar
-test_schema#!#f1#!#v
-~~END~~
-
-exec sys.sp_volatility 'f1', 'immutable'
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: must be owner of function test_schema.f1)~~
-
-exec sys.sp_volatility 'f1'
-go
-~~START~~
-text#!#varchar#!#varchar
-test_schema#!#f1#!#v
-~~END~~
-
-exec sys.sp_volatility 'f1', 'volatile'
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: must be owner of function test_schema.f1)~~
-
-exec sys.sp_volatility 'f1'
-go
-~~START~~
-text#!#varchar#!#varchar
-test_schema#!#f1#!#v
-~~END~~
-
-exec sys.sp_volatility 'f1', 'random'
+exec sys.sp_volatility 'f1', 'immutable; some random text'
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -175,7 +143,43 @@ exec sys.sp_volatility 'f1'
 go
 ~~START~~
 text#!#varchar#!#varchar
+dbo#!#f1#!#s
+~~END~~
+
+
+/* testing to get all functions in current db */
+exec sys.sp_volatility
+go
+~~START~~
+text#!#varchar#!#varchar
+a#!#f1#!#v
+dbo#!#f1#!#s
+~~END~~
+
+
+-- tsql user=test_user password=abc
+/* test for default schema */
+use test_db
+go
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#varchar
 test_schema#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility 'f1    '
+go
+~~START~~
+text#!#varchar#!#varchar
+test_schema#!#f1#!#v
+~~END~~
+
+exec sys.sp_volatility
+go
+~~START~~
+text#!#varchar#!#varchar
+db#!#f1#!#v
 ~~END~~
 
 
