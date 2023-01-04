@@ -60,11 +60,6 @@ extern bool pltsql_numeric_roundabort;
 extern bool pltsql_quoted_identifier;
 extern char *bbf_servername;
 
-extern bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
-extern bytea *convertIntToSQLVariantByteA(int ret);
-extern  Datum datetime_in_str(char *str);
-extern Datum datetime2sqlvariant(PG_FUNCTION_ARGS);
-extern Datum tinyint2sqlvariant(PG_FUNCTION_ARGS);
 static VarChar *get_servername_helper(void);
 static VarChar *get_product_version_helper(int idx);
 
@@ -204,7 +199,7 @@ get_product_version_helper(int idx)
 		appendStringInfoString(&temp, get_version_number(product_version,idx));
 	}
 		
-    info = tsql_varchar_input(temp.data, temp.len, -1);
+    info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
     pfree(temp.data);
     return (VarChar *)info;
 }
