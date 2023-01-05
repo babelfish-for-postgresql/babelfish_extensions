@@ -2686,7 +2686,7 @@ RETURN (SELECT * FROM t487)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'EXECUTE AS' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 DROP TABLE t487
 GO

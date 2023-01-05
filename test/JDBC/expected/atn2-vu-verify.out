@@ -1,0 +1,215 @@
+SELECT * FROM atn2_vu_prepare_v1
+GO
+~~START~~
+float#!#float#!#float
+0.5880026035475675#!#0.6202494859828215#!#0.6202494859828215
+~~END~~
+
+
+-- test with all datatypes that could implicity converted to float
+SELECT * FROM atn2_vu_prepare_v2
+GO
+~~START~~
+float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float#!#float
+0.5880026035475675#!#0.6202494859828215#!#0.6202494859828215#!#0.5880026035475675#!#0.5880026035475675#!#0.5880026035475675#!#0.6202494859828215#!#0.6202494859828215#!#0.6435011087932844#!#0.6435011087932844#!#0.6202494859828215#!#0.6202494859828215#!#0.6202494859828215#!#0.6202494859828215
+~~END~~
+
+
+-- returns NULL
+SELECT * FROM atn2_vu_prepare_v3
+GO
+~~START~~
+float#!#float#!#float
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- expect float overflow error
+SELECT * FROM atn2_vu_prepare_v4
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" is out of range for type double precision)~~
+
+
+-- won't over flow
+SELECT * FROM atn2_vu_prepare_v5
+GO
+~~START~~
+float
+1.5707963267948966
+~~END~~
+
+
+-- throws error when input is (0, 0)
+SELECT * FROM atn2_vu_prepare_v6
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid floating point operation occurred.)~~
+
+
+SELECT * FROM atn2_vu_prepare_v7
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid floating point operation occurred.)~~
+
+
+SELECT * FROM atn2_vu_prepare_v8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid floating point operation occurred.)~~
+
+
+EXEC atn2_vu_prepare_p1
+GO
+~~START~~
+float
+0.5880026035475675
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+-- test with all datatypes that could implicity converted to float
+EXEC atn2_vu_prepare_p2
+GO
+~~START~~
+float
+0.5880026035475675
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.5880026035475675
+~~END~~
+
+~~START~~
+float
+0.5880026035475675
+~~END~~
+
+~~START~~
+float
+0.5880026035475675
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+~~START~~
+float
+0.6202494859828215
+~~END~~
+
+
+-- returns NULL
+EXEC atn2_vu_prepare_p3
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+-- expect float overflow
+EXEC atn2_vu_prepare_p4
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "1790000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" is out of range for type double precision)~~
+
+
+-- won't over flow
+EXEC atn2_vu_prepare_p5
+GO
+~~START~~
+float
+1.5707963267948966
+~~END~~
+
+
+-- throws error when input is (0, 0)
+EXEC atn2_vu_prepare_p6
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid floating point operation occurred.)~~
+
+
+EXEC atn2_vu_prepare_p7
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid floating point operation occurred.)~~
+
+
+EXEC atn2_vu_prepare_p8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An invalid floating point operation occurred.)~~
+
+
