@@ -52,6 +52,8 @@
 #include "src/include/tds_protocol.h"
 #include "src/include/tds_response.h"
 #include "src/include/faultinjection.h"
+#include "storage/proc.h"
+#include "utils/timeout.h"
 
 /*
  * When we reset the connection, we save the required information in the following
@@ -76,6 +78,8 @@ ResetConnection	resetCon = NULL;
 static void ResetTDSConnection(void);
 static TDSRequest GetTDSRequest(bool *resetProtocol);
 static void ProcessTDSRequest(TDSRequest request);
+static void enable_statement_timeout(void);
+static void disable_statement_timeout(void);
 
 /*
  * TDSDiscardAll - copy of DiscardAll
@@ -289,6 +293,12 @@ GetTDSRequest(bool *resetProtocol)
 			return NULL;
 		}
 
+		/*
+		 * Enable statement timeout. Note we add this function here to
+		 * include the time taken by the protocol in the timeout.
+		 */
+		enable_statement_timeout();
+
 		/* Parse the packet */
 		switch (messageType)
 		{
@@ -398,6 +408,10 @@ ProcessTDSRequest(TDSRequest request)
 				Assert(0);
 				break;
 		}
+
+		/* Disabling statement timeout after processing. */
+		disable_statement_timeout();
+
 		CommitTransactionCommand();
 		MemoryContextSwitchTo(MessageContext);
 
@@ -407,6 +421,7 @@ ProcessTDSRequest(TDSRequest request)
 		int token_type;
 		int command_type = TDS_CMD_UNKNOWN;
 
+		disable_statement_timeout();
 		CommitTransactionCommand();
 		MemoryContextSwitchTo(MessageContext);
 
@@ -710,4 +725,32 @@ TestGetTdsRequest(uint8_t reqType, const char *expectedStr)
 			return -1;
 	}
 	return res;
+}
+
+/*
+ * Start statement timeout timer, if enabled.
+ */
+static void
+enable_statement_timeout(void)
+{
+	if (StatementTimeout > 0)
+	{
+		if (!get_timeout_active(STATEMENT_TIMEOUT))
+			enable_timeout_after(STATEMENT_TIMEOUT, StatementTimeout);
+	}
+	else
+	{
+		if (get_timeout_active(STATEMENT_TIMEOUT))
+			disable_timeout(STATEMENT_TIMEOUT, false);
+	}
+}
+
+/*
+ * Disable statement timeout, if active.
+ */
+static void
+disable_statement_timeout(void)
+{
+	if (get_timeout_active(STATEMENT_TIMEOUT))
+		disable_timeout(STATEMENT_TIMEOUT, false);
 }
