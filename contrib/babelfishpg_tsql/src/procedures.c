@@ -927,7 +927,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = insert_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
 				break;
@@ -938,7 +938,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = update_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = list_copy(update_stmt->targetList);
 
@@ -974,7 +974,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = delete_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = NIL;
 
