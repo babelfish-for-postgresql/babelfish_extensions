@@ -1091,37 +1091,32 @@ char**
 split_object_name(char *name)
 {	
 	char		**res = palloc(4 * sizeof(char *));
+	char		*temp[4];
 	char		*str;
 	int			cur_pos, next_pos;
-	int 		count = 1;
-	int			i;
+	int 		count = 0;
 
-	/* count the number of delimeters */
+	/* extract and remove the delimited identifiers from input into temp array */
 	cur_pos = 0;
 	next_pos = babelfish_get_delimiter_pos(name);
-	while(next_pos != -1 && count < 4)
-	{	
-		count++;
-		cur_pos += next_pos + 1;
-		next_pos = babelfish_get_delimiter_pos(&name[cur_pos]);
-	}
-
-	/* fill unspecified parts with empty strings */
-	for(i = 0; i < 4 - count; i++)
-		res[i] = "";
-
-	/* extract the remainings parts */
-	cur_pos = 0;
-	next_pos = babelfish_get_delimiter_pos(name);
-	while (i + 1 < 4)
+	while (next_pos != -1 && count < 3)
 	{
 		str = remove_delimited_identifiers(&name[cur_pos], next_pos);
-		res[i++] = str;
+		temp[count++] = str;
 		cur_pos += next_pos + 1;
 		next_pos = babelfish_get_delimiter_pos(&name[cur_pos]);
 	}
 	str = remove_delimited_identifiers(&name[cur_pos], strlen(&name[cur_pos]));
-	res[i] = str;
+	temp[count++] = str;
+
+	/* fill unspecified parts with empty strings */
+	for(int i = 0; i < 4; i++)
+	{
+		if(i < 4 - count)
+			res[i] = "";
+		else
+			res[i] = temp[i - (4 - count)];
+	}
 
 	return res;
 }
