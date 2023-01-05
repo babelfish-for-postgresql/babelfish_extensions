@@ -61,6 +61,22 @@ and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
+AS
+$$
+DECLARE
+    res SYS.FLOAT;
+BEGIN
+    IF x = 0 AND y = 0 THEN
+        RAISE EXCEPTION 'An invalid floating point operation occurred.';
+    ELSE
+        res = PG_CATALOG.atan2(x, y);
+        RETURN res;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   SELECT 
   CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
@@ -178,6 +194,21 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 INT)
+RETURNS int AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 SMALLINT)
+RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
+RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

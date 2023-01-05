@@ -85,6 +85,7 @@ extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
+extern bool pltsql_nocount;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -3461,6 +3462,7 @@ _PG_init(void)
 	/* If a protocol extension is loaded, initialize the inline handler. */
 	if (*pltsql_protocol_plugin_ptr)
 	{
+		(*pltsql_protocol_plugin_ptr)->pltsql_nocount_addr = &pltsql_nocount;
 		(*pltsql_protocol_plugin_ptr)->sql_batch_callback = &pltsql_inline_handler;
 		(*pltsql_protocol_plugin_ptr)->sp_executesql_callback = &pltsql_inline_handler;
         (*pltsql_protocol_plugin_ptr)->sp_prepare_callback = &sp_prepare;
@@ -3501,6 +3503,8 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
 		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = common_utility_plugin_ptr->tsql_varchar_input;
 		(*pltsql_protocol_plugin_ptr)->tsql_char_input = common_utility_plugin_ptr->tsql_bpchar_input;
+		(*pltsql_protocol_plugin_ptr)->get_cur_db_name = &get_cur_db_name;
+		(*pltsql_protocol_plugin_ptr)->get_physical_schema_name = &get_physical_schema_name;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
