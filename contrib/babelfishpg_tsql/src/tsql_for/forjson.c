@@ -237,5 +237,5 @@ tsql_query_to_json_text(PG_FUNCTION_ARGS)
 	ereport(WARNING,
 			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
 			 errmsg("This function has been deprecated.")));
-	PG_RETURN_INT32(0);
+	PG_RETURN_NULL();
 }
