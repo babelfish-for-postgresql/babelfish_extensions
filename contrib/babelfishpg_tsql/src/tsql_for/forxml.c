@@ -344,7 +344,8 @@ tsql_query_to_xml(PG_FUNCTION_ARGS)
 	ereport(WARNING,
 			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
 			 errmsg("This function has been deprecated.")));
-	PG_RETURN_INT32(0);
+	StringInfo s = makeStringInfo();
+	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(s->data, s->len));
 }
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_text);
@@ -363,5 +364,6 @@ tsql_query_to_xml_text(PG_FUNCTION_ARGS)
 	ereport(WARNING,
 			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
 			 errmsg("This function has been deprecated.")));
-	PG_RETURN_INT32(0);
+	StringInfo s = makeStringInfo();
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(s->data, s->len));
 }
