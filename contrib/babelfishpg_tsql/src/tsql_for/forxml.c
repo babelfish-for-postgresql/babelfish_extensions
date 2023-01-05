@@ -332,6 +332,7 @@ PG_FUNCTION_INFO_V1(tsql_query_to_xml);
 Datum
 tsql_query_to_xml(PG_FUNCTION_ARGS)
 {
+	StringInfo s = makeStringInfo();
 	/*
 	 * This function has been deprecated as of v2.4.
 	 * However, we cannot remove this function entirely because
@@ -344,7 +345,6 @@ tsql_query_to_xml(PG_FUNCTION_ARGS)
 	ereport(WARNING,
 			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
 			 errmsg("This function has been deprecated.")));
-	StringInfo s = makeStringInfo();
 	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(s->data, s->len));
 }
 
@@ -352,6 +352,7 @@ PG_FUNCTION_INFO_V1(tsql_query_to_xml_text);
 Datum
 tsql_query_to_xml_text(PG_FUNCTION_ARGS)
 {
+	StringInfo s = makeStringInfo();
 	/*
 	 * This function has been deprecated as of v2.4.
 	 * However, we cannot remove this function entirely because
@@ -364,6 +365,5 @@ tsql_query_to_xml_text(PG_FUNCTION_ARGS)
 	ereport(WARNING,
 			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
 			 errmsg("This function has been deprecated.")));
-	StringInfo s = makeStringInfo();
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(s->data, s->len));
 }
