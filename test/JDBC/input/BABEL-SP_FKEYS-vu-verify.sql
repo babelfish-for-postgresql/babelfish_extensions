@@ -1,4 +1,4 @@
--- sla 1200000
+-- sla 2500000
 use babel_sp_fkeys_vu_prepare_db1
 go
 
