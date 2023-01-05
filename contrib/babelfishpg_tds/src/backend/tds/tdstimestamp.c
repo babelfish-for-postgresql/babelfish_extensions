@@ -190,7 +190,12 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 	uint32 milliCount = 0;
 	struct pg_tm tj, ti, *tm = &ti, *tt = &tj;
 	fsec_t fsec;
-	int unit = 0;
+	int msec = 0, unit = 0, round_val = 0;
+	/*
+	 * 1 tick = 1/300 sec = 3.3333333 ms
+	 * babelfish uses tick count to accommodate millisecound count in 4 bytes
+	 */
+	double tick =  3.3333333;
 
 	GetDatetimeFromDatum(value, &fsec, tm);
 	tt->tm_mday = 1, tt->tm_mon = 1, tt->tm_year = 1900;
@@ -200,24 +205,49 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 	if (tm->tm_hour == 23 && tm->tm_min == 59 && tm->tm_sec == 59 &&
 		fsec == 999000)
 	{
-		fsec = 0;
+		msec = 0;
 		GetNumDaysHelper(tm);
 		(*numDays)++;
 	}
 	else
 	{
-		unit = (fsec/1000) % 10;
-		if (unit == 1 || unit == 4 || unit == 8)
-			fsec = ((fsec/1000)-1) * 1000;
-		else if (unit == 2 || unit == 6 || unit == 9)
-			fsec = ((fsec/1000)+1) * 1000;	
-		else if (unit == 5)
-			fsec = ((fsec/1000)+2) * 1000;
+		msec = (fsec/1000);
+		unit = msec % 10;
+
+		/*
+		 * millisecond value rounded to increments of .000, .003, or .007 seconds
+		 */
+		switch (unit)
+		{
+			case 0:
+			case 1:
+				round_val = 0;
+				break;
+			case 2:
+			case 3:
+			case 4:
+				round_val = 3;
+				/* slightly different from default tick value at 7th decimal place */
+				tick = 3.3333332;
+				break;
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+				round_val = 7;
+				break;
+			case 9:
+				round_val = 10;
+				break;
+			default:
+				break;
+		}
+		msec = msec - unit + round_val;
 	}
-	milliCount = (((tm->tm_hour * 60 + tm->tm_min) * 60 +
-			tm->tm_sec) * 1000 + (int)fsec/1000);
+	milliCount = ((tm->tm_hour * 60 + tm->tm_min) * 60 +
+					tm->tm_sec) * 1000 + msec;
 	
-	*numTicks = (int)(milliCount/3.3333333);
+	*numTicks = (int)(milliCount / tick);
 }
 
 /*
