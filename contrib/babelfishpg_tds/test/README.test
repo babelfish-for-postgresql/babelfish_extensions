@@ -1,10 +1,33 @@
-This folder contains TAP tests written for TDS endpoint. To enable the TAP tests,
-the server needs to be configured with --enable-tap-tests -flag.  Additionally,
-to run the Kerberos test, the server needs to be configured with --with-gssapi
-flag.
+This folder contains TAP tests written for TDS endpoint. 
+
+In PG, TAP test framework is used to drive tests for backup and restore,
+replication, etc - anything that can't really be expressed using pg_regress
+or the isolation test framework.
+https://github.com/postgres/postgres/blob/master/src/test/perl/README
+
+Basically, it can be used if we want something more than just comparing the
+expected outputs. It may include:
+
+- Some engine/os configuration changes
+- Start or stop the server
+- grep log messages from log file and match with expected log file output
+- system calls
+
+In Babelfish, we can utilize the same test framework for the following
+scenarios:
+
+- pg_hba.conf changes with password authentication
+- Kerberos authentication by setting up MIT kerberos 
+- SSL setup and test encrypted connection
+- Provisioning
+
+We've added an additional library, called TDSNode.pm, that provides APIs to
+provision a babelfish node, execute T-SQL statements through a TDS endpoint
+and test TDS connections.
 
 Installing dependencies
 --------------------------
+
 For TAP tests, you need to install a few perl modules.
 IPC::Run
 Test::More
@@ -22,9 +45,64 @@ sudo yum install krb5-server krb5-workstation -y
 Running the tests
 ----------------------
 
+To enable the TAP tests, the server needs to be configured with --enable-tap-tests 
+flag.  Additionally, to run the Kerberos test, the server needs to be configured
+with --with-gssapi flag.
+
 1. Configure engine with --enable-tap-tests and --with-gssapi flag
 2. Build engine and extension
 3. Execute the following command:
 export PG_CONFIG=<engine installation directory>/pg_config
 cd babelfish_extensions/contrib/babelfishpg_tds/
 make installcheck
+
+Writing test cases
+----------------------
+Test scripts in the t/ subdirectory of a suite are executed in alphabetical
+order.
+
+Each test script should begin with:
+
+    use strict;
+    use warnings;
+    use PostgreSQL::Test::Cluster;
+    use PostgreSQL::Test::Utils;
+    use Test::More;
+	use TDSNode;
+
+then it will generally need to set up one or more nodes, run commands
+against them and evaluate the results. For example:
+
+    my $node = PostgreSQL::Test::Cluster->new('primary');
+    $node->init;
+	$node->append_conf(
+	'postgresql.conf', qq{
+log_connections = on
+listen_addresses='127.0.0.1'
+shared_preload_libraries = 'babelfishpg_tds'
+});
+    $node->start;
+
+	my $tsql_node = new TDSNode($node);
+	$tsql_node->init_tsql('test_master', 'testdb');
+
+    my $ret = $node->safe_tsql('master', 'SELECT 1');
+    is($ret, '1', 'SELECT 1 returns 1');
+
+	$node->stop('fast');
+
+Each test script should end with:
+
+	done_testing();
+
+All the APIs defined in [1] can be used. Additionally, we have a new module for
+TDS connections,
+Module: TDSNode
+APIs:
+TDSNode->init_tsql
+TDSNode->tsql_connstr
+TDSNode->safe_tsql
+TDSNode->connect_ok
+TDSNode->connect_fails
+
+[1] https://github.com/postgres/postgres/tree/master/src/test/perl/PostgreSQL
