@@ -2868,7 +2868,12 @@ SELECT
   CAST(u.srvid as int) AS server_id,
   CAST(0 as int) AS local_principal_id,
   CAST(0 as sys.bit) AS uses_self_credential,
-  CAST(split_part(u.umoptions[1], 'username=', 2) as sys.sysname) AS remote_name,
+  CAST((select string_agg(
+                  case
+                  when option like 'username=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(u.umoptions) as option) as sys.sysname) AS remote_name,
   CAST(NULL as sys.datetime) AS modify_date
 FROM pg_user_mappings AS U
 LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid

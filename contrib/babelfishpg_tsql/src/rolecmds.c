@@ -604,7 +604,8 @@ bool
 tsql_has_linked_srv_permissions(Oid role)
 {
 	/* Only sysadmin has permission to create/alter/delete linked servers */
-	return role_is_sa(GetSessionUserId());
+	//return role_is_sa(GetSessionUserId());
+	return false;
 }
 
 PG_FUNCTION_INFO_V1(initialize_logins);

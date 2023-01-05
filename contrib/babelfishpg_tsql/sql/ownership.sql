@@ -181,6 +181,8 @@ BEGIN
                                                       IN "@rmtpassword" sys.sysname DEFAULT NULL)
   AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
   LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
 END
 $$;
 
