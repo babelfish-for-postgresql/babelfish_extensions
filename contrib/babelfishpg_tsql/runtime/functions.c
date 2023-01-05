@@ -941,35 +941,27 @@ object_id(PG_FUNCTION_ARGS)
 	int 			i;
 	char 			*input = lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
 	char 			*object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
-	List 			*splited_object_name;
+	char 			**splited_object_name;
 
 	/* strip trailing whitespace */
 	i = strlen(input);
 	while (i > 0 && isspace((unsigned char) input[i - 1]))
 		input[--i] = '\0';
 	
+	/* length should be restricted to 4000 */
+	if(strlen(input) > 4000)
+		ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+				errmsg("String or binary data would be truncated.")));
+
 	/* resolve the three part name */
 	splited_object_name = split_object_name(input);
-	switch (list_length(splited_object_name))
-	{
-		case 1:
-			object_name = (char *) linitial(splited_object_name);
-			break;
-		case 2:
-			schema_name = (char *) linitial(splited_object_name);
-			object_name = (char *) lsecond(splited_object_name);
-			break;
-		case 3:
-			db_name = (char *) linitial(splited_object_name);
-			schema_name = (char *) lsecond(splited_object_name);
-			object_name = (char *) lthird(splited_object_name);
-			break;
-		default:
-			list_free(splited_object_name);
-			PG_RETURN_NULL();
-	}
+	db_name = splited_object_name[1];
+	schema_name = splited_object_name[2];
+	object_name = splited_object_name[3];
+
 	pfree(input);
-	list_free(splited_object_name);
+	pfree(splited_object_name);
 
 	/* truncate identifiers if needed */
 	truncate_tsql_identifier(db_name);
@@ -978,12 +970,13 @@ object_id(PG_FUNCTION_ARGS)
 
 	if (!strcmp(db_name, ""))
 		db_name = get_cur_db_name();
-
-	/* check if looking in current database, if not then return null value */
-	if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
+	else if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
+	{
+		/* can only search in current database, allowing tempdb for temp objects */
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("Can only do lookup in current database.")));
+	}
 
 	if (!strcmp(schema_name, ""))
 	{	
@@ -1014,54 +1007,74 @@ object_id(PG_FUNCTION_ARGS)
 	is_temp_object = (object_name[0] == '#'? true: false);
 
 	if (strcmp(object_type, "")) /* object_type is not empty */
-	{
-		if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
-			!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
+	{	
+		if (is_temp_object)
 		{
-			if (is_temp_object)
+			if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
+				!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
 			{
 				/* search in list of ENRs registered in the current query environment by name */
-				result = tsql_get_temp_object_oid(object_name);
+				EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
+				if(enr != NULL)
+				{
+					result = enr->md.reliddesc;
+				}
 			}
-			else
+			else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
+					!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
 			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Object type currently unsupported in Babelfish.")));
+			}
+		}
+		else
+		{
+			if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
+				!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
+			{	
 				/* search in pg_class by name and schema oid */
 				result = get_relname_relid((const char *) object_name, schema_oid); 
 			}
+			else if (!strcmp(object_type, "C") || !strcmp(object_type, "D") || !strcmp(object_type, "F") ||
+					!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
+			{
+				/* search in pg_constraint by name and schema oid */
+				result = tsql_get_constraint_oid(object_name, schema_oid);
+			}
+			else if (!strcmp(object_type, "AF") || !strcmp(object_type, "FN") || !strcmp(object_type, "FS") ||
+					!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
+					!strcmp(object_type, "PC") || !strcmp(object_type, "TF") || !strcmp(object_type, "RF") ||
+					!strcmp(object_type, "X"))
+			{
+				/* search in pg_proc by name and schema oid */
+				result = tsql_get_proc_oid(object_name, schema_oid);
+			}
+			else if (!strcmp(object_type, "TR") || !strcmp(object_type, "TA"))
+			{
+				/* search in pg_trigger by name and schema oid */
+				result = tsql_get_trigger_oid(object_name, schema_oid);
+			}
+			else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
+					!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Object type currently unsupported in Babelfish.")));
+			}
 		}
-		else if (!strcmp(object_type, "C") || !strcmp(object_type, "D") || !strcmp(object_type, "F") ||
-				!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
-		{
-			/* search in pg_constraint by name and schema oid */
-			result = tsql_get_constraint_oid(object_name, schema_oid);
-		}
-		else if (!strcmp(object_type, "AF") || !strcmp(object_type, "FN") || !strcmp(object_type, "FS") ||
-				!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
-				!strcmp(object_type, "PC") || !strcmp(object_type, "TF") || !strcmp(object_type, "RF") ||
-				!strcmp(object_type, "X"))
-		{
-			/* search in pg_proc by name and schema oid */
-			result = tsql_get_proc_oid(object_name, schema_oid);
-		}
-		else if (!strcmp(object_type, "TR") || !strcmp(object_type, "TA"))
-		{
-			/* search in pg_trigger by name */
-			result = tsql_get_trigger_oid(object_name);
-		}
-		else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
-				!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("Object type currently unsupported")));
-		}
+		
 	}
 	else
 	{	
 		if (is_temp_object) /* temp object without "object_type" in-argument */
 		{
 			/* search in list of ENRs registered in the current query environment by name */
-			result = tsql_get_temp_object_oid(object_name);
+			EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
+			if(enr != NULL)
+			{
+				result = enr->md.reliddesc;
+			}
 		}
 		else
 		{
@@ -1076,8 +1089,8 @@ object_id(PG_FUNCTION_ARGS)
 
 			if (!OidIsValid(result))  /* search only if not found earlier */
 			{
-				/* search in pg_trigger by name */
-				result = tsql_get_trigger_oid(object_name);
+				/* search in pg_trigger by name and schema oid */
+				result = tsql_get_trigger_oid(object_name, schema_oid);
 			}
 
 			if (!OidIsValid(result))  /* search only if not found earlier */
