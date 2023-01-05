@@ -10047,7 +10047,7 @@ BEGIN
 
 END;
 $body$
-LANGUAGE 'plpgsql' STABLE;
+LANGUAGE 'plpgsql';
 
 CREATE OR REPLACE FUNCTION sys.babelfish_waitfor_delay(time_to_pass TEXT)
 RETURNS void AS

@@ -2163,6 +2163,20 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_dateval DATE)
+RETURNS DATE
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_greg_to_hijri(extract(day from p_dateval)::NUMERIC,
+                                                extract(month from p_dateval)::NUMERIC,
+                                                extract(year from p_dateval)::NUMERIC);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_day NUMERIC,
                                                                 IN p_month NUMERIC,
                                                                 IN p_year NUMERIC)
