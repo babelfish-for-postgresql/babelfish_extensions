@@ -2,8 +2,8 @@
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-dbo#!#f1#!#v
+text#!#varchar#!#text
+master_dbo#!#f1#!#volatile
 ~~END~~
 
 exec sys.sp_volatility 'f1', 'stable'
@@ -11,8 +11,8 @@ go
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-dbo#!#f1#!#s
+text#!#varchar#!#text
+master_dbo#!#f1#!#stable
 ~~END~~
 
 exec sys.sp_volatility 'f1', 'immutable'
@@ -20,8 +20,8 @@ go
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-dbo#!#f1#!#i
+text#!#varchar#!#text
+master_dbo#!#f1#!#immutable
 ~~END~~
 
 exec sys.sp_volatility 'f1', 'volatile'
@@ -29,8 +29,8 @@ go
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-dbo#!#f1#!#v
+text#!#varchar#!#text
+master_dbo#!#f1#!#volatile
 ~~END~~
 
 exec sys.sp_volatility 'f1', 'random'
@@ -42,16 +42,16 @@ go
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-dbo#!#f1#!#v
+text#!#varchar#!#text
+master_dbo#!#f1#!#volatile
 ~~END~~
 
 
 exec sys.sp_volatility 'a.f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-a#!#f1#!#v
+text#!#varchar#!#text
+master_a#!#f1#!#volatile
 ~~END~~
 
 exec sys.sp_volatility 'a.f1', 'stable'
@@ -59,8 +59,8 @@ go
 exec sys.sp_volatility 'a.f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-a#!#f1#!#s
+text#!#varchar#!#text
+master_a#!#f1#!#stable
 ~~END~~
 
 exec sys.sp_volatility 'a.f1', 'immutable'
@@ -68,8 +68,8 @@ go
 exec sys.sp_volatility 'a.f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-a#!#f1#!#i
+text#!#varchar#!#text
+master_a#!#f1#!#immutable
 ~~END~~
 
 exec sys.sp_volatility 'a.f1', 'volatile'
@@ -77,8 +77,8 @@ go
 exec sys.sp_volatility 'a.f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-a#!#f1#!#v
+text#!#varchar#!#text
+master_a#!#f1#!#volatile
 ~~END~~
 
 exec sys.sp_volatility 'a.f1', 'random'
@@ -90,8 +90,8 @@ go
 exec sys.sp_volatility 'a.f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-a#!#f1#!#v
+text#!#varchar#!#text
+master_a#!#f1#!#volatile
 ~~END~~
 
 
@@ -101,8 +101,8 @@ go
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-dbo#!#f1#!#s
+text#!#varchar#!#text
+master_dbo#!#f1#!#stable
 ~~END~~
 
 
@@ -142,8 +142,8 @@ go
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-dbo#!#f1#!#s
+text#!#varchar#!#text
+master_dbo#!#f1#!#stable
 ~~END~~
 
 
@@ -151,9 +151,9 @@ dbo#!#f1#!#s
 exec sys.sp_volatility
 go
 ~~START~~
-text#!#varchar#!#varchar
-a#!#f1#!#v
-dbo#!#f1#!#s
+varchar#!#varchar#!#text
+master_a#!#f1#!#volatile
+master_dbo#!#f1#!#stable
 ~~END~~
 
 
@@ -164,22 +164,22 @@ go
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
-text#!#varchar#!#varchar
-test_schema#!#f1#!#v
+text#!#varchar#!#text
+test_db_test_schema#!#f1#!#volatile
 ~~END~~
 
 exec sys.sp_volatility 'f1    '
 go
 ~~START~~
-text#!#varchar#!#varchar
-test_schema#!#f1#!#v
+text#!#varchar#!#text
+test_db_test_schema#!#f1#!#volatile
 ~~END~~
 
 exec sys.sp_volatility
 go
 ~~START~~
-text#!#varchar#!#varchar
-db#!#f1#!#v
+varchar#!#varchar#!#text
+test_db_test_schema#!#f1#!#volatile
 ~~END~~
 
 
