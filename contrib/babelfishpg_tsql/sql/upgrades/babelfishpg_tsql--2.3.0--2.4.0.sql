@@ -65,6 +65,13 @@ END;
 $$
 LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)
+AS
+$$
+    SELECT current_setting('application_name');
+$$
+LANGUAGE sql PARALLEL SAFE STABLE;
+
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
   , CAST(oid as integer) as object_id
@@ -90,6 +97,8 @@ INNER JOIN sys.schemas s on c.connamespace = s.schema_id
 WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
+
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
