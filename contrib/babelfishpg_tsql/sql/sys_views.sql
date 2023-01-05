@@ -2835,10 +2835,20 @@ SELECT
   CAST(f.srvname as sys.sysname) AS name,
   CAST('' as sys.sysname) AS product,
   CAST('tds_fdw' as sys.sysname) AS provider,
-  CAST(split_part(f.srvoptions[1], 'servername=', 2) as sys.nvarchar(4000)) AS data_source,
+  CAST((select string_agg(
+                  case
+                  when option like 'servername=%%' then substring(option, 12)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
   CAST(NULL as sys.nvarchar(4000)) AS location,
   CAST(NULL as sys.nvarchar(4000)) AS provider_string,
-  CAST(split_part(f.srvoptions[2], 'database=', 2) as sys.sysname) AS catalog,
+  CAST((select string_agg(
+                  case
+                  when option like 'database=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
   CAST(0 as int) AS connect_timeout,
   CAST(0 as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,

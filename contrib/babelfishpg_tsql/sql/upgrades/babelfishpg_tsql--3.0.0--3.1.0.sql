@@ -61,6 +61,22 @@ and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
+AS
+$$
+DECLARE
+    res SYS.FLOAT;
+BEGIN
+    IF x = 0 AND y = 0 THEN
+        RAISE EXCEPTION 'An invalid floating point operation occurred.';
+    ELSE
+        res = PG_CATALOG.atan2(x, y);
+        RETURN res;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   SELECT 
   CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
@@ -145,6 +161,13 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
     AND ext.dbid = cast(sys.db_id() as oid);
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)
+AS
+$$
+    SELECT current_setting('application_name');
+$$
+LANGUAGE sql PARALLEL SAFE STABLE;
+
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
   , CAST(oid as integer) as object_id
@@ -170,6 +193,22 @@ INNER JOIN sys.schemas s on c.connamespace = s.schema_id
 WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 INT)
+RETURNS int AS 'babelfishpg_tsql','int_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 SMALLINT)
+RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
+RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
                                                     IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
@@ -209,10 +248,20 @@ SELECT
   CAST(f.srvname as sys.sysname) AS name,
   CAST('' as sys.sysname) AS product,
   CAST('tds_fdw' as sys.sysname) AS provider,
-  CAST(split_part(f.srvoptions[1], 'servername=', 2) as sys.nvarchar(4000)) AS data_source,
+  CAST((select string_agg(
+                  case
+                  when option like 'servername=%%' then substring(option, 12)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
   CAST(NULL as sys.nvarchar(4000)) AS location,
   CAST(NULL as sys.nvarchar(4000)) AS provider_string,
-  CAST(split_part(f.srvoptions[2], 'database=', 2) as sys.sysname) AS catalog,
+  CAST((select string_agg(
+                  case
+                  when option like 'database=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
   CAST(0 as int) AS connect_timeout,
   CAST(0 as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,

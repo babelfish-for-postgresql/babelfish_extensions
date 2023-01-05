@@ -104,6 +104,7 @@ BABEL-2819
 BABEL-2917
 BABEL-2955
 BABEL-3358
+BABEL-3747
 temp-tables
 table-variable
 TestNotNull
@@ -359,4 +360,6 @@ sys_server_principals_dep
 sys_database_principals_dep
 TestVariableDataLength
 BABEL-3801
+app_name
+atn2
 linked_servers
