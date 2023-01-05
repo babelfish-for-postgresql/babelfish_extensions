@@ -2131,6 +2131,11 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	StringInfoData query;
 
 	bool provider_warning = false, provstr_warning = false;
+
+	if (linked_server == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+					errmsg("@server parameter cannot be NULL")));
 	
 	if (strlen(srv_product) == 10 && (strncmp(srv_product, "sql server", 10) == 0))
 	{
