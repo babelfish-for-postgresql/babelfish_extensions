@@ -2168,6 +2168,14 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	initStringInfo(&query);
 
+	/*
+	 * We prepare the following query to create a foreign server. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * CREATE SERVER <server name> FOREIGN DATA WRAPPER tds_fdw OPTIONS (servername
+	 * 	'<remote data source endpoint>', database '<catalog name>')
+	 *
+	 */
 	appendStringInfo(&query, "CREATE SERVER \"%s\" FOREIGN DATA WRAPPER tds_fdw ", linked_server);
 
 	/* Add the relevant options */
@@ -2175,6 +2183,10 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	{
 		appendStringInfoString(&query, "OPTIONS ( ");
 
+		/*
+		 * The servername option is required for foreign server creation,
+		 * but we leave it to the FDW's validator function to check for that
+		 */
 		if (data_src)
 			appendStringInfo(&query, "servername '%s' ", data_src);
 
