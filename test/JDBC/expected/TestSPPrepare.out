@@ -807,10 +807,6 @@ c100 ,  c101 ,  c102 ,  c103 ,  c104 ,  c105 ,  c106 ,  c107 ,  c108 ,  c109
 @c100 ,  @c101 ,  @c102 ,  @c103 ,  @c104 ,  @c105 ,  @c106 ,  @c107 ,  @c108 ,  @c109
 )'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Too many arguments were provided: 110. The maximum allowed limit is 100)~~
-
 
 DROP Table sp_prepare_table
 GO
