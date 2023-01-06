@@ -987,6 +987,22 @@ END;
 $BODY$
 LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.atn2(IN x SYS.FLOAT, IN y SYS.FLOAT) RETURNS SYS.FLOAT
+AS
+$$
+DECLARE
+    res SYS.FLOAT;
+BEGIN
+    IF x = 0 AND y = 0 THEN
+        RAISE EXCEPTION 'An invalid floating point operation occurred.';
+    ELSE
+        res = PG_CATALOG.atan2(x, y);
+        RETURN res;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg anyelement) RETURNS INTEGER
 AS
 $body$
@@ -3247,6 +3263,22 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 BIGINT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 INT)
+RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 SMALLINT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
 $BODY$
@@ -3313,3 +3345,10 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)
+AS
+$$
+    SELECT current_setting('application_name');
+$$
+LANGUAGE sql PARALLEL SAFE STABLE;

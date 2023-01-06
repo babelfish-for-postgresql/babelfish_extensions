@@ -32,7 +32,6 @@
 
 #include "../src/babelfish_version.h"
 #include "../src/datatype_info.h"
-#include "../src/datatypes.h"
 #include "../src/pltsql.h"
 #include "../src/pltsql_instr.h"
 #include "../src/multidb.h"
@@ -79,6 +78,9 @@ PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 PG_FUNCTION_INFO_V1(bigint_degrees);
 PG_FUNCTION_INFO_V1(int_degrees);
 PG_FUNCTION_INFO_V1(smallint_degrees);
+PG_FUNCTION_INFO_V1(bigint_radians);
+PG_FUNCTION_INFO_V1(int_radians);
+PG_FUNCTION_INFO_V1(smallint_radians);
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -158,7 +160,7 @@ version(PG_FUNCTION_ARGS)
 	 * TODO: Return Build number with version string as well.
 	 */
 
-	info = tsql_varchar_input(temp.data, temp.len, -1);
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
 	pfree(temp.data);
 	PG_RETURN_VARCHAR_P(info);
 }
@@ -171,7 +173,7 @@ void* string_to_tsql_varchar(const char *input_str)
 	initStringInfo(&temp);
 	appendStringInfoString(&temp, input_str);
 
-	info = tsql_varchar_input(temp.data, temp.len, -1);
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
 	pfree(temp.data);
 	return info;
 }
@@ -219,7 +221,7 @@ Datum
 pgerror(PG_FUNCTION_ARGS)
 {
 	char *error_sqlstate = unpack_sql_state(latest_pg_error_code);
-	PG_RETURN_VARCHAR_P(tsql_varchar_input((error_sqlstate), strlen(error_sqlstate), -1));
+	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)((error_sqlstate), strlen(error_sqlstate), -1));
 }
 
 
@@ -458,9 +460,9 @@ schema_name(PG_FUNCTION_ARGS)
 
 	logical_name = get_logical_schema_name(name.data, true);
 	if (logical_name)
-		result = tsql_varchar_input(logical_name, strlen(logical_name), -1);
+		result = (*common_utility_plugin_ptr->tsql_varchar_input)(logical_name, strlen(logical_name), -1);
 	else 
-		result = tsql_varchar_input(name.data, strlen(name.data), -1);
+		result = (*common_utility_plugin_ptr->tsql_varchar_input)(name.data, strlen(name.data), -1);
 
 	ReleaseSysCache(tup);
 	PG_RETURN_VARCHAR_P(result);
@@ -584,7 +586,7 @@ default_domain(PG_FUNCTION_ARGS)
 		login_domainname = (*pltsql_protocol_plugin_ptr)->get_login_domainname();
 
 	if (login_domainname)
-		PG_RETURN_VARCHAR_P(tsql_varchar_input(login_domainname, strlen(login_domainname), -1));
+		PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)(login_domainname, strlen(login_domainname), -1));
 	else
 		PG_RETURN_NULL();
 }
@@ -633,7 +635,7 @@ host_os(PG_FUNCTION_ARGS)
 	else
 		host_os_res = pstrdup("UNKNOWN");
 
-	info = tsql_varchar_input(host_os_res, strlen(host_os_res), -1);
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(host_os_res, strlen(host_os_res), -1);
 	if (pg_version)
 		pfree(pg_version);
 	if (host_os_res)
@@ -1244,8 +1246,6 @@ smallint_degrees(PG_FUNCTION_ARGS)
 {
 	int16	arg1 = PG_GETARG_INT16(0);
 	float8	result;
-	 
-	
 
 	result = DatumGetFloat8(DirectFunctionCall1(degrees, Float8GetDatum((float8) arg1)));
 
@@ -1257,4 +1257,43 @@ smallint_degrees(PG_FUNCTION_ARGS)
 	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32) result);
+}
+
+Datum
+bigint_radians(PG_FUNCTION_ARGS)
+{
+	int64    arg1 = PG_GETARG_INT64(0);
+	float8  result;
+
+	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+
+	/* skip range check, since it cannot overflow int64 */
+
+	PG_RETURN_INT64((int64)result);
+}
+
+Datum
+int_radians(PG_FUNCTION_ARGS)
+{
+	int32    arg1 = PG_GETARG_INT32(0);
+	float8  result;
+
+	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+
+	/* skip range check, since it cannot overflow int32 */
+
+	PG_RETURN_INT32((int32)result);
+}
+
+Datum
+smallint_radians(PG_FUNCTION_ARGS)
+{
+	int16    arg1 = PG_GETARG_INT16(0);
+	float8  result;
+
+	result = DatumGetFloat8(DirectFunctionCall1(radians, Float8GetDatum((float8) arg1)));
+
+	/* skip range check, since it cannot overflow int32 */
+
+	PG_RETURN_INT32((int32)result);
 }

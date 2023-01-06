@@ -14,7 +14,8 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "datatypes.h"
+
+common_utility_plugin *common_utility_plugin_ptr = NULL;
 
 bool suppress_string_truncation_error = false;
 
@@ -195,10 +196,10 @@ void pltsql_declare_variable(Oid type, int32 typmod, char *name, char mode, Datu
 	(*fcinfo)->nargs++;
 	
 	/* Safety check */
-	if ((*fcinfo)->nargs > FUNC_MAX_ARGS)
+	if ((*fcinfo)->nargs - 2 > PREPARE_STMT_MAX_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				errmsg("cannot pass more than %d arguments to a procedure",
-				       FUNC_MAX_ARGS)));
+				       PREPARE_STMT_MAX_ARGS)));
 }
 
 /*
@@ -734,17 +735,17 @@ update_ViewStmt(Node *n, const char *view_schema)
 
 bool is_tsql_any_char_datatype(Oid oid)
 {
-	return is_tsql_bpchar_datatype(oid) ||
-		is_tsql_nchar_datatype(oid) ||
-		is_tsql_varchar_datatype(oid) ||
-		is_tsql_nvarchar_datatype(oid);
+	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nchar_datatype)(oid) ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype)(oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(oid);
 }
 
 bool is_tsql_text_ntext_or_image_datatype(Oid oid)
 {
-	return is_tsql_text_datatype(oid) ||
-		is_tsql_ntext_datatype(oid) ||
-		is_tsql_image_datatype(oid);
+	return (*common_utility_plugin_ptr->is_tsql_text_datatype)(oid) ||
+		(*common_utility_plugin_ptr->is_tsql_ntext_datatype)(oid) ||
+		(*common_utility_plugin_ptr->is_tsql_image_datatype)(oid);
 }
 
 /*
@@ -888,4 +889,20 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 
 	ReleaseSysCache(proctup);
 	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
+}
+
+void init_and_check_common_utility(void)
+{
+	if (!common_utility_plugin_ptr)
+	{
+		common_utility_plugin **utility_plugin;
+		utility_plugin = (common_utility_plugin **) find_rendezvous_variable("common_utility_plugin"); 
+		common_utility_plugin_ptr = *utility_plugin;
+
+		/* common_utility_plugin_ptr is still not initialised */
+		if (!common_utility_plugin_ptr)
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Failed to find common utility plugin.")));
+	}
 }

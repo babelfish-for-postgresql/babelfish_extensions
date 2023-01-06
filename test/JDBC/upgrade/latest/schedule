@@ -104,6 +104,7 @@ BABEL-2917
 BABEL-2955
 BABEL-3358
 BABEL-3747
+BABEL-3781
 temp-tables
 table-variable
 TestNotNull
@@ -193,6 +194,7 @@ BABEL-741
 BABEL-ROLE-MEMBER
 tdscollation
 BABEL-EXTENDEDPROPERTY
+BABEL-EXECUTE_AS_CALLER
 sys-filegroups
 sys-filetables
 sys-fulltext_indexes
@@ -264,6 +266,7 @@ format
 msdb-dbo-syspolicy_system_health_state
 dateadd_internal_df
 sys-all_columns
+sys-all_columns-dep
 sys-all_sql_modules
 sys-assembly_modules
 sys-change_tracking_databases
@@ -295,6 +298,8 @@ sys-index_columns
 sys-indexes
 sys-key_constraints
 sys-master_files
+sys-partitions
+sys-partitions-dep
 sys-registered_search_property_lists
 sys-schemas
 sys-selective_xml_index_paths
@@ -354,5 +359,8 @@ ISC-Columns
 ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
+atn2
+app_name
 ISC-sequences
 jira-BABEL-3504-upgrade
+case_insensitive_collation
