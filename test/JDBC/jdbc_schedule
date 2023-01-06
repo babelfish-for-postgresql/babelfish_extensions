@@ -96,3 +96,11 @@ ignore#!#sys-system_objects-for-13-x-vu-cleanup
 ignore#!#sys-identity_columns-dep-for-14-3-vu-prepare
 ignore#!#sys-identity_columns-dep-for-14-3-vu-verify
 ignore#!#sys-identity_columns-dep-for-14-3-vu-cleanup
+ignore#!#case_insensitive_collation-before-13-5-vu-prepare
+ignore#!#case_insensitive_collation-before-13-5-vu-verify
+ignore#!#case_insensitive_collation-before-13-5-vu-cleanup
+
+#Ignore upgrade tests in normal JDBC run as they are to be run in multi-db mode, similar test files for JDBC testing are already present
+ignore#!#jira-BABEL-3504-upgrade-vu-prepare
+ignore#!#jira-BABEL-3504-upgrade-vu-verify
+ignore#!#jira-BABEL-3504-upgrade-vu-cleanup

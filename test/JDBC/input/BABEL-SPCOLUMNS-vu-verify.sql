@@ -1,3 +1,4 @@
+-- sla 800000
 USE babel_sp_columns_vu_prepare_mydb1
 GO
 
