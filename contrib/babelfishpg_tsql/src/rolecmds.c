@@ -68,6 +68,8 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										void *arg);
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
+static bool has_user_in_db(const char *login, char **db_name);
+
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -1680,7 +1682,7 @@ is_active_login(Oid role_oid)
 /*
  * To check if given login is already a user in one of the databases
  */
-bool
+static bool
 has_user_in_db(const char *login, char **db_name)
 {
 	Relation		bbf_authid_user_ext_rel;
