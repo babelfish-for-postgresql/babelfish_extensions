@@ -37,6 +37,9 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
+ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN orig_loginname SYS.NVARCHAR(128);
+
 create or replace view sys.views as 
 select 
   t.relname as name
