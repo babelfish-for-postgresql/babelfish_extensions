@@ -1,0 +1,78 @@
+-- psql
+show statement_timeout;
+GO
+~~START~~
+text
+0
+~~END~~
+
+
+ALTER SYSTEM SET statement_timeout=3000;
+GO
+
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+-- execution should get terminated due to statement timeout
+exec pg_sleep 10;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: canceling statement due to statement timeout)~~
+
+
+exec pg_sleep 1;
+GO
+
+-- should time out for execution_time = statement_timeout
+exec pg_sleep 3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: canceling statement due to statement timeout)~~
+
+
+exec pg_sleep 2.9;
+GO
+
+-- psql
+-- should throw error as negative values aren't permitted 
+ALTER SYSTEM SET statement_timeout=-1000;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: -1000 ms is outside the valid range for parameter "statement_timeout" (0 .. 2147483647)
+    Server SQLState: 22023)~~
+
+-- psql
+
+-- reset guc value to default
+ALTER SYSTEM SET statement_timeout=0;
+GO
+
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+-- no timeout for t = 0
+exec pg_sleep 0;
+GO

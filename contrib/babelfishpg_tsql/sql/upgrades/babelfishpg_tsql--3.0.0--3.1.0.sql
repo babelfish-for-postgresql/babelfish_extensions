@@ -285,6 +285,21 @@ LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.partitions AS
+SELECT
+ (to_char( i.object_id, 'FM9999999999' ) || to_char( i.index_id, 'FM9999999999' ) || '1')::bigint AS partition_id
+ , i.object_id
+ , i.index_id
+ , 1::integer AS partition_number
+ , 0::bigint AS hobt_id
+ , c.reltuples::bigint AS "rows"
+ , 0::smallint AS filestream_filegroup_id
+ , 0::sys.tinyint AS data_compression
+ , 'NONE'::sys.nvarchar(60) AS data_compression_desc
+FROM sys.indexes AS i
+INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
+GRANT SELECT ON sys.partitions TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
