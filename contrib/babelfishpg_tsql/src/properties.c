@@ -60,7 +60,7 @@ extern bool pltsql_numeric_roundabort;
 extern bool pltsql_quoted_identifier;
 extern char *bbf_servername;
 
-static VarChar *get_servername_helper(void);
+static void* get_servername_helper(void);
 static VarChar *get_product_version_helper(int idx);
 
 Datum connectionproperty(PG_FUNCTION_ARGS) {
@@ -140,18 +140,17 @@ Datum connectionproperty(PG_FUNCTION_ARGS) {
 	PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertVarcharToSQLVariantByteA)(vch, PG_GET_COLLATION()));
 }
 
-static VarChar *
-get_servername_helper()
+void* get_servername_helper()
 {
-	StringInfoData	temp;
-	void*		info;
+	StringInfoData temp;
+    void* info;
 
-	initStringInfo(&temp);
-	appendStringInfoString(&temp, bbf_servername);
-	
-	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
-	pfree(temp.data);
-	return (VarChar *)info;
+    initStringInfo(&temp);
+    appendStringInfoString(&temp, bbf_servername);
+
+    info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+    pfree(temp.data);
+    return info;
 }
 
 static char *
@@ -453,7 +452,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	}
 	else if (strcasecmp(property, "ServerName") == 0)
 	{
-		vch = get_servername_helper();
+		vch = (VarChar*) get_servername_helper();
 	}
 	else if (strcasecmp(property, "SqlCharSet") == 0 || strcasecmp(property, "SqlSortOrder") == 0)
 	{
