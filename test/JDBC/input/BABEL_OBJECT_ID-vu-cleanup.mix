@@ -1,7 +1,7 @@
 USE babel_object_id_db;
 GO
 
-DROP TABLE babel_object_id_t1;
+DROP TABLE babel_object_id_db_t1;
 GO
 
 USE master;
@@ -26,6 +26,9 @@ DROP FUNCTION babel_object_id_func1
 GO
 
 DROP PROCEDURE babel_object_id_proc1
+GO
+
+DROP TRIGGER babel_object_id_trg
 GO
 
 DROP TABLE babel_object_id_t1

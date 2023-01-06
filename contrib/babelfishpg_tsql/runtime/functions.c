@@ -937,6 +937,7 @@ object_id(PG_FUNCTION_ARGS)
 	char 			*object_name;
 	bool 			is_temp_object;
 	Oid 			schema_oid;
+	Oid				user_id = GetUserId();
 	Oid 			result = InvalidOid;
 	int 			i;
 	char 			*input = lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
@@ -972,10 +973,19 @@ object_id(PG_FUNCTION_ARGS)
 		db_name = get_cur_db_name();
 	else if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
 	{
-		/* can only search in current database, allowing tempdb for temp objects */
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("Can only do lookup in current database.")));
+		/* cross database lookup */
+		const char *login;
+		const char *user = NULL;
+		int db_id = get_db_id(db_name);
+
+		if (!DbidIsValid(db_id))
+			PG_RETURN_NULL();
+		login = GetUserNameFromId(GetSessionUserId(), false);
+		user = get_authid_user_ext_physical_name(db_name, login);
+		if(!user)
+			PG_RETURN_NULL();
+		
+		user_id = GetSessionUserId();
 	}
 
 	if (!strcmp(schema_name, ""))
@@ -1015,7 +1025,7 @@ object_id(PG_FUNCTION_ARGS)
 			{
 				/* search in list of ENRs registered in the current query environment by name */
 				EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
-				if(enr != NULL)
+				if(enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 				{
 					result = enr->md.reliddesc;
 				}
@@ -1034,13 +1044,17 @@ object_id(PG_FUNCTION_ARGS)
 				!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
 			{	
 				/* search in pg_class by name and schema oid */
-				result = get_relname_relid((const char *) object_name, schema_oid); 
+				Oid relid = get_relname_relid((const char *) object_name, schema_oid);
+				if(OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				{
+					result = relid;
+				} 
 			}
 			else if (!strcmp(object_type, "C") || !strcmp(object_type, "D") || !strcmp(object_type, "F") ||
 					!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
 			{
 				/* search in pg_constraint by name and schema oid */
-				result = tsql_get_constraint_oid(object_name, schema_oid);
+				result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
 			}
 			else if (!strcmp(object_type, "AF") || !strcmp(object_type, "FN") || !strcmp(object_type, "FS") ||
 					!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
@@ -1048,12 +1062,12 @@ object_id(PG_FUNCTION_ARGS)
 					!strcmp(object_type, "X"))
 			{
 				/* search in pg_proc by name and schema oid */
-				result = tsql_get_proc_oid(object_name, schema_oid);
+				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
 			}
 			else if (!strcmp(object_type, "TR") || !strcmp(object_type, "TA"))
 			{
 				/* search in pg_trigger by name and schema oid */
-				result = tsql_get_trigger_oid(object_name, schema_oid);
+				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
 			}
 			else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
 					!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
@@ -1071,7 +1085,7 @@ object_id(PG_FUNCTION_ARGS)
 		{
 			/* search in list of ENRs registered in the current query environment by name */
 			EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
-			if(enr != NULL)
+			if(enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 			{
 				result = enr->md.reliddesc;
 			}
@@ -1079,24 +1093,28 @@ object_id(PG_FUNCTION_ARGS)
 		else
 		{
 			/* search in pg_constraint by name and schema oid */
-			result = tsql_get_constraint_oid(object_name, schema_oid);
+			result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
 
 			if (!OidIsValid(result)) /* if not found earlier */
 			{
 				/* search in pg_class by name and schema oid */
-				result = get_relname_relid((const char *) object_name, schema_oid);
+				Oid relid = get_relname_relid((const char *) object_name, schema_oid);
+				if(OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				{
+					result = relid;
+				} 
 			}
 
 			if (!OidIsValid(result))  /* search only if not found earlier */
 			{
 				/* search in pg_trigger by name and schema oid */
-				result = tsql_get_trigger_oid(object_name, schema_oid);
+				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
 			}
 
 			if (!OidIsValid(result))  /* search only if not found earlier */
 			{
 				/* search in pg_proc by name and schema oid */
-				result = tsql_get_proc_oid(object_name, schema_oid);
+				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
 			}
 		}
 	}

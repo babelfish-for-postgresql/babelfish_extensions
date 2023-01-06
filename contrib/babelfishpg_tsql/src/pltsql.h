@@ -1975,10 +1975,9 @@ extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern void init_and_check_common_utility(void);
-extern Oid tsql_get_trigger_oid(char *tgname, Oid tgnamespace);
-extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace);
-extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace);
-extern Oid tsql_get_temp_object_oid(char *relname);
+extern Oid tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
+extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id);
+extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
 extern char** split_object_name(char *name);
 
 typedef struct

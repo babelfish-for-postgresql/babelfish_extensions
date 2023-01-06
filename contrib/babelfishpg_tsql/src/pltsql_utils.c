@@ -18,6 +18,7 @@
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
 #include "utils/catcache.h"
+#include "utils/acl.h"
 #include "access/table.h"
 #include "access/genam.h"
 
@@ -920,7 +921,7 @@ void init_and_check_common_utility(void)
  * Returns InvalidOid if there is no such constraint.
  */
 Oid
-tsql_get_constraint_oid(char *conname, Oid connamespace)
+tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id)
 {	
 	Relation		tgrel;
 	ScanKeyData 	skey[2];
@@ -948,8 +949,14 @@ tsql_get_constraint_oid(char *conname, Oid connamespace)
 	{
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 		if (OidIsValid(con->oid))
-		{
-			result = con->oid;
+		{	
+			if (OidIsValid(con->conrelid))
+			{
+				if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+					result = con->oid;
+			}
+			else
+				result = con->oid;
 		}
 	}
 	systable_endscan(tgscan);
@@ -964,7 +971,7 @@ tsql_get_constraint_oid(char *conname, Oid connamespace)
  * Returns InvalidOid if there is no such trigger.
  */
 Oid
-tsql_get_trigger_oid(char *tgname, Oid tgnamespace)
+tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id)
 {
 	Relation		tgrel;
 	ScanKeyData 	key;
@@ -990,7 +997,8 @@ tsql_get_trigger_oid(char *tgname, Oid tgnamespace)
 			break;
 		}
 		/* then consider only trigger in specified namespace */
-		if (get_rel_namespace(pg_trigger->tgrelid) == tgnamespace)
+		if (get_rel_namespace(pg_trigger->tgrelid) == tgnamespace && 
+			pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			result = pg_trigger->oid;
 			break;
@@ -1008,7 +1016,7 @@ tsql_get_trigger_oid(char *tgname, Oid tgnamespace)
  * Returns InvalidOid if there is no such proc.
  */
 Oid
-tsql_get_proc_oid(char *proname, Oid pronamespace)
+tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id)
 {
 	HeapTuple		tuple;
 	CatCList		*catlist;
@@ -1022,7 +1030,7 @@ tsql_get_proc_oid(char *proname, Oid pronamespace)
 		tuple = &catlist->members[i]->tuple;
 		procform = (Form_pg_proc) GETSTRUCT(tuple);
 		/* then consider only procs in specified namespace */
-		if (procform->pronamespace == pronamespace)
+		if (procform->pronamespace == pronamespace && pg_proc_aclcheck(procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 		{
 			result = procform->oid;
 			break;

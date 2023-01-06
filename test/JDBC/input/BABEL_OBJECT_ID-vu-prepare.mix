@@ -1,6 +1,9 @@
 
--- To test table, procedure, function
+-- To test table, trigger, procedure, function
 CREATE TABLE babel_object_id_t1 (a int);
+GO
+
+CREATE TRIGGER babel_object_id_trg ON babel_object_id_t1 AFTER INSERT AS SELECT 1;
 GO
 
 CREATE PROCEDURE babel_object_id_proc1 AS SELECT 1;
@@ -29,8 +32,5 @@ GO
 USE babel_object_id_db;
 GO
 
-CREATE TABLE babel_object_id_t1 (a int);
-GO
-
-USE master;
+CREATE TABLE babel_object_id_db_t1 (a int);
 GO
