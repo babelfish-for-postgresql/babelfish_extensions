@@ -18,3 +18,6 @@ GO
 
 Select sys.tsql_get_expr('abc',123)
 GO
+
+Select sys.tsql_get_expr('abc',0)
+GO

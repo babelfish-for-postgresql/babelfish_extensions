@@ -408,18 +408,19 @@ tsql_get_expr(PG_FUNCTION_ARGS)
     {
         /* Get the name for the relation */
         relname = get_rel_name(relid);
-
-        /*
-         * If the OID isn't actually valid, don't throw an error, just return
-         * NULL.  This is a bit questionable, but it's what we've done
-         * historically, and it can help avoid unwanted failures when
-         * examining catalog entries for just-deleted relations.
-         */
-        if (relname == NULL)
-            PG_RETURN_NULL();
     }
     else
+    {
         relname = NULL;
+    }
+    /*
+     * If the relname is NULL, don't throw an error, just return
+     * NULL.  This is a bit questionable, but it's what we've done
+     * historically, and it can help avoid unwanted failures when
+     * examining catalog entries for just-deleted relations.
+     */
+    if (relname == NULL)
+	PG_RETURN_NULL();
 
     PG_RETURN_TEXT_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
 }
@@ -430,7 +431,6 @@ tsql_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags
     Node       *node;
     List       *context;
     char       *exprstr;
-    char       *str;
 
     /* Convert input TEXT object to C string */
     exprstr = text_to_cstring(expr);
@@ -446,12 +446,9 @@ tsql_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags
     else
         context = NIL;
 
-    /* Deparse */
-    str = deparse_expression_pretty(node, context, false, false,
-                                    prettyFlags, 0);
-
-	pfree(node);
-    return string_to_text(str);
+    pfree(node);
+							 /* Deparse */
+    return string_to_text(deparse_expression_pretty(node, context, false, false,prettyFlags, 0));
 }
 
 /*
