@@ -2280,8 +2280,6 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		 */
 		if (list_length(type_names) == 2)
 		{
-			/* Free the existing val before modifying it. */
-			pfree(strVal(linitial(type_names)));
 			strVal(linitial(type_names)) = get_physical_schema_name(
 							get_cur_db_name(), strVal(linitial(type_names)));
 		}
