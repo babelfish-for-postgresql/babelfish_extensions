@@ -397,7 +397,7 @@ ProcessVersionNumber(const char* inputString)
 	char 		*token;
 
 	Assert(inputString != NULL);
-	strcpy(copy_version_number,inputString);
+	strncpy(copy_version_number,inputString,strlen(inputString) + 1);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{ 
 		version_arr[part] = atoi(token);
