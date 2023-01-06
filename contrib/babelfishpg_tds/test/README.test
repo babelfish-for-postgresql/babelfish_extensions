@@ -56,6 +56,9 @@ export PG_CONFIG=<engine installation directory>/pg_config
 cd babelfish_extensions/contrib/babelfishpg_tds/
 make installcheck
 
+Individual test(s) can be run instead by passing
+something like PROVE_TESTS="t/001_testname.pl t/002_othertestname.pl" to make.
+
 Writing test cases
 ----------------------
 Test scripts in the t/ subdirectory of a suite are executed in alphabetical
@@ -68,7 +71,7 @@ Each test script should begin with:
     use PostgreSQL::Test::Cluster;
     use PostgreSQL::Test::Utils;
     use Test::More;
-	use TDSNode;
+    use TDSNode;
 
 then it will generally need to set up one or more nodes, run commands
 against them and evaluate the results. For example:
