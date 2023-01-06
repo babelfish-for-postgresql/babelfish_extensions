@@ -2247,7 +2247,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	
 	initStringInfo(&query);
 
-	appendStringInfo(&query, "CREATE USER MAPPING \"%s\" FOR SESSION_USER ", servername);
+	appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
 
 	/* Add the relevant options */
 	if (username || password)

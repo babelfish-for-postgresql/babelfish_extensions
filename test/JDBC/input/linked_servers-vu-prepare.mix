@@ -41,7 +41,7 @@ GO
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'TRUE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
 
--- Create a linked server login with @useself = FALSE
+-- Create a linked server login with @useself = FALSE. Also call sp_addlinkedsrvlogin from master.dbo schema
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
 
