@@ -147,7 +147,6 @@ static Constraint *get_rowversion_default_constraint(TypeName *typname);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
-static char* convertToUPN(char* input);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -2017,61 +2016,6 @@ static inline bool process_utility_stmt_explain_only_mode(const char *queryStrin
 		return false;
 
 	return true;
-}
-
-/* 
-* This function is called to convert domain\user to user@DOMAIN
-*/
-
-static char* convertToUPN(char* input){
-	int i=0, pos_slash = -1, k=0, pos_at = -1;
-    char* output = malloc(strlen(input));
-    while(input[i]!='\0'){
-        if(input[i] == '\\'){
-            pos_slash = i;
-            break;
-        }
-        else if(input[i] == '@'){
-            pos_at = i;
-            break;
-        }
-        i++;
-    }
-
-    if(pos_slash == -1 && pos_at == -1)
-        return input;
-    
-    if(pos_slash != -1){
-        i = pos_slash + 1;
-        
-        while(input[i]!='\0'){
-            output[k] = tolower(input[i]);
-            i++;
-            k++;
-        }
-        output[k++] = '@';
-        i = 0;
-        while(i != pos_slash){
-        	output[k] = toupper(input[i]);
-            i++;
-            k++;
-        }
-    }
-        
-    else{
-        i = 0;
-        while(input[i] != '\0'){
-            if(i<pos_at)
-                output[i] = tolower(input[i]);
-            else if(i> pos_at)
-                output[i] = toupper(input[i]);
-            else
-                output[i] = input[i];
-            i++;
-        }
-    }
-
-    return output;
 }
 
 /*
