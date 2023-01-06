@@ -2279,10 +2279,8 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		 */
 		if (list_length(type_names) == 2)
 		{
-			String *orig_typname = (String *) linitial(type_names);
-			char *tmp_typname = = get_physical_schema_name( get_cur_db_name(), orig_typname->sval);
-			pfree(orig_typname->sval);
-			orig_typname->sval = tmp_typname;
+			strVal(linitial(type_names)) = get_physical_schema_name(
+							get_cur_db_name(), strVal(linitial(type_names)));
 		}
 
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
