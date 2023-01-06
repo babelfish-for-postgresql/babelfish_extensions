@@ -8,6 +8,10 @@ inputs:
     description: 'Engine install directory'
     required: no
     default: psql
+  tap_tests:
+    description: 'Tap Tests Enabled'
+    required: no
+    default: no
 
 runs:
   using: "composite"
@@ -35,7 +39,11 @@ runs:
 
         $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"
         cd postgresql_modified_for_babelfish
-        ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+        if [[ ${{inputs.tap_tests}} == "yes" ]]; then
+          ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --enable-tap-tests --with-gssapi
+        else
+          ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+        fi
         make -j 4 2>error.txt
         make install
         make check
