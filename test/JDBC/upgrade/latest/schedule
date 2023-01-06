@@ -365,3 +365,4 @@ BABEL-3801
 app_name
 atn2
 linked_servers
+case_insensitive_collation
