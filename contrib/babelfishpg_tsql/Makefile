@@ -67,7 +67,9 @@ OBJS += src/json_funcs.o
 OBJS += src/pltsql_ruleutils.o
 OBJS += src/tsql_for/tsql_for.o
 OBJS += src/tsql_for/forjson.o
+OBJS += src/tsql_for/forjson_old.o
 OBJS += src/tsql_for/forxml.o
+OBJS += src/tsql_for/forxml_old.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime

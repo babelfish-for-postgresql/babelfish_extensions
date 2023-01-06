@@ -220,22 +220,3 @@ tsql_row_to_json(StringInfo state, Datum record, bool include_null_values)
 	}
 	appendStringInfoChar(state,'}');
 }
-
-PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
-Datum
-tsql_query_to_json_text(PG_FUNCTION_ARGS)
-{
-	/*
-	 * This function has been deprecated as of v2.4.
-	 * However, we cannot remove this function entirely because
-	 * it exists in PG13. Without this function, MVU from PG13 to PG14 will fail.
-	 *
-	 * Removing the procedure sys.tsql_query_to_json_text() during pg_dump
-	 * cannot be an option because other user-defined procedures
-	 * are able to refer this function as well.
-	 */
-	ereport(WARNING,
-			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-			 errmsg("This function has been deprecated.")));
-	PG_RETURN_NULL();
-}
