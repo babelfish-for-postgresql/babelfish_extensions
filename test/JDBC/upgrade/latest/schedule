@@ -365,3 +365,4 @@ TestVariableDataLength
 BABEL-3801
 app_name
 atn2
+case_insensitive_collation
