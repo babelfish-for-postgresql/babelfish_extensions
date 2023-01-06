@@ -22,10 +22,6 @@ GO
 
 CREATE LOGIN r4 FROM WINDOWS;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'WINDOWS' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_login_misc_options to ignore)~~
-
 
 CREATE LOGIN r5 WITH PASSWORD = 'xyz', SID = 0x123ABC;
 GO
@@ -60,10 +56,6 @@ FROM WINDOWS
 WITH DEFAULT_DATABASE = db2,
 DEFAULT_LANGUAGE = English;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'WINDOWS' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_login_misc_options to ignore)~~
-
 
 CREATE LOGIN r9 FROM ASYMMETRIC KEY asymkey1;
 GO
@@ -239,6 +231,10 @@ GO
 
 CREATE LOGIN r4 FROM WINDOWS;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The Server principal 'r4' already exists)~~
+
 
 CREATE LOGIN r5 WITH PASSWORD = 'xyz', SID = 0x123ABC;
 GO
@@ -277,6 +273,10 @@ FROM WINDOWS
 WITH DEFAULT_DATABASE = db2,
 DEFAULT_LANGUAGE = English;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The Server principal 'r8' already exists)~~
+
 
 CREATE LOGIN r9 FROM ASYMMETRIC KEY asymkey1;
 GO
