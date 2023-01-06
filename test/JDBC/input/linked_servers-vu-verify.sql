@@ -4,3 +4,6 @@ GO
 
 SELECT * FROM sys_linked_servers_vu_prepare__sys_servers_func()
 GO
+
+SELECT * FROM sys_linked_servers_vu_prepare__sys_servers_view
+GO
