@@ -251,6 +251,17 @@ public class batch_run {
                     // Ensure con_bbl is never null
                     if (connection != null) con_bbl = connection;
 
+                } else if (isCrossDialectFile && ( (tsqlDialect = strLine.toLowerCase().startsWith("-- terminate-tsql-conn")) ||
+                                                    (psqlDialect = strLine.toLowerCase().startsWith("-- terminate-psql-conn")))) {
+
+                    bw.write(strLine);
+                    bw.newLine();
+
+                    if (tsqlDialect) {
+                        jdbcCrossDialect.terminateTsqlConnection(strLine, bw, logger);
+                    } else if (psqlDialect) {
+                        jdbcCrossDialect.terminatePsqlConnection(strLine, bw, logger);
+                    }
                 } else {
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {

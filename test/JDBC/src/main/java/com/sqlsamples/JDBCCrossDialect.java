@@ -168,4 +168,41 @@ public class JDBCCrossDialect {
         closeConnectionsUtil(tsqlConnectionMap, bw, logger);
         closeConnectionsUtil(psqlConnectionMap, bw, logger);
     }
+
+    void terminateTsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
+        getConnectionAttributes(strLine);
+
+        if (tsqlConnectionMap.containsKey(newUser + newPassword + newDatabase)) {
+            Connection connection = tsqlConnectionMap.get(newUser + newPassword + newDatabase);
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    handleSQLExceptionWithFile(e, bw, logger);
+                }
+            }
+
+            tsqlConnectionMap.remove(newUser + newPassword + newDatabase);
+            resetConnectionAttributes();
+        }
+    }
+
+
+    void terminatePsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
+        getConnectionAttributes(strLine);
+
+        if (psqlConnectionMap.containsKey(newUser + newPassword + newPhysicalDatabase + searchPath)) {
+            Connection connection = psqlConnectionMap.get(newUser + newPassword + newPhysicalDatabase + searchPath);
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    handleSQLExceptionWithFile(e, bw, logger);
+                }
+            }
+
+            psqlConnectionMap.remove(newUser + newPassword + newDatabase);
+            resetConnectionAttributes();
+        }
+    }
 }
