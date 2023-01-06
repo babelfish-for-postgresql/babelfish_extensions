@@ -9,6 +9,7 @@
 #include "commands/proclang.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
+#include "nodes/value.h"
 #include "pltsql_bulkcopy.h"
 
 #include "catalog.h"
