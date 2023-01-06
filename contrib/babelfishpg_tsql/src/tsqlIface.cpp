@@ -69,6 +69,7 @@ extern "C"
 
 	extern bool pltsql_dump_antlr_query_graph;
 	extern bool pltsql_enable_antlr_detailed_log;
+	extern bool pltsql_disable_sll_parse_mode;
 
 	extern bool pltsql_enable_tsql_information_schema;
 
@@ -165,6 +166,7 @@ static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
+static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -2451,6 +2453,21 @@ antlr_parser_cpp(const char *sourceText)
 		std::cout << sep << std::endl;
 	}
 
+	result = antlr_parse_query(sourceText, !pltsql_disable_sll_parse_mode);
+
+	// If parsing failed in SLL mode, reparse in LL mode
+	if (!result.success && result.errcod == ERRCODE_SYNTAX_ERROR)
+	{
+		elog(WARNING, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
+		result = antlr_parse_query(sourceText, false);
+	}
+
+	return result;
+}
+
+ANTLR_result
+antlr_parse_query(const char *sourceText, bool useSSLParsing) {
+	ANTLR_result result;
 	MyInputStream sourceStream(sourceText);
 
 	TSqlLexer lexer(&sourceStream);
@@ -2458,8 +2475,10 @@ antlr_parser_cpp(const char *sourceText)
 
 	MyParserErrorListener errorListner;
 
-        TSqlParser parser(&tokens);
+	TSqlParser parser(&tokens);
 
+	if (useSSLParsing)
+		parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(atn::PredictionMode::SLL);
 	parser.removeErrorListeners();
 	parser.addErrorListener(&errorListner);
 
