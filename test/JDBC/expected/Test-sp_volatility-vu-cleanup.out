@@ -7,6 +7,12 @@ go
 drop schema a
 go
 
+use test_sp_volatility_db1
+go
+
+drop function f2
+go
+
 use test_db
 go
 
@@ -20,6 +26,9 @@ drop user test_user
 go
 
 use master
+go
+
+drop database test_sp_volatility_db1
 go
 
 drop database test_db

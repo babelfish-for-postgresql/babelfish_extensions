@@ -1,4 +1,5 @@
 -- tsql
+/* test without schema name */
 exec sys.sp_volatility 'f1'
 go
 ~~START~~
@@ -47,6 +48,7 @@ master_dbo#!#f1#!#volatile
 ~~END~~
 
 
+/* test with schema name */
 exec sys.sp_volatility 'a.f1'
 go
 ~~START~~
@@ -63,7 +65,7 @@ text#!#varchar#!#text
 master_a#!#f1#!#stable
 ~~END~~
 
-exec sys.sp_volatility 'a.f1', 'immutable'
+exec sys.sp_volatility '"a".f1', 'immutable'
 go
 exec sys.sp_volatility 'a.f1'
 go
@@ -72,7 +74,7 @@ text#!#varchar#!#text
 master_a#!#f1#!#immutable
 ~~END~~
 
-exec sys.sp_volatility 'a.f1', 'volatile'
+exec sys.sp_volatility '[a].f1', 'volatile'
 go
 exec sys.sp_volatility 'a.f1'
 go
@@ -106,6 +108,27 @@ master_dbo#!#f1#!#stable
 ~~END~~
 
 
+/* testing for leading space should give error */
+exec sys.sp_volatility '  f1', 'immutable'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message:   f1 function not found)~~
+
+exec sys.sp_volatility 'f1', '  immutable'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Enter a valid volatility)~~
+
+exec sys.sp_volatility 'f1'
+go
+~~START~~
+text#!#varchar#!#text
+master_dbo#!#f1#!#stable
+~~END~~
+
+
 /* testing for some invalid cases */
 exec sys.sp_volatility 'master.a.f1'
 go
@@ -119,7 +142,7 @@ go
 
 ~~ERROR (Message: random_function function not found)~~
 
-exec sys.sp_volatility '','stable'
+exec sys.sp_volatility '','immutable'
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -148,12 +171,13 @@ master_dbo#!#f1#!#stable
 
 
 /* testing to get all functions in current db */
+use test_sp_volatility_db1
+go
 exec sys.sp_volatility
 go
 ~~START~~
 varchar#!#varchar#!#text
-master_a#!#f1#!#volatile
-master_dbo#!#f1#!#stable
+test_sp_volatility_db1_dbo#!#f2#!#volatile
 ~~END~~
 
 
