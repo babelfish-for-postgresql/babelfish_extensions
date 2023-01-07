@@ -54,7 +54,7 @@ EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'TRUE', @rmtu
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Only @useself = FALSE is supported)~~
+~~ERROR (Message: Only @useself = FALSE is supported. Remote login using user's self credentials is not supported.)~~
 
 
 -- Create a linked server login with @useself = FALSE. Also call sp_addlinkedsrvlogin from master.dbo schema
@@ -76,6 +76,12 @@ GO
 CREATE VIEW sys_linked_servers_vu_prepare__sys_servers_view
 AS
 SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers ORDER BY name
+GO
+
+-- Create a view dependent on sys.linked_logins view
+CREATE VIEW sys_linked_servers_vu_prepare__sys_linked_logins_view
+AS
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id ORDER BY linked_srv_name
 GO
 
 -- tsql    user=linked_server_login_861    password=password_861

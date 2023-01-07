@@ -2202,8 +2202,6 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 		appendStringInfoString(&query, ")");
 	}
 
-	exec_utility_cmd_helper("GRANT USAGE ON FOREIGN DATA WRAPPER tds_fdw TO sysadmin");
-
 	exec_utility_cmd_helper(query.data);
 
 	/* We throw warnings only if foreign server object creation succeeds */
@@ -2249,19 +2247,33 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	if (servername == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
-				 	errmsg("@rmtsrvname parameter cannot be NULL")));
+					errmsg("@rmtsrvname parameter cannot be NULL")));
 
 	/* We do not support login using user's self credentials */
 	if ((useself == NULL) || (strlen(useself) != 5) || (strncmp(useself, "false", 5) != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
-				 	errmsg("Only @useself = FALSE is supported")));
-	
+					errmsg("Only @useself = FALSE is supported. Remote login using user's self credentials is not supported.")));
+
 	initStringInfo(&query);
 
+	/*
+	 * We prepare the following query to create a user mapping. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * CREATE USER MAPPING FOR CURRENT_USER SERVER <servername> OPTIONS (username
+	 * 	'<remote server user name>', password '<remote server user password>')
+	 *
+	 */
 	appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
 
-	/* Add the relevant options */
+	/*
+	 * Add the relevant options
+	 *
+	 * The username and password options are required for user mapping
+	 * creation, but we leave it to the FDW's validator function to
+	 * check for that
+	 */
 	if (username || password)
 	{
 		appendStringInfoString(&query, "OPTIONS ( ");
@@ -2290,7 +2302,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	if (username)
 		pfree(username);
-	
+
 	if (password)
 		pfree(password);
 
