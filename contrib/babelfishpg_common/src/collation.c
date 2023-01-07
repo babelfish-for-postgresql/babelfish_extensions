@@ -120,12 +120,16 @@ coll_translate_t coll_translations[] =
 #define TOTAL_COLL_TRANSLATION_COUNT (sizeof(coll_translations)/sizeof(coll_translations[0]))
 
 /*
- * Collation translation table.  This must be sorted by the first column (BBF collation),
- * which contains the name of the collation to be translated from.  The second
- * column (TSQL Collation) is the name of the collation to translate to.
+ * Reverse Collation translation table.  The first column (BBF collation) contains
+ * the name of the collation to be translated from.  The second column
+ * (TSQL Collation) is the name of the collation to translate to.
  */
 coll_translate_t reverse_coll_translations[] =
 {
+	{ "bbf_unicode_cp1_ci_as", "latin1_general_ci_as", 1252 }, /* default */
+	{ "bbf_unicode_cp1_ci_ai", "latin1_general_ci_ai", 1252 },
+	{ "bbf_unicode_cp1_cs_ai", "latin1_general_cs_ai", 1252 },
+	{ "bbf_unicode_cp1_cs_as", "latin1_general_cs_as", 1252 },
 	{ "bbf_unicode_bin2", "latin1_general_bin2", 1252 },
 	{ "bbf_unicode_cp1250_ci_as", "sql_latin1_general_cp1250_ci_as", 1250 },
 	{ "bbf_unicode_cp1250_cs_as", "sql_latin1_general_cp1250_cs_as", 1250 },
@@ -141,17 +145,12 @@ coll_translate_t reverse_coll_translations[] =
 	{ "bbf_unicode_cp1257_cs_as", "sql_latin1_general_cp1257_cs_as", 1257 },
 	{ "bbf_unicode_cp1258_ci_as", "sql_latin1_general_cp1258_ci_as", 1258 },
 	{ "bbf_unicode_cp1258_cs_as", "sql_latin1_general_cp1258_cs_as", 1258 },
-	{ "bbf_unicode_cp1_ci_ai", "latin1_general_ci_ai", 1252 },
-	{ "bbf_unicode_cp1_ci_as", "latin1_general_ci_as", 1252 }, /* default */
-	{ "bbf_unicode_cp1_cs_ai", "latin1_general_cs_ai", 1252 },
-	{ "bbf_unicode_cp1_cs_as", "latin1_general_cs_as", 1252 },
 	{ "bbf_unicode_cp874_ci_as", "sql_latin1_general_cp874_ci_as", 874 },
 	{ "bbf_unicode_cp874_cs_as", "sql_latin1_general_cp874_cs_as", 874 },
 	{ "bbf_unicode_pref_cp1_cs_as", "sql_latin1_general_pref_cp1_cs_as", 1252 }
 };
 
 #define TOTAL_REVERSE_COLL_TRANSLATION_COUNT (sizeof(reverse_coll_translations)/sizeof(reverse_coll_translations[0]))
-#define DEFAULT_COLLATION_IN_REVERSE_TRANSALTION 16
 
 coll_info coll_infos[] =
 {
@@ -639,25 +638,11 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 const char *
 translate_bbf_collation_to_tsql_collation(const char *collname)
 {
-	int first = 0;
 	int last = TOTAL_REVERSE_COLL_TRANSLATION_COUNT - 1;
-	int middle = DEFAULT_COLLATION_IN_REVERSE_TRANSALTION; /* Optimization: Usually the default collation is "bbf_unicode_cp1_ci_as". */
-	int compare;
+	for (int i = 0; i < last; i++)
+		if (pg_strcasecmp(reverse_coll_translations[i].from_collname, collname) == 0)
+			return (reverse_coll_translations[i].to_collname);
 
-	while (first <= last)
-	{
-		compare = pg_strcasecmp(reverse_coll_translations[middle].from_collname, collname);
-		if (compare < 0)
-			first = middle + 1;
-		else if (compare == 0)
-		{
-			return (reverse_coll_translations[middle].to_collname);
-		}
-		else
-			last = middle - 1;
-
-		middle = (first + last) / 2;
-	}
 	return NULL;
 }
 
