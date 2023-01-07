@@ -210,6 +210,21 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.partitions AS
+SELECT
+ (to_char( i.object_id, 'FM9999999999' ) || to_char( i.index_id, 'FM9999999999' ) || '1')::bigint AS partition_id
+ , i.object_id
+ , i.index_id
+ , 1::integer AS partition_number
+ , 0::bigint AS hobt_id
+ , c.reltuples::bigint AS "rows"
+ , 0::smallint AS filestream_filegroup_id
+ , 0::sys.tinyint AS data_compression
+ , 'NONE'::sys.nvarchar(60) AS data_compression_desc
+FROM sys.indexes AS i
+INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
+GRANT SELECT ON sys.partitions TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
                                                     IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
                                                     IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',

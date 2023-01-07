@@ -49,6 +49,19 @@ GO
 create login linked_server_login_861 with password = 'password_861'
 GO
 
+-- Create a function dependent on sys.servers view
+CREATE FUNCTION sys_linked_servers_vu_prepare__sys_servers_func()
+RETURNS TABLE
+AS
+RETURN (SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers ORDER BY name);
+GO
+
+-- Create a view dependent on sys.servers view
+CREATE VIEW sys_linked_servers_vu_prepare__sys_servers_view
+AS
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers ORDER BY name
+GO
+
 -- tsql    user=linked_server_login_861    password=password_861
 
 -- Creation of linked_server should fail since only sysadmin will have privilege to create linked server

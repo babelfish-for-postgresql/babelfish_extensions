@@ -752,7 +752,6 @@ Operator sys.+(interval,sys.datetimeoffset)
 Operator sys.+(smallint,sys.fixeddecimal)
 Operator sys.+(smallint,sys.smallmoney)
 Operator sys.+(sys."nchar",sys."nchar")
-Operator sys.+(sys."varchar",sys."varchar")
 Operator sys.+(sys."varchar",sys.nvarchar)
 Operator sys.+(sys.bpchar,sys.bpchar)
 Operator sys.+(sys.datetimeoffset,interval)
@@ -982,7 +981,6 @@ View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
 View sys.selective_xml_index_paths
-View sys.servers
 View sys.shipped_objects_not_in_sys
 View sys.sp_column_privileges_view
 View sys.sp_columns_100_view
