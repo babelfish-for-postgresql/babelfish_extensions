@@ -4609,7 +4609,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	/* fetch current search_path */
 	List 		*path_oids = fetch_search_path(false);
 	char 		*old_search_path = flatten_search_path(path_oids);
-	set_original_query_string(stmt->original_query);
+	if (stmt->original_query)
+		set_original_query_string(stmt->original_query);
 
 	if (stmt->is_cross_db)
 	{
