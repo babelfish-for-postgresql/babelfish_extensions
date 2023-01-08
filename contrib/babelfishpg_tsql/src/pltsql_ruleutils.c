@@ -445,8 +445,6 @@ tsql_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags
         context = deparse_context_for(relname, relid);
     else
         context = NIL;
-
-    pfree(node);
 							 /* Deparse */
     return string_to_text(deparse_expression_pretty(node, context, false, false,prettyFlags, 0));
 }
