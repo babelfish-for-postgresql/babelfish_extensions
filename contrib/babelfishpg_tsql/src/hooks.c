@@ -1922,7 +1922,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = CStringGetTextDatum(logical_schemaname);
 	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
-	new_record[3] = CStringGetTextDatum(queryString);
+	new_record[3] = CStringGetTextDatum(get_original_query_string());
 	new_record[4] = UInt64GetDatum(flag_validity);
 	new_record[5] = UInt64GetDatum(flag_values);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(3));
