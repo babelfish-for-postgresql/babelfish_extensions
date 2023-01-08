@@ -1,4 +1,4 @@
--- sla 60000
+-- sla 70000
 use babel_sp_special_columns_vu_prepare_db1
 go
 
