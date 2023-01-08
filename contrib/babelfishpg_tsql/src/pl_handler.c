@@ -78,7 +78,6 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pl_explain.h"
-#include "datatypes.h"
 
 #include "access/xact.h"
 
@@ -86,6 +85,7 @@ extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
+extern bool pltsql_nocount;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -144,7 +144,6 @@ static bool is_rowversion_column(ParseState *pstate, ColumnDef *column);
 static void validate_rowversion_column_constraints(ColumnDef *column);
 static void validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name);
 static Constraint *get_rowversion_default_constraint(TypeName *typname);
-extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
@@ -225,6 +224,7 @@ static pltsql_sequence_datatype_hook_type prev_pltsql_sequence_datatype_hook = N
 static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 static ProcessUtility_hook_type prev_ProcessUtility = NULL;
 static get_func_language_oids_hook_type prev_get_func_language_oids_hook = NULL;
+static tsql_has_linked_srv_permissions_hook_type prev_tsql_has_linked_srv_permissions_hook = NULL;
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
@@ -581,7 +581,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				if (attr->attisdropped)
 					continue;
 
-				if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+				if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
 				{
 					SetToDefault *def = makeNode(SetToDefault);
 					ResTarget *res;
@@ -842,7 +842,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 			}
 
 			/*Disallow insert into a ROWVERSION column */
-			if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+			if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -996,7 +996,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 							seen_identity = true;
 						
 						/* Check for rowversion attribute */
-						if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+						if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
 						{
 							seen_rowversion = true;
 							rowversion_column_name = NameStr(attr->attname);
@@ -1165,7 +1165,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 							if (!tle->resjunk)
 								typeid = exprType((Node *) tle->expr);
 
-							if (OidIsValid(typeid) && is_tsql_rowversion_or_timestamp_datatype(typeid))
+							if (OidIsValid(typeid) && (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(typeid))
 							{
 								if (seen_rowversion)
 									ereport(ERROR,
@@ -1198,7 +1198,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 			attr = TupleDescAttr(tupdesc, attr_num);
 
-			if(is_tsql_rowversion_or_timestamp_datatype(attr->atttypid) && !IsA(tle->expr, SetToDefault))
+			if((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid) && !IsA(tle->expr, SetToDefault))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1307,7 +1307,7 @@ is_rowversion_column(ParseState *pstate, ColumnDef *column)
 	typeOid = ((Form_pg_type) GETSTRUCT(ctype))->oid;
 	ReleaseSysCache(ctype);
 
-	if (is_tsql_rowversion_or_timestamp_datatype(typeOid))
+	if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(typeOid))
 		return true;
 
 	return false;
@@ -3127,7 +3127,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (attr->attisdropped)
 						continue;
 
-					if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+					if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
 					{
 						RawColumnDefault *rawEnt;
 						Constraint *con;
@@ -3347,6 +3347,7 @@ _PG_init(void)
 
 	/* Fixme: Handle loading of pgtsql_common_library_name library cleanly. */
 	load_libraries("babelfishpg_common", NULL, false);
+	init_and_check_common_utility();
 
 	pg_bindtextdomain(TEXTDOMAIN);
 
@@ -3462,6 +3463,7 @@ _PG_init(void)
 	/* If a protocol extension is loaded, initialize the inline handler. */
 	if (*pltsql_protocol_plugin_ptr)
 	{
+		(*pltsql_protocol_plugin_ptr)->pltsql_nocount_addr = &pltsql_nocount;
 		(*pltsql_protocol_plugin_ptr)->sql_batch_callback = &pltsql_inline_handler;
 		(*pltsql_protocol_plugin_ptr)->sp_executesql_callback = &pltsql_inline_handler;
         (*pltsql_protocol_plugin_ptr)->sp_prepare_callback = &sp_prepare;
@@ -3472,11 +3474,11 @@ _PG_init(void)
         (*pltsql_protocol_plugin_ptr)->bulk_load_callback = &execute_bulk_load_insert;
 		(*pltsql_protocol_plugin_ptr)->pltsql_declare_var_callback = &pltsql_declare_variable;
 		(*pltsql_protocol_plugin_ptr)->pltsql_read_out_param_callback = &pltsql_read_composite_out_param;
-		(*pltsql_protocol_plugin_ptr)->sqlvariant_set_metadata = &TdsSetMetaData;
-		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_metadata = &TdsGetMetaData;
-		(*pltsql_protocol_plugin_ptr)->sqlvariant_inline_pg_base_type = &TdsPGbaseType;
-		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_pg_base_type = &TdsGetPGbaseType;
-		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_variant_base_type = &TdsGetVariantBaseType;
+		(*pltsql_protocol_plugin_ptr)->sqlvariant_set_metadata = common_utility_plugin_ptr->TdsSetMetaData;
+		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_metadata = common_utility_plugin_ptr->TdsGetMetaData;
+		(*pltsql_protocol_plugin_ptr)->sqlvariant_inline_pg_base_type = common_utility_plugin_ptr->TdsPGbaseType;
+		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_pg_base_type = common_utility_plugin_ptr->TdsGetPGbaseType;
+		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_variant_base_type = common_utility_plugin_ptr->TdsGetVariantBaseType;
 		(*pltsql_protocol_plugin_ptr)->pltsql_read_proc_return_status = &pltsql_proc_return_code;
 		(*pltsql_protocol_plugin_ptr)->sp_cursoropen_callback = &execute_sp_cursoropen_old;
 		(*pltsql_protocol_plugin_ptr)->sp_cursorclose_callback = &execute_sp_cursorclose;
@@ -3500,8 +3502,10 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_user_for_database = &get_user_for_database;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_rows_per_batch = &get_insert_bulk_rows_per_batch;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
-		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = &tsql_varchar_input;
-		(*pltsql_protocol_plugin_ptr)->tsql_char_input = &tsql_bpchar_input;
+		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = common_utility_plugin_ptr->tsql_varchar_input;
+		(*pltsql_protocol_plugin_ptr)->tsql_char_input = common_utility_plugin_ptr->tsql_bpchar_input;
+		(*pltsql_protocol_plugin_ptr)->get_cur_db_name = &get_cur_db_name;
+		(*pltsql_protocol_plugin_ptr)->get_physical_schema_name = &get_physical_schema_name;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
@@ -3557,6 +3561,8 @@ _PG_init(void)
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
+
+	prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
 	tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
 
 	InstallExtendedHooks();
@@ -3599,6 +3605,7 @@ _PG_fini(void)
 	validate_set_config_function_hook = prev_validate_set_config_function_hook;
 	non_tsql_proc_entry_hook = prev_non_tsql_proc_entry_hook;
 	get_func_language_oids_hook = prev_get_func_language_oids_hook;
+	tsql_has_linked_srv_permissions_hook = prev_tsql_has_linked_srv_permissions_hook;
 
 	UninstallExtendedHooks();
 }
@@ -4162,9 +4169,9 @@ pltsql_validator(PG_FUNCTION_ARGS)
 
 	/* Disallow text, ntext, and image type result */
 	if (!babelfish_dump_restore &&
-		(is_tsql_text_datatype(proc->prorettype) ||
-		 is_tsql_ntext_datatype(proc->prorettype) ||
-		 is_tsql_image_datatype(proc->prorettype)))
+		((*common_utility_plugin_ptr->is_tsql_text_datatype)(proc->prorettype) ||
+		 (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(proc->prorettype) ||
+		 (*common_utility_plugin_ptr->is_tsql_image_datatype)(proc->prorettype)))
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),

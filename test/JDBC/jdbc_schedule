@@ -85,4 +85,22 @@ ignore#!#sys_database_principals_dep_for_13_x-vu-verify
 ignore#!#sys_server_principals_dep_for_13_x-vu-cleanup
 ignore#!#sys_server_principals_dep_for_13_x-vu-prepare
 ignore#!#sys_server_principals_dep_for_13_x-vu-verify
+ignore#!#sys-identity_columns-dep-for-13-x-vu-prepare
+ignore#!#sys-identity_columns-dep-for-13-x-vu-verify
+ignore#!#sys-identity_columns-dep-for-13-x-vu-cleanup
+ignore#!#sys-system_objects-for-13-x-vu-prepare
+ignore#!#sys-system_objects-for-13-x-vu-verify
+ignore#!#sys-system_objects-for-13-x-vu-cleanup
 
+# These tests are meant for upgrade scenario where source version 14_3
+ignore#!#sys-identity_columns-dep-for-14-3-vu-prepare
+ignore#!#sys-identity_columns-dep-for-14-3-vu-verify
+ignore#!#sys-identity_columns-dep-for-14-3-vu-cleanup
+ignore#!#case_insensitive_collation-before-13-5-vu-prepare
+ignore#!#case_insensitive_collation-before-13-5-vu-verify
+ignore#!#case_insensitive_collation-before-13-5-vu-cleanup
+
+#Ignore upgrade tests in normal JDBC run as they are to be run in multi-db mode, similar test files for JDBC testing are already present
+ignore#!#jira-BABEL-3504-upgrade-vu-prepare
+ignore#!#jira-BABEL-3504-upgrade-vu-verify
+ignore#!#jira-BABEL-3504-upgrade-vu-cleanup

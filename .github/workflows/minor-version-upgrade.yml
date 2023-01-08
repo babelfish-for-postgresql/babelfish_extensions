@@ -1,12 +1,11 @@
 name: Minor Version Upgrade Tests for empty database
-# No minor version upgrade path exists in v15 so temporarily disabling the workflow
-on:
+on: [push, pull_request]
 
 jobs:
   extension-tests:
     env:
-      ENGINE_VER_FROM: BABEL_2_1_STABLE__PG_14_3
-      EXTENSION_VER_FROM: BABEL_2_1_STABLE
+      ENGINE_VER_FROM: BABEL_3_0_STABLE__PG_15_1
+      EXTENSION_VER_FROM: BABEL_3_0_STABLE
 
     name: Build and test
     runs-on: ubuntu-20.04
@@ -40,9 +39,23 @@ jobs:
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
+    - name: Build tds_fdw Extension
+      id: build-tds_fdw-extension
+      if: always() && steps.build-extensions-older.outcome == 'success'
+      run: |
+        cd ..
+        export TDS_FDW_VERSION="2.0.3"
+        sudo apt-get install wget
+        wget https://github.com/tds-fdw/tds_fdw/archive/v${TDS_FDW_VERSION}.tar.gz
+        tar -xvzf v${TDS_FDW_VERSION}.tar.gz
+        cd tds_fdw-${TDS_FDW_VERSION}/
+        make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
+        sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
+      shell: bash
+
       - name: Install extensions
         id: install-extensions-older
-        if: always() && steps.build-extensions-older.outcome == 'success'
+        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
         
       - uses: actions/checkout@v2
@@ -60,10 +73,10 @@ jobs:
         if: always() && steps.build-extensions-newer.outcome == 'success'
         run: |
           cd ~
-          ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
-          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
-          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
-          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
+          ~/psql/bin/pg_ctl -D ~/psql/data/ -l logfile restart
+          sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "\dx"
+          sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+          sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
 
       - name: Run JDBC Tests
@@ -78,7 +91,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: postgres-log
-          path: ~/postgres/data/logfile
+          path: ~/psql/data/logfile
 
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files

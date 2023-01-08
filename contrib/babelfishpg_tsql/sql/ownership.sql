@@ -162,16 +162,34 @@ BEGIN
   GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
   ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
 
-  CREATE OR REPLACE PROCEDURE sys.create_linked_server_procs_in_master_dbo()
-  LANGUAGE C
-  AS 'babelfishpg_tsql', 'create_linked_server_procs_in_master_dbo_internal';
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedserver( IN "@server" sys.sysname,
+                                                    IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
+                                                    IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
+                                                    IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@location" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@catalog" sys.sysname DEFAULT NULL)
+  AS 'babelfishpg_tsql', 'sp_addlinkedserver_internal'
+  LANGUAGE C;
 
-  CALL sys.create_linked_server_procs_in_master_dbo();
   ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
-  ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
-  ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
-  DROP PROCEDURE sys.create_linked_server_procs_in_master_dbo;
 
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
+                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
+  AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
+  LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
+
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
+                                                    IN "@droplogins" char(10) DEFAULT NULL)
+  AS 'babelfishpg_tsql', 'sp_dropserver_internal'
+  LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
 END
 $$;
 

@@ -89,7 +89,7 @@ select
   , 0 as is_date_correlation_view 
   , 0 as is_tracked_by_cdc 
 from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
-left outer join sys.babelfish_view_def vd on t.relname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
+left outer join sys.babelfish_view_def vd on t.relname::sys.sysname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
 where t.relkind = 'v'
 and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
@@ -769,7 +769,7 @@ SELECT
   , CAST(sys.babelfish_get_sequence_value(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)) AS SQL_VARIANT) AS last_value
   , CAST(0 as sys.BIT) as is_not_for_replication
 FROM sys.columns_internal() sc
-INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
+INNER JOIN pg_attribute a ON sc.out_name = cast(a.attname as sys.sysname) AND sc.out_column_id = a.attnum
 INNER JOIN pg_class c ON c.oid = a.attrelid
 INNER JOIN sys.pg_namespace_ext ext ON ext.oid = c.relnamespace
 WHERE NOT a.attisdropped
@@ -907,7 +907,7 @@ select
           then 'TR'
           else 'FN'
         end
-    end as sys.bpchar(2)) as type
+    end as sys.bpchar(2)) COLLATE sys.database_default as type
   , cast(case p.prokind
       when 'p' then 'SQL_STORED_PROCEDURE'
       when 'a' then 'AGGREGATE_FUNCTION'
@@ -1141,7 +1141,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(0 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
-  , CAST(d.adnum as int) as  parent_column_id
+  , CAST(d.adnum as int) as parent_column_id
   -- use a simple regex to strip the datatype and collation that pg_get_expr returns after a double-colon that is not expected in SQL Server
   , CAST(regexp_replace(pg_get_expr(d.adbin, d.adrelid), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) as definition
   , CAST(1 as sys.bit) as is_system_named
@@ -1170,8 +1170,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(0 as sys.bit) as is_not_for_replication
   , CAST(0 as sys.bit) as is_not_trusted
   , CAST(c.conkey[1] as integer) AS parent_column_id
-  -- use a simple regex to strip the datatype and collation that pg_get_constraintdef returns after a double-colon that is not expected in SQL Server
-  , CAST(regexp_replace(substring(pg_get_constraintdef(c.oid) from 7), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) AS definition
+  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar(4000)) AS definition
   , CAST(1 as sys.bit) as uses_database_collation
   , CAST(0 as sys.bit) as is_system_named
 FROM pg_catalog.pg_constraint as c
@@ -1186,7 +1185,7 @@ create or replace view sys.shipped_objects_not_in_sys AS
 -- Internally stored schema name (nspname) must be provided.
 select t.name,t.type, ns.oid as schemaid from
 (
-  values 
+  values
     ('xp_qv','master_dbo','P'),
     ('xp_instance_regread','master_dbo','P'),
     ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
@@ -1195,27 +1194,27 @@ select t.name,t.type, ns.oid as schemaid from
 ) t(name,schema_name, type)
 inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
 
-union all 
+union all
 
 -- This portion of view retrieves information on objects that reside in a schema in any number of databases.
 -- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
-select t.name,t.type, ns.oid  as schemaid from
+select t.name,t.type, ns.oid as schemaid from
 (
-  values 
+  values
     ('sysdatabases','dbo','V')
 ) t (name, schema_name, type)
-inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name
+inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.all_objects as
 select 
-    cast (name as sys.sysname) 
+    cast (name as sys.sysname) collate sys.database_default
   , cast (object_id as integer) 
   , cast ( principal_id as integer)
   , cast (schema_id as integer)
   , cast (parent_object_id as integer)
-  , cast (type as char(2))
+  , cast (type as char(2)) collate sys.database_default
   , cast (type_desc as sys.nvarchar(60))
   , cast (create_date as sys.datetime)
   , cast (modify_date as sys.datetime)
@@ -1311,7 +1310,7 @@ and c.contype = 'p'
 union all
 -- details of user defined and system defined procedures
 select
-    p.proname as name
+    p.proname as name 
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1479,7 +1478,7 @@ select
   , CAST(0 as sys.BIT) AS is_date_correlation_view
 from sys.all_objects t
 INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
-INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
+INNER JOIN information_schema.views v ON t.name = cast(v.table_name as sys.sysname) AND ns.nspname = v.table_schema
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
@@ -1659,7 +1658,7 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
-    CAST(('TT_' || tt.name || '_' || tt.type_table_object_id) as sys.sysname) as name
+    CAST(('TT_' || tt.name collate "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
   , CAST(tt.type_table_object_id as int) as object_id
   , CAST(tt.principal_id as int) as principal_id
   , CAST(tt.schema_id as int) as schema_id
@@ -1862,7 +1861,7 @@ SELECT out_object_id as object_id
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
 FROM sys.columns_internal() sc
-INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
+INNER JOIN pg_attribute a ON sc.out_name = a.attname COLLATE sys.database_default AND sc.out_column_id = a.attnum
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
@@ -2501,7 +2500,7 @@ AS
 SELECT 
    CAST(ds.name AS sys.SYSNAME),
    CAST(ds.data_space_id AS INT),
-   CAST(ds.type AS sys.BPCHAR(2)),
+   CAST(ds.type AS sys.BPCHAR(2)) COLLATE sys.database_default,
    CAST(ds.type_desc AS sys.NVARCHAR(60)),
    CAST(ds.is_default AS sys.BIT),
    CAST(ds.is_system AS sys.BIT),
@@ -2829,17 +2828,42 @@ FROM sys.events e
 WHERE e.is_trigger_event = 1;
 GRANT SELECT ON sys.trigger_events TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.partitions AS
+SELECT
+ (to_char( i.object_id, 'FM9999999999' ) || to_char( i.index_id, 'FM9999999999' ) || '1')::bigint AS partition_id
+ , i.object_id
+ , i.index_id
+ , 1::integer AS partition_number
+ , 0::bigint AS hobt_id
+ , c.reltuples::bigint AS "rows"
+ , 0::smallint AS filestream_filegroup_id
+ , 0::sys.tinyint AS data_compression
+ , 'NONE'::sys.nvarchar(60) AS data_compression_desc
+FROM sys.indexes AS i
+INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
+GRANT SELECT ON sys.partitions TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.servers
 AS
 SELECT
   CAST(f.oid as int) AS server_id,
   CAST(f.srvname as sys.sysname) AS name,
-  CAST('SQL Server' as sys.sysname) AS product,
+  CAST('' as sys.sysname) AS product,
   CAST('tds_fdw' as sys.sysname) AS provider,
-  CAST(split_part(f.srvoptions[1], 'servername=', 2) as sys.nvarchar(4000)) AS data_source,
+  CAST((select string_agg(
+                  case
+                  when option like 'servername=%%' then substring(option, 12)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
   CAST(NULL as sys.nvarchar(4000)) AS location,
   CAST(NULL as sys.nvarchar(4000)) AS provider_string,
-  CAST(split_part(f.srvoptions[2], 'database=', 2) as sys.sysname) AS catalog,
+  CAST((select string_agg(
+                  case
+                  when option like 'database=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
   CAST(0 as int) AS connect_timeout,
   CAST(0 as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,
@@ -2869,7 +2893,12 @@ SELECT
   CAST(u.srvid as int) AS server_id,
   CAST(0 as int) AS local_principal_id,
   CAST(0 as sys.bit) AS uses_self_credential,
-  CAST(split_part(u.umoptions[1], 'username=', 2) as sys.sysname) AS remote_name,
+  CAST((select string_agg(
+                  case
+                  when option like 'username=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(u.umoptions) as option) as sys.sysname) AS remote_name,
   CAST(NULL as sys.datetime) AS modify_date
 FROM pg_user_mappings AS U
 LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid

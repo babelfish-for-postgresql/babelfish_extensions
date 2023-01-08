@@ -1,0 +1,27 @@
+-- tsql
+create login [test_conn] with password = '12345678';
+GO
+
+-- tsql user=test_conn password=12345678
+select 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+select 1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- terminate-tsql-conn user=test_conn password=12345678
+
+-- tsql
+DROP LOGIN [test_conn];
+GO

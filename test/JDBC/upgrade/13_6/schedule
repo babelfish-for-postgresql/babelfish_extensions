@@ -9,6 +9,8 @@
 # This should be the first test to check there are no duplicated object_ids
 BABEL-3613
 
+babelfish_cast_floor
+babel_try_parse
 TestBigInt
 TestBinary
 TestBIT
@@ -71,6 +73,7 @@ sys-fulltext_index_columns
 sys-fulltext_languages
 sys-fulltext_stoplists
 sys-identity_columns
+sys-identity_columns-dep-for-13-x
 sys-index_columns
 sys-indexes
 sys-key_constraints
@@ -99,7 +102,7 @@ sys-views
 sys-xml_indexes
 sys-xml_schema_collections
 sys_all_objects
-
+sys-system_objects-for-13-x
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
@@ -243,14 +246,13 @@ BABEL-SPCOLUMNS
 BABEL-SP_TABLES
 BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
-BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
-sys-identity_columns-dep
 sys-indexes-dep
+sys-computed_columns-dep
 sys-key_constraints-dep
 sys-schemas-dep
 sys-sp_tables_view-dep
@@ -259,7 +261,6 @@ sys-tables-dep
 sys-types-dep
 sys-views-dep
 sys-check_constraints-dep
-sys-computed_columns-dep
 sys-index_columns-dep
 sys-sp_databases-dep
 sys-syscolumns-dep
@@ -268,9 +269,11 @@ sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
+sys-proc_param_helper-dep
 BABEL-SPCOLUMNS-dep
+BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
-BABEL-SP_FKEYS-dep
+BABEL-SP_SPECIAL_COLUMNS_100-dep
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-3000-dep
 BABEL-3347-before-14_6
@@ -284,5 +287,10 @@ BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
+sys-sysindexes
+ISC-Tables
+ISC-Columns
+ISC-Table_Constraints
 sys_server_principals_dep_for_13_x
 sys_database_principals_dep_for_13_x
+case_insensitive_collation

@@ -1,0 +1,2 @@
+EXEC sp_oledb_ro_usrname
+GO

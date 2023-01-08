@@ -43,6 +43,18 @@ runs:
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
 
+    - name: Build tds_fdw Extension
+      run: |
+        cd ..
+        export TDS_FDW_VERSION="2.0.3"
+        sudo apt-get install wget
+        wget https://github.com/tds-fdw/tds_fdw/archive/v${TDS_FDW_VERSION}.tar.gz
+        tar -xvzf v${TDS_FDW_VERSION}.tar.gz
+        cd tds_fdw-${TDS_FDW_VERSION}/
+        make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
+        sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
+      shell: bash
+
     # Not used composite action install-extension here since, in the previous step it has 
     # checked out a branch/tag which may not have the updated install-extension composite action
     - name: Install extensions
