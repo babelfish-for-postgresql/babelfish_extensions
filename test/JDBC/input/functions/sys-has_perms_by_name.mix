@@ -123,6 +123,10 @@ GO
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT');
 GO
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('t_PERMS_by_nAMe','oBjeCT', 'SeleCT');
+GO
+
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE');
 GO
 
@@ -286,6 +290,10 @@ GO
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT');
 GO
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('v_PERMS_by_NAme','oBjEcT', 'SelECt');
+GO
+
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'UPDATE');
 GO
 
@@ -404,6 +412,10 @@ GO
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
 GO
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('t_PERMS_by_NaME','oBJeCt', 'sEleCt', 'CoL1', 'coLUmN');
+GO
+
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN');
 GO
 
@@ -519,6 +531,10 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('scalar_function_PERMS_by_NaME','oBJeCt', 'sEleCt');
 GO
 
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'UPDATE');
@@ -645,6 +661,10 @@ GO
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'SELECT');
 GO
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('TAbLE_function_PERMS_by_NaME','oBJeCt', 'sEleCt');
+GO
+
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'UPDATE');
 GO
 
@@ -769,6 +789,10 @@ go
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'SELECT');
 GO
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('proc_PERMS_by_NaME','oBJeCt', 'sEleCt');
+GO
+
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'UPDATE');
 GO
 
@@ -890,6 +914,10 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME(db_name(),'DATABASE', 'CREATE TABLE');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME(DB_Name(),'DaTaBaSe', 'creATE TAbLe');
 GO
 
 SELECT HAS_PERMS_BY_NAME(db_name(),'DATABASE', 'CREATE SCHEMA');
@@ -1097,6 +1125,10 @@ GO
 SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA', 'SELECT');
 GO
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('DbO','ScHEmA', 'SeLEct');
+GO
+
 SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA', 'CREATE SEQUENCE');
 GO
 
@@ -1132,6 +1164,10 @@ SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'ALTER ANY ENDPOINT');
 GO
 
 SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+
+-- case insensitivity check 
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VieW SerVer STAte');
 GO
 
 SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'ANY');
@@ -1186,6 +1222,10 @@ SELECT HAS_PERMS_BY_NAME('server.db_perms_by_name.dbo.t_perms_by_name','OBJECT',
 GO
 
 SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].[dbo].[t_perms_by_name]','OBJECT', 'SELECT');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('[DB_PerMS_By_nAmE].[DBo].[t_PerMS_By_NamE]','oBJeCT', 'sELecT');
 GO
 
 SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].[dbo].[t_perms_by_name]','OBJECT', 'UPDATE');

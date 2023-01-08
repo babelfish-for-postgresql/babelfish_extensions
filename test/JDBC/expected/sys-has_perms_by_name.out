@@ -133,6 +133,15 @@ int
 ~~END~~
 
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('t_PERMS_by_nAMe','oBjeCT', 'SeleCT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE');
 GO
 ~~START~~
@@ -466,6 +475,15 @@ int
 ~~END~~
 
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('v_PERMS_by_NAme','oBjEcT', 'SelECt');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'UPDATE');
 GO
 ~~START~~
@@ -687,6 +705,15 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('t_PERMS_by_NaME','oBJeCt', 'sEleCt', 'CoL1', 'coLUmN');
 GO
 ~~START~~
 int
@@ -951,6 +978,15 @@ int
 ~~END~~
 
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('scalar_function_PERMS_by_NaME','oBJeCt', 'sEleCt');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'UPDATE');
 GO
 ~~START~~
@@ -1188,6 +1224,15 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('TAbLE_function_PERMS_by_NaME','oBJeCt', 'sEleCt');
 GO
 ~~START~~
 int
@@ -1439,6 +1484,15 @@ int
 ~~END~~
 
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('proc_PERMS_by_NaME','oBJeCt', 'sEleCt');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'UPDATE');
 GO
 ~~START~~
@@ -1675,6 +1729,15 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME(db_name(),'DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME(DB_Name(),'DaTaBaSe', 'creATE TAbLe');
 GO
 ~~START~~
 int
@@ -2182,6 +2245,15 @@ int
 ~~END~~
 
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('DbO','ScHEmA', 'SeLEct');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA', 'CREATE SEQUENCE');
 GO
 ~~START~~
@@ -2257,6 +2329,15 @@ int
 
 
 SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check 
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VieW SerVer STAte');
 GO
 ~~START~~
 int
@@ -2366,6 +2447,15 @@ int
 
 
 SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].[dbo].[t_perms_by_name]','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('[DB_PerMS_By_nAmE].[DBo].[t_PerMS_By_NamE]','oBJeCT', 'sELecT');
 GO
 ~~START~~
 int
