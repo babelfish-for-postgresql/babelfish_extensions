@@ -2316,30 +2316,44 @@ Datum
 sp_dropserver_internal(PG_FUNCTION_ARGS)
 {
 	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *droplogins = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(1));
+	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
 
-	DropStmt *stmt = makeNode(DropStmt);
+	StringInfoData query;
 
-	List *objects = list_make1(makeString(linked_srv));
-	stmt->objects = objects;
+	if (linked_srv == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+					errmsg("@server parameter cannot be NULL")));
+	
+	initStringInfo(&query);
 
-	stmt->removeType = OBJECT_FOREIGN_SERVER;
-	stmt->missing_ok = false;
-	stmt->concurrent = false;
+	/*
+	 * We prepare the following query to create a user mapping. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * DROP SERVER <servername> [ CASCADE ]
+	 *
+	 */
+	appendStringInfo(&query, "DROP SERVER \"%s\" ", linked_srv);
 
-	if (droplogins == NULL)
+	if (droplogins != NULL)
 	{
-		stmt->behavior = DROP_RESTRICT;
-	}
-	else
-	{
-		if (strncmp(droplogins, "droplogins", 10) == 0)
-			stmt->behavior = DROP_CASCADE;
+		/* droplogins indicates that we also drop any logins linkked to the server, so we add CASCADE parameter */
+		if ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0))
+			appendStringInfoString(&query, "CASCADE");
 		else
 			elog(ERROR, "invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.");
 	}
 
-	RemoveObjects(stmt);
+	exec_utility_cmd_helper(query.data);
+
+	if (linked_srv)
+		pfree(linked_srv);
+
+	if (droplogins)
+		pfree(droplogins);
+
+	pfree(query.data);
 
 	return (Datum) 0;
 }

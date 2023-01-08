@@ -14,8 +14,8 @@ GO
 EXEC sp_dropserver @server = 'mssql_server_that_does_not_exist', @droplogins = NULL
 GO
 
--- Dropping a server with droplogins should drop the linked logins as well
-EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'droplogins'
+-- Dropping a server with droplogins should drop the linked logins as well. Also call sp_dropserver from master.dbo schema
+EXEC master.dbo.sp_dropserver @server = 'mssql_server', @droplogins = 'droplogins'
 GO
 
 SELECT * FROM sys.servers WHERE name = 'mssql_server'
