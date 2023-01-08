@@ -2,7 +2,7 @@ SELECT * FROM has_perms_by_name_dep_vu_prepare_view
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -10,14 +10,15 @@ EXEC has_perms_by_name_dep_vu_prepare_proc
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
 SELECT * FROM has_perms_by_name_dep_vu_prepare_func()
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function has_perms_by_name_dep_vu_prepare_func() does not exist)~~
+~~START~~
+int
+1
+~~END~~
 
 
