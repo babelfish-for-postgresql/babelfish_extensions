@@ -1512,6 +1512,18 @@ typedef struct PLtsql_protocol_plugin
 {
 	/* True if Protocol being used by client is TDS. */
 	bool is_tds_client;
+
+	/*
+	 * List of GUCs used/set by protocol plugin.  We can always use this pointer
+	 * to read the GUC value directly.  We've declared volatile so that the
+	 * compiler always reads the value from the memory location instead of
+	 * the register.
+	 * We should be careful while setting data using this pointer - as the value
+	 * will not be verified and changes can't be rolled back automatically in
+	 * case of an error.
+	 */
+	volatile bool *pltsql_nocount_addr;
+
 	/* 
 	 * stmt_need_logging checks whether stmt needs to be logged at babelfishpg_tsql parser
 	 * and logs the statement at the end of statement execution on TDS
@@ -1627,6 +1639,10 @@ typedef struct PLtsql_protocol_plugin
 	void* (*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
 
 	void* (*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
+
+	char* (*get_cur_db_name) ();
+
+	char* (*get_physical_schema_name) (char *db_name, const char *schema_name);
 	
 } PLtsql_protocol_plugin;
 
@@ -1956,6 +1972,7 @@ extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
+extern void report_info_or_warning(int elevel, char* message);
 extern void init_and_check_common_utility(void);
 
 typedef struct

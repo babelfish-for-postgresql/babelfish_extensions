@@ -248,7 +248,6 @@ Function sys.bit_unsupported_sum(sys."bit",sys."bit")
 Function sys.bitxor(bit,bit)
 Function sys.bpchar2datetime2(sys.bpchar)
 Function sys.bpchar2float4(sys.bpchar)
-Function sys.bpchar2float8(sys.bpchar)
 Function sys.bpchar2int2(sys.bpchar)
 Function sys.bpchar2int4(sys.bpchar)
 Function sys.bpchar2int8(sys.bpchar)
@@ -393,7 +392,6 @@ Function sys.fixeddecimalint4(sys.fixeddecimal)
 Function sys.fixeddecimalint8(sys.fixeddecimal)
 Function sys.fixeddecimallarger(sys.fixeddecimal,sys.fixeddecimal)
 Function sys.fixeddecimalsmaller(sys.fixeddecimal,sys.fixeddecimal)
-Function sys.fixeddecimaltod(sys.fixeddecimal)
 Function sys.fixeddecimaltof(sys.fixeddecimal)
 Function sys.float4binary(real,integer,boolean)
 Function sys.float4varbinary(real,integer,boolean)
@@ -691,7 +689,6 @@ Function sys.varchar2datetime(character varying)
 Function sys.varchar2datetime2(character varying)
 Function sys.varchar2datetime2(sys."varchar")
 Function sys.varchar2float4(sys."varchar")
-Function sys.varchar2float8(sys."varchar")
 Function sys.varchar2int2(sys."varchar")
 Function sys.varchar2int4(sys."varchar")
 Function sys.varchar2int8(sys."varchar")
@@ -755,7 +752,6 @@ Operator sys.+(interval,sys.datetimeoffset)
 Operator sys.+(smallint,sys.fixeddecimal)
 Operator sys.+(smallint,sys.smallmoney)
 Operator sys.+(sys."nchar",sys."nchar")
-Operator sys.+(sys."varchar",sys."varchar")
 Operator sys.+(sys."varchar",sys.nvarchar)
 Operator sys.+(sys.bpchar,sys.bpchar)
 Operator sys.+(sys.datetimeoffset,interval)
@@ -950,7 +946,6 @@ Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
 Type sys."bigint"
-Type sys."float"
 Type sys."int"
 Type sys."real"
 Type sys.bbf_varbinary
@@ -981,12 +976,10 @@ View sys.fulltext_catalogs
 View sys.fulltext_index_columns
 View sys.fulltext_languages
 View sys.fulltext_stoplists
-View sys.linked_logins
 View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
 View sys.selective_xml_index_paths
-View sys.servers
 View sys.shipped_objects_not_in_sys
 View sys.sp_column_privileges_view
 View sys.sp_columns_100_view

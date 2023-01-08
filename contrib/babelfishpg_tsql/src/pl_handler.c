@@ -85,6 +85,7 @@ extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
+extern bool pltsql_nocount;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -223,6 +224,7 @@ static pltsql_sequence_datatype_hook_type prev_pltsql_sequence_datatype_hook = N
 static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 static ProcessUtility_hook_type prev_ProcessUtility = NULL;
 static get_func_language_oids_hook_type prev_get_func_language_oids_hook = NULL;
+static tsql_has_linked_srv_permissions_hook_type prev_tsql_has_linked_srv_permissions_hook = NULL;
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
@@ -3461,6 +3463,7 @@ _PG_init(void)
 	/* If a protocol extension is loaded, initialize the inline handler. */
 	if (*pltsql_protocol_plugin_ptr)
 	{
+		(*pltsql_protocol_plugin_ptr)->pltsql_nocount_addr = &pltsql_nocount;
 		(*pltsql_protocol_plugin_ptr)->sql_batch_callback = &pltsql_inline_handler;
 		(*pltsql_protocol_plugin_ptr)->sp_executesql_callback = &pltsql_inline_handler;
         (*pltsql_protocol_plugin_ptr)->sp_prepare_callback = &sp_prepare;
@@ -3501,6 +3504,8 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
 		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = common_utility_plugin_ptr->tsql_varchar_input;
 		(*pltsql_protocol_plugin_ptr)->tsql_char_input = common_utility_plugin_ptr->tsql_bpchar_input;
+		(*pltsql_protocol_plugin_ptr)->get_cur_db_name = &get_cur_db_name;
+		(*pltsql_protocol_plugin_ptr)->get_physical_schema_name = &get_physical_schema_name;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
@@ -3556,6 +3561,8 @@ _PG_init(void)
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
+
+	prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
 	tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
 
 	InstallExtendedHooks();
@@ -3598,6 +3605,7 @@ _PG_fini(void)
 	validate_set_config_function_hook = prev_validate_set_config_function_hook;
 	non_tsql_proc_entry_hook = prev_non_tsql_proc_entry_hook;
 	get_func_language_oids_hook = prev_get_func_language_oids_hook;
+	tsql_has_linked_srv_permissions_hook = prev_tsql_has_linked_srv_permissions_hook;
 
 	UninstallExtendedHooks();
 }

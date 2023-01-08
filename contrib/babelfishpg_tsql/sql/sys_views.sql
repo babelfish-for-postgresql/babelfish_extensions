@@ -89,7 +89,7 @@ select
   , 0 as is_date_correlation_view 
   , 0 as is_tracked_by_cdc 
 from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
-left outer join sys.babelfish_view_def vd on t.relname COLLATE sys.database_default = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
+left outer join sys.babelfish_view_def vd on t.relname::sys.sysname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
 where t.relkind = 'v'
 and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
@@ -1170,8 +1170,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(0 as sys.bit) as is_not_for_replication
   , CAST(0 as sys.bit) as is_not_trusted
   , CAST(c.conkey[1] as integer) AS parent_column_id
-  -- use a simple regex to strip the datatype and collation that pg_get_constraintdef returns after a double-colon that is not expected in SQL Server
-  , CAST(regexp_replace(substring(pg_get_constraintdef(c.oid) from 7), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) AS definition
+  , CAST(tsql_get_constraintdef(c.oid) as sys.nvarchar(4000)) AS definition
   , CAST(1 as sys.bit) as uses_database_collation
   , CAST(0 as sys.bit) as is_system_named
 FROM pg_catalog.pg_constraint as c
@@ -2829,17 +2828,42 @@ FROM sys.events e
 WHERE e.is_trigger_event = 1;
 GRANT SELECT ON sys.trigger_events TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.partitions AS
+SELECT
+ (to_char( i.object_id, 'FM9999999999' ) || to_char( i.index_id, 'FM9999999999' ) || '1')::bigint AS partition_id
+ , i.object_id
+ , i.index_id
+ , 1::integer AS partition_number
+ , 0::bigint AS hobt_id
+ , c.reltuples::bigint AS "rows"
+ , 0::smallint AS filestream_filegroup_id
+ , 0::sys.tinyint AS data_compression
+ , 'NONE'::sys.nvarchar(60) AS data_compression_desc
+FROM sys.indexes AS i
+INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
+GRANT SELECT ON sys.partitions TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.servers
 AS
 SELECT
   CAST(f.oid as int) AS server_id,
   CAST(f.srvname as sys.sysname) AS name,
-  CAST('SQL Server' as sys.sysname) AS product,
+  CAST('' as sys.sysname) AS product,
   CAST('tds_fdw' as sys.sysname) AS provider,
-  CAST(split_part(f.srvoptions[1], 'servername=', 2) as sys.nvarchar(4000)) AS data_source,
+  CAST((select string_agg(
+                  case
+                  when option like 'servername=%%' then substring(option, 12)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
   CAST(NULL as sys.nvarchar(4000)) AS location,
   CAST(NULL as sys.nvarchar(4000)) AS provider_string,
-  CAST(split_part(f.srvoptions[2], 'database=', 2) as sys.sysname) AS catalog,
+  CAST((select string_agg(
+                  case
+                  when option like 'database=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
   CAST(0 as int) AS connect_timeout,
   CAST(0 as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,
@@ -2869,7 +2893,12 @@ SELECT
   CAST(u.srvid as int) AS server_id,
   CAST(0 as int) AS local_principal_id,
   CAST(0 as sys.bit) AS uses_self_credential,
-  CAST(split_part(u.umoptions[1], 'username=', 2) as sys.sysname) AS remote_name,
+  CAST((select string_agg(
+                  case
+                  when option like 'username=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(u.umoptions) as option) as sys.sysname) AS remote_name,
   CAST(NULL as sys.datetime) AS modify_date
 FROM pg_user_mappings AS U
 LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
