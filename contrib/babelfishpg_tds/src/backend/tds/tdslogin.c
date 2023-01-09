@@ -1756,38 +1756,39 @@ TdsClientAuthentication(Port *port)
 		case uaMD5:
 		case uaPassword:
 			/* if sspiLen > 0 then GSS auth is already done at this point */
-			if (loginInfo->sspiLen == 0)
+			if (loginInfo->sspiLen > 0)
 			{
-				/*
-				* If pg_hba.conf specifies that the entry should be authenticated using
-				* password and the request doesn't contain a password, we should
-				* throw an error.
-				*/
-				if (!loginInfo->password)
-				{
-					char		hostinfo[NI_MAXHOST];
+				Assert(loginInfo->sspi);
 
-					pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-									hostinfo, sizeof(hostinfo),
-									NULL, 0,
-									NI_NUMERICHOST);
-
-					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							errmsg("invalid TDS authentication request for host \"%s\", user \"%s\", database \"%s\"",
-									hostinfo, port->user_name, port->database_name),
-							errhint("Expected authentication request: md5 or password")));
-				}
-
-				/* we've a password, let's verify it */
-				status = CheckAuthPassword(port, &logdetail);
-			}
-			else if (loginInfo->sspiLen > 0 && loginInfo->sspi)
-			{
 				/* Cleanup sspi data. */
 				pfree(loginInfo->sspi);
 				loginInfo->sspiLen = 0;
+				break;
 			}
+
+			/*
+			* If pg_hba.conf specifies that the entry should be authenticated using
+			* password and the request doesn't contain a password, we should
+			* throw an error.
+			*/
+			if (!loginInfo->password)
+			{
+				char		hostinfo[NI_MAXHOST];
+
+				pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+								hostinfo, sizeof(hostinfo),
+								NULL, 0,
+								NI_NUMERICHOST);
+
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						errmsg("invalid TDS authentication request for host \"%s\", user \"%s\", database \"%s\"",
+								hostinfo, port->user_name, port->database_name),
+						errhint("Expected authentication request: md5 or password")));
+			}
+
+			/* we've a password, let's verify it */
+			status = CheckAuthPassword(port, &logdetail);
 			break;
 		case uaTrust:
 			status = STATUS_OK;
