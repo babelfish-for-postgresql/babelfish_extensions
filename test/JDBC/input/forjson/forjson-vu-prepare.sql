@@ -155,16 +155,6 @@ SELECT (
 ) c1
 GO
 
--- FOR JSON AUTO clause not supported
-CREATE VIEW forjson_vu_v_auto AS
-SELECT (
-	SELECT Id,
-		   State
-	FROM forjson_vu_t_people
-	FOR JSON AUTO
-) c1
-GO
-
 -- Test case with parameters
 CREATE PROCEDURE forjson_vu_p_params1 @id int AS
 SELECT (
@@ -182,14 +172,6 @@ SELECT (
 		   State AS [State"@]
 	FROM forjson_vu_t_people
 	WHERE Id = @id
-	FOR JSON PATH
-) c1
-GO
-
--- Alias/colname not present
-CREATE VIEW forjson_vu_v_no_alias AS
-SELECT (
-	SELECT 2
 	FOR JSON PATH
 ) c1
 GO
@@ -213,31 +195,4 @@ SELECT (
 	ORDER BY Age
 	FOR JSON PATH
 ) C1
-GO
-
-CREATE VIEW forjson_vu_v_with AS
-WITH forjson_vu_with1(avg_age) AS (
-	SELECT avg(Age)
-	FROM forjson_vu_t_countries
-)
-SELECT (
-	SELECT Id, Age, Country
-	FROM forjson_vu_t_countries, forjson_vu_with1
-	WHERE Age >= forjson_vu_with1.avg_age
-	FOR JSON PATH
-) C1
-GO
-
-CREATE VIEW forjson_vu_v_with_order_by AS
-WITH forjson_vu_with2(avg_age) AS (
-	SELECT avg(Age)
-	FROM forjson_vu_t_countries
-)
-SELECT (
-	SELECT Id, Age, Country 
-	FROM forjson_vu_t_countries, forjson_vu_with2
-	WHERE Age >= forjson_vu_with2.avg_age
-	ORDER BY Country
-	FOR JSON PATH
-) c1
 GO

@@ -10,12 +10,6 @@ drop view forxml_vu_v2;
 go
 drop view forxml_vu_v_cte1;
 go
-drop view forxml_vu_v_cte2;
-go
-drop view forxml_vu_v_cte3;
-go
-drop view forxml_vu_v_cte4;
-go
 drop view forxml_vu_v_with;
 go
 drop view forxml_vu_v_with_where;
@@ -24,11 +18,9 @@ drop procedure test_forxml_datalength;
 go
 drop procedure test_forxml_strvar;
 go
-drop view forxml_vu_v_correlated_subquery;
+drop table forxml_t1;
 go
-drop table t1;
-go
-drop table t2;
+drop table forxml_t2;
 go
 drop table forxml_vu_t_employees;
 go

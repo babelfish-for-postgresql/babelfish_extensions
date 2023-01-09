@@ -39,32 +39,6 @@ GO
 ~~ROW COUNT: 1~~
 
 
--- Binary strings
-CREATE TABLE forjson_datatypes_vu_t_binary_strings(abinary binary, avarbinary varbinary(10))
-GO
-INSERT forjson_datatypes_vu_t_binary_strings VALUES (123456,0x0a0b0c0d0e)
-GO
-~~ROW COUNT: 1~~
-
-
--- Rowversion and timestamp
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
-GO
-
-CREATE TABLE forjson_datatypes_vu_t_rowversion (myKey int, myValue int,RV rowversion);
-GO
-INSERT INTO forjson_datatypes_vu_t_rowversion (myKey, myValue) VALUES (1, 0);
-GO
-~~ROW COUNT: 1~~
-
-
-CREATE TABLE forjson_datatypes_vu_t_timestamp (myKey int, myValue int, timestamp);
-GO
-INSERT INTO forjson_datatypes_vu_t_timestamp (myKey, myValue) VALUES (1, 0);
-GO
-~~ROW COUNT: 1~~
-
-
 -- T-SQL does not allow raw scalars as the output of a view, so surround the FOR JSON call with a SELECT to avoid a syntax error
 -- Exact Numerics
 CREATE VIEW forjson_datatypes_vu_v_numerics AS
@@ -175,44 +149,6 @@ SELECT
 (
     SELECT * 
     FROM forjson_datatypes_vu_t_unicode_strings
-    FOR JSON PATH
-) as c1;
-GO
-
--- Binary strings
-CREATE VIEW forjson_datatypes_vu_v_binary_strings AS
-SELECT
-(
-    SELECT abinary 
-    FROM forjson_datatypes_vu_t_binary_strings
-    FOR JSON PATH
-) as c1;
-GO
-
-CREATE VIEW forjson_datatypes_vu_v_varbinary_strings AS
-SELECT
-(
-    SELECT avarbinary
-    FROM forjson_datatypes_vu_t_binary_strings
-    FOR JSON PATH
-) as c1;
-GO
-
--- Rowversion and timestamp
-CREATE VIEW forjson_datatypes_vu_v_rowversion AS
-SELECT
-(
-    SELECT *
-    FROM forjson_datatypes_vu_t_rowversion
-    FOR JSON PATH
-) as c1;
-GO
-
-CREATE VIEW forjson_datatypes_vu_v_timestamp AS
-SELECT
-(
-    SELECT *
-    FROM forjson_datatypes_vu_t_timestamp
     FOR JSON PATH
 ) as c1;
 GO

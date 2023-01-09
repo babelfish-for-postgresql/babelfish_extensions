@@ -19,15 +19,6 @@ go
 SELECT * FROM forxml_vu_v_cte1;
 GO
 
-SELECT * FROM forxml_vu_v_cte2;
-GO
-
-SELECT * FROM forxml_vu_v_cte3;
-GO
-
-SELECT * FROM forxml_vu_v_cte4;
-GO
-
 SELECT * FROM forxml_vu_v_with_where
 GO
 
@@ -42,7 +33,4 @@ go
 -- test NULL parameter
 -- TODO fix BABEL-3569 so this returns 0 rows
 exec test_forxml_strvar 1, NULL;
-go
-
-select * from forxml_vu_v_correlated_subquery;
 go

@@ -36,10 +36,6 @@ GO
 DROP VIEW forjson_vu_v_without_array_wrapper_include_null_values
 GO
 
--- FOR JSON AUTO clause not supported
-DROP VIEW forjson_vu_v_auto
-GO
-
 
 -- Test case with parameters
 DROP PROCEDURE forjson_vu_p_params1
@@ -48,22 +44,12 @@ GO
 DROP PROCEDURE forjson_vu_p_params2
 GO
 
--- Alias/colname is not present
-DROP VIEW forjson_vu_v_no_alias
-GO
-
 -- All null values test
 DROP VIEW forjson_vu_v_nulls
 GO
 
 -- Test for all parser rules
 DROP VIEW forjson_vu_v_order_by
-GO
-
-DROP VIEW forjson_vu_v_with
-GO
-
-DROP VIEW forjson_vu_v_with_order_by
 GO
 
 -- Display Table Contents

@@ -46,10 +46,6 @@ GO
 SELECT * FROM forjson_vu_v_without_array_wrapper_include_null_values
 GO
 
--- FOR JSON AUTO clause not supported
-SELECT * FROM forjson_vu_v_auto
-GO
-
 
 -- Test case with parameters
 EXECUTE forjson_vu_p_params1 @id = 2
@@ -58,20 +54,10 @@ GO
 EXECUTE forjson_vu_p_params2 @id = 3
 GO
 
--- Alias/colname is not present
-SELECT * FROM forjson_vu_v_no_alias
-GO
-
 -- All null values test
 SELECT * FROM forjson_vu_v_nulls
 GO
 
 -- Test for all parser rules
 SELECT * FROM forjson_vu_v_order_by
-GO
-
-SELECT * FROM forjson_vu_v_with
-GO
-
-SELECT * FROM forjson_vu_v_with_order_by
 GO

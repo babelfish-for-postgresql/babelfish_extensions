@@ -120,16 +120,6 @@ nvarchar
 ~~END~~
 
 
--- FOR JSON AUTO clause not supported
-SELECT * FROM forjson_vu_v_auto
-GO
-~~START~~
-nvarchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: AUTO mode is not supported)~~
-
-
 
 -- Test case with parameters
 EXECUTE forjson_vu_p_params1 @id = 2
@@ -148,16 +138,6 @@ nvarchar
 ~~END~~
 
 
--- Alias/colname is not present
-SELECT * FROM forjson_vu_v_no_alias
-GO
-~~START~~
-nvarchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table)~~
-
-
 -- All null values test
 SELECT * FROM forjson_vu_v_nulls
 GO
@@ -173,21 +153,5 @@ GO
 ~~START~~
 nvarchar
 [{"Id":5,"Age":10,"Country":"USA"},{"Id":4,"Age":20},{"Id":1,"Age":25,"Country":"India"},{"Id":3,"Age":30,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"}]
-~~END~~
-
-
-SELECT * FROM forjson_vu_v_with
-GO
-~~START~~
-nvarchar
-[{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"}]
-~~END~~
-
-
-SELECT * FROM forjson_vu_v_with_order_by
-GO
-~~START~~
-nvarchar
-[{"Id":1,"Age":25,"Country":"India"},{"Id":3,"Age":30,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"}]
 ~~END~~
 

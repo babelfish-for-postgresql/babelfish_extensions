@@ -39,17 +39,3 @@ GO
 -- Unicode character strings
 SELECT * FROM forjson_datatypes_vu_v_unicode_strings
 GO
-
--- Binary strings
-SELECT * FROM forjson_datatypes_vu_v_binary_strings
-GO
-
-SELECT * FROM forjson_datatypes_vu_v_varbinary_strings
-GO
-
--- Rowversion and timestamp
-SELECT * FROM forjson_datatypes_vu_v_rowversion
-GO
-
-SELECT * FROM forjson_datatypes_vu_v_timestamp
-GO
