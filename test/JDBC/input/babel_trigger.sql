@@ -320,7 +320,32 @@ GO
 drop trigger notify
 GO
 
+-- test trigger function's schema
+create schema babel_trigger_sch1;
+GO
+
+create table babel_trigger_sch1.babel_trigger_t1(a int, b int);
+GO
+
+create trigger babel_trigger_sch1.babel_trigger_trig1 on babel_trigger_sch1.babel_trigger_t1 after insert as select 1;
+GO
+
+-- if we don't specify the schema name of trigger
+create trigger babel_trigger_trig2 on babel_trigger_sch1.babel_trigger_t1 after insert as select 1;
+GO
+
+select name,schema_name(schema_id) from sys.objects where name in ('babel_trigger_trig1','babel_trigger_trig2');
+GO
+
 -- clean up
+drop trigger babel_trigger_sch1.babel_trigger_trig1
+GO
+drop trigger babel_trigger_sch1.babel_trigger_trig2
+GO
+drop table babel_trigger_sch1.babel_trigger_t1
+GO
+drop schema babel_trigger_sch1
+GO
 drop table testing1
 GO
 drop table product_audits
