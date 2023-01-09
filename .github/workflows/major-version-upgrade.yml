@@ -60,7 +60,7 @@ jobs:
           make && make install
           cd ../babelfishpg_tsql
           make && make install
-      
+
       - name: Install Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: install-extensions-old
         if: always() && steps.build-extensions-old.outcome == 'success'
@@ -99,9 +99,16 @@ jobs:
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
+      - name: Build tds_fdw Extension
+        id: build-tds_fdw-extension
+        if: always() && steps.build-extensions-new.outcome == 'success'
+        uses: ./.github/composite-actions/build-tds_fdw-extension
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
+
       - name: Setup new data directory
         id: setup-new-datadir
-        if: always() && steps.build-extensions-new.outcome == 'success'
+        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         run: |
           cd ~
           ~/${{env.NEW_INSTALL_DIR}}/bin/initdb -D ~/${{env.NEW_INSTALL_DIR}}/data

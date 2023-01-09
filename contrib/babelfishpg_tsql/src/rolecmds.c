@@ -600,6 +600,13 @@ tsql_has_pgstat_permissions(Oid role)
 	return role_is_sa(GetSessionUserId()) || has_privs_of_role(GetSessionUserId(), role);
 }
 
+bool
+tsql_has_linked_srv_permissions(Oid role)
+{
+	/* Only sysadmin has permission to create/alter/delete linked servers */
+	return role_is_sa(GetSessionUserId());
+}
+
 PG_FUNCTION_INFO_V1(initialize_logins);
 Datum
 initialize_logins(PG_FUNCTION_ARGS)

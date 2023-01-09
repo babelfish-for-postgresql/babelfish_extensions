@@ -224,6 +224,7 @@ static pltsql_sequence_datatype_hook_type prev_pltsql_sequence_datatype_hook = N
 static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 static ProcessUtility_hook_type prev_ProcessUtility = NULL;
 static get_func_language_oids_hook_type prev_get_func_language_oids_hook = NULL;
+static tsql_has_linked_srv_permissions_hook_type prev_tsql_has_linked_srv_permissions_hook = NULL;
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
@@ -3561,6 +3562,9 @@ _PG_init(void)
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
+	prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
+	tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
+
 	InstallExtendedHooks();
 
 	prev_guc_push_old_value_hook = guc_push_old_value_hook;
@@ -3601,6 +3605,7 @@ _PG_fini(void)
 	validate_set_config_function_hook = prev_validate_set_config_function_hook;
 	non_tsql_proc_entry_hook = prev_non_tsql_proc_entry_hook;
 	get_func_language_oids_hook = prev_get_func_language_oids_hook;
+	tsql_has_linked_srv_permissions_hook = prev_tsql_has_linked_srv_permissions_hook;
 
 	UninstallExtendedHooks();
 }
