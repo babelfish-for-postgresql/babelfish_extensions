@@ -18,6 +18,10 @@ GO
 
 EXEC sp_describe_undeclared_parameters @tsql = N'INSERT INTO simpletable VALUES (@P1), (@P2), (@P3)'
 GO
+
+exec sys.sp_describe_undeclared_parameters N'insert into pg_shadow (a,b,c,d,e,f) values (@a,@b,@c,@d,@e,@f)'
+go
+
 -- Done testing simple error scenario
 
 -- Set-up
