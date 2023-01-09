@@ -1,4 +1,6 @@
 DROP TABLE IF EXISTS sys_all_columns_vu_prepare_table
+DROP TABLE IF EXISTS sys_all_columns_vu_prepare_t1
+DROP TABLE IF EXISTS sys_all_columns_vu_prepare_t2
 GO
 
 CREATE TABLE sys_all_columns_vu_prepare_table (
@@ -15,5 +17,13 @@ CREATE TABLE sys_all_columns_vu_prepare_t1 (
 	datecol date,
 	moneycol money,
 	datetimecol datetime,
+)
+GO
+
+CREATE TABLE sys_all_columns_vu_prepare_t2 (
+	col_one INT PRIMARY KEY,
+	col_two INT,
+	col_three INT IDENTITY(1,1),
+	col_computed AS col_one * col_two
 )
 GO
