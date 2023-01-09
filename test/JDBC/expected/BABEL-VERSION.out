@@ -121,6 +121,25 @@ t
 ~~END~~
 
 
+-- Test if PG will lose connection when setting GUC more than two times
+Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
 SELECT pg_reload_conf();
 GO
