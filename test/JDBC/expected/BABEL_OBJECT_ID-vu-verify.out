@@ -1,5 +1,5 @@
 -- test table, trigger, procedure, function
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_t1'))
+SELECT * FROM babel_object_id_t1_view
 GO
 ~~START~~
 varchar
@@ -7,7 +7,7 @@ babel_object_id_t1
 ~~END~~
 
 
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_proc1'))
+SELECT * FROM babel_object_id_proc1_view
 GO
 ~~START~~
 varchar
@@ -15,7 +15,7 @@ babel_object_id_proc1
 ~~END~~
 
 
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_func1'))
+SELECT * FROM babel_object_id_func1_view
 GO
 ~~START~~
 varchar
@@ -23,7 +23,7 @@ babel_object_id_func1
 ~~END~~
 
 
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_v1'))
+SELECT * FROM babel_object_id_v1_view
 GO
 ~~START~~
 varchar
@@ -31,7 +31,7 @@ babel_object_id_v1
 ~~END~~
 
 
-SELECT (CASE WHEN OBJECT_ID('babel_object_id_trg') = NULL THEN 'false' ELSE 'true' END) result;
+SELECT * FROM babel_object_id_trg_view
 GO
 ~~START~~
 text
@@ -82,12 +82,37 @@ babel_object_id_t1
 ~~END~~
 
 
--- Case insensitive
+-- case insensitive
 SELECT OBJECT_NAME(OBJECT_ID('Babel_Object_ID_t1'))
 GO
 ~~START~~
 varchar
 babel_object_id_t1
+~~END~~
+
+
+-- Negative scenarios
+SELECT OBJECT_ID()
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function object_id expects parameter "object_name", which was not supplied.)~~
+
+
+SELECT OBJECT_ID('input_longer_than_4000_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1')
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.)~~
+
+
+SELECT OBJECT_ID('babel_object_id_t1', '')
+GO
+~~START~~
+int
+<NULL>
 ~~END~~
 
 
@@ -174,6 +199,40 @@ babel_object_id_t3 .with .dot_and_spaces
 ~~END~~
 
 
+-- test longer schema name and table name 
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.babel_object_id_table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij'))
+GO
+~~START~~
+varchar
+babel_object_id_table_longer_th98997f4fc7505f5a0e4e8fa9d333617e
+~~END~~
+
+
+-- it can be also accessed with its shortened name
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.babel_object_id_table_longer_th98997f4fc7505f5a0e4e8fa9d333617e'))
+GO
+~~START~~
+varchar
+babel_object_id_table_longer_th98997f4fc7505f5a0e4e8fa9d333617e
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema_longer_tac6266677f55e340966ca52f80004919.babel_object_id_table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij'))
+GO
+~~START~~
+varchar
+babel_object_id_table_longer_th98997f4fc7505f5a0e4e8fa9d333617e
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema_longer_tac6266677f55e340966ca52f80004919.babel_object_id_table_longer_th98997f4fc7505f5a0e4e8fa9d333617e'))
+GO
+~~START~~
+varchar
+babel_object_id_table_longer_th98997f4fc7505f5a0e4e8fa9d333617e
+~~END~~
+
+
 -- To test temp object
 CREATE TABLE #babel_object_id_temp_t1 (a int);
 GO
@@ -206,23 +265,8 @@ varchar
 DROP TABLE #babel_object_id_temp_t1;
 go
 
--- test dependency of user's permission on object
-USE master;
-GO
-
-CREATE LOGIN babel_object_id_login1 WITH PASSWORD = '12345678';
-GO
-
-CREATE USER babel_object_id_master_user1 FOR LOGIN babel_object_id_login1;
-GO
-
-USE babel_object_id_db;
-GO
-
-CREATE USER babel_object_id_user2 FOR LOGIN babel_object_id_login1;
-GO
-
 -- tsql      user=babel_object_id_login1 password=12345678
+-- test dependency of user's permission on object
 USE master
 GO
 
@@ -358,19 +402,51 @@ GO
 
 -- tsql  user=babel_object_id_login1 password=12345678
 -- test cross database lookup
-USE master;
+USE babel_object_id_db;
 GO
 
 SELECT current_user;
 GO
 ~~START~~
 varchar
-babel_object_id_master_user1
+babel_object_id_user2
 ~~END~~
 
 
--- following should return NULL, as user in db corresponding to current login still don't have permission
-SELECT OBJECT_ID('babel_object_id_db..babel_object_id_db_t1')
+-- following should return NULL, as user in master corresponding to current login still don't have permission
+SELECT OBJECT_ID('master..babel_object_id_t1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('master..babel_object_id_proc1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('master..babel_object_id_func1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('master..babel_object_id_v1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('master..babel_object_id_trg')
 GO
 ~~START~~
 int
@@ -380,70 +456,116 @@ int
 
 -- tsql
 -- grant permission for access
-USE babel_object_id_db
+USE master
 GO
 
-GRANT SELECT ON babel_object_id_db_t1 TO babel_object_id_user2;
+GRANT SELECT ON babel_object_id_t1 TO babel_object_id_master_user1;
+GO
+
+GRANT EXECUTE ON babel_object_id_proc1 TO babel_object_id_master_user1;
+GO
+
+GRANT EXECUTE ON babel_object_id_func1 TO babel_object_id_master_user1;
+GO
+
+GRANT SELECT ON babel_object_id_v1 TO babel_object_id_master_user1;
 GO
 
 -- tsql    user=babel_object_id_login1 password=12345678
-USE master;
+USE babel_object_id_db;
 GO
 
 SELECT current_user;
 GO
 ~~START~~
 varchar
-babel_object_id_master_user1
+babel_object_id_user2
 ~~END~~
 
 
 -- Now we can access
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_db..babel_object_id_db_t1'))
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_t1'))
 GO
 ~~START~~
 varchar
-babel_object_id_db_t1
+babel_object_id_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_proc1'))
+GO
+~~START~~
+varchar
+babel_object_id_proc1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_func1'))
+GO
+~~START~~
+varchar
+babel_object_id_func1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_v1'))
+GO
+~~START~~
+varchar
+babel_object_id_v1
+~~END~~
+
+
+SELECT (CASE WHEN OBJECT_ID('master..babel_object_id_trg') = NULL THEN 'false' ELSE 'true' END) result;
+GO
+~~START~~
+text
+true
 ~~END~~
 
 
 -- tsql
-USE babel_object_id_db
+USE master
 GO
 
-REVOKE SELECT ON babel_object_id_db_t1 FROM babel_object_id_user2;
+REVOKE SELECT ON babel_object_id_t1 FROM babel_object_id_master_user1;
 GO
 
-DROP USER babel_object_id_user2
+REVOKE EXECUTE ON babel_object_id_proc1 FROM babel_object_id_master_user1;
 GO
 
-USE master;
+REVOKE EXECUTE ON babel_object_id_func1 FROM babel_object_id_master_user1;
 GO
 
-DROP USER babel_object_id_master_user1
+REVOKE SELECT ON babel_object_id_v1 FROM babel_object_id_master_user1;
 GO
 
--- psql
-
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'babel_object_id_login1'
-AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+-- tsql    user=babel_object_id_login1 password=12345678
+-- test if it is looking in user's default schema, in case no schema name is specified
+USE babel_object_id_db2;
 GO
-~~START~~
-bool
-t
-~~END~~
 
--- Wait to sync with another session
-SELECT pg_sleep(1);
+SELECT current_user;
 GO
 ~~START~~
-void
-
+varchar
+babel_object_id_db2_user2
 ~~END~~
 
 
--- tsql
-DROP LOGIN babel_object_id_login1;
+-- both should work
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_db2_t1'))
 GO
+~~START~~
+varchar
+babel_object_id_db2_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema2.babel_object_id_db2_t1'))
+GO
+~~START~~
+varchar
+babel_object_id_db2_t1
+~~END~~
+

@@ -1,4 +1,24 @@
+-- tsql
+
+USE babel_object_id_db2;
+GO
+
+REVOKE ALL ON babel_object_id_schema2.babel_object_id_db2_t1 FROM babel_object_id_db2_user2;
+GO
+
+DROP USER babel_object_id_db2_user2
+GO
+
+DROP TABLE babel_object_id_schema2.babel_object_id_db2_t1;
+GO
+
+DROP SCHEMA babel_object_id_schema2;
+GO
+
 USE babel_object_id_db;
+GO
+
+DROP USER babel_object_id_user2
 GO
 
 DROP TABLE babel_object_id_db_t1;
@@ -7,7 +27,22 @@ GO
 USE master;
 GO
 
+DROP USER babel_object_id_master_user1
+GO
+
+DROP LOGIN babel_object_id_login1;
+GO
+
+DROP DATABASE babel_object_id_db2;
+GO
+
 DROP DATABASE babel_object_id_db;
+GO
+
+DROP TABLE babel_object_id_schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.babel_object_id_table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij;
+GO
+
+DROP SCHEMA babel_object_id_schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij;
 GO
 
 DROP TABLE [babel_object_id_schema .with .dot_and_spaces]."babel_object_id_t3 .with .dot_and_spaces";
@@ -17,6 +52,21 @@ DROP SCHEMA [babel_object_id_schema .with .dot_and_spaces]
 GO
 
 DROP TABLE [babel_object_id_t2 .with .dot_an_spaces]
+GO
+
+DROP VIEW babel_object_id_v1_view
+GO
+
+DROP VIEW babel_object_id_func1_view
+GO
+
+DROP VIEW babel_object_id_trg_view
+GO
+
+DROP VIEW babel_object_id_t1_view
+GO
+
+DROP VIEW babel_object_id_proc1_view
 GO
 
 DROP VIEW babel_object_id_v1

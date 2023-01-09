@@ -928,22 +928,36 @@ checksum(PG_FUNCTION_ARGS)
         PG_RETURN_INT32(result);
 }
 
+/*
+ * object_id
+ * 		Returns the object ID with object name and object type as input where object type is option
+ * Returns NULL
+ * 		if input is NULL
+ * 		if there is no such object
+ * 		if user don't have right permission
+ * 		if any error occured
+ */
 Datum
 object_id(PG_FUNCTION_ARGS)
 {	
-	char 			*db_name = "";
-	char 			*schema_name = "";
+	char 			*db_name, *schema_name, *object_name;
 	char 			*physical_schema_name;
-	char 			*object_name;
-	bool 			is_temp_object;
+	char 			*input;
+	char 			*object_type = NULL;
+	char 			**splited_object_name;
 	Oid 			schema_oid;
 	Oid				user_id = GetUserId();
 	Oid 			result = InvalidOid;
+	bool 			is_temp_object;
 	int 			i;
-	char 			*input = lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
-	char 			*object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
-	char 			**splited_object_name;
 
+	if(PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+	else 
+		input = text_to_cstring(PG_GETARG_TEXT_P(0));
+	if(!PG_ARGISNULL(1))
+		object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
+	
 	/* strip trailing whitespace */
 	i = strlen(input);
 	while (i > 0 && isspace((unsigned char) input[i - 1]))
@@ -961,6 +975,13 @@ object_id(PG_FUNCTION_ARGS)
 	schema_name = splited_object_name[2];
 	object_name = splited_object_name[3];
 
+	/* downcase identifier if needed */
+	if (pltsql_case_insensitive_identifiers)
+	{	
+		db_name = downcase_identifier(db_name, strlen(db_name), false, false);
+		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
+		object_name = downcase_identifier(object_name, strlen(object_name), false, false);
+	}
 	pfree(input);
 	pfree(splited_object_name);
 
@@ -974,17 +995,9 @@ object_id(PG_FUNCTION_ARGS)
 	else if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
 	{
 		/* cross database lookup */
-		const char *login;
-		const char *user = NULL;
 		int db_id = get_db_id(db_name);
-
 		if (!DbidIsValid(db_id))
 			PG_RETURN_NULL();
-		login = GetUserNameFromId(GetSessionUserId(), false);
-		user = get_authid_user_ext_physical_name(db_name, login);
-		if(!user)
-			PG_RETURN_NULL();
-		
 		user_id = GetSessionUserId();
 	}
 
@@ -998,7 +1011,7 @@ object_id(PG_FUNCTION_ARGS)
 	/* get physical schema name from logical schema name */
 	physical_schema_name = get_physical_schema_name(db_name, schema_name);
 
-	/* get schema oid from physical schema name */
+	/* get schema oid from physical schema name, it will return InvalidOid if user don't have lookup access */
 	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
 
 	/* free unnecessary pointers */
@@ -1009,14 +1022,15 @@ object_id(PG_FUNCTION_ARGS)
 	if (!OidIsValid(schema_oid))
 	{
 		pfree(object_name);
-		pfree(object_type);
+		if(object_type)
+			pfree(object_type);
 		PG_RETURN_NULL();
 	}
 	
 	/* check if looking for temp object */
 	is_temp_object = (object_name[0] == '#'? true: false);
 
-	if (strcmp(object_type, "")) /* object_type is not empty */
+	if (object_type) /* "object_type" is specified in-argument */
 	{	
 		if (is_temp_object)
 		{
@@ -1119,7 +1133,8 @@ object_id(PG_FUNCTION_ARGS)
 		}
 	}
 	pfree(object_name);
-	pfree(object_type);
+	if(object_type)
+		pfree(object_type);
 	if (OidIsValid(result))
 	{
 		PG_RETURN_INT32(result);
