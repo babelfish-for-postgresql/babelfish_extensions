@@ -146,10 +146,10 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
 	new_record_login_ext[LOGIN_EXT_CREATE_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
 	new_record_login_ext[LOGIN_EXT_MODIFY_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
-	new_record_login_ext[LOGIN_EXT_ORIG_LOGINNAME] = CStringGetTextDatum(orig_loginname);
 	new_record_login_ext[LOGIN_EXT_DEFAULT_DATABASE_NAME] = CStringGetTextDatum(default_database);
 	new_record_login_ext[LOGIN_EXT_DEFAULT_LANGUAGE_NAME] = CStringGetTextDatum("English"); /* placeholder */
 	new_record_nulls_login_ext[LOGIN_EXT_PROPERTIES] = true;
+	new_record_login_ext[LOGIN_EXT_ORIG_LOGINNAME] = CStringGetTextDatum(orig_loginname);
 
 	tuple_login_ext = heap_form_tuple(bbf_authid_login_ext_dsc,
 									  new_record_login_ext,
