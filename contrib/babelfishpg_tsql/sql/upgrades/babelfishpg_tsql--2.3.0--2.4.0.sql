@@ -404,6 +404,9 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
+-- For all the views created Pre-Ocelot, the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def SET definition = NULL;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
