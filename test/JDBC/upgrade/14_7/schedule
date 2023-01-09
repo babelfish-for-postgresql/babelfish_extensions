@@ -247,6 +247,7 @@ BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
 # Re-enable once BABEL-3837 is fixed
 # BABEL-SP_FKEYS
+BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
@@ -362,3 +363,4 @@ sys_server_principals_dep
 sys_database_principals_dep
 atn2
 app_name
+case_insensitive_collation
