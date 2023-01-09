@@ -7,6 +7,7 @@ getdate()
 0
 1
 50
+'42' COLLATE "default"
 ~~END~~
 
 
