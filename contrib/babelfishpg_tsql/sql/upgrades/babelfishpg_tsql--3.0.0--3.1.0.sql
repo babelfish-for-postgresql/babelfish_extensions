@@ -168,6 +168,61 @@ $$
 $$
 LANGUAGE sql PARALLEL SAFE STABLE;
 
+create or replace view sys.all_columns as
+select CAST(c.oid as int) as object_id
+  , CAST(a.attname as sys.sysname) as name
+  , CAST(a.attnum as int) as column_id
+  , CAST(t.oid as int) as system_type_id
+  , CAST(t.oid as int) as user_type_id
+  , CAST(sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod) as smallint) as max_length
+  , CAST(case
+      when a.atttypmod != -1 then
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+      else
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+    end as sys.tinyint) as precision
+  , CAST(case
+      when a.atttypmod != -1 THEN
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+      else
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+    end as sys.tinyint) as scale
+  , CAST(coll.collname as sys.sysname) as collation_name
+  , case when a.attnotnull then CAST(0 as sys.bit) else CAST(1 as sys.bit) end as is_nullable
+  , CAST(0 as sys.bit) as is_ansi_padded
+  , CAST(0 as sys.bit) as is_rowguidcol
+  , CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit) as is_identity
+  , CAST(0 as sys.bit) as is_computed
+  , CAST(0 as sys.bit) as is_filestream
+  , CAST(0 as sys.bit) as is_replicated
+  , CAST(0 as sys.bit) as is_non_sql_subscribed
+  , CAST(0 as sys.bit) as is_merge_published
+  , CAST(0 as sys.bit) as is_dts_replicated
+  , CAST(0 as sys.bit) as is_xml_document
+  , CAST(0 as int) as xml_collection_id
+  , CAST(coalesce(d.oid, 0) as int) as default_object_id
+  , CAST(coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as int) as rule_object_id
+  , CAST(0 as sys.bit) as is_sparse
+  , CAST(0 as sys.bit) as is_column_set
+  , CAST(0 as sys.tinyint) as generated_always_type
+  , CAST('NOT_APPLICABLE' as sys.nvarchar(60)) as generated_always_type_desc
+from pg_attribute a
+inner join pg_class c on c.oid = a.attrelid
+inner join pg_type t on t.oid = a.atttypid
+inner join pg_namespace s on s.oid = c.relnamespace
+left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
+left join pg_collation coll on coll.oid = a.attcollation
+, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+where not a.attisdropped
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+and c.relkind in ('r', 'v', 'm', 'f', 'p')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+and a.attnum > 0;
+GRANT SELECT ON sys.all_columns TO PUBLIC;
+
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
   , CAST(oid as integer) as object_id
@@ -331,6 +386,21 @@ LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 INT)
+RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 BIGINT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 SMALLINT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.partitions AS
 SELECT
@@ -346,6 +416,81 @@ SELECT
 FROM sys.indexes AS i
 INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
 GRANT SELECT ON sys.partitions TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
+                                                    IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
+                                                    IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
+                                                    IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@location" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@catalog" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedserver_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedserver(IN sys.sysname,
+                                                  IN sys.nvarchar(128),
+                                                  IN sys.nvarchar(128),
+                                                  IN sys.nvarchar(4000),
+                                                  IN sys.nvarchar(4000),
+                                                  IN sys.nvarchar(4000),
+                                                  IN sys.sysname)
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedserver( IN "@server" sys.sysname,
+                                                  IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
+                                                  IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
+                                                  IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
+                                                  IN "@location" sys.nvarchar(4000) DEFAULT NULL,
+                                                  IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
+                                                  IN "@catalog" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedserver_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
+
+CREATE OR REPLACE VIEW sys.servers
+AS
+SELECT
+  CAST(f.oid as int) AS server_id,
+  CAST(f.srvname as sys.sysname) AS name,
+  CAST('' as sys.sysname) AS product,
+  CAST('tds_fdw' as sys.sysname) AS provider,
+  CAST((select string_agg(
+                  case
+                  when option like 'servername=%%' then substring(option, 12)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
+  CAST(NULL as sys.nvarchar(4000)) AS location,
+  CAST(NULL as sys.nvarchar(4000)) AS provider_string,
+  CAST((select string_agg(
+                  case
+                  when option like 'database=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
+  CAST(0 as int) AS connect_timeout,
+  CAST(0 as int) AS query_timeout,
+  CAST(1 as sys.bit) AS is_linked,
+  CAST(0 as sys.bit) AS is_remote_login_enabled,
+  CAST(0 as sys.bit) AS is_rpc_out_enabled,
+  CAST(1 as sys.bit) AS is_data_access_enabled,
+  CAST(0 as sys.bit) AS is_collation_compatible,
+  CAST(1 as sys.bit) AS uses_remote_collation,
+  CAST(NULL as sys.sysname) AS collation_name,
+  CAST(0 as sys.bit) AS lazy_schema_validation,
+  CAST(0 as sys.bit) AS is_system,
+  CAST(0 as sys.bit) AS is_publisher,
+  CAST(0 as sys.bit) AS is_subscriber,
+  CAST(0 as sys.bit) AS is_distributor,
+  CAST(0 as sys.bit) AS is_nonsql_subscriber,
+  CAST(1 as sys.bit) AS is_remote_proc_transaction_promotion_enabled,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_rda_server
+FROM pg_foreign_server AS f
+LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
+WHERE w.fdwname = 'tds_fdw';
+GRANT SELECT ON sys.servers TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -37,16 +37,21 @@ GO
 EXEC sp_addlinkedserver  @server = N'mssql_server3', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'mssql_server2\ABC', @catalog=N'master'
 GO
 
--- Create a linked server login with @useself = TRUE (Should throw error)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'TRUE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
-GO
-
--- Create a linked server login with @useself = FALSE
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
-GO
-
 -- Creating a simple login which has lesser privilege than sysadmin role
 create login linked_server_login_861 with password = 'password_861'
+GO
+
+-- Create a function dependent on sys.servers view
+CREATE FUNCTION sys_linked_servers_vu_prepare__sys_servers_func()
+RETURNS TABLE
+AS
+RETURN (SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers ORDER BY name);
+GO
+
+-- Create a view dependent on sys.servers view
+CREATE VIEW sys_linked_servers_vu_prepare__sys_servers_view
+AS
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers ORDER BY name
 GO
 
 -- tsql    user=linked_server_login_861    password=password_861

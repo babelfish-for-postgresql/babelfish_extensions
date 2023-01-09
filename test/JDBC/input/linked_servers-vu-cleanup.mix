@@ -1,32 +1,10 @@
 DROP LOGIN linked_server_login_861
 GO
 
--- Should throw an error as only locallogin = NULL is supported
-EXEC sp_droplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'login_1'
+DROP FUNCTION sys_linked_servers_vu_prepare__sys_servers_func
 GO
 
--- Trying to drop a linked server login that does not exist
-EXEC sp_droplinkedsrvlogin @rmtsrvname = 'mssql_server_that_does_not_exist', @locallogin = NULL
-GO
-
-EXEC sp_droplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = NULL
-GO
-
-SELECT * FROM sys.linked_logins
-GO
-
--- Trying to drop a server that does not exist (Should throw error)
-EXEC sp_dropserver @server = 'mssql_server_that_does_not_exist', @droplogins = NULL
-GO
-
--- Dropping a server with droplogins should drop the linked logins as well
-EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'droplogins'
-GO
-
-SELECT * FROM sys.servers WHERE name = 'mssql_server'
-GO
-
-SELECT * FROM sys.linked_logins
+DROP VIEW sys_linked_servers_vu_prepare__sys_servers_view
 GO
 
 -- psql

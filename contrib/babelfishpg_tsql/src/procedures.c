@@ -944,7 +944,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = insert_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
 				break;
@@ -955,7 +955,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = update_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = list_copy(update_stmt->targetList);
 
@@ -991,7 +991,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = delete_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = NIL;
 
@@ -2172,6 +2172,14 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	initStringInfo(&query);
 
+	/*
+	 * We prepare the following query to create a foreign server. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * CREATE SERVER <server name> FOREIGN DATA WRAPPER tds_fdw OPTIONS (servername
+	 * 	'<remote data source endpoint>', database '<catalog name>')
+	 *
+	 */
 	appendStringInfo(&query, "CREATE SERVER \"%s\" FOREIGN DATA WRAPPER tds_fdw ", linked_server);
 
 	/* Add the relevant options */
@@ -2179,6 +2187,10 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	{
 		appendStringInfoString(&query, "OPTIONS ( ");
 
+		/*
+		 * The servername option is required for foreign server creation,
+		 * but we leave it to the FDW's validator function to check for that
+		 */
 		if (data_src)
 			appendStringInfo(&query, "servername '%s' ", data_src);
 
