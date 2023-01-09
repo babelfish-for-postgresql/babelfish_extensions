@@ -40,11 +40,6 @@ LANGUAGE plpgsql;
 
 ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN orig_loginname SYS.NVARCHAR(128);
 GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_sysdatabases', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_db_seq', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
 
 create or replace view sys.views as 
 select 
