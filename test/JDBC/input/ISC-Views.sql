@@ -80,6 +80,9 @@ go
 create view iscv as select * from information_schema.views;
 go
 
+create view sbv with schemabinding as select 1;
+go
+
 -- create view with definition length more than 4000 char
 create view lview as select 'provvwstdjtlyzygsxcnqlkyukpjlseachjalbtttvujvdnhooy
 ursfkalzuixjyhogeijfpyidmrjciefitzurwxrazaqbmpljryfhmraftlwmktxqzsrhnbfgftqdxpxs
@@ -222,13 +225,14 @@ go
 create view sch1.v1 as select 1;
 go
 
-select * from information_schema.views where TABLE_NAME IN ('v1', 'iscv')  ORDER BY TABLE_NAME
+select * from information_schema.views where TABLE_NAME IN ('v1', 'iscv', 'sbv')  ORDER BY TABLE_NAME
 go
 
 -- clean-up
 DROP VIEW vnums
 DROP VIEW vcnums
 DROP VIEW iscv
+DROP VIEW sbv
 DROP VIEW lview
 DROP VIEW nlview
 DROP TABLE nums
