@@ -381,7 +381,7 @@ select CAST(c.oid as int) as object_id
   , CAST(0 as sys.bit) as is_ansi_padded
   , CAST(0 as sys.bit) as is_rowguidcol
   , CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit) as is_identity
-  , CAST(0 as sys.bit) as is_computed
+  , CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit) as is_computed
   , CAST(0 as sys.bit) as is_filestream
   , CAST(0 as sys.bit) as is_replicated
   , CAST(0 as sys.bit) as is_non_sql_subscribed
@@ -1142,8 +1142,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(d.adnum as int) as parent_column_id
-  -- use a simple regex to strip the datatype and collation that pg_get_expr returns after a double-colon that is not expected in SQL Server
-  , CAST(regexp_replace(pg_get_expr(d.adbin, d.adrelid), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) as definition
+  , CAST(tsql_get_expr(d.adbin, d.adrelid) as sys.nvarchar(4000)) as definition
   , CAST(1 as sys.bit) as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
@@ -1857,7 +1856,7 @@ SELECT out_object_id as object_id
   , out_is_masked as is_masked
   , out_graph_type as graph_type
   , out_graph_type_desc as graph_type_desc
-  , substring(pg_get_expr(d.adbin, d.adrelid), 1, 4000)::sys.nvarchar(4000) AS definition
+  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar(4000)) AS definition
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
 FROM sys.columns_internal() sc
