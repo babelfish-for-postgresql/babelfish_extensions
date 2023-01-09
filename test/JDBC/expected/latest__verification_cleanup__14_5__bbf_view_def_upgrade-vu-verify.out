@@ -2,11 +2,18 @@ SELECT vd.schema_name, vd.object_name, vd.definition FROM babelfish_view_def vd 
 GO
 ~~START~~
 varchar#!#varchar#!#ntext
-~~END~~
+dbo#!#bbf_view_def_upgrade_vu_prepare_dep_view#!#CREATE VIEW bbf_view_def_upgrade_vu_prepare_dep_view AS SELECT * FROM information_schema_tsql.views;
+dbo#!#bbf_view_def_upgrade_vu_prepare_view#!#CREATE VIEW bbf_view_def_upgrade_vu_prepare_view AS SELECT 1;
+~END~~
 
 
 SELECT * FROM bbf_view_def_upgrade_vu_prepare_dep_view WHERE "TABLE_NAME" LIKE '%bbf_view_def_upgrade_vu_prepare%' ORDER BY "TABLE_NAME";
 GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#bbf_view_def_upgrade_vu_prepare_dep_view#!#CREATE VIEW bbf_view_def_upgrade_vu_prepare_dep_view AS SELECT * FROM information_schema_tsql.views;#!#NONE#!#NO
+master#!#dbo#!#bbf_view_def_upgrade_vu_prepare_view#!#CREATE VIEW bbf_view_def_upgrade_vu_prepare_view AS SELECT 1;#!#NONE#!#NO
+~END~~
 
 
 DROP VIEW bbf_view_def_upgrade_vu_prepare_view;
