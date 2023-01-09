@@ -2300,9 +2300,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				bool			isuser = false;
 				bool			isrole = false;
 
-				char			*orig_loginname; // POC code - shameem
-				char 			*from_windows;
-				int location_windows = -1;
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
 				{
@@ -2314,8 +2311,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if (strcmp(headel->defname, "islogin") == 0)
 					{
-						int location = -1;
-						
+						bool from_windows = false;
+						char *orig_loginname = NULL;
+
 						islogin = true;
 						stmt->options = list_delete_cell(stmt->options,
 														 list_head(stmt->options));
@@ -2330,12 +2328,13 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								login_options = lappend(login_options, defel);
 							else if (strcmp(defel->defname, "name_location") == 0)
 							{
-								location = defel->location;
+								int location = defel->location;
+								orig_loginname = extract_identifier(queryString + location);
 								login_options = lappend(login_options, defel);
 							}
-							else if (strcmp(defel->defname, "name_location_windows") == 0)
+							else if (strcmp(defel->defname, "from_windows") == 0)
 							{
-								location_windows = defel->location;
+								from_windows = true;
 								login_options = lappend(login_options, defel);
 							}
 						}
@@ -2345,23 +2344,20 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							stmt->options = list_delete_ptr(stmt->options,
 															lfirst(option));
 						}
-						if (location >= 0)
+
+						if (orig_loginname)
 						{
-							orig_loginname = extract_identifier(queryString + location);
-							login_options = lappend(login_options,
-												   makeDefElem("original_login_name",
-															   (Node *) makeString(orig_loginname),
-															   -1));
-						}
-						if (location_windows >= 0)
-						{
-							from_windows = extract_identifier(queryString + location_windows);
-							login_options = lappend(login_options,
-												   makeDefElem("from_windows",
-															   (Node *) makeString(from_windows),
-															   -1));
+							login_options = lappend(login_options, 
+														makeDefElem("original_login_name",
+																	(Node *) makeString(orig_loginname),
+																	-1));
 						}
 
+						if (from_windows && orig_loginname)
+						{
+							pfree(stmt->role);
+							stmt->role = convertToUPN(orig_loginname);
+						}
 					}
 					else if (strcmp(headel->defname, "isuser") == 0)
 					{
@@ -2473,9 +2469,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_set_current_user("sysadmin");
 
-					if(location_windows!=-1)
-						stmt->role = convertToUPN(orig_loginname);
-
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)
@@ -2490,8 +2483,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						stmt->options = list_concat(stmt->options,
 													login_options);
 						create_bbf_authid_login_ext(stmt);
-						// if(location_windows!=-1)
-						// 	SPI_execute("GRANT rds_ad TO ")
 					}
 					PG_CATCH();
 					{
@@ -2933,7 +2924,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else
 						bbf_set_current_user("sysadmin");
 
-					// stmt->roles->length --> shameem poc
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)
