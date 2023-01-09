@@ -241,6 +241,81 @@ FROM sys.indexes AS i
 INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
 GRANT SELECT ON sys.partitions TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
+                                                    IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
+                                                    IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
+                                                    IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@location" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
+                                                    IN "@catalog" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedserver_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedserver(IN sys.sysname,
+                                                  IN sys.nvarchar(128),
+                                                  IN sys.nvarchar(128),
+                                                  IN sys.nvarchar(4000),
+                                                  IN sys.nvarchar(4000),
+                                                  IN sys.nvarchar(4000),
+                                                  IN sys.sysname)
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedserver( IN "@server" sys.sysname,
+                                                  IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
+                                                  IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
+                                                  IN "@datasrc" sys.nvarchar(4000) DEFAULT NULL,
+                                                  IN "@location" sys.nvarchar(4000) DEFAULT NULL,
+                                                  IN "@provstr" sys.nvarchar(4000) DEFAULT NULL,
+                                                  IN "@catalog" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedserver_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_addlinkedserver OWNER TO sysadmin;
+
+CREATE OR REPLACE VIEW sys.servers
+AS
+SELECT
+  CAST(f.oid as int) AS server_id,
+  CAST(f.srvname as sys.sysname) AS name,
+  CAST('' as sys.sysname) AS product,
+  CAST('tds_fdw' as sys.sysname) AS provider,
+  CAST((select string_agg(
+                  case
+                  when option like 'servername=%%' then substring(option, 12)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
+  CAST(NULL as sys.nvarchar(4000)) AS location,
+  CAST(NULL as sys.nvarchar(4000)) AS provider_string,
+  CAST((select string_agg(
+                  case
+                  when option like 'database=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
+  CAST(0 as int) AS connect_timeout,
+  CAST(0 as int) AS query_timeout,
+  CAST(1 as sys.bit) AS is_linked,
+  CAST(0 as sys.bit) AS is_remote_login_enabled,
+  CAST(0 as sys.bit) AS is_rpc_out_enabled,
+  CAST(1 as sys.bit) AS is_data_access_enabled,
+  CAST(0 as sys.bit) AS is_collation_compatible,
+  CAST(1 as sys.bit) AS uses_remote_collation,
+  CAST(NULL as sys.sysname) AS collation_name,
+  CAST(0 as sys.bit) AS lazy_schema_validation,
+  CAST(0 as sys.bit) AS is_system,
+  CAST(0 as sys.bit) AS is_publisher,
+  CAST(0 as sys.bit) AS is_subscriber,
+  CAST(0 as sys.bit) AS is_distributor,
+  CAST(0 as sys.bit) AS is_nonsql_subscriber,
+  CAST(1 as sys.bit) AS is_remote_proc_transaction_promotion_enabled,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_rda_server
+FROM pg_foreign_server AS f
+LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
+WHERE w.fdwname = 'tds_fdw';
+GRANT SELECT ON sys.servers TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
