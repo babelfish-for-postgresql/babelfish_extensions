@@ -1776,15 +1776,15 @@ TdsClientAuthentication(Port *port)
 				char		hostinfo[NI_MAXHOST];
 
 				pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-								hostinfo, sizeof(hostinfo),
-								NULL, 0,
-								NI_NUMERICHOST);
+									hostinfo, sizeof(hostinfo),
+									NULL, 0,
+									NI_NUMERICHOST);
 
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						errmsg("invalid TDS authentication request for host \"%s\", user \"%s\", database \"%s\"",
+						 errmsg("invalid TDS authentication request for host \"%s\", user \"%s\", database \"%s\"",
 								hostinfo, port->user_name, port->database_name),
-						errhint("Expected authentication request: md5 or password")));
+						 errhint("Expected authentication request: md5 or password")));
 			}
 
 			/* we've a password, let's verify it */
