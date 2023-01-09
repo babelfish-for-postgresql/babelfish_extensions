@@ -959,12 +959,12 @@ tsql_get_constraint_oid(char *conname, Oid connamespace)
 
 /*
  * tsql_get_trigger_oid
- *		Given name of a trigger, look up the OID.
+ *		Given name and namespace of a trigger, look up the OID.
  *
  * Returns InvalidOid if there is no such trigger.
  */
 Oid
-tsql_get_trigger_oid(char *tgname)
+tsql_get_trigger_oid(char *tgname, Oid tgnamespace)
 {
 	Relation		tgrel;
 	ScanKeyData 	key;
@@ -972,7 +972,7 @@ tsql_get_trigger_oid(char *tgname)
 	HeapTuple		tuple;
 	Oid				result = InvalidOid;
 
-	/* search in pg_trigger by name */
+	/* first search in pg_trigger by name */
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&key,
 				Anum_pg_trigger_tgname,
@@ -982,13 +982,18 @@ tsql_get_trigger_oid(char *tgname)
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
 								true, NULL, 1, &key);
 	
-	/* we are interested in the first row only */
-	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		if (OidIsValid(pg_trigger->oid))
+		if(!OidIsValid(pg_trigger->tgrelid))
+		{
+			break;
+		}
+		/* then consider only trigger in specified namespace */
+		if (get_rel_namespace(pg_trigger->tgrelid) == tgnamespace)
 		{
 			result = pg_trigger->oid;
+			break;
 		}
 	}
 	systable_endscan(tgscan);
@@ -1027,34 +1032,6 @@ tsql_get_proc_oid(char *proname, Oid pronamespace)
 	return result;
 }
 
-/*
- * tsql_get_temp_object_oid
- *		Given relname of a temp object, look up the OID.
- *		Search in list of ENRs registered in the current query environment by relname.
- * Returns InvalidOid if there is no such proc.
- */
-Oid
-tsql_get_temp_object_oid(char *relname)
-{
-	ListCell 		*lc;
-	char			*name;
-	int 			reloid;
-	Oid				result = InvalidOid;
-	List 			*enr_list = get_namedRelList();
-
-	foreach (lc, enr_list)
-	{	
-		reloid = ((EphemeralNamedRelationMetadata)lfirst(lc))->reliddesc;
-		name = ((EphemeralNamedRelationMetadata)lfirst(lc))->name;
-		if (!strcmp(name, relname))
-		{
-			result = reloid;
-			break;
-		}
-	}
-	return result;
-}
-
 static int
 babelfish_get_delimiter_pos(char *str)
 {	
@@ -1089,54 +1066,58 @@ babelfish_get_delimiter_pos(char *str)
 	return -1;
 }
 
+/* 
+ * Extract string from input of given length and remove delimited identifiers.
+ */
 static char*
-extract_and_remove_delimiter_pair(char *str, int len)
+remove_delimited_identifiers(char *str, int len)
 {	
-	/* extract string from str of given length and remove delimiter pair */
+	
 	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
 	{	
 		if(len > 2)
-		{	
-			char *res = (char *) palloc((len - 1) * sizeof(char));
-			strncpy(res, &str[1], len - 2);
-			res[len - 2] = '\0';
-			return res;
-		} 
+			return pnstrdup(&str[1], len - 2);
 		else
 			return "";
-			
 	}
 	else
-	{
-		char *res = (char *) palloc((len + 1) * sizeof(char));
-		strncpy(res, str, len);
-		res[len] =  '\0';
-		return res;
-	}
+		return pnstrdup(str, len);
 }
 
 /*
- * Split multiple-part object-name into list, it also extract the delimiter pairs. 
+ * Split multiple-part object-name into array of pointers , it also remove the delimited identifiers. 
  */
-List*
+char**
 split_object_name(char *name)
-{
+{	
+	char		**res = palloc(4 * sizeof(char *));
+	char		*temp[4];
 	char		*str;
-	int			cur_pos;
-	int			next_pos;
-	List		*res = NIL;
+	int			cur_pos, next_pos;
+	int 		count = 0;
 
+	/* extract and remove the delimited identifiers from input into temp array */
 	cur_pos = 0;
 	next_pos = babelfish_get_delimiter_pos(name);
-	while (next_pos != -1)
+	while (next_pos != -1 && count < 3)
 	{
-		str = extract_and_remove_delimiter_pair(&name[cur_pos], next_pos);
-		res = lappend(res, str);
+		str = remove_delimited_identifiers(&name[cur_pos], next_pos);
+		temp[count++] = str;
 		cur_pos += next_pos + 1;
 		next_pos = babelfish_get_delimiter_pos(&name[cur_pos]);
 	}
-	str = extract_and_remove_delimiter_pair(&name[cur_pos], strlen(&name[cur_pos]));
-	res = lappend(res, str);
+	str = remove_delimited_identifiers(&name[cur_pos], strlen(&name[cur_pos]));
+	temp[count++] = str;
+
+	/* fill unspecified parts with empty strings */
+	for(int i = 0; i < 4; i++)
+	{
+		if(i < 4 - count)
+			res[i] = "";
+		else
+			res[i] = temp[i - (4 - count)];
+	}
+
 	return res;
 }
 
