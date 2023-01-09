@@ -2348,9 +2348,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						if (orig_loginname)
 						{
 							login_options = lappend(login_options, 
-														makeDefElem("original_login_name",
-																	(Node *) makeString(orig_loginname),
-																	-1));
+													makeDefElem("original_login_name",
+																(Node *) makeString(orig_loginname),
+																-1));
 						}
 
 						if (from_windows && orig_loginname)

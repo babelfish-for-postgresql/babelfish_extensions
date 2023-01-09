@@ -156,7 +156,13 @@ opt_must_change:
 		;
 
 tsql_login_sources:
-			TSQL_WINDOWS WITH tsql_windows_options_list
+			TSQL_WINDOWS
+				{
+					$$ = list_make1(makeDefElem("from_windows",
+												(Node *)makeBoolean(true),
+												@1));
+				}
+			| TSQL_WINDOWS WITH tsql_windows_options_list
 				{
 					DefElem *elem = makeDefElem("from_windows",
 												(Node *)makeBoolean(true),
