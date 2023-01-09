@@ -1767,10 +1767,10 @@ TdsClientAuthentication(Port *port)
 			}
 
 			/*
-			* If pg_hba.conf specifies that the entry should be authenticated using
-			* password and the request doesn't contain a password, we should
-			* throw an error.
-			*/
+			 * If pg_hba.conf specifies that the entry should be authenticated using
+			 * password and the request doesn't contain a password, we should
+			 * throw an error.
+			 */
 			if (!loginInfo->password)
 			{
 				char		hostinfo[NI_MAXHOST];
