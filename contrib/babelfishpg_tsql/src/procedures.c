@@ -2237,10 +2237,10 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 Datum
 sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
-	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
-	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(4));
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
+	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
 
 	StringInfoData query;
 
