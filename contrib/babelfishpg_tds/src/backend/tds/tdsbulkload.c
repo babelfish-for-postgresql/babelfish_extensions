@@ -205,7 +205,8 @@ GetBulkLoadRequest(StringInfo message)
 {
 	TDSRequestBulkLoad		request;
 	uint16_t 				colCount;
-	BulkLoadColMetaData 			*colmetadata;
+	BulkLoadColMetaData		*colmetadata;
+	uint32_t				collation;
 
 	TdsErrorContext->err_text = "Fetching Bulk Load Request";
 
@@ -271,9 +272,10 @@ GetBulkLoadRequest(StringInfo message)
 				memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint16));
 				offset += sizeof(uint16);
 
-				memcpy(&colmetadata[currentColumn].collation, &message->data[offset], sizeof(uint32_t));
+				memcpy(&collation, &message->data[offset], sizeof(uint32_t));
 				offset += sizeof(uint32_t);
 				colmetadata[currentColumn].sortId = message->data[offset++];
+				colmetadata[currentColumn].encoding = TdsGetEncoding(collation);
 			}
 			break;
 			case TDS_TYPE_TEXT:
@@ -290,9 +292,10 @@ GetBulkLoadRequest(StringInfo message)
 					colmetadata[currentColumn].columnTdsType == TDS_TYPE_NTEXT)
 				{
 					CheckMessageHasEnoughBytesToRead(&message, sizeof(uint32_t) + 1);
-					memcpy(&colmetadata[currentColumn].collation, &message->data[offset], sizeof(uint32_t));
+					memcpy(&collation, &message->data[offset], sizeof(uint32_t));
 					offset += sizeof(uint32_t);
 					colmetadata[currentColumn].sortId = message->data[offset++];
+					colmetadata[currentColumn].encoding = TdsGetEncoding(collation);
 				}
 
 				CheckMessageHasEnoughBytesToRead(&message, sizeof(uint16_t));
@@ -675,7 +678,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
-							rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].collation, colmetadata[i].columnTdsType);
+							rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].encoding, colmetadata[i].columnTdsType);
 						break;
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_NVARCHAR:
@@ -742,7 +745,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 					switch(colmetadata[i].columnTdsType)
 					{
 						case TDS_TYPE_TEXT:
-							rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].collation, colmetadata[i].columnTdsType);
+							rowData->columnValues[i] = TdsTypeVarcharToDatum(temp, colmetadata[i].encoding, colmetadata[i].columnTdsType);
 						break;
 						case TDS_TYPE_NTEXT:
 							rowData->columnValues[i] = TdsTypeNCharToDatum(temp);
