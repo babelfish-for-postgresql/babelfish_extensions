@@ -69,6 +69,19 @@ GO
 create login linked_server_login_861 with password = 'password_861'
 GO
 
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @locallogin = 'linked_server_login_861', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
+GO
+
+-- Creating a user which is part of sysadmin role
+create login linked_server_login_admin with password = 'adminpass'
+GO
+
+alter server role sysadmin add member linked_server_login_admin
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @locallogin = 'linked_server_login_admin', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
+GO
+
 -- Create a function dependent on sys.servers view
 CREATE FUNCTION sys_linked_servers_vu_prepare__sys_servers_func()
 RETURNS TABLE
