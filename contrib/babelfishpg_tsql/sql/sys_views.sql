@@ -2828,50 +2828,6 @@ FROM sys.events e
 WHERE e.is_trigger_event = 1;
 GRANT SELECT ON sys.trigger_events TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.servers
-AS
-SELECT
-  CAST(f.oid as int) AS server_id,
-  CAST(f.srvname as sys.sysname) AS name,
-  CAST('' as sys.sysname) AS product,
-  CAST('tds_fdw' as sys.sysname) AS provider,
-  CAST((select string_agg(
-                  case
-                  when option like 'servername=%%' then substring(option, 12)
-                  else NULL
-                  end, ',')
-          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
-  CAST(NULL as sys.nvarchar(4000)) AS location,
-  CAST(NULL as sys.nvarchar(4000)) AS provider_string,
-  CAST((select string_agg(
-                  case
-                  when option like 'database=%%' then substring(option, 10)
-                  else NULL
-                  end, ',')
-          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
-  CAST(0 as int) AS connect_timeout,
-  CAST(0 as int) AS query_timeout,
-  CAST(1 as sys.bit) AS is_linked,
-  CAST(0 as sys.bit) AS is_remote_login_enabled,
-  CAST(0 as sys.bit) AS is_rpc_out_enabled,
-  CAST(1 as sys.bit) AS is_data_access_enabled,
-  CAST(0 as sys.bit) AS is_collation_compatible,
-  CAST(1 as sys.bit) AS uses_remote_collation,
-  CAST(NULL as sys.sysname) AS collation_name,
-  CAST(0 as sys.bit) AS lazy_schema_validation,
-  CAST(0 as sys.bit) AS is_system,
-  CAST(0 as sys.bit) AS is_publisher,
-  CAST(0 as sys.bit) AS is_subscriber,
-  CAST(0 as sys.bit) AS is_distributor,
-  CAST(0 as sys.bit) AS is_nonsql_subscriber,
-  CAST(1 as sys.bit) AS is_remote_proc_transaction_promotion_enabled,
-  CAST(NULL as sys.datetime) AS modify_date,
-  CAST(0 as sys.bit) AS is_rda_server
-FROM pg_foreign_server AS f
-LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
-WHERE w.fdwname = 'tds_fdw';
-GRANT SELECT ON sys.servers TO PUBLIC;
-
 CREATE OR REPLACE VIEW sys.linked_logins
 AS
 SELECT
