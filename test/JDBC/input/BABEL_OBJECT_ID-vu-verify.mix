@@ -268,15 +268,32 @@ GO
 
 -- test if it is looking in user's default schema, in case no schema name is specified
 -- tsql    user=babel_object_id_login1 password=12345678
-USE babel_object_id_db2;
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema2.babel_object_id_db_t2'))
+GO
+
+-- should fail 
+SELECT OBJECT_ID('babel_object_id_db_t2')
+GO
+
+-- tsql 
+-- now change the default schema
+USE babel_object_id_db;
+GO
+
+ALTER USER babel_object_id_user2 WITH DEFAULT_SCHEMA = babel_object_id_schema2;
+GO
+
+-- tsql    user=babel_object_id_login1 password=12345678
+-- now it will search in default schema
+USE babel_object_id_db;
 GO
 
 SELECT current_user;
 GO
 
--- both should work
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_db2_t1'))
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_db_t2'))
 GO
 
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema2.babel_object_id_db2_t1'))
+-- tsql
+USE babel_object_id_db;
 GO

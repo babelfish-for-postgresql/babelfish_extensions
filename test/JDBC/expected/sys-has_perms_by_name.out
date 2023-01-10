@@ -1896,7 +1896,7 @@ SELECT HAS_PERMS_BY_NAME('master..t_perms_by_name', 'OBJECT', 'SELECT', '"col1"'
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -2192,7 +2192,7 @@ SELECT HAS_PERMS_BY_NAME('[ non.existent.db ].".non existent.schema.".[non .. ex
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 

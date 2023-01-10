@@ -1,21 +1,15 @@
 -- tsql
 
-USE babel_object_id_db2;
+USE babel_object_id_db;
 GO
 
-REVOKE ALL ON babel_object_id_schema2.babel_object_id_db2_t1 FROM babel_object_id_db2_user2;
+REVOKE ALL ON babel_object_id_schema2.babel_object_id_db_t2 FROM babel_object_id_user2;
 GO
 
-DROP USER babel_object_id_db2_user2
-GO
-
-DROP TABLE babel_object_id_schema2.babel_object_id_db2_t1;
+DROP TABLE babel_object_id_schema2.babel_object_id_db_t2;
 GO
 
 DROP SCHEMA babel_object_id_schema2;
-GO
-
-USE babel_object_id_db;
 GO
 
 DROP USER babel_object_id_user2
@@ -31,9 +25,6 @@ DROP USER babel_object_id_master_user1
 GO
 
 DROP LOGIN babel_object_id_login1;
-GO
-
-DROP DATABASE babel_object_id_db2;
 GO
 
 DROP DATABASE babel_object_id_db;

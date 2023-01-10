@@ -80,26 +80,14 @@ CREATE USER babel_object_id_user2 FOR LOGIN babel_object_id_login1;
 GO
 
 -- to test that it is looking in user's default schema, in case no schema name is specified
-USE master;
-GO
-
-CREATE DATABASE babel_object_id_db2;
-GO
-
-USE babel_object_id_db2;
+USE babel_object_id_db;
 GO
 
 CREATE SCHEMA babel_object_id_schema2;
 GO
 
-CREATE TABLE babel_object_id_schema2.babel_object_id_db2_t1 (a int);
+CREATE TABLE babel_object_id_schema2.babel_object_id_db_t2 (a int);
 GO
 
-CREATE USER babel_object_id_db2_user2 FOR LOGIN babel_object_id_login1;
-GO
-
-ALTER USER babel_object_id_db2_user2 WITH DEFAULT_SCHEMA = babel_object_id_schema2;
-GO
-
-GRANT ALL ON babel_object_id_schema2.babel_object_id_db2_t1 TO babel_object_id_db2_user2;
+GRANT ALL ON babel_object_id_schema2.babel_object_id_db_t2 TO babel_object_id_user2;
 GO
