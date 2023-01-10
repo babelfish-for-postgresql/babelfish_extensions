@@ -2271,8 +2271,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * Add the relevant options
 	 *
 	 * The username and password options are required for user mapping
-	 * creation, but we leave it to the FDW's validator function to
-	 * check for that
+	 * creation, (according to tds_fdw documentation) but we leave it
+	 * to the FDW's validator function to check for that
 	 */
 	if (username || password)
 	{

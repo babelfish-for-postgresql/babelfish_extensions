@@ -40,6 +40,8 @@ GO
 ~~START~~
 varchar#!#varchar
 mssql_server#!#jdbc_user
+mssql_server2#!#only_user_no_password
+mssql_server3#!#<NULL>
 ~~END~~
 
 
@@ -48,5 +50,7 @@ GO
 ~~START~~
 varchar#!#varchar
 mssql_server#!#jdbc_user
+mssql_server2#!#only_user_no_password
+mssql_server3#!#<NULL>
 ~~END~~
 
