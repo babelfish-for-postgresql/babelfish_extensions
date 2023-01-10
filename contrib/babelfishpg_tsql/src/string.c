@@ -14,14 +14,11 @@
 #include "utils/lsyscache.h"
 #include <openssl/sha.h>
 #include "utils/varlena.h"
-#include "utils/float.h"
 #include "utils/numeric.h"
 
 #include "pltsql.h"
 #include "pltsql-2.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 
 #define MD5_RESULTLEN  (16)
 #define SHA1_RESULTLEN	(20)
