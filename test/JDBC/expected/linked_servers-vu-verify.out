@@ -40,6 +40,8 @@ GO
 ~~START~~
 varchar#!#varchar
 mssql_server#!#jdbc_user
+mssql_server#!#<NULL>
+mssql_server#!#<NULL>
 mssql_server2#!#only_user_no_password
 mssql_server3#!#<NULL>
 ~~END~~
@@ -48,8 +50,9 @@ mssql_server3#!#<NULL>
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 ~~START~~
-varchar#!#varchar
 mssql_server#!#jdbc_user
+mssql_server#!#<NULL>
+mssql_server#!#<NULL>
 mssql_server2#!#only_user_no_password
 mssql_server3#!#<NULL>
 ~~END~~
