@@ -544,33 +544,36 @@ float_str(PG_FUNCTION_ARGS)
 
     // count number of numeric digits in the numeric input
     // find - and . in input
-    if (strchr(float_char, '-') != NULL) {
+    if (strchr(float_char, '-') != NULL) 
+    {
         has_neg_sign = 1;
         precision--;
     }
-    if (strchr(float_char, '.') != NULL) {
+    if (strchr(float_char, '.') != NULL) 
+    {
         precision--;
         int_digits = strchr(float_char, '.') - float_char - has_neg_sign;
         input_deci_point = 1;
-    } else {
+    } 
+    else 
+    {
         int_digits = precision;
     }
     input_deci_digits = precision - int_digits;
 
-    if (precision > 38) {
+    if (precision > 38) 
         ereport(ERROR,
             (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
             errmsg("The number '%s' is out of the range for numeric representation (maximum precision 38).", float_char)));
-    }
 
     length = PG_GETARG_INT32(1);
     decimal = PG_GETARG_INT32(2);
 
-    if (length <=0 || length > 8000 || decimal < 0) {
+    if (length <=0 || length > 8000 || decimal < 0) 
         PG_RETURN_NULL();
-    }
 
-    if (int_digits + has_neg_sign > length) {
+    if (int_digits + has_neg_sign > length) 
+    {
         // return string of length filled with * 
         buf = palloc(length + 1 * sizeof(char));
 	    memset(buf, 42, (length + 1) * sizeof (char));
@@ -578,7 +581,9 @@ float_str(PG_FUNCTION_ARGS)
         result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf, length + 1, -1);
         pfree(buf);
         PG_RETURN_VARCHAR_P(result);
-    } else if (int_digits > 17) {
+    } 
+    else if (int_digits > 17) 
+    {
         int_part_zeros = int_digits - 17;
     }
 
@@ -588,25 +593,29 @@ float_str(PG_FUNCTION_ARGS)
 	memset(buf, 0, size * sizeof (char));
     if (has_neg_sign)
         length--;
-    if (decimal > 0 && length > int_digits) {
+    if (decimal > 0 && length > int_digits) 
+    {
         has_deci_point = 1;
         length--;
     }
 
-    if (length < (decimal + int_digits)) {
+    if (length < (decimal + int_digits)) 
         decimal = length - int_digits;
-    }
     
-    if (decimal > 0) {
+    if (decimal > 0) 
+    {
         deci_digits = (16 > decimal) ? decimal : 16;
-    } else {
+    } 
+    else 
+    {
         deci_digits = 0;
     }
 
     num_spaces = length - int_digits - deci_digits;
 
     // comp space for the decimal point
-    if (has_deci_point && !deci_digits) {
+    if (has_deci_point && !deci_digits) 
+    {
         num_spaces++;
         has_deci_point--;
     }
@@ -614,50 +623,66 @@ float_str(PG_FUNCTION_ARGS)
     deci_sig = (17 > int_digits ? 17 - int_digits : 0);
     deci_sig = (deci_sig > input_deci_digits ? input_deci_digits : deci_sig);
     // compute deci_part_zeros and update actual deci_sig
-    if (deci_digits > 0 && length > 17 && deci_digits > deci_sig) {
+    if (deci_digits > 0 && length > 17 && deci_digits > deci_sig) 
+    {
         deci_part_zeros = deci_digits - deci_sig;
-    } else if (deci_digits > input_deci_digits) {
+    } 
+    else if (deci_digits > input_deci_digits) 
+    {
         deci_part_zeros = deci_digits - input_deci_digits;
         deci_sig = input_deci_digits;
-    } else {
+    } 
+    else 
+    {
         deci_sig = deci_digits;
     }
 
 
     // set the spaces
-    if (num_spaces > 0) {
+    if (num_spaces > 0) 
         memset(buf, 32, num_spaces * sizeof(char));
-    }
+    
 
     // find if need to round
-    if (int_digits + input_deci_digits > 17) {
+    if (int_digits + input_deci_digits > 17) 
+    {
         // exceeds the max precision, need to round to 17th digit(excluding - and .) 
-        if (int_digits > 17) {
+        if (int_digits > 17) 
+        {
             curr_digit = float_char[17 + has_neg_sign] - 48;
             if (curr_digit >= 5) 
                 round_pos = 16 + has_neg_sign;
-        } else {
+        } 
+        else 
+        {
             curr_digit = float_char[17 + has_neg_sign + input_deci_point] - 48;
             if (curr_digit >= 5)
                 round_pos = 16 + has_neg_sign + input_deci_point;
         }    
-    } else if (deci_digits && input_deci_digits > deci_sig) {
+    } 
+    else if (deci_digits && input_deci_digits > deci_sig) 
+    {
         // input decimal digits > needed, round to size - 2 th digit
         curr_digit = float_char[has_neg_sign + int_digits + input_deci_point + deci_sig] - 48;
         if (curr_digit >= 5) 
             round_pos = has_neg_sign + int_digits + input_deci_point + deci_sig - 1;
-    } else if (!deci_sig && input_deci_digits) {
+    } 
+    else if (!deci_sig && input_deci_digits) 
+    {
         // int part == length and has deci digit input, round to integer
         curr_digit = float_char[has_neg_sign + int_digits + 1] - 48;
         if (curr_digit >= 5)
             round_pos = has_neg_sign + int_digits - 1; // last digit of integer
     }
 
-    if (round_pos > 0) {
+    if (round_pos > 0) 
+    {
         // do rounding 
         carry = 1;
-        while (round_pos > (0 + has_neg_sign) && carry) {
-            if (float_char[round_pos] == '.') {
+        while (round_pos > (0 + has_neg_sign) && carry) 
+        {
+            if (float_char[round_pos] == '.') 
+            {
                 round_pos--;
                 continue;
             }
@@ -669,15 +694,20 @@ float_str(PG_FUNCTION_ARGS)
     }
 
     // handle carried over digit
-    if (carry) {
-        if (num_spaces > 0) {
-            if (has_neg_sign) {
+    if (carry) 
+    {
+        if (num_spaces > 0) 
+        {
+            if (has_neg_sign) 
+            {
                 memset(buf+num_spaces - 1, 45, sizeof(char));
                 num_spaces++;
             }
             memset(buf+num_spaces - 1, 49, sizeof(char));
             memset(float_char, 48, sizeof(char));
-        } else {
+        } 
+        else 
+        {
             // not enough space for the carried_over digit, return ***
             buf = palloc(size * sizeof(char));
 	        memset(buf, 42, size * sizeof (char));
@@ -691,19 +721,23 @@ float_str(PG_FUNCTION_ARGS)
     strncpy(buf+num_spaces, float_char, size - 1 - num_spaces);
 
     // add decimal point if needed
-    if (has_deci_point && !input_deci_digits) {
+    if (has_deci_point && !input_deci_digits) 
         memset(buf+num_spaces+has_neg_sign+int_digits, 46, sizeof(char));
-    }
+    
 
     // set the zeros
-    if (deci_part_zeros > 0) {
+    if (deci_part_zeros > 0) 
         memset(buf + size - deci_part_zeros - 1, 48, deci_part_zeros * sizeof(char));
-    }
-    if (int_part_zeros > 0) {
-        if (deci_digits > 0) {
+    
+    if (int_part_zeros > 0) 
+    {
+        if (deci_digits > 0) 
+        {
             ptr = strchr(buf, '.');
             memset(ptr - int_part_zeros, 48, int_part_zeros * sizeof(char));
-        } else {
+        } 
+        else 
+        {
             memset(buf+ size - int_part_zeros - 1, 48, int_part_zeros * sizeof(char));
         }
     }
