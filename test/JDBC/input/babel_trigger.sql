@@ -334,7 +334,7 @@ GO
 create trigger babel_trigger_trig2 on babel_trigger_sch1.babel_trigger_t1 after insert as select 1;
 GO
 
-select name,schema_name(schema_id) from sys.objects where name in ('babel_trigger_trig1','babel_trigger_trig2');
+select name,schema_name(schema_id) from sys.objects where name in ('babel_trigger_trig1','babel_trigger_trig2') order by name;
 GO
 
 -- clean up
