@@ -123,17 +123,12 @@ check_version_number(char **newval, void **extra, GucSource source)
 	Assert(*newval != NULL);
 	if(pg_strcasecmp(*newval,"default") == 0)
 		return true;
-	/* 
-	 * We use snprintf instead of strncpy is because using strncpy here causes
-	 * PG lose connection when setting babelfishpg_tds.product_version in the 
-	 * same connection more than two times.
-	 */
-	copy_version_number = palloc(strlen(*newval) + 1);
-	snprintf(copy_version_number,strlen(*newval) + 1,"%s",*newval);
+	copy_version_number = palloc(sizeof(char) * strlen(*newval) + 1);
+	strncpy(copy_version_number,*newval,strlen(*newval) + 1);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{	
 		/* check each token contains only digits */
-		if(!isdigit((unsigned char) *token))
+		if(strspn(token, "0123456789") != strlen(token))
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

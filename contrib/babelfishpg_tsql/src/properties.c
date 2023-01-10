@@ -158,7 +158,7 @@ get_version_number(const char* version_string, int idx)
 {
 	int		part = 0;
 	char		*token;
-	char 		*copy_version_number = palloc(sizeof(version_string));
+	char 		*copy_version_number = palloc(sizeof(char) * strlen(version_string) + 1);
 
 	Assert(version_string != NULL);
 	if(idx == -1) 
