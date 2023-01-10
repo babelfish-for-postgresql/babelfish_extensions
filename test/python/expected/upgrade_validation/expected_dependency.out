@@ -980,7 +980,6 @@ View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists
 View sys.selective_xml_index_paths
-View sys.servers
 View sys.shipped_objects_not_in_sys
 View sys.sp_column_privileges_view
 View sys.sp_columns_100_view
