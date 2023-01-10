@@ -1022,17 +1022,24 @@ public:
 
 	}
 
-	void exitOpen_query(TSqlParser::Open_queryContext *ctx) override
+	void (TSqlParser::Open_queryContext *ctx) override
 	{
 		TSqlParser::IdContext *linked_srv = ctx->linked_server;
 
+		/* 
+		 * The calling syntax for T-SQL OPENQUERY is OPENQUERY(linked_server, 'query')
+		 * which means that linked_server is passed as an identifier (without quotes)
+		 * 
+		 * Since we have implemented OPENQUERY as a PG function, the linked_server gets
+		 * interpreted as a column. To fix this, we enclose the linked_server in single
+		 * quotes, so that the function now gets called as OPENQUERY('linked_server', 'query')
+		 */
 		if (linked_srv)
 		{
 			std::string linked_srv_name = getIDName(linked_srv->DOUBLE_QUOTE_ID(), linked_srv->SQUARE_BRACKET_ID(), linked_srv->ID());
 			std::string str = std::string("'") + linked_srv_name + std::string("'");
 
 			rewritten_query_fragment.emplace(std::make_pair(linked_srv->start->getStartIndex(), std::make_pair(linked_srv_name, str)));
-			//stream.setText(linked_srv->start->getStartIndex(), str.c_str());
 		}	
     	}
 };

@@ -13,7 +13,6 @@
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "common/md5.h"
-#include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
 #include "tsearch/ts_locale.h"
@@ -29,7 +28,6 @@
 #include "utils/queryenvironment.h"
 #include "utils/float.h"
 #include "utils/xid8.h"
-#include "libpq/pqformat.h"
 #include <math.h>
 
 #include "../src/babelfish_version.h"
@@ -75,8 +73,6 @@ PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
-
-/* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 PG_FUNCTION_INFO_V1(bigint_degrees);
