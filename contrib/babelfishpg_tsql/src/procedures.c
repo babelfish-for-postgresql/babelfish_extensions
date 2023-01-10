@@ -2294,7 +2294,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * DROP USER MAPPING FOR @LOCALLOGIN SERVER @SERVERNAME
 	 *
 	 */
-	appendStringInfo(&query, "DROP USER MAPPING FOR %s SERVER %s", locallogin, servername);
+	appendStringInfo(&query, "DROP USER MAPPING FOR PUBLIC SERVER %s", locallogin, servername);
 
 	exec_utility_cmd_helper(query.data);
 
