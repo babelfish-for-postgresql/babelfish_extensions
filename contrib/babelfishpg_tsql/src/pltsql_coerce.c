@@ -36,6 +36,7 @@
 
 
 #include <math.h>
+#include "pltsql.h"
 
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
@@ -45,9 +46,6 @@ extern coerce_string_literal_hook_type coerce_string_literal_hook;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
-
-extern bool is_tsql_binary_datatype(Oid oid);
-extern bool is_tsql_varbinary_datatype(Oid oid);
 
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
@@ -904,11 +902,11 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 		if (ccontext != COERCION_EXPLICIT)
 		{
 			/* T-SQL may forbid casting from string literal to certain datatypes (i.e. binary, varbinary) */
-			if (is_tsql_binary_datatype(baseTypeId))
+			if ((*common_utility_plugin_ptr->is_tsql_binary_datatype)(baseTypeId))
 				ereport(ERROR,
 					(errcode(ERRCODE_CANNOT_COERCE),
 						errmsg("cannot coerce string literal to binary datatype")));
-			if (is_tsql_varbinary_datatype(baseTypeId))
+			if ((*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(baseTypeId))
 				ereport(ERROR,
 					(errcode(ERRCODE_CANNOT_COERCE),
 						errmsg("cannot coerce string literal to varbinary datatype")));

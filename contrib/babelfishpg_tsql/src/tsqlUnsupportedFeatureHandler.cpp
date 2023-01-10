@@ -301,7 +301,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 		else if (option->NATIVE_COMPILATION())
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION_NATIVE_COMPILATION_OPTION, option->NATIVE_COMPILATION());
 		else if (option->execute_as_clause())
-			handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
+		{
+			auto exec_as = option->execute_as_clause();
+			if (!exec_as->CALLER())
+				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
+		}
 	}
 
 	if (ctx->func_body_returns_scalar() && ctx->func_body_returns_scalar()->external_name())
@@ -347,7 +351,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(
 		else if (option->RECOMPILE())
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE_RECOMPILE_OPTION, option->RECOMPILE());
 		else if (option->execute_as_clause())
-			handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
+		{
+			auto exec_as = option->execute_as_clause();
+			if (!exec_as->CALLER())
+				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
+		}
 	}
 
 	if (ctx->atomic_proc_body())
@@ -410,6 +418,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 				handle(INSTR_UNSUPPORTED_TSQL_DML_TRIGGER_ENCRYPTION_OPTION, option->ENCRYPTION());
 			else if (option->NATIVE_COMPILATION())
 				handle(INSTR_UNSUPPORTED_TSQL_DML_TRIGGER_NATIVE_COMPILATION_OPTION, option->NATIVE_COMPILATION());
+			else if (option->execute_as_clause())
+			{
+				auto exec_as = option->execute_as_clause();
+				if (!exec_as->CALLER())
+					handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
+			}
 		}
 
 		if (dctx->external_name())
@@ -425,6 +439,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 				handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER_ENCRYPTION_OPTION, option->ENCRYPTION());
 			else if (option->NATIVE_COMPILATION())
 				handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER_NATIVE_COMPILATION_OPTION, option->NATIVE_COMPILATION());
+			else if (option->execute_as_clause())
+			{
+				auto exec_as = option->execute_as_clause();
+				if (!exec_as->CALLER())
+					handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
+			}
 		}
 
 		if (dctx->external_name())
@@ -801,7 +821,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_ON, "CREATE DATABASE ON <database-file-spec>", &st_escape_hatch_storage_options, getLineAndPos(ctx->ON()[0]));
 
 	if (ctx->collation())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_COLLATE, "COLLATE", getLineAndPos(ctx->collation()));
+		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_COLLATE, "COLLATE", &st_escape_hatch_database_misc_options, getLineAndPos(ctx->collation()));
 
 	if (ctx->WITH())
 	{
@@ -832,7 +852,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 			if (cdoctx->TRUSTWORTHY())
 				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_TRUSTWORTHY, cdoctx->TRUSTWORTHY(), &st_escape_hatch_database_misc_options);
 			if (cdoctx->CATALOG_COLLATION())
-				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_CATALOG_COLLATION, cdoctx->CATALOG_COLLATION());
+				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_CATALOG_COLLATION, cdoctx->CATALOG_COLLATION(), &st_escape_hatch_database_misc_options);
 			if (cdoctx->PERSISTENT_LOG_BUFFER())
 				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_PERSISTENT_LOG_BUFFER, cdoctx->PERSISTENT_LOG_BUFFER(), &st_escape_hatch_database_misc_options);
 		}
@@ -1346,7 +1366,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_database_sc
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername", getLineAndPos(ctx));
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote object reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 
 	if (ctx->DOT().empty())
 	{
@@ -1360,7 +1380,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_data
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFull_object_name(TSqlParser::Full_object_nameContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername", getLineAndPos(ctx));
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote object reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 
 	return visitChildren(ctx);
 }

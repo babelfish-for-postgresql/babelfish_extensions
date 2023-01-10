@@ -520,6 +520,23 @@ GO
 DROP DATABASE db_unsupported6;
 GO
 
+CREATE DATABASE db_unsupported7 WITH CATALOG_COLLATION = DATABASE_DEFAULT;
+GO
+DROP DATABASE db_unsupported7;
+GO
+
+CREATE DATABASE db_unsupported8 COLLATE SQL_Latin1_General_CP1_CI_AS;
+GO
+DROP DATABASE db_unsupported8;
+GO
+
+CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
+
+
 SELECT set_config('babelfishpg_tsql.escape_hatch_database_misc_options', 'strict', 'false')
 GO
 ~~START~~
@@ -574,6 +591,27 @@ GO
 ~~ERROR (Code: 911)~~
 
 ~~ERROR (Message: database "db_unsupported6" does not exist)~~
+
+
+CREATE DATABASE db_unsupported7 WITH CATALOG_COLLATION = DATABASE_DEFAULT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'CATALOG_COLLATION' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
+
+
+CREATE DATABASE db_unsupported8 COLLATE SQL_Latin1_General_CP1_CI_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
+
+
+CREATE DATABASE db_unsupported9 COLLATE Arabic_CI_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_database_misc_options to ignore)~~
 
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_database_misc_options', 'ignore', 'false')
@@ -2446,7 +2484,7 @@ CREATE DATABASE t448 COLLATE NOT_VALID_COLLATION;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'COLLATE' is not currently supported in Babelfish)~~
+~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
 
 
 
@@ -2648,7 +2686,7 @@ RETURN (SELECT * FROM t487)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'EXECUTE AS' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'EXECUTE AS SELF|OWNER|<user>|<login>' is not currently supported in Babelfish)~~
 
 DROP TABLE t487
 GO
