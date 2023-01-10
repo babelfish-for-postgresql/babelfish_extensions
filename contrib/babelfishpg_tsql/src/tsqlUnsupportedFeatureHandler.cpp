@@ -1545,7 +1545,6 @@ const char *unsupported_sp_procedures[] = {
 	/* Security */
 	"sp_add_trusted_assembly",
 	"sp_addapprole",
-	"sp_addlinkedserver",
 	"sp_addlinkedsrvlogin",
 	"sp_addlogin",
 	"sp_addremotelogin",
