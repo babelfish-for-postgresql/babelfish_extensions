@@ -1,9 +1,5 @@
 name: Code Coverage
-<<<<<<< HEAD
-on: [pull_request_target]
-=======
 on: [push, pull_request]
->>>>>>> 4a09d72c (Added a new workflow for generating code coverage reports)
 
 jobs:
   run-all-tests:
