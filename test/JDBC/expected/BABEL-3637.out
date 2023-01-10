@@ -1,0 +1,322 @@
+-- tsql
+USE master
+GO
+
+CREATE PROC test_babel_3637_proc1 @rolename AS sys.SYSNAME = NULL
+AS
+BEGIN
+	DECLARE @tmp_babel_3637 TABLE(ServerRole sys.SYSNAME,
+									MemberName sys.SYSNAME,
+									MemberSID sys.VARBINARY(85));
+	INSERT INTO @tmp_babel_3637 (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember @rolename;
+	SELECT ServerRole, MemberName FROM @tmp_babel_3637;
+END
+GO
+
+CREATE PROC test_babel_3637_proc2 @rolename AS SYS.SYSNAME = NULL
+AS
+BEGIN
+	DECLARE @tmp_babel_3637 TABLE(UserName sys.SYSNAME, RoleName sys.SYSNAME, LoginName sys.SYSNAME NULL, DefDBName sys.SYSNAME NULL, DefSchemaName sys.SYSNAME, UserID INT, SID sys.VARBINARY(85));
+	INSERT INTO @tmp_babel_3637(UserName, RoleName, LoginName, DefDBName, DefSchemaName, UserID, SID) EXEC sp_helpuser @rolename;
+	SELECT UserName, RoleName, LoginName, DefDBName, DefSchemaName from @tmp_babel_3637;
+END
+GO
+
+CREATE LOGIN babel_3637_login1 WITH PASSWORD='12345678';
+GO
+CREATE LOGIN babel_3637_login2 WITH PASSWORD='12345678';
+GO
+
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+CREATE DATABASE babel_3637_db
+GO
+USE babel_3637_db
+GO
+
+CREATE PROC test_babel_3637_proc1 @rolename AS sys.SYSNAME = NULL
+AS
+BEGIN
+	DECLARE @tmp_babel_3637 TABLE(ServerRole sys.SYSNAME,
+									MemberName sys.SYSNAME,
+									MemberSID sys.VARBINARY(85));
+	INSERT INTO @tmp_babel_3637 (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember @rolename;
+	SELECT ServerRole, MemberName FROM @tmp_babel_3637;
+END
+GO
+
+CREATE PROC test_babel_3637_proc2 @rolename AS SYS.SYSNAME = NULL
+AS
+BEGIN
+	DECLARE @tmp_babel_3637 TABLE(UserName sys.SYSNAME, RoleName sys.SYSNAME, LoginName sys.SYSNAME NULL, DefDBName sys.SYSNAME NULL, DefSchemaName sys.SYSNAME, UserID INT, SID sys.VARBINARY(85));
+	INSERT INTO @tmp_babel_3637(UserName, RoleName, LoginName, DefDBName, DefSchemaName, UserID, SID) EXEC sp_helpuser @rolename;
+	SELECT UserName, RoleName, LoginName, DefDBName, DefSchemaName from @tmp_babel_3637;
+END
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3637_login1;
+GO
+
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#babel_3637_login1
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3637_login2;
+GO
+
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#babel_3637_login1
+sysadmin#!#babel_3637_login2
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_3637_login2;
+GO
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#babel_3637_login1
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_3637_login1;
+GO
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+CREATE USER babel_3637_login2
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3637_login1;
+GO
+
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#babel_3637_login1
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3637_login2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'sysadmin' role cannot be granted to login: a user is already created in database 'babel_3637_db')~~
+
+
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#babel_3637_login1
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_3637_login2;
+GO
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#babel_3637_login1
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_3637_login1;
+GO
+
+EXEC test_babel_3637_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar
+sysadmin#!#jdbc_user
+~~END~~
+
+EXEC test_babel_3637_proc2
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
+dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
+guest#!#public#!#<NULL>#!#<NULL>#!#
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_3637_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN babel_3637_login1
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_3637_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN babel_3637_login2
+GO
+
+-- tsql
+USE master
+GO
+DROP DATABASE babel_3637_db;
+GO
