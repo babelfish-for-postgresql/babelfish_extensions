@@ -5,8 +5,9 @@ runs:
     - name: Install Dependencies
       run: |
         cd ~
-        sudo apt-get update
+        sudo apt clean && sudo apt-get update --fix-missing -y
         curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
         curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        sudo apt-get update --fix-missing -y
         sudo apt-get install uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python3-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison mssql-tools unixodbc-dev libsybdb5 freetds-dev freetds-common
       shell: bash
