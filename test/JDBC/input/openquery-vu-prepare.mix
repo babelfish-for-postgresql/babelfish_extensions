@@ -10,3 +10,7 @@ GO
 -- Add jdbc_user as linked server login
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
+
+-- Create a view dependent on OPENQUERY
+CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
+GO

@@ -2373,65 +2373,157 @@ smallint
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table1');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+3.00000000
+123.46000000
+123.40000000
+123.00000000
+123.45000000
+<NULL>
+-123.46000000
+-123.40000000
+-123.00000000
+-1.00000000
+-123.00000000
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table2');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+3.00000000
+123.45600000
+123.40000000
+123.00000000
+123.45000000
+<NULL>
+-123.45600000
+-123.40000000
+-123.00000000
+-1.00000000
+-123.00000000
+2147483647.00000000
+-2147483647.00000000
+2147483646.00000000
+-2147483646.00000000
+2147483648.00000000
+-2147483648.00000000
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table3');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+3.00000000
+123.45600000
+123.40000000
+123.00000000
+123.45000000
+<NULL>
+-123.45600000
+-123.40000000
+-123.00000000
+-1.00000000
+-123.00000000
+2147483647.00000000
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table4');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+3.00000000
+123.45600000
+123.40000000
+123.00000000
+123.45000000
+<NULL>
+-123.45600000
+-123.40000000
+-123.00000000
+-1.00000000
+-123.00000000
+2147483647.00000000
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table5');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+3.00000000
+123.45600000
+123.40000000
+123.00000000
+123.45000000
+<NULL>
+-123.45600000
+-123.40000000
+-123.00000000
+-1.00000000
+-123.00000000
+2147483647.00000000
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table6');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+3.00000000
+123.45600000
+123.40000000
+123.00000000
+123.45000000
+<NULL>
+-123.45600000
+-123.40000000
+-123.00000000
+-1.00000000
+-123.00000000
+2147483647.00000000
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table7');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+3.00000000
+123.45600000
+123.40000000
+123.00000000
+123.45000000
+<NULL>
+-123.45600000
+-123.40000000
+-123.00000000
+-1.00000000
+-123.00000000
+2147483647.00000000
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table8');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+3.00000000
+123.45600000
+123.40000000
+123.00000000
+123.45000000
+<NULL>
+-123.45600000
+-123.40000000
+-123.00000000
+-1.00000000
+-123.00000000
+247483647.00000000
+-247483647.00000000
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table9');
 ~~START~~
 numeric
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+2147483647.00000000
+-2147483647.00000000
+2147483646.00000000
+-2147483646.00000000
+2147483648.00000000
+-2147483648.00000000
+0E-8
+0E-8
+0E-8
+~~END~~
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM smallmoney_dt');
@@ -2802,30 +2894,30 @@ time
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt1');
 ~~START~~
 binary#!#varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+00000000000004D2#!#00003039
+<NULL>#!#<NULL>
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt2');
 ~~START~~
 varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+<NULL>
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt3');
 ~~START~~
 varbinary#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+<NULL>#!#1#!#2#!#3#!#4#!#5#!#6#!#7#!#8
+~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt4');
 ~~START~~
 binary#!#varbinary
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function return row and query-specified return row do not match)~~
+00000000000004D2#!#00003039
+3132333400000000#!#3132333435
+3132333435363738#!#3132333435
+3132333400000000#!#313233343536373839
+~~END~~
 
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt1');
@@ -3103,8 +3195,16 @@ int
 
 
 # Try executing a query that does not return a result set
-SELECT * FROM OPENQUERY(bbf_server, 'PRINT 1')
+SELECT * FROM OPENQUERY(bbf_server, 'INSERT INTO just_a_table_which_does_not_exist VALUES (1)')
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Failed to get results from query EXEC sp_describe_first_result_set N'PRINT 1', NULL, 0)~~
+~~ERROR (Message: Query passed to OPENQUERY did not return a result set)~~
+
+
+# Test view dependent on OPENQUERY
+SELECT * FROM openquery_vu_prepare__openquery_view
+~~START~~
+int
+1
+~~END~~
 

@@ -37,5 +37,5 @@ int#!#int#!#bit#!#varchar#!#datetime
 
 
 -- psql
-DROP EXTENSION tds_fdw CASCADE;
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO

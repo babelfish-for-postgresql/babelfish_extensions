@@ -7,61 +7,35 @@
 #include "miscadmin.h"
 
 #include "pltsql.h"
-#include "datatypes.h"
-
 #include "linked_servers.h"
 
-const int tds_numeric_bytes_per_prec[78] = {
-	/*
-	 * precision can't be 0 but using a value > 0 assure no
-	 * core if for some bug it's 0...
-	 */
+PG_FUNCTION_INFO_V1(openquery_imp);
+
+void getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc);
+
+#ifdef ENABLE_TDS_LIB
+
+#define TDS_NUMERIC_MAX_PRECISION	38
+
+/* 
+ * number of bytes a numeric/decimal value takes in
+ * TDS (according to implementation of client library),
+ * where the array index is the numeric precision
+ */
+const int tds_numeric_bytes_per_prec[TDS_NUMERIC_MAX_PRECISION + 1] = {
 	1, 
 	2,  2,  3,  3,  4,  4,  4,  5,  5,
 	6,  6,  6,  7,  7,  8,  8,  9,  9,  9,
 	10, 10, 11, 11, 11, 12, 12, 13, 13, 14,
-	14, 14, 15, 15, 16, 16, 16, 17, 17, 18,
-	18, 19, 19, 19, 20, 20, 21, 21, 21, 22,
-	22, 23, 23, 24, 24, 24, 25, 25, 26, 26,
-	26, 27, 27, 28, 28, 28, 29, 29, 30, 30,
-	31, 31, 31, 32, 32, 33, 33, 33
+	14, 14, 15, 15, 16, 16, 16, 17, 17
 };
-
-PG_FUNCTION_INFO_V1(openquery_imp);
-PG_FUNCTION_INFO_V1(sp_testlinkedserver_internal);
 
 int tdsTypeStrToTypeId(char* datatype);
 Oid tdsTypeToOid(int datatype);
 int tdsTypeLen(int datatype, int datalen, bool is_metadata);
 Datum getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
-void getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc);
 
 static TupleDesc curr_openquery_tupdesc = NULL;
-
-// static int
-// linked_server_error_handler(LinkedServerProcess lsproc, int severity, int db_error_code, int os_error_code, char *db_error_msg, char *os_error_msg)
-// {
-// 	StringInfoData buf;
-
-// 	initStringInfo(&buf);
-
-// 	appendStringInfo(
-// 			&buf,
-// 			"TDS client library Error: DB #: %i, DB Msg: %s, OS #: %i, OS Msg: %s, Level: %i",
-// 			db_error_code,
-// 			db_error_msg ? db_error_msg : "",
-// 			os_error_code,
-// 			os_error_msg ? os_error_msg : "",
-// 			severity
-// 	);
-	
-// 	ereport(ERROR,
-// 		(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-// 		errmsg("%s", buf.data)
-// 		));
-
-// 	return LS_INT_CANCEL;
-// }
 
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
@@ -95,6 +69,10 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	return 0;
 }
 
+/*
+ * Given data from TDS client library, convert it to Datum.
+ * Used for T-SQL OPENQUERY.
+ */
 Datum
 getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len)
 {
@@ -103,22 +81,22 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 	switch (datatype)
 	{
 		case TSQL_IMAGE:
-		case SYBVARBINARY:
-		case SYBBINARY:
+		case TSQL_VARBINARY:
+		case TSQL_BINARY:
 		case TSQL_BINARY_X:
 		case TSQL_VARBINARY_X:
-			bytes = palloc(len + VARHDRSZ);
+			bytes = palloc0(len + VARHDRSZ);
 			SET_VARSIZE(bytes, len + VARHDRSZ);
-			memcpy(VARDATA(bytes), (BYTE *) val, len);
+			memcpy(VARDATA(bytes), (LS_BYTE *) val, len);
 			return PointerGetDatum(bytes);
 		case TSQL_BIT:
 		case TSQL_BITN:
 			return BoolGetDatum(*(bool *)val);
-		case SYBVARCHAR:
+		case TSQL_VARCHAR:
 		case TSQL_VARCHAR_X:
-		case SYBCHAR:
+		case TSQL_CHAR:
 		case TSQL_CHAR_X:
-		case SYBMSXML:
+		case TSQL_XML:
 		case TSQL_NVARCHAR_X:
 		case TSQL_NCHAR_X:
 			PG_RETURN_VARCHAR_P((VarChar *)cstring_to_text_with_len((char *)val, len));
@@ -128,7 +106,7 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 			PG_RETURN_TEXT_P(cstring_to_text_with_len((char *)val, len));
 			break;
 		case TSQL_DATETIME:
-		case SYBDATETIMN:
+		case TSQL_DATETIMN:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
 				StringInfo pbuf;
@@ -144,7 +122,7 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 8;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_DATETIMN, 0, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_DATETIMN, 0);
 			}
 			break;
 		case TSQL_SMALLDATETIME:
@@ -163,7 +141,7 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 4;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_SMALLDATETIME, 0, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_SMALLDATETIME, 0);
 			}
 			break;
 		case TSQL_DATE:
@@ -177,7 +155,6 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				return (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct(0, date.date, TSQL_DATE, 0);
 			}
 			break;
-		case SYBTIME:
 		case TSQL_TIME:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_date_time_struct)
 			{
@@ -196,7 +173,7 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				LS_TDS_NUMERIC *numeric;
 				StringInfo pbuf;
 				int i = 0;
-				char numeric_bytes[16] = {0x00};
+				char numeric_bytes[16] = {0x00}; /* max storage bytes for numeric - sign byte = 17 - 1 = 16*/
 				int n;
 
 				numeric = (LS_TDS_NUMERIC *)val;
@@ -227,10 +204,10 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 17;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_NUMERIC, numeric->scale, numeric->precision);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_NUMERIC, numeric->scale);
 			}
 			break;
-		case SYBFLTN:
+		case TSQL_FLOATN:
 		case TSQL_FLOAT:
 			return Float8GetDatum(*(float8 *)val);
 		case TSQL_REAL:
@@ -261,7 +238,7 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 8;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_MONEYN, 0, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_MONEYN, 0);
 			}
 			break;
 		case TSQL_SMALLMONEY:
@@ -280,7 +257,7 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 				pbuf->len = 4;
 				pbuf->cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_SMALLMONEY, 0, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_SMALLMONEY, 0);
 			}
 			break;
 		case TSQL_DATETIME2:
@@ -308,6 +285,10 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 	return (Datum) 0;
 }
 
+/*
+ * Given T-SQL data type in string, return equivalent client libary TDS
+ * type. Used when preparing tuple descriptor for T-SQL OPENQUERY.
+ */
 int
 tdsTypeStrToTypeId(char* datatype)
 {
@@ -372,84 +353,101 @@ tdsTypeStrToTypeId(char* datatype)
 	return 0;
 }
 
+/*
+ * Given TDS type from client library, return equivalent Babelfish T-SQL
+ * data type OID. Used when preparing tuple descriptor for T-SQL OPENQUERY.
+ */
 Oid
 tdsTypeToOid(int datatype)
 {
-	switch (datatype)
+	if (common_utility_plugin_ptr && common_utility_plugin_ptr->lookup_tsql_datatype_oid)
 	{
-		case TSQL_IMAGE:
-			return lookup_tsql_datatype_oid("image");
-		case TSQL_VARBINARY:
-		case TSQL_VARBINARY_X:
-			return lookup_tsql_datatype_oid("varbinary");
-		case TSQL_BINARY:
-		case TSQL_BINARY_X:
-			return lookup_tsql_datatype_oid("binary");
-		case TSQL_BIT:
-		case TSQL_BITN:
-			return lookup_tsql_datatype_oid("bit");
-		case TSQL_TEXT:
-			return TEXTOID;
-		case TSQL_NTEXT:
-			return lookup_tsql_datatype_oid("ntext");
-		case TSQL_NVARCHAR_X:
-			return lookup_tsql_datatype_oid("nvarchar");
-		case SYBVARCHAR:
-		case TSQL_VARCHAR_X:
-		case TSQL_CHAR:
-		case TSQL_XML:
-			return VARCHAROID;
-		case TSQL_NCHAR_X:
-			return lookup_tsql_datatype_oid("nchar");
-		case TSQL_CHAR_X:
-			return lookup_tsql_datatype_oid("bpchar");
-		case TSQL_DATETIME:
-		case TSQL_DATETIMN:
-			return lookup_tsql_datatype_oid("datetime");
-		case TSQL_SMALLDATETIME:
-			return lookup_tsql_datatype_oid("smalldatetime");
-		case TSQL_DATETIME2:
-			return lookup_tsql_datatype_oid("datetime2");
-		case TSQL_DATETIMEOFFSET:
-			return lookup_tsql_datatype_oid("datetimeoffset");
-		// case SYBDATE:
-		case TSQL_DATE:
-			return DATEOID;
-		// case SYBTIME:
-		case TSQL_TIME:
-			return TIMEOID;
-		case TSQL_DECIMAL:
-			return lookup_tsql_datatype_oid("decimal");
-		case TSQL_NUMERIC:
-			return NUMERICOID;
-		case TSQL_FLOAT:
-			return lookup_tsql_datatype_oid("float");
-		case TSQL_REAL:
-			return lookup_tsql_datatype_oid("real");
-		case TSQL_TINYINT:
-			return lookup_tsql_datatype_oid("tinyint");
-		case TSQL_SMALLINT:
-			return INT2OID;
-		case TSQL_INT:
-		case TSQL_INTN:
-			return lookup_tsql_datatype_oid("int");
-		case TSQL_BIGINT:
-			return lookup_tsql_datatype_oid("bigint");
-		case TSQL_MONEY:
-		case TSQL_MONEYN:
-			return lookup_tsql_datatype_oid("money");
-		case TSQL_SMALLMONEY:
-			return lookup_tsql_datatype_oid("smallmoney");
-		default:
-			ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Unable to find OID for datatype %d", datatype)
-				));
+		switch (datatype)
+		{
+			case TSQL_IMAGE:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("image");
+			case TSQL_VARBINARY:
+			case TSQL_VARBINARY_X:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("varbinary");
+			case TSQL_BINARY:
+			case TSQL_BINARY_X:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary");
+			case TSQL_BIT:
+			case TSQL_BITN:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bit");
+			case TSQL_TEXT:
+				return TEXTOID;
+			case TSQL_NTEXT:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("ntext");
+			case TSQL_NVARCHAR_X:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nvarchar");
+			case TSQL_VARCHAR:
+			case TSQL_VARCHAR_X:
+			case TSQL_CHAR:
+			case TSQL_XML:
+				return VARCHAROID;
+			case TSQL_NCHAR_X:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("nchar");
+			case TSQL_CHAR_X:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bpchar");
+			case TSQL_DATETIME:
+			case TSQL_DATETIMN:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime");
+			case TSQL_SMALLDATETIME:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smalldatetime");
+			case TSQL_DATETIME2:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetime2");
+			case TSQL_DATETIMEOFFSET:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("datetimeoffset");
+			case TSQL_DATE:
+				return DATEOID;
+			case TSQL_TIME:
+				return TIMEOID;
+			case TSQL_DECIMAL:
+			case TSQL_NUMERIC:
+				/* 
+				 * Even though we have a domain for decimal, we will still use NUMERICOID
+				 *
+				 * In babelfish, we send decimal as numeric so when the client library reads
+				 * the column metadata token, it reads it as TSQL_NUMERIC but while computing
+				 * the tuple descriptor using sp_describe_first_result_set, the system_type_name
+				 * is decimal which causes a mismatch between actual and expected data type.
+				 */
+				return NUMERICOID;
+			case TSQL_FLOAT:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("float");
+			case TSQL_REAL:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("real");
+			case TSQL_TINYINT:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("tinyint");
+			case TSQL_SMALLINT:
+				return INT2OID;
+			case TSQL_INT:
+			case TSQL_INTN:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("int");
+			case TSQL_BIGINT:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("bigint");
+			case TSQL_MONEY:
+			case TSQL_MONEYN:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
+			case TSQL_SMALLMONEY:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Unable to find OID for datatype %d", datatype)
+					));
+		}
 	}
-
-	return 0;
+	
+	return InvalidOid;
 }
 
+/*
+ * Given TDS type and data length from client library, return equivalent
+ * Babelfish T-SQL data type length. Used when preparing tuple descriptor
+ * for T-SQL OPENQUERY.
+ */
 int
 tdsTypeLen(int datatype, int datalen, bool is_metadata)
 {
@@ -460,7 +458,7 @@ tdsTypeLen(int datatype, int datalen, bool is_metadata)
 		case TSQL_BINARY:
 		case TSQL_BINARY_X:
 		case TSQL_VARBINARY_X:
-			return datalen;
+			return datalen + VARHDRSZ;
 		case TSQL_VARCHAR:
 		case TSQL_CHAR:
 		case TSQL_NVARCHAR_X:
@@ -472,6 +470,12 @@ tdsTypeLen(int datatype, int datalen, bool is_metadata)
 				if (datalen == -1)
 					return -1;
 
+				/* 
+				 * When modfying the OPENQUERY result-set tuple descriptor, we use sp_describe_first_result_set,
+				 * which gives us the correct data length of character data types. However, the col length that 
+				 * accompanies the actual result set column metadata from client library, is 4 * (max column
+				 * len) and so we divide it by 4 to get appropriate typmod for character data types.
+				 */
 				if (is_metadata)
 					return datalen + VARHDRSZ;
 				else
@@ -482,13 +486,11 @@ tdsTypeLen(int datatype, int datalen, bool is_metadata)
                 case TSQL_TEXT:
 		case TSQL_NTEXT:
 		case TSQL_DATETIME:
-		case SYBDATETIMN:
+		case TSQL_DATETIMN:
 		case TSQL_SMALLDATETIME:
 		case TSQL_DATETIME2:
 		case TSQL_DATETIMEOFFSET:
-		// case SYBDATE:
 		case TSQL_DATE:
-		// case SYBTIME:
 		case TSQL_TIME:
 		case TSQL_DECIMAL:
 		case TSQL_NUMERIC:
@@ -513,21 +515,57 @@ tdsTypeLen(int datatype, int datalen, bool is_metadata)
 	return 0;
 }
 
-void
+static void
+ValidateLinkedServerDataSource(char* data_src)
+{
+	/* 
+	 * Only treat fully qualified DNS names (endpoints) or IP address 
+	 * as valid data sources.
+	 * 
+	 * If data source is provided in the form of servername\\instancename, we
+	 * throw an error to suggest use of fully qualified domain name or the IP address
+	 * instead.
+	 */
+	if (strchr(data_src, '\\'))
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Only fully qualified domain name or IP address are allowed as data source")));
+}
+
+#endif
+
+static void
 linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc)
 {
 	/* Get the foreign server and user mapping */
-	ForeignServer *server = GetForeignServerByName(servername, false);
-	UserMapping *mapping = GetUserMapping(GetUserId(), server->serverid);
+	ForeignServer *server = NULL;
+	UserMapping *mapping = NULL;
 
 #ifdef ENABLE_TDS_LIB
 	
 	LinkedServerLogin login;
 	DefElem *element;
+#endif
+	server = GetForeignServerByName(servername, false);
+
+	/* Unlikely */
+	if (server == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Error fetching foreign server with servername '%s'", servername)
+				));
+	
+	mapping = GetUserMapping(GetUserId(), server->serverid);
+
+	if (mapping == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Error user mapping with servername '%s'", servername)
+				));
+#ifdef ENABLE_TDS_LIB
 
 	LINKED_SERVER_INIT();
 
-	//LINKED_SERVER_ERR_HANDLE(linked_server_error_handler);
 	LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
 	login = LINKED_SERVER_LOGIN();
@@ -558,11 +596,16 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 	/* first option in foreign server should be servername */
 	element = linitial_node(DefElem, server->options);
 	if (strcmp(element->defname, "servername") == 0){
-		*lsproc = LINKED_SERVER_OPEN(login, defGetString(element));
+
+		char *data_src = defGetString(element);
+
+		ValidateLinkedServerDataSource(data_src);
+
+		*lsproc = LINKED_SERVER_OPEN(login, data_src);
 		if (!(*lsproc))
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Unable to connect to %s", defGetString(element))
+					errmsg("Unable to connect to %s", data_src)
 				));
 	}
 	else
@@ -585,9 +628,10 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 					errmsg("Incorrect option. Expected \"database\" but got \"%s\"", element->defname)
 				));
 #else
+
 	ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Could not establish connection with remote server as use of TDS client library has been disabled."
+					errmsg("Could not establish connection with remote server as use of TDS client library has been disabled. "
 						"Please recompile source with 'ENABLE_TDS_LIB' flag to enable client library.")
 				));
 #endif
@@ -601,194 +645,178 @@ void
 getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc)
 {
 	LinkedServerProcess lsproc;
-	MemoryContext oldContext;
 
 #ifdef ENABLE_TDS_LIB
 
 	LINKED_SERVER_RETCODE erc;
 
-	int colcount;
-// 	DefElem *element;
-
-// 	// MemoryContext per_query_ctx;
-// 	// MemoryContext oldcontext;
+ 	MemoryContext oldContext;
 	StringInfoData buf;
-#endif
+	int colcount;
 
-	/* Reuse already computed Tuple Descriptor if it exists */
-	if (curr_openquery_tupdesc != NULL)
+	PG_TRY();
 	{
-		//oldContext = MemoryContextSwitchTo(MessageContext);
-		//memcpy(*tupdesc, curr_openquery_tupdesc, sizeof(TupleDescData));
-		TupleDescCopy(*tupdesc, curr_openquery_tupdesc);
-		//MemoryContextSwitchTo(oldContext);
-		//tupdesc = curr_openquery_tupdesc;
-		return;
-	}
 
-	linked_server_establish_connection(linked_server, &lsproc);
+		/* Reuse already computed Tuple Descriptor if it exists */
+		if (curr_openquery_tupdesc != NULL)
+		{
+			TupleDescCopy(*tupdesc, curr_openquery_tupdesc);
+			return;
+		}
+#endif
+		linked_server_establish_connection(linked_server, &lsproc);
 
 #ifdef ENABLE_TDS_LIB
 
-	// int i;
-	// LINKED_SERVER_RETCODE erc;
-
-	// int colcount;
-
-	// MemoryContext per_query_ctx;
-	// MemoryContext oldcontext;
-	// StringInfoData buf;
-
-	/* prepare the query that will executed on remote server to get column medata of result set*/
-	initStringInfo(&buf);
-	appendStringInfoString(&buf, "EXEC sp_describe_first_result_set N'");
-	appendStringInfoString(&buf, query);
-	appendStringInfoString(&buf, "', NULL, 0");
-	
-	/* populate query in LinkedServerProcess structure */
-	if ((erc = LINKED_SERVER_PUT_CMD(lsproc, buf.data)) != SUCCEED) {
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("error writing query to LinkedServerProcess struct")
-				));
-	}
-
-	/* Execute the query on remote server */
-	LINKED_SERVER_EXEC_QUERY(lsproc);
-
-	while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
-	{
-		if (erc == FAIL)
-		{
+		/* prepare the query that will executed on remote server to get column medata of result set*/
+		initStringInfo(&buf);
+		appendStringInfoString(&buf, "EXEC sp_describe_first_result_set N'");
+		appendStringInfoString(&buf, query);
+		appendStringInfoString(&buf, "', NULL, 0");
+		
+		/* populate query in LinkedServerProcess structure */
+		if ((erc = LINKED_SERVER_PUT_CMD(lsproc, buf.data)) != SUCCEED) {
 			ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Failed to get results from query %s", buf.data)
-				));
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("error writing query to LinkedServerProcess struct")
+					));
 		}
 
-		/* We have some results to process */
-		colcount = LINKED_SERVER_NUM_COLS(lsproc);
+		/* Execute the query on remote server */
+		LINKED_SERVER_EXEC_QUERY(lsproc);
 
-		if(colcount > 0)
+		while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
 		{
-			int numrows = 0;
-			int i = 0;
-
-			int collen[MAX_COLS_SELECT];
-			char **colname = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
-			// char **typename = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
-			int tdsTypeId[MAX_COLS_SELECT];
-
-			/* bound variables */
-			int bind_collen, bind_tdsTypeId;
-			char bind_colname[256], bind_typename[256];
-			//int bind_errornumber;
-
-			for (i = 0; i < MAX_COLS_SELECT; i++)
-				colname[i] = (char *) palloc0(256 * sizeof(char));
-
-			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 3, LS_NTBSTRINGBING, sizeof(bind_colname), (BYTE *)bind_colname)) != SUCCEED)
-				ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Failed to bind results for column \"name\" to a variable.")
-				));
-
-			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 5, LS_INTBIND, sizeof(int), (BYTE *)&bind_tdsTypeId)) != SUCCEED)
-				ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Failed to bind results for column \"system_type_id\" to a variable.")
-				));
-			
-			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 6, LS_NTBSTRINGBING, sizeof(bind_typename), (BYTE *)&bind_typename)) != SUCCEED)
-				ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
-				));
-
-			if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 7, INTBIND, sizeof(int), (BYTE *)&bind_collen)) != SUCCEED)
-				ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Failed to bind results for column \"max_length\" to a variable.")
-				));
-			
-			// if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 36, INTBIND, sizeof(int), (BYTE *)&bind_errornumber)) != SUCCEED)
-			// 	ereport(ERROR,
-			// 		(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-			// 		errmsg("Failed to bind results for column \"error_number\" to a variable.")
-			// 	));
-
-			/* fetch the rows */
-			while ((erc = LINKED_SERVER_NEXT_ROW(lsproc)) != NO_MORE_ROWS)
+			if (erc == FAIL)
 			{
-				char *typestr;
-				
-				/* We encountered an error, we shouldn't return any results */
-				/* We return here, when we will again execute the query we will error out from there */
-				if (bind_typename == NULL)
-					ereport(ERROR,
+				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
-				));
-
-				collen[numrows] = bind_collen;
-				strlcpy(colname[numrows], bind_colname, strlen(bind_colname) + 1);
-
-				/* Only keep the data type name */
-				typestr = strstr(bind_typename, "(");
-
-				if (typestr != NULL)
-					*typestr = '\0';
-
-				tdsTypeId[numrows] = tdsTypeStrToTypeId(bind_typename);
-				//tdsTypeId[numrows] = bind_tdsTypeId;
-				++numrows;
+						errmsg("Failed to get results from query %s", buf.data)
+					));
 			}
 
-			if (numrows > 0)
+			/* We have some results to process */
+			colcount = LINKED_SERVER_NUM_COLS(lsproc);
+
+			if(colcount > 0)
 			{
-				*tupdesc = CreateTemplateTupleDesc(numrows);
+				int numrows = 0;
+				int i = 0;
 
-				for (i = 0; i < numrows; i++)
-					TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : NULL, tdsTypeToOid(tdsTypeId[i]), tdsTypeLen(tdsTypeId[i], collen[i], true), 0);
+				int collen[MAX_COLS_SELECT];
+				char **colname = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
+				int tdsTypeId[MAX_COLS_SELECT];
 
-				*tupdesc = BlessTupleDesc(*tupdesc);
+				/* bound variables */
+				int bind_collen, bind_tdsTypeId;
+				char bind_colname[256], bind_typename[256];
+
+				for (i = 0; i < MAX_COLS_SELECT; i++)
+					colname[i] = (char *) palloc0(256 * sizeof(char));
+
+				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 3, LS_NTBSTRINGBING, sizeof(bind_colname), (LS_BYTE *)bind_colname)) != SUCCEED)
+					ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to bind results for column \"name\" to a variable.")
+					));
+
+				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 5, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_tdsTypeId)) != SUCCEED)
+					ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to bind results for column \"system_type_id\" to a variable.")
+					));
+				
+				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 6, LS_NTBSTRINGBING, sizeof(bind_typename), (LS_BYTE *)&bind_typename)) != SUCCEED)
+					ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
+					));
+
+				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 7, INTBIND, sizeof(int), (LS_BYTE *)&bind_collen)) != SUCCEED)
+					ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to bind results for column \"max_length\" to a variable.")
+					));
+
+				/* fetch the rows */
+				while ((erc = LINKED_SERVER_NEXT_ROW(lsproc)) != NO_MORE_ROWS)
+				{
+					char *typestr;
+					
+					/* We encountered an error, we shouldn't return any results */
+					/* We return here, when we will again execute the query we will error out from there */
+					if (bind_typename == NULL)
+						ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
+					));
+
+					collen[numrows] = bind_collen;
+					strlcpy(colname[numrows], bind_colname, strlen(bind_colname) + 1);
+
+					/* Only keep the data type name */
+					typestr = strstr(bind_typename, "(");
+
+					if (typestr != NULL)
+						*typestr = '\0';
+
+					tdsTypeId[numrows] = tdsTypeStrToTypeId(bind_typename);
+					++numrows;
+				}
+
+				if (numrows > 0)
+				{
+					*tupdesc = CreateTemplateTupleDesc(numrows);
+
+					for (i = 0; i < numrows; i++)
+						TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : NULL, tdsTypeToOid(tdsTypeId[i]), tdsTypeLen(tdsTypeId[i], collen[i], true), 0);
+
+					*tupdesc = BlessTupleDesc(*tupdesc);
+				}
+				else
+				{
+					/*
+					* Result set is empty, that means DML/DDL was passed as an argument to
+					* sp_describe_first_result_set. Since we only support SELECTs, we error out.
+					*/
+					ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Query passed to OPENQUERY did not return a result set")
+					));
+				}
+
+				if (colname)
+				{
+					for (i = 0; i < MAX_COLS_SELECT; i++)
+					{
+						if (colname[i])
+							pfree(colname[i]);
+					}
+
+					pfree(colname);
+				}
 			}
 		}
+
+		/* Store the tuple descriptor in TopMemoryContext to be used later */
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		curr_openquery_tupdesc = CreateTemplateTupleDesc((*tupdesc)->natts);
+		TupleDescCopy(curr_openquery_tupdesc, *tupdesc);
+		MemoryContextSwitchTo(oldContext);
 	}
-
-	LINKED_SERVER_CLOSE(lsproc);
-	LINKED_SERVER_EXIT();
+	PG_FINALLY();
+	{
+		LINKED_SERVER_EXIT();
+	}
+	PG_END_TRY();
 #endif
-	//curr_openquery_tupdesc = tupdesc;
-	oldContext = MemoryContextSwitchTo(TopMemoryContext);
-
-	curr_openquery_tupdesc = CreateTemplateTupleDesc((*tupdesc)->natts);
-	//memcpy(curr_openquery_tupdesc, *tupdesc, sizeof(TupleDescData));
-	TupleDescCopy(curr_openquery_tupdesc, *tupdesc);
-
-	MemoryContextSwitchTo(oldContext);
-}
-
-Datum
-sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
-{
-	LinkedServerProcess lsproc;
-
-	linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
-
-#ifdef ENABLE_TDS_LIB
-
-	LINKED_SERVER_CLOSE(lsproc);
-	LINKED_SERVER_EXIT();
-#endif
-
-	return (Datum) 0;
 }
 
 Datum
 openquery_imp(PG_FUNCTION_ARGS)
 {
-	LinkedServerProcess lsproc;
+	LinkedServerProcess lsproc = NULL;
+	char* query; 
 
 #ifdef ENABLE_TDS_LIB
 
@@ -805,160 +833,146 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-	char* query = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+		query = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	
-	linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
+		linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
 
 #ifdef ENABLE_TDS_LIB
 
-	/* populate query in DBPROCESS */
-	if ((erc = LINKED_SERVER_PUT_CMD(lsproc, query)) != SUCCEED) {
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("error writing query to lsproc struct")
-				));
-	}
-
-	/* Execute the query on remote server */
-	LINKED_SERVER_EXEC_QUERY(lsproc);
-
-	while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
-	{
-		int i;
-		int coltype[MAX_COLS_SELECT];
-		char *colname[MAX_COLS_SELECT];
-		int collen[MAX_COLS_SELECT];
-
-		void *val[MAX_COLS_SELECT];
-
-		if (erc == FAIL)
-		{
+		/* populate query in DBPROCESS */
+		if ((erc = LINKED_SERVER_PUT_CMD(lsproc, query)) != SUCCEED) {
 			ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Failed to get results from query %s", query)
-				));
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("error writing query to lsproc struct")
+					));
 		}
 
-		/* store the column metadata if present */
-		colcount = LINKED_SERVER_NUM_COLS(lsproc);
+		/* Execute the query on remote server */
+		LINKED_SERVER_EXEC_QUERY(lsproc);
 
-		for(i = 0; i < colcount; i++)
+		while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
 		{
-			/* Let us process column metadata first */
-			coltype[i] = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
-			colname[i] = LINKED_SERVER_COL_NAME(lsproc, i + 1);
-			collen[i] = LINKED_SERVER_COL_LEN(lsproc, i + 1);
-		}
+			int i;
+			int coltype[MAX_COLS_SELECT];
+			char *colname[MAX_COLS_SELECT];
+			int collen[MAX_COLS_SELECT];
 
-		if(colcount > 0)
-		{
-			/* check to see if caller supports us returning a tuplestore */
-			if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+			void *val[MAX_COLS_SELECT];
+
+			if (erc == FAIL)
+			{
 				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("set-valued function called in context that cannot accept a set")));
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to get results from query %s", query)
+					));
+			}
 
-			if (!(rsinfo->allowedModes & SFRM_Materialize))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("materialize mode required, but it is not allowed in this context")));
+			/* store the column metadata if present */
+			colcount = LINKED_SERVER_NUM_COLS(lsproc);
 
-			/* Build tupdesc for result tuples. */
-			tupdesc = CreateTemplateTupleDesc(colcount);
-
-			/* 
-			 * If column name is NULL, we set the column name as "?column?" (default 
-			 * column name set by PG if column name is NULL). We have logic in the
-			 * babelfishpg_tds extension to set the column name length 0 on the wire
-			 * if we come across this column name.
-			 */
 			for(i = 0; i < colcount; i++)
 			{
-				Oid tdsTypeOid = tdsTypeToOid(coltype[i]);
+				/* Let us process column metadata first */
+				coltype[i] = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
+				colname[i] = LINKED_SERVER_COL_NAME(lsproc, i + 1);
+				collen[i] = LINKED_SERVER_COL_LEN(lsproc, i + 1);
+			}
+
+			if(colcount > 0)
+			{
+				/* check to see if caller supports us returning a tuplestore */
+				if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("set-valued function called in context that cannot accept a set")));
+
+				if (!(rsinfo->allowedModes & SFRM_Materialize))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("materialize mode required, but it is not allowed in this context")));
+
+				/* Build tupdesc for result tuples. */
+				tupdesc = CreateTemplateTupleDesc(colcount);
 
 				/* 
-				 * Current TDS client library has a limitation where it can send
-				 * column types like nvarchar as varchar in column metadata, so
-				 * check with out previously computed tuple descriptor to see what
-				 * should be the actual data type. At the moment there is no other way.
+				 * If column name is NULL, we set the column name as "?column?" (default 
+				 * column name set by PG if column name is NULL). We have logic in the
+				 * babelfishpg_tds extension to set the column name length 0 on the wire
+				 * if we come across this column name.
 				 */
-				if (tdsTypeOid == VARCHAROID || tdsTypeOid == TEXTOID)
+				for(i = 0; i < colcount; i++)
 				{
-					Form_pg_attribute att = TupleDescAttr(curr_openquery_tupdesc, (AttrNumber) i);
-					tdsTypeOid = att->atttypid;
+					Oid tdsTypeOid = tdsTypeToOid(coltype[i]);
+
+					/* 
+					 * Current TDS client library has a limitation where it can send
+					 * column types like nvarchar as varchar in column metadata, so
+					 * check with out previously computed tuple descriptor to see what
+					 * should be the actual data type. At the moment there is no other way.
+					 */
+					if ((tdsTypeOid == VARCHAROID) || (tdsTypeOid == TEXTOID) || (common_utility_plugin_ptr && ((*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary"))))
+					{
+						Form_pg_attribute att = TupleDescAttr(curr_openquery_tupdesc, (AttrNumber) i);
+						tdsTypeOid = att->atttypid;
+					}
+
+					TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : NULL, tdsTypeOid, tdsTypeLen(coltype[i], collen[i], false), 0);
 				}
-				TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : NULL, tdsTypeOid, tdsTypeLen(coltype[i], collen[i], false), 0);
-			}
-			tupdesc = BlessTupleDesc(tupdesc);
+				tupdesc = BlessTupleDesc(tupdesc);
 
-			per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-			oldcontext = MemoryContextSwitchTo(per_query_ctx);
+				per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+				oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-			tupstore = tuplestore_begin_heap(true, false, work_mem);
-			rsinfo->returnMode = SFRM_Materialize;
-			rsinfo->setResult = tupstore;
-			rsinfo->setDesc = tupdesc;
+				tupstore = tuplestore_begin_heap(true, false, work_mem);
+				rsinfo->returnMode = SFRM_Materialize;
+				rsinfo->setResult = tupstore;
+				rsinfo->setDesc = tupdesc;
 
-			MemoryContextSwitchTo(oldcontext);
+				MemoryContextSwitchTo(oldcontext);
 
-			/* fetch the rows */
-			while ((erc = LINKED_SERVER_NEXT_ROW(lsproc)) != NO_MORE_ROWS)
-			{
-				/* for each row */
-				Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
-				bool	*nulls = palloc0(sizeof(bool) * colcount);
-
-				MemSet(nulls, false, sizeof(nulls));
-
-				for (i = 0; i < colcount; i++)
+				/* fetch the rows */
+				while ((erc = LINKED_SERVER_NEXT_ROW(lsproc)) != NO_MORE_ROWS)
 				{
-					int datalen = LINKED_SERVER_DATA_LEN(lsproc, i + 1);
-					val[i] = LINKED_SERVER_DATA(lsproc, i + 1);
+					/* for each row */
+					Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
+					bool	*nulls = palloc0(sizeof(bool) * colcount);
 
-					if (val[i] == NULL && datalen == 0)
+					MemSet(nulls, false, sizeof(nulls));
+
+					for (i = 0; i < colcount; i++)
 					{
-						nulls[i] = true;
+						int datalen = LINKED_SERVER_DATA_LEN(lsproc, i + 1);
+						val[i] = LINKED_SERVER_DATA(lsproc, i + 1);
+
+						// if (val[i] == NULL && datalen == 0)
+						if (val[i] == NULL)
+							nulls[i] = true;
+						else
+							values[i] = getDatumFromBytePtr(lsproc, val[i], coltype[i], datalen);
+							
 					}
-					else
-					{
-						//if 
-						values[i] = getDatumFromBytePtr(lsproc, val[i], coltype[i], datalen);
-					}
-						
+
+					tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 				}
 
-				tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+				tuplestore_donestoring(tupstore);
 			}
-
-			tuplestore_donestoring(tupstore);
 		}
-	}
-
-	LINKED_SERVER_CLOSE(lsproc);
-	LINKED_SERVER_EXIT();
-
-	if (curr_openquery_tupdesc)
-			pfree(curr_openquery_tupdesc);
-
-	curr_openquery_tupdesc = NULL;
-
-	/* Invalidate Tuple Descriptor */
-	
-	//oldcontext = MemoryContextSwitchTo(MessageContext);
-	//curr_openquery_tupdesc = NULL;
-	
-	//MemoryContextSwitchTo(oldcontext);
-
 #endif
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
+#ifdef ENABLE_TDS_LIB
+		/* Invalidate Tuple Descriptor */
 		if (curr_openquery_tupdesc)
 			pfree(curr_openquery_tupdesc);
 
 		curr_openquery_tupdesc = NULL;
 
-		PG_RE_THROW();
+		LINKED_SERVER_EXIT();
+#endif
+		if (query)
+			pfree(query);
 	}
 	PG_END_TRY();
 

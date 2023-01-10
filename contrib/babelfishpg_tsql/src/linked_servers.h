@@ -1,3 +1,4 @@
+#ifdef ENABLE_TDS_LIB
 #include "sybdb.h"
 
 #define SQL_RETURN_CODE_LEN 1000
@@ -35,13 +36,12 @@
 #define TSQL_SMALLDATETIME	SYBDATETIME4
 #define TSQL_DATETIME2		SYBMSDATETIME2
 #define TSQL_DATETIMEOFFSET	SYBMSDATETIMEOFFSET
-// #define TSQL_DATE		SYBDATE
 #define TSQL_DATE		SYBMSDATE
-//#define SYBTIME
 #define TSQL_TIME		SYBMSTIME
 #define TSQL_DECIMAL		SYBDECIMAL
 #define TSQL_NUMERIC		SYBNUMERIC
 #define TSQL_FLOAT		SYBFLT8
+#define TSQL_FLOATN		SYBFLTN
 #define TSQL_REAL		SYBREAL
 #define TSQL_TINYINT		SYBINT1
 #define TSQL_SMALLINT		SYBINT2
@@ -51,9 +51,6 @@
 #define TSQL_MONEY		SYBMONEY
 #define TSQL_MONEYN		SYBMONEYN
 #define TSQL_SMALLMONEY		SYBMONEY4
-
-/* Bind variables */
-
 
 typedef struct
 {
@@ -72,7 +69,6 @@ typedef struct
 
 typedef int LINKED_SERVER_RETCODE;
 
-#ifdef ENABLE_TDS_LIB
 typedef LOGINREC *LinkedServerLogin;
 typedef DBPROCESS *LinkedServerProcess;
 
@@ -88,7 +84,6 @@ typedef DBPROCESS *LinkedServerProcess;
 #define LINKED_SERVER_RESULTS(process)		dbresults(process)
 #define LINKED_SERVER_NUM_COLS(process)		dbnumcols(process)
 #define LINKED_SERVER_NEXT_ROW(process)		dbnextrow(process)
-#define LINKED_SERVER_CLOSE(process)		dbclose(process)
 #define LINKED_SERVER_EXIT(void)		dbexit(void)
 #define LINKED_SERVER_DATA(process, index)	dbdata(process, index)
 #define LINKED_SERVER_DATA_LEN(process, index)	dbdatlen(process, index)
@@ -106,6 +101,8 @@ typedef DBPROCESS *LinkedServerProcess;
 #define LS_NTBSTRINGBING	NTBSTRINGBIND
 #define	LS_INTBIND		INTBIND
 
+#define LS_BYTE			BYTE
+
 #else
 typedef int *LinkedServerLogin;
 typedef int *LinkedServerProcess;
@@ -122,7 +119,6 @@ typedef int *LinkedServerProcess;
 #define LINKED_SERVER_RESULTS(process)		((void)0)
 #define LINKED_SERVER_NUM_COLS(process)		((void)0)
 #define LINKED_SERVER_NEXT_ROW(process)		((void)0)
-#define LINKED_SERVER_CLOSE(process)		((void)0)
 #define LINKED_SERVER_EXIT(void)		((void)0)
 #define LINKED_SERVER_DATA(process, index)	((void)0)
 #define LINKED_SERVER_DATA_LEN(process, index)	((void)0)
@@ -140,6 +136,6 @@ typedef int *LinkedServerProcess;
 #define LS_NTBSTRINGBING	0
 #define	LS_INTBIND		0
 
-#endif
+#define LS_BYTE			unsigned char
 
-extern void linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc);
+#endif

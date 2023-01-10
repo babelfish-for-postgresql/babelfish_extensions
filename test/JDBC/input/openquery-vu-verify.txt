@@ -212,4 +212,7 @@ include#!#input/datatypes/TestImage-vu-cleanup.txt
 SELECT * FROM OPENQUERY(bbf_server, 'select 1/0 as a')
 
 # Try executing a query that does not return a result set
-SELECT * FROM OPENQUERY(bbf_server, 'PRINT 1')
+SELECT * FROM OPENQUERY(bbf_server, 'INSERT INTO just_a_table_which_does_not_exist VALUES (1)')
+
+# Test view dependent on OPENQUERY
+SELECT * FROM openquery_vu_prepare__openquery_view

@@ -3769,67 +3769,14 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
-Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale, int precision)
+Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale)
 {	
 	switch (datatype)
 	{
-		case TDS_TYPE_DATE:
-			{
-				DateADT result;
-				uint64	val;
-
-				/* 
-				 * By default the we calculate date from 01-01-0001
-				 * but buf has number of days from 01-01-1900. So adding
-				 * number of days between 01-01-1900 and 01-01-0001
-				 */
-				result = (DateADT)GetMsgInt(buf, 3) + (DateADT)TdsGetDayDifferenceHelper(1, 1, 1900, true);
-				TdsCheckDateValidity(result);
-
-				TdsTimeGetDatumFromDays(result, &val);
-
-				PG_RETURN_DATEADT(val);
-			}
-		case TDS_TYPE_TIME:
-			return TdsTypeTimeToDatum(buf, scale, buf->len);
 		case TDS_TYPE_DATETIMEN:
 			return TdsTypeDatetimeToDatum(buf);
-		case TDS_TYPE_NCHAR:
-		case TDS_TYPE_NTEXT:
-			return TdsTypeNCharToDatum(buf);
-		case TDS_TYPE_VARCHAR:
-		case TDS_TYPE_NVARCHAR:
-		case TDS_TYPE_CHAR:
-		case TDS_TYPE_TEXT:
-			return TdsTypeVarcharToDatum(buf, PG_UTF8, datatype);
 		case TDS_TYPE_SMALLDATETIME:
 			return TdsTypeSmallDatetimeToDatum(buf);
-		case TDS_TYPE_DATETIME2:
-			{
-				uint64_t    numMicro = 0;
-				uint32_t	numDays = 0;
-				Timestamp	timestamp;
-
-				if (scale == 255)
-					scale = DATETIMEOFFSETMAXSCALE;
-
-				memcpy(&numMicro, &buf->data[buf->cursor], 8);
-				buf->cursor += 8;
-
-				memcpy(&numDays, &buf->data[buf->cursor], 4);
-				buf->cursor += 4;
-				
-				/* 
-				 * By default the we calculate date from 01-01-0001
-				 * but buf has number of days from 01-01-1900. So adding
-				 * number of days between 01-01-1900 and 01-01-0001
-				 */
-				numDays += TdsGetDayDifferenceHelper(1, 1, 1900, true);
-
-				TdsGetTimestampFromDayTime(numDays, numMicro, 0, &timestamp, scale);
-
-				PG_RETURN_TIMESTAMP((Timestamp)timestamp);
-			}
 		case TDS_TYPE_MONEYN:
 			return TdsTypeMoneyToDatum(buf);
 		case TDS_TYPE_SMALLMONEY:
@@ -3895,12 +3842,6 @@ Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int optiona
 				tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
 				TimestampTz	timestamp;
 
-				/*
-				* if Datetimeoffset data has no specific scale specified in the query, default scale
-				* to be considered is 7 always.
-				*/
-				// if (scale == 0xFF)
-				// 	scale = DATETIMEOFFSETMAXSCALE;
 				date += TdsGetDayDifferenceHelper(1, 1, 1900, true);
 
 				optional_attr *= -1;
