@@ -290,6 +290,16 @@ sub tsql_connstr_with_role
 	return @connarray;
 }
 
+sub tsql_connstr_for_kerb_auth
+{
+	my ($self, $dbname) = @_;
+
+	my $node = $self->{_node};
+	my @connarray = $self->tsql_connstr($dbname);
+
+	return @connarray;
+}
+
 sub connect_ok
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;

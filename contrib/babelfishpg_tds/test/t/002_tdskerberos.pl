@@ -183,7 +183,9 @@ my $tsql_node = new TDSNode($node);
 $tsql_node->init_tsql('test_master', 'testdb');
 
 $node->safe_psql('postgres', 'CREATE USER test1;');
-$node->safe_psql('postgres', 'CREATE ROLE "test1@EXAMPLE.COM";');
+
+# Create a windows login
+$tsql_node->safe_tsql("master",qq{CREATE LOGIN [example.com\\test1] FROM WINDOWS});
 
 note "running tests";
 
@@ -406,7 +408,26 @@ test_access(
 	"connection authenticated: identity=\"test1\@$realm\" method=gss");
 
 # Babelfish Tests start here
-my @connstr1 = $tsql_node->tsql_connstr('master');
-$tsql_node->connect_fails('Test 1', (connstr => \@connstr1, log_like => [qr/role "test1\@EXAMPLE.COM" is not permitted to log in/]));
 
+# Reset pg_hba.conf and mark every connection to use GSS
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf',
+	qq{host all all $hostaddr/32 gss include_realm=0 krb_realm=EXAMPLE.COM});
+$node->restart;
+
+my @connstr2 = $tsql_node->tsql_connstr_for_kerb_auth('master');
+$tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr2));
+
+# Reset pg_hba.conf and mark every connection to use password based auth
+# But we should be able to use kerberos auth through TDS endpoint irrespective
+# of pg_hba.conf file
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf',
+	qq{host all all $hostaddr/32 md5});
+$node->restart;
+
+my @connstr3 = $tsql_node->tsql_connstr_for_kerb_auth('master');
+$tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr3));
+
+$node->stop;
 done_testing();
