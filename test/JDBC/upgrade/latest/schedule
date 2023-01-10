@@ -368,4 +368,4 @@ app_name
 atn2
 case_insensitive_collation
 linked_servers
-ad-jira-babel-3851
+test_windows_login

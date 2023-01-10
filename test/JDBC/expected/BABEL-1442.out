@@ -56,6 +56,10 @@ FROM WINDOWS
 WITH DEFAULT_DATABASE = db2,
 DEFAULT_LANGUAGE = English;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database 'db2' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
 
 CREATE LOGIN r9 FROM ASYMMETRIC KEY asymkey1;
 GO
@@ -275,7 +279,7 @@ DEFAULT_LANGUAGE = English;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The Server principal 'r8' already exists)~~
+~~ERROR (Message: The database 'db2' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
 
 
 CREATE LOGIN r9 FROM ASYMMETRIC KEY asymkey1;
@@ -418,6 +422,10 @@ DROP LOGIN r7;
 GO
 DROP LOGIN r8;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'r8', because it does not exist or you do not have permission.)~~
+
 DROP LOGIN r9;
 GO
 DROP LOGIN r10;

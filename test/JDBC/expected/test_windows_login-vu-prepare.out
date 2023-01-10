@@ -1,0 +1,22 @@
+CREATE DATABASE ad_db;
+GO
+
+CREATE LOGIN [ad\Aduser] from windows;
+GO
+
+CREATE LOGIN [ad\Aduserdb] from windows with default_database=[ad_db];
+GO
+
+CREATE LOGIN [ad\Aduserlanguage] from windows with default_language=[German];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '[German]' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_language_non_english to ignore)~~
+
+
+CREATE LOGIN [ad\Aduserdblanguage] from windows with default_database=[ad_db], default_language=[German];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '[German]' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_language_non_english to ignore)~~
+
