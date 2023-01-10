@@ -60,3 +60,6 @@ GO
 -- This will change once T-SQL ALTER ANY LINKED SERVER permission is implemented in babelfish
 EXEC sp_addlinkedserver  @server = N'mssql_server4', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
+
+EXEC master.dbo.sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server1', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO

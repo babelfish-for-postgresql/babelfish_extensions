@@ -386,14 +386,21 @@ GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedsrvlogin(IN sys.sysname,
                                                     IN sys.sysname)
 TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
-                                                      IN "@locallogin" sys.sysname)
+CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
+                                                        IN "@locallogin" sys.sysname)
 AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
 LANGUAGE C;
 
-GRANT EXECUTE ON PROCEDURE sys.sp_droplinkedsrvlogin(IN sys.sysname,
-                                                    IN sys.sysname)
+GRANT EXECUTE ON PROCEDURE sys.sp_droplinkedsrvlogin( IN sys.sysname,
+                                                      IN sys.sysname)
 TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                              IN "@locallogin" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
 
 CREATE OR REPLACE PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
                                                     IN "@droplogins" char(10) DEFAULT NULL)

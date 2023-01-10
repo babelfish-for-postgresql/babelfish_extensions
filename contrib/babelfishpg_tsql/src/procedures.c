@@ -2278,18 +2278,31 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
 	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
-	DropUserMappingStmt *stmt = makeNode(DropUserMappingStmt);
-	RoleSpec *user = makeNode(RoleSpec);
-	if (locallogin != NULL){
-		elog(ERROR, "Only @locallogin = NULL is supported");
-	}
-	stmt->servername = servername;
+	StringInfoData query;
 
-	user->roletype = ROLESPEC_CURRENT_USER;
-	user->location = -1;
-	stmt->user = user;
+	if (locallogin != NULL)
+		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("Only @locallogin = NULL is supported")));
+	
+	initStringInfo(&query);
 
-	RemoveUserMapping(stmt);
+	/*
+	 * We prepare the following query to drop a linked server login. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * DROP USER MAPPING FOR @LOCALLOGIN SERVER @SERVERNAME
+	 *
+	 */
+	appendStringInfo(&query, "DROP USER MAPPING FOR %s SERVER %s", locallogin, servername);
+
+	exec_utility_cmd_helper(query.data);
+
+	if(locallogin)
+		pfree(locallogin);
+	
+	if(servername)
+		pfree(servername);
 
 	return (Datum) 0;
 }
