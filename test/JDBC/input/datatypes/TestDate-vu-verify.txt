@@ -1,1 +1,3 @@
 SELECT * FROM DATE_dt;
+select * from TestDate1;
+select cast('' as date);

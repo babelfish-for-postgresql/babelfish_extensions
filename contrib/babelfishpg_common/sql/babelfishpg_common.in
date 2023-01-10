@@ -29,7 +29,8 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "string_operators.sql"
 #include "coerce.sql"
 #include "rowversion.sql"
-
+#include "date.sql"
+#include "time.sql"
 #include "utils.sql"
 
 /*
