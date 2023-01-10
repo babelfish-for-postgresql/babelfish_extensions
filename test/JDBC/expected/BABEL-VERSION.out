@@ -95,6 +95,14 @@ GO
     Server SQLState: 22023)~~
 
 
+Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
 Alter system set babelfishpg_tds.product_version = NULL;
 GO
 ~~ERROR (Code: 0)~~

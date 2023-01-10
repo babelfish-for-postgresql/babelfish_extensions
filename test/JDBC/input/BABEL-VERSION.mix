@@ -35,6 +35,9 @@ GO
 Alter system set babelfishpg_tds.product_version = "11.4.3000.";
 GO
 
+Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
+GO
+
 Alter system set babelfishpg_tds.product_version = NULL;
 GO
 
