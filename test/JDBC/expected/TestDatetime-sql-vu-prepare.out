@@ -144,17 +144,9 @@ GO
 
 CREATE TABLE Datetime_tbl1 (c1 DATETIME, c2 as DATEDIFF(day,'1900-01-01 00:00:00.000',c1))
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "datetime_tbl1" already exists)~~
-
 
 CREATE TABLE Datetime_tbl2 (c1 SMALLDATETIME, c2 as DATEDIFF(day,'1900-01-01 00:00:00.000',c1))
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "datetime_tbl2" already exists)~~
-
 
 CREATE PROCEDURE Datetime_proc1 (@a DATETIME, @b BIT) AS
 BEGIN

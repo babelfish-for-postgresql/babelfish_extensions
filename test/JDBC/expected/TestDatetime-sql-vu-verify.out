@@ -1144,8 +1144,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-01 00:00:00.0#!#0
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1169,8 +1167,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-03 00:00:00.0#!#2
 ~~END~~
@@ -1193,8 +1189,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-03 00:00:00.0#!#2
 ~~END~~
@@ -1217,8 +1211,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 12:00:00.0#!#1
 ~~END~~
@@ -1241,8 +1233,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 12:00:00.0#!#1
 ~~END~~
@@ -1265,8 +1255,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1289,8 +1277,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1313,8 +1299,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1337,8 +1321,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1361,8 +1343,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 12:00:00.0#!#1
 ~~END~~
@@ -1385,8 +1365,6 @@ SELECT * FROM Datetime_tbl1
 GO
 ~~START~~
 datetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 12:00:00.0#!#1
 ~~END~~
@@ -1411,8 +1389,6 @@ GO
 datetime#!#int
 <NULL>#!#<NULL>
 <NULL>#!#<NULL>
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 ~~END~~
 
 DELETE FROM Datetime_tbl1 WHERE c1 IS NOT NULL
@@ -1430,8 +1406,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-01 00:00:00.0#!#0
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1455,8 +1429,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-03 00:00:00.0#!#2
 ~~END~~
@@ -1479,8 +1451,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-03 00:00:00.0#!#2
 ~~END~~
@@ -1503,8 +1473,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 12:00:00.0#!#1
 ~~END~~
@@ -1527,8 +1495,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 12:00:00.0#!#1
 ~~END~~
@@ -1551,8 +1517,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1575,8 +1539,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1599,8 +1561,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1623,8 +1583,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 00:00:00.0#!#1
 ~~END~~
@@ -1647,8 +1605,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 12:00:00.0#!#1
 ~~END~~
@@ -1671,8 +1627,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 1900-01-03 00:00:00.0#!#2
 1900-01-02 12:00:00.0#!#1
 ~~END~~
@@ -1695,8 +1649,6 @@ SELECT * FROM Datetime_tbl2
 GO
 ~~START~~
 smalldatetime#!#int
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
 <NULL>#!#<NULL>
 <NULL>#!#<NULL>
 ~~END~~
