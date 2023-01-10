@@ -393,7 +393,7 @@ ProcessVersionNumber(const char* inputString)
 {
 	static int 	version_arr[4];
 	int 		part = 0;
-	char		*copy_version_number = palloc0(sizeof(inputString));
+	char		*copy_version_number = palloc(sizeof(char) * strlen(inputString) + 1);
 	char 		*token;
 
 	Assert(inputString != NULL);
@@ -401,7 +401,8 @@ ProcessVersionNumber(const char* inputString)
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{ 
 		version_arr[part] = atoi(token);
-		part++; 
+		part++;
+		Assert(part <= 4);
 	}
 	return version_arr;
 }
