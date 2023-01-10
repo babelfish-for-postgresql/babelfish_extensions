@@ -1,0 +1,308 @@
+SELECT * FROM str_vu_prepare_v1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+ 1234.56#!#1235#!#    -1234.5600000000#!#   1234.57
+~~END~~
+
+
+-- test different number of input agruments, default lenghth = 10 and default decimal = 0
+SELECT * FROM str_vu_prepare_v2
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+      1235#!#  1235#!#1234.6
+~~END~~
+
+
+-- only third argument could be null, otherwise return null
+SELECT * FROM str_vu_prepare_v4
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#  1235#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- test with all datatypes that could implicitly converted to numeric
+SELECT * FROM str_vu_prepare_v5
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+123.0#!#123.5#!#123.5#!#123.0#!#123.0#!#123.0#!#123.5#!#123.5#!#123.0#!#123.0#!#123.5#!#123.5#!#123.5#!#123.5
+~~END~~
+
+
+-- test with all datatypes that could implicitly converted to int
+SELECT * FROM str_vu_prepare_v6
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560
+~~END~~
+
+
+-- returns null on negative second or third input argument
+SELECT * FROM str_vu_prepare_v7
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- returns null when length > 8000, due to row size limit
+SELECT * FROM str_vu_prepare_v8
+GO
+~~START~~
+varchar#!#varchar
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            1235#!#<NULL>
+~~END~~
+
+
+-- throws error when float_exp input has precision > 38
+SELECT * FROM str_vu_prepare_v9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The number '12345678901234567890.1234567890123456789' is out of the range for numeric representation (maximum precision 38).)~~
+
+
+-- throws error when length input exceed input of int32
+SELECT * FROM str_vu_prepare_v10
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- throws error when decimal input exceed input of int32
+SELECT * FROM str_vu_prepare_v11
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- won't over flow
+SELECT * FROM str_vu_prepare_v12
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- integer length of input expression exceeds the specified length, returns ** for the specified length
+-- negative sign is also count as one digit in integer part
+SELECT * FROM str_vu_prepare_v13
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+***#!#*****#!#******
+~~END~~
+
+
+-- when input decimal greater than length - integer digits, go with length's constraint
+SELECT * FROM str_vu_prepare_v14
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+ 1234#!#123457#!#-123457#!#1234.5670000
+~~END~~
+
+
+-- actual max precision 17, round to 17th digit and pad rest of significant digits with zeros
+SELECT * FROM str_vu_prepare_v15
+GO
+~~START~~
+varchar#!#varchar
+ 1234567890123456800000000#!#  -1234567890.1234568000000000
+~~END~~
+
+
+-- max scale is 16, add num of preceding spaces when decimal is more than 16
+SELECT * FROM str_vu_prepare_v16
+GO
+~~START~~
+varchar#!#varchar
+         1234.1234567890123000#!#    1234.1230000000000000
+~~END~~
+
+
+-- decimal point and negative sign count as one digit
+SELECT * FROM str_vu_prepare_v17
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+*********#!#1234567891#!# 1234567891#!#1234567890.5#!#**********#!#-1234567891#!# -1234567891#!#-1234567890.5
+~~END~~
+
+
+-- when there's one extra digit from carried over, go with the length and decimal constraint before rounding
+SELECT * FROM str_vu_prepare_v18
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+10000.00#!#***#!#*******
+~~END~~
+
+
+EXEC str_vu_prepare_p1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+ 1234.56#!#1235#!#    -1234.5600000000#!#   1234.57
+~~END~~
+
+
+-- test different number of input agruments, default lenghth = 10 and default decimal = 0
+EXEC str_vu_prepare_p2
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+      1235#!#  1235#!#1234.6
+~~END~~
+
+
+-- null inputs
+-- no input arguments, throw error
+EXEC str_vu_prepare_p3
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function str expects parameter "float_expression", which was not supplied.)~~
+
+
+-- only third argument could be null, otherwise return null
+EXEC str_vu_prepare_p4
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#  1235#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- test with all datatypes that could implicitly converted to numeric
+EXEC str_vu_prepare_p5
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+123.0#!#123.5#!#123.5#!#123.0#!#123.0#!#123.0#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5
+~~END~~
+
+
+-- test with all datatypes that could implicitly converted to int
+EXEC str_vu_prepare_p6
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560#!#1234.560
+~~END~~
+
+
+-- returns null on negative second or third input argument
+EXEC str_vu_prepare_p7
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- returns null when length > 8000, due to row size limit
+EXEC str_vu_prepare_p8
+GO
+~~START~~
+varchar#!#varchar
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            1235#!#<NULL>
+~~END~~
+
+
+-- throws error when float_exp input has precision > 38
+EXEC str_vu_prepare_p9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The number '12345678901234567890.1234567890123456789' is out of the range for numeric representation (maximum precision 38).)~~
+
+
+-- throws error when length input exceed input of int32
+EXEC str_vu_prepare_p10
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- throws error when decimal input exceed input of int32
+EXEC str_vu_prepare_p11
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- won't over flow
+EXEC str_vu_prepare_p12
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- integer length of input expression exceeds the specified length, returns ** for the specified length
+-- negative sign is also count as one digit in integer part
+EXEC str_vu_prepare_p13
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+***#!#*****#!#******
+~~END~~
+
+
+-- when input decimal greater than length - integer digits, go with length's constraint
+EXEC str_vu_prepare_p14
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+ 1234#!#123457#!#-123457#!#1234.5670000
+~~END~~
+
+
+-- actual max precision 17, round to 17th digit and pad rest of significant digits with zeros
+EXEC str_vu_prepare_p15
+GO
+~~START~~
+varchar#!#varchar
+ 1234567890123456800000000#!#  -1234567890.1234568000000000
+~~END~~
+
+
+-- max scale is 16, add num of preceding spaces when decimal is more than 16
+EXEC str_vu_prepare_p16
+GO
+~~START~~
+varchar#!#varchar
+         1234.1234567890123000#!#    1234.1230000000000000
+~~END~~
+
+
+-- decimal point and negative sign count as one digit
+EXEC str_vu_prepare_p17
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+*********#!#1234567891#!# 1234567891#!#1234567890.5#!#**********#!#-1234567891#!# -1234567891#!#-1234567890.5
+~~END~~
+
+
+-- when there's one extra digit from carried over, go with the length and decimal constraint before rounding
+EXEC str_vu_prepare_p18
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+10000.00#!#***#!#*******
+~~END~~
+
