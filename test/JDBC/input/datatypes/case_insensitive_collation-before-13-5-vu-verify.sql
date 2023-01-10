@@ -1,3 +1,4 @@
+-- sla 100000
 select name from sys.columns where name = 'Test';
 go
 
