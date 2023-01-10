@@ -1,4 +1,5 @@
 -- test table, trigger, procedure, function
+-- tsql
 SELECT * FROM babel_object_id_t1_view
 GO
 

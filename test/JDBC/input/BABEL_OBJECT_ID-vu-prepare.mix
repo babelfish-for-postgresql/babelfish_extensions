@@ -1,5 +1,6 @@
 
 -- To test table, trigger, procedure, function
+-- tsql
 CREATE TABLE babel_object_id_t1 (a int);
 GO
 
