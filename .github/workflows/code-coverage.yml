@@ -196,21 +196,10 @@ jobs:
       - name: Summarize code coverage
         id: code-coverage-summary
         if: always()
-<<<<<<< HEAD
-        uses: peter-evans/create-or-update-comment@v2
-        run: |
-          cd contrib/
-          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o lcov.info
-          lcov --list lcov.info > output.txt
-        with:
-          body-file: 'output.txt'
-
-=======
         run: |
           cd contrib/
           lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o lcov.info
           lcov --list lcov.info
->>>>>>> 4a09d72c (Added a new workflow for generating code coverage reports)
 
       - name: Upload Coverage Report for babelfishpg_tsql extension
         if: always()
@@ -238,8 +227,16 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: coverage_money
-<<<<<<< HEAD
           path: contrib/babelfishpg_money/coverage/
-=======
-          path: contrib/babelfishpg_money/coverage/
->>>>>>> 4a09d72c (Added a new workflow for generating code coverage reports)
+      - name: Add cache for code coverage
+        id: code-coverage-cache
+        uses: actions/cache@v2
+        with:
+          name: cache-code_coverage
+          key: ${{ runner.os }}-code_coverage-${{ hashFiles('**/contrib/lcov.info') }}
+          restore-keys: |
+            ${{ runner.os }}-code_coverage-
+      - name: Read Summarized code coverage
+        if: ${{ steps.cache-code-coverage.outputs.cache-hit != 'true' }}
+        run: |
+          lcov --list lcov.info
