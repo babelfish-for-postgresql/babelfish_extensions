@@ -367,7 +367,7 @@ OUT arg1 text,
 OUT arg2 INT)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'openquery_imp'
-LANGUAGE C VOLATILE STRICT;
+LANGUAGE C VOLATILE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
