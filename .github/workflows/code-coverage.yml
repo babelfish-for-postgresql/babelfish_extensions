@@ -224,14 +224,16 @@ jobs:
         with:
           name: coverage_money
           path: contrib/babelfishpg_money/coverage/
+
       - name: Add cache for code coverage
         id: code-coverage-cache
         uses: actions/cache@v2
         with:
           name: cache-code_coverage
-          key: ${{ runner.os }}-code_coverage-${{ hashFiles('**/contrib/lcov.info') }}
+          key: ${{ runner.os }}-code_coverage-${{ hashFiles('/contrib/lcov.info') }}
           restore-keys: |
             ${{ runner.os }}-code_coverage-
+
       - name: Read Summarized code coverage
         if: ${{ steps.cache-code-coverage.outputs.cache-hit != 'true' }}
         run: |
