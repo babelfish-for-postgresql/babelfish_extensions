@@ -1,4 +1,4 @@
-EXEC master.dbo.sp_droplinkedsrvlogin @locallogin = "jdbc_user", @servername = "mssql_server1"
+EXEC master.dbo.sp_droplinkedsrvlogin @rmtsrvname = "mssql_server1", @locallogin = "jdbc_user"
 GO
 
 DROP LOGIN linked_server_login_861
