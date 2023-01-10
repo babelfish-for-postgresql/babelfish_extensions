@@ -2788,19 +2788,6 @@ datetime2
 DROP FUNCTION BABEL_3486_vu_prepare_f102()
 GO
 
-SELECT * FROM BABEL_3486_vu_prepare_v102_2
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_3486_vu_prepare_v102_2" does not exist)~~
-
-DROP VIEW BABEL_3486_vu_prepare_v102_2
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "babel_3486_vu_prepare_v102_2" does not exist)~~
-
-
 EXEC BABEL_3486_vu_prepare_p102_2
 GO
 ~~ERROR (Code: 33557097)~~
