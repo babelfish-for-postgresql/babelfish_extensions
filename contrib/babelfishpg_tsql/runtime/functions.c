@@ -997,19 +997,44 @@ object_id(PG_FUNCTION_ARGS)
 		/* cross database lookup */
 		int db_id = get_db_id(db_name);
 		if (!DbidIsValid(db_id))
+		{
+			pfree(db_name);
+			pfree(object_name);
+			if(object_type)
+				pfree(object_type);
 			PG_RETURN_NULL();
+		}
 		user_id = GetSessionUserId();
 	}
 
+	/* get physical schema name from logical schema name */
 	if (!strcmp(schema_name, ""))
 	{	
-		/* find the default schema for current user */
+		/* find the default schema for current user and get physical schema name */
 		const char *user = get_user_for_database(db_name);
-		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+		const char		*guest_role_name = get_guest_role_name(db_name);
+		if(!user)
+		{	
+			pfree(db_name);
+			pfree(object_name);
+			if(object_type)
+				pfree(object_type);
+			PG_RETURN_NULL();
+		}
+		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+		{
+			physical_schema_name = pstrdup(get_dbo_schema_name(db_name));
+		}
+		else
+		{
+			schema_name  = get_authid_user_ext_schema_name((const char *) db_name, user);
+			physical_schema_name = get_physical_schema_name(db_name, schema_name);
+		}
 	}
-
-	/* get physical schema name from logical schema name */
-	physical_schema_name = get_physical_schema_name(db_name, schema_name);
+	else
+	{
+		physical_schema_name = get_physical_schema_name(db_name, schema_name);
+	}
 
 	/* get schema oid from physical schema name, it will return InvalidOid if user don't have lookup access */
 	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
