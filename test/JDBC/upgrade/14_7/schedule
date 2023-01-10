@@ -68,7 +68,8 @@ sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
-objectproperty
+# Takes too long, tracking with BABEL-3675
+# objectproperty
 objectpropertyex
 sys-column-property
 sys-configurations
