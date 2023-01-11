@@ -89,8 +89,29 @@ CREATE VIEW str_vu_prepare_v7 AS (
     );
 GO
 
--- returns null when length > 8000, due to row size limit
+-- returns null when float_exp is NaN or Infinity
 CREATE VIEW str_vu_prepare_v8 AS (
+    SELECT 
+        STR('NaN', 5, 3) AS res1,
+        STR('nan', 5, 3) AS res2,
+        STR('NAN', 5, 3) AS res3,
+        STR('Infinity', 5, 3) AS res4,
+        STR('Inf', 5, 3) AS res5,
+        STR('INFINITY', 5, 3) AS res6,
+        STR('INF', 5, 3) AS res7,
+        STR('infinity', 5, 3) AS res8,
+        STR('inf', 5, 3) AS res9,
+        STR('-Infinity', 5, 3) AS res10,
+        STR('-Inf', 5, 3) AS res11,
+        STR('-INFINITY', 5, 3) AS res12,
+        STR('-INF', 5, 3) AS res13,
+        STR('-infinity', 5, 3) AS res14,
+        STR('-inf', 5, 3) AS res15
+    );
+GO
+
+-- returns null when length > 8000, due to row size limit
+CREATE VIEW str_vu_prepare_v9 AS (
     SELECT 
         STR(1234.56, 8000) AS res1,
         STR(1234.56, 8001) AS res2
@@ -98,28 +119,28 @@ CREATE VIEW str_vu_prepare_v8 AS (
 GO
 
 -- throws error when float_exp input has precision > 38
-CREATE VIEW str_vu_prepare_v9 AS (
+CREATE VIEW str_vu_prepare_v10 AS (
     SELECT 
         STR(12345678901234567890.1234567890123456789, 40, 20)
     );
 GO
 
 -- throws error when length input exceed input of int32
-CREATE VIEW str_vu_prepare_v10 AS (
+CREATE VIEW str_vu_prepare_v11 AS (
     SELECT 
         STR(1234.56, 2147483648, 20)
     );
 GO
 
 -- throws error when decimal input exceed input of int32
-CREATE VIEW str_vu_prepare_v11 AS (
+CREATE VIEW str_vu_prepare_v12 AS (
     SELECT 
         STR(1234.56, 40, 2147483648)
     );
 GO
 
 -- won't over flow
-CREATE VIEW str_vu_prepare_v12 AS (
+CREATE VIEW str_vu_prepare_v13 AS (
     SELECT 
         STR(12345678901234567890.123456789012345678, 2147483647, 2147483647)
     );
@@ -127,7 +148,7 @@ GO
 
 -- integer length of input expression exceeds the specified length, returns ** for the specified length
 -- negative sign is also count as one digit in integer part
-CREATE VIEW str_vu_prepare_v13 AS (
+CREATE VIEW str_vu_prepare_v14 AS (
     SELECT 
         STR(1234, 3) AS res1,
         STR(123456.78, 5, 3) AS res2,
@@ -136,7 +157,7 @@ CREATE VIEW str_vu_prepare_v13 AS (
 GO
 
 -- when input decimal greater than length - integer digits, go with length's constraint
-CREATE VIEW str_vu_prepare_v14 AS (
+CREATE VIEW str_vu_prepare_v15 AS (
     SELECT 
         STR(1234, 5, 6) AS res1,
         STR(123456.78, 6, 3) AS res2,
@@ -146,7 +167,7 @@ CREATE VIEW str_vu_prepare_v14 AS (
 GO
 
 -- actual max precision 17, round to 17th digit and pad rest of significant digits with zeros
-CREATE VIEW str_vu_prepare_v15 AS (
+CREATE VIEW str_vu_prepare_v16 AS (
     SELECT 
         STR(1234567890123456789012345.67, 26, 1) AS res1,
         STR(-1234567890.12345678901234567, 30, 16) AS res2
@@ -154,7 +175,7 @@ CREATE VIEW str_vu_prepare_v15 AS (
 GO
 
 -- max scale is 16, add num of preceding spaces when decimal is more than 16
-CREATE VIEW str_vu_prepare_v16 AS (
+CREATE VIEW str_vu_prepare_v17 AS (
     SELECT 
         STR(1234.1234567890123456789012, 30, 20) AS res1,
         STR(1234.123, 25, 20) AS res2
@@ -162,7 +183,7 @@ CREATE VIEW str_vu_prepare_v16 AS (
 GO
 
 -- decimal point and negative sign count as one digit
-CREATE VIEW str_vu_prepare_v17 AS (
+CREATE VIEW str_vu_prepare_v18 AS (
     SELECT 
         STR(1234567890.5, 9, 1) AS res1,
         STR(1234567890.5, 10, 1) AS res2,
@@ -176,7 +197,7 @@ CREATE VIEW str_vu_prepare_v17 AS (
 GO
 
 -- when there's one extra digit from carried over, go with the length and decimal constraint before rounding
-CREATE VIEW str_vu_prepare_v18 AS (
+CREATE VIEW str_vu_prepare_v19 AS (
     SELECT 
         STR(9999.995, 8, 2) AS res1,
         STR(999.99, 3, 1) AS res2,
@@ -308,7 +329,28 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE str_vu_prepare_p8 AS 
+CREATE PROCEDURE str_vu_prepare_p8 AS
+BEGIN
+    SELECT 
+        STR('NaN', 5, 3) AS res1,
+        STR('nan', 5, 3) AS res2,
+        STR('NAN', 5, 3) AS res3,
+        STR('Infinity', 5, 3) AS res4,
+        STR('Inf', 5, 3) AS res5,
+        STR('INFINITY', 5, 3) AS res6,
+        STR('INF', 5, 3) AS res7,
+        STR('infinity', 5, 3) AS res8,
+        STR('inf', 5, 3) AS res9,
+        STR('-Infinity', 5, 3) AS res10,
+        STR('-Inf', 5, 3) AS res11,
+        STR('-INFINITY', 5, 3) AS res12,
+        STR('-INF', 5, 3) AS res13,
+        STR('-infinity', 5, 3) AS res14,
+        STR('-inf', 5, 3) AS res15;
+END
+GO
+
+CREATE PROCEDURE str_vu_prepare_p9 AS 
 BEGIN
     SELECT 
         STR(1234.56, 8000) AS res1,
@@ -316,7 +358,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE str_vu_prepare_p9 AS 
+CREATE PROCEDURE str_vu_prepare_p10 AS 
 BEGIN
     SELECT 
         STR(12345678901234567890.1234567890123456789, 40, 20);
@@ -324,7 +366,7 @@ END
 GO
 
 -- throws error when length input exceed input of int32
-CREATE PROCEDURE str_vu_prepare_p10 AS 
+CREATE PROCEDURE str_vu_prepare_p11 AS 
 BEGIN
     SELECT 
         STR(1234.56, 2147483648, 20);
@@ -332,7 +374,7 @@ END
 GO
 
 -- throws error when decimal input exceed input of int32
-CREATE PROCEDURE str_vu_prepare_p11 AS 
+CREATE PROCEDURE str_vu_prepare_p12 AS 
 BEGIN
     SELECT 
         STR(1234.56, 40, 2147483648);
@@ -340,7 +382,7 @@ END
 GO
 
 -- won't overfow
-CREATE PROCEDURE str_vu_prepare_p12 AS 
+CREATE PROCEDURE str_vu_prepare_p13 AS 
 BEGIN
     SELECT 
         STR(12345678901234567890.123456789012345678, 2147483647, 2147483647);
@@ -349,7 +391,7 @@ GO
 
 -- integer length of input expression exceeds the specified length, returns ** for the specified length
 -- negative sign is also count as one digit in integer part
-CREATE PROCEDURE str_vu_prepare_p13 AS 
+CREATE PROCEDURE str_vu_prepare_p14 AS 
 BEGIN
     SELECT 
         STR(1234, 3) AS res1,
@@ -359,7 +401,7 @@ END
 GO
 
 -- when input decimal greater than length - integer digits, go with length's constraint
-CREATE PROCEDURE str_vu_prepare_p14 AS 
+CREATE PROCEDURE str_vu_prepare_p15 AS 
 BEGIN
     SELECT 
         STR(1234, 5, 6) AS res1,
@@ -370,7 +412,7 @@ END
 GO
 
 -- actual max precision 17, round to 17th digit and pad rest of significant digits with zeros
-CREATE PROCEDURE str_vu_prepare_p15 AS 
+CREATE PROCEDURE str_vu_prepare_p16 AS 
 BEGIN
     SELECT 
         STR(1234567890123456789012345.67, 26, 1) AS res1,
@@ -379,7 +421,7 @@ END
 GO
 
 -- max scale is 16, add num of preceding spaces when decimal is more than 16
-CREATE PROCEDURE str_vu_prepare_p16 AS 
+CREATE PROCEDURE str_vu_prepare_p17 AS 
 BEGIN
     SELECT 
         STR(1234.1234567890123456789012, 30, 20) AS res1,
@@ -388,7 +430,7 @@ END
 GO
 
 -- decimal point and negative sign count as one digit
-CREATE PROCEDURE str_vu_prepare_p17 AS 
+CREATE PROCEDURE str_vu_prepare_p18 AS 
 BEGIN
     SELECT 
         STR(1234567890.5, 9, 1) AS res1,
@@ -403,7 +445,7 @@ END
 GO
 
 -- when there's one extra digit from carried over, go with the length and decimal constraint before rounding
-CREATE PROCEDURE str_vu_prepare_p18 AS 
+CREATE PROCEDURE str_vu_prepare_p19 AS 
 BEGIN
     SELECT 
         STR(9999.995, 8, 2) AS res1,

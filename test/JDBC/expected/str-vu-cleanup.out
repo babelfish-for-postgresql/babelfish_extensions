@@ -49,6 +49,9 @@ GO
 DROP VIEW str_vu_prepare_v18
 GO
 
+DROP VIEW str_vu_prepare_v19
+GO
+
 DROP PROCEDURE str_vu_prepare_p1;
 GO
 
@@ -101,4 +104,7 @@ DROP PROCEDURE str_vu_prepare_p17;
 GO
 
 DROP PROCEDURE str_vu_prepare_p18;
+GO
+
+DROP PROCEDURE str_vu_prepare_p19;
 GO
