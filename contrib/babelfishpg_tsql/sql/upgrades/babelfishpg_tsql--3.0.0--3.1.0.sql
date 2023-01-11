@@ -480,6 +480,28 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
 
 GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
+CREATE TABLE sys.babelfish_domain_mapping (
+  netbios_domain_name TEXT NOT NULL COLLATE sys.database_default, -- Netbios domain name
+  fq_domain_name TEXT NOT NULL COLLATE sys.database_default, -- DNS domain name
+  PRIMARY KEY (netbios_domain_name)
+);
+-- GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin; -- should be in upgrade script
+GRANT SELECT ON TABLE sys.babelfish_domain_mapping TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_domain_mapping', '');
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_add_domain_mapping_entry(IN TEXT, IN TEXT)
+  AS 'babelfishpg_tsql', 'babelfish_add_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_add_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_remove_domain_mapping_entry(IN TEXT)
+  AS 'babelfishpg_tsql', 'babelfish_remove_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_remove_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_reset_domain_mapping()
+  AS 'babelfishpg_tsql', 'babelfish_reset_domain_mapping_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_reset_domain_mapping TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

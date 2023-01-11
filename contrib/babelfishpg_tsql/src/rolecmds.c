@@ -1984,6 +1984,8 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 		CatalogCloseIndexes(indstate);
 		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
 		heap_freetuple(tuple);
+		pfree(new_record);
+		pfree(new_record_nulls);
 	}
 	PG_CATCH();
 	{
@@ -1992,6 +1994,8 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 		CatalogCloseIndexes(indstate);
 		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
 		heap_freetuple(tuple);
+		pfree(new_record);
+		pfree(new_record_nulls);
 
 		ereport(ERROR,
 				(errcode(edata->sqlerrcode),
