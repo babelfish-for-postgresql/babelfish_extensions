@@ -18,14 +18,19 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.ccache
-          key: ccache
+          key: ccache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ runner.os }}
+          
 
       - name: Restore antlr-runtime
         id: cache-antlr
         uses: actions/cache@v3
         with:
           path: ~/psql/lib/libantlr4-runtime.so.4.9.3
-          key: antlr-runtime
+          key: antlr-runtime-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            antlr-runtime-${{ runner.os }}
       
       - name: Build Modified Postgres
         id: build-modified-postgres
