@@ -16,6 +16,9 @@ PREV_EXTVERSION = 1.0.0
 MODULEPATH = $$libdir/$(EXTENSION)-$(PGTSQL_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
 
+# This extension can't be compiled in parallel
+.NOTPARALLEL:
+
 # $(OBJS) should contain the name of each .o file that
 #         we link into the extension
 OBJS = src/pl_gram.o src/pl_handler.o src/pl_comp.o src/pl_exec.o
