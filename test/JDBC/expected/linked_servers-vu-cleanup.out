@@ -5,6 +5,7 @@ GO
 
 ~~ERROR (Message: server "invalid_server" does not exist)~~
 
+
 -- drop all the linked server logins that have been created
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server2", @locallogin = NULL
 GO
