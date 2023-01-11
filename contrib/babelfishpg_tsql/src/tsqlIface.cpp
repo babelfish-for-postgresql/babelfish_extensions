@@ -1022,7 +1022,7 @@ public:
 
 	}
 
-	void (TSqlParser::Open_queryContext *ctx) override
+	void exitOpen_query(TSqlParser::Open_queryContext *ctx) override
 	{
 		TSqlParser::IdContext *linked_srv = ctx->linked_server;
 

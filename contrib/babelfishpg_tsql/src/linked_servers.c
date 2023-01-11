@@ -660,7 +660,7 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 		/* Reuse already computed Tuple Descriptor if it exists */
 		if (curr_openquery_tupdesc != NULL)
 		{
-			TupleDescCopy(*tupdesc, curr_openquery_tupdesc);
+			*tupdesc = CreateTupleDescCopy(curr_openquery_tupdesc);
 			return;
 		}
 #endif
@@ -709,7 +709,10 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 
 				/* bound variables */
 				int bind_collen, bind_tdsTypeId;
-				char bind_colname[256], bind_typename[256];
+				char bind_colname[256] = {0x00};
+				char bind_typename[256] = {0x00};
+				char *column_dup;
+				int dup_collen;
 
 				for (i = 0; i < MAX_COLS_SELECT; i++)
 					colname[i] = (char *) palloc0(256 * sizeof(char));
@@ -752,6 +755,37 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 					));
 
 					collen[numrows] = bind_collen;
+
+					/*
+					 * If column name is NULL or column name consists only of whitespace characters,
+					 * we internally store it as ?column? (PG interpretation of NULL column name).
+					 *
+					 * This is needed so that later in the query plan, this column is not interpreted
+					 * as a dropped column.
+					 *
+					 * TODO: Solve for cases where column with only whitespace characters is a valid
+					 * column name.
+					 */
+					if ((bind_colname == NULL))
+						strncpy(bind_colname, "?column?", 256);
+					else
+					{
+						/* we create a duplicate just to be safe */
+						column_dup = pstrdup(bind_colname);
+						dup_collen = strlen(column_dup);
+
+						/* remove trailing whitespaces */
+						while(isspace(column_dup[dup_collen - 1]))
+							column_dup[--dup_collen] = 0;
+
+						/* column name only had whitespace characters */
+						if (dup_collen == 0)
+							strncpy(bind_colname, "?column?", 256);
+
+						if (column_dup)
+							pfree(column_dup);
+					}
+
 					strlcpy(colname[numrows], bind_colname, strlen(bind_colname) + 1);
 
 					/* Only keep the data type name */
@@ -769,7 +803,7 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 					*tupdesc = CreateTemplateTupleDesc(numrows);
 
 					for (i = 0; i < numrows; i++)
-						TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : NULL, tdsTypeToOid(tdsTypeId[i]), tdsTypeLen(tdsTypeId[i], collen[i], true), 0);
+						TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeToOid(tdsTypeId[i]), tdsTypeLen(tdsTypeId[i], collen[i], true), 0);
 
 					*tupdesc = BlessTupleDesc(*tupdesc);
 				}
@@ -916,7 +950,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 						tdsTypeOid = att->atttypid;
 					}
 
-					TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname[i] != NULL ? colname[i] : NULL, tdsTypeOid, tdsTypeLen(coltype[i], collen[i], false), 0);
+					TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeOid, tdsTypeLen(coltype[i], collen[i], false), 0);
 				}
 				tupdesc = BlessTupleDesc(tupdesc);
 
