@@ -1,5 +1,7 @@
 -- tsql
 /* test without schema name */
+use master
+go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
@@ -38,7 +40,7 @@ exec sys.sp_volatility 'test_sp_volatility_f1', 'random'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Enter a valid volatility)~~
+~~ERROR (Message: "random" is not a valid volatility)~~
 
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
@@ -87,7 +89,7 @@ exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1', 'rand
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Enter a valid volatility)~~
+~~ERROR (Message: "random" is not a valid volatility)~~
 
 exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
@@ -113,13 +115,13 @@ exec sys.sp_volatility '  test_sp_volatility_f1', 'immutable'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: master_dbo.  test_sp_volatility_f1 function not found)~~
+~~ERROR (Message: function "dbo.  test_sp_volatility_f1" does not exist)~~
 
 exec sys.sp_volatility 'test_sp_volatility_f1', '  immutable'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Enter a valid volatility)~~
+~~ERROR (Message: "  immutable" is not a valid volatility)~~
 
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
@@ -134,19 +136,19 @@ exec sys.sp_volatility 'master.test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Enter a valid Funtion Name)~~
+~~ERROR (Message: function "master.test_sp_volatility_schema1.test_sp_volatility_f1" is not a valid two part name)~~
 
 exec sys.sp_volatility 'random_function'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: master_dbo.random_function function not found)~~
+~~ERROR (Message: function "dbo.random_function" does not exist)~~
 
 exec sys.sp_volatility '','immutable'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Enter a valid Function Name)~~
+~~ERROR (Message: function name cannot be NULL)~~
 
 
 /* testing for injection */
@@ -154,13 +156,13 @@ exec sys.sp_volatility 'ran;dom'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: master_dbo.ran;dom function not found)~~
+~~ERROR (Message: function "dbo.ran;dom" does not exist)~~
 
 exec sys.sp_volatility 'test_sp_volatility_f1', 'immutable; some random text'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Enter a valid volatility)~~
+~~ERROR (Message: "immutable; some random text" is not a valid volatility)~~
 
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
@@ -170,35 +172,51 @@ dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
 
--- tsql user=test_sp_volatility_user password=abc
-/* test for default schema */
+/* testing for case insensitive */
+exec sys.sp_volatility 'TesT_SP_Volatility_f1', 'VolatILe'
+go
+exec sys.sp_volatility 'TesT_Sp_Volatility_F1'
+go
+~~START~~
+text#!#varchar#!#text
+dbo#!#test_sp_volatility_f1#!#volatile
+~~END~~
+
+
+/* testing with dot and spaces in schema name */
+exec sys.sp_volatility '[test_sp_volatility_schema1 with .dot and spaces].test_sp_volatility_f1', 'stable'
+go
+exec sys.sp_volatility '[test_sp_volatility_schema1 with .dot and spaces]."test_sp_volatility_f1"'
+go
+~~START~~
+text#!#varchar#!#text
+test_sp_volatility_schema1 with .dot and spaces#!#test_sp_volatility_f1#!#stable
+~~END~~
+
+
+/* test in a database */
 use test_sp_volatility_db1
 go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
-~~START~~
-text#!#varchar#!#text
-test_sp_volatility_schema2#!#test_sp_volatility_f1#!#volatile
-~~END~~
-
-exec sys.sp_volatility 'test_sp_volatility_f1    '
-go
-~~START~~
-text#!#varchar#!#text
-test_sp_volatility_schema2#!#test_sp_volatility_f1#!#volatile
-~~END~~
-
-exec sys.sp_volatility 'test_sp_volatility_f2'
-go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: test_sp_volatility_db1_test_sp_volatility_schema2.test_sp_volatility_f2 function not found)~~
+~~ERROR (Message: function "dbo.test_sp_volatility_f1" does not exist)~~
 
-exec sys.sp_volatility 'dbo.test_sp_volatility_f2'
+exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-dbo#!#test_sp_volatility_f2#!#volatile
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#volatile
+~~END~~
+
+exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1', 'stable'
+go
+exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1'
+go
+~~START~~
+text#!#varchar#!#text
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
 exec sys.sp_volatility
@@ -206,7 +224,70 @@ go
 ~~START~~
 nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f2#!#volatile
-test_sp_volatility_schema2#!#test_sp_volatility_f1#!#volatile
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
+~~END~~
+
+exec sys.sp_volatility 'test_sp_volatility_f2'
+go
+~~START~~
+text#!#varchar#!#text
+dbo#!#test_sp_volatility_f2#!#volatile
+~~END~~
+
+exec sys.sp_volatility 'test_sp_volatility_f2', 'stable'
+go
+exec sys.sp_volatility 'test_sp_volatility_f2'
+go
+~~START~~
+text#!#varchar#!#text
+dbo#!#test_sp_volatility_f2#!#stable
+~~END~~
+
+
+-- tsql      user=test_sp_volatility_login password='abc'
+/* test for default schema */
+use test_sp_volatility_db1
+go
+select current_user
+go
+~~START~~
+varchar
+test_sp_volatility_user
+~~END~~
+
+exec sys.sp_volatility 'test_sp_volatility_f1'
+go
+~~START~~
+text#!#varchar#!#text
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
+~~END~~
+
+exec sys.sp_volatility 'test_sp_volatility_f1    '
+go
+~~START~~
+text#!#varchar#!#text
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
+~~END~~
+
+exec sys.sp_volatility 'test_sp_volatility_f2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function "test_sp_volatility_schema2.test_sp_volatility_f2" does not exist)~~
+
+exec sys.sp_volatility 'dbo.test_sp_volatility_f2'
+go
+~~START~~
+text#!#varchar#!#text
+dbo#!#test_sp_volatility_f2#!#stable
+~~END~~
+
+exec sys.sp_volatility
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_volatility_f2#!#stable
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
 
@@ -217,7 +298,6 @@ WHERE sys.suser_name(usesysid) = 'test_sp_volatility_user' AND backend_type = 'c
 GO
 ~~START~~
 bool
-t
 ~~END~~
 
 -- Wait to sync with another session

@@ -2104,8 +2104,8 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 	
 	if(function_name == NULL && volatility != NULL)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("Enter a valid Function Name")));
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("function name cannot be NULL")));
 
 	if(function_name != NULL)
 	{	
@@ -2114,13 +2114,13 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		/* get physical schema name */
 		splited_object_name = split_object_name(function_name);
 
-		logical_schema_name = splited_object_name[2];
-		function_name = splited_object_name[3];
-
 		if(strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "") || !strcmp(function_name, ""))
 			ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("Enter a valid Funtion Name")));
+						errmsg("function \"%s\" is not a valid two part name", function_name)));
+		
+		logical_schema_name = splited_object_name[2];
+		function_name = splited_object_name[3];
 
 		if (!strcmp(logical_schema_name, ""))
 		{	
@@ -2135,13 +2135,13 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 
 		/* get function id from function name*/
 		candidates = FuncnameGetCandidates(list_make2(makeString(physical_schema_name),makeString(function_name)), -1, NIL, false, false, false, true);
-		full_function_name = psprintf("%s.%s", physical_schema_name, function_name);
+		full_function_name = psprintf("\"%s\".\"%s\"", physical_schema_name, function_name);
 
 		/* if no function is found */
 		if(candidates == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("%s function not found", full_function_name)));
+					errmsg("function \"%s\" does not exist", psprintf("%s.%s", logical_schema_name, function_name))));
 	}
 	if(volatility == NULL)
 	{	
@@ -2220,13 +2220,13 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		PG_END_TRY();	
 	}
 	else
-	{
+	{	
 		volatility = lowerstr(volatility);
 		
 		if(strcmp(volatility,"volatile") && strcmp(volatility,"stable") && strcmp(volatility,"immutable"))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("Enter a valid volatility")));
+					errmsg("\"%s\" is not a valid volatility", volatility)));
 
 		query = psprintf("ALTER FUNCTION %s %s;", full_function_name, volatility);
 
