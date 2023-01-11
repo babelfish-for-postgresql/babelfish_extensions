@@ -989,6 +989,27 @@ LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
+CREATE TABLE sys.babelfish_domain_mapping (
+  netbios_domain_name TEXT NOT NULL COLLATE sys.database_default, -- Netbios domain name
+  fq_domain_name TEXT NOT NULL COLLATE sys.database_default, -- DNS domain name
+  PRIMARY KEY (netbios_domain_name)
+);
+-- GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin; -- should be in upgrade script
+GRANT SELECT ON TABLE sys.babelfish_domain_mapping TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_domain_mapping', '');
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_add_domain_mapping_entry(IN TEXT, IN TEXT)
+  AS 'babelfishpg_tsql', 'babelfish_add_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_add_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_remove_domain_mapping_entry(IN TEXT)
+  AS 'babelfishpg_tsql', 'babelfish_remove_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_remove_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_reset_domain_mapping()
+  AS 'babelfishpg_tsql', 'babelfish_reset_domain_mapping_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_reset_domain_mapping TO PUBLIC;
 
 CREATE TABLE sys.babelfish_domain_mapping (
   netbios_domain_name sys.VARCHAR(15) NOT NULL, -- Netbios domain name
