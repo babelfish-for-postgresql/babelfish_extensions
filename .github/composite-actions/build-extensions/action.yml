@@ -29,7 +29,12 @@ runs:
         export CC='ccache gcc'
         export CMAKE_C_COMPILER_LAUNCHER=ccache
         export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
-        cd contrib
-        make -j4
-        make install
+        cd contrib/babelfishpg_money
+        make -j 4 && make install
+        cd ../babelfishpg_common
+        make -j 4 && make install
+        cd ../babelfishpg_tds
+        make -j 4 && make install
+        cd ../babelfishpg_tsql
+        make && make install
       shell: bash
