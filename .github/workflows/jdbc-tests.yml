@@ -13,24 +13,6 @@ jobs:
         if: always()
         uses: ./.github/composite-actions/install-dependencies
 
-      - name: Restore ccache
-        id: cache-compiler
-        uses: actions/cache@v3
-        with:
-          path: ~/.ccache
-          key: ccache-${{ runner.os }}-${{ github.run_id }}
-          restore-keys: |
-            ccache-${{ runner.os }}
-          
-
-      - name: Restore antlr-runtime
-        id: cache-antlr
-        uses: actions/cache@v3
-        with:
-          path: ~/psql/lib/libantlr4-runtime.so.4.9.3
-          key: antlr-runtime-${{ runner.os }}-${{ github.run_id }}
-          restore-keys: |
-            antlr-runtime-${{ runner.os }}
       
       - name: Build Modified Postgres
         id: build-modified-postgres
@@ -39,12 +21,12 @@ jobs:
         
       - name: Compile ANTLR
         id: compile-antlr
-        if: steps.cache-antlr.outputs.cache-hit != 'true'
+        if: always() && steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
       
       - name: Build Extensions
         id: build-extensions
-        if: always() && steps.build-modified-postgres.outcome == 'success'
+        if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build tds_fdw Extension
