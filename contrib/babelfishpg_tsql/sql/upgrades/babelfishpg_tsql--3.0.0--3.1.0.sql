@@ -521,21 +521,6 @@ LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
-                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
-                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
-                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
-                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
-AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
-LANGUAGE C;
-
-GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedsrvlogin(IN sys.sysname,
-                                                    IN sys.varchar(8),
-                                                    IN sys.sysname,
-                                                    IN sys.sysname,
-                                                    IN sys.sysname)
-TO PUBLIC;
-
 CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
                                                         IN "@locallogin" sys.sysname)
 AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
@@ -551,32 +536,6 @@ AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
 LANGUAGE C;
 
 ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
-
-CREATE OR REPLACE PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
-                                                    IN "@droplogins" char(10) DEFAULT NULL)
-AS 'babelfishpg_tsql', 'sp_dropserver_internal'
-LANGUAGE C;
-
-GRANT EXECUTE ON PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
-                                                    IN "@droplogins" char(10))
-TO PUBLIC;
-
-CREATE OR REPLACE VIEW sys.linked_logins
-AS
-SELECT
-  CAST(u.srvid as int) AS server_id,
-  CAST(0 as int) AS local_principal_id,
-  CAST(0 as sys.bit) AS uses_self_credential,
-  CAST(split_part(u.umoptions[1], 'username=', 2) as sys.sysname) AS remote_name,
-  CAST(NULL as sys.datetime) AS modify_date
-FROM pg_user_mappings AS U
-LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
-LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
-WHERE w.fdwname = 'tds_fdw';
-GRANT SELECT ON sys.linked_logins TO PUBLIC;
-CREATE OR REPLACE FUNCTION sys.radians(IN arg1 INT)
-RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION sys.radians(INT) TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
