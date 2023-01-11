@@ -404,117 +404,6 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
--- Add one column to store definition of the function in the table.
-ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT;
-GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
-
-CREATE OR REPLACE VIEW information_schema_tsql.routines AS
-SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
-        CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
-        CAST(p.proname AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
-        CAST(nc.dbname AS sys.nvarchar(128)) AS "ROUTINE_CATALOG",
-        CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
-        CAST(p.proname AS sys.nvarchar(128)) AS "ROUTINE_NAME",
-        CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
-          AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
-        CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "MODULE_SCHEMA",
-        CAST(NULL AS sys.nvarchar(128)) AS "MODULE_NAME",
-        CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
-        CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
-	      CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
-        CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
-          AS int)
-          AS "CHARACTER_MAXIMUM_LENGTH",
-        CAST(information_schema_tsql._pgtsql_char_octet_length_for_routines(tsql_type_name, true_typmod)
-          AS int)
-          AS "CHARACTER_OCTET_LENGTH",
-        CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_SCHEMA",
-        CAST( CASE co.collname
-          WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
-          ELSE co.collname END
-          AS sys.nvarchar(128)) AS "COLLATION_NAME",
-        CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
-	      /*
-         * TODO: We need to first create mapping of collation name to char-set name;
-         * Until then return null.
-         */
-	      CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
-	      CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
-          AS smallint)
-          AS "NUMERIC_PRECISION",
-	      CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, true_typmod)
-          AS smallint)
-          AS "NUMERIC_PRECISION_RADIX",
-        CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
-          AS smallint)
-          AS "NUMERIC_SCALE",
-        CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
-          AS smallint)
-          AS "DATETIME_PRECISION",
-	      CAST(NULL AS sys.nvarchar(30)) AS "INTERVAL_TYPE",
-        CAST(NULL AS smallint) AS "INTERVAL_PRECISION",
-        CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_SCHEMA",
-        CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_NAME",
-        CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_SCHEMA",
-        CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_NAME",
-        CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
-        CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
-        CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
-        CAST(f.definition AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
-        CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
-        CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
-        CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
-        CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS sys.nvarchar(10)) AS "IS_DETERMINISTIC",
-	      CAST(CASE p.prokind WHEN 'p' THEN 'MODIFIES' ELSE 'READS' END AS sys.nvarchar(30)) AS "SQL_DATA_ACCESS",
-        CAST(CASE WHEN p.prokind <> 'p' THEN
-          CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
-        CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
-        CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
-        CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
-        CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
-        CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
-        CAST(NULL AS sys.datetime) AS "CREATED",
-        CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
-
-        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
-          pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
-	      inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT)
-		    left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
-			  and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C",
-          pg_language l,
-          pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
-          sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
-          sys.tsql_get_returnTypmodValue(p.oid) AS true_typmod,
-	        sys.is_table_type(t.typrelid) as is_tbl_type
-
-        WHERE
-          (case p.prokind
-	        when 'p' then true
-	        when 'a' then false
-            else
-    	        (case format_type(p.prorettype, null)
-	   	        when 'trigger' then false
-	   	        else true
-   		        end)
-          end)
-          AND (NOT pg_is_other_temp_schema(nc.oid))
-          AND has_function_privilege(p.oid, 'EXECUTE')
-          AND (pg_has_role(t.typowner, 'USAGE')
-          OR has_type_privilege(t.oid, 'USAGE'))
-          AND ext.dbid = cast(sys.db_id() as oid)
-	        AND p.prolang = l.oid
-          AND p.prorettype = t.oid
-          AND p.pronamespace = nc.oid
-	        AND CAST(ao.is_ms_shipped as INT) = 0;
-
-GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
-
 create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
@@ -605,6 +494,122 @@ and
     tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
+
+-- Add one column to store definition of the function in the table.
+ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT DEFAULT NULL;
+
+GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+
+CREATE OR REPLACE VIEW information_schema_tsql.routines AS
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
+           CAST(p.proname AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
+           CAST(nc.dbname AS sys.nvarchar(128)) AS "ROUTINE_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
+           CAST(p.proname AS sys.nvarchar(128)) AS "ROUTINE_NAME",
+           CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
+           	 AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_SCHEMA",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_NAME",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
+	   CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
+           CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
+                 AS int)
+           AS "CHARACTER_MAXIMUM_LENGTH",
+           CAST(information_schema_tsql._pgtsql_char_octet_length_for_routines(tsql_type_name, true_typmod)
+                 AS int)
+           AS "CHARACTER_OCTET_LENGTH",
+           CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+           CAST(
+                 CASE co.collname
+                       WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
+                       ELSE co.collname
+                 END
+            AS sys.nvarchar(128)) AS "COLLATION_NAME",
+            CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+	    /*
+                 * TODO: We need to first create mapping of collation name to char-set name;
+                 * Until then return null.
+            */
+	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+	    CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_PRECISION",
+	    CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_PRECISION_RADIX",
+            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_SCALE",
+            CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+                        AS smallint)
+            AS "DATETIME_PRECISION",
+	    CAST(NULL AS sys.nvarchar(30)) AS "INTERVAL_TYPE",
+            CAST(NULL AS smallint) AS "INTERVAL_PRECISION",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_SCHEMA",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_NAME",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_SCHEMA",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_NAME",
+            CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
+            CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
+            CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
+            CAST(f.definition AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
+            CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
+            CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
+            CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
+            CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS sys.nvarchar(10)) AS "IS_DETERMINISTIC",
+	    CAST(CASE p.prokind WHEN 'p' THEN 'MODIFIES' ELSE 'READS' END AS sys.nvarchar(30)) AS "SQL_DATA_ACCESS",
+            CAST(CASE WHEN p.prokind <> 'p' THEN
+              CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
+            CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
+            CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
+            CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
+            CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
+            CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
+            CAST(NULL AS sys.datetime) AS "CREATED",
+            CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
+
+       FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT)
+		left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+			and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C",
+            pg_language l,
+            pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
+            sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
+            sys.tsql_get_returnTypmodValue(p.oid) AS true_typmod,
+	    sys.is_table_type(t.typrelid) as is_tbl_type
+
+       WHERE
+            (case p.prokind 
+	       when 'p' then true 
+	       when 'a' then false
+               else 
+    	           (case format_type(p.prorettype, null) 
+	   	      when 'trigger' then false 
+	   	      else true 
+   		    end) 
+            end)  
+            AND (NOT pg_is_other_temp_schema(nc.oid))
+            AND has_function_privilege(p.oid, 'EXECUTE')
+            AND (pg_has_role(t.typowner, 'USAGE')
+            OR has_type_privilege(t.oid, 'USAGE'))
+            AND ext.dbid = cast(sys.db_id() as oid)
+	    AND p.prolang = l.oid
+            AND p.prorettype = t.oid
+            AND p.pronamespace = nc.oid
+	    AND CAST(ao.is_ms_shipped as INT) = 0;
+
+GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
