@@ -1,3 +1,18 @@
+-- Try to drop a linked server login that does not exist (should throw error)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "invalid_server", @locallogin = NULL
+GO
+
+-- drop all the linked server logins that have been created
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server2", @locallogin = NULL
+GO
+
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server3", @locallogin = NULL
+GO
+
+-- Call sp_droplinkedsrvlogin from master.dbo schema
+EXEC master.dbo.sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = NULL
+GO
+
 DROP LOGIN linked_server_login_861
 GO
 

@@ -59,7 +59,6 @@ PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
-PG_FUNCTION_INFO_V1(sp_dropserver_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -2345,38 +2344,6 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	
 	if(servername)
 		pfree(servername);
-
-	return (Datum) 0;
-}
-
-Datum
-sp_dropserver_internal(PG_FUNCTION_ARGS)
-{
-	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *droplogins = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(1));
-
-	DropStmt *stmt = makeNode(DropStmt);
-
-	List *objects = list_make1(makeString(linked_srv));
-	stmt->objects = objects;
-
-	stmt->removeType = OBJECT_FOREIGN_SERVER;
-	stmt->missing_ok = false;
-	stmt->concurrent = false;
-
-	if (droplogins == NULL)
-	{
-		stmt->behavior = DROP_RESTRICT;
-	}
-	else
-	{
-		if (strncmp(droplogins, "droplogins", 10) == 0)
-			stmt->behavior = DROP_CASCADE;
-		else
-			elog(ERROR, "invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.");
-	}
-
-	RemoveObjects(stmt);
 
 	return (Datum) 0;
 }
