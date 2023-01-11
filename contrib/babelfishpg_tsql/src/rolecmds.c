@@ -1708,8 +1708,6 @@ is_active_login(Oid role_oid)
 	return true;
 }
 
-<<<<<<< HEAD
-=======
 /*
  * To check if given login is already a user in one of the databases
  */
@@ -1756,7 +1754,6 @@ has_user_in_db(const char *login, char **db_name)
 	return false;
 }
 
->>>>>>> ad-jira-babel-3854
 /* 
  * convertToUPN - This function is called to convert 
  * domain\user to user@DOMAIN.
@@ -1764,39 +1761,30 @@ has_user_in_db(const char *login, char **db_name)
 char *
 convertToUPN(char* input)
 {
-<<<<<<< HEAD
-=======
-	char *output = "";
->>>>>>> ad-jira-babel-3854
 	char *pos_slash = NULL;
 
 	if ((pos_slash = strchr(input, '\\')) != NULL)
 	{
-<<<<<<< HEAD
-		char *output = "";
-		/* 
-		 * collation aware lower casing and upper casing should be done. 
-		 * But which collation should be used?
+		/*
+		 * This means that provided login name is in windows format 
+		 * so let's update role_name with UPN format.
 		 */
-		output = psprintf("%s@%s", 
-				 str_tolower(pos_slash + 1, strlen(pos_slash + 1), C_COLLATION_OID),
-				 str_toupper(input, (pos_slash - input), C_COLLATION_OID));
-		return output;
+		return psprintf("%s@%s", 
+						str_tolower(pos_slash + 1, strlen(pos_slash + 1), C_COLLATION_OID),
+						str_toupper(input, (pos_slash - input), C_COLLATION_OID));
 	}
 	else
-		return input;
-=======
-		output = psprintf("%s@%s", 
-				 str_tolower(pos_slash + 1, strlen(pos_slash + 1), C_COLLATION_OID),
-				 str_toupper(input, (pos_slash - input), C_COLLATION_OID));
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
+						input)));
 	}
-	return output;
->>>>>>> ad-jira-babel-3854
 }
 
 /*
  * get_roleform_ext - Useful when someone tries to drop login and that login is in
- * the form of windows format i.e, domain\user
+ * the form of windows format i.e, domain\login
  */
 HeapTuple 
 get_roleform_ext(char *login)
@@ -1808,6 +1796,10 @@ get_roleform_ext(char *login)
 	char		*upn_login;
 	TupleDesc	dsc;
 
+	/* 
+	 * If login being dropped is not valid windows format
+	 * then return the invalid tuple from here only.
+	 */
 	if (!strchr(login, '\\'))
 		return NULL;
 
@@ -1853,11 +1845,18 @@ get_roleform_ext(char *login)
 	table_close(bbf_authid_login_ext_rel, AccessShareLock);
 
 	if (!HeapTupleIsValid(tuple))
+	{
+		if (upn_login != login)
+			pfree(upn_login);
 		return tuple;
+	}
 
-	/* It is proven that this rolename is indeed windows login */
+	/* It is proven that this rolename is indeed windows login. */
 	tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(upn_login));
 
-	/* Return tuple even if it is invalid tuple */
+	if (upn_login != login)
+			pfree(upn_login);
+
+	/* Return tuple even if it is invalid tuple. */
 	return tuple;
 }

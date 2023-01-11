@@ -2912,7 +2912,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						roleform = (Form_pg_authid) GETSTRUCT(tuple);
 					else
 					{
-						/* Supplied login name might be in windows format i.e, domain\user form */
+						/* Supplied login name might be in windows format i.e, domain\login form */
 						tuple = get_roleform_ext(role_name);
 						if (HeapTupleIsValid(tuple))
 						{
