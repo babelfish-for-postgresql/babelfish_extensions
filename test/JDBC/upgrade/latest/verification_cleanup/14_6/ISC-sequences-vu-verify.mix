@@ -1,0 +1,47 @@
+-- tsql
+
+use isc_sequences_dbone;
+go
+
+select * from information_schema.SEQUENCES order by sequence_schema,sequence_name;
+go
+
+use master;
+go
+
+select * from information_schema.SEQUENCES where sequence_schema='isc_sequences_dbone_sc1' order by sequence_name;
+go
+
+use isc_sequences_dbone;
+go
+
+--privilege testing
+create login isc_sequences_log1 with password='123456789';
+go
+
+create user isc_sequences_usr1 for login isc_sequences_log1;
+go
+
+-- tsql user=isc_sequences_log1 password=123456789
+
+use isc_sequences_dbone;
+go
+
+select * from information_schema.SEQUENCES order by sequence_name;
+go
+
+-- tsql
+
+use isc_sequences_dbone;
+go
+
+grant select on isc_sequences_sc1.isc_sequences_seq1 to isc_sequences_usr1;
+go
+
+-- tsql user=isc_sequences_log1 password=123456789
+
+use isc_sequences_dbone; 
+go
+
+select * from information_schema.SEQUENCES order by sequence_name;
+go
