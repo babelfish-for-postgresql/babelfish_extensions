@@ -12,12 +12,12 @@ jobs:
         id: install-dependencies
         if: always()
         uses: ./.github/composite-actions/install-dependencies
-     
+
       - name: Build Modified Postgres
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
-        
+      
       - name: Compile ANTLR
         id: compile-antlr
         if: always() && steps.build-modified-postgres.outcome == 'success'
