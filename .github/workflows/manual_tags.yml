@@ -1,0 +1,40 @@
+name: Manual workflow for tags
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch:
+    # Inputs the workflow accepts.
+    inputs:
+      # tag id that is to be created
+      tagId:
+        required: true
+      # message for the tag
+      message:
+        required: false
+      # commit hash on top of which the tag will be created
+      commit_hash:
+        required: false
+
+jobs:
+  create_tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Run create-tag script
+        env:
+          message: ${{ github.event.inputs.message }}
+        # Run when commit hash is not provided (then the tag will be created on the latest commit of the current branch)
+        if: ${{github.event.inputs.commit_hash == ''}} 
+        run: |
+            bash ./.github/scripts/create-tag.sh -t ${{github.event.inputs.tagId}}
+      - name: Run create-tag script when commit hash is provided
+        env:
+          message: ${{ github.event.inputs.message }}
+        # Run when commit hash is provided, tag will be created on top of the commit hash
+        if: ${{github.event.inputs.commit_hash != ''}} 
+        run: |
+            bash ./.github/scripts/create-tag.sh -c ${{github.event.inputs.commit_hash}} -t ${{github.event.inputs.tagId}}

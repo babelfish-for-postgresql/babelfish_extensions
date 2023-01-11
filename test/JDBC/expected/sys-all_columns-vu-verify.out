@@ -34,3 +34,17 @@ intcol#!#1#!#4#!#10#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
 moneycol#!#5#!#8#!#19#!#4#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#NOT_APPLICABLE
 ~~END~~
 
+
+SELECT name, is_identity, is_computed
+FROM sys.all_columns
+WHERE name in ('col_computed', 'col_one', 'col_two', 'col_three')
+ORDER BY name
+GO
+~~START~~
+varchar#!#bit#!#bit
+col_computed#!#0#!#1
+col_one#!#0#!#0
+col_three#!#1#!#0
+col_two#!#0#!#0
+~~END~~
+

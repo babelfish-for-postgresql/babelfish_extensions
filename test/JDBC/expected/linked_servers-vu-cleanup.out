@@ -18,8 +18,16 @@ GO
 ~~ERROR (Message: server "mssql_server_that_does_not_exist" does not exist)~~
 
 
--- Dropping a server with droplogins should drop the linked logins as well. Also call sp_dropserver from master.dbo schema
-EXEC master.dbo.sp_dropserver @server = 'mssql_server', @droplogins = 'droplogins'
+-- Trying to drop a server with @droplogins = invalid value (Should throw error)
+EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'definitely_invalid'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.)~~
+
+
+-- Dropping a server without droplogins should also drop the server and the linked login
+EXEC sp_dropserver @server = 'mssql_server', @droplogins = NULL
 GO
 
 SELECT * FROM sys.servers WHERE name = 'mssql_server'
@@ -29,10 +37,28 @@ int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#i
 ~~END~~
 
 
-SELECT * FROM sys.linked_logins
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name = 'mssql_server'
 GO
 ~~START~~
-int#!#int#!#bit#!#varchar#!#datetime
+varchar#!#varchar
+~~END~~
+
+
+-- Dropping a server with droplogins should drop the linked logins as well. Also call sp_dropserver from master.dbo schema
+EXEC master.dbo.sp_dropserver @server = 'mssql_server2', @droplogins = 'droplogins'
+GO
+
+SELECT * FROM sys.servers WHERE name = 'mssql_server'
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#int#!#int#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#datetime#!#bit
+~~END~~
+
+
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name = 'mssql_server2'
+GO
+~~START~~
+varchar#!#varchar
 ~~END~~
 
 

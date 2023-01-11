@@ -1,0 +1,88 @@
+-- tsql
+create database jira_babel_3504_dbone;
+go
+
+Use jira_babel_3504_dbone;
+go
+
+create schema jira_babel_3504_sch1;
+go
+
+create schema jira_babel_3504_sch2;
+go
+
+create sequence jira_babel_3504_sch1.jira_babel_3504_seq1 start with 1 minvalue 1 maxvalue 5 cycle;
+go
+
+create sequence jira_babel_3504_sch1.jira_babel_3504_seq2 as tinyint start with 2 minvalue 1 maxvalue 5 cycle;
+go
+
+create sequence jira_babel_3504_sch1.jira_babel_3504_seq3 as smallint start with 3 increment by 3 minvalue 3 maxvalue 10;
+go
+
+create sequence jira_babel_3504_sch1.jira_babel_3504_seq4 as int start with 4 increment by 2 minvalue 2 maxvalue 10;
+go
+
+create sequence jira_babel_3504_sch1.jira_babel_3504_seq5 as bigint start with 1 minvalue 1 maxvalue 5 cycle;
+go
+
+create sequence jira_babel_3504_sch1.jira_babel_3504_seq6 as decimal start with 2 increment by 2 minvalue 2 maxvalue 10;
+go
+
+create sequence jira_babel_3504_sch1.jira_babel_3504_seq7 as numeric start with 3 increment by 3 minvalue 3 maxvalue 12 cycle;
+go
+
+--sequence of datatype varchar can't be created
+create sequence jira_babel_3504_sch1.jira_babel_3504_seq8 as varchar(10) start with 3 increment by 3 minvalue 3 maxvalue 12 cycle;
+go
+~~ERROR (Code: 11702)~~
+
+~~ERROR (Message: sequence type must be smallint, integer, or bigint)~~
+
+
+create type jira_babel_3504_sch2.jira_babel_3504_tinyint from tinyint;
+go
+
+create type jira_babel_3504_sch2.jira_babel_3504_smallint from smallint;
+go
+
+create type jira_babel_3504_sch2.jira_babel_3504_int from int;
+go
+
+create type jira_babel_3504_sch2.jira_babel_3504_bigint from bigint;
+go
+
+create type jira_babel_3504_sch2.jira_babel_3504_decimal from decimal(10,0);
+go
+
+create type jira_babel_3504_sch2.jira_babel_3504_numeric from numeric(10,0);
+go
+
+create type jira_babel_3504_varchar from varchar(10);
+go
+
+create sequence jira_babel_3504_sch2.jira_babel_3504_udtseq1 as jira_babel_3504_sch2.jira_babel_3504_tinyint start with 2 minvalue 1 maxvalue 5 cycle;
+go
+
+create sequence jira_babel_3504_sch2.jira_babel_3504_udtseq2 as jira_babel_3504_sch2.jira_babel_3504_smallint start with 3 increment by 3 minvalue 3 maxvalue 10;
+go
+
+create sequence jira_babel_3504_sch2.jira_babel_3504_udtseq3 as jira_babel_3504_sch2.jira_babel_3504_int start with 4 increment by 2 minvalue 2 maxvalue 10;
+go
+
+create sequence jira_babel_3504_sch2.jira_babel_3504_udtseq4 as jira_babel_3504_sch2.jira_babel_3504_bigint start with 1 minvalue 1 maxvalue 5 cycle;
+go
+
+create sequence jira_babel_3504_sch2.jira_babel_3504_udtseq5 as jira_babel_3504_sch2.jira_babel_3504_decimal start with 2 increment by 2 minvalue 2 maxvalue 10;
+go
+
+create sequence jira_babel_3504_sch2.jira_babel_3504_udtseq6 as jira_babel_3504_sch2.jira_babel_3504_numeric start with 3 increment by 3 minvalue 3 maxvalue 12 cycle;
+go
+
+--sequence of UDT with basetype varchar can't be created
+create sequence jira_babel_3504_sch2.jira_babel_3504_udtseq7 as jira_babel_3504_varchar start with 3 increment by 3 minvalue 3 maxvalue 12 cycle;
+go
+~~ERROR (Code: 11702)~~
+
+~~ERROR (Message: sequence type must be smallint, integer, or bigint)~~
+

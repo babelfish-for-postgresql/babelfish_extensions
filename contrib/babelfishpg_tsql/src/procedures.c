@@ -942,7 +942,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = insert_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
 				break;
@@ -953,7 +953,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = update_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = list_copy(update_stmt->targetList);
 
@@ -989,7 +989,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = delete_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = NIL;
 
@@ -2238,10 +2238,10 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 Datum
 sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
-	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
-	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(4));
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
+	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
 
 	StringInfoData query;
 
@@ -2272,8 +2272,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * Add the relevant options
 	 *
 	 * The username and password options are required for user mapping
-	 * creation, but we leave it to the FDW's validator function to
-	 * check for that
+	 * creation, (according to tds_fdw documentation) but we leave it
+	 * to the FDW's validator function to check for that
 	 */
 	if (username || password)
 	{
@@ -2315,8 +2315,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 Datum
 sp_dropserver_internal(PG_FUNCTION_ARGS)
 {
-	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
+	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
 
 	StringInfoData query;
 
@@ -2331,29 +2331,26 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	 * We prepare the following query to create a user mapping. This will
 	 * be executed using ProcessUtility():
 	 *
-	 * DROP SERVER <servername> [ CASCADE ]
+	 * DROP SERVER <servername> CASCADE
 	 *
+	 * linked logins along with server are dropped if @droplogins = 'NULL'
+	 * or @droplogins = 'droplogins' so we add CASCADE.
 	 */
-	appendStringInfo(&query, "DROP SERVER \"%s\" ", linked_srv);
-
-	if (droplogins != NULL)
+	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
 	{
-		/* droplogins indicates that we also drop any logins linkked to the server, so we add CASCADE parameter */
-		if ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0))
-			appendStringInfoString(&query, "CASCADE");
-		else
-			elog(ERROR, "invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.");
-	}
+		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
 
-	exec_utility_cmd_helper(query.data);
+		exec_utility_cmd_helper(query.data);
+		pfree(query.data);
+	}
+	else
+		elog(ERROR, "invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.");
 
 	if (linked_srv)
 		pfree(linked_srv);
 
 	if (droplogins)
 		pfree(droplogins);
-
-	pfree(query.data);
 
 	return (Datum) 0;
 }
