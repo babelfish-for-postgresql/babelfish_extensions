@@ -13,6 +13,7 @@ runs:
     - name: Compile ANTLR
       run: |
         ANTLR_VERSION=4.9.3
+        
         cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
         sudo cp "antlr-$ANTLR_VERSION-complete.jar" /usr/local/lib
         cd ..

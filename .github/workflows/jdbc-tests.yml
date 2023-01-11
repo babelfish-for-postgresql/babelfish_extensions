@@ -12,8 +12,7 @@ jobs:
         id: install-dependencies
         if: always()
         uses: ./.github/composite-actions/install-dependencies
-
-      
+     
       - name: Build Modified Postgres
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
@@ -39,10 +38,6 @@ jobs:
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
-      - name: ccache statistics
-        run: |
-          ccache -s
-          
       - name: Run JDBC Tests
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'

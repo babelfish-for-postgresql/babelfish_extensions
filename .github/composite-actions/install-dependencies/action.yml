@@ -22,11 +22,9 @@ runs:
         sudo /usr/sbin/update-ccache-symlinks
         echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
         source ~/.bashrc && echo $PATH
-      shell: bash
-    - name: Get current timestamp
-      run: |
         echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       shell: bash
+
     - name: Restore ccache
       id: cache-compiler
       uses: actions/cache@v3
