@@ -5,6 +5,7 @@ GO
 name#!#"sys"."varchar"#!#bpchar#!#"sys"."varchar"#!#"sys"."varchar"
 jdbc_user#!#jdbc_user#!#S#!#master#!#English
 sysadmin#!#sysadmin#!#R#!#master#!#English
+passworduser#!#PassWordUser#!#S#!#master#!#English
 aduser@AD#!#ad\Aduser#!#U#!#master#!#English
 aduserdb@AD#!#ad\Aduserdb#!#U#!#ad_db#!#English
 aduserdblanguageenglish@AD#!#ad\AduserdblanguageEnglish#!#U#!#ad_db#!#English

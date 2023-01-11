@@ -1,0 +1,3 @@
+-- psql
+select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext;
+GO

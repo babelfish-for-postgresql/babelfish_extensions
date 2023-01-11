@@ -22,6 +22,10 @@ GO
 
 CREATE LOGIN r4 FROM WINDOWS;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'r4' is not a valid Windows NT name. Give the complete name: <domain\username>.)~~
+
 
 CREATE LOGIN r5 WITH PASSWORD = 'xyz', SID = 0x123ABC;
 GO
@@ -58,7 +62,7 @@ DEFAULT_LANGUAGE = English;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The database 'db2' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+~~ERROR (Message: 'r8' is not a valid Windows NT name. Give the complete name: <domain\username>.)~~
 
 
 CREATE LOGIN r9 FROM ASYMMETRIC KEY asymkey1;
@@ -237,7 +241,7 @@ CREATE LOGIN r4 FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The Server principal 'r4' already exists)~~
+~~ERROR (Message: 'r4' is not a valid Windows NT name. Give the complete name: <domain\username>.)~~
 
 
 CREATE LOGIN r5 WITH PASSWORD = 'xyz', SID = 0x123ABC;
@@ -279,7 +283,7 @@ DEFAULT_LANGUAGE = English;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The database 'db2' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+~~ERROR (Message: 'r8' is not a valid Windows NT name. Give the complete name: <domain\username>.)~~
 
 
 CREATE LOGIN r9 FROM ASYMMETRIC KEY asymkey1;
@@ -414,6 +418,10 @@ DROP LOGIN r3;
 GO
 DROP LOGIN r4;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'r4', because it does not exist or you do not have permission.)~~
+
 DROP LOGIN r5;
 GO
 DROP LOGIN r6;

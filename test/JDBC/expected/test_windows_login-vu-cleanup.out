@@ -1,3 +1,6 @@
+DROP LOGIN PassWordUser;
+GO
+
 DROP LOGIN [ad\Aduser];
 GO
 

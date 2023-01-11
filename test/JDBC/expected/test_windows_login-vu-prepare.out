@@ -1,6 +1,9 @@
 CREATE DATABASE ad_db;
 GO
 
+CREATE LOGIN PassWordUser with PASSWORD='123';
+GO
+
 CREATE LOGIN [ad\Aduser] from windows;
 GO
 
