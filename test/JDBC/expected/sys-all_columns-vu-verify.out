@@ -42,7 +42,7 @@ ORDER BY name
 GO
 ~~START~~
 varchar#!#bit#!#bit
-col_computed#!#0#!#0
+col_computed#!#0#!#1
 col_one#!#0#!#0
 col_three#!#1#!#0
 col_two#!#0#!#0
