@@ -1,16 +1,16 @@
 /* Tsql system catalog views */
 
--- The sys.table_types_internal view mimics the logic used in sys.is_table_type function
+/*
+ * Note: this view, although written efficiently might cause perfomance degradation when
+ * joined with other system objects. One should try to use them as part of a materialized CTE.
+ */
 create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
-    INNER JOIN pg_catalog.pg_depend dep
-    ON pt.typrelid = dep.objid
+    INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
+    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
     INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE 
-    pt.typnamespace in (select schema_id from sys.schemas) 
-    and (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r')
-;
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
 
 create or replace view sys.tables as
 select
@@ -1040,10 +1040,14 @@ left join pg_catalog.pg_locks         blocking_locks
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
-with type_code_list as
+with RECURSIVE type_code_list as
 (
     select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
     from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
+(
+  Select * from sys.table_types_internal
 )
 -- For System types
 select 
@@ -1102,7 +1106,7 @@ from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
 left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-left join sys.table_types_internal tt on t.typrelid = tt.typrelid
+left join tt_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 , cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
 -- we want to show details of user defined datatypes created under babelfish database
