@@ -12,3 +12,10 @@ GO
 
 CREATE LOGIN [ad\Aduserdblanguage] from windows with default_database=[ad_db], default_language=[German];
 GO
+
+CREATE LOGIN [ad\AduserdblanguageEnglish] from windows with default_database=[ad_db], default_language=[English];
+GO
+
+CREATE LOGIN [ad\Aduseroption] from windows with CHECK_POLICY = OFF, CHECK_EXPIRATION = OFF;
+GO
+

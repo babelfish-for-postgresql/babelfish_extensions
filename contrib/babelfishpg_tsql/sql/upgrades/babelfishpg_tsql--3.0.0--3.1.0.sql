@@ -38,8 +38,7 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
-ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN IF NOT EXISTS orig_loginname SYS.NVARCHAR(128);
-GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
+ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN IF NOT EXISTS orig_loginname SYS.NVARCHAR(128) DEFAULT NULL;
 
 create or replace view sys.views as 
 select 

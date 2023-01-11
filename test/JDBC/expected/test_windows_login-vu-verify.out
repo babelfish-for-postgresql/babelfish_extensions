@@ -1,0 +1,12 @@
+-- psql
+select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext;
+GO
+~~START~~
+name#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+jdbc_user#!#jdbc_user#!#master#!#English
+sysadmin#!#sysadmin#!#master#!#English
+aduser@AD#!#ad\Aduser#!#master#!#English
+aduserdb@AD#!#ad\Aduserdb#!#ad_db#!#English
+aduserdblanguageenglish@AD#!#ad\AduserdblanguageEnglish#!#ad_db#!#English
+~~END~~
+
