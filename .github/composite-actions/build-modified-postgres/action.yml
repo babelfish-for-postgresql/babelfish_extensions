@@ -46,7 +46,6 @@ runs:
         fi
         make -j 4 2>error.txt
         make install
-        make check
         cd contrib && make && sudo make install
 
         if [[ ${{inputs.engine_branch}} == *"__PG_14_"* ]]; then

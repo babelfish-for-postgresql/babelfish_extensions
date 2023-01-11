@@ -14,12 +14,14 @@ jobs:
         uses: ./.github/composite-actions/install-dependencies
 
       - name: Restore ccache
+        id: cache-compiler
         uses: actions/cache@v3
         with:
           path: ~/.ccache
           key: ccache
 
       - name: Restore antlr-runtime
+        id: cache-antlr
         uses: actions/cache@v3
         with:
           path: /usr/local/lib/libantlr4-runtime.so.4.9.3
@@ -32,8 +34,8 @@ jobs:
       
       - name: Compile ANTLR
         id: compile-antlr
-        if: always() && steps.build-modified-postgres.outcome == 'success'
-        uses: ./.github/composite-actions/compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success' && steps.cache-antlr.outputs.cache-hit != 'true'
+        uses: ./.github/composite-actions/compile-antlr 
       
       - name: Build Extensions
         id: build-extensions
