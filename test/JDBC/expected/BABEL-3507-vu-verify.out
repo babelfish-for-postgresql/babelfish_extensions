@@ -1,4 +1,4 @@
--- throws an error
+-- throws an error due to overflow
 SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t1
 GO
 ~~START~~
@@ -50,7 +50,7 @@ int
 ~~END~~
 
 
-
+-- sanity check
 SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t3
 GO
 ~~START~~
@@ -83,6 +83,7 @@ int
 ~~END~~
 
 
+-- Check the return type for all integer datatypes
 SELECT 
 	cast(pg_typeof( AVG( avgbigint ) ) as varchar(48) )  as avg_bigint 
 	, cast(pg_typeof( AVG( avgint ) ) as varchar(48) )  as avg_int 
@@ -96,10 +97,11 @@ bigint#!#integer#!#integer#!#integer
 ~~END~~
 
 
+-- Dependant Functions
 SELECT babel_3507_vu_prepare_f1()
 GO
 ~~START~~
-bigint
+int
 1
 ~~END~~
 
@@ -107,20 +109,37 @@ bigint
 SELECT babel_3507_vu_prepare_f2()
 GO
 ~~START~~
-numeric
+bigint
 1
 ~~END~~
 
 
-EXEC babel_3507_vu_prepare_p1
+SELECT babel_3507_vu_prepare_f3()
 GO
 ~~START~~
-int#!#int#!#int
-1#!#1#!#1
+int
+1
 ~~END~~
 
 
--- throws an error
+SELECT babel_3507_vu_prepare_f4()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Dependant Procedures
+EXEC babel_3507_vu_prepare_p1
+GO
+~~START~~
+bigint#!#int#!#int#!#int
+1#!#1#!#1#!#1
+~~END~~
+
+
+-- throws an error due to undeflow
 SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t5
 GO
 ~~START~~
@@ -248,6 +267,7 @@ B#!#3000
 ~~END~~
 
 
+-- Dependant Views
 SELECT * FROM babel_3507_vu_prepare_v1
 GO
 ~~START~~
@@ -256,6 +276,8 @@ bigint#!#integer#!#integer#!#integer
 ~~END~~
 
 
+
+-- CLEANUP
 DROP FUNCTION babel_3507_vu_prepare_f1
 DROP FUNCTION babel_3507_vu_prepare_f2
 DROP FUNCTION babel_3507_vu_prepare_f3

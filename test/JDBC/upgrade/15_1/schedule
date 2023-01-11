@@ -359,3 +359,4 @@ sys_server_principals_dep
 sys_database_principals_dep
 TestVariableDataLength
 BABEL-3801
+BABEL-3507

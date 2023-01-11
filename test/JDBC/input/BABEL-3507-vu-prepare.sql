@@ -1,4 +1,4 @@
--- max values causing overflow in sum (BIGINT,INT) 
+-- max values causing overflow in avg (BIGINT,INT) 
 CREATE TABLE babel_3507_vu_prepare_t1(
 avgbigint BIGINT, avgint INT , avgsmallint SMALLINT , avgtinyint TINYINT )
 GO
@@ -7,11 +7,12 @@ INSERT INTO babel_3507_vu_prepare_t1 VALUES (9223372036854775807,2147483647,3276
 INSERT INTO babel_3507_vu_prepare_t1 VALUES (9223372036854775807,2147483647,32767,255)
 GO
 
--- empty table
+-- empty table should return NULL
 CREATE TABLE babel_3507_vu_prepare_t2(
 avgbigint BIGINT, avgint INT , avgsmallint SMALLINT , avgtinyint TINYINT )
 GO
 
+-- sanity check 
 CREATE TABLE babel_3507_vu_prepare_t3(
 avgbigint BIGINT, avgint INT , avgsmallint SMALLINT , avgtinyint TINYINT )
 GO
@@ -27,50 +28,50 @@ GO
 INSERT INTO babel_3507_vu_prepare_t4 VALUES(1,1,1,1)
 GO
 
-
+-- Dependant Functions
 CREATE FUNCTION babel_3507_vu_prepare_f1()
-RETURNS BIGINT AS
+RETURNS INT AS
 BEGIN
-    DECLARE @ans BIGINT
+    DECLARE @ans INT
     SELECT @ans= AVG(avgint) FROM babel_3507_vu_prepare_t4
     RETURN @ans
 END
 GO
 
 CREATE FUNCTION babel_3507_vu_prepare_f2()
-RETURNS NUMERIC AS
+RETURNS BIGINT AS
 BEGIN
-    DECLARE @ans NUMERIC
+    DECLARE @ans BIGINT
     SELECT @ans= AVG(avgbigint) FROM babel_3507_vu_prepare_t4
     RETURN @ans
 END
 GO
 
 CREATE FUNCTION babel_3507_vu_prepare_f3()
-RETURNS BIGINT AS
+RETURNS INT AS
 BEGIN
-    DECLARE @ans BIGINT
+    DECLARE @ans INT
     SELECT @ans= AVG(avgsmallint) FROM babel_3507_vu_prepare_t4
     RETURN @ans
 END
 GO
 
 CREATE FUNCTION babel_3507_vu_prepare_f4()
-RETURNS BIGINT AS
+RETURNS INT AS
 BEGIN
-    DECLARE @ans BIGINT
+    DECLARE @ans INT
     SELECT @ans= AVG(avgtinyint) FROM babel_3507_vu_prepare_t4
     RETURN @ans
 END
 GO
 
-
+-- Dependant Procedures
 CREATE PROCEDURE babel_3507_vu_prepare_p1
 AS
-SELECT AVG(avgint)as avg_int,AVG(avgsmallint) as avg_smallint ,AVG(avgtinyint) as avg_tinyint FROM babel_3507_vu_prepare_t4
+SELECT AVG(avgbigint)as avg_bigint,AVG(avgint)as avg_int,AVG(avgsmallint) as avg_smallint ,AVG(avgtinyint) as avg_tinyint FROM babel_3507_vu_prepare_t4
 GO
 
--- min values causing overflow in sum (BIGINT,INT)
+-- min values causing overflow in avg (BIGINT,INT)
 CREATE TABLE babel_3507_vu_prepare_t5(
 avgbigint BIGINT, avgint INT , avgsmallint SMALLINT , avgtinyint TINYINT )
 GO
@@ -79,6 +80,7 @@ INSERT INTO babel_3507_vu_prepare_t5 VALUES (-9223372036854775808,-2147483648,-3
 INSERT INTO babel_3507_vu_prepare_t5 VALUES (-9223372036854775808,-2147483648,-32768,0)
 GO
 
+-- Test OVER,PARTITION,DISTINCT,ORDER BY clause
 CREATE TABLE babel_3507_vu_prepare_t6(
 col1int INT, col2int INT, col3bigint BIGINT)
 GO

@@ -1,4 +1,4 @@
--- throws an error
+-- throws an error due to overflow
 SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t1
 GO
 
@@ -18,7 +18,7 @@ GO
 SELECT AVG( avgtinyint ) AS avg_tinyint FROM babel_3507_vu_prepare_t2
 GO
 
-
+-- sanity check
 SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t3
 GO
 
@@ -31,6 +31,7 @@ GO
 SELECT AVG( avgtinyint ) AS avg_tinyint FROM babel_3507_vu_prepare_t3
 GO
 
+-- Check the return type for all integer datatypes
 SELECT 
 	cast(pg_typeof( AVG( avgbigint ) ) as varchar(48) )  as avg_bigint 
 	, cast(pg_typeof( AVG( avgint ) ) as varchar(48) )  as avg_int 
@@ -39,16 +40,24 @@ SELECT
 FROM babel_3507_vu_prepare_t3
 GO
 
+-- Dependant Functions
 SELECT babel_3507_vu_prepare_f1()
 GO
 
 SELECT babel_3507_vu_prepare_f2()
 GO
 
+SELECT babel_3507_vu_prepare_f3()
+GO
+
+SELECT babel_3507_vu_prepare_f4()
+GO
+
+-- Dependant Procedures
 EXEC babel_3507_vu_prepare_p1
 GO
 
--- throws an error
+-- throws an error due to undeflow
 SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t5
 GO
 
@@ -93,9 +102,12 @@ GO
 SELECT dept,AVG(pricebigint) OVER(PARTITION BY dept) FROM babel_3507_vu_prepare_t7
 GO
 
+-- Dependant Views
 SELECT * FROM babel_3507_vu_prepare_v1
 GO
 
+
+-- CLEANUP
 DROP FUNCTION babel_3507_vu_prepare_f1
 DROP FUNCTION babel_3507_vu_prepare_f2
 DROP FUNCTION babel_3507_vu_prepare_f3
