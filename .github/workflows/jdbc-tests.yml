@@ -14,13 +14,13 @@ jobs:
         uses: ./.github/composite-actions/install-dependencies
 
       - name: Restore ccache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.ccache
           key: ccache
 
       - name: Restore antlr-runtime
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /usr/local/lib/libantlr4-runtime.so.4.9.3
           key: antlr-runtime

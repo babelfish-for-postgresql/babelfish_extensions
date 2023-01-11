@@ -8,7 +8,8 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+BABEL-3144-vu-prepare
+BABEL-3144-vu-verify
 
 # Temporarily ignore tests until fixed in PG15
 ignore#!#BABEL-LOGIN-USER-EXT
