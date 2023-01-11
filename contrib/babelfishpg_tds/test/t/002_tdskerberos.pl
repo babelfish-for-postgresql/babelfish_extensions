@@ -415,8 +415,8 @@ $node->append_conf('pg_hba.conf',
 	qq{host all all $hostaddr/32 gss include_realm=0 krb_realm=EXAMPLE.COM});
 $node->restart;
 
-my @connstr2 = $tsql_node->tsql_connstr_for_kerb_auth('master');
-$tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr2));
+my @connstr1 = $tsql_node->tsql_connstr('master');
+$tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr1));
 
 # Reset pg_hba.conf and mark every connection to use password based auth
 # But we should be able to use kerberos auth through TDS endpoint irrespective
@@ -426,8 +426,17 @@ $node->append_conf('pg_hba.conf',
 	qq{host all all $hostaddr/32 md5});
 $node->restart;
 
-my @connstr3 = $tsql_node->tsql_connstr_for_kerb_auth('master');
-$tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr3));
+my @connstr2 = $tsql_node->tsql_connstr('master');
+$tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr2));
+
+# Reset pg_hba.conf and mark every connection rejected
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf',
+	qq{host all all $hostaddr/32 reject});
+$node->restart;
+
+my @connstr3 = $tsql_node->tsql_connstr('master');
+$tsql_node->connect_fails('Kerberos auth fail test', (connstr => \@connstr3, log_like => [qr/pg_hba.conf rejects connection for host "127.0.0.1", user "test1\@EXAMPLE.COM", database "testdb"/]));
 
 $node->stop;
 done_testing();
