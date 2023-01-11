@@ -34,3 +34,14 @@ GO
 ~~ERROR (Message: syntax error near '=' at line 1 and character position 62)~~
 
 
+-- test boundary condition
+create login [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa] from windows;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL' is too long. Maximum length is 63.)~~
+
+
+create login [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa] from windows;
+GO
+

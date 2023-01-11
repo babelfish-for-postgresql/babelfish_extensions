@@ -21,3 +21,6 @@ GO
 
 DROP DATABASE ad_db;
 GO
+
+DROP LOGIN [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
+GO

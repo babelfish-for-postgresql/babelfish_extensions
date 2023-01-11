@@ -1,3 +1,16 @@
 -- psql
-select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext;
+select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext;
+GO
+
+-- tsql
+select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext
+where orig_loginname = 'babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+GO
+
+-- tsql
+select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+GO
+
+-- psql
+select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
 GO

@@ -2,12 +2,40 @@
 select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext;
 GO
 ~~START~~
-name#!#"sys"."varchar"#!#bpchar#!#"sys"."varchar"#!#"sys"."varchar"
-jdbc_user#!#jdbc_user#!#S#!#master#!#English
-sysadmin#!#sysadmin#!#R#!#master#!#English
-passworduser#!#PassWordUser#!#S#!#master#!#English
-aduser@AD#!#ad\Aduser#!#U#!#master#!#English
-aduserdb@AD#!#ad\Aduserdb#!#U#!#ad_db#!#English
-aduserdblanguageenglish@AD#!#ad\AduserdblanguageEnglish#!#U#!#ad_db#!#English
+name#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+jdbc_user#!#jdbc_user#!#master#!#English
+sysadmin#!#sysadmin#!#master#!#English
+aduser@AD#!#ad\Aduser#!#master#!#English
+aduserdb@AD#!#ad\Aduserdb#!#ad_db#!#English
+aduserdblanguageenglish@AD#!#ad\AduserdblanguageEnglish#!#ad_db#!#English
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL#!#babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#English
+~~END~~
+
+
+-- tsql
+select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext
+where orig_loginname = 'babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL#!#babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#English
+~~END~~
+
+
+-- tsql
+select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- psql
+select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+GO
+~~START~~
+int8
+1
 ~~END~~
 
