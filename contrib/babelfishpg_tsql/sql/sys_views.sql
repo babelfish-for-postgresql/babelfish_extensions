@@ -1040,20 +1040,25 @@ left join pg_catalog.pg_locks         blocking_locks
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
-with tt_internal as MATERIALIZED
+with RECURSIVE type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
 (
   Select * from sys.table_types_internal
 )
 -- For System types
 select 
-  tsql_type_name as name
+  ti.tsql_type_name as name
   , t.oid as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
   , cast(NULL as INT) as principal_id
-  , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
-  , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
+  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , cast(sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
     WHEN 'default' THEN default_collation_name
     ELSE  c.collname
@@ -1066,11 +1071,11 @@ select
   , 0 as is_table_type
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
+inner join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-,sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
 ,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
 where
-tsql_type_name IS NOT NULL
+ti.tsql_type_name IS NOT NULL  
 and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
@@ -1099,12 +1104,15 @@ select cast(t.typname as text) as name
   , case when tt.typrelid is not null then 1 else 0 end as is_table_type
 from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
+left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 left join tt_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 , cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
 -- we want to show details of user defined datatypes created under babelfish database
 where 
+ ti.tsql_type_name IS NULL
+and
   (
     -- show all user defined datatypes created under babelfish database except table types
     t.typtype = 'd'
