@@ -220,3 +220,18 @@ GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedserver(IN sys.sysname,
                                                   IN sys.nvarchar(4000),
                                                   IN sys.sysname)
 TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
+                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedsrvlogin(IN sys.sysname,
+                                                    IN sys.varchar(8),
+                                                    IN sys.sysname,
+                                                    IN sys.sysname,
+                                                    IN sys.sysname)
+TO PUBLIC;
