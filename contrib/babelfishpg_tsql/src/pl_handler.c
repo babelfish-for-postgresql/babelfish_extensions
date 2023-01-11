@@ -445,10 +445,11 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				}
 				else
 				{
+					Assert(list_length(funcStmt->funcname) == 1);
 					/*
 					 * Add schemaname to trigger's function name.
 					 */
-					if (list_length(funcStmt->funcname) == 1 && trigStmt->relation->schemaname != NULL)
+					if (trigStmt->relation->schemaname != NULL)
 					{
 						funcStmt->funcname = lcons(makeString(trigStmt->relation->schemaname), funcStmt->funcname);
 					}
