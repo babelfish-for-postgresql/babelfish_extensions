@@ -560,7 +560,7 @@ where
     tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
-=======
+
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
                                                       IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
                                                       IN "@locallogin" sys.sysname DEFAULT NULL,
