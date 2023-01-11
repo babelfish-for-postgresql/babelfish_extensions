@@ -192,7 +192,7 @@ exec sys.sp_volatility 'test_sp_volatility_f2'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: test_sp_volatility_schema2.test_sp_volatility_f2 function not found)~~
+~~ERROR (Message: test_sp_volatility_db1_test_sp_volatility_schema2.test_sp_volatility_f2 function not found)~~
 
 exec sys.sp_volatility 'dbo.test_sp_volatility_f2'
 go
