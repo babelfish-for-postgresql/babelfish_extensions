@@ -2321,6 +2321,11 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	StringInfoData query;
 
+	if (servername == NULL)
+		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("@servername cannot be NULL")));
+
 	if (locallogin != NULL)
 		ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2335,7 +2340,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * DROP USER MAPPING FOR @LOCALLOGIN SERVER @SERVERNAME
 	 *
 	 */
-	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER %s", servername);
+	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
 
 	exec_utility_cmd_helper(query.data);
 
