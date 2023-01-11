@@ -477,6 +477,50 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
 
 GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
+                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedsrvlogin(IN sys.sysname,
+                                                    IN sys.varchar(8),
+                                                    IN sys.sysname,
+                                                    IN sys.sysname,
+                                                    IN sys.sysname)
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
+                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
+
+CREATE OR REPLACE VIEW sys.linked_logins
+AS
+SELECT
+  CAST(u.srvid as int) AS server_id,
+  CAST(0 as int) AS local_principal_id,
+  CAST(0 as sys.bit) AS uses_self_credential,
+  CAST((select string_agg(
+                  case
+                  when option like 'username=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(u.umoptions) as option) as sys.sysname) AS remote_name,
+  CAST(NULL as sys.datetime) AS modify_date
+FROM pg_user_mappings AS U
+LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
+LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
+WHERE w.fdwname = 'tds_fdw';
+GRANT SELECT ON sys.linked_logins TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
