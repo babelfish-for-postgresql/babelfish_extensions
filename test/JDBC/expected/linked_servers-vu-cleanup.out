@@ -1,6 +1,9 @@
 -- Try to drop a linked server login that does not exist (should throw error)
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "invalid_server", @locallogin = NULL
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "invalid_server" does not exist)~~
 
 -- drop all the linked server logins that have been created
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server2", @locallogin = NULL
