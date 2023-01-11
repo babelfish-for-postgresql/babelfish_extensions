@@ -70,6 +70,8 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										void *arg);
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
+static bool has_user_in_db(const char *login, char **db_name);
+
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -1424,12 +1426,18 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 {
 	Oid grantee;
 	const char 	*grantee_name;
+	const char 	*granted_name;
 	RoleSpec 	*spec;
+	AccessPriv 	*granted;
 	CatCList   	*memlist;
 	Oid         sysadmin;
+	char		*db_name;
 
 	spec = (RoleSpec *) linitial(stmt->grantee_roles);		
 	sysadmin = get_role_oid("sysadmin", false);
+
+	granted = (AccessPriv *) linitial(stmt->granted_roles);
+	granted_name = granted->priv_name;
 
 	/* grantee MUST be a login */
 	grantee_name = spec->rolename;
@@ -1446,6 +1454,12 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s does not have permission to alter server role",
 					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	/* sysadmin role is not granted if grantee login has a user in one of the databases, as Babelfish only supports one dbo currently*/
+	if (stmt->is_grant && (strcmp(granted_name, "sysadmin") == 0) && has_user_in_db(grantee_name, &db_name))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("'sysadmin' role cannot be granted to login: a user is already created in database '%s'", db_name)));
 
 	/* could not drop the last member of sysadmin */
 	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
@@ -1696,6 +1710,52 @@ is_active_login(Oid role_oid)
 }
 
 /*
+ * To check if given login is already a user in one of the databases
+ */
+static bool
+has_user_in_db(const char *login, char **db_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData		key[3];
+	TableScanDesc	scan;
+	NameData		*login_name;
+	bool			is_null;
+
+	// open the table to scane
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	// change the target name to NameData for search
+	login_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(login_name->data, NAMEDATALEN, "%s", login);
+
+	// operate scanning
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_login_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(login_name));
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 1, key);
+
+	// match stored, if there is a match
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+	{
+
+		Datum name = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_database_name,
+								  bbf_authid_user_ext_rel->rd_att, &is_null);
+
+		*db_name = pstrdup(TextDatumGetCString(name));
+
+		return true;
+	}
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return false;
+}
+
+/*
  * get_fully_qualified_domain_name - Returns fully qualified domain name corresponding to
  * supplied netbios_domain by looking into sys.babelfish_domain_mapping catalog.
  * For example, if ('babel', 'babel.internal') entry is present in sys.babelfish_domain_mapping catalog,
@@ -1775,11 +1835,11 @@ convertToUPN(char* input)
 
 	if ((pos_slash = strchr(input, '\\')) != NULL)
 	{
-		char *output = "";
+		char *output = NULL;
 		char *netbios_domain_name = pnstrdup(input, (pos_slash - input));
-		/* 
-		 * collation aware lower casing and upper casing should be done. 
-		 * But which collation should be used?
+		/*
+		 * This means that provided login name is in windows format 
+		 * so let's update role_name with UPN format.
 		 */
 		output = psprintf("%s@%s", 
 				 str_tolower(pos_slash + 1, strlen(pos_slash + 1), C_COLLATION_OID),
@@ -1788,12 +1848,17 @@ convertToUPN(char* input)
 		return output;
 	}
 	else
-		return input;
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
+						input)));
+	}
 }
 
 /*
  * get_roleform_ext - Useful when someone tries to drop login and that login is in
- * the form of windows format i.e, domain\user
+ * the form of windows format i.e, domain\login
  */
 HeapTuple 
 get_roleform_ext(char *login)
@@ -1805,6 +1870,10 @@ get_roleform_ext(char *login)
 	char		*upn_login;
 	TupleDesc	dsc;
 
+	/* 
+	 * If login being dropped is not valid windows format
+	 * then return the invalid tuple from here only.
+	 */
 	if (!strchr(login, '\\'))
 		return NULL;
 
@@ -1850,12 +1919,19 @@ get_roleform_ext(char *login)
 	table_close(bbf_authid_login_ext_rel, AccessShareLock);
 
 	if (!HeapTupleIsValid(tuple))
+	{
+		if (upn_login != login)
+			pfree(upn_login);
 		return tuple;
+	}
 
-	/* It is proven that this rolename is indeed windows login */
+	/* It is proven that this rolename is indeed windows login. */
 	tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(upn_login));
 
-	/* Return tuple even if it is invalid tuple */
+	if (upn_login != login)
+		pfree(upn_login);
+
+	/* Return tuple even if it is invalid tuple. */
 	return tuple;
 }
 

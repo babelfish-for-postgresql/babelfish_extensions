@@ -10,5 +10,11 @@ GO
 DROP LOGIN [ad\Aduserdblanguage];
 GO
 
+DROP LOGIN [ad\AduserdblanguageEnglish];
+GO
+
+DROP LOGIN [ad\Aduseroption];
+GO
+
 DROP DATABASE ad_db;
 GO

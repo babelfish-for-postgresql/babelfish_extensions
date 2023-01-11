@@ -38,8 +38,6 @@ runs:
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT * from sys.babelfish_authid_login_ext;"
         export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash

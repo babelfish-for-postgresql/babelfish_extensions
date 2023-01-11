@@ -35,7 +35,7 @@
 #define USER_EXT_DEFAULT_SCHEMA_NAME					12
 #define USER_EXT_DEFAULT_LANGUAGE_NAME					13
 #define USER_EXT_AUTHENTICATION_TYPE_DESC				14
-#define USER_EXT_USER_CAN_CONNECT						15
+#define USER_EXT_USER_CAN_CONNECT					15
 
 extern void drop_bbf_roles(ObjectAccessType access,
 										Oid classId,
