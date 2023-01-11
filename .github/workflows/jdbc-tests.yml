@@ -31,15 +31,16 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
-      - name: Testing temp
-        run: |
-          echo ${{steps.cache-antlr.outputs.cache-hit != 'true'}}
-          echo ${{steps.cache-antlr.outputs.cache-hit}}
         
       - name: Compile ANTLR
         id: compile-antlr
-        if: steps.build-modified-postgres.outcome == 'success' && steps.cache-antlr.outputs.cache-hit != 'true'
-        uses: ./.github/composite-actions/compile-antlr 
+        if: steps.cache-antlr.outputs.cache-hit != 'true'
+        uses: ./.github/composite-actions/compile-antlr
+
+      - name: Set Antlr Runtime
+        if: steps.cache-antlr.outputs.cache-hit == 'true'
+        run: |
+          cp "/usr/local/lib/libantlr4-runtime.so.$ANTLR_VERSION" ~/psql/lib/
       
       - name: Build Extensions
         id: build-extensions

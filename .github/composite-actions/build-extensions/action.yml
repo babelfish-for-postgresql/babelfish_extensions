@@ -26,7 +26,9 @@ runs:
         export PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
         export cmake=$(which cmake)
-        export CC='ccache gcc' 
+        export CC='ccache gcc'
+        export CMAKE_C_COMPILER_LAUNCHER=ccache
+        export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
         cd contrib/babelfishpg_money
         make && make install
         cd ../babelfishpg_common
