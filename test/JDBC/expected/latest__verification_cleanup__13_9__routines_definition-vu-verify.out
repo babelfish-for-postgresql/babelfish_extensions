@@ -45,7 +45,7 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nva
 ~~END~~
 
 
--- Test cross DB reference to ISC view routines
+-- Verify cross DB reference to ISC view routines
 select ROUTINE_NAME from db_routines_vu_prepare.information_schema.routines ORDER BY ROUTINE_NAME;
 go
 ~~START~~
