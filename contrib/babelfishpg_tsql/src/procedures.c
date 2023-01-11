@@ -2316,8 +2316,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 Datum
 sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
 
 	StringInfoData query;
 
@@ -2335,7 +2335,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * DROP USER MAPPING FOR @LOCALLOGIN SERVER @SERVERNAME
 	 *
 	 */
-	appendStringInfo(&query, "DROP USER MAPPING FOR PUBLIC SERVER %s", servername);
+	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER %s", servername);
 
 	exec_utility_cmd_helper(query.data);
 
