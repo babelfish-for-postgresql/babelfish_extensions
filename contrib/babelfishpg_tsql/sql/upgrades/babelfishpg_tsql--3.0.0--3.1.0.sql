@@ -480,11 +480,10 @@ GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
-    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
     INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
-    WHERE 
-    (pt.typtype = 'c' AND dep.deptype = 'i' AND pt.oid = dep.refobjid AND dep.deptype = 'i'
-    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
+    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
 
 create or replace view sys.types As
 with tt_internal as MATERIALIZED
