@@ -2404,6 +2404,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if (from_windows && orig_loginname)
 						{
+							if ((strchr(orig_loginname, '\\')) == NULL)
+								ereport(ERROR, (errcode(ERRCODE_INVALID_NAME),
+				 					errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
+										orig_loginname)));
 							pfree(stmt->role);
 							stmt->role = convertToUPN(orig_loginname);
 						}

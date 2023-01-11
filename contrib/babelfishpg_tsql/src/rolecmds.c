@@ -1774,12 +1774,7 @@ convertToUPN(char* input)
 						str_toupper(input, (pos_slash - input), C_COLLATION_OID));
 	}
 	else
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
-						input)));
-	}
+		return input;
 }
 
 /*
