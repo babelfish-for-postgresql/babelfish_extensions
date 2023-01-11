@@ -31,15 +31,19 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
-      
+      - name: Testing temp
+        run: |
+          echo ${{steps.cache-antlr.outputs.cache-hit != 'true'}}
+          echo ${{steps.cache-antlr.outputs.cache-hit}}
+        
       - name: Compile ANTLR
         id: compile-antlr
-        if: always() && steps.build-modified-postgres.outcome == 'success' && steps.cache-antlr.outputs.cache-hit != 'true'
+        if: steps.build-modified-postgres.outcome == 'success' && steps.cache-antlr.outputs.cache-hit != 'true'
         uses: ./.github/composite-actions/compile-antlr 
       
       - name: Build Extensions
         id: build-extensions
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: always() && steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build tds_fdw Extension

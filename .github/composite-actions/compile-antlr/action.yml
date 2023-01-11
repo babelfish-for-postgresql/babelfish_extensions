@@ -13,7 +13,6 @@ runs:
     - name: Compile ANTLR
       run: |
         ANTLR_VERSION=4.9.3
-        
         cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
         sudo cp "antlr-$ANTLR_VERSION-complete.jar" /usr/local/lib
         cd ..
@@ -21,7 +20,9 @@ runs:
         unzip -d antlr4 "antlr4-cpp-runtime-$ANTLR_VERSION-source.zip"
         cd antlr4
         mkdir build && cd build
-        cmake .. -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache -D ANTLR_JAR_LOCATION="/usr/local/lib/antlr-$ANTLR_VERSION-complete.jar" -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
+        export CMAKE_C_COMPILER_LAUNCHER=ccache
+        export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+        cmake .. -D ANTLR_JAR_LOCATION="/usr/local/lib/antlr-$ANTLR_VERSION-complete.jar" -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
         make -j 4
         sudo make install
         cp "/usr/local/lib/libantlr4-runtime.so.$ANTLR_VERSION" ~/${{inputs.install_dir}}/lib/
