@@ -119,7 +119,6 @@ sys-suser_sname
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
-routines_definition
 constraint_column_usage
 column_domain_usage
 sp_describe_first_result_set

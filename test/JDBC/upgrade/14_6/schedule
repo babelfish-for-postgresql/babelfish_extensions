@@ -51,7 +51,6 @@ BABEL-3234
 BABEL-3402
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
-routines_definition
 column_domain_usage
 constraint_column_usage
 sp_describe_first_result_set

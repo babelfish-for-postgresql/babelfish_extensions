@@ -120,7 +120,6 @@ sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 identity_function
-routines_definition
 constraint_column_usage
 column_domain_usage
 sp_describe_first_result_set
