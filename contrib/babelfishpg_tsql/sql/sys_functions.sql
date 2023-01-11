@@ -34,6 +34,11 @@ RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_functiondef'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_expr(IN text_expr text DEFAULT NULL , IN function_id OID DEFAULT NULL)
+RETURNS text
+AS 'babelfishpg_tsql', 'tsql_get_expr'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.tsql_get_returnTypmodValue(IN function_id OID DEFAULT NULL)
 RETURNS INTEGER
 AS 'babelfishpg_tsql', 'tsql_get_returnTypmodValue'
