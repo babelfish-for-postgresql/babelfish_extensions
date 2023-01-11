@@ -1855,7 +1855,7 @@ get_roleform_ext(char *login)
 	tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(upn_login));
 
 	if (upn_login != login)
-			pfree(upn_login);
+		pfree(upn_login);
 
 	/* Return tuple even if it is invalid tuple. */
 	return tuple;
