@@ -515,6 +515,97 @@ SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
+create or replace view sys.table_types_internal as
+SELECT pt.typrelid
+    FROM pg_catalog.pg_type pt
+    INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
+    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
+
+create or replace view sys.types As
+with RECURSIVE type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
+(
+  Select * from sys.table_types_internal
+)
+-- For System types
+select 
+  ti.tsql_type_name as name
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , s.oid as schema_id
+  , cast(NULL as INT) as principal_id
+  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , cast(sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as int) as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  c.collname
+    END as collation_name
+  , case when typnotnull then 0 else 1 end as is_nullable
+  , 0 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , 0 as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+inner join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+where
+ti.tsql_type_name IS NOT NULL  
+and pg_type_is_visible(t.oid)
+and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
+union all 
+-- For User Defined Types
+select cast(t.typname as text) as name
+  , t.typbasetype as system_type_id
+  , t.oid as user_type_id
+  , t.typnamespace as schema_id
+  , null::integer as principal_id
+  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  c.collname 
+    END as collation_name
+  , case when tt.typrelid is not null then 0
+         else case when typnotnull then 0 else 1 end
+    end
+    as is_nullable
+  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
+  , 1 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , case when tt.typrelid is not null then 1 else 0 end as is_table_type
+from pg_type t
+join sys.schemas sch on t.typnamespace = sch.schema_id
+left join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+left join tt_internal tt on t.typrelid = tt.typrelid
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+, cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+-- we want to show details of user defined datatypes created under babelfish database
+where 
+ ti.tsql_type_name IS NULL
+and
+  (
+    -- show all user defined datatypes created under babelfish database except table types
+    t.typtype = 'd'
+    or
+    -- only for table types
+    tt.typrelid is not null  
+  );
+GRANT SELECT ON sys.types TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
