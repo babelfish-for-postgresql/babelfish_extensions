@@ -24,7 +24,7 @@ jobs:
         id: cache-antlr
         uses: actions/cache@v3
         with:
-          path: /usr/local/lib/libantlr4-runtime.so.4.9.3
+          path: ~/psql/lib/libantlr4-runtime.so.4.9.3
           key: antlr-runtime
       
       - name: Build Modified Postgres
@@ -36,11 +36,6 @@ jobs:
         id: compile-antlr
         if: steps.cache-antlr.outputs.cache-hit != 'true'
         uses: ./.github/composite-actions/compile-antlr
-
-      - name: Set Antlr Runtime
-        if: steps.cache-antlr.outputs.cache-hit == 'true'
-        run: |
-          cp "/usr/local/lib/libantlr4-runtime.so.$ANTLR_VERSION" ~/psql/lib/
       
       - name: Build Extensions
         id: build-extensions
