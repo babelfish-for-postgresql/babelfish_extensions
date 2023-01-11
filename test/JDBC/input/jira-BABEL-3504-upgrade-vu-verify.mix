@@ -1,0 +1,42 @@
+-- tsql 
+
+use jira_babel_3504_dbone;
+go
+
+--data type of UDT sequences will be the base type of the data type 
+select sequence_catalog, sequence_schema, sequence_name, data_type from information_schema.sequences order by sequence_name;
+go
+
+--privilege testing
+create login jira_babel_3504_log1 with password='123456789';
+go
+
+create user jira_babel_3504_usr1 for login jira_babel_3504_log1;
+go
+
+create type jira_babel_3504_bigint2 from bigint;
+go
+
+-- tsql user=jira_babel_3504_log1 password=123456789
+
+use jira_babel_3504_dbone;
+go
+
+create sequence jira_babel_3504_seq1 as jira_babel_3504_bigint2 start with 1;
+go
+
+--providing usage privilege to user via psql on as grant on type to user is not currently supported in babelfish
+-- psql
+grant create on schema jira_babel_3504_dbone_dbo to jira_babel_3504_dbone_jira_babel_3504_usr1;
+go
+
+grant usage on type jira_babel_3504_dbone_dbo.jira_babel_3504_bigint2 to jira_babel_3504_dbone_jira_babel_3504_usr1;
+go
+
+-- tsql user=jira_babel_3504_log1 password=123456789
+
+use jira_babel_3504_dbone;
+go
+
+create sequence jira_babel_3504_seq1 as jira_babel_3504_bigint2 start with 1;
+go

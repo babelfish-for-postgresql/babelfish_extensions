@@ -168,6 +168,81 @@ $$
 $$
 LANGUAGE sql PARALLEL SAFE STABLE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_expr(IN text_expr text DEFAULT NULL , IN function_id OID DEFAULT NULL)
+RETURNS text AS 'babelfishpg_tsql', 'tsql_get_expr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE VIEW sys.computed_columns
+AS
+SELECT out_object_id as object_id
+  , out_name as name
+  , out_column_id as column_id
+  , out_system_type_id as system_type_id
+  , out_user_type_id as user_type_id
+  , out_max_length as max_length
+  , out_precision as precision
+  , out_scale as scale
+  , out_collation_name as collation_name
+  , out_is_nullable as is_nullable
+  , out_is_ansi_padded as is_ansi_padded
+  , out_is_rowguidcol as is_rowguidcol
+  , out_is_identity as is_identity
+  , out_is_computed as is_computed
+  , out_is_filestream as is_filestream
+  , out_is_replicated as is_replicated
+  , out_is_non_sql_subscribed as is_non_sql_subscribed
+  , out_is_merge_published as is_merge_published
+  , out_is_dts_replicated as is_dts_replicated
+  , out_is_xml_document as is_xml_document
+  , out_xml_collection_id as xml_collection_id
+  , out_default_object_id as default_object_id
+  , out_rule_object_id as rule_object_id
+  , out_is_sparse as is_sparse
+  , out_is_column_set as is_column_set
+  , out_generated_always_type as generated_always_type
+  , out_generated_always_type_desc as generated_always_type_desc
+  , out_encryption_type as encryption_type
+  , out_encryption_type_desc as encryption_type_desc
+  , out_encryption_algorithm_name as encryption_algorithm_name
+  , out_column_encryption_key_id as column_encryption_key_id
+  , out_column_encryption_key_database_name as column_encryption_key_database_name
+  , out_is_hidden as is_hidden
+  , out_is_masked as is_masked
+  , out_graph_type as graph_type
+  , out_graph_type_desc as graph_type_desc
+  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar(4000)) AS definition
+  , 1::sys.bit AS uses_database_collation
+  , 0::sys.bit AS is_persisted
+FROM sys.columns_internal() sc
+INNER JOIN pg_attribute a ON sc.out_name = a.attname COLLATE sys.database_default AND sc.out_column_id = a.attnum
+INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
+GRANT SELECT ON sys.computed_columns TO PUBLIC;
+
+create or replace view sys.default_constraints
+AS
+select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
+  , CAST(d.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(tab.schema_id as int) as schema_id
+  , CAST(d.adrelid as int) as parent_object_id
+  , CAST('D' as char(2)) as type
+  , CAST('DEFAULT_CONSTRAINT' as sys.nvarchar(60)) AS type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modified_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(d.adnum as int) as parent_column_id
+  , CAST(tsql_get_expr(d.adbin, d.adrelid) as sys.nvarchar(4000)) as definition
+  , CAST(1 as sys.bit) as is_system_named
+from pg_catalog.pg_attrdef as d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join sys.tables tab on d.adrelid = tab.object_id
+WHERE a.atthasdef = 't' and a.attgenerated = ''
+AND has_schema_privilege(tab.schema_id, 'USAGE')
+AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+GRANT SELECT ON sys.default_constraints TO PUBLIC;
+
 create or replace view sys.all_columns as
 select CAST(c.oid as int) as object_id
   , CAST(a.attname as sys.sysname) as name
@@ -192,7 +267,7 @@ select CAST(c.oid as int) as object_id
   , CAST(0 as sys.bit) as is_ansi_padded
   , CAST(0 as sys.bit) as is_rowguidcol
   , CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit) as is_identity
-  , CAST(0 as sys.bit) as is_computed
+  , CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit) as is_computed
   , CAST(0 as sys.bit) as is_filestream
   , CAST(0 as sys.bit) as is_replicated
   , CAST(0 as sys.bit) as is_non_sql_subscribed
@@ -370,6 +445,81 @@ FROM pg_foreign_server AS f
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
+CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
+            CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
+            CAST(r.relname AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
+            CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
+                    AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres inherent implementation
+            CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)
+                        AS smallint) AS "NUMERIC_PRECISION",
+            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, -1)
+                        AS smallint) AS "NUMERIC_PRECISION_RADIX",
+            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, -1)
+                        AS int) AS "NUMERIC_SCALE",
+            CAST(s.seqstart AS sys.sql_variant) AS "START_VALUE",
+            CAST(s.seqmin AS sys.sql_variant) AS "MINIMUM_VALUE",
+            CAST(s.seqmax AS sys.sql_variant) AS "MAXIMUM_VALUE",
+            CAST(s.seqincrement AS sys.sql_variant) AS "INCREMENT",
+            CAST( CASE WHEN s.seqcycle = 't' THEN 1 ELSE 0 END AS int) AS "CYCLE_OPTION",
+            CAST(NULL AS sys.nvarchar(128)) AS "DECLARED_DATA_TYPE",
+            CAST(NULL AS int) AS "DECLARED_NUMERIC_PRECISION",
+            CAST(NULL AS int) AS "DECLARED_NUMERIC_SCALE"
+        FROM sys.pg_namespace_ext nc JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+            pg_sequence s join pg_class r on s.seqrelid = r.oid join pg_type t on s.seqtypid=t.oid,
+            sys.translate_pg_type_to_tsql(s.seqtypid) AS tsql_type_name
+        WHERE nc.oid = r.relnamespace
+        AND extc.dbid = cast(sys.db_id() as oid)
+            AND r.relkind = 'S'
+            AND (NOT pg_is_other_temp_schema(nc.oid))
+            AND (pg_has_role(r.relowner, 'USAGE')
+                OR has_sequence_privilege(r.oid, 'SELECT, UPDATE, USAGE'));
+
+GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
+                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedsrvlogin(IN sys.sysname,
+                                                    IN sys.varchar(8),
+                                                    IN sys.sysname,
+                                                    IN sys.sysname,
+                                                    IN sys.sysname)
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
+                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
+                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
+
+CREATE OR REPLACE VIEW sys.linked_logins
+AS
+SELECT
+  CAST(u.srvid as int) AS server_id,
+  CAST(0 as int) AS local_principal_id,
+  CAST(0 as sys.bit) AS uses_self_credential,
+  CAST((select string_agg(
+                  case
+                  when option like 'username=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(u.umoptions) as option) as sys.sysname) AS remote_name,
+  CAST(NULL as sys.datetime) AS modify_date
+FROM pg_user_mappings AS U
+LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
+LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
+WHERE w.fdwname = 'tds_fdw';
+GRANT SELECT ON sys.linked_logins TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
                                                       IN "@useself" sys.varchar(8) DEFAULT 'TRUE',

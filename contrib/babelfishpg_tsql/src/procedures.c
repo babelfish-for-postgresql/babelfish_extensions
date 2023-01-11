@@ -2240,37 +2240,79 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 Datum
 sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *useself = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(1));
-	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
-	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(4));
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
+	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
 
-	CreateUserMappingStmt *stmt = makeNode(CreateUserMappingStmt);
-	RoleSpec *user = makeNode(RoleSpec);
-	List *options = NIL;
+	StringInfoData query;
 
-	stmt->servername = servername;
-	stmt->if_not_exists = false;
-
-	user->roletype = ROLESPEC_CURRENT_USER;
-	user->location = -1;
-	stmt->user = user;
+	if (servername == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+					errmsg("@rmtsrvname parameter cannot be NULL")));
 
 	/* We do not support login using user's self credentials */
-	if ((useself == NULL) || (strlen(useself) != 5) || (strncmp(downcase_identifier(useself, 5, false, false), "false", 5) != 0))
-		elog(ERROR, "Only @useself = FALSE is supported");
+	if ((useself == NULL) || (strlen(useself) != 5) || (strncmp(useself, "false", 5) != 0))
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+					errmsg("Only @useself = FALSE is supported. Remote login using user's self credentials is not supported.")));
 
-	/* Add the relevant options */
-	options = lappend(options, makeDefElem("username", (Node *) makeString(username), -1));
-	options = lappend(options, makeDefElem("password", (Node *) makeString(password), -1));
+	initStringInfo(&query);
 
-	stmt->options = options;
+	/*
+	 * We prepare the following query to create a user mapping. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * CREATE USER MAPPING FOR CURRENT_USER SERVER <servername> OPTIONS (username
+	 * 	'<remote server user name>', password '<remote server user password>')
+	 *
+	 */
+	appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
 
-	CreateUserMapping(stmt);
+	/*
+	 * Add the relevant options
+	 *
+	 * The username and password options are required for user mapping
+	 * creation, (according to tds_fdw documentation) but we leave it
+	 * to the FDW's validator function to check for that
+	 */
+	if (username || password)
+	{
+		appendStringInfoString(&query, "OPTIONS ( ");
+
+		if (username)
+			appendStringInfo(&query, "username '%s' ", username);
+
+		if (password)
+		{
+			if (username)
+				appendStringInfoString(&query, ", ");
+
+			appendStringInfo(&query, "password '%s' ", password);
+		}
+
+		appendStringInfoString(&query, ")");
+	}
+
+	exec_utility_cmd_helper(query.data);
+
+	if (servername)
+		pfree(servername);
+
+	if (useself)
+		pfree(useself);
+
+	if (username)
+		pfree(username);
+
+	if (password)
+		pfree(password);
+
+	pfree(query.data);
 
 	return (Datum) 0;
 }
-
 
 Datum
 sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
