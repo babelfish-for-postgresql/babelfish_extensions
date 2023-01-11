@@ -1,31 +1,26 @@
-create function f1() returns int begin declare @a int; set @a = 1; return @a; end
+create function test_sp_volatility_f1() returns int begin declare @a int; set @a = 1; return @a; end
 go
 
-create schema a
+create schema test_sp_volatility_schema1
 go
 
-create function a.f1() returns int begin declare @a int; set @a = 1; return @a; end
+create function test_sp_volatility_schema1.test_sp_volatility_f1() returns int begin declare @a int; set @a = 1; return @a; end
 go
 
-create database test_sp_volatility_db1
-go
-use test_sp_volatility_db1
-go
-create function f2() returns int begin declare @a int; set @a = 1; return @a; end
-go
-
-CREATE LOGIN test_user WITH PASSWORD = 'abc';
+CREATE LOGIN test_sp_volatility_user WITH PASSWORD = 'abc';
 GO
-CREATE DATABASE test_db
+CREATE DATABASE test_sp_volatility_db1
 GO
-USE test_db
+USE test_sp_volatility_db1
 GO
-CREATE USER test_user FOR LOGIN test_user
+create function test_sp_volatility_f2() returns int begin declare @a int; set @a = 1; return @a; end
+GO
+CREATE USER test_sp_volatility_user FOR LOGIN test_sp_volatility_user
 GO
 
-CREATE SCHEMA test_schema
+CREATE SCHEMA test_sp_volatility_schema2
 GO
-ALTER USER test_user WITH DEFAULT_SCHEMA=test_schema
+ALTER USER test_sp_volatility_user WITH DEFAULT_SCHEMA=test_sp_volatility_schema2
 GO
-create function test_schema.f1() returns int begin declare @a int; set @a = 1; return @a; end
+create function test_sp_volatility_schema2.test_sp_volatility_f1() returns int begin declare @a int; set @a = 1; return @a; end
 GO

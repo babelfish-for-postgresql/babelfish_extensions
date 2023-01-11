@@ -2071,21 +2071,14 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 {
 	int rc;
 	int i;
-	char nulls = 0;
 	char *db_name = get_cur_db_name();
 	char *physical_schema_name;
 	char *logical_schema_name;
 	char *full_function_name;
-	char *user;
 	char *query;
 	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
-	MemoryContext savedPortalCxt;
-	SPIPlanPtr plan;
-	Portal portal;
-	DestReceiver *receiver;
-	List *splited_object_name;
-
+	char **splited_object_name;
 	FuncCandidateList candidates = NULL;
 
 	if(function_name != NULL)
@@ -2121,24 +2114,22 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		/* get physical schema name */
 		splited_object_name = split_object_name(function_name);
 
-		switch(list_length(splited_object_name))
-		{
-			case 1:
-				/* find the default schema for current user */
-				user = get_user_for_database(db_name);
-				logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
-				function_name = (char *) linitial(splited_object_name);
-				break;
-			case 2:
-				logical_schema_name = (char *) linitial(splited_object_name);
-				function_name = (char *) lsecond(splited_object_name);
-				break;
-			default:
-				ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("%s function not found", function_name)));
+		logical_schema_name = splited_object_name[2];
+		function_name = splited_object_name[3];
+
+		if(strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "") || !strcmp(function_name, ""))
+			ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("Enter a valid Funtion Name")));
+
+		if (!strcmp(logical_schema_name, ""))
+		{	
+			/* find the default schema for current user */
+			char *user = get_user_for_database(db_name);
+			logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 		}
-		list_free(splited_object_name);
+
+		pfree(splited_object_name);
 
 		physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
 
@@ -2150,22 +2141,23 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		if(candidates == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("%s function not found", function_name)));
+					errmsg("%s function not found", full_function_name)));
 	}
 	if(volatility == NULL)
 	{	
 		if(function_name == NULL)
-		{
+		{	
 			query = psprintf(
-					"SELECT pg_namespace.nspname as SchemaName, pg_proc.proname as FunctionName, "
+					"SELECT t3.orig_name as SchemaName, t1.proname as FunctionName, "
 					"CASE "
-						"WHEN provolatile = 'v' THEN 'volatile' "
-						"WHEN provolatile = 's' THEN 'stable' "
+						"WHEN t1.provolatile = 'v' THEN 'volatile' "
+						"WHEN t1.provolatile = 's' THEN 'stable' "
 						"ELSE 'immutable' "
 					"END AS Volatility "
-					"from pg_proc "
-					"JOIN pg_namespace ON pg_proc.pronamespace = pg_namespace.oid where pg_proc.prokind = 'f' "
-					"AND pg_namespace.nspname LIKE '%s%s'", db_name, "%"
+					"from pg_proc t1 "
+					"JOIN pg_namespace t2 ON t1.pronamespace = t2.oid "
+					"JOIN sys.babelfish_namespace_ext t3 ON t3.nspname = t2.nspname "
+					"where t1.prokind = 'f' AND t3.dbid = sys.db_id('%s') ", db_name
 				);
 		}
 		else
@@ -2178,12 +2170,18 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 						"ELSE 'immutable' "
 					"END AS Volatility "
 					"from pg_proc "
-					"where oid = %u", physical_schema_name, candidates->oid
+					"where oid = %u", logical_schema_name, candidates->oid
 				);
 		}
 
 		PG_TRY();
-		{
+		{	
+			char nulls = 0;
+			MemoryContext savedPortalCxt;
+			SPIPlanPtr plan;
+			Portal portal;
+			DestReceiver *receiver;
+
 			savedPortalCxt = PortalContext;
 			if (PortalContext == NULL)
 				PortalContext = MessageContext;

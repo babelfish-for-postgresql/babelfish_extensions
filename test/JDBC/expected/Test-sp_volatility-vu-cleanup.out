@@ -1,28 +1,25 @@
-drop function f1
+drop function test_sp_volatility_f1
 go
 
-drop function a.f1
+drop function test_sp_volatility_schema1.test_sp_volatility_f1
 go
 
-drop schema a
+drop schema test_sp_volatility_schema1
 go
 
 use test_sp_volatility_db1
 go
 
-drop function f2
+drop function test_sp_volatility_schema2.test_sp_volatility_f1
 go
 
-use test_db
+drop function test_sp_volatility_f2
 go
 
-drop function test_schema.f1
+drop schema test_sp_volatility_schema2
 go
 
-drop schema test_schema
-go
-
-drop user test_user
+drop user test_sp_volatility_user
 go
 
 use master
@@ -31,9 +28,6 @@ go
 drop database test_sp_volatility_db1
 go
 
-drop database test_db
-go
-
-drop login test_user
+drop login test_sp_volatility_user
 go
 

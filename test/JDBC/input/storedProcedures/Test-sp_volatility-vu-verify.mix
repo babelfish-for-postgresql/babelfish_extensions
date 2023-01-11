@@ -1,60 +1,60 @@
 -- tsql
 /* test without schema name */
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
-exec sys.sp_volatility 'f1', 'stable'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'stable'
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
-exec sys.sp_volatility 'f1', 'immutable'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'immutable'
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
-exec sys.sp_volatility 'f1', 'volatile'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'volatile'
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
-exec sys.sp_volatility 'f1', 'random'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'random'
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 
 /* test with schema name */
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
-exec sys.sp_volatility 'a.f1', 'stable'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1', 'stable'
 go
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
-exec sys.sp_volatility '"a".f1', 'immutable'
+exec sys.sp_volatility '"test_sp_volatility_schema1".test_sp_volatility_f1', 'immutable'
 go
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
-exec sys.sp_volatility '[a].f1', 'volatile'
+exec sys.sp_volatility '[test_sp_volatility_schema1].test_sp_volatility_f1', 'volatile'
 go
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
-exec sys.sp_volatility 'a.f1', 'random'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1', 'random'
 go
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 
 /* testing for trailing spaces */
-exec sys.sp_volatility 'f1   ', 'stable   '
+exec sys.sp_volatility 'test_sp_volatility_f1   ', 'stable   '
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 
 /* testing for leading space should give error */
-exec sys.sp_volatility '  f1', 'immutable'
+exec sys.sp_volatility '  test_sp_volatility_f1', 'immutable'
 go
-exec sys.sp_volatility 'f1', '  immutable'
+exec sys.sp_volatility 'test_sp_volatility_f1', '  immutable'
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 
 /* testing for some invalid cases */
-exec sys.sp_volatility 'master.a.f1'
+exec sys.sp_volatility 'master.test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 exec sys.sp_volatility 'random_function'
 go
@@ -64,24 +64,22 @@ go
 /* testing for injection */
 exec sys.sp_volatility 'ran;dom'
 go
-exec sys.sp_volatility 'f1', 'immutable; some random text'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'immutable; some random text'
 go
-exec sys.sp_volatility 'f1'
-go
-
-/* testing to get all functions in current db */
-use test_sp_volatility_db1
-go
-exec sys.sp_volatility
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 
 /* test for default schema */
--- tsql user=test_user password=abc
-use test_db
+-- tsql user=test_sp_volatility_user password=abc
+use test_sp_volatility_db1
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
-exec sys.sp_volatility 'f1    '
+exec sys.sp_volatility 'test_sp_volatility_f1    '
+go
+exec sys.sp_volatility 'test_sp_volatility_f2'
+go
+exec sys.sp_volatility 'dbo.test_sp_volatility_f2'
 go
 exec sys.sp_volatility
 go
@@ -89,7 +87,7 @@ go
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'test_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+WHERE sys.suser_name(usesysid) = 'test_sp_volatility_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 -- Wait to sync with another session
 SELECT pg_sleep(1);

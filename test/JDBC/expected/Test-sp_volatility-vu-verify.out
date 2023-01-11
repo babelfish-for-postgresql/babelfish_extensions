@@ -1,146 +1,146 @@
 -- tsql
 /* test without schema name */
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_dbo#!#f1#!#volatile
+dbo#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
-exec sys.sp_volatility 'f1', 'stable'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'stable'
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_dbo#!#f1#!#stable
+dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
-exec sys.sp_volatility 'f1', 'immutable'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'immutable'
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_dbo#!#f1#!#immutable
+dbo#!#test_sp_volatility_f1#!#immutable
 ~~END~~
 
-exec sys.sp_volatility 'f1', 'volatile'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'volatile'
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_dbo#!#f1#!#volatile
+dbo#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
-exec sys.sp_volatility 'f1', 'random'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'random'
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Enter a valid volatility)~~
 
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_dbo#!#f1#!#volatile
+dbo#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
 
 /* test with schema name */
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_a#!#f1#!#volatile
+test_sp_volatility_schema1#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
-exec sys.sp_volatility 'a.f1', 'stable'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1', 'stable'
 go
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_a#!#f1#!#stable
+test_sp_volatility_schema1#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
-exec sys.sp_volatility '"a".f1', 'immutable'
+exec sys.sp_volatility '"test_sp_volatility_schema1".test_sp_volatility_f1', 'immutable'
 go
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_a#!#f1#!#immutable
+test_sp_volatility_schema1#!#test_sp_volatility_f1#!#immutable
 ~~END~~
 
-exec sys.sp_volatility '[a].f1', 'volatile'
+exec sys.sp_volatility '[test_sp_volatility_schema1].test_sp_volatility_f1', 'volatile'
 go
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_a#!#f1#!#volatile
+test_sp_volatility_schema1#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
-exec sys.sp_volatility 'a.f1', 'random'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1', 'random'
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Enter a valid volatility)~~
 
-exec sys.sp_volatility 'a.f1'
+exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_a#!#f1#!#volatile
+test_sp_volatility_schema1#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
 
 /* testing for trailing spaces */
-exec sys.sp_volatility 'f1   ', 'stable   '
+exec sys.sp_volatility 'test_sp_volatility_f1   ', 'stable   '
 go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_dbo#!#f1#!#stable
+dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
 
 /* testing for leading space should give error */
-exec sys.sp_volatility '  f1', 'immutable'
+exec sys.sp_volatility '  test_sp_volatility_f1', 'immutable'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message:   f1 function not found)~~
+~~ERROR (Message: master_dbo.  test_sp_volatility_f1 function not found)~~
 
-exec sys.sp_volatility 'f1', '  immutable'
+exec sys.sp_volatility 'test_sp_volatility_f1', '  immutable'
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Enter a valid volatility)~~
 
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_dbo#!#f1#!#stable
+dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
 
 /* testing for some invalid cases */
-exec sys.sp_volatility 'master.a.f1'
+exec sys.sp_volatility 'master.test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: master.a.f1 function not found)~~
+~~ERROR (Message: Enter a valid Funtion Name)~~
 
 exec sys.sp_volatility 'random_function'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: random_function function not found)~~
+~~ERROR (Message: master_dbo.random_function function not found)~~
 
 exec sys.sp_volatility '','immutable'
 go
@@ -154,63 +154,66 @@ exec sys.sp_volatility 'ran;dom'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ran;dom function not found)~~
+~~ERROR (Message: master_dbo.ran;dom function not found)~~
 
-exec sys.sp_volatility 'f1', 'immutable; some random text'
+exec sys.sp_volatility 'test_sp_volatility_f1', 'immutable; some random text'
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Enter a valid volatility)~~
 
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-master_dbo#!#f1#!#stable
+dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
 
-/* testing to get all functions in current db */
+-- tsql user=test_sp_volatility_user password=abc
+/* test for default schema */
 use test_sp_volatility_db1
 go
-exec sys.sp_volatility
-go
-~~START~~
-varchar#!#varchar#!#text
-test_sp_volatility_db1_dbo#!#f2#!#volatile
-~~END~~
-
-
--- tsql user=test_user password=abc
-/* test for default schema */
-use test_db
-go
-exec sys.sp_volatility 'f1'
+exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
 text#!#varchar#!#text
-test_db_test_schema#!#f1#!#volatile
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
-exec sys.sp_volatility 'f1    '
+exec sys.sp_volatility 'test_sp_volatility_f1    '
 go
 ~~START~~
 text#!#varchar#!#text
-test_db_test_schema#!#f1#!#volatile
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#volatile
+~~END~~
+
+exec sys.sp_volatility 'test_sp_volatility_f2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: test_sp_volatility_schema2.test_sp_volatility_f2 function not found)~~
+
+exec sys.sp_volatility 'dbo.test_sp_volatility_f2'
+go
+~~START~~
+text#!#varchar#!#text
+dbo#!#test_sp_volatility_f2#!#volatile
 ~~END~~
 
 exec sys.sp_volatility
 go
 ~~START~~
-varchar#!#varchar#!#text
-test_db_test_schema#!#f1#!#volatile
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_volatility_f2#!#volatile
+test_sp_volatility_schema2#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
 
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'test_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+WHERE sys.suser_name(usesysid) = 'test_sp_volatility_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 ~~START~~
 bool
