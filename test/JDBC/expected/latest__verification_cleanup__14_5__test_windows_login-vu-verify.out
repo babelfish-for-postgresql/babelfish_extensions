@@ -4,11 +4,7 @@ where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdblanguageengl
 GO
 ~~START~~
 name#!#"sys"."varchar"#!#bpchar#!#"sys"."varchar"#!#"sys"."varchar"
-passworduser#!#PassWordUser#!#S#!#master#!#English
-aduser@AD#!#ad\Aduser#!#U#!#master#!#English
-aduserdb@AD#!#ad\Aduserdb#!#U#!#ad_db#!#English
-aduserdblanguageenglish@AD#!#ad\AduserdblanguageEnglish#!#U#!#ad_db#!#English
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL#!#babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#U#!#master#!#English
+passworduser#!#<NULL>#!#S#!#master#!#English
 ~~END~~
 
 
@@ -18,7 +14,6 @@ where orig_loginname = 'babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#nvarchar
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL#!#babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#English
 ~~END~~
 
 
@@ -27,7 +22,7 @@ select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaa
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 
@@ -36,6 +31,6 @@ select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 GO
 ~~START~~
 int8
-1
+0
 ~~END~~
 

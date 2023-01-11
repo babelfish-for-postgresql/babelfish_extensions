@@ -1,5 +1,6 @@
 -- psql
-select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext;
+select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext
+where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdblanguageenglish@AD','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL');
 GO
 
 -- tsql
