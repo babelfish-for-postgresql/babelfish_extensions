@@ -67,8 +67,6 @@ Could not find tests for procedure sys.babel_drop_all_dbs
 Could not find tests for procedure sys.babel_drop_all_logins
 Could not find tests for procedure sys.babel_initialize_logins
 Could not find tests for procedure sys.printarg
-Could not find tests for procedure sys.sp_droplinkedsrvlogin
-Could not find tests for procedure sys.sp_dropserver
 Could not find tests for table sys.babelfish_helpcollation
 Could not find tests for table sys.babelfish_syslanguages
 Could not find tests for table sys.service_settings
@@ -190,14 +188,12 @@ Could not find upgrade tests for procedure sys.babel_drop_all_dbs
 Could not find upgrade tests for procedure sys.babel_drop_all_logins
 Could not find upgrade tests for procedure sys.babel_initialize_logins
 Could not find upgrade tests for procedure sys.printarg
-Could not find upgrade tests for procedure sys.sp_addlinkedsrvlogin
 Could not find upgrade tests for procedure sys.sp_column_privileges
 Could not find upgrade tests for procedure sys.sp_cursor_list
 Could not find upgrade tests for procedure sys.sp_databases
 Could not find upgrade tests for procedure sys.sp_describe_cursor
 Could not find upgrade tests for procedure sys.sp_describe_undeclared_parameters
 Could not find upgrade tests for procedure sys.sp_droplinkedsrvlogin
-Could not find upgrade tests for procedure sys.sp_dropserver
 Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
 Could not find upgrade tests for procedure sys.sp_unprepare
