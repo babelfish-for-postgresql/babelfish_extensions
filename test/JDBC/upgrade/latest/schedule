@@ -371,3 +371,5 @@ linked_servers
 ISC-sequences
 jira-BABEL-3504-upgrade
 BABEL-3507
+sys-has_perms_by_name
+sys-has_perms_by_name-dep
