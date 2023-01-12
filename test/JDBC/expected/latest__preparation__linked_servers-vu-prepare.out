@@ -1,3 +1,4 @@
+
 -- psql
 -- Install the TDS_FDW extension to enable linked_servers
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
