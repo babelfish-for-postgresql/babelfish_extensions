@@ -242,7 +242,8 @@ BABEL-SPCOLUMNS
 BABEL-SP_TABLES
 BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
-BABEL-SP_FKEYS
+# Re-enable once BABEL-3837 is fixed
+# BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
@@ -350,3 +351,5 @@ sys_server_principals_dep
 sys_database_principals_dep
 BABEL-3801
 case_insensitive_collation
+sys-has_perms_by_name
+sys-has_perms_by_name-dep

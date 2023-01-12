@@ -942,7 +942,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = insert_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
 				break;
@@ -953,7 +953,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = update_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = list_copy(update_stmt->targetList);
 
@@ -989,7 +989,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = delete_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = NIL;
 
@@ -2238,10 +2238,10 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 Datum
 sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
-	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
-	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(4));
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
+	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
 
 	StringInfoData query;
 
@@ -2272,8 +2272,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * Add the relevant options
 	 *
 	 * The username and password options are required for user mapping
-	 * creation, but we leave it to the FDW's validator function to
-	 * check for that
+	 * creation, (according to tds_fdw documentation) but we leave it
+	 * to the FDW's validator function to check for that
 	 */
 	if (username || password)
 	{

@@ -1423,10 +1423,6 @@ CheckGSSAuth(Port *port)
 										  NULL,
 										  NULL);
 
-		/* gbuf no longer used */
-		pfree(request->sspi);
-		request->sspiLen = 0;
-
 		elog(DEBUG4, "gss_accept_sec_context major: %d, "
 			 "minor: %d, outlen: %u, outflags: %x",
 			 maj_stat, min_stat,
@@ -1759,6 +1755,17 @@ TdsClientAuthentication(Port *port)
 			break;
 		case uaMD5:
 		case uaPassword:
+			/* if sspiLen > 0 then GSS auth is already done at this point */
+			if (loginInfo->sspiLen > 0)
+			{
+				Assert(loginInfo->sspi);
+
+				/* Cleanup sspi data. */
+				pfree(loginInfo->sspi);
+				loginInfo->sspiLen = 0;
+				break;
+			}
+
 			/*
 			 * If pg_hba.conf specifies that the entry should be authenticated using
 			 * password and the request doesn't contain a password, we should
