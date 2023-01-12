@@ -656,7 +656,7 @@ int
 ~~END~~
 
 
--- Currently, object_id() doesn't support cross-db lookup due to column permissions check are not working for has_perms_by_name
+-- Currently, using tsql we are not able access cross-db entries in sys.all_columns due to which column permissions check are not working for has_perms_by_name
 USE master;
 GO
 
@@ -664,7 +664,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -672,7 +672,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -680,7 +680,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'INSERT',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -688,7 +688,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'DELETE',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -696,7 +696,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'REFERENC
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -704,7 +704,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'EXECUTE'
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -712,7 +712,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -745,7 +745,7 @@ SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col2', 'COLUMN')
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 
@@ -753,7 +753,7 @@ SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN')
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 
@@ -773,7 +773,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -781,7 +781,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -789,7 +789,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -797,7 +797,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -841,7 +841,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
@@ -2845,7 +2845,7 @@ int
 ~~END~~
 
 
--- should return 0, but fails because Babelfish doesn't support cross-db querying inside object_id
+-- should return 0
 SELECT HAS_PERMS_BY_NAME('[ non.existent.db ].".non existent.schema.".[non .. existent table]', 'OBJECT', 'SELECT', '[. non. existent.column]', 'COLUMN');
 GO
 ~~START~~
