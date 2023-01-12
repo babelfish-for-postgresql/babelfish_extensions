@@ -1,111 +1,3 @@
--- =============== Setup ===============
-
--- tsql
-DROP TABLE IF EXISTS t_perms_by_name;
-GO
-
-CREATE TABLE t_perms_by_name (col1 INT, col2 VARCHAR(16));
-GO
-
-CREATE LOGIN user_perms_by_name WITH PASSWORD='test';
-GO
-
-CREATE DATABASE db_perms_by_name;
-GO
-
-USE db_perms_by_name;
-GO
-
-DROP TABLE IF EXISTS t_perms_by_name;
-GO
-
-CREATE TABLE t_perms_by_name (col1 INT, col2 VARCHAR(16));
-GO
-
-CREATE SCHEMA s_perms_by_name;
-GO
-
-CREATE TABLE s_perms_by_name.t_perms_by_name (col1 INT, col2 VARCHAR(16));
-GO
-
-DROP TABLE IF EXISTS [.t perms.by.name.];
-GO
-
-CREATE TABLE [.t perms.by.name.] ([.column perms.by.name.] INT);
-GO
-
-DROP TABLE IF EXISTS [ t.perms by name ];
-GO
-
-CREATE TABLE [ t.perms by name ] ([ column perms.by.name ] INT);
-GO
-
-DROP VIEW IF EXISTS v_perms_by_name;
-GO
-
-CREATE VIEW v_perms_by_name AS
-	SELECT * FROM t_perms_by_name;
-GO
-
-DROP FUNCTION IF EXISTS scalar_function_perms_by_name;
-GO
-
-CREATE FUNCTION scalar_function_perms_by_name()
-RETURNS int
-AS 
-BEGIN
-   DECLARE @retval int
-   SELECT @retval = COUNT(*) FROM t_perms_by_name
-   RETURN @retval
-END;
-GO
-
-DROP FUNCTION IF EXISTS table_function_perms_by_name;
-GO
-
-CREATE FUNCTION table_function_perms_by_name(@empid int)
-RETURNS table
-AS
-RETURN
-(
-	SELECT * FROM t_perms_by_name WHERE col1 = @empid
-);
-GO
-
-DROP PROCEDURE IF EXISTS proc_perms_by_name;
-GO
-
-CREATE procedure proc_perms_by_name AS
-	SELECT * FROM t_perms_by_name
-GO
-
-DROP USER IF EXISTS user_perms_by_name;
-GO
-
-CREATE USER user_perms_by_name FOR LOGIN user_perms_by_name;
-GO
-
-GRANT ALL ON t_perms_by_name TO user_perms_by_name;
-GO
-
-GRANT ALL ON [.t perms.by.name.] TO user_perms_by_name;
-GO
-
-GRANT ALL ON [ t.perms by name ] TO user_perms_by_name;
-GO
-
-GRANT ALL ON v_perms_by_name TO user_perms_by_name;
-GO
-
-GRANT ALL ON scalar_function_perms_by_name TO user_perms_by_name;
-GO
-
-GRANT ALL ON table_function_perms_by_name TO user_perms_by_name;
-GO
-
-GRANT ALL ON proc_perms_by_name TO user_perms_by_name;
-GO
-
 -- tsql user=user_perms_by_name password=test
 USE db_perms_by_name;
 GO
@@ -113,11 +5,13 @@ GO
 SELECT CURRENT_USER;
 GO
 
-
-
 -- =============== Tables ===============
 
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('t_PERMS_by_nAMe','oBjeCT', 'SeleCT');
 GO
 
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE');
@@ -133,6 +27,31 @@ SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'REFERENCES');
 GO
 
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'EXECUTE');
+GO
+
+-- cross-db cases
+USE master;
+GO
+
+SELECT CURRENT_USER;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'INSERT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'DELETE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'REFERENCES');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
 -- tsql
@@ -167,6 +86,15 @@ GO
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE');
+GO
+
 -- tsql
 REVOKE ALL ON OBJECT::db_perms_by_name.dbo.t_perms_by_name FROM user_perms_by_name;
 GO
@@ -176,6 +104,15 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'ANY');
+GO
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name]."dbo".[t_perms_by_name]','OBJECT', 'ANY');
+GO
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'ANY');
 GO
 
 SELECT HAS_PERMS_BY_NAME('[db_perms_by_name]."dbo".[t_perms_by_name]','OBJECT', 'ANY');
@@ -198,6 +135,12 @@ GO
 SELECT HAS_PERMS_BY_NAME('"db_perms_by_name".[dbo]."t_perms_by_name"','OBJECT', 'ANY');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'ANY');
+GO
+
 -- tsql
 GRANT ALL ON OBJECT::db_perms_by_name.dbo.t_perms_by_name TO user_perms_by_name;
 GO
@@ -215,11 +158,27 @@ GO
 SELECT HAS_PERMS_BY_NAME('pg_catalog.pg_class','OBJECT', 'SELECT');
 GO
 
+USE master;
+GO
 
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('sys.databases','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('pg_catalog.pg_class','OBJECT', 'SELECT');
+GO
 
 -- =============== Views ===============
+USE db_perms_by_name;
+GO
 
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('v_PERMS_by_NAme','oBjEcT', 'SelECt');
 GO
 
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'UPDATE');
@@ -237,6 +196,28 @@ GO
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'UPDATE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'INSERT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'DELETE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'REFERENCES');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'EXECUTE');
+GO
+
+
 -- tsql
 REVOKE SELECT ON OBJECT::v_perms_by_name FROM user_perms_by_name;
 GO
@@ -251,6 +232,15 @@ GO
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'UPDATE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'UPDATE');
+GO
+
 -- tsql
 REVOKE ALL ON OBJECT::v_perms_by_name FROM user_perms_by_name;
 GO
@@ -260,6 +250,12 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'ANY');
+GO
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'ANY');
 GO
 
 -- tsql
@@ -273,6 +269,12 @@ GO
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'ANY');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'ANY');
+GO
+
 -- tsql
 GRANT ALL ON OBJECT::v_perms_by_name TO user_perms_by_name;
 GO
@@ -284,11 +286,21 @@ GO
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT');
 GO
 
+USE master;
+GO
 
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT');
+GO
 
 -- =============== Columns ===============
+USE db_perms_by_name;
+GO
 
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('t_PERMS_by_NaME','oBJeCt', 'sEleCt', 'CoL1', 'coLUmN');
 GO
 
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN');
@@ -309,14 +321,29 @@ GO
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
 GO
 
+-- Currently, object_id() doesn't support cross-db lookup due to column permissions check are not working for has_perms_by_name
 USE master;
 GO
 
--- should return 1, but fails because Babelfish doesn't support cross-db query
-SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'SELECT', '[col1]', 'COLUMN');
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
 GO
 
-SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'SELECT');
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'INSERT', 'col1', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'DELETE', 'col1', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'REFERENCES', 'col1', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'EXECUTE', 'col1', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
 GO
 
 -- tsql
@@ -344,6 +371,25 @@ GO
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'ANY', 'col1', 'COLUMN');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT', 'col2', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN');
+GO
+
+-- ANY permission not supported for COLUMN permissions in SQL Server
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'ANY', 'col1', 'COLUMN');
+GO
+
 -- tsql
 GRANT ALL ON OBJECT::db_perms_by_name.dbo.t_perms_by_name TO user_perms_by_name;
 GO
@@ -358,11 +404,24 @@ GO
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT');
 GO
 
+USE master;
+GO
 
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT');
+GO
 
 -- =============== Scalar-valued functions ===============
+USE db_perms_by_name;
+GO
 
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('scalar_function_PERMS_by_NaME','oBJeCt', 'sEleCt');
 GO
 
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'UPDATE');
@@ -380,6 +439,27 @@ GO
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'UPDATE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'INSERT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'DELETE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'REFERENCES');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+
 -- tsql
 REVOKE EXECUTE ON OBJECT::scalar_function_perms_by_name FROM user_perms_by_name;
 GO
@@ -394,6 +474,15 @@ GO
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+
 -- tsql
 REVOKE ALL ON OBJECT::scalar_function_perms_by_name FROM user_perms_by_name;
 GO
@@ -403,6 +492,12 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'ANY');
+GO
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'ANY');
 GO
 
 -- tsql
@@ -415,6 +510,13 @@ GO
 
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'ANY');
 GO
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'ANY');
+GO
+
 
 -- tsql
 GRANT ALL ON OBJECT::scalar_function_perms_by_name TO user_perms_by_name;
@@ -430,11 +532,24 @@ GO
 SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
 
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
 
 -- =============== Table-valued functions ===============
+USE db_perms_by_name;
+GO
 
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('TAbLE_function_PERMS_by_NaME','oBJeCt', 'sEleCt');
 GO
 
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'UPDATE');
@@ -452,6 +567,27 @@ GO
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'UPDATE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'INSERT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'DELETE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'REFERENCES');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+
 -- tsql
 REVOKE EXECUTE ON OBJECT::table_function_perms_by_name FROM user_perms_by_name;
 GO
@@ -466,6 +602,15 @@ GO
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+
 -- tsql
 REVOKE ALL ON OBJECT::table_function_perms_by_name FROM user_perms_by_name;
 GO
@@ -475,6 +620,12 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'ANY');
+GO
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'ANY');
 GO
 
 -- tsql
@@ -488,13 +639,19 @@ GO
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'ANY');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'ANY');
+GO
+
 -- tsql
 GRANT ALL ON OBJECT::table_function_perms_by_name TO user_perms_by_name;
 GO
 
 -- tsql user=user_perms_by_name password=test
-USE db_perms_by_name;
-GO
+use db_perms_by_name;
+go
 
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'SELECT');
 GO
@@ -502,11 +659,25 @@ GO
 SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
 
 
 -- =============== Procedures ===============
+use db_perms_by_name;
+go
 
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'SELECT');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('proc_PERMS_by_NaME','oBJeCt', 'sEleCt');
 GO
 
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'UPDATE');
@@ -524,6 +695,27 @@ GO
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'UPDATE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'INSERT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'DELETE');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'REFERENCES');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
+
 -- tsql
 REVOKE EXECUTE ON OBJECT::proc_perms_by_name FROM user_perms_by_name;
 GO
@@ -538,6 +730,15 @@ GO
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
+
 -- tsql
 REVOKE ALL ON OBJECT::proc_perms_by_name FROM user_perms_by_name;
 GO
@@ -549,6 +750,12 @@ GO
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'ANY');
 GO
 
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'ANY');
+GO
+
 -- tsql
 GRANT EXECUTE ON OBJECT::proc_perms_by_name TO user_perms_by_name;
 GO
@@ -558,6 +765,12 @@ USE db_perms_by_name;
 GO
 
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'ANY');
+GO
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'ANY');
 GO
 
 -- tsql
@@ -574,11 +787,24 @@ GO
 SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'EXECUTE');
 GO
 
+USE master;
+GO
 
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
 
 -- =============== Database permissions ================
+USE db_perms_by_name;
+GO
 
 SELECT HAS_PERMS_BY_NAME(db_name(),'DATABASE', 'CREATE TABLE');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME(DB_Name(),'DaTaBaSe', 'creATE TAbLe');
 GO
 
 SELECT HAS_PERMS_BY_NAME(db_name(),'DATABASE', 'CREATE SCHEMA');
@@ -786,6 +1012,10 @@ GO
 SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA', 'SELECT');
 GO
 
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('DbO','ScHEmA', 'SeLEct');
+GO
+
 SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA', 'CREATE SEQUENCE');
 GO
 
@@ -821,6 +1051,10 @@ SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'ALTER ANY ENDPOINT');
 GO
 
 SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+
+-- case insensitivity check 
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VieW SerVer STAte');
 GO
 
 SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'ANY');
@@ -875,6 +1109,10 @@ SELECT HAS_PERMS_BY_NAME('server.db_perms_by_name.dbo.t_perms_by_name','OBJECT',
 GO
 
 SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].[dbo].[t_perms_by_name]','OBJECT', 'SELECT');
+GO
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('[DB_PerMS_By_nAmE].[DBo].[t_PerMS_By_NamE]','oBJeCT', 'sELecT');
 GO
 
 SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].[dbo].[t_perms_by_name]','OBJECT', 'UPDATE');
@@ -1074,63 +1312,3 @@ GO
 SELECT HAS_PERMS_BY_NAME('".non existent.schema.".[non .. existent table]', 'OBJECT', 'SELECT', '[. non. existent.column]', 'COLUMN');
 GO
 
-USE master;
-GO
-
-
-
--- =============== Cleanup ===============
-
--- tsql
-USE db_perms_by_name;
-GO
-
-DROP PROCEDURE proc_perms_by_name;
-GO
-
-DROP FUNCTION table_function_perms_by_name;
-GO
-
-DROP FUNCTION scalar_function_perms_by_name;
-GO
-
-DROP VIEW IF EXISTS v_perms_by_name;
-GO
-
-DROP TABLE IF EXISTS t_perms_by_name;
-GO
-
-DROP TABLE IF EXISTS s_perms_by_name.t_perms_by_name;
-GO
-
-DROP SCHEMA s_perms_by_name
-GO
-
-DROP TABLE IF EXISTS [.t perms.by.name.];
-GO
-
-DROP TABLE IF EXISTS [ t.perms by name ];
-GO
-
-USE master;
-GO
-
-DROP DATABASE db_perms_by_name;
-GO
-
--- psql
-
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
-WHERE sys.suser_name(usesysid) = 'user_perms_by_name' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-
--- tsql
-DROP LOGIN user_perms_by_name;
-GO
-
-DROP TABLE IF EXISTS t_perms_by_name;
-GO
