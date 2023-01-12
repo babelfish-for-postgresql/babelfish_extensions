@@ -993,10 +993,12 @@ object_id(PG_FUNCTION_ARGS)
 		db_name = downcase_identifier(db_name, strlen(db_name), false, false);
 		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
 		object_name = downcase_identifier(object_name, strlen(object_name), false, false);
+		for (int i = 0; i < 4; i++)
+			pfree(splited_object_name[i]);
 	}
-	
-	for (int i = 0; i < 4; i++)
-		pfree(splited_object_name[i]);
+	else
+		pfree(splited_object_name[0]);
+
 	pfree(input);
 	pfree(splited_object_name);
 
