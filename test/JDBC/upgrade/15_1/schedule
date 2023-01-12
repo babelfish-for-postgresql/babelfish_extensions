@@ -358,4 +358,4 @@ sys_server_principals_dep
 sys_database_principals_dep
 TestVariableDataLength
 BABEL-3801
-bbf_view_def_upgrade
+bbf_view_def_upgrade-before-15_2
