@@ -20,6 +20,10 @@ GO
 
 insert into testing1 (col) select N'Muffler';
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: trigger invoked  Server SQLState: S0001)~~
+
 ~~ROW COUNT: 1~~
 
 
