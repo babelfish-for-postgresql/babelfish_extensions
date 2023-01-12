@@ -2435,7 +2435,9 @@ ANTLR_result
 antlr_parser_cpp(const char *sourceText)
 {
 	ANTLR_result result;
-
+	instr_time	parseStart;
+	instr_time	parseEnd;
+	INSTR_TIME_SET_CURRENT(parseStart);
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
 	{
@@ -2456,11 +2458,14 @@ antlr_parser_cpp(const char *sourceText)
 	result = antlr_parse_query(sourceText, !pltsql_disable_sll_parse_mode);
 
 	// If parsing failed in SLL mode, reparse in LL mode
-	if (!result.success && result.errcod == ERRCODE_SYNTAX_ERROR)
+	if (!result.success && result.errcod == ERRCODE_SYNTAX_ERROR && !pltsql_disable_sll_parse_mode)
 	{
 		elog(WARNING, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
 		result = antlr_parse_query(sourceText, false);
 	}
+	INSTR_TIME_SET_CURRENT(parseEnd);
+	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
+	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
 
 	return result;
 }

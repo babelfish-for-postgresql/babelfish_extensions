@@ -580,9 +580,9 @@ define_custom_variables(void)
 				 gettext_noop("disable SLL parser mode for ANTLR parser"),
 				 NULL,
 				 &pltsql_disable_sll_parse_mode,
-				 false,
-				 PGC_SUSET,
-				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 true,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 
 	/* temporary GUC until test is refactored properly */
