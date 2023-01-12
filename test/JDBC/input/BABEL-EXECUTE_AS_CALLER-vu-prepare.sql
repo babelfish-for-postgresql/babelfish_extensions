@@ -91,6 +91,19 @@ CREATE PROCEDURE babel_execute_as_caller_procedure_3 (@v int) WITH EXECUTE AS CA
 BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
 GO
 
+-- procedures with more than 1 argument and with-clause
+CREATE PROCEDURE babel_execute_as_caller_procedure_4 (@arg1 int, @arg2 varchar(10)) WITH EXECUTE AS CALLER AS
+BEGIN SELECT @arg1,@arg2 END;
+GO
+
+CREATE PROCEDURE babel_execute_as_caller_procedure_5 (@arg1 int, @arg2 varchar(10), @arg3 int) WITH EXECUTE AS CALLER, SCHEMABINDING AS
+BEGIN SELECT @arg1, @arg2, @arg3 END;
+GO
+
+CREATE PROCEDURE babel_execute_as_caller_procedure_6 @arg1 int, @arg2 varchar(10), @arg3 int WITH EXECUTE AS CALLER, SCHEMABINDING AS
+BEGIN SELECT @arg1, @arg2, @arg3 END;
+GO
+
 -- trigger
 CREATE TABLE babel_execute_as_caller_table_1 (c varchar(20));
 GO

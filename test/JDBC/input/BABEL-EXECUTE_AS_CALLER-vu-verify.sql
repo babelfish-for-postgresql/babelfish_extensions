@@ -18,6 +18,16 @@ GO
 EXEC babel_execute_as_caller_procedure_2 2
 GO
 
+-- procedures with more than 1 argument and with-clause
+EXEC babel_execute_as_caller_procedure_4 4, 'test'
+GO
+
+EXEC babel_execute_as_caller_procedure_5 5, 'test', 0
+GO
+
+EXEC babel_execute_as_caller_procedure_6 6, 'test', 0
+GO
+
 -- triggers
 INSERT INTO babel_execute_as_caller_table values (2);
 GO
