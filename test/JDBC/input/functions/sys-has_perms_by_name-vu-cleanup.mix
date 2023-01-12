@@ -1,0 +1,50 @@
+-- =============== Cleanup ===============
+
+-- tsql
+USE db_perms_by_name;
+GO
+
+DROP PROCEDURE proc_perms_by_name;
+GO
+
+DROP FUNCTION table_function_perms_by_name;
+GO
+
+DROP FUNCTION scalar_function_perms_by_name;
+GO
+
+DROP VIEW IF EXISTS v_perms_by_name;
+GO
+
+DROP TABLE IF EXISTS t_perms_by_name;
+GO
+
+DROP TABLE IF EXISTS s_perms_by_name.t_perms_by_name;
+GO
+
+DROP SCHEMA s_perms_by_name
+GO
+
+DROP TABLE IF EXISTS [.t perms.by.name.];
+GO
+
+DROP TABLE IF EXISTS [ t.perms by name ];
+GO
+
+DROP USER user_perms_by_name;
+GO
+
+USE master;
+GO
+
+DROP USER crossdb_user_perms_by_name;
+GO
+
+DROP DATABASE db_perms_by_name;
+GO
+
+DROP LOGIN user_perms_by_name;
+GO
+
+DROP TABLE IF EXISTS t_perms_by_name;
+GO

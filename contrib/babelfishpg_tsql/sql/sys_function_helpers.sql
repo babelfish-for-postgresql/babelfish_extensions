@@ -10147,6 +10147,7 @@ $$
 LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_has_any_privilege(
+    userid oid,
     perm_target_type text,
     schema_name text,
     object_name text)
@@ -10190,9 +10191,9 @@ BEGIN
 
     FOREACH permission IN ARRAY relevant_permissions
     LOOP
-        IF perm_target_type = 'table' COLLATE sys.database_default AND has_table_privilege(qualified_name, permission)::integer = 1
+        IF perm_target_type = 'table' COLLATE sys.database_default AND has_table_privilege(userid, qualified_name, permission)::integer = 1
             THEN RETURN 1;
-        ELSIF perm_target_type COLLATE sys.database_default IN ('function', 'procedure') AND has_function_privilege(function_signature, permission)::integer = 1
+        ELSIF perm_target_type COLLATE sys.database_default IN ('function', 'procedure') AND has_function_privilege(userid, function_signature, permission)::integer = 1
             THEN RETURN 1;
         END IF;
     END LOOP;

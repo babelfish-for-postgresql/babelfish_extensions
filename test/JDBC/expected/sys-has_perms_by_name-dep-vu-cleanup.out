@@ -1,0 +1,12 @@
+DROP VIEW has_perms_by_name_dep_vu_prepare_view
+GO
+
+DROP PROC has_perms_by_name_dep_vu_prepare_proc
+GO
+
+DROP FUNCTION has_perms_by_name_dep_vu_prepare_func
+GO
+
+DROP TABLE has_perms_by_name_dep_vu_prepare_t1
+GO
+
