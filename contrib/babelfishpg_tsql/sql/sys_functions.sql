@@ -2449,9 +2449,11 @@ DECLARE
     pg_schema text COLLATE sys.database_default;
     implied_dbo_permissions boolean;
     fully_supported boolean;
+    is_cross_db boolean := false;
     object_name text COLLATE sys.database_default;
     database_id smallint;
     namespace_id oid;
+    userid oid;
     object_type text;
     function_signature text;
     qualified_name text;
@@ -2540,7 +2542,8 @@ BEGIN
         END IF;
     END IF;
 
-    IF fully_supported = 'f' AND CURRENT_USER IN('dbo', 'master_dbo', 'tempdb_dbo', 'msdb_dbo') THEN
+    IF fully_supported = 'f' AND
+		(SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) = 'dbo' THEN
         RETURN CAST(implied_dbo_permissions AS integer);
     ELSIF fully_supported = 'f' THEN
         RETURN 0;
@@ -2566,6 +2569,16 @@ BEGIN
         SELECT CASE 
             WHEN db_name IS NULL OR db_name = '' THEN (sys.db_id())
             ELSE (sys.db_id(db_name))
+        END);
+
+	IF database_id <> sys.db_id() THEN
+        is_cross_db = true;
+	END IF;
+
+	userid := (
+        SELECT CASE
+            WHEN is_cross_db THEN sys.suser_id()
+            ELSE sys.user_id()
         END);
   
     -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
@@ -2639,24 +2652,24 @@ BEGIN
 
     return_value := (
         SELECT CASE
-            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(object_type, pg_schema, object_name)
+            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(userid, object_type, pg_schema, object_name)
 
             WHEN object_type = 'column'
                 THEN CASE
                     WHEN cs_as_permission IN('insert', 'delete', 'execute') THEN NULL
-                    ELSE CAST(has_column_privilege(qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
+                    ELSE CAST(has_column_privilege(userid, qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
                 END
 
             WHEN object_type = 'table'
                 THEN CASE
                     WHEN cs_as_permission = 'execute' THEN 0
-                    ELSE CAST(has_table_privilege(qualified_name, cs_as_permission) AS integer)
+                    ELSE CAST(has_table_privilege(userid, qualified_name, cs_as_permission) AS integer)
                 END
 
             WHEN object_type = 'function'
                 THEN CASE
                     WHEN cs_as_permission IN('select', 'execute')
-                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                        THEN CAST(has_function_privilege(userid, function_signature, 'execute') AS integer)
                     WHEN cs_as_permission IN('update', 'insert', 'delete', 'references')
                         THEN 0
                     ELSE NULL
@@ -2665,7 +2678,7 @@ BEGIN
             WHEN object_type = 'procedure'
                 THEN CASE
                     WHEN cs_as_permission = 'execute'
-                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                        THEN CAST(has_function_privilege(userid, function_signature, 'execute') AS integer)
                     WHEN cs_as_permission IN('select', 'update', 'insert', 'delete', 'references')
                         THEN 0
                     ELSE NULL

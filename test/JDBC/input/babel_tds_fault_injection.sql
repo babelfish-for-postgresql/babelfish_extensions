@@ -71,6 +71,7 @@ select inject_fault('pre_parsing_tamper_request');
 select inject_fault('pre_parsing_tamper_rpc_request_sptype');
 select inject_fault('parsing_tamper_rpc_parameter_datatype');
 select inject_fault('pre_parsing_throw_error');
+select inject_fault('buffer_overflow_test');
 select inject_fault('post_parsing_throw_error');
 GO
 
@@ -129,6 +130,10 @@ go
 
 -- should be disabled
 select inject_fault_status('pre_parsing_throw_error');
+go
+
+-- should be disabled
+select inject_fault_status('buffer_overflow_test');
 go
 
 -- should be disabled

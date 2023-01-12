@@ -338,6 +338,328 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
 
 GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_has_any_privilege(
+    userid oid,
+    perm_target_type text,
+    schema_name text,
+    object_name text)
+RETURNS INTEGER
+AS
+$BODY$
+DECLARE
+    relevant_permissions text[];
+    namespace_id oid;
+    function_signature text;
+    qualified_name text;
+    permission text;
+BEGIN
+ IF perm_target_type IS NULL OR perm_target_type COLLATE sys.database_default NOT IN('table', 'function', 'procedure')
+        THEN RETURN NULL;
+    END IF;
+
+    relevant_permissions := (
+        SELECT CASE
+            WHEN perm_target_type = 'table' COLLATE sys.database_default
+                THEN '{"select", "insert", "update", "delete", "references"}'
+            WHEN perm_target_type = 'column' COLLATE sys.database_default
+                THEN '{"select", "update", "references"}'
+            WHEN perm_target_type COLLATE sys.database_default IN ('function', 'procedure')
+                THEN '{"execute"}'
+        END
+    );
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = schema_name COLLATE sys.database_default;
+
+    IF perm_target_type COLLATE sys.database_default IN ('function', 'procedure')
+        THEN SELECT oid::regprocedure
+                INTO function_signature
+                FROM pg_catalog.pg_proc
+                WHERE proname = object_name COLLATE sys.database_default
+                    AND pronamespace = namespace_id;
+    END IF;
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', schema_name, '"."', object_name, '"');
+
+    FOREACH permission IN ARRAY relevant_permissions
+    LOOP
+        IF perm_target_type = 'table' COLLATE sys.database_default AND has_table_privilege(userid, qualified_name, permission)::integer = 1
+            THEN RETURN 1;
+        ELSIF perm_target_type COLLATE sys.database_default IN ('function', 'procedure') AND has_function_privilege(userid, function_signature, permission)::integer = 1
+            THEN RETURN 1;
+        END IF;
+    END LOOP;
+    RETURN 0;
+END
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
+    securable SYS.SYSNAME, 
+    securable_class SYS.NVARCHAR(60), 
+    permission SYS.SYSNAME,
+    sub_securable SYS.SYSNAME DEFAULT NULL,
+    sub_securable_class SYS.NVARCHAR(60) DEFAULT NULL
+)
+RETURNS integer
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    db_name text COLLATE sys.database_default; 
+    bbf_schema_name text;
+    pg_schema text COLLATE sys.database_default;
+    implied_dbo_permissions boolean;
+    fully_supported boolean;
+    is_cross_db boolean := false;
+    object_name text COLLATE sys.database_default;
+    database_id smallint;
+    namespace_id oid;
+    userid oid;
+    object_type text;
+    function_signature text;
+    qualified_name text;
+    return_value integer;
+    cs_as_securable text COLLATE "C" := securable;
+    cs_as_securable_class text COLLATE "C" := securable_class;
+    cs_as_permission text COLLATE "C" := permission;
+    cs_as_sub_securable text COLLATE "C" := sub_securable;
+    cs_as_sub_securable_class text COLLATE "C" := sub_securable_class;
+BEGIN
+    return_value := NULL;
+
+    -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
+    -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
+    cs_as_securable = lower(rtrim(cs_as_securable));
+    cs_as_securable_class = lower(rtrim(cs_as_securable_class));
+    cs_as_permission = lower(rtrim(cs_as_permission));
+    cs_as_sub_securable = lower(rtrim(cs_as_sub_securable));
+    cs_as_sub_securable_class = lower(rtrim(cs_as_sub_securable_class));
+
+    -- Assert that sub_securable and sub_securable_class are either both NULL or both defined
+    IF cs_as_sub_securable IS NOT NULL AND cs_as_sub_securable_class IS NULL THEN
+        RETURN NULL;
+    ELSIF cs_as_sub_securable IS NULL AND cs_as_sub_securable_class IS NOT NULL THEN
+        RETURN NULL;
+    -- If they are both defined, user must be evaluating column privileges.
+    -- Check that inputs are valid for column privileges: sub_securable_class must 
+    -- be column, securable_class must be object, and permission cannot be any.
+    ELSIF cs_as_sub_securable_class IS NOT NULL 
+            AND (cs_as_sub_securable_class != 'column' 
+                    OR cs_as_securable_class IS NULL 
+                    OR cs_as_securable_class != 'object' 
+                    OR cs_as_permission = 'any') THEN
+        RETURN NULL;
+
+    -- If securable is null, securable_class must be null
+    ELSIF cs_as_securable IS NULL AND cs_as_securable_class IS NOT NULL THEN
+        RETURN NULL;
+    -- If securable_class is null, securable must be null
+    ELSIF cs_as_securable IS NOT NULL AND cs_as_securable_class IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF cs_as_securable_class = 'server' THEN
+        -- SQL Server does not permit a securable_class value of 'server'.
+        -- securable_class should be NULL to evaluate server permissions.
+        RETURN NULL;
+    ELSIF cs_as_securable_class IS NULL THEN
+        -- NULL indicates a server permission. Set this variable so that we can
+        -- search for the matching entry in babelfish_has_perms_by_name_permissions
+        cs_as_securable_class = 'server';
+    END IF;
+
+    IF cs_as_sub_securable IS NOT NULL THEN
+        cs_as_sub_securable := babelfish_remove_delimiter_pair(cs_as_sub_securable);
+        IF cs_as_sub_securable IS NULL THEN
+            RETURN NULL;
+        END IF;
+    END IF;
+
+    SELECT p.implied_dbo_permissions,p.fully_supported 
+    INTO implied_dbo_permissions,fully_supported 
+    FROM babelfish_has_perms_by_name_permissions p 
+    WHERE p.securable_type = cs_as_securable_class AND p.permission_name = cs_as_permission;
+    
+    IF implied_dbo_permissions IS NULL OR fully_supported IS NULL THEN
+        -- Securable class or permission is not valid, or permission is not valid for given securable
+        RETURN NULL;
+    END IF;
+
+    IF cs_as_securable_class = 'database' AND cs_as_securable IS NOT NULL THEN
+        db_name = babelfish_remove_delimiter_pair(cs_as_securable);
+        IF db_name IS NULL THEN
+            RETURN NULL;
+        ELSIF (SELECT COUNT(name) FROM sys.databases WHERE name = db_name) != 1 THEN
+            RETURN 0;
+        END IF;
+    ELSIF cs_as_securable_class = 'schema' THEN
+        bbf_schema_name = babelfish_remove_delimiter_pair(cs_as_securable);
+        IF bbf_schema_name IS NULL THEN
+            RETURN NULL;
+        ELSIF (SELECT COUNT(nspname) FROM sys.babelfish_namespace_ext ext
+                WHERE ext.orig_name = bbf_schema_name 
+                    AND CAST(ext.dbid AS oid) = CAST(sys.db_id() AS oid)) != 1 THEN
+            RETURN 0;
+        END IF;
+    END IF;
+
+    IF fully_supported = 'f' AND
+		(SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) = 'dbo' THEN
+        RETURN CAST(implied_dbo_permissions AS integer);
+    ELSIF fully_supported = 'f' THEN
+        RETURN 0;
+    END IF;
+
+    -- The only permissions that are fully supported belong to the OBJECT securable class.
+    -- The block above has dealt with all permissions that are not fully supported, so 
+    -- if we reach this point we know the securable class is OBJECT.
+    SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, object_name 
+    FROM babelfish_split_object_name(cs_as_securable) s;
+
+    -- Invalid securable name
+    IF object_name IS NULL OR object_name = '' THEN
+        RETURN NULL;
+    END IF;
+
+    -- If schema was not specified, use the default
+    IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
+        bbf_schema_name := sys.schema_name();
+    END IF;
+
+    database_id := (
+        SELECT CASE 
+            WHEN db_name IS NULL OR db_name = '' THEN (sys.db_id())
+            ELSE (sys.db_id(db_name))
+        END);
+
+	IF database_id <> sys.db_id() THEN
+        is_cross_db = true;
+	END IF;
+
+	userid := (
+        SELECT CASE
+            WHEN is_cross_db THEN sys.suser_id()
+            ELSE sys.user_id()
+        END);
+  
+    -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
+    pg_schema := (SELECT nspname 
+                    FROM sys.babelfish_namespace_ext ext 
+                    WHERE ext.orig_name = bbf_schema_name 
+                        AND CAST(ext.dbid AS oid) = CAST(database_id AS oid));
+
+    IF pg_schema IS NULL THEN
+        -- Shared schemas like sys and pg_catalog do not exist in the table above.
+        -- These schemas do not need to be translated from Babelfish to Postgres
+        pg_schema := bbf_schema_name;
+    END IF;
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', pg_schema, '"."', object_name, '"');
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = pg_schema COLLATE sys.database_default;
+
+    object_type := (
+        SELECT CASE
+            WHEN cs_as_sub_securable_class = 'column'
+                THEN CASE 
+                    WHEN (SELECT count(name) 
+                        FROM sys.all_columns 
+                        WHERE name = cs_as_sub_securable COLLATE sys.database_default
+                            -- Use V as the object type to specify that the securable is table-like.
+                            -- We do not know that the securable is a view, but object_id behaves the 
+                            -- same for differint table-like types, so V can be arbitrarily chosen.
+                            AND object_id = sys.object_id(cs_as_securable, 'V')) = 1
+                                THEN 'column'
+                    ELSE NULL
+                END
+
+            WHEN (SELECT count(relname) 
+                    FROM pg_catalog.pg_class 
+                    WHERE relname = object_name COLLATE sys.database_default
+                        AND relnamespace = namespace_id) = 1
+                THEN 'table'
+
+            WHEN (SELECT count(proname) 
+                    FROM pg_catalog.pg_proc 
+                    WHERE proname = object_name COLLATE sys.database_default 
+                        AND pronamespace = namespace_id
+                        AND prokind = 'f') = 1
+                THEN 'function'
+                
+            WHEN (SELECT count(proname) 
+                    FROM pg_catalog.pg_proc 
+                    WHERE proname = object_name COLLATE sys.database_default
+                        AND pronamespace = namespace_id
+                        AND prokind = 'p') = 1
+                THEN 'procedure'
+            ELSE NULL
+        END
+    );
+    
+    -- Object was not found
+    IF object_type IS NULL THEN
+        RETURN 0;
+    END IF;
+  
+    -- Get signature for function-like objects
+    IF object_type IN('function', 'procedure') THEN
+        SELECT CAST(oid AS regprocedure) 
+            INTO function_signature 
+            FROM pg_catalog.pg_proc 
+            WHERE proname = object_name COLLATE sys.database_default
+                AND pronamespace = namespace_id;
+    END IF;
+
+    return_value := (
+        SELECT CASE
+            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(userid, object_type, pg_schema, object_name)
+
+            WHEN object_type = 'column'
+                THEN CASE
+                    WHEN cs_as_permission IN('insert', 'delete', 'execute') THEN NULL
+                    ELSE CAST(has_column_privilege(userid, qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
+                END
+
+            WHEN object_type = 'table'
+                THEN CASE
+                    WHEN cs_as_permission = 'execute' THEN 0
+                    ELSE CAST(has_table_privilege(userid, qualified_name, cs_as_permission) AS integer)
+                END
+
+            WHEN object_type = 'function'
+                THEN CASE
+                    WHEN cs_as_permission IN('select', 'execute')
+                        THEN CAST(has_function_privilege(userid, function_signature, 'execute') AS integer)
+                    WHEN cs_as_permission IN('update', 'insert', 'delete', 'references')
+                        THEN 0
+                    ELSE NULL
+                END
+
+            WHEN object_type = 'procedure'
+                THEN CASE
+                    WHEN cs_as_permission = 'execute'
+                        THEN CAST(has_function_privilege(userid, function_signature, 'execute') AS integer)
+                    WHEN cs_as_permission IN('select', 'update', 'insert', 'delete', 'references')
+                        THEN 0
+                    ELSE NULL
+                END
+
+            ELSE NULL
+        END
+    );
+
+    RETURN return_value;
+    EXCEPTION WHEN OTHERS THEN RETURN NULL;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
+    securable sys.SYSNAME, 
+    securable_class sys.nvarchar(60), 
+    permission sys.SYSNAME, 
+    sub_securable sys.SYSNAME,
+    sub_securable_class sys.nvarchar(60)) TO PUBLIC;
 
 
 CREATE OR REPLACE VIEW sys.computed_columns
@@ -493,6 +815,97 @@ INNER JOIN sys.schemas s on c.connamespace = s.schema_id
 WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
+
+create or replace view sys.table_types_internal as
+SELECT pt.typrelid
+    FROM pg_catalog.pg_type pt
+    INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
+    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
+
+create or replace view sys.types As
+with RECURSIVE type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
+(
+  Select * from sys.table_types_internal
+)
+-- For System types
+select 
+  ti.tsql_type_name as name
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , s.oid as schema_id
+  , cast(NULL as INT) as principal_id
+  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , cast(sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as int) as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  c.collname
+    END as collation_name
+  , case when typnotnull then 0 else 1 end as is_nullable
+  , 0 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , 0 as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+inner join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+where
+ti.tsql_type_name IS NOT NULL  
+and pg_type_is_visible(t.oid)
+and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
+union all 
+-- For User Defined Types
+select cast(t.typname as text) as name
+  , t.typbasetype as system_type_id
+  , t.oid as user_type_id
+  , t.typnamespace as schema_id
+  , null::integer as principal_id
+  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  c.collname 
+    END as collation_name
+  , case when tt.typrelid is not null then 0
+         else case when typnotnull then 0 else 1 end
+    end
+    as is_nullable
+  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
+  , 1 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , case when tt.typrelid is not null then 1 else 0 end as is_table_type
+from pg_type t
+join sys.schemas sch on t.typnamespace = sch.schema_id
+left join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+left join tt_internal tt on t.typrelid = tt.typrelid
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+, cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+-- we want to show details of user defined datatypes created under babelfish database
+where 
+ ti.tsql_type_name IS NULL
+and
+  (
+    -- show all user defined datatypes created under babelfish database except table types
+    t.typtype = 'd'
+    or
+    -- only for table types
+    tt.typrelid is not null  
+  );
+GRANT SELECT ON sys.types TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
