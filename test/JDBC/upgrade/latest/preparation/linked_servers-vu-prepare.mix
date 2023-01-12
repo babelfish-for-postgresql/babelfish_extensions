@@ -33,12 +33,32 @@ GO
 EXEC sp_addlinkedserver  @server = N'mssql_server3', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'mssql_server2\ABC', @catalog=N'master'
 GO
 
+-- Create a linked server with invalid @rmtsrvname (Should throw error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'invalid_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+-- Create a linked server with NULL @rmtsrvname (Should throw error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = NULL, @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
 -- Create a linked server login with @useself = TRUE (Should throw error)
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'TRUE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
 
+-- Create a linked server login with @useself = NULL (Should throw error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = NULL, @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
 -- Create a linked server login with @useself = FALSE. Also call sp_addlinkedsrvlogin from master.dbo schema
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+EXEC master.dbo.sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+-- Create a linked server login with no @rmtpassword (Won't throw error at creation time but will most likely fail remote login attempt)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
+GO
+
+-- Create a linked server login with no @rmtuser (Won't throw error at creation time but will most likely fail remote login attempt)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server3', @useself = 'FALSE', @rmtpassword = 'only_password_no_user'
 GO
 
 -- Creating a simple login which has lesser privilege than sysadmin role
