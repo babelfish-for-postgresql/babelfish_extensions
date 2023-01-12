@@ -496,11 +496,11 @@ and
 GRANT SELECT ON sys.types TO PUBLIC;
 
 -- Add one column to store definition of the function in the table.
+SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT DEFAULT NULL;
+SET allow_system_table_mods = off;
 
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
-
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
 CREATE OR REPLACE VIEW information_schema_tsql.routines AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
