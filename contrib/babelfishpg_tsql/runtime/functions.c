@@ -1054,14 +1054,14 @@ object_id(PG_FUNCTION_ARGS)
 	}
 
 	/* get schema oid from physical schema name, it will return InvalidOid if user don't have lookup access */
-	schema_oid = LookupExplicitNamespace(physical_schema_name, true);
+	schema_oid = get_namespace_oid(physical_schema_name, true);
 
 	/* free unnecessary pointers */
 	pfree(db_name);
 	pfree(schema_name);
 	pfree(physical_schema_name);
 
-	if (!OidIsValid(schema_oid))
+	if(!OidIsValid(schema_oid) || pg_namespace_aclcheck(schema_oid, user_id, ACL_USAGE) != ACLCHECK_OK)
 	{
 		pfree(object_name);
 		if (object_type)
