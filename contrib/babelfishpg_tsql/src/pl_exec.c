@@ -483,7 +483,6 @@ extern void exec_save_simple_expr(PLtsql_expr *expr, CachedPlan *cplan);
 
 extern int
 execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamListInfo paramLI);
-static void set_original_query_string(char *queryString);
 
 /* ----------
  * pltsql_exec_function	Called by the call handler for
@@ -4610,7 +4609,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	List 		*path_oids = fetch_search_path(false);
 	char 		*old_search_path = flatten_search_path(path_oids);
 	if (stmt->original_query)
-		set_original_query_string(stmt->original_query);
+		original_query_string = stmt->original_query;
 
 	if (stmt->is_cross_db)
 	{
@@ -10210,15 +10209,6 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 		return true;
 	}
 	return false;
-}
-
-/*
- * Set the global variable original_query_string with the original query.
- */
-static void
-set_original_query_string(char *queryString)
-{
-	original_query_string = queryString;
 }
 
 /*
