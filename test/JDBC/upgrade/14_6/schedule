@@ -340,3 +340,5 @@ sys_database_principals_dep
 case_insensitive_collation
 Test-sp_volatility
 BABEL_OBJECT_ID
+sys-has_perms_by_name
+sys-has_perms_by_name-dep
