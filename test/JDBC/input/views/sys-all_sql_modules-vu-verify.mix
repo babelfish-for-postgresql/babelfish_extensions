@@ -14,7 +14,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.all_sql_modules
-WHERE definition LIKE 'CREATE FUNCTION dbo.sys_all_sql_modules_vu_prepare_f1()%'
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_f1()%'
 GO
 
 -- Test for views
@@ -29,7 +29,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.all_sql_modules
-WHERE definition LIKE 'CREATE VIEW sys_all_sql_modules_vu_prepare_v2%'
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_v2%'
 GO
 
 -- Test for triggers
@@ -59,7 +59,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.all_sql_modules
-WHERE definition = 'CREATE PROCEDURE dbo.sys_all_sql_modules_vu_prepare_p1 AS SELECT 1'
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_p1%'
 GO
 
 -- Test for system function
@@ -153,7 +153,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.all_sql_modules
-WHERE definition = 'CREATE PROCEDURE dbo.sys_all_sql_modules_vu_prepare_p1 AS SELECT 1'
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_p1%'
 GO
 
 USE master
