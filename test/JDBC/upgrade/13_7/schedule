@@ -293,3 +293,4 @@ ISC-Table_Constraints
 sys_server_principals_dep_for_13_x
 sys_database_principals_dep_for_13_x
 case_insensitive_collation
+bbf_view_def_upgrade-before-14_5

@@ -77,6 +77,10 @@ ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-verify
 ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-cleanup
 ignore#!#BABEL-3646-before-14_6-vu-prepare
 ignore#!#BABEL-3646-before-14_6-vu-verify
+ignore#!#bbf_view_def_upgrade-before-14_5-vu-prepare
+ignore#!#bbf_view_def_upgrade-before-14_5-vu-verify
+ignore#!#bbf_view_def_upgrade-before-14_7-vu-prepare
+ignore#!#bbf_view_def_upgrade-before-14_7-vu-verify
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup

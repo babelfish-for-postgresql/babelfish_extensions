@@ -1935,10 +1935,10 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 		new_record[3] = CStringGetTextDatum(original_query);
 	/*
 	 * sp_describe_first_result_set internally translates to a "CREATE VIEW" statement,
-	 * we don't want to save the view definition for that case.
+	 * we won't have the original view definition for that case.
 	 */
 	else
-		new_record[3] = CStringGetTextDatum(NULL);
+		new_record[3] = CStringGetTextDatum(queryString);
 	new_record[4] = UInt64GetDatum(flag_validity);
 	new_record[5] = UInt64GetDatum(flag_values);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(3));
