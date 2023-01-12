@@ -18,4 +18,18 @@ runs:
         curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
         sudo apt-get update --fix-missing -y
         sudo apt-get install uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python3-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison mssql-tools unixodbc-dev libsybdb5 freetds-dev freetds-common
+        sudo apt install -y ccache
+        sudo /usr/sbin/update-ccache-symlinks
+        echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
+        source ~/.bashrc && echo $PATH
+        echo "NOW=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       shell: bash
+
+    - name: Restore ccache
+      id: cache-compiler
+      uses: actions/cache@v3
+      with:
+        path: ~/.ccache
+        key: ccache-${{ runner.os }}-${{ env.NOW }}
+        restore-keys: |
+          ccache-${{ runner.os }}
