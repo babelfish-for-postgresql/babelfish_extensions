@@ -2316,7 +2316,7 @@ Datum
 sp_dropserver_internal(PG_FUNCTION_ARGS)
 {
 	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
-	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_BPCHAR_PP(1)));
 
 	StringInfoData query;
 
@@ -2328,7 +2328,7 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	initStringInfo(&query);
 
 	/*
-	 * We prepare the following query to create a user mapping. This will
+	 * We prepare the following query to drop foreign server. This will
 	 * be executed using ProcessUtility():
 	 *
 	 * DROP SERVER <servername> CASCADE
@@ -2342,15 +2342,26 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 
 		exec_utility_cmd_helper(query.data);
 		pfree(query.data);
+
+		if (linked_srv)
+			pfree(linked_srv);
+
+		if (droplogins)
+			pfree(droplogins);
+
 	}
 	else
-		elog(ERROR, "invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.");
+	{
+		if (linked_srv)
+			pfree(linked_srv);
 
-	if (linked_srv)
-		pfree(linked_srv);
+		if (droplogins)
+			pfree(droplogins);
 
-	if (droplogins)
-		pfree(droplogins);
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.")));
+	}
 
 	return (Datum) 0;
 }

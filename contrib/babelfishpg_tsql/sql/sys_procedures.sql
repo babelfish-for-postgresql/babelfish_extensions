@@ -237,10 +237,10 @@ GRANT EXECUTE ON PROCEDURE sys.sp_addlinkedsrvlogin(IN sys.sysname,
 TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
-                                                    IN "@droplogins" char(10) DEFAULT NULL)
+                                                    IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
 AS 'babelfishpg_tsql', 'sp_dropserver_internal'
 LANGUAGE C;
 
 GRANT EXECUTE ON PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
-                                                    IN "@droplogins" char(10))
+                                                    IN "@droplogins" sys.bpchar(10))
 TO PUBLIC;
