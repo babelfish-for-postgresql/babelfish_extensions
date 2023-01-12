@@ -2352,6 +2352,8 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		pfree(query.data);
+
 		if (linked_srv)
 			pfree(linked_srv);
 
