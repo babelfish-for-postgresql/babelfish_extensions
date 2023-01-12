@@ -237,7 +237,7 @@ def list_upgrade_files():
     inpPath = "../JDBC/upgrade"
 
     # searching prepare and verify scripts in upgrade directory
-    update_files = list_files(inpPath, "**/*[-][v][u][-][!c]*.*")
+    update_files = list_files(inpPath, "**/*[-][v][u][-]*.*")
     upgrade_files.extend(update_files)
 
     # list all schedule files
