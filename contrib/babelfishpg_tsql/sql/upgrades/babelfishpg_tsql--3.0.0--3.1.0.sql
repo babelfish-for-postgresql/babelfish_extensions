@@ -935,6 +935,9 @@ LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
 
+-- For all the views created on previous versions, the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def SET definition = NULL;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

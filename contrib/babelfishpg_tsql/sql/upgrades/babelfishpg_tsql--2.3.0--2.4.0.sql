@@ -614,6 +614,9 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
     sub_securable sys.SYSNAME,
     sub_securable_class sys.nvarchar(60)) TO PUBLIC;
 
+-- For all the views created on previous versions, the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def SET definition = NULL;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
