@@ -1,16 +1,16 @@
 /* Tsql system catalog views */
 
--- The sys.table_types_internal view mimics the logic used in sys.is_table_type function
+/*
+ * Note: this view, although written efficiently might cause perfomance degradation when
+ * joined with other system objects. One should try to use them as part of a materialized CTE.
+ */
 create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
-    INNER JOIN pg_catalog.pg_depend dep
-    ON pt.typrelid = dep.objid
+    INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
+    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
     INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE 
-    pt.typnamespace in (select schema_id from sys.schemas) 
-    and (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r')
-;
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
 
 create or replace view sys.tables as
 select
@@ -89,7 +89,7 @@ select
   , 0 as is_date_correlation_view 
   , 0 as is_tracked_by_cdc 
 from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
-left outer join sys.babelfish_view_def vd on t.relname COLLATE sys.database_default = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
+left outer join sys.babelfish_view_def vd on t.relname::sys.sysname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
 where t.relkind = 'v'
 and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
@@ -380,8 +380,8 @@ select CAST(c.oid as int) as object_id
   , case when a.attnotnull then CAST(0 as sys.bit) else CAST(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_ansi_padded
   , CAST(0 as sys.bit) as is_rowguidcol
-  , CAST(0 as sys.bit) as is_identity
-  , CAST(0 as sys.bit) as is_computed
+  , CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit) as is_identity
+  , CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit) as is_computed
   , CAST(0 as sys.bit) as is_filestream
   , CAST(0 as sys.bit) as is_replicated
   , CAST(0 as sys.bit) as is_non_sql_subscribed
@@ -1040,10 +1040,14 @@ left join pg_catalog.pg_locks         blocking_locks
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
-with type_code_list as
+with RECURSIVE type_code_list as
 (
     select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
     from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
+(
+  Select * from sys.table_types_internal
 )
 -- For System types
 select 
@@ -1102,7 +1106,7 @@ from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
 left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-left join sys.table_types_internal tt on t.typrelid = tt.typrelid
+left join tt_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 , cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
 -- we want to show details of user defined datatypes created under babelfish database
@@ -1142,8 +1146,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(d.adnum as int) as parent_column_id
-  -- use a simple regex to strip the datatype and collation that pg_get_expr returns after a double-colon that is not expected in SQL Server
-  , CAST(regexp_replace(pg_get_expr(d.adbin, d.adrelid), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) as definition
+  , CAST(tsql_get_expr(d.adbin, d.adrelid) as sys.nvarchar(4000)) as definition
   , CAST(1 as sys.bit) as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
@@ -1857,7 +1860,7 @@ SELECT out_object_id as object_id
   , out_is_masked as is_masked
   , out_graph_type as graph_type
   , out_graph_type_desc as graph_type_desc
-  , substring(pg_get_expr(d.adbin, d.adrelid), 1, 4000)::sys.nvarchar(4000) AS definition
+  , cast(tsql_get_expr(d.adbin, d.adrelid) AS sys.nvarchar(4000)) AS definition
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
 FROM sys.columns_internal() sc

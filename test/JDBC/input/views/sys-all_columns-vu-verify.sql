@@ -12,3 +12,9 @@ FROM sys.all_columns
 WHERE name='intcol' OR name='char128col' OR name='bitcol' OR name='datecol' OR name='moneycol' OR name='datetimecol'
 ORDER BY name
 GO
+
+SELECT name, is_identity, is_computed
+FROM sys.all_columns
+WHERE name in ('col_computed', 'col_one', 'col_two', 'col_three')
+ORDER BY name
+GO
