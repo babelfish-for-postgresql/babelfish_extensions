@@ -81,8 +81,8 @@ else
 fi
 GIT_URL=${BASE_URL}.git
 
-echo running git clone "$BRANCH_OPTION" "$GIT_URL"
-git clone $BRANCH_OPTION "$GIT_URL" && exit
+echo running git clone --depth 1 "$BRANCH_OPTION" --single-branch "$GIT_URL"
+git clone --depth 1 $BRANCH_OPTION --single-branch "$GIT_URL" && exit
 rc=$?
 echo "git clone failed with return code $rc"
 exit $rc
