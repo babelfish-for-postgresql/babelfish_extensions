@@ -2360,7 +2360,7 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.")));
+				errmsg("Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.")));
 	}
 
 	return (Datum) 0;
