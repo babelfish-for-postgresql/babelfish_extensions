@@ -1,0 +1,87 @@
+-- psql
+-- Install the TDS_FDW extension to enable linked_servers
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+-- tsql
+-- Try to create linked server without a valid a provider being available (Should throw error)
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'wrong_provider', @datasrc=N'localhost', @catalog=N'master'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported provider 'wrong_provider'. Supported provider is 'tds_fdw')~~
+
+
+-- Create linked server with valid T-SQL provider (Will throw warning internally)
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Create linked server with valid provider. Also call sp_addlinkedserver from master.dbo schema
+EXEC master.dbo.sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Create linked server with server product 'SQL Server'
+EXEC sp_addlinkedserver  @server = N'hello.world.com', @srvproduct=N'SQL Server'
+GO
+
+-- Create linked server with a non-null provider string (Will throw warning internally)
+EXEC sp_addlinkedserver  @server = N'mssql_server2', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @provstr='blahblahblah', @catalog=N'master'
+GO
+
+-- Try to create linked server with same server name (Should throw error)
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "mssql_server" already exists)~~
+
+
+-- Try to create linked server with data source of the form 'servername\\instancename' (Will throw error when we try to connect to it)
+EXEC sp_addlinkedserver  @server = N'mssql_server3', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'mssql_server2\ABC', @catalog=N'master'
+GO
+
+-- Create a linked server login with @useself = TRUE (Should throw error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'TRUE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only @useself = FALSE is supported. Remote login using user's self credentials is not supported.)~~
+
+
+-- Create a linked server login with @useself = FALSE. Also call sp_addlinkedsrvlogin from master.dbo schema
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login linked_server_login_861 with password = 'password_861'
+GO
+
+-- Create a function dependent on sys.servers view
+CREATE FUNCTION sys_linked_servers_vu_prepare__sys_servers_func()
+RETURNS TABLE
+AS
+RETURN (SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name);
+GO
+
+-- Create a view dependent on sys.servers view
+CREATE VIEW sys_linked_servers_vu_prepare__sys_servers_view
+AS
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name
+GO
+
+-- Create a view dependent on sys.linked_logins view
+CREATE VIEW sys_linked_servers_vu_prepare__sys_linked_logins_view
+AS
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE name <> 'bbf_server' ORDER BY linked_srv_name
+GO
+
+-- tsql    user=linked_server_login_861    password=password_861
+
+-- Creation of linked_server should fail since only sysadmin will have privilege to create linked server
+-- This will change once T-SQL ALTER ANY LINKED SERVER permission is implemented in babelfish
+EXEC sp_addlinkedserver  @server = N'mssql_server4', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for foreign-data wrapper tds_fdw)~~
+
