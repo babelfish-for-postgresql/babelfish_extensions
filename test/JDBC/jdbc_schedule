@@ -71,6 +71,12 @@ ignore#!#sys_database_principals_dep_for_13_x-vu-verify
 ignore#!#sys_server_principals_dep_for_13_x-vu-cleanup
 ignore#!#sys_server_principals_dep_for_13_x-vu-prepare
 ignore#!#sys_server_principals_dep_for_13_x-vu-verify
+ignore#!#bbf_view_def-vu-prepare
+ignore#!#bbf_view_def-vu-verify
+ignore#!#bbf_view_def-before-14_5-vu-prepare
+ignore#!#bbf_view_def-before-14_5-vu-verify
+ignore#!#bbf_view_def-before-14_7-or-15_2-vu-prepare
+ignore#!#bbf_view_def-before-14_7-or-15_2-vu-verify
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup

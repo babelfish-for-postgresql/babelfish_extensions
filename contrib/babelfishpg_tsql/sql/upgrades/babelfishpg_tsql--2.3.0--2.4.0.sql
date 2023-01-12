@@ -982,6 +982,9 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+-- For all the views created on previous versions, the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def SET definition = NULL;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
