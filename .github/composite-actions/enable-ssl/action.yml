@@ -1,0 +1,18 @@
+name: 'Enable SSL'
+
+inputs:
+  install_dir:
+    description: 'Engine install directory'
+    required: no
+    default: postgres
+
+runs:
+  using: "composite"
+  steps:
+    - name: Enable SSL
+      run: |
+        cd ~/${{inputs.install_dir}}/data
+        openssl req -new -x509 -days 3650 -nodes -text -out server.crt -keyout server.key -subj "/CN=localhost"
+        sudo sed -i "s/#ssl = off/ssl = on /g" postgresql.conf
+        ~/${{inputs.install_dir}}/bin/pg_ctl -D ~/${{inputs.install_dir}}/data/ -l logfile restart
+      shell: bash
