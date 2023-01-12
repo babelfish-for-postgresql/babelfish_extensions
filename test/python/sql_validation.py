@@ -264,9 +264,7 @@ def list_upgrade_files():
     path=Path("../JDBC/input")
     for test in search_tests:
         for i in path.rglob("*.*"):
-            if re.search(test + "-vu-prepare.*", str(i)):
-                upgrade_files.append(i)
-            if re.search(test + "-vu-verify.*", str(i)):
+            if re.search(test + "-vu-prepare.*", str(i)) or re.search(test + "-vu-verify.*", str(i)) or re.search(test + "-vu-cleanup.*", str(i)):
                 upgrade_files.append(i)
 
     return upgrade_files
