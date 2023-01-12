@@ -14,6 +14,10 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
+-- Trying to drop a server that does not exist (Should throw error)
+EXEC sp_dropserver @server = 'mssql_server_that_does_not_exist', @droplogins = NULL
+GO
+
 -- Trying to drop a server with @droplogins = invalid value (Should throw error)
 EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'definitely_invalid'
 GO
