@@ -2315,8 +2315,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 Datum
 sp_dropserver_internal(PG_FUNCTION_ARGS)
 {
-	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
-	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
+	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_BPCHAR_PP(1)));
 
 	StringInfoData query;
 
@@ -2328,32 +2328,40 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	initStringInfo(&query);
 
 	/*
-	 * We prepare the following query to create a user mapping. This will
+	 * We prepare the following query to drop foreign server. This will
 	 * be executed using ProcessUtility():
 	 *
-	 * DROP SERVER <servername> [ CASCADE ]
+	 * DROP SERVER <servername> CASCADE
 	 *
+	 * linked logins along with server are dropped if @droplogins = 'NULL'
+	 * or @droplogins = 'droplogins' so we add CASCADE.
 	 */
-	appendStringInfo(&query, "DROP SERVER \"%s\" ", linked_srv);
-
-	if (droplogins != NULL)
+	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
 	{
-		/* droplogins indicates that we also drop any logins linkked to the server, so we add CASCADE parameter */
-		if ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0))
-			appendStringInfoString(&query, "CASCADE");
-		else
-			elog(ERROR, "invalid parameter specified for procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.");
+		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
+
+		exec_utility_cmd_helper(query.data);
+		pfree(query.data);
+
+		if (linked_srv)
+			pfree(linked_srv);
+
+		if (droplogins)
+			pfree(droplogins);
+
 	}
+	else
+	{
+		if (linked_srv)
+			pfree(linked_srv);
 
-	exec_utility_cmd_helper(query.data);
+		if (droplogins)
+			pfree(droplogins);
 
-	if (linked_srv)
-		pfree(linked_srv);
-
-	if (droplogins)
-		pfree(droplogins);
-
-	pfree(query.data);
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.")));
+	}
 
 	return (Datum) 0;
 }
