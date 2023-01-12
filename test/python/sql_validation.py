@@ -237,7 +237,7 @@ def list_upgrade_files():
     inpPath = "../JDBC/upgrade"
 
     # searching prepare and verify scripts in upgrade directory
-    update_files = list_files(inpPath, "**/*[-][v][u][-][!c]*.*")
+    update_files = list_files(inpPath, "**/*[-][v][u][-]*.*")
     upgrade_files.extend(update_files)
 
     # list all schedule files
@@ -264,9 +264,7 @@ def list_upgrade_files():
     path=Path("../JDBC/input")
     for test in search_tests:
         for i in path.rglob("*.*"):
-            if re.search(test + "-vu-prepare.*", str(i)):
-                upgrade_files.append(i)
-            if re.search(test + "-vu-verify.*", str(i)):
+            if re.search(test + "-vu-*.*", str(i)):
                 upgrade_files.append(i)
 
     return upgrade_files
