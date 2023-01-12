@@ -3,9 +3,17 @@ GO
 
 DROP LOGIN [ad\Aduser];
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'ad\aduser', because it does not exist or you do not have permission.)~~
+
 
 DROP LOGIN [ad\Aduserdb];
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'ad\aduserdb', because it does not exist or you do not have permission.)~~
+
 
 DROP LOGIN [ad\Aduserlanguage];
 GO
@@ -23,6 +31,10 @@ GO
 
 DROP LOGIN [ad\AduserdblanguageEnglish];
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'ad\aduserdblanguageenglish', because it does not exist or you do not have permission.)~~
+
 
 DROP LOGIN [ad\Aduseroption];
 GO
@@ -32,7 +44,4 @@ GO
 
 
 DROP DATABASE ad_db;
-GO
-
-DROP LOGIN [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
 GO

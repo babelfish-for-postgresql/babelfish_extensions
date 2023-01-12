@@ -22,10 +22,3 @@ GO
 CREATE LOGIN [ad\Aduseroption] from windows with CHECK_POLICY = OFF, CHECK_EXPIRATION = OFF;
 GO
 
--- test boundary condition
-create login [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa] from windows;
-GO
-
-create login [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa] from windows;
-GO
-

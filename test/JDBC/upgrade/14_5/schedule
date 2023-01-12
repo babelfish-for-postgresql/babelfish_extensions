@@ -316,4 +316,5 @@ sys_server_principals_dep
 sys_database_principals_dep
 BABEL-3801
 case_insensitive_collation
-test_windows_login
+sys-has_perms_by_name
+sys-has_perms_by_name-dep

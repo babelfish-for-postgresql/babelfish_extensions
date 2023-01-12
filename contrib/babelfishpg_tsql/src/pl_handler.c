@@ -2404,8 +2404,25 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if (from_windows && orig_loginname)
 						{
+							if ((strchr(orig_loginname, '\\')) == NULL)
+								ereport(ERROR, (errcode(ERRCODE_INVALID_NAME),
+				 					errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
+										orig_loginname)));
 							pfree(stmt->role);
 							stmt->role = convertToUPN(orig_loginname);
+						}
+
+						/*
+						 * Length of login name should be less than 128. Throw an error
+						 * here if it is not.
+						 * XXX: Below check is to work around BABEL-3868.
+						 */
+						if (strlen(stmt->role) >= NAMEDATALEN)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_NAME),
+									 errmsg("The login name '%s' is too long. Maximum length is %d.",
+											stmt->role, (NAMEDATALEN - 1))));
 						}
 					}
 					else if (strcmp(headel->defname, "isuser") == 0)
