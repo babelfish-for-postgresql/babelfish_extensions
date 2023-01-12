@@ -35,20 +35,28 @@ tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 	bool		include_null_values;
 	bool		without_array_wrapper;
 	char		*root_name;
+	
+	MemoryContext agg_context;
+	MemoryContext old_context;
+	if (!AggCheckCallContext(fcinfo, &agg_context))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+	old_context = MemoryContextSwitchTo(agg_context);
+
 	for (int i=1; i < PG_NARGS()-1; i++)
 	{
+		/* only state and root_name can be null, so check the other params for safety */
 		if PG_ARGISNULL(i) 
 			PG_RETURN_NULL();
 	}
-	state = makeStringInfo();
 	record = PG_GETARG_DATUM(1);
 	mode = PG_GETARG_INT32(2);
 	include_null_values = PG_GETARG_BOOL(3);
-	without_array_wrapper = PG_GETARG_BOOL(4);
-	root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 	if (PG_ARGISNULL(0))
 	{
 		/* first time setup */
+		state = makeStringInfo();
+		without_array_wrapper = PG_GETARG_BOOL(4);
+		root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 		/* If root_name is present then WITHOUT_ARRAY_WRAPPER will be FALSE */
 		if(root_name)
 			/* we need to add an extra token to the beginning so that the finalfunc knows to append "]}" to the end */
@@ -58,7 +66,7 @@ tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		appendStringInfoString(state, TextDatumGetCString(PG_GETARG_TEXT_PP(0)));
+		state = (StringInfo) PG_GETARG_POINTER(0);
 		appendStringInfoChar(state, ',');
 	}
 	switch (mode)
@@ -84,7 +92,41 @@ tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 						errmsg("invalid FOR JSON mode")));
 	}
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->data, state->len));
+	MemoryContextSwitchTo(old_context);
+
+	PG_RETURN_POINTER(state);
+}
+
+PG_FUNCTION_INFO_V1(tsql_query_to_json_ffunc);
+
+Datum
+tsql_query_to_json_ffunc(PG_FUNCTION_ARGS)
+{
+	char 		*state;
+	StringInfo	res = makeStringInfo();
+	if (PG_ARGISNULL(0))
+	{
+		PG_RETURN_NULL();
+	}
+	else
+	{
+		state = ((StringInfo) PG_GETARG_POINTER(0))->data;
+	}
+	if (state[0] == '[') /* check for array wrapper */
+	{
+		appendStringInfoString(res, state);
+		appendStringInfoChar(res, ']');
+	}
+	else if (state[0] == '<') /* '<' indicates that root was specified */
+	{
+		appendStringInfoString(res, state+1);
+		appendStringInfoString(res, "]}");
+	}
+	else
+	{
+		appendStringInfoString(res, state);
+	}
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(res->data, res->len));
 }
 
 static void 
@@ -219,4 +261,5 @@ tsql_row_to_json(StringInfo state, Datum record, bool include_null_values)
 
 	}
 	appendStringInfoChar(state,'}');
+	ReleaseTupleDesc(tupdesc);
 }

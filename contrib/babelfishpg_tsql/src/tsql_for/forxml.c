@@ -20,8 +20,11 @@
 #include "catalog/pg_type.h"
 #include "catalog/namespace.h"
 
+#include <regex.h>
+
 #include "tsql_for.h"
 
+static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
 static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bool binary_base64);
 static void tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, bool binary_base64);
 
@@ -30,22 +33,31 @@ PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
 Datum
 tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 {
-	StringInfo	state = makeStringInfo();
+	StringInfo	state;
 	Datum		record = PG_GETARG_DATUM(1);
 	int			mode = PG_GETARG_INT32(2);
 	char		*element_name = PG_ARGISNULL(3) ? "row" : text_to_cstring(PG_GETARG_TEXT_PP(3));
 	bool		binary_base64 = PG_GETARG_BOOL(4);
-	char		*root_name = PG_ARGISNULL(5) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(5));
+	char		*root_name;
+	
+	MemoryContext agg_context;
+	MemoryContext old_context;
+	if (!AggCheckCallContext(fcinfo, &agg_context))
+		elog(ERROR, "aggregate function called in non-aggregate context");
+	old_context = MemoryContextSwitchTo(agg_context);
+
 	if (PG_ARGISNULL(0))
 	{
 		/* first time setup */
+		state = makeStringInfo();
+		root_name = PG_ARGISNULL(5) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(5));
 		if (root_name != NULL && strlen(root_name) > 0)
 			/* we need to add an extra token to the beginning so that the finalfunc knows there is a root element */
 			appendStringInfo(state, "{<%s>", root_name);
 	}
 	else
 	{
-		appendStringInfoString(state, TextDatumGetCString(PG_GETARG_TEXT_PP(0)));
+		state = (StringInfo) PG_GETARG_POINTER(0);
 	}
 	switch (mode)
 	{
@@ -80,8 +92,76 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INTERNAL_ERROR),
 							errmsg("invalid FOR XML mode")));
 	}
-	
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->data, state->len));
+
+	MemoryContextSwitchTo(old_context);
+
+	PG_RETURN_POINTER(state);
+}
+
+PG_FUNCTION_INFO_V1(tsql_query_to_xml_ffunc);
+
+Datum
+tsql_query_to_xml_ffunc(PG_FUNCTION_ARGS)
+{
+	StringInfo res = for_xml_ffunc(fcinfo);
+	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(res->data, res->len));
+}
+
+PG_FUNCTION_INFO_V1(tsql_query_to_xml_text_ffunc);
+
+Datum
+tsql_query_to_xml_text_ffunc(PG_FUNCTION_ARGS)
+{
+	StringInfo res = for_xml_ffunc(fcinfo);
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(res->data, res->len));
+}
+
+static StringInfo
+for_xml_ffunc(PG_FUNCTION_ARGS)
+{
+	char 		*state;
+	StringInfo	res = makeStringInfo();
+	if (PG_ARGISNULL(0))
+	{
+		PG_RETURN_NULL();
+	}
+	else
+	{
+		state = ((StringInfo) PG_GETARG_POINTER(0))->data;
+	}
+	if (state[0] == '{') /* '{' indicates that root was specified, so add the corresponding end tag */
+	{
+		/* set up regex to match first tag */
+		char		*pattern = "<([^\\/>]+)[\\/]*>";
+		regex_t		preg;
+		regmatch_t	match, pmatch[1];
+		char		*root = palloc(1024);
+		int			len;
+		
+		if (regcomp(&preg, pattern, REG_EXTENDED) != 0)
+			ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("unexpected error parsing xml root tag")));
+		
+		if (regexec(&preg, state, 1, pmatch, 0) != 0)
+			ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("unexpected error parsing xml root tag")));
+						
+		match = pmatch[0];
+		len = match.rm_eo - match.rm_so;
+		len = len > 1024 ? 1023 : len;
+		
+		pg_snprintf(root, len, "%s", state + match.rm_so);
+		root[len] = '\0';
+
+		appendStringInfo(res, "%s</%s>", state+1, root);
+	}
+	else
+	{
+		appendStringInfoString(res, state);
+	}
+	return res;
 }
 
 /*
