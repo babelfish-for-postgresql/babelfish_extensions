@@ -976,7 +976,7 @@ object_id(PG_FUNCTION_ARGS)
 		input[--i] = '\0';
 	
 	/* length should be restricted to 4000 */
-	if (strlen(input) > 4000)
+	if (i > 4000)
 		ereport(ERROR,
 			(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 			errmsg("String or binary data would be truncated.")));
@@ -994,6 +994,9 @@ object_id(PG_FUNCTION_ARGS)
 		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
 		object_name = downcase_identifier(object_name, strlen(object_name), false, false);
 	}
+	
+	for (int i = 0; i < 4; i++)
+		pfree(splited_object_name[i]);
 	pfree(input);
 	pfree(splited_object_name);
 
@@ -1011,6 +1014,7 @@ object_id(PG_FUNCTION_ARGS)
 		if (!DbidIsValid(db_id))
 		{
 			pfree(db_name);
+			pfree(schema_name);
 			pfree(object_name);
 			if (object_type)
 				pfree(object_type);
@@ -1028,6 +1032,7 @@ object_id(PG_FUNCTION_ARGS)
 		if (!user)
 		{	
 			pfree(db_name);
+			pfree(schema_name);
 			pfree(object_name);
 			if(object_type)
 				pfree(object_type);

@@ -1087,7 +1087,7 @@ remove_delimited_identifiers(char *str, int len)
 		if (len > 2)
 			return pnstrdup(&str[1], len - 2);
 		else
-			return "";
+			return pstrdup("");
 	}
 	else
 		return pnstrdup(str, len);
@@ -1122,7 +1122,7 @@ split_object_name(char *name)
 	for(int i = 0; i < 4; i++)
 	{
 		if (i < 4 - count)
-			res[i] = "";
+			res[i] = pstrdup("");
 		else
 			res[i] = temp[i - (4 - count)];
 	}
