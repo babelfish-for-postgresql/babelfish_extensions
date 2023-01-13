@@ -152,9 +152,10 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		len = match.rm_eo - match.rm_so;
 		len = len > 1024 ? 1023 : len;
 		
-		pg_snprintf(root, len, "%s", state + match.rm_so);
+		pg_snprintf(root, len, "%s", state + match.rm_so+1);
 		root[len] = '\0';
 
+		/* add the state (minus the '{') in along with the end tag for the root */
 		appendStringInfo(res, "%s</%s>", state+1, root);
 	}
 	else
