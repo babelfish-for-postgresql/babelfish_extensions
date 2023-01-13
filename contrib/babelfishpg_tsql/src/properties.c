@@ -44,7 +44,7 @@
 #include "utils/varbit.h"
 
 #include "collation.h"
-#include "datatypes.h"
+#include "pltsql.h"
 
 PG_FUNCTION_INFO_V1(connectionproperty);
 PG_FUNCTION_INFO_V1(serverproperty);
@@ -60,12 +60,8 @@ extern bool pltsql_numeric_roundabort;
 extern bool pltsql_quoted_identifier;
 extern char *bbf_servername;
 
-extern bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
-extern bytea *convertIntToSQLVariantByteA(int ret);
-extern  Datum datetime_in_str(char *str);
-extern Datum datetime2sqlvariant(PG_FUNCTION_ARGS);
-extern Datum tinyint2sqlvariant(PG_FUNCTION_ARGS);
 static void* get_servername_helper(void);
+static VarChar *get_product_version_helper(int idx);
 
 Datum connectionproperty(PG_FUNCTION_ARGS) {
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(0));
@@ -74,26 +70,26 @@ Datum connectionproperty(PG_FUNCTION_ARGS) {
 	if (strcasecmp(property, "net_transport") == 0)
 	{
 		const char *ret = "TCP";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "protocol_type") == 0)
 	{
 		const char *ret = "TSQL";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "auth_scheme") == 0)
 	{
 		const char *ret = "SQL";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "local_net_address") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "local_tcp_port") == 0)
 	{
-		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(1433));
+		PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertIntToSQLVariantByteA)(1433));
 	}
 	else if (strcasecmp(property, "client_net_address") == 0)
 	{
@@ -128,19 +124,20 @@ Datum connectionproperty(PG_FUNCTION_ARGS) {
 		clean_ipv6_addr(port->raddr.addr.ss_family, remote_host);
 
 		ret = remote_host;
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "physical_net_transport") == 0)
 	{
 		const char *ret = "TCP";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else
 	{
 		/* for invalid input, return NULL */
 		PG_RETURN_NULL();
 	}
-	PG_RETURN_BYTEA_P(convertVarcharToSQLVariantByteA(vch, PG_GET_COLLATION()));
+
+	PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertVarcharToSQLVariantByteA)(vch, PG_GET_COLLATION()));
 }
 
 void* get_servername_helper()
@@ -151,26 +148,77 @@ void* get_servername_helper()
     initStringInfo(&temp);
     appendStringInfoString(&temp, bbf_servername);
 
-    info = tsql_varchar_input(temp.data, temp.len, -1);
+    info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
     pfree(temp.data);
     return info;
+}
+
+static char *
+get_version_number(const char* version_string, int idx)
+{
+	int		part = 0;
+	char		*token;
+	char 		*copy_version_number = palloc(sizeof(char) * strlen(version_string) + 1);
+
+	Assert(version_string != NULL);
+	if(idx == -1) 
+		return (char *)version_string;
+
+	strncpy(copy_version_number,version_string,strlen(version_string) + 1);
+	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+	{ 
+		if(part == idx)
+			return token;
+		part++;
+	}
+	
+	/* part should less than 2 */
+	Assert(part <= 1);
+	return "";
+}
+
+static VarChar *
+get_product_version_helper(int idx)
+{
+	StringInfoData	temp;
+	void		*info;
+	const char	*product_version;
+
+	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
+	Assert(product_version != NULL);
+	Assert(idx == -1 || idx == 0 || idx == 1);
+
+	initStringInfo(&temp);
+	if(pg_strcasecmp(product_version,"default") == 0)
+	{
+		appendStringInfoString(&temp, get_version_number(BABEL_COMPATIBILITY_VERSION,idx));
+	}
+	else
+	{
+		appendStringInfoString(&temp, get_version_number(product_version,idx));
+	}
+		
+    info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+    pfree(temp.data);
+    return (VarChar *)info;
 }
 
 Datum serverproperty(PG_FUNCTION_ARGS) {
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(0));
 	VarChar *vch = NULL;
 	int64_t intVal = 0;
+
 	if (strcasecmp(property, "BuildClrVersion") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 		TSQLInstrumentation(INSTR_TSQL_SERVERPROPERTY_BUILDCLRVERSION);
 	}
     else if (strcasecmp(property, "Collation") == 0)
     {
 		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
 		if (server_collation_name)
-			vch = tsql_varchar_input(server_collation_name, strlen(server_collation_name), -1);
+			vch = (*common_utility_plugin_ptr->tsql_varchar_input)(server_collation_name, strlen(server_collation_name), -1);
 	}
 	else if (strcasecmp(property, "CollationID") == 0)
 	{
@@ -200,7 +248,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "ComputerNamePhysicalNetBIOS") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_SERVERPROPERTY_COMPUTERNAME_PHYSICAL_NETBIOS);
 	}
 	else if (strcasecmp(property, "Edition") == 0)
@@ -219,7 +267,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 		'SQL Azure'
 		*/
 		const char *ret = "Standard Edition";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 		TSQLInstrumentation(INSTR_TSQL_SERVERPROPERTY_EDITION);
 	}
 	else if (strcasecmp(property, "EditionID") == 0)
@@ -243,19 +291,19 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "InstanceDefaultDataPath") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_SERVERPROPERTY_INSTANCE_DEFAULT_PATH);
 	}
 	else if (strcasecmp(property, "InstanceDefaultLogPath") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_SERVERPROPERTY_INSTANCE_DEFAULT_LOG_PATH);
 	}
 	else if (strcasecmp(property, "InstanceName") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_SERVERPROPERTY_INSTANCE_NAME);
 	}
     else if (strcasecmp(property, "IsAdvancedAnalyticsInstalled") == 0)
@@ -314,19 +362,19 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "LCID") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_SERVERPROPERTY_LCID);
 	}
 	else if (strcasecmp(property, "LicenseType") == 0)
 	{
 		const char *ret = "DISABLED";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_SERVERPROPERTY_LICENSE_TYPE);
 	}
 	else if (strcasecmp(property, "MachineName") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "NumLicenses") == 0)
 	{
@@ -339,49 +387,45 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "ProductBuild") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "ProductBuildType") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "ProductLevel") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "ProductMajorVersion") == 0)
 	{
-		/* Provide a valid SQL Server version that SSMS can accept */
-                const char *ret = BABEL_COMPATIBILITY_MAJOR_VERSION;
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = get_product_version_helper(0);
 	}
 	else if (strcasecmp(property, "ProductMinorVersion") == 0)
 	{
-		const char *ret = "0";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = get_product_version_helper(1);
 	}
 	else if (strcasecmp(property, "ProductUpdateLevel") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "ProductUpdateReference") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "ProductVersion") == 0)
 	{
-		const char *ret = BABEL_COMPATIBILITY_VERSION;
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = get_product_version_helper(-1);
 	}
 	else if (strcasecmp(property, "ResourceLastUpdateDateTime") == 0)
 	{
 		/* We need a valid date in here */
 		const char* date = "2021-01-01 00:00:00-08";
-		Datum        data     = datetime_in_str((char*)date);
+		Datum        data     = (*common_utility_plugin_ptr->datetime_in_str)((char*)date);
 		/*
 		bytea        *result  = gen_sqlvariant_bytea_from_type_datum(DATETIME_T, data);
 		svhdr_1B_t   *svhdr;
@@ -391,14 +435,14 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 		SV_SET_METADATA(svhdr, DATETIME_T, HDR_VER);
 		*/
 
-		Datum result = DirectFunctionCall1(datetime2sqlvariant, data);
+		Datum result = DirectFunctionCall1(common_utility_plugin_ptr->datetime2sqlvariant, data);
 
 		PG_RETURN_BYTEA_P(result);
 	}
 	else if (strcasecmp(property, "ResourceVersion") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "ServerName") == 0)
 	{
@@ -417,24 +461,24 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 		SV_SET_METADATA(svhdr, TINYINT_T, HDR_VER);
 		*/
 
-		Datum result = DirectFunctionCall1(tinyint2sqlvariant, data);
+		Datum result = DirectFunctionCall1(common_utility_plugin_ptr->tinyint2sqlvariant, data);
 
 		PG_RETURN_BYTEA_P(result);
 	}
 	else if (strcasecmp(property, "SqlCharSetName") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "SqlSortOrderName") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "FilestreamShareName") == 0)
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
 	else if (strcasecmp(property, "FilestreamConfiguredLevel") == 0)
 	{
@@ -451,7 +495,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "BabelfishVersion") == 0)
 	{
                 const char *ret = BABELFISH_VERSION_STR;
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
         else if (strcasecmp(property, "BabelfishInternalVersion") == 0)
         {
@@ -462,17 +506,18 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
                 appendStringInfoString(&babelInternalVersion, BABELFISH_INTERNAL_VERSION_STR);
 
                 ret = babelInternalVersion.data;
-                vch = tsql_varchar_input(ret, strlen(ret), -1);
+                vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
         }
 	else
 	{
 		const char *ret = "";
-		vch = tsql_varchar_input(ret, strlen(ret), -1);
+		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
 	}
+
 	if (vch != NULL) {
-		PG_RETURN_BYTEA_P(convertVarcharToSQLVariantByteA(vch, PG_GET_COLLATION()));
+		PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertVarcharToSQLVariantByteA)(vch, PG_GET_COLLATION()));
 	} else {
-		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(intVal));
+		PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertIntToSQLVariantByteA)(intVal));
 	}
 }
 
@@ -496,8 +541,8 @@ Datum sessionproperty(PG_FUNCTION_ARGS) {
 		intVal = (int) pltsql_quoted_identifier;
     else
         PG_RETURN_NULL(); 
-    
-    PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(intVal));
+
+    PG_RETURN_BYTEA_P((*common_utility_plugin_ptr->convertIntToSQLVariantByteA)(intVal));
 }
 
 Datum fulltextserviceproperty(PG_FUNCTION_ARGS) {

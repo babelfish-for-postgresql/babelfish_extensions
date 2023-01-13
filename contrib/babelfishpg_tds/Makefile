@@ -11,6 +11,7 @@ tds_include = $(tds_top_dir)/src/include
 TSQL_SRC = ../babelfishpg_tsql
 
 PG_CFLAGS += -Werror
+PG_CFLAGS += -fstack-protector-strong
 PG_CPPFLAGS += -I$(TSQL_SRC) -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR
 
 # Exclude the following files from the build (sometimes these

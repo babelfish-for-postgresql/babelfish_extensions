@@ -283,6 +283,7 @@ sys-index_columns
 sys-indexes
 sys-key_constraints
 sys-master_files
+sys-partitions
 sys-registered_search_property_lists
 sys-schemas
 sys-selective_xml_index_paths
@@ -336,3 +337,6 @@ BABEL-CHECK-CONSTRAINT
 BABEL-3640
 sys_server_principals_dep
 sys_database_principals_dep
+case_insensitive_collation
+sys-has_perms_by_name
+sys-has_perms_by_name-dep

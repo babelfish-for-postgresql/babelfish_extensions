@@ -67,8 +67,8 @@
 #include "utils/varlena.h"
 #include "utils/xml.h"
 
-#include "datatypes.h"
 #include "catalog.h"
+#include "pltsql.h"
 
 /* ----------
  * Pretty formatting constants
@@ -342,8 +342,9 @@ static Plan *find_recursive_union(deparse_namespace *dpns,
 static text *string_to_text(char *str);
 static char *tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 										 int prettyFlags, bool missing_ok);
+static text *tsql_get_expr_worker(text *expr, Oid relid, const char *relname,
+                                         int prettyFlags);
 static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
-extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 int tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 		bool print_table_args, bool print_defaults, int** typmod_arr_arg, bool* has_tvp);
@@ -377,6 +378,76 @@ tsql_get_constraintdef(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(string_to_text(res));
 }
 
+PG_FUNCTION_INFO_V1(tsql_get_expr);
+
+/* ----------
+ * tsql_get_expr          - Decompile an expression tree
+ *
+ * Input: an expression tree in nodeToString form, and a relation OID
+ *
+ * Output: reverse-listed expression
+ *
+ * Currently, the expression can only refer to a single relation, namely
+ * the one specified by the second parameter.  This is sufficient for
+ * partial indexes, column default expressions, etc.  We also support
+ * Var-free expressions, for which the OID can be InvalidOid.
+ * ----------
+ */
+
+Datum
+tsql_get_expr(PG_FUNCTION_ARGS)
+{
+    text       *expr = PG_GETARG_TEXT_PP(0);
+    Oid         relid = PG_GETARG_OID(1);
+    int         prettyFlags;
+    char       *relname;
+
+    prettyFlags = PRETTYFLAG_INDENT;
+
+    if (OidIsValid(relid))
+    {
+        /* Get the name for the relation */
+        relname = get_rel_name(relid);
+    }
+    else
+    {
+        relname = NULL;
+    }
+    /*
+     * If the relname is NULL, don't throw an error, just return
+     * NULL.  This is a bit questionable, but it's what we've done
+     * historically, and it can help avoid unwanted failures when
+     * examining catalog entries for just-deleted relations.
+     */
+    if (relname == NULL)
+	PG_RETURN_NULL();
+
+    PG_RETURN_TEXT_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
+}
+
+static text *
+tsql_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
+{
+    Node       *node;
+    List       *context;
+    char       *exprstr;
+
+    /* Convert input TEXT object to C string */
+    exprstr = text_to_cstring(expr);
+
+    /* Convert expression to node tree */
+    node = (Node *) stringToNode(exprstr);
+
+    pfree(exprstr);
+
+    /* Prepare deparse context if needed */
+    if (OidIsValid(relid))
+        context = deparse_context_for(relname, relid);
+    else
+        context = NIL;
+							 /* Deparse */
+    return string_to_text(deparse_expression_pretty(node, context, false, false,prettyFlags, 0));
+}
 
 /*
  * tsql_get_functiondef
@@ -1777,7 +1848,7 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 			needlabel |= (constval->consttypmod >= 0);
 			break;
 		default:
-			needlabel = true;
+			needlabel = false;
 			break;
 	}
 	if (needlabel || showtype > 0)
@@ -2737,7 +2808,7 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	 * Assign -1 as typmod which is equivalent to not printing the typmod for
 	 * smalldatetime
 	 */
-	if (is_tsql_smalldatetime_datatype(type_oid))
+	if ((*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(type_oid))
 		typemod = -1;
 
 	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
@@ -2748,7 +2819,7 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
 	fcinfo->args[0].value = ObjectIdGetDatum(type_oid);
 	fcinfo->args[0].isnull = false;
-	tsql_typename = (*translate_pg_type_to_tsql) (fcinfo);
+	tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo);
 
 	/*
 	 * If it is TSQL type then report it without any qualification.
@@ -2779,9 +2850,9 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 		 * Assign correct typename in case of sys.binary, it gives bbf_binary
 		 * internally
 		 */
-		if (is_tsql_binary_datatype(type_oid))
+		if ((*common_utility_plugin_ptr->is_tsql_binary_datatype)(type_oid))
 				buf = pstrdup("binary");
-		if (is_tsql_varbinary_datatype(type_oid))
+		if ((*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(type_oid))
 				buf = pstrdup("varbinary");
 	}
 
@@ -2796,8 +2867,8 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 		* doesn't support typmod.
 		*/
 		if (type_oid == TIMEOID ||
-			is_tsql_datetime2_datatype(type_oid) ||
-			is_tsql_datetimeoffset_datatype(type_oid))
+			(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(type_oid) ||
+			(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(type_oid))
 		{
 			typmodout = InvalidOid;
 		}
