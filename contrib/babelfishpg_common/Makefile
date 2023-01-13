@@ -13,7 +13,7 @@ MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
 
 PG_CFLAGS += -g -Werror
-
+PG_CFLAGS += -fstack-protector-strong
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
 endif
