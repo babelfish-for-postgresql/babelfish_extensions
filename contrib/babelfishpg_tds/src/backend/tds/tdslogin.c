@@ -203,6 +203,7 @@ LoginRequest loginInfo = NULL;
 static const char *PreLoginTokenType(uint8_t token);
 static void DebugPrintPreLoginStructure(PreLoginOption *request);
 static int ParsePreLoginRequest();
+static int *ProcessVersionNumber(const char* inputString);
 static void SetPreLoginResponseVal(Port *port, uint8_t token,
 								StringInfo val, StringInfo reqVal,
 								bool loadSsl, int *loadEncryption);
@@ -387,24 +388,57 @@ ParsePreLoginRequest()
 
 	return 0;
 }
+static int *
+ProcessVersionNumber(const char* inputString)
+{
+	static int 	version_arr[4];
+	int 		part = 0;
+	char		*copy_version_number = palloc0(sizeof(char) * strlen(inputString) + 1);
+	char 		*token;
+
+	Assert(inputString != NULL);
+	strncpy(copy_version_number,inputString,strlen(inputString) + 1);
+	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+	{ 
+		version_arr[part] = atoi(token);
+		part++;
+		Assert(part <= 4);
+	}
+	return version_arr;
+}
 
 static void
 SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 						StringInfo reqVal, bool loadSsl, int *loadEncryption)
 {
+	int *version_pnt;
+	int MajorVersion;
+	int MinorVersion;
+	int MicroVersion;
+
 	switch(token)
 	{
 		case TDS_PRELOGIN_VERSION:
-			/* Major Version 0x0C */
-			appendStringInfoChar(val, 0x0C);
+			if(pg_strcasecmp(product_version,"default") == 0)
+				version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
+			else
+				version_pnt = ProcessVersionNumber(product_version);
 
-			/* Minor Version 0x00 */
-			appendStringInfoChar(val, 0x00);
-
-			/* Micro Version 0x07d0 */
-			appendStringInfoChar(val, 0x07);
-			appendStringInfoChar(val, 0xd0);
-
+			MajorVersion = *(version_pnt + 0);
+			MinorVersion = *(version_pnt + 1);
+			MicroVersion = *(version_pnt + 2);
+			appendStringInfoChar(val, MajorVersion & 0xFF);
+			appendStringInfoChar(val, MinorVersion & 0xFF);
+			if (MicroVersion <= 0xFF)
+			{
+				appendStringInfoChar(val, 0x00);
+				appendStringInfoChar(val, MicroVersion & 0xFF);
+			} 
+			else 
+			{
+				appendStringInfoChar(val, (MicroVersion >> 8) & 0xFF);
+				appendStringInfoChar(val, MicroVersion & 0xFF);
+			}
 			/* Subbuild Version 0x0000 */
 			appendStringInfoChar(val, 0x00);
 			appendStringInfoChar(val, 0x00);

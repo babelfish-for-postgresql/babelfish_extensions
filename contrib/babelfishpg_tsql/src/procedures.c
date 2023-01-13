@@ -2239,7 +2239,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
 	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
 	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
-	char *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+	char *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(2));
 	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
 	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
 
@@ -2266,10 +2266,12 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * 	'<remote server user name>', password '<remote server user password>')
 	 *
 	 */
+
 	if(locallogin == NULL)
-		appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_ROLE SERVER \"%s\" ", servername);
+		appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
 	else
 		appendStringInfo(&query, "CREATE USER MAPPING FOR \"%s\" SERVER \"%s\" ", locallogin, servername);
+
 	/*
 	 * Add the relevant options
 	 *

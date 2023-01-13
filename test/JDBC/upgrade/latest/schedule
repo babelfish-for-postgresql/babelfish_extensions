@@ -368,3 +368,7 @@ app_name
 atn2
 case_insensitive_collation
 linked_servers
+ISC-sequences
+jira-BABEL-3504-upgrade
+sys-has_perms_by_name
+sys-has_perms_by_name-dep
