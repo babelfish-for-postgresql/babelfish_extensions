@@ -111,10 +111,6 @@ GO
 -- Creating a user which is part of sysadmin role
 create login linked_server_login_admin with password = 'adminpass'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The Server principal 'linked_server_login_admin' already exists)~~
-
 
 alter server role sysadmin add member linked_server_login_admin
 GO
