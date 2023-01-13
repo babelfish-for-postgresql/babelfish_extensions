@@ -2078,6 +2078,11 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
+/*
+ * Helper function to execute a utility command using
+ * ProcessUtility(). Caller should make sure their
+ * inputs are sanitized to prevent unexpected behaviour.
+ */
 static void
 exec_utility_cmd_helper(char *query_str)
 {
