@@ -37,3 +37,5 @@ GO
 EXEC master.dbo.sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = NULL
 GO
 
+SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
+GO

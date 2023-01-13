@@ -32,7 +32,6 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_relation.h"
-#include "parser/scansup.h"  /* downcase_identifier */
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
