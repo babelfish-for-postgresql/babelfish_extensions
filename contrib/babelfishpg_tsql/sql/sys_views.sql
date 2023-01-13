@@ -2894,7 +2894,7 @@ CREATE OR REPLACE VIEW sys.linked_logins
 AS
 SELECT
   CAST(u.srvid as int) AS server_id,
-  CAST(0 as int) AS local_principal_id,
+  CAST(u.umid as int) AS local_principal_id,
   CAST(0 as sys.bit) AS uses_self_credential,
   CAST((select string_agg(
                   case
