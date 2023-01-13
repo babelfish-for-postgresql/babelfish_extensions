@@ -102,16 +102,8 @@ PG_FUNCTION_INFO_V1(tsql_query_to_json_ffunc);
 Datum
 tsql_query_to_json_ffunc(PG_FUNCTION_ARGS)
 {
-	char 		*state;
 	StringInfo	res = makeStringInfo();
-	if (PG_ARGISNULL(0))
-	{
-		PG_RETURN_NULL();
-	}
-	else
-	{
-		state = ((StringInfo) PG_GETARG_POINTER(0))->data;
-	}
+	char 		*state = ((StringInfo) PG_GETARG_POINTER(0))->data;
 	if (state[0] == '[') /* check for array wrapper */
 	{
 		appendStringInfoString(res, state);

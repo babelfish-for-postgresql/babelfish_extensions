@@ -8,21 +8,21 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
     root_name text
 ) RETURNS INTERNAL
 AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
-LANGUAGE C COST 100;
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
     state INTERNAL
 )
 RETURNS XML AS
 'babelfishpg_tsql', 'tsql_query_to_xml_ffunc'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
     state INTERNAL
 )
 RETURNS NTEXT AS
 'babelfishpg_tsql', 'tsql_query_to_xml_text_ffunc'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     rec ANYELEMENT,
@@ -58,14 +58,14 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
     root_name TEXT
 ) RETURNS INTERNAL
 AS 'babelfishpg_tsql', 'tsql_query_to_json_sfunc'
-LANGUAGE C;
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
     state INTERNAL
 )
 RETURNS sys.NVARCHAR AS
 'babelfishpg_tsql', 'tsql_query_to_json_ffunc'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
     rec ANYELEMENT,

@@ -119,16 +119,8 @@ tsql_query_to_xml_text_ffunc(PG_FUNCTION_ARGS)
 static StringInfo
 for_xml_ffunc(PG_FUNCTION_ARGS)
 {
-	char 		*state;
 	StringInfo	res = makeStringInfo();
-	if (PG_ARGISNULL(0))
-	{
-		PG_RETURN_NULL();
-	}
-	else
-	{
-		state = ((StringInfo) PG_GETARG_POINTER(0))->data;
-	}
+	char		*state = ((StringInfo) PG_GETARG_POINTER(0))->data;
 	if (state[0] == '{') /* '{' indicates that root was specified, so add the corresponding end tag */
 	{
 		/* set up regex to match first tag */
@@ -149,8 +141,14 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 							errmsg("unexpected error parsing xml root tag")));
 						
 		match = pmatch[0];
-		len = match.rm_eo - match.rm_so;
-		len = len > 1024 ? 1023 : len;
+		len = match.rm_eo - match.rm_so - 1;
+		if (len >= 1024)
+		{
+			ereport(WARNING,
+							(errcode(ERRCODE_WARNING_STRING_DATA_RIGHT_TRUNCATION),
+								errmsg("root name too long and will be truncated at the end tag")));
+		}
+		len = len >= 1024 ? 1023 : len;
 		
 		pg_snprintf(root, len, "%s", state + match.rm_so+1);
 		root[len] = '\0';
