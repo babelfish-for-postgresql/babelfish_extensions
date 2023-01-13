@@ -96,10 +96,6 @@ GO
 -- Creating a simple login which has lesser privilege than sysadmin role
 create login linked_server_login_861 with password = 'password_861'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The Server principal 'linked_server_login_861' already exists)~~
-
 
 -- Try to create linked server with same server name (Should throw error)
 EXEC sp_addlinkedserver  @server = N'mssql_server4', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
