@@ -2157,7 +2157,7 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 					"from pg_proc t1 "
 					"JOIN pg_namespace t2 ON t1.pronamespace = t2.oid "
 					"JOIN sys.babelfish_namespace_ext t3 ON t3.nspname = t2.nspname "
-					"where t1.prokind = 'f' AND t3.dbid = sys.db_id('%s') ", db_name
+					"where t1.prokind = 'f' AND t3.dbid = sys.db_id('%s') ORDER BY t2.nspname, t1.proname", db_name
 				);
 		}
 		else
