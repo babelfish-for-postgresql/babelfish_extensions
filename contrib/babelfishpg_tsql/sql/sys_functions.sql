@@ -478,7 +478,7 @@ LANGUAGE plpgsql
 VOLATILE CALLED ON NULL INPUT;
 
 -- Return the object ID given the object name. Can specify optional type.
-CREATE OR REPLACE FUNCTION sys.object_id(IN object_name VARCHAR, IN object_type VARCHAR DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
 RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
