@@ -59,7 +59,7 @@ typedef enum PgTsqlInstrMetricType {
 	INSTR_TSQL_CEILING,
 	INSTR_TSQL_FLOOR,
 	INSTR_TSQL_ROUND,
-    INSTR_TSQL_STR,
+	INSTR_TSQL_STR,
 
 
 
