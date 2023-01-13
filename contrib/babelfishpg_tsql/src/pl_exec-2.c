@@ -2264,24 +2264,17 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	foreach(lc, params)
 	{
 		FunctionParameter   *p;
-		List* type_names;
 
 		p = (FunctionParameter *) lfirst(lc);
 		args->argnames[i] = p->name;
 		args->argmodes[i] = p->mode;
-
-		type_names = p->argType->names;
 
 		/*
 		 * Handle User defined types with schema qualifiers. Convert logical Schema Name to
 		 * Physical Schema Name. Note: The list length can not be more than 2 since db name
 		 * can not be a qualifier for a UDT and error will be thrown in the parser itself.
 		 */
-		if (list_length(type_names) == 2)
-		{
-			strVal(linitial(type_names)) = get_physical_schema_name(
-							get_cur_db_name(), strVal(linitial(type_names)));
-		}
+		rewrite_plain_name(p->argType->names);
 
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
 		i++;
