@@ -717,7 +717,6 @@ Function sys.xid8rowversion(xid8,integer,boolean)
 Function sys.year(anyelement)
 Operator <=(sys."varchar",sys."varchar")
 Operator <=(sys.bpchar,sys.bpchar)
-Operator <>(sys."varchar",sys."varchar")
 Operator <>(sys.bpchar,sys.bpchar)
 Operator <>(sys.bpchar,text)
 Operator <>(text,sys.bpchar)
@@ -946,7 +945,6 @@ Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
 Type sys."bigint"
-Type sys."int"
 Type sys."real"
 Type sys.bbf_varbinary
 Type sys.cursor
