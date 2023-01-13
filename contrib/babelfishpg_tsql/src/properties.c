@@ -62,6 +62,7 @@ extern char *bbf_servername;
 
 static void* get_servername_helper(void);
 static VarChar *get_product_version_helper(int idx);
+static VarChar *get_product_level_helper();
 
 Datum connectionproperty(PG_FUNCTION_ARGS) {
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(0));
@@ -176,7 +177,7 @@ get_version_number(const char* version_string, int idx)
 	}
 	
 	/* part should less than 2 */
-	Assert(part <= 1);
+	Assert(part <= 2);
 	return "";
 }
 
@@ -201,6 +202,44 @@ get_product_version_helper(int idx)
 		appendStringInfoString(&temp, get_version_number(product_version,idx));
 	}
 		
+    info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+    pfree(temp.data);
+    return (VarChar *)info;
+}
+
+static VarChar *
+get_product_level_helper()
+{
+	StringInfoData	temp;
+	void		*info;
+	const char	*product_version;
+	int				minor_version;
+	char*			product_level_RTM = "RTM";
+	char*			product_level_prefix = "SP";
+	
+    initStringInfo(&temp);
+	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
+	Assert(product_version != NULL);
+
+	if(strcasecmp(product_version,"default") == 0)
+	{
+		Assert(BABEL_COMPATIBILITY_VERSION != NULL);
+		product_version = BABEL_COMPATIBILITY_VERSION;
+	}
+
+	minor_version = atoi(get_version_number(product_version,1));
+	if(minor_version == 0)
+	{
+		appendStringInfoString(&temp, product_level_RTM);
+	}
+	else
+	{
+		appendStringInfoString(&temp, product_level_prefix);
+		appendStringInfoString(&temp, get_version_number(product_version,1));
+		appendStringInfoString(&temp, ".");
+		appendStringInfoString(&temp, get_version_number(product_version,2));
+	}
+
     info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
     pfree(temp.data);
     return (VarChar *)info;
@@ -405,8 +444,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	}
 	else if (strcasecmp(property, "ProductLevel") == 0)
 	{
-		const char *ret = "";
-		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
+		vch = get_product_level_helper();
 	}
 	else if (strcasecmp(property, "ProductMajorVersion") == 0)
 	{
