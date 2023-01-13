@@ -5,14 +5,17 @@ runs:
     - name: Install Dependencies
       run: |
         cd ~
-        echo 'Acquire::Retries "10";
-        Acquire::https::Timeout "240";
-        Acquire::http::Timeout "240";
-        APT::Get::Assume-Yes "true";
-        APT::Install-Recommends "false";
-        APT::Install-Suggests "false";
-        Debug::Acquire::https "true";
-        ' | sudo tee -a /etc/apt/apt.conf.d/99custom
+        # echo 'Acquire::Retries "10";
+        # Acquire::https::Timeout "240";
+        # Acquire::http::Timeout "240";
+        # APT::Get::Assume-Yes "true";
+        # APT::Install-Recommends "false";
+        # APT::Install-Suggests "false";
+        # Debug::Acquire::https "true";
+        # ' | sudo tee -a /etc/apt/apt.conf.d/99custom
+        sudo gem install apt-spy2
+        sudo apt-spy2 check
+        sudo apt-spy2 fix --commit
         sudo apt clean && sudo apt-get update --fix-missing -y
         curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
         curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
