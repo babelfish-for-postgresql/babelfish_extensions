@@ -1,29 +1,85 @@
 -- psql
 select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext
-where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdblanguageenglish@AD','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL');
+where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdbenglish@AD','userpassword','duplicate@BABEL','duplicatedefaultdb@BABEL');
 GO
 ~~START~~
 name#!#"sys"."varchar"#!#bpchar#!#"sys"."varchar"#!#"sys"."varchar"
 passworduser#!#PassWordUser#!#S#!#master#!#English
 aduser@AD#!#ad\Aduser#!#U#!#master#!#English
 aduserdb@AD#!#ad\Aduserdb#!#U#!#ad_db#!#English
-aduserdblanguageenglish@AD#!#ad\AduserdblanguageEnglish#!#U#!#ad_db#!#English
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL#!#babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#U#!#master#!#English
+aduserdbenglish@AD#!#ad\AduserdbEnglish#!#U#!#ad_db#!#English
+userpassword#!#usErpassWord#!#S#!#master#!#English
+duplicate@BABEL#!#babel\duplicate#!#U#!#master#!#English
+duplicatedefaultdb@BABEL#!#babel\duplicatedefaultdb#!#U#!#master#!#English
 ~~END~~
 
 
 -- tsql
 select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext
-where orig_loginname = 'babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+where orig_loginname in ('PassWordUser','ad\Aduser','ad\AduserdbEnglish','usErpassWord','babel\duplicate','babel\duplicatedefaultdb');
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#nvarchar
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL#!#babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#master#!#English
+passworduser#!#PassWordUser#!#master#!#English
+aduser@AD#!#ad\Aduser#!#master#!#English
+aduserdbenglish@AD#!#ad\AduserdbEnglish#!#ad_db#!#English
+userpassword#!#usErpassWord#!#master#!#English
+duplicate@BABEL#!#babel\duplicate#!#master#!#English
+duplicatedefaultdb@BABEL#!#babel\duplicatedefaultdb#!#master#!#English
 ~~END~~
 
 
 -- tsql
 select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+GO
+~~START~~
+int
+0
+~~END~~
+
+select count(*) from sys.server_principals where name = 'passworduser';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from sys.server_principals where name = 'aduser@AD';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from sys.server_principals where name = 'aduserdb@AD';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from sys.server_principals where name = 'aduserdbenglish@AD';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from sys.server_principals where name = 'userpassword';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from sys.server_principals where name = 'duplicate@BABEL';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from sys.server_principals where name = 'duplicatedefaultdb@BABEL';
 GO
 ~~START~~
 int
@@ -33,6 +89,55 @@ int
 
 -- psql
 select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+GO
+~~START~~
+int8
+0
+~~END~~
+
+select count(*) from pg_authid where rolname = 'passworduser';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+select count(*) from pg_authid where rolname = 'aduser@AD';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+select count(*) from pg_authid where rolname = 'aduserdb@AD';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+select count(*) from pg_authid where rolname = 'aduserdbenglish@AD';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+select count(*) from pg_authid where rolname = 'userpassword';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+select count(*) from pg_authid where rolname = 'duplicate@BABEL';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+select count(*) from pg_authid where rolname = 'duplicatedefaultdb@BABEL';
 GO
 ~~START~~
 int8
