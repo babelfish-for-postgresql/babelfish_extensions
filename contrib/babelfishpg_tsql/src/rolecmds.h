@@ -18,6 +18,9 @@
 #define LOGIN_EXT_PROPERTIES			10
 #define LOGIN_EXT_ORIG_LOGINNAME		11
 
+#define NAMEDATALEN_WINDOWS_MAX 21
+#define NAMEDATALEN_WINDOWS_MIN 0
+
 
 #define BBF_AUTHID_USER_EXT_NUM_COLS					16
 #define USER_EXT_ROLNAME								0
@@ -65,5 +68,7 @@ extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
 extern bool is_active_login(Oid role_oid);
 extern char *convertToUPN(char* input);
 extern HeapTuple get_roleform_ext(char *login);
+extern bool windows_login_contains_invalid_chars(char* input);
+extern bool check_windows_login_length(char* input);
 
 #endif

@@ -2001,6 +2001,8 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
 
+	pfree(new_record);
+	pfree(new_record_nulls);
 	return (Datum) 0;
 }
 
@@ -2083,4 +2085,53 @@ babelfish_reset_domain_mapping_internal(PG_FUNCTION_ARGS)
 
 	table_close(bbf_domain_mapping_rel, RowExclusiveLock);
 	return (Datum) 0;
+}
+/*
+* AD does not allow user to have some special characters,
+* from babelfish side, we can not connect to AD directly 
+* so we do not know whether the user exists in AD or not.
+* From TDS endpoint, if login is created with such special
+* characters, then we will throw error or else the user will 
+* get confused because the login will get created but they 
+* won't be able to connect
+*/
+bool 
+windows_login_contains_invalid_chars(char* input)
+{
+	char* pos_slash = strchr(input, '\\');
+	char* pos_end = strchr(input, '\0');
+	int length_to_copy = pos_end - pos_slash - 1;
+	int pos_to_copy_from = strlen(input) - length_to_copy;
+
+	char* login_name = palloc(length_to_copy + 1);
+	memcpy(login_name, input + pos_to_copy_from, length_to_copy);
+	login_name[length_to_copy + 1] = '\0';
+
+
+	if (strchr(login_name, '\\') != NULL || strchr(login_name, '/') != NULL || 
+	strchr(login_name, '[') != NULL || strchr(login_name, ']') != NULL ||
+	strchr(login_name, ';') != NULL || strchr(login_name, ':') != NULL ||
+	strchr(login_name, '|') != NULL || strchr(login_name, '=') != NULL ||
+	strchr(login_name, ',') != NULL || strchr(login_name, '+') != NULL ||
+	strchr(login_name, '*') != NULL || strchr(login_name, '?') != NULL ||
+	strchr(login_name, '<') != NULL || strchr(login_name, '>') != NULL ||
+	strchr(login_name, '@') != NULL)
+		return true;
+	else
+	{
+		pfree(login_name);
+		return false;
+	}
+}
+
+bool
+check_windows_login_length(char* input)
+{
+	char* pos_slash = strchr(input, '\\');
+	char* pos_end = strchr(input, '\0');
+
+	if ((pos_end - pos_slash - 1) < NAMEDATALEN_WINDOWS_MAX && (pos_end - pos_slash - 1) > NAMEDATALEN_WINDOWS_MIN)
+		return true;
+	else
+		return false;
 }

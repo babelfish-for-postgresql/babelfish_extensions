@@ -2420,8 +2420,23 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								ereport(ERROR, (errcode(ERRCODE_INVALID_NAME),
 				 					errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
 										orig_loginname)));
+
+							if (!check_windows_login_length(orig_loginname))
+								ereport(ERROR,
+									(errcode(ERRCODE_INVALID_NAME),
+									 errmsg("The login name '%s' has invalid length. Login name length should be between %d and %d for windows login.",
+											orig_loginname, (NAMEDATALEN_WINDOWS_MIN + 1), (NAMEDATALEN_WINDOWS_MAX - 1))));
+
+							if (windows_login_contains_invalid_chars(orig_loginname))
+								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+
 							pfree(stmt->role);
 							stmt->role = convertToUPN(orig_loginname);
+
+							if (get_role_oid(stmt->role, true) != InvalidOid)
+						  		ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
+									errmsg("The Server principal '%s' already exists", stmt->role)));
 						}
 
 						/*
