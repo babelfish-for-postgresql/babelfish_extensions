@@ -125,7 +125,6 @@ Could not find upgrade tests for function sys.format_numeric
 Could not find upgrade tests for function sys.formatmessage
 Could not find upgrade tests for function sys.get_current_full_xact_id
 Could not find upgrade tests for function sys.get_host_os
-Could not find upgrade tests for function sys.has_perms_by_name
 Could not find upgrade tests for function sys.ident_incr
 Could not find upgrade tests for function sys.ident_seed
 Could not find upgrade tests for function sys.is_collated_ci_as
