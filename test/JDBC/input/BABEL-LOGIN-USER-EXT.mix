@@ -5,6 +5,8 @@ SELECT pg_reload_conf();
 CREATE USER foo WITH LOGIN PASSWORD 'abc';
 CREATE USER su_user WITH SUPERUSER LOGIN PASSWORD 'abc';
 GO
+SELECT pg_sleep(1);
+GO
 
 -- tsql      user=foo      password=abc
 -- Login with non babelfish user should fail
@@ -709,4 +711,7 @@ SELECT pg_sleep(1);
 GO
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
 SELECT pg_reload_conf();
+GO
+
+SELECT pg_sleep(1);
 GO

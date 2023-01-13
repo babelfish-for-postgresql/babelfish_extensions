@@ -278,6 +278,8 @@ GO
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 SELECT pg_reload_conf();
 GO
+SELECT pg_sleep(1);
+GO
 
 -- tsql
 USE master;
@@ -348,4 +350,6 @@ GO
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
 SELECT pg_reload_conf();
+GO
+SELECT pg_sleep(1);
 GO
