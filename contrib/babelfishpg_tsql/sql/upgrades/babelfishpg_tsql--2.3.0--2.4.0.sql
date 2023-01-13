@@ -817,11 +817,11 @@ and
   );
 GRANT SELECT ON sys.types TO PUBLIC;
 
--- function sys.object_id(object_name, object_type) needs to change input type to VARCHAR
+-- function sys.object_id(object_name, object_type) needs to change input type to sys.VARCHAR
 ALTER FUNCTION sys.object_id RENAME TO object_id_deprecated_in_2_4_0;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'object_id_deprecated_in_2_4_0');
 
-CREATE OR REPLACE FUNCTION sys.object_id(IN object_name VARCHAR, IN object_type VARCHAR DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
 RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
