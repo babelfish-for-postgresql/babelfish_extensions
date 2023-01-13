@@ -172,9 +172,8 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 			{
 				LS_TDS_NUMERIC *numeric;
 				StringInfo pbuf;
-				int i = 0;
-				char numeric_bytes[16] = {0x00}; /* max storage bytes for numeric - sign byte = 17 - 1 = 16*/
-				int n;
+				int n, i = 0;
+				char numeric_bytes[16] = {0x00}; /* max storage bytes for numeric - sign byte = 17 - 1 = 16 */
 
 				numeric = (LS_TDS_NUMERIC *)val;
 
@@ -286,7 +285,7 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 }
 
 /*
- * Given T-SQL data type in string, return equivalent client libary TDS
+ * Given T-SQL data type in string, return equivalent client library TDS
  * type. Used when preparing tuple descriptor for T-SQL OPENQUERY.
  */
 int
@@ -412,6 +411,8 @@ tdsTypeToOid(int datatype)
 				 * the column metadata token, it reads it as TSQL_NUMERIC but while computing
 				 * the tuple descriptor using sp_describe_first_result_set, the system_type_name
 				 * is decimal which causes a mismatch between actual and expected data type.
+				 * 
+				 * To get around this, we store both decimal and numeric with NUMERICOID
 				 */
 				return NUMERICOID;
 			case TSQL_FLOAT:
@@ -560,7 +561,7 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 	if (mapping == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Error user mapping with servername '%s'", servername)
+					errmsg("Error fetching user mapping with servername '%s'", servername)
 				));
 #ifdef ENABLE_TDS_LIB
 
