@@ -358,6 +358,9 @@ bcp -w#!#in#!#bcp_source#!#destinationTable
 #Q#Insert into sourceTable values (NULL, 1);
 #Q#Insert into sourceTable values (NULL, NULL);
 #Q#Insert into sourceTable(a) values (2);
+#Q#Insert into sourceTable(b) values (2);
+#Q#Insert into sourceTable(a) values (3);
+#Q#Insert into sourceTable values (4, NULL);
 bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable1
 bcp#!#in#!#bcp_source#!#destinationTable2
@@ -368,6 +371,9 @@ bcp#!#in#!#bcp_source#!#destinationTable2
 #!#1
 #!#
 2#!#
+#!#2
+3#!#
+4#!#
 #Q#Select * from destinationTable1
 #D#int#!#int
 1#!#1
@@ -375,6 +381,9 @@ bcp#!#in#!#bcp_source#!#destinationTable2
 #!#1
 #!#
 2#!#
+#!#2
+3#!#
+4#!#
 #Q#Select * from destinationTable2
 #D#int#!#int
 1#!#1
@@ -382,6 +391,15 @@ bcp#!#in#!#bcp_source#!#destinationTable2
 #!#1
 #!#4
 2#!#4
+#!#2
+3#!#4
+4#!#4
+#Q#select count(*) from destinationTable1 where b is NULL
+#D#int
+5
+#Q#select count(*) from destinationTable2 where b is NULL
+#D#int
+0
 #Q#drop table sourceTable
 #Q#drop table destinationTable1
 #Q#drop table destinationTable2
@@ -393,6 +411,9 @@ bcp#!#in#!#bcp_source#!#destinationTable2
 #Q#Insert into sourceTable values (NULL, 1);
 #Q#Insert into sourceTable values (NULL, NULL);
 #Q#Insert into sourceTable(a) values (2);
+#Q#Insert into sourceTable(b) values (2);
+#Q#Insert into sourceTable(a) values (3);
+#Q#Insert into sourceTable values (4, NULL);
 bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable1
 bcp#!#in#!#bcp_source#!#destinationTable2
@@ -403,6 +424,9 @@ bcp#!#in#!#bcp_source#!#destinationTable2
 #!#1
 #!#
 2#!#4
+#!#2
+3#!#4
+4#!#
 #Q#Select * from destinationTable1
 #D#int#!#int
 1#!#1
@@ -410,6 +434,9 @@ bcp#!#in#!#bcp_source#!#destinationTable2
 #!#1
 #!#
 2#!#4
+#!#2
+3#!#4
+4#!#
 #Q#Select * from destinationTable2
 #D#int#!#int
 1#!#1
@@ -417,6 +444,15 @@ bcp#!#in#!#bcp_source#!#destinationTable2
 #!#1
 #!#4
 2#!#4
+#!#2
+3#!#4
+4#!#4
+#Q#select count(*) from destinationTable1 where b is NULL
+#D#int
+3
+#Q#select count(*) from destinationTable2 where b is NULL
+#D#int
+0
 #Q#drop table sourceTable
 #Q#drop table destinationTable1
 #Q#drop table destinationTable2
