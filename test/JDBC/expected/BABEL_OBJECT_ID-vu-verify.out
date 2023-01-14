@@ -117,7 +117,7 @@ GO
 int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: String or binary data would be truncated.)~~
+~~ERROR (Message: input value is too long for object name)~~
 
 
 SELECT OBJECT_ID('babel_object_id_t1', '')
@@ -129,6 +129,22 @@ int
 
 
 SELECT OBJECT_ID(NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_ID('', '')
 GO
 ~~START~~
 int
