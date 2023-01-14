@@ -638,8 +638,7 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 const char *
 translate_bbf_collation_to_tsql_collation(const char *collname)
 {
-	int last = TOTAL_REVERSE_COLL_TRANSLATION_COUNT - 1;
-	for (int i = 0; i < last; i++)
+	for (int i = 0; i < TOTAL_REVERSE_COLL_TRANSLATION_COUNT; i++)
 		if (pg_strcasecmp(reverse_coll_translations[i].from_collname, collname) == 0)
 			return (reverse_coll_translations[i].to_collname);
 
