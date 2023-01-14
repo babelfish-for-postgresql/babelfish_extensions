@@ -52,7 +52,7 @@ BABEL-3234
 BABEL-3402
 BABEL-3646-before-14_6
 cast_numeric_types_to_datetime
-routines_definition
+routines_definition_before-14_7-or-15_2
 column_domain_usage
 constraint_column_usage
 sp_describe_first_result_set

@@ -669,7 +669,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
             CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
             CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
-            CAST(sys.tsql_get_functiondef(p.oid) AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
+            CAST(f.definition AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
             CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
             CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
             CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
@@ -687,7 +687,9 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
             pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
-	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT)
+		left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+			and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate sys.database_default,
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,

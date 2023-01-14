@@ -142,6 +142,7 @@ static SimpleEcontextStackEntry *simple_econtext_stack = NULL;
 	MemoryContextAlloc(get_eval_mcontext(estate), sz)
 #define eval_mcontext_alloc0(estate, sz) \
 	MemoryContextAllocZero(get_eval_mcontext(estate), sz)
+char *original_query_string = NULL;
 
 /*
  * We use a session-wide hash table for caching cast information.
@@ -4607,6 +4608,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	/* fetch current search_path */
 	List 		*path_oids = fetch_search_path(false);
 	char 		*old_search_path = flatten_search_path(path_oids);
+	if (stmt->original_query)
+		original_query_string = stmt->original_query;
 
 	if (stmt->is_cross_db)
 	{
@@ -10206,4 +10209,13 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 		return true;
 	}
 	return false;
+}
+
+/*
+ * Get the original_query_string which stores the original query.
+ */
+char*
+get_original_query_string(void)
+{
+	return original_query_string;
 }
