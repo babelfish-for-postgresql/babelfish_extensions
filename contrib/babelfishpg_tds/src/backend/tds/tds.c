@@ -423,7 +423,6 @@ tdsstat_bestart(void)
 	char *library_name = NULL;
 	char *host_name = NULL;
 	const char *language = NULL;
-	const char *guc_val = NULL;
 
 	/*
 	 * To minimize the time spent modifying the TdsStatus entry, and
@@ -440,7 +439,6 @@ tdsstat_bestart(void)
 		   unvolatize(TdsStatus *, vtdsentry),
 		   sizeof(TdsStatus));
 
-
 	ltdsentry.st_procpid = MyProcPid;
 	ltdsentry.client_version = MyTdsClientVersion;
 	ltdsentry.client_pid = MyTdsClientPid;
@@ -448,42 +446,31 @@ tdsstat_bestart(void)
 	ltdsentry.packet_size = MyTdsPacketSize;
 
 	/* Set the boot GUC values */
-	guc_val = GetConfigOption("babelfishpg_tsql.quoted_identifier", true, true);
-	ltdsentry.quoted_identifier = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+	ltdsentry.quoted_identifier = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->quoted_identifier) ? pltsql_plugin_handler_ptr->quoted_identifier : true;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.arithabort", true, true);
-	ltdsentry.arithabort = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+	ltdsentry.arithabort = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->arithabort) ? pltsql_plugin_handler_ptr->arithabort : true;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.ansi_null_dflt_on", true, true);
-	ltdsentry.ansi_null_dflt_on = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+	ltdsentry.ansi_null_dflt_on = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->ansi_null_dflt_on) ? pltsql_plugin_handler_ptr->ansi_null_dflt_on : true;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.ansi_defaults", true, true);
-	ltdsentry.ansi_defaults = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+	ltdsentry.ansi_defaults = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->ansi_defaults) ? pltsql_plugin_handler_ptr->ansi_defaults : true;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.ansi_warnings", true, true);
-	ltdsentry.ansi_warnings = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+	ltdsentry.ansi_warnings = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->ansi_warnings) ? pltsql_plugin_handler_ptr->ansi_warnings : true;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.ansi_padding", true, true);
-	ltdsentry.ansi_padding = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+	ltdsentry.ansi_padding = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->ansi_padding) ? pltsql_plugin_handler_ptr->ansi_padding : true;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.ansi_nulls", true, true);
-	ltdsentry.ansi_nulls = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+	ltdsentry.ansi_nulls = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->ansi_nulls) ? pltsql_plugin_handler_ptr->ansi_nulls : true;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.concat_null_yields_null", true, true);
-	ltdsentry.concat_null_yields_null = ((guc_val == NULL) || (strcmp(guc_val, "on") == 0)) ? true : false;
+	ltdsentry.concat_null_yields_null = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->concat_null_yields_null) ? pltsql_plugin_handler_ptr->concat_null_yields_null : true;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.textsize", true, true);
-	ltdsentry.textsize = guc_val != NULL ? atoi(guc_val) : 0;
+	ltdsentry.textsize = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->textsize) ? pltsql_plugin_handler_ptr->textsize : 0;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.datefirst", true, true);
-	ltdsentry.datefirst = guc_val != NULL ? atoi(guc_val) : 7;
+	ltdsentry.datefirst = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->datefirst) ? pltsql_plugin_handler_ptr->datefirst : 7;
 
-	guc_val = GetConfigOption("babelfishpg_tsql.lock_timeout", true, true);
-	ltdsentry.lock_timeout = guc_val != NULL ? atoi(guc_val) : -1;
+	ltdsentry.lock_timeout = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->lock_timeout) ? pltsql_plugin_handler_ptr->lock_timeout : -1;
 
 	ltdsentry.transaction_isolation = DefaultXactIsoLevel;
 
-	language = GetConfigOption("babelfishpg_tsql.language", true, true);
+	language = (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->language) ? pltsql_plugin_handler_ptr->language : NULL;
 
 	if (language != NULL)
 	{
