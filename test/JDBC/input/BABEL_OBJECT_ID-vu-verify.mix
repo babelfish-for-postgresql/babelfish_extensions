@@ -55,6 +55,12 @@ GO
 SELECT OBJECT_ID(NULL)
 GO
 
+SELECT OBJECT_ID('')
+GO
+
+SELECT OBJECT_ID('', '')
+GO
+
 -- leading spaces should fail
 SELECT (CASE WHEN OBJECT_NAME(OBJECT_ID('   babel_object_id_t1')) = 'babel_object_id_t1' THEN 'true' ELSE 'false' END) result;
 GO

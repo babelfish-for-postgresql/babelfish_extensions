@@ -963,22 +963,24 @@ object_id(PG_FUNCTION_ARGS)
 
 	if(PG_ARGISNULL(0))
 		PG_RETURN_NULL();
-	else 
-		input = text_to_cstring(PG_GETARG_TEXT_P(0));
+	input = text_to_cstring(PG_GETARG_TEXT_P(0));
+
 	if(!PG_ARGISNULL(1))
 	{
-		object_type = text_to_cstring(PG_GETARG_TEXT_P(1));
-		i = strlen(object_type);
+		char *str = text_to_cstring(PG_GETARG_TEXT_P(1));
+		i = strlen(str);
 		if (i > 2)
 		{
 			pfree(input);
-			pfree(object_type);
+			pfree(str);
 			PG_RETURN_NULL();
 		}
-		else if (i == 2 && isspace((unsigned char) object_type[1]))
+		else if (i == 2 && isspace((unsigned char) str[1]))
 		{
-			object_type[1] = '\0';
+			str[1] = '\0';
 		}
+		object_type = downcase_identifier(str, strlen(str), false, false);
+		pfree(str);
 	}
 	/* strip trailing whitespace from input */
 	i = strlen(input);
@@ -988,8 +990,8 @@ object_id(PG_FUNCTION_ARGS)
 	/* length should be restricted to 4000 */
 	if (i > 4000)
 		ereport(ERROR,
-			(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-			errmsg("String or binary data would be truncated.")));
+			(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+			errmsg("input value is too long for object name")));
 
 	/* resolve the three part name */
 	splited_object_name = split_object_name(input);
@@ -1056,6 +1058,7 @@ object_id(PG_FUNCTION_ARGS)
 		}
 		else
 		{
+			pfree(schema_name);
 			schema_name  = get_authid_user_ext_schema_name((const char *) db_name, user);
 			physical_schema_name = get_physical_schema_name(db_name, schema_name);
 		}
@@ -1088,8 +1091,8 @@ object_id(PG_FUNCTION_ARGS)
 	{	
 		if (is_temp_object)
 		{
-			if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
-				!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
+			if (!strcmp(object_type, "s") || !strcmp(object_type, "u") || !strcmp(object_type, "v") ||
+				!strcmp(object_type, "it") || !strcmp(object_type, "et") || !strcmp(object_type, "so"))
 			{
 				/* search in list of ENRs registered in the current query environment by name */
 				EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
@@ -1098,8 +1101,8 @@ object_id(PG_FUNCTION_ARGS)
 					result = enr->md.reliddesc;
 				}
 			}
-			else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
-					!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
+			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
+					!strcmp(object_type, "sn") || !strcmp(object_type, "sq") || !strcmp(object_type, "tt"))
 			{
 				ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1108,8 +1111,8 @@ object_id(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			if (!strcmp(object_type, "S") || !strcmp(object_type, "U") || !strcmp(object_type, "V") ||
-				!strcmp(object_type, "IT") || !strcmp(object_type, "ET") || !strcmp(object_type, "SO"))
+			if (!strcmp(object_type, "s") || !strcmp(object_type, "u") || !strcmp(object_type, "v") ||
+				!strcmp(object_type, "it") || !strcmp(object_type, "et") || !strcmp(object_type, "so"))
 			{
 				/* search in pg_class by name and schema oid */
 				Oid relid = get_relname_relid((const char *) object_name, schema_oid);
@@ -1118,27 +1121,27 @@ object_id(PG_FUNCTION_ARGS)
 					result = relid;
 				} 
 			}
-			else if (!strcmp(object_type, "C") || !strcmp(object_type, "D") || !strcmp(object_type, "F") ||
-				!strcmp(object_type, "PK") || !strcmp(object_type, "UQ"))
+			else if (!strcmp(object_type, "c") || !strcmp(object_type, "d") || !strcmp(object_type, "f") ||
+				!strcmp(object_type, "pk") || !strcmp(object_type, "uq"))
 			{
 				/* search in pg_constraint by name and schema oid */
 				result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
 			}
-			else if (!strcmp(object_type, "AF") || !strcmp(object_type, "FN") || !strcmp(object_type, "FS") ||
-				!strcmp(object_type, "FT") || !strcmp(object_type, "IF") || !strcmp(object_type, "P") ||
-				!strcmp(object_type, "PC") || !strcmp(object_type, "TF") || !strcmp(object_type, "RF") ||
-				!strcmp(object_type, "X"))
+			else if (!strcmp(object_type, "af") || !strcmp(object_type, "fn") || !strcmp(object_type, "fs") ||
+				!strcmp(object_type, "ft") || !strcmp(object_type, "if") || !strcmp(object_type, "p") ||
+				!strcmp(object_type, "pc") || !strcmp(object_type, "tf") || !strcmp(object_type, "rf") ||
+				!strcmp(object_type, "x"))
 			{
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
 			}
-			else if (!strcmp(object_type, "TR") || !strcmp(object_type, "TA"))
+			else if (!strcmp(object_type, "tr") || !strcmp(object_type, "ta"))
 			{
 				/* search in pg_trigger by name and schema oid */
 				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
 			}
-			else if (!strcmp(object_type, "R") || !strcmp(object_type, "EC") || !strcmp(object_type, "PG") ||
-				!strcmp(object_type, "SN") || !strcmp(object_type, "SQ") || !strcmp(object_type, "TT"))
+			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
+				!strcmp(object_type, "sn") || !strcmp(object_type, "sq") || !strcmp(object_type, "tt"))
 			{
 				ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
