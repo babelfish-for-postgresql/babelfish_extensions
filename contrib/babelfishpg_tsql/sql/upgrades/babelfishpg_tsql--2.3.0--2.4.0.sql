@@ -621,6 +621,8 @@ SET allow_system_table_mods = off;
 
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+
 CREATE OR REPLACE VIEW information_schema_tsql.routines AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
