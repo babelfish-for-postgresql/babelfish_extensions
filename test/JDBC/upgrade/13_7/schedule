@@ -293,3 +293,4 @@ ISC-Table_Constraints
 sys_server_principals_dep_for_13_x
 sys_database_principals_dep_for_13_x
 case_insensitive_collation
+sys-all_sql_modules_before-14_7-or-15_2
