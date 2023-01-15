@@ -311,7 +311,6 @@ sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
 sys-system_sql_modules
-sys-sql_modules
 sys-table_types
 sys-tables
 sys-triggers
@@ -359,3 +358,4 @@ sys_database_principals_dep
 TestVariableDataLength
 BABEL-3801
 sys-all_sql_modules_before-14_7-or-15_2
+sys-sql_modules_before-14_7-or-15_2
