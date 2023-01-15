@@ -35,6 +35,23 @@ Oid tdsTypeToOid(int datatype);
 int tdsTypeLen(int datatype, int datalen, bool is_metadata);
 Datum getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
 
+/*
+ * T-SQL OPENQUERY is implemented as a PG range table function.
+ * For a PG range table function, the expected tuple descriptor
+ * is computed twice from the SQL definition: first during the
+ * pre-analyze phase of query execution, and next during the
+ * query planning phase. In case of T-SQL OPENQUERY, the tuple
+ * descriptor computation is a costly operation which involves
+ * connecting to the remote server to get the expected column
+ * metadata information using sp_describe_first_result_set.
+ *
+ * As an optimization, instead of doing the above operation twice,
+ * we store the initial computed tuple descriptor in this structure
+ * and simply re-use it a second time during the planning phase.
+ *
+ * We invalidate the stored tuple descriptor once the actual column
+ * metadata is fetched as part of the OPENQUERY result-set.
+ */
 static TupleDesc curr_openquery_tupdesc = NULL;
 
 static int
@@ -63,8 +80,21 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 			errmsg("%s", buf.data)));
 	else
+	{
+		/*
+		 * We delibrately don't call the TDS report warning/info function
+		 * here because in doing so, it spews a lot of messages client side
+		 * like for database change, language change for every single connection
+		 * made to a remote server. Thus, we just log those events in the PG log
+		 * files. It would be better to atleast send the warnings client side but
+		 * currently there is no way the client libary is able to distinguish
+		 * between a warning and an informational message.
+		 *
+		 * TODO: Distinguish between WARNING and INFO
+		 */
 		ereport(INFO,
 			(errmsg("%s", buf.data)));
+	}
 
 	return 0;
 }
@@ -99,10 +129,18 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 		case TSQL_XML:
 		case TSQL_NVARCHAR_X:
 		case TSQL_NCHAR_X:
+			/*
+			 * All character data types are received from the client library in a format that can
+			 * directly be stored in a PG tuple store so they need our TDS side receiver magic.
+			 */
 			PG_RETURN_VARCHAR_P((VarChar *)cstring_to_text_with_len((char *)val, len));
 			break;
 		case TSQL_TEXT:
 		case TSQL_NTEXT:
+			/*
+			 * All character data types are received from the client library in a format that can
+			 * directly be stored in a PG tuple store, so they do not need our TDS side receiver magic.
+			 */
 			PG_RETURN_TEXT_P(cstring_to_text_with_len((char *)val, len));
 			break;
 		case TSQL_DATETIME:
@@ -811,9 +849,9 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 				else
 				{
 					/*
-					* Result set is empty, that means DML/DDL was passed as an argument to
-					* sp_describe_first_result_set. Since we only support SELECTs, we error out.
-					*/
+					 * Result set is empty, that means DML/DDL was passed as an argument to
+					 * sp_describe_first_result_set. Since we only support SELECTs, we error out.
+					 */
 					ereport(ERROR,
 						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Query passed to OPENQUERY did not return a result set")
@@ -842,6 +880,9 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 	PG_FINALLY();
 	{
 		LINKED_SERVER_EXIT();
+
+		if (buf.data)
+			pfree(buf.data);
 	}
 	PG_END_TRY();
 #endif

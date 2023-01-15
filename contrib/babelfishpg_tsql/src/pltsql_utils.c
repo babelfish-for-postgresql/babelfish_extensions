@@ -894,7 +894,7 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 void
 report_info_or_warning(int elevel, char* message)
 {
-	ereport(WARNING, errmsg("%s", message));
+	ereport(elevel, errmsg("%s", message));
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);

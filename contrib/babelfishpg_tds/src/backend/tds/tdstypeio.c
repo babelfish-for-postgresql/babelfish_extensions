@@ -3794,7 +3794,7 @@ Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int optiona
 				uint64	val;
 
 				/* 
-				 * By default the we calculate date from 01-01-0001
+				 * By default we calculate date from 01-01-0001
 				 * but buf has number of days from 01-01-1900. So adding
 				 * number of days between 01-01-1900 and 01-01-0001
 				 */
@@ -3807,6 +3807,7 @@ Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int optiona
 			}
 		case TDS_TYPE_TIME:
 			{
+				/* optional attribute here is scale */
 				while (optional_attr--)
 					time /= 10;
 
@@ -3823,12 +3824,13 @@ Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int optiona
 				Timestamp	timestamp;
 
 				/* 
-				 * By default the we calculate date from 01-01-0001
+				 * By default we calculate date from 01-01-0001
 				 * but buf has number of days from 01-01-1900. So adding
 				 * number of days between 01-01-1900 and 01-01-0001
 				 */
 				date += TdsGetDayDifferenceHelper(1, 1, 1900, true);
 
+				/* optional attribute here is scale */
 				TdsGetTimestampFromDayTime(date, time, 0, &timestamp, optional_attr);
 
 				PG_RETURN_TIMESTAMP((Timestamp)timestamp);
@@ -3838,8 +3840,14 @@ Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int optiona
 				tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
 				TimestampTz	timestamp;
 
+				/* 
+				 * By default we calculate date from 01-01-0001
+				 * but buf has number of days from 01-01-1900. So adding
+				 * number of days between 01-01-1900 and 01-01-0001
+				 */
 				date += TdsGetDayDifferenceHelper(1, 1, 1900, true);
 
+				/* optional attribute here is time offset */
 				optional_attr *= -1;
 				TdsGetTimestampFromDayTime(date, time, (int)optional_attr, &timestamp, 7);
 

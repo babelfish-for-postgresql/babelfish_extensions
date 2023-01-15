@@ -3069,6 +3069,10 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 	}
 }
 
+/*
+ * Modify the Tuple Descriptor to match the expected
+ * result set. Currently used only for T-SQL OPENQUERY.
+ */
 static void 
 modify_RangeTblFunction_tupdesc(Node *expr, TupleDesc *tupdesc)
 {
@@ -3078,10 +3082,20 @@ modify_RangeTblFunction_tupdesc(Node *expr, TupleDesc *tupdesc)
 	FuncExpr *funcexpr = (FuncExpr*) expr;
 	List* arg_list = funcexpr->args;
 
-	Assert(list_length(funcexpr->args) == 2);
+	/*
+	 * According to T-SQL OPENQUERY SQL definition, we will get
+	 * linked server name and the query to execute as arguments.
+	 */
+	Assert(list_length(arg_list) == 2);
 
 	linked_server = TextDatumGetCString(((Const*)linitial(arg_list))->constvalue);
 	query = TextDatumGetCString(((Const*)lsecond(arg_list))->constvalue);
 
 	getOpenqueryTupdescFromMetadata(linked_server, query, tupdesc);
+
+	if (linked_server)
+		pfree(linked_server);
+
+	if (query)
+		pfree(query);
 }
