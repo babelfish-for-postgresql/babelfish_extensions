@@ -79,6 +79,9 @@ ignore#!#BABEL-3646-before-14_6-vu-prepare
 ignore#!#BABEL-3646-before-14_6-vu-verify
 ignore#!#routines_definition_before-14_7-or-15_2-vu-prepare
 ignore#!#routines_definition_before-14_7-or-15_2-vu-verify
+ignore#!#sys-all_sql_modules_before-14_5-vu-prepare
+ignore#!#sys-all_sql_modules_before-14_5-vu-verify
+ignore#!#sys-all_sql_modules_before-14_5-vu-cleanup
 ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-prepare
 ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-verify
 ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-cleanup
