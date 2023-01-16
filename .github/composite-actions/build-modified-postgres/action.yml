@@ -56,6 +56,14 @@ runs:
           export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
           make
           make install
+        elif [[ ${{inputs.engine_branch}} != *"__PG_13_"* ]]; then
+          cd ../..
+          rm -rf pg_hint_plan
+          git clone --depth 1 --branch PG15 https://github.com/ossc-db/pg_hint_plan.git
+          cd pg_hint_plan
+          export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
+          make
+          make install
         fi
       env:
         HEAD_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
