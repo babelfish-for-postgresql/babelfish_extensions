@@ -585,98 +585,111 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 	LinkedServerLogin login;
 	DefElem *element;
 #endif
-	server = GetForeignServerByName(servername, false);
 
-	/* Unlikely */
-	if (server == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Error fetching foreign server with servername '%s'", servername)
-				));
-	
-	mapping = GetUserMapping(GetUserId(), server->serverid);
+	PG_TRY();
+	{
+		server = GetForeignServerByName(servername, false);
 
-	if (mapping == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Error fetching user mapping with servername '%s'", servername)
-				));
+		/* Unlikely */
+		if (server == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Error fetching foreign server with servername '%s'", servername)
+					));
+
+		mapping = GetUserMapping(GetUserId(), server->serverid);
+
+		if (mapping == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Error fetching user mapping with servername '%s'", servername)
+					));
 #ifdef ENABLE_TDS_LIB
 
-	LINKED_SERVER_INIT();
+		LINKED_SERVER_INIT();
 
-	LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
+		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
-	login = LINKED_SERVER_LOGIN();
+		login = LINKED_SERVER_LOGIN();
 
-	/* first option in user mapping should be the username */
-	element = linitial_node(DefElem, mapping->options);
-	if (strcmp(element->defname, "username") == 0)
-		LINKED_SERVER_SET_USER(login, defGetString(element));
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Incorrect option. Expected \"username\" but got \"%s\"", element->defname)
-				));
-
-	/* second option in user mapping should be the password */
-	element = lsecond_node(DefElem, mapping->options);
-	if (strcmp(element->defname, "password") == 0)
-		LINKED_SERVER_SET_PWD(login, defGetString(element));
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Incorrect option. Expected \"password\" but got \"%s\"", element->defname)
-				));
-
-	LINKED_SERVER_SET_APP(login);
-	LINKED_SERVER_SET_VERSION(login);
-
-	/* first option in foreign server should be servername */
-	element = linitial_node(DefElem, server->options);
-	if (strcmp(element->defname, "servername") == 0){
-
-		char *data_src = defGetString(element);
-
-		ValidateLinkedServerDataSource(data_src);
-
-		*lsproc = LINKED_SERVER_OPEN(login, data_src);
-		if (!(*lsproc))
+		/* first option in user mapping should be the username */
+		element = linitial_node(DefElem, mapping->options);
+		if (strcmp(element->defname, "username") == 0)
+			LINKED_SERVER_SET_USER(login, defGetString(element));
+		else
 			ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Unable to connect to %s", data_src)
-				));
-	}
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Incorrect option. Expected \"servername\" but got \"%s\"", element->defname)
-				));
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Incorrect option. Expected \"username\" but got \"%s\"", element->defname)
+					));
 
-	LINKED_SERVER_FREELOGIN(login);
+		/* second option in user mapping should be the password */
+		element = lsecond_node(DefElem, mapping->options);
+		if (strcmp(element->defname, "password") == 0)
+			LINKED_SERVER_SET_PWD(login, defGetString(element));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Incorrect option. Expected \"password\" but got \"%s\"", element->defname)
+					));
 
-        element = lsecond_node(DefElem, server->options);
-	if (strcmp(element->defname, "database") == 0)
-	{
-		if (strlen(defGetString(element)))
-			Assert(LINKED_SERVER_USE_DB(*lsproc, defGetString(element)) == SUCCEED);
-	}
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Incorrect option. Expected \"database\" but got \"%s\"", element->defname)
-				));
+		LINKED_SERVER_SET_APP(login);
+		LINKED_SERVER_SET_VERSION(login);
+
+		/* first option in foreign server should be servername */
+		element = linitial_node(DefElem, server->options);
+		if (strcmp(element->defname, "servername") == 0){
+
+			char *data_src = defGetString(element);
+
+			ValidateLinkedServerDataSource(data_src);
+
+			*lsproc = LINKED_SERVER_OPEN(login, data_src);
+			if (!(*lsproc))
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Unable to connect to %s", data_src)
+					));
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Incorrect option. Expected \"servername\" but got \"%s\"", element->defname)
+					));
+
+		LINKED_SERVER_FREELOGIN(login);
+
+		element = lsecond_node(DefElem, server->options);
+		if (strcmp(element->defname, "database") == 0)
+		{
+			if (strlen(defGetString(element)))
+				Assert(LINKED_SERVER_USE_DB(*lsproc, defGetString(element)) == SUCCEED);
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Incorrect option. Expected \"database\" but got \"%s\"", element->defname)
+					));
 #else
 
-	ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Could not establish connection with remote server as use of TDS client library has been disabled. "
-						"Please recompile source with 'ENABLE_TDS_LIB' flag to enable client library.")
-				));
+		ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Could not establish connection with remote server as use of TDS client library has been disabled. "
+							"Please recompile source with 'ENABLE_TDS_LIB' flag to enable client library.")
+					));
 #endif
+	}
+	PG_CATCH();
+	{
+#ifdef ENABLE_TDS_LIB
+		LINKED_SERVER_EXIT();
+#endif
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 }
 
-/* 
+/*
  * Fetch the column medata for the expected result set 
  * from remote server 
  */
