@@ -191,3 +191,17 @@ begin
 end
 GO
 
+-- to test trigger created inside schema
+create schema babel_trigger_vu_prepare_sch1
+GO
+
+create table babel_trigger_vu_prepare_sch1.babel_trigger_vu_prepare_t1(col nvarchar(60))
+GO
+
+create trigger babel_trigger_vu_prepare_trig3 on babel_trigger_vu_prepare_sch1.babel_trigger_vu_prepare_t1 after insert
+as
+begin
+	SELECT 'trigger3 from sch1 invoked'
+end
+GO
+

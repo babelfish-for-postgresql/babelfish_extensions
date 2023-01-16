@@ -1,4 +1,13 @@
 -- clean up
+drop trigger babel_trigger_vu_prepare_sch1.babel_trigger_vu_prepare_trig3
+GO
+
+drop table babel_trigger_vu_prepare_sch1.babel_trigger_vu_prepare_t1
+GO
+
+drop schema babel_trigger_vu_prepare_sch1
+GO
+
 drop table babel_trigger_vu_prepare_t1
 GO
 
