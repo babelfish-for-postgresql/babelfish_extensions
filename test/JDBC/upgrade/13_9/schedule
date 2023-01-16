@@ -292,4 +292,5 @@ ISC-Tables
 ISC-Columns
 ISC-Table_Constraints
 case_insensitive_collation
+BABEL_OBJECT_ID
 BABEL_OBJECT_NAME
