@@ -1039,7 +1039,7 @@ tsql_numeric_get_typmod(Numeric num)
 Datum
 bigint_sum(PG_FUNCTION_ARGS)
 {
-	return bigint_utility(fcinfo, true);
+	return bigint_utility(fcinfo, TSQL_SUM);
 }
 
 /* 
@@ -1058,7 +1058,7 @@ int4int2_sum(PG_FUNCTION_ARGS)
 	{
 		result  = PG_GETARG_INT64(0);
 
-		if (unlikely(result < PG_INT32_MIN) || unlikely(result > PG_INT32_MAX))
+		if (unlikely(result < PG_INT32_MIN || result > PG_INT32_MAX))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					errmsg("Arithmetic overflow error converting expression to data type int.")));
@@ -1081,7 +1081,9 @@ int4int2_avg(PG_FUNCTION_ARGS)
 
 	if (ARR_HASNULL(transarray) ||
 			ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
-			elog(ERROR, "expected 2-element int8 array");
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					errmsg("expected 2-element int8 array")));
 	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 	
 	/* SQL defines AVG of no values to be NULL */
@@ -1100,5 +1102,5 @@ int4int2_avg(PG_FUNCTION_ARGS)
 Datum
 bigint_avg(PG_FUNCTION_ARGS)
 {
-	return bigint_utility(fcinfo, false);
+	return bigint_utility(fcinfo, TSQL_AVG);
 }

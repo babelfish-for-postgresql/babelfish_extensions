@@ -106,6 +106,31 @@ GO
 SELECT * FROM babel_3507_vu_prepare_v1
 GO
 
+-- Check for mix values
+SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t8
+GO
+
+SELECT AVG( avgint ) AS avg_int FROM babel_3507_vu_prepare_t8
+GO
+
+SELECT AVG( avgsmallint ) AS avg_smallintint FROM babel_3507_vu_prepare_t8
+GO
+
+SELECT AVG( avgtinyint ) AS avg_tinyint FROM babel_3507_vu_prepare_t8
+GO
+
+SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t9
+GO
+
+SELECT AVG( avgint ) AS avg_int FROM babel_3507_vu_prepare_t9
+GO
+
+SELECT AVG( avgsmallint ) AS avg_smallintint FROM babel_3507_vu_prepare_t9
+GO
+
+SELECT AVG( avgtinyint ) AS avg_tinyint FROM babel_3507_vu_prepare_t9
+GO
+
 
 -- CLEANUP
 DROP FUNCTION babel_3507_vu_prepare_f1
@@ -127,4 +152,6 @@ DROP TABLE babel_3507_vu_prepare_t4
 DROP TABLE babel_3507_vu_prepare_t5
 DROP TABLE babel_3507_vu_prepare_t6
 DROP TABLE babel_3507_vu_prepare_t7
+DROP TABLE babel_3507_vu_prepare_t8
+DROP TABLE babel_3507_vu_prepare_t9
 GO

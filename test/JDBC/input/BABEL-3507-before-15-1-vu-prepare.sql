@@ -110,3 +110,20 @@ cast(pg_typeof( AVG( avgsmallint ) ) as varchar(48) )  as avg_smallint ,
 cast(pg_typeof( AVG( avgtinyint ) ) as varchar(48) )  as avg_tinyint 
 FROM babel_3507_vu_prepare_t3
 GO
+
+CREATE TABLE babel_3507_vu_prepare_t8(
+avgbigint BIGINT, avgint INT , avgsmallint SMALLINT , avgtinyint TINYINT )
+GO
+
+INSERT INTO babel_3507_vu_prepare_t8 VALUES(NULL,8,NULL,2)
+INSERT INTO babel_3507_vu_prepare_t8 VALUES(10,NULL,8,NULL)
+GO
+
+CREATE TABLE babel_3507_vu_prepare_t9(
+avgbigint BIGINT, avgint INT , avgsmallint SMALLINT , avgtinyint TINYINT )
+GO
+
+INSERT INTO babel_3507_vu_prepare_t9 VALUES(-10,10,-4,2)
+INSERT INTO babel_3507_vu_prepare_t9 VALUES(14,-8,8,0)
+INSERT INTO babel_3507_vu_prepare_t9 VALUES(NULL,NULL,NULL,NULL)
+GO

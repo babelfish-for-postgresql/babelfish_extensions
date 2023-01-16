@@ -276,6 +276,71 @@ numeric#!#numeric#!#numeric#!#numeric
 ~~END~~
 
 
+-- Check for mix values
+SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t8
+GO
+~~START~~
+bigint
+10
+~~END~~
+
+
+SELECT AVG( avgint ) AS avg_int FROM babel_3507_vu_prepare_t8
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT AVG( avgsmallint ) AS avg_smallintint FROM babel_3507_vu_prepare_t8
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT AVG( avgtinyint ) AS avg_tinyint FROM babel_3507_vu_prepare_t8
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT AVG( avgbigint ) AS avg_bigint FROM babel_3507_vu_prepare_t9
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+SELECT AVG( avgint ) AS avg_int FROM babel_3507_vu_prepare_t9
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT AVG( avgsmallint ) AS avg_smallintint FROM babel_3507_vu_prepare_t9
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT AVG( avgtinyint ) AS avg_tinyint FROM babel_3507_vu_prepare_t9
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- CLEANUP
 DROP FUNCTION babel_3507_vu_prepare_f1
@@ -297,4 +362,6 @@ DROP TABLE babel_3507_vu_prepare_t4
 DROP TABLE babel_3507_vu_prepare_t5
 DROP TABLE babel_3507_vu_prepare_t6
 DROP TABLE babel_3507_vu_prepare_t7
+DROP TABLE babel_3507_vu_prepare_t8
+DROP TABLE babel_3507_vu_prepare_t9
 GO
