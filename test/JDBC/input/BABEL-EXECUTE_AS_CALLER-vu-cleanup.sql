@@ -1,4 +1,7 @@
 DROP TRIGGER babel_execute_as_caller_trigger1;
+DROP PROCEDURE babel_execute_as_caller_procedure_6;
+DROP PROCEDURE babel_execute_as_caller_procedure_5;
+DROP PROCEDURE babel_execute_as_caller_procedure_4;
 DROP PROCEDURE babel_execute_as_caller_procedure_3;
 DROP PROCEDURE babel_execute_as_caller_procedure_2;
 DROP PROCEDURE babel_execute_as_caller_procedure_1;

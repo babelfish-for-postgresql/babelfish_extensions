@@ -2750,16 +2750,21 @@ rewriteBatchLevelStatement(
 	else if (ctx->create_or_alter_procedure())
 	{
 		auto cctx = ctx->create_or_alter_procedure();
+		size_t num_commas_in_procedure_param = cctx->COMMA().size();
 		if (cctx->WITH())
 		{
 			auto options = cctx->procedure_option();
+			/* COMMA is shared between procedure-param and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_procedure_param -= (cctx->procedure_option().size() - 1);
 			auto commas = cctx->COMMA();
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() + num_commas_in_procedure_param, commas.end());
 			GetTokenFunc<TSqlParser::Procedure_optionContext*> getToken = [](TSqlParser::Procedure_optionContext* o) {
 				if (o->execute_as_clause())
 					return o->execute_as_clause()->CALLER();
 				return o->SCHEMABINDING();
 			};
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 		}

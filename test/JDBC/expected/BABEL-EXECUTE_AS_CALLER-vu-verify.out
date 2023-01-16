@@ -48,6 +48,31 @@ int
 ~~END~~
 
 
+-- procedures with more than 1 argument and with-clause
+EXEC babel_execute_as_caller_procedure_4 4, 'test'
+GO
+~~START~~
+int#!#varchar
+4#!#test
+~~END~~
+
+
+EXEC babel_execute_as_caller_procedure_5 5, 'test', 0
+GO
+~~START~~
+int#!#varchar#!#int
+5#!#test#!#0
+~~END~~
+
+
+EXEC babel_execute_as_caller_procedure_6 6, 'test', 0
+GO
+~~START~~
+int#!#varchar#!#int
+6#!#test#!#0
+~~END~~
+
+
 -- triggers
 INSERT INTO babel_execute_as_caller_table values (2);
 GO
