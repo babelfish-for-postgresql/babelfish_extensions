@@ -340,5 +340,3 @@ sys-has_perms_by_name
 sys-has_perms_by_name-dep
 bbf_view_def-before-14_7-or-15_2
 BABEL_OBJECT_ID
-sys-all_sql_modules_before-14_7
-sys-sql_modules_before-14_7
