@@ -85,8 +85,52 @@ varchar
 ~~END~~
 
 
+-- to test dependency of user's permission on object
+USE master;
+GO
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_t1'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_trg'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_proc1'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_func1'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_v1'));
+GO
+~~ROW COUNT: 1~~
+
+
+-- give access
+GRANT ALL ON babel_object_name_store_OID TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_t1 TO babel_object_name_master_user1;
+GO
+
+GRANT EXECUTE ON babel_object_name_proc1 TO babel_object_name_master_user1;
+GO
+
+GRANT EXECUTE ON babel_object_name_func1 TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_v1 TO babel_object_name_master_user1;
+GO
+
 -- tsql      user=babel_object_name_login1 password=12345678
--- test dependency of user's permission on object
 USE master
 GO
 
