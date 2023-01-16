@@ -1645,6 +1645,20 @@ typedef struct PLtsql_protocol_plugin
 	char* (*get_cur_db_name) ();
 
 	char* (*get_physical_schema_name) (char *db_name, const char *schema_name);
+
+	/* Session level GUCs */
+	bool		quoted_identifier;
+	bool		arithabort;
+	bool		ansi_null_dflt_on;
+	bool		ansi_defaults;
+	bool		ansi_warnings;
+	bool		ansi_padding;
+	bool		ansi_nulls;
+	bool		concat_null_yields_null;
+	int		textsize;
+	int		datefirst;
+	int		lock_timeout;
+	const char*	language;
 	
 } PLtsql_protocol_plugin;
 
