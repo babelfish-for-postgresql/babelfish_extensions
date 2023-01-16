@@ -39,7 +39,6 @@
 #include "../src/catalog.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
-/* remove this once object_id get merge */
 #include "utils/fmgroids.h"
 #include "utils/acl.h"
 #include "access/table.h"
