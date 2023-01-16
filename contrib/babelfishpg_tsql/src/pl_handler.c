@@ -425,6 +425,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (parseTree->stmt->type == T_CreateFunctionStmt ){
 		ListCell 		*option;
 		CreateTrigStmt *trigStmt;
+		CreateFunctionStmt *funcStmt = (CreateFunctionStmt *) parseTree->stmt;
 		char* trig_schema;
 		foreach (option, ((CreateFunctionStmt *) parseTree->stmt)->options){
 			DefElem *defel = (DefElem *) lfirst(option);
@@ -441,6 +442,17 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						   trig_schema , trigStmt->trigname)));
 					}
 					trigStmt->args = NIL;
+				}
+				else
+				{
+					Assert(list_length(funcStmt->funcname) == 1);
+					/*
+					 * Add schemaname to trigger's function name.
+					 */
+					if (trigStmt->relation->schemaname != NULL)
+					{
+						funcStmt->funcname = lcons(makeString(trigStmt->relation->schemaname), funcStmt->funcname);
+					}
 				}
 			}
 		}
