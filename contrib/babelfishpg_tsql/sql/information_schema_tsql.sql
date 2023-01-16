@@ -688,7 +688,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
             pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
 	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT)
-		left join sys.babelfish_function_ext f on sch.schema_id::regnamespace::name = f.nspname
+		left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
 			and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate sys.database_default,
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,

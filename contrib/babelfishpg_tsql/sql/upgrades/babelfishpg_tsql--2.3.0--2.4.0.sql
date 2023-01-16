@@ -617,7 +617,7 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
 -- Add one column to store definition of the function in the table.
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT DEFAULT NULL;
-RESET allow_system_table_mods;
+SET allow_system_table_mods = off;
 
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
@@ -700,7 +700,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
             pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
 	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT)
-		left join sys.babelfish_function_ext f on sch.schema_id::regnamespace::name = f.nspname
+		left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
 			and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate sys.database_default,
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
@@ -766,7 +766,7 @@ LEFT OUTER JOIN sys.babelfish_view_def bvd
       ao.name = bvd.object_name 
    )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f on ao.schema_id::regnamespace::name = f.nspname
+LEFT JOIN sys.babelfish_function_ext f on ao.name = f.funcname collate "C" and ao.schema_id::regnamespace::name = f.nspname
 and sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature collate "C"
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
