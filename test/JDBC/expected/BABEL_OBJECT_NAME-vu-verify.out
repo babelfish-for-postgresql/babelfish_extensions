@@ -72,9 +72,8 @@ SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'), d
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Can only do lookup in current database.)~~
+babel_object_name_db_t1
+~~END~~
 
 
 -- should fail
@@ -82,9 +81,8 @@ SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'))
 GO
 ~~START~~
 varchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Can only do lookup in current database.)~~
+<NULL>
+~~END~~
 
 
 -- tsql      user=babel_object_name_login1 password=12345678

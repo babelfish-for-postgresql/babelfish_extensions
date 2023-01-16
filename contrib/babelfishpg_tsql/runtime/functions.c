@@ -1291,7 +1291,6 @@ object_name(PG_FUNCTION_ARGS)
 			{	
 				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
 				result = pstrdup(NameStr(pg_type->typname));
-				schema_id = pg_type->typnamespace;
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -1331,7 +1330,7 @@ object_name(PG_FUNCTION_ARGS)
 	if(result)
 	{	
 		/* check if schema corresponding to found object belongs to specified database */
-		if(is_schema_from_db(schema_id, database_id))
+		if(!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id)) /* in case of pg_type schema_id will be invalid */
 			PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
 		else
 			pfree(result);
