@@ -321,7 +321,7 @@ GO
 SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
 GO
 
--- Currently, object_id() doesn't support cross-db lookup due to column permissions check are not working for has_perms_by_name
+-- Currently, using tsql we are not able access cross-db entries in sys.all_columns due to which column permissions check are not working for has_perms_by_name
 USE master;
 GO
 
