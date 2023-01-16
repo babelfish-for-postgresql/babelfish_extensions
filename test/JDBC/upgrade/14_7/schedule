@@ -367,3 +367,4 @@ app_name
 case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+BABEL_OBJECT_NAME
