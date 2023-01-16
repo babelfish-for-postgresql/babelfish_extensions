@@ -1319,11 +1319,10 @@ object_name(PG_FUNCTION_ARGS)
 				result = pstrdup(NameStr(pg_trigger->tgname));
 				schema_id = get_rel_namespace(pg_trigger->tgrelid);
 			}
-				
+			found = true;
 		}
 		systable_endscan(tgscan);
 		table_close(tgrel, AccessShareLock);
-		found = true;
 	}
 
 	if(result)
