@@ -938,7 +938,7 @@ GRANT SELECT ON sys.linked_logins TO PUBLIC;
 -- Add one column to store definition of the function in the table.
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT DEFAULT NULL;
-SET allow_system_table_mods = off;
+RESET allow_system_table_mods;
 
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
