@@ -31,8 +31,27 @@ go
 create table test_tsql_collate(
 	c_varchar varchar check(c_varchar <> cast('sflkjasdlkfjf' as varchar(12)) COLLATE latin1_general_ci_as),
 	c_char char check(c_char <> cast('sflkjasdlkfjf' as char(7)) COLLATE japanese_ci_as),
-	c_char1 char check(c_char <> cast('abcd' as char(7)) COLLATE "default"),
+	c_char1 char check(c_char <> cast('abcd' as char(7)) COLLATE latin1_general_ci_ai),
 	c_nchar nchar check(cast(c_nchar as nchar(7)) <> cast('sflkjasdlkfjf' as nchar(7)) COLLATE sql_latin1_general_pref_cp1_cs_as),
+	c_varchar2 varchar check(c_varchar2 <> cast('abc' as varchar(12)) COLLATE latin1_general_cs_ai),
+	c_varchar3 varchar check(c_varchar3 <> cast('abc' as varchar(12)) COLLATE latin1_general_cs_as),
+	c_varchar4 varchar check(c_varchar4 <> cast('abc' as varchar(12)) COLLATE latin1_general_bin2),
+	c_varchar5 varchar check(c_varchar5 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1250_ci_as),
+	c_varchar6 varchar check(c_varchar6 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1250_cs_as),
+	c_varchar7 varchar check(c_varchar7 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1253_ci_as),
+	c_varchar8 varchar check(c_varchar8 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1253_cs_as),
+	c_varchar9 varchar check(c_varchar9 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1254_ci_as),
+	c_varchar10 varchar check(c_varchar10 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1254_cs_as),
+	c_varchar11 varchar check(c_varchar11 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1255_ci_as),
+	c_varchar12 varchar check(c_varchar12 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1255_cs_as),
+	c_varchar13 varchar check(c_varchar13 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1256_ci_as),
+	c_varchar14 varchar check(c_varchar14 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1256_cs_as),
+	c_varchar15 varchar check(c_varchar15 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1257_ci_as),
+	c_varchar16 varchar check(c_varchar16 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1257_cs_as),
+	c_varchar17 varchar check(c_varchar17 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1258_ci_as),
+	c_varchar18 varchar check(c_varchar18 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp1258_cs_as),
+	c_varchar19 varchar check(c_varchar19 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp874_ci_as),
+	c_varchar20 varchar check(c_varchar20 <> cast('abc' as varchar(12)) COLLATE sql_latin1_general_cp874_cs_as)
 );
 go
 
