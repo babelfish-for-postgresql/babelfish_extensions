@@ -1,0 +1,55 @@
+-- tsql
+USE babel_object_name_db;
+GO
+
+DROP USER babel_object_name_user2
+GO
+
+DROP TABLE babel_object_name_db_t1;
+GO
+
+USE master;
+GO
+
+
+DROP USER babel_object_name_master_user1;
+GO
+
+DROP TABLE babel_object_name_store_OID
+GO
+
+DROP LOGIN babel_object_name_login1;
+GO
+
+DROP DATABASE babel_object_name_db;
+GO
+
+DROP VIEW babel_object_name_v1_view
+GO
+
+DROP VIEW babel_object_name_func1_view
+GO
+
+DROP VIEW babel_object_name_trg_view 
+GO
+
+DROP VIEW babel_object_name_t1_view
+GO
+
+DROP VIEW babel_object_name_proc1_view
+GO
+
+DROP VIEW babel_object_name_v1
+GO
+
+DROP FUNCTION babel_object_name_func1
+GO
+
+DROP PROCEDURE babel_object_name_proc1
+GO
+
+DROP TRIGGER babel_object_name_trg
+GO
+
+DROP TABLE babel_object_name_t1
+GO

@@ -1,0 +1,98 @@
+-- test table, trigger, procedure, function
+-- tsql
+SELECT * FROM babel_object_name_t1_view
+GO
+
+SELECT * FROM babel_object_name_proc1_view
+GO
+
+SELECT * FROM babel_object_name_func1_view
+GO
+
+SELECT * FROM babel_object_name_v1_view
+GO
+
+SELECT * FROM babel_object_name_trg_view
+GO
+
+-- To test temp object
+CREATE TABLE #babel_object_name_temp_t1 (a int);
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_name_temp_t1'))
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_name_temp_t1'), db_id('tempdb'))
+GO
+
+DROP TABLE #babel_object_name_temp_t1;
+GO
+
+-- test cross database lookup
+USE master;
+GO
+
+-- should work
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'), db_id('babel_object_name_db'))
+GO
+
+-- should fail
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'))
+GO
+
+-- test dependency of user's permission on object
+-- tsql      user=babel_object_name_login1 password=12345678
+USE master
+GO
+
+SELECT current_user;
+GO
+
+-- should work as we have grant access in prepare
+SELECT OBJECT_NAME(a) FROM babel_object_name_store_OID
+GO
+
+
+-- cross-db will also work 
+USE babel_object_name_db
+GO
+
+SELECT current_user;
+GO
+
+SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
+GO
+
+
+-- lets revoke access
+-- tsql
+USE master;
+GO
+
+
+REVOKE SELECT ON babel_object_name_t1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE EXECUTE ON babel_object_name_proc1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE EXECUTE ON babel_object_name_func1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_name_v1 FROM babel_object_name_master_user1;
+GO
+
+-- tsql      user=babel_object_name_login1 password=12345678
+-- should return null
+SELECT OBJECT_NAME(a) FROM master..babel_object_name_store_OID
+GO
+
+SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
+GO
+
+-- tsql
+USE master;
+GO
+
+REVOKE ALL ON babel_object_name_store_OID FROM babel_object_name_master_user1;
+GO

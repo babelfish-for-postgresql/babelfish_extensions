@@ -1,0 +1,191 @@
+-- tsql
+-- test table, trigger, procedure, function
+SELECT * FROM babel_object_name_t1_view
+GO
+~~START~~
+varchar
+babel_object_name_t1
+~~END~~
+
+
+SELECT * FROM babel_object_name_proc1_view
+GO
+~~START~~
+varchar
+babel_object_name_proc1
+~~END~~
+
+
+SELECT * FROM babel_object_name_func1_view
+GO
+~~START~~
+varchar
+babel_object_name_func1
+~~END~~
+
+
+SELECT * FROM babel_object_name_v1_view
+GO
+~~START~~
+varchar
+babel_object_name_v1
+~~END~~
+
+
+SELECT * FROM babel_object_name_trg_view
+GO
+~~START~~
+varchar
+babel_object_name_trg
+~~END~~
+
+
+-- To test temp object
+CREATE TABLE #babel_object_name_temp_t1 (a int);
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_name_temp_t1'))
+GO
+~~START~~
+varchar
+#babel_object_name_temp_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_name_temp_t1'), db_id('tempdb'))
+GO
+~~START~~
+varchar
+#babel_object_name_temp_t1
+~~END~~
+
+
+DROP TABLE #babel_object_name_temp_t1;
+GO
+
+-- test cross database lookup
+USE master;
+GO
+
+-- should work
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'), db_id('babel_object_name_db'))
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Can only do lookup in current database.)~~
+
+
+-- should fail
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'))
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Can only do lookup in current database.)~~
+
+
+-- tsql      user=babel_object_name_login1 password=12345678
+-- test dependency of user's permission on object
+USE master
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_name_master_user1
+~~END~~
+
+
+-- should work as we have grant access in prepare
+SELECT OBJECT_NAME(a) FROM babel_object_name_store_OID
+GO
+~~START~~
+varchar
+babel_object_name_t1
+babel_object_name_trg
+babel_object_name_proc1
+babel_object_name_func1
+babel_object_name_v1
+~~END~~
+
+
+
+-- cross-db will also work 
+USE babel_object_name_db
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_name_user2
+~~END~~
+
+
+SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
+GO
+~~START~~
+varchar
+babel_object_name_t1
+babel_object_name_trg
+babel_object_name_proc1
+babel_object_name_func1
+babel_object_name_v1
+~~END~~
+
+
+
+-- tsql
+-- lets revoke access
+USE master;
+GO
+
+
+REVOKE SELECT ON babel_object_name_t1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE EXECUTE ON babel_object_name_proc1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE EXECUTE ON babel_object_name_func1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_name_v1 FROM babel_object_name_master_user1;
+GO
+
+-- tsql      user=babel_object_name_login1 password=12345678
+-- should return null
+SELECT OBJECT_NAME(a) FROM master..babel_object_name_store_OID
+GO
+~~START~~
+varchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
+GO
+~~START~~
+varchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+-- tsql
+USE master;
+GO
+
+REVOKE ALL ON babel_object_name_store_OID FROM babel_object_name_master_user1;
+GO

@@ -1976,6 +1976,7 @@ extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern void report_info_or_warning(int elevel, char* message);
 extern void init_and_check_common_utility(void);
+extern bool is_schema_from_db(Oid schema_oid, Oid db_id);
 
 typedef struct
 {

@@ -14,6 +14,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "catalog.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -914,4 +915,20 @@ void init_and_check_common_utility(void)
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Failed to find common utility plugin.")));
 	}
+}
+
+/*
+ * is_schema_from_db
+ *		Given schema_oid and db_id, check if schema belongs to provided database id.
+ */
+bool is_schema_from_db(Oid schema_oid, Oid db_id)
+{
+	Oid db_id_from_schema;
+	char *schema_name = get_namespace_name(schema_oid);
+	if(!schema_name)
+		return false;
+
+	db_id_from_schema = get_dbid_from_physical_schema_name(schema_name, true);
+	pfree(schema_name);
+	return (db_id_from_schema == db_id);
 }

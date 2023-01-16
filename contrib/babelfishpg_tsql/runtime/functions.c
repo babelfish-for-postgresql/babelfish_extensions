@@ -39,6 +39,13 @@
 #include "../src/catalog.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
+/* remove this once object_id get merge */
+#include "utils/fmgroids.h"
+#include "utils/acl.h"
+#include "access/table.h"
+#include "access/genam.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_trigger.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -70,6 +77,7 @@ PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
+PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
@@ -935,6 +943,137 @@ checksum(PG_FUNCTION_ARGS)
         pfree(buf.data);
 
         PG_RETURN_INT32(result);
+}
+/*
+ * object_name
+ * 		returns the object name with object id and database id as input where database id is optional
+ * Returns NULL
+ * 		if there is no such object in specified database, if database id is not provided it will lookup in current database
+ * 		if user don't have right permission
+ */
+Datum
+object_name(PG_FUNCTION_ARGS)
+{
+	Oid 				object_id = PG_GETARG_OID(0);
+	Oid 				database_id = get_cur_db_id();
+	Oid 				user_id = GetUserId();
+	Oid				schema_id = InvalidOid;
+	HeapTuple 			tuple;
+	Relation			tgrel;
+	ScanKeyData 			key;
+	SysScanDesc 			tgscan;
+	EphemeralNamedRelation 		enr;
+	bool 				found = false;
+	char 				*result = NULL;
+
+	if(!PG_ARGISNULL(1))
+	{
+		char *db_name;
+		database_id = PG_GETARG_OID(1);
+		db_name = get_db_name(database_id);
+		if(db_name == NULL) /* database doesn't exist with given oid */
+			PG_RETURN_NULL();
+		user_id = GetSessionUserId();
+	}
+
+	/* search in list of ENRs registered in the current query environment by object_id */
+	enr = get_ENR_withoid(currentQueryEnv, object_id);
+	if(enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
+	{
+		result = pstrdup(enr->md.name);
+		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+	}
+
+	/* search in pg_class by object_id */
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
+	if (HeapTupleIsValid(tuple))
+	{
+		/* check if user have right permission on object */
+		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+		{	
+			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
+			result = pstrdup(NameStr(pg_class->relname));
+			schema_id = pg_class->relnamespace;
+		}
+		ReleaseSysCache(tuple);
+		found = true;
+	}
+
+	if (!found)
+	{
+		/* search in pg_proc by object_id */
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+		if (HeapTupleIsValid(tuple))
+		{
+			/* check if user have right permission on object */
+			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+			{
+				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+				result = pstrdup(NameStr(procform->proname));
+				schema_id = procform->pronamespace;
+			}
+			ReleaseSysCache(tuple);
+			found = true;
+		}
+	}
+
+	if (!found)
+	{
+		/* search in pg_types by object_id */
+		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(object_id));
+		if (HeapTupleIsValid(tuple))
+		{
+			/* check if user have right permission on object */
+			if (pg_type_aclcheck(object_id, user_id, ACL_USAGE) == ACLCHECK_OK)
+			{	
+				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+				result = pstrdup(NameStr(pg_type->typname));
+				schema_id = pg_type->typnamespace;
+			}
+			ReleaseSysCache(tuple);
+			found = true;
+		}
+	}
+	
+	if(!found)
+	{
+		/* search in pg_trigger by object_id */
+		tgrel = table_open(TriggerRelationId, AccessShareLock);
+		ScanKeyInit(&key,
+				Anum_pg_trigger_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object_id));
+
+		tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
+						NULL, 1, &key);
+
+		tuple = systable_getnext(tgscan);
+		if (HeapTupleIsValid(tuple))
+		{
+			Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+			/* check if user have right permission on object */
+			if(OidIsValid(pg_trigger->tgrelid) && 
+				pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+			{
+				result = pstrdup(NameStr(pg_trigger->tgname));
+				schema_id = get_rel_namespace(pg_trigger->tgrelid);
+			}
+				
+		}
+		systable_endscan(tgscan);
+		table_close(tgrel, AccessShareLock);
+		found = true;
+	}
+
+	if(result)
+	{	
+		/* check if schema corresponding to found object belongs to specified database */
+		if(is_schema_from_db(schema_id, database_id))
+			PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+		else
+			pfree(result);
+	}
+	PG_RETURN_NULL();
 }
 
 Datum
