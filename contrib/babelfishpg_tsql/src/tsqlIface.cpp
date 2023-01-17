@@ -69,7 +69,7 @@ extern "C"
 
 	extern bool pltsql_dump_antlr_query_graph;
 	extern bool pltsql_enable_antlr_detailed_log;
-	extern bool pltsql_disable_sll_parse_mode;
+	extern bool pltsql_enable_sll_parse_mode;
 
 	extern bool pltsql_enable_tsql_information_schema;
 
@@ -2455,10 +2455,10 @@ antlr_parser_cpp(const char *sourceText)
 		std::cout << sep << std::endl;
 	}
 
-	result = antlr_parse_query(sourceText, !pltsql_disable_sll_parse_mode);
+	result = antlr_parse_query(sourceText, pltsql_enable_sll_parse_mode);
 
 	// If parsing failed in SLL mode, reparse in LL mode
-	if (!result.success && result.errcod == ERRCODE_SYNTAX_ERROR && !pltsql_disable_sll_parse_mode)
+	if (!result.success && result.errcod == ERRCODE_SYNTAX_ERROR && pltsql_enable_sll_parse_mode)
 	{
 		elog(WARNING, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
 		result = antlr_parse_query(sourceText, false);
@@ -2471,7 +2471,7 @@ antlr_parser_cpp(const char *sourceText)
 }
 
 ANTLR_result
-antlr_parse_query(const char *sourceText, bool useSSLParsing) {
+antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 	ANTLR_result result;
 	MyInputStream sourceStream(sourceText);
 
@@ -2482,7 +2482,7 @@ antlr_parse_query(const char *sourceText, bool useSSLParsing) {
 
 	TSqlParser parser(&tokens);
 
-	if (useSSLParsing)
+	if (useSLLParsing)
 		parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(atn::PredictionMode::SLL);
 	parser.removeErrorListeners();
 	parser.addErrorListener(&errorListner);

@@ -21,7 +21,7 @@ bool enable_metadata_inconsistency_check = true;
 
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
-bool pltsql_disable_sll_parse_mode = false;
+bool pltsql_enable_sll_parse_mode = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
 bool  pltsql_ansi_defaults = true;
 bool  pltsql_quoted_identifier = true;
@@ -576,11 +576,11 @@ define_custom_variables(void)
 				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 
-	DefineCustomBoolVariable("babelfishpg_tsql.disable_sll_parse_mode",
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_sll_parse_mode",
 				 gettext_noop("disable SLL parser mode for ANTLR parser"),
 				 NULL,
-				 &pltsql_disable_sll_parse_mode,
-				 true,
+				 &pltsql_enable_sll_parse_mode,
+				 false,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
