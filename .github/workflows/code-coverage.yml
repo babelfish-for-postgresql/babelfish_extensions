@@ -231,7 +231,7 @@ jobs:
         with:
           name: cache-code_coverage
           path: ~/contrib
-          key: cache-${{ runner.os }}-${{hashFiles('**/lcov.info'}}
+          key: cache-${{ runner.os }}-${{hashFiles('**/lcov.info')}}
           restore-keys: |
             ${{ runner.os }}-code_coverage-
 
