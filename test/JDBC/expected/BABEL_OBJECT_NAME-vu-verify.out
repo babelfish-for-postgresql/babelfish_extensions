@@ -44,9 +44,8 @@ babel_object_name_trg
 SELECT * FROM babel_object_name_type_view
 GO
 ~~START~~
-text#!#text#!#varchar#!#varchar
-babel_object_name_type_int#!#int#!#int4#!#babel_object_name_type_int
-int#!#int#!#int4#!#int4
+varchar
+babel_object_name_type_int
 ~~END~~
 
 

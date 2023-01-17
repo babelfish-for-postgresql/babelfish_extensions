@@ -42,10 +42,7 @@ GO
 DROP VIEW babel_object_name_type_view
 GO
 
-DROP TABLE babel_object_name_type_table
-GO
-
-DROP TYPE Babel_Object_name_type_int
+DROP TYPE babel_object_name_type_int
 GO
 
 DROP VIEW babel_object_name_v1

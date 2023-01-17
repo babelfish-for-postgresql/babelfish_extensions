@@ -1217,7 +1217,7 @@ Datum
 object_name(PG_FUNCTION_ARGS)
 {
 	Oid 				object_id = PG_GETARG_OID(0);
-	Oid 				database_id = get_cur_db_id();
+	Oid 				database_id;
 	Oid 				user_id = GetUserId();
 	Oid				schema_id = InvalidOid;
 	HeapTuple 			tuple;
@@ -1228,15 +1228,19 @@ object_name(PG_FUNCTION_ARGS)
 	bool 				found = false;
 	char 				*result = NULL;
 
-	if(!PG_ARGISNULL(1))
+	if (!PG_ARGISNULL(1)) /* if database id is provided */
 	{
-		char *db_name;
 		database_id = PG_GETARG_OID(1);
-		db_name = get_db_name(database_id);
-		if(db_name == NULL) /* database doesn't exist with given oid */
-			PG_RETURN_NULL();
-		user_id = GetSessionUserId();
+		if (database_id != get_cur_db_id()) /* cross-db lookup */
+		{	
+			char *db_name = get_db_name(database_id);
+			if (db_name == NULL) /* database doesn't exist with given oid */
+				PG_RETURN_NULL();
+			user_id = GetSessionUserId();
+		}
 	}
+	else	/* by default lookup in current database */
+		database_id = get_cur_db_id();
 
 	/* search in list of ENRs registered in the current query environment by object_id */
 	enr = get_ENR_withoid(currentQueryEnv, object_id);

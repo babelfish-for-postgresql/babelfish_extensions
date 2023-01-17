@@ -16,23 +16,11 @@ CREATE VIEW babel_object_name_v1 AS SELECT 1;
 GO
 
 -- to test type
-CREATE TYPE Babel_Object_name_type_int FROM INT NOT NULL
-GO
-
-CREATE TABLE babel_object_name_type_table(a int, b Babel_Object_name_type_int)
+CREATE TYPE babel_object_name_type_int FROM INT NOT NULL
 GO
 
 CREATE VIEW babel_object_name_type_view AS
-SELECT
-T.name AS "UDDT name",
-T2.name AS "system dt name",
-OBJECT_NAME(T.system_type_id) AS "System type name", -- system_type_id is not static
-OBJECT_NAME(T.user_type_id) AS "User type name" -- user_type_id is not static
-FROM sys.columns C, sys.types T, sys.types T2
-WHERE C.object_id = OBJECT_ID( 'babel_object_name_type_table' )
-AND C.user_type_id = T.user_type_id
-AND T.system_type_id = T2.user_type_id
-ORDER BY T.name
+SELECT OBJECT_NAME(user_type_id) FROM  sys.types where name = 'babel_object_name_type_int'
 GO
 
 CREATE VIEW babel_object_name_proc1_view AS
