@@ -1,0 +1,13 @@
+-- psql
+select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext
+where rolname in ('aduser@BABEL','babeluser');
+GO
+
+select count(*) from pg_authid where rolname = 'aduser@BABEL';
+GO
+select count(*) from pg_authid where rolname = 'babeluser';
+GO
+select count(*) from pg_authid where rolname = 'babel\babeluser';
+GO
+select count(*) from pg_authid where rolname = 'babeluser@BABEL';
+GO
