@@ -211,3 +211,9 @@ EXECUTE sp_test21 @one = "hello", @two = 1;
 #EXECUTE sp_test21 @two = 1, @one = "hello"; ##### Babel 2392
 storedproc#!#prep#!#sp_test21#!#varchar|-|one|-|hello|-|input#!#int|-|two|-|200|-|input
 DROP PROCEDURE sp_test21
+
+CREATE PROCEDURE dbo.sp_test22 ( @one int, @two int ) AS BEGIN SELECT @one, @two; END;
+DECLARE @one int = 100; DECLARE @two int = 200; EXECUTE sp_test22 @one = @one, @two = @two;
+storedproc#!#prep#!#sp_test22#!#int|-|one|-|100|-|input#!#int|-|two|-|200|-|input
+storedproc#!#prep#!#dbo.sp_test22#!#int|-|one|-|100|-|input#!#int|-|two|-|200|-|input
+DROP PROCEDURE dbo.sp_test22 
