@@ -64,5 +64,22 @@ GO
 DROP LOGIN [Babel\DuplicateDefaultDB];
 GO
 
+-- test drop logins for logins with different language names
+-- Arabic
+DROP LOGIN [babel\كلب];
+GO
+
+-- Mongolian
+DROP LOGIN [babel\өглөө];
+GO
+
+-- Greek
+DROP LOGIN [babel\ελπίδα];
+GO
+
+-- Chinese
+DROP LOGIN [babel\爱];
+GO
+
 DROP DATABASE ad_db;
 GO

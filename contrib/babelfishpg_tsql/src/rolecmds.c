@@ -1896,13 +1896,16 @@ windows_login_contains_invalid_chars(char* input)
 	}
 }
 
+/*
+*	Check whether the login_name has a valid length or not.
+*/
 bool
 check_windows_login_length(char* input)
 {
 	char* pos_slash = strchr(input, '\\');
 	char* pos_end = strchr(input, '\0');
 
-	if ((pos_end - pos_slash - 1) < NAMEDATALEN_WINDOWS_MAX && (pos_end - pos_slash - 1) > NAMEDATALEN_WINDOWS_MIN)
+	if (((pos_end - pos_slash - 1) < NAMEDATALEN_WINDOWS_MAX) && ((pos_end - pos_slash - 1) > NAMEDATALEN_WINDOWS_MIN))
 		return true;
 	else
 		return false;

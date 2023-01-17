@@ -298,3 +298,28 @@ GO
 ~~ERROR (Message: The Server principal 'duplicatedefaultdb@BABEL' already exists)~~
 
 
+-- test for empty domain name
+CREATE LOGIN [\adnodomain] from windows;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name '\adnodomain' is invalid. The domain can not be empty.)~~
+
+
+
+-- test for login names with different language
+-- Arabic
+CREATE LOGIN [babel\كلب] from windows;
+GO
+
+-- Mongolian
+CREATE LOGIN [babel\өглөө] from windows;
+GO
+
+-- Greek
+CREATE LOGIN [babel\ελπίδα] from windows;
+GO
+
+-- Chinese
+CREATE LOGIN [babel\爱] from windows;
+GO
