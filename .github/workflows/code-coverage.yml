@@ -230,7 +230,8 @@ jobs:
         uses: actions/cache@v2
         with:
           name: cache-code_coverage
-          key: cache-${{ runner.os }}-${{'contrib/lcov.info'}}
+          path: ~/contrib
+          key: cache-${{ runner.os }}-${{hashFiles('**/lcov.info'}}
           restore-keys: |
             ${{ runner.os }}-code_coverage-
 
