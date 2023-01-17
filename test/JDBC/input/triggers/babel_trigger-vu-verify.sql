@@ -144,4 +144,7 @@ GO
 insert into babel_trigger_vu_prepare_t5 (col) select N'Muffler'
 GO
 
+-- Test for trigger inside schema
+insert into babel_trigger_vu_prepare_sch1.babel_trigger_vu_prepare_t1(col) select N'Muffler'
+GO
 

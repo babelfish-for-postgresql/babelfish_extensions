@@ -204,8 +204,8 @@ typedef struct TvpColMetaData
 	uint8_t scale;
 	uint8_t precision;
 
-	uint32_t collation;
 	uint8_t sortId;
+	pg_enc	encoding;
 
 	uint32_t maxLen;
 } TvpColMetaData;
@@ -241,8 +241,8 @@ typedef struct BulkLoadColMetaData
 	uint8_t 	precision;
 
 	/* For String Datatpes. */
-	uint32_t 	collation;
 	uint8_t 	sortId;
+	pg_enc		encoding;
 
 	uint32_t 	maxLen;
 
@@ -457,7 +457,7 @@ extern Datum TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken
 extern Datum TdsTypeBitToDatum(StringInfo buf);
 extern Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
 extern Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
-extern Datum TdsTypeVarcharToDatum(StringInfo buf, uint32_t collation, uint8_t tdsColDataType);
+extern Datum TdsTypeVarcharToDatum(StringInfo buf, pg_enc encoding, uint8_t tdsColDataType);
 extern Datum TdsTypeNCharToDatum(StringInfo buf);
 extern Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 extern Datum TdsTypeVarbinaryToDatum(StringInfo buf);
