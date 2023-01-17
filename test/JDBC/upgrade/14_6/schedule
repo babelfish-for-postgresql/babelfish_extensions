@@ -49,9 +49,8 @@ BABEL-3221
 BABEL-3204
 BABEL-3234
 BABEL-3402
-# Disabled until BABEL-3720 gets fixed
-# cast_numeric_types_to_datetime
-# cast_numeric_types_to_smalldatetime
+cast_numeric_types_to_datetime
+cast_numeric_types_to_smalldatetime
 routines_definition_before-14_7
 column_domain_usage
 constraint_column_usage
