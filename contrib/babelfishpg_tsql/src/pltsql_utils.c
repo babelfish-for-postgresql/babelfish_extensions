@@ -18,6 +18,7 @@
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
 #include "utils/catcache.h"
+#include "utils/acl.h"
 #include "access/table.h"
 #include "access/genam.h"
 
@@ -915,33 +916,33 @@ void init_and_check_common_utility(void)
 
 /*
  * tsql_get_constraint_oid
- *		Given name and namespace of a constraint, look up the OID.
+ *	Given name and namespace of a constraint, look up the OID.
  *
  * Returns InvalidOid if there is no such constraint.
  */
 Oid
-tsql_get_constraint_oid(char *conname, Oid connamespace)
-{	
+tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id)
+{
 	Relation		tgrel;
-	ScanKeyData 	skey[2];
-	SysScanDesc 	tgscan;
+	ScanKeyData		skey[2];
+	SysScanDesc		tgscan;
 	HeapTuple		tuple;
-	Oid				result = InvalidOid;
+	Oid			result = InvalidOid;
 
 	/* search in pg_constraint by name and namespace */
 	tgrel = table_open(ConstraintRelationId, AccessShareLock);
 	ScanKeyInit(&skey[0],
-				Anum_pg_constraint_conname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(conname));
+			Anum_pg_constraint_conname,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			CStringGetDatum(conname));
 
 	ScanKeyInit(&skey[1],
-				Anum_pg_constraint_connamespace,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(connamespace));
+			Anum_pg_constraint_connamespace,
+			BTEqualStrategyNumber, F_OIDEQ,
+			ObjectIdGetDatum(connamespace));
 
 	tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId,
-								true, NULL, 2, skey);
+					true, NULL, 2, skey);
 
 	/* we are interested in the first row only */
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
@@ -949,7 +950,13 @@ tsql_get_constraint_oid(char *conname, Oid connamespace)
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 		if (OidIsValid(con->oid))
 		{
-			result = con->oid;
+			if (OidIsValid(con->conrelid))
+			{
+				if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+					result = con->oid;
+			}
+			else
+				result = con->oid;
 		}
 	}
 	systable_endscan(tgscan);
@@ -959,28 +966,28 @@ tsql_get_constraint_oid(char *conname, Oid connamespace)
 
 /*
  * tsql_get_trigger_oid
- *		Given name and namespace of a trigger, look up the OID.
+ *	Given name and namespace of a trigger, look up the OID.
  *
  * Returns InvalidOid if there is no such trigger.
  */
 Oid
-tsql_get_trigger_oid(char *tgname, Oid tgnamespace)
+tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id)
 {
 	Relation		tgrel;
-	ScanKeyData 	key;
-	SysScanDesc 	tgscan;
-	HeapTuple		tuple;
-	Oid				result = InvalidOid;
+	ScanKeyData 		key;
+	SysScanDesc		tgscan;
+	HeapTuple 		tuple;
+	Oid			result = InvalidOid;
 
 	/* first search in pg_trigger by name */
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&key,
-				Anum_pg_trigger_tgname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(tgname));
+			Anum_pg_trigger_tgname,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			CStringGetDatum(tgname));
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
-								true, NULL, 1, &key);
+					true, NULL, 1, &key);
 	
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
@@ -990,7 +997,8 @@ tsql_get_trigger_oid(char *tgname, Oid tgnamespace)
 			break;
 		}
 		/* then consider only trigger in specified namespace */
-		if (get_rel_namespace(pg_trigger->tgrelid) == tgnamespace)
+		if (get_rel_namespace(pg_trigger->tgrelid) == tgnamespace && 
+			pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			result = pg_trigger->oid;
 			break;
@@ -1003,16 +1011,16 @@ tsql_get_trigger_oid(char *tgname, Oid tgnamespace)
 
 /*
  * tsql_get_proc_oid
- *		Given name and namespace of a proc, look up the OID.
+ *	Given name and namespace of a proc, look up the OID.
  *
  * Returns InvalidOid if there is no such proc.
  */
 Oid
-tsql_get_proc_oid(char *proname, Oid pronamespace)
+tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id)
 {
 	HeapTuple		tuple;
 	CatCList		*catlist;
-	Oid				result = InvalidOid;
+	Oid			result = InvalidOid;
 
 	/* first search in pg_proc by name */
 	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
@@ -1022,7 +1030,8 @@ tsql_get_proc_oid(char *proname, Oid pronamespace)
 		tuple = &catlist->members[i]->tuple;
 		procform = (Form_pg_proc) GETSTRUCT(tuple);
 		/* then consider only procs in specified namespace */
-		if (procform->pronamespace == pronamespace)
+		if (procform->pronamespace == pronamespace &&
+			pg_proc_aclcheck(procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 		{
 			result = procform->oid;
 			break;
@@ -1036,31 +1045,31 @@ static int
 babelfish_get_delimiter_pos(char *str)
 {	
 	char *ptr;
-	if(strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
+	if (strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
 		return -1;
-	else if(str[0] == '[')
+	else if (str[0] == '[')
 	{
 		ptr = strstr(str, "].");
-		if(ptr == NULL)
+		if (ptr == NULL)
 			return -1;
 		else
-			return (int)(ptr - str) + 1;
+			return (int) (ptr - str) + 1;
 	}
-	else if(str[0] == '"')
+	else if (str[0] == '"')
 	{
 		ptr = strstr(&str[1], "\".");
-		if(ptr == NULL)
+		if (ptr == NULL)
 			return -1;
 		else
-			return (int)(ptr - str) + 1;
+			return (int) (ptr - str) + 1;
 	}
 	else
 	{	
 		ptr = strstr(str, ".");
-		if(ptr == NULL)
+		if (ptr == NULL)
 			return -1;
 		else
-			return (int)(ptr - str);
+			return (int) (ptr - str);
 	}
 	
 	return -1;
@@ -1075,17 +1084,17 @@ remove_delimited_identifiers(char *str, int len)
 	
 	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
 	{	
-		if(len > 2)
+		if (len > 2)
 			return pnstrdup(&str[1], len - 2);
 		else
-			return "";
+			return pstrdup("");
 	}
 	else
 		return pnstrdup(str, len);
 }
 
 /*
- * Split multiple-part object-name into array of pointers , it also remove the delimited identifiers. 
+ * Split multiple-part object-name into array of pointers, it also remove the delimited identifiers. 
  */
 char**
 split_object_name(char *name)
@@ -1093,8 +1102,8 @@ split_object_name(char *name)
 	char		**res = palloc(4 * sizeof(char *));
 	char		*temp[4];
 	char		*str;
-	int			cur_pos, next_pos;
-	int 		count = 0;
+	int		cur_pos, next_pos;
+	int		count = 0;
 
 	/* extract and remove the delimited identifiers from input into temp array */
 	cur_pos = 0;
@@ -1112,8 +1121,8 @@ split_object_name(char *name)
 	/* fill unspecified parts with empty strings */
 	for(int i = 0; i < 4; i++)
 	{
-		if(i < 4 - count)
-			res[i] = "";
+		if (i < 4 - count)
+			res[i] = pstrdup("");
 		else
 			res[i] = temp[i - (4 - count)];
 	}

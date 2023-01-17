@@ -726,14 +726,6 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_volatility(IN "@function_name" sys.varchar(128) DEFAULT NULL, IN "@volatility" sys.varchar(128) DEFAULT NULL)
-AS 'babelfishpg_tsql', 'sp_volatility' LANGUAGE C;
-GRANT EXECUTE on PROCEDURE sys.sp_volatility(IN sys.varchar(128), IN sys.varchar(128)) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
-RETURNS INTEGER AS
-'babelfishpg_tsql', 'object_id'
-LANGUAGE C STABLE RETURNS NULL ON NULL INPUT;
 create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
@@ -824,6 +816,19 @@ and
     tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
+
+-- function sys.object_id(object_name, object_type) needs to change input type to sys.VARCHAR
+ALTER FUNCTION sys.object_id RENAME TO object_id_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'object_id_deprecated_in_2_4_0');
+
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'object_id'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_volatility(IN "@function_name" sys.varchar(128) DEFAULT NULL, IN "@volatility" sys.varchar(128) DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_volatility' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_volatility(IN sys.varchar(128), IN sys.varchar(128)) TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
