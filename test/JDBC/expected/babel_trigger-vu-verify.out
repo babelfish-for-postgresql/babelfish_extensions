@@ -218,4 +218,14 @@ GO
 ~~ROW COUNT: 1~~
 
 
+-- Test for trigger inside schema
+insert into babel_trigger_vu_prepare_sch1.babel_trigger_vu_prepare_t1(col) select N'Muffler'
+GO
+~~START~~
+varchar
+trigger3 from sch1 invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
 

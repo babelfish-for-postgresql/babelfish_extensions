@@ -9,6 +9,13 @@ bool
 t
 ~~END~~
 
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql      user=foo      password=abc
 ~~ERROR (Code: 33557097)~~
@@ -1376,5 +1383,13 @@ GO
 ~~START~~
 bool
 t
+~~END~~
+
+
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
 ~~END~~
 

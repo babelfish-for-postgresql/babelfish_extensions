@@ -60,6 +60,9 @@
 /* default server name */
 #define TDS_DEFAULT_SERVER_NAME "Microsoft SQL Server"
 
+/* default compatibility version */
+#define BABEL_COMPATIBILITY_VERSION "12.0.2000.8"
+
 /* TDS packet types */
 #define TDS_QUERY				0x01
 #define TDS_RPC					0x03

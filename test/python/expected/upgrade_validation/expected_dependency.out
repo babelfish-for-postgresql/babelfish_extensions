@@ -140,7 +140,7 @@ Function sys.babelfish_get_service_setting(character varying,character varying)
 Function sys.babelfish_get_timeunit_from_string(text,text)
 Function sys.babelfish_get_version(character varying)
 Function sys.babelfish_get_weekdaynum_by_name(text,jsonb)
-Function sys.babelfish_has_any_privilege(text,text,text)
+Function sys.babelfish_has_any_privilege(oid,text,text,text)
 Function sys.babelfish_helpdb()
 Function sys.babelfish_helpdb(character varying)
 Function sys.babelfish_is_ossp_present()
@@ -425,7 +425,6 @@ Function sys.get_host_os()
 Function sys.getdate()
 Function sys.getutcdate()
 Function sys.has_dbaccess(sys.sysname)
-Function sys.has_perms_by_name(sys.sysname,sys.nvarchar,sys.sysname,sys.sysname,sys.nvarchar)
 Function sys.hashbpchar(sys.bpchar)
 Function sys.hashbytes(character varying,sys.bbf_varbinary)
 Function sys.hashvarchar(sys."varchar")
@@ -499,7 +498,6 @@ Function sys.nvarchar(sys.nvarchar,integer,boolean)
 Function sys.nvarchar_larger(sys.nvarchar,sys.nvarchar)
 Function sys.nvarchar_smaller(sys.nvarchar,sys.nvarchar)
 Function sys.nvarchar_sqlvariant(sys.nvarchar)
-Function sys.object_name(integer,integer)
 Function sys.objectproperty(integer,sys."varchar")
 Function sys.objectpropertyex(integer,sys."varchar")
 Function sys.openjson_array(text)
@@ -651,6 +649,7 @@ Function sys.translate_pg_type_to_tsql(oid)
 Function sys.trigger_nestlevel()
 Function sys.trigger_test_fault()
 Function sys.tsql_get_constraintdef(oid)
+Function sys.tsql_get_expr(text,oid)
 Function sys.tsql_get_functiondef(oid)
 Function sys.tsql_get_returntypmodvalue(oid)
 Function sys.tsql_query_to_xml(text,integer,text,boolean,text)
@@ -953,7 +952,6 @@ View information_schema_tsql.constraint_column_usage
 View information_schema_tsql.domains
 View information_schema_tsql.routines
 View information_schema_tsql.views
-View sys.all_columns
 View sys.all_sql_modules_internal
 View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions

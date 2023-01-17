@@ -34,6 +34,11 @@ RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_functiondef'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_expr(IN text_expr text DEFAULT NULL , IN function_id OID DEFAULT NULL)
+RETURNS text
+AS 'babelfishpg_tsql', 'tsql_get_expr'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.tsql_get_returnTypmodValue(IN function_id OID DEFAULT NULL)
 RETURNS INTEGER
 AS 'babelfishpg_tsql', 'tsql_get_returnTypmodValue'
@@ -473,109 +478,10 @@ LANGUAGE plpgsql
 VOLATILE CALLED ON NULL INPUT;
 
 -- Return the object ID given the object name. Can specify optional type.
-CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
 RETURNS INTEGER AS
-$BODY$
-DECLARE
-        id oid;
-        db_name text collate "C";
-        bbf_schema_name text collate "C";
-        schema_name text collate "C";
-        schema_oid oid;
-        obj_name text collate "C";
-        is_temp_object boolean;
-        obj_type char(2) collate "C";
-        cs_as_object_name text collate "C" := object_name;
-BEGIN
-        obj_type = object_type;
-        id = null;
-        schema_oid = NULL;
-
-        SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
-        FROM babelfish_split_object_name(cs_as_object_name) s;
-
-        -- Invalid object_name
-        IF obj_name IS NULL OR obj_name = '' collate sys.database_default THEN
-            RETURN NULL;
-        END IF;
-
-        IF bbf_schema_name IS NULL OR bbf_schema_name = '' collate sys.database_default THEN
-            bbf_schema_name := sys.schema_name();
-        END IF;
-
-        schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
-
-        -- Check if looking for temp object.
-        is_temp_object = left(obj_name, 1) = '#' collate sys.database_default;
-
-        -- Can only search in current database. Allowing tempdb for temp objects.
-        IF db_name IS NOT NULL AND db_name collate sys.database_default <> db_name() AND db_name collate sys.database_default <> 'tempdb' THEN
-            RAISE EXCEPTION 'Can only do lookup in current database.';
-        END IF;
-
-        IF schema_name IS NULL OR schema_name = '' collate sys.database_default THEN
-            RETURN NULL;
-        END IF;
-
-        -- Searching within a schema. Get schema oid.
-        schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
-        IF schema_oid IS NULL THEN
-            RETURN NULL;
-        END IF;
-
-        if obj_type <> '' then
-            case
-                -- Schema does not apply as much to temp objects.
-                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-	            id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
-
-                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-	            id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name 
-                            and relnamespace = schema_oid limit 1);
-
-                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-	            id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name 
-                            and connamespace = schema_oid limit 1);
-
-                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-	            id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name 
-                            and pronamespace = schema_oid limit 1);
-
-                when upper(object_type) in ('TR', 'TA') then
-	            id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
-
-                -- Throwing exception as a reminder to add support in the future.
-                when upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
-                    RAISE EXCEPTION 'Object type currently unsupported.';
-
-                -- unsupported obj_type
-                else id := null;
-            end case;
-        else
-            if not is_temp_object then 
-                id := (
-                    select oid from pg_class where lower(relname) = obj_name
-                        and relnamespace = schema_oid
-                    union
-                    select oid from pg_constraint where lower(conname) = obj_name
-                        and connamespace = schema_oid
-                    union
-                    select oid from pg_proc where lower(proname) = obj_name
-                        and pronamespace = schema_oid
-                    union
-                    select oid from pg_trigger where lower(tgname) = obj_name
-                    limit 1
-                );
-            else
-                -- temp object without "object_type" in-argument
-                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
-            end if;
-        end if;
-
-        RETURN id::integer;
-END;
-$BODY$
-LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
+'babelfishpg_tsql', 'object_id'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.parsename (
 	object_name VARCHAR
@@ -2383,9 +2289,11 @@ DECLARE
     pg_schema text COLLATE sys.database_default;
     implied_dbo_permissions boolean;
     fully_supported boolean;
+    is_cross_db boolean := false;
     object_name text COLLATE sys.database_default;
     database_id smallint;
     namespace_id oid;
+    userid oid;
     object_type text;
     function_signature text;
     qualified_name text;
@@ -2474,7 +2382,8 @@ BEGIN
         END IF;
     END IF;
 
-    IF fully_supported = 'f' AND CURRENT_USER IN('dbo', 'master_dbo', 'tempdb_dbo', 'msdb_dbo') THEN
+    IF fully_supported = 'f' AND
+		(SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) = 'dbo' THEN
         RETURN CAST(implied_dbo_permissions AS integer);
     ELSIF fully_supported = 'f' THEN
         RETURN 0;
@@ -2500,6 +2409,16 @@ BEGIN
         SELECT CASE 
             WHEN db_name IS NULL OR db_name = '' THEN (sys.db_id())
             ELSE (sys.db_id(db_name))
+        END);
+
+	IF database_id <> sys.db_id() THEN
+        is_cross_db = true;
+	END IF;
+
+	userid := (
+        SELECT CASE
+            WHEN is_cross_db THEN sys.suser_id()
+            ELSE sys.user_id()
         END);
   
     -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
@@ -2573,24 +2492,24 @@ BEGIN
 
     return_value := (
         SELECT CASE
-            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(object_type, pg_schema, object_name)
+            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(userid, object_type, pg_schema, object_name)
 
             WHEN object_type = 'column'
                 THEN CASE
                     WHEN cs_as_permission IN('insert', 'delete', 'execute') THEN NULL
-                    ELSE CAST(has_column_privilege(qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
+                    ELSE CAST(has_column_privilege(userid, qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
                 END
 
             WHEN object_type = 'table'
                 THEN CASE
                     WHEN cs_as_permission = 'execute' THEN 0
-                    ELSE CAST(has_table_privilege(qualified_name, cs_as_permission) AS integer)
+                    ELSE CAST(has_table_privilege(userid, qualified_name, cs_as_permission) AS integer)
                 END
 
             WHEN object_type = 'function'
                 THEN CASE
                     WHEN cs_as_permission IN('select', 'execute')
-                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                        THEN CAST(has_function_privilege(userid, function_signature, 'execute') AS integer)
                     WHEN cs_as_permission IN('update', 'insert', 'delete', 'references')
                         THEN 0
                     ELSE NULL
@@ -2599,7 +2518,7 @@ BEGIN
             WHEN object_type = 'procedure'
                 THEN CASE
                     WHEN cs_as_permission = 'execute'
-                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                        THEN CAST(has_function_privilege(userid, function_signature, 'execute') AS integer)
                     WHEN cs_as_permission IN('select', 'update', 'insert', 'delete', 'references')
                         THEN 0
                     ELSE NULL

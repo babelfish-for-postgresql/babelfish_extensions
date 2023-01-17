@@ -66,6 +66,7 @@
 
 uint64 rowcount_var = 0;
 List *columns_updated_list = NIL;
+static char *original_query_string = NULL;
 
 int fetch_status_var = 0;
 
@@ -4607,6 +4608,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	/* fetch current search_path */
 	List 		*path_oids = fetch_search_path(false);
 	char 		*old_search_path = flatten_search_path(path_oids);
+	if (stmt->original_query)
+		original_query_string = stmt->original_query;
 
 	if (stmt->is_cross_db)
 	{
@@ -10206,4 +10209,13 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 		return true;
 	}
 	return false;
+}
+
+/*
+ * Get the original_query_string which stores the original query.
+ */
+char *
+get_original_query_string(void)
+{
+	return original_query_string;
 }
