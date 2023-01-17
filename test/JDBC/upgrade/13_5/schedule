@@ -115,7 +115,7 @@ identity_function
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
-routines_definition
+routines_definition_before-14_7-or-15_2
 constraint_column_usage
 column_domain_usage
 sp_describe_first_result_set
