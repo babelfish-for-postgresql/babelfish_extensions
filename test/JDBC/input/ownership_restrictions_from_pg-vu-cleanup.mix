@@ -1,0 +1,25 @@
+-- psql
+DROP ROLE ownership_restrictions_from_pg_role4;
+GO
+
+SET enable_drop_babelfish_role = true;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role2;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role3;
+GO
+
+SET enable_drop_babelfish_role = false;
+GO
+
+DROP USER ownership_restrictions_from_pg_test_user;
+GO
+
+-- tsql
+DROP ROLE ownership_restrictions_from_pg_role1;
+GO
+
+DROP LOGIN ownership_restrictions_from_pg_login1;
+GO

@@ -45,6 +45,7 @@ char*	product_version = "default";
 static bool TdsFaultInjectionEnabled = false;
 #endif
 bool enable_drop_babelfish_role = false;
+bool enable_alter_babelfish_role = false;
 
 const struct config_enum_entry ssl_protocol_versions_info[] = {
 	{"", PG_TLS_ANY, false},
@@ -355,6 +356,21 @@ TdsDefineGucs(void)
 		gettext_noop("Enables dropping a babelfish role"),
 		NULL,
 		&enable_drop_babelfish_role,
+		false,
+		PGC_USERSET,
+		GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+		NULL,
+		NULL,
+		NULL);
+
+	/*
+	 * Enable user to drop a babelfish role while not in a babelfish setting.
+	 */
+	DefineCustomBoolVariable(
+		"enable_alter_babelfish_role",
+		gettext_noop("Enables altering a babelfish role"),
+		NULL,
+		&enable_alter_babelfish_role,
 		false,
 		PGC_USERSET,
 		GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,

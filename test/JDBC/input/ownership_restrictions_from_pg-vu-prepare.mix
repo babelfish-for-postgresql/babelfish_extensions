@@ -1,0 +1,27 @@
+-- tsql
+CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '123';
+GO
+
+CREATE ROLE ownership_restrictions_from_pg_role1;
+go
+
+-- psql
+CREATE USER ownership_restrictions_from_pg_test_user WITH PASSWORD '12345678' inherit;
+go
+
+-- Create a non babelfish role that is a member of master_guest
+-- and enable altering role for few statemenst(password, valid until, connection limit)
+CREATE ROLE ownership_restrictions_from_pg_role2 IN ROLE master_guest, tempdb_guest, msdb_guest;
+GO
+
+CREATE ROLE ownership_restrictions_from_pg_role3;
+GO
+
+GRANT master_guest TO ownership_restrictions_from_pg_role3;
+GRANT tempdb_guest TO ownership_restrictions_from_pg_role3;
+GRANT msdb_guest TO ownership_restrictions_from_pg_role3;
+GO
+
+-- Test a regular role
+CREATE ROLE ownership_restrictions_from_pg_role4;
+GO

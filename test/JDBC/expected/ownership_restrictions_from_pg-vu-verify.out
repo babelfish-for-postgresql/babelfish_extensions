@@ -1,0 +1,580 @@
+-- psql user=ownership_restrictions_from_pg_test_user password=12345678
+-- Altering of role from an non superuser should fail
+ALTER ROLE master_ownership_restrictions_from_pg_role1 rename to master_ownership_restrictions_from_pg_role5;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 with password '123';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOCREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOLOGIN;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOSUPERUSER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOINHERIT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 REPLICATION;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 BYPASSRLS;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 set babelfishpg_tsql.escape_hatch_schemabinding_function = 'strict';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql
+-- Altering bbf created logins/roles from psql port should fail
+ALTER ROLE ownership_restrictions_from_pg_login1 rename to ownership_restrictions_from_pg_login2;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 with password '123';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOCREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOLOGIN;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOSUPERUSER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOINHERIT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 REPLICATION;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 BYPASSRLS;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 set babelfishpg_tsql.escape_hatch_schemabinding_function = 'strict';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 rename to ownership_restrictions_from_pg_role5;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 with password '123';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 NOCREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 NOLOGIN;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 NOSUPERUSER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 NOINHERIT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 REPLICATION;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 BYPASSRLS;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_role2 set babelfishpg_tsql.escape_hatch_schemabinding_function = 'strict';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- Altering of APG Master should be allowed for few stataements(password, valid until, connection limit)
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 rename to ownership_restrictions_from_pg_role5;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 with password '123';
+SET enable_alter_babelfish_role = false;
+GO
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 NOCREATEROLE;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 NOCREATEDB;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 NOLOGIN;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 NOSUPERUSER;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 NOINHERIT;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 REPLICATION;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 BYPASSRLS;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 WITH CONNECTION LIMIT 1;
+SET enable_alter_babelfish_role = false;
+GO
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role2 set babelfishpg_tsql.escape_hatch_schemabinding_function = 'strict';
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 rename to ownership_restrictions_from_pg_role5;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 with password '123';
+SET enable_alter_babelfish_role = false;
+GO
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 NOCREATEROLE;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 NOCREATEDB;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 NOLOGIN;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 NOSUPERUSER;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 NOINHERIT;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 REPLICATION;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 BYPASSRLS;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 WITH CONNECTION LIMIT 1;
+SET enable_alter_babelfish_role = false;
+GO
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE ownership_restrictions_from_pg_role3 set babelfishpg_tsql.escape_hatch_schemabinding_function = 'strict';
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- Altering of babelfish created roles shouldn't be allowed for superuser
+-- even if the enable_alter_babelfish_role is set to true
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 rename to master_ownership_restrictions_from_pg_role5;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 with password '123';
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOCREATEROLE;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOCREATEDB;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOLOGIN;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOSUPERUSER;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOINHERIT;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 REPLICATION;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 BYPASSRLS;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH CONNECTION LIMIT 1;
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 set babelfishpg_tsql.escape_hatch_schemabinding_function = 'strict';
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
