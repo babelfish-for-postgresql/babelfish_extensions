@@ -66,6 +66,7 @@
 
 uint64 rowcount_var = 0;
 List *columns_updated_list = NIL;
+static char *original_query_string = NULL;
 
 int fetch_status_var = 0;
 
@@ -10213,18 +10214,9 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 }
 
 /*
- * Set the global variable original_query_string with the original query.
- */
-static void
-set_original_query_string(char *queryString)
-{
-	original_query_string = queryString;
-}
-
-/*
  * Get the original_query_string which stores the original query.
  */
-char*
+char *
 get_original_query_string(void)
 {
 	return original_query_string;

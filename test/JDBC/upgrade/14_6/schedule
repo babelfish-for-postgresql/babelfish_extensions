@@ -51,7 +51,7 @@ BABEL-3234
 BABEL-3402
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
-routines_definition
+routines_definition_before-14_7
 column_domain_usage
 constraint_column_usage
 sp_describe_first_result_set
@@ -298,7 +298,6 @@ sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
 sys-system_sql_modules
-sys-sql_modules
 sys-table_types
 sys-tables
 sys-triggers
@@ -339,3 +338,6 @@ sys_database_principals_dep
 case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+BABEL_OBJECT_ID
+sys-all_sql_modules_before-14_7
+sys-sql_modules_before-14_7
