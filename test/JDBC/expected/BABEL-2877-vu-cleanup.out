@@ -41,6 +41,6 @@ GO
 SELECT * FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel_2877_vu_prepare%';
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar#!#text#!#text#!#bigint#!#bigint#!#datetime#!#datetime
+varchar#!#varchar#!#nvarchar#!#text#!#text#!#bigint#!#bigint#!#datetime#!#datetime#!#ntext
 ~~END~~
 

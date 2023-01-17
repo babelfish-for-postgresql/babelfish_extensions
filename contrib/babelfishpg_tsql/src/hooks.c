@@ -2107,6 +2107,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	ListCell	*x;
 	int			idx;
 	uint64		flag_values = 0, flag_validity = 0;
+	char *original_query = get_original_query_string();
 
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
@@ -2235,6 +2236,13 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	/*
+	 * Save the original query in the catalog.
+	 */
+	if (original_query)
+		new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(original_query);
+	else
+		new_record_nulls[Anum_bbf_function_ext_definition - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
 	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
