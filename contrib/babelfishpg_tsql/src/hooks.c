@@ -2099,7 +2099,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	ListCell	*x;
 	int			idx;
 	uint64		flag_values = 0, flag_validity = 0;
-	const char *original_query = get_original_query_string();
+	char *original_query = get_original_query_string();
 
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
