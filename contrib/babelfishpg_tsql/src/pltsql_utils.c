@@ -1137,8 +1137,6 @@ split_object_name(char *name)
 	return res;
 }
 
-
-
 /*
  * is_schema_from_db
  *		Given schema_oid and db_id, check if schema belongs to provided database id.
@@ -1153,4 +1151,103 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
 	db_id_from_schema = get_dbid_from_physical_schema_name(schema_name, true);
 	pfree(schema_name);
 	return (db_id_from_schema == db_id);
+}
+
+Oid 
+tsql_get_proc_nsp_oid(Oid object_id, Oid user_id)
+{
+	Oid namespace_oid = InvalidOid;
+	HeapTuple tuple;
+	bool isnull;
+
+	/* first search in pg_proc by oid */
+	tuple = SearchSysCache1(PROCOID, CStringGetDatum(object_id));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		(void) SysCacheGetAttr(PROCOID, tuple,
+								Anum_pg_proc_pronamespace,
+								&isnull);		
+		if(!isnull)
+		{
+			Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tuple);
+			if(OidIsValid(proc->oid))
+			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+			{
+				namespace_oid = proc->pronamespace;
+			}
+		}
+		ReleaseSysCache(tuple);
+	}
+	return namespace_oid;
+}
+
+Oid 
+tsql_get_constaint_nsp_oid(Oid object_id, Oid user_id){
+
+	Oid namespace_oid = InvalidOid;
+	HeapTuple tuple;
+	bool isnull;
+
+	/* first search in pg_proc by oid */
+	tuple = SearchSysCache1(CONSTROID, CStringGetDatum(object_id));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		(void) SysCacheGetAttr(CONSTROID, tuple,
+								Anum_pg_constraint_connamespace,
+								&isnull);		
+		if(!isnull)
+		{
+			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+			if (OidIsValid(con->oid))
+			{	
+				if (OidIsValid(con->conrelid))
+				{
+					if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+						namespace_oid = con->connamespace;
+				}
+				else
+					namespace_oid = con->connamespace;
+			}
+		}
+		ReleaseSysCache(tuple);
+	}
+	return namespace_oid;
+}
+
+Oid 
+tsql_get_trigger_nsp_oid(Oid object_id, Oid user_id){
+
+	Relation		tgrel;
+	ScanKeyData 	key[1];
+	SysScanDesc 	tgscan;
+	HeapTuple		tuple;
+	Oid namespace_oid = InvalidOid;
+
+	/* first search in pg_trigger by name */
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
+	ScanKeyInit(&key[0],
+				Anum_pg_trigger_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object_id));
+
+	tgscan = systable_beginscan(tgrel, TriggerOidIndexId,
+								true, NULL, 1, key);
+
+	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger trig = (Form_pg_trigger) GETSTRUCT(tuple);
+		Oid relid = trig->tgrelid;
+		if(OidIsValid(relid))
+		{
+			if (pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+			{
+				namespace_oid = get_rel_namespace(relid);
+			}
+		}
+	}
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+	return namespace_oid;
 }
