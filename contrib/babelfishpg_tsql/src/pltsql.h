@@ -1041,6 +1041,7 @@ typedef struct PLtsql_stmt_execsql
 	char		*db_name;		/* db_name: only for cross db query */
 	bool            is_schema_specified;    /*is schema name specified? */
 	bool		is_create_view;		/* CREATE VIEW? */
+	char		*original_query;    /* Only for batch level statement. */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1645,6 +1646,20 @@ typedef struct PLtsql_protocol_plugin
 	char* (*get_cur_db_name) ();
 
 	char* (*get_physical_schema_name) (char *db_name, const char *schema_name);
+
+	/* Session level GUCs */
+	bool		quoted_identifier;
+	bool		arithabort;
+	bool		ansi_null_dflt_on;
+	bool		ansi_defaults;
+	bool		ansi_warnings;
+	bool		ansi_padding;
+	bool		ansi_nulls;
+	bool		concat_null_yields_null;
+	int		textsize;
+	int		datefirst;
+	int		lock_timeout;
+	const char*	language;
 	
 } PLtsql_protocol_plugin;
 
@@ -1874,7 +1889,7 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 
 extern int get_insert_bulk_rows_per_batch(void);
 extern int get_insert_bulk_kilobytes_per_batch(void);
-
+extern char *get_original_query_string(void);
 
 /*
  * Functions for namespace handling in pl_funcs.c

@@ -52,7 +52,7 @@ BABEL-3234
 BABEL-3402
 BABEL-3646-before-14_6
 cast_numeric_types_to_datetime
-routines_definition
+routines_definition_before-14_7
 column_domain_usage
 constraint_column_usage
 sp_describe_first_result_set
@@ -316,5 +316,6 @@ sys_database_principals_dep
 case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+sys-all_sql_modules_before-14_7
 BABEL_OBJECT_ID
 Test-sp_volatility

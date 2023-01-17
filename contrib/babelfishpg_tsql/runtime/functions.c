@@ -135,9 +135,9 @@ procid(PG_FUNCTION_ARGS)
 Datum
 version(PG_FUNCTION_ARGS)
 {
-	StringInfoData temp;
-	void *info;
-
+	StringInfoData	temp;
+	void		*info;
+	const char	*product_version;
 	initStringInfo(&temp);
 
 	if (pg_strcasecmp(pltsql_version, "default") == 0)
@@ -147,11 +147,15 @@ version(PG_FUNCTION_ARGS)
 
 		temp_str = strstr(temp_str, ", compiled by");
 		*temp_str = '\0';
-
+		product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
+		
+		Assert(product_version != NULL);
+		if(pg_strcasecmp(product_version,"default") == 0)
+			product_version = BABEL_COMPATIBILITY_VERSION;
 		appendStringInfo(&temp,
 						 "Babelfish for PostgreSQL with SQL Server Compatibility - %s"
 						 "\n%s %s\nCopyright (c) Amazon Web Services\n%s (Babelfish %s)",
-						 BABEL_COMPATIBILITY_VERSION,
+						 product_version,
 						 __DATE__, __TIME__, pg_version, BABELFISH_VERSION_STR);
 	}
 	else
