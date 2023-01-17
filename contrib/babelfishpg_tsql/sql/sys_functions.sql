@@ -3378,6 +3378,7 @@ $$
 $$
 LANGUAGE sql PARALLEL SAFE STABLE;
 
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
 RETURNS sys.NVARCHAR(4000)
 AS $$
@@ -3410,3 +3411,9 @@ IN query text)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'openquery_internal'
 LANGUAGE C VOLATILE;
+=======
+CREATE OR REPLACE FUNCTION sys.OBJECT_SCHEMA_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
+RETURNS sys.SYSNAME AS
+'babelfishpg_tsql', 'object_schema_name'
+LANGUAGE C STABLE;
+>>>>>>> cf04ca40 (BABEL-733: Support OBJECT_SCHEMA_NAME T-SQL function)

@@ -48,6 +48,15 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
 
+#include "catalog/pg_trigger.h"
+#include "catalog/pg_constraint.h"
+#include "utils/fmgroids.h"
+#include "utils/catcache.h"
+#include "utils/acl.h"
+#include "access/table.h"
+#include "access/genam.h"
+#include "catalog/pg_proc.h"
+
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 
@@ -91,11 +100,15 @@ PG_FUNCTION_INFO_V1(smallint_degrees);
 PG_FUNCTION_INFO_V1(bigint_radians);
 PG_FUNCTION_INFO_V1(int_radians);
 PG_FUNCTION_INFO_V1(smallint_radians);
+<<<<<<< HEAD
 PG_FUNCTION_INFO_V1(bigint_power);
 PG_FUNCTION_INFO_V1(int_power);
 PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
+=======
+PG_FUNCTION_INFO_V1(object_schema_name);
+>>>>>>> 1555d795 (BABEL-733: Support OBJECT_SCHEMA_NAME T-SQL function)
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -1814,4 +1827,85 @@ numeric_radians(PG_FUNCTION_ARGS)
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
 
 	PG_RETURN_NUMERIC(result);
+}
+
+/* Returns the database schema name for schema-scoped objects. */
+Datum 
+object_schema_name(PG_FUNCTION_ARGS)
+{	
+	int64 arg0 = PG_GETARG_INT64(0);
+	int64 arg1 = PG_GETARG_INT64(1);
+	Oid object_id;
+	Oid database_id;
+	Oid	user_id = GetUserId();
+	Oid namespace_oid = InvalidOid;
+	Oid relid = InvalidOid;
+	char* namespace_name;
+	const char* schema_name;
+
+	if(!arg0)
+		PG_RETURN_NULL();
+	else{
+		if (arg0 < PG_INT32_MIN || arg0 > PG_INT32_MAX) {
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					errmsg("Arithmetic overflow error converting expression to data type int.")));
+		}
+		object_id = (Oid) arg0;
+	}
+
+	if(!arg1)
+		database_id = get_cur_db_id();
+	else {
+		if (arg1 < PG_INT32_MIN || arg1 > PG_INT32_MAX) {
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					errmsg("Arithmetic overflow error converting expression to data type int.")));
+		}
+		database_id = (Oid) arg1;
+		user_id = GetSessionUserId();
+	}
+
+	if (!DbidIsValid(database_id))
+		PG_RETURN_NULL();
+	
+	/* Lookup namespace_oid in pg_class */
+	relid = get_rel_namespace(object_id);
+	if(OidIsValid(relid) && 
+		pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+	{
+		namespace_oid = relid;
+	}
+	
+	if (!OidIsValid(namespace_oid)) /* if not found earlier */
+	{
+		/* Lookup namespace_oid in pg_constraint */
+		namespace_oid = tsql_get_constaint_nsp_oid(object_id, user_id);
+	
+	}
+	if (!OidIsValid(namespace_oid))  /* if not found earlier */
+	{
+		/* Lookup namespace_oid in pg_proc */
+		namespace_oid = tsql_get_proc_nsp_oid(object_id, user_id);
+	}
+	if (!OidIsValid(namespace_oid))  /* if not found earlier */
+	{
+		/* Lookup namespace_oid in pg_trigger */
+		namespace_oid = tsql_get_trigger_nsp_oid(object_id, user_id);
+	}
+
+	/* Find schema name from namespace_oid */
+	if (OidIsValid(namespace_oid)){
+		namespace_name = get_namespace_name(namespace_oid);
+
+		if (pg_namespace_aclcheck(namespace_oid, user_id, ACL_USAGE) != ACLCHECK_OK ||
+			database_id != get_dbid_from_physical_schema_name(namespace_name, true))
+				PG_RETURN_NULL();
+
+		schema_name = pstrdup(get_logical_schema_name(namespace_name, true));
+		pfree(namespace_name);
+		PG_RETURN_TEXT_P(cstring_to_text(schema_name));
+	}
+	else
+		PG_RETURN_NULL();
 }
