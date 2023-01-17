@@ -1,0 +1,87 @@
+-- tsql
+ALTER LOGIN [babel\aduser] DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@BABEL';
+GO
+
+-- tsql
+ALTER LOGIN [babel\aduser] ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@BABEL';
+GO
+
+-- tsql
+ALTER LOGIN [babel\aduser] with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@BABEL';
+GO
+
+-- tsql
+ALTER LOGIN [aduser@BABEL] DISABLE;
+GO
+
+ALTER LOGIN passWORduser DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser';
+GO
+
+-- tsql
+ALTER LOGIN passWORduser ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser';
+GO
+
+-- tsql
+ALTER LOGIN passWORduser with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser';
+GO
+
+-- tsql
+ALTER LOGIN [aduser@BBF] DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@bbf';
+GO
+
+-- tsql
+ALTER LOGIN [aduser@BBF] ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@bbf';
+GO
+
+-- tsql
+ALTER LOGIN [aduser@BBF] with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@bbf';
+GO
+
+-- tsql
+ALTER LOGIN [bbf\aduser] DISABLE;
+GO

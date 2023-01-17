@@ -1,0 +1,140 @@
+-- tsql
+ALTER LOGIN [babel\aduser] DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@BABEL';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+aduser@BABEL#!#1#!#master#!#English#!#U
+~~END~~
+
+
+-- tsql
+ALTER LOGIN [babel\aduser] ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@BABEL';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+aduser@BABEL#!#0#!#master#!#English#!#U
+~~END~~
+
+
+-- tsql
+ALTER LOGIN [babel\aduser] with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@BABEL';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+aduser@BABEL#!#0#!#alter_db#!#English#!#U
+~~END~~
+
+
+-- tsql
+ALTER LOGIN [aduser@BABEL] DISABLE;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'aduser@babel', because it does not exist or you do not have permission.)~~
+
+
+ALTER LOGIN passWORduser DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+passworduser#!#1#!#master#!#English#!#S
+~~END~~
+
+
+-- tsql
+ALTER LOGIN passWORduser ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+passworduser#!#0#!#master#!#English#!#S
+~~END~~
+
+
+-- tsql
+ALTER LOGIN passWORduser with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+passworduser#!#0#!#alter_db#!#English#!#S
+~~END~~
+
+
+-- tsql
+ALTER LOGIN [aduser@BBF] DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@bbf';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+aduser@bbf#!#1#!#master#!#English#!#S
+~~END~~
+
+
+-- tsql
+ALTER LOGIN [aduser@BBF] ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@bbf';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+aduser@bbf#!#0#!#master#!#English#!#S
+~~END~~
+
+
+-- tsql
+ALTER LOGIN [aduser@BBF] with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser@bbf';
+GO
+~~START~~
+name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
+aduser@bbf#!#0#!#alter_db#!#English#!#S
+~~END~~
+
+
+-- tsql
+ALTER LOGIN [bbf\aduser] DISABLE;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'aduser@BBF', because it does not exist or you do not have permission.)~~
+
