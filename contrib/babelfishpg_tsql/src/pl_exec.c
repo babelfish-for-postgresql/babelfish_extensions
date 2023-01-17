@@ -10214,7 +10214,7 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 /*
  * Get the original_query_string which stores the original query.
  */
-char*
+char *
 get_original_query_string(void)
 {
 	return original_query_string;
