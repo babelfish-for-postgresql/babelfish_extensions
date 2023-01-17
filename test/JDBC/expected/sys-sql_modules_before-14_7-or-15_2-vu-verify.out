@@ -36,7 +36,6 @@ WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_v2%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
