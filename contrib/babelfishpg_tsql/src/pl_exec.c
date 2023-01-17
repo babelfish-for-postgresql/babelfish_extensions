@@ -143,7 +143,6 @@ static SimpleEcontextStackEntry *simple_econtext_stack = NULL;
 	MemoryContextAlloc(get_eval_mcontext(estate), sz)
 #define eval_mcontext_alloc0(estate, sz) \
 	MemoryContextAllocZero(get_eval_mcontext(estate), sz)
-char *original_query_string = NULL;
 
 /*
  * We use a session-wide hash table for caching cast information.
