@@ -41,7 +41,7 @@ typedef enum
 	TSQL_JSON_DIRECTIVE_WITHOUT_ARRAY_WRAPPER
 } TSQLJSONDirective;
 
-extern void tsql_for_datetime_format(StringInfo format_output, char *outputstr);
-extern void tsql_for_datetimeoffset_format(StringInfo format_output, char *outputstr);
+extern void tsql_for_datetime_format(StringInfo format_output, const char *outputstr);
+extern void tsql_for_datetimeoffset_format(StringInfo format_output, const char *outputstr);
 
 #endif /* TSQL_FOR_H */
