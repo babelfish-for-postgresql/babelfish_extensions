@@ -82,3 +82,6 @@ ignore#!#case_insensitive_collation-before-13-5-vu-cleanup
 ignore#!#jira-BABEL-3504-upgrade-vu-prepare
 ignore#!#jira-BABEL-3504-upgrade-vu-verify
 ignore#!#jira-BABEL-3504-upgrade-vu-cleanup
+
+ignore#!#BABEL-3507-before-14-7-vu-prepare
+ignore#!#BABEL-3507-before-14-7-vu-verify

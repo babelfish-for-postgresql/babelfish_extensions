@@ -272,7 +272,7 @@ SELECT * FROM babel_3507_vu_prepare_v1
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar
-bigint#!#integer#!#integer#!#integer
+numeric#!#numeric#!#numeric#!#numeric
 ~~END~~
 
 
