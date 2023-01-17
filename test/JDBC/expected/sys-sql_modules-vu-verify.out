@@ -13,11 +13,11 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE definition LIKE 'CREATE FUNCTION dbo.sys_sql_modules_vu_prepare_f1()%'
+WHERE definition LIKE '%sys_sql_modules_vu_prepare_f1()%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE FUNCTION dbo.sys_sql_modules_vu_prepare_f1() RETURNS int AS BEGIN<newline>    RETURN 1;<newline>END#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE FUNCTION sys_sql_modules_vu_prepare_f1() <newline>RETURNS INT<newline>AS <newline>BEGIN<newline>    RETURN 1;<newline>END#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -33,7 +33,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE definition LIKE 'CREATE VIEW sys_all_sql_modules_vu_prepare_v2%'
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_v2%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
@@ -72,11 +72,11 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE definition = 'CREATE PROCEDURE dbo.sys_sql_modules_vu_prepare_p1 AS SELECT 1'
+WHERE definition LIKE '%sys_sql_modules_vu_prepare_p1%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE PROCEDURE dbo.sys_sql_modules_vu_prepare_p1 AS SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE PROC sys_sql_modules_vu_prepare_p1 AS<newline>SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -146,7 +146,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE definition LIKE 'CREATE VIEW sys_all_sql_modules_vu_prepare_v1%'
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_v1%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
@@ -172,7 +172,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE definition = 'CREATE PROCEDURE dbo.sys_sql_modules_vu_prepare_p1 AS SELECT 1'
+WHERE definition LIKE '%sys_sql_modules_vu_prepare_p1%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit

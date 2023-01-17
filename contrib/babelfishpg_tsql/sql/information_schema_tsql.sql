@@ -669,7 +669,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
             CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
             CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
-            CAST(sys.tsql_get_functiondef(p.oid) AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
+            CAST(f.definition AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
             CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
             CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
             CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
@@ -687,7 +687,9 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
             pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
-	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT)
+		LEFT JOIN sys.babelfish_function_ext f ON p.proname = f.funcname AND sch.schema_id::regnamespace::name = f.nspname
+			AND sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature COLLATE "C",
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
@@ -715,5 +717,37 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 	    AND CAST(ao.is_ms_shipped as INT) = 0;
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
+            CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
+            CAST(r.relname AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
+            CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
+                    AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres' inherent implementation
+            CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)
+                        AS smallint) AS "NUMERIC_PRECISION",
+            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, -1)
+                        AS smallint) AS "NUMERIC_PRECISION_RADIX",
+            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, -1)
+                        AS int) AS "NUMERIC_SCALE",
+            CAST(s.seqstart AS sys.sql_variant) AS "START_VALUE",
+            CAST(s.seqmin AS sys.sql_variant) AS "MINIMUM_VALUE",
+            CAST(s.seqmax AS sys.sql_variant) AS "MAXIMUM_VALUE",
+            CAST(s.seqincrement AS sys.sql_variant) AS "INCREMENT",
+            CAST( CASE WHEN s.seqcycle = 't' THEN 1 ELSE 0 END AS int) AS "CYCLE_OPTION",
+            CAST(NULL AS sys.nvarchar(128)) AS "DECLARED_DATA_TYPE",
+            CAST(NULL AS int) AS "DECLARED_NUMERIC_PRECISION",
+            CAST(NULL AS int) AS "DECLARED_NUMERIC_SCALE"
+        FROM sys.pg_namespace_ext nc JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+            pg_sequence s join pg_class r on s.seqrelid = r.oid join pg_type t on s.seqtypid=t.oid,
+            sys.translate_pg_type_to_tsql(s.seqtypid) AS tsql_type_name
+        WHERE nc.oid = r.relnamespace
+        AND extc.dbid = cast(sys.db_id() as oid)
+            AND r.relkind = 'S'
+            AND (NOT pg_is_other_temp_schema(nc.oid))
+            AND (pg_has_role(r.relowner, 'USAGE')
+                OR has_sequence_privilege(r.oid, 'SELECT, UPDATE, USAGE'));
+
+GRANT SELECT ON information_schema_tsql.sequences TO PUBLIC; 
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);

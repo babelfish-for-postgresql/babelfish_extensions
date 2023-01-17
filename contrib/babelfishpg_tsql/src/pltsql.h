@@ -58,6 +58,8 @@
 
 #define TSQL_TXN_NAME_LIMIT 64 /* Transaction name limit */
 
+/* Max number of Args allowed for Prepared stmts. */
+#define PREPARE_STMT_MAX_ARGS 2100
 
 /*
  * Compiler's namespace item types
@@ -1039,6 +1041,7 @@ typedef struct PLtsql_stmt_execsql
 	char		*db_name;		/* db_name: only for cross db query */
 	bool            is_schema_specified;    /*is schema name specified? */
 	bool		is_create_view;		/* CREATE VIEW? */
+	char		*original_query;    /* Only for batch level statement. */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1161,7 +1164,7 @@ typedef struct PLtsql_function
 	char		fn_prokind;
 
 	int			fn_nargs;
-	int			fn_argvarnos[FUNC_MAX_ARGS];
+	int			fn_argvarnos[PREPARE_STMT_MAX_ARGS];
 	int			out_param_varno;
 	int			found_varno;
 	int			fetch_status_varno;
@@ -1643,6 +1646,20 @@ typedef struct PLtsql_protocol_plugin
 	char* (*get_cur_db_name) ();
 
 	char* (*get_physical_schema_name) (char *db_name, const char *schema_name);
+
+	/* Session level GUCs */
+	bool		quoted_identifier;
+	bool		arithabort;
+	bool		ansi_null_dflt_on;
+	bool		ansi_defaults;
+	bool		ansi_warnings;
+	bool		ansi_padding;
+	bool		ansi_nulls;
+	bool		concat_null_yields_null;
+	int		textsize;
+	int		datefirst;
+	int		lock_timeout;
+	const char*	language;
 	
 } PLtsql_protocol_plugin;
 
@@ -1872,7 +1889,7 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 
 extern int get_insert_bulk_rows_per_batch(void);
 extern int get_insert_bulk_kilobytes_per_batch(void);
-
+extern char *get_original_query_string(void);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -1972,7 +1989,12 @@ extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
+extern void report_info_or_warning(int elevel, char* message);
 extern void init_and_check_common_utility(void);
+extern Oid tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
+extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id);
+extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
+extern char** split_object_name(char *name);
 
 typedef struct
 {

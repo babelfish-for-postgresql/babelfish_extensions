@@ -13,6 +13,7 @@
 #include "access/relation.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "common/string.h"
 #include "executor/spi.h"
@@ -38,6 +39,7 @@
 
 #include "catalog.h"
 #include "multidb.h"
+#include "pltsql.h"
 #include "session.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
@@ -53,6 +55,8 @@ PG_FUNCTION_INFO_V1(sp_addrole);
 PG_FUNCTION_INFO_V1(sp_droprole);
 PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
+PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
+PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -63,6 +67,8 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
+static void exec_utility_cmd_helper(char *query_str);
+
 List *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
 List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets);
@@ -935,7 +941,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = insert_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
 				break;
@@ -946,7 +952,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = update_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = list_copy(update_stmt->targetList);
 
@@ -982,7 +988,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				relation = delete_stmt->relation;
 				relid = RangeVarGetRelid(relation, NoLock, false);
 				r = relation_open(relid, AccessShareLock);
-				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate = (ParseState *) palloc0(sizeof(ParseState));
 				pstate->p_target_relation = r;
 				cols = NIL;
 
@@ -2069,4 +2075,238 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 
 	rewrite_object_refs(stmt);
 	return res;
+}
+
+static void
+exec_utility_cmd_helper(char *query_str)
+{
+	List			*parsetree_list;
+	Node			*stmt;
+	PlannedStmt		*wrapper;
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				   query_str,
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
+}
+
+Datum
+sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
+{
+	char *linked_server = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *srv_product = PG_ARGISNULL(1) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
+	char *provider = PG_ARGISNULL(2) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(2)));
+	char *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
+	char *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
+	char *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
+
+	StringInfoData query;
+
+	bool provider_warning = false, provstr_warning = false;
+
+	if (linked_server == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+					errmsg("@server parameter cannot be NULL")));
+	
+	if (strlen(srv_product) == 10 && (strncmp(srv_product, "sql server", 10) == 0))
+	{
+		/*
+		 * if server product is "SQL Server", rest of the arguments need not be
+		 * specified except the linked server name. The linked server name in
+		 * such a case, also doubles up as the linked server data source.
+		 */
+		data_src = pstrdup(linked_server);
+	}
+	else
+	{
+		if (((strlen(provider) == 7) && (strncmp(provider, "sqlncli", 7) == 0)) ||
+			((strlen(provider) == 10) && (strncmp(provider, "msoledbsql", 10) == 0)) ||
+			((strlen(provider) == 8) && (strncmp(provider, "sqloledb", 8) == 0)))
+		{
+			/* if provider is a valid T-SQL provider, we throw a warning indicating internally, we will be using tds_fdw */
+			provider_warning = true;
+		}
+		else if ((strlen(provider) != 7) || (strncmp(provider, "tds_fdw", 7) != 0))
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 	errmsg("Unsupported provider '%s'. Supported provider is 'tds_fdw'", provider)));
+
+		if (provstr != NULL)
+		{
+			/* we ignore provider string in any case */
+			provstr_warning = true;
+		}
+	}
+
+	initStringInfo(&query);
+
+	/*
+	 * We prepare the following query to create a foreign server. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * CREATE SERVER <server name> FOREIGN DATA WRAPPER tds_fdw OPTIONS (servername
+	 * 	'<remote data source endpoint>', database '<catalog name>')
+	 *
+	 */
+	appendStringInfo(&query, "CREATE SERVER \"%s\" FOREIGN DATA WRAPPER tds_fdw ", linked_server);
+
+	/* Add the relevant options */
+	if (data_src || catalog)
+	{
+		appendStringInfoString(&query, "OPTIONS ( ");
+
+		/*
+		 * The servername option is required for foreign server creation,
+		 * but we leave it to the FDW's validator function to check for that
+		 */
+		if (data_src)
+			appendStringInfo(&query, "servername '%s' ", data_src);
+
+		if (catalog)
+		{
+			if (data_src)
+				appendStringInfoString(&query, ", ");
+
+			appendStringInfo(&query, "database '%s' ", catalog);
+		}
+
+		appendStringInfoString(&query, ")");
+	}
+
+	exec_utility_cmd_helper(query.data);
+
+	/* We throw warnings only if foreign server object creation succeeds */
+	if (provider_warning)
+		report_info_or_warning(WARNING, "Warning: Using the TDS Foreign data wrapper (tds_fdw) as provider");
+
+	if (provstr_warning)
+		report_info_or_warning(WARNING, "Warning: Ignoring @provstr argument value");
+
+	if (linked_server)
+		pfree(linked_server);
+	
+	if (srv_product)
+		pfree(srv_product);
+	
+	if (provider)
+		pfree(provider);
+
+	if (data_src)
+		pfree(data_src);
+
+	if (provstr)
+		pfree(provstr);
+	
+	if (catalog)
+		pfree(catalog);
+
+	pfree(query.data);
+
+	return (Datum) 0;
+}
+
+Datum
+sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
+	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
+
+	StringInfoData query;
+
+	if (servername == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+					errmsg("@rmtsrvname parameter cannot be NULL")));
+
+	/* We do not support login using user's self credentials */
+	if ((useself == NULL) || (strlen(useself) != 5) || (strncmp(useself, "false", 5) != 0))
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+					errmsg("Only @useself = FALSE is supported. Remote login using user's self credentials is not supported.")));
+
+	initStringInfo(&query);
+
+	/*
+	 * We prepare the following query to create a user mapping. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * CREATE USER MAPPING FOR CURRENT_USER SERVER <servername> OPTIONS (username
+	 * 	'<remote server user name>', password '<remote server user password>')
+	 *
+	 */
+	appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
+
+	/*
+	 * Add the relevant options
+	 *
+	 * The username and password options are required for user mapping
+	 * creation, (according to tds_fdw documentation) but we leave it
+	 * to the FDW's validator function to check for that
+	 */
+	if (username || password)
+	{
+		appendStringInfoString(&query, "OPTIONS ( ");
+
+		if (username)
+			appendStringInfo(&query, "username '%s' ", username);
+
+		if (password)
+		{
+			if (username)
+				appendStringInfoString(&query, ", ");
+
+			appendStringInfo(&query, "password '%s' ", password);
+		}
+
+		appendStringInfoString(&query, ")");
+	}
+
+	exec_utility_cmd_helper(query.data);
+
+	if (servername)
+		pfree(servername);
+
+	if (useself)
+		pfree(useself);
+
+	if (username)
+		pfree(username);
+
+	if (password)
+		pfree(password);
+
+	pfree(query.data);
+
+	return (Datum) 0;
 }

@@ -68,6 +68,8 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										void *arg);
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
+static bool has_user_in_db(const char *login, char **db_name);
+
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -598,6 +600,13 @@ bool
 tsql_has_pgstat_permissions(Oid role)
 {
 	return role_is_sa(GetSessionUserId()) || has_privs_of_role(GetSessionUserId(), role);
+}
+
+bool
+tsql_has_linked_srv_permissions(Oid role)
+{
+	/* Only sysadmin has permission to create/alter/delete linked servers */
+	return role_is_sa(GetSessionUserId());
 }
 
 PG_FUNCTION_INFO_V1(initialize_logins);
@@ -1394,12 +1403,18 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 {
 	Oid grantee;
 	const char 	*grantee_name;
+	const char 	*granted_name;
 	RoleSpec 	*spec;
+	AccessPriv 	*granted;
 	CatCList   	*memlist;
 	Oid         sysadmin;
+	char		*db_name;
 
 	spec = (RoleSpec *) linitial(stmt->grantee_roles);		
 	sysadmin = get_role_oid("sysadmin", false);
+
+	granted = (AccessPriv *) linitial(stmt->granted_roles);
+	granted_name = granted->priv_name;
 
 	/* grantee MUST be a login */
 	grantee_name = spec->rolename;
@@ -1416,6 +1431,12 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s does not have permission to alter server role",
 					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	/* sysadmin role is not granted if grantee login has a user in one of the databases, as Babelfish only supports one dbo currently*/
+	if (stmt->is_grant && (strcmp(granted_name, "sysadmin") == 0) && has_user_in_db(grantee_name, &db_name))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("'sysadmin' role cannot be granted to login: a user is already created in database '%s'", db_name)));
 
 	/* could not drop the last member of sysadmin */
 	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
@@ -1665,3 +1686,50 @@ is_active_login(Oid role_oid)
 	return true;
 }
 
+/*
+ * To check if given login is already a user in one of the databases
+ */
+static bool
+has_user_in_db(const char *login, char **db_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData		key[3];
+	TableScanDesc	scan;
+	NameData		*login_name;
+	bool			is_null;
+
+	// open the table to scane
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	// change the target name to NameData for search
+	login_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(login_name->data, NAMEDATALEN, "%s", login);
+
+	// operate scanning
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_login_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(login_name));
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 1, key);
+
+	// match stored, if there is a match
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+	{
+
+		Datum name = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_database_name,
+								  bbf_authid_user_ext_rel->rd_att, &is_null);
+
+		*db_name = pstrdup(TextDatumGetCString(name));
+		
+		table_endscan(scan);
+		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		return true;
+	}
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return false;
+}

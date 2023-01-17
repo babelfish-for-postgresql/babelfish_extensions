@@ -1,4 +1,3 @@
-
 SELECT name,type,type_desc FROM sys.system_objects WHERE name = 'key_constraints'
 GO
 ~~START~~

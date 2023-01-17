@@ -1,0 +1,2864 @@
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT CURRENT_USER;
+GO
+~~START~~
+varchar
+user_perms_by_name
+~~END~~
+
+
+
+-- =============== Tables ===============
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('t_PERMS_by_nAMe','oBjeCT', 'SeleCT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- cross-db cases
+USE master;
+GO
+
+SELECT CURRENT_USER;
+GO
+~~START~~
+varchar
+crossdb_user_perms_by_name
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+SELECT CURRENT_USER
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('master.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE db_perms_by_name;
+GO
+
+REVOKE SELECT ON OBJECT::db_perms_by_name.dbo.t_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('master.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+REVOKE ALL ON OBJECT::db_perms_by_name.dbo.t_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name]."dbo".[t_perms_by_name]','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name]."dbo".[t_perms_by_name]','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+GRANT REFERENCES ON OBJECT::db_perms_by_name.dbo.t_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name]."dbo".[t_perms_by_name]','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('"db_perms_by_name".[dbo]."t_perms_by_name"','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+GRANT ALL ON OBJECT::db_perms_by_name.dbo.t_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('sys.databases','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('pg_catalog.pg_class','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('sys.databases','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('pg_catalog.pg_class','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- =============== Views ===============
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('v_PERMS_by_NAme','oBjEcT', 'SelECt');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- tsql
+REVOKE SELECT ON OBJECT::v_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+REVOKE ALL ON OBJECT::v_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+GRANT REFERENCES ON OBJECT::v_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+GRANT ALL ON OBJECT::v_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- =============== Columns ===============
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('t_PERMS_by_NaME','oBJeCt', 'sEleCt', 'CoL1', 'coLUmN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'INSERT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'DELETE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'REFERENCES', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'EXECUTE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Currently, using tsql we are not able access cross-db entries in sys.all_columns due to which column permissions check are not working for has_perms_by_name
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'INSERT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'DELETE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'REFERENCES', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'EXECUTE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+REVOKE SELECT ON OBJECT::db_perms_by_name.dbo.t_perms_by_name FROM user_perms_by_name;
+GRANT SELECT (col2) ON OBJECT::db_perms_by_name.dbo.t_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('v_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col2', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- ANY permission not supported for COLUMN permissions in SQL Server
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'ANY', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT', 'col2', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- ANY permission not supported for COLUMN permissions in SQL Server
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'ANY', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+GRANT ALL ON OBJECT::db_perms_by_name.dbo.t_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- =============== Scalar-valued functions ===============
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('scalar_function_PERMS_by_NaME','oBJeCt', 'sEleCt');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+REVOKE EXECUTE ON OBJECT::scalar_function_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+REVOKE ALL ON OBJECT::scalar_function_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+GRANT EXECUTE ON OBJECT::scalar_function_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+
+-- tsql
+GRANT ALL ON OBJECT::scalar_function_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..scalar_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- =============== Table-valued functions ===============
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('TAbLE_function_PERMS_by_NaME','oBJeCt', 'sEleCt');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+REVOKE EXECUTE ON OBJECT::table_function_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+REVOKE ALL ON OBJECT::table_function_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+GRANT EXECUTE ON OBJECT::table_function_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+GRANT ALL ON OBJECT::table_function_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+use db_perms_by_name;
+go
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..table_function_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+
+-- =============== Procedures ===============
+use db_perms_by_name;
+go
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('proc_PERMS_by_NaME','oBJeCt', 'sEleCt');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'INSERT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'DELETE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'REFERENCES');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+REVOKE EXECUTE ON OBJECT::proc_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+REVOKE ALL ON OBJECT::proc_perms_by_name FROM user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+GRANT EXECUTE ON OBJECT::proc_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+GRANT ALL ON OBJECT::proc_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name..proc_perms_by_name','OBJECT', 'EXECUTE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- =============== Database permissions ================
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME(db_name(),'DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME(DB_Name(),'DaTaBaSe', 'creATE TAbLe');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(db_name(),'DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CONNECT REPLICATION');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master]','DATABASE', 'CONNECT REPLICATION');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- securable class must be set to OBJECT if evaluating COLUMN permissions
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE TABLE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE msdb;
+GO
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE tempdb;
+GO
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('msdb','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('tempdb','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_db','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- tsql user=user_perms_by_name password=test
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master','DATABASE', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE TABLE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'CREATE SCHEMA');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name','DATABASE', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+
+-- tsql
+-- =============== Schema permissions ================
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('DbO','ScHEmA', 'SeLEct');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA', 'CREATE SEQUENCE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('dbo','SCHEMA', 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('"dbo','SCHEMA', 'ANY');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_schema','SCHEMA', 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+
+-- tsql
+-- =============== Server permissions ================
+USE master;
+GO
+
+-- invalid in SQL Server
+SELECT HAS_PERMS_BY_NAME(NULL, 'SERVER', 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- invalid in SQL Server
+SELECT HAS_PERMS_BY_NAME('server_name', 'SERVER', 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- securable must be NULL to evaluate SERVER permissions
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name', NULL, 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'ALTER ANY ENDPOINT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check 
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VieW SerVer STAte');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'ANY');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE tempdb;
+GO
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE msdb;
+GO
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql user=user_perms_by_name password=test
+USE master;
+GO
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE db_perms_by_name;
+GO
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'ANY');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+
+
+-- =============== Object name splitting ================
+-- invalid table spec (five part name or more)
+SELECT HAS_PERMS_BY_NAME('invalid.server.db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('server.db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].[dbo].[t_perms_by_name]','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- case insensitivity check
+SELECT HAS_PERMS_BY_NAME('[DB_PerMS_By_nAmE].[DBo].[t_PerMS_By_NamE]','oBJeCT', 'sELecT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].[dbo].[t_perms_by_name]','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[dbo].[t_perms_by_name]','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[dbo].[t_perms_by_name]','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('s_perms_by_name.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[t_perms_by_name]','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[t_perms_by_name]','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.dbo.t_perms_by_name','OBJECT', 'SELECT', '[col1]', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].[dbo].[t_perms_by_name]','OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].dbo.[t_perms_by_name]','OBJECT', 'SELECT', '[col1]', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.[dbo].[t_perms_by_name]','OBJECT', 'UPDATE', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.[dbo.t_perms_by_name','OBJECT', 'SELECT', '[col1]', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].dbo.[t_perms_by_name]','OBJECT', 'SELECT', 'col1]', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].dbo.[t_perms_by_name]','OBJECT', 'SELECT', '[col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name]','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('"db_perms_by_name".dbo."t_perms_by_name"','OBJECT', 'SELECT', '"col1"', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name"','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('"t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[db_perms_by_name].dbo."t_perms_by_name"', 'OBJECT', 'SELECT', '"col1"', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('db_perms_by_name.."t_perms_by_name"', 'OBJECT', 'SELECT', '"col1"', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('master..t_perms_by_name', 'OBJECT', 'SELECT', '"col1"', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+
+
+-- =============== Special handling ================
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', 'non_existent_sub_securable_class');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'non_existent_column', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'non_existent_permission');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','non_existent_securable_class', 'SELECT');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('non_existent_table','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'ALTER');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- test permission type that only exists in Postgres
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'TRUNCATE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(db_name(), 'SEARCH PROPERTY LIST', 'CONTROL');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- test invalid sub-securable_class
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', 'TABLE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- test incompatible securable_class for permission
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'CREATE TABLE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col1', NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', NULL, 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', NULL, 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name', NULL, 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(NULL, 'OBJECT', 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME(NULL, NULL, 'SELECT', 'col1', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('dbo.t_perms_by_name     ','OBJECT    ', 'SELECT   ', 'col2   ', 'COLUMN ');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('dBo.t_PeRmS_bY_nAmE','oBjEcT', 'sElEcT', 'CoL2', 'cOlUmN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('  t_perms_by_name','OBJECT', 'SELECT', 'col2', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name',' OBJECT', 'SELECT', 'col2', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', ' SELECT', 'col2', 'COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', ' col2', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col2', ' COLUMN');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[.t perms.by.name.]', 'OBJECT', 'SELECT')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('".t perms.by.name."', 'OBJECT', 'SELECT')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[ t.perms by name ]', 'OBJECT', 'SELECT')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('" t.perms by name "', 'OBJECT', 'SELECT')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[.t perms.by.name.]', 'OBJECT', 'SELECT', '".column perms.by.name."', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('".t perms.by.name."', 'OBJECT', 'SELECT', '[.column perms.by.name.]', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[.t perms.by.name.]', 'OBJECT', 'SELECT', '".column perms.by.name."', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('".t perms.by.name."', 'OBJECT', 'SELECT', '[.column perms.by.name.]', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[ t.perms by name ]', 'OBJECT', 'SELECT', '" column perms.by.name "', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('" t.perms by name "', 'OBJECT', 'SELECT', '[ column perms.by.name ]', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('[ t.perms by name ]', 'OBJECT', 'SELECT', '" column perms.by.name "', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('" t.perms by name "', 'OBJECT', 'SELECT', '[ column perms.by.name ]', 'COLUMN');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- should return 0
+SELECT HAS_PERMS_BY_NAME('[ non.existent.db ].".non existent.schema.".[non .. existent table]', 'OBJECT', 'SELECT', '[. non. existent.column]', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('".non existent.schema.".[non .. existent table]', 'OBJECT', 'SELECT', '[. non. existent.column]', 'COLUMN');
+GO
+~~START~~
+int
+0
+~~END~~
+
+

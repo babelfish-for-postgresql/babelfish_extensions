@@ -37,6 +37,7 @@
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/pg_list.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
 #include "parser/parse_clause.h"
@@ -148,6 +149,18 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 
+extern bool  pltsql_ansi_defaults;
+extern bool  pltsql_quoted_identifier;
+extern bool  pltsql_concat_null_yields_null;
+extern bool  pltsql_ansi_nulls;
+extern bool  pltsql_ansi_null_dflt_on;
+extern bool  pltsql_ansi_padding;
+extern bool  pltsql_ansi_warnings;
+extern bool  pltsql_arithabort;
+extern int   pltsql_datefirst;
+extern char* pltsql_language;
+extern int pltsql_lock_timeout;
+
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
 static Oid lang_handler_oid = InvalidOid;     /* Oid of language handler function */
@@ -222,6 +235,7 @@ static pltsql_sequence_datatype_hook_type prev_pltsql_sequence_datatype_hook = N
 static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 static ProcessUtility_hook_type prev_ProcessUtility = NULL;
 static get_func_language_oids_hook_type prev_get_func_language_oids_hook = NULL;
+static tsql_has_linked_srv_permissions_hook_type prev_tsql_has_linked_srv_permissions_hook = NULL;
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
@@ -422,6 +436,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (parseTree->stmt->type == T_CreateFunctionStmt ){
 		ListCell 		*option;
 		CreateTrigStmt *trigStmt;
+		CreateFunctionStmt *funcStmt = (CreateFunctionStmt *) parseTree->stmt;
 		char* trig_schema;
 		foreach (option, ((CreateFunctionStmt *) parseTree->stmt)->options){
 			DefElem *defel = (DefElem *) lfirst(option);
@@ -438,6 +453,17 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						   trig_schema , trigStmt->trigname)));
 					}
 					trigStmt->args = NIL;
+				}
+				else
+				{
+					Assert(list_length(funcStmt->funcname) == 1);
+					/*
+					 * Add schemaname to trigger's function name.
+					 */
+					if (trigStmt->relation->schemaname != NULL)
+					{
+						funcStmt->funcname = lcons(makeString(trigStmt->relation->schemaname), funcStmt->funcname);
+					}
 				}
 			}
 		}
@@ -1734,7 +1760,11 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	char *typname;
 	Oid tsqlSeqTypOid;
 	TypeName *type_def;
-
+	List* type_names;
+	List* new_type_names;
+	AclResult aclresult;
+	Oid base_type;
+	int list_len;
 	if (prev_pltsql_sequence_datatype_hook)
 		prev_pltsql_sequence_datatype_hook(pstate,
 										   newtypid,
@@ -1747,14 +1777,44 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		return;
 
 	type_def = defGetTypeName(as_type);
+	type_names = type_def->names;
+	list_len = list_length(type_names);
+
+	switch (list_len)
+	{
+		case 2:
+			new_type_names = list_make2(type_names->elements[0].ptr_value, type_names->elements[1].ptr_value);
+			strVal(linitial(new_type_names)) = get_physical_schema_name(get_cur_db_name(), strVal(linitial(type_names)));
+			break;
+		case 3:
+			/* Changing three part name of data type to physcial schema name */
+			new_type_names = list_make2(type_names->elements[1].ptr_value, type_names->elements[2].ptr_value);
+			strVal(linitial(new_type_names)) = get_physical_schema_name(strVal(linitial(type_names)), strVal(lsecond(type_names)));
+			break;
+	}
+
+	if(list_len > 1)
+		type_def->names = new_type_names;
+
+	*newtypid = typenameTypeId(pstate, type_def);
 	typ = typenameType(pstate, type_def, &typmod_p);
 	typname = typeTypeName(typ);
+	type_def->names = type_names;
+
+	if(list_len > 1)
+		list_free(new_type_names);
+
+	aclresult = pg_type_aclcheck(*newtypid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error_type(aclresult, *newtypid);
+
 	tsqlSeqTypOid = pltsql_seq_type_map(*newtypid);
 
 	if (type_def->typemod != -1)
 		typmod_p = type_def->typemod;
 
 	ReleaseSysCache(typ);
+	base_type = getBaseType(*newtypid);
 
 	if (tsqlSeqTypOid != InvalidOid)
 	{
@@ -1801,12 +1861,20 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 			}
 		}
 	}
-	else if ((*newtypid == NUMERICOID) || (getBaseType(*newtypid) == NUMERICOID))
+	else if ((*newtypid == NUMERICOID) || (base_type == NUMERICOID))
 	{
 		/*
 		 * Identity column drops the typmod upon sequence creation
 		 * so it gets its own check
 		 */
+
+		/* When sequence is created using user-defined data type, !for_identity == true and
+		 * typmod_p == -1, which results in calculating incorrect scale and precision
+		 * therefore we update typmod_p to that of numeric(18,0)
+		 */
+		if (typmod_p == -1)
+			typmod_p = 1179652;
+
 		if (!for_identity || typmod_p != -1)
 		{
 			uint8_t scale = (typmod_p - VARHDRSZ) & 0xffff;
@@ -1823,10 +1891,16 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 						 errmsg("sequence type must have precision 18 or less")));
 		}
 
-		*newtypid = INT8OID;
+		base_type = INT8OID;
 		ereport(WARNING,
 				(errmsg("NUMERIC or DECIMAL type is cast to BIGINT")));
 	}
+
+	/*
+	 * To add support for User-Defined Data types for sequences, data type
+	 * of sequence is changed to its basetype
+	*/
+	*newtypid = base_type;
 }
 
 static Oid
@@ -2397,9 +2471,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								user_options = lappend(user_options, defel);
 								orig_username_exists = true;
 							}
-							
+
 						}
-						
+
 
 						foreach(option, user_options)
 						{
@@ -3503,6 +3577,19 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->tsql_char_input = common_utility_plugin_ptr->tsql_bpchar_input;
 		(*pltsql_protocol_plugin_ptr)->get_cur_db_name = &get_cur_db_name;
 		(*pltsql_protocol_plugin_ptr)->get_physical_schema_name = &get_physical_schema_name;
+
+		(*pltsql_protocol_plugin_ptr)->quoted_identifier = pltsql_quoted_identifier;
+		(*pltsql_protocol_plugin_ptr)->arithabort = pltsql_arithabort;
+		(*pltsql_protocol_plugin_ptr)->ansi_null_dflt_on = pltsql_ansi_null_dflt_on;
+		(*pltsql_protocol_plugin_ptr)->ansi_defaults = pltsql_ansi_defaults;
+		(*pltsql_protocol_plugin_ptr)->ansi_warnings = pltsql_ansi_warnings;
+		(*pltsql_protocol_plugin_ptr)->ansi_padding = pltsql_ansi_padding;
+		(*pltsql_protocol_plugin_ptr)->ansi_nulls = pltsql_ansi_nulls;
+		(*pltsql_protocol_plugin_ptr)->concat_null_yields_null = pltsql_concat_null_yields_null;
+		(*pltsql_protocol_plugin_ptr)->textsize = text_size;
+		(*pltsql_protocol_plugin_ptr)->datefirst = pltsql_datefirst;
+		(*pltsql_protocol_plugin_ptr)->lock_timeout = pltsql_lock_timeout;
+		(*pltsql_protocol_plugin_ptr)->language = pltsql_language;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
@@ -3559,6 +3646,9 @@ _PG_init(void)
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
+	prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
+	tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
+
 	InstallExtendedHooks();
 
 	prev_guc_push_old_value_hook = guc_push_old_value_hook;
@@ -3599,6 +3689,7 @@ _PG_fini(void)
 	validate_set_config_function_hook = prev_validate_set_config_function_hook;
 	non_tsql_proc_entry_hook = prev_non_tsql_proc_entry_hook;
 	get_func_language_oids_hook = prev_get_func_language_oids_hook;
+	tsql_has_linked_srv_permissions_hook = prev_tsql_has_linked_srv_permissions_hook;
 
 	UninstallExtendedHooks();
 }
@@ -3895,7 +3986,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	int			nargs = PG_NARGS();
 	int 			i;
 	MemoryContext 		savedPortalCxt;
-	LOCAL_FCINFO(fake_fcinfo, FUNC_MAX_ARGS);
+	FunctionCallInfo fake_fcinfo = palloc0(SizeForFunctionCallInfo(nargs));
 	bool nonatomic;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	ReturnSetInfo rsinfo; /* for INSERT ... EXECUTE */
@@ -3907,7 +3998,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	 */
 	sp_describe_first_result_set_inprogress = false;
 
-	Assert((nargs > 2 ? nargs - 2 : 0) <= FUNC_MAX_ARGS);
+	Assert((nargs > 2 ? nargs - 2 : 0) <= PREPARE_STMT_MAX_ARGS);
 	Assert(exec_state_call_stack != NULL || !AbortCurTransaction);
 
 	/* TSQL transactions are always non atomic */
@@ -3985,7 +4076,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	 * pltsql_exec_function().  In particular note that this sets things up
 	 * with no arguments passed.
 	 */
-	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(FUNC_MAX_ARGS));
+	MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(nargs));
 	MemSet(&flinfo, 0, sizeof(flinfo));
 	fake_fcinfo->flinfo = &flinfo;
 	flinfo.fn_oid = InvalidOid;
