@@ -12,7 +12,7 @@ DATA_built = babelfishpg_money--1.1.0.sql
 
 CFLAGS = `$(PG_CONFIG) --includedir-server`
 PG_CFLAGS += -Werror
-
+PG_CFLAGS += -fstack-protector-strong
 TESTS = $(wildcard test/sql/*.sql)
 
 REGRESS_BRIN := $(shell LD_LIBRARY_PATH=$(LD_LIBRARY_PATH) $(PG_CONFIG) --version | grep -qE "XL 9\.[5-9]| 10\.0| 11\.[0-9]| 12\.[0-9]" && echo brin-xl)
