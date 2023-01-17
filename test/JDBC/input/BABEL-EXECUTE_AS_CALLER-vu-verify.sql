@@ -46,3 +46,6 @@ GO
 
 SELECT babel_execute_as_caller_function_return_int_6(6)
 GO
+
+SELECT babel_execute_as_caller_function_return_int_7(7, 'test', 5)
+GO

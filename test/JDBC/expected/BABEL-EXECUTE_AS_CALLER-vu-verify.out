@@ -78,6 +78,16 @@ INSERT INTO babel_execute_as_caller_table values (2);
 GO
 ~~ROW COUNT: 1~~
 
+~~START~~
+varchar
+babel_execute_as_caller_trigger2 invoked
+~~END~~
+
+~~START~~
+varchar
+babel_execute_as_caller_trigger3 invoked
+~~END~~
+
 ~~ROW COUNT: 1~~
 
 SELECT * FROM babel_execute_as_caller_table_1;
@@ -118,5 +128,13 @@ GO
 ~~START~~
 int
 7
+~~END~~
+
+
+SELECT babel_execute_as_caller_function_return_int_7(7, 'test', 5)
+GO
+~~START~~
+int
+8
 ~~END~~
 
