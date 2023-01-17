@@ -1760,8 +1760,8 @@ LEFT OUTER JOIN sys.babelfish_view_def bvd
       ao.name = bvd.object_name 
    )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
-LEFT JOIN sys.babelfish_function_ext f on ao.name = f.funcname collate "C" and ao.schema_id::regnamespace::name = f.nspname
-and sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature collate "C"
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
