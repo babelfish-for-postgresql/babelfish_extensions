@@ -48,15 +48,6 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
 
-#include "catalog/pg_trigger.h"
-#include "catalog/pg_constraint.h"
-#include "utils/fmgroids.h"
-#include "utils/catcache.h"
-#include "utils/acl.h"
-#include "access/table.h"
-#include "access/genam.h"
-#include "catalog/pg_proc.h"
-
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 
