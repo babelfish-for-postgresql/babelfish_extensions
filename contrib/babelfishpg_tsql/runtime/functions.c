@@ -45,6 +45,7 @@
 #include "access/genam.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
+#include "catalog/pg_constraint.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -1285,7 +1286,7 @@ object_name(PG_FUNCTION_ARGS)
 
 	if (!found)
 	{
-		/* search in pg_types by object_id */
+		/* search in pg_type by object_id */
 		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(object_id));
 		if (HeapTupleIsValid(tuple))
 		{
@@ -1327,6 +1328,24 @@ object_name(PG_FUNCTION_ARGS)
 		}
 		systable_endscan(tgscan);
 		table_close(tgrel, AccessShareLock);
+	}
+
+	if(!found)
+	{
+		/* search in pg_constraint by object_id */
+		tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
+		if (HeapTupleIsValid(tuple))
+		{	
+			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+			/* check if user have right permission on object */
+			if (OidIsValid(con->conrelid) && (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK))
+			{	
+				result = NameStr(con->conname);
+				schema_id = con->connamespace;
+			}
+			ReleaseSysCache(tuple);
+			found = true;
+		}
 	}
 
 	if(result)

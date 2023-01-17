@@ -24,6 +24,12 @@ GO
 DROP DATABASE babel_object_name_db;
 GO
 
+DROP VIEW babel_object_name_constraint_view
+GO
+
+DROP TABLE babel_object_name_t_pk
+GO
+
 DROP VIEW babel_object_name_v1_view
 GO
 

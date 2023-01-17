@@ -44,6 +44,17 @@ SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_v1'))
 GO
 
 
+-- To test constraint
+CREATE TABLE babel_object_name_t_pk ( a int, b int)
+go
+
+alter table babel_object_name_t_pk add constraint babel_object_name_primary_key primary key(a)
+go
+
+CREATE VIEW babel_object_name_constraint_view AS
+SELECT OBJECT_NAME(object_id) from sys.key_constraints where name like 'babel_object_name_primary_key%'
+go
+
 -- To test cross-db lookup
 CREATE DATABASE babel_object_name_db;
 GO

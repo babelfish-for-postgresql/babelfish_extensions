@@ -49,6 +49,15 @@ babel_object_name_type_int
 ~~END~~
 
 
+-- test constraint
+SELECT * FROM babel_object_name_constraint_view
+GO
+~~START~~
+varchar
+babel_object_name_primary_keyba94b55ca598e66970e6936b997f0be82e
+~~END~~
+
+
 -- To test temp object
 CREATE TABLE #babel_object_name_temp_t1 (a int);
 GO

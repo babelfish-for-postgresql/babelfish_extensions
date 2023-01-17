@@ -19,6 +19,10 @@ GO
 SELECT * FROM babel_object_name_type_view
 GO
 
+-- test constraint
+SELECT * FROM babel_object_name_constraint_view
+GO
+
 -- To test temp object
 CREATE TABLE #babel_object_name_temp_t1 (a int);
 GO
