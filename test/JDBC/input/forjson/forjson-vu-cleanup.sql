@@ -1,63 +1,47 @@
--- FOR JSON PATH clause without nested support
-DROP VIEW forjson_vu_v_people
+-- FOR JSON AUTO clause not supported
+DROP VIEW forjson_vu_v_auto
 GO
 
-DROP VIEW forjson_vu_v_countries
+-- Alias/colname is not present
+DROP VIEW forjson_vu_v_no_alias
 GO
 
--- Multiple tables without nested support
-DROP VIEW forjson_vu_v_join
+DROP VIEW forjson_vu_v_with
 GO
 
--- ROOT directive without specifying value
-DROP VIEW forjson_vu_v_root
+DROP VIEW forjson_vu_v_with_order_by
 GO
 
--- ROOT directive with specifying ROOT value
-DROP VIEW forjson_vu_v_root_value
+DROP TABLE forjson_14_6_vu_t_countries
 GO
 
--- ROOT directive with specifying ROOT value with empty string
-DROP VIEW forjson_vu_v_empty_root
+DROP TABLE forjson_vu_t1
 GO
 
--- WITHOUT_ARRAY_WRAPPERS directive
-DROP VIEW forjson_vu_v_without_array_wrapper
+-- Binary strings
+DROP VIEW forjson_datatypes_vu_v_binary_strings
 GO
 
--- INCLUDE_NULL_VALUES directive
-DROP VIEW forjson_vu_v_include_null_values
+DROP VIEW forjson_datatypes_vu_v_varbinary_strings
 GO
 
--- Multiple Directives
-DROP VIEW forjson_vu_v_root_include_null_values
+-- Rowversion and timestamp
+DROP VIEW forjson_datatypes_vu_v_rowversion
 GO
 
-DROP VIEW forjson_vu_v_without_array_wrapper_include_null_values
+DROP VIEW forjson_datatypes_vu_v_timestamp
 GO
 
-
--- Test case with parameters
-DROP PROCEDURE forjson_vu_p_params1
+-- Binary strings
+DROP TABLE forjson_datatypes_vu_t_binary_strings
 GO
 
-DROP PROCEDURE forjson_vu_p_params2
+-- Rowversion and timestamp
+DROP TABLE forjson_datatypes_vu_t_rowversion
 GO
 
--- All null values test
-DROP VIEW forjson_vu_v_nulls
+DROP TABLE forjson_datatypes_vu_t_timestamp
 GO
 
--- Test for all parser rules
-DROP VIEW forjson_vu_v_order_by
-GO
-
--- Display Table Contents
-DROP TABLE forjson_vu_t_people
-GO
-
-DROP TABLE forjson_vu_t_countries
-GO
-
-DROP TABLE forjson_vu_t_values
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 GO

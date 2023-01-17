@@ -15,7 +15,7 @@
  * "2022-11-11 20:56:22.41" -> "2022-11-11T20:56:22.41" for datetime, datetime2 & smalldatetime
  */
 void
-tsql_for_datetime_format(StringInfo format_output, char *outputstr)
+tsql_for_datetime_format(StringInfo format_output, const char *outputstr)
 {
 	char *date;
 	char *spaceptr = strstr(outputstr, " ");
@@ -37,7 +37,7 @@ tsql_for_datetime_format(StringInfo format_output, char *outputstr)
  * "2022-11-11 12:34:56 +02:30" -> "2022-11-11T12:34:56+02:30"
  */
 void
-tsql_for_datetimeoffset_format(StringInfo format_output, char *str)
+tsql_for_datetimeoffset_format(StringInfo format_output, const char *str)
 {
 	char *date, *endptr, *time, *offset;
 	char *spaceptr = strstr(str, " ");

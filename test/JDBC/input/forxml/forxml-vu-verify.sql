@@ -1,36 +1,17 @@
-
-
-execute p_employee_select;
-go
-
-execute p_employee_select2 150, 300;
-go
-
-select * from forxml_vu_v1;
-go
-
--- Test for xml on view with xml column
-select * from forxml_vu_v1 for xml path;
-go
-
-select * from forxml_vu_v2 for xml path;
-go
-
-SELECT * FROM forxml_vu_v_cte1;
+select * from forxml_after_14_5_v_path
 GO
 
-SELECT * FROM forxml_vu_v_with_where
+select * from forxml_after_14_5_v_base64
 GO
 
-SELECT * FROM forxml_vu_v_with
+SELECT * FROM forxml_vu_v_cte2;
 GO
 
-exec test_forxml_datalength 1;
-go
+SELECT * FROM forxml_vu_v_cte3;
+GO
 
-exec test_forxml_strvar 1, 't1_a1';
-go
--- test NULL parameter
--- TODO fix BABEL-3569 so this returns 0 rows
-exec test_forxml_strvar 1, NULL;
+SELECT * FROM forxml_vu_v_cte4;
+GO
+
+select * from forxml_vu_v_correlated_subquery;
 go

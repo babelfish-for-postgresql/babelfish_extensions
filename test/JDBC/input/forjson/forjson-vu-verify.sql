@@ -1,63 +1,27 @@
--- Display Table Contents
-SELECT * FROM forjson_vu_t_people
+-- FOR JSON AUTO clause not supported
+SELECT * FROM forjson_vu_v_auto
 GO
 
-SELECT * FROM forjson_vu_t_countries
+-- Alias/colname is not present
+SELECT * FROM forjson_vu_v_no_alias
 GO
 
-SELECT * FROM forjson_vu_t_values
+SELECT * FROM forjson_vu_v_with
 GO
 
--- FOR JSON PATH clause without nested support
-SELECT * FROM forjson_vu_v_people
+SELECT * FROM forjson_vu_v_with_order_by
 GO
 
-SELECT * FROM forjson_vu_v_countries
+-- Binary strings
+SELECT * FROM forjson_datatypes_vu_v_binary_strings
 GO
 
--- Multiple tables without nested support
-SELECT * FROM forjson_vu_v_join
+SELECT * FROM forjson_datatypes_vu_v_varbinary_strings
 GO
 
--- ROOT directive without specifying value
-SELECT * FROM forjson_vu_v_root
+-- Rowversion and timestamp
+SELECT * FROM forjson_datatypes_vu_v_rowversion
 GO
 
--- ROOT directive with specifying ROOT value
-SELECT * FROM forjson_vu_v_root_value
-GO
-
--- ROOT directive with specifying ROOT value with empty string
-SELECT * FROM forjson_vu_v_empty_root
-GO
-
--- WITHOUT_ARRAY_WRAPPERS directive
-SELECT * FROM forjson_vu_v_without_array_wrapper
-GO
-
--- INCLUDE_NULL_VALUES directive
-SELECT * FROM forjson_vu_v_include_null_values
-GO
-
--- Multiple Directives
-SELECT * FROM forjson_vu_v_root_include_null_values
-GO
-
-SELECT * FROM forjson_vu_v_without_array_wrapper_include_null_values
-GO
-
-
--- Test case with parameters
-EXECUTE forjson_vu_p_params1 @id = 2
-GO
-
-EXECUTE forjson_vu_p_params2 @id = 3
-GO
-
--- All null values test
-SELECT * FROM forjson_vu_v_nulls
-GO
-
--- Test for all parser rules
-SELECT * FROM forjson_vu_v_order_by
+SELECT * FROM forjson_datatypes_vu_v_timestamp
 GO
