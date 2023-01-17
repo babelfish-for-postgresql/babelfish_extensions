@@ -1875,8 +1875,7 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 
 extern int get_insert_bulk_rows_per_batch(void);
 extern int get_insert_bulk_kilobytes_per_batch(void);
-extern char* get_original_query_string(void);
-
+extern char *get_original_query_string(void);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -1978,6 +1977,10 @@ extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern void report_info_or_warning(int elevel, char* message);
 extern void init_and_check_common_utility(void);
+extern Oid tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
+extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id);
+extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
+extern char** split_object_name(char *name);
 
 typedef struct
 {
