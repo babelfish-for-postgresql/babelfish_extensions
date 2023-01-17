@@ -948,17 +948,17 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
-create or replace view sys.sp_fkeys_view as
-select 
-CAST(nsp_ext2.dbname as sys.sysname) as PKTABLE_QUALIFIER,
-CAST(bbf_nsp2.orig_name as sys.sysname) as PKTABLE_OWNER , 
-CAST(c2.relname as sys.sysname) as PKTABLE_NAME,
-CAST(coalesce(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) as sys.sysname) as PKCOLUMN_NAME,
-CAST(nsp_ext.dbname as sys.sysname) as FKTABLE_QUALIFIER,
-CAST(bbf_nsp.orig_name as sys.sysname) as FKTABLE_OWNER , 
-CAST(c.relname as sys.sysname) as FKTABLE_NAME,
-CAST(coalesce(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) as sys.sysname) as FKCOLUMN_NAME,
-CAST(nr as smallint) as KEY_SEQ,
+CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
+SELECT
+CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
+CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
+CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
+CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
+CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
+CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
+CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
+CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
+CAST(nr AS smallint) AS KEY_SEQ,
 CASE
    WHEN const1.confupdtype = 'a' THEN CAST(1 AS smallint)
    WHEN const1.confupdtype = 'n' THEN CAST(2 AS smallint)
@@ -972,33 +972,36 @@ CASE
    WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint)
    ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
-CAST(const1.conname as sys.sysname) as FK_NAME,
-CAST(const2.conname as sys.sysname) as PK_NAME
-from (pg_constraint const1 
-join sys.pg_namespace_ext nsp_ext on nsp_ext.oid = const1.connamespace
-join pg_class c on const1.conrelid = c.oid and const1.contype ='f' 
-join sys.babelfish_namespace_ext bbf_nsp on bbf_nsp.nspname = nsp_ext.nspname and bbf_nsp.dbid = sys.db_id()
-CROSS JOIN LATERAL unnest(const1.conkey,const1.confkey) with ordinality as ak(j,k,nr)
-            left JOIN pg_attribute a
+CAST(const1.conname AS sys.sysname) AS FK_NAME,
+CAST(const2.conname AS sys.sysname) AS PK_NAME
+
+FROM (pg_constraint const1
+-- join with nsp_Ext to get constraints in current namespace
+JOIN sys.pg_namespace_ext nsp_ext ON nsp_ext.oid = const1.connamespace
+--get the table names corresponding to foreign keys
+JOIN pg_class c ON const1.conrelid = c.oid AND const1.contype ='f'
+-- join wiht bbf_nsp to get all constraint related to tsql endpoint and the owner of foreign key
+JOIN sys.babelfish_namespace_ext bbf_nsp ON bbf_nsp.nspname = nsp_ext.nspname AND bbf_nsp.dbid = sys.db_id()
+-- lateral join to use the conkey and confkey to join with pg_attribute to get column names
+CROSS JOIN LATERAL unnest(const1.conkey,const1.confkey) WITH ORDINALITY AS ak(j, k, nr)
+            LEFT JOIN pg_attribute a
                        ON (a.attrelid = const1.conrelid AND a.attnum = ak.j)
-            left JOIN pg_attribute a2
+            LEFT JOIN pg_attribute a2
                        ON (a2.attrelid = const1.confrelid AND a2.attnum = ak.k)
-                      
- )
- 
--- get the index that foreign key depends on 
-left join pg_depend d1 ON d1.objid = const1.oid AND d1.classid = 'pg_constraint'::regclass
-           AND d1.refclassid = 'pg_class'::regclass AND d1.refobjsubid = 0 
+)
+-- get the index that foreign key depends on
+LEFT JOIN pg_depend d1 ON d1.objid = const1.oid AND d1.classid = 'pg_constraint'::regclass
+           AND d1.refclassid = 'pg_class'::regclass AND d1.refobjsubid = 0
 -- get the pkey/ukey constraint for this index
-LEFT JOIN pg_depend d2 on d2.refclassid = 'pg_constraint'::regclass and d2.classid= 'pg_class'::regclass and d2.objid=d1.refobjid and d2.objsubid = 0 and d2.deptype = 'i'
+LEFT JOIN pg_depend d2 ON d2.refclassid = 'pg_constraint'::regclass AND d2.classid = 'pg_class'::regclass AND d2.objid = d1.refobjid AND d2.objsubid = 0 AND d2.deptype = 'i'
 -- get the constraint name from new pg_constraint
-join pg_constraint const2 on const2.oid= d2.refobjid and const2.contype in ('p','u') and const2.conrelid= const1.confrelid
+LEFT JOIN pg_constraint const2 ON const2.oid = d2.refobjid AND const2.contype IN ('p', 'u') AND const2.conrelid = const1.confrelid
 -- get the namespace name for primary key
 LEFT JOIN sys.pg_namespace_ext nsp_ext2 ON const2.connamespace = nsp_ext2.oid
 -- get the owner name for primary key
-left join sys.babelfish_namespace_ext bbf_nsp2 on bbf_nsp2.nspname = nsp_ext2.nspname and bbf_nsp2.dbid = sys.db_id()
+LEFT JOIN sys.babelfish_namespace_ext bbf_nsp2 ON bbf_nsp2.nspname = nsp_ext2.nspname AND bbf_nsp2.dbid = sys.db_id()
 -- get the table name for primary key
-left join pg_class c2 on const2.conrelid = c2.oid and const2.contype in ('p','u');
+LEFT JOIN pg_class c2 ON const2.conrelid = c2.oid AND const2.contype IN ('p', 'u');
 
 GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
 
