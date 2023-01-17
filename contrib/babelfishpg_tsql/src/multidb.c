@@ -33,8 +33,6 @@ static void rewrite_role_list(List *rolespecs); /* list of RoleSpecs */
 static bool rewrite_relation_walker(Node *node, void *context);
 
 
-/* helper functions */
-static void truncate_tsql_identifier(char *ident);
 
 
 /*************************************************************
@@ -1136,7 +1134,7 @@ const char *get_guest_role_name(const char *dbname)
  *************************************************************/
 
 /* in-place truncate identifiers if needded */
-static void
+void
 truncate_tsql_identifier(char *ident)
 {
 	const char *saved_dialect;
