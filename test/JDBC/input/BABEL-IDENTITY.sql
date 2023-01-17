@@ -317,6 +317,37 @@ go
 SET IDENTITY_INSERT dbo.t1_identity_2 OFF;
 go
 
+-- Test that the correct range of values can be inserted into an identity column
+CREATE TABLE dbo.test_identity_range (a INT IDENTITY, b INT);
+go
+
+SET IDENTITY_INSERT dbo.test_identity_range ON;
+go
+
+-- Check nonpositive values
+INSERT INTO dbo.test_identity_range (a, b) VALUES (0, 10);
+go
+
+INSERT INTO dbo.test_identity_range (a, b) VALUES (-5, 10);
+go
+
+-- Check max / min
+INSERT INTO dbo.test_identity_range (a, b) VALUES (-2147483648, 10);
+go
+
+INSERT INTO dbo.test_identity_range (a, b) VALUES (2147483647, 10);
+go
+
+-- Expect overflow
+INSERT INTO dbo.test_identity_range (a, b) VALUES (-2147483649, 10);
+go
+
+INSERT INTO dbo.test_identity_range (a, b) VALUES (2147483648, 10);
+go
+
+SELECT * from dbo.test_identity_range;
+go
+
 -- Clean up
 DROP PROCEDURE insert_test_table1,
 insert_employees,
@@ -331,5 +362,6 @@ dbo.test_table3,
 dbo.employees,
 dbo.t_neg_inc_1,
 dbo.t1_identity_1,
-dbo.t1_identity_2
+dbo.t1_identity_2,
+dbo.test_identity_range
 go
