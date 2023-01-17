@@ -6,17 +6,37 @@ GO
 CREATE TRIGGER babel_object_name_trg ON babel_object_name_t1 AFTER INSERT AS SELECT 1;
 GO
 
-CREATE PROCEDURE babel_object_name_proc1 AS SELECT 1;
+CREATE PROCEDURE BABEL_OBJECT_NAME_PROC1 AS SELECT 1;
 GO
 
-CREATE FUNCTION babel_object_name_func1() returns int BEGIN RETURN 1; END
+CREATE FUNCTION BABEL_OBJECT_NAME_func1() returns int BEGIN RETURN 1; END
 GO
 
 CREATE VIEW babel_object_name_v1 AS SELECT 1;
 GO
 
+-- to test type
+CREATE TYPE Babel_Object_name_type_int FROM INT NOT NULL
+GO
+
+CREATE TABLE babel_object_name_type_table(a int, b Babel_Object_name_type_int)
+GO
+
+CREATE VIEW babel_object_name_type_view AS
+SELECT
+T.name AS "UDDT name",
+T2.name AS "system dt name",
+OBJECT_NAME(T.system_type_id) AS "System type name", -- system_type_id is not static
+OBJECT_NAME(T.user_type_id) AS "User type name" -- user_type_id is not static
+FROM sys.columns C, sys.types T, sys.types T2
+WHERE C.object_id = OBJECT_ID( 'babel_object_name_type_table' )
+AND C.user_type_id = T.user_type_id
+AND T.system_type_id = T2.user_type_id
+ORDER BY T.name
+GO
+
 CREATE VIEW babel_object_name_proc1_view AS
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_proc1'))
+SELECT OBJECT_NAME(OBJECT_ID('BABEL_OBJECT_NAME_PROC1'))
 GO
 
 CREATE VIEW babel_object_name_t1_view AS
@@ -28,7 +48,7 @@ SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_trg'));
 GO
 
 CREATE VIEW babel_object_name_func1_view AS
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_func1'))
+SELECT OBJECT_NAME(OBJECT_ID('BABEL_OBJECT_NAME_func1'))
 GO
 
 CREATE VIEW babel_object_name_v1_view AS

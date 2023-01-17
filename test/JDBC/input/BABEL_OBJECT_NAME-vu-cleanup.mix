@@ -39,13 +39,22 @@ GO
 DROP VIEW babel_object_name_proc1_view
 GO
 
+DROP VIEW babel_object_name_type_view
+GO
+
+DROP TABLE babel_object_name_type_table
+GO
+
+DROP TYPE Babel_Object_name_type_int
+GO
+
 DROP VIEW babel_object_name_v1
 GO
 
-DROP FUNCTION babel_object_name_func1
+DROP FUNCTION BABEL_OBJECT_NAME_func1
 GO
 
-DROP PROCEDURE babel_object_name_proc1
+DROP PROCEDURE BABEL_OBJECT_NAME_PROC1
 GO
 
 DROP TRIGGER babel_object_name_trg

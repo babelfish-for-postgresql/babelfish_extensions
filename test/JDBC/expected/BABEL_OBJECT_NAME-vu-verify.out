@@ -40,6 +40,16 @@ babel_object_name_trg
 ~~END~~
 
 
+-- test types
+SELECT * FROM babel_object_name_type_view
+GO
+~~START~~
+text#!#text#!#varchar#!#varchar
+babel_object_name_type_int#!#int#!#int4#!#babel_object_name_type_int
+int#!#int#!#int4#!#int4
+~~END~~
+
+
 -- To test temp object
 CREATE TABLE #babel_object_name_temp_t1 (a int);
 GO
@@ -99,12 +109,12 @@ GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_proc1'));
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('BABEL_OBJECT_NAME_PROC1'));
 GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_func1'));
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('BABEL_OBJECT_NAME_func1'));
 GO
 ~~ROW COUNT: 1~~
 
@@ -121,10 +131,10 @@ GO
 GRANT SELECT ON babel_object_name_t1 TO babel_object_name_master_user1;
 GO
 
-GRANT EXECUTE ON babel_object_name_proc1 TO babel_object_name_master_user1;
+GRANT EXECUTE ON BABEL_OBJECT_NAME_PROC1 TO babel_object_name_master_user1;
 GO
 
-GRANT EXECUTE ON babel_object_name_func1 TO babel_object_name_master_user1;
+GRANT EXECUTE ON BABEL_OBJECT_NAME_func1 TO babel_object_name_master_user1;
 GO
 
 GRANT SELECT ON babel_object_name_v1 TO babel_object_name_master_user1;
@@ -190,10 +200,10 @@ GO
 REVOKE SELECT ON babel_object_name_t1 FROM babel_object_name_master_user1;
 GO
 
-REVOKE EXECUTE ON babel_object_name_proc1 FROM babel_object_name_master_user1;
+REVOKE EXECUTE ON BABEL_OBJECT_NAME_PROC1 FROM babel_object_name_master_user1;
 GO
 
-REVOKE EXECUTE ON babel_object_name_func1 FROM babel_object_name_master_user1;
+REVOKE EXECUTE ON BABEL_OBJECT_NAME_func1 FROM babel_object_name_master_user1;
 GO
 
 REVOKE SELECT ON babel_object_name_v1 FROM babel_object_name_master_user1;

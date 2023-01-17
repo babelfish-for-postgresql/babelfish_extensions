@@ -1242,7 +1242,7 @@ object_name(PG_FUNCTION_ARGS)
 	enr = get_ENR_withoid(currentQueryEnv, object_id);
 	if(enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
-		result = pstrdup(enr->md.name);
+		result = enr->md.name;
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
 	}
 
@@ -1254,7 +1254,7 @@ object_name(PG_FUNCTION_ARGS)
 		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{	
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
-			result = pstrdup(NameStr(pg_class->relname));
+			result = NameStr(pg_class->relname);
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);
@@ -1271,7 +1271,7 @@ object_name(PG_FUNCTION_ARGS)
 			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 			{
 				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
-				result = pstrdup(NameStr(procform->proname));
+				result = NameStr(procform->proname);
 				schema_id = procform->pronamespace;
 			}
 			ReleaseSysCache(tuple);
@@ -1289,7 +1289,7 @@ object_name(PG_FUNCTION_ARGS)
 			if (pg_type_aclcheck(object_id, user_id, ACL_USAGE) == ACLCHECK_OK)
 			{	
 				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
-				result = pstrdup(NameStr(pg_type->typname));
+				result = NameStr(pg_type->typname);
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -1316,7 +1316,7 @@ object_name(PG_FUNCTION_ARGS)
 			if(OidIsValid(pg_trigger->tgrelid) && 
 				pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
-				result = pstrdup(NameStr(pg_trigger->tgname));
+				result = NameStr(pg_trigger->tgname);
 				schema_id = get_rel_namespace(pg_trigger->tgrelid);
 			}
 			found = true;
@@ -1330,8 +1330,6 @@ object_name(PG_FUNCTION_ARGS)
 		/* check if schema corresponding to found object belongs to specified database */
 		if(!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id)) /* in case of pg_type schema_id will be invalid */
 			PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
-		else
-			pfree(result);
 	}
 	PG_RETURN_NULL();
 }
