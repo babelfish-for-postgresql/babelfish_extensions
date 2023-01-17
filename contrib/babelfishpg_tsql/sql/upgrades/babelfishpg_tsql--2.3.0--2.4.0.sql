@@ -815,7 +815,7 @@ and
     tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
-=======
+
 -- Add one column to store definition of the function in the table.
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT DEFAULT NULL;
