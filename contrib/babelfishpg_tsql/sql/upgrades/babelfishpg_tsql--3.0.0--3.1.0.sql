@@ -938,6 +938,20 @@ LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
 
+-- function sys.object_id(object_name, object_type) needs to change input type to sys.VARCHAR if not changed already
+DO $$
+BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'object_id' AND (p.pronargs = 2 AND p.proargtypes[0] = 'sys.varchar'::regtype AND p.proargtypes[1] = 'sys.varchar'::regtype)) = 0 THEN
+    ALTER FUNCTION sys.object_id RENAME TO object_id_deprecated_in_3_1_0;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'object_id_deprecated_in_3_1_0');
+END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'object_id'
+LANGUAGE C STABLE;
+
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

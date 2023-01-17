@@ -1745,7 +1745,9 @@ has_user_in_db(const char *login, char **db_name)
 								  bbf_authid_user_ext_rel->rd_att, &is_null);
 
 		*db_name = pstrdup(TextDatumGetCString(name));
-
+		
+		table_endscan(scan);
+		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 		return true;
 	}
 	table_endscan(scan);
