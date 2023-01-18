@@ -218,7 +218,8 @@ typedef FormData_bbf_view_def *Form_bbf_view_def;
 #define Anum_bbf_function_ext_flag_values 7
 #define Anum_bbf_function_ext_create_date 8
 #define Anum_bbf_function_ext_modify_date 9
-#define BBF_FUNCTION_EXT_NUM_COLS 9
+#define Anum_bbf_function_ext_definition 10
+#define BBF_FUNCTION_EXT_NUM_COLS 10
 #define FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define FLAG_USES_QUOTED_IDENTIFIER (1<<1)
 extern Oid			bbf_function_ext_oid;
@@ -240,6 +241,7 @@ typedef struct FormData_bbf_function_ext
 	uint64		flag_values;
 	Timestamp	create_date;
 	Timestamp	modify_date;
+	text		definition;
 } FormData_bbf_function_ext;
 
 typedef FormData_bbf_function_ext *Form_bbf_function_ext;
