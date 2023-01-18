@@ -1818,8 +1818,6 @@ numeric_radians(PG_FUNCTION_ARGS)
 Datum 
 object_schema_name(PG_FUNCTION_ARGS)
 {	
-	int64 arg0 = PG_GETARG_INT64(0);
-	int64 arg1 = PG_GETARG_INT64(1);
 	Oid object_id;
 	Oid database_id;
 	Oid	user_id = GetUserId();
@@ -1828,33 +1826,23 @@ object_schema_name(PG_FUNCTION_ARGS)
 	char* namespace_name;
 	const char* schema_name;
 
-	if(!arg0)
+	if(PG_ARGISNULL(0))
 		PG_RETURN_NULL();
-	else{
-		if (arg0 < PG_INT32_MIN || arg0 > PG_INT32_MAX) {
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("Arithmetic overflow error converting expression to data type int.")));
-		}
-		object_id = (Oid) arg0;
-	}
+	else
+		object_id = (Oid) PG_GETARG_INT32(0);
 
-	if(!arg1)
+	if(PG_ARGISNULL(1))
 		database_id = get_cur_db_id();
 	else {
-		if (arg1 < PG_INT32_MIN || arg1 > PG_INT32_MAX) {
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("Arithmetic overflow error converting expression to data type int.")));
-		}
-		database_id = (Oid) arg1;
+		database_id = (Oid) PG_GETARG_INT32(1);
 		user_id = GetSessionUserId();
 	}
 
+	/* if user inputs invalid database_id */
 	if (!DbidIsValid(database_id))
 		PG_RETURN_NULL();
 	
-	/* Lookup namespace_oid in pg_class */
+	/* lookup namespace_oid in pg_class */
 	relid = get_rel_namespace(object_id);
 	if(OidIsValid(relid) && 
 		pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)

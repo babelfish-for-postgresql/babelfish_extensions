@@ -1,0 +1,57 @@
+-- tsql
+CREATE DATABASE babel_733_db1;
+GO
+
+CREATE SCHEMA babel_733_sch1;
+GO
+
+CREATE TABLE babel_733_t1(a int);
+GO
+
+CREATE SEQUENCE babel_733_seq1;
+GO
+
+CREATE TRIGGER babel_733_trig1 ON babel_733_t1 AFTER INSERT AS SELECT 1;
+GO
+
+CREATE PROCEDURE babel_733_sch1.babel_733_proc1 AS SELECT 1;
+GO
+
+CREATE FUNCTION babel_733_sch1.babel_733_func1() RETURNS INT BEGIN RETURN 1; END;
+GO
+
+CREATE VIEW babel_733_sch1.babel_733_v1 AS SELECT * FROM babel_733_t1;
+GO
+
+CREATE VIEW babel_733_sch1.babel_733_v2 AS 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_t1'));
+GO
+
+CREATE VIEW babel_733_sch1.babel_733_v4 AS 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_proc1'));
+GO
+
+
+CREATE VIEW babel_733_sch1.babel_733_v5 AS
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_func1'));
+GO
+
+CREATE VIEW babel_733_sch1.babel_733_v6 AS
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_v1'));
+GO
+
+CREATE LOGIN babel_733_log1 WITH PASSWORD = '123456789';
+GO
+
+CREATE USER babel_733_user1 FOR LOGIN babel_733_log1;
+GO
+
+USE babel_733_db1;
+GO
+
+CREATE USER babel_733_user2 FOR LOGIN babel_733_log1;
+GO
+
+USE master;
+GO
+

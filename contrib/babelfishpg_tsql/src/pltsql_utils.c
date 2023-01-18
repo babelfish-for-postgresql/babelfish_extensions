@@ -1160,7 +1160,7 @@ tsql_get_proc_nsp_oid(Oid object_id, Oid user_id)
 	HeapTuple tuple;
 	bool isnull;
 
-	/* first search in pg_proc by oid */
+	/* retrieve namespace oid in pg_proc by oid */
 	tuple = SearchSysCache1(PROCOID, CStringGetDatum(object_id));
 
 	if (HeapTupleIsValid(tuple))
@@ -1183,13 +1183,13 @@ tsql_get_proc_nsp_oid(Oid object_id, Oid user_id)
 }
 
 Oid 
-tsql_get_constaint_nsp_oid(Oid object_id, Oid user_id){
+tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
 
 	Oid namespace_oid = InvalidOid;
 	HeapTuple tuple;
 	bool isnull;
 
-	/* first search in pg_proc by oid */
+	/* retrieve namespace oid in pg_proc by oid */
 	tuple = SearchSysCache1(CONSTROID, CStringGetDatum(object_id));
 
 	if (HeapTupleIsValid(tuple))
@@ -1202,6 +1202,7 @@ tsql_get_constaint_nsp_oid(Oid object_id, Oid user_id){
 			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 			if (OidIsValid(con->oid))
 			{	
+				/* user should have permission of table associated with constraint */
 				if (OidIsValid(con->conrelid))
 				{
 					if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
@@ -1237,6 +1238,12 @@ tsql_get_trigger_nsp_oid(Oid object_id, Oid user_id){
 
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
+		/* 
+		 * since pg_trigger does not contain namespace oid, we use 
+		 * the fact that the schema name of the trigger should be same 
+		 * as that of the table it is associated with 
+		 */
+		
 		Form_pg_trigger trig = (Form_pg_trigger) GETSTRUCT(tuple);
 		Oid relid = trig->tgrelid;
 		if(OidIsValid(relid))
