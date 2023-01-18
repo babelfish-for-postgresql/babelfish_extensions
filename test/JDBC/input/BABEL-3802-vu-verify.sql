@@ -31,6 +31,9 @@ GO
 EXECUTE BABEL_3802_vu_prepare_t_p7
 GO
 
+EXECUTE BABEL_3802_vu_prepare_t_p8
+GO
+
 SELECT * FROM BABEL_3802_vu_prepare_t_v1
 GO
 

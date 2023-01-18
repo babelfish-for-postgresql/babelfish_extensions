@@ -86,6 +86,14 @@ GO
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type Int)~~
 
 
+EXECUTE BABEL_3802_vu_prepare_t_p8
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 SELECT * FROM BABEL_3802_vu_prepare_t_v1
 GO
 ~~START~~
