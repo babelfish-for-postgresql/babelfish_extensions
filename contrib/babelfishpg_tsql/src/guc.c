@@ -577,7 +577,7 @@ define_custom_variables(void)
 				 NULL, NULL, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_sll_parse_mode",
-				 gettext_noop("disable SLL parser mode for ANTLR parser"),
+				 gettext_noop("enable SLL parser mode for ANTLR parser"),
 				 NULL,
 				 &pltsql_enable_sll_parse_mode,
 				 false,
