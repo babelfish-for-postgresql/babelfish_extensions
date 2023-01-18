@@ -1354,6 +1354,14 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
 	return rt;
 }
 
+/*
+ * Create an aliased sub-select clause for use in FOR XML/JSON
+ * rule resolution. We re-use construct_unique_index_name to 
+ * generate a unique row name to reference - this makes it virtually
+ * impossible for any query to accidentally use the same alias name.
+ * construct_unique_index_name should only fail in case of OOM, which
+ * is highly unlikely.
+ */
 static RangeSubselect *
 TsqlForClauseSubselect(Node *selectstmt)
 {
