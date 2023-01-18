@@ -2891,3 +2891,48 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helplinkedsrvlogin(
+	IN "@rmtsrvname" sysname DEFAULT NULL,
+	IN "@locallogin" sysname DEFAULT NULL
+)
+AS $$
+BEGIN
+  IF @rmtsrvname IS NULL
+	BEGIN
+    	SELECT 
+    		s.name AS linked_server, 
+    		u.usename AS local_login, 
+    		CAST(0 as smallint) AS is_self_mapping, 
+    		l.remote_name AS remote_name 
+		FROM sys.linked_logins AS l 
+		LEFT JOIN sys.servers AS s ON l.server_id = s.server_id 
+		LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid
+	END
+  ELSE IF @locallogin IS NULL
+	BEGIN
+    	SELECT 
+    		s.name AS linked_server, 
+    		u.usename AS local_login, 
+    		CAST(0 as smallint) AS is_self_mapping, 
+    		l.remote_name AS remote_name 
+		FROM sys.linked_logins AS l 
+		LEFT JOIN sys.servers AS s ON l.server_id = s.server_id 
+		LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid 
+		WHERE s.name = @rmtsrvname;
+	END
+  ELSE
+	BEGIN
+		SELECT 
+    		s.name AS linked_server, 
+    		u.usename AS local_login, 
+    		CAST(0 as smallint) AS is_self_mapping, 
+    		l.remote_name AS remote_name 
+		FROM sys.linked_logins AS l 
+		LEFT JOIN sys.servers AS s ON l.server_id = s.server_id 
+		LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid 
+		WHERE s.name = @rmtsrvname AND u.usename = @locallogin;
+	END
+END;
+$$ LANGUAGE pltsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_helplinkedsrvlogin TO PUBLIC;

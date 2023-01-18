@@ -13,3 +13,12 @@ GO
 
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
+
+EXEC sp_helplinkedsrvlogin
+GO
+
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server'
+GO
+
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
+GO

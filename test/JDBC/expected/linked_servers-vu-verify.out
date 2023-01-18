@@ -54,3 +54,28 @@ mssql_server2#!#only_user_no_password
 mssql_server3#!#<NULL>
 ~~END~~
 
+
+EXEC sp_helplinkedsrvlogin
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#varchar
+mssql_server#!#<NULL>#!#0#!#jdbc_user
+mssql_server2#!#<NULL>#!#0#!#only_user_no_password
+mssql_server3#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#varchar
+mssql_server#!#<NULL>#!#0#!#jdbc_user
+~~END~~
+
+
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#varchar
+~~END~~
+
