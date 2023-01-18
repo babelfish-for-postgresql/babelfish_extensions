@@ -56,7 +56,7 @@ WHERE object_id = (SELECT TOP(1) object_id FROM sys.objects WHERE name = 'sys_sq
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-<NULL>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE TRIGGER sys_sql_modules_vu_prepare_tr1 ON sys_sql_modules_vu_prepare_t2 INSTEAD OF INSERT<newline>AS<newline>BEGIN<newline>SELECT * FROM sys_sql_modules_vu_prepare_t1;<newline>END#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
