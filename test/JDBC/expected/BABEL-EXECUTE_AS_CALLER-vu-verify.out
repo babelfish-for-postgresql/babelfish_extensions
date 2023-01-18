@@ -88,6 +88,11 @@ varchar
 babel_execute_as_caller_trigger3 invoked
 ~~END~~
 
+~~START~~
+varchar
+babel_execute_as_caller_trigger4 invoked
+~~END~~
+
 ~~ROW COUNT: 1~~
 
 SELECT * FROM babel_execute_as_caller_table_1;

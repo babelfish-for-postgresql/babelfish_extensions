@@ -1,3 +1,4 @@
+DROP TRIGGER babel_execute_as_caller_trigger4;
 DROP TRIGGER babel_execute_as_caller_trigger3;
 DROP TRIGGER babel_execute_as_caller_trigger2;
 DROP TRIGGER babel_execute_as_caller_trigger1;

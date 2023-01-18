@@ -129,6 +129,18 @@ BEGIN
 END
 GO
 
+CREATE TRIGGER babel_execute_as_caller_trigger4 on babel_execute_as_caller_table WITH EXECUTE AS CALLER, SCHEMABINDING AFTER UPDATE, INSERT, DELETE
+AS
+BEGIN
+  SELECT 'babel_execute_as_caller_trigger4 invoked'
+END
+GO
+
+-- DML triggers aren't supported yet
+-- When supported the corner case of having more terigger_options and has WITH-clause should succeed
+CREATE TRIGGER trg_index_changes ON DATABASE WITH EXECUTE AS CALLER, SCHEMABINDING FOR  CREATE_INDEX, DROP_INDEX as begin insert into index_logs(a,b) values (1,2); end
+GO
+
 -- create function with duplicate execute as caller
 CREATE FUNCTION babel_execute_as_caller_function_return_int_3 (@v int) RETURNS INT WITH EXECUTE AS CALLER, EXECUTE AS CALLER AS BEGIN RETURN @v+1 END;
 GO
