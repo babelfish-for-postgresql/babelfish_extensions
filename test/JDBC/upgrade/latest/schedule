@@ -400,3 +400,5 @@ Test-sp_rename
 Test-sp_rename-dep
 openquery_upgrd
 BABEL-3657
+sys-systypes
+BABEL-733

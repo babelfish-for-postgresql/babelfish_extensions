@@ -1,0 +1,206 @@
+-- VERIFY
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_t1'));
+GO
+
+-- should give same output
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_t1'), NULL);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_v1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_seq1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_trig1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_proc1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_func1'));
+GO
+
+-- sql stored procedure
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('sysdatabases'));
+GO
+
+SELECT * from babel_733_sch1.babel_733_v2;
+GO
+
+SELECT * from babel_733_sch1.babel_733_v4;
+GO
+
+SELECT * from babel_733_sch1.babel_733_v5;
+GO
+
+SELECT * from babel_733_sch1.babel_733_v6;
+GO
+
+-- negative test case to check range
+SELECT OBJECT_SCHEMA_NAME(2147483648);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(-2147483648);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(-2147483649);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(NULL);
+GO
+
+-- test user permissions
+-- tsql user=babel_733_log1 password=123456789
+SELECT current_user;
+GO
+
+-- should return NULL since user does not have permission
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('dbo.babel_733_t1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_v1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_proc1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_func1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_trig1'));
+GO
+
+-- grant permission
+-- tsql
+
+USE master
+GO
+
+GRANT SELECT ON dbo.babel_733_t1 TO babel_733_user1;
+GO
+
+GRANT SELECT ON babel_733_sch1.babel_733_v1 TO babel_733_user1;
+GO
+
+GRANT EXECUTE ON babel_733_sch1.babel_733_proc1 TO babel_733_user1;
+GO
+
+GRANT EXECUTE ON babel_733_sch1.babel_733_func1 TO babel_733_user1;
+GO
+
+-- tsql user=babel_733_log1 password=123456789
+-- Note: for triggers and constraints permission of association table is checked
+USE master;
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('dbo.babel_733_t1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_v1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_proc1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_func1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_trig1'));
+GO
+
+-- revoke permission
+-- tsql
+USE master;
+GO
+
+REVOKE SELECT ON dbo.babel_733_t1 FROM babel_733_user1;
+GO
+
+REVOKE SELECT ON babel_733_sch1.babel_733_v1 FROM babel_733_user1;
+GO
+
+REVOKE EXECUTE ON babel_733_sch1.babel_733_proc1 FROM babel_733_user1;
+GO
+
+REVOKE EXECUTE ON babel_733_sch1.babel_733_func1 FROM babel_733_user1;
+GO
+
+-- cross database
+-- tsql user=babel_733_log1 password=123456789
+
+USE babel_733_db1;
+GO
+
+SELECT current_user;
+GO
+
+-- should return NULL since user in master associated with login does not have permission
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_t1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.babel_733_sch1.babel_733_v1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.babel_733_sch1.babel_733_proc1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.babel_733_sch1.babel_733_func1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_trig1'),1);
+GO
+
+-- grant permission
+-- tsql 
+USE master;
+GO
+
+GRANT SELECT ON dbo.babel_733_t1 TO babel_733_user1;
+GO
+
+GRANT SELECT ON babel_733_sch1.babel_733_v1 TO babel_733_user1;
+GO
+
+GRANT EXECUTE ON babel_733_sch1.babel_733_proc1 TO babel_733_user1;
+GO
+
+GRANT EXECUTE ON babel_733_sch1.babel_733_func1 TO babel_733_user1;
+GO
+
+-- tsql user=babel_733_log1 password=123456789
+USE babel_733_db1;
+GO
+
+-- database ID of master is always 1
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_t1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.babel_733_sch1.babel_733_v1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.babel_733_sch1.babel_733_proc1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.babel_733_sch1.babel_733_func1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_trig1'),1);
+GO
+
+-- revoke permission
+-- tsql
+USE master;
+GO
+
+REVOKE SELECT ON dbo.babel_733_t1 FROM babel_733_user1;
+GO
+
+REVOKE SELECT ON babel_733_sch1.babel_733_v1 FROM babel_733_user1;
+GO
+
+REVOKE EXECUTE ON babel_733_sch1.babel_733_proc1 FROM babel_733_user1;
+GO
+
+REVOKE EXECUTE ON babel_733_sch1.babel_733_func1 FROM babel_733_user1;
+GO
