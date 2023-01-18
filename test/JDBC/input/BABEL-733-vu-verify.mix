@@ -1,4 +1,22 @@
 -- VERIFY
+
+CREATE VIEW babel_733_sch1.babel_733_v2 AS 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_t1'));
+GO
+
+CREATE VIEW babel_733_sch1.babel_733_v4 AS 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_proc1'));
+GO
+
+
+CREATE VIEW babel_733_sch1.babel_733_v5 AS
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_func1'));
+GO
+
+CREATE VIEW babel_733_sch1.babel_733_v6 AS
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_v1'));
+GO
+
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_t1'));
 GO
 
