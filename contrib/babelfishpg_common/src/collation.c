@@ -1361,21 +1361,21 @@ void BabelfishPreCreateCollation_hook(
 		 */
 		if (collcollate[0] == '@')
 		{
-			char *catcollcollate = palloc0(strlen(bbf_default_locale) +
-										   strlen(collcollate) + 1);
+			size_t totallen = strlen(bbf_default_locale) + strlen(collcollate) + 1;
+			char *catcollcollate = palloc0(totallen);
 
 			memcpy(catcollcollate, bbf_default_locale, strlen(bbf_default_locale));
-			strncat(catcollcollate, collcollate, strlen(collcollate));
+			strncat(catcollcollate, collcollate, totallen);
 			*pCollcollate = catcollcollate;
 		}
 
 		if (collctype[0] == '@')
 		{
-			char *catcollctype = palloc0(strlen(bbf_default_locale) +
-										 strlen(collctype) + 1);
+			size_t totallen = strlen(bbf_default_locale) + strlen(collctype) + 1;
+			char *catcollctype = palloc0(totallen);
 
 			memcpy(catcollctype, bbf_default_locale, strlen(bbf_default_locale));
-			strncat(catcollctype, collcollate, strlen(collcollate));
+			strncat(catcollctype, collcollate, totallen);
 			*pCollctype = catcollctype;
 		}
 	}
