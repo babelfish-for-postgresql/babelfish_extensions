@@ -210,11 +210,11 @@ get_product_level_helper()
 	StringInfoData	temp;
 	void		*info;
 	const char	*product_version;
-	int				minor_version;
-	char*			product_level_RTM = "RTM";
-	char*			product_level_prefix = "SP";
+	int		minor_version;
+	char*		product_level_RTM = "RTM";
+	char*		product_level_prefix = "SP";
 	
-    initStringInfo(&temp);
+	initStringInfo(&temp);
 	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
 	Assert(product_version != NULL);
 
@@ -237,9 +237,9 @@ get_product_level_helper()
 		appendStringInfoString(&temp, get_version_number(product_version,2));
 	}
 
-    info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
-    pfree(temp.data);
-    return (VarChar *)info;
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+	pfree(temp.data);
+	return (VarChar *)info;
 }
 
 Datum serverproperty(PG_FUNCTION_ARGS) {
