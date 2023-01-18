@@ -1039,7 +1039,7 @@ tsql_numeric_get_typmod(Numeric num)
 Datum
 bigint_sum(PG_FUNCTION_ARGS)
 {
-	return bigint_utility(fcinfo, TSQL_SUM);
+	return bigint_poly_aggr_final(fcinfo, TSQL_SUM);
 }
 
 /* 
@@ -1073,6 +1073,9 @@ typedef struct Int8TransTypeData
 	int64		sum;
 } Int8TransTypeData;
 
+/* 
+ * Final function to be used by AVGINT),AVG(SMALLINT),AVG(TINYINT) aggregates
+ */
 Datum
 int4int2_avg(PG_FUNCTION_ARGS)
 {
@@ -1099,8 +1102,11 @@ int4int2_avg(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32((int32) transdata->sum / transdata->count);
 }
 
+/* 
+ * Final function to be used by AVG(BIGINT) aggregate
+ */
 Datum
 bigint_avg(PG_FUNCTION_ARGS)
 {
-	return bigint_utility(fcinfo, TSQL_AVG);
+	return bigint_poly_aggr_final(fcinfo, TSQL_AVG);
 }

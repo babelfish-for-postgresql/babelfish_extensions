@@ -365,6 +365,7 @@ sys_database_principals_dep
 atn2
 app_name
 case_insensitive_collation
-BABEL-3507-before-15-1
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+AVG-Aggregate-common
+AVG-Aggregate-Dep

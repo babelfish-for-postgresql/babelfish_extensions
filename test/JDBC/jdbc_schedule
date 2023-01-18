@@ -105,5 +105,5 @@ ignore#!#jira-BABEL-3504-upgrade-vu-prepare
 ignore#!#jira-BABEL-3504-upgrade-vu-verify
 ignore#!#jira-BABEL-3504-upgrade-vu-cleanup
 
-ignore#!#BABEL-3507-before-15-1-vu-prepare
-ignore#!#BABEL-3507-before-15-1-vu-verify
+ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-prepare
+ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-verify

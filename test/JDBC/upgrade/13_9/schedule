@@ -292,4 +292,5 @@ ISC-Tables
 ISC-Columns
 ISC-Table_Constraints
 case_insensitive_collation
-BABEL-3507-before-15-1
+AVG-Aggregate-common
+AVG-Aggregate-Dep-before-15-2-or-14-7
