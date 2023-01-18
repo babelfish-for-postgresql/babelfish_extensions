@@ -2457,11 +2457,17 @@ antlr_parser_cpp(const char *sourceText)
 
 	result = antlr_parse_query(sourceText, pltsql_enable_sll_parse_mode);
 
-	// If parsing failed in SLL mode, reparse in LL mode
-	if (!result.success && result.errcod == ERRCODE_SYNTAX_ERROR && pltsql_enable_sll_parse_mode)
+	/* 
+	 * Only try to reparse if creation of the parse tree failed.  If parse tree is created, parsing mode will make no difference
+	 * Generally the mutator steps are non-reentrant, if parsetree is created and mutators are run, subsequent parsing may produce
+	 * incorrect error messages
+	*/
+	if (!result.success && !result.parseTreeCreated)
 	{
-		elog(WARNING, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
+		elog(DEBUG1, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
 		result = antlr_parse_query(sourceText, false);
+		if (result.parseTreeCreated)
+			elog(WARNING, "Query parsing failed using SLL parser mode but succeeded with LL mode: %s", sourceText);
 	}
 	INSTR_TIME_SET_CURRENT(parseEnd);
 	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
@@ -2481,6 +2487,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 	MyParserErrorListener errorListner;
 
 	TSqlParser parser(&tokens);
+	volatile bool parseTreeCreated = false;
 
 	if (useSLLParsing)
 		parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(atn::PredictionMode::SLL);
@@ -2507,7 +2514,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			tree = parser.func_body_return_select_body();
 		else /* normal path */
 			tree = parser.tsql_file();
-
+		parseTreeCreated = true;
 		if (pltsql_enable_antlr_detailed_log)
 			std::cout << tree->toStringTree(&parser, true) << std::endl;
 
@@ -2566,12 +2573,14 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 		if (pltsql_parseonly)
 			pltsql_parse_result = makeEmptyBlockStmt(0);
 
+		result.parseTreeCreated = parseTreeCreated;
 		result.success = true;
 		return result;
 	}
 	catch (PGErrorWrapperException &e)
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = e.get_errcode();
 		result.errpos = e.get_errpos();
 		result.errfmt = e.get_errmsg();
@@ -2586,6 +2595,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 	catch (std::exception &e) /* not to cause a crash just in case */
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = ERRCODE_SYNTAX_ERROR;
 		result.errpos = 0;
 		result.errfmt = pstrdup(e.what());
@@ -2596,6 +2606,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 	catch (...) /* not to cause a crash just in case. consume all exception before C-layer */
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = ERRCODE_SYNTAX_ERROR;
 		result.errpos = 0;
 		result.errfmt = "unknown error";

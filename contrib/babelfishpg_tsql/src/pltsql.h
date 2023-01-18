@@ -1979,6 +1979,7 @@ extern void init_and_check_common_utility(void);
 typedef struct
 {
 	bool success;
+	bool parseTreeCreated; /* used to determine if on error should retry with a different parse mode */
 	size_t errpos;
 	int errcod;
 	const char *errfmt;
