@@ -32,5 +32,20 @@ GO
 DROP SCHEMA babel_733_sch1;
 GO
 
+USE babel_733_db1;
+GO
+
+DROP USER babel_733_user2;
+GO
+
+USE master;
+GO
+
+DROP USER babel_733_user1;
+GO
+
+DROP LOGIN babel_733_log1;
+GO
+
 DROP DATABASE babel_733_db1;
 GO
