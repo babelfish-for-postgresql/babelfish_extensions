@@ -1859,7 +1859,7 @@ object_schema_name(PG_FUNCTION_ARGS)
 	if (!OidIsValid(namespace_oid)) /* if not found earlier */
 	{
 		/* Lookup namespace_oid in pg_constraint */
-		namespace_oid = tsql_get_constaint_nsp_oid(object_id, user_id);
+		namespace_oid = tsql_get_constraint_nsp_oid(object_id, user_id);
 	
 	}
 	if (!OidIsValid(namespace_oid))  /* if not found earlier */
