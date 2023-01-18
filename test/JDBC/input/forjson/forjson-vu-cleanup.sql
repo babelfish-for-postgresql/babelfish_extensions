@@ -12,7 +12,7 @@ GO
 DROP VIEW forjson_vu_v_with_order_by
 GO
 
-DROP TABLE forjson_14_6_vu_t_countries
+DROP TABLE forjson_vu_t_countries
 GO
 
 DROP TABLE forjson_vu_t1

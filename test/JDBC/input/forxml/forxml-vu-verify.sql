@@ -1,7 +1,7 @@
-select * from forxml_after_14_5_v_path
+select * from forxml_vu_v_path
 GO
 
-select * from forxml_after_14_5_v_base64
+select * from forxml_vu_v_base64
 GO
 
 SELECT * FROM forxml_vu_v_cte2;

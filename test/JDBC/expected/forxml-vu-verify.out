@@ -1,47 +1,41 @@
-
-
-execute p_employee_select;
-go
+select * from forxml_vu_v_path
+GO
 ~~START~~
 ntext
-<row><pers_id>1</pers_id><fname>John</fname><lname>Johnson</lname><sal>123.1234</sal></row><row><pers_id>2</pers_id><fname>Max</fname><lname>Welch</lname><sal>200.1234</sal></row>
+<row><Col1>1</Col1><Col2>0x07</Col2></row>
 ~~END~~
 
 
-execute p_employee_select2 150, 300;
-go
+select * from forxml_vu_v_base64
+GO
 ~~START~~
 ntext
-<Employee><pers_id>2</pers_id><fname>Max</fname><lname>Welch</lname><sal>200.1234</sal></Employee>
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: option binary base64 is not supported)~~
 
 
-select * from forxml_vu_v1;
-go
+SELECT * FROM forxml_vu_v_cte2;
+GO
 ~~START~~
-xml
-<row id="1" a="t1_a1"/><row id="2" a="t1_a2"/><row id="3"/>
+int#!#varchar#!#ntext
+1#!#t2_a1#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
+2#!#t2_a2#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
+3#!#<NULL>#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
 ~~END~~
 
 
--- Test for xml on view with xml column
-select * from forxml_vu_v1 for xml path;
-go
+SELECT * FROM forxml_vu_v_cte3;
+GO
 ~~START~~
-ntext
-<row><col1><row id="1" a="t1_a1"/><row id="2" a="t1_a2"/><row id="3"/></col1></row>
+ntext#!#int#!#varchar
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#1#!#t2_a1
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#2#!#t2_a2
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#3#!#<NULL>
 ~~END~~
 
 
-select * from forxml_vu_v2 for xml path;
-go
-~~START~~
-ntext
-<row><col1>1</col1><col2>t1_a1</col2></row><row><col1>2</col1><col2>t1_a2</col2></row><row><col1>3</col1></row>
-~~END~~
-
-
-SELECT * FROM forxml_vu_v_cte1;
+SELECT * FROM forxml_vu_v_cte4;
 GO
 ~~START~~
 ntext
@@ -49,49 +43,12 @@ ntext
 ~~END~~
 
 
-SELECT * FROM forxml_vu_v_with_where
-GO
-~~START~~
-ntext
-<managertree id="5" name="Linda" manager_id="2"/>
-~~END~~
-
-
-SELECT * FROM forxml_vu_v_with
-GO
-~~START~~
-int#!#varchar#!#int
-2#!#John#!#1
-3#!#Dan#!#2
-5#!#Linda#!#2
-6#!#Willy#!#2
-7#!#Barack#!#2
-8#!#Elen#!#2
-9#!#Kate#!#3
-~~END~~
-
-
-exec test_forxml_datalength 1;
+select * from forxml_vu_v_correlated_subquery;
 go
 ~~START~~
-ntext
-<row a="t1_a1" datalength="4" datalength="2"/>
-~~END~~
-
-
-exec test_forxml_strvar 1, 't1_a1';
-go
-~~START~~
-ntext
-<row id="1" a="t1_a1"/>
-~~END~~
-
--- test NULL parameter
--- TODO fix BABEL-3569 so this returns 0 rows
-exec test_forxml_strvar 1, NULL;
-go
-~~START~~
-ntext
-<NULL>
+varchar#!#ntext
+t1_a1#!#<row id="1" a="t2_a1"/>
+t1_a2#!#<row id="2" a="t2_a2"/>
+<NULL>#!#<row id="3"/>
 ~~END~~
 

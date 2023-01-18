@@ -11,6 +11,8 @@ INSERT INTO forjson_before_14_7_vu_t_people values
 (3,'Tom','Mehta','Kolkata'),
 (4,'Kane',NULL,'Delhi')
 GO
+~~ROW COUNT: 4~~
+
 
 CREATE TABLE forjson_before_14_7_vu_t_countries (
 [Id] INT,
@@ -25,6 +27,8 @@ INSERT INTO forjson_before_14_7_vu_t_countries values
 (4,20, NULL),
 (5,10, 'USA')
 GO
+~~ROW COUNT: 5~~
+
 
 CREATE TABLE forjson_before_14_7_vu_t_values (
 [Id] INT,
@@ -36,6 +40,8 @@ INSERT INTO forjson_before_14_7_vu_t_values values
 (2,NULL),
 (3,NULL)
 GO
+~~ROW COUNT: 3~~
+
 
 -- FOR JSON PATH clause without nested support
 CREATE VIEW forjson_before_14_7_vu_v_people AS
@@ -154,6 +160,10 @@ SELECT (
 	FOR JSON PATH, ROOT, WITHOUT_ARRAY_WRAPPER
 ) c1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON. Remove one of these options)~~
+
 
 -- Test case with parameters
 CREATE PROCEDURE forjson_before_14_7_vu_p_params1 @id int AS
