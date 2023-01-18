@@ -1739,7 +1739,7 @@ SELECT
   , CAST(0 as sys.bit)  AS uses_database_collation
   , CAST(0 as sys.bit)  AS is_recompiled
   , CAST(
-      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF', 'TR') THEN
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN
         CASE WHEN p.proisstrict THEN 1
         ELSE 0 
         END
