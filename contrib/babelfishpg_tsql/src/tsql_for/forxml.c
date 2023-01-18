@@ -27,6 +27,7 @@
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
 static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bool binary_base64);
 static void tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, bool binary_base64);
+static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
 
@@ -198,9 +199,6 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bo
 		Datum	colval;
 		bool	isnull;
 		Oid 	datatype_oid;
-		Oid 	nspoid;
-		Oid 	tsql_datatype_oid;
-		char	*typename;
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		if (att->attisdropped)
@@ -210,63 +208,8 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bo
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 		datatype_oid = att->atttypid;
 
-		/* 
-		 * Below is a workaround for is_tsql_x_datatype() which does not work as expected.
-		 * We compare the datatype oid of the columns with the tsql_datatype_oid and
-		 * then specially handle some TSQL-specific datatypes.
-		 */
-		typename = SPI_gettype(tupdesc, i+1);
-		nspoid = get_namespace_oid("sys", true);
-		Assert(nspoid != InvalidOid);
+		update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, binary_base64, i);
 
-		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
-	
-		/*
-		 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
-		 * but with the same name. Examples: bigint, int, etc.
-		 */
-		if (tsql_datatype_oid == datatype_oid)
-		{
-			/* binary datatypes are not supported with binary_base64 */
-			if (binary_base64 &&
-				(strcmp(typename, "binary") == 0 ||
-				strcmp(typename, "varbinary") == 0 ||
-				strcmp(typename, "image") == 0 ||
-				strcmp(typename, "timestamp") == 0 ||
-				strcmp(typename, "rowversion") == 0))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								errmsg("option binary base64 is not supported")));
-			/*
-			 * convert datetime, smalldatetime, and datetime2 to appropriate text values, 
-			 * as T-SQL has a different text conversion than postgres.
-			 */
-			else if (strcmp(typename, "datetime")  == 0 ||
-				strcmp(typename, "smalldatetime") == 0 ||
-				strcmp(typename, "datetime2") == 0)
-			{
-				char *val = SPI_getvalue(tuple, tupdesc, i+1);
-				StringInfo format_output = makeStringInfo();
-				tsql_for_datetime_format(format_output, val);
-				colval = CStringGetDatum(format_output->data);
-
-				datatype_oid = CSTRINGOID;
-			}
-			/*
-			 * datetimeoffset has two behaviors:
-			 * if offset is 0, just return the datetime with 'Z' at the end
-			 * otherwise, append the offset
-			 */
-			else if (strcmp(typename, "datetimeoffset") == 0)
-			{
-				char *val = SPI_getvalue(tuple, tupdesc, i+1);
-				StringInfo format_output = makeStringInfo();
-				tsql_for_datetimeoffset_format(format_output, val);
-				colval = CStringGetDatum(format_output->data);
-
-				datatype_oid = CSTRINGOID;
-			}
-		}
 		if (!isnull)
 		{
 			appendStringInfo(state, " %s=\"%s\"",
@@ -314,9 +257,6 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 		Datum	colval;
 		bool	isnull;
 		Oid 	datatype_oid;
-		Oid 	nspoid;
-		Oid 	tsql_datatype_oid;
-		char	*typename;
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		if (att->attisdropped)
@@ -326,63 +266,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 		colval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 		datatype_oid = att->atttypid;
 
-		/* 
-		 * Below is a workaround for is_tsql_x_datatype() which does not work as expected.
-		 * We compare the datatype oid of the columns with the tsql_datatype_oid and
-		 * then specially handle some TSQL-specific datatypes.
-		 */
-		typename = SPI_gettype(tupdesc, i+1);
-		nspoid = get_namespace_oid("sys", true);
-		Assert(nspoid != InvalidOid);
-
-		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
-	
-		/*
-		 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
-		 * but with the same name. Examples: bigint, int, etc.
-		 */
-		if (tsql_datatype_oid == datatype_oid)
-		{
-			/* binary datatypes are not supported */
-			if (binary_base64 &&
-				(strcmp(typename, "binary") == 0 ||
-				strcmp(typename, "varbinary") == 0 ||
-				strcmp(typename, "image") == 0 ||
-				strcmp(typename, "timestamp") == 0 ||
-				strcmp(typename, "rowversion") == 0))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								errmsg("option binary base64 is not supported")));
-			/*
-			 * convert datetime, smalldatetime, and datetime2 to appropriate text values, 
-			 * as T-SQL has a different text conversion than postgres.
-			 */
-			else if (strcmp(typename, "datetime")  == 0 ||
-				strcmp(typename, "smalldatetime") == 0 ||
-				strcmp(typename, "datetime2") == 0)
-			{
-				char *val = SPI_getvalue(tuple, tupdesc, i+1);
-				StringInfo format_output = makeStringInfo();
-				tsql_for_datetime_format(format_output, val);
-				colval = CStringGetDatum(format_output->data);
-
-				datatype_oid = CSTRINGOID;
-			}
-			/*
-			 * datetimeoffset has two behaviors:
-			 * if offset is 0, just return the datetime with 'Z' at the end
-			 * otherwise, append the offset
-			 */
-			else if (strcmp(typename, "datetimeoffset") == 0)
-			{
-				char *val = SPI_getvalue(tuple, tupdesc, i+1);
-				StringInfo format_output = makeStringInfo();
-				tsql_for_datetimeoffset_format(format_output, val);
-				colval = CStringGetDatum(format_output->data);
-
-				datatype_oid = CSTRINGOID;
-			}
-		}
+		update_tsql_datatype_and_val(tuple, tupdesc, &datatype_oid, &colval, binary_base64, i);
 
 		if (!isnull)
 		{
@@ -405,4 +289,69 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 	}
 	else if (element_name[0] != '\0')
 		appendStringInfo(state, "</%s>", element_name);
+}
+
+static void
+update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i)
+{
+	char	*typename;
+	Oid		nspoid, tsql_datatype_oid;
+
+	/* 
+	 * Below is a workaround for is_tsql_x_datatype() which does not work as expected.
+	 * We compare the datatype oid of the columns with the tsql_datatype_oid and
+	 * then specially handle some TSQL-specific datatypes.
+	 */
+	typename = SPI_gettype(tupdesc, i+1);
+	nspoid = get_namespace_oid("sys", true);
+	Assert(nspoid != InvalidOid);
+
+	tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
+
+	/*
+	 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
+	 * but with the same name. Examples: bigint, int, etc.
+	 */
+	if (tsql_datatype_oid == *datatype_oid)
+	{
+		/* binary datatypes are not supported */
+		if (binary_base64 &&
+			(strcmp(typename, "binary") == 0 ||
+			strcmp(typename, "varbinary") == 0 ||
+			strcmp(typename, "image") == 0 ||
+			strcmp(typename, "timestamp") == 0 ||
+			strcmp(typename, "rowversion") == 0))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("option binary base64 is not supported")));
+		/*
+		 * convert datetime, smalldatetime, and datetime2 to appropriate text values, 
+		 * as T-SQL has a different text conversion than postgres.
+		 */
+		else if (strcmp(typename, "datetime")  == 0 ||
+			strcmp(typename, "smalldatetime") == 0 ||
+			strcmp(typename, "datetime2") == 0)
+		{
+			char *val = SPI_getvalue(tuple, tupdesc, i+1);
+			StringInfo format_output = makeStringInfo();
+			tsql_for_datetime_format(format_output, val);
+			*colval = CStringGetDatum(format_output->data);
+
+			*datatype_oid = CSTRINGOID;
+		}
+		/*
+		 * datetimeoffset has two behaviors:
+		 * if offset is 0, just return the datetime with 'Z' at the end
+		 * otherwise, append the offset
+		 */
+		else if (strcmp(typename, "datetimeoffset") == 0)
+		{
+			char *val = SPI_getvalue(tuple, tupdesc, i+1);
+			StringInfo format_output = makeStringInfo();
+			tsql_for_datetimeoffset_format(format_output, val);
+			*colval = CStringGetDatum(format_output->data);
+
+			*datatype_oid = CSTRINGOID;
+		}
+	}
 }
