@@ -2752,14 +2752,19 @@ rewriteBatchLevelStatement(
 		auto cctx = ctx->create_or_alter_procedure();
 		if (cctx->WITH())
 		{
+			size_t num_commas_in_procedure_param = cctx->COMMA().size();
 			auto options = cctx->procedure_option();
+			/* COMMA is shared between procedure-param and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_procedure_param -= (cctx->procedure_option().size() - 1);
 			auto commas = cctx->COMMA();
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() + num_commas_in_procedure_param, commas.end());
 			GetTokenFunc<TSqlParser::Procedure_optionContext*> getToken = [](TSqlParser::Procedure_optionContext* o) {
 				if (o->execute_as_clause())
 					return o->execute_as_clause()->CALLER();
 				return o->SCHEMABINDING();
 			};
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 		}
@@ -2774,14 +2779,19 @@ rewriteBatchLevelStatement(
 		/* DML trigger can have two WITH. one for trigger options and the other for WITH APPEND */
 		if (cctx->WITH().size() > 1 || (cctx->WITH().size() == 1 && !cctx->APPEND()))
 		{
+			size_t num_commas_in_dml_trigger_operaion = cctx->COMMA().size();
 			auto options = cctx->trigger_option();
+			/* COMMA is shared between dml_trigger_operation and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_dml_trigger_operaion -= (cctx->trigger_option().size() - 1);
 			auto commas = cctx->COMMA();
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() , commas.end() - num_commas_in_dml_trigger_operaion);
 			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) {
 				if (o->execute_as_clause())
 					return o->execute_as_clause()->CALLER();
 				return o->SCHEMABINDING();
 			};
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
 		}
@@ -2791,14 +2801,19 @@ rewriteBatchLevelStatement(
 		auto cctx = ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger();
 		if (cctx->WITH())
 		{
+			size_t num_commas_in_ddl_trigger_operaion = cctx->COMMA().size();
 			auto options = cctx->trigger_option();
+			/* COMMA is shared between ddl_trigger_operation and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_ddl_trigger_operaion -= (cctx->trigger_option().size() - 1);
 			auto commas = cctx->COMMA();
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() , commas.end() - num_commas_in_ddl_trigger_operaion);
 			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) {
 				if (o->execute_as_clause())
 					return o->execute_as_clause()->CALLER();
 				return o->SCHEMABINDING();
 			};
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 		}
