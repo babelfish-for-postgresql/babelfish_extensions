@@ -1920,10 +1920,10 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	if (pltsql_quoted_identifier)
 		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
 	/*
-	 * Need to set this flag for MVU from 2.4 to 3.1.
+	 * Need to set this flag for MVU from 2.4 or after to 3.1.
 	 */
-	flag_validity |= BBF_VIEW_DEF_FLAG_CREATED_IN_2_4;
-	flag_values |= BBF_VIEW_DEF_FLAG_CREATED_IN_2_4;
+	flag_validity |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
+	flag_values |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = CStringGetTextDatum(logical_schemaname);

@@ -176,7 +176,7 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 #define BBF_VIEW_DEF_NUM_COLS 8
 #define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
-#define BBF_VIEW_DEF_FLAG_CREATED_IN_2_4 (1<<2)
+#define BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4 (1<<2)
 extern Oid			bbf_view_def_oid;
 extern Oid			bbf_view_def_idx_oid;
 
