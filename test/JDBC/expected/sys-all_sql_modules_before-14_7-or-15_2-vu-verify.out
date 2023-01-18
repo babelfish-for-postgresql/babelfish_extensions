@@ -1,4 +1,4 @@
-USE sys_sql_modules_vu_prepare_db
+USE sys_all_sql_modules_vu_prepare_db
 GO
 
 -- Test for function
@@ -12,12 +12,11 @@ SELECT
     null_on_null_input,
     execute_as_principal_id,
     uses_native_compilation
-FROM sys.sql_modules
-WHERE definition LIKE '%sys_sql_modules_vu_prepare_f1()%'
+FROM sys.all_sql_modules
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_f1()%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE FUNCTION sys_sql_modules_vu_prepare_f1() <newline>RETURNS INT<newline>AS <newline>BEGIN<newline>    RETURN 1;<newline>END#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -32,31 +31,32 @@ SELECT
     null_on_null_input,
     execute_as_principal_id,
     uses_native_compilation
-FROM sys.sql_modules
+FROM sys.all_sql_modules
 WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_v2%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+CREATE VIEW sys_all_sql_modules_vu_prepare_v2 AS<newline>SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
 -- Test for triggers
 SELECT
-    definition,
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = (SELECT TOP(1) object_id FROM sys.objects WHERE name = 'sys_sql_modules_vu_prepare_tr1')
+   definition,
+   uses_ansi_nulls,
+   uses_quoted_identifier,
+   is_schema_bound,
+   uses_database_collation,
+   is_recompiled,
+   null_on_null_input,
+   execute_as_principal_id,
+   uses_native_compilation
+FROM sys.all_sql_modules
+WHERE object_id = (SELECT TOP(1) object_id FROM sys.all_objects WHERE name = 'sys_all_sql_modules_vu_prepare_tr1')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE TRIGGER sys_sql_modules_vu_prepare_tr1 ON sys_sql_modules_vu_prepare_t2 INSTEAD OF INSERT<newline>AS<newline>BEGIN<newline>SELECT * FROM sys_sql_modules_vu_prepare_t1;<newline>END#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -71,30 +71,30 @@ SELECT
     null_on_null_input,
     execute_as_principal_id,
     uses_native_compilation
-FROM sys.sql_modules
-WHERE definition LIKE '%sys_sql_modules_vu_prepare_p1%'
+FROM sys.all_sql_modules
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_p1%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE PROC sys_sql_modules_vu_prepare_p1 AS<newline>SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
 -- Test for system function
 SELECT
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys.fn_listextendedproperty')
+   uses_ansi_nulls,
+   uses_quoted_identifier,
+   is_schema_bound,
+   uses_database_collation,
+   is_recompiled,
+   null_on_null_input,
+   execute_as_principal_id,
+   uses_native_compilation
+FROM sys.all_sql_modules
+WHERE object_id = OBJECT_ID('sys.fn_listextendedproperty', 'FN')
 GO
 ~~START~~
 bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -108,11 +108,12 @@ SELECT
    null_on_null_input,
    execute_as_principal_id,
    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys.tables')
+FROM sys.all_sql_modules
+WHERE object_id = OBJECT_ID('sys.tables', 'V')
 GO
 ~~START~~
 bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -126,27 +127,48 @@ SELECT
    null_on_null_input,
    execute_as_principal_id,
    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys.sp_tables')
+FROM sys.all_sql_modules
+WHERE object_id = OBJECT_ID('sys.sp_tables', 'P')
 GO
 ~~START~~
 bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
--- Test that sys.sql_modules is database-scoped
+-- Test for system function written in c 
 SELECT
-    definition,
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.sql_modules
-WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_v1%'
+   definition,
+   uses_ansi_nulls,
+   uses_quoted_identifier,
+   is_schema_bound,
+   uses_database_collation,
+   is_recompiled,
+   null_on_null_input,
+   execute_as_principal_id,
+  uses_native_compilation
+FROM sys.all_sql_modules
+WHERE object_id = OBJECT_ID('sys.user_name', 'FN')
+GO
+~~START~~
+nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+~~END~~
+
+
+-- Test that sys.all_sql_modules is database-scoped
+SELECT
+   definition,
+   uses_ansi_nulls,
+   uses_quoted_identifier,
+   is_schema_bound,
+   uses_database_collation,
+   is_recompiled,
+   null_on_null_input,
+   execute_as_principal_id,
+   uses_native_compilation
+FROM sys.all_sql_modules
+WHERE object_id = OBJECT_ID('sys_all_sql_modules_vu_prepare_v1', 'V')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
@@ -156,9 +178,9 @@ nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 USE master
 GO
 
--- tsql user=sys_sql_modules_vu_prepare_user password=test
+-- tsql user=sys_all_sql_modules_vu_prepare_user password=test
 
-USE sys_sql_modules_vu_prepare_db
+USE sys_all_sql_modules_vu_prepare_db
 GO
 
 SELECT
@@ -171,8 +193,8 @@ SELECT
     null_on_null_input,
     execute_as_principal_id,
     uses_native_compilation
-FROM sys.sql_modules
-WHERE definition LIKE '%sys_sql_modules_vu_prepare_p1%'
+FROM sys.all_sql_modules
+WHERE definition LIKE '%sys_all_sql_modules_vu_prepare_p1%'
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
