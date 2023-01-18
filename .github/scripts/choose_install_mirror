@@ -24,6 +24,8 @@ if [ -z "$UBUNTU_MIRROR" ]; then
     UBUNTU_MIRROR="mirror://mirrors.ubuntu.com/mirrors.txt"
 fi
 OLD_MIRROR=$(cat /etc/apt/sources.list | grep '^deb ' | head -1 | awk '{ print $2 }')
+
+#add retries and timeout for apt
 echo 'Acquire::Retries "10";
 Acquire::https::Timeout "240";
 Acquire::http::Timeout "240";
@@ -32,6 +34,9 @@ APT::Install-Recommends "false";
 APT::Install-Suggests "false";
 Debug::Acquire::https "true";
 ' | sudo tee -a /etc/apt/apt.conf.d/99custom
+
+sudo cat /etc/apt/apt.conf.d/99custom
+
 echo "Picked '$UBUNTU_MIRROR'. Current mirror is '$OLD_MIRROR'."
 if [[ "$OLD_MIRROR" != "$UBUNTU_MIRROR" ]]; then
     sudo sed -i "s|$OLD_MIRROR|$UBUNTU_MIRROR|g" /etc/apt/sources.list
