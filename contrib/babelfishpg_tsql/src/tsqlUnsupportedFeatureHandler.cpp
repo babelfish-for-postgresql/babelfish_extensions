@@ -12,11 +12,14 @@
 #include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
 #include "tsqlIface.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wregister"
 extern "C" {
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "guc.h"
 }
+#pragma GCC diagnostic pop
 
 extern bool pltsql_allow_antlr_to_unsupported_grammar_for_testing;
 

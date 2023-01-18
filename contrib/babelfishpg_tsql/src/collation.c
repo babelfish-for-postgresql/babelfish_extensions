@@ -1423,23 +1423,23 @@ void BabelfishPreCreateCollation_hook(
          */
         if (collcollate[0] == '@')
         {
-	    char *catcollcollate = palloc0(strlen(pltsql_default_locale) +
-					   strlen(collcollate) + 1);
-			
-	    memcpy(catcollcollate, pltsql_default_locale, strlen(pltsql_default_locale));
-	    strncat(catcollcollate, collcollate, strlen(collcollate));
-	    *pCollcollate = catcollcollate;
-	}
+            size_t totallen = strlen(pltsql_default_locale) + strlen(collcollate) + 1;
+            char *catcollcollate = palloc0(totallen);
+                
+            memcpy(catcollcollate, pltsql_default_locale, strlen(pltsql_default_locale));
+            strncat(catcollcollate, collcollate, totallen);
+            *pCollcollate = catcollcollate;
+	    }
 
         if (collctype[0] == '@')
-	{
-	    char *catcollctype = palloc0(strlen(pltsql_default_locale) +
-					 strlen(collctype) + 1);
-			
-	    memcpy(catcollctype, pltsql_default_locale, strlen(pltsql_default_locale));
-	    strncat(catcollctype, collcollate, strlen(collcollate));
-	    *pCollctype = catcollctype;
-	}
+	    {
+            size_t totallen = strlen(pltsql_default_locale) + strlen(collctype) + 1;
+            char *catcollctype = palloc0(totallen);
+                
+            memcpy(catcollctype, pltsql_default_locale, strlen(pltsql_default_locale));
+            strncat(catcollctype, collcollate, totallen);
+            *pCollctype = catcollctype;
+	    }
     }
 }
 

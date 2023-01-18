@@ -875,8 +875,9 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 		return NULL;
 
 	/* always return a new copy */
-	name = palloc0(len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND);
-	strncpy(name, schema_name, strlen(schema_name));
+	len = len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND;
+	name = palloc0(len + 1);
+	strncpy(name, schema_name, len);
 
 	if (is_shared_schema(name))
 		return name;
@@ -952,7 +953,8 @@ get_physical_user_name(char *db_name, char *user_name)
 				 errmsg("database \"%s\" does not exist.", db_name)));
 
 	/* Get a new copy */
-	new_user_name = palloc0(len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND);
+	len = len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND;
+	new_user_name = palloc0(len + 1);
 	strncpy(new_user_name, user_name, len);
 
 	/* Truncate to 64 bytes */
