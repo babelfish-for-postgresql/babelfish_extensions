@@ -79,6 +79,13 @@ GO
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
 
 
+EXECUTE BABEL_3802_vu_prepare_t_p7
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type Int)~~
+
+
 SELECT * FROM BABEL_3802_vu_prepare_t_v1
 GO
 ~~START~~

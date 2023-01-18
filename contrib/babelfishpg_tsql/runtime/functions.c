@@ -1348,7 +1348,11 @@ smallint_power(PG_FUNCTION_ARGS)
 
     result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
 	
-    /* skip range check, since it cannot overflow int32 */
+	/* Range check */
+	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type Int")));
 
     PG_RETURN_INT32((int32)result);
  
