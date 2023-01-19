@@ -22,6 +22,8 @@
 #include "access/table.h"
 #include "access/genam.h"
 
+#include "multidb.h"
+
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
 bool suppress_string_truncation_error = false;
@@ -288,6 +290,10 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	appendStringInfoString(&proc_stmt, inout_str->data);
 	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
 	cstmt  = (CallStmt *) ((RawStmt *) linitial(parsetree))->stmt;
+	Assert(cstmt);
+
+	if (enable_schema_mapping())
+		rewrite_object_refs((Node *) cstmt);
 
 	funccall = cstmt->funccall;
 
