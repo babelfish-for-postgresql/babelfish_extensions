@@ -15,6 +15,8 @@
 #include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParserBaseListener.h"
 #include "tsqlIface.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wregister"
 extern "C" {
 #if 0
 #include "tsqlNodes.h"
@@ -32,6 +34,7 @@ extern "C" {
 #undef LOG
 #endif
 }
+#pragma GCC diagnostic pop
 
 using namespace std;
 using namespace antlr4;
