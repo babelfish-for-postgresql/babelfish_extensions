@@ -2904,6 +2904,7 @@ BEGIN
 		location AS SRV_LOCATION,
 		catalog AS SRV_CAT 
 	FROM sys.servers
+	ORDER BY SRV_NAME
 END;
 $$ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
