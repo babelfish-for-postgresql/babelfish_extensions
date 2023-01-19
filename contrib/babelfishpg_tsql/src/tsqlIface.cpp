@@ -73,6 +73,7 @@ extern "C"
 
 	extern bool pltsql_dump_antlr_query_graph;
 	extern bool pltsql_enable_antlr_detailed_log;
+	extern bool pltsql_enable_sll_parse_mode;
 
 	extern bool pltsql_enable_tsql_information_schema;
 
@@ -169,6 +170,7 @@ static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
+static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -2437,7 +2439,9 @@ ANTLR_result
 antlr_parser_cpp(const char *sourceText)
 {
 	ANTLR_result result;
-
+	instr_time	parseStart;
+	instr_time	parseEnd;
+	INSTR_TIME_SET_CURRENT(parseStart);
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
 	{
@@ -2455,6 +2459,30 @@ antlr_parser_cpp(const char *sourceText)
 		std::cout << sep << std::endl;
 	}
 
+	result = antlr_parse_query(sourceText, pltsql_enable_sll_parse_mode);
+
+	/* 
+	 * Only try to reparse if creation of the parse tree failed.  If parse tree is created, parsing mode will make no difference
+	 * Generally the mutator steps are non-reentrant, if parsetree is created and mutators are run, subsequent parsing may produce
+	 * incorrect error messages
+	*/
+	if (!result.success && !result.parseTreeCreated)
+	{
+		elog(DEBUG1, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
+		result = antlr_parse_query(sourceText, false);
+		if (result.parseTreeCreated)
+			elog(WARNING, "Query parsing failed using SLL parser mode but succeeded with LL mode: %s", sourceText);
+	}
+	INSTR_TIME_SET_CURRENT(parseEnd);
+	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
+	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
+
+	return result;
+}
+
+ANTLR_result
+antlr_parse_query(const char *sourceText, bool useSLLParsing) {
+	ANTLR_result result;
 	MyInputStream sourceStream(sourceText);
 
 	TSqlLexer lexer(&sourceStream);
@@ -2462,8 +2490,11 @@ antlr_parser_cpp(const char *sourceText)
 
 	MyParserErrorListener errorListner;
 
-        TSqlParser parser(&tokens);
+	TSqlParser parser(&tokens);
+	volatile bool parseTreeCreated = false;
 
+	if (useSLLParsing)
+		parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(atn::PredictionMode::SLL);
 	parser.removeErrorListeners();
 	parser.addErrorListener(&errorListner);
 
@@ -2487,7 +2518,7 @@ antlr_parser_cpp(const char *sourceText)
 			tree = parser.func_body_return_select_body();
 		else /* normal path */
 			tree = parser.tsql_file();
-
+		parseTreeCreated = true;
 		if (pltsql_enable_antlr_detailed_log)
 			std::cout << tree->toStringTree(&parser, true) << std::endl;
 
@@ -2546,12 +2577,14 @@ antlr_parser_cpp(const char *sourceText)
 		if (pltsql_parseonly)
 			pltsql_parse_result = makeEmptyBlockStmt(0);
 
+		result.parseTreeCreated = parseTreeCreated;
 		result.success = true;
 		return result;
 	}
 	catch (PGErrorWrapperException &e)
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = e.get_errcode();
 		result.errpos = e.get_errpos();
 		result.errfmt = e.get_errmsg();
@@ -2566,6 +2599,7 @@ antlr_parser_cpp(const char *sourceText)
 	catch (std::exception &e) /* not to cause a crash just in case */
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = ERRCODE_SYNTAX_ERROR;
 		result.errpos = 0;
 		result.errfmt = pstrdup(e.what());
@@ -2576,6 +2610,7 @@ antlr_parser_cpp(const char *sourceText)
 	catch (...) /* not to cause a crash just in case. consume all exception before C-layer */
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = ERRCODE_SYNTAX_ERROR;
 		result.errpos = 0;
 		result.errfmt = "unknown error";
