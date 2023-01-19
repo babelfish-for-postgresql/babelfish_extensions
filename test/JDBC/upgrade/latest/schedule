@@ -341,8 +341,7 @@ sys-all_parameters-dep
 BABEL-3556
 BABEL-3588
 BABEL-3268
-# TO-DO: Uncomment following test when pg_hint_plan extension gets supported in PG15
-# BABEL-3513
+BABEL-3513
 BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795
@@ -371,3 +370,4 @@ ISC-sequences
 jira-BABEL-3504-upgrade
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+BABEL_OBJECT_ID
