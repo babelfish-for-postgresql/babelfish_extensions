@@ -392,12 +392,15 @@ static int *
 ProcessVersionNumber(const char* inputString)
 {
 	static int 	version_arr[4];
-	int 		part = 0;
-	char		*copy_version_number = palloc0(sizeof(char) * strlen(inputString) + 1);
+	int 		part = 0,
+	    		len = 0;
+	char		*copy_version_number;
 	char 		*token;
 
 	Assert(inputString != NULL);
-	strncpy(copy_version_number,inputString,strlen(inputString) + 1);
+	len = strlen(inputString);
+	copy_version_number = palloc0(len + 1);
+	memcpy(copy_version_number, inputString, len);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{ 
 		version_arr[part] = atoi(token);
