@@ -13,3 +13,6 @@ GO
 
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
+
+EXEC sp_linkedservers
+GO
