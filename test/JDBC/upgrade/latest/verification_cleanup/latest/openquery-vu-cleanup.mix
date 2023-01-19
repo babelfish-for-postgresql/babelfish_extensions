@@ -3,5 +3,5 @@ DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO
 
 -- tsql
-DROP VIEW openquery_vu_prepare__openquery_view
+-- DROP VIEW openquery_vu_prepare__openquery_view
 GO

@@ -505,6 +505,7 @@ Function sys.openjson_array(text)
 Function sys.openjson_object(text)
 Function sys.openjson_simple(text,text)
 Function sys.openjson_with(text,text,text[])
+Function sys.openquery(text,text)
 Function sys.options()
 Function sys.original_login()
 Function sys.parsename(character varying,integer)
@@ -944,6 +945,7 @@ Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
 Type sys."bigint"
+Type sys."int"
 Type sys."real"
 Type sys.bbf_varbinary
 Type sys.cursor
