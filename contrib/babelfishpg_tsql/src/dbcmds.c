@@ -349,10 +349,9 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		if (user_dbname)
 		 	ereport(ERROR,
  				 (errcode(ERRCODE_DUPLICATE_DATABASE),
-                	errmsg("Only one user database allowed under single-db mode. User database \"%s\" already exists",
-							user_dbname)));
+                	errmsg("Only one user database allowed under single-db mode. You cannot create user database \'%s\',  because user database \'%s\' already exists",
+							dbname, user_dbname)));
 	}
-
 	if (!have_createdb_privilege())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

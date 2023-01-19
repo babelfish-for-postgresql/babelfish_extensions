@@ -124,7 +124,7 @@ CREATE DATABASE db2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Only one user database allowed under single-db mode. User database "db1" already exists)~~
+~~ERROR (Message: Only one user database allowed under single-db mode. You cannot create user database 'db2',  because user database 'db1' already exists)~~
 
 
 USE db1;
