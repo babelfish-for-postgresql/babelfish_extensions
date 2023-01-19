@@ -4,7 +4,7 @@ AS(
     SELECT 
         CAST(CAST(2.5 as BIT) as DATETIME) as re1,
         CAST(CAST(2.5 as DECIMAL) as DATETIME)as re2,
-        CAST(CAST(2.5 as NUMERIC) as DATETIME)as re3,
+        CAST(CAST(2.5 as NUMERIC(30,8)) as DATETIME)as re3,
         CAST(CAST(2.5 as FLOAT) as DATETIME)as re4,
         CAST(CAST(2.5 as REAL) as DATETIME)as re5,
         CAST(CAST(2.5 as INT) as DATETIME)as re6,
@@ -13,7 +13,17 @@ AS(
         CAST(CAST(2.5 as TINYINT) as DATETIME)as re9,
         CAST(CAST(2.5 as MONEY) as DATETIME)as re10,
         CAST(CAST(2.5 as SMALLMONEY) as DATETIME)as re11,
-        CAST(NULL as DATETIME)as res12
+        CAST(CAST(-2.5 as BIT) as DATETIME) as re12,
+        CAST(CAST(-2.5 as DECIMAL) as DATETIME)as re13,
+        CAST(CAST(-2.5 as NUMERIC(30,8)) as DATETIME)as re14,
+        CAST(CAST(-2.5 as FLOAT) as DATETIME)as re15,
+        CAST(CAST(-2.5 as REAL) as DATETIME)as re16,
+        CAST(CAST(-2.5 as INT) as DATETIME)as re17,
+        CAST(CAST(-2.5 as BIGINT) as DATETIME)as re18,
+        CAST(CAST(-2.5 as SMALLINT) as DATETIME)as re19,
+        CAST(CAST(-2.5 as MONEY) as DATETIME)as re20,
+        CAST(CAST(-2.5 as SMALLMONEY) as DATETIME)as re21,
+        CAST(NULL as DATETIME)as res22
 );
 GO
 
@@ -22,7 +32,7 @@ AS(
     SELECT 
         CAST(CAST(2.5 as BIT) as SMALLDATETIME) as re1,
         CAST(CAST(2.5 as DECIMAL) as SMALLDATETIME)as re2,
-        CAST(CAST(2.5 as NUMERIC) as SMALLDATETIME)as re3,
+        CAST(CAST(2.5 as NUMERIC(30,8)) as SMALLDATETIME)as re3,
         CAST(CAST(2.5 as FLOAT) as SMALLDATETIME)as re4,
         CAST(CAST(2.5 as REAL) as SMALLDATETIME)as re5,
         CAST(CAST(2.5 as INT) as SMALLDATETIME)as re6,
@@ -31,16 +41,77 @@ AS(
         CAST(CAST(2.5 as TINYINT) as SMALLDATETIME)as re9,
         CAST(CAST(2.5 as MONEY) as SMALLDATETIME)as re10,
         CAST(CAST(2.5 as SMALLMONEY) as SMALLDATETIME)as re11,
-        CAST(NULL as SMALLDATETIME)as res12
+        CAST(CAST(-2.5 as BIT) as SMALLDATETIME) as re12,
+        CAST(NULL as SMALLDATETIME)as res13
 );
 GO
 
+-- Should all fail
+SELECT CAST(CAST(-2.5 as NUMERIC(30,8)) as SMALLDATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CAST(CAST(-2.5 as FLOAT) as SMALLDATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CAST(CAST(-2.5 as REAL) as SMALLDATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CAST(CAST(-2.5 as INT) as SMALLDATETIME)
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CAST(CAST(-2.5 as BIGINT) as SMALLDATETIME)
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CAST(CAST(-2.5 as SMALLINT) as SMALLDATETIME)
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CAST(CAST(-2.5 as MONEY) as SMALLDATETIME)
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CAST(CAST(-2.5 as SMALLMONEY) as SMALLDATETIME)
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+       
 CREATE VIEW Datetime_view3
 AS(
     SELECT 
         CONVERT(DATETIME, CAST(2.5 as BIT)) as re1,
         CONVERT(DATETIME, CAST(2.5 as DECIMAL))as re2,
-        CONVERT(DATETIME, CAST(2.5 as NUMERIC))as re3,
+        CONVERT(DATETIME, CAST(2.5 as NUMERIC(30,8)))as re3,
         CONVERT(DATETIME, CAST(2.5 as FLOAT))as re4,
         CONVERT(DATETIME, CAST(2.5 as REAL))as re5,
         CONVERT(DATETIME, CAST(2.5 as INT))as re6,
@@ -49,7 +120,17 @@ AS(
         CONVERT(DATETIME, CAST(2.5 as TINYINT))as re9,
         CONVERT(DATETIME, CAST(2.5 as MONEY))as re10,
         CONVERT(DATETIME, CAST(2.5 as SMALLMONEY))as re11,
-        CONVERT(DATETIME, NULL)as res12
+        CONVERT(DATETIME, CAST(-2.5 as BIT)) as re12,
+        CONVERT(DATETIME, CAST(-2.5 as DECIMAL))as re13,
+        CONVERT(DATETIME, CAST(-2.5 as NUMERIC(30,8)))as re14,
+        CONVERT(DATETIME, CAST(-2.5 as FLOAT))as re15,
+        CONVERT(DATETIME, CAST(-2.5 as REAL))as re16,
+        CONVERT(DATETIME, CAST(-2.5 as INT))as re17,
+        CONVERT(DATETIME, CAST(-2.5 as BIGINT))as re18,
+        CONVERT(DATETIME, CAST(-2.5 as SMALLINT))as re19,
+        CONVERT(DATETIME, CAST(-2.5 as MONEY))as re20,
+        CONVERT(DATETIME, CAST(-2.5 as SMALLMONEY))as re21,
+        CONVERT(DATETIME, NULL)as res22
 );
 GO
 
@@ -58,7 +139,7 @@ AS(
     SELECT 
         CONVERT(SMALLDATETIME, CAST(2.5 as BIT)) as re1,
         CONVERT(SMALLDATETIME, CAST(2.5 as DECIMAL)) as re2,
-        CONVERT(SMALLDATETIME, CAST(2.5 as NUMERIC)) as re3,
+        CONVERT(SMALLDATETIME, CAST(2.5 as NUMERIC(30,8))) as re3,
         CONVERT(SMALLDATETIME, CAST(2.5 as FLOAT)) as re4,
         CONVERT(SMALLDATETIME, CAST(2.5 as REAL)) as re5,
         CONVERT(SMALLDATETIME, CAST(2.5 as INT)) as re6,
@@ -67,23 +148,101 @@ AS(
         CONVERT(SMALLDATETIME, CAST(2.5 as TINYINT)) as re9,
         CONVERT(SMALLDATETIME, CAST(2.5 as MONEY)) as re10,
         CONVERT(SMALLDATETIME, CAST(2.5 as SMALLMONEY)) as re11,
-        CONVERT(SMALLDATETIME, NULL) as res12
+        CONVERT(SMALLDATETIME, CAST(-2.5 as BIT)) as re12,
+        CONVERT(SMALLDATETIME, NULL) as res13
 );
 GO
+
+-- Should all fail
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as DECIMAL))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as NUMERIC(30,8)))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as FLOAT))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as REAL))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as INT))
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as BIGINT))
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as SMALLINT))
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as MONEY))
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as SMALLMONEY))
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
 
 
 CREATE VIEW Datetime_view5 as (
     SELECT 
-        DATEADD(minute, CAST(1 as DECIMAL), CAST(2.5 as DECIMAL)) as re1,
-        DATEADD(minute, CAST(1 as NUMERIC), CAST(2.5 as NUMERIC)) as re2,
-        DATEADD(minute, CAST(1 as FLOAT), CAST(2.5 as FLOAT)) as re3,
-        DATEADD(minute, CAST(1 as REAL), CAST(2.5 as REAL)) as re4,
-        DATEADD(minute, CAST(1 as INT), CAST(2.5 as INT)) as re5,
-        DATEADD(minute, CAST(1 as BIGINT), CAST(2.5 as BIGINT)) as re6,
-        DATEADD(minute, CAST(1 as SMALLINT), CAST(2.5 as SMALLINT)) as re7,
-        DATEADD(minute, CAST(1 as TINYINT), CAST(2.5 as TINYINT)) as re8,
-        DATEADD(minute, CAST(1 as MONEY), CAST(2.5 as MONEY)) as re9,
-        DATEADD(minute, CAST(1 as SMALLMONEY), CAST(2.5 as SMALLMONEY)) as re10
+        DATEADD(minute, CAST(1 as BIT), CAST(2.5 as DECIMAL)) as re1,
+        DATEADD(minute, CAST(1 as DECIMAL), CAST(2.5 as DECIMAL)) as re2,
+        DATEADD(minute, CAST(1 as NUMERIC(30,8)), CAST(2.5 as NUMERIC(30,8))) as re3,
+        DATEADD(minute, CAST(1 as FLOAT), CAST(2.5 as FLOAT)) as re4,
+        DATEADD(minute, CAST(1 as REAL), CAST(2.5 as REAL)) as re5,
+        DATEADD(minute, CAST(1 as INT), CAST(2.5 as INT)) as re6,
+        DATEADD(minute, CAST(1 as BIGINT), CAST(2.5 as BIGINT)) as re7,
+        DATEADD(minute, CAST(1 as SMALLINT), CAST(2.5 as SMALLINT)) as re8,
+        DATEADD(minute, CAST(1 as TINYINT), CAST(2.5 as TINYINT)) as re9,
+        DATEADD(minute, CAST(1 as MONEY), CAST(2.5 as MONEY)) as re10,
+        DATEADD(minute, CAST(1 as SMALLMONEY), CAST(2.5 as SMALLMONEY)) as re11,
+        DATEADD(minute, CAST(-1 as BIT), CAST(-2.5 as BIT)) as re12,
+        DATEADD(minute, CAST(-1 as DECIMAL), CAST(-2.5 as DECIMAL)) as re13,
+        DATEADD(minute, CAST(-1 as NUMERIC(30,8)), CAST(-2.5 as NUMERIC(30,8))) as re14,
+        DATEADD(minute, CAST(-1 as FLOAT), CAST(-2.5 as FLOAT)) as re15,
+        DATEADD(minute, CAST(-1 as REAL), CAST(-2.5 as REAL)) as re16,
+        DATEADD(minute, CAST(-1 as INT), CAST(-2.5 as INT)) as re17,
+        DATEADD(minute, CAST(-1 as BIGINT), CAST(-2.5 as BIGINT)) as re18,
+        DATEADD(minute, CAST(-1 as SMALLINT), CAST(-2.5 as SMALLINT)) as re19,
+        DATEADD(minute, CAST(-1 as MONEY), CAST(-2.5 as MONEY)) as re20,
+        DATEADD(minute, CAST(-1 as SMALLMONEY), CAST(-2.5 as SMALLMONEY)) as re21
 );
 GO
 
@@ -91,7 +250,7 @@ CREATE VIEW Datetime_view6 as (
     SELECT 
         DATEDIFF(minute, CAST(1 as BIT), CAST(2.5 AS BIT)) as re1,
         DATEDIFF(minute, CAST(1 as DECIMAL), CAST(2.5 AS DECIMAL)) as re2,
-        DATEDIFF(minute, CAST(1 as NUMERIC), CAST(2.5 AS NUMERIC)) as re3,
+        DATEDIFF(minute, CAST(1 as NUMERIC(30,8)), CAST(2.5 AS NUMERIC(30,8))) as re3,
         DATEDIFF(minute, CAST(1 as FLOAT), CAST(2.5 AS FLOAT)) as re4,
         DATEDIFF(minute, CAST(1 as REAL), CAST(2.5 AS REAL)) as re5,
         DATEDIFF(minute, CAST(1 as INT), CAST(2.5 AS INT)) as re6,
@@ -99,7 +258,17 @@ CREATE VIEW Datetime_view6 as (
         DATEDIFF(minute, CAST(1 as SMALLINT), CAST(2.5 AS SMALLINT)) as re8,
         DATEDIFF(minute, CAST(1 as TINYINT), CAST(2.5 AS TINYINT)) as re9,
         DATEDIFF(minute, CAST(1 as MONEY), CAST(2.5 AS MONEY)) as re10,
-        DATEDIFF(minute, CAST(1 as SMALLMONEY), CAST(2.5 AS SMALLMONEY)) as re11
+        DATEDIFF(minute, CAST(1 as SMALLMONEY), CAST(-2.5 AS SMALLMONEY)) as re11,
+        DATEDIFF(minute, CAST(-1 as BIT), CAST(-2.5 AS BIT)) as re12,
+        DATEDIFF(minute, CAST(-1 as DECIMAL), CAST(-2.5 AS DECIMAL)) as re13,
+        DATEDIFF(minute, CAST(-1 as NUMERIC(30,8)), CAST(-2.5 AS NUMERIC(30,8))) as re14,
+        DATEDIFF(minute, CAST(-1 as FLOAT), CAST(-2.5 AS FLOAT)) as re15,
+        DATEDIFF(minute, CAST(-1 as REAL), CAST(-2.5 AS REAL)) as re16,
+        DATEDIFF(minute, CAST(-1 as INT), CAST(-2.5 AS INT)) as re17,
+        DATEDIFF(minute, CAST(-1 as BIGINT), CAST(-2.5 AS BIGINT)) as re18,
+        DATEDIFF(minute, CAST(-1 as SMALLINT), CAST(-2.5 AS SMALLINT)) as re19,
+        DATEDIFF(minute, CAST(-1 as MONEY), CAST(-2.5 AS MONEY)) as re20,
+        DATEDIFF(minute, CAST(-1 as SMALLMONEY), CAST(-2.5 AS SMALLMONEY)) as re21
 );
 GO
 
@@ -162,7 +331,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE Datetime_proc3 (@a DATETIME, @b NUMERIC) AS
+CREATE PROCEDURE Datetime_proc3 (@a DATETIME, @b NUMERIC(30,8)) AS
 BEGIN
    DECLARE @c DATETIME = @b;
    SELECT (CASE WHEN @a = @c THEN 'pass' ELSE 'fail' END) as result;
@@ -240,7 +409,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE SMALLDatetime_proc3 (@a SMALLDATETIME, @b NUMERIC) AS
+CREATE PROCEDURE SMALLDatetime_proc3 (@a SMALLDATETIME, @b NUMERIC(30,8)) AS
 BEGIN
    DECLARE @c SMALLDATETIME = @b;
    SELECT (CASE WHEN @a = @c THEN 'pass' ELSE 'fail' END) as result;
@@ -314,7 +483,7 @@ GO
 CREATE TABLE Datetime_source_type_table (
     bittype bit,
     decimaltype decimal,
-    numerictype numeric,
+    numerictype numeric(30,8),
     floattype float,
     realtype real,
     inttype int,

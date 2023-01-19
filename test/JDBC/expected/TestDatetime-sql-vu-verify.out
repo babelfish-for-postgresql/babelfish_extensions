@@ -6,8 +6,8 @@
 SELECT * FROM Datetime_view1
 GO
 ~~START~~
-datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
-1900-01-02 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#<NULL>
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+1900-01-02 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-02 00:00:00.0#!#1899-12-29 00:00:00.0#!#1899-12-29 12:00:00.0#!#1899-12-29 12:00:00.0#!#1899-12-29 12:00:00.0#!#1899-12-30 00:00:00.0#!#1899-12-30 00:00:00.0#!#1899-12-30 00:00:00.0#!#1899-12-29 12:00:00.0#!#1899-12-29 12:00:00.0#!#<NULL>
 ~~END~~
 
 DROP VIEW Datetime_view1
@@ -21,8 +21,8 @@ GO
 SELECT * FROM Datetime_view2
 GO
 ~~START~~
-smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
-1900-01-02 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#<NULL>
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+1900-01-02 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-02 00:00:00.0#!#<NULL>
 ~~END~~
 
 DROP VIEW Datetime_view2
@@ -35,7 +35,7 @@ GO
 SELECT * FROM Datetime_view3
 GO
 ~~START~~
-datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and time from character string.)~~
@@ -50,8 +50,8 @@ GO
 SELECT * FROM Datetime_view4
 GO
 ~~START~~
-smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
-1900-01-02 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#<NULL>
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+1900-01-02 00:00:00.0#!#1900-01-04 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 00:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-03 12:00:00.0#!#1900-01-02 00:00:00.0#!#<NULL>
 ~~END~~
 
 DROP VIEW Datetime_view4
@@ -73,7 +73,7 @@ SELECT * FROM Datetime_view5
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: operator does not exist: double precision + interval)~~
+~~ERROR (Message: operator does not exist: "decimal" + interval)~~
 
 DROP VIEW Datetime_view5
 GO
@@ -85,8 +85,8 @@ GO
 SELECT * FROM Datetime_view6
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-0#!#2880#!#2880#!#2160#!#2160#!#1440#!#1440#!#1440#!#1440#!#2160#!#2160
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+0#!#2880#!#2160#!#2160#!#2160#!#1440#!#1440#!#1440#!#1440#!#2160#!#-5040#!#0#!#-2880#!#-2160#!#-2160#!#-2160#!#-1440#!#-1440#!#-1440#!#-2160#!#-2160
 ~~END~~
 
 DROP VIEW Datetime_view6
@@ -1394,6 +1394,9 @@ datetime#!#int
 DELETE FROM Datetime_tbl1 WHERE c1 IS NOT NULL
 GO
 
+DROP TABLE datetime_tbl1
+GO
+
 ALTER TABLE Datetime_tbl2 ADD CONSTRAINT Datetime_constraint13 DEFAULT CAST(0 as BIT) FOR c1
 INSERT INTO Datetime_tbl2 VALUES(DEFAULT)
 INSERT INTO Datetime_tbl2 VALUES(CAST(1.5 as BIT))
@@ -1656,6 +1659,9 @@ smalldatetime#!#int
 DELETE FROM Datetime_tbl2 WHERE c1 IS NOT NULL
 GO
 
+DROP TABLE datetime_tbl2
+GO
+
 -- Procedures
 EXEC Datetime_proc1 '1900-01-02 00:00:00', 3.1
 GO
@@ -1717,7 +1723,7 @@ pass
 DROP PROCEDURE Datetime_proc2
 GO
 
-EXEC Datetime_proc3 '1900-01-04 00:00:00', 3.1
+EXEC Datetime_proc3 '1900-01-04 02:24:00', 3.1
 GO
 ~~START~~
 text
@@ -1731,14 +1737,14 @@ text
 pass
 ~~END~~
 
-EXEC Datetime_proc3 '1900-01-04 00:00:00', 2.5
+EXEC Datetime_proc3 '1900-01-03 12:00:00', 2.5
 GO
 ~~START~~
 text
 pass
 ~~END~~
 
-EXEC Datetime_proc3 '1899-12-29 00:00:00', -2.5
+EXEC Datetime_proc3 '1899-12-29 12:00:00', -2.5
 GO
 ~~START~~
 text
@@ -2051,7 +2057,7 @@ GO
 DROP PROCEDURE SMALLDatetime_proc2
 GO
 
-EXEC SMALLDatetime_proc3 '1900-01-04 00:00:00', 3.1
+EXEC SMALLDatetime_proc3 '1900-01-04 02:24:00', 3.1
 GO
 ~~START~~
 text
@@ -2065,18 +2071,12 @@ text
 pass
 ~~END~~
 
-EXEC SMALLDatetime_proc3 '1900-01-04 00:00:00', 2.5
+EXEC SMALLDatetime_proc3 '1900-01-03 12:00:00', 2.5
 GO
 ~~START~~
 text
 pass
 ~~END~~
-
-EXEC SMALLDatetime_proc3 '1899-12-29 00:00:00', -2.5
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: data out of range for smalldatetime)~~
 
 DROP PROCEDURE SMALLDatetime_proc3
 GO

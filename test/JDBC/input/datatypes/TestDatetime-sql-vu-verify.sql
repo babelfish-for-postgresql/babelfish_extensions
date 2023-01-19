@@ -378,6 +378,9 @@ GO
 DELETE FROM Datetime_tbl1 WHERE c1 IS NOT NULL
 GO
 
+DROP TABLE datetime_tbl1
+GO
+
 ALTER TABLE Datetime_tbl2 ADD CONSTRAINT Datetime_constraint13 DEFAULT CAST(0 as BIT) FOR c1
 INSERT INTO Datetime_tbl2 VALUES(DEFAULT)
 INSERT INTO Datetime_tbl2 VALUES(CAST(1.5 as BIT))
@@ -498,6 +501,9 @@ GO
 DELETE FROM Datetime_tbl2 WHERE c1 IS NOT NULL
 GO
 
+DROP TABLE datetime_tbl2
+GO
+
 -- Procedures
 EXEC Datetime_proc1 '1900-01-02 00:00:00', 3.1
 GO
@@ -521,13 +527,13 @@ GO
 DROP PROCEDURE Datetime_proc2
 GO
 
-EXEC Datetime_proc3 '1900-01-04 00:00:00', 3.1
+EXEC Datetime_proc3 '1900-01-04 02:24:00', 3.1
 GO
 EXEC Datetime_proc3 '1900-01-01 00:00:00', 0
 GO
-EXEC Datetime_proc3 '1900-01-04 00:00:00', 2.5
+EXEC Datetime_proc3 '1900-01-03 12:00:00', 2.5
 GO
-EXEC Datetime_proc3 '1899-12-29 00:00:00', -2.5
+EXEC Datetime_proc3 '1899-12-29 12:00:00', -2.5
 GO
 DROP PROCEDURE Datetime_proc3
 GO
@@ -635,13 +641,11 @@ GO
 DROP PROCEDURE SMALLDatetime_proc2
 GO
 
-EXEC SMALLDatetime_proc3 '1900-01-04 00:00:00', 3.1
+EXEC SMALLDatetime_proc3 '1900-01-04 02:24:00', 3.1
 GO
 EXEC SMALLDatetime_proc3 '1900-01-01 00:00:00', 0
 GO
-EXEC SMALLDatetime_proc3 '1900-01-04 00:00:00', 2.5
-GO
-EXEC SMALLDatetime_proc3 '1899-12-29 00:00:00', -2.5
+EXEC SMALLDatetime_proc3 '1900-01-03 12:00:00', 2.5
 GO
 DROP PROCEDURE SMALLDatetime_proc3
 GO
