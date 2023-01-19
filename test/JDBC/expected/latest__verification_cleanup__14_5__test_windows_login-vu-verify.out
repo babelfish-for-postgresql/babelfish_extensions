@@ -4,7 +4,7 @@ where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdblanguageengl
 GO
 ~~START~~
 name#!#"sys"."varchar"#!#bpchar#!#"sys"."varchar"#!#"sys"."varchar"
-passworduser#!#<NULL>#!#S#!#master#!#English
+passworduser#!#passworduser#!#S#!#master#!#English
 ~~END~~
 
 
