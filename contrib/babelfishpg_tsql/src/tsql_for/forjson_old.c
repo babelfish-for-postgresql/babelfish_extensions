@@ -46,6 +46,10 @@ tsql_query_to_json_text(PG_FUNCTION_ARGS)
 	bool	without_array_wrapper;
 	StringInfo result;
 
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This version of FOR JSON has been deprecated. We recommend recreating the view for this query.")));
+
 	for (int i=0; i< PG_NARGS()-1; i++)
 	{
 		if PG_ARGISNULL(i) 
