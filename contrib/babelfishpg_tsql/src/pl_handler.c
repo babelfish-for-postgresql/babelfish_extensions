@@ -2429,33 +2429,35 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						if (from_windows && orig_loginname)
 						{
 							/*
-							* The login name must contain '\' if it is windows login or else throw error.
-							*/
+							 * The login name must contain '\' if it is windows login or else throw error.
+							 */
 							if ((strchr(orig_loginname, '\\')) == NULL)
-								ereport(ERROR, (errcode(ERRCODE_INVALID_NAME),
-				 					errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
-										orig_loginname)));
-
-							/*
-							*	Check whether login_name has valid length or not.
-							*/
-							if (!check_windows_login_length(orig_loginname))
 								ereport(ERROR,
-									(errcode(ERRCODE_INVALID_NAME),
-									 errmsg("The login name '%s' has invalid length. Login name length should be between %d and %d for windows login.",
-											orig_loginname, (NAMEDATALEN_WINDOWS_MIN + 1), (NAMEDATALEN_WINDOWS_MAX - 1))));
+										(errcode(ERRCODE_INVALID_NAME),
+										 errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
+										 orig_loginname)));
 
 							/*
-							*	Check whether domain name is empty. If the first character is '\', that ensures domain is empty.
-							*/
+							 * Check whether domain name is empty. If the first character is '\', that ensures domain is empty.
+							 */
 							if (orig_loginname[0] == '\\')
 								ereport(ERROR,
 									(errcode(ERRCODE_INVALID_NAME),
 									 errmsg("The login name '%s' is invalid. The domain can not be empty.",
 											orig_loginname)));
+
 							/*
-							*	Check whether the login_name contains invalid characters or not.
-							*/
+							 * Check whether login_name has valid length or not.
+							 */
+							if (!check_windows_login_length(orig_loginname))
+								ereport(ERROR,
+										(errcode(ERRCODE_INVALID_NAME),
+										 errmsg("The login name '%s' has invalid length. Login name length should be between %d and %d for windows login.",
+											orig_loginname, (NAMEDATALEN_WINDOWS_MIN + 1), (NAMEDATALEN_WINDOWS_MAX - 1))));
+
+							/*
+							 * Check whether the login_name contains invalid characters or not.
+							 */
 							if (windows_login_contains_invalid_chars(orig_loginname))
 								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 									errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));

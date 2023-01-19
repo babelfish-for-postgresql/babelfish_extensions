@@ -256,7 +256,7 @@ modify_date timestamptz NOT NULL,
 default_database_name SYS.NVARCHAR(128) NOT NULL,
 default_language_name SYS.NVARCHAR(128) NOT NULL,
 properties JSONB,
-orig_loginname SYS.NVARCHAR(128) DEFAULT NULL,
+orig_loginname SYS.NVARCHAR(128) NOT NULL,
 PRIMARY KEY (rolname));
 GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
 
