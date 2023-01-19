@@ -72,6 +72,8 @@ typedef struct collation_callbacks
 
 	bool (*has_ilike_node)(Node *expr);
 
+	const char* (*translate_bbf_collation_to_tsql_collation)(const char *collname);
+
 } collation_callbacks;
 
 extern collation_callbacks *collation_callbacks_ptr;
@@ -90,6 +92,7 @@ coll_info_t tsql_lookup_collation_table_internal(Oid oid);
 like_ilike_info_t tsql_lookup_like_ilike_table_internal(Oid opno);
 int tsql_find_cs_as_collation_internal(int collidx);
 int tsql_find_collation_internal(const char *collation_name);
+extern const char* tsql_translate_bbf_collation_to_tsql_collation(const char *collname);
 
 /* Utility functions */
 extern bool has_ilike_node_and_ci_as_coll(Node *expr);
