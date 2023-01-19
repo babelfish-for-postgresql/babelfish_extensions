@@ -41,7 +41,7 @@ set_cur_db(int16 id, const char *name)
 	Assert(len <= MAX_BBF_NAMEDATALEND);
 
 	current_db_id = id;
-	strncpy(current_db_name, name, len);
+	strncpy(current_db_name, name, MAX_BBF_NAMEDATALEND);
 	current_db_name[len] = '\0';
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_db_stat_var)
@@ -211,17 +211,17 @@ Datum babelfish_db_name(PG_FUNCTION_ARGS)
 	if (dbid == 1)
 	{
 		dbname = palloc((strlen("master") + 1) * sizeof(char));
-		strncpy(dbname, "master", strlen("master") + 1);
+		strncpy(dbname, "master", MAX_BBF_NAMEDATALEND);
 	}
 	else if (dbid == 2)
 	{
 		dbname = palloc((strlen("tempdb") + 1) * sizeof(char));
-		strncpy(dbname, "tempdb", strlen("tempdb") + 1);
+		strncpy(dbname, "tempdb", MAX_BBF_NAMEDATALEND);
 	}
 	else if (dbid == 4)
 	{
 		dbname = palloc((strlen("msdb") + 1) * sizeof(char));
-		strncpy(dbname, "msdb", strlen("msdb") + 1);
+		strncpy(dbname, "msdb", MAX_BBF_NAMEDATALEND);
 	}
 	else
 		dbname = get_db_name(dbid);

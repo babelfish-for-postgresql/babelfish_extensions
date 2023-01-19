@@ -51,7 +51,7 @@ void reset_sp_cursor_params(void);
 /* cursor information hashtab */
 typedef struct cursorhashent
 {
-	char curname[NAMEDATALEN];
+	char curname[NAMEDATALEN + 1];
 	PLtsql_expr *explicit_expr;
 	uint32 cursor_options;
 	int16 fetch_status;
@@ -93,7 +93,7 @@ static Oid tsql_cursor_oid = InvalidOid;
 static Oid lookup_tsql_cursor_oid(void);
 
 /* keep the name of last opened cursor name for @@cursor_rows */
-static char last_opened_cursor[NAMEDATALEN];
+static char last_opened_cursor[NAMEDATALEN + 1];
 
 /* implementation function shared between cursor functions and procedures */
 static int cursor_status_impl(PLtsql_var *var);
@@ -458,7 +458,7 @@ CursorHashEnt *pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_e
 		elog(ERROR, "duplicate cursor name");
 
 	curname[0] = '\0';
-	strncat(hentry->curname, curname, strlen(curname));
+	strncat(hentry->curname, curname, NAMEDATALEN);
 	hentry->explicit_expr = explicit_expr;
 	hentry->cursor_options = cursor_options;
 	hentry->fetch_status = -9;
@@ -551,7 +551,7 @@ void pltsql_update_cursor_last_operation(char *curname, int last_operation)
 	if (last_operation == 1) /* open */
 	{
 		last_opened_cursor[0] = '\0';
-		strncat(last_opened_cursor, curname, strlen(curname));
+		strncat(last_opened_cursor, curname, NAMEDATALEN);
 	}
 }
 

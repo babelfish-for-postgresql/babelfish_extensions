@@ -118,13 +118,15 @@ check_version_number(char **newval, void **extra, GucSource source)
 {
 	char 		*copy_version_number;
 	char		*token;
-	int		part = 0;
+	int 		part = 0,
+	    		len = 0;
 
 	Assert(*newval != NULL);
 	if(pg_strcasecmp(*newval,"default") == 0)
 		return true;
-	copy_version_number = palloc(sizeof(char) * strlen(*newval) + 1);
-	strncpy(copy_version_number,*newval,strlen(*newval) + 1);
+	len = strlen(*newval);
+	copy_version_number = palloc0(len + 1);
+	memcpy(copy_version_number, *newval, len);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{	
 		/* check each token contains only digits */
