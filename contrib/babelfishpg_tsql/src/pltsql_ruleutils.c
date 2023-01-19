@@ -350,6 +350,7 @@ int tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 		bool print_table_args, bool print_defaults, int** typmod_arr_arg, bool* has_tvp);
 char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
+char* generate_tsql_collation_name(Oid collOid);
 int adjustTypmod(Oid oid, int typmod);
 static void tsql_print_function_rettype(StringInfo buf, HeapTuple proctup,
 										int** typmod_arr_ret, int number_args);
@@ -1434,7 +1435,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendStringInfoChar(buf, '(');
 				get_rule_expr_paren(arg, context, showimplicit, node);
 				appendStringInfo(buf, " COLLATE %s",
-								 generate_collation_name(collate->collOid));
+								 generate_tsql_collation_name(collate->collOid));
 				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, ')');
 			}
@@ -1908,7 +1909,7 @@ get_const_collation(Const *constval, deparse_context *context)
 		if (constval->constcollid != typcollation)
 		{
 			appendStringInfo(buf, " COLLATE %s",
-							 generate_collation_name(constval->constcollid));
+							 generate_tsql_collation_name(constval->constcollid));
 		}
 	}
 }
@@ -2907,6 +2908,29 @@ tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout)
 		tmstr = DatumGetCString(OidFunctionCall1(typmodout,
 													Int32GetDatum(typmod)));
 		res = psprintf("%s%s", typname, tmstr);
+	}
+	return res;
+}
+
+/*
+ * Given a collation oid, this function generates the BBF collation name and
+ * looks up in the reverse translation table to check if it's equivalent TSQL collation
+ * name exists. If exists, it returns the TSQL collation name. Otherwise,
+ * it returns the BBF collation name.
+ */
+char*
+generate_tsql_collation_name(Oid collOid)
+{
+	char* res = NULL;
+	char* translated_res = NULL;
+	res = generate_collation_name(collOid);
+	if (res)
+		translated_res = (char*)tsql_translate_bbf_collation_to_tsql_collation(res);
+
+	if (translated_res)
+	{
+		pfree(res);
+		return translated_res;
 	}
 	return res;
 }
