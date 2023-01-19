@@ -145,7 +145,7 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 		appendStringInfoString(res, state+1);
 
 		/* copy the root tag */
-		state[match.rm_eo] = '\0';
+		state[match.rm_eo-1] = '\0';
 		initStringInfo(&root);
 		appendStringInfoString(&root, state + match.rm_so + 1);
 		appendStringInfo(res, "</%s>", root.data);
