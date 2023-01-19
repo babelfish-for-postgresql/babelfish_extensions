@@ -125,11 +125,10 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 	if (state[0] == '{') /* '{' indicates that root was specified, so add the corresponding end tag */
 	{
 		/* set up regex to match first tag */
-		char		*pattern = "<([^\\/>]+)[\\/]*>";
-		regex_t		preg;
-		regmatch_t	match, pmatch[1];
-		char		*root = palloc(1024);
-		int			len;
+		char			*pattern = "<([^\\/>]+)[\\/]*>";
+		regex_t			preg;
+		regmatch_t		match, pmatch[1];
+		StringInfoData	root;
 		
 		if (regcomp(&preg, pattern, REG_EXTENDED) != 0)
 			ereport(ERROR,
@@ -142,20 +141,14 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
 							errmsg("unexpected error parsing xml root tag")));
 						
 		match = pmatch[0];
-		len = match.rm_eo - match.rm_so - 1;
-		if (len >= 1024)
-		{
-			ereport(WARNING,
-							(errcode(ERRCODE_WARNING_STRING_DATA_RIGHT_TRUNCATION),
-								errmsg("root name too long and will be truncated at the end tag")));
-		}
-		len = len >= 1024 ? 1023 : len;
-		
-		pg_snprintf(root, len, "%s", state + match.rm_so+1);
-		root[len] = '\0';
+		/* we will be bashing the string in state, so copy it into res first */
+		appendStringInfoString(res, state+1);
 
-		/* add the state (minus the '{') in along with the end tag for the root */
-		appendStringInfo(res, "%s</%s>", state+1, root);
+		/* copy the root tag */
+		state[match.rm_eo] = '\0';
+		initStringInfo(&root);
+		appendStringInfoString(&root, state + match.rm_so + 1);
+		appendStringInfo(res, "</%s>", root.data);
 	}
 	else
 	{
