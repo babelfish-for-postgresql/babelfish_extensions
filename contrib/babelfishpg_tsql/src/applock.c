@@ -55,7 +55,7 @@ static HTAB * appLockCacheGlobal = NULL;
 typedef struct applockcacheent
 {
     int64       key;			/* (hashed) key integer of the lock */
-    char        resource[APPLOCK_MAX_RESOURCE_LENGTH];	/* Resource name string of the lock */
+    char        resource[APPLOCK_MAX_RESOURCE_LENGTH + 1];	/* Resource name string of the lock */
     uint32_t    refcount;		/* Currently how many times this lock is being held. 
 	                               Note the count may be different locally/globally.*/
     slist_head  mode_head;		/* lock mode list, keeping track of all lock modes 
@@ -502,7 +502,7 @@ static int64 ApplockGetUsableKey(char *resource)
 		entry->key = usable_key;
 		entry->refcount = 1;
 		entry->resource[0] = '\0';
-		strncat(entry->resource, resource, strlen(resource));
+		strncat(entry->resource, resource, APPLOCK_MAX_RESOURCE_LENGTH);
 	}
 
 	LWLockRelease(TsqlApplockSyncLock);
@@ -647,7 +647,7 @@ static int _sp_getapplock_internal (char *resource, char *lockmode,
 	/* lock aquired, we can insert or update the local cache entry now. */
 	AppLockCacheInsert(key, entry);
 	entry->resource[0] = '\0';
-	strncat(entry->resource, resource, strlen(resource));
+	strncat(entry->resource, resource, APPLOCK_MAX_RESOURCE_LENGTH);
 	entry->refcount++;
 	node = malloc(sizeof(AppLockModeNode));
 	node->mode = mode;
