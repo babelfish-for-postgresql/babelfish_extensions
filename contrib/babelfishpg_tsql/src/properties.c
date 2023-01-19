@@ -209,22 +209,14 @@ get_product_level_helper()
 {
 	StringInfoData	temp;
 	void		*info;
-	const char	*product_version;
 	int		minor_version;
 	char*		product_level_RTM = "RTM";
 	char*		product_level_prefix = "SP";
 	
 	initStringInfo(&temp);
-	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
-	Assert(product_version != NULL);
-
-	if(strcasecmp(product_version,"default") == 0)
-	{
-		Assert(BABEL_COMPATIBILITY_VERSION != NULL);
-		product_version = BABEL_COMPATIBILITY_VERSION;
-	}
-
-	minor_version = atoi(get_version_number(product_version,1));
+	
+	Assert(BABELFISH_VERSION_STR != NULL);
+	minor_version = atoi(get_version_number(BABELFISH_VERSION_STR,1));
 	if(minor_version == 0)
 	{
 		appendStringInfoString(&temp, product_level_RTM);
@@ -232,9 +224,9 @@ get_product_level_helper()
 	else
 	{
 		appendStringInfoString(&temp, product_level_prefix);
-		appendStringInfoString(&temp, get_version_number(product_version,1));
+		appendStringInfoString(&temp, get_version_number(BABELFISH_VERSION_STR,1));
 		appendStringInfoString(&temp, ".");
-		appendStringInfoString(&temp, get_version_number(product_version,2));
+		appendStringInfoString(&temp, get_version_number(BABELFISH_VERSION_STR,2));
 	}
 
 	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
