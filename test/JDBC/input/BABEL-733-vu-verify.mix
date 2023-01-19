@@ -39,6 +39,9 @@ GO
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_func1'));
 GO
 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_con1'));
+GO
+
 -- sql stored procedure
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('sysdatabases'));
 GO
@@ -89,6 +92,9 @@ GO
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_trig1'));
 GO
 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_con1'));
+GO
+
 -- grant permission
 -- tsql
 
@@ -125,6 +131,9 @@ SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_sch1.babel_733_func1'));
 GO
 
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_trig1'));
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_con1'));
 GO
 
 -- revoke permission
@@ -169,6 +178,9 @@ GO
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_trig1'),1);
 GO
 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_con1'),1);
+GO
+
 -- grant permission
 -- tsql 
 USE master;
@@ -204,6 +216,9 @@ SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.babel_733_sch1.babel_733_func1'),1);
 GO
 
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_trig1'),1);
+GO
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_con1'),1);
 GO
 
 -- revoke permission
