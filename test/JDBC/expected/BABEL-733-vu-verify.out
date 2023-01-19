@@ -74,6 +74,14 @@ babel_733_sch1
 ~~END~~
 
 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_con1'));
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
 -- sql stored procedure
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('sysdatabases'));
 GO
@@ -197,6 +205,14 @@ varchar
 ~~END~~
 
 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_con1'));
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 -- tsql
 
 -- grant permission
@@ -253,6 +269,14 @@ babel_733_sch1
 
 
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_trig1'));
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('babel_733_con1'));
 GO
 ~~START~~
 varchar
@@ -332,6 +356,14 @@ varchar
 ~~END~~
 
 
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_con1'),1);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 -- tsql 
 -- grant permission
 USE master;
@@ -387,6 +419,14 @@ babel_733_sch1
 
 
 SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_trig1'),1);
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_con1'),1);
 GO
 ~~START~~
 varchar
