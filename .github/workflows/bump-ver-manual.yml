@@ -1,0 +1,98 @@
+name: Bump BabelFish Version Manual workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      commiter:
+        description: 'Alias of the commiter'
+        required: true
+      target_branch:
+        description: 'Branch Where to do version bump'
+        required: true
+      bump_type:
+        type: choice
+        description: 'Which version number to Bump'
+        options: 
+        - minor
+        - patch
+
+jobs:
+  Auto-Bump-Version:
+    runs-on: ubuntu-latest
+    env:
+      EXT_BRANCH_URL: https://github.com/babelfish-for-postgresql/babelfish_extensions 
+      GITHUB_TOKEN: ${{ secrets.PAT }}
+      vfile: contrib/babelfishpg_tsql/src/babelfish_version.h
+    steps:
+        - name: Checkout the repo
+          id: checkout-fork
+          uses: actions/checkout@v3
+          with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: add the remote and setup tracking branch
+          id: setup-tr-branch
+          run: |
+            git remote add upstream ${{ env.EXT_BRANCH_URL }}
+            git fetch upstream
+            git checkout -b bump-me  upstream/${{ github.event.inputs.target_branch}}
+            git status
+            git branch -vv
+        - name: Identify the version to bump patch release
+          id: identify-versions-patch
+          if: ${{ github.event.inputs.bump_type == 'patch' }}
+          run: |
+            # bump babelfish internal version
+            bbf_int_new_version=$(awk -F'[ ."]' '/^#define BABELFISH_INT/ {print $5"."$6"."$7+1"."$8}' ${{ env.vfile }} )
+            echo "bbf_int_new_version=$bbf_int_new_version" >> $GITHUB_ENV
+            # bump babelfish version
+            bbf_new_version=$( awk -F'[ ."]' '/^#define BABELFISH_VER/ {print $4"."$5"."$6+1}' ${{ env.vfile }} )
+            echo "bbf_new_version=$bbf_new_version" >> $GITHUB_ENV
+           
+        - name: Identify the version to bump patch release
+          id: identify-versions-minor
+          if: ${{ github.event.inputs.bump_type == 'minor' }}
+          run: |
+            # bump babelfish internal version
+            bbf_int_new_version=$(awk -F'[ ."]' '/^#define BABELFISH_INT/ {print $5"."$6+1".0.0"}' ${{ env.vfile }} )
+            echo "bbf_int_new_version=$bbf_int_new_version" >> $GITHUB_ENV
+            # bump babelfish version
+            bbf_new_version=$( awk -F'[ ."]' '/^#define BABELFISH_VER/ {print $4"."$5+1".0"}' ${{ env.vfile }} )
+            echo "bbf_new_version=$bbf_new_version" >> $GITHUB_ENV
+          
+        - name: Make commits to bump version and push to remote branch
+          if: ${{ github.event.inputs.bump_type == 'patch' }}
+          run: |
+            git config --global user.email "${{ github.event.inputs.commiter }}@amazon.com"
+            git config --global user.name "${{ github.event.inputs.commiter }}"
+            sed -i -r 's/(.*)(BABELFISH_INTERNAL_VERSION_STR )"(Babelfish )([0-9]+.[0-9]+.)([0-9]+)(.[0-9]+)"/echo "\1\2\\"\3\4$((\5+1))\6\\""/ge' ${{ env.vfile }}
+            git diff
+            git add .
+            git commit -m "Bump Babelfish Internal Version to ${{ env.bbf_int_new_version }}" -s
+            sed -i -r 's/(.*)(BABELFISH_VERSION_STR )"([0-9]+.[0-9]+.)([0-9]+)"/echo "\1\2\\"\3$((\4+1))\\""/ge' ${{ env.vfile }}
+            git diff
+            git add .
+            git commit -m "Bump Babelfish Version to ${{ env.bbf_new_version }}" -s
+            git checkout -b  bump-${{ github.event.inputs.bump_type }}-ver-${{ github.event.inputs.target_branch}}
+            git push -u origin bump-${{ github.event.inputs.bump_type }}-ver-${{ github.event.inputs.target_branch}}
+            
+        - name: Make commits to bump version and push to remote branch
+          if: ${{ github.event.inputs.bump_type == 'minor' }}
+          run: |
+            git config --global user.email "${{ github.event.inputs.commiter }}@amazon.com"
+            git config --global user.name "${{ github.event.inputs.commiter }}"
+            sed -i -r 's/(.*)(BABELFISH_INTERNAL_VERSION_STR )"(Babelfish )([0-9]+.)([0-9]+)(.[0-9]+)(.[0-9]+)"/echo "\1\2\\"\3\4$((\5+1)).0.0\\""/ge' ${{ env.vfile }}
+            git diff
+            git add .
+            git commit -m "Bump Babelfish Internal Version to ${{ env.bbf_int_new_version }}" -s
+            sed -i -r 's/(.*)(BABELFISH_VERSION_STR )"([0-9]+.)([0-9]+)(.[0-9]+)"/echo "\1\2\\"\3$((\4+1)).0\\""/ge' ${{ env.vfile }}
+            git diff
+            git add .
+            git commit -m "Bump Babelfish Version to ${{ env.bbf_new_version }}" -s
+            git checkout -b  bump-${{ github.event.inputs.bump_type }}-ver-${{ github.event.inputs.target_branch}}
+            git push -u origin bump-${{ github.event.inputs.bump_type }}-ver-${{ github.event.inputs.target_branch}}
+        - name: Raise a PR
+          run: |
+            gh pr create --title "Bump Babelfish Version to ${{ env.bbf_new_version }}" --repo babelfish-for-postgresql/babelfish_extensions --base ${{ github.event.inputs.target_branch }} \
+                                                                                       --body "1.Bump Babelfish Version to ${{ env.bbf_new_version }}
+                                                                                       2.Bump Babelfish Internal Version to ${{ env.bbf_int_new_version }}"
