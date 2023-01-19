@@ -15,14 +15,14 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
 )
 RETURNS XML AS
 'babelfishpg_tsql', 'tsql_query_to_xml_ffunc'
-LANGUAGE C STABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
     state INTERNAL
 )
 RETURNS NTEXT AS
 'babelfishpg_tsql', 'tsql_query_to_xml_text_ffunc'
-LANGUAGE C STABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
     rec ANYELEMENT,
@@ -65,7 +65,7 @@ CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
 )
 RETURNS sys.NVARCHAR AS
 'babelfishpg_tsql', 'tsql_query_to_json_ffunc'
-LANGUAGE C STABLE STRICT;
+LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
     rec ANYELEMENT,
