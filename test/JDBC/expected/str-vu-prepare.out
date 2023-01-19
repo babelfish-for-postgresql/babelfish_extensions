@@ -171,10 +171,34 @@ CREATE VIEW str_vu_prepare_v15 AS (
 GO
 
 -- actual max precision 17, round to 17th digit and pad rest of significant digits with zeros
+--
+-- SQL Server's STR() function returns flacky results when it rounds the integer part.
+-- SELECT  STR(123456789012345670, 20); returns '  123456789012345660', which brings down the 17th digit by 1.
+-- SELECT  STR(123456789012345671, 20); and SELECT  STR(123456789012345672, 20); returns the same result as above.
+-- Starting from 123456789012345673 to 123456789012345679,
+-- SELECT  STR(12345678901234567X, 20); returns '  123456789012345680', the last digit get rounded up
+--
+-- When integer has 19 digits,
+-- SELECT  STR(1234567890123456100, 20); returns ' 1234567890123456000', 17th digit 1 got rounded down
+-- SELECT  STR(1234567890123456200, 20); returns ' 1234567890123456300', 17th digit 2 got rounded up
+-- SELECT  STR(1234567890123456380, 20); returns ' 1234567890123456300' but SELECT  STR(1234567890123456390, 20); returns ' 1234567890123456500'
+--
+-- When integer has 20 digits,
+-- SELECT  STR(12345678901234562000, 20); returns '12345678901234561000', 17th digit 2 got rounded down
+-- SELECT  STR(12345678901234562050, 20); returns '12345678901234563000', 17th digit 2 got rounded up
+-- SELECT  STR(12345678901234567890, 20); returns '12345678901234567000', 17th digit didn't get rounded up
+-- SELECT  STR(12345678901234569999, 20); returns '12345678901234569000', 17th digit didn't get rounded up
+-- 
+-- This is hard to recreate so here we return with the correct rounding result.
 CREATE VIEW str_vu_prepare_v16 AS (
     SELECT 
         STR(1234567890123456789012345.67, 26, 1) AS res1,
-        STR(-1234567890.12345678901234567, 30, 16) AS res2
+        STR(123456789012345670, 20) AS res2,
+        STR(123456789012345679, 20) AS res3,
+        STR(1234567890123456100, 20) AS res4,
+        STR(12345678901234562050, 20) AS res5,
+        STR(12345678901234569999, 20) AS res6,
+        STR(-1234567890.12345678901234567, 30, 16) AS res7
     );
 GO
 
@@ -420,7 +444,12 @@ CREATE PROCEDURE str_vu_prepare_p16 AS
 BEGIN
     SELECT 
         STR(1234567890123456789012345.67, 26, 1) AS res1,
-        STR(-1234567890.12345678901234567, 30, 16) AS res2;
+        STR(123456789012345670, 20) AS res2,
+        STR(123456789012345679, 20) AS res3,
+        STR(1234567890123456100, 20) AS res4,
+        STR(12345678901234562050, 20) AS res5,
+        STR(12345678901234569999, 20) AS res6,
+        STR(-1234567890.12345678901234567, 30, 16) AS res;
 END
 GO
 

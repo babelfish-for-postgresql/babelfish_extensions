@@ -15,7 +15,7 @@
 #include <openssl/sha.h>
 #include "utils/varlena.h"
 #include "utils/numeric.h"
-
+#include "c.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
 
@@ -30,6 +30,13 @@ PG_FUNCTION_INFO_V1(string_escape);
 PG_FUNCTION_INFO_V1(formatmessage);
 PG_FUNCTION_INFO_V1(tsql_varchar_substr);
 PG_FUNCTION_INFO_V1(float_str);
+
+/*
+ * Helper functions for float_str()
+*/
+static int round_float_char(char *float_char, int round_pos, int has_neg_sign);
+static int find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digits, int input_deci_digits, int input_deci_point, int deci_sig);
+static Datum return_varchar_pointer(char *buf, int size);
 
 /*
  * Hashbytes implementation
@@ -148,8 +155,6 @@ quotename(PG_FUNCTION_ARGS)
 	char *buf;
 	int buf_i = 0;
 
-	VarChar *result;
-
 	/* Validate input len */
 	if (strlen(input_string) > 128) {
 		PG_RETURN_NULL();
@@ -211,10 +216,7 @@ quotename(PG_FUNCTION_ARGS)
 	}
 	buf[buf_i++] = right_delim;
 
-	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf, buf_i, -1);
-	pfree(buf);
-
-	PG_RETURN_VARCHAR_P(result);	
+    return return_varchar_pointer(buf, buf_i);
 }
 
 Datum
@@ -225,8 +227,6 @@ string_escape(PG_FUNCTION_ARGS)
 	
 	StringInfoData buf;
 	int text_len = strlen(str);
-
-	VarChar *result;
 
 	if (strcmp(type, "json")) 
 	{
@@ -280,10 +280,7 @@ string_escape(PG_FUNCTION_ARGS)
 		}
 	}
 	
-	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf.data, buf.len, -1);
-	pfree(buf.data);
-
-	PG_RETURN_VARCHAR_P(result);
+    return return_varchar_pointer(buf.data, buf.len);
 }
 
 /*
@@ -302,7 +299,6 @@ formatmessage(PG_FUNCTION_ARGS)
 	Oid				*argtypes;
 	bool			*argisnull;
 	StringInfoData	buf;
-	VarChar			*result;
 
 	if (nargs > 20)
 	{
@@ -328,10 +324,7 @@ formatmessage(PG_FUNCTION_ARGS)
 
 	initStringInfo(&buf);
 	prepare_format_string(&buf, msg_string, nargs, args, argtypes, argisnull);
-	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf.data, buf.len, -1);
-	pfree(buf.data);
-
-	PG_RETURN_VARCHAR_P(result);
+    return return_varchar_pointer(buf.data, buf.len);
 }
 
 /*
@@ -525,9 +518,6 @@ float_str(PG_FUNCTION_ARGS)
     int deci_part_zeros = 0;
     int deci_sig;
     int round_pos = -1;
-    int curr_digit;
-    int carry = 0;
-    VarChar *result;
 
     if (PG_ARGISNULL(0)) 
         PG_RETURN_NULL();
@@ -583,12 +573,9 @@ float_str(PG_FUNCTION_ARGS)
     {
         // return string of length filled with * 
         // STR(-1234, 4), return "****"
-        buf = palloc(length + 1);
-        memset(buf, '*', length + 1);
-        buf[length] = '\0';
-        result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf, length + 1, -1);
-        pfree(buf);
-        PG_RETURN_VARCHAR_P(result);
+        buf = palloc(length);
+        memset(buf, '*', length);
+        return return_varchar_pointer(buf, length);
     } 
     else if (int_digits > 17) 
     {
@@ -619,7 +606,7 @@ float_str(PG_FUNCTION_ARGS)
     {   // max scale is 16, so actual deci_digits is min(decimal, 16), 
         // rest of the decimal digits will be disgarded
         // STR(0.123456789012345678, 20, 18), decimal=18, deci_digits=16. will return "  0.1234567890123457"
-        deci_digits = (16 > decimal) ? decimal : 16;
+        deci_digits = Min(decimal, 16);
     } 
     else 
     {   // no decimal digits
@@ -637,8 +624,7 @@ float_str(PG_FUNCTION_ARGS)
     }
     
     // max precision is 17, max significant digits in decimal part = min(remaining significant digits, input decimal digits)
-    deci_sig = (17 > int_digits ? 17 - int_digits : 0);
-    deci_sig = (deci_sig > input_deci_digits ? input_deci_digits : deci_sig);
+    deci_sig = Min(Max(17 - int_digits, 0), input_deci_digits);
 
     // compute deci_part_zeros and update actual deci_sig
     if (deci_digits > 0 && length > 17 && deci_digits > deci_sig) 
@@ -664,89 +650,38 @@ float_str(PG_FUNCTION_ARGS)
         memset(buf, ' ', num_spaces);
     
 
-    // find if need to round
-    if (int_digits + input_deci_digits > 17) 
-    {
-        // exceeds the max precision, need to round to 17th digit(excluding - and .) 
-        if (int_digits > 17) 
-        {   // round in int part
-            // STR(12345678901234567890, 20) returns "1234567890123456800"
-            curr_digit = float_char[17 + has_neg_sign] - 48;
-            if (curr_digit >= 5) 
-                round_pos = 16 + has_neg_sign;
-        } 
-        else 
-        {   // round in decimal part
-            // STR(1234567890.1234567890, 22, 20) returns "1234567890.12345670000"
-            curr_digit = float_char[17 + has_neg_sign + input_deci_point] - 48;
-            if (curr_digit >= 5)
-                round_pos = 16 + has_neg_sign + input_deci_point;
-        }    
-    } 
-    else if (deci_digits && input_deci_digits > deci_sig) 
-    {
-        // input decimal digits > needed, round to last output decimal digit 
-        // STR(-1.123456, 8, 5) retuns "-1.12346"
-        curr_digit = float_char[has_neg_sign + int_digits + input_deci_point + deci_sig] - 48;
-        if (curr_digit >= 5) 
-            round_pos = has_neg_sign + int_digits + input_deci_point + deci_sig - 1;
-    } 
-    else if (!deci_sig && input_deci_digits) 
-    {
-        // int part == length and has deci digit input, round to integer
-        // STR(-1234.9, 5, 1) returns "-1235"
-        curr_digit = float_char[has_neg_sign + int_digits + 1] - 48;
-        if (curr_digit >= 5)
-            round_pos = has_neg_sign + int_digits - 1; // last digit of integer
-    }
+    // find if need to round, if round_pos = 0, do not need rounding
+    round_pos = find_round_pos(float_char, has_neg_sign, int_digits, deci_digits, input_deci_digits, input_deci_point, deci_sig);
 
-    if (round_pos > 0) 
-    {
-        // do rounding 
-        carry = 1;
-        while (round_pos > (0 + has_neg_sign) && carry) 
+    if (round_pos > 0) {
+        // do rounding
+        if (round_float_char(float_char, round_pos, has_neg_sign))
         {
-            if (float_char[round_pos] == '.') 
+            if (num_spaces > 0) 
+            {   
+                // one more digits in front of the number, 
+                // set the 1 in buffer and set first digit in float_char to 0
+                // STR(-999.9, 6, 0) returns " -1000"
+                if (has_neg_sign) 
+                {   // set '-' after the spaces and increment num_spaces to skip '-' when copying number
+                    memset(buf+num_spaces - 1, '-', 1);
+                    num_spaces++;
+                }
+                memset(buf+num_spaces - 1, '1', 1);
+                memset(float_char, '0', 1);
+            } 
+            else 
             {
-                round_pos--;
-                continue;
-            }
-            curr_digit = float_char[round_pos] - 48 + carry;
-            carry = curr_digit / 10;
-            memset(float_char+round_pos, 48 + curr_digit % 10, 1); // update the curr digit
-            round_pos--;
+                // not enough space for the carried_over digit, return ***
+                // the space limitation goes by the one set before the rounding & carried over
+                // STR(9999.998, 7, 2) returns "*******" but STR(10000.000, 7, 2) returns "10000.0"
+                // which means the max length constraint of integer part is still 4 after rounding
+                memset(buf, '*', size - 1);
+                return return_varchar_pointer(buf, size - 1);
+            } 
         }
     }
 
-    // handle carried over digit
-    if (carry) 
-    {
-        if (num_spaces > 0) 
-        {   // one more digits in front of the number, 
-            // set the 1 in buffer and set first digit in float_char to 0
-            // STR(-999.9, 6, 0) returns " -1000"
-            if (has_neg_sign) 
-            {   // set '-' after the spaces and increment num_spaces to skip '-' when copying number
-                memset(buf+num_spaces - 1, '-', 1);
-                num_spaces++;
-            }
-            memset(buf+num_spaces - 1, '1', 1);
-            memset(float_char, '0', 1);
-        } 
-        else 
-        {
-            // not enough space for the carried_over digit, return ***
-            // the space limitation goes by the one set before the rounding & carried over
-            // STR(9999.998, 7, 2) returns "*******" but STR(10000.000, 7, 2) returns "10000.0"
-            // which means the max length constraint of integer part is still 4 after rounding
-            buf = palloc(size);
-	        memset(buf, '*', size);
-            buf[size - 1] = '\0';
-            result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf, size, -1);
-            pfree(buf);
-            PG_RETURN_VARCHAR_P(result);
-        } 
-    }
 
     // copy the actual number to the buffer after preceding spaces
     strncpy(buf+num_spaces, float_char, size - 1 - num_spaces);
@@ -774,8 +709,92 @@ float_str(PG_FUNCTION_ARGS)
         }
     }
     
+    return return_varchar_pointer(buf, size);
+}
+
+/*
+ * Find the rounding position of the float_char input using the constraints
+ * returns the rounding position 
+*/
+static int
+find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digits, int input_deci_digits, int input_deci_point, int deci_sig)
+{
+    int round_pos = 0;
+    int curr_digit;
+
+    if (int_digits + input_deci_digits > 17) 
+    {
+        // exceeds the max precision, need to round to 17th digit(excluding - and .) 
+        if (int_digits > 17) 
+        {   // round in int part
+            // STR(12345678901234567890, 20) returns "1234567890123456800"
+            curr_digit = float_char[17 + has_neg_sign] - '0';
+            if (curr_digit >= 5) 
+                round_pos = 16 + has_neg_sign;
+        } 
+        else 
+        {   // round in decimal part
+            // STR(1234567890.1234567890, 22, 20) returns "1234567890.12345670000"
+            curr_digit = float_char[17 + has_neg_sign + input_deci_point] - '0';
+            if (curr_digit >= 5)
+                round_pos = 16 + has_neg_sign + input_deci_point;
+        }    
+    } 
+    else if (deci_digits && input_deci_digits > deci_sig) 
+    {
+        // input decimal digits > needed, round to last output decimal digit 
+        // STR(-1.123456, 8, 5) retuns "-1.12346"
+        curr_digit = float_char[has_neg_sign + int_digits + input_deci_point + deci_sig] - '0';
+        if (curr_digit >= 5) 
+            round_pos = has_neg_sign + int_digits + input_deci_point + deci_sig - 1;
+    } 
+    else if (!deci_sig && input_deci_digits) 
+    {
+        // int part == length and has deci digit input, round to integer
+        // STR(-1234.9, 5, 1) returns "-1235"
+        curr_digit = float_char[has_neg_sign + int_digits + 1] - '0';
+        if (curr_digit >= 5)
+            round_pos = has_neg_sign + int_digits - 1; // last digit of integer
+    }
+
+    return round_pos;
+}
+
+/*
+ * Inplace round the float_char to the digit at round_pos, returns the final carried over digit
+*/
+static int 
+round_float_char(char *float_char, int round_pos, int has_neg_sign)
+{
+    int curr_digit;
+    int carry = 1;
+
+    while (round_pos > (0 + has_neg_sign) && carry) 
+    {
+        if (float_char[round_pos] == '.') 
+        {
+            round_pos--;
+            continue;
+        }
+        curr_digit = float_char[round_pos] - '0' + carry;
+        carry = curr_digit / 10;
+        memset(float_char+round_pos, '0' + curr_digit % 10, 1); // update the curr digit
+        round_pos--;
+    }
+
+    return carry;
+}
+
+/*
+ * Convert a char * to Varchar *
+ * returns the Varchar *
+*/
+static Datum
+return_varchar_pointer(char *buf, int size) 
+{   
+    VarChar *result;
+
     result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf, size, -1);
     pfree(buf);
-
     PG_RETURN_VARCHAR_P(result);
 }
