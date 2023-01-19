@@ -1106,6 +1106,22 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
+AS $$
+BEGIN
+    SELECT 
+    	name AS SRV_NAME, 
+    	provider AS SRV_PROVIDERNAME, 
+    	product AS SRV_PRODUCT, 
+    	data_source AS SRV_DATASOURCE,
+		provider_string AS SRV_PROVIDERSTRING,
+		location AS SRV_LOCATION,
+		catalog AS SRV_CAT 
+	FROM sys.servers
+END;
+$$ LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
