@@ -2265,6 +2265,14 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		p = (FunctionParameter *) lfirst(lc);
 		args->argnames[i] = p->name;
 		args->argmodes[i] = p->mode;
+
+		/*
+		 * Handle User defined types with schema qualifiers. Convert logical Schema Name to
+		 * Physical Schema Name. Note: The list length can not be more than 2 since db name
+		 * can not be a qualifier for a UDT and error will be thrown in the parser itself.
+		 */
+		rewrite_plain_name(p->argType->names);
+
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
 		i++;
 	}
@@ -2382,7 +2390,8 @@ read_param_val(PLtsql_execstate *estate, List *params, InlineCodeBlockArgs *args
 		{
 			for (j = i; j < args->numargs; j++)
 			{
-				if (strcmp(p->name, args->argnames[j]) == 0)
+				/* Case insensitive param names can be used. */
+				if (pg_strcasecmp(p->name, args->argnames[j]) == 0)
 				{
 					/* Check if the param's declared mode matches called mode */
 					if (!check_spexecutesql_param(&(args->argmodes[j]), p))
