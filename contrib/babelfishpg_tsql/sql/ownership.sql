@@ -198,7 +198,6 @@ BEGIN
   LANGUAGE C;
 
   ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
-
 END
 $$;
 

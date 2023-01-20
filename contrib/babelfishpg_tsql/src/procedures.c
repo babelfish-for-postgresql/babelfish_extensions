@@ -2371,6 +2371,9 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FDW_ERROR),
 					errmsg("@server parameter cannot be NULL")));
 
+	initStringInfo(&query);
+
+	/*
 	 * We prepare the following query to drop foreign server. This will
 	 * be executed using ProcessUtility():
 	 *
