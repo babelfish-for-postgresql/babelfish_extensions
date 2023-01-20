@@ -5,10 +5,10 @@ GO
 DROP LOGIN [aduser@AD];
 GO
 
-DROP LOGIN [ad\Aduser];
+DROP LOGIN [ad\adUSer];
 GO
 
-DROP LOGIN [ad\Aduserdb];
+DROP LOGIN [ad\aduserDB];
 GO
 
 DROP LOGIN [ad\Aduserlanguage];

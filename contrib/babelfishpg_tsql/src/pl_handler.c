@@ -2449,11 +2449,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							/*
 							 * Check whether login_name has valid length or not.
 							 */
-							if (!check_windows_login_length(orig_loginname))
+							if (!check_windows_logon_length(orig_loginname))
 								ereport(ERROR,
 										(errcode(ERRCODE_INVALID_NAME),
 										 errmsg("The login name '%s' has invalid length. Login name length should be between %d and %d for windows login.",
-											orig_loginname, (NAMEDATALEN_WINDOWS_MIN + 1), (NAMEDATALEN_WINDOWS_MAX - 1))));
+											orig_loginname, (LOGON_NAME_MIN_LEN + 1), (LOGON_NAME_MAX_LEN - 1))));
 
 							/*
 							 * Check whether the login_name contains invalid characters or not.

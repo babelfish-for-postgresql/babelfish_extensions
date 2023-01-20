@@ -9,10 +9,10 @@ GO
 ~~ERROR (Message: Cannot drop the login 'aduser@ad', because it does not exist or you do not have permission.)~~
 
 
-DROP LOGIN [ad\Aduser];
+DROP LOGIN [ad\adUSer];
 GO
 
-DROP LOGIN [ad\Aduserdb];
+DROP LOGIN [ad\aduserDB];
 GO
 
 DROP LOGIN [ad\Aduserlanguage];

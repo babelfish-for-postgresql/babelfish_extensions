@@ -1872,31 +1872,36 @@ windows_login_contains_invalid_chars(char* input)
 {
 	char* pos_slash = strchr(input, '\\');
 	
-	char* login_name = pos_slash + 1;
+	char* logon_name = pos_slash + 1;
 
-	if (strchr(login_name, '\\') != NULL || strchr(login_name, '/') != NULL || 
-	strchr(login_name, '[') != NULL || strchr(login_name, ']') != NULL ||
-	strchr(login_name, ';') != NULL || strchr(login_name, ':') != NULL ||
-	strchr(login_name, '|') != NULL || strchr(login_name, '=') != NULL ||
-	strchr(login_name, ',') != NULL || strchr(login_name, '+') != NULL ||
-	strchr(login_name, '*') != NULL || strchr(login_name, '?') != NULL ||
-	strchr(login_name, '<') != NULL || strchr(login_name, '>') != NULL ||
-	strchr(login_name, '@') != NULL)
-		return true;
-	else
-		return false;
+	int start = 0;
+	while(logon_name[start] != '\0'){
+		if (logon_name[start] == '\\' || logon_name[start] == '/'||
+		logon_name[start] == '[' || logon_name[start] == ']' ||
+		logon_name[start] == ';' || logon_name[start] == ':' ||
+		logon_name[start] == '|' || logon_name[start] == '=' ||
+		logon_name[start] == ',' || logon_name[start] == '+' ||
+		logon_name[start] == '*' || logon_name[start] == '?' ||
+		logon_name[start] == '<' || logon_name[start] == '>' ||
+		logon_name[start] == '@')
+			return true;
+		
+		start++;
+	}
+
+	return false;
 }
 
 /*
- * Check whether the login_name has a valid length or not.
+ * Check whether the logon_name has a valid length or not.
  */
 bool
-check_windows_login_length(char* input)
+check_windows_logon_length(char* input)
 {
 	char *pos_slash = strchr(input, '\\');
-	int login_name_len = strlen(pos_slash + 1);
+	int logon_name_len = strlen(pos_slash + 1);
 
-	if (login_name_len > NAMEDATALEN_WINDOWS_MIN && login_name_len < NAMEDATALEN_WINDOWS_MAX)
+	if (logon_name_len > LOGON_NAME_MIN_LEN && logon_name_len < LOGON_NAME_MAX_LEN)
 		return true;
 	else
 		return false;

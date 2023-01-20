@@ -323,3 +323,11 @@ GO
 -- Chinese
 CREATE LOGIN [babel\爱] from windows;
 GO
+
+-- test for windows login with password --> should throw error
+CREATE LOGIN [babel\adbabel] from windows with password='1234';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '=' at line 2 and character position 55)~~
+

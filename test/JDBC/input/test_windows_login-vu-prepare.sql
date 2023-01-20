@@ -151,3 +151,7 @@ GO
 -- Chinese
 CREATE LOGIN [babel\爱] from windows;
 GO
+
+-- test for windows login with password --> should throw error
+CREATE LOGIN [babel\adbabel] from windows with password='1234';
+GO
