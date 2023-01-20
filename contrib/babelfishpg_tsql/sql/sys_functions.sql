@@ -1652,7 +1652,7 @@ DECLARE
 BEGIN
     eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
     IF eh_setting = 'strict' THEN
-        RAISE EXCEPTION 'DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore';
+        RAISE EXCEPTION 'To use @@DBTS, set ''babelfishpg_tsql.escape_hatch_rowversion'' to ''ignore''';
     ELSE
         RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
     END IF;

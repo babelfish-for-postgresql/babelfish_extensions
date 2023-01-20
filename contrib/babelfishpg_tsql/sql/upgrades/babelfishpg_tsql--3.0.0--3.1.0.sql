@@ -1058,9 +1058,8 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF', 'TR') THEN COALESCE(f.definition, '')
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
-      WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
       END
     AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
@@ -1108,6 +1107,26 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+<<<<<<< HEAD
+=======
+CREATE OR REPLACE FUNCTION sys.DBTS()
+RETURNS sys.ROWVERSION AS
+$$
+DECLARE
+    eh_setting text;
+BEGIN
+    eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
+    IF eh_setting = 'strict' THEN
+        RAISE EXCEPTION 'To use @@DBTS, set ''babelfishpg_tsql.escape_hatch_rowversion'' to ''ignore''';
+    ELSE
+        RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
+
+>>>>>>> upstream/BABEL_3_X_DEV
 CREATE OR REPLACE PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
                                                     IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
 AS 'babelfishpg_tsql', 'sp_dropserver_internal'
