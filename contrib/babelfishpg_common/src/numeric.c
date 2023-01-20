@@ -1093,7 +1093,7 @@ int4int2_avg(PG_FUNCTION_ARGS)
 	if (transdata->count == 0)
 		PG_RETURN_NULL();
 	
-	if (unlikely(transdata->sum < PG_INT32_MIN) || unlikely(transdata->sum > PG_INT32_MAX))
+	if (unlikely(transdata->sum < PG_INT32_MIN || transdata->sum > PG_INT32_MAX))
 	{
 		ereport(ERROR,(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				errmsg("Arithmetic overflow error converting expression to data type int.")));
