@@ -1874,19 +1874,20 @@ windows_login_contains_invalid_chars(char* input)
 	
 	char* logon_name = pos_slash + 1;
 
-	int start = 0;
-	while(logon_name[start] != '\0'){
-		if (logon_name[start] == '\\' || logon_name[start] == '/'||
-		logon_name[start] == '[' || logon_name[start] == ']' ||
-		logon_name[start] == ';' || logon_name[start] == ':' ||
-		logon_name[start] == '|' || logon_name[start] == '=' ||
-		logon_name[start] == ',' || logon_name[start] == '+' ||
-		logon_name[start] == '*' || logon_name[start] == '?' ||
-		logon_name[start] == '<' || logon_name[start] == '>' ||
-		logon_name[start] == '@')
+	int i = 0;
+	while (logon_name[i] != '\0')
+	{
+		if (logon_name[i] == '\\' || logon_name[i] == '/'||
+		logon_name[i] == '[' || logon_name[i] == ']' ||
+		logon_name[i] == ';' || logon_name[i] == ':' ||
+		logon_name[i] == '|' || logon_name[i] == '=' ||
+		logon_name[i] == ',' || logon_name[i] == '+' ||
+		logon_name[i] == '*' || logon_name[i] == '?' ||
+		logon_name[i] == '<' || logon_name[i] == '>' ||
+		logon_name[i] == '@')
 			return true;
 		
-		start++;
+		i++;
 	}
 
 	return false;

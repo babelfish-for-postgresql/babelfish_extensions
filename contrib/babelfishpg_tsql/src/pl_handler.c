@@ -2466,7 +2466,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							stmt->role = convertToUPN(orig_loginname);
 
 							/*
-							*	Check for duplicate login
+							* Check for duplicate login
 							*/
 							if (get_role_oid(stmt->role, true) != InvalidOid)
 						  		ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
