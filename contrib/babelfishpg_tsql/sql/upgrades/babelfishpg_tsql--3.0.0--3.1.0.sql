@@ -1107,8 +1107,6 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
-<<<<<<< HEAD
-=======
 CREATE OR REPLACE FUNCTION sys.DBTS()
 RETURNS sys.ROWVERSION AS
 $$
