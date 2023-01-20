@@ -36,33 +36,33 @@ go
 exec sp_fkeys @pktable_name = 't1'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey#!#7
 ~~END~~
 
 
 exec sys.sp_fkeys @pktable_name = 't1'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 't2', @pktable_qualifier = 'db1'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @pktable_name = 't3', @pktable_owner = 'dbo'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
-db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
+db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
 ~~END~~
 
 
@@ -70,9 +70,9 @@ db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
 EXEC SP_FKEYS @FKTABLE_NAME = 't4', @PKTABLE_NAME = 't3', @PKTABLE_OWNER = 'dbo', @FKTABLE_QUALIFIER = 'db1'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
-db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
+db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
 ~~END~~
 
 
@@ -80,9 +80,9 @@ db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
 exec sp_fkeys @fktable_name = 'T4', @pktable_name = 'T3', @pktable_owner = 'dbo', @fktable_qualifier = 'db1'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
-db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
+db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
 ~~END~~
 
 
@@ -90,9 +90,9 @@ db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
 EXEC [sys].[sp_fkeys] @FKTABLE_NAME = 't4', @PKTABLE_NAME = 't3', @PKTABLE_OWNER = 'dbo', @FKTABLE_QUALIFIER = 'db1'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
-db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
+db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
 ~~END~~
 
 
@@ -100,58 +100,58 @@ db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
 exec sp_fkeys @pktable_name = 'mytable5'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @pktable_name = 'MYTABLE5'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'mytable6'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'MYTABLE6'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'mytable7'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'MYTABLE7'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
-db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
 ~~END~~
 
 -- Delimiter table tests NOTE: THese do not procude correct output due to BABEL-2883
@@ -207,9 +207,9 @@ go
 EXEC SP_FKEYS @FKTABLE_NAME = 't4'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-master#!#dbo#!#t3#!#c#!#master#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
-master#!#dbo#!#t3#!#b#!#master#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#t3#!#c#!#master#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
+master#!#dbo#!#t3#!#b#!#master#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey#!#7
 ~~END~~
 
 
