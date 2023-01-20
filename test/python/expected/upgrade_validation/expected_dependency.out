@@ -496,7 +496,6 @@ Function sys.nvarchar(sys.nvarchar,integer,boolean)
 Function sys.nvarchar_larger(sys.nvarchar,sys.nvarchar)
 Function sys.nvarchar_smaller(sys.nvarchar,sys.nvarchar)
 Function sys.nvarchar_sqlvariant(sys.nvarchar)
-Function sys.object_name(integer,integer)
 Function sys.objectproperty(integer,sys."varchar")
 Function sys.objectpropertyex(integer,sys."varchar")
 Function sys.openjson_array(text)
@@ -511,6 +510,7 @@ Function sys.pgerror()
 Function sys.pltsql_call_handler()
 Function sys.pltsql_inline_handler(internal)
 Function sys.pltsql_validator(oid)
+Function sys.power(sys.tinyint,double precision)
 Function sys.proc_param_helper()
 Function sys.procid()
 Function sys.quotename(character varying,character)
@@ -953,7 +953,6 @@ View information_schema_tsql.column_domain_usage
 View information_schema_tsql.constraint_column_usage
 View information_schema_tsql.domains
 View information_schema_tsql.routines
-View information_schema_tsql.views
 View sys.all_sql_modules_internal
 View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions

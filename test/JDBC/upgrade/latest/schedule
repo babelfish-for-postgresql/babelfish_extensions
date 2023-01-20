@@ -105,6 +105,7 @@ BABEL-2955
 BABEL-3358
 BABEL-3747
 BABEL-3781
+BABEL-3802
 temp-tables
 table-variable
 TestNotNull
@@ -367,3 +368,5 @@ jira-BABEL-3504-upgrade
 case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+BABEL_OBJECT_ID
+bbf_view_def

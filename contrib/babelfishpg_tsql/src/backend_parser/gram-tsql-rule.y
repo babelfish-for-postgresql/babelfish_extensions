@@ -2707,7 +2707,7 @@ tsql_CreateTrigStmt:
 					 * trigger will be created as part of
 					 * this create trigger command.
 					 */
-					n1->funcname = list_make1(makeString(n1->trigname));
+					n1->funcname = $3;
  					if (list_length($3) > 1){
 	 					n1->trigname = ((Value *)list_nth($3,1))->val.str;
 						/*
@@ -2748,7 +2748,7 @@ tsql_CreateTrigStmt:
 
 					n2->is_procedure = false;
 					n2->replace = true;
-					n2->funcname = list_make1(makeString(n1->trigname));;
+					n2->funcname = $3;
 					n2->parameters = NIL;
 					n2->returnType = makeTypeName("trigger");
 					n2->options = list_make3(lang, body, trigStmt);
