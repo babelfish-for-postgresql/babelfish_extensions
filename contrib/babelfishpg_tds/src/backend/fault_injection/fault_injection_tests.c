@@ -236,13 +236,18 @@ static void
 throw_error_buffer(void *arg ,int *num_occurrences)
 {
 	char buffer[3] = {'\0'};
-	int can = 0;
-	char tem[10]="aaaaaaaaaa";
+	int  can = 0;
+	char tem[10] = "aaaaaaaaaa";
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
 	memcpy(buffer,tem,10);
+#pragma GCC diagnostic pop
 	if (can !=0)
-	elog(LOG,"Buffer overflowed \n");
+		elog(LOG,"Buffer overflowed \n");
 	else
-	elog(LOG,"Did not Overflow \n");
+		elog(LOG,"Did not Overflow \n");
 }
 /*
  * Type declarations

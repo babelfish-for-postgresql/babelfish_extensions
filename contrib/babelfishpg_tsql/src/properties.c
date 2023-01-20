@@ -156,15 +156,18 @@ void* get_servername_helper()
 static char *
 get_version_number(const char* version_string, int idx)
 {
-	int		part = 0;
+	int 		part = 0,
+	    		len = 0;
 	char		*token;
-	char 		*copy_version_number = palloc(sizeof(char) * strlen(version_string) + 1);
+	char 		*copy_version_number;
 
 	Assert(version_string != NULL);
 	if(idx == -1) 
 		return (char *)version_string;
 
-	strncpy(copy_version_number,version_string,strlen(version_string) + 1);
+	len = strlen(version_string);
+	copy_version_number = palloc0(len + 1);
+	memcpy(copy_version_number, version_string, len);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{ 
 		if(part == idx)
