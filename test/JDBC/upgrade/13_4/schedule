@@ -195,4 +195,5 @@ sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 sys_server_principals_dep_for_13_x
 case_insensitive_collation-before-13-5
-BABEL-3507-before-14-7
+AVG-Aggregate-common
+AVG-Aggregate-Dep-before-15-2-or-14-7

@@ -1040,7 +1040,7 @@ tsql_numeric_get_typmod(Numeric num)
 Datum
 bigint_sum(PG_FUNCTION_ARGS)
 {
-	return bigint_utility(fcinfo, TSQL_SUM);
+	return bigint_poly_aggr_final(fcinfo, TSQL_SUM);
 }
 
 /* 
@@ -1103,5 +1103,5 @@ int4int2_avg(PG_FUNCTION_ARGS)
 Datum
 bigint_avg(PG_FUNCTION_ARGS)
 {
-	return bigint_utility(fcinfo, TSQL_AVG);
+	return bigint_poly_aggr_final(fcinfo, TSQL_AVG);
 }

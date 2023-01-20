@@ -336,9 +336,10 @@ BABEL-3640
 sys_server_principals_dep
 sys_database_principals_dep
 case_insensitive_collation
-BABEL-3507-before-14-7
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID
 sys-all_sql_modules_before-14_7
 sys-sql_modules_before-14_7
+AVG-Aggregate-common
+AVG-Aggregate-Dep-before-15-2-or-14-7
