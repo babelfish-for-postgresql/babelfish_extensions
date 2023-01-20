@@ -1928,7 +1928,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	if (pltsql_quoted_identifier)
 		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
 	/*
-	 * Setting this flag big to 0 to distinguish between the objects
+	 * Setting this flag bit to 0 to distinguish between the objects
 	 * created in 2.x or 3.x for future references. Let's not use
 	 * this bit in 3.x, as we are setting this to 1 in 2.x and will
 	 * be reserved for MVU.
