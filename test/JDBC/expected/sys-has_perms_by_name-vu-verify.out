@@ -656,7 +656,6 @@ int
 ~~END~~
 
 
--- Currently, using tsql we are not able access cross-db entries in sys.all_columns due to which column permissions check are not working for has_perms_by_name
 USE master;
 GO
 
@@ -664,7 +663,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -672,7 +671,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE',
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -680,7 +679,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'INSERT',
 GO
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 
@@ -688,7 +687,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'DELETE',
 GO
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 
@@ -696,7 +695,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'REFERENC
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -704,7 +703,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'EXECUTE'
 GO
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 
@@ -712,7 +711,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -745,7 +744,7 @@ SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col2', 'COLUMN')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -753,7 +752,7 @@ SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'UPDATE', 'col1', 'COLUMN')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -781,7 +780,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..v_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -789,7 +788,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -797,7 +796,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'UPDATE',
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -841,7 +840,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
