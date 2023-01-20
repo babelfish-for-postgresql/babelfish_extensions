@@ -369,3 +369,4 @@ sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID
 bbf_view_def
+TestRowVersion

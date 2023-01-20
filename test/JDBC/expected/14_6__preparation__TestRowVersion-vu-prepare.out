@@ -5,7 +5,7 @@ go
 binary
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: To use @@DBTS, set 'babelfishpg_tsql.escape_hatch_rowversion' to 'ignore')~~
+~~ERROR (Message: DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
 
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
