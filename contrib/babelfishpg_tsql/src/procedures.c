@@ -1024,9 +1024,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		undeclaredparams->tablename = (char *) palloc(sizeof(char) * 64);
+		undeclaredparams->tablename = (char *) palloc(NAMEDATALEN);
 		relname_len = strlen(relation->relname);
-		strncpy(undeclaredparams->tablename, relation->relname, relname_len);
+		strncpy(undeclaredparams->tablename, relation->relname, NAMEDATALEN);
 		undeclaredparams->tablename[relname_len] = '\0';
 		undeclaredparams->schemaoid = RelationGetNamespace(r);
 		undeclaredparams->targetattnums = (int *) palloc(sizeof(int) * list_length(target_attnums));
@@ -1046,8 +1046,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 
 			col = (ResTarget *)list_nth(cols, target_attnum_i);
 			colname_len = strlen(col->name);
-			undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(sizeof(char) * 64);
-			strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, colname_len);
+			undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(NAMEDATALEN);
+			strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, NAMEDATALEN);
 			undeclaredparams->targetcolnames[num_target_attnums][colname_len] = '\0';
 
 			target_attnum_i += 1;
@@ -1157,8 +1157,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						if (undeclared)
 						{
 							int paramname_len = strlen(field->sval);
-							undeclaredparams->paramnames[numresults] = (char *) palloc(64 * sizeof(char));
-							strncpy(undeclaredparams->paramnames[numresults], field->sval, paramname_len);
+							undeclaredparams->paramnames[numresults] = (char *) palloc(NAMEDATALEN);
+							strncpy(undeclaredparams->paramnames[numresults], field->sval, NAMEDATALEN);
 							undeclaredparams->paramnames[numresults][paramname_len] = '\0';
 							undeclaredparams->paramindexes[numresults] = numvalues;
 							numresults += 1;
