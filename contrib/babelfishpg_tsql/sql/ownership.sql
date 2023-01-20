@@ -187,6 +187,12 @@ BEGIN
 
   -- let sysadmin only to update babelfish_domain_mapping
   GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
+                                                    IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
+  AS 'babelfishpg_tsql', 'sp_dropserver_internal'
+  LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
 END
 $$;
 
