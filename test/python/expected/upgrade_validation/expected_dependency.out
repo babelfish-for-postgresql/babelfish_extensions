@@ -950,7 +950,6 @@ View information_schema_tsql.column_domain_usage
 View information_schema_tsql.constraint_column_usage
 View information_schema_tsql.domains
 View information_schema_tsql.routines
-View information_schema_tsql.views
 View sys.all_sql_modules_internal
 View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions
