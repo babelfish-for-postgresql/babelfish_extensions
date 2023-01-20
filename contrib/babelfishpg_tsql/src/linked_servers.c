@@ -583,7 +583,9 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 #ifdef ENABLE_TDS_LIB
 	
 	LinkedServerLogin login;
-	DefElem *element;
+	ListCell *option;
+	char *data_src;
+	char *database;
 #endif
 
 	PG_TRY();
@@ -612,63 +614,55 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 
 		login = LINKED_SERVER_LOGIN();
 
-		/* first option in user mapping should be the username */
-		element = linitial_node(DefElem, mapping->options);
-		if (strcmp(element->defname, "username") == 0)
-			LINKED_SERVER_SET_USER(login, defGetString(element));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						errmsg("Incorrect option. Expected \"username\" but got \"%s\"", element->defname)
-					));
+		/* options in user mapping should be the username and password */
+		foreach(option, mapping->options)
+		{
+			DefElem    *element = (DefElem *) lfirst(option);
 
-		/* second option in user mapping should be the password */
-		element = lsecond_node(DefElem, mapping->options);
-		if (strcmp(element->defname, "password") == 0)
-			LINKED_SERVER_SET_PWD(login, defGetString(element));
-		else
-			ereport(ERROR,
+			if (strcmp(element->defname, "username") == 0)
+				LINKED_SERVER_SET_USER(login, defGetString(element));
+			else if (strcmp(element->defname, "password") == 0)
+				LINKED_SERVER_SET_PWD(login, defGetString(element));
+			else
+				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						errmsg("Incorrect option. Expected \"password\" but got \"%s\"", element->defname)
+						errmsg("Unrecognized option \"%s\" for user mapping", element->defname)
 					));
+		}
 
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
 
-		/* first option in foreign server should be servername */
-		element = linitial_node(DefElem, server->options);
-		if (strcmp(element->defname, "servername") == 0){
+		/* options in foreign server should be the servername and database */
+		foreach(option, server->options)
+		{
+			DefElem    *element = (DefElem *) lfirst(option);
 
-			char *data_src = defGetString(element);
-
-			ValidateLinkedServerDataSource(data_src);
-
-			*lsproc = LINKED_SERVER_OPEN(login, data_src);
-			if (!(*lsproc))
+			if (strcmp(element->defname, "servername") == 0)
+				data_src = defGetString(element);
+			else if (strcmp(element->defname, "database") == 0)
+				database =  defGetString(element);
+			else
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						errmsg("Unable to connect to %s", data_src)
+						errmsg("Unrecognized option \"%s\" for foreign server", element->defname)
 					));
 		}
-		else
+
+		ValidateLinkedServerDataSource(data_src);
+
+		*lsproc = LINKED_SERVER_OPEN(login, data_src);
+		if (!(*lsproc))
 			ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						errmsg("Incorrect option. Expected \"servername\" but got \"%s\"", element->defname)
-					));
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Unable to connect to %s", data_src)));
 
 		LINKED_SERVER_FREELOGIN(login);
 
-		element = lsecond_node(DefElem, server->options);
-		if (strcmp(element->defname, "database") == 0)
-		{
-			if (strlen(defGetString(element)))
-				Assert(LINKED_SERVER_USE_DB(*lsproc, defGetString(element)) == SUCCEED);
-		}
-		else
+		if ((strlen(database) != 0) && (LINKED_SERVER_USE_DB(*lsproc, database) != SUCCEED))
 			ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						errmsg("Incorrect option. Expected \"database\" but got \"%s\"", element->defname)
-					));
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Unable to connect to database %s", database)));
 #else
 
 		ereport(ERROR,
@@ -700,14 +694,14 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 
 #ifdef ENABLE_TDS_LIB
 
-	LINKED_SERVER_RETCODE erc;
-
  	MemoryContext oldContext;
-	StringInfoData buf;
-	int colcount;
 
 	PG_TRY();
 	{
+		LINKED_SERVER_RETCODE erc;
+
+		StringInfoData buf;
+		int colcount;
 
 		/* Reuse already computed Tuple Descriptor if it exists */
 		if (curr_openquery_tupdesc != NULL)
@@ -736,6 +730,9 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 
 		/* Execute the query on remote server */
 		LINKED_SERVER_EXEC_QUERY(lsproc);
+
+		if (buf.data)
+			pfree(buf.data);
 
 		while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
 		{
@@ -894,8 +891,8 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 	{
 		LINKED_SERVER_EXIT();
 
-		if (buf.data)
-			pfree(buf.data);
+		// if (buf.data)
+		// 	pfree(buf.data);
 	}
 	PG_END_TRY();
 #endif
