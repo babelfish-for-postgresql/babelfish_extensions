@@ -1927,6 +1927,14 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	flag_validity |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
 	if (pltsql_quoted_identifier)
 		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
+	/*
+	 * Setting this flag big to 0 to distinguish between the objects
+	 * created in 2.x or 3.x for future references. Let's not use
+	 * this bit in 3.x, as we are setting this to 1 in 2.x and will
+	 * be reserved for MVU.
+	 */
+	flag_validity |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
+	flag_values |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = CStringGetTextDatum(logical_schemaname);
