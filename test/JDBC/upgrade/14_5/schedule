@@ -36,7 +36,7 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
-forxml-before-14-7
+forxml
 sys-assembly_types
 sys-database_mirroring
 sys-databases

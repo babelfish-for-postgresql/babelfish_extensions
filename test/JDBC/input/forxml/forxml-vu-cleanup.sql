@@ -1,22 +1,28 @@
--- Test BASE64 encoding on binary data
-drop view forxml_vu_v_path;
-GO
 
-drop view forxml_vu_v_base64;
-GO
 
-drop TABLE forxml_vu_t_binary;
-GO
-
-drop view forxml_vu_v_cte2;
+drop procedure forxml_vu_p_employee_select;
 go
-drop view forxml_vu_v_cte3;
+drop procedure forxml_vu_p_employee_select2;
 go
-drop view forxml_vu_v_cte4;
+drop view forxml_vu_v1;
 go
-drop view forxml_vu_v_correlated_subquery;
+drop view forxml_vu_v2;
 go
-drop table forxml_vu_t_t1;
+drop view forxml_vu_v_cte1;
 go
-drop table forxml_vu_t_t2;
+drop view forxml_vu_v_with;
+go
+drop view forxml_vu_v_with_where;
+go
+drop procedure forxml_vu_p_datalength;
+go
+drop procedure forxml_vu_p_strvar;
+go
+drop table forxml_vu_t1;
+go
+drop table forxml_vu_t2;
+go
+drop table forxml_vu_t_employees;
+go
+drop table forxml_vu_t_employees2;
 go
