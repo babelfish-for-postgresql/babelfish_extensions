@@ -1871,14 +1871,8 @@ bool
 windows_login_contains_invalid_chars(char* input)
 {
 	char* pos_slash = strchr(input, '\\');
-	char* pos_end = strchr(input, '\0');
-	int length_to_copy = pos_end - pos_slash - 1;
-	int pos_to_copy_from = strlen(input) - length_to_copy;
-
-	char* login_name = palloc(length_to_copy + 1);
-	memcpy(login_name, input + pos_to_copy_from, length_to_copy);
-	login_name[length_to_copy + 1] = '\0';
-
+	
+	char* login_name = pos_slash + 1;
 
 	if (strchr(login_name, '\\') != NULL || strchr(login_name, '/') != NULL || 
 	strchr(login_name, '[') != NULL || strchr(login_name, ']') != NULL ||
@@ -1890,10 +1884,7 @@ windows_login_contains_invalid_chars(char* input)
 	strchr(login_name, '@') != NULL)
 		return true;
 	else
-	{
-		pfree(login_name);
 		return false;
-	}
 }
 
 /*
@@ -1903,9 +1894,9 @@ bool
 check_windows_login_length(char* input)
 {
 	char *pos_slash = strchr(input, '\\');
-	int user_name_len = strlen(pos_slash + 1);
+	int login_name_len = strlen(pos_slash + 1);
 
-	if (user_name_len > NAMEDATALEN_WINDOWS_MIN && user_name_len < NAMEDATALEN_WINDOWS_MAX)
+	if (login_name_len > NAMEDATALEN_WINDOWS_MIN && login_name_len < NAMEDATALEN_WINDOWS_MAX)
 		return true;
 	else
 		return false;
