@@ -1893,20 +1893,27 @@ CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE
-   WHEN const1.confupdtype = 'a' THEN CAST(1 AS smallint)
-   WHEN const1.confupdtype = 'n' THEN CAST(2 AS smallint)
-   WHEN const1.confupdtype = 'd' THEN CAST(3 AS smallint)
-   ELSE CAST(0 AS smallint)
+   WHEN const1.confupdtype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confupdtype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confupdtype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confupdtype = 'd' THEN CAST(3 AS smallint) -- set default
 END AS UPDATE_RULE,
 
 CASE
-   WHEN const1.confdeltype = 'a' THEN CAST(1 AS smallint)
-   WHEN const1.confdeltype = 'n' THEN CAST(2 AS smallint)
-   WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint)
+   WHEN const1.confdeltype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confdeltype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confdeltype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
    ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
 CAST(const1.conname AS sys.sysname) AS FK_NAME,
-CAST(const2.conname AS sys.sysname) AS PK_NAME
+CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CASE
+   WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
+   ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
+              ELSE CAST(5 as smallint) -- deferred by default
+         END)
+END AS DEFERRABILITY
 
 FROM (pg_constraint const1
 -- join with nsp_Ext to get constraints in current namespace
@@ -1973,7 +1980,8 @@ BEGIN
 	UPDATE_RULE,
 	DELETE_RULE,
 	FK_NAME,
-	PK_NAME
+	PK_NAME,
+	DEFERRABILITY
 	FROM sys.sp_fkeys_view
 	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR LOWER(pktable_name) = LOWER(@pktable_name))
 		AND ((SELECT coalesce(@fktable_name,'')) = '' OR LOWER(fktable_name) = LOWER(@fktable_name))

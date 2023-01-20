@@ -960,20 +960,27 @@ CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
 CAST(nr AS smallint) AS KEY_SEQ,
 CASE
-   WHEN const1.confupdtype = 'a' THEN CAST(1 AS smallint)
-   WHEN const1.confupdtype = 'n' THEN CAST(2 AS smallint)
-   WHEN const1.confupdtype = 'd' THEN CAST(3 AS smallint)
-   ELSE CAST(0 AS smallint)
+   WHEN const1.confupdtype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confupdtype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confupdtype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confupdtype = 'd' THEN CAST(3 AS smallint) -- set default
 END AS UPDATE_RULE,
 
 CASE
-   WHEN const1.confdeltype = 'a' THEN CAST(1 AS smallint)
-   WHEN const1.confdeltype = 'n' THEN CAST(2 AS smallint)
-   WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint)
+   WHEN const1.confdeltype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confdeltype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confdeltype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
    ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
 CAST(const1.conname AS sys.sysname) AS FK_NAME,
-CAST(const2.conname AS sys.sysname) AS PK_NAME
+CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CASE
+   WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
+   ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
+              ELSE CAST(5 as smallint) -- deferred by default
+         END)
+END AS DEFERRABILITY
 
 FROM (pg_constraint const1
 -- join with nsp_Ext to get constraints in current namespace
@@ -1004,6 +1011,57 @@ LEFT JOIN sys.babelfish_namespace_ext bbf_nsp2 ON bbf_nsp2.nspname = nsp_ext2.ns
 LEFT JOIN pg_class c2 ON const2.conrelid = c2.oid AND const2.contype IN ('p', 'u');
 
 GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_fkeys(
+	"@pktable_name" sys.sysname = '',
+	"@pktable_owner" sys.sysname = '',
+	"@pktable_qualifier" sys.sysname = '',
+	"@fktable_name" sys.sysname = '',
+	"@fktable_owner" sys.sysname = '',
+	"@fktable_qualifier" sys.sysname = ''
+)
+AS $$
+BEGIN
+	
+	IF coalesce(@pktable_name,'') = '' AND coalesce(@fktable_name,'') = '' 
+	BEGIN
+		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
+	END
+	
+	IF (@pktable_qualifier != '' AND (SELECT sys.db_name()) != @pktable_qualifier) OR 
+		(@fktable_qualifier != '' AND (SELECT sys.db_name()) != @fktable_qualifier) 
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+  	END
+  	
+  	SELECT 
+	PKTABLE_QUALIFIER,
+	PKTABLE_OWNER,
+	PKTABLE_NAME,
+	PKCOLUMN_NAME,
+	FKTABLE_QUALIFIER,
+	FKTABLE_OWNER,
+	FKTABLE_NAME,
+	FKCOLUMN_NAME,
+	KEY_SEQ,
+	UPDATE_RULE,
+	DELETE_RULE,
+	FK_NAME,
+	PK_NAME,
+	DEFERRABILITY
+	FROM sys.sp_fkeys_view
+	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR LOWER(pktable_name) = LOWER(@pktable_name))
+		AND ((SELECT coalesce(@fktable_name,'')) = '' OR LOWER(fktable_name) = LOWER(@fktable_name))
+		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR LOWER(pktable_owner) = LOWER(@pktable_owner))
+		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR LOWER(pktable_qualifier) = LOWER(@pktable_qualifier))
+		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR LOWER(fktable_owner) = LOWER(@fktable_owner))
+		AND ((SELECT coalesce(@fktable_qualifier,'')) = '' OR LOWER(fktable_qualifier) = LOWER(@fktable_qualifier))
+	ORDER BY fktable_qualifier, fktable_owner, fktable_name, key_seq;
+
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 
 
 -- Drops the temporary procedure used by the upgrade script.

@@ -1,7 +1,7 @@
 exec babel_sp_fkeys_dep_vu_prepare_p1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-master#!#dbo#!#babel_sp_fkeys_dep_vu_prepare_t1#!#a#!#master#!#dbo#!#babel_sp_fkeys_dep_vu_prepare_t2#!#b#!#1#!#1#!#1#!#babel_sp_fkeys_dep_vu_prepare_t2_b_fkey#!#babel_sp_fkeys_dep_vu_prepare_t1_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#babel_sp_fkeys_dep_vu_prepare_t1#!#a#!#master#!#dbo#!#babel_sp_fkeys_dep_vu_prepare_t2#!#b#!#1#!#1#!#1#!#babel_sp_fkeys_dep_vu_prepare_t2_b_fkey#!#babel_sp_fkeys_dep_vu_prepare_t1_pkey#!#7
 ~~END~~
 
