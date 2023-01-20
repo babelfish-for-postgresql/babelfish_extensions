@@ -2370,7 +2370,7 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
 					errmsg("@server parameter cannot be NULL")));
-
+	
 	initStringInfo(&query);
 
 	/*

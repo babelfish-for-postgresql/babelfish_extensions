@@ -936,7 +936,6 @@ LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
 
-
 CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
                                                         IN "@locallogin" sys.sysname)
 AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
