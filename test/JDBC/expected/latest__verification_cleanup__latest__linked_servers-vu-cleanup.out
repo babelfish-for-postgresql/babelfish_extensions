@@ -9,7 +9,3 @@ GO
 
 DROP VIEW sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
-
--- psql
-DROP EXTENSION tds_fdw CASCADE;
-GO
