@@ -35,25 +35,6 @@ Oid tdsTypeToOid(int datatype);
 int tdsTypeLen(int datatype, int datalen, bool is_metadata);
 Datum getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
 
-/*
- * T-SQL OPENQUERY is implemented as a PG range table function.
- * For a PG range table function, the expected tuple descriptor
- * is computed twice from the SQL definition: first during the
- * pre-analyze phase of query execution, and next during the
- * query planning phase. In case of T-SQL OPENQUERY, the tuple
- * descriptor computation is a costly operation which involves
- * connecting to the remote server to get the expected column
- * metadata information using sp_describe_first_result_set.
- *
- * As an optimization, instead of doing the above operation twice,
- * we store the initial computed tuple descriptor in this structure
- * and simply re-use it a second time during the planning phase.
- *
- * We invalidate the stored tuple descriptor once the actual column
- * metadata is fetched as part of the OPENQUERY result-set.
- */
-static TupleDesc curr_openquery_tupdesc = NULL;
-
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
 {
@@ -694,8 +675,6 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 
 #ifdef ENABLE_TDS_LIB
 
- 	MemoryContext oldContext;
-
 	PG_TRY();
 	{
 		LINKED_SERVER_RETCODE erc;
@@ -703,12 +682,6 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 		StringInfoData buf;
 		int colcount;
 
-		/* Reuse already computed Tuple Descriptor if it exists */
-		if (curr_openquery_tupdesc != NULL)
-		{
-			*tupdesc = CreateTupleDescCopy(curr_openquery_tupdesc);
-			return;
-		}
 #endif
 		linked_server_establish_connection(linked_server, &lsproc);
 
@@ -880,19 +853,10 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 				}
 			}
 		}
-
-		/* Store the tuple descriptor in TopMemoryContext to be used later */
-		oldContext = MemoryContextSwitchTo(TopMemoryContext);
-		curr_openquery_tupdesc = CreateTemplateTupleDesc((*tupdesc)->natts);
-		TupleDescCopy(curr_openquery_tupdesc, *tupdesc);
-		MemoryContextSwitchTo(oldContext);
 	}
 	PG_FINALLY();
 	{
 		LINKED_SERVER_EXIT();
-
-		// if (buf.data)
-		// 	pfree(buf.data);
 	}
 	PG_END_TRY();
 #endif
@@ -925,7 +889,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 #ifdef ENABLE_TDS_LIB
 
-		/* populate query in DBPROCESS */
+		/* populate query in LinkedServerProcess */
 		if ((erc = LINKED_SERVER_PUT_CMD(lsproc, query)) != SUCCEED) {
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -998,7 +962,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 					 */
 					if ((tdsTypeOid == VARCHAROID) || (tdsTypeOid == TEXTOID) || (common_utility_plugin_ptr && ((*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("binary"))))
 					{
-						Form_pg_attribute att = TupleDescAttr(curr_openquery_tupdesc, (AttrNumber) i);
+						Form_pg_attribute att = TupleDescAttr(rsinfo->expectedDesc, (AttrNumber) i);
 						tdsTypeOid = att->atttypid;
 					}
 
@@ -1030,7 +994,6 @@ openquery_imp(PG_FUNCTION_ARGS)
 						int datalen = LINKED_SERVER_DATA_LEN(lsproc, i + 1);
 						val[i] = LINKED_SERVER_DATA(lsproc, i + 1);
 
-						// if (val[i] == NULL && datalen == 0)
 						if (val[i] == NULL)
 							nulls[i] = true;
 						else
@@ -1049,11 +1012,6 @@ openquery_imp(PG_FUNCTION_ARGS)
 	PG_FINALLY();
 	{
 #ifdef ENABLE_TDS_LIB
-		/* Invalidate Tuple Descriptor */
-		if (curr_openquery_tupdesc)
-			pfree(curr_openquery_tupdesc);
-
-		curr_openquery_tupdesc = NULL;
 
 		LINKED_SERVER_EXIT();
 #endif
