@@ -22,6 +22,9 @@
 #include "src/include/tds_request.h"
 #include "src/include/faultinjection.h"
 
+#include <stdio.h>
+#include <string.h>
+
 /* test cases */
 static void
 test_fault1(void *arg, int *num_occurrences)
@@ -229,6 +232,23 @@ throw_error_comm(void *arg, int *num_occurrences)
 	elog(FATAL, "FATAL error triggered from fault injection");
 }
 
+static void
+throw_error_buffer(void *arg ,int *num_occurrences)
+{
+	char buffer[3] = {'\0'};
+	int  can = 0;
+	char tem[10] = "aaaaaaaaaa";
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+	memcpy(buffer,tem,10);
+#pragma GCC diagnostic pop
+	if (can !=0)
+		elog(LOG,"Buffer overflowed \n");
+	else
+		elog(LOG,"Did not Overflow \n");
+}
 /*
  * Type declarations
  *
@@ -264,5 +284,6 @@ TEST_LIST = {
 	{"parsing_tamper_rpc_parameter_datatype", ParseRpcType, 0, &parsing_tamper_rpc_parameter_datatype},
 	{"pre_parsing_throw_error", PreParsingType, 0, &throw_error},
 	{"post_parsing_throw_error", PostParsingType, 0, &throw_error},
+	{"buffer_overflow_test",PreParsingType,0, &throw_error_buffer},
 	{"", InvalidType, 0, NULL} /* keep this as last */
 };
