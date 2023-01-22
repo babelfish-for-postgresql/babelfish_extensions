@@ -32,6 +32,7 @@
 #include "parser/parser.h"
 #include "parser/parse_target.h"
 #include "parser/parse_relation.h"
+#include "parser/scansup.h" 
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
@@ -2072,13 +2073,15 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 	int rc;
 	int i;
 	char *db_name = get_cur_db_name();
-	char *physical_schema_name;
-	char *logical_schema_name;
-	char *full_function_name;
-	char *query;
+	char *physical_schema_name = NULL;
+	char *logical_schema_name = NULL;
+	char *full_function_name = NULL;
+	char *query = NULL;
 	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 	char **splited_object_name;
+	Oid function_id;
+	List *function_name_list;
 	FuncCandidateList candidates = NULL;
 
 	if(function_name != NULL)
@@ -2088,8 +2091,17 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		while (i > 0 && isspace((unsigned char) function_name[i - 1]))
 			function_name[--i] = '\0';
 
-		if(!strlen(function_name))
-			function_name = NULL;
+		/* if function name is empty */
+		if(i == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("function name is not valid")));
+		
+		/* length should be restricted to 4000 */
+		if (i > 4000)
+			ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				errmsg("input value is too long for function name")));
 	}
 	if(volatility != NULL)
 	{
@@ -2097,11 +2109,19 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		i = strlen(volatility);
 		while (i > 0 && isspace((unsigned char) volatility[i - 1]))
 			volatility[--i] = '\0';
+		
+		/* if volatility is empty */
+		if(i==0)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("volatility is not valid")));
 
-		if(!strlen(volatility))
-			volatility = NULL;
+		/* its length is greater than 9 (len of immutable) */
+		if (i > 9)
+			ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				errmsg("input value is too long for volatility")));
 	}
-	
 	if(function_name == NULL && volatility != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -2109,40 +2129,64 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 
 	if(function_name != NULL)
 	{	
-		function_name = lowerstr(function_name);
+		/* downcase identifier */
+		if(pltsql_case_insensitive_identifiers)
+			function_name = downcase_identifier(function_name, strlen(function_name), false, false);
 
 		/* get physical schema name */
 		splited_object_name = split_object_name(function_name);
 
-		if(strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "") || !strcmp(function_name, ""))
+		if(strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], ""))
 			ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						errmsg("function \"%s\" is not a valid two part name", function_name)));
-		
+		pfree(function_name);
+
 		logical_schema_name = splited_object_name[2];
 		function_name = splited_object_name[3];
+
+		/* truncate identifiers if needed */
+		truncate_tsql_identifier(logical_schema_name);
+		truncate_tsql_identifier(function_name);
+
+		if(!strcmp(function_name, ""))
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("function name is not valid")));
 
 		if (!strcmp(logical_schema_name, ""))
 		{	
 			/* find the default schema for current user */
 			char *user = get_user_for_database(db_name);
 			logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+			// pfree((char*)user);
 		}
-
 		pfree(splited_object_name);
-
+		
 		physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
 
 		/* get function id from function name*/
-		candidates = FuncnameGetCandidates(list_make2(makeString(physical_schema_name),makeString(function_name)), -1, NIL, false, false, false, true);
-		full_function_name = psprintf("\"%s\".\"%s\"", physical_schema_name, function_name);
+		function_name_list = list_make2(makeString(physical_schema_name),makeString(function_name));
+		candidates = FuncnameGetCandidates(function_name_list, -1, NIL, false, false, false, true);
 
 		/* if no function is found */
 		if(candidates == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("function \"%s\" does not exist", psprintf("%s.%s", logical_schema_name, function_name))));
+					errmsg("function does not exist")));
+
+		function_id = candidates->oid;
+		full_function_name = psprintf("\"%s\".\"%s\"", physical_schema_name, function_name);
+
+		list_free(function_name_list);
+		pfree(candidates);
 	}
+	
+	/*
+	 * If both volatility and function name is not provided the it will return a list of functions present in current database.
+	 * else if only volatility is not provided the it will return the volatility of the specified function.
+	 * If both volatility and function name is provided it will set the function volatility to the specified volatility
+	 */
 	if(volatility == NULL)
 	{	
 		if(function_name == NULL)
@@ -2157,7 +2201,7 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 					"from pg_proc t1 "
 					"JOIN pg_namespace t2 ON t1.pronamespace = t2.oid "
 					"JOIN sys.babelfish_namespace_ext t3 ON t3.nspname = t2.nspname "
-					"where t1.prokind = 'f' AND t3.dbid = sys.db_id('%s') ORDER BY t2.nspname, t1.proname", db_name
+					"where t1.prokind = 'f' AND t3.dbid = sys.db_id() ORDER BY t3.orig_name, t1.proname"
 				);
 		}
 		else
@@ -2170,7 +2214,7 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 						"ELSE 'immutable' "
 					"END AS Volatility "
 					"from pg_proc "
-					"where oid = %u", logical_schema_name, candidates->oid
+					"where oid = %u", logical_schema_name, function_id
 				);
 		}
 
@@ -2221,11 +2265,12 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 	}
 	else
 	{	
-		volatility = lowerstr(volatility);
-		
-		if(strcmp(volatility,"volatile") && strcmp(volatility,"stable") && strcmp(volatility,"immutable"))
+		/* downcase identifier if needed */
+		volatility = downcase_identifier(volatility, strlen(volatility), false, false);
+	
+		if(strcmp(volatility, "volatile") && strcmp(volatility, "stable") && strcmp(volatility, "immutable"))
 			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("\"%s\" is not a valid volatility", volatility)));
 
 		query = psprintf("ALTER FUNCTION %s %s;", full_function_name, volatility);
@@ -2248,5 +2293,20 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		}
 		PG_END_TRY();
 	}
+
+	if(function_name)
+		pfree(function_name);
+	if(logical_schema_name)
+		pfree(logical_schema_name);
+	if(physical_schema_name)
+		pfree(physical_schema_name);
+	if(full_function_name)
+		pfree(full_function_name);
+	if(volatility)
+		pfree(volatility);
+	if(query)
+		pfree(query);
+	pfree(db_name);
+
   	PG_RETURN_VOID();
 }
