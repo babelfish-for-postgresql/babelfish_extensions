@@ -1652,7 +1652,7 @@ DECLARE
 BEGIN
     eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
     IF eh_setting = 'strict' THEN
-        RAISE EXCEPTION 'DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore';
+        RAISE EXCEPTION 'To use @@DBTS, set ''babelfishpg_tsql.escape_hatch_rowversion'' to ''ignore''';
     ELSE
         RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
     END IF;
@@ -2442,13 +2442,19 @@ BEGIN
         SELECT CASE
             WHEN cs_as_sub_securable_class = 'column'
                 THEN CASE 
-                    WHEN (SELECT count(name) 
-                        FROM sys.all_columns 
-                        WHERE name = cs_as_sub_securable COLLATE sys.database_default
-                            -- Use V as the object type to specify that the securable is table-like.
-                            -- We do not know that the securable is a view, but object_id behaves the 
-                            -- same for differint table-like types, so V can be arbitrarily chosen.
-                            AND object_id = sys.object_id(cs_as_securable, 'V')) = 1
+                    WHEN (SELECT count(a.attname)
+                        FROM pg_attribute a
+                        INNER JOIN pg_class c ON c.oid = a.attrelid
+                        INNER JOIN pg_namespace s ON s.oid = c.relnamespace
+                        WHERE
+                        a.attname = cs_as_sub_securable COLLATE sys.database_default
+                        AND c.relname = object_name COLLATE sys.database_default
+                        AND s.nspname = pg_schema COLLATE sys.database_default
+                        AND NOT a.attisdropped
+                        AND (s.nspname IN (SELECT nspname FROM sys.babelfish_namespace_ext) OR s.nspname = 'sys')
+                        -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+                        AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+                        AND a.attnum > 0) = 1
                                 THEN 'column'
                     ELSE NULL
                 END
@@ -3197,6 +3203,22 @@ GRANT EXECUTE ON FUNCTION sys.radians(SMALLINT) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
 RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 FLOAT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(BIGINT,FLOAT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 INT, IN arg2 FLOAT)
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(INT,FLOAT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 FLOAT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(SMALLINT,FLOAT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 TINYINT, IN arg2 FLOAT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(TINYINT,FLOAT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS

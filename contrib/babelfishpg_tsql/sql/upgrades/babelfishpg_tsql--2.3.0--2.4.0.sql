@@ -157,6 +157,21 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 FLOAT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(BIGINT,FLOAT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 INT, IN arg2 FLOAT)
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(INT,FLOAT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 FLOAT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(SMALLINT,FLOAT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 TINYINT, IN arg2 FLOAT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(TINYINT,FLOAT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.tsql_get_expr(IN text_expr text DEFAULT NULL , IN function_id OID DEFAULT NULL)
 RETURNS text AS 'babelfishpg_tsql', 'tsql_get_expr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
@@ -473,13 +488,19 @@ BEGIN
         SELECT CASE
             WHEN cs_as_sub_securable_class = 'column'
                 THEN CASE 
-                    WHEN (SELECT count(name) 
-                        FROM sys.all_columns 
-                        WHERE name = cs_as_sub_securable COLLATE sys.database_default
-                            -- Use V as the object type to specify that the securable is table-like.
-                            -- We do not know that the securable is a view, but object_id behaves the 
-                            -- same for differint table-like types, so V can be arbitrarily chosen.
-                            AND object_id = sys.object_id(cs_as_securable, 'V')) = 1
+                    WHEN (SELECT count(a.attname)
+                        FROM pg_attribute a
+                        INNER JOIN pg_class c ON c.oid = a.attrelid
+                        INNER JOIN pg_namespace s ON s.oid = c.relnamespace
+                        WHERE
+                        a.attname = cs_as_sub_securable COLLATE sys.database_default
+                        AND c.relname = object_name COLLATE sys.database_default
+                        AND s.nspname = pg_schema COLLATE sys.database_default
+                        AND NOT a.attisdropped
+                        AND (s.nspname IN (SELECT nspname FROM sys.babelfish_namespace_ext) OR s.nspname = 'sys')
+                        -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+                        AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+                        AND a.attnum > 0) = 1
                                 THEN 'column'
                     ELSE NULL
                 END
@@ -936,9 +957,8 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF', 'TR') THEN COALESCE(f.definition, '')
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
-      WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
       END
     AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
@@ -981,6 +1001,26 @@ CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_t
 RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
+
+-- For all the views created on previous versions, the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def SET definition = NULL;
+
+CREATE OR REPLACE FUNCTION sys.DBTS()
+RETURNS sys.ROWVERSION AS
+$$
+DECLARE
+    eh_setting text;
+BEGIN
+    eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
+    IF eh_setting = 'strict' THEN
+        RAISE EXCEPTION 'To use @@DBTS, set ''babelfishpg_tsql.escape_hatch_rowversion'' to ''ignore''';
+    ELSE
+        RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE sys.sp_volatility(IN "@function_name" sys.varchar(128) DEFAULT NULL, IN "@volatility" sys.varchar(128) DEFAULT NULL)
 AS 'babelfishpg_tsql', 'sp_volatility' LANGUAGE C;

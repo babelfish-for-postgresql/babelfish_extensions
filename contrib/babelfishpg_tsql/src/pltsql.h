@@ -1998,6 +1998,7 @@ extern char** split_object_name(char *name);
 typedef struct
 {
 	bool success;
+	bool parseTreeCreated; /* used to determine if on error should retry with a different parse mode */
 	size_t errpos;
 	int errcod;
 	const char *errfmt;
