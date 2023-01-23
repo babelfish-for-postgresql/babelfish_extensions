@@ -1246,17 +1246,17 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause)
 			/* commonDirective is either integer const or string const */
 			Assert(IsA(myNode, A_Const));
 			myConst = (A_Const *)myNode;
-			Assert(myConst->val.type == T_Integer || myConst->val.type == T_String);
-			if (myConst->val.type == T_Integer)
+			Assert(IsA(&myConst->val, Integer) || IsA(&myConst->val, String));
+			if (IsA(&myConst->val, Integer))
 			{
-				if (myConst->val.val.ival == TSQL_XML_DIRECTIVE_BINARY_BASE64)
+				if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_BINARY_BASE64)
 					binary_base64 = true;
-				else if (myConst->val.val.ival == TSQL_XML_DIRECTIVE_TYPE)
+				else if (myConst->val.ival.ival == TSQL_XML_DIRECTIVE_TYPE)
 					return_xml_type = true;
 			}
-			else if (myConst->val.type == T_String)
+			else if (IsA(&myConst->val, String))
 			{
-				root_name = myConst->val.val.str;
+				root_name = myConst->val.sval.sval;
 			}
 		}
 	}
