@@ -350,3 +350,4 @@ sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_SCHEMATA
 BABEL_OBJECT_ID
+test_windows_login_before_15_2
