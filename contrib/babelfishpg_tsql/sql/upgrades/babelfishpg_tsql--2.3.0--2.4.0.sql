@@ -987,6 +987,26 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+-- For all the views created on previous versions, the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def SET definition = NULL;
+
+CREATE OR REPLACE FUNCTION sys.DBTS()
+RETURNS sys.ROWVERSION AS
+$$
+DECLARE
+    eh_setting text;
+BEGIN
+    eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
+    IF eh_setting = 'strict' THEN
+        RAISE EXCEPTION 'To use @@DBTS, set ''babelfishpg_tsql.escape_hatch_rowversion'' to ''ignore''';
+    ELSE
+        RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
+
 /* set sys functions as STABLE */
 ALTER FUNCTION sys.schema_id() STABLE;
 ALTER FUNCTION sys.schema_name() STABLE;
@@ -1304,26 +1324,6 @@ ALTER FUNCTION sys.user_name_sysname() STABLE;
 ALTER FUNCTION sys.system_user() STABLE;
 ALTER FUNCTION sys.session_user() STABLE;
 ALTER FUNCTION UPDATE (TEXT) STABLE;
-
--- For all the views created on previous versions, the definition in the catalog should be NULL.
-UPDATE sys.babelfish_view_def SET definition = NULL;
-
-CREATE OR REPLACE FUNCTION sys.DBTS()
-RETURNS sys.ROWVERSION AS
-$$
-DECLARE
-    eh_setting text;
-BEGIN
-    eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
-    IF eh_setting = 'strict' THEN
-        RAISE EXCEPTION 'To use @@DBTS, set ''babelfishpg_tsql.escape_hatch_rowversion'' to ''ignore''';
-    ELSE
-        RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
-    END IF;
-END;
-$$
-STRICT
-LANGUAGE plpgsql;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
