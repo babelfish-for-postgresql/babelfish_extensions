@@ -368,3 +368,4 @@ bbf_view_def
 sys-all_sql_modules
 sys-sql_modules
 BABEL_OBJECT_ID
+test_windows_login_before_15_2

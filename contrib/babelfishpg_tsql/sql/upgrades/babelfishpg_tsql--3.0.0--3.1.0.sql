@@ -37,6 +37,7 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+
 create or replace view sys.views as 
 select 
   t.relname as name
@@ -947,6 +948,22 @@ UPDATE sys.babelfish_view_def AS bvd
 SET definition = NULL
 WHERE (SELECT get_bit(CAST(bvd.flag_validity AS bit(7)),4) = 0);
 
+CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
+                                                        IN "@locallogin" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_droplinkedsrvlogin( IN sys.sysname,
+                                                      IN sys.sysname)
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                              IN "@locallogin" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
+
 -- Add one column to store definition of the function in the table.
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT DEFAULT NULL;
@@ -1117,6 +1134,13 @@ CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_t
 RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
+
+
+ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN IF NOT EXISTS orig_loginname SYS.NVARCHAR(128);
+
+UPDATE sys.babelfish_authid_login_ext SET orig_loginname = rolname WHERE orig_loginname IS NULL;
+
+ALTER TABLE sys.babelfish_authid_login_ext ALTER COLUMN orig_loginname SET NOT NULL;
 
 CREATE OR REPLACE FUNCTION sys.DBTS()
 RETURNS sys.ROWVERSION AS

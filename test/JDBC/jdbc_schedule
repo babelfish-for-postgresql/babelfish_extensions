@@ -108,3 +108,8 @@ ignore#!#case_insensitive_collation-before-13-5-vu-cleanup
 ignore#!#jira-BABEL-3504-upgrade-vu-prepare
 ignore#!#jira-BABEL-3504-upgrade-vu-verify
 ignore#!#jira-BABEL-3504-upgrade-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to (potential) 15_2 release
+ignore#!#test_windows_login_before_15_2-vu-prepare
+ignore#!#test_windows_login_before_15_2-vu-verify
+ignore#!#test_windows_login_before_15_2-vu-cleanup
