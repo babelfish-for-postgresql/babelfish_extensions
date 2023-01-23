@@ -106,7 +106,7 @@ exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1', 'stab
 go
 exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1'
 go
-  /* test with long names */
+/* test with long names */
 exec sys.sp_volatility 'test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa'
 go
 exec sys.sp_volatility 'test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa', 'stable'
@@ -119,7 +119,7 @@ exec sys.sp_volatility 'test_sp_volatility_schema_very_long_with_length_greater_
 go
 exec sys.sp_volatility '[test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa].[test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa]'
 go
-  /* test with trucated names */
+/* test with trucated names */
 exec sys.sp_volatility 'test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9'
 go
 exec sys.sp_volatility 'test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9', 'immutable'
@@ -141,7 +141,45 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f2'
 go
 
+/* function on which user has privilege is only visible */
+-- tsql      user=test_sp_volatility_login password='abc'
+use test_sp_volatility_db1
+go
+select current_user
+go
+exec sys.sp_volatility 'test_sp_volatility_f1'
+go
+exec sys.sp_volatility 'dbo.test_sp_volatility_f2'
+go
+exec sys.sp_volatility
+go
+
+/* grant access to current user */
+-- tsql
+use test_sp_volatility_db1
+go
+grant execute on test_sp_volatility_schema2.test_sp_volatility_f1 to test_sp_volatility_user
+go
+grant execute on test_sp_volatility_f2 to test_sp_volatility_user
+go
+
+-- tsql      user=test_sp_volatility_login password='abc'
+use test_sp_volatility_db1
+go
+exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1'
+go
+exec sys.sp_volatility 'test_sp_volatility_f2'
+go
+exec sys.sp_volatility
+go
+
 /* test for default schema */
+-- tsql 
+use test_sp_volatility_db1
+go
+ALTER USER test_sp_volatility_user WITH DEFAULT_SCHEMA=test_sp_volatility_schema2
+GO
+
 -- tsql      user=test_sp_volatility_login password='abc'
 use test_sp_volatility_db1
 go
@@ -157,6 +195,16 @@ exec sys.sp_volatility 'dbo.test_sp_volatility_f2'
 go
 exec sys.sp_volatility
 go
+
+/* revoke the priviledges to the user */
+-- tsql
+use test_sp_volatility_db1
+go
+revoke execute on test_sp_volatility_schema2.test_sp_volatility_f1 from test_sp_volatility_user
+go
+revoke execute on test_sp_volatility_f2 from test_sp_volatility_user
+go
+
 
 -- psql
 -- Need to terminate active session before cleaning up the login

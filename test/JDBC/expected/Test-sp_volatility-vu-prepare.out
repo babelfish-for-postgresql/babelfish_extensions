@@ -44,6 +44,3 @@ go
 
 CREATE USER test_sp_volatility_user FOR LOGIN test_sp_volatility_login
 GO
-
-ALTER USER test_sp_volatility_user WITH DEFAULT_SCHEMA=test_sp_volatility_schema2
-GO
