@@ -584,7 +584,7 @@ varchar(PG_FUNCTION_ARGS)
 	/* Encode the input string encoding to UTF8(server) encoding */
 	resStr = encoding_conv_util(tmp, maxmblen, collInfo.enc, PG_UTF8, &encodedByteLen);
 
-	if (tmp && s_data != tmp)
+	if (tmp && s_data != tmp && tmp != resStr)
 		pfree(tmp);
 
 	/* Output of encoding_conv_util() would always be NULL terminated So we can use cstring_to_text directly. */
