@@ -2384,6 +2384,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if (strcmp(headel->defname, "islogin") == 0)
 					{
+						bool from_windows = false;
+						char *orig_loginname = NULL;
+
 						islogin = true;
 						stmt->options = list_delete_cell(stmt->options,
 														 list_head(stmt->options));
@@ -2396,12 +2399,91 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "default_database") == 0)
 								login_options = lappend(login_options, defel);
+							else if (strcmp(defel->defname, "name_location") == 0)
+							{
+								int location = defel->location;
+								orig_loginname = extract_identifier(queryString + location);
+								login_options = lappend(login_options, defel);
+							}
+							else if (strcmp(defel->defname, "from_windows") == 0)
+							{
+								from_windows = true;
+								login_options = lappend(login_options, defel);
+							}
 						}
 
 						foreach(option, login_options)
 						{
 							stmt->options = list_delete_ptr(stmt->options,
 															lfirst(option));
+						}
+
+						if (orig_loginname)
+						{
+							login_options = lappend(login_options, 
+													makeDefElem("original_login_name",
+																(Node *) makeString(orig_loginname),
+																-1));
+						}
+
+						if (from_windows && orig_loginname)
+						{
+							/*
+							 * The login name must contain '\' if it is windows login or else throw error.
+							 */
+							if ((strchr(orig_loginname, '\\')) == NULL)
+								ereport(ERROR,
+										(errcode(ERRCODE_INVALID_NAME),
+										 errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
+										 orig_loginname)));
+
+							/*
+							 * Check whether domain name is empty. If the first character is '\', that ensures domain is empty.
+							 */
+							if (orig_loginname[0] == '\\')
+								ereport(ERROR,
+									(errcode(ERRCODE_INVALID_NAME),
+									 errmsg("The login name '%s' is invalid. The domain can not be empty.",
+											orig_loginname)));
+
+							/*
+							 * Check whether login_name has valid length or not.
+							 */
+							if (!check_windows_logon_length(orig_loginname))
+								ereport(ERROR,
+										(errcode(ERRCODE_INVALID_NAME),
+										 errmsg("The login name '%s' has invalid length. Login name length should be between %d and %d for windows login.",
+											orig_loginname, (LOGON_NAME_MIN_LEN + 1), (LOGON_NAME_MAX_LEN - 1))));
+
+							/*
+							 * Check whether the login_name contains invalid characters or not.
+							 */
+							if (windows_login_contains_invalid_chars(orig_loginname))
+								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+
+							pfree(stmt->role);
+							stmt->role = convertToUPN(orig_loginname);
+
+							/*
+							* Check for duplicate login
+							*/
+							if (get_role_oid(stmt->role, true) != InvalidOid)
+						  		ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
+									errmsg("The Server principal '%s' already exists", stmt->role)));
+						}
+
+						/*
+						 * Length of login name should be less than 128. Throw an error
+						 * here if it is not.
+						 * XXX: Below check is to work around BABEL-3868.
+						 */
+						if (strlen(stmt->role) >= NAMEDATALEN)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_NAME),
+									 errmsg("The login name '%s' is too long. Maximum length is %d.",
+											stmt->role, (NAMEDATALEN - 1))));
 						}
 					}
 					else if (strcmp(headel->defname, "isuser") == 0)
@@ -2907,7 +2989,23 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (HeapTupleIsValid(tuple))
 						roleform = (Form_pg_authid) GETSTRUCT(tuple);
 					else
-						continue;
+					{
+						/* Supplied login name might be in windows format i.e, domain\login form */
+						tuple = get_roleform_ext(role_name);
+						if (HeapTupleIsValid(tuple))
+						{
+							roleform = (Form_pg_authid) GETSTRUCT(tuple);
+							/*
+							 * This means that provided login name is in windows format 
+							 * so let's update role_name with UPN format.
+							 */
+							role_name = pstrdup((roleform->rolname).data);
+							pfree(rolspec->rolename);
+							rolspec->rolename = role_name;
+						}
+						else
+							continue;
+					}
 
 					if (is_login(roleform->oid))
 						all_logins = true;

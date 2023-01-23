@@ -47,6 +47,11 @@ tsql_CreateLoginStmt:
 										 makeDefElem("canlogin",
 													 (Node *)makeBoolean(true),
 													 @1));
+					n->options = lappend(n->options,
+										 makeDefElem("name_location",
+													 (Node *)makeInteger(@3),
+													 @3));
+					n->options = list_concat(n->options, $5);
 					$$ = (Node *)n;
 				}
 			| CREATE TSQL_LOGIN RoleId tsql_login_option_list1
@@ -73,6 +78,10 @@ tsql_CreateLoginStmt:
 										 makeDefElem("canlogin",
 													 (Node *)makeBoolean(true),
 													 @1));
+					n->options = lappend(n->options,
+										 makeDefElem("name_location",
+													 (Node *)makeInteger(@3),
+													 @3));
 					n->options = list_concat(n->options, $4);
 					$$ = (Node *)n;
 				}
@@ -148,19 +157,60 @@ opt_must_change:
 
 tsql_login_sources:
 			TSQL_WINDOWS
+				{
+					$$ = list_make1(makeDefElem("from_windows",
+												(Node *)makeBoolean(true),
+												@1));
+				}
 			| TSQL_WINDOWS WITH tsql_windows_options_list
+				{
+					DefElem *elem = makeDefElem("from_windows",
+												(Node *)makeBoolean(true),
+												@1);
+					if ($2 != NULL)
+					{
+						$$ = lcons(elem, $3);
+					}
+					else
+					{
+						$$ = list_make1(elem);
+					}
+				}
 			| TSQL_CERTIFICATE NonReservedWord
+				{
+					$$ = NIL;
+				}
 			| ASYMMETRIC KEY NonReservedWord
+				{
+					$$ = NIL;
+				}
 		;
 
 tsql_windows_options_list:
 			tsql_windows_options
+				{
+					$$ = list_make1($1);
+				}
 			| tsql_windows_options_list ',' tsql_windows_options
+				{
+					if ($3 != NULL)
+					{
+						$$ = lappend ($1, $3);
+					}
+				}
 		;
 
 tsql_windows_options:
 			TSQL_DEFAULT_DATABASE '=' NonReservedWord
+				{
+					$$ = makeDefElem("default_database",
+									 (Node *)makeString($3),
+									 @1);
+				}
 			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
+				{
+					$$ = NULL;
+				}
 		;
 
 /*

@@ -1,0 +1,54 @@
+-- psql
+select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext
+where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdbenglish@AD','userpassword','duplicate@BABEL','duplicatedefaultdb@BABEL',
+'كلب@BABEL','өглөө@BABEL','ελπίδα@BABEL','爱@BABEL');
+GO
+
+-- tsql
+select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext
+where orig_loginname in ('PassWordUser','ad\Aduser','ad\AduserdbEnglish','usErpassWord','babel\duplicate','babel\duplicatedefaultdb');
+GO
+
+-- tsql
+select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+GO
+select count(*) from sys.server_principals where name = 'passworduser';
+GO
+select count(*) from sys.server_principals where name = 'aduser@AD';
+GO
+select count(*) from sys.server_principals where name = 'aduserdb@AD';
+GO
+select count(*) from sys.server_principals where name = 'aduserdbenglish@AD';
+GO
+select count(*) from sys.server_principals where name = 'userpassword';
+GO
+select count(*) from sys.server_principals where name = 'duplicate@BABEL';
+GO
+select count(*) from sys.server_principals where name = 'duplicatedefaultdb@BABEL';
+GO
+
+-- psql
+select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+GO
+select count(*) from pg_authid where rolname = 'passworduser';
+GO
+select count(*) from pg_authid where rolname = 'aduser@AD';
+GO
+select count(*) from pg_authid where rolname = 'aduserdb@AD';
+GO
+select count(*) from pg_authid where rolname = 'aduserdbenglish@AD';
+GO
+select count(*) from pg_authid where rolname = 'userpassword';
+GO
+select count(*) from pg_authid where rolname = 'duplicate@BABEL';
+GO
+select count(*) from pg_authid where rolname = 'duplicatedefaultdb@BABEL';
+GO
+select count(*) from pg_authid where rolname = 'كلب@BABEL';
+GO
+select count(*) from pg_authid where rolname = 'өглөө@BABEL';
+GO
+select count(*) from pg_authid where rolname = 'ελπίδα@BABEL';
+GO
+select count(*) from pg_authid where rolname = '爱@BABEL';
+GO

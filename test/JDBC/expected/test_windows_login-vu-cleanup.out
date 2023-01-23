@@ -1,0 +1,85 @@
+DROP LOGIN PassWordUser;
+GO
+
+-- test for drop login with upn format
+DROP LOGIN [aduser@AD];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'aduser@ad', because it does not exist or you do not have permission.)~~
+
+
+DROP LOGIN [ad\adUSer];
+GO
+
+DROP LOGIN [ad\aduserDB];
+GO
+
+DROP LOGIN [ad\Aduserlanguage];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'ad\aduserlanguage', because it does not exist or you do not have permission.)~~
+
+
+DROP LOGIN [ad\Aduserdblanguage];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'ad\aduserdblanguage', because it does not exist or you do not have permission.)~~
+
+
+DROP LOGIN [ad\AduserdbEnglish];
+GO
+
+DROP LOGIN [ad\Aduseroption];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'ad\aduseroption', because it does not exist or you do not have permission.)~~
+
+
+DROP LOGIN [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', because it does not exist or you do not have permission.)~~
+
+
+-- test for non-existent login
+DROP LOGIN [babel\non_existent_login]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'babel\non_existent_login', because it does not exist or you do not have permission.)~~
+
+
+-- drop login with different casing
+DROP LOGIN UserPassword;
+GO
+
+DROP LOGIN [BabeL\DupLicate];
+GO
+
+DROP LOGIN [Babel\DuplicateDefaultDB];
+GO
+
+-- test drop logins for logins with different language names
+-- Arabic
+DROP LOGIN [babel\كلب];
+GO
+
+-- Mongolian
+DROP LOGIN [babel\өглөө];
+GO
+
+-- Greek
+DROP LOGIN [babel\ελπίδα];
+GO
+
+-- Chinese
+DROP LOGIN [babel\爱];
+GO
+
+DROP DATABASE ad_db;
+GO
