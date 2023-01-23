@@ -263,9 +263,9 @@ public class batch_run {
                         jdbcCrossDialect.terminatePsqlConnection(strLine, bw, logger);
                     }
                 } else {
+                    customSLA = strLine.toLowerCase().startsWith("-- sla");
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {
-                        customSLA = strLine.toLowerCase().startsWith("-- sla");
                         if (customSLA){
                             String[] tokens=strLine.split(" ");  
                             sla = Long.parseLong(tokens[2]);
