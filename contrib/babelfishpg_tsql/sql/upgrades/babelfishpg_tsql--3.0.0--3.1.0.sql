@@ -943,6 +943,22 @@ LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
+                                                        IN "@locallogin" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_droplinkedsrvlogin( IN sys.sysname,
+                                                      IN sys.sysname)
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                              IN "@locallogin" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
+
 -- Add one column to store definition of the function in the table.
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT DEFAULT NULL;

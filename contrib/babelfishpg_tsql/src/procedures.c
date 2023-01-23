@@ -57,6 +57,7 @@ PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
+PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_dropserver_internal);
 
 extern void delete_cached_batch(int handle);
@@ -2315,6 +2316,46 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	pfree(query.data);
 
 	return (Datum) 0;
+}
+
+Datum
+sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
+
+	StringInfoData query;
+
+	if (servername == NULL)
+		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("@servername cannot be NULL")));
+
+	if (locallogin != NULL)
+		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("Only @locallogin = NULL is supported")));
+	
+	initStringInfo(&query);
+
+	/*
+	 * We prepare the following query to drop a linked server login. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * DROP USER MAPPING FOR CURRENT_USER SERVER @SERVERNAME
+	 *
+	 */
+	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
+
+	exec_utility_cmd_helper(query.data);
+
+	if(locallogin)
+		pfree(locallogin);
+	
+	if(servername)
+		pfree(servername);
+  
+  	return (Datum) 0;
 }
 
 Datum
