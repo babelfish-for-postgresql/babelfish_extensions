@@ -432,7 +432,7 @@ RETURNS pg_catalog.bit
 AS $$
 SELECT (leftarg & ~rightarg) | (~leftarg & rightarg);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.bit_unsupported_max(IN b1 sys.BIT, IN b2 sys.BIT)
 RETURNS sys.BIT
