@@ -1153,14 +1153,19 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
 	return (db_id_from_schema == db_id);
 }
 
+/*
+ * tsql_get_proc_nsp_oid
+ * Given Oid of pg_proc entry return namespace_oid
+ * Returns InvalidOid if Oid is not found
+ */
 Oid 
-tsql_get_proc_nsp_oid(Oid object_id, Oid user_id)
+tsql_get_proc_nsp_oid(Oid object_id)
 {
 	Oid namespace_oid = InvalidOid;
 	HeapTuple tuple;
 	bool isnull;
 
-	/* retrieve namespace oid in pg_proc by oid */
+	/* retrieve pronamespace in pg_proc by oid */
 	tuple = SearchSysCache1(PROCOID, CStringGetDatum(object_id));
 
 	if (HeapTupleIsValid(tuple))
@@ -1171,17 +1176,18 @@ tsql_get_proc_nsp_oid(Oid object_id, Oid user_id)
 		if(!isnull)
 		{
 			Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tuple);
-			if(OidIsValid(proc->oid))
-			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
-			{
-				namespace_oid = proc->pronamespace;
-			}
+			namespace_oid = proc->pronamespace;
 		}
 		ReleaseSysCache(tuple);
 	}
 	return namespace_oid;
 }
 
+/*
+ * tsql_get_constraint_nsp_oid
+ * Given Oid of pg_constraint entry return namespace_oid
+ * Returns InvalidOid if Oid is not found
+ */
 Oid 
 tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
 
@@ -1189,7 +1195,7 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
 	HeapTuple tuple;
 	bool isnull;
 
-	/* retrieve namespace oid in pg_proc by oid */
+	/* retrieve connamespace in pg_proc by oid */
 	tuple = SearchSysCache1(CONSTROID, CStringGetDatum(object_id));
 
 	if (HeapTupleIsValid(tuple))
@@ -1216,17 +1222,22 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
 	}
 	return namespace_oid;
 }
-
+/*
+ * tsql_get_trigger_rel_oid
+ * Given Oid of pg_trigger entry return Oid of table
+ * the trigger is on
+ * Returns InvalidOid if Oid is not found
+ */
 Oid 
-tsql_get_trigger_nsp_oid(Oid object_id, Oid user_id){
+tsql_get_trigger_rel_oid(Oid object_id){
 
 	Relation		tgrel;
 	ScanKeyData 	key[1];
 	SysScanDesc 	tgscan;
 	HeapTuple		tuple;
-	Oid namespace_oid = InvalidOid;
+	Oid tgrelid = InvalidOid;
 
-	/* first search in pg_trigger by name */
+	/* retrieve tgrelid in pg_trigger by oid */
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&key[0],
 				Anum_pg_trigger_oid,
@@ -1238,23 +1249,10 @@ tsql_get_trigger_nsp_oid(Oid object_id, Oid user_id){
 
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
-		/* 
-		 * since pg_trigger does not contain namespace oid, we use 
-		 * the fact that the schema name of the trigger should be same 
-		 * as that of the table it is associated with 
-		 */
-		
 		Form_pg_trigger trig = (Form_pg_trigger) GETSTRUCT(tuple);
-		Oid relid = trig->tgrelid;
-		if(OidIsValid(relid))
-		{
-			if (pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
-			{
-				namespace_oid = get_rel_namespace(relid);
-			}
-		}
+		tgrelid = trig->tgrelid;
 	}
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
-	return namespace_oid;
+	return tgrelid;
 }

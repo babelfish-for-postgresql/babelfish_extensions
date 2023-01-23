@@ -1822,7 +1822,7 @@ object_schema_name(PG_FUNCTION_ARGS)
 	Oid database_id;
 	Oid	user_id = GetUserId();
 	Oid namespace_oid = InvalidOid;
-	Oid relid = InvalidOid;
+	Oid temp_nspid = InvalidOid;
 	char* namespace_name;
 	const char* schema_name;
 
@@ -1837,45 +1837,54 @@ object_schema_name(PG_FUNCTION_ARGS)
 		database_id = (Oid) PG_GETARG_INT32(1);
 		user_id = GetSessionUserId();
 	}
-
-	/* if user inputs invalid database_id */
-	if (!DbidIsValid(database_id))
-		PG_RETURN_NULL();
 	
 	/* lookup namespace_oid in pg_class */
-	relid = get_rel_namespace(object_id);
-	if(OidIsValid(relid) && 
-		pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
-	{
-		namespace_oid = relid;
+	temp_nspid = get_rel_namespace(object_id);
+	if(OidIsValid(temp_nspid)){
+		if(pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+			namespace_oid = temp_nspid;
+		else
+			PG_RETURN_NULL();
 	}
-	
-	if (!OidIsValid(namespace_oid)) /* if not found earlier */
-	{
+	if (!OidIsValid(namespace_oid)){  /* if not found earlier */
+		/* Lookup namespace_oid in pg_proc */
+		temp_nspid = tsql_get_proc_nsp_oid(object_id);
+		if(OidIsValid(temp_nspid)){
+			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+				namespace_oid = temp_nspid;
+			else
+				PG_RETURN_NULL();
+		}
+	}
+	if (!OidIsValid(namespace_oid)){  /* if not found earlier */
+		/* Lookup namespace_oid in pg_trigger */
+		temp_nspid = tsql_get_trigger_rel_oid(object_id);
+		if(OidIsValid(temp_nspid))
+		{
+			/*
+			 * Since pg_trigger does not contain namespace oid, we use
+			 * the fact that the schema name of the trigger should be same
+			 * as that of the table the trigger is on
+			 */
+			if (pg_class_aclcheck(temp_nspid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				namespace_oid = get_rel_namespace(temp_nspid);
+			else
+				PG_RETURN_NULL();
+		}
+	}
+	if (!OidIsValid(namespace_oid)){ /* if not found earlier */
 		/* Lookup namespace_oid in pg_constraint */
 		namespace_oid = tsql_get_constraint_nsp_oid(object_id, user_id);
-	
-	}
-	if (!OidIsValid(namespace_oid))  /* if not found earlier */
-	{
-		/* Lookup namespace_oid in pg_proc */
-		namespace_oid = tsql_get_proc_nsp_oid(object_id, user_id);
-	}
-	if (!OidIsValid(namespace_oid))  /* if not found earlier */
-	{
-		/* Lookup namespace_oid in pg_trigger */
-		namespace_oid = tsql_get_trigger_nsp_oid(object_id, user_id);
 	}
 
 	/* Find schema name from namespace_oid */
 	if (OidIsValid(namespace_oid)){
 		namespace_name = get_namespace_name(namespace_oid);
-
 		if (pg_namespace_aclcheck(namespace_oid, user_id, ACL_USAGE) != ACLCHECK_OK ||
+		/* database_id should be same as that of db_id of physical schema name*/
 			database_id != get_dbid_from_physical_schema_name(namespace_name, true))
 				PG_RETURN_NULL();
-
-		schema_name = pstrdup(get_logical_schema_name(namespace_name, true));
+		schema_name = get_logical_schema_name(namespace_name, true);
 		pfree(namespace_name);
 		PG_RETURN_TEXT_P(cstring_to_text(schema_name));
 	}
