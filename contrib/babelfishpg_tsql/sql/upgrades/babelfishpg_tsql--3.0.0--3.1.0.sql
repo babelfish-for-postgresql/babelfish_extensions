@@ -1107,8 +1107,6 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
-<<<<<<< HEAD
-=======
 CREATE OR REPLACE FUNCTION sys.DBTS()
 RETURNS sys.ROWVERSION AS
 $$
@@ -1126,7 +1124,6 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
->>>>>>> upstream/BABEL_3_X_DEV
 CREATE OR REPLACE PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
                                                     IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
 AS 'babelfishpg_tsql', 'sp_dropserver_internal'
