@@ -5,10 +5,10 @@ GO
 DROP LOGIN [aduser@AD];
 GO
 
-DROP LOGIN [ad\Aduser];
+DROP LOGIN [ad\adUSer];
 GO
 
-DROP LOGIN [ad\Aduserdb];
+DROP LOGIN [ad\aduserDB];
 GO
 
 DROP LOGIN [ad\Aduserlanguage];
@@ -38,6 +38,23 @@ DROP LOGIN [BabeL\DupLicate];
 GO
 
 DROP LOGIN [Babel\DuplicateDefaultDB];
+GO
+
+-- test drop logins for logins with different language names
+-- Arabic
+DROP LOGIN [babel\كلب];
+GO
+
+-- Mongolian
+DROP LOGIN [babel\өглөө];
+GO
+
+-- Greek
+DROP LOGIN [babel\ελπίδα];
+GO
+
+-- Chinese
+DROP LOGIN [babel\爱];
 GO
 
 DROP DATABASE ad_db;

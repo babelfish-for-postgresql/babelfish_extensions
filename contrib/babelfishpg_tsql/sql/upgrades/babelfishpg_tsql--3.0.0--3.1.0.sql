@@ -38,8 +38,6 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
-ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN IF NOT EXISTS orig_loginname SYS.NVARCHAR(128) DEFAULT NULL;
-
 create or replace view sys.views as 
 select 
   t.relname as name
@@ -1137,6 +1135,13 @@ CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_t
 RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
+
+
+ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN IF NOT EXISTS orig_loginname SYS.NVARCHAR(128);
+
+UPDATE sys.babelfish_authid_login_ext SET orig_loginname = rolname WHERE orig_loginname IS NULL;
+
+ALTER TABLE sys.babelfish_authid_login_ext ALTER COLUMN orig_loginname SET NOT NULL;
 
 CREATE OR REPLACE FUNCTION sys.DBTS()
 RETURNS sys.ROWVERSION AS
