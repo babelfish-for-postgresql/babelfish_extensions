@@ -434,6 +434,15 @@ dbo
 ~~END~~
 
 
+-- wrong database_id passed should return NULL
+SELECT OBJECT_SCHEMA_NAME(OBJECT_ID('master.dbo.babel_733_con1'),2147483647);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 -- tsql
 -- revoke permission
 USE master;
