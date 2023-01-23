@@ -58,6 +58,40 @@ babel_object_name_primary_keyba94b55ca598e66970e6936b997f0be82e
 ~~END~~
 
 
+-- Negative values/ out of range values
+SELECT OBJECT_NAME(-123)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_trg_view'), -123)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- max value
+SELECT OBJECT_NAME(2147483647)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- greater than max allowed value
+SELECT OBJECT_NAME(2147483648)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
 -- To test temp object
 CREATE TABLE #babel_object_name_temp_t1 (a int);
 GO

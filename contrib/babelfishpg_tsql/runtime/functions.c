@@ -1217,7 +1217,8 @@ object_id(PG_FUNCTION_ARGS)
 Datum
 object_name(PG_FUNCTION_ARGS)
 {
-	Oid 				object_id = PG_GETARG_OID(0);
+	int32 				input1 = PG_GETARG_INT32(0);
+	Oid 				object_id;
 	Oid 				database_id;
 	Oid 				user_id = GetUserId();
 	Oid				schema_id = InvalidOid;
@@ -1229,15 +1230,22 @@ object_name(PG_FUNCTION_ARGS)
 	bool 				found = false;
 	char 				*result = NULL;
 
+	if(input1 < 0)
+		PG_RETURN_NULL();
+	object_id = (Oid) input1;
 	if (!PG_ARGISNULL(1)) /* if database id is provided */
 	{
-		database_id = PG_GETARG_OID(1);
+		int32  input2 = PG_GETARG_INT32(1);
+		if(input2 < 0)
+			PG_RETURN_NULL();
+		database_id = (Oid) input2;
 		if (database_id != get_cur_db_id()) /* cross-db lookup */
 		{	
 			char *db_name = get_db_name(database_id);
 			if (db_name == NULL) /* database doesn't exist with given oid */
 				PG_RETURN_NULL();
 			user_id = GetSessionUserId();
+			pfree(db_name);
 		}
 	}
 	else	/* by default lookup in current database */

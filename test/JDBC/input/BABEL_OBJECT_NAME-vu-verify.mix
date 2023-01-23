@@ -23,6 +23,21 @@ GO
 SELECT * FROM babel_object_name_constraint_view
 GO
 
+-- Negative values/ out of range values
+SELECT OBJECT_NAME(-123)
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_trg_view'), -123)
+GO
+
+-- max value
+SELECT OBJECT_NAME(2147483647)
+GO
+
+-- greater than max allowed value
+SELECT OBJECT_NAME(2147483648)
+GO
+
 -- To test temp object
 CREATE TABLE #babel_object_name_temp_t1 (a int);
 GO
