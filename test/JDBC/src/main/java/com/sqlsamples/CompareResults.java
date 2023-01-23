@@ -135,7 +135,7 @@ public class CompareResults {
     }
 
     // processes all the results sequentially that we get from executing a JDBC Statement
-    static void processResults(Statement stmt, BufferedWriter bw, int resultsProcessed, boolean resultSetExist,  Logger logger) {
+    static void processResults(Statement stmt, BufferedWriter bw, int resultsProcessed, boolean resultSetExist, boolean warningExist, Logger logger) {
         int updateCount = -9;  // initialize to impossible value
 
         while (true) {
@@ -156,16 +156,14 @@ public class CompareResults {
             if ((!resultSetExist) && (updateCount == -1)) {
                 break;
             }
-            
-            try{
-                if (stmt.getWarnings() != null) {
+            if (warningExist) {
+                try{
                     SQLWarning sqlwarn = stmt.getWarnings();
                     writeWarningToFile(bw, sqlwarn, logger);
-                }
-            } catch (SQLException e){
-                handleSQLExceptionWithFile(e, bw, logger);
+                } catch (SQLException e) {
+                    handleSQLExceptionWithFile(e, bw, logger);
+                }      
             }
-            
             if (resultSetExist) {
                 try (ResultSet rs = stmt.getResultSet()) {
                     writeResultSetToFile(bw, rs, logger);
