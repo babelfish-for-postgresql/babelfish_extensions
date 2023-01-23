@@ -185,6 +185,13 @@ BEGIN
 
   ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
 
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                              IN "@locallogin" sys.sysname)
+  AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+  LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
+
   CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
                                                     IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
   AS 'babelfishpg_tsql', 'sp_dropserver_internal'
