@@ -46,7 +46,7 @@ RETURNS INT8 AS $$
 BEGIN
   RETURN CAST(round(arg) AS INT8);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 -- fixeddecimal -> int8
 CREATE OR REPLACE FUNCTION sys._round_fixeddecimal_to_int4(In arg sys.fixeddecimal)
@@ -54,7 +54,7 @@ RETURNS INT4 AS $$
 BEGIN
   RETURN CAST(round(arg) AS INT4);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 -- fixeddecimal -> int8
 CREATE OR REPLACE FUNCTION sys._round_fixeddecimal_to_int2(In arg sys.fixeddecimal)
@@ -62,7 +62,7 @@ RETURNS INT2 AS $$
 BEGIN
   RETURN CAST(round(arg) AS INT2);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 -- numeric -> int8
 CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int8(In arg numeric)
@@ -70,7 +70,7 @@ RETURNS INT8 AS $$
 BEGIN
   RETURN CAST(trunc(arg) AS INT8);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 -- numeric -> int4
 CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int4(In arg numeric)
@@ -78,7 +78,7 @@ RETURNS INT4 AS $$
 BEGIN
   RETURN CAST(trunc(arg) AS INT4);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 -- numeric -> int2
 CREATE OR REPLACE FUNCTION sys._trunc_numeric_to_int2(In arg numeric)
@@ -86,7 +86,7 @@ RETURNS INT2 AS $$
 BEGIN
   RETURN CAST(trunc(arg) AS INT2);
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 -- text -> fixeddecimal
 CREATE FUNCTION sys.char_to_fixeddecimal(text)

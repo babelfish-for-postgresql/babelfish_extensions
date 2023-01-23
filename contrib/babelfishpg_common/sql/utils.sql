@@ -13,7 +13,7 @@ RETURNS table (
   type_family_priority smallint,
   priority smallint,
   sql_variant_hdr_size smallint
-) AS 'babelfishpg_common', 'typecode_list' LANGUAGE C;
+) AS 'babelfishpg_common', 'typecode_list' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.translate_pg_type_to_tsql(pgoid oid) RETURNS TEXT
 AS 'babelfishpg_common', 'translate_pg_type_to_tsql'

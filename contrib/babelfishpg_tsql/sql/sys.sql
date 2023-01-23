@@ -7,19 +7,19 @@ GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
 CREATE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
     -- Casting to text as there are not type cast function from timestamptz to datetimeoffset
     AS $$select cast(cast(clock_timestamp() as text) as sys.datetimeoffset);$$
-    LANGUAGE SQL;
+    LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC; 
 
 
 CREATE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
     AS $$select (clock_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
-    LANGUAGE SQL;
+    LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC; 
 
 
 CREATE FUNCTION sys.getdate() RETURNS sys.datetime
     AS $$select date_trunc('millisecond', clock_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
-    LANGUAGE SQL;
+    LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC; 
 
 
@@ -32,67 +32,67 @@ GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
 CREATE FUNCTION sys.isnull(text,text) RETURNS text AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(text,text) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(boolean,boolean) RETURNS boolean AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(boolean,boolean) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(smallint,smallint) RETURNS smallint AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(smallint,smallint) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(integer,integer) RETURNS integer AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(integer,integer) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(bigint,bigint) RETURNS bigint AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(bigint,bigint) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(real,real) RETURNS real AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(real,real) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(double precision, double precision) RETURNS double precision AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(double precision, double precision) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(numeric,numeric) RETURNS numeric AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(numeric,numeric) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(date, date) RETURNS date AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(date,date) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(timestamp,timestamp) RETURNS timestamp AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(timestamp,timestamp) TO PUBLIC;
 
 CREATE FUNCTION sys.isnull(timestamp with time zone,timestamp with time zone) RETURNS timestamp with time zone AS $$
   SELECT COALESCE($1,$2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.isnull(timestamp with time zone,timestamp with time zone) TO PUBLIC;
 
 /* Tsql tables */
