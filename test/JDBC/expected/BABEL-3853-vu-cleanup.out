@@ -1,0 +1,19 @@
+-- tsql
+USE master;
+GO
+
+DROP TABLE babel_object_id_t1
+GO
+
+DROP USER babel_object_id_master_user1
+GO
+
+DROP LOGIN babel_object_id_login1;
+GO
+
+DROP USER babel_object_id_master_user2
+GO
+
+DROP LOGIN babel_object_id_login2;
+GO
+

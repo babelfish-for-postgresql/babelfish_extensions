@@ -1,0 +1,56 @@
+
+-- tsql      user=babel_object_id_login1 password=12345678
+-- Create table with scope identity and Two logins and two users.
+-- One login granted with INSERT authority should be able to see SCOPE_IDENTITY value.
+-- Other login should not.
+USE master
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_id_master_user1
+~~END~~
+
+
+INSERT INTO babel_object_id_t1(b) VALUES(1);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT SCOPE_IDENTITY()
+GO
+~~START~~
+numeric
+1
+~~END~~
+
+
+-- tsql      user=babel_object_id_login2 password=12345678
+-- A login without INSERT authority on table should not see SCOPE_IDENTITY() value
+USE master
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_id_master_user2
+~~END~~
+
+
+INSERT INTO babel_object_id_t1(b) VALUES(2);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_object_id_t1)~~
+
+
+SELECT SCOPE_IDENTITY()
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
