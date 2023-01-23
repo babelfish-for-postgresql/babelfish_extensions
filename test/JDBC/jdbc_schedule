@@ -17,6 +17,10 @@ ignore#!#tds_faultinjection
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
 
+#TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
+ignore#!#tds_faultinjection
+ignore#!#babel_tds_fault_injection
+
 # Ignore Upgrade related tests
 ignore#!#BABEL-2983_upgrade
 ignore#!#BABEL-2687_upgrade
