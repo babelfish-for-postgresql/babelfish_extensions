@@ -446,6 +446,7 @@ FROM pg_foreign_server AS f
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
+
 CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
             CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
@@ -703,13 +704,19 @@ BEGIN
         SELECT CASE
             WHEN cs_as_sub_securable_class = 'column'
                 THEN CASE 
-                    WHEN (SELECT count(name) 
-                        FROM sys.all_columns 
-                        WHERE name = cs_as_sub_securable COLLATE sys.database_default
-                            -- Use V as the object type to specify that the securable is table-like.
-                            -- We do not know that the securable is a view, but object_id behaves the 
-                            -- same for differint table-like types, so V can be arbitrarily chosen.
-                            AND object_id = sys.object_id(cs_as_securable, 'V')) = 1
+                    WHEN (SELECT count(a.attname)
+                        FROM pg_attribute a
+                        INNER JOIN pg_class c ON c.oid = a.attrelid
+                        INNER JOIN pg_namespace s ON s.oid = c.relnamespace
+                        WHERE
+                        a.attname = cs_as_sub_securable COLLATE sys.database_default
+                        AND c.relname = object_name COLLATE sys.database_default
+                        AND s.nspname = pg_schema COLLATE sys.database_default
+                        AND NOT a.attisdropped
+                        AND (s.nspname IN (SELECT nspname FROM sys.babelfish_namespace_ext) OR s.nspname = 'sys')
+                        -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+                        AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+                        AND a.attnum > 0) = 1
                                 THEN 'column'
                     ELSE NULL
                 END
@@ -1130,6 +1137,22 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
+                                                    IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_dropserver_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
+                                                    IN "@droplogins" sys.bpchar(10))
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
+                                                    IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_dropserver_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
