@@ -264,15 +264,15 @@ public class batch_run {
                     }
                 } else {
                     customSLA = strLine.toLowerCase().startsWith("-- sla");
+                    if (customSLA){
+                        String[] tokens=strLine.split(" ");  
+                        sla = Long.parseLong(tokens[2]);
+                        sla = sla*(1000000L);
+                        continue;
+                    }
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {
-                        if (customSLA){
-                            String[] tokens=strLine.split(" ");  
-                            sla = Long.parseLong(tokens[2]);
-                            sla = sla*(1000000L);
-                            continue;
-                        }
-                        else if (!strLine.equalsIgnoreCase("GO")) {
+                        if (!strLine.equalsIgnoreCase("GO")) {
                             sqlBatch.append(strLine).append(System.lineSeparator());
                             continue;
                         } else {
