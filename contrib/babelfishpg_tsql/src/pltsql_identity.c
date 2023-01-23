@@ -282,12 +282,6 @@ last_identity_value(void)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("last identity not valid")));
 
-	if (pg_class_aclcheck(last_used_seq_identity->relid, GetUserId(),
-						  ACL_SELECT | ACL_USAGE) != ACLCHECK_OK)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied for sequence")));
-
 	return last_used_seq_identity->last_identity;
 }
 
