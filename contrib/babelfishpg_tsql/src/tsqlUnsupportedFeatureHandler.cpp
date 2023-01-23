@@ -905,9 +905,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_login(TSqlParser::C
 	if (ctx->MUST_CHANGE())
 		handle(INSTR_UNSUPPORTED_TSQL_LOGIN_PASSWORD_MUST_CHANGE, ctx->MUST_CHANGE(), &st_escape_hatch_login_password_must_change);
 
-	if (ctx->WINDOWS())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_MISC_OPTIONS, ctx->WINDOWS(), &st_escape_hatch_login_misc_options);
-
 	if (ctx->CERTIFICATE())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_MISC_OPTIONS, ctx->CERTIFICATE(), &st_escape_hatch_login_misc_options);
 

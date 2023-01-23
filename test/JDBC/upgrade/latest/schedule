@@ -368,6 +368,7 @@ atn2
 case_insensitive_collation
 ISC-sequences
 jira-BABEL-3504-upgrade
+test_windows_login
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID
