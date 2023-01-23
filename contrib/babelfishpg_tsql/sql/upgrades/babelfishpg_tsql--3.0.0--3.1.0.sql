@@ -965,6 +965,21 @@ GRANT EXECUTE ON PROCEDURE sys.babelfish_remove_domain_mapping_entry TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.babelfish_truncate_domain_mapping_table()
   AS 'babelfishpg_tsql', 'babelfish_truncate_domain_mapping_table_internal' LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.babelfish_truncate_domain_mapping_table TO PUBLIC;
+CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
+                                                        IN "@locallogin" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_droplinkedsrvlogin( IN sys.sysname,
+                                                      IN sys.sysname)
+TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                              IN "@locallogin" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
 
 -- Add one column to store definition of the function in the table.
 SET allow_system_table_mods = on;
