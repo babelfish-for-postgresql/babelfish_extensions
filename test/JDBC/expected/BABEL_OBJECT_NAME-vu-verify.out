@@ -54,7 +54,7 @@ SELECT * FROM babel_object_name_constraint_view
 GO
 ~~START~~
 varchar
-babel_object_name_primary_keyba94b55ca598e66970e6936b997f0be82e
+babel_object_name_constraint
 ~~END~~
 
 
@@ -166,6 +166,11 @@ GO
 ~~ROW COUNT: 1~~
 
 
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_constraint'));
+GO
+~~ROW COUNT: 1~~
+
+
 -- give access
 GRANT ALL ON babel_object_name_store_OID TO babel_object_name_master_user1;
 GO
@@ -180,6 +185,9 @@ GRANT EXECUTE ON BABEL_OBJECT_NAME_func1 TO babel_object_name_master_user1;
 GO
 
 GRANT SELECT ON babel_object_name_v1 TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_t_pk TO babel_object_name_master_user1;
 GO
 
 -- tsql      user=babel_object_name_login1 password=12345678
@@ -204,6 +212,7 @@ babel_object_name_trg
 babel_object_name_proc1
 babel_object_name_func1
 babel_object_name_v1
+babel_object_name_constraint
 ~~END~~
 
 
@@ -229,6 +238,7 @@ babel_object_name_trg
 babel_object_name_proc1
 babel_object_name_func1
 babel_object_name_v1
+babel_object_name_constraint
 ~~END~~
 
 
@@ -251,12 +261,16 @@ GO
 REVOKE SELECT ON babel_object_name_v1 FROM babel_object_name_master_user1;
 GO
 
+REVOKE SELECT ON babel_object_name_t_pk FROM babel_object_name_master_user1;
+GO
+
 -- tsql      user=babel_object_name_login1 password=12345678
 -- should return null
 SELECT OBJECT_NAME(a) FROM master..babel_object_name_store_OID
 GO
 ~~START~~
 varchar
+<NULL>
 <NULL>
 <NULL>
 <NULL>
@@ -269,6 +283,7 @@ SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
 GO
 ~~START~~
 varchar
+<NULL>
 <NULL>
 <NULL>
 <NULL>

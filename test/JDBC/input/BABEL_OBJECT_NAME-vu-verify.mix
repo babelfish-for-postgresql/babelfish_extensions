@@ -82,6 +82,9 @@ GO
 INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_v1'));
 GO
 
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_constraint'));
+GO
+
 -- give access
 GRANT ALL ON babel_object_name_store_OID TO babel_object_name_master_user1;
 GO
@@ -96,6 +99,9 @@ GRANT EXECUTE ON BABEL_OBJECT_NAME_func1 TO babel_object_name_master_user1;
 GO
 
 GRANT SELECT ON babel_object_name_v1 TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_t_pk TO babel_object_name_master_user1;
 GO
 
 -- tsql      user=babel_object_name_login1 password=12345678
@@ -137,6 +143,9 @@ REVOKE EXECUTE ON BABEL_OBJECT_NAME_func1 FROM babel_object_name_master_user1;
 GO
 
 REVOKE SELECT ON babel_object_name_v1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_name_t_pk FROM babel_object_name_master_user1;
 GO
 
 -- tsql      user=babel_object_name_login1 password=12345678

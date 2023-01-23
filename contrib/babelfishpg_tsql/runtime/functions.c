@@ -1171,20 +1171,14 @@ object_id(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* search in pg_constraint by name and schema oid */
-			result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
-
-			if (!OidIsValid(result)) /* search only if not found earlier */
+			/* search in pg_class by name and schema oid */
+			Oid relid = get_relname_relid((const char *) object_name, schema_oid);
+			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
-				/* search in pg_class by name and schema oid */
-				Oid relid = get_relname_relid((const char *) object_name, schema_oid);
-				if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
-				{
-					result = relid;
-				} 
+				result = relid;
 			}
-
-			if (!OidIsValid(result))
+								
+			if (!OidIsValid(result))  /* search only if not found earlier */
 			{
 				/* search in pg_trigger by name and schema oid */
 				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
@@ -1194,6 +1188,12 @@ object_id(PG_FUNCTION_ARGS)
 			{
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
+			}
+
+			if (!OidIsValid(result))
+			{
+				 /* search in pg_constraint by name and schema oid */
+				result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
 			}
 		}
 	}
