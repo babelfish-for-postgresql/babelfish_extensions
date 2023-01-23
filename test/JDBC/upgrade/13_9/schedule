@@ -295,3 +295,4 @@ case_insensitive_collation
 sys-sql_modules_before-14_7
 sys-all_sql_modules_before-14_5
 BABEL_OBJECT_ID
+bbf_view_def-before-14_5

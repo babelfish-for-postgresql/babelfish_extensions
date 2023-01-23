@@ -2621,7 +2621,7 @@ CREATE TABLE t_ts(a timestamp);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: To use the TIMESTAMP datatype, set 'babelfishpg_tsql.escape_hatch_rowversion' to 'ignore')~~
 
 CREATE TABLE t_ts2(a pg_catalog.timestamp); -- it's fine
 GO
@@ -2631,13 +2631,13 @@ CREATE TABLE t_rv(a ROWVERSION);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ROWVERSION datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: To use the ROWVERSION datatype, set 'babelfishpg_tsql.escape_hatch_rowversion' to 'ignore')~~
 
 CREATE PROCEDURE p_t2 (@v timestamp) AS BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: To use the TIMESTAMP datatype, set 'babelfishpg_tsql.escape_hatch_rowversion' to 'ignore')~~
 
 SELECT @@DBTS;
 GO
@@ -2645,7 +2645,7 @@ GO
 binary
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: To use @@DBTS, set 'babelfishpg_tsql.escape_hatch_rowversion' to 'ignore')~~
 
 
 -- CREATE TYPE WITH (10788)
@@ -2963,13 +2963,13 @@ DECLARE @var_rowversion ROWVERSION;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ROWVERSION datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: To use the ROWVERSION datatype, set 'babelfishpg_tsql.escape_hatch_rowversion' to 'ignore')~~
 
 DECLARE @var_timestamp TIMESTAMP;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+~~ERROR (Message: To use the TIMESTAMP datatype, set 'babelfishpg_tsql.escape_hatch_rowversion' to 'ignore')~~
 
 DECLARE @var_hierarchyid HIERARCHYID;
 GO
