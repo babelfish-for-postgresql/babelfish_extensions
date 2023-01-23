@@ -23,7 +23,7 @@ babelfishpg_tsql.database_name = 'testdb'
 });
 $node->start;
 
-# Create user and a babelfish data but don't create babelfish extensions
+# Create user and a babelfish database but don't create babelfish extensions
 my $tsql_node = new TDSNode($node);
 $node->safe_psql('postgres', qq{CREATE USER test_master WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT});
 $node->safe_psql('postgres', qq{CREATE DATABASE testdb OWNER test_master});
