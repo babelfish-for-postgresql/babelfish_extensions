@@ -2355,7 +2355,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	if(servername)
 		pfree(servername);
   
-  return (Datum) 0;
+  	return (Datum) 0;
 }
 
 Datum
