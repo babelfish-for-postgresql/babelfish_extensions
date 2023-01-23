@@ -28,31 +28,31 @@ RETURNS sys.SYSNAME AS
 $BODY$
 	SELECT COALESCE(sys.user_name(), '');
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.system_user()
 RETURNS sys.nvarchar(128) AS
 $BODY$
 	SELECT sys.suser_name();
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.session_user()
 RETURNS sys.nvarchar(128) AS
 $BODY$
 	SELECT sys.user_name();
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_identity_param(IN tablename TEXT, IN optionname TEXT)
 RETURNS INT8
 AS 'babelfishpg_tsql', 'get_identity_param'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_identity_current(IN tablename TEXT)
 RETURNS INT8
 AS 'babelfishpg_tsql', 'get_identity_current'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 create or replace function sys.babelfish_get_id_by_name(object_name text)
 returns bigint as
@@ -63,7 +63,7 @@ begin
   return res;
 end;
 $BODY$
-language plpgsql returns null on null input;
+language plpgsql STABLE returns null on null input;
 
 create or replace function sys.babelfish_get_sequence_value(in sequence_name character varying)
 returns bigint as
@@ -75,12 +75,12 @@ begin
   return v_res;
 end;
 $BODY$
-language plpgsql returns null on null input;
+language plpgsql STABLE returns null on null input;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_login_default_db(IN login_name TEXT)
 RETURNS TEXT
 AS 'babelfishpg_tsql', 'bbf_get_login_default_db'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
@@ -256,7 +256,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
@@ -543,7 +543,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_dateval DATE)
@@ -557,7 +557,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_day NUMERIC,
@@ -625,7 +625,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_day TEXT,
@@ -641,7 +641,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE)
@@ -661,7 +661,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_dateval DATE)
@@ -675,7 +675,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_day NUMERIC,
@@ -757,7 +757,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_day TEXT,
@@ -773,7 +773,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE)
@@ -793,7 +793,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_date(IN p_datestring TEXT,
@@ -1182,7 +1182,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_datetime(IN p_datatype TEXT,
@@ -1772,7 +1772,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
@@ -1923,7 +1923,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT,
@@ -2101,7 +2101,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 create or replace function sys.babelfish_dbts()
@@ -2114,7 +2114,7 @@ begin
   return v_res;
 end;
 $BODY$
-language plpgsql;
+language plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_full_year(IN p_short_year TEXT,
                                                            IN p_base_century TEXT DEFAULT '',
@@ -2238,7 +2238,8 @@ BEGIN
 
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
 RETURNS JSONB
@@ -2354,7 +2355,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_microsecs_from_fractsecs(IN p_fractsecs TEXT,
                                                                           IN p_scale NUMERIC DEFAULT 7)
@@ -2465,7 +2466,8 @@ BEGIN
   RETURN settingValue;
 END;
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_timeunit_from_string(IN p_timepart TEXT,
                                                                       IN p_timeunit TEXT)
@@ -2574,7 +2576,8 @@ BEGIN
 	RETURN lComponentVersion;
 END;
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_weekdaynum_by_name(IN p_weekdayname TEXT,
                                                                     IN p_lang_metadata_json JSONB)
@@ -2628,7 +2631,8 @@ BEGIN
 	RETURN (result = 1);
 END;
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_is_spatial_present()
 RETURNS BOOLEAN AS
@@ -2646,7 +2650,8 @@ BEGIN
 	RETURN (result = 1);
 END;
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 create or replace function sys.babelfish_istime(v text)
 returns boolean
@@ -2660,7 +2665,8 @@ exception
    return false;
 end
 $body$
-language 'plpgsql';
+language 'plpgsql'
+STABLE;
 
 -- Remove single pair of either square brackets or double-quotes from outer ends if present
 -- If name begins with a delimiter but does not end with the matching delimiter return NULL
@@ -2698,7 +2704,8 @@ BEGIN
     RETURN name;
 END;
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_openxml(IN DocHandle BIGINT)
    RETURNS TABLE (XmlData XML)
@@ -2723,7 +2730,8 @@ BEGIN
                                                                              END;
 END;
 $BODY$
-LANGUAGE  plpgsql;
+LANGUAGE  plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_parse_to_date(IN p_datestring TEXT,
                                                            IN p_culture TEXT DEFAULT '')
@@ -3701,7 +3709,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_parse_to_datetime(IN p_datatype TEXT,
@@ -4759,7 +4767,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_parse_to_time(IN p_datatype TEXT,
@@ -5787,7 +5795,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 /* ***********************************************
@@ -5808,7 +5816,8 @@ EXTENSION PACK function ROUND3(arg1, arg2, arg3)
 	end if;
 END;
 $body$
-language plpgsql;
+language plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_round_fractseconds(IN p_fractseconds NUMERIC)
 RETURNS INTEGER
@@ -6689,7 +6698,8 @@ BEGIN
 
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_aws_del_jobschedule (
   par_job_id integer = NULL::integer,
@@ -6741,7 +6751,8 @@ BEGIN
 
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_delete_job (
   par_job_id integer = NULL::integer,
@@ -7393,7 +7404,8 @@ BEGIN
 
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 create or replace function sys.babelfish_sp_sequence_get_range(
   in par_sequence_name text,
@@ -7435,7 +7447,8 @@ begin
   par_range_last_value := sys.babelfish_get_sequence_value(par_sequence_name);
 end;
 $body$
-language plpgsql;
+language plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_set_next_run (
   par_job_id integer,
@@ -8580,7 +8593,8 @@ BEGIN
   RETURN;
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_job_date (
   par_date integer,
@@ -8598,7 +8612,8 @@ BEGIN
   RETURN;
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_job_identifiers (
   par_name_of_name_parameter varchar,
@@ -8687,7 +8702,8 @@ BEGIN
   RETURN;
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_job_time (
   par_time integer,
@@ -8740,7 +8756,8 @@ BEGIN
   RETURN;
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_jobstep (
   par_job_id integer,
@@ -8883,7 +8900,8 @@ BEGIN
   RETURN;
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_schedule (
   par_schedule_id integer,
@@ -9177,7 +9195,8 @@ BEGIN
   RETURN;
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_verify_schedule_identifiers (
   par_name_of_name_parameter varchar,
@@ -9269,7 +9288,8 @@ BEGIN
   RETURN;
 END;
 $body$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_xml_preparedocument(IN XmlDocument TEXT,OUT DocHandle BIGINT)
 AS
@@ -9346,7 +9366,8 @@ EXTENSION PACK function STRPOS3(x)
 	end if;
 END;
 $body$
-language plpgsql;
+language plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_tomsbit(in_str NUMERIC)
 RETURNS SMALLINT
@@ -9359,7 +9380,8 @@ BEGIN
   END CASE;
 END;
 $BODY$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_tomsbit(in_str VARCHAR)
 RETURNS SMALLINT
@@ -9373,7 +9395,8 @@ BEGIN
   END CASE;
 END;
 $BODY$
-LANGUAGE 'plpgsql';
+LANGUAGE 'plpgsql'
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_date_to_string(IN p_datatype TEXT,
                                                                      IN p_dateval DATE,
@@ -9391,7 +9414,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_datetime_to_string(IN p_datatype TEXT,
@@ -9412,7 +9435,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_date(IN p_datestring TEXT,
@@ -9429,7 +9452,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_datetime(IN p_datatype TEXT,
@@ -9448,7 +9471,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_string_to_time(IN p_datatype TEXT,
@@ -9467,7 +9490,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT,
@@ -9488,7 +9511,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 -- convertion to date
@@ -9507,7 +9530,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_date(IN arg anyelement,
                                                         IN try BOOL,
@@ -9524,7 +9547,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_date(IN arg anyelement)
 RETURNS DATE
@@ -9538,7 +9561,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 -- convertion to time
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN arg TEXT,
@@ -9556,7 +9579,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_time(IN arg anyelement,
                                                         IN try BOOL,
@@ -9573,7 +9596,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_time(IN arg anyelement)
 RETURNS TIME
@@ -9587,7 +9610,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 -- convertion to datetime
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg TEXT,
@@ -9605,7 +9628,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement)
@@ -9620,7 +9643,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 -- convertion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
@@ -9639,7 +9662,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg ANYELEMENT,
@@ -9657,7 +9680,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg TEXT,
@@ -9670,7 +9693,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
@@ -9696,7 +9719,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
 														IN arg TEXT,
@@ -9712,7 +9735,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
@@ -9728,7 +9751,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_parse_helper_to_date(IN arg TEXT, IN try BOOL, IN culture TEXT DEFAULT '')
 RETURNS DATE
@@ -9743,7 +9766,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_parse_helper_to_time(IN arg TEXT, IN try BOOL, IN culture TEXT DEFAULT '')
 RETURNS TIME WITHOUT TIME ZONE
@@ -9758,7 +9781,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_parse_helper_to_datetime(IN arg TEXT, IN try BOOL, IN culture TEXT DEFAULT '')
 RETURNS TIMESTAMP WITHOUT TIME ZONE
@@ -9773,7 +9796,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE;
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT,
 														IN p_moneyval PG_CATALOG.MONEY,
@@ -9831,7 +9854,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT,
@@ -9902,7 +9925,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_parse_to_date(IN p_datestring TEXT,
@@ -9918,7 +9941,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_parse_to_datetime(IN p_datatype TEXT,
@@ -9935,7 +9958,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_parse_to_time(IN p_datatype TEXT,
@@ -9952,7 +9975,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_update_job (
@@ -10039,7 +10062,7 @@ $BODY$
                                                         )::numeric
                                                       )/1000::numeric);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_waitfor_delay(time_to_pass TIMESTAMP WITHOUT TIME ZONE)
 RETURNS void AS
@@ -10054,7 +10077,7 @@ $BODY$
                                                         )::numeric
                                                       )/1000::numeric);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION babelfish_get_name_delimiter_pos(name TEXT)
 RETURNS INTEGER
@@ -10087,7 +10110,8 @@ BEGIN
     END IF;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 -- valid names are db_name.schema_name.object_name or schema_name.object_name or object_name
 CREATE OR REPLACE FUNCTION sys.babelfish_split_object_name(
@@ -10144,7 +10168,8 @@ BEGIN
     object_name = sys.babelfish_truncate_identifier(babelfish_remove_delimiter_pair(rtrim(lower_object_name)));
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_has_any_privilege(
     userid oid,
@@ -10200,7 +10225,8 @@ BEGIN
     RETURN 0;
 END
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 -- internal table function for sp_cursor_list and sp_decribe_cursor
 CREATE OR REPLACE FUNCTION sys.babelfish_cursor_list(cursor_source integer)
@@ -10220,7 +10246,7 @@ RETURNS table (
   last_operation smallint,
   cursor_handle int,
   cursor_source smallint
-) AS 'babelfishpg_tsql', 'cursor_list' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'cursor_list' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_datetimeoffset_tzoffset(SYS.DATETIMEOFFSET)
 RETURNS SMALLINT
@@ -10232,7 +10258,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_get_enr_list()
 RETURNS table (
   reloid int,
   relname text
-) AS 'babelfishpg_tsql', 'get_enr_list' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'get_enr_list' LANGUAGE C STABLE;
 
 -- internal table function for collation_list
 CREATE OR REPLACE FUNCTION sys.babelfish_collation_list()
@@ -10244,7 +10270,7 @@ RETURNS table (
   l3_priority int,
   l4_priority int,
   l5_priority int
-) AS 'babelfishpg_tsql', 'collation_list' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'collation_list' LANGUAGE C STABLE;
 
 -- internal function to truncate long identifier
 CREATE OR REPLACE FUNCTION sys.babelfish_truncate_identifier(IN object_name TEXT)
@@ -10291,4 +10317,4 @@ BEGIN
 	return n1;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
