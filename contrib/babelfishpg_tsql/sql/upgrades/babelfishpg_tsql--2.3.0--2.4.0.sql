@@ -157,25 +157,6 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
-AS $$
-BEGIN
-  IF sys.user_name() != 'dbo' THEN
-    RAISE EXCEPTION 'user does not have permission';
-  END IF;
-
-  IF lower("@resample") = 'resample' THEN
-    RAISE NOTICE 'ignoring resample option';
-  ELSIF lower("@resample") != 'no' THEN
-    RAISE EXCEPTION 'Invalid option name %', "@resample";
-  END IF;
-
-  ANALYZE;
-
-  CALL sys.printarg('Statistics for all tables have been updated. Refer logs for details.');
-END;
-$$ LANGUAGE plpgsql;
-GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.tsql_get_expr(IN text_expr text DEFAULT NULL , IN function_id OID DEFAULT NULL)
 RETURNS text AS 'babelfishpg_tsql', 'tsql_get_expr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
