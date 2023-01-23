@@ -101,12 +101,11 @@ pltsql_ns_additem(PLtsql_nsitem_type itemtype, int itemno, const char *name)
 	/* first item added must be a label */
 	Assert(ns_top != NULL || itemtype == PLTSQL_NSTYPE_LABEL);
 
-	nse = palloc(offsetof(PLtsql_nsitem, name) + strlen(name) + 1);
+	nse = palloc0(offsetof(PLtsql_nsitem, name) + strlen(name) + 1);
 	nse->itemtype = itemtype;
 	nse->itemno = itemno;
 	nse->prev = ns_top;
-	nse->name[0] = '\0';
-	strncat(nse->name, name, strlen(name));
+	memcpy(nse->name, name, strlen(name));
 	ns_top = nse;
 }
 
