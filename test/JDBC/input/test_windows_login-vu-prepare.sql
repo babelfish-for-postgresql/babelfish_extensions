@@ -130,3 +130,28 @@ GO
 CREATE LOGIN [Babel\DuplicateDefaultDB] from windows with default_database=[ad_db];
 GO
 
+-- test for empty domain name
+CREATE LOGIN [\adnodomain] from windows;
+GO
+
+
+-- test for login names with different language
+-- Arabic
+CREATE LOGIN [babel\كلب] from windows;
+GO
+
+-- Mongolian
+CREATE LOGIN [babel\өглөө] from windows;
+GO
+
+-- Greek
+CREATE LOGIN [babel\ελπίδα] from windows;
+GO
+
+-- Chinese
+CREATE LOGIN [babel\爱] from windows;
+GO
+
+-- test for windows login with password --> should throw error
+CREATE LOGIN [babel\adbabel] from windows with password='1234';
+GO

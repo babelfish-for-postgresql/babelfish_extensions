@@ -91,6 +91,19 @@ CREATE PROCEDURE babel_execute_as_caller_procedure_3 (@v int) WITH EXECUTE AS CA
 BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
 GO
 
+-- procedures with more than 1 argument and with-clause
+CREATE PROCEDURE babel_execute_as_caller_procedure_4 (@arg1 int, @arg2 varchar(10)) WITH EXECUTE AS CALLER AS
+BEGIN SELECT @arg1,@arg2 END;
+GO
+
+CREATE PROCEDURE babel_execute_as_caller_procedure_5 (@arg1 int, @arg2 varchar(10), @arg3 int) WITH EXECUTE AS CALLER, SCHEMABINDING AS
+BEGIN SELECT @arg1, @arg2, @arg3 END;
+GO
+
+CREATE PROCEDURE babel_execute_as_caller_procedure_6 @arg1 int, @arg2 varchar(10), @arg3 int WITH EXECUTE AS CALLER, SCHEMABINDING AS
+BEGIN SELECT @arg1, @arg2, @arg3 END;
+GO
+
 -- trigger
 CREATE TABLE babel_execute_as_caller_table_1 (c varchar(20));
 GO
@@ -99,6 +112,33 @@ GO
 
 CREATE TRIGGER babel_execute_as_caller_trigger1 ON babel_execute_as_caller_table WITH EXECUTE AS OWNER
 FOR INSERT AS BEGIN UPDATE babel_execute_as_caller_table SET c1 =10 END
+GO
+
+-- triggers with more than 1 trigger option and with-clause
+CREATE TRIGGER babel_execute_as_caller_trigger2 on babel_execute_as_caller_table WITH EXECUTE AS CALLER AFTER INSERT, DELETE
+AS
+BEGIN
+  SELECT 'babel_execute_as_caller_trigger2 invoked'
+END
+GO
+
+CREATE TRIGGER babel_execute_as_caller_trigger3 on babel_execute_as_caller_table WITH EXECUTE AS CALLER, SCHEMABINDING AFTER INSERT, DELETE
+AS
+BEGIN
+  SELECT 'babel_execute_as_caller_trigger3 invoked'
+END
+GO
+
+CREATE TRIGGER babel_execute_as_caller_trigger4 on babel_execute_as_caller_table WITH EXECUTE AS CALLER, SCHEMABINDING AFTER UPDATE, INSERT, DELETE
+AS
+BEGIN
+  SELECT 'babel_execute_as_caller_trigger4 invoked'
+END
+GO
+
+-- DML triggers aren't supported yet
+-- When supported the corner case of having more terigger_options and has WITH-clause should succeed
+CREATE TRIGGER trg_index_changes ON DATABASE WITH EXECUTE AS CALLER, SCHEMABINDING FOR  CREATE_INDEX, DROP_INDEX as begin insert into index_logs(a,b) values (1,2); end
 GO
 
 -- create function with duplicate execute as caller
@@ -113,6 +153,9 @@ CREATE FUNCTION babel_execute_as_caller_function_return_int_5 (@v int) RETURNS I
 GO
 
 CREATE FUNCTION babel_execute_as_caller_function_return_int_6 (@v int) RETURNS INT WITH RETURNS NULL ON NULL INPUT, EXECUTE AS CALLER, SCHEMABINDING AS BEGIN RETURN @v+1 END;
+GO
+
+CREATE FUNCTION babel_execute_as_caller_function_return_int_7 (@v int, @a varchar, @i int) RETURNS INT WITH RETURNS NULL ON NULL INPUT, EXECUTE AS CALLER, SCHEMABINDING AS BEGIN RETURN @v+1 END;
 GO
 
 CREATE FUNCTION babel_execute_as_caller_function_return_table_1(@i int) returns @tableVar table(a text not null) WITH schemabinding, execute as caller as begin return end

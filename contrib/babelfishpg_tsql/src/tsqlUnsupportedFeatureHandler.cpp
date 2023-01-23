@@ -12,11 +12,14 @@
 #include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParser.h"
 #include "tsqlIface.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wregister"
 extern "C" {
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "guc.h"
 }
+#pragma GCC diagnostic pop
 
 extern bool pltsql_allow_antlr_to_unsupported_grammar_for_testing;
 
@@ -584,8 +587,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_definition(TSqlPars
 	// ctx->special_column_option() will be handled by visitSpecial_column_option(). do nothing here.
 
 	if (ctx->TIMESTAMP())
-		handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx->TIMESTAMP()));
-
+	{
+		if (*st_escape_hatch_rowversion.val != EH_IGNORE)
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "To use the TIMESTAMP datatype, set \'babelfishpg_tsql.escape_hatch_rowversion\' to \'ignore\'", getLineAndPos(ctx));
+	}
 	if (ctx->for_replication())
 		handle_for_replication(ctx->for_replication());
 
@@ -1411,9 +1416,15 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 		{
 			std::string name = stripQuoteFromId(ctx->simple_name()->id().back());
 			if (pg_strcasecmp("timestamp", name.c_str()) == 0)
-				handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			{
+				if (*st_escape_hatch_rowversion.val != EH_IGNORE)
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "To use the TIMESTAMP datatype, set \'babelfishpg_tsql.escape_hatch_rowversion\' to \'ignore\'", getLineAndPos(ctx));
+			}
 			else if (pg_strcasecmp("rowversion", name.c_str()) == 0)
-				handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			{
+				if (*st_escape_hatch_rowversion.val != EH_IGNORE)
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "To use the ROWVERSION datatype, set \'babelfishpg_tsql.escape_hatch_rowversion\' to \'ignore\'", getLineAndPos(ctx));
+			}
 			else if (pg_strcasecmp("hierarchyid", name.c_str()) == 0)
 				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", getLineAndPos(ctx));
 			else if (pg_strcasecmp("geography", name.c_str()) == 0)
@@ -1564,7 +1575,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_droplinkedsrvlogin",
 	"sp_droplogin",
 	"sp_dropremotelogin",
-	"sp_dropserver",
 	"sp_dropsrvrolemember",
 	"sp_dropuser",
 	"sp_generate_database_ledger_digest",
