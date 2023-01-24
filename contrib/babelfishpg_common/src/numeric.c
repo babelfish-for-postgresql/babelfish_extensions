@@ -407,7 +407,9 @@ static const int round_powers[4] = {0, 1000, 100, 10};
 PG_FUNCTION_INFO_V1(tsql_numeric_round);
 PG_FUNCTION_INFO_V1(tsql_numeric_trunc);
 PG_FUNCTION_INFO_V1(bigint_sum);
+PG_FUNCTION_INFO_V1(bigint_avg);
 PG_FUNCTION_INFO_V1(int4int2_sum);
+PG_FUNCTION_INFO_V1(int4int2_avg);
 
 static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
@@ -1038,7 +1040,7 @@ tsql_numeric_get_typmod(Numeric num)
 Datum
 bigint_sum(PG_FUNCTION_ARGS)
 {
-	return bigint_poly_sum(fcinfo);
+	return bigint_poly_aggr_final(fcinfo, TSQL_SUM);
 }
 
 /* 
@@ -1057,7 +1059,7 @@ int4int2_sum(PG_FUNCTION_ARGS)
 	{
 		result  = PG_GETARG_INT64(0);
 
-		if (unlikely(result < PG_INT32_MIN) || unlikely(result > PG_INT32_MAX))
+		if (unlikely(result < PG_INT32_MIN || result > PG_INT32_MAX))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					errmsg("Arithmetic overflow error converting expression to data type int.")));
@@ -1066,3 +1068,40 @@ int4int2_sum(PG_FUNCTION_ARGS)
 	}
 }
 
+typedef struct Int8TransTypeData
+{
+	int64		count;
+	int64		sum;
+} Int8TransTypeData;
+
+Datum
+int4int2_avg(PG_FUNCTION_ARGS)
+{
+	ArrayType *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Int8TransTypeData *transdata;
+
+	if (ARR_HASNULL(transarray) ||
+			ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
+			ereport(ERROR,
+					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+					errmsg("expected 2-element int8 array")));
+	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
+
+	/* SQL defines AVG of no values to be NULL */
+	if (transdata->count == 0)
+		PG_RETURN_NULL();
+
+	if (unlikely(transdata->sum < PG_INT32_MIN || transdata->sum > PG_INT32_MAX))
+{
+		ereport(ERROR,(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type int.")));
+	}
+
+	PG_RETURN_INT32((int32) transdata->sum / transdata->count);
+}
+
+Datum
+bigint_avg(PG_FUNCTION_ARGS)
+{
+	return bigint_poly_aggr_final(fcinfo, TSQL_AVG);
+}
