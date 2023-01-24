@@ -29,8 +29,8 @@ create table test_tsql_cast(
 go
 
 create table test_tsql_collate(
-	c_varchar varchar check(c_varchar <> cast('sflkjasdlkfjf' as varchar(12)) COLLATE bbf_unicode_cp1_ci_as),
-	c_char char check(c_char <> cast('sflkjasdlkfjf' as char(7)) COLLATE bbf_unicode_cp1_ci_as),
+	c_varchar varchar check(c_varchar <> cast('sflkjasdlkfjf' as varchar(12)) COLLATE latin1_general_ci_as),
+	c_char char check(c_char <> cast('sflkjasdlkfjf' as char(7)) COLLATE japanese_ci_as),
 	c_char1 char check(c_char <> cast('abcd' as char(7)) COLLATE "default"),
 	c_nchar nchar check(cast(c_nchar as nchar(7)) <> cast('sflkjasdlkfjf' as nchar(7)) COLLATE bbf_unicode_cp1_ci_as),
 );
