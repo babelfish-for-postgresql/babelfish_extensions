@@ -100,6 +100,14 @@ GO
 EXEC sp_addlinkedserver  @server = N'mssql_server4', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
 
+--Try to add a linked server login with invalid locallogin (Should throw error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server4', @useself = 'FALSE', @locallogin = 'invalid_login', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "invalid_login" does not exist)~~
+
+
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server4', @useself = 'FALSE', @locallogin = 'linked_server_login_861', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
 GO
 

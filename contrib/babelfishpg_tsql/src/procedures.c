@@ -2276,7 +2276,6 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * CREATE USER MAPPING FOR <locallogin> SERVER <servername> OPTIONS (username
 	 * 	'<remote server user name>', password '<remote server user password>')
 	 */
-
 	if(locallogin == NULL)
 		appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
 	else
@@ -2353,7 +2352,6 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * else
 	 * DROP USER MAPPING FOR @LOCALLOGIN SERVER @SERVERNAME
 	 */
-
 	if(locallogin == NULL)
 		appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
 	else
