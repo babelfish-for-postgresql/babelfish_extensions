@@ -2060,12 +2060,12 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	return (Datum) 0;
 }
 
-PG_FUNCTION_INFO_V1(babelfish_reset_domain_mapping_internal);
+PG_FUNCTION_INFO_V1(babelfish_truncate_domain_mapping_table_internal);
 /*
  * babelfish_remove_domain_mapping_entry_internal - Deletes all domain mapping entries
  */
 Datum
-babelfish_reset_domain_mapping_internal(PG_FUNCTION_ARGS)
+babelfish_truncate_domain_mapping_table_internal(PG_FUNCTION_ARGS)
 {
 	Relation	bbf_domain_mapping_rel;
 

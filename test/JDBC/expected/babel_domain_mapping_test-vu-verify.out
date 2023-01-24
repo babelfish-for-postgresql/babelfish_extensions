@@ -75,7 +75,7 @@ test@ABC
 
 
 -- tsql
-exec babelfish_reset_domain_mapping;
+exec babelfish_truncate_domain_mapping_table;
 GO
 
 -- tsql
