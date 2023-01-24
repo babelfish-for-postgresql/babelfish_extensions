@@ -3,6 +3,53 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+CREATE OR REPLACE FUNCTION sys.bigint_avg(INTERNAL)
+RETURNS BIGINT
+AS 'babelfishpg_common', 'bigint_avg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4int2_avg(pg_catalog._int8)
+RETURNS INT
+AS 'babelfishpg_common', 'int4int2_avg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.avg(TINYINT)(
+SFUNC = int2_avg_accum,
+FINALFUNC = int4int2_avg,
+STYPE = _int8,
+COMBINEFUNC = int4_avg_combine,
+PARALLEL = SAFE,
+INITCOND='{0,0}'
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(SMALLINT)(
+SFUNC = int2_avg_accum,
+FINALFUNC = int4int2_avg,
+STYPE = _int8,
+COMBINEFUNC = int4_avg_combine,
+PARALLEL = SAFE,
+INITCOND='{0,0}'
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(INT)(
+SFUNC = int4_avg_accum,
+FINALFUNC = int4int2_avg,
+STYPE = _int8,
+COMBINEFUNC = int4_avg_combine,
+PARALLEL = SAFE,
+INITCOND='{0,0}'
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(BIGINT) (
+SFUNC = int8_avg_accum,
+FINALFUNC = bigint_avg,
+STYPE = INTERNAL,
+COMBINEFUNC = int8_avg_combine,
+SERIALFUNC = int8_avg_serialize,
+DESERIALFUNC = int8_avg_deserialize,
+PARALLEL = SAFE
+);
+
 /* set sys functions as STABLE */
 ALTER FUNCTION sys._round_fixeddecimal_to_int8(In arg sys.fixeddecimal) STABLE;
 ALTER FUNCTION sys._round_fixeddecimal_to_int4(In arg sys.fixeddecimal) STABLE;

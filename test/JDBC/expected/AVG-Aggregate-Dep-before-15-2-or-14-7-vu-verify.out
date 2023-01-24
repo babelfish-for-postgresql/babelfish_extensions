@@ -1,0 +1,66 @@
+-- Dependant Functions
+SELECT avg_dep_vu_prepare_f1()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT avg_dep_vu_prepare_f2()
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+
+SELECT avg_dep_vu_prepare_f3()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT avg_dep_vu_prepare_f4()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Dependant Procedures
+EXEC avg_dep_vu_prepare_p1
+GO
+~~START~~
+bigint#!#int#!#int#!#int
+1#!#1#!#1#!#1
+~~END~~
+
+
+-- Dependant Views
+SELECT * FROM avg_dep_vu_prepare_v1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+numeric#!#numeric#!#numeric#!#numeric
+~~END~~
+
+
+-- CLEANUP
+DROP FUNCTION avg_dep_vu_prepare_f1
+DROP FUNCTION avg_dep_vu_prepare_f2
+DROP FUNCTION avg_dep_vu_prepare_f3
+DROP FUNCTION avg_dep_vu_prepare_f4
+GO
+
+DROP PROCEDURE avg_dep_vu_prepare_p1
+GO
+
+DROP VIEW avg_dep_vu_prepare_v1
+GO
+
+DROP TABLE avg_dep_vu_prepare_t1
+GO
