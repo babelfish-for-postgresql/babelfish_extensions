@@ -965,6 +965,11 @@ GRANT EXECUTE ON PROCEDURE sys.babelfish_remove_domain_mapping_entry TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.babelfish_truncate_domain_mapping_table()
   AS 'babelfishpg_tsql', 'babelfish_truncate_domain_mapping_table_internal' LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.babelfish_truncate_domain_mapping_table TO PUBLIC;
+-- For all the views created on previous versions(except 2.4 and onwards), the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def AS bvd
+SET definition = NULL
+WHERE (SELECT get_bit(CAST(bvd.flag_validity AS bit(7)),4) = 0);
+
 CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
                                                         IN "@locallogin" sys.sysname)
 AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
