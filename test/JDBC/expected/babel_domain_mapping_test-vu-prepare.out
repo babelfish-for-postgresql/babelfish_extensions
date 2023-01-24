@@ -51,3 +51,182 @@ GO
 -- tsql
 alter role sysadmin add member test_login_sa;
 GO
+
+-- tsql
+-- negative test cases for netbios
+exec sys.babelfish_add_domain_mapping_entry '','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The NetBIOS name '' has invalid length. NetBIOS name length should be between 1 and 14.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'checkforlengthwhichmustbelessthatfifteen','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The NetBIOS name 'checkforlengthwhichmustbelessthatfifteen' has invalid length. NetBIOS name length should be between 1 and 14.)~~
+
+
+exec sys.babelfish_add_domain_mapping_entry '.netbios','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '.netbios' is not a valid NetBIOS name. It must not start with '.' .)~~
+
+
+exec sys.babelfish_add_domain_mapping_entry 'net/bios','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'net/bios' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'net\bios','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'net\bios' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'ne:tbios','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ne:tbios' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'net|bios','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'net|bios' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netb*bios','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'netb*bios' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios?','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'netbios?' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry '<netbios','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '<netbios' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios>','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'netbios>' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'net"bi"os','test.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'net"bi"os' is not a valid NetBIOS name because it contains invalid characters.)~~
+
+
+-- negative test cases for fqdn
+exec sys.babelfish_add_domain_mapping_entry 'netbios','';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The FQDN '' has invalid length. FQDN length should be between 2 and 127.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters.fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The FQDN 'fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters.fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters' has invalid length. FQDN length should be between 2 and 127.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','fullyqualifieddomainnamehavingmore.thansixtyfourcharacters.isdisallowed';
+GO
+create login [netbios\testaduser] from windows;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The login name 'testaduser@FULLYQUALIFIEDDOMAINNAMEHAVINGMORE.THANSIXTYFOURCHARACTERS.ISDISALLOWED' is too long. Maximum length is 63.)~~
+
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test.babel.';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test.babel.' is not a valid FQDN. The last character must not be a minus sign or a period .)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test.babel-';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test.babel-' is not a valid FQDN. The last character must not be a minus sign or a period .)~~
+
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test/babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test/babel' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test\babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test\babel' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test:babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test:babel' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test;babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test;babel' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test?babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test?babel' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test福.babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test福.babel' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test*babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test*babel' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test.babel>';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test.babel>' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','<test.>babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '<test.>babel' is not a valid FQDN. It must start with alphabetical or numeric character .)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test||babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test||babel' is not a valid FQDN because it contains invalid characters.)~~
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test)babel';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'test)babel' is not a valid FQDN because it contains invalid characters.)~~
+
