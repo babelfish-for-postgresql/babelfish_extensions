@@ -32,6 +32,14 @@ typedef struct TSQL_ForClause
 	int location;		/* token location of FOR, or -1 if unknown */
 } TSQL_ForClause;
 
+typedef struct OpenJson_Col_Def
+{
+    char *elemName;
+    TypeName *elemType;
+    char *elemPath;
+    bool asJson;
+} OpenJson_Col_Def;
+
 extern bool output_update_transformation;
 extern bool output_into_insert_transformation;
 extern char *update_delete_target_alias;
@@ -50,6 +58,12 @@ static void tsql_check_param_readonly(const char* paramname, TypeName *typename,
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause, char *src_query, size_t start_location, core_yyscan_t yyscanner);
 static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause, char *src_query, size_t start_location, core_yyscan_t yyscanner);
 static Node* tsql_get_transformed_query(StringInfo format_query, char *end_param, char *query, List *params);
+
+static Node *TsqlOpenJSONSimpleMakeFuncCall(Node* jsonExpr, Node* path);
+static Node *TsqlOpenJSONWithMakeFuncCall(Node* jsonExpr, Node* path, List* cols, Alias* alias);
+static Node *createOpenJsonWithColDef(char* elemName, TypeName* elemType);
+static int getNVarcharTypMod(TypeName *t);
+static TypeName* setNVarcharTypMod(TypeName *t);
 
 char * construct_unique_index_name(char *index_name, char *relation_name);
 

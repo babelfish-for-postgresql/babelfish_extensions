@@ -524,6 +524,162 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_
 	return rt;
 }
 
+Node *
+TsqlOpenJSONSimpleMakeFuncCall(Node* jsonExpr, Node* path)
+{
+    FuncCall *fc;
+    if(path)
+    {
+        fc = makeFuncCall(TsqlSystemFuncName("openjson_simple"), list_make2(jsonExpr, path), COERCE_EXPLICIT_CALL, -1);
+    }
+    else
+    {
+        fc = makeFuncCall(TsqlSystemFuncName("openjson_simple"), list_make1(jsonExpr), COERCE_EXPLICIT_CALL, -1);
+    }
+    return (Node*) fc;
+}
+
+/*
+* This function takes a JsonExpression, path, column list, and optional alias
+* It acts as a bridge between the parser and the json_with function by correctly
+* assembling the function arguments, column definitions list, and alias
+*/
+Node *
+TsqlOpenJSONWithMakeFuncCall(Node* jsonExpr, Node* path, List* cols, Alias* alias)
+{
+    FuncCall *fc;
+    List *jsonWithParams = list_make2(jsonExpr, path);
+    ListCell *lc;
+    RangeFunction *rf = makeNode(RangeFunction);
+    Alias *a = makeNode(Alias);
+    a->aliasname = alias != NULL ? alias->aliasname : "f";
+
+    foreach(lc, cols)
+    {
+        OpenJson_Col_Def *cd = (OpenJson_Col_Def*) lfirst(lc);
+        int initialTmod = getNVarcharTypMod(cd->elemType);
+        ColumnDef *n = (ColumnDef *) createOpenJsonWithColDef(cd->elemName, cd->elemType);
+        StringInfo format_cols = makeStringInfo();
+
+        if(strcmp(cd->elemPath, "") == 0)
+        {
+            // If not path is provided with use the standard path [$.columnName]
+            appendStringInfo(format_cols, "$.%s ", cd->elemName);
+        }
+        else
+        {
+            appendStringInfo(format_cols, "%s ", cd->elemPath);
+        }
+
+        // character types need to have the typmod appended to them
+        if((pg_strcasecmp(TypeNameToString(cd->elemType), "nvarchar") == 0 ||
+            (pg_strcasecmp(TypeNameToString(cd->elemType), "varchar") == 0 ||
+            (pg_strcasecmp(TypeNameToString(cd->elemType), "nchar") == 0 ||
+            pg_strcasecmp(TypeNameToString(cd->elemType), "char") == 0))))
+        {
+            int newTypMod = getNVarcharTypMod(cd->elemType);
+            char buffer [sizeof(int)*8+1];
+            sprintf(buffer, "%d", newTypMod);
+            appendStringInfo(format_cols, "%s(%s)", TypeNameToString(cd->elemType), buffer);
+        }
+        else
+        {
+            appendStringInfoString(format_cols, TypeNameToString(cd->elemType));
+        }
+
+        if((cd->asJson && pg_strcasecmp(TypeNameToString(cd->elemType), "nvarchar") == 0) && initialTmod == TSQLMaxTypmod)
+        {
+            appendStringInfoString(format_cols, " AS JSON");
+        }
+        else if(cd->asJson)
+        {
+            ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+                                errmsg("AS JSON in WITH clause can only be specified for column of type nvarchar(max)")));
+        }
+
+        jsonWithParams = lappend(jsonWithParams, makeStringConstCast(format_cols->data, -1, SystemTypeName("text")));
+        rf->coldeflist = lappend(rf->coldeflist, n);
+    }
+
+    fc = makeFuncCall(TsqlSystemFuncName("openjson_with"), jsonWithParams, COERCE_EXPLICIT_CALL, -1);
+    rf->functions = list_make1(list_make2(fc, NULL));
+    rf->alias = alias;
+    return (Node*) rf;
+}
+
+/*
+* Create a column definition node for the given column name and type
+* If the column type is a character type, we need to change the underlying typmod
+*/
+Node *
+createOpenJsonWithColDef(char* elemName, TypeName* elemType)
+{
+    ColumnDef *n = makeNode(ColumnDef);
+    n->colname = elemName;
+    if((pg_strcasecmp(TypeNameToString(elemType), "nvarchar") == 0 ||
+        (pg_strcasecmp(TypeNameToString(elemType), "varchar") == 0 ||
+        (pg_strcasecmp(TypeNameToString(elemType), "nchar") == 0 ||
+        pg_strcasecmp(TypeNameToString(elemType), "char") == 0))))
+    {
+        n->typeName = setNVarcharTypMod(elemType);
+    }
+    else
+    {
+        n->typeName = elemType;
+    }
+    n->inhcount = 0;
+    n->is_local = true;
+    n->is_not_null = false;
+    n->is_from_type = false;
+    n->storage = 0;
+    n->raw_default = NULL;
+    n->cooked_default = NULL;
+    n->collOid = InvalidOid;
+    n->constraints = NIL;
+    n->location = -1;
+    return (Node*) n;
+}
+
+TypeName *
+setNVarcharTypMod(TypeName *t)
+{
+    int curTMod = getNVarcharTypMod(t);
+    List *tmods = (List*) t->typmods;
+    if(tmods == NULL)
+    {
+        // Default value when no typmod is provided is 1
+        t->typmods = list_make1(makeIntConst(1, -1));
+        return t;
+    }
+    else if(curTMod == TSQLMaxTypmod)
+    {
+        // TSQLMaxTypmod is represented as -8000 so we need to change to
+        // the actual max value of 4000
+        t->typmods = list_make1(makeIntConst(4000, -1));
+        return t;
+    }
+    else
+    {
+        return t;
+    }
+}
+
+int getNVarcharTypMod(TypeName *t)
+{
+    List *tmods = (List*) t->typmods;
+    if(tmods == NULL)
+    {
+        return 1;
+    }
+    else
+    {
+        ListCell *elems = (ListCell*) tmods->elements;
+        A_Expr *expr = (A_Expr*) lfirst(elems);
+        A_Const *constVal = (A_Const*) expr;
+        return constVal->val.val.ival;
+    }
+}
+
 /*
  * helper macro to compare relname in
  * function tsql_update_delete_stmt_with_join
