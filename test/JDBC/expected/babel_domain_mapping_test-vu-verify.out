@@ -44,10 +44,19 @@ GO
 -- remove entry for xyz
 exec babelfish_remove_domain_mapping_entry 'xyz'
 GO
+exec babelfish_remove_domain_mapping_entry 'netbios'
+GO
 
 -- tsql
 -- should be zero rows
 select count(*) from sys.babelfish_domain_mapping where netbios_domain_name = 'xyz';
+GO
+~~START~~
+int
+0
+~~END~~
+
+select count(*) from sys.babelfish_domain_mapping where netbios_domain_name = 'netbios';
 GO
 ~~START~~
 int

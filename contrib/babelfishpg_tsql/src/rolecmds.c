@@ -1931,6 +1931,76 @@ get_roleform_ext(char *login)
 	return tuple;
 }
 
+/*
+* Utility function to validate netbios name provided by user
+*/
+
+void
+validateNetBIOS(char* netbios)
+{
+	int len = strlen(netbios);
+	int i = 0;
+
+	if (len >= NETBIOS_NAME_MAX_LEN || len <= NETBIOS_NAME_MIN_LEN)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_NAME),
+				errmsg("The NetBIOS name '%s' has invalid length. NetBIOS name length should be between %d and %d.",
+				netbios, (NETBIOS_NAME_MIN_LEN + 1), (NETBIOS_NAME_MAX_LEN - 1))));
+
+	if (netbios[0] == '.')
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a valid NetBIOS name. It must not start with '.' .", netbios)));
+			
+	while (netbios[i] != '\0')
+	{
+		if (netbios[i] == '\\' || netbios[i] == '/'||
+		netbios[i] == ':' || netbios[i] == '|' ||
+		netbios[i] == '*' || netbios[i] == '?' ||
+		netbios[i] == '<' || netbios[i] == '>' ||
+		netbios[i] == '"')
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("'%s' is not a valid NetBIOS name because it contains invalid characters.", netbios)));
+		
+		i++;
+	}
+}
+
+/*
+* Utility function to validate FQDN provided by user
+*/
+
+void
+validateFQDN(char* fqdn)
+{
+	int len = strlen(fqdn);
+	int i = 1;
+
+	if (len >= FQDN_NAME_MAX_LEN || len <= FQDN_NAME_MIN_LEN)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_NAME),
+				errmsg("The FQDN '%s' has invalid length. FQDN length should be between %d and %d.",
+				fqdn, (FQDN_NAME_MIN_LEN + 1), (FQDN_NAME_MAX_LEN - 1))));
+
+	if (!((fqdn[0] >= 65 && fqdn[0] <= 90) || (fqdn[0] >= 97 && fqdn[0] <= 122) || (fqdn[0] >= 48 && fqdn[0] <= 57)))
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a valid FQDN. It must start with alphabetical or numeric character .", fqdn)));
+
+	if (fqdn[len-1] == '-' || fqdn[len-1] == '.')
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a valid FQDN. The last character must not be a minus sign or a period .", fqdn)));
+			
+	while (fqdn[i] != '\0')
+	{
+		if (!((fqdn[i] >= 65 && fqdn[i] <= 90) || (fqdn[i] >= 97 && fqdn[i] <= 122) || (fqdn[i] >= 48 && fqdn[i] <= 57) ||
+		(fqdn[i] == '-' || fqdn[i] == '.')))
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("'%s' is not a valid FQDN because it contains invalid characters.", fqdn)));
+		
+		i++;
+	}
+	
+}
+
 PG_FUNCTION_INFO_V1(babelfish_add_domain_mapping_entry_internal);
 
 /*
@@ -1967,6 +2037,8 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 
 	new_record[0] = PG_GETARG_DATUM(0);
 	new_record[1] = PG_GETARG_DATUM(1);
+	validateNetBIOS(TextDatumGetCString(new_record[0]));
+	validateFQDN(TextDatumGetCString(new_record[1]));
 
 	tuple = heap_form_tuple(RelationGetDescr(bbf_domain_mapping_rel),
 							new_record, new_record_nulls);

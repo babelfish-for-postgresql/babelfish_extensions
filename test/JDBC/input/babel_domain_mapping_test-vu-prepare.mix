@@ -42,3 +42,70 @@ GO
 -- tsql
 alter role sysadmin add member test_login_sa;
 GO
+
+-- tsql
+-- negative test cases for netbios
+exec sys.babelfish_add_domain_mapping_entry '','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'checkforlengthwhichmustbelessthatfifteen','test.babel';
+GO
+
+exec sys.babelfish_add_domain_mapping_entry '.netbios','test.babel';
+GO
+
+exec sys.babelfish_add_domain_mapping_entry 'net/bios','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'net\bios','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'ne:tbios','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'net|bios','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netb*bios','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios?','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry '<netbios','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios>','test.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'net"bi"os','test.babel';
+GO
+
+-- negative test cases for fqdn
+exec sys.babelfish_add_domain_mapping_entry 'netbios','';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters.fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','fullyqualifieddomainnamehavingmore.thansixtyfourcharacters.isdisallowed';
+GO
+create login [netbios\testaduser] from windows;
+GO
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test.babel.';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test.babel-';
+GO
+
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test/babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test\babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test:babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test;babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test?babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test福.babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test*babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test.babel>';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','<test.>babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test||babel';
+GO
+exec sys.babelfish_add_domain_mapping_entry 'netbios','test)babel';
+GO
