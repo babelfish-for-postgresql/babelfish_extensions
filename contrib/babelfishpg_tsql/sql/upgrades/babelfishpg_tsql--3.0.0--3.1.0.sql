@@ -943,6 +943,11 @@ LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
 
+-- For all the views created on previous versions(except 2.4 and onwards), the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def AS bvd
+SET definition = NULL
+WHERE (SELECT get_bit(CAST(bvd.flag_validity AS bit(7)),4) = 0);
+
 CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
                                                         IN "@locallogin" sys.sysname)
 AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'

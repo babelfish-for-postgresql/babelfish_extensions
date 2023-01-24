@@ -356,6 +356,7 @@ sys_server_principals_dep
 sys_database_principals_dep
 TestVariableDataLength
 BABEL-3801
+bbf_view_def-before-14_7-or-15_2
 sys-all_sql_modules_before-14_7-or-15_2
 sys-sql_modules_before-14_7-or-15_2
 BABEL_OBJECT_ID

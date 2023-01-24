@@ -1,8 +1,20 @@
 SELECT vd.schema_name, vd.object_name, vd.definition FROM babelfish_view_def vd WHERE vd.object_name LIKE '%bbf_view_def_upgrade_vu_prepare%' ORDER BY vd.schema_name, vd.object_name, vd.definition;
 GO
+~~START~~
+varchar#!#varchar#!#ntext
+dbo#!#bbf_view_def_upgrade_vu_prepare_dep_view#!#<NULL>
+dbo#!#bbf_view_def_upgrade_vu_prepare_view#!#<NULL>
+~~END~~
+
 
 SELECT * FROM bbf_view_def_upgrade_vu_prepare_dep_view WHERE "TABLE_NAME" LIKE '%bbf_view_def_upgrade_vu_prepare%' ORDER BY "TABLE_NAME";
 GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#bbf_view_def_upgrade_vu_prepare_dep_view#!#<NULL>#!#NONE#!#NO
+master#!#dbo#!#bbf_view_def_upgrade_vu_prepare_view#!#<NULL>#!#NONE#!#NO
+~~END~~
+
 
 DROP VIEW bbf_view_def_upgrade_vu_prepare_view;
 GO
