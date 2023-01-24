@@ -1,4 +1,4 @@
--- sla 60000
+-- sla 70000
 # Here we run all the datatype related prepare scripts
 
 # bigint
