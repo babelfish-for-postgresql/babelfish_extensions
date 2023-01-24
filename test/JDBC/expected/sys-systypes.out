@@ -1,0 +1,125 @@
+CREATE DATABASE sys_systypes_db;
+GO
+
+USE sys_systypes_db
+GO
+
+select name, status, length, variable, allownulls, printfmt, collation from sys.systypes order by name asc;
+GO
+~~START~~
+varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
+bigint#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+binary#!#0#!#8000#!#0#!#1#!#<NULL>#!#<NULL>
+bit#!#0#!#1#!#0#!#1#!#<NULL>#!#<NULL>
+char#!#0#!#8000#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+date#!#0#!#3#!#0#!#1#!#<NULL>#!#<NULL>
+datetime#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+datetime2#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+datetimeoffset#!#0#!#10#!#0#!#1#!#<NULL>#!#<NULL>
+decimal#!#0#!#17#!#0#!#1#!#<NULL>#!#<NULL>
+float#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+image#!#0#!#16#!#0#!#1#!#<NULL>#!#<NULL>
+int#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+money#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+nchar#!#0#!#8000#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+ntext#!#0#!#16#!#0#!#1#!#<NULL>#!#sql_latin1_general_cp1_ci_as
+numeric#!#0#!#17#!#0#!#1#!#<NULL>#!#<NULL>
+nvarchar#!#0#!#8000#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+real#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+smalldatetime#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+smallint#!#0#!#2#!#0#!#1#!#<NULL>#!#<NULL>
+smallmoney#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+sql_variant#!#0#!#8016#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+sysname#!#0#!#256#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+text#!#0#!#16#!#0#!#1#!#<NULL>#!#sql_latin1_general_cp1_ci_as
+time#!#0#!#5#!#0#!#1#!#<NULL>#!#<NULL>
+timestamp#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+timestamp#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+tinyint#!#0#!#1#!#0#!#1#!#<NULL>#!#<NULL>
+uniqueidentifier#!#0#!#16#!#0#!#1#!#<NULL>#!#<NULL>
+varbinary#!#0#!#8000#!#1#!#1#!#<NULL>#!#<NULL>
+varchar#!#0#!#8000#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+xml#!#0#!#-1#!#0#!#1#!#<NULL>#!#<NULL>
+~~END~~
+
+
+CREATE TYPE sys_systypes_type FROM int;
+GO
+
+select name, status, length, variable, allownulls, printfmt, collation from sys.systypes where name = 'sys_systypes_type';
+GO
+~~START~~
+varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
+sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+~~END~~
+
+
+
+
+-- variable length
+select length, name from sys.systypes where variable = 1 order by name asc;
+GO
+~~START~~
+smallint#!#varchar
+8000#!#nvarchar
+256#!#sysname
+8000#!#varbinary
+8000#!#varchar
+~~END~~
+
+
+CREATE TYPE sys_systypes_type2 FROM varchar;
+GO
+
+select name, status, length, variable, allownulls, printfmt, collation from sys.systypes where name = 'sys_systypes_type2';
+GO
+~~START~~
+varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
+sys_systypes_type2#!#0#!#1#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+USE master;
+GO
+
+-- sys_systypes_type should not be visible here
+SELECT count(*) FROM sys.systypes WHERE name = 'sys_systypes_type';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+CREATE TYPE sys_systypes_type FROM int;
+GO
+
+
+SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys.systypes WHERE name = 'sys_systypes_type';
+GO
+~~START~~
+varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
+sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+~~END~~
+
+
+
+DROP TYPE sys_systypes_type;
+GO
+
+USE sys_systypes_db
+GO
+
+
+DROP TYPE sys_systypes_type
+GO
+
+DROP TYPE sys_systypes_type2
+GO
+
+
+USE master
+GO
+
+DROP DATABASE sys_systypes_db
+GO
