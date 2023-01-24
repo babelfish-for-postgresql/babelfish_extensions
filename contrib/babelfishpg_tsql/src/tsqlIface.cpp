@@ -26,6 +26,9 @@
 
 #define RAISE_ERROR_PARAMS_LIMIT 20
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wregister"
 extern "C" {
 #if 0
 #include "tsqlNodes.h"
@@ -47,6 +50,7 @@ extern "C" {
 #undef LOG
 #endif
 }
+#pragma GCC diagnostic pop
 
 using namespace std;
 using namespace antlr4;
@@ -69,6 +73,7 @@ extern "C"
 
 	extern bool pltsql_dump_antlr_query_graph;
 	extern bool pltsql_enable_antlr_detailed_log;
+	extern bool pltsql_enable_sll_parse_mode;
 
 	extern bool pltsql_enable_tsql_information_schema;
 
@@ -165,6 +170,7 @@ static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
+static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -2433,7 +2439,9 @@ ANTLR_result
 antlr_parser_cpp(const char *sourceText)
 {
 	ANTLR_result result;
-
+	instr_time	parseStart;
+	instr_time	parseEnd;
+	INSTR_TIME_SET_CURRENT(parseStart);
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
 	{
@@ -2451,6 +2459,30 @@ antlr_parser_cpp(const char *sourceText)
 		std::cout << sep << std::endl;
 	}
 
+	result = antlr_parse_query(sourceText, pltsql_enable_sll_parse_mode);
+
+	/* 
+	 * Only try to reparse if creation of the parse tree failed.  If parse tree is created, parsing mode will make no difference
+	 * Generally the mutator steps are non-reentrant, if parsetree is created and mutators are run, subsequent parsing may produce
+	 * incorrect error messages
+	*/
+	if (!result.success && !result.parseTreeCreated)
+	{
+		elog(DEBUG1, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
+		result = antlr_parse_query(sourceText, false);
+		if (result.parseTreeCreated)
+			elog(WARNING, "Query parsing failed using SLL parser mode but succeeded with LL mode: %s", sourceText);
+	}
+	INSTR_TIME_SET_CURRENT(parseEnd);
+	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
+	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
+
+	return result;
+}
+
+ANTLR_result
+antlr_parse_query(const char *sourceText, bool useSLLParsing) {
+	ANTLR_result result;
 	MyInputStream sourceStream(sourceText);
 
 	TSqlLexer lexer(&sourceStream);
@@ -2458,8 +2490,11 @@ antlr_parser_cpp(const char *sourceText)
 
 	MyParserErrorListener errorListner;
 
-        TSqlParser parser(&tokens);
+	TSqlParser parser(&tokens);
+	volatile bool parseTreeCreated = false;
 
+	if (useSLLParsing)
+		parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(atn::PredictionMode::SLL);
 	parser.removeErrorListeners();
 	parser.addErrorListener(&errorListner);
 
@@ -2483,7 +2518,7 @@ antlr_parser_cpp(const char *sourceText)
 			tree = parser.func_body_return_select_body();
 		else /* normal path */
 			tree = parser.tsql_file();
-
+		parseTreeCreated = true;
 		if (pltsql_enable_antlr_detailed_log)
 			std::cout << tree->toStringTree(&parser, true) << std::endl;
 
@@ -2542,12 +2577,14 @@ antlr_parser_cpp(const char *sourceText)
 		if (pltsql_parseonly)
 			pltsql_parse_result = makeEmptyBlockStmt(0);
 
+		result.parseTreeCreated = parseTreeCreated;
 		result.success = true;
 		return result;
 	}
 	catch (PGErrorWrapperException &e)
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = e.get_errcode();
 		result.errpos = e.get_errpos();
 		result.errfmt = e.get_errmsg();
@@ -2562,6 +2599,7 @@ antlr_parser_cpp(const char *sourceText)
 	catch (std::exception &e) /* not to cause a crash just in case */
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = ERRCODE_SYNTAX_ERROR;
 		result.errpos = 0;
 		result.errfmt = pstrdup(e.what());
@@ -2572,6 +2610,7 @@ antlr_parser_cpp(const char *sourceText)
 	catch (...) /* not to cause a crash just in case. consume all exception before C-layer */
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = ERRCODE_SYNTAX_ERROR;
 		result.errpos = 0;
 		result.errfmt = "unknown error";
@@ -2665,8 +2704,8 @@ rewriteBatchLevelStatement(
 	ssm->mutator = &mutator;
 
 	/*
-	 * remove unnecessary create-options such as SCHEMABINDING.
-	 * basically, we check SCHEMABINDING is specified of each kind of statement
+	 * remove unnecessary create-options such as SCHEMABINDING, EXECUTE_AS_CALLER.
+	 * basically, we check SCHEMABINDING,EXECUTE_AS_CALLER is specified of each kind of statement
 	 * each code is very similar the grammar can be little bit different
 	 * so handle them by one by one
 	 */
@@ -2679,20 +2718,28 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) { return o->SCHEMABINDING(); };
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
+					if (o->execute_as_clause())
+						return o->execute_as_clause()->CALLER();
+					return o->SCHEMABINDING();
+				};
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 			}
 		}
-		else if (ctx->create_or_alter_function()->func_body_returns_table()) /* CREATE FUNCTION ... RETURNS TABLE RETURN SELECT ... */
+		else if (ctx->create_or_alter_function()->func_body_returns_table()) /* CREATE FUNCTION ... RETURNS TABLE(COLUMN_DEFINITION) AS BEGIN ... END */
 		{
 			auto cctx = ctx->create_or_alter_function()->func_body_returns_table();
 			if (cctx->WITH())
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) { return o->SCHEMABINDING(); };
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
+					if (o->execute_as_clause())
+						return o->execute_as_clause()->CALLER();
+					return o->SCHEMABINDING();
+				};
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -2705,7 +2752,11 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) { return o->SCHEMABINDING(); };
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
+					if (o->execute_as_clause())
+						return o->execute_as_clause()->CALLER();
+					return o->SCHEMABINDING();
+				};
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -2718,7 +2769,11 @@ rewriteBatchLevelStatement(
 			{
 				auto options = cctx->function_option();
 				auto commas = cctx->COMMA();
-				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) { return o->SCHEMABINDING(); };
+				GetTokenFunc<TSqlParser::Function_optionContext*> getToken = [](TSqlParser::Function_optionContext* o) {
+					if (o->execute_as_clause())
+						return o->execute_as_clause()->CALLER();
+					return o->SCHEMABINDING();
+				};
 				bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 				if (all_removed)
 					removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
@@ -2736,10 +2791,19 @@ rewriteBatchLevelStatement(
 		auto cctx = ctx->create_or_alter_procedure();
 		if (cctx->WITH())
 		{
+			size_t num_commas_in_procedure_param = cctx->COMMA().size();
 			auto options = cctx->procedure_option();
+			/* COMMA is shared between procedure-param and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_procedure_param -= (cctx->procedure_option().size() - 1);
 			auto commas = cctx->COMMA();
-			GetTokenFunc<TSqlParser::Procedure_optionContext*> getToken = [](TSqlParser::Procedure_optionContext* o) { return o->SCHEMABINDING(); };
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() + num_commas_in_procedure_param, commas.end());
+			GetTokenFunc<TSqlParser::Procedure_optionContext*> getToken = [](TSqlParser::Procedure_optionContext* o) {
+				if (o->execute_as_clause())
+					return o->execute_as_clause()->CALLER();
+				return o->SCHEMABINDING();
+			};
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 		}
@@ -2754,10 +2818,19 @@ rewriteBatchLevelStatement(
 		/* DML trigger can have two WITH. one for trigger options and the other for WITH APPEND */
 		if (cctx->WITH().size() > 1 || (cctx->WITH().size() == 1 && !cctx->APPEND()))
 		{
+			size_t num_commas_in_dml_trigger_operaion = cctx->COMMA().size();
 			auto options = cctx->trigger_option();
+			/* COMMA is shared between dml_trigger_operation and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_dml_trigger_operaion -= (cctx->trigger_option().size() - 1);
 			auto commas = cctx->COMMA();
-			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) { return o->SCHEMABINDING(); };
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() , commas.end() - num_commas_in_dml_trigger_operaion);
+			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) {
+				if (o->execute_as_clause())
+					return o->execute_as_clause()->CALLER();
+				return o->SCHEMABINDING();
+			};
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
 		}
@@ -2767,10 +2840,19 @@ rewriteBatchLevelStatement(
 		auto cctx = ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger();
 		if (cctx->WITH())
 		{
+			size_t num_commas_in_ddl_trigger_operaion = cctx->COMMA().size();
 			auto options = cctx->trigger_option();
+			/* COMMA is shared between ddl_trigger_operation and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_ddl_trigger_operaion -= (cctx->trigger_option().size() - 1);
 			auto commas = cctx->COMMA();
-			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) { return o->SCHEMABINDING(); };
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() , commas.end() - num_commas_in_ddl_trigger_operaion);
+			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) {
+				if (o->execute_as_clause())
+					return o->execute_as_clause()->CALLER();
+				return o->SCHEMABINDING();
+			};
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 		}
@@ -2877,6 +2959,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
+	execsql->original_query = pstrdup((makeTsqlExpr(ctx, false))->query);
 
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	result->body = lappend(result->body, execsql);
@@ -5703,6 +5786,8 @@ getCreateDatabaseOptionTobeRemoved(TSqlParser::Create_database_optionContext* o)
 		return o->DB_CHAINING();
 	if (o->TRUSTWORTHY())
 		return o->TRUSTWORTHY();
+	if (o->CATALOG_COLLATION())
+		return o->CATALOG_COLLATION();
 	if (o->PERSISTENT_LOG_BUFFER())
 		return o->PERSISTENT_LOG_BUFFER();
 	return nullptr;

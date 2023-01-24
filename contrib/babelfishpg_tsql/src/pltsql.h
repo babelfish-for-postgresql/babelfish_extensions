@@ -34,6 +34,7 @@
 
 #include "dynavec.h"
 #include "dynastack.h"
+#include "../../contrib/babelfishpg_common/src/babelfishpg_common.h"
 
 /**********************************************************************
  * Definitions
@@ -1040,6 +1041,7 @@ typedef struct PLtsql_stmt_execsql
 	char		*db_name;		/* db_name: only for cross db query */
 	bool            is_schema_specified;    /*is schema name specified? */
 	bool		is_create_view;		/* CREATE VIEW? */
+	char		*original_query;    /* Only for batch level statement. */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1644,6 +1646,20 @@ typedef struct PLtsql_protocol_plugin
 	char* (*get_cur_db_name) ();
 
 	char* (*get_physical_schema_name) (char *db_name, const char *schema_name);
+
+	/* Session level GUCs */
+	bool		quoted_identifier;
+	bool		arithabort;
+	bool		ansi_null_dflt_on;
+	bool		ansi_defaults;
+	bool		ansi_warnings;
+	bool		ansi_padding;
+	bool		ansi_nulls;
+	bool		concat_null_yields_null;
+	int		textsize;
+	int		datefirst;
+	int		lock_timeout;
+	const char*	language;
 	
 } PLtsql_protocol_plugin;
 
@@ -1731,6 +1747,7 @@ extern MemoryContext pltsql_compile_tmp_cxt;
 extern PLtsql_plugin **pltsql_plugin_ptr;
 extern PLtsql_instr_plugin **pltsql_instr_plugin_ptr;
 extern PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr;
+extern common_utility_plugin *common_utility_plugin_ptr;
 
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
@@ -1872,7 +1889,7 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 
 extern int get_insert_bulk_rows_per_batch(void);
 extern int get_insert_bulk_kilobytes_per_batch(void);
-
+extern char *get_original_query_string(void);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -1972,10 +1989,16 @@ extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
+extern void init_and_check_common_utility(void);
+extern Oid tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
+extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id);
+extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
+extern char** split_object_name(char *name);
 
 typedef struct
 {
 	bool success;
+	bool parseTreeCreated; /* used to determine if on error should retry with a different parse mode */
 	size_t errpos;
 	int errcod;
 	const char *errfmt;
@@ -1993,24 +2016,6 @@ extern bool pltsql_trace_tree;
 extern bool pltsql_trace_exec_codes;
 extern bool pltsql_trace_exec_counts;
 extern bool pltsql_trace_exec_time;
-
-/* 
- * Sql variant functions for tdstypeio.c
- */
-extern void
-TdsGetVariantBaseType(int pgBaseType, int *variantBaseType,
-                                  bool *isBaseNum, bool *isBaseChar,
-                                  bool *isBaseDec, bool *isBaseBin,
-                                  bool *isBaseDate, int *variantHeaderLen);
-
-extern void
-TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen, int *dataLen, int *variantHeaderLen);
-extern void
-TdsSetMetaData(bytea *result, int pgBaseType, int scale, int precision, int maxLen);
-extern int
-TdsPGbaseType(bytea *vlena);
-extern void
-TdsGetMetaData(bytea *result, int pgBaseType, int *scale, int *precision, int *maxLen);
 
 /* 
  * Functions in cursor.c

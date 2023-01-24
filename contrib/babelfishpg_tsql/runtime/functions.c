@@ -22,6 +22,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/numeric.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
@@ -32,7 +33,6 @@
 
 #include "../src/babelfish_version.h"
 #include "../src/datatype_info.h"
-#include "../src/datatypes.h"
 #include "../src/pltsql.h"
 #include "../src/pltsql_instr.h"
 #include "../src/multidb.h"
@@ -71,6 +71,7 @@ PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
+PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
@@ -82,6 +83,9 @@ PG_FUNCTION_INFO_V1(smallint_degrees);
 PG_FUNCTION_INFO_V1(bigint_radians);
 PG_FUNCTION_INFO_V1(int_radians);
 PG_FUNCTION_INFO_V1(smallint_radians);
+PG_FUNCTION_INFO_V1(bigint_power);
+PG_FUNCTION_INFO_V1(int_power);
+PG_FUNCTION_INFO_V1(smallint_power);
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -135,9 +139,9 @@ procid(PG_FUNCTION_ARGS)
 Datum
 version(PG_FUNCTION_ARGS)
 {
-	StringInfoData temp;
-	void *info;
-
+	StringInfoData	temp;
+	void		*info;
+	const char	*product_version;
 	initStringInfo(&temp);
 
 	if (pg_strcasecmp(pltsql_version, "default") == 0)
@@ -147,11 +151,15 @@ version(PG_FUNCTION_ARGS)
 
 		temp_str = strstr(temp_str, ", compiled by");
 		*temp_str = '\0';
-
+		product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
+		
+		Assert(product_version != NULL);
+		if(pg_strcasecmp(product_version,"default") == 0)
+			product_version = BABEL_COMPATIBILITY_VERSION;
 		appendStringInfo(&temp,
 						 "Babelfish for PostgreSQL with SQL Server Compatibility - %s"
 						 "\n%s %s\nCopyright (c) Amazon Web Services\n%s (Babelfish %s)",
-						 BABEL_COMPATIBILITY_VERSION,
+						 product_version,
 						 __DATE__, __TIME__, pg_version, BABELFISH_VERSION_STR);
 	}
 	else
@@ -161,7 +169,7 @@ version(PG_FUNCTION_ARGS)
 	 * TODO: Return Build number with version string as well.
 	 */
 
-	info = tsql_varchar_input(temp.data, temp.len, -1);
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
 	pfree(temp.data);
 	PG_RETURN_VARCHAR_P(info);
 }
@@ -174,7 +182,7 @@ void* string_to_tsql_varchar(const char *input_str)
 	initStringInfo(&temp);
 	appendStringInfoString(&temp, input_str);
 
-	info = tsql_varchar_input(temp.data, temp.len, -1);
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
 	pfree(temp.data);
 	return info;
 }
@@ -222,7 +230,7 @@ Datum
 pgerror(PG_FUNCTION_ARGS)
 {
 	char *error_sqlstate = unpack_sql_state(latest_pg_error_code);
-	PG_RETURN_VARCHAR_P(tsql_varchar_input((error_sqlstate), strlen(error_sqlstate), -1));
+	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)((error_sqlstate), strlen(error_sqlstate), -1));
 }
 
 
@@ -461,9 +469,9 @@ schema_name(PG_FUNCTION_ARGS)
 
 	logical_name = get_logical_schema_name(name.data, true);
 	if (logical_name)
-		result = tsql_varchar_input(logical_name, strlen(logical_name), -1);
+		result = (*common_utility_plugin_ptr->tsql_varchar_input)(logical_name, strlen(logical_name), -1);
 	else 
-		result = tsql_varchar_input(name.data, strlen(name.data), -1);
+		result = (*common_utility_plugin_ptr->tsql_varchar_input)(name.data, strlen(name.data), -1);
 
 	ReleaseSysCache(tup);
 	PG_RETURN_VARCHAR_P(result);
@@ -587,7 +595,7 @@ default_domain(PG_FUNCTION_ARGS)
 		login_domainname = (*pltsql_protocol_plugin_ptr)->get_login_domainname();
 
 	if (login_domainname)
-		PG_RETURN_VARCHAR_P(tsql_varchar_input(login_domainname, strlen(login_domainname), -1));
+		PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)(login_domainname, strlen(login_domainname), -1));
 	else
 		PG_RETURN_NULL();
 }
@@ -636,7 +644,7 @@ host_os(PG_FUNCTION_ARGS)
 	else
 		host_os_res = pstrdup("UNKNOWN");
 
-	info = tsql_varchar_input(host_os_res, strlen(host_os_res), -1);
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(host_os_res, strlen(host_os_res), -1);
 	if (pg_version)
 		pfree(pg_version);
 	if (host_os_res)
@@ -927,6 +935,268 @@ checksum(PG_FUNCTION_ARGS)
 
         PG_RETURN_INT32(result);
 }
+
+/*
+ * object_id
+ * 	Returns the object ID with object name and object type as input where object type is optional
+ * Returns NULL
+ * 	if input is NULL
+ * 	if there is no such object
+ * 	if user don't have right permission
+ * 	if any error occured
+ */
+Datum
+object_id(PG_FUNCTION_ARGS)
+{	
+	char			*db_name, *schema_name, *object_name;
+	char			*physical_schema_name;
+	char			*input;
+	char			*object_type = NULL;
+	char			**splited_object_name;
+	Oid			schema_oid;
+	Oid			user_id = GetUserId();
+	Oid			result = InvalidOid;
+	bool			is_temp_object;
+	int			i;
+
+	if(PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+	input = text_to_cstring(PG_GETARG_TEXT_P(0));
+
+	if(!PG_ARGISNULL(1))
+	{
+		char *str = text_to_cstring(PG_GETARG_TEXT_P(1));
+		i = strlen(str);
+		if (i > 2)
+		{
+			pfree(input);
+			pfree(str);
+			PG_RETURN_NULL();
+		}
+		else if (i == 2 && isspace((unsigned char) str[1]))
+		{
+			str[1] = '\0';
+		}
+		object_type = downcase_identifier(str, strlen(str), false, false);
+		pfree(str);
+	}
+	/* strip trailing whitespace from input */
+	i = strlen(input);
+	while (i > 0 && isspace((unsigned char) input[i - 1]))
+		input[--i] = '\0';
+	
+	/* length should be restricted to 4000 */
+	if (i > 4000)
+		ereport(ERROR,
+			(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+			errmsg("input value is too long for object name")));
+
+	/* resolve the three part name */
+	splited_object_name = split_object_name(input);
+	db_name = splited_object_name[1];
+	schema_name = splited_object_name[2];
+	object_name = splited_object_name[3];
+
+	/* downcase identifier if needed */
+	if (pltsql_case_insensitive_identifiers)
+	{	
+		db_name = downcase_identifier(db_name, strlen(db_name), false, false);
+		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
+		object_name = downcase_identifier(object_name, strlen(object_name), false, false);
+		for (int i = 0; i < 4; i++)
+			pfree(splited_object_name[i]);
+	}
+	else
+		pfree(splited_object_name[0]);
+
+	pfree(input);
+	pfree(splited_object_name);
+
+	/* truncate identifiers if needed */
+	truncate_tsql_identifier(db_name);
+	truncate_tsql_identifier(schema_name);
+	truncate_tsql_identifier(object_name);
+
+	if (!strcmp(db_name, ""))
+		db_name = get_cur_db_name();
+	else if (strcmp(db_name, get_cur_db_name()) && strcmp(db_name, "tempdb"))
+	{
+		/* cross database lookup */
+		int db_id = get_db_id(db_name);
+		if (!DbidIsValid(db_id))
+		{
+			pfree(db_name);
+			pfree(schema_name);
+			pfree(object_name);
+			if (object_type)
+				pfree(object_type);
+			PG_RETURN_NULL();
+		}
+		user_id = GetSessionUserId();
+	}
+
+	/* get physical schema name from logical schema name */
+	if (!strcmp(schema_name, ""))
+	{	
+		/* find the default schema for current user and get physical schema name */
+		const char *user = get_user_for_database(db_name);
+		const char *guest_role_name = get_guest_role_name(db_name);
+		if (!user)
+		{	
+			pfree(db_name);
+			pfree(schema_name);
+			pfree(object_name);
+			if(object_type)
+				pfree(object_type);
+			PG_RETURN_NULL();
+		}
+		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+		{
+			physical_schema_name = pstrdup(get_dbo_schema_name(db_name));
+		}
+		else
+		{	
+			pfree(schema_name);
+			schema_name  = get_authid_user_ext_schema_name((const char *) db_name, user);
+			physical_schema_name = get_physical_schema_name(db_name, schema_name);
+		}
+	}
+	else
+	{
+		physical_schema_name = get_physical_schema_name(db_name, schema_name);
+	}
+
+	/* get schema oid from physical schema name, it will return InvalidOid if user don't have lookup access */
+	schema_oid = get_namespace_oid(physical_schema_name, true);
+
+	/* free unnecessary pointers */
+	pfree(db_name);
+	pfree(schema_name);
+	pfree(physical_schema_name);
+
+	if(!OidIsValid(schema_oid) || pg_namespace_aclcheck(schema_oid, user_id, ACL_USAGE) != ACLCHECK_OK)
+	{
+		pfree(object_name);
+		if (object_type)
+			pfree(object_type);
+		PG_RETURN_NULL();
+	}
+	
+	/* check if looking for temp object */
+	is_temp_object = (object_name[0] == '#'? true: false);
+
+	if (object_type) /* "object_type" is specified in-argument */
+	{	
+		if (is_temp_object)
+		{
+			if (!strcmp(object_type, "s") || !strcmp(object_type, "u") || !strcmp(object_type, "v") ||
+				!strcmp(object_type, "it") || !strcmp(object_type, "et") || !strcmp(object_type, "so"))
+			{
+				/* search in list of ENRs registered in the current query environment by name */
+				EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
+				if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
+				{
+					result = enr->md.reliddesc;
+				}
+			}
+			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
+					!strcmp(object_type, "sn") || !strcmp(object_type, "sq") || !strcmp(object_type, "tt"))
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Object type currently unsupported in Babelfish.")));
+			}
+		}
+		else
+		{
+			if (!strcmp(object_type, "s") || !strcmp(object_type, "u") || !strcmp(object_type, "v") ||
+				!strcmp(object_type, "it") || !strcmp(object_type, "et") || !strcmp(object_type, "so"))
+			{
+				/* search in pg_class by name and schema oid */
+				Oid relid = get_relname_relid((const char *) object_name, schema_oid);
+				if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				{
+					result = relid;
+				} 
+			}
+			else if (!strcmp(object_type, "c") || !strcmp(object_type, "d") || !strcmp(object_type, "f") ||
+				!strcmp(object_type, "pk") || !strcmp(object_type, "uq"))
+			{
+				/* search in pg_constraint by name and schema oid */
+				result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
+			}
+			else if (!strcmp(object_type, "af") || !strcmp(object_type, "fn") || !strcmp(object_type, "fs") ||
+				!strcmp(object_type, "ft") || !strcmp(object_type, "if") || !strcmp(object_type, "p") ||
+				!strcmp(object_type, "pc") || !strcmp(object_type, "tf") || !strcmp(object_type, "rf") ||
+				!strcmp(object_type, "x"))
+			{
+				/* search in pg_proc by name and schema oid */
+				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
+			}
+			else if (!strcmp(object_type, "tr") || !strcmp(object_type, "ta"))
+			{
+				/* search in pg_trigger by name and schema oid */
+				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
+			}
+			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
+				!strcmp(object_type, "sn") || !strcmp(object_type, "sq") || !strcmp(object_type, "tt"))
+			{
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Object type currently unsupported in Babelfish.")));
+			}
+		}
+		
+	}
+	else
+	{	
+		if (is_temp_object) /* temp object without "object_type" in-argument */
+		{
+			/* search in list of ENRs registered in the current query environment by name */
+			EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
+			if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
+			{
+				result = enr->md.reliddesc;
+			}
+		}
+		else
+		{
+			/* search in pg_constraint by name and schema oid */
+			result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
+
+			if (!OidIsValid(result)) /* search only if not found earlier */
+			{
+				/* search in pg_class by name and schema oid */
+				Oid relid = get_relname_relid((const char *) object_name, schema_oid);
+				if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				{
+					result = relid;
+				} 
+			}
+
+			if (!OidIsValid(result))
+			{
+				/* search in pg_trigger by name and schema oid */
+				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
+			}
+
+			if (!OidIsValid(result))
+			{
+				/* search in pg_proc by name and schema oid */
+				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
+			}
+		}
+	}
+	pfree(object_name);
+	if (object_type)
+		pfree(object_type);
+
+	if (OidIsValid(result))
+		PG_RETURN_INT32(result);
+	else
+		PG_RETURN_NULL();
+}
+
 
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
@@ -1297,4 +1567,52 @@ smallint_radians(PG_FUNCTION_ARGS)
 	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32)result);
+}
+
+Datum
+bigint_power(PG_FUNCTION_ARGS)
+{
+	int64	arg1 = PG_GETARG_INT64(0);
+	Numeric	arg2 = PG_GETARG_NUMERIC(1);
+	int64	result;
+	Numeric	arg1_numeric, result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric,arg1));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
+
+	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_INT64(result); 
+}
+
+Datum
+int_power(PG_FUNCTION_ARGS)
+{
+	int32	arg1 = PG_GETARG_INT32(0);
+	Numeric	arg2 = PG_GETARG_NUMERIC(1);
+	int32	result;
+	Numeric	arg1_numeric, result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric,arg1));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
+
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_INT32(result); 
+}
+
+Datum
+smallint_power(PG_FUNCTION_ARGS)
+{
+	int16	arg1 = PG_GETARG_INT16(0);
+	Numeric	arg2 = PG_GETARG_NUMERIC(1);
+	int32	result;
+	Numeric	arg1_numeric, result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int2_numeric,arg1));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), Int16GetDatum (arg2)));
+
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int2, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_INT32(result); 
 }

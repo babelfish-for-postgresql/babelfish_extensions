@@ -17,7 +17,6 @@
 
 #include "pltsql.h"
 #include "pltsql-2.h"
-#include "datatypes.h"
 
 #define MD5_RESULTLEN  (16)
 #define SHA1_RESULTLEN	(20)
@@ -202,7 +201,7 @@ quotename(PG_FUNCTION_ARGS)
 	}
 	buf[buf_i++] = right_delim;
 
-	result = tsql_varchar_input(buf, buf_i, -1);
+	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf, buf_i, -1);
 	pfree(buf);
 
 	PG_RETURN_VARCHAR_P(result);	
@@ -271,7 +270,7 @@ string_escape(PG_FUNCTION_ARGS)
 		}
 	}
 	
-	result = tsql_varchar_input(buf.data, buf.len, -1);
+	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf.data, buf.len, -1);
 	pfree(buf.data);
 
 	PG_RETURN_VARCHAR_P(result);
@@ -319,7 +318,7 @@ formatmessage(PG_FUNCTION_ARGS)
 
 	initStringInfo(&buf);
 	prepare_format_string(&buf, msg_string, nargs, args, argtypes, argisnull);
-	result = tsql_varchar_input(buf.data, buf.len, -1);
+	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf.data, buf.len, -1);
 	pfree(buf.data);
 
 	PG_RETURN_VARCHAR_P(result);

@@ -1,0 +1,145 @@
+-- functions
+SELECT babel_execute_as_caller_function_return_table_select()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT babel_execute_as_caller_function_return_int(1)
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT babel_execute_as_caller_function_return_bigint()
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+
+SELECT babel_execute_as_caller_function_return_int_1(2)
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- procedures
+EXEC babel_execute_as_caller_procedure_1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC babel_execute_as_caller_procedure_2 2
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- procedures with more than 1 argument and with-clause
+EXEC babel_execute_as_caller_procedure_4 4, 'test'
+GO
+~~START~~
+int#!#varchar
+4#!#test
+~~END~~
+
+
+EXEC babel_execute_as_caller_procedure_5 5, 'test', 0
+GO
+~~START~~
+int#!#varchar#!#int
+5#!#test#!#0
+~~END~~
+
+
+EXEC babel_execute_as_caller_procedure_6 6, 'test', 0
+GO
+~~START~~
+int#!#varchar#!#int
+6#!#test#!#0
+~~END~~
+
+
+-- triggers
+INSERT INTO babel_execute_as_caller_table values (2);
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+babel_execute_as_caller_trigger2 invoked
+~~END~~
+
+~~START~~
+varchar
+babel_execute_as_caller_trigger3 invoked
+~~END~~
+
+~~START~~
+varchar
+babel_execute_as_caller_trigger4 invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_execute_as_caller_table_1;
+GO
+~~START~~
+varchar
+triggered
+~~END~~
+
+
+-- functions with other options
+SELECT babel_execute_as_caller_function_return_int_3(3)
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT babel_execute_as_caller_function_return_int_4(4)
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT babel_execute_as_caller_function_return_int_5(5)
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT babel_execute_as_caller_function_return_int_6(6)
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SELECT babel_execute_as_caller_function_return_int_7(7, 'test', 5)
+GO
+~~START~~
+int
+8
+~~END~~
+

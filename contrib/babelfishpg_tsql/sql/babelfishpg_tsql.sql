@@ -35,10 +35,10 @@ CREATE FUNCTION fulltextserviceproperty (TEXT)
 	RETURNS sys.int AS 'babelfishpg_tsql', 'fulltextserviceproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
-	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C;
+	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION UPDATE (TEXT)
-	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C;
+	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C STABLE;
 
 CREATE OR REPLACE PROCEDURE xp_qv(IN nvarchar(256), IN nvarchar(256))
 	   AS 'babelfishpg_tsql', 'xp_qv_internal' LANGUAGE C;
@@ -369,8 +369,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
      LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA")
-     LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname = t4."COLUMN_NAME" COLLATE sys.database_default
+     JOIN information_schema_tsql.columns t4 ON (t1.relname::sys.nvarchar(128) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
+     LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
      LEFT JOIN pg_type t ON t.oid = a.atttypid
      LEFT JOIN sys.columns t6 ON
      (
@@ -379,7 +379,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      )
      , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
      , sys.spt_datatype_info_table AS t5
-  WHERE (t4."DATA_TYPE" = t5.TYPE_NAME COLLATE sys.database_default)
+  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)))
     AND ext.dbid = cast(sys.db_id() as oid);
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
@@ -488,7 +488,7 @@ begin
 	END IF;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_columns (
 	"@table_name" sys.nvarchar(384),
@@ -870,7 +870,7 @@ BEGIN
         (in_schematype = 0 AND (s_cv.IS_SPARSE = 0) OR in_schematype = 1 OR in_schematype = 2 AND (s_cv.IS_SPARSE = 1));
 END;
 $$
-language plpgsql;
+language plpgsql STABLE;
 
 CREATE PROCEDURE sys.sp_columns_managed
 (
@@ -1040,7 +1040,7 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 		END IF;
 	END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 	 
 
 CREATE OR REPLACE PROCEDURE sys.sp_tables (
@@ -1164,7 +1164,7 @@ begin
 		 key_seq;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
 	"@table_name" sys.nvarchar(384),
@@ -1279,7 +1279,7 @@ begin
     order by non_unique, type, index_name, seq_in_index;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_statistics(
     "@table_name" sys.sysname,
@@ -2255,7 +2255,7 @@ BEGIN
  	EXCEPTION WHEN OTHERS THEN
 	 	  RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$

@@ -60,13 +60,11 @@
 #include "session.h"
 #include "multidb.h"
 
-
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
-extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
  * 			Catalog Hooks
@@ -236,7 +234,7 @@ InstallExtendedHooks(void)
 	logicalrep_modify_slot_hook = logicalrep_modify_slot;
 
 	prev_is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype_hook;
-	is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype;
+	is_tsql_rowversion_or_timestamp_datatype_hook = common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype;
 
 	prev_ExecutorStart = ExecutorStart_hook;
 	ExecutorStart_hook = pltsql_ExecutorStart;
@@ -1640,7 +1638,7 @@ logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot)
 		 * If it is rowversion/timestamp column, then re-evaluate the column default
 		 * and replace the slot with this new value.
 		 */
-		if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+		if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
 		{
 			Expr *defexpr;
 			ExprState *def;
@@ -1860,6 +1858,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	uint64		flag_values = 0, flag_validity = 0;
 	char		*physical_schemaname;
 	const char  *logical_schemaname;
+	char *original_query = get_original_query_string();
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1920,11 +1919,19 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	flag_validity |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
 	if (pltsql_quoted_identifier)
 		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
+	/*
+	 * Need to set this flag for MVU from 2.4 or after to 3.1.
+	 */
+	flag_validity |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
+	flag_values |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = CStringGetTextDatum(logical_schemaname);
 	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
-	new_record[3] = CStringGetTextDatum(queryString);
+	if (original_query)
+		new_record[3] = CStringGetTextDatum(original_query);
+	else
+		new_record_nulls[3] = true;
 	new_record[4] = UInt64GetDatum(flag_validity);
 	new_record[5] = UInt64GetDatum(flag_values);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(3));
@@ -2101,6 +2108,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	ListCell	*x;
 	int			idx;
 	uint64		flag_values = 0, flag_validity = 0;
+	char *original_query = get_original_query_string();
 
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
@@ -2229,6 +2237,13 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	/*
+	 * Save the original query in the catalog.
+	 */
+	if (original_query)
+		new_record[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(original_query);
+	else
+		new_record_nulls[Anum_bbf_function_ext_definition - 1] = true;
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
 	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
