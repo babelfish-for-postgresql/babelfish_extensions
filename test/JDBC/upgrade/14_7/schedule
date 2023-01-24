@@ -155,6 +155,7 @@ Test-sp_droprole
 Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
+Test-sp_set_session_context
 Test-sp_helpuser
 TestTableType
 BABEL-CROSS-DB

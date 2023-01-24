@@ -1,0 +1,401 @@
+-- tsql
+-- Basic Case: Store and Load various types
+EXEC sys.sp_set_session_context 'foo', 'bar'
+go
+
+SELECT sys.session_context(N'foo')
+go
+~~START~~
+sql_variant
+bar
+~~END~~
+
+
+EXEC sp_set_session_context 'foo', 10
+go
+
+SELECT SESSION_CONTEXT(N'FOO')
+go
+~~START~~
+sql_variant
+10
+~~END~~
+
+
+EXEC sp_set_session_context 'decimal', 11.5
+go
+
+SELECT session_context('decimal')
+go
+~~START~~
+sql_variant
+11.5
+~~END~~
+
+
+EXEC sp_set_session_context 'nvarchar', N'mynvarchar'
+go
+
+SELECT session_context('nvarchar')
+go
+~~START~~
+sql_variant
+mynvarchar
+~~END~~
+
+
+EXEC sp_set_session_context 'MONEY', $123.456
+go
+
+SELECT session_context('money')
+go
+~~START~~
+sql_variant
+123.456
+~~END~~
+
+
+-- Remove Item
+EXEC sp_set_session_context 'money', NULL
+go
+
+SELECT session_context('money')
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- Remove Missing
+EXEC sp_set_session_context 'missing', NULL
+go
+
+SELECT session_context('missing')
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- Multiple Sessions
+CREATE LOGIN session_context_1 WITH PASSWORD = 'abc';
+GO
+
+CREATE LOGIN session_context_2 WITH PASSWORD = 'abc';
+GO
+
+-- tsql user=session_context_1 password=abc
+SELECT SESSION_CONTEXT('foo')
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+EXEC sp_set_session_context 'foo', 'session1'
+go
+
+SELECT SESSION_CONTEXT('foo')
+go
+~~START~~
+sql_variant
+session1
+~~END~~
+
+
+-- tsql user=session_context_2 password=abc
+SELECT SESSION_CONTEXT('foo')
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+EXEC sp_set_session_context 'foo', 'session2'
+go
+
+SELECT SESSION_CONTEXT('foo')
+go
+~~START~~
+sql_variant
+session2
+~~END~~
+
+
+-- tsql
+SELECT SESSION_CONTEXT('foo')
+go
+~~START~~
+sql_variant
+10
+~~END~~
+
+
+-- Missing Items
+SELECT sys.session_context('missing')
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- Input Testing
+EXEC sp_set_session_context '', 'emptystring'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The parameters supplied for the procedure "sp_set_session_context" are not valid.)~~
+
+
+SELECT sys.session_context('')
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+EXEC sp_set_session_context NULL, 'nullInput'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The parameters supplied for the procedure "sp_set_session_context" are not valid.)~~
+
+
+SELECT sys.session_context(NULL)
+go
+~~START~~
+sql_variant
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The parameters supplied for the function "SESSION_CONTEXT" are not valid.)~~
+
+
+declare @key nvarchar(4000) = cast (REPLICATE('a', 128) as nvarchar(4000));
+EXEC sp_set_session_context @key, '128 chars';
+SELECT sys.session_context(@key)
+go
+~~START~~
+sql_variant
+128 chars
+~~END~~
+
+
+declare @key nvarchar(4000) = cast (REPLICATE('a', 129) as nvarchar(4000));
+EXEC sp_set_session_context @key, '129 chars';
+SELECT sys.session_context(@key)
+go
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(128))~~
+
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(128))~~
+
+
+declare @key nvarchar(4000) = cast (REPLICATE('あ', 128) as nvarchar(4000));
+EXEC sp_set_session_context @key, 1;
+select session_context(@key);
+go
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+declare @key nvarchar(4000) = cast (REPLICATE('あ', 129) as nvarchar(4000));
+EXEC sp_set_session_context @key, 1;
+select session_context(@key);
+go
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(128))~~
+
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(128))~~
+
+
+-- Ensures that we are allocating enough space to store multi-byte characters
+declare @key nvarchar(4000) = cast (REPLICATE('あ', 128) as nvarchar(4000));
+declare @key1 nvarchar(4000) = cast (REPLICATE('あ', 127) as nvarchar(4000));
+EXEC sp_set_session_context @key, 1;
+select session_context(@key1);
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+EXEC sp_set_session_context '¨ © ª Ć ć Ĉ ĉ Ċ ċ ª Θ Ж ऌ ฒ', 'ஐ ஒ ↙ ↚ ɝ ɞ ʿ'
+go
+
+SELECT CAST( sys.session_context(N'¨ © ª Ć ć Ĉ ĉ Ċ ċ ª Θ Ж ऌ ฒ') AS NVARCHAR);
+go
+~~START~~
+nvarchar
+ஐ ஒ ↙ ↚ ɝ ɞ ʿ
+~~END~~
+
+
+declare @val varchar(8000) = cast (REPLICATE('a', 8000) as varchar(8000));
+EXEC sp_set_session_context 'long_val', @val
+SELECT case when CAST( sys.session_context(N'long_val') AS varchar(8000)) = @val  then 'true' else 'false' end
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+declare @val varchar(8000) = cast (REPLICATE('あ', 8000) as varchar(8000));
+EXEC sp_set_session_context 'long_val_unicode', @val
+SELECT case when CAST( session_context(N'long_val_unicode') AS varchar(8000)) = @val then 'true' else 'false' end
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+-- Read Only
+EXEC sp_set_session_context 'read_only', 10, 1
+go
+
+SELECT sys.session_context('read_only')
+go
+~~START~~
+sql_variant
+10
+~~END~~
+
+
+EXEC sp_set_session_context 'read_only', 15
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot set key 'read_only' in the session context. The key has been set as read_only for this session.)~~
+
+
+SELECT sys.session_context('read_only')
+go
+~~START~~
+sql_variant
+10
+~~END~~
+
+
+EXEC sp_set_session_context 'read_only', NULL
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot set key 'read_only' in the session context. The key has been set as read_only for this session.)~~
+
+
+SELECT sys.session_context('read_only')
+go
+~~START~~
+sql_variant
+10
+~~END~~
+
+
+-- Transactions
+begin transaction
+go
+
+exec sp_set_session_context 'in_txn', 11
+go
+
+SELECT sys.session_context('in_txn')
+go
+~~START~~
+sql_variant
+11
+~~END~~
+
+
+rollback transaction
+go
+
+SELECT sys.session_context('in_txn')
+go
+~~START~~
+sql_variant
+11
+~~END~~
+
+
+-- Many Entries
+declare @i int = 0
+WHILE @i < 1000 BEGIN
+    DECLARE @key NVARCHAR(128) = CAST (@i AS VARCHAR(128));
+    EXEC sp_set_session_context @key, 'value';
+    set @i = @i + 1;
+END
+GO
+
+select session_context(N'500')
+GO
+~~START~~
+sql_variant
+value
+~~END~~
+
+
+select session_context(N'999')
+GO
+~~START~~
+sql_variant
+value
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'session_context_1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'session_context_2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN session_context_1;
+DROP LOGIN session_context_2;
+go
