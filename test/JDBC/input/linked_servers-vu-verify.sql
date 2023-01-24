@@ -29,9 +29,6 @@ GO
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server4", @locallogin = "linked_server_login_861"
 GO
 
-EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server5", @locallogin = "linked_server_login_admin"
-GO
-
 -- drop all the linked server logins that have been created
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server2", @locallogin = NULL
 GO

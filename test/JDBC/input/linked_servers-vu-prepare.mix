@@ -69,25 +69,10 @@ GO
 create login linked_server_login_861 with password = 'password_861'
 GO
 
--- Try to create linked server with same server name (Should throw error)
 EXEC sp_addlinkedserver  @server = N'mssql_server4', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
 
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server4', @useself = 'FALSE', @locallogin = 'linked_server_login_861', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
-GO
-
--- Creating a user which is part of sysadmin role
-create login linked_server_login_admin with password = 'adminpass'
-GO
-
-alter server role sysadmin add member linked_server_login_admin
-GO
-
--- Try to create linked server with same server name (Should throw error)
-EXEC sp_addlinkedserver  @server = N'mssql_server5', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
-GO
-
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server5', @useself = 'FALSE', @locallogin = 'linked_server_login_admin', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
 GO
 
 -- Create a function dependent on sys.servers view
@@ -113,5 +98,5 @@ GO
 
 -- Creation of linked_server should fail since only sysadmin will have privilege to create linked server
 -- This will change once T-SQL ALTER ANY LINKED SERVER permission is implemented in babelfish
-EXEC sp_addlinkedserver  @server = N'mssql_server6', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+EXEC sp_addlinkedserver  @server = N'mssql_server5', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO

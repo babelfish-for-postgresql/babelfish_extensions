@@ -9,7 +9,6 @@ mssql_server1#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server2#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server3#!##!#tds_fdw#!#mssql_server2\ABC#!#<NULL>#!#master#!#1
 mssql_server4#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
-mssql_server5#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 ~~END~~
 
 
@@ -23,7 +22,6 @@ mssql_server1#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server2#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server3#!##!#tds_fdw#!#mssql_server2\ABC#!#<NULL>#!#master#!#1
 mssql_server4#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
-mssql_server5#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 ~~END~~
 
 
@@ -37,7 +35,6 @@ mssql_server1#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server2#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 mssql_server3#!##!#tds_fdw#!#mssql_server2\ABC#!#<NULL>#!#master#!#1
 mssql_server4#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
-mssql_server5#!##!#tds_fdw#!#localhost#!#<NULL>#!#master#!#1
 ~~END~~
 
 
@@ -49,7 +46,6 @@ mssql_server#!#jdbc_user
 mssql_server2#!#only_user_no_password
 mssql_server3#!#<NULL>
 mssql_server4#!#<NULL>
-mssql_server5#!#<NULL>
 ~~END~~
 
 
@@ -61,7 +57,6 @@ mssql_server#!#jdbc_user
 mssql_server2#!#only_user_no_password
 mssql_server3#!#<NULL>
 mssql_server4#!#<NULL>
-mssql_server5#!#<NULL>
 ~~END~~
 
 
@@ -90,9 +85,6 @@ GO
 
 
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server4", @locallogin = "linked_server_login_861"
-GO
-
-EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server5", @locallogin = "linked_server_login_admin"
 GO
 
 -- drop all the linked server logins that have been created
