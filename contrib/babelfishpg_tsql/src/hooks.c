@@ -100,7 +100,7 @@ static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
-static void modify_RangeTblFunction_tupdesc(Node *expr, TupleDesc *tupdesc);
+static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
 
 /*****************************************
  * 			Commands Hooks
@@ -3082,13 +3082,22 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
  * result set. Currently used only for T-SQL OPENQUERY.
  */
 static void 
-modify_RangeTblFunction_tupdesc(Node *expr, TupleDesc *tupdesc)
+modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc)
 {
 	char* linked_server;
 	char* query;
 
-	FuncExpr *funcexpr = (FuncExpr*) expr;
-	List* arg_list = funcexpr->args;
+	FuncExpr *funcexpr;
+	List* arg_list;
+
+	/*
+	 * Only override tupdesc for T-SQL OPENQUERY
+	 */
+	if (!funcname || (strlen(funcname) != 9) || (strncasecmp(funcname, "openquery", 9) != 0))
+		return;
+
+	funcexpr = (FuncExpr*) expr;
+	arg_list = funcexpr->args;
 
 	/*
 	 * According to T-SQL OPENQUERY SQL definition, we will get
