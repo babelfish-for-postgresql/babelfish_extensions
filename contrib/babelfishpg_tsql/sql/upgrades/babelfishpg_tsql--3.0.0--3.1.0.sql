@@ -1100,26 +1100,33 @@ AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature 
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
--- deprecate old FOR XML/JSON functions if they exist - if this is a fresh install of 3.1 they won't exist, so check for that
+-- deprecate old FOR XML/JSON functions if they exist - if this install came from an upgrade path that did
+-- not contain v2.4+, then they WILL exist. Otherwise (v2.3->v3.0 OR v3.0->v3.1) they WILL NOT exist.
 DO $$
-BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'tsql_query_to_xml') = 1 THEN
-    ALTER FUNCTION sys.tsql_query_to_xml(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_deprecated_in_2_4_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_deprecated_in_2_4_0');
-END IF;
+BEGIN
+ALTER FUNCTION sys.tsql_query_to_xml(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_deprecated_in_3_1_0');
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Do nothing
 END $$;
 
 DO $$
-BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'tsql_query_to_xml_text') = 1 THEN
-    ALTER FUNCTION sys.tsql_query_to_xml_text(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_text_deprecated_in_2_4_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_text_deprecated_in_2_4_0');
-END IF;
+BEGIN
+ALTER FUNCTION sys.tsql_query_to_xml_text(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_text_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_text_deprecated_in_3_1_0');
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Do nothing
 END $$;
 
 DO $$
-BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'tsql_query_to_json_text') = 1 THEN
-    ALTER FUNCTION sys.tsql_query_to_json_text(text, int, boolean, boolean, text) RENAME TO tsql_query_to_json_text_deprecated_in_2_4_0;
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_json_text_deprecated_in_2_4_0');
-END IF;
+BEGIN
+ALTER FUNCTION sys.tsql_query_to_json_text(text, int, boolean, boolean, text) RENAME TO tsql_query_to_json_text_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_json_text_deprecated_in_3_1_0');
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Do nothing
 END $$;
 
 -- SELECT FOR XML
