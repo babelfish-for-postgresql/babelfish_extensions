@@ -1,10 +1,8 @@
-CREATE DATABASE sys_systypes_db;
-GO
 
 USE sys_systypes_db
 GO
 
-select name, status, length, variable, allownulls, printfmt, collation from sys.systypes order by name asc;
+SELECT * FROM sys_systypes_view1
 GO
 ~~START~~
 varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
@@ -30,6 +28,8 @@ smalldatetime#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 smallint#!#0#!#2#!#0#!#1#!#<NULL>#!#<NULL>
 smallmoney#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 sql_variant#!#0#!#8016#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+sys_systypes_type2#!#0#!#1#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 sysname#!#0#!#256#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 text#!#0#!#16#!#0#!#1#!#<NULL>#!#sql_latin1_general_cp1_ci_as
 time#!#0#!#5#!#0#!#1#!#<NULL>#!#<NULL>
@@ -43,10 +43,7 @@ xml#!#0#!#-1#!#0#!#1#!#<NULL>#!#<NULL>
 ~~END~~
 
 
-CREATE TYPE sys_systypes_type FROM int;
-GO
-
-select name, status, length, variable, allownulls, printfmt, collation from sys.systypes where name = 'sys_systypes_type';
+SELECT * FROM sys_systypes_view2
 GO
 ~~START~~
 varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
@@ -54,24 +51,21 @@ sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 ~~END~~
 
 
-
-
 -- variable length
-select length, name from sys.systypes where variable = 1 order by name asc;
+SELECT * FROM sys_systypes_view3
 GO
 ~~START~~
 smallint#!#varchar
 8000#!#nvarchar
+1#!#sys_systypes_type2
 256#!#sysname
 8000#!#varbinary
 8000#!#varchar
 ~~END~~
 
 
-CREATE TYPE sys_systypes_type2 FROM varchar;
-GO
 
-select name, status, length, variable, allownulls, printfmt, collation from sys.systypes where name = 'sys_systypes_type2';
+SELECT * FROM sys_systypes_view4
 GO
 ~~START~~
 varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
@@ -107,6 +101,7 @@ sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 DROP TYPE sys_systypes_type;
 GO
 
+
 USE sys_systypes_db
 GO
 
@@ -117,6 +112,17 @@ GO
 DROP TYPE sys_systypes_type2
 GO
 
+DROP VIEW sys_systypes_view4
+GO
+
+DROP VIEW sys_systypes_view3
+GO
+
+DROP VIEW sys_systypes_view2
+GO
+
+DROP VIEW sys_systypes_view1
+GO
 
 USE master
 GO
