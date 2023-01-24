@@ -33,7 +33,7 @@ datetime
 SELECT * FROM babel_2812_vu_v1
 GO
 ~~START~~
-int
+bigint
 -9
 ~~END~~
 
