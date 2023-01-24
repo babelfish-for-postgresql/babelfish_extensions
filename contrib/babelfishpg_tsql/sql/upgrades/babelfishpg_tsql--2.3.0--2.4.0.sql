@@ -726,6 +726,9 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
     sub_securable sys.SYSNAME,
     sub_securable_class sys.nvarchar(60)) TO PUBLIC;
 
+-- For all the views created on previous versions, the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def SET definition = NULL;
+
 -- Add one column to store definition of the function in the table.
 SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_function_ext add COLUMN IF NOT EXISTS definition sys.NTEXT DEFAULT NULL;
@@ -907,6 +910,324 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql;
+
+/* set sys functions as STABLE */
+ALTER FUNCTION sys.schema_id() STABLE;
+ALTER FUNCTION sys.schema_name() STABLE;
+ALTER FUNCTION sys.sp_columns_100_internal(
+	in_table_name sys.nvarchar(384),
+    in_table_owner sys.nvarchar(384), 
+    in_table_qualifier sys.nvarchar(384),
+    in_column_name sys.nvarchar(384),
+	in_NameScope int,
+    in_ODBCVer int,
+    in_fusepattern smallint)
+STABLE;
+ALTER FUNCTION sys.sp_columns_managed_internal(
+    in_catalog sys.nvarchar(128), 
+    in_owner sys.nvarchar(128),
+    in_table sys.nvarchar(128),
+    in_column sys.nvarchar(128),
+    in_schematype int)
+STABLE;
+ALTER FUNCTION sys.sp_pkeys_internal(
+	in_table_name sys.nvarchar(384),
+	in_table_owner sys.nvarchar(384),
+	in_table_qualifier sys.nvarchar(384)
+)
+STABLE;
+ALTER FUNCTION sys.sp_statistics_internal(
+    in_table_name sys.sysname,
+    in_table_owner sys.sysname,
+    in_table_qualifier sys.sysname,
+    in_index_name sys.sysname,
+	in_is_unique char,
+	in_accuracy char
+)
+STABLE;
+ALTER FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384),
+	in_table_owner sys.nvarchar(384), 
+	in_table_qualifier sys.sysname,
+	in_table_type sys.varchar(100),
+	in_fusepattern sys.bit)
+STABLE;
+ALTER FUNCTION sys.trigger_nestlevel() STABLE;
+ALTER FUNCTION sys.proc_param_helper() STABLE;
+ALTER FUNCTION sys.original_login() STABLE; 
+ALTER FUNCTION sys.objectproperty(id INT, property SYS.VARCHAR) STABLE;
+ALTER FUNCTION sys.OBJECTPROPERTYEX(id INT, property SYS.VARCHAR) STABLE;
+ALTER FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) STABLE;
+ALTER FUNCTION sys.nestlevel() STABLE;
+ALTER FUNCTION sys.max_connections() STABLE;
+ALTER FUNCTION sys.lock_timeout() STABLE;
+ALTER FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT) STABLE;
+ALTER FUNCTION sys.isnumeric(IN expr ANYELEMENT) STABLE;
+ALTER FUNCTION sys.isnumeric(IN expr TEXT) STABLE;
+ALTER FUNCTION sys.isdate(v text) STABLE;
+ALTER FUNCTION sys.is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME) STABLE;
+ALTER FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128)) STABLE;
+ALTER FUNCTION sys.has_perms_by_name(
+    securable SYS.SYSNAME, 
+    securable_class SYS.NVARCHAR(60), 
+    permission SYS.SYSNAME,
+    sub_securable SYS.SYSNAME,
+    sub_securable_class SYS.NVARCHAR(60)
+)
+STABLE;
+ALTER FUNCTION sys.fn_listextendedproperty (
+property_name varchar(128),
+level0_object_type varchar(128),
+level0_object_name varchar(128),
+level1_object_type varchar(128),
+level1_object_name varchar(128),
+level2_object_type varchar(128),
+level2_object_name varchar(128)
+)
+STABLE;
+ALTER FUNCTION sys.fn_helpcollations() STABLE;
+ALTER FUNCTION sys.DBTS() STABLE;
+ALTER FUNCTION sys.columns_internal() STABLE;
+ALTER FUNCTION sys.columnproperty(object_id oid, property name, property_name text) STABLE;
+ALTER FUNCTION sys.babelfish_get_id_by_name(object_name text) STABLE;
+ALTER FUNCTION sys.babelfish_get_sequence_value(in sequence_name character varying) STABLE;
+ALTER FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT, IN p_dateval DATE, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_dateval DATE) STABLE;
+ALTER FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_day NUMERIC, IN p_month NUMERIC, IN p_year NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_day TEXT, IN p_month TEXT, IN p_year TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE) STABLE;
+ALTER FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_dateval DATE) STABLE;
+ALTER FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_day NUMERIC, IN p_month NUMERIC, IN p_year NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_day TEXT, IN p_month TEXT, IN p_year TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE) STABLE;
+ALTER FUNCTION sys.babelfish_conv_string_to_date(IN p_datestring TEXT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_string_to_datetime(IN p_datatype TEXT, IN p_datetimestring TEXT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT, IN p_timestring TEXT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_timeval TIME(6) WITHOUT TIME ZONE, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_dbts() STABLE;
+ALTER FUNCTION sys.babelfish_get_jobs() STABLE;
+ALTER FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_get_service_setting ( IN p_service sys.service_settings.service%TYPE , IN p_setting sys.service_settings.setting%TYPE ) STABLE;
+ALTER FUNCTION sys.babelfish_get_version(pComponentName VARCHAR(256)) STABLE;
+ALTER FUNCTION sys.babelfish_is_ossp_present() STABLE;
+ALTER FUNCTION sys.babelfish_is_spatial_present() STABLE;
+ALTER FUNCTION sys.babelfish_istime(v text) STABLE;
+ALTER FUNCTION babelfish_remove_delimiter_pair(IN name TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_openxml(IN DocHandle BIGINT) STABLE;
+ALTER FUNCTION sys.babelfish_parse_to_date(IN p_datestring TEXT, IN p_culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_parse_to_datetime(IN p_datatype TEXT, IN p_datetimestring TEXT, IN p_culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_parse_to_time(IN p_datatype TEXT, IN p_srctimestring TEXT, IN p_culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_ROUND3(x in numeric, y in int, z in int) STABLE;
+ALTER FUNCTION sys.babelfish_sp_aws_add_jobschedule (par_job_id integer, par_schedule_id integer, out returncode integer) STABLE;
+ALTER FUNCTION sys.babelfish_sp_aws_del_jobschedule (par_job_id integer, par_schedule_id integer, out returncode integer )STABLE;
+ALTER FUNCTION sys.babelfish_sp_schedule_to_cron (par_job_id integer, par_schedule_id integer, out cron_expression varchar )STABLE;
+ALTER FUNCTION sys.babelfish_sp_sequence_get_range(
+  in par_sequence_name text,
+  in par_range_size bigint,
+  out par_range_first_value bigint,
+  out par_range_last_value bigint,
+  out par_range_cycle_count bigint,
+  out par_sequence_increment bigint,
+  out par_sequence_min_value bigint,
+  out par_sequence_max_value bigint
+)  
+STABLE;
+ALTER FUNCTION sys.babelfish_sp_verify_job (
+  par_job_id integer,
+  par_name varchar,
+  par_enabled smallint,
+  par_start_step_id integer,
+  par_category_name varchar,
+  inout par_owner_sid char,
+  par_notify_level_eventlog integer,
+  inout par_notify_level_email integer,
+  inout par_notify_level_netsend integer,
+  inout par_notify_level_page integer,
+  par_notify_email_operator_name varchar,
+  par_notify_netsend_operator_name varchar,
+  par_notify_page_operator_name varchar,
+  par_delete_level integer,
+  inout par_category_id integer,
+  inout par_notify_email_operator_id integer,
+  inout par_notify_netsend_operator_id integer,
+  inout par_notify_page_operator_id integer,
+  inout par_originating_server varchar,
+  out returncode integer
+)
+STABLE;
+ALTER FUNCTION sys.babelfish_sp_verify_job_date (par_date integer, par_date_name varchar, out returncode integer) STABLE;
+ALTER FUNCTION sys.babelfish_sp_verify_job_identifiers (
+  par_name_of_name_parameter varchar,
+  par_name_of_id_parameter varchar,
+  inout par_job_name varchar,
+  inout par_job_id integer,
+  par_sqlagent_starting_test varchar,
+  inout par_owner_sid char,
+  out returncode integer
+)
+STABLE;
+ALTER FUNCTION sys.babelfish_sp_verify_job_time (
+  par_time integer,
+  par_time_name varchar,
+  out returncode integer
+)
+STABLE;
+ALTER FUNCTION sys.babelfish_sp_verify_jobstep (
+  par_job_id integer,
+  par_step_id integer,
+  par_step_name varchar,
+  par_subsystem varchar,
+  par_command text,
+  par_server varchar,
+  par_on_success_action smallint,
+  par_on_success_step_id integer,
+  par_on_fail_action smallint,
+  par_on_fail_step_id integer,
+  par_os_run_priority integer,
+  par_flags integer,
+  par_output_file_name varchar,
+  par_proxy_id integer,
+  out returncode integer
+)
+STABLE;
+ALTER FUNCTION sys.babelfish_sp_verify_schedule (
+  par_schedule_id integer,
+  par_name varchar,
+  par_enabled smallint,
+  par_freq_type integer,
+  inout par_freq_interval integer,
+  inout par_freq_subday_type integer,
+  inout par_freq_subday_interval integer,
+  inout par_freq_relative_interval integer,
+  inout par_freq_recurrence_factor integer,
+  inout par_active_start_date integer,
+  inout par_active_start_time integer,
+  inout par_active_end_date integer,
+  inout par_active_end_time integer,
+  par_owner_sid char,
+  out returncode integer
+)
+STABLE;
+ALTER FUNCTION sys.babelfish_sp_verify_schedule_identifiers (
+  par_name_of_name_parameter varchar,
+  par_name_of_id_parameter varchar,
+  inout par_schedule_name varchar,
+  inout par_schedule_id integer,
+  inout par_owner_sid char,
+  inout par_orig_server_id integer,
+  par_job_id_filter integer,
+  out returncode integer
+)
+STABLE;
+ALTER FUNCTION sys.babelfish_STRPOS3(p_str text, p_substr text, p_loc int) STABLE;
+ALTER FUNCTION sys.babelfish_tomsbit(in_str NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_tomsbit(in_str VARCHAR) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_date_to_string(IN p_datatype TEXT, IN p_dateval DATE, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_datetime_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_string_to_date(IN p_datestring TEXT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_string_to_datetime(IN p_datatype TEXT, IN p_datetimestring TEXT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_string_to_time(IN p_datatype TEXT, IN p_timestring TEXT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_time_to_string(IN p_datatype TEXT, IN p_src_datatype TEXT, IN p_timeval TIME WITHOUT TIME ZONE, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_helper_to_date(IN arg TEXT, IN try BOOL, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_helper_to_date(IN arg anyelement, IN try BOOL, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_to_date(IN arg anyelement) STABLE;
+ALTER FUNCTION sys.babelfish_conv_helper_to_time(IN arg TEXT, IN try BOOL, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_helper_to_time(IN arg anyelement, IN try BOOL, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_to_time(IN arg anyelement) STABLE;
+ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg TEXT, IN try BOOL, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement) STABLE;
+ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg TEXT, IN try BOOL, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg ANYELEMENT, IN try BOOL, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg TEXT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg TEXT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_parse_helper_to_date(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_parse_helper_to_time(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_parse_helper_to_datetime(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_money_to_string(IN p_datatype TEXT, IN p_moneyval PG_CATALOG.MONEY, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_conv_float_to_string(IN p_datatype TEXT, IN p_floatval FLOAT, IN p_style NUMERIC) STABLE;
+ALTER FUNCTION sys.babelfish_try_parse_to_date(IN p_datestring TEXT, IN p_culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_try_parse_to_datetime(IN p_datatype TEXT, IN p_datetimestring TEXT, IN p_culture TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_try_parse_to_time(IN p_datatype TEXT, IN p_srctimestring TEXT, IN p_culture TEXT) STABLE;
+ALTER FUNCTION babelfish_get_name_delimiter_pos(name TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_split_object_name(name TEXT, OUT db_name TEXT, OUT schema_name TEXT, OUT object_name TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_has_any_privilege(userid oid, perm_target_type text, schema_name text, object_name text) STABLE;
+ALTER FUNCTION sys.babelfish_cast_floor_smallint(IN arg TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_cast_floor_smallint(IN arg ANYELEMENT) STABLE;
+ALTER FUNCTION sys.babelfish_cast_floor_int(IN arg TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_cast_floor_int(IN arg ANYELEMENT) STABLE;
+ALTER FUNCTION sys.babelfish_cast_floor_bigint(IN arg TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_cast_floor_bigint(IN arg ANYELEMENT) STABLE;
+ALTER FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg TEXT, IN typmod INTEGER) STABLE;
+ALTER FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg ANYELEMENT, IN typmod INTEGER) STABLE;
+ALTER FUNCTION sys.sysdatetimeoffset() STABLE;
+ALTER FUNCTION sys.sysutcdatetime() STABLE;
+ALTER FUNCTION sys.getdate() STABLE;
+ALTER FUNCTION sys.GETUTCDATE() STABLE;
+ALTER FUNCTION sys.isnull(text,text) STABLE;
+ALTER FUNCTION sys.isnull(boolean,boolean) STABLE;
+ALTER FUNCTION sys.isnull(smallint,smallint) STABLE;
+ALTER FUNCTION sys.isnull(integer,integer) STABLE;
+ALTER FUNCTION sys.isnull(bigint,bigint) STABLE;
+ALTER FUNCTION sys.isnull(real,real) STABLE;
+ALTER FUNCTION sys.isnull(double precision, double precision) STABLE;
+ALTER FUNCTION sys.isnull(numeric,numeric) STABLE;
+ALTER FUNCTION sys.isnull(date, date) STABLE;
+ALTER FUNCTION sys.isnull(timestamp,timestamp) STABLE;
+ALTER FUNCTION sys.isnull(timestamp with time zone,timestamp with time zone) STABLE;
+ALTER FUNCTION sys.is_table_type(object_id oid) STABLE;
+ALTER FUNCTION sys.rand() STABLE;
+ALTER FUNCTION sys.spid() STABLE;
+ALTER FUNCTION sys.APPLOCK_MODE(IN "@dbprincipal" varchar(32), IN "@resource" varchar(255), IN "@lockowner" varchar(32)) STABLE;
+ALTER FUNCTION sys.APPLOCK_TEST(IN "@dbprincipal" varchar(32), IN "@resource" varchar(255), IN "@lockmode" varchar(32), IN "@lockowner" varchar(32)) STABLE;
+ALTER FUNCTION sys.has_dbaccess(database_name SYSNAME) STABLE;
+ALTER FUNCTION sys.language() STABLE;
+ALTER FUNCTION sys.rowcount() STABLE;
+ALTER FUNCTION sys.error() STABLE;
+ALTER FUNCTION sys.pgerror() STABLE;
+ALTER FUNCTION sys.trancount() STABLE;
+ALTER FUNCTION sys.datefirst() STABLE;
+ALTER FUNCTION sys.options() STABLE;
+ALTER FUNCTION sys.version() STABLE;
+ALTER FUNCTION sys.servername() STABLE;
+ALTER FUNCTION sys.servicename() STABLE;
+ALTER FUNCTION sys.fetch_status() STABLE;
+ALTER FUNCTION sys.cursor_rows() STABLE;
+ALTER FUNCTION sys.cursor_status(text, text) STABLE;
+ALTER FUNCTION sys.xact_state() STABLE;
+ALTER FUNCTION sys.error_line() STABLE;
+ALTER FUNCTION sys.error_message() STABLE;
+ALTER FUNCTION sys.error_number() STABLE;
+ALTER FUNCTION sys.error_procedure() STABLE;
+ALTER FUNCTION sys.error_severity() STABLE;
+ALTER FUNCTION sys.error_state() STABLE;
+ALTER FUNCTION sys.babelfish_get_identity_param(IN tablename TEXT, IN optionname TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_get_identity_current(IN tablename TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_get_login_default_db(IN login_name TEXT) STABLE;
+-- internal table function for querying the registered ENRs
+ALTER FUNCTION sys.babelfish_get_enr_list() STABLE;
+-- internal table function for collation_list
+ALTER FUNCTION sys.babelfish_collation_list() STABLE;
+-- internal table function for sp_cursor_list and sp_decribe_cursor
+ALTER FUNCTION sys.babelfish_cursor_list(cursor_source integer) STABLE;
+-- internal table function for sp_helpdb with no arguments
+ALTER FUNCTION sys.babelfish_helpdb() STABLE;
+-- internal table function for helpdb with dbname as input
+ALTER FUNCTION sys.babelfish_helpdb(varchar) STABLE;
+
+ALTER FUNCTION sys.babelfish_inconsistent_metadata(return_consistency boolean) STABLE;
+ALTER FUNCTION COLUMNS_UPDATED () STABLE;
+ALTER FUNCTION sys.ident_seed(IN tablename TEXT) STABLE;
+ALTER FUNCTION sys.ident_incr(IN tablename TEXT) STABLE;
+ALTER FUNCTION sys.ident_current(IN tablename TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_waitfor_delay(time_to_pass TEXT) STABLE;
+ALTER FUNCTION sys.babelfish_waitfor_delay(time_to_pass TIMESTAMP WITHOUT TIME ZONE) STABLE;
+ALTER FUNCTION sys.user_name_sysname() STABLE;
+ALTER FUNCTION sys.system_user() STABLE;
+ALTER FUNCTION sys.session_user() STABLE;
+ALTER FUNCTION UPDATE (TEXT) STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

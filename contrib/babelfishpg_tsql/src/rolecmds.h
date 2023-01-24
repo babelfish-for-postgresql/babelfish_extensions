@@ -4,7 +4,7 @@
 #include "catalog/objectaccess.h"
 #include "nodes/parsenodes.h"
 
-#define BBF_AUTHID_LOGIN_EXT_NUM_COLS	11
+#define BBF_AUTHID_LOGIN_EXT_NUM_COLS	12
 #define LOGIN_EXT_ROLNAME				0
 #define LOGIN_EXT_IS_DISABLED			1
 #define LOGIN_EXT_TYPE					2
@@ -16,6 +16,14 @@
 #define LOGIN_EXT_DEFAULT_DATABASE_NAME 8
 #define LOGIN_EXT_DEFAULT_LANGUAGE_NAME 9
 #define LOGIN_EXT_PROPERTIES			10
+#define LOGIN_EXT_ORIG_LOGINNAME		11
+
+/*
+*	A logon must have less that 21 characters in AD
+*/
+#define LOGON_NAME_MAX_LEN 21
+#define LOGON_NAME_MIN_LEN 0
+
 
 #define BBF_AUTHID_USER_EXT_NUM_COLS					16
 #define USER_EXT_ROLNAME								0
@@ -61,5 +69,9 @@ extern void add_to_bbf_authid_user_ext(const char *user_name,
 extern void drop_related_bbf_users(List *db_users);
 extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
 extern bool is_active_login(Oid role_oid);
+extern char *convertToUPN(char* input);
+extern HeapTuple get_roleform_ext(char *login);
+extern bool windows_login_contains_invalid_chars(char* input);
+extern bool check_windows_logon_length(char* input);
 
 #endif
