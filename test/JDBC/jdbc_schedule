@@ -20,17 +20,6 @@ ignore#!#BABEL-ROLE-vu-cleanup
 ignore#!#BABEL-ROLE
 ignore#!#BABEL-USER
 
-# TO-DO: re-enable these tests when pg_hint_plan extension gets supported in PG15
-ignore#!#BABEL-3291
-ignore#!#BABEL-3292
-ignore#!#BABEL-3293
-ignore#!#BABEL-3294
-ignore#!#BABEL-3295
-ignore#!#BABEL-3512
-ignore#!#BABEL-3592
-ignore#!#BABEL-3513-vu-prepare
-ignore#!#BABEL-3513-vu-verify
-
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 ignore#!#BABEL-SP_FKEYS
 ignore#!#BABEL-SP_FKEYS-vu-prepare
@@ -79,6 +68,17 @@ ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-verify
 ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-cleanup
 ignore#!#BABEL-3646-before-14_6-vu-prepare
 ignore#!#BABEL-3646-before-14_6-vu-verify
+ignore#!#routines_definition_before-14_7-or-15_2-vu-prepare
+ignore#!#routines_definition_before-14_7-or-15_2-vu-verify
+ignore#!#sys-all_sql_modules_before-14_5-vu-prepare
+ignore#!#sys-all_sql_modules_before-14_5-vu-verify
+ignore#!#sys-all_sql_modules_before-14_5-vu-cleanup
+ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-prepare
+ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-verify
+ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-cleanup
+ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-prepare
+ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-verify
+ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-cleanup
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
@@ -106,3 +106,8 @@ ignore#!#case_insensitive_collation-before-13-5-vu-cleanup
 ignore#!#jira-BABEL-3504-upgrade-vu-prepare
 ignore#!#jira-BABEL-3504-upgrade-vu-verify
 ignore#!#jira-BABEL-3504-upgrade-vu-cleanup
+
+# These tests are meant for upgrade scenario prior to (potential) 15_2 release
+ignore#!#test_windows_login_before_15_2-vu-prepare
+ignore#!#test_windows_login_before_15_2-vu-verify
+ignore#!#test_windows_login_before_15_2-vu-cleanup

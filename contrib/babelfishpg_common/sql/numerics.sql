@@ -22,7 +22,7 @@ AS $$
 SELECT CAST(CAST(sys.bitxor(CAST(CAST(leftarg AS int4) AS pg_catalog.bit(16)),
                     CAST(CAST(rightarg AS int4) AS pg_catalog.bit(16))) AS int4) AS sys.tinyint);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OPERATOR sys.^ (
     LEFTARG = sys.tinyint,
@@ -37,7 +37,7 @@ AS $$
 SELECT CAST(CAST(sys.bitxor(CAST(CAST(leftarg AS int4) AS pg_catalog.bit(16)),
                     CAST(CAST(rightarg AS int4) AS pg_catalog.bit(16))) AS int4) AS int2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OPERATOR sys.^ (
     LEFTARG = int2,
@@ -52,7 +52,7 @@ AS $$
 SELECT CAST(sys.bitxor(CAST(leftarg AS pg_catalog.bit(32)),
                     CAST(rightarg AS pg_catalog.bit(32))) AS int4)
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OPERATOR sys.^ (
     LEFTARG = int4,
@@ -67,7 +67,7 @@ AS $$
 SELECT CAST(sys.bitxor(CAST(leftarg AS pg_catalog.bit(64)),
                     CAST(rightarg AS pg_catalog.bit(64))) AS int8)
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OPERATOR sys.^ (
     LEFTARG = int8,

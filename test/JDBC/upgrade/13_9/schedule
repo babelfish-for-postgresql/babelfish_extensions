@@ -116,7 +116,7 @@ sys-suser_sname
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
-routines_definition
+routines_definition_before-14_7-or-15_2
 constraint_column_usage
 column_domain_usage
 sp_describe_first_result_set
@@ -292,3 +292,7 @@ ISC-Tables
 ISC-Columns
 ISC-Table_Constraints
 case_insensitive_collation
+sys-sql_modules_before-14_7-or-15_2
+sys-all_sql_modules_before-14_5
+BABEL_OBJECT_ID
+test_windows_login_before_15_2

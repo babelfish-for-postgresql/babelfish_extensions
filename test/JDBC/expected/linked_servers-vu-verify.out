@@ -64,3 +64,97 @@ mssql_server4#!#<NULL>
 mssql_server5#!#<NULL>
 ~~END~~
 
+
+-- Try to drop a linked server login that does not exist (should throw error)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "invalid_server", @locallogin = NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "invalid_server" does not exist)~~
+
+
+-- Try to drop a linked server login with @rmtsrvname = NULL (should throw error)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = NULL, @locallogin = NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: @servername cannot be NULL)~~
+
+
+-- Try to drop a linked server login with locallogin != NULL (should throw error saying that only localogin = NULL is supported)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = "login_1"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only @locallogin = NULL is supported)~~
+
+
+-- drop all the linked server logins that have been created
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server2", @locallogin = NULL
+GO
+
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server3", @locallogin = NULL
+GO
+
+-- Call sp_droplinkedsrvlogin from master.dbo schema
+EXEC master.dbo.sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = NULL
+GO
+
+SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+-- Trying to drop a server that does not exist (Should throw error)
+EXEC sp_dropserver @server = 'mssql_server_that_does_not_exist', @droplogins = NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "mssql_server_that_does_not_exist" does not exist)~~
+
+
+-- Trying to drop a server with @droplogins = invalid value (Should throw error)
+EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'definitely_invalid'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.)~~
+
+
+-- Dropping a server without droplogins should also drop the server and the linked login
+EXEC sp_dropserver @server = 'mssql_server', @droplogins = NULL
+GO
+
+SELECT * FROM sys.servers WHERE name = 'mssql_server'
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#int#!#int#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#datetime#!#bit
+~~END~~
+
+
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name = 'mssql_server'
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+-- Dropping a server with droplogins should drop the linked logins as well. Also call sp_dropserver from master.dbo schema
+EXEC master.dbo.sp_dropserver @server = 'mssql_server2', @droplogins = 'droplogins'
+GO
+
+SELECT * FROM sys.servers WHERE name = 'mssql_server'
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#int#!#int#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#datetime#!#bit
+~~END~~
+
+
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name = 'mssql_server2'
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+

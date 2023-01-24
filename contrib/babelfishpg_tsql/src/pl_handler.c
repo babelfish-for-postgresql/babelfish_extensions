@@ -149,6 +149,18 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 
+extern bool  pltsql_ansi_defaults;
+extern bool  pltsql_quoted_identifier;
+extern bool  pltsql_concat_null_yields_null;
+extern bool  pltsql_ansi_nulls;
+extern bool  pltsql_ansi_null_dflt_on;
+extern bool  pltsql_ansi_padding;
+extern bool  pltsql_ansi_warnings;
+extern bool  pltsql_arithabort;
+extern int   pltsql_datefirst;
+extern char* pltsql_language;
+extern int pltsql_lock_timeout;
+
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
 static Oid lang_handler_oid = InvalidOid;     /* Oid of language handler function */
@@ -426,6 +438,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (parseTree->stmt->type == T_CreateFunctionStmt ){
 		ListCell 		*option;
 		CreateTrigStmt *trigStmt;
+		CreateFunctionStmt *funcStmt = (CreateFunctionStmt *) parseTree->stmt;
 		char* trig_schema;
 		foreach (option, ((CreateFunctionStmt *) parseTree->stmt)->options){
 			DefElem *defel = (DefElem *) lfirst(option);
@@ -442,6 +455,17 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 						   trig_schema , trigStmt->trigname)));
 					}
 					trigStmt->args = NIL;
+				}
+				else
+				{
+					Assert(list_length(funcStmt->funcname) == 1);
+					/*
+					 * Add schemaname to trigger's function name.
+					 */
+					if (trigStmt->relation->schemaname != NULL)
+					{
+						funcStmt->funcname = lcons(makeString(trigStmt->relation->schemaname), funcStmt->funcname);
+					}
 				}
 			}
 		}
@@ -2360,6 +2384,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if (strcmp(headel->defname, "islogin") == 0)
 					{
+						bool from_windows = false;
+						char *orig_loginname = NULL;
+
 						islogin = true;
 						stmt->options = list_delete_cell(stmt->options,
 														 list_head(stmt->options));
@@ -2372,12 +2399,91 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "default_database") == 0)
 								login_options = lappend(login_options, defel);
+							else if (strcmp(defel->defname, "name_location") == 0)
+							{
+								int location = defel->location;
+								orig_loginname = extract_identifier(queryString + location);
+								login_options = lappend(login_options, defel);
+							}
+							else if (strcmp(defel->defname, "from_windows") == 0)
+							{
+								from_windows = true;
+								login_options = lappend(login_options, defel);
+							}
 						}
 
 						foreach(option, login_options)
 						{
 							stmt->options = list_delete_ptr(stmt->options,
 															lfirst(option));
+						}
+
+						if (orig_loginname)
+						{
+							login_options = lappend(login_options, 
+													makeDefElem("original_login_name",
+																(Node *) makeString(orig_loginname),
+																-1));
+						}
+
+						if (from_windows && orig_loginname)
+						{
+							/*
+							 * The login name must contain '\' if it is windows login or else throw error.
+							 */
+							if ((strchr(orig_loginname, '\\')) == NULL)
+								ereport(ERROR,
+										(errcode(ERRCODE_INVALID_NAME),
+										 errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
+										 orig_loginname)));
+
+							/*
+							 * Check whether domain name is empty. If the first character is '\', that ensures domain is empty.
+							 */
+							if (orig_loginname[0] == '\\')
+								ereport(ERROR,
+									(errcode(ERRCODE_INVALID_NAME),
+									 errmsg("The login name '%s' is invalid. The domain can not be empty.",
+											orig_loginname)));
+
+							/*
+							 * Check whether login_name has valid length or not.
+							 */
+							if (!check_windows_logon_length(orig_loginname))
+								ereport(ERROR,
+										(errcode(ERRCODE_INVALID_NAME),
+										 errmsg("The login name '%s' has invalid length. Login name length should be between %d and %d for windows login.",
+											orig_loginname, (LOGON_NAME_MIN_LEN + 1), (LOGON_NAME_MAX_LEN - 1))));
+
+							/*
+							 * Check whether the login_name contains invalid characters or not.
+							 */
+							if (windows_login_contains_invalid_chars(orig_loginname))
+								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+
+							pfree(stmt->role);
+							stmt->role = convertToUPN(orig_loginname);
+
+							/*
+							* Check for duplicate login
+							*/
+							if (get_role_oid(stmt->role, true) != InvalidOid)
+						  		ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
+									errmsg("The Server principal '%s' already exists", stmt->role)));
+						}
+
+						/*
+						 * Length of login name should be less than 128. Throw an error
+						 * here if it is not.
+						 * XXX: Below check is to work around BABEL-3868.
+						 */
+						if (strlen(stmt->role) >= NAMEDATALEN)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_INVALID_NAME),
+									 errmsg("The login name '%s' is too long. Maximum length is %d.",
+											stmt->role, (NAMEDATALEN - 1))));
 						}
 					}
 					else if (strcmp(headel->defname, "isuser") == 0)
@@ -2883,7 +2989,23 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (HeapTupleIsValid(tuple))
 						roleform = (Form_pg_authid) GETSTRUCT(tuple);
 					else
-						continue;
+					{
+						/* Supplied login name might be in windows format i.e, domain\login form */
+						tuple = get_roleform_ext(role_name);
+						if (HeapTupleIsValid(tuple))
+						{
+							roleform = (Form_pg_authid) GETSTRUCT(tuple);
+							/*
+							 * This means that provided login name is in windows format 
+							 * so let's update role_name with UPN format.
+							 */
+							role_name = pstrdup((roleform->rolname).data);
+							pfree(rolspec->rolename);
+							rolspec->rolename = role_name;
+						}
+						else
+							continue;
+					}
 
 					if (is_login(roleform->oid))
 						all_logins = true;
@@ -3555,6 +3677,19 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->tsql_char_input = common_utility_plugin_ptr->tsql_bpchar_input;
 		(*pltsql_protocol_plugin_ptr)->get_cur_db_name = &get_cur_db_name;
 		(*pltsql_protocol_plugin_ptr)->get_physical_schema_name = &get_physical_schema_name;
+
+		(*pltsql_protocol_plugin_ptr)->quoted_identifier = pltsql_quoted_identifier;
+		(*pltsql_protocol_plugin_ptr)->arithabort = pltsql_arithabort;
+		(*pltsql_protocol_plugin_ptr)->ansi_null_dflt_on = pltsql_ansi_null_dflt_on;
+		(*pltsql_protocol_plugin_ptr)->ansi_defaults = pltsql_ansi_defaults;
+		(*pltsql_protocol_plugin_ptr)->ansi_warnings = pltsql_ansi_warnings;
+		(*pltsql_protocol_plugin_ptr)->ansi_padding = pltsql_ansi_padding;
+		(*pltsql_protocol_plugin_ptr)->ansi_nulls = pltsql_ansi_nulls;
+		(*pltsql_protocol_plugin_ptr)->concat_null_yields_null = pltsql_concat_null_yields_null;
+		(*pltsql_protocol_plugin_ptr)->textsize = text_size;
+		(*pltsql_protocol_plugin_ptr)->datefirst = pltsql_datefirst;
+		(*pltsql_protocol_plugin_ptr)->lock_timeout = pltsql_lock_timeout;
+		(*pltsql_protocol_plugin_ptr)->language = pltsql_language;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
