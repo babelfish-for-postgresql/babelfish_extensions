@@ -145,21 +145,21 @@ RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_param(tablename, 'start'::text)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.ident_incr(IN tablename TEXT)
 RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_param(tablename, 'increment'::text)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.ident_current(IN tablename TEXT)
 RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_current(tablename)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.checksum(VARIADIC arr TEXT[])
 RETURNS INTEGER
@@ -399,7 +399,7 @@ EXCEPTION WHEN others THEN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE CALLED ON NULL INPUT;
+STABLE CALLED ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT) RETURNS INTEGER AS
 $BODY$
@@ -432,7 +432,7 @@ EXCEPTION WHEN others THEN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE CALLED ON NULL INPUT;
+STABLE CALLED ON NULL INPUT;
 
 -- Return the object ID given the object name. Can specify optional type.
 CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
@@ -553,7 +553,7 @@ RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
 'babelfishpg_tsql', 'has_dbaccess'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.datefromparts(IN year INT, IN month INT, IN day INT)
 RETURNS DATE AS
@@ -789,7 +789,7 @@ begin
     RETURN 0;
 end
 $body$
-language 'plpgsql';
+language 'plpgsql' STABLE;
 
 CREATE OR REPLACE FUNCTION sys.is_collated_ci_as_internal(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ci_as_internal'
@@ -1477,7 +1477,7 @@ CREATE OR REPLACE FUNCTION sys.GETUTCDATE() RETURNS sys.DATETIME AS
 $BODY$
 SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
 $BODY$
-LANGUAGE SQL PARALLEL SAFE;
+LANGUAGE SQL STABLE PARALLEL SAFE;
 
 -- These come from the built-in pg_catalog.count in pg_aggregate.dat
 CREATE AGGREGATE sys.count(*)
@@ -1549,31 +1549,31 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 -- @@ functions
 CREATE OR REPLACE FUNCTION sys.rowcount()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.pgerror()
-	   RETURNS VARCHAR AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS VARCHAR AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.trancount()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.datefirst()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.options()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.version()
-        RETURNS sys.NVARCHAR(255)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(255)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.servername()
-        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.servicename()
-        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 -- In tsql @@max_precision represents max precision that server supports
 -- As of now, we do not support change in max_precision. So, returning default value
@@ -1596,7 +1596,7 @@ $BODY$
 SELECT pg_backend_pid();
 $BODY$
 STRICT
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.get_current_full_xact_id()
     RETURNS XID8 AS 'babelfishpg_tsql' LANGUAGE C STABLE;
@@ -1616,7 +1616,7 @@ BEGIN
 END;
 $$
 STRICT
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
 $$
@@ -1633,16 +1633,16 @@ BEGIN
     END IF;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.fetch_status()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.cursor_rows()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.cursor_status(text, text)
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 -- Floor for bit
 CREATE OR REPLACE FUNCTION sys.floor(sys.bit) RETURNS DOUBLE PRECISION
@@ -1688,49 +1688,49 @@ CREATE OR REPLACE FUNCTION sys.APPLOCK_MODE(IN "@dbprincipal" varchar(32),
                                             IN "@resource" varchar(255),
                                             IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION')
 RETURNS TEXT
-AS 'babelfishpg_tsql', 'APPLOCK_MODE' LANGUAGE C;
+AS 'babelfishpg_tsql', 'APPLOCK_MODE' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.APPLOCK_TEST(IN "@dbprincipal" varchar(32),
                                             IN "@resource" varchar(255),
 											IN "@lockmode" varchar(32),
                                             IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION')
 RETURNS SMALLINT
-AS 'babelfishpg_tsql', 'APPLOCK_TEST' LANGUAGE C;
+AS 'babelfishpg_tsql', 'APPLOCK_TEST' LANGUAGE C STABLE;
 
 -- Error handling functions
 CREATE OR REPLACE FUNCTION sys.xact_state()
 RETURNS SMALLINT
-AS 'babelfishpg_tsql', 'xact_state' LANGUAGE C;
+AS 'babelfishpg_tsql', 'xact_state' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_line()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_line' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_line' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_message()
 RETURNS sys.NVARCHAR(4000)
-AS 'babelfishpg_tsql', 'pltsql_error_message' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_message' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_number()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_number' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_number' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_procedure()
 RETURNS sys.NVARCHAR(128)
-AS 'babelfishpg_tsql', 'pltsql_error_procedure' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_procedure' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_severity()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_severity' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_severity' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_state()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_state' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_state' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.rand() RETURNS FLOAT AS
 $$
 	SELECT random();
 $$
-LANGUAGE SQL VOLATILE STRICT PARALLEL RESTRICTED;
+LANGUAGE SQL STABLE STRICT PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.DEFAULT_DOMAIN()
 RETURNS TEXT
@@ -1801,7 +1801,8 @@ END IF;
 RETURN;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
 	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
 ) TO PUBLIC;
@@ -1902,7 +1903,7 @@ GRANT EXECUTE ON FUNCTION sys.sign(TEXT) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.lock_timeout()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -1918,7 +1919,7 @@ GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.max_connections()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -1934,7 +1935,7 @@ GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -2239,6 +2240,7 @@ CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
 )
 RETURNS integer
 LANGUAGE plpgsql
+STABLE
 AS $$
 DECLARE
     db_name text COLLATE sys.database_default; 
@@ -2506,7 +2508,7 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
 CREATE OR REPLACE FUNCTION sys.schema_name()
 RETURNS sys.sysname
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $function$
 begin
     RETURN (select orig_name from sys.babelfish_namespace_ext ext  
@@ -2522,7 +2524,7 @@ GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.schema_id()
 RETURNS INT
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 BEGIN
   RETURN (select oid from sys.pg_namespace_ext where nspname = (select current_schema()))::INT;
@@ -2536,7 +2538,7 @@ GRANT EXECUTE ON FUNCTION sys.schema_id() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.original_login()
 RETURNS sys.sysname
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value text;
 begin
@@ -2551,7 +2553,7 @@ GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 
 declare extra_bytes CONSTANT integer := 4;
@@ -2656,7 +2658,7 @@ SELECT
     WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
     AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
 $BODY$
-LANGUAGE SQL VOLATILE STRICT;
+LANGUAGE SQL STABLE STRICT;
 
 -- JSON Functions
 CREATE OR REPLACE FUNCTION sys.isjson(json_string text)
@@ -2817,7 +2819,7 @@ EXCEPTION
             RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
 END;        
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
@@ -3086,7 +3088,7 @@ BEGIN
     RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
@@ -3114,7 +3116,7 @@ BEGIN
     RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
 RETURNS SYS.VARBINARY
@@ -3124,7 +3126,7 @@ $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.language()
-RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
@@ -3225,7 +3227,7 @@ BEGIN
 RETURN ret_val;
 END;
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)

@@ -185,6 +185,13 @@ BEGIN
 
   ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
 
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                              IN "@locallogin" sys.sysname)
+  AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+  LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
+
   CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
                                                     IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
   AS 'babelfishpg_tsql', 'sp_dropserver_internal'
@@ -373,7 +380,7 @@ RETURNS table (
   created varchar(11),
   status varchar(600),
   compatibility_level smallint
-) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C STABLE;
 
 -- internal table function for helpdb with dbname as input
 CREATE OR REPLACE FUNCTION sys.babelfish_helpdb(varchar)
@@ -385,7 +392,7 @@ RETURNS table (
   created varchar(11),
   status varchar(600),
   compatibility_level smallint
-) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C STABLE;
 
 create or replace view sys.databases as
 select
@@ -492,7 +499,7 @@ RETURNS table (
   schema_name varchar(128),
   object_name varchar(128),
   detail jsonb
-) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.role_id(role_name SYS.SYSNAME)
