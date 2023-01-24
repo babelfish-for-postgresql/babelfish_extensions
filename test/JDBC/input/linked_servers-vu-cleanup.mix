@@ -1,6 +1,9 @@
 DROP LOGIN linked_server_login_861
 GO
 
+DROP LOGIN linked_server_login_admin
+GO
+
 DROP FUNCTION sys_linked_servers_vu_prepare__sys_servers_func
 GO
 
