@@ -386,115 +386,35 @@ CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
 RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
-AS
-$body$
+ALTER FUNCTION sys.num_days_in_date RENAME TO num_days_in_date_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'num_days_in_date_deprecated_in_2_4_0');
+CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 BIGINT, IN m1 BIGINT, IN y1 BIGINT) RETURNS BIGINT AS $$
+DECLARE
+	i BIGINT;
+	n1 BIGINT;
 BEGIN
-    return CAST(sys.datediff_internal_date(datepart, startdate, enddate) AS INTEGER);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
+	n1 = y1 * 365 + d1;
+	FOR i in 0 .. m1-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n1 = n1 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n1 = n1 + 30;
+		ELSIF (i = 1) THEN
+			n1 = n1 + 28;
+		END IF;
+	END LOOP;
+	IF m1 <= 2 THEN
+		y1 = y1 - 1;
+	END IF;
+	n1 = n1 + (y1/4 - y1/100 + y1/400);
 
-CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS INTEGER
-AS
-$body$
-BEGIN
-    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+	return n1;
 END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
+$$
+LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS INTEGER
-AS
-$body$
-BEGIN
-    return CAST(sys.datediff_internal_df(datepart, startdate, enddate) AS INTEGER);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS INTEGER
-AS
-$body$
-BEGIN
-    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS INTEGER
-AS
-$body$
-BEGIN
-    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS INTEGER
-AS
-$body$
-BEGIN
-    return CAST(sys.datediff_internal(datepart, startdate, enddate) AS INTEGER);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
--- datediff big
-CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT
-AS
-$body$
-BEGIN
-    return sys.datediff_internal_date(datepart, startdate, enddate);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS BIGINT
-AS
-$body$
-BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS BIGINT
-AS
-$body$
-BEGIN
-    return sys.datediff_internal_df(datepart, startdate, enddate);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS BIGINT
-AS
-$body$
-BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS BIGINT
-AS
-$body$
-BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS BIGINT
-AS
-$body$
-BEGIN
-    return sys.datediff_internal(datepart, startdate, enddate);
-END
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
+ALTER FUNCTION sys.datediff_internal_df RENAME TO datediff_internal_df_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_df_deprecated_in_2_4_0');
 CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS BIGINT AS $$
 DECLARE
 	result BIGINT;
@@ -598,6 +518,8 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
+ALTER FUNCTION sys.datediff_internal_date RENAME TO datediff_internal_date_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_date_deprecated_in_2_4_0');
 CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT AS $$
 DECLARE
 	result BIGINT;
@@ -667,6 +589,8 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
+ALTER FUNCTION sys.datediff_internal RENAME TO datediff_internal_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_deprecated_in_2_4_0');
 CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS BIGINT AS $$
 DECLARE
 	result BIGINT;
@@ -768,6 +692,114 @@ BEGIN
 END;
 $$
 STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal_date(datepart, startdate, enddate) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal_df(datepart, startdate, enddate) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate, enddate) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_date(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_df(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate, enddate);
+END
+$body$
 LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
