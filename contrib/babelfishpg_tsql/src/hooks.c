@@ -1866,6 +1866,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	uint64		flag_values = 0, flag_validity = 0;
 	char		*physical_schemaname;
 	const char  *logical_schemaname;
+	char *original_query = get_original_query_string();
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1926,11 +1927,22 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	flag_validity |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
 	if (pltsql_quoted_identifier)
 		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
+	/*
+	 * Setting this flag bit to 0 to distinguish between the objects
+	 * created in 2.x or 3.x for future references. Let's not use
+	 * this bit in 3.x, as we are setting this to 1 in 2.x and will
+	 * be reserved for MVU.
+	 */
+	flag_validity |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
+	flag_values |= BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4;
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = CStringGetTextDatum(logical_schemaname);
 	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
-	new_record[3] = CStringGetTextDatum(queryString);
+	if (original_query)
+		new_record[3] = CStringGetTextDatum(original_query);
+	else
+		new_record_nulls[3] = true;
 	new_record[4] = UInt64GetDatum(flag_validity);
 	new_record[5] = UInt64GetDatum(flag_values);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(3));
