@@ -82,9 +82,6 @@ PG_FUNCTION_INFO_V1(smallint_degrees);
 PG_FUNCTION_INFO_V1(bigint_radians);
 PG_FUNCTION_INFO_V1(int_radians);
 PG_FUNCTION_INFO_V1(smallint_radians);
-PG_FUNCTION_INFO_V1(bigint_power);
-PG_FUNCTION_INFO_V1(int_power);
-PG_FUNCTION_INFO_V1(smallint_power);
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -1566,61 +1563,4 @@ smallint_radians(PG_FUNCTION_ARGS)
 	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32)result);
-}
-
-Datum
-bigint_power(PG_FUNCTION_ARGS)
-{
-    int64	arg1 = PG_GETARG_INT64(0);
-    float8	arg2 = PG_GETARG_FLOAT8(1);
-    float8  result;
-
-    result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
-
-	/* Range check */
-	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT64(result)))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("Arithmetic overflow error converting expression to data type bigint")));
-
-    PG_RETURN_INT64((int64)result);
- 
-}
-
-Datum
-int_power(PG_FUNCTION_ARGS)
-{
-    int32   arg1 = PG_GETARG_INT32(0);
-    float8	arg2 = PG_GETARG_FLOAT8(1);
-    float8  result;
-
-    result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
-
-	/* Range check */
-	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("Arithmetic overflow error converting expression to data type int")));
-
-    PG_RETURN_INT32((int32)result);
- 
-}
-          
-Datum
-smallint_power(PG_FUNCTION_ARGS)
-{
-    int16   arg1 = PG_GETARG_INT16(0);
-    float8	arg2 = PG_GETARG_FLOAT8(1);
-    float8  result;
-
-    result = DatumGetFloat8(DirectFunctionCall2(dpow, Float8GetDatum((float8) arg1),Float8GetDatum((float8) arg2)));
-	
-	/* Range check */
-	if (unlikely(isnan(result) || !FLOAT8_FITS_IN_INT32(result)))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("Arithmetic overflow error converting expression to data type Int")));
-
-    PG_RETURN_INT32((int32)result);
- 
 }
