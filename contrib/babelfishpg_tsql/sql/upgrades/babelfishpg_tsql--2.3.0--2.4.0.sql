@@ -820,6 +820,18 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
+
+CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.sysname, 
+	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
+AS 'babelfishpg_tsql', 'sp_set_session_context'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.SESSION_CONTEXT ("@key" sys.sysname)
+	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'SESSION_CONTEXT' LANGUAGE C;
+GRANT EXECUTE ON FUNCTION sys.SESSION_CONTEXT TO PUBLIC;
+
+
 /* set sys functions as STABLE */
 ALTER FUNCTION sys.schema_id() STABLE;
 ALTER FUNCTION sys.schema_name() STABLE;
