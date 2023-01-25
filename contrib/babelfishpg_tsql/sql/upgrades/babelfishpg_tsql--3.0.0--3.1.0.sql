@@ -1509,6 +1509,11 @@ ALTER FUNCTION sys.system_user() STABLE;
 ALTER FUNCTION sys.session_user() STABLE;
 ALTER FUNCTION UPDATE (TEXT) STABLE;
 
+CREATE OR REPLACE FUNCTION sys.OBJECT_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
+RETURNS sys.SYSNAME AS
+'babelfishpg_tsql', 'object_name'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE VIEW sys.systypes AS
 SELECT CAST(name as sys.sysname) as name
   , CAST(system_type_id as int) as xtype
