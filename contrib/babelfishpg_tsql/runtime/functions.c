@@ -22,6 +22,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/numeric.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
@@ -39,6 +40,13 @@
 #include "../src/catalog.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
+#include "utils/fmgroids.h"
+#include "utils/acl.h"
+#include "access/table.h"
+#include "access/genam.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_trigger.h"
+#include "catalog/pg_constraint.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -71,6 +79,7 @@ PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(object_id);
+PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
@@ -82,6 +91,9 @@ PG_FUNCTION_INFO_V1(smallint_degrees);
 PG_FUNCTION_INFO_V1(bigint_radians);
 PG_FUNCTION_INFO_V1(int_radians);
 PG_FUNCTION_INFO_V1(smallint_radians);
+PG_FUNCTION_INFO_V1(bigint_power);
+PG_FUNCTION_INFO_V1(int_power);
+PG_FUNCTION_INFO_V1(smallint_power);
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -1163,20 +1175,14 @@ object_id(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			/* search in pg_constraint by name and schema oid */
-			result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
-
-			if (!OidIsValid(result)) /* search only if not found earlier */
+			/* search in pg_class by name and schema oid */
+			Oid relid = get_relname_relid((const char *) object_name, schema_oid);
+			if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
-				/* search in pg_class by name and schema oid */
-				Oid relid = get_relname_relid((const char *) object_name, schema_oid);
-				if (OidIsValid(relid) && pg_class_aclcheck(relid, user_id, ACL_SELECT) == ACLCHECK_OK)
-				{
-					result = relid;
-				} 
+				result = relid;
 			}
-
-			if (!OidIsValid(result))
+								
+			if (!OidIsValid(result))  /* search only if not found earlier */
 			{
 				/* search in pg_trigger by name and schema oid */
 				result = tsql_get_trigger_oid(object_name, schema_oid, user_id);
@@ -1186,6 +1192,12 @@ object_id(PG_FUNCTION_ARGS)
 			{
 				/* search in pg_proc by name and schema oid */
 				result = tsql_get_proc_oid(object_name, schema_oid, user_id);
+			}
+
+			if (!OidIsValid(result))
+			{
+				 /* search in pg_constraint by name and schema oid */
+				result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
 			}
 		}
 	}
@@ -1199,6 +1211,163 @@ object_id(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 }
 
+/*
+ * object_name
+ * 		returns the object name with object id and database id as input where database id is optional
+ * Returns NULL
+ * 		if there is no such object in specified database, if database id is not provided it will lookup in current database
+ * 		if user don't have right permission
+ */
+Datum
+object_name(PG_FUNCTION_ARGS)
+{
+	int32 				input1 = PG_GETARG_INT32(0);
+	Oid 				object_id;
+	Oid 				database_id;
+	Oid 				user_id = GetUserId();
+	Oid				schema_id = InvalidOid;
+	HeapTuple 			tuple;
+	Relation			tgrel;
+	ScanKeyData 			key;
+	SysScanDesc 			tgscan;
+	EphemeralNamedRelation 		enr;
+	bool 				found = false;
+	char 				*result = NULL;
+
+	if(input1 < 0)
+		PG_RETURN_NULL();
+	object_id = (Oid) input1;
+	if (!PG_ARGISNULL(1)) /* if database id is provided */
+	{
+		int32  input2 = PG_GETARG_INT32(1);
+		if(input2 < 0)
+			PG_RETURN_NULL();
+		database_id = (Oid) input2;
+		if (database_id != get_cur_db_id()) /* cross-db lookup */
+		{	
+			char *db_name = get_db_name(database_id);
+			if (db_name == NULL) /* database doesn't exist with given oid */
+				PG_RETURN_NULL();
+			user_id = GetSessionUserId();
+			pfree(db_name);
+		}
+	}
+	else	/* by default lookup in current database */
+		database_id = get_cur_db_id();
+
+	/* search in list of ENRs registered in the current query environment by object_id */
+	enr = get_ENR_withoid(currentQueryEnv, object_id);
+	if(enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
+	{
+		result = enr->md.name;
+		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+	}
+
+	/* search in pg_class by object_id */
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
+	if (HeapTupleIsValid(tuple))
+	{
+		/* check if user have right permission on object */
+		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+		{	
+			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
+			result = NameStr(pg_class->relname);
+			schema_id = pg_class->relnamespace;
+		}
+		ReleaseSysCache(tuple);
+		found = true;
+	}
+
+	if (!found)
+	{
+		/* search in pg_proc by object_id */
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+		if (HeapTupleIsValid(tuple))
+		{
+			/* check if user have right permission on object */
+			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+			{
+				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+				result = NameStr(procform->proname);
+				schema_id = procform->pronamespace;
+			}
+			ReleaseSysCache(tuple);
+			found = true;
+		}
+	}
+
+	if (!found)
+	{
+		/* search in pg_type by object_id */
+		tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(object_id));
+		if (HeapTupleIsValid(tuple))
+		{
+			/* check if user have right permission on object */
+			if (pg_type_aclcheck(object_id, user_id, ACL_USAGE) == ACLCHECK_OK)
+			{	
+				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+				result = NameStr(pg_type->typname);
+			}
+			ReleaseSysCache(tuple);
+			found = true;
+		}
+	}
+	
+	if(!found)
+	{
+		/* search in pg_trigger by object_id */
+		tgrel = table_open(TriggerRelationId, AccessShareLock);
+		ScanKeyInit(&key,
+				Anum_pg_trigger_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object_id));
+
+		tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
+						NULL, 1, &key);
+
+		tuple = systable_getnext(tgscan);
+		if (HeapTupleIsValid(tuple))
+		{
+			Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+			/* check if user have right permission on object */
+			if(OidIsValid(pg_trigger->tgrelid) && 
+				pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+			{
+				result = NameStr(pg_trigger->tgname);
+				schema_id = get_rel_namespace(pg_trigger->tgrelid);
+			}
+			found = true;
+		}
+		systable_endscan(tgscan);
+		table_close(tgrel, AccessShareLock);
+	}
+
+	if(!found)
+	{
+		/* search in pg_constraint by object_id */
+		tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
+		if (HeapTupleIsValid(tuple))
+		{	
+			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+			/* check if user have right permission on object */
+			if (OidIsValid(con->conrelid) && (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK))
+			{	
+				result = NameStr(con->conname);
+				schema_id = con->connamespace;
+			}
+			ReleaseSysCache(tuple);
+			found = true;
+		}
+	}
+
+	if(result)
+	{	
+		/* check if schema corresponding to found object belongs to specified database */
+		if(!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id)) /* in case of pg_type schema_id will be invalid */
+			PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+	}
+	PG_RETURN_NULL();
+}
 
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
@@ -1569,4 +1738,52 @@ smallint_radians(PG_FUNCTION_ARGS)
 	/* skip range check, since it cannot overflow int32 */
 
 	PG_RETURN_INT32((int32)result);
+}
+
+Datum
+bigint_power(PG_FUNCTION_ARGS)
+{
+	int64	arg1 = PG_GETARG_INT64(0);
+	Numeric	arg2 = PG_GETARG_NUMERIC(1);
+	int64	result;
+	Numeric	arg1_numeric, result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric,arg1));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
+
+	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_INT64(result); 
+}
+
+Datum
+int_power(PG_FUNCTION_ARGS)
+{
+	int32	arg1 = PG_GETARG_INT32(0);
+	Numeric	arg2 = PG_GETARG_NUMERIC(1);
+	int32	result;
+	Numeric	arg1_numeric, result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric,arg1));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
+
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_INT32(result); 
+}
+
+Datum
+smallint_power(PG_FUNCTION_ARGS)
+{
+	int16	arg1 = PG_GETARG_INT16(0);
+	Numeric	arg2 = PG_GETARG_NUMERIC(1);
+	int32	result;
+	Numeric	arg1_numeric, result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int2_numeric,arg1));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), Int16GetDatum (arg2)));
+
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int2, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_INT32(result); 
 }
