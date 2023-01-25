@@ -61,6 +61,8 @@ extern bool pltsql_quoted_identifier;
 extern char *bbf_servername;
 
 static void* get_servername_helper(void);
+static VarChar *get_product_version_helper(int idx);
+static VarChar *get_product_level_helper();
 
 Datum connectionproperty(PG_FUNCTION_ARGS) {
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(0));
@@ -152,10 +154,94 @@ void* get_servername_helper()
     return info;
 }
 
+static char *
+get_version_number(const char* version_string, int idx)
+{
+	int 		part = 0,
+	    		len = 0;
+	char		*token;
+	char 		*copy_version_number;
+
+	Assert(version_string != NULL);
+	if(idx == -1) 
+		return (char *)version_string;
+
+	len = strlen(version_string);
+	copy_version_number = palloc0(len + 1);
+	memcpy(copy_version_number, version_string, len);
+	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+	{ 
+		if(part == idx)
+			return token;
+		part++;
+	}
+	
+	/* part should less than 2 */
+	Assert(part <= 2);
+	return "";
+}
+
+static VarChar *
+get_product_version_helper(int idx)
+{
+	StringInfoData	temp;
+	void		*info;
+	const char	*product_version;
+
+	product_version = GetConfigOption("babelfishpg_tds.product_version", true, false);
+	Assert(product_version != NULL);
+	Assert(idx == -1 || idx == 0 || idx == 1);
+
+	initStringInfo(&temp);
+	if(pg_strcasecmp(product_version,"default") == 0)
+	{
+		appendStringInfoString(&temp, get_version_number(BABEL_COMPATIBILITY_VERSION,idx));
+	}
+	else
+	{
+		appendStringInfoString(&temp, get_version_number(product_version,idx));
+	}
+		
+    info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+    pfree(temp.data);
+    return (VarChar *)info;
+}
+
+static VarChar *
+get_product_level_helper()
+{
+	StringInfoData	temp;
+	void		*info;
+	int		minor_version;
+	char*		product_level_RTM = "RTM";
+	char*		product_level_prefix = "SP";
+	
+	initStringInfo(&temp);
+	
+	Assert(BABELFISH_VERSION_STR != NULL);
+	minor_version = atoi(get_version_number(BABELFISH_VERSION_STR,1));
+	if(minor_version == 0)
+	{
+		appendStringInfoString(&temp, product_level_RTM);
+	}
+	else
+	{
+		appendStringInfoString(&temp, product_level_prefix);
+		appendStringInfoString(&temp, get_version_number(BABELFISH_VERSION_STR,1));
+		appendStringInfoString(&temp, ".");
+		appendStringInfoString(&temp, get_version_number(BABELFISH_VERSION_STR,2));
+	}
+
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+	pfree(temp.data);
+	return (VarChar *)info;
+}
+
 Datum serverproperty(PG_FUNCTION_ARGS) {
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(0));
 	VarChar *vch = NULL;
 	int64_t intVal = 0;
+
 	if (strcasecmp(property, "BuildClrVersion") == 0)
 	{
 		const char *ret = "";
@@ -344,19 +430,15 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	}
 	else if (strcasecmp(property, "ProductLevel") == 0)
 	{
-		const char *ret = "";
-		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
+		vch = get_product_level_helper();
 	}
 	else if (strcasecmp(property, "ProductMajorVersion") == 0)
 	{
-		/* Provide a valid SQL Server version that SSMS can accept */
-                const char *ret = BABEL_COMPATIBILITY_MAJOR_VERSION;
-		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
+		vch = get_product_version_helper(0);
 	}
 	else if (strcasecmp(property, "ProductMinorVersion") == 0)
 	{
-		const char *ret = "0";
-		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
+		vch = get_product_version_helper(1);
 	}
 	else if (strcasecmp(property, "ProductUpdateLevel") == 0)
 	{
@@ -370,8 +452,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	}
 	else if (strcasecmp(property, "ProductVersion") == 0)
 	{
-		const char *ret = BABEL_COMPATIBILITY_VERSION;
-		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
+		vch = get_product_version_helper(-1);
 	}
 	else if (strcasecmp(property, "ResourceLastUpdateDateTime") == 0)
 	{

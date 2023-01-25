@@ -367,3 +367,9 @@ jira-BABEL-3504-upgrade
 case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+BABEL_OBJECT_ID
+AVG-Aggregate-common
+AVG-Aggregate-Dep
+bbf_view_def
+BABEL-3802
+BABEL_OBJECT_NAME

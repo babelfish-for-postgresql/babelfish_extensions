@@ -21,6 +21,7 @@ bool enable_metadata_inconsistency_check = true;
 
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
+bool pltsql_enable_sll_parse_mode = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
 bool  pltsql_ansi_defaults = true;
 bool  pltsql_quoted_identifier = true;
@@ -367,6 +368,15 @@ static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
 	}
 	return true;
 }
+static bool check_tsql_version (char **newval, void **extra, GucSource source)
+{
+	Assert(*newval != NULL);
+	if(pg_strcasecmp(*newval,"default") != 0)
+		ereport(WARNING,
+			(errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
+
+	return true;
+}
 
 static void assign_enable_pg_hint (bool newval, void *extra)
 {
@@ -575,6 +585,15 @@ define_custom_variables(void)
 				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_sll_parse_mode",
+				 gettext_noop("enable SLL parser mode for ANTLR parser"),
+				 NULL,
+				 &pltsql_enable_sll_parse_mode,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
 	/* temporary GUC until test is refactored properly */
 	DefineCustomBoolVariable("babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing",
 				 gettext_noop("GUC for internal testing - make antlr allow some of unsupported grammar"),
@@ -749,7 +768,7 @@ define_custom_variables(void)
 				 "default",
 				 PGC_SUSET,
 				 GUC_NOT_IN_SAMPLE,
-				 NULL, NULL, NULL);
+				 check_tsql_version, NULL, NULL);
 
 	DefineCustomStringVariable("babelfishpg_tsql.language",
 				 gettext_noop("T-SQL compatibility LANGUAGE option."),

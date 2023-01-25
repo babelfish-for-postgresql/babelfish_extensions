@@ -116,7 +116,7 @@ sys-suser_sname
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
-routines_definition
+routines_definition_before-14_7
 constraint_column_usage
 column_domain_usage
 sp_describe_first_result_set
@@ -292,3 +292,10 @@ ISC-Tables
 ISC-Columns
 ISC-Table_Constraints
 case_insensitive_collation
+sys-sql_modules_before-14_7
+sys-all_sql_modules_before-14_5
+BABEL_OBJECT_ID
+AVG-Aggregate-common
+AVG-Aggregate-Dep-before-15-2-or-14-7
+bbf_view_def-before-14_5
+BABEL_OBJECT_NAME
