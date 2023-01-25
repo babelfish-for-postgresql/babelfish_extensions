@@ -2015,6 +2015,7 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	Datum				*new_record;
 	bool				*new_record_nulls;
 	CatalogIndexState	indstate;
+	MemoryContext		ccxt = CurrentMemoryContext;
 	
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		ereport(ERROR,
@@ -2057,13 +2058,18 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		ErrorData *edata = CopyErrorData();
+		MemoryContext ectx;
+		ErrorData *edata;
 
 		CatalogCloseIndexes(indstate);
 		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
 		heap_freetuple(tuple);
 		pfree(new_record);
 		pfree(new_record_nulls);
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		edata = CopyErrorData();
+		MemoryContextSwitchTo(ectx);
 
 		ereport(ERROR,
 				(errcode(edata->sqlerrcode),
