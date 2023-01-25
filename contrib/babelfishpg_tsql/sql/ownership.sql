@@ -201,16 +201,6 @@ BEGIN
 
   -- let sysadmin only to update babelfish_domain_mapping
   GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
-  
-  CREATE OR REPLACE PROCEDURE master_dbo.sp_addlinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
-                                                      IN "@useself" sys.varchar(8) DEFAULT 'TRUE',
-                                                      IN "@locallogin" sys.sysname DEFAULT NULL,
-                                                      IN "@rmtuser" sys.sysname DEFAULT NULL,
-                                                      IN "@rmtpassword" sys.sysname DEFAULT NULL)
-  AS 'babelfishpg_tsql', 'sp_addlinkedsrvlogin_internal'
-  LANGUAGE C;
-
-  ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
 END
 $$;
 
