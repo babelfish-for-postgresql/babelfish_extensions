@@ -133,6 +133,11 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.OBJECT_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
+RETURNS sys.SYSNAME AS
+'babelfishpg_tsql', 'object_name'
+LANGUAGE C STABLE;
+
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext_login_db_idx', 'database_name');
 -- we have to reindex babelfish_authid_user_ext_login_db_idx because given index includes database_name and we have to change its collation
 REINDEX INDEX sys.babelfish_authid_user_ext_login_db_idx;
