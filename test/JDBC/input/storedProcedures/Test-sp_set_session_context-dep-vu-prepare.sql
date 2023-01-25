@@ -20,5 +20,5 @@ END
 GO
 
 CREATE VIEW test_sp_set_session_context_view AS
-SELECT test_sp_set_session_context_func()
+SELECT SESSION_CONTEXT(N'test_sp_set_session_context_proc')
 GO

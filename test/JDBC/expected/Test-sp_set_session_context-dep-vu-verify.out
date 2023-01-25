@@ -17,7 +17,7 @@ int
 SELECT * FROM test_sp_set_session_context_view;
 GO
 ~~START~~
-int
-0
+sql_variant
+test_sp_set_session_context_proc_val
 ~~END~~
 
