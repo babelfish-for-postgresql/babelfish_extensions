@@ -1134,7 +1134,7 @@ SELECT CAST(name as sys.sysname) as name
   , CAST(rule_object_id as int) as domain
   , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
   , CAST(0 as smallint) as reserved
-  , CAST((case when collation_name is null then null else sys.CollationProperty(collation_name, 'CollationId') end) as int) as collationid
+  , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
   , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
   , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
           in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
