@@ -4779,7 +4779,7 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
                return;
 
        /* Do we already have a stack entry of the current nest level? */
-       stack = gconf->stack;
+       stack = gconf->session_stack;
        if (stack && stack->nest_level >= PltsqlGUCNestLevel)
        {
                /* Yes, so adjust its state if necessary */
@@ -4808,7 +4808,7 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
        stack = (GucStack *) MemoryContextAllocZero(TopMemoryContext,
                                                                                                sizeof(GucStack));
 
-       stack->prev = gconf->stack;
+       stack->prev = gconf->session_stack;
        stack->nest_level = PltsqlGUCNestLevel;
        switch (action)
        {
@@ -4825,7 +4825,7 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
        stack->scontext = gconf->scontext;
        guc_set_stack_value(gconf, &stack->prior);
 
-       gconf->stack = stack;
+       gconf->session_stack = stack;
        pltsql_guc_dirty = true;
 }
 
@@ -4858,7 +4858,7 @@ pltsql_revert_guc(int nest_level)
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
-		GucStack   *stack =  gconf->stack;
+		GucStack   *stack =  gconf->session_stack;
 
 		if (stack != NULL && stack->nest_level == nest_level)
 		{
@@ -4975,7 +4975,7 @@ pltsql_revert_guc(int nest_level)
 			gconf->scontext = newscontext;
 
 			/* Finish popping the state stack */
-			gconf->stack = prev;
+			gconf->session_stack = prev;
 			pfree(stack);
 		} /* end of stack-popping loop */
 
