@@ -4223,6 +4223,7 @@ createdb_opt_item:
 			;
 col_name_keyword:
 			  TSQL_NVARCHAR
+			| OPENJSON
 			;
 
 unreserved_keyword:
