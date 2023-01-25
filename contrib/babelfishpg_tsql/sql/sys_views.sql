@@ -802,7 +802,7 @@ select
 from 
 (
   -- Get all indexes from all system and user tables
-  select
+select
     i.indrelid as object_id
     , c.relname as name
     , case when i.indisclustered then 1 else 2 end as type
@@ -811,7 +811,7 @@ from
     , c.reltablespace as data_space_id
     , 0 as ignore_dup_key
     , case when i.indisprimary then 1 else 0 end as is_primary_key
-    , case when (SELECT count(constr.oid) FROM pg_constraint constr WHERE constr.conindid = c.oid and constr.contype = 'u') > 0 then 1 else 0 end as is_unique_constraint
+    , case when const.oid is null then 0 else 1 end as is_unique_constraint
     , 0 as fill_factor
     , case when i.indpred is null then 0 else 1 end as is_padded
     , case when i.indisready then 0 else 1 end as is_disabled
@@ -822,16 +822,19 @@ from
     , null as filter_definition
     , 0 as auto_created
     , case when i.indisclustered then 1 else c.oid end as index_id
-  from pg_class c
-  inner join pg_index i on i.indexrelid = c.oid
-  where c.relkind = 'i' and i.indislive
-  and (c.relnamespace in (select schema_id from sys.schemas) or c.relnamespace::regnamespace::text = 'sys')
-  and has_schema_privilege(c.relnamespace, 'USAGE')
+ from pg_index i
+ join pg_class c on i.indexrelid = c.oid 
+ left join sys.schemas sch on c.relnamespace = sch.schema_id
+ left join pg_constraint const on const.conindid = c.oid and const.contype = 'u'
+ where has_schema_privilege(c.relnamespace, 'USAGE') 
+ and c.relkind = 'i' 
+ and i.indislive
+ and (sch.schema_id is not null or c.relnamespace::regnamespace::text = 'sys')
 
   union all 
   
-  -- Create HEAP entries for each system and user table
-  select distinct on (t.oid)
+-- Create HEAP entries for each system and user table
+select distinct on (t.oid)
     t.oid as object_id
     , null as name
     , 0 as type
@@ -851,9 +854,10 @@ from
     , null as filter_definition
     , 0 as auto_created
     , 0 as index_id
-  from pg_class t 
+  from pg_class t
+  left join sys.schemas sch on t.relnamespace = sch.schema_id
   where t.relkind = 'r'
-  and (t.relnamespace in (select schema_id from sys.schemas) or t.relnamespace::regnamespace::text = 'sys')
+  and (sch.schema_id is not null or t.relnamespace::regnamespace::text = 'sys')
   and has_schema_privilege(t.relnamespace, 'USAGE')
   and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 
@@ -957,7 +961,7 @@ select
   i.object_id::integer as id
   , null::integer as status
   , null::binary(6) as first
-  , i.type::smallint as indid
+  , i.index_id::smallint as indid
   , null::binary(6) as root
   , 0::smallint as minlen
   , 1::smallint as keycnt

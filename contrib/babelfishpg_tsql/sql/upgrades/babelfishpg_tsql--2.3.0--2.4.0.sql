@@ -1143,6 +1143,126 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_name'
 LANGUAGE C STABLE;
 
+create or replace view sys.indexes as
+select 
+  CAST(object_id as int)
+  , CAST(name as sys.sysname)
+  , CAST(type as sys.tinyint)
+  , CAST(type_desc as sys.nvarchar(60))
+  , CAST(is_unique as sys.bit)
+  , CAST(data_space_id as int)
+  , CAST(ignore_dup_key as sys.bit)
+  , CAST(is_primary_key as sys.bit)
+  , CAST(is_unique_constraint as sys.bit)
+  , CAST(fill_factor as sys.tinyint)
+  , CAST(is_padded as sys.bit)
+  , CAST(is_disabled as sys.bit)
+  , CAST(is_hypothetical as sys.bit)
+  , CAST(allow_row_locks as sys.bit)
+  , CAST(allow_page_locks as sys.bit)
+  , CAST(has_filter as sys.bit)
+  , CAST(filter_definition as sys.nvarchar)
+  , CAST(auto_created as sys.bit)
+  , CAST(index_id as int)
+from 
+(
+  -- Get all indexes from all system and user tables
+select
+    i.indrelid as object_id
+    , c.relname as name
+    , case when i.indisclustered then 1 else 2 end as type
+    , case when i.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as type_desc
+    , case when i.indisunique then 1 else 0 end as is_unique
+    , c.reltablespace as data_space_id
+    , 0 as ignore_dup_key
+    , case when i.indisprimary then 1 else 0 end as is_primary_key
+    , case when const.oid is null then 0 else 1 end as is_unique_constraint
+    , 0 as fill_factor
+    , case when i.indpred is null then 0 else 1 end as is_padded
+    , case when i.indisready then 0 else 1 end as is_disabled
+    , 0 as is_hypothetical
+    , 1 as allow_row_locks
+    , 1 as allow_page_locks
+    , 0 as has_filter
+    , null as filter_definition
+    , 0 as auto_created
+    , case when i.indisclustered then 1 else c.oid end as index_id
+ from pg_index i
+join pg_class c on i.indexrelid=c.oid 
+left join sys.schemas sch on ( c.relnamespace=sch.schema_id)
+left join pg_constraint const on const.conindid = c.oid and const.contype = 'u'
+where has_schema_privilege(c.relnamespace, 'USAGE') 
+and c.relkind='i' 
+and i.indislive 
+and (sch.schema_id is not null or c.relnamespace::regnamespace::text = 'sys')
+
+union all 
+  
+-- Create HEAP entries for each system and user table
+select distinct on (t.oid)
+    t.oid as object_id
+    , null as name
+    , 0 as type
+    , 'HEAP' as type_desc
+    , 0 as is_unique
+    , 1 as data_space_id
+    , 0 as ignore_dup_key
+    , 0 as is_primary_key
+    , 0 as is_unique_constraint
+    , 0 as fill_factor
+    , 0 as is_padded
+    , 0 as is_disabled
+    , 0 as is_hypothetical
+    , 1 as allow_row_locks
+    , 1 as allow_page_locks
+    , 0 as has_filter
+    , null as filter_definition
+    , 0 as auto_created
+    , 0 as index_id
+  from pg_class t
+ left join sys.schemas sch on  ( t.relnamespace=sch.schema_id)
+  where t.relkind = 'r'
+  and (sch.schema_id is not null or t.relnamespace::regnamespace::text = 'sys')
+  and has_schema_privilege(t.relnamespace, 'USAGE')
+  and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+
+) as indexes_select order by object_id, type_desc;
+GRANT SELECT ON sys.indexes TO PUBLIC;
+
+create or replace view  sys.sysindexes as
+select
+  i.object_id::integer as id
+  , null::integer as status
+  , null::binary(6) as first
+  , i.index_id::smallint as indid
+  , null::binary(6) as root
+  , 0::smallint as minlen
+  , 1::smallint as keycnt
+  , null::smallint as groupid
+  , 0 as dpages
+  , 0 as reserved
+  , 0 as used
+  , 0::bigint as rowcnt
+  , 0 as rowmodctr
+  , 0 as reserved3
+  , 0 as reserved4
+  , 0::smallint as xmaxlen
+  , null::smallint as maxirow
+  , 90::sys.tinyint as "OrigFillFactor"
+  , 0::sys.tinyint as "StatVersion"
+  , 0 as reserved2
+  , null::binary(6) as "FirstIAM"
+  , 0::smallint as impid
+  , 0::smallint as lockflags
+  , 0 as pgmodctr
+  , null::sys.varbinary(816) as keys
+  , i.name::sys.sysname as name
+  , null::sys.image as statblob
+  , 0 as maxlen
+  , 0 as rows
+from sys.indexes i;
+GRANT SELECT ON sys.sysindexes TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
