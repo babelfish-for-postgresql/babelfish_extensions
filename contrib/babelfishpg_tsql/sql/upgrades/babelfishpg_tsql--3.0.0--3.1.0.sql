@@ -357,6 +357,22 @@ CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
 RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(BIGINT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(INT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(SMALLINT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(TINYINT,NUMERIC) TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.partitions AS
 SELECT
  (to_char( i.object_id, 'FM9999999999' ) || to_char( i.index_id, 'FM9999999999' ) || '1')::bigint AS partition_id
@@ -942,6 +958,11 @@ LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
+
+-- For all the views created on previous versions(except 2.4 and onwards), the definition in the catalog should be NULL.
+UPDATE sys.babelfish_view_def AS bvd
+SET definition = NULL
+WHERE (SELECT get_bit(CAST(bvd.flag_validity AS bit(7)),4) = 0);
 
 CREATE OR REPLACE PROCEDURE sys.sp_droplinkedsrvlogin(  IN "@rmtsrvname" sys.sysname,
                                                         IN "@locallogin" sys.sysname)
