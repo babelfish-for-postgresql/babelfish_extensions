@@ -5,6 +5,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/hsearch.h"
 
 #include <ctype.h>
 #include "catalog.h"
@@ -15,11 +16,25 @@
 
 /* Core Session Properties */
 
+#define MAX_SYSNAME_LEN 512 /* Large enough to handle 128 character unicode strings */
+
 static int16 current_db_id = 0;
 static char current_db_name[MAX_BBF_NAMEDATALEND+1] = {'\0'};
 static Oid current_user_id = InvalidOid;
 static void set_search_path_for_user_schema(const char* db_name, const char* user);
 void reset_cached_batch(void);
+
+/* Session Context */
+static HTAB *session_context_table = NULL;
+static char* validate_and_get_key_str(Datum);
+static void initialize_context_table(void);
+static bytea* copy_session_value(bytea*);
+typedef struct SessionCxtEntry
+{
+	char sessionKey[MAX_SYSNAME_LEN]; /* Hashtable Key, must be first */
+	bool read_only;
+	bytea *value;
+} SessionCxtEntry;
 
 int16
 get_cur_db_id(void)
@@ -230,4 +245,116 @@ Datum babelfish_db_name(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(CStringGetTextDatum(dbname));
+}
+
+/* 
+ * Stores key-value pairs in a hashtable
+ * Table takes a string as a key, and saves a pointer to the sql_variant-typed value
+ */
+PG_FUNCTION_INFO_V1(sp_set_session_context);
+Datum sp_set_session_context(PG_FUNCTION_ARGS)
+{
+	Datum key_datum = PG_GETARG_DATUM(0);
+	Datum val_datum = PG_GETARG_DATUM(1);
+	bool read_only = PG_GETARG_BOOL(2);
+	SessionCxtEntry *result_entry;
+	char *key;
+	bytea *stored_value;
+	bool found;
+
+	key = validate_and_get_key_str(key_datum);
+
+	if (!session_context_table)
+		initialize_context_table();
+
+	result_entry = (SessionCxtEntry*) hash_search(session_context_table, key, HASH_ENTER, &found);
+
+	if (found && result_entry->read_only == true)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Cannot set key '%s' in the session context. The key has been set as read_only for this session.", key)));
+	}
+	/* Free old entry if val argument is null */
+	if (!val_datum)
+	{
+		if (found)
+			pfree(result_entry->value);
+		hash_search(session_context_table, key, HASH_REMOVE, NULL);
+		PG_RETURN_NULL(); 
+	}
+
+	stored_value = copy_session_value(DatumGetByteaPP(val_datum));
+	result_entry->read_only = read_only;
+	result_entry->value = stored_value;
+
+	PG_RETURN_NULL();
+}
+
+PG_FUNCTION_INFO_V1(SESSION_CONTEXT);
+Datum SESSION_CONTEXT(PG_FUNCTION_ARGS)
+{
+	SessionCxtEntry *result_entry;
+	Datum key_datum = PG_GETARG_DATUM(0);
+	char *key;
+
+	if (!key_datum)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("The parameters supplied for the function \"SESSION_CONTEXT\" are not valid.")));
+
+	key = TextDatumGetCString(key_datum);
+	for (char *p = key ; *p; ++p) *p = tolower(*p);
+
+	if (!session_context_table)
+		PG_RETURN_NULL();
+
+	result_entry = (SessionCxtEntry*) hash_search(session_context_table, key, HASH_FIND, NULL);
+
+	if (!result_entry)
+		PG_RETURN_NULL();
+
+	PG_RETURN_BYTEA_P(result_entry->value);
+}
+
+static char*
+validate_and_get_key_str(Datum key_datum)
+{
+	char *key;
+	if (!key_datum)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("The parameters supplied for the procedure \"sp_set_session_context\" are not valid.")));
+	key = TextDatumGetCString(key_datum);
+	if (strlen(key) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("The parameters supplied for the procedure \"sp_set_session_context\" are not valid.")));
+	for (char *p = key ; *p; ++p) *p = tolower(*p);
+
+	return key;
+}
+
+static void
+initialize_context_table() 
+{
+	HASHCTL hash_options;
+	memset(&hash_options, 0, sizeof(hash_options));
+	hash_options.keysize = MAX_SYSNAME_LEN;
+	hash_options.entrysize = sizeof(SessionCxtEntry);
+
+	session_context_table = hash_create("Session Context", 125, &hash_options, HASH_ELEM | HASH_STRINGS);
+}
+
+static bytea*
+copy_session_value(bytea *value) {
+	bytea* 		  stored_value;
+	size_t		  value_size = VARHDRSZ + VARSIZE_ANY(value);
+	MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+
+	stored_value = (bytea*) palloc(value_size);
+	MemoryContextSwitchTo(oldContext);
+
+	memcpy(stored_value, value, value_size);
+	return stored_value;
 }
