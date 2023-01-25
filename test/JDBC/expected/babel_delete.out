@@ -184,9 +184,7 @@ go
 
 ~~ROW COUNT: 3~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: self-join in FROM-clause is not supported in Babelfish)~~
+~~ROW COUNT: 1~~
 
 
 -- outer joins
@@ -207,7 +205,9 @@ go
 
 ~~ROW COUNT: 3~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ctid is NULL)~~
 
 
 -- null filters
@@ -247,9 +247,7 @@ go
 
 delete babel_2020_delete_v1 from babel_2020_delete_v1 x where x.a = 2;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: updatable view in FROM-clause is not supported in Babelfish)~~
+~~ROW COUNT: 1~~
 
 
 drop view if exists babel_2020_delete_v1;

@@ -14,6 +14,7 @@
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
+#include "utils/rel.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
@@ -33,6 +34,9 @@ bool pltsql_suppress_string_truncation_error(void);
 
 bool is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar / sys.varchar / sys.nvarchar */
 bool is_tsql_text_ntext_or_image_datatype(Oid oid);
+
+static bool find_target_alias_in_tableref(RangeVar **target, Node *tblref);
+static bool find_relation_in_tableref(RangeVar *target, Node *tblref);
 
 /* 
  * Following the rule for locktag fields of advisory locks:
@@ -1137,8 +1141,6 @@ split_object_name(char *name)
 	return res;
 }
 
-
-
 /*
  * is_schema_from_db
  *		Given schema_oid and db_id, check if schema belongs to provided database id.
@@ -1153,4 +1155,201 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
 	db_id_from_schema = get_dbid_from_physical_schema_name(schema_name, true);
 	pfree(schema_name);
 	return (db_id_from_schema == db_id);
+}
+
+void
+pltsql_cte_update_target_table_alias(WithClause *withClause)
+{
+	ListCell *lc;
+
+	if (!withClause || !withClause->ctes)
+		return;
+	
+	foreach(lc, withClause->ctes)
+	{
+		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+		Node *qry = cte->ctequery;
+		
+		if (!qry)
+			continue;
+
+		if (IsA(qry, DeleteStmt))
+		{
+			DeleteStmt *stmt = (DeleteStmt *) qry;
+
+			pltsql_update_target_table_alias(&(stmt->relation), stmt->usingClause);
+			if (stmt->withClause)
+				pltsql_cte_update_target_table_alias(stmt->withClause);
+		}
+		else if (IsA(qry, InsertStmt))
+		{
+			InsertStmt *stmt = (InsertStmt *) qry;
+			
+			if (stmt->withClause)
+				pltsql_cte_update_target_table_alias(stmt->withClause);
+		}
+		else if (IsA(qry, SelectStmt))
+		{
+			SelectStmt *stmt = (SelectStmt *) qry;
+	
+			if (stmt->withClause)
+				pltsql_cte_update_target_table_alias(stmt->withClause);
+		}
+		else if (IsA(qry, UpdateStmt))
+		{
+			UpdateStmt *stmt = (UpdateStmt *) qry;
+
+			pltsql_update_target_table_alias(&(stmt->relation), stmt->fromClause);
+			if (stmt->withClause)
+				pltsql_cte_update_target_table_alias(stmt->withClause);
+		}
+	}	
+}
+
+void
+pltsql_update_target_table_alias(RangeVar **target_table, List *fromClause)
+{
+	ListCell *lc;
+
+	if (!(*target_table) || !fromClause || !IsA(*target_table, RangeVar) || (*target_table)->alias)
+		return;
+	
+	/*
+	 * For each table reference in fromClause, check if the table alias
+	 * name matches the target table.
+	 * If yes, substitute target table with the table reference.
+	 */
+	foreach(lc, fromClause)
+	{
+		Node *n = lfirst(lc);
+		if (find_target_alias_in_tableref(target_table, n))
+			return;
+	}
+}
+
+static bool
+find_target_alias_in_tableref(RangeVar **target, Node *tblref)
+{
+	/* 
+ 	 * If the table refenrence is a JoinExpr, recursively check the 
+ 	 * join tree's left child and right child.
+ 	 */
+	if (IsA(tblref, JoinExpr))
+	{
+		JoinExpr *je = (JoinExpr *) tblref;
+		if (find_target_alias_in_tableref(target, (Node *) je->larg) ||
+			find_target_alias_in_tableref(target, (Node *) je->rarg))
+			return true;
+	}
+	/*
+	 * If the table reference is an actual table (RangeVar), check if
+	 * the table alias is the same as the target table name.
+	 * If yes, substitute the target table with the RangeVar.
+	 */
+	else if (IsA(tblref, RangeVar))
+	{
+		RangeVar *rv = (RangeVar *) tblref;
+		if (pg_strcasecmp((*target)->relname, rv->relname) == 0)
+		{
+			if ((*target)->schemaname && 
+				(!rv->schemaname || pg_strcasecmp((*target)->schemaname, rv->schemaname) != 0))
+			{
+				int rv_fullname_len = strlen(rv->schemaname) + strlen(rv->relname) + 1;
+				char *rv_fullname = palloc(sizeof(char) * (rv_fullname_len + 1));
+
+				strncpy(rv_fullname, rv->schemaname, strlen(rv->schemaname));
+				strncat(rv_fullname, ".", 1);
+				strncat(rv_fullname, rv->relname, strlen(rv->relname));
+				rv_fullname[rv_fullname_len] = '\0';
+
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("The objects \"%s.%s\" and \"%s\" in the FROM clause have the same exposed names. " \
+								"Use correlation names to distinguish them.", 
+								(*target)->schemaname, (*target)->relname, rv_fullname)));
+			}
+
+			*target = rv;
+			return true;
+		}
+		else if (rv->alias && pg_strcasecmp((*target)->relname, rv->alias->aliasname) == 0)
+		{
+			if ((*target)->schemaname)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("The correlation name \'%s\' has the same exposed name as table \'%s.%s\'.", 
+								rv->alias->aliasname, (*target)->schemaname, (*target)->relname)));
+			*target = rv;
+			return true;
+		}
+	}
+	/* 
+ 	 * Currently we only consider RangeVar and JoinExpr cases. In the
+ 	 * future, if there are concrete use cases, we'll add support for 
+ 	 * more table reference types
+ 	 */
+	return false;
+}
+
+void
+pltsql_update_table_reference(RangeVar *target_table, List *fromClause, ParseState *pstate)
+{
+	ListCell *lc;
+
+	if (!target_table || !fromClause || !IsA(target_table, RangeVar))
+		return;
+
+	foreach(lc, fromClause)
+	{
+		Node *n = lfirst(lc);
+		if (find_relation_in_tableref(target_table, n))
+		{
+			pstate->p_namespace = NIL;
+			pstate->p_joinlist = NIL;
+			pstate->p_rtable = NIL;
+			break;
+		}
+	}
+}
+
+static bool
+find_relation_in_tableref(RangeVar *target, Node *tblref)
+{
+	if (IsA(tblref, JoinExpr))
+	{
+		JoinExpr *je = (JoinExpr *) tblref;
+		if (find_relation_in_tableref(target, (Node *) je->larg) ||
+			find_relation_in_tableref(target, (Node *) je->rarg))
+			return true;
+	}
+	else if (IsA(tblref, RangeVar))
+	{
+		RangeVar *rv = (RangeVar *) tblref;
+		if (pg_strcasecmp(target->relname, rv->relname) == 0)
+		{
+			if (target->alias && 
+				(!rv->alias || pg_strcasecmp(target->alias->aliasname, rv->alias->aliasname) != 0))
+				return false;
+
+			return true;
+		}
+	}
+	return false;
+}
+
+void
+pltsql_update_query_result_relation(Query *qry, Relation target_rel, List *rtable)
+{
+	Oid target_relid = RelationGetRelid(target_rel);
+
+	for (int i = 0; i < list_length(rtable); i++)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) list_nth(rtable, i);
+		if (rte->relid == target_relid)
+		{
+			qry->resultRelation = i + 1;
+			return;
+		}
+	}
+	elog(ERROR, "didn't find resultRelation in rtable, shouldn't reach here");
 }

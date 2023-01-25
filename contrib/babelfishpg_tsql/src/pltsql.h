@@ -1995,6 +1995,10 @@ extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id)
 extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
 extern char** split_object_name(char *name);
 extern bool is_schema_from_db(Oid schema_oid, Oid db_id);
+extern void pltsql_update_target_table_alias(RangeVar **target_table, List *fromClause);
+extern void pltsql_cte_update_target_table_alias(WithClause *withClause);
+extern void pltsql_update_table_reference(RangeVar *target_table, List *fromClause, ParseState *pstate);
+extern void pltsql_update_query_result_relation(Query *qry, Relation target_rel, List *rtable);
 
 typedef struct
 {

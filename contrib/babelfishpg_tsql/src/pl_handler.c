@@ -578,6 +578,28 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			}
 			break;
 		}
+		case T_DeleteStmt:
+		{
+			DeleteStmt *delete_stmt = (DeleteStmt *) parseTree->stmt;
+			pltsql_update_target_table_alias(&(delete_stmt->relation), delete_stmt->usingClause);
+			if (delete_stmt->withClause)
+				pltsql_cte_update_target_table_alias(delete_stmt->withClause);
+			break;
+		}
+		case T_InsertStmt:
+		{
+			InsertStmt *insert_stmt = (InsertStmt *) parseTree->stmt;
+			if (insert_stmt->withClause)
+				pltsql_cte_update_target_table_alias(insert_stmt->withClause);
+			break;
+		}
+		case T_SelectStmt:
+		{
+			SelectStmt *select_stmt = (SelectStmt *) parseTree->stmt;
+			if (select_stmt->withClause)
+				pltsql_cte_update_target_table_alias(select_stmt->withClause);
+			break;
+		}
 		case T_UpdateStmt:
 		{
 			UpdateStmt *updstmt = (UpdateStmt *) parseTree->stmt;
@@ -585,6 +607,10 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			Relation rel;
 			TupleDesc tupdesc;
 			AttrNumber attr_num;
+
+			pltsql_update_target_table_alias(&(updstmt->relation), updstmt->fromClause);
+			if (updstmt->withClause)
+				pltsql_cte_update_target_table_alias(updstmt->withClause);
 
 			relid = RangeVarGetRelid(updstmt->relation, NoLock, false);
 			rel = RelationIdGetRelation(relid);
@@ -690,101 +716,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		}
 		default:
 			break;
-	}
-}
-
-/* In UPDATE/DELECT statements, if the target table appears in the FROM-clause again,
- * T_SQL just ignores it.
- * However, in PG, the target table and the FROM-table are regarded as different tables,
- * so it will apply cartesian product.
- * To remove the cartesian product, we add an additional self-join condition using ctid,
- * i.e., target_table.ctid = from_table.ctid
- */
-static inline void
-pltsql_add_ctid_self_join_cond_between_target_and_from_clause(Query *query)
-{
-	Node *node = NULL;
-	RangeTblEntry *rte = NULL;
-	Var *lexpr = NULL;
-	Var *rexpr = NULL;
-	Expr *op = NULL;
-	List *clauses = NULL;
-	AttrNumber ctid_attr_num = InvalidAttrNumber;
-	RangeTblEntry *tt = NULL; /* target table */
-	unsigned int ncond_added = 0; /* number of ctid join conditions added */
-	const FormData_pg_attribute *sysatt;
-	Oid tideq_opoid = InvalidOid;
-
-	if (!query->jointree || !query->jointree->quals || !query->rtable)
-		return;
-
-	if (query->resultRelation < 1 || query->resultRelation > query->rtable->length)
-		return;
-
-	node = (Node *)query->rtable->elements[query->resultRelation - 1].ptr_value;
-	if (node->type != T_RangeTblEntry)
-		return;
-
-	tt = (RangeTblEntry *)node;
-	if (tt->inFromCl)
-		return;
-
-	// Add a ctid join condition
-	for (unsigned int i = 0; i < query->rtable->length; i++)
-	{
-		if (i == query->resultRelation - 1)
-			continue;
-
-		node = (Node *)query->rtable->elements[i].ptr_value;
-		if (node->type != T_RangeTblEntry)
-			continue;
-
-		rte = (RangeTblEntry *)node;
-		if (rte->relid != tt->relid)
-			continue;
-
-		if (rte->enrname && (strcmp(rte->enrname, "inserted") == 0 || strcmp(rte->enrname, "deleted") == 0))
-			continue;
-
-		if (query->returningList)
-		{
-			/* Exclude tables having alias "inserted" or "deleted" if OUTPUT-clause exists */
-			if (rte->alias && (strcmp(rte->alias->aliasname, "inserted") == 0
-				|| strcmp(rte->alias->aliasname, "deleted") == 0))
-				continue;
-		}
-
-		/* Now, we found a table in the FROM-clause which refers to the target table */
-		if (ncond_added >= 1)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("self-join in FROM-clause is not supported in Babelfish")));
-		}
-
-		if (rte->relkind == 'v')
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("updatable view in FROM-clause is not supported in Babelfish")));
-		}
-
-		sysatt = SystemAttributeByName("ctid");
-		if (!sysatt)
-			return;
-		ctid_attr_num = sysatt->attnum;
-		tideq_opoid = OpernameGetOprid(list_make1(makeString("=")), TIDOID, TIDOID);
-		if (tideq_opoid == InvalidOid)
-			return;
-
-		lexpr = makeVar(i + 1, ctid_attr_num, TIDOID, -1, 0, 0); /* from_table.ctid */
-		rexpr = makeVar(query->resultRelation, ctid_attr_num, TIDOID, -1, 0, 0); /* target_table.ctid */
-		op = make_opclause(tideq_opoid, BOOLOID, false, (Expr *)lexpr, (Expr *)rexpr, 0, 0); /* from_table.ctid = target_table.ctid */
-		clauses = lappend(NIL, query->jointree->quals);
-		clauses = lappend(clauses, op);
-
-		query->jointree->quals = (Node *)make_andclause(clauses);
-		ncond_added++;
 	}
 }
 
@@ -1229,11 +1160,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						errmsg("Cannot update a timestamp column.")));
 			}
 		}
-		pltsql_add_ctid_self_join_cond_between_target_and_from_clause(query);
-	}
-	else if (query->commandType == CMD_DELETE)
-	{
-		pltsql_add_ctid_self_join_cond_between_target_and_from_clause(query);
 	}
 	else if (query->commandType == CMD_SELECT)
 	{
