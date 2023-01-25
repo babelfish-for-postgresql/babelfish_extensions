@@ -66,6 +66,10 @@ ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-verify
 ignore#!#BABEL-CHECK-CONSTRAINT-before-14_6-vu-cleanup
 ignore#!#BABEL-3646-before-14_6-vu-prepare
 ignore#!#BABEL-3646-before-14_6-vu-verify
+ignore#!#bbf_view_def-before-14_5-vu-prepare
+ignore#!#bbf_view_def-before-14_5-vu-verify
+ignore#!#bbf_view_def-before-14_7-or-15_2-vu-prepare
+ignore#!#bbf_view_def-before-14_7-or-15_2-vu-verify
 ignore#!#routines_definition_before-14_7-or-15_2-vu-prepare
 ignore#!#routines_definition_before-14_7-or-15_2-vu-verify
 ignore#!#sys-all_sql_modules_before-14_5-vu-prepare
@@ -104,3 +108,10 @@ ignore#!#case_insensitive_collation-before-13-5-vu-cleanup
 ignore#!#jira-BABEL-3504-upgrade-vu-prepare
 ignore#!#jira-BABEL-3504-upgrade-vu-verify
 ignore#!#jira-BABEL-3504-upgrade-vu-cleanup
+
+ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-prepare
+ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-verify
+# These tests are meant for upgrade scenario prior to (potential) 15_2 release
+ignore#!#test_windows_login_before_15_2-vu-prepare
+ignore#!#test_windows_login_before_15_2-vu-verify
+ignore#!#test_windows_login_before_15_2-vu-cleanup

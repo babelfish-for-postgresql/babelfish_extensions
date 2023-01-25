@@ -24,7 +24,7 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int server_collation_collidx = NOT_FOUND;
@@ -118,6 +118,39 @@ coll_translate_t coll_translations[] =
 
 };
 #define TOTAL_COLL_TRANSLATION_COUNT (sizeof(coll_translations)/sizeof(coll_translations[0]))
+
+/*
+ * Reverse Collation translation table.  The first column (BBF collation) contains
+ * the name of the collation to be translated from.  The second column
+ * (TSQL Collation) is the name of the collation to translate to.
+ */
+coll_translate_t reverse_coll_translations[] =
+{
+	{ "bbf_unicode_cp1_ci_as", "latin1_general_ci_as", 1252 }, /* default */
+	{ "bbf_unicode_cp1_ci_ai", "latin1_general_ci_ai", 1252 },
+	{ "bbf_unicode_cp1_cs_ai", "latin1_general_cs_ai", 1252 },
+	{ "bbf_unicode_cp1_cs_as", "latin1_general_cs_as", 1252 },
+	{ "bbf_unicode_bin2", "latin1_general_bin2", 1252 },
+	{ "bbf_unicode_cp1250_ci_as", "sql_latin1_general_cp1250_ci_as", 1250 },
+	{ "bbf_unicode_cp1250_cs_as", "sql_latin1_general_cp1250_cs_as", 1250 },
+	{ "bbf_unicode_cp1253_ci_as", "sql_latin1_general_cp1253_ci_as", 1253 },
+	{ "bbf_unicode_cp1253_cs_as", "sql_latin1_general_cp1253_cs_as", 1253 },
+	{ "bbf_unicode_cp1254_ci_as", "sql_latin1_general_cp1254_ci_as", 1254 },
+	{ "bbf_unicode_cp1254_cs_as", "sql_latin1_general_cp1254_cs_as", 1254 },
+	{ "bbf_unicode_cp1255_ci_as", "sql_latin1_general_cp1255_ci_as", 1255 },
+	{ "bbf_unicode_cp1255_cs_as", "sql_latin1_general_cp1255_cs_as", 1255 },
+	{ "bbf_unicode_cp1256_ci_as", "sql_latin1_general_cp1256_ci_as", 1256 },
+	{ "bbf_unicode_cp1256_cs_as", "sql_latin1_general_cp1256_cs_as", 1256 },
+	{ "bbf_unicode_cp1257_ci_as", "sql_latin1_general_cp1257_ci_as", 1257 },
+	{ "bbf_unicode_cp1257_cs_as", "sql_latin1_general_cp1257_cs_as", 1257 },
+	{ "bbf_unicode_cp1258_ci_as", "sql_latin1_general_cp1258_ci_as", 1258 },
+	{ "bbf_unicode_cp1258_cs_as", "sql_latin1_general_cp1258_cs_as", 1258 },
+	{ "bbf_unicode_cp874_ci_as", "sql_latin1_general_cp874_ci_as", 874 },
+	{ "bbf_unicode_cp874_cs_as", "sql_latin1_general_cp874_cs_as", 874 },
+	{ "bbf_unicode_pref_cp1_cs_as", "sql_latin1_general_pref_cp1_cs_as", 1252 }
+};
+
+#define TOTAL_REVERSE_COLL_TRANSLATION_COUNT (sizeof(reverse_coll_translations)/sizeof(reverse_coll_translations[0]))
 
 coll_info coll_infos[] =
 {
@@ -599,6 +632,17 @@ translate_collation(const char *collname, bool check_for_server_collation_name_g
 		idx = translate_collation_utility(collname);
 	}
 	return idx;
+}
+
+/* Translate BBF collation to it's closest TSQL Collation. */
+const char *
+translate_bbf_collation_to_tsql_collation(const char *collname)
+{
+	for (int i = 0; i < TOTAL_REVERSE_COLL_TRANSLATION_COUNT; i++)
+		if (pg_strcasecmp(reverse_coll_translations[i].from_collname, collname) == 0)
+			return (reverse_coll_translations[i].to_collname);
+
+	return NULL;
 }
 
 /*
@@ -1361,21 +1405,21 @@ void BabelfishPreCreateCollation_hook(
 		 */
 		if (collcollate[0] == '@')
 		{
-			char *catcollcollate = palloc0(strlen(bbf_default_locale) +
-										   strlen(collcollate) + 1);
+			size_t totallen = strlen(bbf_default_locale) + strlen(collcollate) + 1;
+			char *catcollcollate = palloc0(totallen);
 
 			memcpy(catcollcollate, bbf_default_locale, strlen(bbf_default_locale));
-			strncat(catcollcollate, collcollate, strlen(collcollate));
+			strncat(catcollcollate, collcollate, totallen);
 			*pCollcollate = catcollcollate;
 		}
 
 		if (collctype[0] == '@')
 		{
-			char *catcollctype = palloc0(strlen(bbf_default_locale) +
-										 strlen(collctype) + 1);
+			size_t totallen = strlen(bbf_default_locale) + strlen(collctype) + 1;
+			char *catcollctype = palloc0(totallen);
 
 			memcpy(catcollctype, bbf_default_locale, strlen(bbf_default_locale));
-			strncat(catcollctype, collcollate, strlen(collcollate));
+			strncat(catcollctype, collcollate, totallen);
 			*pCollctype = catcollctype;
 		}
 	}
@@ -1410,6 +1454,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;
 		collation_callbacks_var.find_collation_internal = &find_collation;
 		collation_callbacks_var.has_ilike_node = &has_ilike_node;
+		collation_callbacks_var.translate_bbf_collation_to_tsql_collation = &translate_bbf_collation_to_tsql_collation;
 	}
 	return &collation_callbacks_var;
 }
