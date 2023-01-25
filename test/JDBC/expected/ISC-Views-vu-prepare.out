@@ -137,10 +137,10 @@ cgikmgfvzwyrbunlxcwmihykwywozqdyfdvjjpiammriimvcxemadanokpgmcspgohxonrdaylklymiu
 asdfghjklqwertyuiopasdfghjklasdfghjklz';
 go
 
-create schema sch1;
+create schema sch11;
 go
 
-create view sch1.v1 as select 1;
+create view sch11.v1 as select 1;
 go
 
 create type numeric_test from numeric(15,6)

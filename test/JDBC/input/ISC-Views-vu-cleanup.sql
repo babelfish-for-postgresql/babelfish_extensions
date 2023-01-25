@@ -11,9 +11,9 @@ DROP TABLE isc_udt_1
 DROP TYPE int_a
 DROP TYPE varchar_a
 DROP DATABASE isc_db
-DROP VIEW sch1.v1
+DROP VIEW sch11.v1
 go
-DROP SCHEMA sch1
+DROP SCHEMA sch11
 go
 
 drop table babel_2863;
