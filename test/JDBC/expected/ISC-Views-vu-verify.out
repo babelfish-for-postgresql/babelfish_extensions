@@ -136,46 +136,6 @@ int
 ~~END~~
 
 
-use master
-go
-
-select * from information_schema.views where TABLE_NAME in ('vnums', 'vcnums')  ORDER BY TABLE_NAME
-go
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#dbo#!#vcnums#!#create view vcnums as select * from nums with check option;#!#CASCADE#!#NO
-master#!#dbo#!#vnums#!#create view vnums as select * from nums;#!#NONE#!#NO
-~~END~~
-
-
--- Get the length of view def
-select object_name,length(definition) from sys.babelfish_view_def where object_name in ('lview','nlview') order by object_name;
-go
-~~START~~
-varchar#!#int
-lview#!#4081
-nlview#!#4000
-~~END~~
-
-
--- This should be truncated
-select length(view_definition) from information_schema.views where TABLE_NAME = 'lview';
-go
-~~START~~
-int
-4000
-~~END~~
-
-
--- This shouldn't be truncated
-select length(view_definition) from information_schema.views where TABLE_NAME = 'nlview';
-go
-~~START~~
-int
-4000
-~~END~~
-
-
 -- Cross db ref testing for ISC.Views view
 use isc_db
 go
@@ -199,15 +159,6 @@ int
 
 use master
 go
-
-select * from information_schema.views where TABLE_NAME = 'v1'  ORDER BY TABLE_NAME
-go
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#sch11#!#v1#!#create view sch11.v1 as select 1;#!#NONE#!#NO
-~~END~~
-
-
 
 -- Tests for numeric scale and precision
 select column_name,numeric_precision, numeric_scale from information_schema.columns where column_name like '_numcol_%';

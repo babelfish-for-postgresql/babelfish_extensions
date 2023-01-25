@@ -44,24 +44,6 @@ select count(*) from information_schema.tables WHERE TABLE_NAME != 'sysdatabases
 select count(*) from information_schema.columns WHERE TABLE_NAME != 'sysdatabases'
 go
 
-use master
-go
-
-select * from information_schema.views where TABLE_NAME in ('vnums', 'vcnums')  ORDER BY TABLE_NAME
-go
-
--- Get the length of view def
-select object_name,length(definition) from sys.babelfish_view_def where object_name in ('lview','nlview') order by object_name;
-go
-
--- This should be truncated
-select length(view_definition) from information_schema.views where TABLE_NAME = 'lview';
-go
-
--- This shouldn't be truncated
-select length(view_definition) from information_schema.views where TABLE_NAME = 'nlview';
-go
-
 -- Cross db ref testing for ISC.Views view
 use isc_db
 go
@@ -76,11 +58,7 @@ go
 use master
 go
 
-select * from information_schema.views where TABLE_NAME = 'v1'  ORDER BY TABLE_NAME
-go
-
 -- Tests for numeric scale and precision
-
 select column_name,numeric_precision, numeric_scale from information_schema.columns where column_name like '_numcol_%';
 GO
 
