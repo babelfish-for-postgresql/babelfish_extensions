@@ -37,6 +37,7 @@ bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 static bool find_target_alias_in_tableref(RangeVar **target, Node *tblref);
 static bool find_relation_in_tableref(RangeVar *target, Node *tblref);
+static bool matches_RangeVar(RangeVar *rv1, RangeVar *rv2);
 
 /* 
  * Following the rule for locktag fields of advisory locks:
@@ -1157,6 +1158,10 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
 	return (db_id_from_schema == db_id);
 }
 
+/*
+ * Recursively go through all CTEs, if any of them is UPDATE/DELETE statement, we
+ * need to do special handling to the target table.
+ */
 void
 pltsql_cte_update_target_table_alias(WithClause *withClause)
 {
@@ -1206,6 +1211,16 @@ pltsql_cte_update_target_table_alias(WithClause *withClause)
 	}	
 }
 
+/*
+ * If a table alias is used when specifying the target table, we need to refer to the
+ * FROM clause for table reference.
+ * Example:
+ * UPDATE tt SET tt.a = 1 FROM t AS tt WHERE tt.b = 2
+ *
+ * We also need to refer to the FROM clause for schema info.
+ * Example:
+ * UPDATE t SET t.a = 1 FROM sch.t WHERE t.b = 2
+ */
 void
 pltsql_update_target_table_alias(RangeVar **target_table, List *fromClause)
 {
@@ -1215,7 +1230,7 @@ pltsql_update_target_table_alias(RangeVar **target_table, List *fromClause)
 		return;
 	
 	/*
-	 * For each table reference in fromClause, check if the table alias
+	 * For each table reference in fromClause, check if the table name or table alias
 	 * name matches the target table.
 	 * If yes, substitute target table with the table reference.
 	 */
@@ -1243,7 +1258,7 @@ find_target_alias_in_tableref(RangeVar **target, Node *tblref)
 	}
 	/*
 	 * If the table reference is an actual table (RangeVar), check if
-	 * the table alias is the same as the target table name.
+	 * the table name or table alias is the same as the target table name.
 	 * If yes, substitute the target table with the RangeVar.
 	 */
 	else if (IsA(tblref, RangeVar))
@@ -1299,6 +1314,11 @@ pltsql_update_table_reference(RangeVar *target_table, List *fromClause, ParseSta
 	if (!target_table || !fromClause || !IsA(target_table, RangeVar))
 		return;
 
+	/*
+	 * For each table (RangeVar) in stmt->fromClause, check if it
+	 * matches stmt->relation. If yes, clean up the joinlist, 
+	 * namespace and rtable structures in pstate.
+	 */
 	foreach(lc, fromClause)
 	{
 		Node *n = lfirst(lc);
@@ -1325,16 +1345,30 @@ find_relation_in_tableref(RangeVar *target, Node *tblref)
 	else if (IsA(tblref, RangeVar))
 	{
 		RangeVar *rv = (RangeVar *) tblref;
-		if (pg_strcasecmp(target->relname, rv->relname) == 0)
-		{
-			if (target->alias && 
-				(!rv->alias || pg_strcasecmp(target->alias->aliasname, rv->alias->aliasname) != 0))
-				return false;
-
-			return true;
-		}
+		return matches_RangeVar(target, rv);
 	}
 	return false;
+}
+
+static bool
+matches_RangeVar(RangeVar *rv1, RangeVar *rv2)
+{
+	if ((rv1->schemaname && !rv2->schemaname) ||
+		(!rv1->schemaname && rv2->schemaname) ||
+		(rv1->schemaname && rv2->schemaname && pg_strcasecmp(rv1->schemaname, rv2->schemaname) != 0))
+		return false;
+	
+	if ((rv1->relname && !rv2->relname) ||
+		(!rv1->relname && rv2->relname) ||
+		(rv1->relname && rv2->relname && pg_strcasecmp(rv1->relname, rv2->relname) != 0))
+		return false;
+	
+	if ((rv1->alias && !rv2->alias) ||
+		(!rv1->alias && rv2->alias) ||
+		(rv1->alias && rv2->alias && pg_strcasecmp(rv1->alias->aliasname, rv2->alias->aliasname) != 0))
+		return false;
+
+	return true;
 }
 
 void

@@ -592,6 +592,12 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	/* 
+ 	 * For UPDATE/DELETE statement, we'll need to update the result relation index after 
+ 	 * analyzing FROM clause and getting the final range table entries.
+ 	 * post_parse_analyze hook, won't be triggered by CTE parse analyze. So we perform the
+ 	 * operation here instead, which will be triggered by all INSERT/UPDATE/DELETE statements.
+ 	 */
 	if (command == CMD_DELETE || command == CMD_UPDATE)
 		pltsql_update_query_result_relation(query, pstate->p_target_relation, pstate->p_rtable);
 
@@ -3197,6 +3203,12 @@ transform_like_in_add_constraint (Node* node)
 	return pltsql_predicate_transformer(node);
 }
 
+/*
+ * This hook is to clean up duplicate table references in UPDATE/DELETE statement, 
+ * after setting target table and before analyzing FROM clause.
+ * This resolves the namespace duplication error raised in FROM clause when running
+ * TSQL-style UPDATE/DELETE command.
+ */
 static void
 pltsql_post_set_target_table(ParseState *pstate, Node *stmt, CmdType command)
 {

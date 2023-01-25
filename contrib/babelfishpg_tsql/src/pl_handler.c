@@ -578,6 +578,15 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			}
 			break;
 		}
+		/*
+		 * DML statements
+		 *
+		 * In UPDATE/DELETE statement, we're doing special handling to the target table.
+		 * UPDATE/DELETE in CTE also needs this special handling, but pre_parse_analyze 
+		 * hook won't be triggered by CTE parse analyze. So we recursively check through 
+		 * all CTEs.
+		 * CTE can only exist four types of DMLs: DELETE/INSERT/SELECT/UPDATE.
+		 */
 		case T_DeleteStmt:
 		{
 			DeleteStmt *delete_stmt = (DeleteStmt *) parseTree->stmt;
