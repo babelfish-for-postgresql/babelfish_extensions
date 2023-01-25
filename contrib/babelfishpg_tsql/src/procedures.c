@@ -1926,7 +1926,7 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 	Oid role_oid;
 	List *parsetree_list;
 	ListCell *parsetree_item;
-	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true); //LCOV_EXCL_LINE
 
 	PG_TRY();
 	{
