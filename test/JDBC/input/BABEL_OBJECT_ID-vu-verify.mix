@@ -248,17 +248,17 @@ GO
 SELECT current_user;
 GO
 
--- Now we can access
-SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_t1'))
+-- Now we can access, to verify name using object_name we have to provide db_id for cross-db lookup 
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_t1'), DB_ID('master'))
 GO
 
-SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_proc1'))
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_proc1'), DB_ID('master'))
 GO
 
-SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_func1'))
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_func1'), DB_ID('master'))
 GO
 
-SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_v1'))
+SELECT OBJECT_NAME(OBJECT_ID('master..babel_object_id_v1'), DB_ID('master'))
 GO
 
 SELECT (CASE WHEN OBJECT_ID('master..babel_object_id_trg') = NULL THEN 'false' ELSE 'true' END) result;

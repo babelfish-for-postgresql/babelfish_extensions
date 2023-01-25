@@ -1,0 +1,300 @@
+-- tsql
+-- test table, trigger, procedure, function
+SELECT * FROM babel_object_name_t1_view
+GO
+~~START~~
+varchar
+babel_object_name_t1
+~~END~~
+
+
+SELECT * FROM babel_object_name_proc1_view
+GO
+~~START~~
+varchar
+babel_object_name_proc1
+~~END~~
+
+
+SELECT * FROM babel_object_name_func1_view
+GO
+~~START~~
+varchar
+babel_object_name_func1
+~~END~~
+
+
+SELECT * FROM babel_object_name_v1_view
+GO
+~~START~~
+varchar
+babel_object_name_v1
+~~END~~
+
+
+SELECT * FROM babel_object_name_trg_view
+GO
+~~START~~
+varchar
+babel_object_name_trg
+~~END~~
+
+
+-- test types
+SELECT * FROM babel_object_name_type_view
+GO
+~~START~~
+varchar
+babel_object_name_type_int
+~~END~~
+
+
+-- test constraint
+SELECT * FROM babel_object_name_constraint_view
+GO
+~~START~~
+varchar
+babel_object_name_constraint
+~~END~~
+
+
+-- Negative values/ out of range values
+SELECT OBJECT_NAME(-123)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_trg_view'), -123)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- max value
+SELECT OBJECT_NAME(2147483647)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- greater than max allowed value
+SELECT OBJECT_NAME(2147483648)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- To test temp object
+CREATE TABLE #babel_object_name_temp_t1 (a int);
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_name_temp_t1'))
+GO
+~~START~~
+varchar
+#babel_object_name_temp_t1
+~~END~~
+
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_name_temp_t1'), db_id('tempdb'))
+GO
+~~START~~
+varchar
+#babel_object_name_temp_t1
+~~END~~
+
+
+DROP TABLE #babel_object_name_temp_t1;
+GO
+
+-- test cross database lookup
+USE master;
+GO
+
+-- should work
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'), db_id('babel_object_name_db'))
+GO
+~~START~~
+varchar
+babel_object_name_db_t1
+~~END~~
+
+
+-- should fail
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'))
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- to test dependency of user's permission on object
+USE master;
+GO
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_t1'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_trg'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('BABEL_OBJECT_NAME_PROC1'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('BABEL_OBJECT_NAME_func1'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_v1'));
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_constraint'));
+GO
+~~ROW COUNT: 1~~
+
+
+-- give access
+GRANT ALL ON babel_object_name_store_OID TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_t1 TO babel_object_name_master_user1;
+GO
+
+GRANT EXECUTE ON BABEL_OBJECT_NAME_PROC1 TO babel_object_name_master_user1;
+GO
+
+GRANT EXECUTE ON BABEL_OBJECT_NAME_func1 TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_v1 TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_t_pk TO babel_object_name_master_user1;
+GO
+
+-- tsql      user=babel_object_name_login1 password=12345678
+USE master
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_name_master_user1
+~~END~~
+
+
+-- should work as we have grant access in prepare
+SELECT OBJECT_NAME(a) FROM babel_object_name_store_OID
+GO
+~~START~~
+varchar
+babel_object_name_t1
+babel_object_name_trg
+babel_object_name_proc1
+babel_object_name_func1
+babel_object_name_v1
+babel_object_name_constraint
+~~END~~
+
+
+
+-- cross-db will also work 
+USE babel_object_name_db
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_object_name_user2
+~~END~~
+
+
+SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
+GO
+~~START~~
+varchar
+babel_object_name_t1
+babel_object_name_trg
+babel_object_name_proc1
+babel_object_name_func1
+babel_object_name_v1
+babel_object_name_constraint
+~~END~~
+
+
+
+-- tsql
+-- lets revoke access
+USE master;
+GO
+
+
+REVOKE SELECT ON babel_object_name_t1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE EXECUTE ON BABEL_OBJECT_NAME_PROC1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE EXECUTE ON BABEL_OBJECT_NAME_func1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_name_v1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_name_t_pk FROM babel_object_name_master_user1;
+GO
+
+-- tsql      user=babel_object_name_login1 password=12345678
+-- should return null
+SELECT OBJECT_NAME(a) FROM master..babel_object_name_store_OID
+GO
+~~START~~
+varchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
+GO
+~~START~~
+varchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+-- tsql
+USE master;
+GO
+
+REVOKE ALL ON babel_object_name_store_OID FROM babel_object_name_master_user1;
+GO
