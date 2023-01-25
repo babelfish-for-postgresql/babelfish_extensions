@@ -21,6 +21,7 @@
 #include "utils/acl.h"
 #include "access/table.h"
 #include "access/genam.h"
+#include "catalog.h"
 
 #include "multidb.h"
 
@@ -1137,3 +1138,19 @@ split_object_name(char *name)
 }
 
 
+
+/*
+ * is_schema_from_db
+ *		Given schema_oid and db_id, check if schema belongs to provided database id.
+ */
+bool is_schema_from_db(Oid schema_oid, Oid db_id)
+{
+	Oid db_id_from_schema;
+	char *schema_name = get_namespace_name(schema_oid);
+	if(!schema_name)
+		return false;
+
+	db_id_from_schema = get_dbid_from_physical_schema_name(schema_name, true);
+	pfree(schema_name);
+	return (db_id_from_schema == db_id);
+}
