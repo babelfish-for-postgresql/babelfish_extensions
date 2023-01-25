@@ -1269,19 +1269,11 @@ find_target_alias_in_tableref(RangeVar **target, Node *tblref)
 			if ((*target)->schemaname && 
 				(!rv->schemaname || pg_strcasecmp((*target)->schemaname, rv->schemaname) != 0))
 			{
-				int rv_fullname_len = strlen(rv->schemaname) + strlen(rv->relname) + 1;
-				char *rv_fullname = palloc(sizeof(char) * (rv_fullname_len + 1));
-
-				strncpy(rv_fullname, rv->schemaname, strlen(rv->schemaname));
-				strncat(rv_fullname, ".", 1);
-				strncat(rv_fullname, rv->relname, strlen(rv->relname));
-				rv_fullname[rv_fullname_len] = '\0';
-
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("The objects \"%s.%s\" and \"%s\" in the FROM clause have the same exposed names. " \
 								"Use correlation names to distinguish them.", 
-								(*target)->schemaname, (*target)->relname, rv_fullname)));
+								(*target)->schemaname, (*target)->relname, rv->relname)));
 			}
 
 			*target = rv;
