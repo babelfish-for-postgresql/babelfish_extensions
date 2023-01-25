@@ -462,37 +462,6 @@ FROM pg_foreign_server AS f
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
-CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
-    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
-            CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
-            CAST(r.relname AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
-            CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
-                    AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres inherent implementation
-            CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)
-                        AS smallint) AS "NUMERIC_PRECISION",
-            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, -1)
-                        AS smallint) AS "NUMERIC_PRECISION_RADIX",
-            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, -1)
-                        AS int) AS "NUMERIC_SCALE",
-            CAST(s.seqstart AS sys.sql_variant) AS "START_VALUE",
-            CAST(s.seqmin AS sys.sql_variant) AS "MINIMUM_VALUE",
-            CAST(s.seqmax AS sys.sql_variant) AS "MAXIMUM_VALUE",
-            CAST(s.seqincrement AS sys.sql_variant) AS "INCREMENT",
-            CAST( CASE WHEN s.seqcycle = 't' THEN 1 ELSE 0 END AS int) AS "CYCLE_OPTION",
-            CAST(NULL AS sys.nvarchar(128)) AS "DECLARED_DATA_TYPE",
-            CAST(NULL AS int) AS "DECLARED_NUMERIC_PRECISION",
-            CAST(NULL AS int) AS "DECLARED_NUMERIC_SCALE"
-        FROM sys.pg_namespace_ext nc JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
-            pg_sequence s join pg_class r on s.seqrelid = r.oid join pg_type t on s.seqtypid=t.oid,
-            sys.translate_pg_type_to_tsql(s.seqtypid) AS tsql_type_name
-        WHERE nc.oid = r.relnamespace
-        AND extc.dbid = cast(sys.db_id() as oid)
-            AND r.relkind = 'S'
-            AND (NOT pg_is_other_temp_schema(nc.oid))
-            AND (pg_has_role(r.relowner, 'USAGE')
-                OR has_sequence_privilege(r.oid, 'SELECT, UPDATE, USAGE'));
-
-GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
