@@ -1,4 +1,3 @@
--- Returns TABLE (simple) or SETOF RECORD (with)
 CREATE VIEW BABEL_3702_vu_prepare_v1 as (select * from OPENJSON(N'{"a":null,"b":"a","c":1,"d":true,"e":[1,2],"f":{"name":"John"}}'));
 GO
 

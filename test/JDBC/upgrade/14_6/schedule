@@ -335,7 +335,7 @@ sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
-BABEL-3702
+BABEL-3702-before-14_7
 sys_server_principals_dep
 sys_database_principals_dep
 case_insensitive_collation
