@@ -375,8 +375,5 @@ sys-has_perms_by_name-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
 bbf_view_def
-<<<<<<< HEAD
 BABEL_OBJECT_ID
-=======
 BABEL-3802
->>>>>>> a5f791812 (BABEL-3802 Bigint/Int/Smallint/Tinyint Power Function (#1123))
