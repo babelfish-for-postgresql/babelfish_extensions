@@ -1124,27 +1124,27 @@ GRANT SELECT ON sys.types TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.systypes AS
 SELECT CAST(name as sys.sysname) as name
-  , CAST(s.system_type_id as int) as xtype
-  , CAST((case when s.is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
-  , CAST((case when s.user_type_id < 32767 then s.user_type_id::int else null end) as smallint) as xusertype
-  , s.max_length as length
+  , CAST(system_type_id as int) as xtype
+  , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
+  , max_length as length
   , CAST(0 as sys.tinyint) as xprec
   , CAST(0 as sys.tinyint) as xscale
-  , CAST(s.default_object_id as int) as tdefault
-  , CAST(s.rule_object_id as int) as domain
-  , CAST((case when s.schema_id < 32767 then s.schema_id::int else null end) as smallint) as uid
+  , CAST(default_object_id as int) as tdefault
+  , CAST(rule_object_id as int) as domain
+  , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
   , CAST(0 as smallint) as reserved
-  , CAST((case when t.typcollation = 0 then null else t.typcollation end) as int) as collationid
-  , CAST((case when s.user_type_id < 32767 then s.user_type_id::int else null end) as smallint) as usertype
-  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(t.typbasetype), sys.translate_pg_type_to_tsql(s.user_type_id)) in ('varchar', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
-  , CAST(s.is_nullable as sys.bit) as allownulls
-  , CAST(s.system_type_id as int) as type
+  , CAST((case when collation_name is null then null else sys.CollationProperty(collation_name, 'CollationId') end) as int) as collationid
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
+  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+          in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
+  , CAST(is_nullable as sys.bit) as allownulls
+  , CAST(system_type_id as int) as type
   , CAST(null as varchar(255)) as printfmt
-  , CAST(s.precision as smallint) as prec
-  , CAST(s.scale as sys.tinyint) as scale
-  , CAST(s.collation_name as sys.sysname) as collation
-FROM sys.types s
-LEFT JOIN pg_type t ON t.oid = s.user_type_id;
+  , CAST(precision as smallint) as prec
+  , CAST(scale as sys.tinyint) as scale
+  , CAST(collation_name as sys.sysname) as collation
+FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
 
 create or replace view sys.table_types as
