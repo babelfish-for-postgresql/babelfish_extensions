@@ -385,3 +385,37 @@ hello#!#1
 #D#varchar#!#int
 hello#!#200
 #Q#DROP PROCEDURE sp_test21
+#Q#CREATE PROCEDURE dbo.sp_test22 ( @one int, @two int ) AS BEGIN SELECT @one, @two; END;
+#Q#DECLARE @one int = 100; DECLARE @two int = 200; EXECUTE sp_test22 @one = @one, @two = @two;
+#D#int#!#int
+100#!#200
+#Q#sp_test22
+#D#int#!#int
+100#!#200
+#Q#dbo.sp_test22
+#D#int#!#int
+100#!#200
+#Q#DROP PROCEDURE dbo.sp_test22
+#Q#CREATE SCHEMA testschema
+#Q#CREATE PROCEDURE testschema.sp_test23 ( @one int, @two int ) AS BEGIN SELECT @one, @two; END;
+#Q#DECLARE @one int = 100; DECLARE @two int = 200; EXECUTE testschema.sp_test23 @one = @one, @two = @two;
+#D#int#!#int
+100#!#200
+#Q#testschema.sp_test23
+#D#int#!#int
+100#!#200
+#Q#sp_test23
+#E#procedure sp_test23(@one => integer, @two => integer) does not exist
+#Q#CREATE PROCEDURE dbo.sp_test23 ( @one varchar(30), @two int ) AS BEGIN SELECT @one, @two; END;
+#Q#EXECUTE sp_test23 @one = "hello", @two = 1;
+#D#varchar#!#int
+hello#!#1
+#Q#sp_test23
+#D#varchar#!#int
+hello#!#200
+#Q#dbo.sp_test23
+#D#varchar#!#int
+hello#!#200
+#Q#DROP PROCEDURE testschema.sp_test23
+#Q#DROP PROCEDURE dbo.sp_test23
+#Q#DROP SCHEMA testschema
