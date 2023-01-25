@@ -2544,11 +2544,11 @@ CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.sysname,
 	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
 AS 'babelfishpg_tsql', 'sp_set_session_context'
 LANGUAGE C;
-GRANT ALL PRIVILEGES ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
+GRANT EXECUTE ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.SESSION_CONTEXT ("@key" sys.sysname)
 	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'SESSION_CONTEXT' LANGUAGE C;
-GRANT ALL PRIVILEGES ON FUNCTION sys.SESSION_CONTEXT TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.SESSION_CONTEXT TO PUBLIC;
 
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
