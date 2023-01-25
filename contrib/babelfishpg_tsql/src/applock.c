@@ -18,8 +18,6 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/timeout.h"
-#include "datatypes.h"
-
 
 PG_FUNCTION_INFO_V1(sp_getapplock_function);
 PG_FUNCTION_INFO_V1(sp_releaseapplock_function);
@@ -57,7 +55,7 @@ static HTAB * appLockCacheGlobal = NULL;
 typedef struct applockcacheent
 {
     int64       key;			/* (hashed) key integer of the lock */
-    char        resource[APPLOCK_MAX_RESOURCE_LENGTH];	/* Resource name string of the lock */
+    char        resource[APPLOCK_MAX_RESOURCE_LENGTH + 1];	/* Resource name string of the lock */
     uint32_t    refcount;		/* Currently how many times this lock is being held. 
 	                               Note the count may be different locally/globally.*/
     slist_head  mode_head;		/* lock mode list, keeping track of all lock modes 
@@ -504,7 +502,7 @@ static int64 ApplockGetUsableKey(char *resource)
 		entry->key = usable_key;
 		entry->refcount = 1;
 		entry->resource[0] = '\0';
-		strncat(entry->resource, resource, strlen(resource));
+		strncat(entry->resource, resource, APPLOCK_MAX_RESOURCE_LENGTH);
 	}
 
 	LWLockRelease(TsqlApplockSyncLock);
@@ -649,7 +647,7 @@ static int _sp_getapplock_internal (char *resource, char *lockmode,
 	/* lock aquired, we can insert or update the local cache entry now. */
 	AppLockCacheInsert(key, entry);
 	entry->resource[0] = '\0';
-	strncat(entry->resource, resource, strlen(resource));
+	strncat(entry->resource, resource, APPLOCK_MAX_RESOURCE_LENGTH);
 	entry->refcount++;
 	node = malloc(sizeof(AppLockModeNode));
 	node->mode = mode;
@@ -803,7 +801,7 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 
 	/* If we don't own the lock, just return NoLock */
 	if ((key = AppLockSearchKeyLocal(resource)) < 0)
-		PG_RETURN_VARCHAR_P(tsql_varchar_input(AppLockModeStrings[APPLOCKMODE_NOLOCK], 
+		PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)(AppLockModeStrings[APPLOCKMODE_NOLOCK], 
 												strlen(AppLockModeStrings[APPLOCKMODE_NOLOCK]), 
 												-1));
 
@@ -828,7 +826,7 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 	else
 		ret_mode = high_mode;
 
-	PG_RETURN_VARCHAR_P(tsql_varchar_input(AppLockModeStrings[ret_mode], 
+	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)(AppLockModeStrings[ret_mode], 
 												strlen(AppLockModeStrings[ret_mode]), 
 												-1));
 }

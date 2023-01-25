@@ -16,7 +16,6 @@
 #include "format.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
-#include "datatypes.h"
 
 #include <string.h>
 #include <strings.h>
@@ -144,7 +143,7 @@ format_datetime(PG_FUNCTION_ARGS)
 		break;
 	}
 
-	result = tsql_varchar_input(buf->data, buf->len, -1);
+	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf->data, buf->len, -1);
 	pfree(buf->data);
 	pfree(buf);
 
@@ -244,7 +243,7 @@ format_numeric(PG_FUNCTION_ARGS)
 						regexp_replace(format_res->data, "[.]{0,1}0*[eE]", "E", "i");
 					}
 
-					result = tsql_varchar_input(format_res->data, format_res->len, -1);
+					result = (*common_utility_plugin_ptr->tsql_varchar_input)(format_res->data, format_res->len, -1);
 					pfree(format_res->data);
 					pfree(format_res);
 					PG_RETURN_VARCHAR_P(result);
@@ -310,7 +309,7 @@ format_numeric(PG_FUNCTION_ARGS)
 
 	if (format_res->len > 0)
 	{
-		result = tsql_varchar_input(format_res->data, format_res->len, -1);
+		result = (*common_utility_plugin_ptr->tsql_varchar_input)(format_res->data, format_res->len, -1);
 		pfree(format_res->data);
 		pfree(format_res);
 		PG_RETURN_VARCHAR_P(result);
@@ -406,23 +405,23 @@ format_validate_and_culture(const char *culture, const char *config_name)
 	if (culture_len > 0)
 	{
 		culture_temp = palloc(sizeof(char) * culture_len + 1);
-		strncpy(culture_temp, culture, culture_len);
+		memcpy(culture_temp, culture, culture_len);
 		culture_temp[culture_len] = '\0';
 
-		temp_res = palloc(sizeof(char) * culture_len + 10);
+		temp_res = palloc0(sizeof(char) * culture_len + 10);
 
 		if (strchr(culture_temp, '-') != NULL)
 		{
 			token = strtok(culture_temp, "-");
 			for (char *c = token; *c; ++c) *c = tolower(*c);
-			strncpy(temp_res, token, strlen(token) + 1);
+			memcpy(temp_res, token, strlen(token));
 			strncat(temp_res, "_", 2);
 
 			if (token != NULL)
 			{
 				token = strtok(NULL, "-");
 				for (char *c = token; *c; ++c) *c = toupper(*c);
-				strncat(temp_res, token, strlen(token) + 1);
+				strncat(temp_res, token, culture_len);
 				temp_res[culture_len] = '\0';
 			}
 			else
@@ -1511,7 +1510,7 @@ regexp_replace(char *format_res, char *match_with, const char *replace_with, cha
 
 	result = text_to_cstring(replace_text_regexp(s, (void *) re, r, false));
 
-	strncpy(format_res, result, strlen(result) + 1);
+	strncpy(format_res, result, strlen(format_res));
 }
 
 /*

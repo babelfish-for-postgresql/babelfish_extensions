@@ -1,0 +1,69 @@
+name: TAP Tests
+on: [push, pull_request]
+
+jobs:
+  run-babelfish-tap-tests:
+    env:
+      INSTALL_DIR: postgres
+
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Install Tap Tests Dependencies
+        id: install-tap-dependencies
+        if: always() && steps.install-dependencies.outcome == 'success'
+        run: |
+          export PERL_MM_USE_DEFAULT=1
+          sudo perl -MCPAN -e 'install IPC::Run'
+        shell: bash
+
+      - name: Install Kerberos Dependencies
+        id: install-kerberos-dependencies
+        if: always() && steps.install-tap-dependencies.outcome == 'success'
+        run: |
+          cd ~
+          export DEBIAN_FRONTEND=noninteractive
+          sudo -E apt-get install krb5-admin-server krb5-kdc krb5-user libkrb5-dev -y -qq
+        shell: bash
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-kerberos-dependencies.outcome == 'success'
+        with:
+          tap_tests: 'yes'
+        uses: ./.github/composite-actions/build-modified-postgres
+
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+
+      - name: Run TAP Tests
+        id: tap
+        if: always() && steps.build-extensions.outcome == 'success'
+        timeout-minutes: 5
+        run: |
+          export PG_CONFIG=~/${{env.INSTALL_DIR}}/bin/pg_config
+          export PATH=/opt/mssql-tools/bin:$PATH
+
+          cd contrib/babelfishpg_tds
+          make installcheck
+
+      - name: Upload Logs
+        if: always() && steps.tap.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: tap_tests_logs
+          path: contrib/babelfishpg_tds/test/tmp_check/log

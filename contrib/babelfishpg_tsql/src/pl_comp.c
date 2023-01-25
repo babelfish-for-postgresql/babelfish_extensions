@@ -141,7 +141,6 @@ static void delete_function(PLtsql_function *func);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char* prosrc);
-extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /* ----------
  * pltsql_compile		Make an execution tree for a PL/tsql function.
@@ -435,7 +434,7 @@ do_compile(FunctionCallInfo fcinfo,
 
 			/* Function return type should not be rowversion. */
 			if (procStruct->prokind == PROKIND_FUNCTION &&
-				is_tsql_rowversion_or_timestamp_datatype(procStruct->prorettype))
+				(*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(procStruct->prorettype))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("The timestamp data type is invalid for return values.")));
@@ -457,7 +456,7 @@ do_compile(FunctionCallInfo fcinfo,
 
 				/* rowversion is not a valid type for function parameter. */
 				if (procStruct->prokind == PROKIND_FUNCTION &&
-					is_tsql_rowversion_or_timestamp_datatype(argtypeid) &&
+					(*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(argtypeid) &&
 					argmode != PROARGMODE_TABLE)
 					ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),

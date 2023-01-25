@@ -13,7 +13,7 @@ MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
 
 PG_CFLAGS += -g -Werror
-
+PG_CFLAGS += -fstack-protector-strong
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
 endif
@@ -78,20 +78,6 @@ include $(PGXS)
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
-endif
-
-install: install-lib link-lib
-uninstall: uninstall-lib unlink-lib
-
-# Also add .so file to libdir so that other extensions can link to it.
-link-lib:
-ifneq ($(pkglibdir), $(libdir))
-	ln -sf $(pkglibdir)/$(EXTENSION).so $(libdir)/$(EXTENSION).so
-endif
-
-unlink-lib:
-ifneq ($(pkglibdir), $(libdir))
-	rm -f $(libdir)/$(EXTENSION).so
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in
