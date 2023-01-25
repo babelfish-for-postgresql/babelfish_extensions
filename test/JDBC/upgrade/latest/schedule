@@ -372,6 +372,9 @@ jira-BABEL-3504-upgrade
 test_windows_login
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+AVG-Aggregate-common
+AVG-Aggregate-Dep
 bbf_view_def
 BABEL_OBJECT_ID
+BABEL-3802
 BABEL_OBJECT_NAME
