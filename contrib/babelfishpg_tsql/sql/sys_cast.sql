@@ -7,7 +7,8 @@ RETURNS SMALLINT
 AS $BODY$ BEGIN
     RETURN CAST(arg AS SMALLINT);
 END; $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_smallint(IN arg ANYELEMENT)
@@ -22,7 +23,8 @@ AS $BODY$ BEGIN
             RETURN CAST(arg AS SMALLINT);
     END CASE;
 END; $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_int(IN arg TEXT)
@@ -30,7 +32,8 @@ RETURNS INT
 AS $BODY$ BEGIN
     RETURN CAST(arg AS INT);
 END; $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_int(IN arg ANYELEMENT)
@@ -45,7 +48,8 @@ AS $BODY$ BEGIN
             RETURN CAST(arg AS INT);
     END CASE;
 END; $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_bigint(IN arg TEXT)
@@ -53,7 +57,8 @@ RETURNS BIGINT
 AS $BODY$ BEGIN
     RETURN CAST(arg AS BIGINT);
 END; $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_cast_floor_bigint(IN arg ANYELEMENT)
@@ -68,7 +73,8 @@ AS $BODY$ BEGIN
             RETURN CAST(arg AS BIGINT);
     END CASE;
 END; $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 
 -- TRY_CAST helper functions
@@ -139,7 +145,8 @@ BEGIN
         WHEN OTHERS THEN
             RETURN NULL;
 END; $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_datetime2(IN arg ANYELEMENT, IN typmod INTEGER)
 RETURNS sys.DATETIME2
@@ -161,7 +168,8 @@ BEGIN
         WHEN OTHERS THEN
             RETURN NULL;
 END; $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg ANYCOMPATIBLE, INOUT output ANYELEMENT, IN typmod INT)
 RETURNS ANYELEMENT
