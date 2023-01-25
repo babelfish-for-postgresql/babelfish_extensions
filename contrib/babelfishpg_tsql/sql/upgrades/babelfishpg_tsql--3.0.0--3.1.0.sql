@@ -479,6 +479,26 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
 
 GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
+AS $$
+BEGIN
+  IF sys.user_name() != 'dbo' THEN
+    RAISE EXCEPTION 'user does not have permission';
+  END IF;
+
+  IF lower("@resample") = 'resample' THEN
+    RAISE NOTICE 'ignoring resample option';
+  ELSIF lower("@resample") != 'no' THEN
+    RAISE EXCEPTION 'Invalid option name %', "@resample";
+  END IF;
+
+  ANALYZE;
+
+  CALL sys.printarg('Statistics for all tables have been updated. Refer logs for details.');
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_has_any_privilege(
     userid oid,
     perm_target_type text,
