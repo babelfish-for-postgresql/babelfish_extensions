@@ -105,7 +105,6 @@ BABEL-2955
 BABEL-3358
 BABEL-3747
 BABEL-3781
-BABEL-3802
 temp-tables
 table-variable
 TestNotNull
@@ -368,4 +367,7 @@ case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID
+AVG-Aggregate-common
+AVG-Aggregate-Dep
 bbf_view_def
+BABEL-3802
