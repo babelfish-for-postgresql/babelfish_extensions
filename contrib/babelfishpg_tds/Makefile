@@ -3,7 +3,6 @@ MODULE_big = babelfishpg_tds
 EXTENSION = babelfishpg_tds
 DATA = babelfishpg_tds--1.0.0.sql
 PGFILEDESC = "babelfishpg_tds - TDS Listener Extension"
-#REGRESS = babelfishpg_tds
 
 tds_top_dir = .
 tds_backend = $(tds_top_dir)/src/backend
@@ -36,6 +35,14 @@ $(tds_backend)/tds/err_handler.o: $(tds_include)/error_mapping.h
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
+# Only execute TAP tests if sqlcmd is installed in the path
+ifneq (, $(shell which sqlcmd))
+SUBDIRS = test
+endif
+
 #include ../Makefile.common
 
 .DEFAULT_GOAL := all
+
+$(recurse)
+$(recurs_always)

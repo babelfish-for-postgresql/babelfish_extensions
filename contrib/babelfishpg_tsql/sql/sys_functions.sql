@@ -191,51 +191,8 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 -- Matches and returns object name to Oid
 CREATE OR REPLACE FUNCTION sys.OBJECT_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
 RETURNS sys.SYSNAME AS
-$BODY$
-DECLARE
-    object_name TEXT;
-    object_oid Oid;
-    cur_dat_id Oid;
-BEGIN
-    IF database_id is not NULL THEN
-        SELECT Oid INTO cur_dat_id FROM pg_database WHERE datname = current_database();
-        IF database_id::Oid != cur_dat_id THEN
-            RAISE EXCEPTION 'Can only do lookup in current database.';
-        END IF;
-    END IF;
-
-    SELECT CAST(object_id AS Oid) INTO object_oid;
-    
-    -- First check for tables, sequences, views, etc.
-    SELECT relname INTO object_name FROM pg_class WHERE Oid = object_oid;
-    IF object_name IS NOT NULL THEN
-        RETURN object_name::sys.SYSNAME;
-    END IF;
-    
-	-- Check ENR for any matches
-    SELECT relname INTO object_name FROM sys.babelfish_get_enr_list() WHERE reloid = object_oid;
-    IF object_name IS NOT NULL THEN
-        RETURN object_name::sys.SYSNAME;
-    END IF;
-    
-    -- Next check for functions
-    SELECT proname INTO object_name FROM pg_proc WHERE Oid = object_oid; 
-    IF object_name IS NOT NULL THEN
-        RETURN object_name::sys.SYSNAME;
-    END IF;
-
-    -- Next check for types
-    SELECT typname INTO object_name FROM pg_type WHERE Oid = object_oid;
-    IF object_name IS NOT NULL THEN
-        RETURN object_name::sys.SYSNAME;
-    END IF;
-   
-    -- Apparently SYSNAME cannot be null so returning empty string
-    RETURN '';
-END;
-$BODY$
-LANGUAGE plpgsql
-IMMUTABLE;
+'babelfishpg_tsql', 'object_name'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.scope_identity()
 RETURNS numeric(38,0) AS
@@ -3266,6 +3223,22 @@ GRANT EXECUTE ON FUNCTION sys.radians(SMALLINT) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
 RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(BIGINT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(INT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(SMALLINT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(TINYINT,NUMERIC) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS

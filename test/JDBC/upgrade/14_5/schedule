@@ -320,3 +320,6 @@ sys-has_perms_by_name-dep
 sys-all_sql_modules_before-14_7
 bbf_view_def-before-14_7-or-15_2
 BABEL_OBJECT_ID
+AVG-Aggregate-common
+AVG-Aggregate-Dep-before-15-2-or-14-7
+BABEL_OBJECT_NAME

@@ -1,0 +1,164 @@
+-- test table, trigger, procedure, function
+-- tsql
+SELECT * FROM babel_object_name_t1_view
+GO
+
+SELECT * FROM babel_object_name_proc1_view
+GO
+
+SELECT * FROM babel_object_name_func1_view
+GO
+
+SELECT * FROM babel_object_name_v1_view
+GO
+
+SELECT * FROM babel_object_name_trg_view
+GO
+
+-- test types
+SELECT * FROM babel_object_name_type_view
+GO
+
+-- test constraint
+SELECT * FROM babel_object_name_constraint_view
+GO
+
+-- Negative values/ out of range values
+SELECT OBJECT_NAME(-123)
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_trg_view'), -123)
+GO
+
+-- max value
+SELECT OBJECT_NAME(2147483647)
+GO
+
+-- greater than max allowed value
+SELECT OBJECT_NAME(2147483648)
+GO
+
+-- To test temp object
+CREATE TABLE #babel_object_name_temp_t1 (a int);
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_name_temp_t1'))
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_name_temp_t1'), db_id('tempdb'))
+GO
+
+DROP TABLE #babel_object_name_temp_t1;
+GO
+
+-- test cross database lookup
+USE master;
+GO
+
+-- should work
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'), db_id('babel_object_name_db'))
+GO
+
+-- should fail
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_db..babel_object_name_db_t1'))
+GO
+
+-- to test dependency of user's permission on object
+USE master;
+GO
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_t1'));
+GO
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_trg'));
+GO
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('BABEL_OBJECT_NAME_PROC1'));
+GO
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('BABEL_OBJECT_NAME_func1'));
+GO
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_v1'));
+GO
+
+INSERT INTO babel_object_name_store_OID VALUES(OBJECT_ID('babel_object_name_constraint'));
+GO
+
+-- give access
+GRANT ALL ON babel_object_name_store_OID TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_t1 TO babel_object_name_master_user1;
+GO
+
+GRANT EXECUTE ON BABEL_OBJECT_NAME_PROC1 TO babel_object_name_master_user1;
+GO
+
+GRANT EXECUTE ON BABEL_OBJECT_NAME_func1 TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_v1 TO babel_object_name_master_user1;
+GO
+
+GRANT SELECT ON babel_object_name_t_pk TO babel_object_name_master_user1;
+GO
+
+-- tsql      user=babel_object_name_login1 password=12345678
+USE master
+GO
+
+SELECT current_user;
+GO
+
+-- should work as we have grant access in prepare
+SELECT OBJECT_NAME(a) FROM babel_object_name_store_OID
+GO
+
+
+-- cross-db will also work 
+USE babel_object_name_db
+GO
+
+SELECT current_user;
+GO
+
+SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
+GO
+
+
+-- lets revoke access
+-- tsql
+USE master;
+GO
+
+
+REVOKE SELECT ON babel_object_name_t1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE EXECUTE ON BABEL_OBJECT_NAME_PROC1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE EXECUTE ON BABEL_OBJECT_NAME_func1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_name_v1 FROM babel_object_name_master_user1;
+GO
+
+REVOKE SELECT ON babel_object_name_t_pk FROM babel_object_name_master_user1;
+GO
+
+-- tsql      user=babel_object_name_login1 password=12345678
+-- should return null
+SELECT OBJECT_NAME(a) FROM master..babel_object_name_store_OID
+GO
+
+SELECT OBJECT_NAME(a, DB_ID('master')) FROM master..babel_object_name_store_OID
+GO
+
+-- tsql
+USE master;
+GO
+
+REVOKE ALL ON babel_object_name_store_OID FROM babel_object_name_master_user1;
+GO
