@@ -593,7 +593,7 @@ TsqlOpenJSONWithMakeFuncCall(Node* jsonExpr, Node* path, List* cols, Alias* alia
         }
         else if(cd->asJson)
         {
-			// AS JSON can only be used with nvarchar(max)
+            // AS JSON can only be used with nvarchar(max)
             ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
                                 errmsg("AS JSON in WITH clause can only be specified for column of type nvarchar(max)")));
         }
