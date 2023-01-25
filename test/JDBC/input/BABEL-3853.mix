@@ -1,0 +1,85 @@
+-- Create table with scope identity and Two logins and two users.
+-- One login granted with INSERT authority should be able to see SCOPE_IDENTITY value.
+-- Other login should not.
+
+-- tsql
+USE master;
+GO
+
+CREATE TABLE babel_object_id_t1 (a int identity, b int);
+GO
+
+CREATE LOGIN babel_object_id_login1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_object_id_master_user1 FOR LOGIN babel_object_id_login1;
+GO
+
+CREATE LOGIN babel_object_id_login2 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_object_id_master_user2 FOR LOGIN babel_object_id_login2;
+GO
+
+-- Grant INSERT to user1 but not user2
+GRANT INSERT on babel_object_id_t1 to babel_object_id_master_user1;
+GO
+
+-- tsql      user=babel_object_id_login1 password=12345678
+USE master
+GO
+
+SELECT current_user;
+GO
+
+INSERT INTO babel_object_id_t1(b) VALUES(1);
+GO
+
+SELECT SCOPE_IDENTITY()
+GO
+
+-- A login without INSERT authority on table should not see SCOPE_IDENTITY() value
+-- tsql      user=babel_object_id_login2 password=12345678
+USE master
+GO
+
+SELECT current_user;
+GO
+
+INSERT INTO babel_object_id_t1(b) VALUES(2);
+GO
+
+SELECT SCOPE_IDENTITY()
+GO
+
+-- tsql
+USE master;
+GO
+
+DROP TABLE babel_object_id_t1
+GO
+
+DROP USER babel_object_id_master_user1
+GO
+
+DROP USER babel_object_id_master_user2
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) IN ('babel_object_id_login1', 'babel_object_id_login2')
+AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+-- (Not a huge fan of this because this could lead to intermittent issue.)
+SELECT pg_sleep(2);
+GO
+
+-- tsql
+DROP LOGIN babel_object_id_login1;
+GO
+
+DROP LOGIN babel_object_id_login2;
+GO

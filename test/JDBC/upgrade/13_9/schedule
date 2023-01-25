@@ -295,5 +295,7 @@ case_insensitive_collation
 sys-sql_modules_before-14_7
 sys-all_sql_modules_before-14_5
 BABEL_OBJECT_ID
+AVG-Aggregate-common
+AVG-Aggregate-Dep-before-15-2-or-14-7
 bbf_view_def-before-14_5
 Test-sp_volatility

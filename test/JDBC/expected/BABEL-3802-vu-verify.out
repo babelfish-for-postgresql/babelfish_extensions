@@ -1,11 +1,11 @@
 SELECT power(a,b), power(b,b), power(c,b), power(d,b), power(e,b) from BABEL_3802_vu_prepare_t_1 ORDER BY 1
 GO
 ~~START~~
-int#!#float#!#bigint#!#int#!#int
--2147483648#!#1.0#!#-9223372036854775808#!#-32768#!#0
-1#!#<NULL>#!#1#!#1#!#1
-101#!#1.0#!#97777#!#376#!#120
-2147483647#!#1.0#!#9223372036854#!#32767#!#255
+int#!#numeric#!#bigint#!#int#!#int
+-2147483648#!#1.00000000#!#-9223372036854775808#!#-32768#!#0
+0#!#1.00000000#!#0#!#0#!#0
+101#!#1.00000000#!#97777#!#376#!#120
+2147483647#!#1.00000000#!#9223372036854#!#32767#!#255
 ~~END~~
 
 
@@ -37,7 +37,7 @@ EXECUTE BABEL_3802_vu_prepare_t_p1
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
--9223372036854775808#!#9223372036854#!#0#!#8969#!#3532120#!#13909496
+-9223372036854775808#!#9223372036854#!#0#!#8969#!#3532120#!#13909497
 ~~END~~
 
 
@@ -45,16 +45,15 @@ EXECUTE BABEL_3802_vu_prepare_t_p2
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int
--2147483648#!#2147483647#!#0#!#8969#!#3532120#!#13909496
+-2147483648#!#2147483647#!#0#!#8969#!#3532120#!#13909497
 ~~END~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p3
 GO
-~~START~~
-int#!#int#!#int#!#int#!#int#!#int
--32768#!#32767#!#0#!#8969#!#22266#!#55320
-~~END~~
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p4
@@ -67,26 +66,26 @@ int#!#int#!#int#!#int#!#int#!#int
 
 EXECUTE BABEL_3802_vu_prepare_t_p5
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8115)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type bigint)~~
+~~ERROR (Message: bigint out of range)~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p6
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8115)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type int)~~
+~~ERROR (Message: integer out of range)~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p7
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 220)~~
 
-~~ERROR (Message: Arithmetic overflow error converting expression to data type Int)~~
+~~ERROR (Message: smallint out of range)~~
 
 
-EXECUTE BABEL_3802_vu_prepare_t_p8
+SELECT * FROM BABEL_3802_vu_prepare_t_v8
 GO
 ~~START~~
 int
@@ -98,7 +97,7 @@ SELECT * FROM BABEL_3802_vu_prepare_t_v1
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
--9223372036854775808#!#9223372036854#!#0#!#8969#!#3532120#!#13909496
+-9223372036854775808#!#9223372036854#!#0#!#8969#!#3532120#!#13909497
 ~~END~~
 
 
@@ -106,7 +105,7 @@ SELECT * FROM BABEL_3802_vu_prepare_t_v2
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int
--2147483648#!#2147483647#!#0#!#8969#!#3532120#!#13909496
+-2147483648#!#2147483647#!#0#!#8969#!#3532120#!#13909497
 ~~END~~
 
 
@@ -114,7 +113,7 @@ SELECT * FROM BABEL_3802_vu_prepare_t_v3
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int
--32768#!#32767#!#0#!#899#!#22266#!#55320
+-32768#!#32767#!#0#!#899#!#22266#!#3490
 ~~END~~
 
 

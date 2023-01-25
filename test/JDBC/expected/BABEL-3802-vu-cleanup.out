@@ -3,7 +3,7 @@ GO
 
 DROP VIEW BABEL_3802_vu_prepare_t_2
 GO
- 
+
 DROP VIEW BABEL_3802_vu_prepare_t_3
 GO
 
@@ -31,7 +31,7 @@ GO
 DROP PROCEDURE BABEL_3802_vu_prepare_t_p7
 GO
 
-DROP PROCEDURE BABEL_3802_vu_prepare_t_p8
+DROP VIEW BABEL_3802_vu_prepare_t_v8
 GO
 
 DROP VIEW BABEL_3802_vu_prepare_t_v1
