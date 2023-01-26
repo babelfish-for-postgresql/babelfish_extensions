@@ -1314,7 +1314,7 @@ LEFT OUTER JOIN sys.babelfish_view_def bvd
  on (
       ext.orig_name = bvd.schema_name AND 
       ext.dbid = bvd.dbid AND
-      ao.name = bvd.object_name 
+      ao.name = bvd.object_name
    )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
 LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
