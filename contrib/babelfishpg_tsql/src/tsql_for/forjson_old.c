@@ -2,6 +2,11 @@
  *
  * forjson.c
  *   For JSON clause support for Babel
+ * 
+ * This implementation of FOR JSON has been deprecated as of v2.4.0. However,
+ * we cannot remove this implementation, as there may be older views that reference
+ * these functions from prior versions, and we do not want to prevent those
+ * views from returning the correct result after upgrade.
  *
  *-------------------------------------------------------------------------
  */
@@ -9,7 +14,6 @@
 
 #include "executor/spi.h"
 #include "fmgr.h"
-#include "src/forjson.h"
 #include "utils/guc.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
@@ -19,6 +23,8 @@
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
 #include "catalog/namespace.h"
+
+#include "tsql_for.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
 								bool without_array_wrapper, const char *root_name);
@@ -39,6 +45,10 @@ tsql_query_to_json_text(PG_FUNCTION_ARGS)
 	bool		without_array_wrapper;
 	char		*root_name;
 	StringInfo	result;
+
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This version of FOR JSON has been deprecated. We recommend recreating the view for this query.")));
 
 	for (int i=0; i< PG_NARGS()-1; i++)
 	{
@@ -80,16 +90,16 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		Oid 	tsql_datatype_oid;
 		Oid 	datatype_oid;
 		char	*typename;
-		
+
 		colname = SPI_fname(SPI_tuptable->tupdesc, i);
-		
+
 		if (!strcmp(colname,"\?column\?")) /* When column name or alias is not provided */
 		{
 			ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
 		}
-		
+
 		colval = SPI_getbinval(SPI_tuptable->vals[rownum],
 							   SPI_tuptable->tupdesc,
 							   i,
@@ -104,7 +114,7 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		Assert(nspoid != InvalidOid);
 
 		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
-		
+
 		if (tsql_datatype_oid == datatype_oid)
 		{
 			/* check for bit datatype, and if so, change type to BOOL */
@@ -181,7 +191,7 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("invalid query")));
-	
+
 	if (SPI_processed==0)
 	{
 		SPI_finish();
@@ -315,7 +325,7 @@ for_json_datetimeoffset_format(StringInfo format_output, char *str)
 	strncpy(time, endptr, len);
 	time[len] = '\0';
 	appendStringInfoString(format_output, time);
-	
+
 	/* append either timezone offset or Z if offset is 0 */
 	offset = ++spaceptr;
 	if (strcmp(offset, "+00:00") == 0)

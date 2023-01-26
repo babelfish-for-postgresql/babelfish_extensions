@@ -1,60 +1,63 @@
--- DIFFERENT CASES TO CHECK DATATYPES
--- Exact Numerics
-SELECT * FROM forjson_vu_view1
+-- Display Table Contents
+SELECT * FROM forjson_vu_t_people
 GO
 
-SELECT * FROM forjson_vu_view2
+SELECT * FROM forjson_vu_t_countries
 GO
 
-SELECT * FROM forjson_vu_view3
+SELECT * FROM forjson_vu_t_values
 GO
 
-SELECT * FROM forjson_vu_view4
+-- FOR JSON PATH clause without nested support
+SELECT * FROM forjson_vu_v_people
 GO
 
--- Approximate numerics
-SELECT * FROM forjson_vu_view5
+SELECT * FROM forjson_vu_v_countries
 GO
 
--- Date and time
-SELECT * FROM forjson_vu_view6
+-- Multiple tables without nested support
+SELECT * FROM forjson_vu_v_join
 GO
 
-SELECT * FROM forjson_vu_view7
+-- ROOT directive without specifying value
+SELECT * FROM forjson_vu_v_root
 GO
 
-SELECT * FROM forjson_vu_view8
+-- ROOT directive with specifying ROOT value
+SELECT * FROM forjson_vu_v_root_value
 GO
 
-SELECT * FROM forjson_vu_view9
+-- ROOT directive with specifying ROOT value with empty string
+SELECT * FROM forjson_vu_v_empty_root
 GO
 
-SELECT * FROM forjson_vu_view10
+-- WITHOUT_ARRAY_WRAPPERS directive
+SELECT * FROM forjson_vu_v_without_array_wrapper
 GO
 
--- Character strings
-SELECT * FROM forjson_vu_view11
+-- INCLUDE_NULL_VALUES directive
+SELECT * FROM forjson_vu_v_include_null_values
 GO
 
--- Unicode character strings
-SELECT * FROM forjson_vu_view12
+-- Multiple Directives
+SELECT * FROM forjson_vu_v_root_include_null_values
 GO
 
--- Binary strings
-SELECT * FROM forjson_vu_view13
+SELECT * FROM forjson_vu_v_without_array_wrapper_include_null_values
 GO
 
-SELECT * FROM forjson_vu_view14
+
+-- Test case with parameters
+EXECUTE forjson_vu_p_params1 @id = 2
 GO
 
--- Return null string
--- should return 0 rows after BABEL-3690 is fixed
-SELECT * FROM forjson_vu_view15
+EXECUTE forjson_vu_p_params2 @id = 3
 GO
 
--- Rowversion and timestamp
-SELECT * FROM forjson_vu_view16
+-- All null values test
+SELECT * FROM forjson_vu_v_nulls
 GO
 
-SELECT * FROM forjson_vu_view17
+-- Test for all parser rules
+SELECT * FROM forjson_vu_v_order_by
 GO

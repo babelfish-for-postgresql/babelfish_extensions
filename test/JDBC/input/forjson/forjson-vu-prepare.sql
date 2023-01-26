@@ -1,217 +1,198 @@
--- DIFFERENT CASES TO CHECK DATATYPES
--- Exact Numerics
-CREATE TABLE forjson_vu_t1(abigint bigint, abit bit, adecimal decimal, aint int, amoney money, anumeric numeric, asmallint smallint, asmallmoney smallmoney, atinyint tinyint)
-GO
-INSERT forjson_vu_t1 VALUES(9223372036854775807, 1, 123.2, 2147483647, 3148.29, 12345.12, 32767, 3148.29, 255)
-GO
-
--- Approximate numerics
-CREATE TABLE forjson_vu_t2(afloat float, areal real)
-GO
-INSERT forjson_vu_t2 VALUES(12.05, 120.53)
+CREATE TABLE forjson_vu_t_people (
+[Id] INT,
+[FirstName] VARCHAR(25),
+[LastName] VARCHAR(25),
+[State] VARCHAR(25) )
 GO
 
--- Date and time
-CREATE TABLE forjson_vu_t3(atime time, adate date, asmalldatetime smalldatetime, adatetime datetime, adatetime2 datetime2, adatetimeoffset datetimeoffset, adatetimeoffset_2 datetimeoffset)
-GO
-INSERT forjson_vu_t3 VALUES('2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560','2022-11-11 23:17:08.560', '2012-10-12 12:34:56 +02:30')
-GO
-
--- Character strings
-CREATE TABLE forjson_vu_t4(achar char, avarchar varchar(3), atext text)
-GO
-INSERT forjson_vu_t4 VALUES('a','abc','abc')
+INSERT INTO forjson_vu_t_people values
+(1,'Divya','Kumar',NULL),
+(2,NULL,'Khanna','Bengaluru'),
+(3,'Tom','Mehta','Kolkata'),
+(4,'Kane',NULL,'Delhi')
 GO
 
--- Unicode character strings
-CREATE TABLE forjson_vu_t5(anchar nchar(5), anvarchar nvarchar(5), antext ntext)
-GO
-INSERT forjson_vu_t5 VALUES('abc','abc','abc')
-GO
-
--- Binary strings
-CREATE TABLE forjson_vu_t6(abinary binary, avarbinary varbinary(10))
-GO
-INSERT forjson_vu_t6 VALUES (123456,0x0a0b0c0d0e)
+CREATE TABLE forjson_vu_t_countries (
+[Id] INT,
+[Age] INT,
+[Country] VARCHAR(25))
 GO
 
--- Return null string
-CREATE TABLE forjson_vu_t7(MyColumn int)
+INSERT INTO forjson_vu_t_countries values
+(1,25, 'India'),
+(2,40, 'USA'),
+(3,30, 'India'),
+(4,20, NULL),
+(5,10, 'USA')
 GO
 
--- Rowversion and timestamp
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+CREATE TABLE forjson_vu_t_values (
+[Id] INT,
+[value] VARCHAR(25) )
 GO
 
-CREATE TABLE forjson_vu_t8 (myKey int, myValue int,RV rowversion);
-GO
-INSERT INTO forjson_vu_t8 (myKey, myValue) VALUES (1, 0);
-GO
-
-CREATE TABLE forjson_vu_t9 (myKey int, myValue int, timestamp);
-GO
-INSERT INTO forjson_vu_t9 (myKey, myValue) VALUES (1, 0);
+INSERT INTO forjson_vu_t_values values
+(1,NULL),
+(2,NULL),
+(3,NULL)
 GO
 
--- T-SQL does not allow raw scalars as the output of a view, so surround the FOR JSON call with a SELECT to avoid a syntax error
--- Exact Numerics
-CREATE VIEW forjson_vu_view1 AS
-SELECT
-(
-    SELECT abigint, adecimal, aint, anumeric, asmallint, atinyint 
-    FROM forjson_vu_t1
-    FOR JSON PATH
-) as c1;
+-- FOR JSON PATH clause without nested support
+CREATE VIEW forjson_vu_v_people AS
+SELECT (
+	SELECT Id AS EmpId, 
+		   FirstName AS "Name.FirstName",
+		   LastName AS  "Name.LastName",
+		   State
+	FROM forjson_vu_t_people
+	FOR JSON PATH
+) c1
 GO
 
-CREATE VIEW forjson_vu_view2 AS
-SELECT
-(
-    SELECT abit 
-    FROM forjson_vu_t1
-    FOR JSON PATH
-) as c1;
+CREATE VIEW forjson_vu_v_countries AS
+SELECT (
+	SELECT Id, 
+		   Age,
+		   Country
+	FROM forjson_vu_t_countries
+	FOR JSON PATH
+) c1
 GO
 
-CREATE VIEW forjson_vu_view3 AS
-SELECT
-(
-    SELECT amoney 
-    FROM forjson_vu_t1
-    FOR JSON PATH
-) as c1;
+-- Multiple tables without nested support
+CREATE VIEW forjson_vu_v_join AS
+SELECT (
+	SELECT E.FirstName AS 'Person.Name',
+		   E.LastName AS 'Person.Surname',
+		   D.Age AS 'Employee.Price',
+		   D.Country AS 'Employee.Quantity'
+	FROM forjson_vu_t_people E
+	   INNER JOIN forjson_vu_t_countries D
+		 ON E.Id = D.Id
+	FOR JSON PATH
+) c1
 GO
 
-CREATE VIEW forjson_vu_view4 AS
-SELECT
-(
-    SELECT asmallmoney
-    FROM forjson_vu_t1
-    FOR JSON PATH
-) as c1;
+-- ROOT directive without specifying value
+CREATE VIEW forjson_vu_v_root AS
+SELECT (
+	SELECT FirstName, 
+		   LastName
+	FROM forjson_vu_t_people
+	FOR JSON PATH, ROOT
+) c1
 GO
 
--- Approximate numerics
-CREATE VIEW forjson_vu_view5 AS
-SELECT
-(
-    SELECT *
-    FROM forjson_vu_t2
-    FOR JSON PATH
-) as c1;
+-- ROOT directive with specifying ROOT value
+CREATE VIEW forjson_vu_v_root_value AS
+SELECT (
+	SELECT FirstName, 
+		   LastName
+	FROM forjson_vu_t_people
+	FOR JSON PATH, ROOT('Employee')
+) c1
 GO
 
--- Date and time
-CREATE VIEW forjson_vu_view6 AS
-SELECT
-(
-    SELECT atime,adate 
-    FROM forjson_vu_t3
-    FOR JSON PATH
-) as c1;
+-- ROOT directive with specifying ROOT value with empty string
+CREATE VIEW forjson_vu_v_empty_root AS
+SELECT (
+	SELECT FirstName, 
+		   LastName
+	FROM forjson_vu_t_people
+	FOR JSON PATH, ROOT('')
+) c1
 GO
 
-CREATE VIEW forjson_vu_view7 AS
-SELECT
-(
-    SELECT asmalldatetime
-    FROM forjson_vu_t3
-    FOR JSON PATH
-) as c1;
+-- WITHOUT_ARRAY_WRAPPERS directive
+CREATE VIEW forjson_vu_v_without_array_wrapper AS
+SELECT (
+	SELECT FirstName, 
+		   LastName
+	FROM forjson_vu_t_people
+	FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+) c1
 GO
 
-CREATE VIEW forjson_vu_view8 AS
-SELECT
-(
-    SELECT adatetime 
-    FROM forjson_vu_t3
-    FOR JSON PATH
-) as c1;
+-- INCLUDE_NULL_VALUES directive
+CREATE VIEW forjson_vu_v_include_null_values AS
+SELECT (
+	SELECT FirstName, 
+		   LastName
+	FROM forjson_vu_t_people
+	FOR JSON PATH, INCLUDE_NULL_VALUES
+) c1
 GO
 
-CREATE VIEW forjson_vu_view9 AS
-SELECT
-(
-    SELECT adatetime2 
-    FROM forjson_vu_t3
-    FOR JSON PATH
-) as c1;
+-- Multiple Directives
+CREATE VIEW forjson_vu_v_root_include_null_values AS
+SELECT (
+	SELECT Id, 
+		   Age,
+		   Country
+	FROM forjson_vu_t_countries
+	FOR JSON PATH, ROOT('Employee'), INCLUDE_NULL_VALUES
+) c1
 GO
 
-CREATE VIEW forjson_vu_view10 AS
-SELECT
-(
-    SELECT adatetimeoffset, adatetimeoffset_2
-    FROM forjson_vu_t3
-    FOR JSON PATH
-) as c1;
+CREATE VIEW forjson_vu_v_without_array_wrapper_include_null_values AS
+SELECT (
+	SELECT Id, 
+		   Age,
+		   Country
+	FROM forjson_vu_t_countries
+	FOR JSON PATH, WITHOUT_ARRAY_WRAPPER, INCLUDE_NULL_VALUES
+) c1
 GO
 
--- Character strings
-CREATE VIEW forjson_vu_view11 AS
-SELECT
-(
-    SELECT * 
-    FROM forjson_vu_t4
-    FOR JSON PATH
-) as c1;
+-- Throws error as ROOT and WITHOUT_ARRAY_WRAPPER cannot be used together
+CREATE VIEW forjson_vu_v_root_and_without_array_wrapper AS
+SELECT (
+	SELECT Id, 
+		   Age,
+		   Country
+	FROM forjson_vu_t_countries
+	FOR JSON PATH, ROOT, WITHOUT_ARRAY_WRAPPER
+) c1
 GO
 
--- Unicode character strings
-CREATE VIEW forjson_vu_view12 AS
-SELECT
-(
-    SELECT * 
-    FROM forjson_vu_t5
-    FOR JSON PATH
-) as c1;
+-- Test case with parameters
+CREATE PROCEDURE forjson_vu_p_params1 @id int AS
+SELECT (
+	SELECT Firstname AS [Name], 
+		   State 
+	FROM forjson_vu_t_people
+	WHERE Id = @id
+	FOR JSON PATH
+) c1
 GO
 
--- Binary strings
-CREATE VIEW forjson_vu_view13 AS
-SELECT
-(
-    SELECT abinary 
-    FROM forjson_vu_t6
-    FOR JSON PATH
-) as c1;
+CREATE PROCEDURE forjson_vu_p_params2 @id int AS
+SELECT (
+	SELECT Firstname AS [nam"@e], 
+		   State AS [State"@]
+	FROM forjson_vu_t_people
+	WHERE Id = @id
+	FOR JSON PATH
+) c1
 GO
 
-CREATE VIEW forjson_vu_view14 AS
-SELECT
-(
-    SELECT avarbinary
-    FROM forjson_vu_t6
-    FOR JSON PATH
-) as c1;
+-- All null values test
+CREATE VIEW forjson_vu_v_nulls AS
+SELECT (
+	SELECT value
+	FROM forjson_vu_t_values
+	FOR JSON PATH
+) c1
 GO
 
--- Return null string
--- should return 0 rows after BABEL-3690 is fixed
-CREATE VIEW forjson_vu_view15 AS
-SELECT
-(
-    SELECT *
-    FROM forjson_vu_t7
-    FOR JSON PATH
-) as c1;
-GO
-
--- Rowversion and timestamp
-CREATE VIEW forjson_vu_view16 AS
-SELECT
-(
-    SELECT *
-    FROM forjson_vu_t8
-    FOR JSON PATH
-) as c1;
-GO
-
-CREATE VIEW forjson_vu_view17 AS
-SELECT
-(
-    SELECT *
-    FROM forjson_vu_t9
-    FOR JSON PATH
-) as c1;
+-- Test for all parser rules
+CREATE VIEW forjson_vu_v_order_by AS
+SELECT (
+	SELECT Id,
+		   Age,
+		   Country
+	FROM forjson_vu_t_countries
+	ORDER BY Age
+	FOR JSON PATH
+) C1
 GO

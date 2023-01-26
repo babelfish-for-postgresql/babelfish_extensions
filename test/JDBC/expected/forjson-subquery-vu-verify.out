@@ -1,0 +1,71 @@
+-- FOR JSON AUTO clause not supported
+SELECT * FROM forjson_subquery_vu_v_auto
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "forjson_subquery_vu_v_auto" does not exist)~~
+
+
+-- Alias/colname is not present
+SELECT * FROM forjson_subquery_vu_v_no_alias
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table)~~
+
+
+SELECT * FROM forjson_subquery_vu_v_with
+GO
+~~START~~
+nvarchar
+[{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"}]
+~~END~~
+
+
+SELECT * FROM forjson_subquery_vu_v_with_order_by
+GO
+~~START~~
+nvarchar
+[{"Id":1,"Age":25,"Country":"India"},{"Id":3,"Age":30,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"}]
+~~END~~
+
+
+-- Binary strings
+SELECT * FROM forjson_subquery_vu_v_binary_strings
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: binary types are not supported with FOR JSON)~~
+
+
+SELECT * FROM forjson_subquery_vu_v_varbinary_strings
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: binary types are not supported with FOR JSON)~~
+
+
+-- Rowversion and timestamp
+SELECT * FROM forjson_subquery_vu_v_rowversion
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: binary types are not supported with FOR JSON)~~
+
+
+SELECT * FROM forjson_subquery_vu_v_timestamp
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: binary types are not supported with FOR JSON)~~
+

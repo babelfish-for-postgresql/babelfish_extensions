@@ -1,0 +1,54 @@
+select * from forxml_subquery_vu_v_path
+GO
+~~START~~
+ntext
+<row><Col1>1</Col1><Col2>0x07</Col2></row>
+~~END~~
+
+
+select * from forxml_subquery_vu_v_base64
+GO
+~~START~~
+ntext
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: option binary base64 is not supported)~~
+
+
+SELECT * FROM forxml_subquery_vu_v_cte2;
+GO
+~~START~~
+int#!#varchar#!#ntext
+1#!#t2_a1#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
+2#!#t2_a2#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
+3#!#<NULL>#!#<row a="t1_a1"/><row a="t1_a2"/><row/>
+~~END~~
+
+
+SELECT * FROM forxml_subquery_vu_v_cte3;
+GO
+~~START~~
+ntext#!#int#!#varchar
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#1#!#t2_a1
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#2#!#t2_a2
+<row a="t1_a1"/><row a="t1_a2"/><row/>#!#3#!#<NULL>
+~~END~~
+
+
+SELECT * FROM forxml_subquery_vu_v_cte4;
+GO
+~~START~~
+ntext
+<row a="t1_a1"/><row a="t1_a2"/><row/>
+~~END~~
+
+
+select * from forxml_subquery_vu_v_correlated_subquery;
+go
+~~START~~
+varchar#!#ntext
+t1_a1#!#<row id="1" a="t2_a1"/>
+t1_a2#!#<row id="2" a="t2_a2"/>
+<NULL>#!#<row id="3"/>
+~~END~~
+

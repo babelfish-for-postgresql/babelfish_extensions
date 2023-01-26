@@ -1,94 +1,63 @@
--- DROP TABLE
-DROP TABLE forjson_vu_t1
+-- FOR JSON PATH clause without nested support
+DROP VIEW forjson_vu_v_people
 GO
 
--- Approximate numerics
-DROP TABLE forjson_vu_t2
+DROP VIEW forjson_vu_v_countries
 GO
 
--- Date and time
-DROP TABLE forjson_vu_t3
+-- Multiple tables without nested support
+DROP VIEW forjson_vu_v_join
 GO
 
--- Character strings
-DROP TABLE forjson_vu_t4
+-- ROOT directive without specifying value
+DROP VIEW forjson_vu_v_root
 GO
 
--- Unicode character strings
-DROP TABLE forjson_vu_t5
+-- ROOT directive with specifying ROOT value
+DROP VIEW forjson_vu_v_root_value
 GO
 
--- Binary strings
-DROP TABLE forjson_vu_t6
+-- ROOT directive with specifying ROOT value with empty string
+DROP VIEW forjson_vu_v_empty_root
 GO
 
--- Return null string
-DROP TABLE forjson_vu_t7
+-- WITHOUT_ARRAY_WRAPPERS directive
+DROP VIEW forjson_vu_v_without_array_wrapper
 GO
 
--- Rowversion and timestamp
-DROP TABLE forjson_vu_t8
+-- INCLUDE_NULL_VALUES directive
+DROP VIEW forjson_vu_v_include_null_values
 GO
 
-DROP TABLE forjson_vu_t9
+-- Multiple Directives
+DROP VIEW forjson_vu_v_root_include_null_values
 GO
 
--- DIFFERENT CASES TO CHECK DATATYPES
--- Exact Numerics
-DROP VIEW forjson_vu_view1
+DROP VIEW forjson_vu_v_without_array_wrapper_include_null_values
 GO
 
-DROP VIEW forjson_vu_view2
+
+-- Test case with parameters
+DROP PROCEDURE forjson_vu_p_params1
 GO
 
-DROP VIEW forjson_vu_view3
+DROP PROCEDURE forjson_vu_p_params2
 GO
 
-DROP VIEW forjson_vu_view4
+-- All null values test
+DROP VIEW forjson_vu_v_nulls
 GO
 
--- Approximate numerics
-DROP VIEW forjson_vu_view5
+-- Test for all parser rules
+DROP VIEW forjson_vu_v_order_by
 GO
 
--- Date and time
-DROP VIEW forjson_vu_view6
+-- Display Table Contents
+DROP TABLE forjson_vu_t_people
 GO
 
-DROP VIEW forjson_vu_view7
+DROP TABLE forjson_vu_t_countries
 GO
 
-DROP VIEW forjson_vu_view8
-GO
-
-DROP VIEW forjson_vu_view9
-GO
-
-DROP VIEW forjson_vu_view10
-GO
-
--- Character strings
-DROP VIEW forjson_vu_view11
-GO
-
--- Unicode character strings
-DROP VIEW forjson_vu_view12
-GO
-
--- Binary strings
-DROP VIEW forjson_vu_view13
-GO
-
-DROP VIEW forjson_vu_view14
-GO
-
--- Return null string
-DROP VIEW forjson_vu_view15
-GO
-
--- Rowversion and timestamp
-DROP VIEW forjson_vu_view16
-GO
-
-DROP VIEW forjson_vu_view17
+DROP TABLE forjson_vu_t_values
 GO
