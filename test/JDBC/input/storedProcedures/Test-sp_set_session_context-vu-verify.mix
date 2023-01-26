@@ -135,6 +135,15 @@ EXEC sp_set_session_context 'long_val_unicode', @val
 SELECT case when CAST( session_context(N'long_val_unicode') AS varchar(8000)) = @val then 'true' else 'false' end
 GO
 
+EXEC sp_set_session_context 'ÀÀ', 'accents';
+go
+
+SELECT CAST(session_context(N'àà') AS NVARCHAR);
+go
+
+SELECT CAST(session_context(N'áá') AS NVARCHAR);
+go
+
 -- Read Only
 EXEC sp_set_session_context 'read_only', 10, 1
 go
