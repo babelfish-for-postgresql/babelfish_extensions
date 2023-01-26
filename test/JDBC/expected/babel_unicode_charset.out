@@ -1,0 +1,46 @@
+drop table if exists unicode_test;
+go
+create table unicode_test(col nvarchar(255), 中文列名 nvarchar(255));
+go
+insert into unicode_test values('Hello', '你好');
+go
+~~ROW COUNT: 1~~
+
+insert into unicode_test values('World', '世界');
+go
+~~ROW COUNT: 1~~
+
+
+/* multibyte characters as identifier */
+select col 别名 from unicode_test;
+go
+~~START~~
+nvarchar
+Hello
+World
+~~END~~
+
+select 别名=col from unicode_test;
+go
+~~START~~
+nvarchar
+Hello
+World
+~~END~~
+
+
+/* multibyte characters with unsupported token */
+select "你好世界" from unicode_test with(nolock);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "你好世界" does not exist)~~
+
+select 中文列名 from unicode_test with(nolock);
+go
+~~START~~
+nvarchar
+你好
+世界
+~~END~~
+
