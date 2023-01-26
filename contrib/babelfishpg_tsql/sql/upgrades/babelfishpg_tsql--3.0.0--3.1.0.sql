@@ -495,6 +495,26 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
 
 GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
+AS $$
+BEGIN
+  IF sys.user_name() != 'dbo' THEN
+    RAISE EXCEPTION 'user does not have permission';
+  END IF;
+
+  IF lower("@resample") = 'resample' THEN
+    RAISE NOTICE 'ignoring resample option';
+  ELSIF lower("@resample") != 'no' THEN
+    RAISE EXCEPTION 'Invalid option name %', "@resample";
+  END IF;
+
+  ANALYZE;
+
+  CALL sys.printarg('Statistics for all tables have been updated. Refer logs for details.');
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_has_any_privilege(
     userid oid,
     perm_target_type text,
@@ -1137,6 +1157,116 @@ LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND a
 AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
+
+-- deprecate old FOR XML/JSON functions if they exist - if this install came from an upgrade path that did
+-- not contain v2.4+, then they WILL exist. Otherwise (v2.3->v3.0 OR v3.0->v3.1) they WILL NOT exist.
+DO $$
+BEGIN
+ALTER FUNCTION sys.tsql_query_to_xml(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_deprecated_in_3_1_0');
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Do nothing
+END $$;
+
+DO $$
+BEGIN
+ALTER FUNCTION sys.tsql_query_to_xml_text(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_text_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_text_deprecated_in_3_1_0');
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Do nothing
+END $$;
+
+DO $$
+BEGIN
+ALTER FUNCTION sys.tsql_query_to_json_text(text, int, boolean, boolean, text) RENAME TO tsql_query_to_json_text_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_json_text_deprecated_in_3_1_0');
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Do nothing
+END $$;
+
+-- SELECT FOR XML
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
+    state INTERNAL
+)
+RETURNS XML AS
+'babelfishpg_tsql', 'tsql_query_to_xml_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
+    state INTERNAL
+)
+RETURNS NTEXT AS
+'babelfishpg_tsql', 'tsql_query_to_xml_text_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
+
+-- SELECT FOR JSON
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_json_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
+    state INTERNAL
+)
+RETURNS sys.NVARCHAR AS
+'babelfishpg_tsql', 'tsql_query_to_json_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_json_sfunc,
+    FINALFUNC = tsql_query_to_json_ffunc
+);
 
 -- function sys.object_id(object_name, object_type) needs to change input type to sys.VARCHAR if not changed already
 DO $$

@@ -46,15 +46,19 @@ public class JDBCCallableStatement {
             bw.newLine();
             set_bind_values(result, cstmt_bbl, bw, logger);
 
+            SQLWarning sqlwarn = null;
             boolean resultSetExist = false;
+            boolean warningExist = false;
             int resultsProcessed = 0;
             try {
                 resultSetExist = cstmt_bbl.execute();
+                sqlwarn = cstmt_bbl.getWarnings();
+                if(sqlwarn != null) warningExist = true;
             } catch (SQLException e) {
                 handleSQLExceptionWithFile(e, bw, logger);
                 resultsProcessed++;
             }
-            CompareResults.processResults(cstmt_bbl, bw, resultsProcessed, resultSetExist, logger);
+            CompareResults.processResults(cstmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }
