@@ -274,11 +274,9 @@ Datum sp_set_session_context(PG_FUNCTION_ARGS)
 	result_entry = (SessionCxtEntry*) hash_search(session_context_table, key, HASH_ENTER, &found);
 
 	if (found && result_entry->read_only == true)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("Cannot set key '%s' in the session context. The key has been set as read_only for this session.", key)));
-	}
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("Cannot set key '%s' in the session context. The key has been set as read_only for this session.", key)));
+
 	/* Free old entry if val argument is null */
 	if (PG_ARGISNULL(1))
 	{
@@ -330,5 +328,5 @@ initialize_context_table()
 	hash_options.keysize = MAX_SYSNAME_LEN;
 	hash_options.entrysize = sizeof(SessionCxtEntry);
 
-	session_context_table = hash_create("Session Context", 125, &hash_options, HASH_ELEM | HASH_STRINGS);
+	session_context_table = hash_create("Session Context", 128, &hash_options, HASH_ELEM | HASH_STRINGS);
 }
