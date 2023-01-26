@@ -532,8 +532,6 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. offset value is negative", 0, 0);
 	if (offset > (int)strlen(expr->query))
 		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. offset value is too large", 0, 0);
-	if (m.find(offset) != m.end())
-		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. mulitiple mutation on the same position", 0, 0);
 
 	m.emplace(std::make_pair(offset, std::make_pair(orig_text, repl_text)));
 }
@@ -1542,6 +1540,9 @@ public:
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", getLineAndPos(ctx->delete_statement()->delete_statement_from()->ddl_object()));
 		}
 
+		/* we must add previous rewrite at first. */
+		add_rewritten_query_fragment_to_mutator(statementMutator.get());
+
 		// post-processing of execsql stmt query
 		for (auto &entry : local_id_positions)
 		{
@@ -1549,9 +1550,6 @@ public:
 			std::string quoted_local_id = std::string("\"") + entry.second + "\"";
 			statementMutator->add(entry.first, entry.second, quoted_local_id);
 		}
-
-		/* common routine for select and non-select */
-		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
 		/* Add query hints */
 		if (query_hints.size() && enable_hint_mapping)
@@ -2854,6 +2852,7 @@ rewriteBatchLevelStatement(
 	// Run select statement mutator
 	antlr4::tree::ParseTreeWalker walker;
 	walker.walk(ssm, ctx);
+	add_rewritten_query_fragment_to_mutator(&mutator);
 
 	mutator.run();
 	ssm->mutator = nullptr;
@@ -3421,7 +3420,7 @@ void replaceTokenStringFromQuery(PLtsql_expr* expr, Token* startToken, Token* en
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	size_t baseIdx = baseCtx->getStart()->getStartIndex();
-	if (endIdx == INVALID_INDEX)
+	if (baseIdx == INVALID_INDEX)
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	// repl string is too long. we cannot replace with it in place.
@@ -3429,10 +3428,9 @@ void replaceTokenStringFromQuery(PLtsql_expr* expr, Token* startToken, Token* en
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	Assert(expr->query);
-	memset(expr->query + startIdx - baseIdx, ' ', endIdx - startIdx + 1);
 
-	if (repl)
-		memcpy(expr->query + startIdx - baseIdx, repl, strlen(repl));
+	/* store and rewrite instead of in-place rewrite */
+	rewritten_query_fragment.emplace(std::make_pair(startIdx, std::make_pair(startToken->getInputStream()->getText(misc::Interval(startIdx, endIdx)), repl ? std::string(repl) : std::string(endIdx - startIdx + 1, ' '))));
 }
 
 void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, const char * repl, ParserRuleContext *baseCtx)
@@ -3876,12 +3874,16 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 		if (base_index == INVALID_INDEX)
 			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(ctx));
 
-		auto *query = itvf_expr->query;
+		/* we must add previous rewrite at first. */
+		add_rewritten_query_fragment_to_mutator(&itvf_mutator);
+
+		std::u32string query = utf8_to_utf32(itvf_expr->query);
 		for (const auto &entry : local_id_positions)
 		{
 			const std::string& local_id = entry.second;
+			const std::u32string& local_id_u32 = utf8_to_utf32(local_id.c_str());
 			size_t offset = entry.first - base_index;
-			if (strncmp(local_id.c_str(), query+offset, local_id.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
+			if (query.substr(offset, local_id_u32.length()) == local_id_u32) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 			{
 				int dno;
 				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id.c_str(), nullptr, nullptr, nullptr);
@@ -3895,7 +3897,6 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 				itvf_mutator.add(entry.first, entry.second, repl_text);
 			}
 		}
-		add_rewritten_query_fragment_to_mutator(&itvf_mutator);
 		itvf_mutator.run();
 		result->query->itvf_query = itvf_expr->query;
 	}
