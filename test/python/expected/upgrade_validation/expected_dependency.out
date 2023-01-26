@@ -223,6 +223,7 @@ Function sys.bbf_varbinary_cmp(sys.bbf_varbinary,sys.bbf_varbinary)
 Function sys.bbfbinary_sqlvariant(sys.bbf_binary)
 Function sys.bbfvarbinary(sys.bbf_varbinary,integer,boolean)
 Function sys.bbfvarbinary_sqlvariant(sys.bbf_varbinary)
+Function sys.bigint_avg(internal)
 Function sys.bigint_sqlvariant(bigint)
 Function sys.bigint_sum(internal)
 Function sys.binary2uniqueidentifier(sys.bbf_binary,integer,boolean)
@@ -452,6 +453,7 @@ Function sys.int2varbinary(smallint,integer,boolean)
 Function sys.int4_fixeddecimal_cmp(integer,sys.fixeddecimal)
 Function sys.int4fixeddecimaldiv(integer,sys.fixeddecimal)
 Function sys.int4fixeddecimaldiv(integer,sys.smallmoney)
+Function sys.int4int2_avg(bigint[])
 Function sys.int4int2_sum(bigint)
 Function sys.int4rowversion(integer,integer,boolean)
 Function sys.int4varbinary(integer,integer,boolean)
@@ -653,8 +655,11 @@ Function sys.tsql_get_constraintdef(oid)
 Function sys.tsql_get_expr(text,oid)
 Function sys.tsql_get_functiondef(oid)
 Function sys.tsql_get_returntypmodvalue(oid)
-Function sys.tsql_query_to_xml(text,integer,text,boolean,text)
-Function sys.tsql_query_to_xml_text(text,integer,text,boolean,text)
+Function sys.tsql_query_to_json_ffunc(internal)
+Function sys.tsql_query_to_json_sfunc(internal,anyelement,integer,boolean,boolean,text)
+Function sys.tsql_query_to_xml_ffunc(internal)
+Function sys.tsql_query_to_xml_sfunc(internal,anyelement,integer,text,boolean,text)
+Function sys.tsql_query_to_xml_text_ffunc(internal)
 Function sys.tsql_stat_get_activity(text)
 Function sys.tsql_type_length_for_sp_columns_helper(text,integer,integer)
 Function sys.tsql_type_max_length_helper(text,integer,integer,boolean,boolean)
@@ -954,7 +959,6 @@ View information_schema_tsql.column_domain_usage
 View information_schema_tsql.constraint_column_usage
 View information_schema_tsql.domains
 View information_schema_tsql.routines
-View information_schema_tsql.views
 View sys.all_sql_modules_internal
 View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions

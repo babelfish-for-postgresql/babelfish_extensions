@@ -106,6 +106,7 @@ BABEL-2955
 BABEL-3358
 BABEL-3747
 BABEL-3781
+BABEL-3802
 temp-tables
 table-variable
 TestNotNull
@@ -139,8 +140,11 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
 forjson
+forjson-subquery
+forjson-datatypes
+forxml
+forxml-subquery
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -364,7 +368,11 @@ app_name
 case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+AVG-Aggregate-common
+AVG-Aggregate-Dep
+bbf_view_def
 sys-all_sql_modules
 sys-sql_modules
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
+BABEL_OBJECT_NAME

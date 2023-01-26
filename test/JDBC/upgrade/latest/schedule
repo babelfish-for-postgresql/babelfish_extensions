@@ -139,8 +139,11 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
 forjson
+forjson-subquery
+forjson-datatypes
+forxml
+forxml-subquery
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -373,4 +376,9 @@ jira-BABEL-3504-upgrade
 test_windows_login
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
+AVG-Aggregate-common
+AVG-Aggregate-Dep
+bbf_view_def
 BABEL_OBJECT_ID
+BABEL-3802
+BABEL_OBJECT_NAME

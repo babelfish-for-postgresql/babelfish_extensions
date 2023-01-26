@@ -1,0 +1,90 @@
+-- tsql
+-- To test table, trigger, procedure, function
+CREATE TABLE babel_object_name_t1 (a int);
+GO
+
+CREATE TRIGGER babel_object_name_trg ON babel_object_name_t1 AFTER INSERT AS SELECT 1;
+GO
+
+CREATE PROCEDURE BABEL_OBJECT_NAME_PROC1 AS SELECT 1;
+GO
+
+CREATE FUNCTION BABEL_OBJECT_NAME_func1() returns int BEGIN RETURN 1; END
+GO
+
+CREATE VIEW babel_object_name_v1 AS SELECT 1;
+GO
+
+-- to test type
+CREATE TYPE babel_object_name_type_int FROM INT NOT NULL
+GO
+
+CREATE VIEW babel_object_name_type_view AS
+SELECT OBJECT_NAME(user_type_id) FROM  sys.types where name = 'babel_object_name_type_int'
+GO
+
+CREATE VIEW babel_object_name_proc1_view AS
+SELECT OBJECT_NAME(OBJECT_ID('BABEL_OBJECT_NAME_PROC1'))
+GO
+
+CREATE VIEW babel_object_name_t1_view AS
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_t1'))
+GO
+
+CREATE VIEW babel_object_name_trg_view AS
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_trg'));
+GO
+
+CREATE VIEW babel_object_name_func1_view AS
+SELECT OBJECT_NAME(OBJECT_ID('BABEL_OBJECT_NAME_func1'))
+GO
+
+CREATE VIEW babel_object_name_v1_view AS
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_v1'))
+GO
+
+
+-- To test constraint
+CREATE TABLE babel_object_name_t_pk ( a int, b int constraint babel_object_name_constraint check ( b > 0 ))
+go
+
+CREATE VIEW babel_object_name_constraint_view AS
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_constraint'))
+go
+
+-- To test cross-db lookup
+CREATE DATABASE babel_object_name_db;
+GO
+
+USE babel_object_name_db;
+GO
+
+CREATE TABLE babel_object_name_db_t1 (a int);
+GO
+
+
+-- to test dependency of user's permission on object
+USE master;
+GO
+
+CREATE LOGIN babel_object_name_login1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_object_name_master_user1 FOR LOGIN babel_object_name_login1;
+GO
+
+USE babel_object_name_db;
+GO
+
+CREATE USER babel_object_name_user2 FOR LOGIN babel_object_name_login1;
+GO
+
+USE master;
+GO
+
+CREATE TABLE babel_object_name_store_OID (a int);
+GO
+
+
+
+

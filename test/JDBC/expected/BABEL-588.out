@@ -1728,7 +1728,15 @@ go
 
 INSERT INTO t1 VALUES( 1, 10, 'filler1', 'vanilla insert' )
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>     INSERT TRIGGER ON t1     <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  Server SQLState: S0001)~~
+
 ~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>     INSERT TRIGGER ON t1     <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  Server SQLState: S0001)~~~~WARNING (Message: >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>     TRIGGER DONE     <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  Server SQLState: S0001)~~
 
 ~~ROW COUNT: 1~~
 
