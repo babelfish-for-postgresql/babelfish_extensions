@@ -1369,7 +1369,7 @@ BEGIN
     RAISE EXCEPTION 'Invalid option name %', "@resample";
   END IF;
 
-  ANALYZE VERBOSE;
+  ANALYZE;
 
   CALL sys.printarg('Statistics for all tables have been updated. Refer logs for details.');
 END;

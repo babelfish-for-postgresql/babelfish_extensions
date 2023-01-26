@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.sql.*;
+import java.sql.SQLWarning;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -116,8 +117,25 @@ public class CompareResults {
         }
     }
 
+    public static void writeWarningToFile(BufferedWriter bw, SQLWarning sqlwarn, Logger logger) {
+        try {
+            bw.write("~~WARNING (Code: " + sqlwarn.getErrorCode() + ")~~");
+            bw.newLine();
+            bw.newLine();
+            while (sqlwarn != null) {
+                bw.write("~~WARNING (Message: "+ sqlwarn.getMessage() +  "  Server SQLState: " + sqlwarn.getSQLState() + ")~~");
+                sqlwarn=sqlwarn.getNextWarning();
+            } 
+            bw.newLine();
+            bw.newLine();
+        } catch (IOException ioe) {
+            logger.error("IO Exception: " + ioe.getMessage(), ioe);
+        }
+                    
+    }
+
     // processes all the results sequentially that we get from executing a JDBC Statement
-    static void processResults(Statement stmt, BufferedWriter bw, int resultsProcessed, boolean resultSetExist, Logger logger) {
+    static void processResults(Statement stmt, BufferedWriter bw, int resultsProcessed, boolean resultSetExist, boolean warningExist, Logger logger) {
         int updateCount = -9;  // initialize to impossible value
 
         while (true) {
@@ -138,7 +156,14 @@ public class CompareResults {
             if ((!resultSetExist) && (updateCount == -1)) {
                 break;
             }
-
+            if (warningExist) {
+                try{
+                    SQLWarning sqlwarn = stmt.getWarnings();
+                    writeWarningToFile(bw, sqlwarn, logger);
+                } catch (SQLException e) {
+                    handleSQLExceptionWithFile(e, bw, logger);
+                }      
+            }
             if (resultSetExist) {
                 try (ResultSet rs = stmt.getResultSet()) {
                     writeResultSetToFile(bw, rs, logger);
