@@ -46,15 +46,19 @@ public class JDBCPreparedStatement {
             bw.newLine();
             set_bind_values(result, pstmt_bbl, bw, logger);
 
+            SQLWarning sqlwarn = null;
             boolean resultSetExist = false;
+            boolean warningExist = false;
             int resultsProcessed = 0;
             try {
                 resultSetExist = pstmt_bbl.execute();
+                sqlwarn = pstmt_bbl.getWarnings();
+                if(sqlwarn != null) warningExist = true;
             } catch (SQLException e) {
                 handleSQLExceptionWithFile(e, bw, logger);
                 resultsProcessed++;
             }
-            CompareResults.processResults(pstmt_bbl, bw, resultsProcessed, resultSetExist, logger);
+            CompareResults.processResults(pstmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }

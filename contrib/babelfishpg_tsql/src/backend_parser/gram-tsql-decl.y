@@ -79,7 +79,7 @@
 %type <str> tsql_table_hint_kw_no_with
 %type <list> tsql_table_hint_expr tsql_opt_table_hint_expr tsql_table_hint_list
 %type <node> tsql_table_hint
-%type <node> tsql_for_clause tsql_xml_common_directive
+%type <node> tsql_for_xml_clause tsql_xml_common_directive
 %type <list> tsql_xml_common_directives
 
 %type <node> tsql_for_json_clause tsql_for_json_common_directive

@@ -1361,155 +1361,119 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 		;
 
 select_no_parens:
-			select_clause tsql_for_clause
+			select_clause tsql_for_xml_clause
 				{
-					base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-					char *src_query = yyextra->core_yy_extra.scanbuf;
 					/*
-					 * We can free the SelectStmt because we will process the transformed
-					 * FOR XML query by calling function tsql_query_to_xml().
+					 * rewrite the query as "SELECT tsql_select_for_xml_agg(rows, ...) FROM (select_clause) AS rows"
 					 */
-					pfree($1);
-					$1 = (Node *) makeNode(SelectStmt);
-					((SelectStmt *)$1)->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $2, src_query, @1, yyscanner));
-					$$ = $1;
+					SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
+					stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $2));
+					stmt->fromClause = list_make1(TsqlForClauseSubselect($1));
+					$$ = (Node *) stmt;
 				}
-			| select_clause sort_clause tsql_for_clause
+			| select_clause sort_clause tsql_for_xml_clause
 				{
+					insertSelectOptions((SelectStmt *) $1, $2, NIL,
+										NULL, NULL,
+										yyscanner);
 					if ($3 == NULL)
-						insertSelectOptions((SelectStmt *) $1, $2, NIL,
-											NULL, NULL,
-											yyscanner);
+						$$ = $1;
 					else
 					{
-						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *src_query = yyextra->core_yy_extra.scanbuf;
-						/*
-						 * We can free the SelectStmt because we will process the transformed
-						 * FOR XML query by calling function tsql_query_to_xml().
-						 */
-						pfree($1);
-						$1 = (Node *) makeNode(SelectStmt);
-						((SelectStmt *)$1)->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $3, src_query, @1, yyscanner));
+						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
+						stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $3));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($1));
+						$$ = (Node *) stmt;
 					}
-					$$ = $1;
 				}
-			| with_clause select_clause tsql_for_clause
+			| with_clause select_clause tsql_for_xml_clause
 				{
+					insertSelectOptions((SelectStmt *) $2, NULL, NIL,
+										NULL,
+										$1,
+										yyscanner);
 					if ($3 == NULL)
-						insertSelectOptions((SelectStmt *) $2, NULL, NIL,
-											NULL,
-											$1,
-											yyscanner);
+						$$ = $2;
 					else
 					{
-						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *src_query = yyextra->core_yy_extra.scanbuf;
-						/*
-						 * We can free the SelectStmt because we will process the transformed
-						 * FOR XML query by calling function tsql_query_to_xml().
-						 */
-						pfree($2);
-						$2 = (Node *) makeNode(SelectStmt);
-						((SelectStmt *)$2)->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $3, src_query, @1, yyscanner));
+						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
+						stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $3));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($2));
+						$$ = (Node *) stmt;
 					}
-					$$ = $2;
 				}
-			| with_clause select_clause sort_clause tsql_for_clause
+			| with_clause select_clause sort_clause tsql_for_xml_clause
 				{
+					insertSelectOptions((SelectStmt *) $2, $3, NIL,
+										NULL,
+										$1,
+										yyscanner);
 					if ($4 == NULL)
-						insertSelectOptions((SelectStmt *) $2, $3, NIL,
-											NULL,
-											$1,
-											yyscanner);
+						$$ = $2;
 					else
 					{
-						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *src_query = yyextra->core_yy_extra.scanbuf;
-						/*
-						 * We can free the SelectStmt because we will process the transformed
-						 * FOR XML query by calling function tsql_query_to_xml().
-						 */
-						pfree($2);
-						$2 = (Node *) makeNode(SelectStmt);
-						((SelectStmt *)$2)->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $4, src_query, @1, yyscanner));
+						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
+						stmt->targetList = list_make1(TsqlForXMLMakeFuncCall((TSQL_ForClause *) $4));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($2));
+						$$ = (Node *) stmt;
 					}
-					$$ = $2;
 				}
 			| select_clause tsql_for_json_clause
 				{
-					base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-					char *src_query = yyextra->core_yy_extra.scanbuf;
 					/*
-					 * We can free the SelectStmt because we will process the transformed
-					 * FOR JSON query by calling function tsql_query_to_json().
+					 * rewrite the query as "SELECT tsql_select_for_json_agg(rows, ...) FROM (select_clause) AS rows"
 					 */
-					pfree($1);
-					$1 = (Node *) makeNode(SelectStmt);
-					((SelectStmt *)$1)->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $2, src_query, @1, yyscanner));
-					$$ = $1;
+					SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
+					stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $2));
+					stmt->fromClause = list_make1(TsqlForClauseSubselect($1));
+					$$ = (Node *) stmt;
 				}
 			| select_clause sort_clause tsql_for_json_clause
 				{
+					insertSelectOptions((SelectStmt *) $1, $2, NIL,
+										NULL, NULL,
+										yyscanner);
 					if ($3 == NULL)
-						insertSelectOptions((SelectStmt *) $1, $2, NIL,
-											NULL, NULL,
-											yyscanner);
+						$$ = $1;
 					else
 					{
-						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *src_query = yyextra->core_yy_extra.scanbuf;
-						/*
-						 * We can free the SelectStmt because we will process the transformed
-						 * FOR JSON query by calling function tsql_query_to_json().
-						 */
-						pfree($1);
-						$1 = (Node *) makeNode(SelectStmt);
-						((SelectStmt *)$1)->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $3, src_query, @1, yyscanner));
+						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
+						stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $3));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($1));
+						$$ = (Node *) stmt;
 					}
-					$$ = $1;
 				}
 			| with_clause select_clause tsql_for_json_clause
 				{
+					insertSelectOptions((SelectStmt *) $2, NULL, NIL,
+										NULL,
+										$1,
+										yyscanner);
 					if ($3 == NULL)
-						insertSelectOptions((SelectStmt *) $2, NULL, NIL,
-											NULL,
-											$1,
-											yyscanner);
+						$$ = $2;
 					else
 					{
-						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *src_query = yyextra->core_yy_extra.scanbuf;
-						/*
-						 * We can free the SelectStmt because we will process the transformed
-						 * FOR JSON query by calling function tsql_query_to_json().
-						 */
-						pfree($2);
-						$2 = (Node *) makeNode(SelectStmt);
-						((SelectStmt *)$2)->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $3, src_query, @1, yyscanner));
+						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
+						stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $3));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($2));
+						$$ = (Node *) stmt;
 					}
-					$$ = $2;
 				}
 			| with_clause select_clause sort_clause tsql_for_json_clause
 				{
+					insertSelectOptions((SelectStmt *) $2, $3, NIL,
+										NULL,
+										$1,
+										yyscanner);
 					if ($4 == NULL)
-						insertSelectOptions((SelectStmt *) $2, $3, NIL,
-											NULL,
-											$1,
-											yyscanner);
+						$$ = $2;
 					else
 					{
-						base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
-						char *src_query = yyextra->core_yy_extra.scanbuf;
-						/*
-						 * We can free the SelectStmt because we will process the transformed
-						 * FOR JSON query by calling function tsql_query_to_json().
-						 */
-						pfree($2);
-						$2 = (Node *) makeNode(SelectStmt);
-						((SelectStmt *)$2)->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $4, src_query, @1, yyscanner));
+						SelectStmt *stmt = (SelectStmt *) makeNode(SelectStmt);
+						stmt->targetList = list_make1(TsqlForJSONMakeFuncCall((TSQL_ForClause *) $4));
+						stmt->fromClause = list_make1(TsqlForClauseSubselect($2));
+						$$ = (Node *) stmt;
 					}
-					$$ = $2;
 				}
 		;
 
@@ -2695,7 +2659,7 @@ opt_plus:
  * FOR XML clause can have 4 modes: RAW, AUTO, PATH and EXPLICIT.
  * Map the mode to the corresponding ENUM.
  */
-tsql_for_clause:
+tsql_for_xml_clause:
 			TSQL_FOR XML_P TSQL_RAW '(' Sconst ')' tsql_xml_common_directives
 			{
 				TSQL_ForClause *n = (TSQL_ForClause *) palloc(sizeof(TSQL_ForClause));
