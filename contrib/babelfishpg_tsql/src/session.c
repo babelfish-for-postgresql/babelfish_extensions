@@ -295,8 +295,8 @@ Datum sp_set_session_context(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
-PG_FUNCTION_INFO_V1(SESSION_CONTEXT);
-Datum SESSION_CONTEXT(PG_FUNCTION_ARGS)
+PG_FUNCTION_INFO_V1(session_context);
+Datum session_context(PG_FUNCTION_ARGS)
 {
 	char *key;
 	SessionCxtEntry *result_entry;
@@ -307,7 +307,7 @@ Datum SESSION_CONTEXT(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("The parameters supplied for the function \"SESSION_CONTEXT\" are not valid.")));
+			errmsg("The parameters supplied for the function \"session_context\" are not valid.")));
 
 	key_arg = PG_GETARG_VARCHAR_PP(0);
 	key = str_tolower(VARDATA_ANY(key_arg), VARSIZE_ANY_EXHDR(key_arg), DEFAULT_COLLATION_OID);

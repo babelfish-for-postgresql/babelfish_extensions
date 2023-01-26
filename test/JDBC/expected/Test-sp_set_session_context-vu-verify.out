@@ -173,7 +173,7 @@ go
 sql_variant
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The parameters supplied for the function "SESSION_CONTEXT" are not valid.)~~
+~~ERROR (Message: The parameters supplied for the function "session_context" are not valid.)~~
 
 
 declare @key nvarchar(4000) = cast (REPLICATE('a', 128) as nvarchar(4000));
