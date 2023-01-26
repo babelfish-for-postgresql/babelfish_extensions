@@ -35,7 +35,7 @@ bool pltsql_suppress_string_truncation_error(void);
 bool is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar / sys.varchar / sys.nvarchar */
 bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 
-static bool find_target_alias_in_tableref(RangeVar **target, Node *tblref);
+static bool update_target_with_tableref(RangeVar **target, Node *tblref);
 static bool find_relation_in_tableref(RangeVar *target, Node *tblref);
 static bool matches_RangeVar(RangeVar *rv1, RangeVar *rv2);
 
@@ -1163,7 +1163,7 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
  * need to do special handling to the target table.
  */
 void
-pltsql_cte_update_target_table_alias(WithClause *withClause)
+pltsql_cte_update_target_table(WithClause *withClause)
 {
 	ListCell *lc;
 
@@ -1182,31 +1182,31 @@ pltsql_cte_update_target_table_alias(WithClause *withClause)
 		{
 			DeleteStmt *stmt = (DeleteStmt *) qry;
 
-			pltsql_update_target_table_alias(&(stmt->relation), stmt->usingClause);
+			pltsql_update_target_table(&(stmt->relation), stmt->usingClause);
 			if (stmt->withClause)
-				pltsql_cte_update_target_table_alias(stmt->withClause);
+				pltsql_cte_update_target_table(stmt->withClause);
 		}
 		else if (IsA(qry, InsertStmt))
 		{
 			InsertStmt *stmt = (InsertStmt *) qry;
 			
 			if (stmt->withClause)
-				pltsql_cte_update_target_table_alias(stmt->withClause);
+				pltsql_cte_update_target_table(stmt->withClause);
 		}
 		else if (IsA(qry, SelectStmt))
 		{
 			SelectStmt *stmt = (SelectStmt *) qry;
 	
 			if (stmt->withClause)
-				pltsql_cte_update_target_table_alias(stmt->withClause);
+				pltsql_cte_update_target_table(stmt->withClause);
 		}
 		else if (IsA(qry, UpdateStmt))
 		{
 			UpdateStmt *stmt = (UpdateStmt *) qry;
 
-			pltsql_update_target_table_alias(&(stmt->relation), stmt->fromClause);
+			pltsql_update_target_table(&(stmt->relation), stmt->fromClause);
 			if (stmt->withClause)
-				pltsql_cte_update_target_table_alias(stmt->withClause);
+				pltsql_cte_update_target_table(stmt->withClause);
 		}
 	}	
 }
@@ -1222,7 +1222,7 @@ pltsql_cte_update_target_table_alias(WithClause *withClause)
  * UPDATE t SET t.a = 1 FROM sch.t WHERE t.b = 2
  */
 void
-pltsql_update_target_table_alias(RangeVar **target_table, List *fromClause)
+pltsql_update_target_table(RangeVar **target_table, List *fromClause)
 {
 	ListCell *lc;
 
@@ -1237,13 +1237,13 @@ pltsql_update_target_table_alias(RangeVar **target_table, List *fromClause)
 	foreach(lc, fromClause)
 	{
 		Node *n = lfirst(lc);
-		if (find_target_alias_in_tableref(target_table, n))
+		if (update_target_with_tableref(target_table, n))
 			return;
 	}
 }
 
 static bool
-find_target_alias_in_tableref(RangeVar **target, Node *tblref)
+update_target_with_tableref(RangeVar **target, Node *tblref)
 {
 	/* 
  	 * If the table refenrence is a JoinExpr, recursively check the 
@@ -1252,8 +1252,8 @@ find_target_alias_in_tableref(RangeVar **target, Node *tblref)
 	if (IsA(tblref, JoinExpr))
 	{
 		JoinExpr *je = (JoinExpr *) tblref;
-		if (find_target_alias_in_tableref(target, (Node *) je->larg) ||
-			find_target_alias_in_tableref(target, (Node *) je->rarg))
+		if (update_target_with_tableref(target, (Node *) je->larg) ||
+			update_target_with_tableref(target, (Node *) je->rarg))
 			return true;
 	}
 	/*

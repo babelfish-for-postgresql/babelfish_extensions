@@ -590,23 +590,23 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		case T_DeleteStmt:
 		{
 			DeleteStmt *delete_stmt = (DeleteStmt *) parseTree->stmt;
-			pltsql_update_target_table_alias(&(delete_stmt->relation), delete_stmt->usingClause);
+			pltsql_update_target_table(&(delete_stmt->relation), delete_stmt->usingClause);
 			if (delete_stmt->withClause)
-				pltsql_cte_update_target_table_alias(delete_stmt->withClause);
+				pltsql_cte_update_target_table(delete_stmt->withClause);
 			break;
 		}
 		case T_InsertStmt:
 		{
 			InsertStmt *insert_stmt = (InsertStmt *) parseTree->stmt;
 			if (insert_stmt->withClause)
-				pltsql_cte_update_target_table_alias(insert_stmt->withClause);
+				pltsql_cte_update_target_table(insert_stmt->withClause);
 			break;
 		}
 		case T_SelectStmt:
 		{
 			SelectStmt *select_stmt = (SelectStmt *) parseTree->stmt;
 			if (select_stmt->withClause)
-				pltsql_cte_update_target_table_alias(select_stmt->withClause);
+				pltsql_cte_update_target_table(select_stmt->withClause);
 			break;
 		}
 		case T_UpdateStmt:
@@ -617,9 +617,9 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			TupleDesc tupdesc;
 			AttrNumber attr_num;
 
-			pltsql_update_target_table_alias(&(updstmt->relation), updstmt->fromClause);
+			pltsql_update_target_table(&(updstmt->relation), updstmt->fromClause);
 			if (updstmt->withClause)
-				pltsql_cte_update_target_table_alias(updstmt->withClause);
+				pltsql_cte_update_target_table(updstmt->withClause);
 
 			relid = RangeVarGetRelid(updstmt->relation, NoLock, false);
 			rel = RelationIdGetRelation(relid);
