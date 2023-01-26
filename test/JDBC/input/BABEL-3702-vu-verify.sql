@@ -57,3 +57,18 @@ EXEC BABEL_3702_vu_prepare_p10
 GO
 DROP PROCEDURE BABEL_3702_vu_prepare_p10
 GO
+
+EXEC BABEL_3702_vu_prepare_p11
+GO
+DROP PROCEDURE BABEL_3702_vu_prepare_p11
+GO
+
+declare @json nvarchar(max) = '{"udfs":[{"name":"alpha","value":"value1"},{"name":"bravo","value":"value2"}]}'
+
+exec BABEL_3702_vu_prepare_p12 @json
+go
+
+drop table fdefs
+drop table ftypes
+drop procedure BABEL_3702_vu_prepare_p12
+go

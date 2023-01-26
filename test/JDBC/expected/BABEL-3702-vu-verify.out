@@ -145,3 +145,28 @@ int#!#varchar#!#varchar#!#nvarchar
 
 DROP PROCEDURE BABEL_3702_vu_prepare_p10
 GO
+
+EXEC BABEL_3702_vu_prepare_p11
+GO
+~~START~~
+datetime2#!#int#!#bit#!#float
+1969-07-20 02:56:00.0000000#!#24#!#1#!#37.578288100208766
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p11
+GO
+
+
+declare @json nvarchar(max) = '{"udfs":[{"name":"alpha","value":"value1"},{"name":"bravo","value":"value2"}]}'
+exec BABEL_3702_vu_prepare_p12 @json
+go
+~~START~~
+nvarchar
+alpha
+~~END~~
+
+
+drop table fdefs
+drop table ftypes
+drop procedure BABEL_3702_vu_prepare_p12
+go

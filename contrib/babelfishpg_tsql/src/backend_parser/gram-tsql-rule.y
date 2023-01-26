@@ -1634,13 +1634,14 @@ table_ref:	relation_expr tsql_table_hint_expr
 					$2->alias = $3;
 					$$ = (Node *) $2;
 				}
-			| OPENJSON '(' a_expr  ')'
+			| OPENJSON '(' a_expr  ')' opt_alias_clause
 				{
 					/* map to OPENJSON_SIMPLE */
 					// Call a function that changes this to "sys.OPENJSON_SIMPLE(a_expr)"
 					// Function can return generic node type and just return that function call
 
 					RangeFunction *n = makeNode(RangeFunction);
+					n->alias = $5;
 					n->lateral = false;
 					n->ordinality = false;
 					n->is_rowsfrom = false;
@@ -1648,9 +1649,10 @@ table_ref:	relation_expr tsql_table_hint_expr
 					/* map to OPENJSON_SIMPLE */
 					$$ = (Node*) n;
 				}
-			| OPENJSON '(' a_expr ',' a_expr ')'
+			| OPENJSON '(' a_expr ',' a_expr ')' opt_alias_clause
 				{
 					RangeFunction *n = makeNode(RangeFunction);
+					n->alias = $7;
 					n->lateral = false;
 					n->ordinality = false;
 					n->is_rowsfrom = false;

@@ -83,3 +83,53 @@ BEGIN
         )
 END;
 GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p11
+AS
+BEGIN
+DECLARE @json_text NVARCHAR(MAX)
+SET @json_text = N'
+{
+    "moon_landing": "1969-07-20T02:56:00+00:00",
+    "seconds_in_a_day": "86400",
+    "console_is_better_than_pc": true,
+    "hundred_meter_world_record": "9.58"
+}
+'
+
+SELECT
+    random_facts.moon_landing
+    ,random_facts.seconds_in_a_day / 3600 as hours_in_a_day
+    ,random_facts.console_is_better_than_pc
+    ,(100 / random_facts.hundred_meter_world_record) * 3.6 as hmwr_kph
+FROM
+    OPENJSON(@json_text)
+        WITH (
+            moon_landing DATETIME2
+            ,seconds_in_a_day INT
+            ,console_is_better_than_pc BIT
+            ,hundred_meter_world_record FLOAT 
+        ) as random_facts
+END;
+GO
+
+create table fdefs (id int, fname nvarchar(20))
+insert into fdefs values (1, 'alpha'),(2, 'bravo')
+create table ftypes (id int, ftype nvarchar(20))
+insert into ftypes values (1, 'type1'),(3, 'type3')
+go
+
+create procedure BABEL_3702_vu_prepare_p12 @body nvarchar(max) as
+select
+	fname
+from
+	fdefs d
+	join ftypes t on d.id = t.id
+	left join
+		openjson(json_query(@body, '$.udfs'))
+		with (
+			jname nvarchar(40) '$.name',
+			jvalue nvarchar(max) '$.value'
+		) j
+		on j.jname = d.fname
+go
