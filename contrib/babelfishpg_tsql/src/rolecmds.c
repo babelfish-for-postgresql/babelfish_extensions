@@ -1756,6 +1756,7 @@ has_user_in_db(const char *login, char **db_name)
 
 	return false;
 }
+
 /*
  * get_fully_qualified_domain_name - Returns fully qualified domain name corresponding to
  * supplied netbios_domain by looking into sys.babelfish_domain_mapping catalog.
@@ -1825,6 +1826,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	return fq_domain_name;
 }
 
+
 /* 
  * convertToUPN - This function is called to convert 
  * domain\user to user@DOMAIN.
@@ -1885,6 +1887,7 @@ get_roleform_ext(char *login)
 	/* Fetch the relation sys.babelfish_authid_login_ext */
 	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
 										  AccessShareLock);
+
 	dsc = RelationGetDescr(bbf_authid_login_ext_rel);
 
 	/* Search and drop on the role */

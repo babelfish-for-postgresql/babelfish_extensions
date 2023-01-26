@@ -1,22 +1,83 @@
--- Helper functions to support the FOR XML clause
-CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml(query text, mode int, element_name text,
-           binary_base64 boolean, root_name text)
-RETURNS xml
-AS 'babelfishpg_tsql', 'tsql_query_to_xml'
-LANGUAGE C IMMUTABLE STRICT COST 100;
+-- SELECT FOR XML
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text(query text, mode int, element_name text,
-           binary_base64 boolean, root_name text)
-RETURNS ntext
-AS 'babelfishpg_tsql', 'tsql_query_to_xml_text'
-LANGUAGE C IMMUTABLE STRICT COST 100;
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
+    state INTERNAL
+)
+RETURNS XML AS
+'babelfishpg_tsql', 'tsql_query_to_xml_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
 
--- Helper function to support the FOR JSON clause
-CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_text(query text, mode int, include_null_value boolean,
-           without_array_wrappers boolean, root_name text)
-RETURNS sys.NVARCHAR(4000)
-AS 'babelfishpg_tsql', 'tsql_query_to_json_text'
-LANGUAGE C IMMUTABLE COST 100;
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
+    state INTERNAL
+)
+RETURNS NTEXT AS
+'babelfishpg_tsql', 'tsql_query_to_xml_text_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
+
+-- SELECT FOR JSON
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_json_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
+    state INTERNAL
+)
+RETURNS sys.NVARCHAR AS
+'babelfishpg_tsql', 'tsql_query_to_json_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_json_sfunc,
+    FINALFUNC = tsql_query_to_json_ffunc
+);
 
 -- User and Login Functions
 CREATE OR REPLACE FUNCTION sys.user_name(IN id OID DEFAULT NULL)

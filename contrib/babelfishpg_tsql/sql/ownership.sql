@@ -187,6 +187,7 @@ BEGIN
 
   -- let sysadmin only to update babelfish_domain_mapping
   GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
+
   CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
                                                               IN "@locallogin" sys.sysname)
   AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
