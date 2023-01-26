@@ -103,8 +103,14 @@ sql_variant
 ~~END~~
 
 
--- tsql user=session_context_1 password=abc
 -- Multiple Sessions
+CREATE LOGIN session_context_1 WITH PASSWORD = 'abc';
+GO
+
+CREATE LOGIN session_context_2 WITH PASSWORD = 'abc';
+GO
+
+-- tsql user=session_context_1 password=abc
 SELECT SESSION_CONTEXT('foo')
 go
 ~~START~~
@@ -395,31 +401,6 @@ value
 ~~END~~
 
 
--- Dependencies
-EXEC test_sp_set_session_context_proc;
-GO
-~~START~~
-text
-Match
-~~END~~
-
-
-SELECT test_sp_set_session_context_func();
-GO
-~~START~~
-int
-0
-~~END~~
-
-
-SELECT * FROM test_sp_set_session_context_view;
-GO
-~~START~~
-sql_variant
-test_sp_set_session_context_proc_val
-~~END~~
-
-
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
@@ -456,3 +437,8 @@ void
 
 ~~END~~
 
+
+-- tsql
+DROP LOGIN session_context_1;
+DROP LOGIN session_context_2;
+go

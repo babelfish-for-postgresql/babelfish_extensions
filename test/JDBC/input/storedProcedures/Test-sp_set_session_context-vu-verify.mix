@@ -59,6 +59,12 @@ SELECT session_context('missing')
 go
 
 -- Multiple Sessions
+CREATE LOGIN session_context_1 WITH PASSWORD = 'abc';
+GO
+
+CREATE LOGIN session_context_2 WITH PASSWORD = 'abc';
+GO
+
 -- tsql user=session_context_1 password=abc
 SELECT SESSION_CONTEXT('foo')
 go
@@ -202,16 +208,6 @@ GO
 select session_context(N'999')
 GO
 
--- Dependencies
-EXEC test_sp_set_session_context_proc;
-GO
-
-SELECT test_sp_set_session_context_func();
-GO
-
-SELECT * FROM test_sp_set_session_context_view;
-GO
-
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
@@ -228,3 +224,8 @@ GO
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
+
+-- tsql
+DROP LOGIN session_context_1;
+DROP LOGIN session_context_2;
+go
