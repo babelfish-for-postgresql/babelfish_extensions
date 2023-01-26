@@ -265,6 +265,25 @@ true
 ~~END~~
 
 
+EXEC sp_set_session_context 'ÀÀ', 'accents';
+go
+
+SELECT CAST(session_context(N'àà') AS NVARCHAR);
+go
+~~START~~
+nvarchar
+accents
+~~END~~
+
+
+SELECT CAST(session_context(N'áá') AS NVARCHAR);
+go
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
 -- Read Only
 EXEC sp_set_session_context 'read_only', 10, 1
 go
