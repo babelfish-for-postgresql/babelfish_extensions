@@ -9,6 +9,10 @@ GO
 
 DROP DATABASE IF EXISTS babel_2622;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: database "babel_2622" does not exist, skipping  Server SQLState: 00000)~~
+
 
 CREATE DATABASE babel_2622;
 GO
@@ -29,6 +33,10 @@ GO
 
 DROP DATABASE IF EXISTS babel2622;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: database "babel2622" does not exist, skipping  Server SQLState: 00000)~~
+
 
 DROP DATABASE babel2622;
 GO

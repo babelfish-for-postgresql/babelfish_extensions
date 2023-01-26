@@ -183,10 +183,22 @@ GO
 
 INSERT INTO babel_2535_vu_prepare_t2 VALUES (1);
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babel_2535_vu_prepare_trg1  Server SQLState: S0001)~~
+
 ~~START~~
 int
 1
 ~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babel_2535_vu_prepare_trg1  Server SQLState: S0001)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babel_2535_vu_prepare_trg1  Server SQLState: S0001)~~~~WARNING (Message: babel_2535_vu_prepare_trg2  Server SQLState: S0001)~~
 
 ~~START~~
 int

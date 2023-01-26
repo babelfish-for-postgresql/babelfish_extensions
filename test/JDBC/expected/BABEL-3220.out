@@ -5,5 +5,9 @@ CREATE PROCEDURE babel_3220_drop_all_users_deprecated()
 GO
 CALL babel_3220_drop_all_users_deprecated();
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: This function has been deprecated and will no longer drop all users.  Server SQLState: 01P01)~~
+
 DROP PROCEDURE babel_3220_drop_all_users_deprecated;
 GO

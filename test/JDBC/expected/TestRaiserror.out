@@ -157,17 +157,33 @@ BEGIN CATCH
 	IF @@trancount > 0 ROLLBACK TRANSACTION;
 END CATCH
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: raiserror 10  Server SQLState: S0001)~~
+
 ~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: raiserror 10  Server SQLState: S0001)~~
 
 ~~START~~
 smallint
 1
 ~~END~~
 
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: raiserror 10  Server SQLState: S0001)~~
+
 ~~START~~
 int
 1
 ~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: raiserror 10  Server SQLState: S0001)~~
 
 ~~START~~
 int
@@ -522,17 +538,33 @@ BEGIN CATCH
 	IF @@trancount > 0 ROLLBACK TRANSACTION;
 END CATCH
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: raiserror 10  Server SQLState: S0001)~~
+
 ~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: raiserror 10  Server SQLState: S0001)~~
 
 ~~START~~
 smallint
 -1
 ~~END~~
 
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: raiserror 10  Server SQLState: S0001)~~
+
 ~~START~~
 int
 1
 ~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: raiserror 10  Server SQLState: S0001)~~
 
 ~~START~~
 int
@@ -687,19 +719,18 @@ SET @err = @@ERROR; IF @err = 0 SELECT 0 ELSE SELECT 1;
 RAISERROR('raiserror 16', 16, 2) WITH SETERROR;
 SET @err = @@ERROR; IF @err = 0 SELECT 0 ELSE SELECT 1;
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: No. 51000 in sys.messages  Server SQLState: S0001)~~
+
 ~~START~~
 int
 0
 ~~END~~
 
-~~START~~
-int
-1
-~~END~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Code: 50000)~~
-
-~~ERROR (Message: raiserror 16)~~
+~~WARNING (Message: No. 51000 in sys.messages  Server SQLState: S0001)~~~~WARNING (Message: No. 51000 in sys.messages  Server SQLState: S0001)~~
 
 ~~START~~
 int
@@ -709,6 +740,23 @@ int
 ~~ERROR (Code: 50000)~~
 
 ~~ERROR (Message: raiserror 16)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: No. 51000 in sys.messages  Server SQLState: S0001)~~~~WARNING (Message: No. 51000 in sys.messages  Server SQLState: S0001)~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: raiserror 16)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: No. 51000 in sys.messages  Server SQLState: S0001)~~~~WARNING (Message: No. 51000 in sys.messages  Server SQLState: S0001)~~
 
 ~~START~~
 int

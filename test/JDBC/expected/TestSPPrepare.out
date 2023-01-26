@@ -512,9 +512,21 @@ PRINT @handle
 EXEC SP_EXECUTE @handle;
 EXEC SP_UNPREPARE @handle;
 GO
-~~ROW COUNT: 1~~
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
 
 ~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
 
 ~~START~~
 int#!#int
@@ -522,15 +534,27 @@ int#!#int
 3#!#4
 ~~END~~
 
-~~START~~
-int#!#int
-1#!#2
-~~END~~
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
 
 ~~START~~
 int#!#int
 1#!#2
 ~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
 
 ~~START~~
 int#!#int

@@ -210,10 +210,22 @@ GO
 
 INSERT INTO t2 VALUES (1);
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: tr1  Server SQLState: S0001)~~
+
 ~~START~~
 int
 1
 ~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: tr1  Server SQLState: S0001)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: tr1  Server SQLState: S0001)~~~~WARNING (Message: tr2  Server SQLState: S0001)~~
 
 ~~START~~
 int

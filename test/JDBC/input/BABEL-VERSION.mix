@@ -44,6 +44,9 @@ GO
 Alter system set babelfishpg_tds.product_version = " ";
 GO
 
+ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "test";
+GO
+
 ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
 SELECT pg_reload_conf();
 GO

@@ -8,10 +8,22 @@ off
 
 drop table if exists babel_3190_t1;
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: table "babel_3190_t1" does not exist, skipping  Server SQLState: 00000)~~
+
 drop table if exists babel_3190_t2;
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: table "babel_3190_t2" does not exist, skipping  Server SQLState: 00000)~~
+
 drop table if exists babel_3190_t3;
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: table "babel_3190_t3" does not exist, skipping  Server SQLState: 00000)~~
+
 CREATE TABLE babel_3190_t1(
     a sys.datetime2(6) without time zone,
     b sys.datetime,
@@ -46,6 +58,10 @@ CREATE TABLE babel_3190_t3(
     e sys.datetimeoffset(7) with time zone
 );
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: TIMESTAMP(7) WITH TIME ZONE precision reduced to maximum allowed, 6  Server SQLState: 22023)~~~~WARNING (Message: TIMESTAMP(7) WITH TIME ZONE precision reduced to maximum allowed, 6  Server SQLState: 22023)~~
+
 select pg_catalog.format_type(oid, 3) from
     (select oid from pg_type where typname in ('datetime2', 'smalldatetime', 'time', 'datetimeoffset')) a order by 1;
 go
@@ -61,7 +77,15 @@ reset babelfishpg_tsql.dump_restore;
 go
 drop table if exists babel_3190_t1;
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: table "babel_3190_t1" does not exist, skipping  Server SQLState: 00000)~~
+
 drop table if exists babel_3190_t2;
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: table "babel_3190_t2" does not exist, skipping  Server SQLState: 00000)~~
+
 drop table if exists babel_3190_t3;
 go

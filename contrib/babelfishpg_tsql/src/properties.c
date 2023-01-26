@@ -176,7 +176,7 @@ get_version_number(const char* version_string, int idx)
 		part++;
 	}
 	
-	/* part should less than 2 */
+	/* part should less than 3 */
 	Assert(part <= 2);
 	return "";
 }
