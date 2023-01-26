@@ -49,6 +49,97 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
+-- deprecate old FOR XML/JSON functions
+ALTER FUNCTION sys.tsql_query_to_xml(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_deprecated_in_2_4_0');
+
+ALTER FUNCTION sys.tsql_query_to_xml_text(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_text_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_text_deprecated_in_2_4_0');
+
+ALTER FUNCTION sys.tsql_query_to_json_text(text, int, boolean, boolean, text) RENAME TO tsql_query_to_json_text_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_json_text_deprecated_in_2_4_0');
+
+-- SELECT FOR XML
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
+    state INTERNAL
+)
+RETURNS XML AS
+'babelfishpg_tsql', 'tsql_query_to_xml_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
+    state INTERNAL
+)
+RETURNS NTEXT AS
+'babelfishpg_tsql', 'tsql_query_to_xml_text_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
+
+-- SELECT FOR JSON
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_json_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
+    state INTERNAL
+)
+RETURNS sys.NVARCHAR AS
+'babelfishpg_tsql', 'tsql_query_to_json_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_json_sfunc,
+    FINALFUNC = tsql_query_to_json_ffunc
+);
+
 CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
 AS $$
 BEGIN
