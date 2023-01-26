@@ -55,6 +55,30 @@ sql_variant
 ~~END~~
 
 
+DECLARE @val sql_variant = CAST(1 AS sql_variant);
+EXEC sp_set_session_context 'sql_variant', @val;
+GO
+
+SELECT session_context('sql_variant');
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+DECLARE @val sql_variant = CAST(1 AS int);
+EXEC sp_set_session_context 'sql_variant_int', @val;
+GO
+
+SELECT sql_variant_property(session_context('sql_variant_int'), 'BaseType');
+GO
+~~START~~
+sql_variant
+int
+~~END~~
+
+
 -- Remove Item
 EXEC sp_set_session_context 'money', NULL
 go
@@ -79,14 +103,8 @@ sql_variant
 ~~END~~
 
 
--- Multiple Sessions
-CREATE LOGIN session_context_1 WITH PASSWORD = 'abc';
-GO
-
-CREATE LOGIN session_context_2 WITH PASSWORD = 'abc';
-GO
-
 -- tsql user=session_context_1 password=abc
+-- Multiple Sessions
 SELECT SESSION_CONTEXT('foo')
 go
 ~~START~~
@@ -377,6 +395,31 @@ value
 ~~END~~
 
 
+-- Dependencies
+EXEC test_sp_set_session_context_proc;
+GO
+~~START~~
+text
+Match
+~~END~~
+
+
+SELECT test_sp_set_session_context_func();
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM test_sp_set_session_context_view;
+GO
+~~START~~
+sql_variant
+test_sp_set_session_context_proc_val
+~~END~~
+
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
@@ -413,8 +456,3 @@ void
 
 ~~END~~
 
-
--- tsql
-DROP LOGIN session_context_1;
-DROP LOGIN session_context_2;
-go
