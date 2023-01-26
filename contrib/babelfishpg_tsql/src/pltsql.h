@@ -2000,6 +2000,7 @@ extern bool is_schema_from_db(Oid schema_oid, Oid db_id);
 typedef struct
 {
 	bool success;
+	bool parseTreeCreated; /* used to determine if on error should retry with a different parse mode */
 	size_t errpos;
 	int errcod;
 	const char *errfmt;
