@@ -1782,12 +1782,12 @@ smallint_power(PG_FUNCTION_ARGS)
 	result = DatumGetInt32(DirectFunctionCall1(numeric_int2, NumericGetDatum(result_numeric)));
 
 	PG_RETURN_INT32(result); 
+	
 }
 
 Datum
 numeric_degrees(PG_FUNCTION_ARGS)
 {
-	
 	Numeric	arg1 = PG_GETARG_NUMERIC(0);
 	Numeric	radians_per_degree,result;
 
@@ -1801,7 +1801,6 @@ numeric_degrees(PG_FUNCTION_ARGS)
 Datum
 numeric_radians(PG_FUNCTION_ARGS)
 {
-	
 	Numeric	arg1 = PG_GETARG_NUMERIC(0);
 	Numeric	radians_per_degree,result;
 
