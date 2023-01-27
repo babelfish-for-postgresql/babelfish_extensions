@@ -424,7 +424,8 @@ CREATE VIEW information_schema_tsql.tables AS
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
-		AND ext.dbid = cast(sys.db_id() as oid);
+		AND ext.dbid = cast(sys.db_id() as oid)
+		AND (NOT c.relname = 'sysdatabases');
 
 GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
