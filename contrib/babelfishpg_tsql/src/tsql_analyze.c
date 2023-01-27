@@ -24,60 +24,6 @@
 static RangeVar *find_matching_table(RangeVar *target, Node *tblref);
 
 /*
- * Recursively go through all CTEs, if any of them is UPDATE/DELETE statement, we
- * need to do special handling to the target table.
- */
-/*
-void
-pltsql_cte_update_target_table(WithClause *withClause)
-{
-	ListCell *lc;
-
-	if (!withClause || !withClause->ctes)
-		return;
-	
-	foreach(lc, withClause->ctes)
-	{
-		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
-		Node *qry = cte->ctequery;
-		
-		if (!qry)
-			continue;
-
-		if (IsA(qry, DeleteStmt))
-		{
-			DeleteStmt *stmt = (DeleteStmt *) qry;
-
-			pltsql_update_target_table(&(stmt->relation), stmt->usingClause);
-			if (stmt->withClause)
-				pltsql_cte_update_target_table(stmt->withClause);
-		}
-		else if (IsA(qry, InsertStmt))
-		{
-			InsertStmt *stmt = (InsertStmt *) qry;
-			
-			if (stmt->withClause)
-				pltsql_cte_update_target_table(stmt->withClause);
-		}
-		else if (IsA(qry, SelectStmt))
-		{
-			SelectStmt *stmt = (SelectStmt *) qry;
-	
-			if (stmt->withClause)
-				pltsql_cte_update_target_table(stmt->withClause);
-		}
-		else if (IsA(qry, UpdateStmt))
-		{
-			UpdateStmt *stmt = (UpdateStmt *) qry;
-
-			pltsql_update_target_table(&(stmt->relation), stmt->fromClause);
-			if (stmt->withClause)
-				pltsql_cte_update_target_table(stmt->withClause);
-		}
-	}	
-}
-*/
-/*
  * If a table alias is used when specifying the target table, we need to refer to the
  * FROM clause for table reference.
  * Example:
