@@ -1,7 +1,7 @@
-
 -------------------------------------------------------------
 -- Tests for UPDATE
 -------------------------------------------------------------
+
 CREATE TABLE update_test_tbl (
     age int,
     fname char(10),
@@ -9,7 +9,6 @@ CREATE TABLE update_test_tbl (
     city nchar(20)
 );
 go
-
 
 INSERT INTO update_test_tbl(age, fname, lname, city) 
 VALUES  (50, 'fname1', 'lname1', 'london'),
@@ -22,13 +21,12 @@ VALUES  (50, 'fname1', 'lname1', 'london'),
         (19, 'fname8', 'lname8', 'hong kong'),
         (61, 'fname9', 'lname9', 'shanghai'),
         (29, 'fname10', 'lname10', 'mumbai');
+
 CREATE TABLE update_test_tbl2 (
     year int,
     lname char(10),
 );
 go
-~~ROW COUNT: 10~~
-
 
 INSERT INTO update_test_tbl2(year, lname) 
 VALUES  (51, 'lname1'),
@@ -37,8 +35,6 @@ VALUES  (51, 'lname1'),
         (95, 'lname9'),
         (36, 'lname10');
 go
-~~ROW COUNT: 5~~
-
 
 CREATE TABLE update_test_tbl3 (
     lname char(10),
@@ -51,91 +47,27 @@ VALUES  ('lname8','london'),
         ('lname9','tokyo'),
         ('lname10','mumbai');
 go
-~~ROW COUNT: 3~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname1    #!#lname1    #!#london              
-29#!#fname10   #!#lname10   #!#mumbai              
-34#!#fname2    #!#lname2    #!#paris               
-35#!#fname3    #!#lname3    #!#brussels            
-90#!#fname4    #!#lname4    #!#new york            
-26#!#fname5    #!#lname5    #!#los angeles         
-74#!#fname6    #!#lname6    #!#tokyo               
-44#!#fname7    #!#lname7    #!#oslo                
-19#!#fname8    #!#lname8    #!#hong kong           
-61#!#fname9    #!#lname9    #!#shanghai            
-~~END~~
-
 SELECT * FROM update_test_tbl2 ORDER BY lname;
 go
-~~START~~
-int#!#char
-51#!#lname1    
-36#!#lname10   
-34#!#lname3    
-25#!#lname8    
-95#!#lname9    
-~~END~~
-
 SELECT * FROM update_test_tbl3 ORDER BY lname;
 go
-~~START~~
-char#!#char
-lname10   #!#mumbai    
-lname8    #!#london    
-lname9    #!#tokyo     
-~~END~~
-
 -- Simple update
 UPDATE update_test_tbl SET fname = 'fname11';
 go
-~~ROW COUNT: 10~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname11   #!#lname1    #!#london              
-29#!#fname11   #!#lname10   #!#mumbai              
-34#!#fname11   #!#lname2    #!#paris               
-35#!#fname11   #!#lname3    #!#brussels            
-90#!#fname11   #!#lname4    #!#new york            
-26#!#fname11   #!#lname5    #!#los angeles         
-74#!#fname11   #!#lname6    #!#tokyo               
-44#!#fname11   #!#lname7    #!#oslo                
-19#!#fname11   #!#lname8    #!#hong kong           
-61#!#fname11   #!#lname9    #!#shanghai            
-~~END~~
-
 
 -- Update with where clause
 UPDATE update_test_tbl SET fname = 'fname12'
 WHERE age > 50 AND city IN ('london','mumbai', 'new york' );
 go
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname11   #!#lname1    #!#london              
-29#!#fname11   #!#lname10   #!#mumbai              
-34#!#fname11   #!#lname2    #!#paris               
-35#!#fname11   #!#lname3    #!#brussels            
-90#!#fname12   #!#lname4    #!#new york            
-26#!#fname11   #!#lname5    #!#los angeles         
-74#!#fname11   #!#lname6    #!#tokyo               
-44#!#fname11   #!#lname7    #!#oslo                
-19#!#fname11   #!#lname8    #!#hong kong           
-61#!#fname11   #!#lname9    #!#shanghai            
-~~END~~
-
 
 -- Update with inner join
 UPDATE update_test_tbl SET fname = 'fname13'
@@ -144,25 +76,9 @@ INNER JOIN update_test_tbl2 t2
 ON t1.lname = t2.lname
 WHERE year > 50;
 go
-~~ROW COUNT: 2~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname13   #!#lname1    #!#london              
-29#!#fname11   #!#lname10   #!#mumbai              
-34#!#fname11   #!#lname2    #!#paris               
-35#!#fname11   #!#lname3    #!#brussels            
-90#!#fname12   #!#lname4    #!#new york            
-26#!#fname11   #!#lname5    #!#los angeles         
-74#!#fname11   #!#lname6    #!#tokyo               
-44#!#fname11   #!#lname7    #!#oslo                
-19#!#fname11   #!#lname8    #!#hong kong           
-61#!#fname13   #!#lname9    #!#shanghai            
-~~END~~
-
 
 UPDATE update_test_tbl SET fname = 'fname14'
 FROM update_test_tbl2 t2
@@ -170,25 +86,9 @@ INNER JOIN update_test_tbl t1
 ON t1.lname = t2.lname
 WHERE year < 50 AND city in ('tokyo', 'hong kong');
 go
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname13   #!#lname1    #!#london              
-29#!#fname11   #!#lname10   #!#mumbai              
-34#!#fname11   #!#lname2    #!#paris               
-35#!#fname11   #!#lname3    #!#brussels            
-90#!#fname12   #!#lname4    #!#new york            
-26#!#fname11   #!#lname5    #!#los angeles         
-74#!#fname11   #!#lname6    #!#tokyo               
-44#!#fname11   #!#lname7    #!#oslo                
-19#!#fname14   #!#lname8    #!#hong kong           
-61#!#fname13   #!#lname9    #!#shanghai            
-~~END~~
-
 
 -- Update with outer join
 UPDATE update_test_tbl SET fname = 'fname15'
@@ -197,25 +97,9 @@ LEFT JOIN update_test_tbl t1
 ON t1.lname = t2.lname
 WHERE year > 50;
 go
-~~ROW COUNT: 2~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname15   #!#lname1    #!#london              
-29#!#fname11   #!#lname10   #!#mumbai              
-34#!#fname11   #!#lname2    #!#paris               
-35#!#fname11   #!#lname3    #!#brussels            
-90#!#fname12   #!#lname4    #!#new york            
-26#!#fname11   #!#lname5    #!#los angeles         
-74#!#fname11   #!#lname6    #!#tokyo               
-44#!#fname11   #!#lname7    #!#oslo                
-19#!#fname14   #!#lname8    #!#hong kong           
-61#!#fname15   #!#lname9    #!#shanghai            
-~~END~~
-
 
 UPDATE update_test_tbl SET fname = 'fname16'
 FROM update_test_tbl2 t2
@@ -223,25 +107,9 @@ FULL JOIN update_test_tbl t1
 ON t1.lname = t2.lname
 WHERE year > 50 AND age > 60;
 go
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname15   #!#lname1    #!#london              
-29#!#fname11   #!#lname10   #!#mumbai              
-34#!#fname11   #!#lname2    #!#paris               
-35#!#fname11   #!#lname3    #!#brussels            
-90#!#fname12   #!#lname4    #!#new york            
-26#!#fname11   #!#lname5    #!#los angeles         
-74#!#fname11   #!#lname6    #!#tokyo               
-44#!#fname11   #!#lname7    #!#oslo                
-19#!#fname14   #!#lname8    #!#hong kong           
-61#!#fname16   #!#lname9    #!#shanghai            
-~~END~~
-
 
 -- update with outer join on multiple tables
 UPDATE update_test_tbl
@@ -253,25 +121,9 @@ LEFT JOIN update_test_tbl2 t2
 ON t1.lname = t2.lname
 WHERE t3.city = 'mumbai';
 go
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname15   #!#lname1    #!#london              
-29#!#fname17   #!#lname10   #!#mumbai              
-34#!#fname11   #!#lname2    #!#paris               
-35#!#fname11   #!#lname3    #!#brussels            
-90#!#fname12   #!#lname4    #!#new york            
-26#!#fname11   #!#lname5    #!#los angeles         
-74#!#fname11   #!#lname6    #!#tokyo               
-44#!#fname11   #!#lname7    #!#oslo                
-19#!#fname14   #!#lname8    #!#hong kong           
-61#!#fname16   #!#lname9    #!#shanghai            
-~~END~~
-
 
 -- update when target table not shown in JoinExpr
 UPDATE update_test_tbl
@@ -280,25 +132,9 @@ from update_test_tbl2 t2
 FULL JOIN update_test_tbl3 t3
 ON t2.lname = t3.lname;
 go
-~~ROW COUNT: 10~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-50#!#fname19   #!#lname1    #!#london              
-29#!#fname19   #!#lname10   #!#mumbai              
-34#!#fname19   #!#lname2    #!#paris               
-35#!#fname19   #!#lname3    #!#brussels            
-90#!#fname19   #!#lname4    #!#new york            
-26#!#fname19   #!#lname5    #!#los angeles         
-74#!#fname19   #!#lname6    #!#tokyo               
-44#!#fname19   #!#lname7    #!#oslo                
-19#!#fname19   #!#lname8    #!#hong kong           
-61#!#fname19   #!#lname9    #!#shanghai            
-~~END~~
-
 
 -- update with self join
 UPDATE update_test_tbl3
@@ -307,18 +143,9 @@ FROM update_test_tbl3 t1
 INNER JOIN update_test_tbl3 t2
 on t1.lname = t2.lname;
 go
-~~ROW COUNT: 3~~
-
 
 SELECT * FROM update_test_tbl3 ORDER BY lname;
 go
-~~START~~
-char#!#char
-lname12   #!#london    
-lname12   #!#tokyo     
-lname12   #!#mumbai    
-~~END~~
-
 
 UPDATE update_test_tbl SET lname='lname13'
 FROM update_test_tbl c
@@ -329,25 +156,9 @@ JOIN
 (SELECT lname, city, age from update_test_tbl) a
 on a.city = c.city;
 go
-~~ROW COUNT: 10~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-34#!#fname19   #!#lname13   #!#paris               
-35#!#fname19   #!#lname13   #!#brussels            
-26#!#fname19   #!#lname13   #!#los angeles         
-74#!#fname19   #!#lname13   #!#tokyo               
-44#!#fname19   #!#lname13   #!#oslo                
-90#!#fname19   #!#lname13   #!#new york            
-19#!#fname19   #!#lname13   #!#hong kong           
-50#!#fname19   #!#lname13   #!#london              
-61#!#fname19   #!#lname13   #!#shanghai            
-29#!#fname19   #!#lname13   #!#mumbai              
-~~END~~
-
 
 -- update when target table only appears in subselect
 UPDATE update_test_tbl SET lname='lname14'
@@ -357,25 +168,9 @@ JOIN
 (SELECT lname, city, age from update_test_tbl) a
 on a.lname = b.lname;
 go
-~~ROW COUNT: 10~~
-
 
 SELECT * FROM update_test_tbl ORDER BY lname;
 go
-~~START~~
-int#!#char#!#char#!#nchar
-34#!#fname19   #!#lname14   #!#paris               
-35#!#fname19   #!#lname14   #!#brussels            
-26#!#fname19   #!#lname14   #!#los angeles         
-74#!#fname19   #!#lname14   #!#tokyo               
-44#!#fname19   #!#lname14   #!#oslo                
-90#!#fname19   #!#lname14   #!#new york            
-19#!#fname19   #!#lname14   #!#hong kong           
-50#!#fname19   #!#lname14   #!#london              
-61#!#fname19   #!#lname14   #!#shanghai            
-29#!#fname19   #!#lname14   #!#mumbai              
-~~END~~
-
 
 DROP TABLE update_test_tbl;
 go
@@ -405,213 +200,93 @@ go
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x where x.a = 2;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
  
 -- multiple tables in FROM clause
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x, babel_2020_update_t2 y;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x, babel_2020_update_t2 y where x.a = 2;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x, babel_2020_update_t2 y where y.a = 2;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x, babel_2020_update_t2 y where x.a = y.a;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 -- JOIN clause
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x join babel_2020_update_t2 y on 1 = 1;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x join babel_2020_update_t2 y on x.a = 2;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x join babel_2020_update_t2 y on y.a = 2;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x join babel_2020_update_t2 y on x.a = y.a;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 -- subqueries
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from (select * from babel_2020_update_t1) x;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x, (select * from babel_2020_update_t1) y;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
 
 -- self join
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x, (select * from babel_2020_update_t1) y where x.a + 1 = y.a;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 y, (select * from babel_2020_update_t1) x where x.a + 1 = y.a;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x join babel_2020_update_t1 on babel_2020_update_t1.a + 1 = x.a;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 join babel_2020_update_t1 x on babel_2020_update_t1.a + 1 = x.a;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x, babel_2020_update_t1 y where x.a + 1 = y.a;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 -- outer joins
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x left outer join babel_2020_update_t2 on babel_2020_update_t2.a = x.a;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-
 
 -- will be tracked in BABEL-3910
 --exec babel_2020_update_ct;
 --update babel_2020_update_t1 set a = 100 from babel_2020_update_t2 left outer join babel_2020_update_t1 x on babel_2020_update_t2.a = x.a;
 --go
+
 -- null filters
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x where x.a is null;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t2 left outer join babel_2020_update_t1 x on x.a is null;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 -- updatable views
 drop view if exists babel_2020_update_v1;
@@ -619,18 +294,12 @@ go
 
 exec babel_2020_update_ct;
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
 
 create view babel_2020_update_v1 as select * from babel_2020_update_t1 where babel_2020_update_t1.a is not null;
 go
 
 update babel_2020_update_v1 set a = 100 from babel_2020_update_v1 x where x.a = 2;
 go
-~~ROW COUNT: 1~~
-
 
 drop view if exists babel_2020_update_v1;
 go
@@ -639,32 +308,14 @@ go
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x where x.a in (select a from babel_2020_update_t1 where babel_2020_update_t1.a = x.a);
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 2~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x where not exists (select a from babel_2020_update_t1 y where y.a + 1 = x.a);
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 2~~
-
 
 exec babel_2020_update_ct;
 update babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x where exists (select a from babel_2020_update_t1 y where y.a + 1 = x.a);
 go
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
 
 drop procedure if exists babel_2020_update_ct;
 drop table if exists babel_2020_update_t1;
@@ -679,12 +330,6 @@ INSERT INTO babel_update_tbl1 VALUES (1, 'left'), (2, 'inner');
 INSERT INTO babel_update_tbl2 VALUES (10, 'inner'), (30, 'right');
 INSERT INTO babel_update_tbl3 VALUES (1, 10), (3, 10);
 go
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 2~~
-
 CREATE VIEW babel_update_view AS SELECT * FROM babel_update_tbl1 WHERE babel_update_tbl1.a > 1;
 go
 CREATE SCHEMA babel_update_schema
@@ -692,14 +337,12 @@ go
 CREATE TABLE babel_update_schema.babel_update_tbl1(a INT);
 INSERT INTO babel_update_schema.babel_update_tbl1 VALUES (1), (2);
 go
-~~ROW COUNT: 2~~
-
-
 
 -------------------------------------------------------------
 -- UPDATE with alias as target
 -- BABEL-2020 already covers test cases to use alias in FROM
 -------------------------------------------------------------
+
 -- alias + plain update
 -- BABEL-2675
 BEGIN TRAN
@@ -708,14 +351,6 @@ FROM babel_update_tbl1 AS t1
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 GO
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-2#!#left
-3#!#inner
-~~END~~
-
 
 -- BABEL-3775
 BEGIN TRAN
@@ -724,14 +359,6 @@ FROM babel_update_tbl1 t1
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 GO
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-2#!#left
-3#!#inner
-~~END~~
-
 
 -- alias + subquery
 -- BABEL-1875
@@ -743,14 +370,6 @@ ON t1.b = t2.b
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 GO
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-3#!#inner
-2#!#left
-~~END~~
-
 
 -- alias + join
 BEGIN TRAN
@@ -761,14 +380,6 @@ ON t2.b = t1.b
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#varchar
-1#!#left
-10#!#inner
-~~END~~
-
 
 -- alias + self join
 -- BABEL-1330
@@ -780,14 +391,6 @@ ON t1.b = t2.b
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-3#!#inner
-2#!#left
-~~END~~
-
 
 -- alias + inner join
 -- BABEL-3091
@@ -799,14 +402,6 @@ ON t1.b = t2.b
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#varchar
-1#!#left
-10#!#inner
-~~END~~
-
 
 -- alias + non-ANSI inner join
 -- BABEL-3685
@@ -817,14 +412,6 @@ WHERE c > 1
 SELECT * FROM babel_update_tbl3
 ROLLBACK
 go
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#int
-10#!#10
-10#!#10
-~~END~~
-
 
 -- alias + outer join
 BEGIN TRAN
@@ -835,14 +422,6 @@ ON t2.b = t1.b
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-100#!#inner
-100#!#left
-~~END~~
-
 
 -- alias + semi join
 BEGIN TRAN
@@ -856,14 +435,6 @@ WHERE t1.a IN
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-100#!#left
-100#!#inner
-~~END~~
-
 
 -- alias + updatable view
 BEGIN TRAN
@@ -875,23 +446,6 @@ SELECT * FROM babel_update_view
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#varchar
-3#!#extra
-100#!#inner
-~~END~~
-
-~~START~~
-int#!#varchar
-1#!#left
-3#!#extra
-100#!#inner
-~~END~~
-
 
 -- alias + table ref with schema
 BEGIN TRAN
@@ -900,14 +454,6 @@ FROM babel_update_schema.babel_update_tbl1 t1
 SELECT * fROM babel_update_schema.babel_update_tbl1
 ROLLBACK
 GO
-~~ROW COUNT: 2~~
-
-~~START~~
-int
-2
-3
-~~END~~
-
 
 -------------------------------------------------------------
 -- Other test cases
@@ -918,14 +464,6 @@ FROM babel_update_tbl1
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-2#!#left
-2#!#inner
-~~END~~
-
 
 BEGIN TRAN
 UPDATE babel_update_tbl1 SET a = t1.a + 1
@@ -933,14 +471,6 @@ FROM babel_update_tbl1 t1
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-2#!#left
-3#!#inner
-~~END~~
-
 
 BEGIN TRAN
 UPDATE babel_update_tbl1 SET a = 100
@@ -948,14 +478,6 @@ FROM babel_update_tbl1, babel_update_tbl2 t2
 SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
-~~ROW COUNT: 2~~
-
-~~START~~
-int#!#varchar
-100#!#left
-100#!#inner
-~~END~~
-
 
 -- table ref with schema
 BEGIN TRAN
@@ -964,14 +486,6 @@ FROM babel_update_schema.babel_update_tbl1
 SELECT * FROM babel_update_schema.babel_update_tbl1
 ROLLBACK
 GO
-~~ROW COUNT: 2~~
-
-~~START~~
-int
-100
-100
-~~END~~
-
 
 -- target with schema
 BEGIN TRAN
@@ -979,32 +493,16 @@ UPDATE babel_update_schema.babel_update_tbl1 SET a = a + 1
 SELECT * fROM babel_update_schema.babel_update_tbl1
 ROLLBACK
 GO
-~~ROW COUNT: 2~~
-
-~~START~~
-int
-2
-3
-~~END~~
-
 
 -- should fail, same exposed names
 UPDATE babel_update_schema.babel_update_tbl1 SET a = 0
 FROM babel_update_tbl1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The objects "master_babel_update_schema.babel_update_tbl1" and "babel_update_tbl1" in the FROM clause have the same exposed names. Use correlation names to distinguish them.)~~
-
 
 -- should fail, same exposed names
 UPDATE babel_update_schema.babel_update_tbl1 SET a = 0
 FROM babel_update_tbl2 AS babel_update_tbl1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The correlation name 'babel_update_tbl1' has the same exposed name as table 'master_babel_update_schema.babel_update_tbl1'.)~~
-
 
 DROP VIEW babel_update_view
 go

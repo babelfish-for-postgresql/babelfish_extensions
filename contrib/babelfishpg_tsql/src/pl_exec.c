@@ -5072,8 +5072,8 @@ static void updateColumnUpdatedList(PLtsql_expr* expr, int i){
 		query->targetList;
 	if (query->rtable == NULL || targetList == NULL)
 		return;
-	rel = RelationIdGetRelation(((RangeTblEntry *)list_nth(query->rtable,0))->relid);
-	if (rel->rd_islocaltemp || !rel->rd_isvalid){
+	rel = RelationIdGetRelation(((RangeTblEntry *)list_nth(query->rtable,query->resultRelation-1))->relid);
+	if (!rel || rel->rd_islocaltemp || !rel->rd_isvalid){
 		RelationClose(rel);
 		return;
 	}
