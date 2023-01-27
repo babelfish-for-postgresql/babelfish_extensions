@@ -332,6 +332,11 @@ INSERT INTO babel_update_tbl3 VALUES (1, 10), (3, 10);
 go
 CREATE VIEW babel_update_view AS SELECT * FROM babel_update_tbl1 WHERE babel_update_tbl1.a > 1;
 go
+CREATE SCHEMA babel_update_schema
+go
+CREATE TABLE babel_update_schema.babel_update_tbl1(a INT);
+INSERT INTO babel_update_schema.babel_update_tbl1 VALUES (1), (2);
+go
 
 -------------------------------------------------------------
 -- UPDATE with alias as target
@@ -442,6 +447,14 @@ SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
 
+-- alias + table ref with schema
+BEGIN TRAN
+UPDATE t1 SET t1.a = a + 1
+FROM babel_update_schema.babel_update_tbl1 t1
+SELECT * fROM babel_update_schema.babel_update_tbl1
+ROLLBACK
+GO
+
 -------------------------------------------------------------
 -- Other test cases
 -------------------------------------------------------------
@@ -466,9 +479,37 @@ SELECT * FROM babel_update_tbl1
 ROLLBACK
 go
 
+-- table ref with schema
+BEGIN TRAN
+UPDATE babel_update_tbl1 SET a = 100
+FROM babel_update_schema.babel_update_tbl1
+SELECT * FROM babel_update_schema.babel_update_tbl1
+ROLLBACK
+GO
+
+-- target with schema
+BEGIN TRAN
+UPDATE babel_update_schema.babel_update_tbl1 SET a = a + 1
+SELECT * fROM babel_update_schema.babel_update_tbl1
+ROLLBACK
+GO
+
+-- should fail, same exposed names
+UPDATE babel_update_schema.babel_update_tbl1 SET a = 0
+FROM babel_update_tbl1
+GO
+
+-- should fail, same exposed names
+UPDATE babel_update_schema.babel_update_tbl1 SET a = 0
+FROM babel_update_tbl2 AS babel_update_tbl1
+GO
+
 DROP VIEW babel_update_view
 go
 DROP TABLE babel_update_tbl1
 DROP TABLE babel_update_tbl2
 DROP TABLE babel_update_tbl3
+DROP TABLE babel_update_schema.babel_update_tbl1
+go
+DROP SCHEMA babel_update_schema
 go

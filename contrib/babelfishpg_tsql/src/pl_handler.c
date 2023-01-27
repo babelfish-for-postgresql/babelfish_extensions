@@ -79,7 +79,6 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pl_explain.h"
-#include "tsql_analyze.h"
 
 #include "access/xact.h"
 

@@ -150,6 +150,11 @@ INSERT INTO babel_delete_tbl3 VALUES (1, 10), (3, 10);
 go
 CREATE VIEW babel_delete_view AS SELECT * FROM babel_delete_tbl1 WHERE babel_delete_tbl1.a > 1;
 go
+CREATE SCHEMA babel_delete_schema
+go
+CREATE TABLE babel_delete_schema.babel_delete_tbl1(a INT);
+INSERT INTO babel_delete_schema.babel_delete_tbl1 VALUES (1), (2);
+go
 
 -------------------------------------------------------------
 -- DELETE with alias as target
@@ -255,9 +260,37 @@ SELECT * FROM babel_delete_tbl1
 ROLLBACK
 go
 
+-- alias + table ref with schema
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_schema.babel_delete_tbl1 t1
+SELECT * fROM babel_delete_schema.babel_delete_tbl1
+ROLLBACK
+GO
+
+-- target with schema
+BEGIN TRAN
+DELETE babel_delete_schema.babel_delete_tbl1
+SELECT * fROM babel_delete_schema.babel_delete_tbl1
+ROLLBACK
+GO
+
+-- should fail, same exposed names
+DELETE babel_delete_schema.babel_delete_tbl1
+FROM babel_delete_tbl1
+GO
+
+-- should fail, same exposed names
+DELETE babel_delete_schema.babel_delete_tbl1
+FROM babel_delete_tbl2 AS babel_delete_tbl1
+GO
+
 DROP VIEW babel_delete_view
 go
 DROP TABLE babel_delete_tbl1
 DROP TABLE babel_delete_tbl2
 DROP TABLE babel_delete_tbl3
+DROP TABLE babel_delete_schema.babel_delete_tbl1
+go
+DROP SCHEMA babel_delete_schema
 go

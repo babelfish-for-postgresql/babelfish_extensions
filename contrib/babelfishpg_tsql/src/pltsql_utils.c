@@ -1154,4 +1154,3 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
 	pfree(schema_name);
 	return (db_id_from_schema == db_id);
 }
-

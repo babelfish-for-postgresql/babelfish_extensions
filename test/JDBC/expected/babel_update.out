@@ -687,6 +687,13 @@ go
 
 CREATE VIEW babel_update_view AS SELECT * FROM babel_update_tbl1 WHERE babel_update_tbl1.a > 1;
 go
+CREATE SCHEMA babel_update_schema
+go
+CREATE TABLE babel_update_schema.babel_update_tbl1(a INT);
+INSERT INTO babel_update_schema.babel_update_tbl1 VALUES (1), (2);
+go
+~~ROW COUNT: 2~~
+
 
 
 -------------------------------------------------------------
@@ -886,6 +893,22 @@ int#!#varchar
 ~~END~~
 
 
+-- alias + table ref with schema
+BEGIN TRAN
+UPDATE t1 SET t1.a = a + 1
+FROM babel_update_schema.babel_update_tbl1 t1
+SELECT * fROM babel_update_schema.babel_update_tbl1
+ROLLBACK
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+2
+3
+~~END~~
+
+
 -------------------------------------------------------------
 -- Other test cases
 -------------------------------------------------------------
@@ -934,9 +957,61 @@ int#!#varchar
 ~~END~~
 
 
+-- table ref with schema
+BEGIN TRAN
+UPDATE babel_update_tbl1 SET a = 100
+FROM babel_update_schema.babel_update_tbl1
+SELECT * FROM babel_update_schema.babel_update_tbl1
+ROLLBACK
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+100
+100
+~~END~~
+
+
+-- target with schema
+BEGIN TRAN
+UPDATE babel_update_schema.babel_update_tbl1 SET a = a + 1
+SELECT * fROM babel_update_schema.babel_update_tbl1
+ROLLBACK
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+2
+3
+~~END~~
+
+
+-- should fail, same exposed names
+UPDATE babel_update_schema.babel_update_tbl1 SET a = 0
+FROM babel_update_tbl1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The objects "master_babel_update_schema.babel_update_tbl1" and "babel_update_tbl1" in the FROM clause have the same exposed names. Use correlation names to distinguish them.)~~
+
+
+-- should fail, same exposed names
+UPDATE babel_update_schema.babel_update_tbl1 SET a = 0
+FROM babel_update_tbl2 AS babel_update_tbl1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The correlation name 'babel_update_tbl1' has the same exposed name as table 'master_babel_update_schema.babel_update_tbl1'.)~~
+
+
 DROP VIEW babel_update_view
 go
 DROP TABLE babel_update_tbl1
 DROP TABLE babel_update_tbl2
 DROP TABLE babel_update_tbl3
+DROP TABLE babel_update_schema.babel_update_tbl1
+go
+DROP SCHEMA babel_update_schema
 go
