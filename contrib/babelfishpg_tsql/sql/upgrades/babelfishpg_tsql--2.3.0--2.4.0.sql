@@ -49,6 +49,117 @@ CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
 
+-- deprecate old FOR XML/JSON functions
+ALTER FUNCTION sys.tsql_query_to_xml(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_deprecated_in_2_4_0');
+
+ALTER FUNCTION sys.tsql_query_to_xml_text(text, int, text, boolean, text) RENAME TO tsql_query_to_xml_text_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_xml_text_deprecated_in_2_4_0');
+
+ALTER FUNCTION sys.tsql_query_to_json_text(text, int, boolean, boolean, text) RENAME TO tsql_query_to_json_text_deprecated_in_2_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_query_to_json_text_deprecated_in_2_4_0');
+
+-- SELECT FOR XML
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
+    state INTERNAL
+)
+RETURNS XML AS
+'babelfishpg_tsql', 'tsql_query_to_xml_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
+    state INTERNAL
+)
+RETURNS NTEXT AS
+'babelfishpg_tsql', 'tsql_query_to_xml_text_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
+
+-- SELECT FOR JSON
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_json_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
+    state INTERNAL
+)
+RETURNS sys.NVARCHAR AS
+'babelfishpg_tsql', 'tsql_query_to_json_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_json_sfunc,
+    FINALFUNC = tsql_query_to_json_ffunc
+);
+
+CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
+AS $$
+BEGIN
+  IF sys.user_name() != 'dbo' THEN
+    RAISE EXCEPTION 'user does not have permission';
+  END IF;
+
+  IF lower("@resample") = 'resample' THEN
+    RAISE NOTICE 'ignoring resample option';
+  ELSIF lower("@resample") != 'no' THEN
+    RAISE EXCEPTION 'Invalid option name %', "@resample";
+  END IF;
+
+  ANALYZE;
+
+  CALL sys.printarg('Statistics for all tables have been updated. Refer logs for details.');
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(BIGINT,NUMERIC) TO PUBLIC;
@@ -274,6 +385,34 @@ GRANT EXECUTE ON FUNCTION sys.radians(SMALLINT) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
 RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		   CAST(
+			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
+                  ELSE c.relname END
+			 AS sys._ci_sysname) AS "TABLE_NAME",
+
+		   CAST(
+			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
+				  WHEN c.relkind = 'v' THEN 'VIEW'
+				  ELSE null END
+			 AS varchar(10)) AS "TABLE_TYPE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+
+	WHERE c.relkind IN ('r', 'v', 'p')
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = cast(sys.db_id() as oid)
+		AND (NOT c.relname = 'sysdatabases');
+
+GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
+
 CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SEQUENCE_CATALOG",
             CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
@@ -820,6 +959,18 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
+
+CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.sysname, 
+	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
+AS 'babelfishpg_tsql', 'sp_set_session_context'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
+	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
+GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
+
+
 /* set sys functions as STABLE */
 ALTER FUNCTION sys.schema_id() STABLE;
 ALTER FUNCTION sys.schema_name() STABLE;
@@ -1137,6 +1288,11 @@ ALTER FUNCTION sys.user_name_sysname() STABLE;
 ALTER FUNCTION sys.system_user() STABLE;
 ALTER FUNCTION sys.session_user() STABLE;
 ALTER FUNCTION UPDATE (TEXT) STABLE;
+
+CREATE OR REPLACE FUNCTION sys.OBJECT_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
+RETURNS sys.SYSNAME AS
+'babelfishpg_tsql', 'object_name'
+LANGUAGE C STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

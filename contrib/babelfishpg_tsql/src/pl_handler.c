@@ -2505,6 +2505,22 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								location = defel->location;
 								user_options = lappend(user_options, defel);
 							}
+							else if (strcmp(defel->defname, "rolemembers") == 0)
+							{
+								RoleSpec *login = (RoleSpec *) linitial((List *) defel->arg);
+								if (strchr(login->rolename, '\\') != NULL)
+								{
+									/*
+									 * If login->rolename contains '\' then treat it as windows login.
+									 */
+									char *upn_login = convertToUPN(login->rolename);
+									if (upn_login != login->rolename)
+									{
+										pfree(login->rolename);
+										login->rolename = upn_login;
+									}
+								}
+							}
 						}
 
 						foreach(option, user_options)

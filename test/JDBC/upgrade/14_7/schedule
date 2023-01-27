@@ -140,8 +140,11 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
 forjson
+forjson-subquery
+forjson-datatypes
+forxml
+forxml-subquery
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -156,6 +159,7 @@ Test-sp_droprole
 Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
+Test-sp_set_session_context
 Test-sp_helpuser
 TestTableType
 BABEL-CROSS-DB
@@ -372,3 +376,4 @@ sys-all_sql_modules
 sys-sql_modules
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
+BABEL_OBJECT_NAME

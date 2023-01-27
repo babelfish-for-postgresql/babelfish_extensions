@@ -36,6 +36,7 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
+forxml
 sys-assembly_types
 sys-database_mirroring
 sys-databases
@@ -325,3 +326,4 @@ sys-all_sql_modules_before-14_7-or-15_2
 sys-sql_modules_before-14_7-or-15_2
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
+BABEL_OBJECT_NAME
