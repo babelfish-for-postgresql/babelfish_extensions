@@ -59,6 +59,7 @@
 #include "rolecmds.h"
 #include "session.h"
 #include "multidb.h"
+#include "tsql_analyze.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -85,7 +86,7 @@ static Node* transform_like_in_add_constraint (Node* node);
 /*****************************************
  * 			Analyzer Hooks
  *****************************************/
-static void pltsql_post_set_target_table(ParseState *pstate, Node *stmt, CmdType command);
+static int pltsql_pre_transform_from_clause(ParseState *pstate, Node *stmt, CmdType command);
 static void set_output_clause_transformation_info(bool enabled);
 static bool get_output_clause_transformation_info(void);
 static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query);
@@ -149,7 +150,6 @@ static PlannedStmt * pltsql_planner_hook(Query *parse, const char *query_string,
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
-static post_set_target_table_hook_type prev_post_set_target_table_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
 static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
@@ -192,9 +192,7 @@ InstallExtendedHooks(void)
 	prev_core_yylex_hook = core_yylex_hook;
 	core_yylex_hook = pgtsql_core_yylex;
 
-	prev_post_set_target_table_hook = post_set_target_table_hook;
-	post_set_target_table_hook = pltsql_post_set_target_table;
-
+	pre_transform_from_clause_hook = pltsql_pre_transform_from_clause;
 	get_output_clause_status_hook = get_output_clause_transformation_info;
 	pre_output_clause_transformation_hook = output_update_self_join_transformation;
 
@@ -286,7 +284,7 @@ UninstallExtendedHooks(void)
 	object_access_hook = prev_object_access_hook;
 
 	core_yylex_hook = prev_core_yylex_hook;
-	post_set_target_table_hook = prev_post_set_target_table_hook;
+	pre_transform_from_clause_hook = NULL;
 	get_output_clause_status_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
@@ -3203,39 +3201,69 @@ transform_like_in_add_constraint (Node* node)
 	return pltsql_predicate_transformer(node);
 }
 
-/*
- * This hook is to clean up duplicate table references in UPDATE/DELETE statement, 
- * after setting target table and before analyzing FROM clause.
- * This resolves the namespace duplication error raised in FROM clause when running
- * TSQL-style UPDATE/DELETE command.
- */
-static void
-pltsql_post_set_target_table(ParseState *pstate, Node *stmt, CmdType command)
+static int
+pltsql_pre_transform_from_clause(ParseState *pstate, Node *stmt, CmdType command)
 {
-	if (prev_post_set_target_table_hook)
-		prev_post_set_target_table_hook(pstate, stmt, command);
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
-	if (output_update_transformation)
-		return;
+	RangeVar *target = NULL;
+	RangeVar *relation;
+	bool inh;
+	AclMode requiredPerms;
 
 	switch (command)
 	{
+		/*
+		 * For DELETE and UPDATE statement, we need to properly handle target table
+		 * based on FROM clause and clean up the duplicate table references.
+		 */
 		case CMD_DELETE:
 		{
 			DeleteStmt *delete_stmt = (DeleteStmt *) stmt;
-			pltsql_update_table_reference(delete_stmt->relation, delete_stmt->usingClause, pstate);
+			
+			relation = delete_stmt->relation;
+			inh = delete_stmt->relation->inh;
+			requiredPerms = ACL_DELETE;
+
+			if (sql_dialect != SQL_DIALECT_TSQL || output_update_transformation)
+				break;
+
+			target = pltsql_get_target_table(relation, delete_stmt->usingClause);
+
 			break;
 		}
 		case CMD_UPDATE:
 		{
 			UpdateStmt *update_stmt = (UpdateStmt *) stmt;
-			pltsql_update_table_reference(update_stmt->relation, update_stmt->fromClause, pstate);
+
+			relation = update_stmt->relation;
+			inh = update_stmt->relation->inh;
+			requiredPerms = ACL_UPDATE;
+
+			if (sql_dialect != SQL_DIALECT_TSQL)
+				break;
+
+			if (!output_update_transformation)
+				target = pltsql_get_target_table(relation, update_stmt->fromClause);
+
+			/* Special handling when target table contains a rowversion column */
+			if (target)
+				handle_rowversion_target_in_update_stmt(target, update_stmt);
+			else
+				handle_rowversion_target_in_update_stmt(relation, update_stmt);
+
 			break;
 		}
 		default:
-			break;
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Unexpected command type")));
 	}
+
+	if (target)
+	{
+		int res = setTargetTable(pstate, target, inh, false, requiredPerms);
+		pstate->p_rtable = NIL;
+		return res;
+	}
+
+	return setTargetTable(pstate, relation, inh, true, requiredPerms);
 }

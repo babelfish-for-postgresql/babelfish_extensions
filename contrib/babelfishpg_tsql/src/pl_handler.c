@@ -79,6 +79,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "tsql_analyze.h"
 
 #include "access/xact.h"
 
@@ -587,6 +588,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		 * all CTEs.
 		 * CTE can only exist four types of DMLs: DELETE/INSERT/SELECT/UPDATE.
 		 */
+/*
 		case T_DeleteStmt:
 		{
 			DeleteStmt *delete_stmt = (DeleteStmt *) parseTree->stmt;
@@ -617,20 +619,17 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			TupleDesc tupdesc;
 			AttrNumber attr_num;
 
-			pltsql_update_target_table(&(updstmt->relation), updstmt->fromClause);
-			if (updstmt->withClause)
-				pltsql_cte_update_target_table(updstmt->withClause);
-
 			relid = RangeVarGetRelid(updstmt->relation, NoLock, false);
 			rel = RelationIdGetRelation(relid);
 			tupdesc = RelationGetDescr(rel);
-
+*/
 			/*
 			* If target table contains a rowversion column, add a new ResTarget node
 			* with a SetToDefault expression into statement's targetList. This will
 			* ensure that the rows which are going to be updated will have new rowversion
 			* value.
 			*/
+/*
 			for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
 			{
 				Form_pg_attribute attr;
@@ -662,6 +661,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			RelationClose(rel);
 			break;
 		}
+*/
 		case T_GrantStmt:
 		{
 			/* detect object type */

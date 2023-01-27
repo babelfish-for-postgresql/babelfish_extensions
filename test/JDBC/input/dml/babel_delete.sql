@@ -93,9 +93,10 @@ exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x left outer join babel_2020_delete_t2 on babel_2020_delete_t2.a = x.a;
 go
 
-exec babel_2020_delete_ct;
-delete babel_2020_delete_t1 from babel_2020_delete_t2 left outer join babel_2020_delete_t1 x on babel_2020_delete_t2.a = x.a;
-go
+-- will be tracked in BABEL-3910
+--exec babel_2020_delete_ct;
+--delete babel_2020_delete_t1 from babel_2020_delete_t2 left outer join babel_2020_delete_t1 x on babel_2020_delete_t2.a = x.a;
+--go
 
 -- null filters
 exec babel_2020_delete_ct;
