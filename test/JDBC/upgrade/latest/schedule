@@ -364,6 +364,7 @@ sys_server_principals_dep
 sys_database_principals_dep
 atn2
 app_name
+str
 ISC-sequences
 jira-BABEL-3504-upgrade
 case_insensitive_collation
