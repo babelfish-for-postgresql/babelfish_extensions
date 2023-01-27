@@ -382,5 +382,6 @@ AVG-Aggregate-Dep
 bbf_view_def
 BABEL_OBJECT_ID
 BABEL-3802
-Babel_domain_mapping_test
 BABEL_OBJECT_NAME
+Test_user_from_win_login
+Babel_domain_mapping_test
