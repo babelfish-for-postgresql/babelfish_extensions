@@ -60,6 +60,7 @@
 #include "rolecmds.h"
 #include "session.h"
 #include "multidb.h"
+#include "tsql_analyze.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -86,10 +87,11 @@ static Node* transform_like_in_add_constraint (Node* node);
 /*****************************************
  * 			Analyzer Hooks
  *****************************************/
+static int pltsql_pre_transform_from_clause(ParseState *pstate, Node *stmt, CmdType command);
 static void set_output_clause_transformation_info(bool enabled);
 static bool get_output_clause_transformation_info(void);
-static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, CmdType command);
-static void handle_returning_qualifiers(CmdType command, List *returningList, ParseState *pstate);
+static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query);
+static void handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstate);
 static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, ColumnDef *column, List **alist);
 static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist);
@@ -193,6 +195,7 @@ InstallExtendedHooks(void)
 	prev_core_yylex_hook = core_yylex_hook;
 	core_yylex_hook = pgtsql_core_yylex;
 
+	pre_transform_from_clause_hook = pltsql_pre_transform_from_clause;
 	get_output_clause_status_hook = get_output_clause_transformation_info;
 	pre_output_clause_transformation_hook = output_update_self_join_transformation;
 
@@ -287,6 +290,7 @@ UninstallExtendedHooks(void)
 	object_access_hook = prev_object_access_hook;
 
 	core_yylex_hook = prev_core_yylex_hook;
+	pre_transform_from_clause_hook = NULL;
 	get_output_clause_status_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
@@ -491,7 +495,7 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 }
 
 static Node *
-output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, CmdType command)
+output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query)
 {
 	Node	    *qual = NULL, *pre_transform_qual = NULL;
 	RangeVar	*from_table = NULL;
@@ -560,7 +564,7 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Cmd
 	else
 		qual = pre_transform_qual;
 
-	handle_returning_qualifiers(command, stmt->returningList, pstate);
+	handle_returning_qualifiers(query, stmt->returningList, pstate);
 	return qual;
 }
 
@@ -577,7 +581,7 @@ get_output_clause_transformation_info(void)
 }
 
 static void
-handle_returning_qualifiers(CmdType command, List *returningList, ParseState *pstate)
+handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstate)
 {
 	ListCell   			*o_target, *expr;
 	Node	   			*field1;
@@ -586,11 +590,24 @@ handle_returning_qualifiers(CmdType command, List *returningList, ParseState *ps
 	int 				levels_up;
 	bool 				inserted = false, deleted = false;
 	List				*queue = NIL;
+	CmdType 			command = query->commandType;
 
 	if (prev_pre_transform_returning_hook)
-		prev_pre_transform_returning_hook(command, returningList, pstate);
+		prev_pre_transform_returning_hook(query, returningList, pstate);
 
-	if (sql_dialect != SQL_DIALECT_TSQL || returningList == NIL)
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	/* 
+ 	 * For UPDATE/DELETE statement, we'll need to update the result relation index after 
+ 	 * analyzing FROM clause and getting the final range table entries.
+ 	 * post_parse_analyze hook, won't be triggered by CTE parse analyze. So we perform the
+ 	 * operation here instead, which will be triggered by all INSERT/UPDATE/DELETE statements.
+ 	 */
+	if (command == CMD_DELETE || command == CMD_UPDATE)
+		pltsql_update_query_result_relation(query, pstate->p_target_relation, pstate->p_rtable);
+
+	if (returningList == NIL)
 		return;
 
 	if (command == CMD_INSERT || command == CMD_DELETE)
@@ -1126,8 +1143,10 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 	/* In the TSQL dialect construct an AS clause for each target list
 	 * item that is a column using the capitalization from the sourcetext.
 	 */
-	if (sql_dialect == SQL_DIALECT_TSQL &&
-		exprKind == EXPR_KIND_SELECT_TARGET)
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	if (exprKind == EXPR_KIND_SELECT_TARGET)
 	{
 		int alias_len = 0;
 		const char *colname_start;
@@ -1222,6 +1241,189 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 
 			res->name = alias;
 		}
+	}
+	/* Update table set qualified column name, resolve qualifiers here */
+	else if (exprKind == EXPR_KIND_UPDATE_SOURCE && res->indirection)
+	{
+		Oid			relid = InvalidOid;
+		Oid			targetRelid = InvalidOid;
+		char	   *relname = NULL;
+		char	   *schemaname = NULL;
+		
+		switch(list_length(res->indirection))
+		{
+			case 1:
+				/* update t set x.y, try to resolve as t.c if it's not x[i] */
+				if(!IsA(linitial(res->indirection), A_Indices))
+				{
+					relname = res->name;
+				}
+				break;
+			case 2:
+				/* if it's set x.y[i], try to resolve as t.c[i] */
+				if(IsA(lsecond(res->indirection), A_Indices))
+				{
+					relname = res->name;
+				}
+				/* otherwise try to resolve as s.t.c. Do not resolve as t.c.f
+				 * because we don't want to extend the legacy case c.f to have
+				 * qualifiers.
+				 */
+				else
+				{
+					schemaname = res->name;
+					relname = strVal(linitial(res->indirection));
+				}
+				break;
+			case 3:
+				/* if it's set x.y.z[i], try to resolve as s.t.c[i]. Do not
+				 * resolve as t.c.f.ff because we don't want to extend the
+				 * legecy case c.f.ff to have qualifiers.
+				 */
+				if(IsA(lthird(res->indirection), A_Indices))
+				{
+					schemaname = res->name;
+					relname = strVal(linitial(res->indirection));
+				}
+				break;
+			default:
+				break;
+		}
+
+		/* Get relid either by s.t or t */
+		if(schemaname && relname)
+		{
+			relid = RangeVarGetRelid(makeRangeVar(schemaname, relname, res->location),
+										NoLock,
+										true);
+		}
+		else if(relname)
+		{
+			relid = RelnameGetRelid(relname);
+		}
+		targetRelid = RelationGetRelid(pstate->p_target_relation);
+		/* If relid matches or alias matches, try to resolve the qualifiers */
+		if(relname
+			/* relid matches */
+			&& (targetRelid == relid
+				/* or alias name matches */
+				|| (!schemaname
+					&& strcmp(pstate->p_target_nsitem->p_rte->eref->aliasname,relname) == 0)))
+		{
+			/* If set x.y... happens to match legacy case set c.f..., treat it as c.f... for
+			 * backward compatability.
+			 */
+			AttrNumber x_attnum = get_attnum(targetRelid, res->name);
+			bool	   isLegacy = false;
+			Oid		   atttype = get_atttype(targetRelid, x_attnum);
+			/* If x is a column of target table t and x is a composite type */
+			if(x_attnum != InvalidAttrNumber
+				&& get_typtype(atttype) == TYPTYPE_COMPOSITE)
+			{
+				char *subfield = strVal(linitial(res->indirection));
+				Oid	  x_relid = get_typ_typrelid(atttype);
+				AttrNumber y_attnum = get_attnum(x_relid, subfield);
+				/* Check if y is a subfield of composite type column x */
+				if(y_attnum != InvalidAttrNumber)
+				{
+					/* set c.f.z, further check if it is c.f.ff */
+					if(schemaname)
+					{
+						atttype = get_atttype(x_relid, y_attnum);
+						/* If y is composite type*/
+						if(get_typtype(atttype) == TYPTYPE_COMPOSITE)
+						{
+							char *subsubfield = strVal(lsecond(res->indirection));
+							Oid	  y_relid = get_typ_typrelid(atttype);
+							AttrNumber z_attnum = get_attnum(y_relid, subsubfield);
+							/* if z is a subfield of y */
+							if(z_attnum != InvalidAttrNumber)
+							{
+								/*
+								 * if z is also a column of the target table, then we face an ambiguity here: should do we interpret it (x.y.z) as
+								 * s.t.z or c.f.ff? We don't know, log an ERROR to avoid silent data corruption.
+								 */
+								z_attnum = get_attnum(targetRelid, subsubfield);
+								if(z_attnum != InvalidAttrNumber)
+								{
+									ereport(ERROR,
+												(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+													errmsg("\"%s\" can be interpreted either as a schema name or a column name.",
+															res->name),
+													errdetail("\"%s.%s\" has column \"%s\" that is a composite type with \"%s\" as a subfield, " \
+															"which is a composite type with \"%s\" as a subfield, as well as column \"%s\".",
+																res->name,
+																subfield,
+																res->name,
+																subfield,
+																subsubfield,
+																res->name),
+													errhint("Use a table alias other than \"%s.%s\" to remove the ambiguity.",
+																res->name,
+																subfield),
+													parser_errposition(pstate, exprLocation((Node *)res))));
+								}
+								else
+								{
+									elog(DEBUG1,
+											"\"%s\" will be interpreted as a column name because it has a composite type and \"%s\" is a subfield "
+											"of \"%s\" and \"%s\" is a subfield of \"%s\".",
+											res->name, subfield, res->name, subsubfield, subfield);
+									isLegacy = true;
+								}
+							}
+						}
+					}
+					/* c.f */
+					else
+					{
+						/*
+						 * if y is also a column of the target table, then we face an ambiguity here: should do we interpret it (x.y) as
+						 * t.y or c.y? We don't know, log an ERROR to avoid silent data corruption.
+						 */
+						y_attnum = get_attnum(targetRelid, subfield);
+						if(y_attnum != InvalidAttrNumber)
+						{
+							ereport(ERROR,
+										(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+											errmsg("\"%s\" can be interpreted either as a table name or a column name.",
+													res->name),
+											errdetail("\"%s\" has column \"%s\" that is a composite type with \"%s\" as a subfield, " \
+													"as well as column \"%s\".",
+														res->name,
+														res->name,
+														subfield,
+														subfield),
+											errhint("Use a table alias other than \"%s\" to remove the ambiguity.",
+														res->name),
+											parser_errposition(pstate, exprLocation((Node *)res))));
+						}
+						else
+						{
+							elog(DEBUG1,
+									"\"%s\" will be interpreted as a column name because it has a composite type and \"%s\" is a subfield of \"%s\".",
+									res->name, subfield, res->name);
+							isLegacy = true;
+						}
+					}
+				}
+			}
+			/* If it's not the legacy case then it's safe to resolve x.y... as qualified name */
+			if(!isLegacy)
+			{
+				if(schemaname)
+				{
+					res->name = strVal(lsecond(res->indirection));
+					res->indirection = list_copy_tail(res->indirection,2);
+				}
+				else
+				{
+					res->name = strVal(linitial(res->indirection));
+					res->indirection = list_copy_tail(res->indirection,1);
+				}
+			}
+		}
+		/* Otherwise keep the ResTarget as is */
 	}
 }
 
@@ -3080,4 +3282,71 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 					 errmsg("The scale %d for \'%s\' datatype must be within the range 0 to precision %d",
 						 scale[1], dataTypeName, scale[0])));
 	}
+}
+
+static int
+pltsql_pre_transform_from_clause(ParseState *pstate, Node *stmt, CmdType command)
+{
+	RangeVar *target = NULL;
+	RangeVar *relation;
+	bool inh;
+	AclMode requiredPerms;
+
+	switch (command)
+	{
+		/*
+		 * For DELETE and UPDATE statement, we need to properly handle target table
+		 * based on FROM clause and clean up the duplicate table references.
+		 */
+		case CMD_DELETE:
+		{
+			DeleteStmt *delete_stmt = (DeleteStmt *) stmt;
+			
+			relation = delete_stmt->relation;
+			inh = delete_stmt->relation->inh;
+			requiredPerms = ACL_DELETE;
+
+			if (sql_dialect != SQL_DIALECT_TSQL || output_update_transformation)
+				break;
+
+			target = pltsql_get_target_table(relation, delete_stmt->usingClause);
+
+			break;
+		}
+		case CMD_UPDATE:
+		{
+			UpdateStmt *update_stmt = (UpdateStmt *) stmt;
+
+			relation = update_stmt->relation;
+			inh = update_stmt->relation->inh;
+			requiredPerms = ACL_UPDATE;
+
+			if (sql_dialect != SQL_DIALECT_TSQL)
+				break;
+
+			if (!output_update_transformation)
+				target = pltsql_get_target_table(relation, update_stmt->fromClause);
+
+			/* Special handling when target table contains a rowversion column */
+			if (target)
+				handle_rowversion_target_in_update_stmt(target, update_stmt);
+			else
+				handle_rowversion_target_in_update_stmt(relation, update_stmt);
+
+			break;
+		}
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Unexpected command type")));
+	}
+
+	if (target)
+	{
+		int res = setTargetTable(pstate, target, inh, false, requiredPerms);
+		pstate->p_rtable = NIL;
+		return res;
+	}
+
+	return setTargetTable(pstate, relation, inh, true, requiredPerms);
 }

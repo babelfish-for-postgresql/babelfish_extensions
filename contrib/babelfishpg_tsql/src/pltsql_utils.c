@@ -1148,6 +1148,7 @@ split_object_name(char *name)
 }
 
 
+
 /*
  * is_schema_from_db
  *		Given schema_oid and db_id, check if schema belongs to provided database id.
