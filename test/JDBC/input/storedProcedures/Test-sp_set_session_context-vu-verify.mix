@@ -1,0 +1,231 @@
+-- tsql
+-- Basic Case: Store and Load various types
+EXEC sys.sp_set_session_context 'foo', 'bar'
+go
+
+SELECT sys.session_context(N'foo')
+go
+
+EXEC sp_set_session_context 'foo', 10
+go
+
+SELECT SESSION_CONTEXT(N'FOO')
+go
+
+EXEC sp_set_session_context 'decimal', 11.5
+go
+
+SELECT session_context('decimal')
+go
+
+EXEC sp_set_session_context 'nvarchar', N'mynvarchar'
+go
+
+SELECT session_context('nvarchar')
+go
+
+EXEC sp_set_session_context 'MONEY', $123.456
+go
+
+SELECT session_context('money')
+go
+
+DECLARE @val sql_variant = CAST(1 AS sql_variant);
+EXEC sp_set_session_context 'sql_variant', @val;
+GO
+
+SELECT session_context('sql_variant');
+GO
+
+DECLARE @val sql_variant = CAST(1 AS int);
+EXEC sp_set_session_context 'sql_variant_int', @val;
+GO
+
+SELECT sql_variant_property(session_context('sql_variant_int'), 'BaseType');
+GO
+
+-- Remove Item
+EXEC sp_set_session_context 'money', NULL
+go
+
+SELECT session_context('money')
+go
+
+-- Remove Missing
+EXEC sp_set_session_context 'missing', NULL
+go
+
+SELECT session_context('missing')
+go
+
+-- Multiple Sessions
+CREATE LOGIN session_context_1 WITH PASSWORD = 'abc';
+GO
+
+CREATE LOGIN session_context_2 WITH PASSWORD = 'abc';
+GO
+
+-- tsql user=session_context_1 password=abc
+SELECT SESSION_CONTEXT('foo')
+go
+
+EXEC sp_set_session_context 'foo', 'session1'
+go
+
+SELECT SESSION_CONTEXT('foo')
+go
+
+-- tsql user=session_context_2 password=abc
+SELECT SESSION_CONTEXT('foo')
+go
+
+EXEC sp_set_session_context 'foo', 'session2'
+go
+
+SELECT SESSION_CONTEXT('foo')
+go
+
+-- tsql
+SELECT SESSION_CONTEXT('foo')
+go
+
+-- Missing Items
+SELECT sys.session_context('missing')
+go
+
+-- Input Testing
+EXEC sp_set_session_context '', 'emptystring'
+go
+
+SELECT sys.session_context('')
+go
+
+EXEC sp_set_session_context NULL, 'nullInput'
+go
+
+SELECT sys.session_context(NULL)
+go
+
+declare @key nvarchar(4000) = cast (REPLICATE('a', 128) as nvarchar(4000));
+EXEC sp_set_session_context @key, '128 chars';
+SELECT sys.session_context(@key)
+go
+
+declare @key nvarchar(4000) = cast (REPLICATE('a', 129) as nvarchar(4000));
+EXEC sp_set_session_context @key, '129 chars';
+SELECT sys.session_context(@key)
+go
+
+declare @key nvarchar(4000) = cast (REPLICATE('あ', 128) as nvarchar(4000));
+EXEC sp_set_session_context @key, 1;
+select session_context(@key);
+go
+
+declare @key nvarchar(4000) = cast (REPLICATE('あ', 129) as nvarchar(4000));
+EXEC sp_set_session_context @key, 1;
+select session_context(@key);
+go
+
+-- Ensures that we are allocating enough space to store multi-byte characters
+declare @key nvarchar(4000) = cast (REPLICATE('あ', 128) as nvarchar(4000));
+declare @key1 nvarchar(4000) = cast (REPLICATE('あ', 127) as nvarchar(4000));
+EXEC sp_set_session_context @key, 1;
+select session_context(@key1);
+go
+
+EXEC sp_set_session_context '¨ © ª Ć ć Ĉ ĉ Ċ ċ ª Θ Ж ऌ ฒ', 'ஐ ஒ ↙ ↚ ɝ ɞ ʿ'
+go
+
+SELECT CAST( sys.session_context(N'¨ © ª Ć ć Ĉ ĉ Ċ ċ ª Θ Ж ऌ ฒ') AS NVARCHAR);
+go
+
+declare @val varchar(8000) = cast (REPLICATE('a', 8000) as varchar(8000));
+EXEC sp_set_session_context 'long_val', @val
+SELECT case when CAST( sys.session_context(N'long_val') AS varchar(8000)) = @val  then 'true' else 'false' end
+GO
+
+declare @val varchar(8000) = cast (REPLICATE('あ', 8000) as varchar(8000));
+EXEC sp_set_session_context 'long_val_unicode', @val
+SELECT case when CAST( session_context(N'long_val_unicode') AS varchar(8000)) = @val then 'true' else 'false' end
+GO
+
+EXEC sp_set_session_context 'ÀÀ', 'accents';
+go
+
+SELECT CAST(session_context(N'àà') AS NVARCHAR);
+go
+
+SELECT CAST(session_context(N'áá') AS NVARCHAR);
+go
+
+-- Read Only
+EXEC sp_set_session_context 'read_only', 10, 1
+go
+
+SELECT sys.session_context('read_only')
+go
+
+EXEC sp_set_session_context 'read_only', 15
+go
+
+SELECT sys.session_context('read_only')
+go
+
+EXEC sp_set_session_context 'read_only', NULL
+go
+
+SELECT sys.session_context('read_only')
+go
+
+-- Transactions
+begin transaction
+go
+
+exec sp_set_session_context 'in_txn', 11
+go
+
+SELECT sys.session_context('in_txn')
+go
+
+rollback transaction
+go
+
+SELECT sys.session_context('in_txn')
+go
+
+-- Many Entries
+declare @i int = 0
+WHILE @i < 1000 BEGIN
+    DECLARE @key NVARCHAR(128) = CAST (@i AS VARCHAR(128));
+    EXEC sp_set_session_context @key, 'value';
+    set @i = @i + 1;
+END
+GO
+
+select session_context(N'500')
+GO
+
+select session_context(N'999')
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'session_context_1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'session_context_2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN session_context_1;
+DROP LOGIN session_context_2;
+go
