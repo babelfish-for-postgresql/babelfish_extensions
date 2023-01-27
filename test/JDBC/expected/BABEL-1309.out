@@ -53,6 +53,10 @@ go
 -- check execution from psql
 call sys.sp_updatestats();
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Statistics for all tables have been updated. Refer logs for details.  Server SQLState: 00000)~~
+
 
 -- tsql
 create database db1;

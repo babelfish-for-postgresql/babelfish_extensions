@@ -47,11 +47,14 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	pgtsql_base_yy_extra_type yyextra;
 	int			yyresult;
 	List	*raw_parsetree_list;
+	instr_time	parseStart;
+	instr_time	parseEnd;
 	/* 
 	 * parse identifiers case-insensitively if the database collation is CI_AS
 	 */
 	pltsql_case_insensitive_identifiers = tsql_is_server_collation_CI_AS();
-	
+	INSTR_TIME_SET_CURRENT(parseStart);
+
 	/* initialize the flex scanner */
 	yyscanner = pgtsql_scanner_init(str, &yyextra.core_yy_extra,
 							 &pgtsql_ScanKeywords, pgtsql_ScanKeywordTokens);
@@ -95,6 +98,9 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	    pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr))
 		(*pltsql_protocol_plugin_ptr)->stmt_needs_logging = true;
 
+	INSTR_TIME_SET_CURRENT(parseEnd);
+	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
+	elog(DEBUG1, "BISON Query Parse Time for query: %s | %f ms", str, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
 	return raw_parsetree_list;
 }
 
