@@ -11,6 +11,30 @@ GO
 EXECUTE BABEL_3914_vu_prepare_t_p2
 GO
 
+SELECT * FROM BABEL_3914_vu_prepare_t_v1
+GO
+
+SELECT * FROM BABEL_3914_vu_prepare_t_v2
+GO
+
+SELECT * FROM BABEL_3914_vu_prepare_t_v3
+GO
+
+SELECT * FROM BABEL_3914_vu_prepare_t_v4
+GO
+
+EXECUTE BABEL_3914_vu_prepare_t_p3
+GO
+
+EXECUTE BABEL_3914_vu_prepare_t_p4
+GO
+
+EXECUTE BABEL_3914_vu_prepare_t_p5
+GO
+
+EXECUTE BABEL_3914_vu_prepare_t_p6
+GO
+
 ---Radians Test
 SELECT * FROM BABEL_3914_vu_prepare_t_3
 GO
@@ -18,8 +42,34 @@ GO
 SELECT * FROM BABEL_3914_vu_prepare_t_4
 GO
 
-EXECUTE BABEL_3914_vu_prepare_t_p3
+EXECUTE BABEL_3914_vu_prepare_t_p7
 GO
 
-EXECUTE BABEL_3914_vu_prepare_t_p4
+EXECUTE BABEL_3914_vu_prepare_t_p8
+GO
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_v5
+GO
+
+SELECT * FROM BABEL_3914_vu_prepare_t_v6
+GO
+
+SELECT * FROM BABEL_3914_vu_prepare_t_v7
+GO
+
+SELECT * FROM BABEL_3914_vu_prepare_t_v8
+GO
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p9
+GO
+
+EXECUTE BABEL_3914_vu_prepare_t_p10
+GO
+
+EXECUTE BABEL_3914_vu_prepare_t_p11
+GO
+
+EXECUTE BABEL_3914_vu_prepare_t_p12
 GO
