@@ -86,7 +86,7 @@ static Node* transform_like_in_add_constraint (Node* node);
 /*****************************************
  * 			Analyzer Hooks
  *****************************************/
-static int pltsql_pre_transform_from_clause(ParseState *pstate, Node *stmt, CmdType command);
+static int pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType command);
 static void set_output_clause_transformation_info(bool enabled);
 static bool get_output_clause_transformation_info(void);
 static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query);
@@ -192,7 +192,7 @@ InstallExtendedHooks(void)
 	prev_core_yylex_hook = core_yylex_hook;
 	core_yylex_hook = pgtsql_core_yylex;
 
-	pre_transform_from_clause_hook = pltsql_pre_transform_from_clause;
+	set_target_table_alternative_hook = pltsql_set_target_table_alternative;
 	get_output_clause_status_hook = get_output_clause_transformation_info;
 	pre_output_clause_transformation_hook = output_update_self_join_transformation;
 
@@ -284,7 +284,7 @@ UninstallExtendedHooks(void)
 	object_access_hook = prev_object_access_hook;
 
 	core_yylex_hook = prev_core_yylex_hook;
-	pre_transform_from_clause_hook = NULL;
+	set_target_table_alternative_hook = NULL;
 	get_output_clause_status_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
@@ -3202,7 +3202,7 @@ transform_like_in_add_constraint (Node* node)
 }
 
 static int
-pltsql_pre_transform_from_clause(ParseState *pstate, Node *stmt, CmdType command)
+pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType command)
 {
 	RangeVar *target = NULL;
 	RangeVar *relation;
