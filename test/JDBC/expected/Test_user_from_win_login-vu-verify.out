@@ -16,7 +16,7 @@ select login_name from sys.babelfish_authid_user_ext where rolname = 'master_tes
 GO
 ~~START~~
 varchar
-test@ABC.INTERNAL
+test@ABC
 ~~END~~
 
 
@@ -32,5 +32,9 @@ GO
 drop login [xyz\admin];
 GO
 
-exec babelfish_reset_domain_mapping;
+exec babelfish_truncate_domain_mapping_table;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babelfish_truncate_domain_mapping_table() does not exist)~~
+

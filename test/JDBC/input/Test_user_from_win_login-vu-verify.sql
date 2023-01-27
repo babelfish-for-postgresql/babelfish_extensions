@@ -22,5 +22,5 @@ GO
 drop login [xyz\admin];
 GO
 
-exec babelfish_reset_domain_mapping;
+exec babelfish_truncate_domain_mapping_table;
 GO
