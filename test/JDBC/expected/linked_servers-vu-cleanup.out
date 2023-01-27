@@ -13,3 +13,7 @@ GO
 -- psql
 DROP EXTENSION tds_fdw CASCADE;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: drop cascades to 3 other objects  Server SQLState: 00000)~~
+

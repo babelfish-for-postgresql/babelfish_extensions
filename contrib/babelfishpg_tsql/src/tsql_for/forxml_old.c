@@ -1,7 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * forxml.c
+ * forxml_old.c
  *   For XML clause support for Babel
+ * 
+ * This implementation of FOR XML has been deprecated as of v2.4.0. However,
+ * we cannot remove this implementation, as there may be older views that reference
+ * these functions from prior versions, and we do not want to prevent those
+ * views from returning the correct result after upgrade.
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +20,8 @@
 #include "parser/parser.h"
 #include "utils/builtins.h"
 #include "utils/xml.h"
+
+#include "tsql_for.h"
 
 static xmltype *stringinfo_to_xmltype(StringInfo buf);
 static void SPI_sql_row_to_xmlelement_raw(uint64 rownum, StringInfo result,
@@ -45,6 +52,10 @@ tsql_query_to_xml(PG_FUNCTION_ARGS)
 	StringInfo result = tsql_query_to_xml_internal(query, mode,
 											element_name, binary_base64, root_name);
 
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This version of FOR XML has been deprecated. We recommend recreating the view for this query.")));
+
 	PG_RETURN_XML_P(stringinfo_to_xmltype(result));
 }
 
@@ -58,6 +69,10 @@ tsql_query_to_xml_text(PG_FUNCTION_ARGS)
 	char *root_name = PG_ARGISNULL(4) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(4));
 	StringInfo result = tsql_query_to_xml_internal(query, mode,
 											element_name, binary_base64, root_name);
+
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This version of FOR XML has been deprecated. We recommend recreating the view for this query.")));
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 }
