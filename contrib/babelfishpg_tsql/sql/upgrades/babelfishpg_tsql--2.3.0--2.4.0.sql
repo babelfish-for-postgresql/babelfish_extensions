@@ -1394,7 +1394,7 @@ ALTER FUNCTION sys.proc_param_helper() STABLE;
 ALTER FUNCTION sys.original_login() STABLE; 
 ALTER FUNCTION sys.objectproperty(id INT, property SYS.VARCHAR) STABLE;
 ALTER FUNCTION sys.OBJECTPROPERTYEX(id INT, property SYS.VARCHAR) STABLE;
-ALTER FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) STABLE;
+ALTER FUNCTION sys.num_days_in_date(IN d1 BIGINT, IN m1 BIGINT, IN y1 BIGINT) STABLE;
 ALTER FUNCTION sys.nestlevel() STABLE;
 ALTER FUNCTION sys.max_connections() STABLE;
 ALTER FUNCTION sys.lock_timeout() STABLE;
