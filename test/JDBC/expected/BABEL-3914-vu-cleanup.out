@@ -1,0 +1,23 @@
+DROP VIEW BABEL_3914_vu_prepare_t_1
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_2
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p1
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p2
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_3
+GO
+
+DROP VIEW BABEL_3914_vu_prepare_t_4
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p3
+GO
+
+DROP PROCEDURE BABEL_3914_vu_prepare_t_p4
+GO

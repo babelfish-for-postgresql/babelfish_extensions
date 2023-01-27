@@ -1,0 +1,65 @@
+--Degrees Test
+SELECT * FROM BABEL_3914_vu_prepare_t_1
+GO
+~~START~~
+numeric
+5284602884.7913698396872839
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_2
+GO
+~~START~~
+numeric
+1464250.9412363314373859
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p1
+GO
+~~START~~
+numeric
+56850804446.5654461289072728
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p2
+GO
+~~START~~
+numeric
+318335.3509746852976255
+~~END~~
+
+
+---Radians Test
+SELECT * FROM BABEL_3914_vu_prepare_t_3
+GO
+~~START~~
+numeric
+1609782.0953625447480760
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_4
+GO
+~~START~~
+numeric
+446.0363436396709748
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p3
+GO
+~~START~~
+numeric
+17317745.3633115147480760
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p4
+GO
+~~START~~
+numeric
+96.9704932408049748
+~~END~~
+
