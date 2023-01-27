@@ -742,22 +742,17 @@ go
 text
 Query Text: update babel_3293_t1 set a1 = 1 from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Update on babel_3293_t1
-  ->  Nested Loop
-        ->  HashAggregate
-              Group Key: babel_3293_t1_1.ctid
-              ->  Hash Join
-                    Hash Cond: (babel_3293_t1_1.a1 = babel_3293_t2.a2)
-                    ->  Bitmap Heap Scan on babel_3293_t1 babel_3293_t1_1
-                          Recheck Cond: (b1 = 1)
-                          ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
-                                Index Cond: (b1 = 1)
-                    ->  Hash
-                          ->  Bitmap Heap Scan on babel_3293_t2
-                                Recheck Cond: (b2 = 1)
-                                ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
-                                      Index Cond: (b2 = 1)
-        ->  Tid Scan on babel_3293_t1
-              TID Cond: (ctid = babel_3293_t1_1.ctid)
+  ->  Hash Join
+        Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+        ->  Bitmap Heap Scan on babel_3293_t1
+              Recheck Cond: (b1 = 1)
+              ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                    Index Cond: (b1 = 1)
+        ->  Hash
+              ->  Bitmap Heap Scan on babel_3293_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                          Index Cond: (b2 = 1)
 ~~END~~
 
 
@@ -767,22 +762,20 @@ go
 text
 Query Text: update/*+ mergejoin(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ babel_3293_t1 set a1 = 1 from babel_3293_t1 inner       join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Update on babel_3293_t1
-  ->  Nested Loop
-        ->  HashAggregate
-              Group Key: babel_3293_t1_1.ctid
-              ->  Hash Join
-                    Hash Cond: (babel_3293_t1_1.a1 = babel_3293_t2.a2)
-                    ->  Bitmap Heap Scan on babel_3293_t1 babel_3293_t1_1
-                          Recheck Cond: (b1 = 1)
-                          ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
-                                Index Cond: (b1 = 1)
-                    ->  Hash
-                          ->  Bitmap Heap Scan on babel_3293_t2
-                                Recheck Cond: (b2 = 1)
-                                ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
-                                      Index Cond: (b2 = 1)
-        ->  Tid Scan on babel_3293_t1
-              TID Cond: (ctid = babel_3293_t1_1.ctid)
+  ->  Merge Join
+        Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+        ->  Sort
+              Sort Key: babel_3293_t1.a1
+              ->  Bitmap Heap Scan on babel_3293_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                          Index Cond: (b1 = 1)
+        ->  Sort
+              Sort Key: babel_3293_t2.a2
+              ->  Bitmap Heap Scan on babel_3293_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                          Index Cond: (b2 = 1)
 ~~END~~
 
 
@@ -792,20 +785,18 @@ go
 text
 Query Text: update/*+ indexscan(babel_3293_t1 index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210) mergejoin(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ babel_3293_t1 set a1 = 1 from babel_3293_t1                                     full outer       join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Update on babel_3293_t1
-  ->  Nested Loop
-        ->  HashAggregate
-              Group Key: babel_3293_t1_1.ctid
-              ->  Hash Join
-                    Hash Cond: (babel_3293_t1_1.a1 = babel_3293_t2.a2)
-                    ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1 babel_3293_t1_1
-                          Index Cond: (b1 = 1)
-                    ->  Hash
-                          ->  Bitmap Heap Scan on babel_3293_t2
-                                Recheck Cond: (b2 = 1)
-                                ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
-                                      Index Cond: (b2 = 1)
-        ->  Tid Scan on babel_3293_t1
-              TID Cond: (ctid = babel_3293_t1_1.ctid)
+  ->  Merge Join
+        Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+        ->  Sort
+              Sort Key: babel_3293_t1.a1
+              ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
+                    Index Cond: (b1 = 1)
+        ->  Sort
+              Sort Key: babel_3293_t2.a2
+              ->  Bitmap Heap Scan on babel_3293_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                          Index Cond: (b2 = 1)
 ~~END~~
 
 
@@ -816,22 +807,17 @@ go
 text
 Query Text: delete babel_3293_t1 from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Delete on babel_3293_t1
-  ->  Nested Loop
-        ->  HashAggregate
-              Group Key: babel_3293_t1_1.ctid
-              ->  Hash Join
-                    Hash Cond: (babel_3293_t1_1.a1 = babel_3293_t2.a2)
-                    ->  Bitmap Heap Scan on babel_3293_t1 babel_3293_t1_1
-                          Recheck Cond: (b1 = 1)
-                          ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
-                                Index Cond: (b1 = 1)
-                    ->  Hash
-                          ->  Bitmap Heap Scan on babel_3293_t2
-                                Recheck Cond: (b2 = 1)
-                                ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
-                                      Index Cond: (b2 = 1)
-        ->  Tid Scan on babel_3293_t1
-              TID Cond: (ctid = babel_3293_t1_1.ctid)
+  ->  Hash Join
+        Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+        ->  Bitmap Heap Scan on babel_3293_t1
+              Recheck Cond: (b1 = 1)
+              ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                    Index Cond: (b1 = 1)
+        ->  Hash
+              ->  Bitmap Heap Scan on babel_3293_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                          Index Cond: (b2 = 1)
 ~~END~~
 
 
@@ -841,22 +827,20 @@ go
 text
 Query Text: delete/*+ mergejoin(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ babel_3293_t1 from babel_3293_t1 inner       join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Delete on babel_3293_t1
-  ->  Nested Loop
-        ->  HashAggregate
-              Group Key: babel_3293_t1_1.ctid
-              ->  Hash Join
-                    Hash Cond: (babel_3293_t1_1.a1 = babel_3293_t2.a2)
-                    ->  Bitmap Heap Scan on babel_3293_t1 babel_3293_t1_1
-                          Recheck Cond: (b1 = 1)
-                          ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
-                                Index Cond: (b1 = 1)
-                    ->  Hash
-                          ->  Bitmap Heap Scan on babel_3293_t2
-                                Recheck Cond: (b2 = 1)
-                                ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
-                                      Index Cond: (b2 = 1)
-        ->  Tid Scan on babel_3293_t1
-              TID Cond: (ctid = babel_3293_t1_1.ctid)
+  ->  Merge Join
+        Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+        ->  Sort
+              Sort Key: babel_3293_t1.a1
+              ->  Bitmap Heap Scan on babel_3293_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                          Index Cond: (b1 = 1)
+        ->  Sort
+              Sort Key: babel_3293_t2.a2
+              ->  Bitmap Heap Scan on babel_3293_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                          Index Cond: (b2 = 1)
 ~~END~~
 
 
@@ -866,20 +850,18 @@ go
 text
 Query Text: delete/*+ indexscan(babel_3293_t1 index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210) mergejoin(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ babel_3293_t1 from babel_3293_t1                                     left outer       join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Delete on babel_3293_t1
-  ->  Nested Loop
-        ->  HashAggregate
-              Group Key: babel_3293_t1_1.ctid
-              ->  Hash Join
-                    Hash Cond: (babel_3293_t1_1.a1 = babel_3293_t2.a2)
-                    ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1 babel_3293_t1_1
-                          Index Cond: (b1 = 1)
-                    ->  Hash
-                          ->  Bitmap Heap Scan on babel_3293_t2
-                                Recheck Cond: (b2 = 1)
-                                ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
-                                      Index Cond: (b2 = 1)
-        ->  Tid Scan on babel_3293_t1
-              TID Cond: (ctid = babel_3293_t1_1.ctid)
+  ->  Merge Join
+        Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+        ->  Sort
+              Sort Key: babel_3293_t1.a1
+              ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
+                    Index Cond: (b1 = 1)
+        ->  Sort
+              Sort Key: babel_3293_t2.a2
+              ->  Bitmap Heap Scan on babel_3293_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                          Index Cond: (b2 = 1)
 ~~END~~
 
 
