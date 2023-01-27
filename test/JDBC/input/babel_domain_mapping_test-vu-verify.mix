@@ -68,13 +68,21 @@ GO
 exec babelfish_remove_domain_mapping_entry 'xyz'
 GO
 
--- terminate-tsql-conn user=test_login_sa password=12345678
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'test_login_sa' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
 
 -- tsql
 DROP LOGIN test_login_sa;
 GO
 
--- terminate-tsql-conn user=test_login1 password=12345678
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'test_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
 
 -- tsql
 DROP LOGIN test_login1;
