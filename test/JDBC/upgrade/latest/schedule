@@ -360,6 +360,7 @@ BABEL-CHECK-CONSTRAINT
 BABEL-3640
 sys-sysindexes
 sys-system_objects
+ISC-Views
 ISC-Tables
 ISC-Columns
 #ISC-Check-Constraints
