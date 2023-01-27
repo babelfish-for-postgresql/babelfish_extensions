@@ -25,10 +25,10 @@
 #define LOGON_NAME_MIN_LEN 0
 
 #define NETBIOS_NAME_MAX_LEN 15
-#define NETBIOS_NAME_MIN_LEN 0
+#define NETBIOS_NAME_MIN_LEN 1
 
 #define FQDN_NAME_MAX_LEN 128
-#define FQDN_NAME_MIN_LEN 1
+#define FQDN_NAME_MIN_LEN 2
 
 #define BBF_AUTHID_USER_EXT_NUM_COLS					16
 #define USER_EXT_ROLNAME								0
@@ -78,7 +78,5 @@ extern char *convertToUPN(char* input);
 extern HeapTuple get_roleform_ext(char *login);
 extern bool windows_login_contains_invalid_chars(char* input);
 extern bool check_windows_logon_length(char* input);
-extern void validateNetBIOS(char* netbios);
-extern void validateFQDN(char* fqdn);
 
 #endif

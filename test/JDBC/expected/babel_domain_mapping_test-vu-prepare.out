@@ -58,13 +58,13 @@ exec sys.babelfish_add_domain_mapping_entry '','test.babel';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The NetBIOS name '' has invalid length. NetBIOS name length should be between 1 and 14.)~~
+~~ERROR (Message: The NetBIOS name '' has invalid length. NetBIOS name length should be between 1 and 15.)~~
 
 exec sys.babelfish_add_domain_mapping_entry 'checkforlengthwhichmustbelessthatfifteen','test.babel';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The NetBIOS name 'checkforlengthwhichmustbelessthatfifteen' has invalid length. NetBIOS name length should be between 1 and 14.)~~
+~~ERROR (Message: The NetBIOS name 'checkforlengthwhichmustbelessthatfifteen' has invalid length. NetBIOS name length should be between 1 and 15.)~~
 
 
 exec sys.babelfish_add_domain_mapping_entry '.netbios','test.babel';
@@ -134,13 +134,13 @@ exec sys.babelfish_add_domain_mapping_entry 'netbios','';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The FQDN '' has invalid length. FQDN length should be between 2 and 127.)~~
+~~ERROR (Message: The FQDN '' has invalid length. FQDN length should be between 2 and 128.)~~
 
 exec sys.babelfish_add_domain_mapping_entry 'netbios','fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters.fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The FQDN 'fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters.fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters' has invalid length. FQDN length should be between 2 and 127.)~~
+~~ERROR (Message: The FQDN 'fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters.fullyqualifieddomainnamehavingmorethanonehundredandtwentyeightcharacters' has invalid length. FQDN length should be between 2 and 128.)~~
 
 exec sys.babelfish_add_domain_mapping_entry 'netbios','fullyqualifieddomainnamehavingmore.thansixtyfourcharacters.isdisallowed';
 GO
@@ -216,7 +216,7 @@ exec sys.babelfish_add_domain_mapping_entry 'netbios','<test.>babel';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: '<test.>babel' is not a valid FQDN. It must start with alphabetical or numeric character .)~~
+~~ERROR (Message: '<test.>babel' is not a valid FQDN. It must start with alphabetical or numeric character.)~~
 
 exec sys.babelfish_add_domain_mapping_entry 'netbios','test||babel';
 GO

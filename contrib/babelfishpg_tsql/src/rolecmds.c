@@ -71,6 +71,8 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
 static bool has_user_in_db(const char *login, char **db_name);
+static void validateNetBIOS(char* netbios);
+static void validateFQDN(char* fqdn);
 
 
 void
@@ -1935,17 +1937,17 @@ get_roleform_ext(char *login)
 * Utility function to validate netbios name provided by user
 */
 
-void
+static void
 validateNetBIOS(char* netbios)
 {
 	int len = strlen(netbios);
 	int i = 0;
 
-	if (len >= NETBIOS_NAME_MAX_LEN || len <= NETBIOS_NAME_MIN_LEN)
+	if (len > NETBIOS_NAME_MAX_LEN || len < NETBIOS_NAME_MIN_LEN)
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_NAME),
 				errmsg("The NetBIOS name '%s' has invalid length. NetBIOS name length should be between %d and %d.",
-				netbios, (NETBIOS_NAME_MIN_LEN + 1), (NETBIOS_NAME_MAX_LEN - 1))));
+				netbios, NETBIOS_NAME_MIN_LEN, NETBIOS_NAME_MAX_LEN)));
 
 	if (netbios[0] == '.')
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1969,21 +1971,21 @@ validateNetBIOS(char* netbios)
 * Utility function to validate FQDN provided by user
 */
 
-void
+static void
 validateFQDN(char* fqdn)
 {
 	int len = strlen(fqdn);
 	int i = 1;
 
-	if (len >= FQDN_NAME_MAX_LEN || len <= FQDN_NAME_MIN_LEN)
+	if (len > FQDN_NAME_MAX_LEN || len < FQDN_NAME_MIN_LEN)
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_NAME),
 				errmsg("The FQDN '%s' has invalid length. FQDN length should be between %d and %d.",
-				fqdn, (FQDN_NAME_MIN_LEN + 1), (FQDN_NAME_MAX_LEN - 1))));
+				fqdn, FQDN_NAME_MIN_LEN, FQDN_NAME_MAX_LEN)));
 
-	if (!((fqdn[0] >= 65 && fqdn[0] <= 90) || (fqdn[0] >= 97 && fqdn[0] <= 122) || (fqdn[0] >= 48 && fqdn[0] <= 57)))
+	if (!((fqdn[0] >= 'a' && fqdn[0] <= 'z') || (fqdn[0] >= 'A' && fqdn[0] <= 'Z') || (fqdn[0] >= '0' && fqdn[0] <= '9')))
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a valid FQDN. It must start with alphabetical or numeric character .", fqdn)));
+			errmsg("'%s' is not a valid FQDN. It must start with alphabetical or numeric character.", fqdn)));
 
 	if (fqdn[len-1] == '-' || fqdn[len-1] == '.')
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1991,7 +1993,7 @@ validateFQDN(char* fqdn)
 			
 	while (fqdn[i] != '\0')
 	{
-		if (!((fqdn[i] >= 65 && fqdn[i] <= 90) || (fqdn[i] >= 97 && fqdn[i] <= 122) || (fqdn[i] >= 48 && fqdn[i] <= 57) ||
+		if (!((fqdn[i] >= 'a' && fqdn[i] <= 'z') || (fqdn[i] >= 'A' && fqdn[i] <= 'Z') || (fqdn[i] >= '0' && fqdn[i] <= '9') ||
 		(fqdn[i] == '-' || fqdn[i] == '.')))
 			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("'%s' is not a valid FQDN because it contains invalid characters.", fqdn)));
@@ -2028,6 +2030,12 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 					 errmsg("Current login %s does not have permission to add new domain mapping entry",
 					 GetUserNameFromId(GetSessionUserId(), true))));
 
+	/*
+	* Validate the netbios and fqdn
+	*/
+	validateNetBIOS(TextDatumGetCString(PG_GETARG_DATUM(0)));
+	validateFQDN(TextDatumGetCString(PG_GETARG_DATUM(1)));
+
 	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
 
 	/* Write catalog entry */
@@ -2038,8 +2046,6 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 
 	new_record[0] = PG_GETARG_DATUM(0);
 	new_record[1] = PG_GETARG_DATUM(1);
-	validateNetBIOS(TextDatumGetCString(new_record[0]));
-	validateFQDN(TextDatumGetCString(new_record[1]));
 
 	tuple = heap_form_tuple(RelationGetDescr(bbf_domain_mapping_rel),
 							new_record, new_record_nulls);
