@@ -65,7 +65,3 @@ GO
 
 DROP PROCEDURE BABEL_3914_vu_prepare_t_p12
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: could not find a procedure named "babel_3914_vu_prepare_t_p12")~~
-
