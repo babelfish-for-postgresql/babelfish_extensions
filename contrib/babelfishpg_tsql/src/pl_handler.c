@@ -3117,18 +3117,56 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 		case T_RenameStmt:
+		{
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-				else
-					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
+				RenameStmt *stmt = (RenameStmt *) parsetree;
+				const char	*db_name;
+				const char	*dbo_name;
+				Oid			dbo_id;
+				Oid prev_current_user;
 
-				check_extra_schema_restrictions(parsetree);
+				db_name = get_cur_db_name();
+				dbo_name = get_dbo_role_name(db_name);
+				dbo_id = get_role_oid(dbo_name, false);
 
+				/* Set current user to dbo for alter permissions */
+				prev_current_user = GetUserId();
+				SetCurrentRoleId(dbo_id, false);
+
+				PG_TRY();
+				{
+					if (prev_ProcessUtility)
+						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+											params, queryEnv, dest, qc);
+					else
+						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+												params, queryEnv, dest, qc);
+					rename_update_bbf_catalog(stmt);
+				}
+				PG_CATCH();
+				{
+					SetCurrentRoleId(prev_current_user, false);
+					PG_RE_THROW();
+				}
+				PG_END_TRY();
+				/* Clean up. Restore previous state. */
+				SetCurrentRoleId(prev_current_user, false);
 				return;
 			}
+			else
+			{
+				if (prev_ProcessUtility)
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+											params, queryEnv, dest, qc);
+				else
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+											params, queryEnv, dest, qc);
+				
+				check_extra_schema_restrictions(parsetree);
+			}
+			break;
+		}
 		case T_CreateTableAsStmt:
 		{
 			if (sql_dialect == SQL_DIALECT_TSQL)

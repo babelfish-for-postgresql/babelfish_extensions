@@ -2903,3 +2903,62 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename_internal(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@schemaname" sys.nvarchar(776),
+	IN "@objtype" char(2) DEFAULT NULL
+) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
+		BEGIN
+			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+		END
+	DECLARE @name_count INT;
+	DECLARE @subname sys.nvarchar(776) = '';
+	DECLARE @schemaname sys.nvarchar(776) = '';
+	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
+	IF @name_count > 1
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+		END
+	ELSE
+		BEGIN
+			SET @schemaname = sys.schema_name();
+			SET @subname = @objname;
+		END
+	
+	DECLARE @count INT;
+	DECLARE @currtype char(2);
+	SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	IF @count > 1
+		BEGIN
+			THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+		END
+	IF @count < 1
+		BEGIN
+			THROW 33557097, N'There is no object with the given @objname.', 1;
+		END
+	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	EXEC sys.sp_rename_internal @subname, @newname, @schemaname, @currtype;
+END;
+$$;
+GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
