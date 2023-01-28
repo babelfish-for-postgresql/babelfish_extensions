@@ -384,5 +384,10 @@ AVG-Aggregate-Dep
 bbf_view_def
 BABEL_OBJECT_ID
 BABEL-3802
+<<<<<<< HEAD
 BABEL_OBJECT_NAME
 Test_user_from_win_login
+=======
+BABEL-3914
+BABEL_OBJECT_NAME
+>>>>>>> 02030c25f (BABEL-3914 Numeric Degrees/Radians Function (#1140))
