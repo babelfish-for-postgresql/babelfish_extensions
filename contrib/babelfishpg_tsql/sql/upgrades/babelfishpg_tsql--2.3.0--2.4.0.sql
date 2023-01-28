@@ -344,6 +344,11 @@ and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.STR(IN float_expression NUMERIC, IN length INTEGER DEFAULT 10, IN decimal_point INTEGER DEFAULT 0) RETURNS VARCHAR 
+AS
+'babelfishpg_tsql', 'float_str' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.STR(IN NUMERIC, IN INTEGER, IN INTEGER) TO PUBLIC;
+
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
   , CAST(oid as integer) as object_id
