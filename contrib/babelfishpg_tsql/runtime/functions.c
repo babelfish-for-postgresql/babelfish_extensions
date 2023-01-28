@@ -94,6 +94,8 @@ PG_FUNCTION_INFO_V1(smallint_radians);
 PG_FUNCTION_INFO_V1(bigint_power);
 PG_FUNCTION_INFO_V1(int_power);
 PG_FUNCTION_INFO_V1(smallint_power);
+PG_FUNCTION_INFO_V1(numeric_degrees);
+PG_FUNCTION_INFO_V1(numeric_radians);
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -1786,4 +1788,30 @@ smallint_power(PG_FUNCTION_ARGS)
 	result = DatumGetInt32(DirectFunctionCall1(numeric_int2, NumericGetDatum(result_numeric)));
 
 	PG_RETURN_INT32(result); 
+}
+
+Datum
+numeric_degrees(PG_FUNCTION_ARGS)
+{
+	Numeric	arg1 = PG_GETARG_NUMERIC(0);
+	Numeric	radians_per_degree,result;
+
+	radians_per_degree = DatumGetNumeric(DirectFunctionCall1(float8_numeric,Float8GetDatum(RADIANS_PER_DEGREE)));
+	
+	result = DatumGetNumeric(DirectFunctionCall2(numeric_div, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
+	
+	PG_RETURN_NUMERIC(result);
+}
+
+Datum
+numeric_radians(PG_FUNCTION_ARGS)
+{
+	Numeric	arg1 = PG_GETARG_NUMERIC(0);
+	Numeric	radians_per_degree,result;
+
+	radians_per_degree = DatumGetNumeric(DirectFunctionCall1(float8_numeric,Float8GetDatum(RADIANS_PER_DEGREE)));
+
+	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
+
+	PG_RETURN_NUMERIC(result);
 }
