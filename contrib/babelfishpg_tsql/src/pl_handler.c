@@ -211,8 +211,6 @@ static bool                            pltsql_guc_dirty;
 static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
-static int pltsql_new_guc_nest_level(void);
-static void pltsql_revert_guc(int nest_level);
 bool current_query_is_create_tbl_check_constraint = false;
 
 /* Configurations */
@@ -4529,12 +4527,6 @@ canCommitTransaction(void)
 	return (AbortCurTransaction == false);
 }
 
-static int
-pltsql_new_guc_nest_level(void)
-{
-       return ++PltsqlGUCNestLevel;
-}
-
 static void
 pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
 {
@@ -4543,10 +4535,6 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
        /* If we're not inside a nest level, do nothing */
        if (PltsqlGUCNestLevel == 0)
                return;
-
-	   /* No need to restore certain gucs */
-	   if (strcmp(gconf->name, "babelfishpg_tsql.identity_insert") == 0)
-		   return;
 
        /* Do we already have a stack entry of the current nest level? */
        stack = gconf->session_stack;
@@ -4599,162 +4587,165 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
        pltsql_guc_dirty = true;
 }
 
-static void
+int
+pltsql_new_guc_nest_level(void)
+{
+       return ++PltsqlGUCNestLevel;
+}
+
+void
 pltsql_revert_guc(int nest_level)
 {
-       bool            still_dirty;
-       int                     i;
-       int                     num_guc_variables;
-       struct config_generic **guc_variables;
+	bool            still_dirty;
+	int                     i;
+	int                     num_guc_variables;
+	struct config_generic **guc_variables;
 
-       Assert(nest_level > 0 && nest_level == PltsqlGUCNestLevel);
+	Assert(nest_level > 0 && nest_level == PltsqlGUCNestLevel);
 
-       /* Quick exit if nothing's changed in this procedure */
-       if (!pltsql_guc_dirty)
-       {
-               PltsqlGUCNestLevel = nest_level - 1;
-               return;
-       }
+	/* Quick exit if nothing's changed in this procedure */
+	if (!pltsql_guc_dirty)
+	{
+		PltsqlGUCNestLevel = nest_level - 1;
+		return;
+	}
 
-       still_dirty = false;
-       num_guc_variables = GetNumConfigOptions();
-       guc_variables = get_guc_variables();
-       for (i = 0; i < num_guc_variables; i++)
-       {
-               struct config_generic *gconf = guc_variables[i];
-               GucStack   *stack =  gconf->session_stack;
+	still_dirty = false;
+	num_guc_variables = GetNumConfigOptions();
+	guc_variables = get_guc_variables();
+	for (i = 0; i < num_guc_variables; i++)
+	{
+		struct config_generic *gconf = guc_variables[i];
+		GucStack   *stack =  gconf->session_stack;
 
-               if (stack != NULL && stack->nest_level == nest_level)
-               {
-                       GucStack   *prev = stack->prev;
+		if (stack != NULL && stack->nest_level == nest_level)
+		{
+			GucStack   *prev = stack->prev;
 
-                       /* Perform appropriate restoration of the stacked value */
-                       config_var_value newvalue = stack->prior;
-                       GucSource       newsource = stack->source;
-                       GucContext      newscontext = stack->scontext;
+			/* Perform appropriate restoration of the stacked value */
+			config_var_value newvalue = stack->prior;
+			GucSource       newsource = stack->source;
+			GucContext      newscontext = stack->scontext;
 
-                       switch (gconf->vartype)
-                       {
-                               case PGC_BOOL:
-                                       {
-                                               struct config_bool *conf = (struct config_bool *) gconf;
-                                               bool            newval = newvalue.val.boolval;
-                                               void       *newextra = newvalue.extra;
+			switch (gconf->vartype)
+			{
+				case PGC_BOOL:
+				{
+					struct config_bool 	*conf = (struct config_bool *) gconf;
+					bool           		newval = newvalue.val.boolval;
+					void       			*newextra = newvalue.extra;
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       *conf->variable = newval;
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
-                                               break;
-                                       }
-                               case PGC_INT:
-                                       {
-                                               struct config_int *conf = (struct config_int *) gconf;
-                                               int                     newval = newvalue.val.intval;
-                                               void       *newextra = newvalue.extra;
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						*conf->variable = newval;
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
+					break;
+				}
+				case PGC_INT:
+				{
+					struct config_int *conf = (struct config_int *) gconf;
+					int                     newval = newvalue.val.intval;
+					void       *newextra = newvalue.extra;
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       *conf->variable = newval;
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
-                                               break;
-                                       }
-                               case PGC_REAL:
-                                       {
-                                               struct config_real *conf = (struct config_real *) gconf;
-                                               double          newval = newvalue.val.realval;
-                                               void       *newextra = newvalue.extra;
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						*conf->variable = newval;
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
+					break;
+				}
+				case PGC_REAL:
+				{
+					struct config_real *conf = (struct config_real *) gconf;
+					double          newval = newvalue.val.realval;
+					void       *newextra = newvalue.extra;
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       *conf->variable = newval;
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
-                                               break;
-                                       }
-                               case PGC_STRING:
-                                       {
-                                               struct config_string *conf = (struct config_string *) gconf;
-                                               char       *newval = newvalue.val.stringval;
-                                               void       *newextra = newvalue.extra;
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						*conf->variable = newval;
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
+					break;
+				}
+				case PGC_STRING:
+				{
+					struct config_string *conf = (struct config_string *) gconf;
+					char       *newval = newvalue.val.stringval;
+					void       *newextra = newvalue.extra;
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       guc_set_string_field(conf, conf->variable, newval);
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
+					/* Special case for identity_insert */
+					if (strcmp(gconf->name, "babelfishpg_tsql.identity_insert") == 0)
+					{
+						tsql_identity_insert = (tsql_identity_insert_fields) 
+							{false, InvalidOid, InvalidOid};
+					}
 
-                                               /*
-                                                * Release stacked values if not used anymore. We
-                                                * could use discard_stack_value() here, but since
-                                                * we have type-specific code anyway, might as
-                                                * well inline it.
-                                                */
-                                               guc_set_string_field(conf, &stack->prior.val.stringval, NULL);
-                                               guc_set_string_field(conf, &stack->masked.val.stringval, NULL);
-                                               break;
-                                       }
-                               case PGC_ENUM:
-                                       {
-                                               struct config_enum *conf = (struct config_enum *) gconf;
-                                               int                     newval = newvalue.val.enumval;
-                                               void       *newextra = newvalue.extra;
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						guc_set_string_field(conf, conf->variable, newval);
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       *conf->variable = newval;
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
-                                               break;
-                                       }
-                       }
+					/*
+					* Release stacked values if not used anymore. We
+					* could use discard_stack_value() here, but since
+					* we have type-specific code anyway, might as
+					* well inline it.
+					*/
+					guc_set_string_field(conf, &stack->prior.val.stringval, NULL);
+					guc_set_string_field(conf, &stack->masked.val.stringval, NULL);
+					break;
+				}
+				case PGC_ENUM:
+				{
+					struct config_enum *conf = (struct config_enum *) gconf;
+					int                     newval = newvalue.val.enumval;
+					void       *newextra = newvalue.extra;
 
-                       /*
-                        * Release stacked extra values if not used anymore.
-                        */
-                       guc_set_extra_field(gconf, &(stack->prior.extra), NULL);
-                       guc_set_extra_field(gconf, &(stack->masked.extra), NULL);
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						*conf->variable = newval;
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
+					break;
+				}
+			}
 
-                       /* And restore source information */
-                       gconf->source = newsource;
-                       gconf->scontext = newscontext;
+			/*
+			* Release stacked extra values if not used anymore.
+			*/
+			guc_set_extra_field(gconf, &(stack->prior.extra), NULL);
+			guc_set_extra_field(gconf, &(stack->masked.extra), NULL);
 
-                       /* Finish popping the state stack */
-                       gconf->session_stack = prev;
-                       pfree(stack);
-               }                                               /* end of stack-popping loop */
+			/* And restore source information */
+			gconf->source = newsource;
+			gconf->scontext = newscontext;
 
-               if (stack != NULL)
-                       still_dirty = true;
-       }
+			/* Finish popping the state stack */
+			gconf->session_stack = prev;
+			pfree(stack);
+		} /* end of stack-popping loop */
 
-       /* If there are no remaining stack entries, we can reset guc_dirty */
-       pltsql_guc_dirty = still_dirty;
+		if (stack != NULL)
+			still_dirty = true;
+	}
 
-       /* Update nesting level */
-       PltsqlGUCNestLevel = nest_level - 1;
+	/* If there are no remaining stack entries, we can reset guc_dirty */
+	pltsql_guc_dirty = still_dirty;
+
+	/* Update nesting level */
+	PltsqlGUCNestLevel = nest_level - 1;
 
 }
 
