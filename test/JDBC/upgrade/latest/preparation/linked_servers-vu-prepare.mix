@@ -1,92 +1,17 @@
--- Install the TDS_FDW extension to enable linked_servers
-
 -- psql
 CREATE EXTENSION IF NOT EXISTS tds_fdw;
 GO
 
 -- tsql
--- Try to create linked server without a valid a provider being available (Should throw error)
-EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'wrong_provider', @datasrc=N'localhost', @catalog=N'master'
+-- Add localhost as linked server
+EXEC sp_addlinkedserver  @server = N'bbf_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
 
--- Create linked server with valid T-SQL provider (Will throw warning internally)
-EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+-- Add jdbc_user as linked server login
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
 
--- Create linked server with valid provider. Also call sp_addlinkedserver from master.dbo schema
-EXEC master.dbo.sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
-GO
-
--- Create linked server with server product 'SQL Server'
-EXEC sp_addlinkedserver  @server = N'hello.world.com', @srvproduct=N'SQL Server'
-GO
-
--- Create linked server with a non-null provider string (Will throw warning internally)
-EXEC sp_addlinkedserver  @server = N'mssql_server2', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @provstr='blahblahblah', @catalog=N'master'
-GO
-
--- Try to create linked server with same server name (Should throw error)
-EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
-GO
-
--- Try to create linked server with data source of the form 'servername\\instancename' (Will throw error when we try to connect to it)
-EXEC sp_addlinkedserver  @server = N'mssql_server3', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'mssql_server2\ABC', @catalog=N'master'
-GO
-
--- Create a linked server with invalid @rmtsrvname (Should throw error)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'invalid_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
-GO
-
--- Create a linked server with NULL @rmtsrvname (Should throw error)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = NULL, @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
-GO
-
--- Create a linked server login with @useself = TRUE (Should throw error)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'TRUE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
-GO
-
--- Create a linked server login with @useself = NULL (Should throw error)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = NULL, @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
-GO
-
--- Create a linked server login with @useself = FALSE. Also call sp_addlinkedsrvlogin from master.dbo schema
-EXEC master.dbo.sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
-GO
-
--- Create a linked server login with no @rmtpassword (Won't throw error at creation time but will most likely fail remote login attempt)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
-GO
-
--- Create a linked server login with no @rmtuser (Won't throw error at creation time but will most likely fail remote login attempt)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server3', @useself = 'FALSE', @rmtpassword = 'only_password_no_user'
-GO
-
--- Creating a simple login which has lesser privilege than sysadmin role
-create login linked_server_login_861 with password = 'password_861'
-GO
-
--- Create a function dependent on sys.servers view
-CREATE FUNCTION sys_linked_servers_vu_prepare__sys_servers_func()
-RETURNS TABLE
-AS
-RETURN (SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name);
-GO
-
--- Create a view dependent on sys.servers view
-CREATE VIEW sys_linked_servers_vu_prepare__sys_servers_view
-AS
-SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name
-GO
-
--- Create a view dependent on sys.linked_logins view
-CREATE VIEW sys_linked_servers_vu_prepare__sys_linked_logins_view
-AS
-SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE name <> 'bbf_server' ORDER BY linked_srv_name
-GO
-
--- tsql    user=linked_server_login_861    password=password_861
-
--- Creation of linked_server should fail since only sysadmin will have privilege to create linked server
--- This will change once T-SQL ALTER ANY LINKED SERVER permission is implemented in babelfish
-EXEC sp_addlinkedserver  @server = N'mssql_server4', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
+-- Create a view dependent on OPENQUERY
+-- Commenting this out until we figure out a way to support CREATE VIEW with OPENQUERY in MVU
+-- CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
 GO
