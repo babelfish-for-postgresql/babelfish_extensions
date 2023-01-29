@@ -52,6 +52,10 @@ USE BABEL_3117_prepare_db4
 -- Should return 0 since trigger exits
 SELECT count(*) FROM BABEL_3117_schema.BABEL_3117_t1;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'babel_3117_prepare_db4'.  Server SQLState: S0001)~~
+
 ~~START~~
 int
 0
@@ -118,6 +122,10 @@ USE BABEL_3117_prepare_db6
 -- Should return 0 since trigger exits
 SELECT count(*) FROM BABEL_3117_schemaB.BABEL_3117_t1;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'babel_3117_prepare_db6'.  Server SQLState: S0001)~~
+
 ~~START~~
 int
 0
