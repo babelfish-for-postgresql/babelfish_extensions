@@ -32,7 +32,7 @@ const int tds_numeric_bytes_per_prec[TDS_NUMERIC_MAX_PRECISION + 1] = {
 
 int tdsTypeStrToTypeId(char* datatype);
 Oid tdsTypeToOid(int datatype);
-int tdsTypeLen(int datatype, int datalen, bool is_metadata);
+int tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
 Datum getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
 
 static int
@@ -465,11 +465,11 @@ tdsTypeToOid(int datatype)
 
 /*
  * Given TDS type and data length from client library, return equivalent
- * Babelfish T-SQL data type length. Used when preparing tuple descriptor
+ * Babelfish T-SQL data type typmod. Used when preparing tuple descriptor
  * for T-SQL OPENQUERY.
  */
 int
-tdsTypeLen(int datatype, int datalen, bool is_metadata)
+tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale)
 {
 	switch (datatype)
 	{
@@ -501,6 +501,21 @@ tdsTypeLen(int datatype, int datalen, bool is_metadata)
 				else
 					return (datalen/4) + VARHDRSZ;
 			}
+		case TSQL_DECIMAL:
+		case TSQL_NUMERIC:
+			{
+				/* copied from make_numeric_typmod */
+				return ((precision << 16) | (scale & 0x7ff)) + VARHDRSZ;
+			}
+		case TSQL_DATETIME2:
+		case TSQL_DATETIMEOFFSET:
+		case TSQL_TIME:
+			{
+				if (scale >= 0 || scale < 7)
+					return scale;
+				else
+					return -1;
+			}
                 case TSQL_BIT:
 		case TSQL_BITN:
                 case TSQL_TEXT:
@@ -508,12 +523,7 @@ tdsTypeLen(int datatype, int datalen, bool is_metadata)
 		case TSQL_DATETIME:
 		case TSQL_DATETIMN:
 		case TSQL_SMALLDATETIME:
-		case TSQL_DATETIME2:
-		case TSQL_DATETIMEOFFSET:
 		case TSQL_DATE:
-		case TSQL_TIME:
-		case TSQL_DECIMAL:
-		case TSQL_NUMERIC:
 		case TSQL_FLOAT:
 		case TSQL_REAL:
 		case TSQL_TINYINT:
@@ -728,9 +738,11 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 				int collen[MAX_COLS_SELECT];
 				char **colname = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
 				int tdsTypeId[MAX_COLS_SELECT];
+				int tdsTypePrecision[MAX_COLS_SELECT];
+				int tdsTypeScale[MAX_COLS_SELECT];
 
 				/* bound variables */
-				int bind_collen, bind_tdsTypeId;
+				int bind_collen, bind_tdsTypeId, bind_precision, bind_scale;
 				char bind_colname[256] = {0x00};
 				char bind_typename[256] = {0x00};
 				char *column_dup;
@@ -761,6 +773,18 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 					ereport(ERROR,
 						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to bind results for column \"max_length\" to a variable.")
+					));
+
+				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 8, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_precision)) != SUCCEED)
+					ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to bind results for column \"precision\" to a variable.")
+					));
+
+				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 9, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_scale)) != SUCCEED)
+					ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to bind results for column \"scale\" to a variable.")
 					));
 
 				/* fetch the rows */
@@ -817,6 +841,10 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 						*typestr = '\0';
 
 					tdsTypeId[numrows] = tdsTypeStrToTypeId(bind_typename);
+
+					tdsTypePrecision[numrows] = bind_precision;
+					tdsTypeScale[numrows] = bind_scale;
+
 					++numrows;
 				}
 
@@ -825,7 +853,7 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 					*tupdesc = CreateTemplateTupleDesc(numrows);
 
 					for (i = 0; i < numrows; i++)
-						TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeToOid(tdsTypeId[i]), tdsTypeLen(tdsTypeId[i], collen[i], true), 0);
+						TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeToOid(tdsTypeId[i]), tdsTypeTypmod(tdsTypeId[i], collen[i], true, tdsTypePrecision[i], tdsTypeScale[i]), 0);
 
 					*tupdesc = BlessTupleDesc(*tupdesc);
 				}
@@ -903,9 +931,6 @@ openquery_imp(PG_FUNCTION_ARGS)
 		while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
 		{
 			int i;
-			int coltype[MAX_COLS_SELECT];
-			char *colname[MAX_COLS_SELECT];
-			int collen[MAX_COLS_SELECT];
 
 			void *val[MAX_COLS_SELECT];
 
@@ -917,16 +942,8 @@ openquery_imp(PG_FUNCTION_ARGS)
 					));
 			}
 
-			/* store the column metadata if present */
+			/* store the column count */
 			colcount = LINKED_SERVER_NUM_COLS(lsproc);
-
-			for(i = 0; i < colcount; i++)
-			{
-				/* Let us process column metadata first */
-				coltype[i] = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
-				colname[i] = LINKED_SERVER_COL_NAME(lsproc, i + 1);
-				collen[i] = LINKED_SERVER_COL_LEN(lsproc, i + 1);
-			}
 
 			if(colcount > 0)
 			{
@@ -944,15 +961,16 @@ openquery_imp(PG_FUNCTION_ARGS)
 				/* Build tupdesc for result tuples. */
 				tupdesc = CreateTemplateTupleDesc(colcount);
 
-				/* 
-				 * If column name is NULL, we set the column name as "?column?" (default 
-				 * column name set by PG if column name is NULL). We have logic in the
-				 * babelfishpg_tds extension to set the column name length 0 on the wire
-				 * if we come across this column name.
-				 */
+				/* Let us process column metadata first */
 				for(i = 0; i < colcount; i++)
 				{
-					Oid tdsTypeOid = tdsTypeToOid(coltype[i]);
+					Oid tdsTypeOid;
+					int coltype = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
+					char *colname = LINKED_SERVER_COL_NAME(lsproc, i + 1);
+					int collen = LINKED_SERVER_COL_LEN(lsproc, i + 1);
+					LS_TYPEINFO *typinfo = LINKED_SERVER_COL_TYPEINFO(lsproc, i + 1);
+					
+					tdsTypeOid = tdsTypeToOid(coltype);
 
 					/* 
 					 * Current TDS client library has a limitation where it can send
@@ -966,7 +984,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 						tdsTypeOid = att->atttypid;
 					}
 
-					TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeOid, tdsTypeLen(coltype[i], collen[i], false), 0);
+					TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname, tdsTypeOid, tdsTypeTypmod(coltype, collen, false, typinfo->precision, typinfo->scale), 0);
 				}
 				tupdesc = BlessTupleDesc(tupdesc);
 
@@ -987,17 +1005,16 @@ openquery_imp(PG_FUNCTION_ARGS)
 					Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
 					bool	*nulls = palloc0(sizeof(bool) * colcount);
 
-					MemSet(nulls, false, sizeof(nulls));
-
 					for (i = 0; i < colcount; i++)
 					{
+						int coltype = LINKED_SERVER_COL_TYPE(lsproc, i + 1);
 						int datalen = LINKED_SERVER_DATA_LEN(lsproc, i + 1);
 						val[i] = LINKED_SERVER_DATA(lsproc, i + 1);
 
 						if (val[i] == NULL)
 							nulls[i] = true;
 						else
-							values[i] = getDatumFromBytePtr(lsproc, val[i], coltype[i], datalen);
+							values[i] = getDatumFromBytePtr(lsproc, val[i], coltype, datalen);
 							
 					}
 
