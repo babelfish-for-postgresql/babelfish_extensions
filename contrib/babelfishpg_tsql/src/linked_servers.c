@@ -128,39 +128,37 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 		case TSQL_DATETIMN:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
-				StringInfo pbuf;
+				StringInfoData pbuf;
 
-				pbuf = palloc(sizeof(StringInfoData));
 				/*
 				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
+				 * StringInfoData pointing to the correct portion of the TDS
+				 * message buffer.
 				 */
-				pbuf->data = (char *)val;
-				pbuf->maxlen = 8;
-				pbuf->len = 8;
-				pbuf->cursor = 0;
+				pbuf.data = (char *)val;
+				pbuf.maxlen = 8;
+				pbuf.len = 8;
+				pbuf.cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_DATETIMN, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(&pbuf, TSQL_DATETIMN, 0);
 			}
 			break;
 		case TSQL_SMALLDATETIME:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
-				StringInfo pbuf;
+				StringInfoData pbuf;
 
-				pbuf = palloc(sizeof(StringInfoData));
 				/*
 				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
+				 * StringInfoData pointing to the correct portion of the TDS
+				 * message buffer.
 				 */
-				pbuf->data = (char *)val;
-				pbuf->maxlen = 4;
-				pbuf->len = 4;
-				pbuf->cursor = 0;
+				pbuf.data = (char *)val;
+				pbuf.maxlen = 4;
+				pbuf.len = 4;
+				pbuf.cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_SMALLDATETIME, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(&pbuf, TSQL_SMALLDATETIME, 0);
 			}
 			break;
 		case TSQL_DATE:
@@ -190,39 +188,38 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
 				LS_TDS_NUMERIC *numeric;
-				StringInfo pbuf;
+				StringInfoData pbuf;
 				int n, i = 0;
-				char numeric_bytes[16] = {0x00}; /* max storage bytes for numeric - sign byte = 17 - 1 = 16 */
 
 				numeric = (LS_TDS_NUMERIC *)val;
 
-				pbuf = palloc(sizeof(StringInfoData));
-				/*
-				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
-				 */
-				pbuf->data = (char *)(numeric->array);
-
 				n = tds_numeric_bytes_per_prec[numeric->precision] - 1;
 
-				/* reverse copy 'n' bytes after 1st byte (sign byte) */
-				for (i = 0; i < n; i++)
-					numeric_bytes[i] = numeric->array[n-i];
+				/* reverse 'n' bytes after 1st byte (sign byte) */
+				for (i = 0; i < n/2; i++)
+				{
+					char c = numeric->array[i + 1];
+					numeric->array[i + 1] = numeric->array[n - i];
+					numeric->array[n - i] = c;
+				}
 
 				/* flip the sign byte */
 				if (numeric->array[0] == 0)
-					pbuf->data[0] = 1;
+					numeric->array[0] = 1;
 				else
-					pbuf->data[0] = 0;
-				
-				memcpy(&pbuf->data[1], numeric_bytes, 16);
+					numeric->array[0] = 0;
 
-				pbuf->maxlen = 17;		/* sign byte + numeric bytes (1 + 16) */
-				pbuf->len = 17;
-				pbuf->cursor = 0;
+				/*
+				 * Rather than copying data around, we just set up a phony
+				 * StringInfoData pointing to the correct portion of the TDS
+				 * message buffer.
+				 */
+				pbuf.data = (char *)(numeric->array);
+				pbuf.maxlen = 17;		/* sign byte + numeric bytes (1 + 16) */
+				pbuf.len = 17;
+				pbuf.cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_NUMERIC, numeric->scale);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(&pbuf, TSQL_NUMERIC, numeric->scale);
 			}
 			break;
 		case TSQL_FLOATN:
@@ -243,39 +240,37 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 		case TSQL_MONEYN:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
-				StringInfo pbuf;
+				StringInfoData pbuf;
 
-				pbuf = palloc(sizeof(StringInfoData));
 				/*
 				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
+				 * StringInfoData pointing to the correct portion of the TDS
+				 * message buffer.
 				 */
-				pbuf->data = (char *)val;
-				pbuf->maxlen = 8;
-				pbuf->len = 8;
-				pbuf->cursor = 0;
+				pbuf.data = (char *)val;
+				pbuf.maxlen = 8;
+				pbuf.len = 8;
+				pbuf.cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_MONEYN, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(&pbuf, TSQL_MONEYN, 0);
 			}
 			break;
 		case TSQL_SMALLMONEY:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
 			{
-				StringInfo pbuf;
+				StringInfoData pbuf;
 
-				pbuf = palloc(sizeof(StringInfoData));
 				/*
 				 * Rather than copying data around, we just set up a phony
-				 * StringInfo pointing to the correct portion of the TDS message
-				 * buffer. 
+				 * StringInfoData pointing to the correct portion of the TDS
+				 * message buffer.
 				 */
-				pbuf->data = (char *)val;
-				pbuf->maxlen = 4;
-				pbuf->len = 4;
-				pbuf->cursor = 0;
+				pbuf.data = (char *)val;
+				pbuf.maxlen = 4;
+				pbuf.len = 4;
+				pbuf.cursor = 0;
 
-				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, TSQL_SMALLMONEY, 0);
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(&pbuf, TSQL_SMALLMONEY, 0);
 			}
 			break;
 		case TSQL_DATETIME2:
