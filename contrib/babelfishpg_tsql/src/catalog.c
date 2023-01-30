@@ -720,10 +720,10 @@ is_user(Oid role_oid)
 	type_str = bpchar_to_cstring(&type);
 
 	/*
-	* Only sysadmin can not be dropped. For the rest
-	* of the cases i.e., type is "S" or "U" etc, we should 
-	* drop the user
-	*/
+	 * Only sysadmin can not be dropped. For the rest
+	 * of the cases i.e., type is "S" or "U" etc, we should 
+	 * drop the user
+	 */
 	if (strcmp(type_str, "R") == 0)
 		is_user = false;
 
@@ -2290,7 +2290,7 @@ create_guest_role_for_db(const char *dbname)
 			CommandCounterIncrement();
 		}
 		set_cur_db(old_dbid, old_dbname);
-		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false);
+		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false, false);
 	}
 	PG_CATCH();
 	{

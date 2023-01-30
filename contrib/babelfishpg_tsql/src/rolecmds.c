@@ -71,7 +71,6 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
 static bool has_user_in_db(const char *login, char **db_name);
-static bool check_windows_user(const char* login);
 static void validateNetBIOS(char* netbios);
 static void validateFQDN(char* fqdn);
 
@@ -921,7 +920,8 @@ add_to_bbf_authid_user_ext(const char *user_name,
 						   const char *schema_name,
 						   const char *login_name,
 						   bool	is_role,
-						   bool has_dbaccess)
+						   bool has_dbaccess,
+						   bool from_windows)
 {
 	Relation		bbf_authid_user_ext_rel;
 	TupleDesc		bbf_authid_user_ext_dsc;
@@ -950,7 +950,7 @@ add_to_bbf_authid_user_ext(const char *user_name,
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum("");
 	if (is_role)
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("R"); 
-	else if (check_windows_user(login_name))
+	else if (from_windows)
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("U");
 	else
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S");
@@ -992,7 +992,7 @@ add_to_bbf_authid_user_ext(const char *user_name,
 }
 
 void
-create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login)
+create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login, bool from_windows)
 {
 	ListCell		*option;
 	char			*default_schema = NULL;
@@ -1080,7 +1080,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	}
 
 	/* Add to the catalog table. Adds current database name by default */
-	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login, true);
+	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login, true, from_windows);
 }
 
 PG_FUNCTION_INFO_V1(add_existing_users_to_catalog);
@@ -1130,17 +1130,17 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			rolspec->location = -1;
 			rolspec->rolename = pstrdup(dbo_role);
 			dbo_list = lappend(dbo_list, rolspec);
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true, false);
 		}
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true, false);
 		if (guest)
 		{
 			/* For master, tempdb and msdb databases, the guest user will be enabled by default */
 			if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
-				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true);
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true, false);
 			else
-				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false, false);
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
@@ -1857,85 +1857,6 @@ convertToUPN(char* input)
 }
 
 /*
- * get_roleform_ext - Useful when someone tries to drop login and that login is in
- * the form of windows format i.e, domain\login
- */
-HeapTuple 
-get_roleform_ext(char *login)
-{
-	Relation	bbf_authid_login_ext_rel;
-	HeapTuple	tuple;
-	ScanKeyData	scanKey;
-	SysScanDesc	scan;
-	char		*upn_login;
-	TupleDesc	dsc;
-
-	/* 
-	 * If login being dropped is not valid windows format
-	 * then return the invalid tuple from here only.
-	 */
-	if (!strchr(login, '\\'))
-		return NULL;
-
-	upn_login = convertToUPN(login);
-
-	/*
-	 * Trying to lookup provided windows user in babelfish_authid_login_ext catalog
-	 * using UPN form.
-	 */
-
-	/* Fetch the relation sys.babelfish_authid_login_ext */
-	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
-										  AccessShareLock);
-	dsc = RelationGetDescr(bbf_authid_login_ext_rel);
-
-	/* Search and drop on the role */
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_login_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(upn_login));
-
-	scan = systable_beginscan(bbf_authid_login_ext_rel,
-							  get_authid_login_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
-
-	if (HeapTupleIsValid(tuple))
-	{
-		char *type;
-		bool isnull = true;
-		Datum datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_type, dsc, &isnull);
-		if (isnull)
-			tuple = NULL;
-		type = pstrdup(TextDatumGetCString(datum));
-		/* Not a windows login */
-		if (strcasecmp(type, "U") != 0)
-			tuple = NULL;
-		pfree(type);
-	}
-
-	systable_endscan(scan);
-	table_close(bbf_authid_login_ext_rel, AccessShareLock);
-
-	if (!HeapTupleIsValid(tuple))
-	{
-		if (upn_login != login)
-			pfree(upn_login);
-		return tuple;
-	}
-
-	/* It is proven that this rolename is indeed windows login. */
-	tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(upn_login));
-
-	if (upn_login != login)
-		pfree(upn_login);
-
-	/* Return tuple even if it is invalid tuple. */
-	return tuple;
-}
-
-/*
 * Utility function to validate netbios name provided by user
 */
 
@@ -2217,56 +2138,4 @@ check_windows_logon_length(char* input)
 		return true;
 	else
 		return false;
-}
-
-static bool
-check_windows_user(const char* login)
-{
-	Relation	bbf_authid_login_ext_rel;
-	HeapTuple	tuple;
-	ScanKeyData	scanKey;
-	TableScanDesc scan;
-	TupleDesc	dsc;
-	NameData	*login_name;
-
-	// change the target name to NameData for search
-	login_name = (NameData *) palloc0(NAMEDATALEN);
-	snprintf(login_name->data, NAMEDATALEN, "%s", login);
-
-	/* Fetch the relation sys.babelfish_authid_login_ext */
-	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
-										  RowExclusiveLock);
-	dsc = RelationGetDescr(bbf_authid_login_ext_rel);
-
-	/* Search the role */
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_login_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(login_name));
-
-	scan = table_beginscan_catalog(bbf_authid_login_ext_rel, 1, &scanKey);
-	tuple = heap_getnext(scan, ForwardScanDirection);
-
-	if (HeapTupleIsValid(tuple))
-	{
-		char *type;
-		bool isnull;
-		Datum datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_type, dsc, &isnull);
-		type = pstrdup(TextDatumGetCString(datum));
-		
-		/* this means, the user has a corresponding windows login */
-		if (strcasecmp(type, "U") == 0)
-		{
-			pfree(type);
-			pfree(login_name);
-			table_endscan(scan);
-			table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
-			return true;
-		}
-		pfree(type);
-	}
-	pfree(login_name);
-	table_endscan(scan);
-	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
-	return false;
 }
