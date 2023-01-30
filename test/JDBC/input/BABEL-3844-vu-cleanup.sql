@@ -1,10 +1,10 @@
-drop user [babel\aduser];
+drop user [babel\aduser1];
 GO
 
 drop user test_user;
 GO
 
-drop login [babel\aduser];
+drop login [babel\aduser1];
 GO
 
 drop user [babel\aduser2];
@@ -23,6 +23,12 @@ drop user pass;
 GO
 
 drop login pass;
+GO
+
+drop user pass2;
+GO
+
+drop login pass2;
 GO
 
 use testdb;

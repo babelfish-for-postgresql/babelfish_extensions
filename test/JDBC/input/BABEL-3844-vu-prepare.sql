@@ -1,8 +1,8 @@
 -- positive test case for windows login
-create login [babel\aduser] from windows;
+create login [babel\aduser1] from windows;
 GO
 
-create user [babel\aduser] for login [babel\aduser];
+create user [babel\aduser1] for login [babel\aduser1];
 GO
 
 -- case when login name is not provied
@@ -32,6 +32,12 @@ GO
 create user pass;
 GO
 
+create login pass2 with password='123';
+GO
+
+create user pass2 for login pass2;
+GO
+
 -- create a new database and test there
 create database testdb;
 GO
@@ -40,11 +46,11 @@ use testdb;
 GO
 
 -- test for multiple users for a single login in different db
-create user [babel\aduser] for login [babel\aduser];
+create user [babel\aduser1] for login [babel\aduser1];
 GO
 
 -- test for multiple users for a single login in different db
-create user test_user for login [babel\aduser];
+create user test_user for login [babel\aduser1];
 GO
 
 -- test for user in different database
