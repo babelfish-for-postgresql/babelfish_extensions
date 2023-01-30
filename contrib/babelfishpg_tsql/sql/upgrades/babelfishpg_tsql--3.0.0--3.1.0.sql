@@ -1326,8 +1326,8 @@ AS $$
 BEGIN
     SELECT 
 		name AS "SRV_NAME", 
-		provider AS "SRV_PROVIDERNAME", 
-		product AS "SRV_PRODUCT", 
+		CAST(provider AS sys.nvarchar(128)) AS "SRV_PROVIDERNAME", 
+		CAST(product AS sys.nvarchar(128)) AS "SRV_PRODUCT", 
 		data_source AS "SRV_DATASOURCE",
 		provider_string AS "SRV_PROVIDERSTRING",
 		location AS "SRV_LOCATION",
