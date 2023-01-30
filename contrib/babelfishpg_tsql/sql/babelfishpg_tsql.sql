@@ -2896,15 +2896,15 @@ CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
 AS $$
 BEGIN
     SELECT 
-    	name AS SRV_NAME, 
-    	provider AS SRV_PROVIDERNAME, 
-    	product AS SRV_PRODUCT, 
-    	data_source AS SRV_DATASOURCE,
-		provider_string AS SRV_PROVIDERSTRING,
-		location AS SRV_LOCATION,
-		catalog AS SRV_CAT 
+		name AS "SRV_NAME", 
+		provider AS "SRV_PROVIDERNAME", 
+		product AS "SRV_PRODUCT", 
+		data_source AS "SRV_DATASOURCE",
+		provider_string AS "SRV_PROVIDERSTRING",
+		location AS "SRV_LOCATION",
+		catalog AS "SRV_CAT" 
 	FROM sys.servers
-	ORDER BY SRV_NAME
+	ORDER BY "SRV_NAME"
 END;
 $$ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
