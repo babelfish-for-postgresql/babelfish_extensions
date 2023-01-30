@@ -713,7 +713,12 @@ is_user(Oid role_oid)
 	type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
 	type_str = bpchar_to_cstring(&type);
 
-	if (strcmp(type_str, "S") != 0)
+	/*
+	* Only sysadmin can not be dropped. For the rest
+	* of the cases i.e., type is "S" or "U" etc, we should 
+	* drop the user
+	*/
+	if (strcmp(type_str, "R") == 0)
 		is_user = false;
 
 	systable_endscan(scan);

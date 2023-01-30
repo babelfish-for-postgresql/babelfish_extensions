@@ -289,6 +289,7 @@ CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
 WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
 ELSE NULL END AS NVARCHAR(60)) AS type_desc,
 CAST(Ext.is_disabled AS INT) AS is_disabled,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
@@ -333,6 +334,7 @@ CAST(Base.oid AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
 WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
 ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
 CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,

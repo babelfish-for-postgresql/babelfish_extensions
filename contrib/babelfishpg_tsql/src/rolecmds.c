@@ -70,7 +70,7 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
 static bool has_user_in_db(const char *login, char **db_name);
-
+static bool check_windows_user(const char* login);
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -947,6 +947,8 @@ add_to_bbf_authid_user_ext(const char *user_name,
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum("");
 	if (is_role)
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("R"); 
+	else if (check_windows_user(login_name))
+		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("U");
 	else
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_user_ext[USER_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1); /* placeholder */
@@ -1906,4 +1908,56 @@ check_windows_logon_length(char* input)
 		return true;
 	else
 		return false;
+}
+
+static bool
+check_windows_user(const char* login)
+{
+	Relation	bbf_authid_login_ext_rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey;
+	TableScanDesc scan;
+	TupleDesc	dsc;
+	NameData	*login_name;
+
+	// change the target name to NameData for search
+	login_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(login_name->data, NAMEDATALEN, "%s", login);
+
+	/* Fetch the relation sys.babelfish_authid_login_ext */
+	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
+										  RowExclusiveLock);
+	dsc = RelationGetDescr(bbf_authid_login_ext_rel);
+
+	/* Search the role */
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_login_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(login_name));
+
+	scan = table_beginscan_catalog(bbf_authid_login_ext_rel, 1, &scanKey);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	if (HeapTupleIsValid(tuple))
+	{
+		char *type;
+		bool isnull;
+		Datum datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_type, dsc, &isnull);
+		type = pstrdup(TextDatumGetCString(datum));
+		
+		/* this means, the user has a corresponding windows login */
+		if (strcasecmp(type, "U") == 0)
+		{
+			pfree(type);
+			pfree(login_name);
+			table_endscan(scan);
+			table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
+			return true;
+		}
+		pfree(type);
+	}
+	pfree(login_name);
+	table_endscan(scan);
+	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
+	return false;
 }

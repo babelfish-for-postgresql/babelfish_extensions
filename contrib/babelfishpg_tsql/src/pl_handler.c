@@ -2221,6 +2221,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				bool			islogin = false;
 				bool			isuser = false;
 				bool			isrole = false;
+				bool			login_from_windows = false;
 
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
@@ -2370,6 +2371,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 										pfree(login->rolename);
 										login->rolename = upn_login;
 									}
+									login_from_windows = true;
 								}
 							}
 						}
@@ -2389,6 +2391,15 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 												   makeDefElem("original_user_name",
 															   (Node *) makeString(orig_user_name),
 															   -1));
+							/*
+							* if the user name contains '\', check whether the login is from windows or not
+							*/
+							if (strchr(orig_user_name, '\\') != NULL)
+							{
+								if (!login_from_windows)
+									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+										errmsg("'%s' is not a valid name because it contains invalid characters.", stmt->role)));
+							}
 						}
 					}
 					else if (strcmp(headel->defname, "isrole") == 0)
@@ -2499,6 +2510,13 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				else if (isuser || isrole)
 				{
+					if (isrole)
+					{
+						if (strchr(stmt->role, '\\') != NULL)
+							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'%s' is not a valid name because it contains invalid characters.", stmt->role)));	
+					}
+
 					/* Set current user to dbo user for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
