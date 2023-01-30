@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "Choosing fastest up-to-date ubuntu mirror based on download speed..."
+UBUNTU_MIRROR=$({
+# choose mirrors that are up-to-date by checking the Last-Modified header for
+{
+    # consider Azure's Ubuntu mirror
+    echo http://azure.archive.ubuntu.com/ubuntu/
+    # also consider AWS's Ubuntu mirror
+    echo http://us-east-1.ec2.archive.ubuntu.com/ubuntu/
+    echo http://us-east-2.ec2.archive.ubuntu.com/ubuntu/
+    echo http://us-west-1.ec2.archive.ubuntu.com/ubuntu/
+    echo http://us-west-2.ec2.archive.ubuntu.com/ubuntu/
+    echo http://ap-southeast-1.ec2.archive.ubuntu.com/ubuntu/
+    echo http://ap-south-1.ec2.archive.ubuntu.com/ubuntu/
+    echo http://ap-south-2.ec2.archive.ubuntu.com/ubuntu/
+    echo http://eu-central-1.ec2.archive.ubuntu.com/ubuntu/
+    echo http://eu-west-2.ec2.archive.ubuntu.com/ubuntu/
+
+} | xargs -I {} sh -c 'echo "$(curl -m 5 -sI {}dists/$(lsb_release -c | cut -f2)-security/Contents-$(dpkg --print-architecture).gz|sed s/\\r\$//|grep Last-Modified|awk -F": " "{ print \$2 }" | LANG=C date -f- -u +%s)" "{}"' | sort -rg | awk '{ if (NR==1) TS=$1; if ($1 == TS) print $2 }'
+} | xargs -I {} sh -c 'echo `curl -r 0-102400 -m 5 -s -w %{speed_download} -o /dev/null {}ls-lR.gz` {}' \
+|sort -g -r |head -1| awk '{ print $2  }')
+if [ -z "$UBUNTU_MIRROR" ]; then
+    # fallback to full mirrors list
+    UBUNTU_MIRROR="mirror://mirrors.ubuntu.com/mirrors.txt"
+fi
+OLD_MIRROR=$(cat /etc/apt/sources.list | grep '^deb ' | head -1 | awk '{ print $2 }')
+
+#add retries and timeout for apt
+echo 'Acquire::Retries "10";
+Acquire::https::Timeout "240";
+Acquire::http::Timeout "240";
+APT::Get::Assume-Yes "true";
+APT::Install-Recommends "false";
+APT::Install-Suggests "false";
+Debug::Acquire::https "true";
+' | sudo tee -a /etc/apt/apt.conf.d/99custom
+
+sudo cat /etc/apt/apt.conf.d/99custom
+
+echo "Picked '$UBUNTU_MIRROR'. Current mirror is '$OLD_MIRROR'."
+if [[ "$OLD_MIRROR" != "$UBUNTU_MIRROR" ]]; then
+    sudo sed -i "s|$OLD_MIRROR|$UBUNTU_MIRROR|g" /etc/apt/sources.list
+    sudo apt-get update
+fi
