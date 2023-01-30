@@ -3,16 +3,12 @@ Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
+~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 16
     Server SQLState: 22023)~~
 
 
 Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
-    Server SQLState: 22023)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
@@ -67,7 +63,7 @@ Alter system set babelfishpg_tds.product_version = ".4.3000.6";
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
+~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 16
     Server SQLState: 22023)~~
 
 
