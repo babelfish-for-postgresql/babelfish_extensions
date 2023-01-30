@@ -2334,7 +2334,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
 	/* Disallow extended catalog lookup during restore */
 	if (!HeapTupleIsValid(proctup) || babelfish_dump_restore)
+	{
+		if (HeapTupleIsValid(proctup))
+			ReleaseSysCache(proctup);
 		return;
+	}
 	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
 
 	if (!is_pltsql_language_oid(form_proctup->prolang))
