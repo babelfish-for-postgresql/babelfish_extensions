@@ -374,6 +374,11 @@ tsql_check_param_readonly(const char *paramname, TypeName *typename, bool readon
 	}
 }
 
+
+/*
+* This function takes a JsonExpression, and an optional path then
+* calls the openjson_simple function
+*/
 Node *
 TsqlOpenJSONSimpleMakeFuncCall(Node* jsonExpr, Node* path)
 {
