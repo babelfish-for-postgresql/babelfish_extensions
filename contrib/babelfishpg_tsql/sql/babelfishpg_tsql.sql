@@ -2920,3 +2920,4 @@ BEGIN
 END;
 $$ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
+
