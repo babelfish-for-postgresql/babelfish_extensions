@@ -610,7 +610,7 @@ BEGIN
 		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 END;
 $$
-language plpgsql;
+language plpgsql STABLE;
 
 create or replace view sys.columns AS
 select out_object_id as object_id
@@ -1728,9 +1728,8 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN COALESCE(f.definition, '')
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF', 'TR') THEN COALESCE(f.definition, '')
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
-      WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
       END
     AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
@@ -1943,7 +1942,7 @@ left join sys.schemas sch on sch.schema_id = pgproc.pronamespace
 where has_schema_privilege(sch.schema_id, 'USAGE');
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE VIEW sys.syscolumns AS
 SELECT out_name as name

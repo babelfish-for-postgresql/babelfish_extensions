@@ -120,6 +120,13 @@ GO
     Server SQLState: 22023)~~
 
 
+ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "test";
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION  Server SQLState: 01000)~~
+
+
 ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
 SELECT pg_reload_conf();
 GO

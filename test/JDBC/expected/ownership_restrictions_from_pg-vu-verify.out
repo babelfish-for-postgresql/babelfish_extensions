@@ -266,7 +266,7 @@ GO
     Server SQLState: 42501)~~
 
 
--- Altering of APG Master should be allowed for few stataements(password, valid until, connection limit)
+-- Altering of non babelfish role that is a member of master_guest should be allowed for few stataements(password, valid until, connection limit) when enabled altering
 SET enable_alter_babelfish_role = true;
 ALTER ROLE ownership_restrictions_from_pg_role2 rename to ownership_restrictions_from_pg_role5;
 SET enable_alter_babelfish_role = false;
@@ -571,6 +571,25 @@ GO
 
 SET enable_alter_babelfish_role = true;
 ALTER ROLE master_ownership_restrictions_from_pg_role1 set babelfishpg_tsql.escape_hatch_schemabinding_function = 'strict';
+SET enable_alter_babelfish_role = false;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- If the stmt contains a non-allowed option then disallow altering even if enabled altering
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTION LIMIT 1  password '123';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET enable_alter_babelfish_role = true;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTION LIMIT 1  password '123';
 SET enable_alter_babelfish_role = false;
 GO
 ~~ERROR (Code: 0)~~

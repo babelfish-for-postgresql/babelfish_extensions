@@ -48,7 +48,7 @@ void tdsutils_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool 
 ProcessUtility_hook_type next_ProcessUtility = NULL;
 static void call_next_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
 static void check_babelfish_droprole_restrictions(char *role);
-static void check_babelfish_alterrole_restictions(char *role);
+static void check_babelfish_alterrole_restictions(char *role, bool allow_alter_operation);
 static void check_babelfish_renamedb_restrictions(Oid target_db_id);
 static void check_babelfish_dropdb_restrictions(Oid target_db_id);
 static bool is_babelfish_ownership_enabled(ArrayType *array);
@@ -686,15 +686,18 @@ void tdsutils_ProcessUtility(PlannedStmt *pstmt,
 	/*
 	 * Regardless of superuser or non-superuser ALTER ROLE statments need to be disallowed
 	 * from PG end.
-	*/
+	 */
 	switch (nodeTag(parsetree))
 	{
+		/* Case thar deal with Rename Stmt */
 		case T_RenameStmt:
 			handle_result = handle_rename((RenameStmt *)parsetree);
 			break;
+		/* Case thar deal with ALTER ROLE WITH Stmt */
 		case T_AlterRoleStmt:
 			handle_result = handle_alter_role((AlterRoleStmt*)parsetree);
 			break;
+		/* Case thar deal with ALTER ROLE SET Stmt */
 		case T_AlterRoleSetStmt:
 			handle_result = handle_alter_role_set((AlterRoleSetStmt*)parsetree);
 			break;
@@ -956,11 +959,12 @@ handle_rename(RenameStmt* rename_stmt)
      * (obviously) event triggers, so we need to ignore those.
      */
     if (OBJECT_ROLE == rename_stmt->renameType)
-	{
-		if (enable_alter_babelfish_role)
-			enable_alter_babelfish_role = false;
-		check_babelfish_alterrole_restictions(rename_stmt->subname);
-	}
+    {
+	    /*
+	     * The second argument is false because alter operation for rename stmt shouldn't be allowed
+	     */
+	    check_babelfish_alterrole_restictions(rename_stmt->subname, false);
+    }
 
     else if (OBJECT_DATABASE == rename_stmt->renameType)
     {
@@ -994,7 +998,7 @@ handle_rename(RenameStmt* rename_stmt)
  * block renaming an active babelfish role/user
  */
 static void
-check_babelfish_alterrole_restictions(char *role)
+check_babelfish_alterrole_restictions(char *role, bool allow_alter_operation)
 {
 	Oid bbf_master_guest_oid;
 	Oid bbf_tempdb_guest_oid;
@@ -1011,7 +1015,7 @@ check_babelfish_alterrole_restictions(char *role)
 			&& OidIsValid(bbf_msdb_guest_oid)
 			&& is_member_of_role(objectId, bbf_master_guest_oid)
 			&& is_member_of_role(objectId, bbf_tempdb_guest_oid)
-			&& is_member_of_role(objectId, bbf_msdb_guest_oid) &&!enable_alter_babelfish_role) || is_babelfish_role(role))
+			&& is_member_of_role(objectId, bbf_msdb_guest_oid) &&!allow_alter_operation) || is_babelfish_role(role))
 	{
 		pfree(role);	/* avoid mem leak */
 		ereport(ERROR,
@@ -1196,41 +1200,53 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 {
 	List *options = alter_role_stmt->options;
 	ListCell *opt;
-    char *name = get_role_name(alter_role_stmt->role);
-
-    /* If the role does not exist, just let the normal Postgres checks happen. */
-    if (name == NULL)
-        return true;
+	char *name = get_role_name(alter_role_stmt->role);
+	bool allow_alter_operation = enable_alter_babelfish_role;
 
 	/*
-	 * There are only few operations which need to be allowed for ALTER ROLE <role> WITH namely
-	 * password change, connection limit, valid until.
-	 * 
-	 * In fututre, if need to allow more operations then add those options into the list. 
-	*/
-	foreach(opt, options)
+	 * If the role does not exist, just let the normal Postgres checks happen.
+	 * If the role is "sysadmin" then allow the alter operation.
+	 */
+	if (name == NULL || (strcmp(name, BABELFISH_SYSADMIN) == 0))
 	{
-		DefElem *defel = (DefElem *) lfirst(opt);
-
-		/*
-		 * If the enable_alter_babelfish_role guc variable is set to true and tried to execute
-		 * ALTER ROLE ... WITH statement(other than password change, connection limit, valid until),
-		 * then change the value of guc variable to false as we disallow alter operation[WITH statement]
-		 * (other than password change, connection limit, valid until) from PG end.
-		*/
-		if ((enable_alter_babelfish_role)&&(strcmp(defel->defname, "password") == 0 ||
-			strcmp(defel->defname, "connectionlimit") == 0 ||
-			strcmp(defel->defname, "validUntil") == 0))
-				enable_alter_babelfish_role = true;
-		else
-			enable_alter_babelfish_role = false;
+		return true;
 	}
 
-    check_babelfish_alterrole_restictions(name);
+	/*
+	 * If the enable_alter_babelfish_role guc variable is set to true and tried to execute
+	 * ALTER ROLE ... WITH statement(other than password change, connection limit, valid until),
+	 * then change the value of allow_alter_operation variable to false as we disallow
+	 * alter operation[WITH statement](other than password change, connection limit, valid until) from PG end.
+	 */
+	if(allow_alter_operation)
+	{
+		/*
+		 * There are only few operations which need to be allowed for ALTER ROLE <role> WITH namely
+		 * password change, connection limit, valid until.
+		 *
+		 * If any non-allowed option is given among the options then disallow the operation.
+		 *
+		 * In fututre, if need to allow more operations then add those options into the list.
+		 */
+		foreach(opt, options)
+		{
+			DefElem *defel = (DefElem *) lfirst(opt);
+			if (strcmp(defel->defname, "password") == 0 ||
+				strcmp(defel->defname, "connectionlimit") == 0 ||
+				strcmp(defel->defname, "validUntil") == 0)
+					allow_alter_operation = true;
+			else
+			{
+				allow_alter_operation = false;
+				break;
+			}
+		}
+	}
+	check_babelfish_alterrole_restictions(name, allow_alter_operation);
 
-    /* We don't need "name" anymore */
-    pfree(name);
-    return true;
+	/* We don't need "name" anymore */
+	pfree(name);
+	return true;
 }
 
 /* handle_alter_role_set
@@ -1258,24 +1274,20 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
      * "protected" databases thanks to handle_alter_owner().)
      */
     if (alter_role_set_stmt->role == NULL)
-	{
-        return true;
-	}
+    {
+	    return true;
+    }
 
     name = get_role_name(alter_role_set_stmt->role);
-	/*
-	 * If the enable_alter_babelfish_role guc variable is set to true and tried to execute
-	 * ALTER ROLE ... SET statement, then change the value of guc variable to false as we
-	 * disallow alter operation[SET statement] from PG end.
-	*/
-    if (enable_alter_babelfish_role)
-	    enable_alter_babelfish_role = false;
 
     /* If the role does not exist, just let the normal Postgres checks happen.*/
     if (NULL == name)
-        return true;
+	    return true;
 
-    check_babelfish_alterrole_restictions(name);
+    /*
+     * The second argument is false because alter set operation shouldn't be allowed
+     */
+    check_babelfish_alterrole_restictions(name, false);
 
     /*
      * Reaching here does not mean that this user has permission to modify the role.

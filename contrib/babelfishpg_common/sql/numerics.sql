@@ -22,7 +22,7 @@ AS $$
 SELECT CAST(CAST(sys.bitxor(CAST(CAST(leftarg AS int4) AS pg_catalog.bit(16)),
                     CAST(CAST(rightarg AS int4) AS pg_catalog.bit(16))) AS int4) AS sys.tinyint);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OPERATOR sys.^ (
     LEFTARG = sys.tinyint,
@@ -37,7 +37,7 @@ AS $$
 SELECT CAST(CAST(sys.bitxor(CAST(CAST(leftarg AS int4) AS pg_catalog.bit(16)),
                     CAST(CAST(rightarg AS int4) AS pg_catalog.bit(16))) AS int4) AS int2);
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OPERATOR sys.^ (
     LEFTARG = int2,
@@ -52,7 +52,7 @@ AS $$
 SELECT CAST(sys.bitxor(CAST(leftarg AS pg_catalog.bit(32)),
                     CAST(rightarg AS pg_catalog.bit(32))) AS int4)
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OPERATOR sys.^ (
     LEFTARG = int4,
@@ -67,7 +67,7 @@ AS $$
 SELECT CAST(sys.bitxor(CAST(leftarg AS pg_catalog.bit(64)),
                     CAST(rightarg AS pg_catalog.bit(64))) AS int8)
 $$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OPERATOR sys.^ (
     LEFTARG = int8,
@@ -313,10 +313,22 @@ RETURNS BIGINT
 AS 'babelfishpg_common', 'bigint_sum'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.bigint_avg(INTERNAL)
+RETURNS BIGINT
+AS 'babelfishpg_common', 'bigint_avg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.int4int2_sum(BIGINT)
 RETURNS INT
 AS 'babelfishpg_common' , 'int4int2_sum'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.int4int2_avg(pg_catalog._int8)
+RETURNS INT
+AS 'babelfishpg_common', 'int4int2_avg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+
 
 CREATE OR REPLACE AGGREGATE sys.sum(BIGINT) (
 SFUNC = int8_avg_accum,
@@ -350,5 +362,42 @@ SFUNC = int2_sum,
 FINALFUNC = int4int2_sum,
 STYPE = int8,
 COMBINEFUNC = int8pl,
+PARALLEL = SAFE
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(TINYINT)(
+SFUNC = int2_avg_accum,
+FINALFUNC = int4int2_avg,
+STYPE = _int8,
+COMBINEFUNC = int4_avg_combine,
+PARALLEL = SAFE,
+INITCOND='{0,0}'
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(SMALLINT)(
+SFUNC = int2_avg_accum,
+FINALFUNC = int4int2_avg,
+STYPE = _int8,
+COMBINEFUNC = int4_avg_combine,
+PARALLEL = SAFE,
+INITCOND='{0,0}'
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(INT)(
+SFUNC = int4_avg_accum,
+FINALFUNC = int4int2_avg,
+STYPE = _int8,
+COMBINEFUNC = int4_avg_combine,
+PARALLEL = SAFE,
+INITCOND='{0,0}'
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(BIGINT) (
+SFUNC = int8_avg_accum,
+FINALFUNC = bigint_avg,
+STYPE = INTERNAL,
+COMBINEFUNC = int8_avg_combine,
+SERIALFUNC = int8_avg_serialize,
+DESERIALFUNC = int8_avg_deserialize,
 PARALLEL = SAFE
 );

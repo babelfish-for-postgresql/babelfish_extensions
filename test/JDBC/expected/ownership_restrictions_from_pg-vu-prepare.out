@@ -10,7 +10,6 @@ CREATE USER ownership_restrictions_from_pg_test_user WITH PASSWORD '12345678' in
 go
 
 -- Create a non babelfish role that is a member of master_guest
--- and enable altering role for few statemenst(password, valid until, connection limit)
 CREATE ROLE ownership_restrictions_from_pg_role2 IN ROLE master_guest, tempdb_guest, msdb_guest;
 GO
 

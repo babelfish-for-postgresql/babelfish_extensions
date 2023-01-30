@@ -1238,94 +1238,95 @@ fragment LETTER
     | '\u03a3'..'\u03ce'
     | '\u03d0'..'\u03d7'
     | '\u03da'..'\u03f3'
-//    | '\u0400'..'\u0481'  // Cyrillic
-//    | '\u048c'..'\u04c4'
-//    | '\u04c7'..'\u04c8'
-//    | '\u04cb'..'\u04cc'
-//    | '\u04d0'..'\u04f5'
-//    | '\u04f8'..'\u04f9'
-//    | '\u05d0'..'\u05ea'  // Hebrew
-//    | '\u0621'..'\u063a'  // Arabic
-//    | '\u0641'..'\u064a'
-//    | '\u0660'..'\u0669'
-//    | '\u0671'..'\u06d3'
-//    | '\u06d5'
-//    | '\u06f0'..'\u06f9'
-//    | '\u06fa'..'\u06fc'
-//    | '\u0e01'..'\u0e5b'  // Thai
-//    | '\u1100'..'\u1159'  // Hangul/Korean
-//    | '\u1161'..'\u11a2'
-//    | '\u11a8'..'\u11f9'
-//    | '\u1e00'..'\u1e9b'  // Latin Extended Additional
-//    | '\u1ea0'..'\u1ef9'
-//    | '\u1f00'..'\u1f15'  // Greek Extended
-//    | '\u1f18'..'\u1f1d'
-//    | '\u1f20'..'\u1f45'
-//    | '\u1f48'..'\u1f4d'
-//    | '\u1f50'..'\u1f57'
-//    | '\u1f59'
-//    | '\u1f5b'
-//    | '\u1f5d'
-//    | '\u1f5f'..'\u1f7d'
-//    | '\u1f80'..'\u1fb4'
-//    | '\u1fb6'..'\u1fbc'
-//    | '\u1fc2'..'\u1fc4'
-//    | '\u1fc6'..'\u1fcc'
-//    | '\u1fd0'..'\u1fd3'
-//    | '\u1fd6'..'\u1fdb'
-//    | '\u1fe0'..'\u1fec'
-//    | '\u1ff2'..'\u1ff4'
-//    | '\u1ff6'..'\u1ffc'
-//    | '\u210a'..'\u2113' // Letter-like symbols
-//    | '\u2118'..'\u211d'
-//    | '\u212a'..'\u212d'
-//    | '\u212f'..'\u2131'
-//    | '\u2133'..'\u2138'
-//    | '\u2160'..'\u2183' // Roman Numeral
-//    | '\u2460'..'\u24ea' // Enclosed Alphanumerics
-//    | '\u2e80'..'\u2ef3' // CJK Radicals Supplement
-//    | '\u2f00'..'\u2fd5' // Kangxi Radicals
-//    | '\u3021'..'\u3029' // CJK
-//    | '\u3031'..'\u3035'
-//    | '\u3038'..'\u303a'
-//    | '\u3041'..'\u3094' // Hiragana
-//    | '\u309d'..'\u309e'
-//    | '\u30a1'..'\u30fa' // Katakana
-//    | '\u30fc'..'\u30fe'
-//    | '\u3105'..'\u312c' // Bopomofo
-//    | '\u3131'..'\u318e' // Hangul Compatability Jamo
-//    | '\u31a0'..'\u31b7' // Bopomofo Extended
-//    | '\ua000'..'\ua48c' // Yi Syllables
-//    | '\uac00'           // Hangul Syllables
-//    | '\ud7a3'
-//    | '\uf900'..'\ufa2d' // CJK Compatibility Ideographs
-//    | '\ufb00'..'\ufb06' // Alphabetic Presentation Forms
-//    | '\ufb13'..'\ufb17'
-//    | '\ufb1d'
-//    | '\ufb1f'..'\ufb28'
-//    | '\ufb2a'..'\ufb36'
-//    | '\ufb38'..'\ufb3c'
-//    | '\ufb3e'
-//    | '\ufb40'..'\ufb41'
-//    | '\ufb43'..'\ufb44'
-//    | '\ufb46'..'\ufb4f'
-//    | '\ufb50'..'\ufbb1' // Arabic Presentation Forms-A
-//    | '\ufbd3'..'\ufd3d'
-//    | '\ufd50'..'\ufd8f'
-//    | '\ufd92'..'\ufdc7'
-//    | '\ufdf0'..'\ufdfb'
-//    | '\ufe70'..'\ufe72' // Arabic Presentation Forms-B
-//    | '\ufe74'
-//    | '\ufe76'..'\ufefc'
-//    | '\uff21'..'\uff3a' // Halfwidth and Fullwidth Forms
-//    | '\uff41'..'\uff5a'
-//    | '\uff66'..'\uffbe'
-//    | '\uffc2'..'\uffc7'
-//    | '\uffca'..'\uffcf'
-//    | '\uffd2'..'\uffd7'
-//    | '\uffda'..'\uffdc'
-//    | '\u10000'..'\u1F9FF'  //not supporting 4-byte chars
-//    | '\u20000'..'\u2FA1F'
+    | '\u0400'..'\u0481'  // Cyrillic
+    | '\u048c'..'\u04c4'
+    | '\u04c7'..'\u04c8'
+    | '\u04cb'..'\u04cc'
+    | '\u04d0'..'\u04f5'
+    | '\u04f8'..'\u04f9'
+    | '\u05d0'..'\u05ea'  // Hebrew
+    | '\u0621'..'\u063a'  // Arabic
+    | '\u0641'..'\u064a'
+    | '\u0660'..'\u0669'
+    | '\u0671'..'\u06d3'
+    | '\u06d5'
+    | '\u06f0'..'\u06f9'
+    | '\u06fa'..'\u06fc'
+    | '\u0e01'..'\u0e5b'  // Thai
+    | '\u1100'..'\u1159'  // Hangul/Korean
+    | '\u1161'..'\u11a2'
+    | '\u11a8'..'\u11f9'
+    | '\u1e00'..'\u1e9b'  // Latin Extended Additional
+    | '\u1ea0'..'\u1ef9'
+    | '\u1f00'..'\u1f15'  // Greek Extended
+    | '\u1f18'..'\u1f1d'
+    | '\u1f20'..'\u1f45'
+    | '\u1f48'..'\u1f4d'
+    | '\u1f50'..'\u1f57'
+    | '\u1f59'
+    | '\u1f5b'
+    | '\u1f5d'
+    | '\u1f5f'..'\u1f7d'
+    | '\u1f80'..'\u1fb4'
+    | '\u1fb6'..'\u1fbc'
+    | '\u1fc2'..'\u1fc4'
+    | '\u1fc6'..'\u1fcc'
+    | '\u1fd0'..'\u1fd3'
+    | '\u1fd6'..'\u1fdb'
+    | '\u1fe0'..'\u1fec'
+    | '\u1ff2'..'\u1ff4'
+    | '\u1ff6'..'\u1ffc'
+    | '\u210a'..'\u2113' // Letter-like symbols
+    | '\u2118'..'\u211d'
+    | '\u212a'..'\u212d'
+    | '\u212f'..'\u2131'
+    | '\u2133'..'\u2138'
+    | '\u2160'..'\u2183' // Roman Numeral
+    | '\u2460'..'\u24ea' // Enclosed Alphanumerics
+    | '\u2e80'..'\u2ef3' // CJK Radicals Supplement
+    | '\u2f00'..'\u2fd5' // Kangxi Radicals
+    | '\u3021'..'\u3029' // CJK
+    | '\u3031'..'\u3035'
+    | '\u3038'..'\u303a'
+    | '\u3041'..'\u3094' // Hiragana
+    | '\u309d'..'\u309e'
+    | '\u30a1'..'\u30fa' // Katakana
+    | '\u30fc'..'\u30fe'
+    | '\u3105'..'\u312c' // Bopomofo
+    | '\u3131'..'\u318e' // Hangul Compatability Jamo
+    | '\u31a0'..'\u31b7' // Bopomofo Extended
+    | '\u4e00'..'\u9fa5' // Chinese
+    | '\ua000'..'\ua48c' // Yi Syllables
+    | '\uac00'           // Hangul Syllables
+    | '\ud7a3'
+    | '\uf900'..'\ufa2d' // CJK Compatibility Ideographs
+    | '\ufb00'..'\ufb06' // Alphabetic Presentation Forms
+    | '\ufb13'..'\ufb17'
+    | '\ufb1d'
+    | '\ufb1f'..'\ufb28'
+    | '\ufb2a'..'\ufb36'
+    | '\ufb38'..'\ufb3c'
+    | '\ufb3e'
+    | '\ufb40'..'\ufb41'
+    | '\ufb43'..'\ufb44'
+    | '\ufb46'..'\ufb4f'
+    | '\ufb50'..'\ufbb1' // Arabic Presentation Forms-A
+    | '\ufbd3'..'\ufd3d'
+    | '\ufd50'..'\ufd8f'
+    | '\ufd92'..'\ufdc7'
+    | '\ufdf0'..'\ufdfb'
+    | '\ufe70'..'\ufe72' // Arabic Presentation Forms-B
+    | '\ufe74'
+    | '\ufe76'..'\ufefc'
+    | '\uff21'..'\uff3a' // Halfwidth and Fullwidth Forms
+    | '\uff41'..'\uff5a'
+    | '\uff66'..'\uffbe'
+    | '\uffc2'..'\uffc7'
+    | '\uffca'..'\uffcf'
+    | '\uffd2'..'\uffd7'
+    | '\uffda'..'\uffdc'
+    | '\u{10000}'..'\u{1F9FF}'
+    | '\u{20000}'..'\u{2FA1F}'
     ;
 
 
