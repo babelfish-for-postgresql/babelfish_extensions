@@ -36,6 +36,7 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
+forxml
 sys-assembly_types
 sys-database_mirroring
 sys-databases
@@ -322,3 +323,4 @@ BABEL_OBJECT_ID
 Test-sp_volatility
 AVG-Aggregate-common
 AVG-Aggregate-Dep-before-15-2-or-14-7
+BABEL_OBJECT_NAME
