@@ -386,5 +386,11 @@ BABEL_OBJECT_ID
 BABEL-3802
 BABEL_OBJECT_NAME
 Test_user_from_win_login
+BABEL-3914
+Babel_domain_mapping_test
+BABEL-3828
+BABEL-3844
+test_windows_alter_login
+sys-systypes
 Test-sp_rename
 Test-sp_rename-dep

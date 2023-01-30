@@ -21,7 +21,7 @@ AS
 BEGIN
     EXEC sp_rename 'sp_rename_dep_schema1.sp_rename_dep_dummy_table1', 'sp_rename_dep_dummy_table1_new', 'OBJECT';
     SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename%'
-    ORDER BY TABLE_NAME
+    ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 END
 GO
 
@@ -31,15 +31,15 @@ BEGIN
     EXEC sp_rename 'sp_rename_dep_dummy_func1', 'sp_rename_dep_dummy_func1_new', 'OBJECT';
     SELECT ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE 
     FROM information_schema.routines WHERE ROUTINE_NAME LIKE '%sp_rename%' 
-    ORDER BY ROUTINE_NAME
+    ORDER BY ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME
 END
 GO
 
 CREATE PROCEDURE sp_rename_dep_proc3
 AS
 BEGIN
-    EXEC sp_rename_internal 'sp_rename_dep_dummy_table1_new', 'sp_rename_dep_dummy_table1', 'sp_rename_dep_schema1', 'U';
+    EXEC babelfish_sp_rename_internal 'sp_rename_dep_dummy_table1_new', 'sp_rename_dep_dummy_table1', 'sp_rename_dep_schema1', 'U';
     SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename%'
-    ORDER BY TABLE_NAME
+    ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 END
 GO

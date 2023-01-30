@@ -81,6 +81,7 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 char *sp_describe_first_result_set_view_name = NULL;
 
 bool sp_describe_first_result_set_inprogress = false;
+char *orig_proc_funcname = NULL;
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -1644,6 +1645,7 @@ gen_sp_addrole_subcmds(const char *user)
 				(Node *) makeString((char *)user),
 						-1));
 	rolestmt->options = list_concat(rolestmt->options, user_options);
+	
 	return res;
 }
 
@@ -2585,6 +2587,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		ObjectWithArgs *objwargs = (ObjectWithArgs *) renamestmt->object;
 		renamestmt->renameType = objtype;
 		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
+		orig_proc_funcname = pstrdup(newname);
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
 	}

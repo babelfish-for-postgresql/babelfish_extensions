@@ -1,3 +1,4 @@
+
 -- tsql
 USE master
 GO
@@ -27,4 +28,3 @@ GO
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#sp_rename_dep_schema1#!#sp_rename_dep_dummy_table1#!#BASE TABLE
 ~~END~~
-

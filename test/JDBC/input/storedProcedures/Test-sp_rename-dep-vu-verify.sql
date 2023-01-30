@@ -1,3 +1,5 @@
+-- sla 30000
+
 -- tsql
 USE master
 GO
