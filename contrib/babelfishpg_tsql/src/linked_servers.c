@@ -3,6 +3,7 @@
 
 #include "foreign/foreign.h"
 #include "libpq/pqformat.h"
+#include "tsearch/ts_locale.h"
 #include "utils/builtins.h"
 #include "miscadmin.h"
 
@@ -305,6 +306,8 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 int
 tdsTypeStrToTypeId(char* datatype)
 {
+	datatype = lowerstr(datatype);
+
 	if (strcmp(datatype, "image") == 0)
 		return TSQL_IMAGE;
 	else if (strcmp(datatype, "varbinary") == 0)
