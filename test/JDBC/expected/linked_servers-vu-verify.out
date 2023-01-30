@@ -58,7 +58,7 @@ mssql_server3#!#<NULL>
 EXEC sp_linkedservers
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
 hello.world.com#!#tds_fdw#!##!#hello.world.com#!#<NULL>#!#<NULL>#!#<NULL>
 mssql_server#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
 mssql_server1#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
