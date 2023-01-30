@@ -360,6 +360,7 @@ BABEL-CHECK-CONSTRAINT
 BABEL-3640
 sys-sysindexes
 sys-system_objects
+ISC-Views
 ISC-Tables
 ISC-Columns
 #ISC-Check-Constraints
@@ -370,6 +371,7 @@ TestVariableDataLength
 BABEL-3801
 app_name
 atn2
+str
 case_insensitive_collation
 linked_servers
 ISC-sequences
@@ -384,4 +386,5 @@ BABEL_OBJECT_ID
 BABEL-3802
 BABEL_OBJECT_NAME
 Test_user_from_win_login
+BABEL-3914
 Babel_domain_mapping_test
