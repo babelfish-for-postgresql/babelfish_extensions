@@ -142,7 +142,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("Please enter a valid major version number between 11 and 15")));
+				errmsg("Please enter a valid major version number between 11 and 16")));
 		}
 		/*
 		 * Minor Version takes 1 byte in PreLogin message when doing handshake, 
