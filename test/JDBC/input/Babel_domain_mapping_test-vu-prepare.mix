@@ -109,3 +109,10 @@ exec sys.babelfish_add_domain_mapping_entry 'netbios','test||babel';
 GO
 exec sys.babelfish_add_domain_mapping_entry 'netbios','test)babel';
 GO
+
+--tsql
+exec babelfish_add_domain_mapping_entry 'def', 'def.internal'
+GO
+
+create login [def\test] from windows;
+GO

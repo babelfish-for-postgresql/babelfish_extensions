@@ -230,3 +230,10 @@ GO
 
 ~~ERROR (Message: 'test)babel' is not a valid FQDN because it contains invalid characters.)~~
 
+
+--tsql
+exec babelfish_add_domain_mapping_entry 'def', 'def.internal'
+GO
+
+create login [def\test] from windows;
+GO
