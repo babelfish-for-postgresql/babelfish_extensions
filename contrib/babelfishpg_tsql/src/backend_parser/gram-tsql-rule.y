@@ -1600,10 +1600,6 @@ table_ref:	relation_expr tsql_table_hint_expr
 				}
 			| OPENJSON '(' a_expr  ')' opt_alias_clause
 				{
-					/* map to OPENJSON_SIMPLE */
-					// Call a function that changes this to "sys.OPENJSON_SIMPLE(a_expr)"
-					// Function can return generic node type and just return that function call
-
 					RangeFunction *n = makeNode(RangeFunction);
 					n->alias = $5;
 					n->lateral = false;

@@ -1,44 +1,27 @@
-CREATE VIEW BABEL_3702_vu_prepare_v1 as (select * from OPENJSON(N'{"a":null,"b":"a","c":1,"d":true,"e":[1,2],"f":{"name":"John"}}'));
-GO
-
-CREATE PROCEDURE BABEL_3702_vu_prepare_p1 as (select * from OPENJSON(N'{"a":null,"b":"a","c":1,"d":true,"e":[1,2],"f":{"name":"John"}}'));
-GO
-
-CREATE PROCEDURE BABEL_3702_vu_prepare_p2
-AS
-BEGIN
-DECLARE @jsonvar NVARCHAR(2048) = N'{
-        "String_value": "John",
-        "DoublePrecisionFloatingPoint_value": 45,
-        "DoublePrecisionFloatingPoint_value": 2.3456,
-        "BooleanTrue_value": true,
-        "BooleanFalse_value": false,
-        "Null_value": null,
-        "Array_value": ["a","r","r","a","y"],
-        "Object_value": {"obj":"ect"}
-    }';
-    SELECT * FROM OpenJson(@jsonvar)
-END;
-GO
-
-CREATE VIEW BABEL_3702_vu_prepare_v3 as (SELECT [key], value FROM OPENJSON(N'{"path":{"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}}','$.path.to."sub-object"'));
-GO
-
-CREATE PROCEDURE BABEL_3702_vu_prepare_p3 as (SELECT [key], value FROM OPENJSON(N'{"path":{"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}}','$.path.to."sub-object"'));
-GO
-
-CREATE PROCEDURE BABEL_3702_vu_prepare_p4 as (select * from openjson(N'{"obj":{"a":1}}', 'lax $.a'));
-GO
-
-CREATE PROCEDURE BABEL_3702_vu_prepare_p5 as (select * from openjson(N'{"obj":{"a":1}}', 'strict $.a'));
-GO
-
 CREATE PROCEDURE BABEL_3702_vu_prepare_p6
 AS
 BEGIN
     DECLARE @json NVARCHAR(MAX) = N'{"obj":{"a":1}}'
     DECLARE @path NVARCHAR(MAX) = N'$.obj'
     SELECT * FROM OPENJSON(@json, @path) with (a nvarchar(20))
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p6_2
+AS
+BEGIN
+    DECLARE @json NCHAR(4000) = N'{"obj":{"a":1}}'
+    DECLARE @path NCHAR(4000) = N'$.obj'
+    SELECT * FROM OPENJSON(@json, @path) with (a nchar(20))
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p6_3
+AS
+BEGIN
+    DECLARE @json CHAR(50) = N'{"obj":{"a":1}}'
+    DECLARE @path CHAR(50) = N'$.obj'
+    SELECT * FROM OPENJSON(@json, @path) with (a char(20))
 END;
 GO
 
@@ -51,6 +34,42 @@ BEGIN
     DECLARE @json NVARCHAR(MAX);
     SET @json=N'[{"a":1},[1,2],"a"]';
     SELECT * FROM OPENJSON(@json, '$') with (name nvarchar(max) '$' AS JSON)
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8_2
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name char(4000) '$')
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8_3
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name nchar(4000) '$')
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8_4
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name pg_catalog.char(4000) '$')
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8_5
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name sys.nvarchar(max) '$' AS JSON)
 END;
 GO
 

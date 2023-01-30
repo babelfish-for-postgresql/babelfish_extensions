@@ -53,8 +53,10 @@ static RangeSubselect *TsqlForClauseSubselect(Node *selectstmt);
 static Node *TsqlOpenJSONSimpleMakeFuncCall(Node* jsonExpr, Node* path);
 static Node *TsqlOpenJSONWithMakeFuncCall(Node* jsonExpr, Node* path, List* cols, Alias* alias);
 static Node *createOpenJsonWithColDef(char* elemName, TypeName* elemType);
-static int getNVarcharTypMod(TypeName *t);
-static TypeName* setNVarcharTypMod(TypeName *t);
+static int getElemTypMod(TypeName *t);
+static TypeName* setCharTypmodForOpenjson(TypeName *t);
+static bool isCharType(char* typenameStr);
+static bool isNVarCharType(char* typenameStr);
 
 char * construct_unique_index_name(char *index_name, char *relation_name);
 

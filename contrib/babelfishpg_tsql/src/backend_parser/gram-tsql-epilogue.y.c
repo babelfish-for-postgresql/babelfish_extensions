@@ -407,7 +407,8 @@ TsqlOpenJSONWithMakeFuncCall(Node* jsonExpr, Node* path, List* cols, Alias* alia
     foreach(lc, cols)
     {
         OpenJson_Col_Def *cd = (OpenJson_Col_Def*) lfirst(lc);
-        int initialTmod = getNVarcharTypMod(cd->elemType);
+        int initialTmod = getElemTypMod(cd->elemType);
+        char* typeNameString = TypeNameToString(cd->elemType);
         ColumnDef *n = (ColumnDef *) createOpenJsonWithColDef(cd->elemName, cd->elemType);
         StringInfo format_cols = makeStringInfo();
 
@@ -422,33 +423,32 @@ TsqlOpenJSONWithMakeFuncCall(Node* jsonExpr, Node* path, List* cols, Alias* alia
         }
 
         // character types need to have the typmod appended to them
-        if((pg_strcasecmp(TypeNameToString(cd->elemType), "nvarchar") == 0 ||
-            (pg_strcasecmp(TypeNameToString(cd->elemType), "varchar") == 0 ||
-            (pg_strcasecmp(TypeNameToString(cd->elemType), "nchar") == 0 ||
-            pg_strcasecmp(TypeNameToString(cd->elemType), "char") == 0))))
+        if(isCharType(typeNameString))
         {
-            int newTypMod = getNVarcharTypMod(cd->elemType);
-            char buffer [sizeof(int)*8+1];
-            sprintf(buffer, "%d", newTypMod);
-            appendStringInfo(format_cols, "%s(%s)", TypeNameToString(cd->elemType), buffer);
+            int newTypMod = getElemTypMod(n->typeName);
+            appendStringInfo(format_cols, "%s(%d)", typeNameString, newTypMod);
         }
         else
         {
-            appendStringInfoString(format_cols, TypeNameToString(cd->elemType));
+            appendStringInfoString(format_cols, typeNameString);
         }
 
-        if((cd->asJson && pg_strcasecmp(TypeNameToString(cd->elemType), "nvarchar") == 0) && initialTmod == TSQLMaxTypmod)
+        if(cd->asJson)
         {
-            appendStringInfoString(format_cols, " AS JSON");
-        }
-        else if(cd->asJson)
-        {
-            // AS JSON can only be used with nvarchar(max)
-            ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+            if(isNVarCharType(typeNameString) && initialTmod == TSQLMaxTypmod)
+            {
+                appendStringInfoString(format_cols, " AS JSON");
+            }
+            else
+            {
+                // AS JSON can only be used with nvarchar(max)
+                ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
                                 errmsg("AS JSON in WITH clause can only be specified for column of type nvarchar(max)")));
+            }
+
         }
 
-        jsonWithParams = lappend(jsonWithParams, makeStringConstCast(format_cols->data, -1, SystemTypeName("text")));
+        jsonWithParams = lappend(jsonWithParams, makeStringConst(format_cols->data, -1));
         rf->coldeflist = lappend(rf->coldeflist, n);
     }
 
@@ -466,13 +466,11 @@ Node *
 createOpenJsonWithColDef(char* elemName, TypeName* elemType)
 {
     ColumnDef *n = makeNode(ColumnDef);
+    char* typeNameString = TypeNameToString(elemType);
     n->colname = elemName;
-    if((pg_strcasecmp(TypeNameToString(elemType), "nvarchar") == 0 ||
-        (pg_strcasecmp(TypeNameToString(elemType), "varchar") == 0 ||
-        (pg_strcasecmp(TypeNameToString(elemType), "nchar") == 0 ||
-        pg_strcasecmp(TypeNameToString(elemType), "char") == 0))))
+    if(isCharType(typeNameString))
     {
-        n->typeName = setNVarcharTypMod(elemType);
+        n->typeName = setCharTypmodForOpenjson(elemType);
     }
     else
     {
@@ -492,9 +490,9 @@ createOpenJsonWithColDef(char* elemName, TypeName* elemType)
 }
 
 TypeName *
-setNVarcharTypMod(TypeName *t)
+setCharTypmodForOpenjson(TypeName *t)
 {
-    int curTMod = getNVarcharTypMod(t);
+    int curTMod = getElemTypMod(t);
     List *tmods = (List*) t->typmods;
     if(tmods == NULL)
     {
@@ -515,7 +513,69 @@ setNVarcharTypMod(TypeName *t)
     }
 }
 
-int getNVarcharTypMod(TypeName *t)
+bool isCharType(char* typenameStr)
+{
+    if(pg_strcasecmp(typenameStr, "char") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "nchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "varchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "pg_catalog.char") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "pg_catalog.nchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "pg_catalog.varchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "sys.char") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "sys.nchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "sys.varchar") == 0)
+    {
+        return true;
+    }
+    else if(isNVarCharType(typenameStr))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool isNVarCharType(char* typenameStr)
+{
+    if(pg_strcasecmp(typenameStr, "nvarchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "pg_catalog.nvarchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "sys.nvarchar") == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+int getElemTypMod(TypeName *t)
 {
     List *tmods = (List*) t->typmods;
     if(tmods == NULL)
