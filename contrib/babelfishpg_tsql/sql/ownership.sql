@@ -198,6 +198,9 @@ BEGIN
   LANGUAGE C;
 
   ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
+
+  -- let sysadmin only to update babelfish_domain_mapping
+  GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
 END
 $$;
 
@@ -507,3 +510,24 @@ RETURNS INT
 AS 'babelfishpg_tsql', 'role_id'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.role_id TO PUBLIC;
+
+CREATE TABLE sys.babelfish_domain_mapping (
+  netbios_domain_name sys.VARCHAR(15) NOT NULL, -- Netbios domain name
+  fq_domain_name sys.VARCHAR(128) NOT NULL, -- DNS domain name
+  PRIMARY KEY (netbios_domain_name)
+);
+GRANT SELECT ON TABLE sys.babelfish_domain_mapping TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_domain_mapping', '');
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_add_domain_mapping_entry(IN sys.VARCHAR(15), IN sys.VARCHAR(128))
+  AS 'babelfishpg_tsql', 'babelfish_add_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_add_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_remove_domain_mapping_entry(IN sys.VARCHAR(15))
+  AS 'babelfishpg_tsql', 'babelfish_remove_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_remove_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_truncate_domain_mapping_table()
+  AS 'babelfishpg_tsql', 'babelfish_truncate_domain_mapping_table_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_truncate_domain_mapping_table TO PUBLIC;
