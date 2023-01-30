@@ -1,3 +1,5 @@
+-- sla 20000
+
 EXEC babel_sp_columns_managed_dep_vu_prepare_p1 "master", "dbo", "sysdatabases";
 GO
 
