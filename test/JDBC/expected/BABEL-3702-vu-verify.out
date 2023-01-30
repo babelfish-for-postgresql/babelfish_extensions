@@ -143,3 +143,15 @@ drop table fdefs
 drop table ftypes
 drop procedure BABEL_3702_vu_prepare_p12
 go
+
+EXEC BABEL_3702_vu_prepare_p13
+GO
+~~START~~
+nvarchar#!#nvarchar#!#int
+0#!#Cat#!#1
+1#!#Dog#!#1
+2#!#Bird#!#1
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p13
+GO

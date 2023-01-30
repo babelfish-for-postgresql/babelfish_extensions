@@ -152,3 +152,6 @@ from
 		) j
 		on j.jname = d.fname
 go
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p13 AS (SELECT * FROM OPENJSON('["Cat","Dog","Bird"]'));
+GO

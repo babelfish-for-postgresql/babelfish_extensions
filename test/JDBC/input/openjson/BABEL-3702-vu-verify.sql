@@ -67,3 +67,8 @@ drop table fdefs
 drop table ftypes
 drop procedure BABEL_3702_vu_prepare_p12
 go
+
+EXEC BABEL_3702_vu_prepare_p13
+GO
+DROP PROCEDURE BABEL_3702_vu_prepare_p13
+GO
