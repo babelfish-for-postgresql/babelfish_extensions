@@ -157,5 +157,23 @@ from
 		on j.jname = d.fname
 go
 
-CREATE PROCEDURE BABEL_3702_vu_prepare_p13 AS (SELECT * FROM OPENJSON('["Cat","Dog","Bird"]'));
+CREATE PROCEDURE BABEL_3702_vu_prepare_p13
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "Female" },
+                { "id" : 2, "name" : "Long Tail", "sex" : "Female" },
+                { "id" : 3, "name" : "Scratch", "sex" : "Male" }
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "Male" },
+                { "name" : "Fluffy", "sex" : "Male" },
+                { "name" : "Wag", "sex" : "Female" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats[1]')
+END;
 GO
