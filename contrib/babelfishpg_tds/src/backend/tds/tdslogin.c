@@ -1985,6 +1985,11 @@ TdsSendLoginAck(Port *port)
 	char	*user = NULL;
 	MemoryContext  oldContext;
 	uint32_t tdsVersion = pg_hton32(loginInfo->tdsVersion);
+	int	*version_pnt;
+	int	MajorVersion;
+	int	MinorVersion;
+	int	MicroVersion;
+	char	srvVersionBytes[4];
 
 	/* TODO: should these version numbers be hardcoded? */
 	char srvVersionBytes[] = {
@@ -2238,6 +2243,30 @@ TdsSendLoginAck(Port *port)
 
 		TdsUTF8toUTF16StringInfo(&buf, default_server_name, prognameLen);
 		TdsPutbytes(buf.data, buf.len);
+
+		Assert(product_version != NULL);
+		if(pg_strcasecmp(product_version,"default") == 0)
+			version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
+		else
+			version_pnt = ProcessVersionNumber(product_version);
+
+		MajorVersion = *(version_pnt + 0);
+		MinorVersion = *(version_pnt + 1);
+		MicroVersion = *(version_pnt + 2);
+		srvVersionBytes[0] = MajorVersion & 0xFF;
+		srvVersionBytes[1] = MinorVersion & 0xFF;
+
+		if (MicroVersion <= 0xFF)
+		{
+
+			srvVersionBytes[2] = 0x00;
+			srvVersionBytes[3] = MicroVersion & 0xFF;
+		}
+		else
+		{	
+			srvVersionBytes[2] = (MicroVersion >> 8) & 0xFF;
+			srvVersionBytes[3] = MicroVersion & 0xFF;
+		}
 
 		TdsPutbytes(&srvVersionBytes, sizeof(srvVersionBytes));
 

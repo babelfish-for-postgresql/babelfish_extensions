@@ -137,12 +137,12 @@ check_version_number(char **newval, void **extra, GucSource source)
 				errmsg("Please enter 4 valid numbers separated by \'.\' ")));
 		}
 		
-		/* check Major Version is between 11 and 15 */
-		if(part == 0 && (11 > atoi(token) || atoi(token) > 15))
+		/* check Major Version is between 11 and 16 */
+		if(part == 0 && (11 > atoi(token) || atoi(token) > 16))
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("Please enter a valid major version number between 11 and 15")));
+				errmsg("Please enter a valid major version number between 11 and 16")));
 		}
 		/*
 		 * Minor Version takes 1 byte in PreLogin message when doing handshake, 
