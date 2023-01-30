@@ -1991,11 +1991,6 @@ TdsSendLoginAck(Port *port)
 	int	MicroVersion;
 	char	srvVersionBytes[4];
 
-	/* TODO: should these version numbers be hardcoded? */
-	char srvVersionBytes[] = {
-		0x0C, 0x00, 0x07, 0xd0
-	};
-
 	PG_TRY();
 	{
 
