@@ -114,6 +114,15 @@ t
 ~~END~~
 
 
+-- psql
+select pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
 -- tsql
 DROP LOGIN test_login_sa;
 GO
@@ -126,6 +135,15 @@ GO
 ~~START~~
 bool
 t
+~~END~~
+
+
+-- psql
+select pg_sleep(1);
+GO
+~~START~~
+void
+
 ~~END~~
 
 
