@@ -10,7 +10,6 @@ GO
 Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
 GO
 
-
 Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
 GO
 ~~ERROR (Code: 0)~~
