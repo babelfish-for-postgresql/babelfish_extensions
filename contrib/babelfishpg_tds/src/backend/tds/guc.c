@@ -139,7 +139,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 		/* check Major Version is between 11 and 16 */
 		if(part == 0 && (11 > atoi(token) || atoi(token) > 16))
 		{
-			GUC_check_errmsg("Please enter a valid major version number between 11 and 16 ");
+			GUC_check_errmsg("Please enter a valid major version number between 11 and 16");
 			return false;
 		}
 		/*
@@ -148,7 +148,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 		 */
 		if(part == 1 && atoi(token) > 0xFF)
 		{
-			GUC_check_errmsg("Please enter a valid minor version number between 0 and 255 ");
+			GUC_check_errmsg("Please enter a valid minor version number between 0 and 255");
 			return false;
 		}
 		/*
