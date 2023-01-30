@@ -1,22 +1,83 @@
--- Helper functions to support the FOR XML clause
-CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml(query text, mode int, element_name text,
-           binary_base64 boolean, root_name text)
-RETURNS xml
-AS 'babelfishpg_tsql', 'tsql_query_to_xml'
-LANGUAGE C IMMUTABLE STRICT COST 100;
+-- SELECT FOR XML
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_xml_sfunc'
+LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text(query text, mode int, element_name text,
-           binary_base64 boolean, root_name text)
-RETURNS ntext
-AS 'babelfishpg_tsql', 'tsql_query_to_xml_text'
-LANGUAGE C IMMUTABLE STRICT COST 100;
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_ffunc(
+    state INTERNAL
+)
+RETURNS XML AS
+'babelfishpg_tsql', 'tsql_query_to_xml_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
 
--- Helper function to support the FOR JSON clause
-CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_text(query text, mode int, include_null_value boolean,
-           without_array_wrappers boolean, root_name text)
-RETURNS sys.NVARCHAR(4000)
-AS 'babelfishpg_tsql', 'tsql_query_to_json_text'
-LANGUAGE C IMMUTABLE COST 100;
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_xml_text_ffunc(
+    state INTERNAL
+)
+RETURNS NTEXT AS
+'babelfishpg_tsql', 'tsql_query_to_xml_text_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_ffunc
+);
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
+    rec ANYELEMENT,
+    mode int,
+    element_name text,
+    binary_base64 boolean,
+    root_name text)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_xml_sfunc,
+    FINALFUNC = tsql_query_to_xml_text_ffunc
+);
+
+-- SELECT FOR JSON
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
+    state INTERNAL,
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT
+) RETURNS INTERNAL
+AS 'babelfishpg_tsql', 'tsql_query_to_json_sfunc'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_ffunc(
+    state INTERNAL
+)
+RETURNS sys.NVARCHAR AS
+'babelfishpg_tsql', 'tsql_query_to_json_ffunc'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
+    rec ANYELEMENT,
+    mode INT,
+    include_null_values BOOLEAN,
+    without_array_wrapper BOOLEAN,
+    root_name TEXT)
+(
+    STYPE = INTERNAL,
+    SFUNC = tsql_query_to_json_sfunc,
+    FINALFUNC = tsql_query_to_json_ffunc
+);
 
 -- User and Login Functions
 CREATE OR REPLACE FUNCTION sys.user_name(IN id OID DEFAULT NULL)
@@ -32,6 +93,11 @@ LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.tsql_get_functiondef(IN function_id OID DEFAULT NULL)
 RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_functiondef'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_get_expr(IN text_expr text DEFAULT NULL , IN function_id OID DEFAULT NULL)
+RETURNS text
+AS 'babelfishpg_tsql', 'tsql_get_expr'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.tsql_get_returnTypmodValue(IN function_id OID DEFAULT NULL)
@@ -125,51 +191,8 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 -- Matches and returns object name to Oid
 CREATE OR REPLACE FUNCTION sys.OBJECT_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
 RETURNS sys.SYSNAME AS
-$BODY$
-DECLARE
-    object_name TEXT;
-    object_oid Oid;
-    cur_dat_id Oid;
-BEGIN
-    IF database_id is not NULL THEN
-        SELECT Oid INTO cur_dat_id FROM pg_database WHERE datname = current_database();
-        IF database_id::Oid != cur_dat_id THEN
-            RAISE EXCEPTION 'Can only do lookup in current database.';
-        END IF;
-    END IF;
-
-    SELECT CAST(object_id AS Oid) INTO object_oid;
-    
-    -- First check for tables, sequences, views, etc.
-    SELECT relname INTO object_name FROM pg_class WHERE Oid = object_oid;
-    IF object_name IS NOT NULL THEN
-        RETURN object_name::sys.SYSNAME;
-    END IF;
-    
-	-- Check ENR for any matches
-    SELECT relname INTO object_name FROM sys.babelfish_get_enr_list() WHERE reloid = object_oid;
-    IF object_name IS NOT NULL THEN
-        RETURN object_name::sys.SYSNAME;
-    END IF;
-    
-    -- Next check for functions
-    SELECT proname INTO object_name FROM pg_proc WHERE Oid = object_oid; 
-    IF object_name IS NOT NULL THEN
-        RETURN object_name::sys.SYSNAME;
-    END IF;
-
-    -- Next check for types
-    SELECT typname INTO object_name FROM pg_type WHERE Oid = object_oid;
-    IF object_name IS NOT NULL THEN
-        RETURN object_name::sys.SYSNAME;
-    END IF;
-   
-    -- Apparently SYSNAME cannot be null so returning empty string
-    RETURN '';
-END;
-$BODY$
-LANGUAGE plpgsql
-IMMUTABLE;
+'babelfishpg_tsql', 'object_name'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.scope_identity()
 RETURNS numeric(38,0) AS
@@ -183,21 +206,21 @@ RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_param(tablename, 'start'::text)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.ident_incr(IN tablename TEXT)
 RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_param(tablename, 'increment'::text)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.ident_current(IN tablename TEXT)
 RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_identity_current(tablename)::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.checksum(VARIADIC arr TEXT[])
 RETURNS INTEGER
@@ -437,7 +460,7 @@ EXCEPTION WHEN others THEN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE CALLED ON NULL INPUT;
+STABLE CALLED ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.isnumeric(IN expr TEXT) RETURNS INTEGER AS
 $BODY$
@@ -470,112 +493,13 @@ EXCEPTION WHEN others THEN
 END;
 $BODY$
 LANGUAGE plpgsql
-VOLATILE CALLED ON NULL INPUT;
+STABLE CALLED ON NULL INPUT;
 
 -- Return the object ID given the object name. Can specify optional type.
-CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
 RETURNS INTEGER AS
-$BODY$
-DECLARE
-        id oid;
-        db_name text collate "C";
-        bbf_schema_name text collate "C";
-        schema_name text collate "C";
-        schema_oid oid;
-        obj_name text collate "C";
-        is_temp_object boolean;
-        obj_type char(2) collate "C";
-        cs_as_object_name text collate "C" := object_name;
-BEGIN
-        obj_type = object_type;
-        id = null;
-        schema_oid = NULL;
-
-        SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
-        FROM babelfish_split_object_name(cs_as_object_name) s;
-
-        -- Invalid object_name
-        IF obj_name IS NULL OR obj_name = '' collate sys.database_default THEN
-            RETURN NULL;
-        END IF;
-
-        IF bbf_schema_name IS NULL OR bbf_schema_name = '' collate sys.database_default THEN
-            bbf_schema_name := sys.schema_name();
-        END IF;
-
-        schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
-
-        -- Check if looking for temp object.
-        is_temp_object = left(obj_name, 1) = '#' collate sys.database_default;
-
-        -- Can only search in current database. Allowing tempdb for temp objects.
-        IF db_name IS NOT NULL AND db_name collate sys.database_default <> db_name() AND db_name collate sys.database_default <> 'tempdb' THEN
-            RAISE EXCEPTION 'Can only do lookup in current database.';
-        END IF;
-
-        IF schema_name IS NULL OR schema_name = '' collate sys.database_default THEN
-            RETURN NULL;
-        END IF;
-
-        -- Searching within a schema. Get schema oid.
-        schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
-        IF schema_oid IS NULL THEN
-            RETURN NULL;
-        END IF;
-
-        if obj_type <> '' then
-            case
-                -- Schema does not apply as much to temp objects.
-                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-	            id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
-
-                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-	            id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name 
-                            and relnamespace = schema_oid limit 1);
-
-                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-	            id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name 
-                            and connamespace = schema_oid limit 1);
-
-                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-	            id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name 
-                            and pronamespace = schema_oid limit 1);
-
-                when upper(object_type) in ('TR', 'TA') then
-	            id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
-
-                -- Throwing exception as a reminder to add support in the future.
-                when upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
-                    RAISE EXCEPTION 'Object type currently unsupported.';
-
-                -- unsupported obj_type
-                else id := null;
-            end case;
-        else
-            if not is_temp_object then 
-                id := (
-                    select oid from pg_class where lower(relname) = obj_name
-                        and relnamespace = schema_oid
-                    union
-                    select oid from pg_constraint where lower(conname) = obj_name
-                        and connamespace = schema_oid
-                    union
-                    select oid from pg_proc where lower(proname) = obj_name
-                        and pronamespace = schema_oid
-                    union
-                    select oid from pg_trigger where lower(tgname) = obj_name
-                    limit 1
-                );
-            else
-                -- temp object without "object_type" in-argument
-                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
-            end if;
-        end if;
-
-        RETURN id::integer;
-END;
-$BODY$
-LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
+'babelfishpg_tsql', 'object_id'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.parsename (
 	object_name VARCHAR
@@ -690,7 +614,7 @@ RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
 'babelfishpg_tsql', 'has_dbaccess'
-LANGUAGE C STRICT;
+LANGUAGE C STABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.datefromparts(IN year INT, IN month INT, IN day INT)
 RETURNS DATE AS
@@ -926,7 +850,7 @@ begin
     RETURN 0;
 end
 $body$
-language 'plpgsql';
+language 'plpgsql' STABLE;
 
 CREATE OR REPLACE FUNCTION sys.is_collated_ci_as_internal(IN input_string TEXT) RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_collated_ci_as_internal'
@@ -1614,7 +1538,7 @@ CREATE OR REPLACE FUNCTION sys.GETUTCDATE() RETURNS sys.DATETIME AS
 $BODY$
 SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
 $BODY$
-LANGUAGE SQL PARALLEL SAFE;
+LANGUAGE SQL STABLE PARALLEL SAFE;
 
 -- These come from the built-in pg_catalog.count in pg_aggregate.dat
 CREATE AGGREGATE sys.count(*)
@@ -1686,31 +1610,31 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 -- @@ functions
 CREATE OR REPLACE FUNCTION sys.rowcount()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.pgerror()
-	   RETURNS VARCHAR AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS VARCHAR AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.trancount()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.datefirst()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.options()
-	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.version()
-        RETURNS sys.NVARCHAR(255)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(255)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.servername()
-        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.servicename()
-        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 -- In tsql @@max_precision represents max precision that server supports
 -- As of now, we do not support change in max_precision. So, returning default value
@@ -1733,7 +1657,7 @@ $BODY$
 SELECT pg_backend_pid();
 $BODY$
 STRICT
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.get_current_full_xact_id()
     RETURNS XID8 AS 'babelfishpg_tsql' LANGUAGE C STABLE;
@@ -1746,14 +1670,14 @@ DECLARE
 BEGIN
     eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
     IF eh_setting = 'strict' THEN
-        RAISE EXCEPTION 'DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore';
+        RAISE EXCEPTION 'To use @@DBTS, set ''babelfishpg_tsql.escape_hatch_rowversion'' to ''ignore''';
     ELSE
         RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
     END IF;
 END;
 $$
 STRICT
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
 $$
@@ -1770,16 +1694,16 @@ BEGIN
     END IF;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.fetch_status()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.cursor_rows()
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.cursor_status(text, text)
-RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 -- Floor for bit
 CREATE OR REPLACE FUNCTION sys.floor(sys.bit) RETURNS DOUBLE PRECISION
@@ -1825,49 +1749,49 @@ CREATE OR REPLACE FUNCTION sys.APPLOCK_MODE(IN "@dbprincipal" varchar(32),
                                             IN "@resource" varchar(255),
                                             IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION')
 RETURNS TEXT
-AS 'babelfishpg_tsql', 'APPLOCK_MODE' LANGUAGE C;
+AS 'babelfishpg_tsql', 'APPLOCK_MODE' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.APPLOCK_TEST(IN "@dbprincipal" varchar(32),
                                             IN "@resource" varchar(255),
 											IN "@lockmode" varchar(32),
                                             IN "@lockowner" varchar(32) DEFAULT 'TRANSACTION')
 RETURNS SMALLINT
-AS 'babelfishpg_tsql', 'APPLOCK_TEST' LANGUAGE C;
+AS 'babelfishpg_tsql', 'APPLOCK_TEST' LANGUAGE C STABLE;
 
 -- Error handling functions
 CREATE OR REPLACE FUNCTION sys.xact_state()
 RETURNS SMALLINT
-AS 'babelfishpg_tsql', 'xact_state' LANGUAGE C;
+AS 'babelfishpg_tsql', 'xact_state' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_line()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_line' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_line' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_message()
 RETURNS sys.NVARCHAR(4000)
-AS 'babelfishpg_tsql', 'pltsql_error_message' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_message' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_number()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_number' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_number' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_procedure()
 RETURNS sys.NVARCHAR(128)
-AS 'babelfishpg_tsql', 'pltsql_error_procedure' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_procedure' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_severity()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_severity' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_severity' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.error_state()
 RETURNS INT
-AS 'babelfishpg_tsql', 'pltsql_error_state' LANGUAGE C;
+AS 'babelfishpg_tsql', 'pltsql_error_state' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.rand() RETURNS FLOAT AS
 $$
 	SELECT random();
 $$
-LANGUAGE SQL VOLATILE STRICT PARALLEL RESTRICTED;
+LANGUAGE SQL STABLE STRICT PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.DEFAULT_DOMAIN()
 RETURNS TEXT
@@ -1938,7 +1862,8 @@ END IF;
 RETURN;
 end;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql
+STABLE;
 GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
 	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
 ) TO PUBLIC;
@@ -2039,7 +1964,7 @@ GRANT EXECUTE ON FUNCTION sys.sign(TEXT) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.lock_timeout()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -2055,7 +1980,7 @@ GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.max_connections()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -2071,7 +1996,7 @@ GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value integer;
 begin
@@ -2376,6 +2301,7 @@ CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
 )
 RETURNS integer
 LANGUAGE plpgsql
+STABLE
 AS $$
 DECLARE
     db_name text COLLATE sys.database_default; 
@@ -2383,9 +2309,11 @@ DECLARE
     pg_schema text COLLATE sys.database_default;
     implied_dbo_permissions boolean;
     fully_supported boolean;
+    is_cross_db boolean := false;
     object_name text COLLATE sys.database_default;
     database_id smallint;
     namespace_id oid;
+    userid oid;
     object_type text;
     function_signature text;
     qualified_name text;
@@ -2474,7 +2402,8 @@ BEGIN
         END IF;
     END IF;
 
-    IF fully_supported = 'f' AND CURRENT_USER IN('dbo', 'master_dbo', 'tempdb_dbo', 'msdb_dbo') THEN
+    IF fully_supported = 'f' AND
+		(SELECT orig_username FROM sys.babelfish_authid_user_ext WHERE rolname = CURRENT_USER) = 'dbo' THEN
         RETURN CAST(implied_dbo_permissions AS integer);
     ELSIF fully_supported = 'f' THEN
         RETURN 0;
@@ -2501,6 +2430,16 @@ BEGIN
             WHEN db_name IS NULL OR db_name = '' THEN (sys.db_id())
             ELSE (sys.db_id(db_name))
         END);
+
+	IF database_id <> sys.db_id() THEN
+        is_cross_db = true;
+	END IF;
+
+	userid := (
+        SELECT CASE
+            WHEN is_cross_db THEN sys.suser_id()
+            ELSE sys.user_id()
+        END);
   
     -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
     pg_schema := (SELECT nspname 
@@ -2523,13 +2462,19 @@ BEGIN
         SELECT CASE
             WHEN cs_as_sub_securable_class = 'column'
                 THEN CASE 
-                    WHEN (SELECT count(name) 
-                        FROM sys.all_columns 
-                        WHERE name = cs_as_sub_securable COLLATE sys.database_default
-                            -- Use V as the object type to specify that the securable is table-like.
-                            -- We do not know that the securable is a view, but object_id behaves the 
-                            -- same for differint table-like types, so V can be arbitrarily chosen.
-                            AND object_id = sys.object_id(cs_as_securable, 'V')) = 1
+                    WHEN (SELECT count(a.attname)
+                        FROM pg_attribute a
+                        INNER JOIN pg_class c ON c.oid = a.attrelid
+                        INNER JOIN pg_namespace s ON s.oid = c.relnamespace
+                        WHERE
+                        a.attname = cs_as_sub_securable COLLATE sys.database_default
+                        AND c.relname = object_name COLLATE sys.database_default
+                        AND s.nspname = pg_schema COLLATE sys.database_default
+                        AND NOT a.attisdropped
+                        AND (s.nspname IN (SELECT nspname FROM sys.babelfish_namespace_ext) OR s.nspname = 'sys')
+                        -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+                        AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+                        AND a.attnum > 0) = 1
                                 THEN 'column'
                     ELSE NULL
                 END
@@ -2573,24 +2518,24 @@ BEGIN
 
     return_value := (
         SELECT CASE
-            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(object_type, pg_schema, object_name)
+            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(userid, object_type, pg_schema, object_name)
 
             WHEN object_type = 'column'
                 THEN CASE
                     WHEN cs_as_permission IN('insert', 'delete', 'execute') THEN NULL
-                    ELSE CAST(has_column_privilege(qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
+                    ELSE CAST(has_column_privilege(userid, qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
                 END
 
             WHEN object_type = 'table'
                 THEN CASE
                     WHEN cs_as_permission = 'execute' THEN 0
-                    ELSE CAST(has_table_privilege(qualified_name, cs_as_permission) AS integer)
+                    ELSE CAST(has_table_privilege(userid, qualified_name, cs_as_permission) AS integer)
                 END
 
             WHEN object_type = 'function'
                 THEN CASE
                     WHEN cs_as_permission IN('select', 'execute')
-                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                        THEN CAST(has_function_privilege(userid, function_signature, 'execute') AS integer)
                     WHEN cs_as_permission IN('update', 'insert', 'delete', 'references')
                         THEN 0
                     ELSE NULL
@@ -2599,7 +2544,7 @@ BEGIN
             WHEN object_type = 'procedure'
                 THEN CASE
                     WHEN cs_as_permission = 'execute'
-                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                        THEN CAST(has_function_privilege(userid, function_signature, 'execute') AS integer)
                     WHEN cs_as_permission IN('select', 'update', 'insert', 'delete', 'references')
                         THEN 0
                     ELSE NULL
@@ -2624,7 +2569,7 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
 CREATE OR REPLACE FUNCTION sys.schema_name()
 RETURNS sys.sysname
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $function$
 begin
     RETURN (select orig_name from sys.babelfish_namespace_ext ext  
@@ -2640,7 +2585,7 @@ GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.schema_id()
 RETURNS INT
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 BEGIN
   RETURN (select oid from sys.pg_namespace_ext where nspname = (select current_schema()))::INT;
@@ -2654,7 +2599,7 @@ GRANT EXECUTE ON FUNCTION sys.schema_id() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.original_login()
 RETURNS sys.sysname
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 declare return_value text;
 begin
@@ -2669,7 +2614,7 @@ GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
 RETURNS integer
 LANGUAGE plpgsql
-STRICT
+STABLE STRICT
 AS $$
 
 declare extra_bytes CONSTANT integer := 4;
@@ -2774,7 +2719,7 @@ SELECT
     WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
     AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
 $BODY$
-LANGUAGE SQL VOLATILE STRICT;
+LANGUAGE SQL STABLE STRICT;
 
 -- JSON Functions
 CREATE OR REPLACE FUNCTION sys.isjson(json_string text)
@@ -2935,7 +2880,7 @@ EXCEPTION
             RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
 END;        
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
@@ -3204,7 +3149,7 @@ BEGIN
     RETURN NULL;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
@@ -3232,7 +3177,7 @@ BEGIN
     RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
 RETURNS SYS.VARBINARY
@@ -3242,7 +3187,7 @@ $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.language()
-RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
@@ -3262,6 +3207,46 @@ GRANT EXECUTE ON FUNCTION sys.degrees(SMALLINT) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 TINYINT)
 RETURNS int AS 'babelfishpg_tsql','smallint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(TINYINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 BIGINT)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 INT)
+RETURNS int  AS 'babelfishpg_tsql','int_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 SMALLINT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 TINYINT)
+RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC)
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(BIGINT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(INT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(SMALLINT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC)
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.power(TINYINT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 NUMERIC)
+RETURNS numeric  AS 'babelfishpg_tsql','numeric_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
+RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
@@ -3327,7 +3312,7 @@ BEGIN
 RETURN ret_val;
 END;
 $BODY$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.APP_NAME() RETURNS SYS.NVARCHAR(128)

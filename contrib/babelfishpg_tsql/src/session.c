@@ -4,7 +4,9 @@
 
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/formatting.h"
 #include "utils/guc.h"
+#include "utils/hsearch.h"
 
 #include <ctype.h>
 #include "catalog.h"
@@ -15,11 +17,23 @@
 
 /* Core Session Properties */
 
+#define MAX_SYSNAME_LEN 512 /* Large enough to handle 128 character unicode strings */
+
 static int16 current_db_id = 0;
 static char current_db_name[MAX_BBF_NAMEDATALEND+1] = {'\0'};
 static Oid current_user_id = InvalidOid;
 static void set_search_path_for_user_schema(const char* db_name, const char* user);
 void reset_cached_batch(void);
+
+/* Session Context */
+static HTAB *session_context_table = NULL;
+static void initialize_context_table(void);
+typedef struct SessionCxtEntry
+{
+	char sessionKey[MAX_SYSNAME_LEN]; /* Hashtable Key, must be first */
+	bool read_only;
+	bytea *value;
+} SessionCxtEntry;
 
 int16
 get_cur_db_id(void)
@@ -41,7 +55,7 @@ set_cur_db(int16 id, const char *name)
 	Assert(len <= MAX_BBF_NAMEDATALEND);
 
 	current_db_id = id;
-	strncpy(current_db_name, name, len);
+	strncpy(current_db_name, name, MAX_BBF_NAMEDATALEND);
 	current_db_name[len] = '\0';
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_db_stat_var)
@@ -211,17 +225,17 @@ Datum babelfish_db_name(PG_FUNCTION_ARGS)
 	if (dbid == 1)
 	{
 		dbname = palloc((strlen("master") + 1) * sizeof(char));
-		strncpy(dbname, "master", strlen("master") + 1);
+		strncpy(dbname, "master", MAX_BBF_NAMEDATALEND);
 	}
 	else if (dbid == 2)
 	{
 		dbname = palloc((strlen("tempdb") + 1) * sizeof(char));
-		strncpy(dbname, "tempdb", strlen("tempdb") + 1);
+		strncpy(dbname, "tempdb", MAX_BBF_NAMEDATALEND);
 	}
 	else if (dbid == 4)
 	{
 		dbname = palloc((strlen("msdb") + 1) * sizeof(char));
-		strncpy(dbname, "msdb", strlen("msdb") + 1);
+		strncpy(dbname, "msdb", MAX_BBF_NAMEDATALEND);
 	}
 	else
 		dbname = get_db_name(dbid);
@@ -230,4 +244,89 @@ Datum babelfish_db_name(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_TEXT_P(CStringGetTextDatum(dbname));
+}
+
+/* 
+ * Stores key-value pairs in a hashtable
+ * Table takes a string as a key, and saves a pointer to the sql_variant-typed value
+ */
+PG_FUNCTION_INFO_V1(sp_set_session_context);
+Datum sp_set_session_context(PG_FUNCTION_ARGS)
+{
+	VarChar *key_arg;
+	SessionCxtEntry *result_entry;
+	char *key;
+	bool found;
+	MemoryContext oldContext;
+
+	if (PG_ARGISNULL(0))
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("The parameters supplied for the procedure \"sp_set_session_context\" are not valid.")));
+	key_arg = PG_GETARG_VARCHAR_PP(0);
+	key = str_tolower(VARDATA_ANY(key_arg), VARSIZE_ANY_EXHDR(key_arg), DEFAULT_COLLATION_OID);
+	if (strlen(key) == 0)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("The parameters supplied for the procedure \"sp_set_session_context\" are not valid.")));
+
+	if (!session_context_table)
+		initialize_context_table();
+
+	result_entry = (SessionCxtEntry*) hash_search(session_context_table, key, HASH_ENTER, &found);
+
+	if (found && result_entry->read_only == true)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("Cannot set key '%s' in the session context. The key has been set as read_only for this session.", key)));
+
+	/* Free old entry if val argument is null */
+	if (PG_ARGISNULL(1))
+	{
+		if (found)
+			pfree(result_entry->value);
+		hash_search(session_context_table, key, HASH_REMOVE, NULL);
+		PG_RETURN_NULL(); 
+	}
+	pfree(key);
+
+	oldContext = MemoryContextSwitchTo(TopMemoryContext);
+	result_entry->read_only = PG_GETARG_BOOL(2);
+	result_entry->value = PG_GETARG_BYTEA_P_COPY(1);
+	MemoryContextSwitchTo(oldContext);
+
+	PG_RETURN_NULL();
+}
+
+PG_FUNCTION_INFO_V1(session_context);
+Datum session_context(PG_FUNCTION_ARGS)
+{
+	char *key;
+	SessionCxtEntry *result_entry;
+	VarChar *key_arg;
+
+	if (!session_context_table)
+		PG_RETURN_NULL();
+
+	if (PG_ARGISNULL(0))
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("The parameters supplied for the function \"session_context\" are not valid.")));
+
+	key_arg = PG_GETARG_VARCHAR_PP(0);
+	key = str_tolower(VARDATA_ANY(key_arg), VARSIZE_ANY_EXHDR(key_arg), DEFAULT_COLLATION_OID);
+
+	result_entry = (SessionCxtEntry*) hash_search(session_context_table, key, HASH_FIND, NULL);
+	pfree(key);
+
+	if (!result_entry)
+		PG_RETURN_NULL();
+	PG_RETURN_BYTEA_P(result_entry->value);
+}
+
+static void
+initialize_context_table() 
+{
+	HASHCTL hash_options;
+	memset(&hash_options, 0, sizeof(hash_options));
+	hash_options.keysize = MAX_SYSNAME_LEN;
+	hash_options.entrysize = sizeof(SessionCxtEntry);
+
+	session_context_table = hash_create("Session Context", 128, &hash_options, HASH_ELEM | HASH_STRINGS);
 }

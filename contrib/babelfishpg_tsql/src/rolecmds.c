@@ -43,6 +43,7 @@
 #include "utils/catcache.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/formatting.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
@@ -68,6 +69,8 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										void *arg);
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
+static bool has_user_in_db(const char *login, char **db_name);
+
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -80,6 +83,8 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	Oid			roleid;
 	ListCell	*option;
 	char		*default_database = NULL;
+	char		*orig_loginname = NULL;
+	bool 		from_windows = false;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -91,7 +96,21 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 			if (defel->arg)
 				default_database = strVal(defel->arg);
 		}
+		else if (strcmp(defel->defname, "original_login_name") == 0)
+		{
+			if (defel->arg)
+			{
+				orig_loginname = strVal(defel->arg);
+			}
+		}
+		else if (strcmp(defel->defname, "from_windows") == 0)
+		{
+			from_windows = true;
+		}
 	}
+
+	if(!orig_loginname)
+		orig_loginname = stmt->role;
 
 	if (!default_database)
 		default_database = "master";
@@ -114,10 +133,14 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 
 	new_record_login_ext[LOGIN_EXT_ROLNAME] = CStringGetDatum(stmt->role);
 	new_record_login_ext[LOGIN_EXT_IS_DISABLED] = Int32GetDatum(0);
+
 	if (strcmp(stmt->role, "sysadmin") == 0)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
+	else if (from_windows)
+		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("U");
 	else
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("S");
+
 	new_record_login_ext[LOGIN_EXT_CREDENTIAL_ID] = Int32GetDatum(-1); /* placeholder */
 	new_record_login_ext[LOGIN_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1); /* placeholder */
 	new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
@@ -126,6 +149,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	new_record_login_ext[LOGIN_EXT_DEFAULT_DATABASE_NAME] = CStringGetTextDatum(default_database);
 	new_record_login_ext[LOGIN_EXT_DEFAULT_LANGUAGE_NAME] = CStringGetTextDatum("English"); /* placeholder */
 	new_record_nulls_login_ext[LOGIN_EXT_PROPERTIES] = true;
+	new_record_login_ext[LOGIN_EXT_ORIG_LOGINNAME] = CStringGetTextDatum(orig_loginname);
 
 	tuple_login_ext = heap_form_tuple(bbf_authid_login_ext_dsc,
 									  new_record_login_ext,
@@ -598,6 +622,13 @@ bool
 tsql_has_pgstat_permissions(Oid role)
 {
 	return role_is_sa(GetSessionUserId()) || has_privs_of_role(GetSessionUserId(), role);
+}
+
+bool
+tsql_has_linked_srv_permissions(Oid role)
+{
+	/* Only sysadmin has permission to create/alter/delete linked servers */
+	return role_is_sa(GetSessionUserId());
 }
 
 PG_FUNCTION_INFO_V1(initialize_logins);
@@ -1394,12 +1425,18 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 {
 	Oid grantee;
 	const char 	*grantee_name;
+	const char 	*granted_name;
 	RoleSpec 	*spec;
+	AccessPriv 	*granted;
 	CatCList   	*memlist;
 	Oid         sysadmin;
+	char		*db_name;
 
 	spec = (RoleSpec *) linitial(stmt->grantee_roles);		
 	sysadmin = get_role_oid("sysadmin", false);
+
+	granted = (AccessPriv *) linitial(stmt->granted_roles);
+	granted_name = granted->priv_name;
 
 	/* grantee MUST be a login */
 	grantee_name = spec->rolename;
@@ -1416,6 +1453,12 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s does not have permission to alter server role",
 					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	/* sysadmin role is not granted if grantee login has a user in one of the databases, as Babelfish only supports one dbo currently*/
+	if (stmt->is_grant && (strcmp(granted_name, "sysadmin") == 0) && has_user_in_db(grantee_name, &db_name))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("'sysadmin' role cannot be granted to login: a user is already created in database '%s'", db_name)));
 
 	/* could not drop the last member of sysadmin */
 	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
@@ -1665,3 +1708,202 @@ is_active_login(Oid role_oid)
 	return true;
 }
 
+/*
+ * To check if given login is already a user in one of the databases
+ */
+static bool
+has_user_in_db(const char *login, char **db_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData		key[3];
+	TableScanDesc	scan;
+	NameData		*login_name;
+	bool			is_null;
+
+	// open the table to scane
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	// change the target name to NameData for search
+	login_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(login_name->data, NAMEDATALEN, "%s", login);
+
+	// operate scanning
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_login_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(login_name));
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 1, key);
+
+	// match stored, if there is a match
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+	{
+
+		Datum name = heap_getattr(tuple_user_ext, Anum_bbf_authid_user_ext_database_name,
+								  bbf_authid_user_ext_rel->rd_att, &is_null);
+
+		*db_name = pstrdup(TextDatumGetCString(name));
+		
+		table_endscan(scan);
+		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		return true;
+	}
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return false;
+}
+
+/* 
+ * convertToUPN - This function is called to convert 
+ * domain\user to user@DOMAIN.
+ */
+char *
+convertToUPN(char* input)
+{
+	char *pos_slash = NULL;
+
+	if ((pos_slash = strchr(input, '\\')) != NULL)
+	{
+		/*
+		 * This means that provided login name is in windows format 
+		 * so let's update role_name with UPN format.
+		 */
+		return psprintf("%s@%s", 
+						str_tolower(pos_slash + 1, strlen(pos_slash + 1), C_COLLATION_OID),
+						str_toupper(input, (pos_slash - input), C_COLLATION_OID));
+	}
+	else
+		return input;
+}
+
+/*
+ * get_roleform_ext - Useful when someone tries to drop login and that login is in
+ * the form of windows format i.e, domain\login
+ */
+HeapTuple 
+get_roleform_ext(char *login)
+{
+	Relation	bbf_authid_login_ext_rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	char		*upn_login;
+	TupleDesc	dsc;
+
+	/* 
+	 * If login being dropped is not valid windows format
+	 * then return the invalid tuple from here only.
+	 */
+	if (!strchr(login, '\\'))
+		return NULL;
+
+	upn_login = convertToUPN(login);
+
+	/*
+	 * Trying to lookup provided windows user in babelfish_authid_login_ext catalog
+	 * using UPN form.
+	 */
+
+	/* Fetch the relation sys.babelfish_authid_login_ext */
+	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
+										  RowExclusiveLock);
+	dsc = RelationGetDescr(bbf_authid_login_ext_rel);
+
+	/* Search and drop on the role */
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_login_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(upn_login));
+
+	scan = systable_beginscan(bbf_authid_login_ext_rel,
+							  get_authid_login_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (HeapTupleIsValid(tuple))
+	{
+		char *type;
+		bool isnull = true;
+		Datum datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_type, dsc, &isnull);
+		if (isnull)
+			tuple = NULL;
+		type = pstrdup(TextDatumGetCString(datum));
+		/* Not a windows login */
+		if (strcasecmp(type, "U") != 0)
+			tuple = NULL;
+		pfree(type);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_authid_login_ext_rel, AccessShareLock);
+
+	if (!HeapTupleIsValid(tuple))
+	{
+		if (upn_login != login)
+			pfree(upn_login);
+		return tuple;
+	}
+
+	/* It is proven that this rolename is indeed windows login. */
+	tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(upn_login));
+
+	if (upn_login != login)
+		pfree(upn_login);
+
+	/* Return tuple even if it is invalid tuple. */
+	return tuple;
+}
+
+/*
+* AD does not allow user to have some special characters,
+* from babelfish side, we can not connect to AD directly 
+* so we do not know whether the user exists in AD or not.
+* From TDS endpoint, if login is created with such special
+* characters, then we will throw error or else the user will 
+* get confused because the login will get created but they 
+* won't be able to connect
+*/
+bool 
+windows_login_contains_invalid_chars(char* input)
+{
+	char* pos_slash = strchr(input, '\\');
+	
+	char* logon_name = pos_slash + 1;
+
+	int i = 0;
+	while (logon_name[i] != '\0')
+	{
+		if (logon_name[i] == '\\' || logon_name[i] == '/'||
+		logon_name[i] == '[' || logon_name[i] == ']' ||
+		logon_name[i] == ';' || logon_name[i] == ':' ||
+		logon_name[i] == '|' || logon_name[i] == '=' ||
+		logon_name[i] == ',' || logon_name[i] == '+' ||
+		logon_name[i] == '*' || logon_name[i] == '?' ||
+		logon_name[i] == '<' || logon_name[i] == '>' ||
+		logon_name[i] == '@')
+			return true;
+		
+		i++;
+	}
+
+	return false;
+}
+
+/*
+ * Check whether the logon_name has a valid length or not.
+ */
+bool
+check_windows_logon_length(char* input)
+{
+	char *pos_slash = strchr(input, '\\');
+	int logon_name_len = strlen(pos_slash + 1);
+
+	if (logon_name_len > LOGON_NAME_MIN_LEN && logon_name_len < LOGON_NAME_MAX_LEN)
+		return true;
+	else
+		return false;
+}

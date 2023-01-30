@@ -70,7 +70,7 @@ identity_function
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
-routines_definition
+routines_definition_before-14_7-or-15_2
 constraint_column_usage
 column_domain_usage
 sp_describe_first_result_set
@@ -195,3 +195,4 @@ sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 sys_server_principals_dep_for_13_x
 case_insensitive_collation-before-13-5
+test_windows_login_before_15_2
