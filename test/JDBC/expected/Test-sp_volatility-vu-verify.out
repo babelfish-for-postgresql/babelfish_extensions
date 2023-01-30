@@ -5,7 +5,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
@@ -14,7 +14,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
@@ -23,7 +23,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#immutable
 ~~END~~
 
@@ -32,7 +32,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
@@ -45,7 +45,7 @@ go
 exec sys.sp_volatility '.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
@@ -54,7 +54,7 @@ dbo#!#test_sp_volatility_f1#!#volatile
 exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema1#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
@@ -63,7 +63,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema1#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
@@ -72,7 +72,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema1#!#test_sp_volatility_f1#!#immutable
 ~~END~~
 
@@ -81,7 +81,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema1#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
@@ -94,7 +94,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_schema1.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema1#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
@@ -105,7 +105,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
@@ -126,7 +126,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
@@ -197,7 +197,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
@@ -214,7 +214,7 @@ go
 exec sys.sp_volatility 'TesT_Sp_Volatility_F1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
@@ -225,7 +225,7 @@ go
 exec sys.sp_volatility '[test_sp_volatility_schema1 with .dot and spaces]."test_sp_volatility_f1"'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema1 with .dot and spaces#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
@@ -242,7 +242,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema2#!#test_sp_volatility_f1#!#volatile
 ~~END~~
 
@@ -251,7 +251,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
@@ -259,8 +259,8 @@ test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
 exec sys.sp_volatility 'test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa'
 go
 ~~START~~
-text#!#text#!#text
-dbo#!#test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa#!#volatile
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#volatile
 ~~END~~
 
 exec sys.sp_volatility 'test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa', 'stable'
@@ -268,15 +268,15 @@ go
 exec sys.sp_volatility '[test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa]'
 go
 ~~START~~
-text#!#text#!#text
-dbo#!#test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa#!#stable
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#stable
 ~~END~~
 
 exec sys.sp_volatility 'test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa.test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa'
 go
 ~~START~~
-text#!#text#!#text
-test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa#!#volatile
+nvarchar#!#varchar#!#text
+test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#volatile
 ~~END~~
 
 exec sys.sp_volatility 'test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa.test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa', 'stable'
@@ -284,15 +284,15 @@ go
 exec sys.sp_volatility '[test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa].[test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa]'
 go
 ~~START~~
-text#!#text#!#text
-test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#test_sp_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaa#!#stable
+nvarchar#!#varchar#!#text
+test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#stable
 ~~END~~
 
 /* test with trucated names */
 exec sys.sp_volatility 'test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#stable
 ~~END~~
 
@@ -301,15 +301,15 @@ go
 exec sys.sp_volatility '"test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9"'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#immutable
 ~~END~~
 
 exec sys.sp_volatility 'test_sp_volatility_schema_very_1549837befc3d1350651a0b13d307305.test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9'
 go
 ~~START~~
-text#!#text#!#text
-test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#stable
+nvarchar#!#varchar#!#text
+test_sp_volatility_schema_very_1549837befc3d1350651a0b13d307305#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#stable
 ~~END~~
 
 exec sys.sp_volatility 'test_sp_volatility_schema_very_1549837befc3d1350651a0b13d307305.test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9', 'immutable'
@@ -317,8 +317,8 @@ go
 exec sys.sp_volatility '"test_sp_volatility_schema_very_1549837befc3d1350651a0b13d307305".[test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9]'
 go
 ~~START~~
-text#!#text#!#text
-test_sp_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaaaaaaaaaaaa#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#immutable
+nvarchar#!#varchar#!#text
+test_sp_volatility_schema_very_1549837befc3d1350651a0b13d307305#!#test_sp_volatility_function_ver45be8038730600713a40017edccb6bd9#!#immutable
 ~~END~~
 
 exec sys.sp_volatility
@@ -334,7 +334,7 @@ test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
 exec sys.sp_volatility 'test_sp_volatility_f2'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f2#!#volatile
 ~~END~~
 
@@ -343,7 +343,7 @@ go
 exec sys.sp_volatility 'test_sp_volatility_f2'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f2#!#stable
 ~~END~~
 
@@ -393,14 +393,14 @@ go
 exec sys.sp_volatility 'test_sp_volatility_schema2.test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
 exec sys.sp_volatility 'test_sp_volatility_f2'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f2#!#stable
 ~~END~~
 
@@ -433,14 +433,14 @@ test_sp_volatility_user
 exec sys.sp_volatility 'test_sp_volatility_f1'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
 exec sys.sp_volatility 'test_sp_volatility_f1    '
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 test_sp_volatility_schema2#!#test_sp_volatility_f1#!#stable
 ~~END~~
 
@@ -453,7 +453,7 @@ go
 exec sys.sp_volatility 'dbo.test_sp_volatility_f2'
 go
 ~~START~~
-text#!#text#!#text
+nvarchar#!#varchar#!#text
 dbo#!#test_sp_volatility_f2#!#stable
 ~~END~~
 

@@ -2075,12 +2075,11 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 	char *db_name = get_cur_db_name();
 	char *physical_schema_name = NULL;
 	char *logical_schema_name = NULL;
-	char *tsql_schema_name = NULL;
-	char *tsql_function_name = NULL;
 	char *full_function_name = NULL;
 	char *query = NULL;
 	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+	char *tsql_schema_name = NULL;
 	char **splited_object_name;
 	Oid function_id;
 	List *function_name_list;
@@ -2152,10 +2151,8 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 			function_name = downcase_identifier(function_name, strlen(function_name), false, false);
 		}
 
-		/* store long function and schema names before truncation */
-		tsql_function_name = pstrdup(function_name);
-
 		/* truncate identifiers if needed */
+		tsql_schema_name = pstrdup(logical_schema_name);
 		truncate_tsql_identifier(logical_schema_name);
 		truncate_tsql_identifier(function_name);
 
@@ -2164,21 +2161,38 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("function name is not valid")));
 
+		/* find the default schema for current user */
 		if (!strcmp(logical_schema_name, ""))
 		{	
-			/* find the default schema for current user */
 			const char *user = get_user_for_database(db_name);
-			
+			const char *guest_role_name = get_guest_role_name(db_name);
 			if(!user)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						errmsg("user does not exist")));
-			
-			logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
-			// pfree((char*)user);
+
+			pfree(logical_schema_name);
+			if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+			{	
+				physical_schema_name = pstrdup(get_dbo_schema_name(db_name));
+				logical_schema_name = (char *)get_logical_schema_name(physical_schema_name, true);
+			}
+			else
+			{
+				logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+				physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
+			}
 		}
-		physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
-		tsql_schema_name = (char *)get_logical_schema_name(physical_schema_name, true);
+		else
+		{
+			physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
+		}
+			
+		if(!strcmp(tsql_schema_name, ""))
+		{	
+			pfree(tsql_schema_name);
+			tsql_schema_name = (char *)get_logical_schema_name(physical_schema_name, true);
+		}
 
 		/* get function id from function name*/
 		function_name_list = list_make2(makeString(physical_schema_name),makeString(function_name));
@@ -2222,20 +2236,19 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 					"from (SELECT (aclexplode(proacl)).*, proname, provolatile, pronamespace from pg_proc WHERE prokind = 'f') t1 "
 					"JOIN pg_namespace t2 ON t1.pronamespace = t2.oid "
 					"JOIN sys.babelfish_namespace_ext t3 ON t3.nspname = t2.nspname "
-					//"JOIN (SELECT distinct(funcname) as fname, orig_name from sys.babelfish_function_ext) t4 ON t4.fname = t1.proname "
 					"where t1.grantee = %d AND t3.dbid = sys.db_id() ORDER BY t3.orig_name, t1.proname", user_id
 				);
 		}
 		else
 		{
 			query = psprintf(
-					"SELECT '%s' as SchemaName, '%s' as FunctionName, "
+					"SELECT CAST('%s' as sys.nvarchar) as SchemaName, CAST('%s' as sys.varchar) as FunctionName, "
 					"CASE "
 						"WHEN provolatile = 'v' THEN 'volatile' "
 						"WHEN provolatile = 's' THEN 'stable' "
 						"ELSE 'immutable' "
 					"END AS Volatility from pg_proc "
-					"where oid = %u", tsql_schema_name, tsql_function_name, function_id
+					"where oid = %u", tsql_schema_name, function_name, function_id
 				);
 		}
 
@@ -2320,9 +2333,8 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 		pfree(function_name);
 		pfree(logical_schema_name);
 		pfree(physical_schema_name);
-		pfree(full_function_name);
 		pfree(tsql_schema_name);
-		pfree(tsql_function_name);
+		pfree(full_function_name);
 	}
 	if(volatility)
 		pfree(volatility);
