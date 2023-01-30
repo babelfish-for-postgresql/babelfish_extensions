@@ -62,6 +62,7 @@ extern char *bbf_servername;
 
 static void* get_servername_helper(void);
 static VarChar *get_product_version_helper(int idx);
+static VarChar *get_product_level_helper();
 
 Datum connectionproperty(PG_FUNCTION_ARGS) {
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(0));
@@ -156,15 +157,18 @@ void* get_servername_helper()
 static char *
 get_version_number(const char* version_string, int idx)
 {
-	int		part = 0;
+	int 		part = 0,
+	    		len = 0;
 	char		*token;
-	char 		*copy_version_number = palloc(sizeof(char) * strlen(version_string) + 1);
+	char 		*copy_version_number;
 
 	Assert(version_string != NULL);
 	if(idx == -1) 
 		return (char *)version_string;
 
-	strncpy(copy_version_number,version_string,strlen(version_string) + 1);
+	len = strlen(version_string);
+	copy_version_number = palloc0(len + 1);
+	memcpy(copy_version_number, version_string, len);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
 	{ 
 		if(part == idx)
@@ -172,8 +176,8 @@ get_version_number(const char* version_string, int idx)
 		part++;
 	}
 	
-	/* part should less than 2 */
-	Assert(part <= 1);
+	/* part should less than 3 */
+	Assert(part <= 2);
 	return "";
 }
 
@@ -201,6 +205,36 @@ get_product_version_helper(int idx)
     info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
     pfree(temp.data);
     return (VarChar *)info;
+}
+
+static VarChar *
+get_product_level_helper()
+{
+	StringInfoData	temp;
+	void		*info;
+	int		minor_version;
+	char*		product_level_RTM = "RTM";
+	char*		product_level_prefix = "SP";
+	
+	initStringInfo(&temp);
+	
+	Assert(BABELFISH_VERSION_STR != NULL);
+	minor_version = atoi(get_version_number(BABELFISH_VERSION_STR,1));
+	if(minor_version == 0)
+	{
+		appendStringInfoString(&temp, product_level_RTM);
+	}
+	else
+	{
+		appendStringInfoString(&temp, product_level_prefix);
+		appendStringInfoString(&temp, get_version_number(BABELFISH_VERSION_STR,1));
+		appendStringInfoString(&temp, ".");
+		appendStringInfoString(&temp, get_version_number(BABELFISH_VERSION_STR,2));
+	}
+
+	info = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+	pfree(temp.data);
+	return (VarChar *)info;
 }
 
 Datum serverproperty(PG_FUNCTION_ARGS) {
@@ -402,8 +436,7 @@ Datum serverproperty(PG_FUNCTION_ARGS) {
 	}
 	else if (strcasecmp(property, "ProductLevel") == 0)
 	{
-		const char *ret = "";
-		vch = (*common_utility_plugin_ptr->tsql_varchar_input)(ret, strlen(ret), -1);
+		vch = get_product_level_helper();
 	}
 	else if (strcasecmp(property, "ProductMajorVersion") == 0)
 	{

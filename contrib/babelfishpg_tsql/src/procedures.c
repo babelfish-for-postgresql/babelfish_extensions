@@ -57,6 +57,8 @@ PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
 PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
+PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
+PG_FUNCTION_INFO_V1(sp_dropserver_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -1024,9 +1026,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		undeclaredparams->tablename = (char *) palloc(sizeof(char) * 64);
+		undeclaredparams->tablename = (char *) palloc(NAMEDATALEN);
 		relname_len = strlen(relation->relname);
-		strncpy(undeclaredparams->tablename, relation->relname, relname_len);
+		strncpy(undeclaredparams->tablename, relation->relname, NAMEDATALEN);
 		undeclaredparams->tablename[relname_len] = '\0';
 		undeclaredparams->schemaoid = RelationGetNamespace(r);
 		undeclaredparams->targetattnums = (int *) palloc(sizeof(int) * list_length(target_attnums));
@@ -1046,8 +1048,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 
 			col = (ResTarget *)list_nth(cols, target_attnum_i);
 			colname_len = strlen(col->name);
-			undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(sizeof(char) * 64);
-			strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, colname_len);
+			undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(NAMEDATALEN);
+			strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, NAMEDATALEN);
 			undeclaredparams->targetcolnames[num_target_attnums][colname_len] = '\0';
 
 			target_attnum_i += 1;
@@ -1157,8 +1159,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						if (undeclared)
 						{
 							int paramname_len = strlen(field->sval);
-							undeclaredparams->paramnames[numresults] = (char *) palloc(64 * sizeof(char));
-							strncpy(undeclaredparams->paramnames[numresults], field->sval, paramname_len);
+							undeclaredparams->paramnames[numresults] = (char *) palloc(NAMEDATALEN);
+							strncpy(undeclaredparams->paramnames[numresults], field->sval, NAMEDATALEN);
 							undeclaredparams->paramnames[numresults][paramname_len] = '\0';
 							undeclaredparams->paramindexes[numresults] = numvalues;
 							numresults += 1;
@@ -2077,6 +2079,11 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
+/*
+ * Helper function to execute a utility command using
+ * ProcessUtility(). Caller should make sure their
+ * inputs are sanitized to prevent unexpected behaviour.
+ */
 static void
 exec_utility_cmd_helper(char *query_str)
 {
@@ -2307,6 +2314,102 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 		pfree(password);
 
 	pfree(query.data);
+
+	return (Datum) 0;
+}
+
+Datum
+sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
+
+	StringInfoData query;
+
+	if (servername == NULL)
+		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("@servername cannot be NULL")));
+
+	if (locallogin != NULL)
+		ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("Only @locallogin = NULL is supported")));
+	
+	initStringInfo(&query);
+
+	/*
+	 * We prepare the following query to drop a linked server login. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * DROP USER MAPPING FOR CURRENT_USER SERVER @SERVERNAME
+	 *
+	 */
+	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
+
+	exec_utility_cmd_helper(query.data);
+
+	if(locallogin)
+		pfree(locallogin);
+	
+	if(servername)
+		pfree(servername);
+  
+  	return (Datum) 0;
+}
+
+Datum
+sp_dropserver_internal(PG_FUNCTION_ARGS)
+{
+	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_BPCHAR_PP(1)));
+
+	StringInfoData query;
+
+	if (linked_srv == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+					errmsg("@server parameter cannot be NULL")));
+	
+	initStringInfo(&query);
+
+	/*
+	 * We prepare the following query to drop foreign server. This will
+	 * be executed using ProcessUtility():
+	 *
+	 * DROP SERVER <servername> CASCADE
+	 *
+	 * linked logins along with server are dropped if @droplogins = 'NULL'
+	 * or @droplogins = 'droplogins' so we add CASCADE.
+	 */
+	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
+	{
+		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
+
+		exec_utility_cmd_helper(query.data);
+		pfree(query.data);
+
+		if (linked_srv)
+			pfree(linked_srv);
+
+		if (droplogins)
+			pfree(droplogins);
+
+	}
+	else
+	{
+		pfree(query.data);
+
+		if (linked_srv)
+			pfree(linked_srv);
+
+		if (droplogins)
+			pfree(droplogins);
+
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.")));
+	}
 
 	return (Datum) 0;
 }

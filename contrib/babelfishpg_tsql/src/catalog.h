@@ -69,6 +69,7 @@ typedef struct FormData_authid_login_ext
 	VarChar		default_database_name;
 	VarChar		default_language_name;
 	Jsonb		properties;
+	VarChar		orig_loginname;
 } FormData_authid_login_ext;
 
 typedef FormData_authid_login_ext *Form_authid_login_ext;
@@ -107,6 +108,9 @@ extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name
 #define BBF_AUTHID_LOGIN_EXT_TABLE_NAME "babelfish_authid_login_ext"
 #define BBF_AUTHID_LOGIN_EXT_IDX_NAME "babelfish_authid_login_ext_pkey"
 #define Anum_bbf_authid_login_ext_rolname 1
+#define Anum_bbf_authid_login_ext_type 3
+#define Anum_bbf_authid_login_ext_orig_loginname 12
+
 extern Oid			bbf_authid_login_ext_oid;
 extern Oid			bbf_authid_login_ext_idx_oid;
 
@@ -176,6 +180,7 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 #define BBF_VIEW_DEF_NUM_COLS 8
 #define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
+#define BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4 (0<<2)
 extern Oid			bbf_view_def_oid;
 extern Oid			bbf_view_def_idx_oid;
 

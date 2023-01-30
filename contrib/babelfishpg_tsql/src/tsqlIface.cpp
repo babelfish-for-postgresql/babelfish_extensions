@@ -26,6 +26,9 @@
 
 #define RAISE_ERROR_PARAMS_LIMIT 20
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wregister"
 extern "C" {
 #if 0
 #include "tsqlNodes.h"
@@ -47,6 +50,7 @@ extern "C" {
 #undef LOG
 #endif
 }
+#pragma GCC diagnostic pop
 
 using namespace std;
 using namespace antlr4;
@@ -69,6 +73,7 @@ extern "C"
 
 	extern bool pltsql_dump_antlr_query_graph;
 	extern bool pltsql_enable_antlr_detailed_log;
+	extern bool pltsql_enable_sll_parse_mode;
 
 	extern bool pltsql_enable_tsql_information_schema;
 
@@ -165,6 +170,7 @@ static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
+static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -528,8 +534,6 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. offset value is negative", 0, 0);
 	if (offset > (int)strlen(expr->query))
 		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. offset value is too large", 0, 0);
-	if (m.find(offset) != m.end())
-		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. mulitiple mutation on the same position", 0, 0);
 
 	m.emplace(std::make_pair(offset, std::make_pair(orig_text, repl_text)));
 }
@@ -1538,6 +1542,9 @@ public:
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", getLineAndPos(ctx->delete_statement()->delete_statement_from()->ddl_object()));
 		}
 
+		/* we must add previous rewrite at first. */
+		add_rewritten_query_fragment_to_mutator(statementMutator.get());
+
 		// post-processing of execsql stmt query
 		for (auto &entry : local_id_positions)
 		{
@@ -1545,9 +1552,6 @@ public:
 			std::string quoted_local_id = std::string("\"") + entry.second + "\"";
 			statementMutator->add(entry.first, entry.second, quoted_local_id);
 		}
-
-		/* common routine for select and non-select */
-		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
 		/* Add query hints */
 		if (query_hints.size() && enable_hint_mapping)
@@ -2433,7 +2437,9 @@ ANTLR_result
 antlr_parser_cpp(const char *sourceText)
 {
 	ANTLR_result result;
-
+	instr_time	parseStart;
+	instr_time	parseEnd;
+	INSTR_TIME_SET_CURRENT(parseStart);
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
 	{
@@ -2451,6 +2457,30 @@ antlr_parser_cpp(const char *sourceText)
 		std::cout << sep << std::endl;
 	}
 
+	result = antlr_parse_query(sourceText, pltsql_enable_sll_parse_mode);
+
+	/* 
+	 * Only try to reparse if creation of the parse tree failed.  If parse tree is created, parsing mode will make no difference
+	 * Generally the mutator steps are non-reentrant, if parsetree is created and mutators are run, subsequent parsing may produce
+	 * incorrect error messages
+	*/
+	if (!result.success && !result.parseTreeCreated)
+	{
+		elog(DEBUG1, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
+		result = antlr_parse_query(sourceText, false);
+		if (result.parseTreeCreated)
+			elog(WARNING, "Query parsing failed using SLL parser mode but succeeded with LL mode: %s", sourceText);
+	}
+	INSTR_TIME_SET_CURRENT(parseEnd);
+	INSTR_TIME_SUBTRACT(parseEnd, parseStart);
+	elog(DEBUG1, "ANTLR Query Parse Time for query: %s | %f ms", sourceText, 1000.0 * INSTR_TIME_GET_DOUBLE(parseEnd));
+
+	return result;
+}
+
+ANTLR_result
+antlr_parse_query(const char *sourceText, bool useSLLParsing) {
+	ANTLR_result result;
 	MyInputStream sourceStream(sourceText);
 
 	TSqlLexer lexer(&sourceStream);
@@ -2458,8 +2488,11 @@ antlr_parser_cpp(const char *sourceText)
 
 	MyParserErrorListener errorListner;
 
-        TSqlParser parser(&tokens);
+	TSqlParser parser(&tokens);
+	volatile bool parseTreeCreated = false;
 
+	if (useSLLParsing)
+		parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(atn::PredictionMode::SLL);
 	parser.removeErrorListeners();
 	parser.addErrorListener(&errorListner);
 
@@ -2483,7 +2516,7 @@ antlr_parser_cpp(const char *sourceText)
 			tree = parser.func_body_return_select_body();
 		else /* normal path */
 			tree = parser.tsql_file();
-
+		parseTreeCreated = true;
 		if (pltsql_enable_antlr_detailed_log)
 			std::cout << tree->toStringTree(&parser, true) << std::endl;
 
@@ -2542,12 +2575,14 @@ antlr_parser_cpp(const char *sourceText)
 		if (pltsql_parseonly)
 			pltsql_parse_result = makeEmptyBlockStmt(0);
 
+		result.parseTreeCreated = parseTreeCreated;
 		result.success = true;
 		return result;
 	}
 	catch (PGErrorWrapperException &e)
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = e.get_errcode();
 		result.errpos = e.get_errpos();
 		result.errfmt = e.get_errmsg();
@@ -2562,6 +2597,7 @@ antlr_parser_cpp(const char *sourceText)
 	catch (std::exception &e) /* not to cause a crash just in case */
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = ERRCODE_SYNTAX_ERROR;
 		result.errpos = 0;
 		result.errfmt = pstrdup(e.what());
@@ -2572,6 +2608,7 @@ antlr_parser_cpp(const char *sourceText)
 	catch (...) /* not to cause a crash just in case. consume all exception before C-layer */
 	{
 		result.success = false;
+		result.parseTreeCreated = parseTreeCreated;
 		result.errcod = ERRCODE_SYNTAX_ERROR;
 		result.errpos = 0;
 		result.errfmt = "unknown error";
@@ -2752,14 +2789,19 @@ rewriteBatchLevelStatement(
 		auto cctx = ctx->create_or_alter_procedure();
 		if (cctx->WITH())
 		{
+			size_t num_commas_in_procedure_param = cctx->COMMA().size();
 			auto options = cctx->procedure_option();
+			/* COMMA is shared between procedure-param and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_procedure_param -= (cctx->procedure_option().size() - 1);
 			auto commas = cctx->COMMA();
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() + num_commas_in_procedure_param, commas.end());
 			GetTokenFunc<TSqlParser::Procedure_optionContext*> getToken = [](TSqlParser::Procedure_optionContext* o) {
 				if (o->execute_as_clause())
 					return o->execute_as_clause()->CALLER();
 				return o->SCHEMABINDING();
 			};
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 		}
@@ -2774,14 +2816,19 @@ rewriteBatchLevelStatement(
 		/* DML trigger can have two WITH. one for trigger options and the other for WITH APPEND */
 		if (cctx->WITH().size() > 1 || (cctx->WITH().size() == 1 && !cctx->APPEND()))
 		{
+			size_t num_commas_in_dml_trigger_operaion = cctx->COMMA().size();
 			auto options = cctx->trigger_option();
+			/* COMMA is shared between dml_trigger_operation and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_dml_trigger_operaion -= (cctx->trigger_option().size() - 1);
 			auto commas = cctx->COMMA();
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() , commas.end() - num_commas_in_dml_trigger_operaion);
 			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) {
 				if (o->execute_as_clause())
 					return o->execute_as_clause()->CALLER();
 				return o->SCHEMABINDING();
 			};
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
 		}
@@ -2791,14 +2838,19 @@ rewriteBatchLevelStatement(
 		auto cctx = ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger();
 		if (cctx->WITH())
 		{
+			size_t num_commas_in_ddl_trigger_operaion = cctx->COMMA().size();
 			auto options = cctx->trigger_option();
+			/* COMMA is shared between ddl_trigger_operation and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+			num_commas_in_ddl_trigger_operaion -= (cctx->trigger_option().size() - 1);
 			auto commas = cctx->COMMA();
+			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() , commas.end() - num_commas_in_ddl_trigger_operaion);
 			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) {
 				if (o->execute_as_clause())
 					return o->execute_as_clause()->CALLER();
 				return o->SCHEMABINDING();
 			};
-			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
+			bool all_removed = removeTokenFromOptionList(expr, options, commas_in_with_clause, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(), ctx);
 		}
@@ -2835,6 +2887,7 @@ rewriteBatchLevelStatement(
 	// Run select statement mutator
 	antlr4::tree::ParseTreeWalker walker;
 	walker.walk(ssm, ctx);
+	add_rewritten_query_fragment_to_mutator(&mutator);
 
 	mutator.run();
 	ssm->mutator = nullptr;
@@ -3402,7 +3455,7 @@ void replaceTokenStringFromQuery(PLtsql_expr* expr, Token* startToken, Token* en
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	size_t baseIdx = baseCtx->getStart()->getStartIndex();
-	if (endIdx == INVALID_INDEX)
+	if (baseIdx == INVALID_INDEX)
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	// repl string is too long. we cannot replace with it in place.
@@ -3410,10 +3463,9 @@ void replaceTokenStringFromQuery(PLtsql_expr* expr, Token* startToken, Token* en
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	Assert(expr->query);
-	memset(expr->query + startIdx - baseIdx, ' ', endIdx - startIdx + 1);
 
-	if (repl)
-		memcpy(expr->query + startIdx - baseIdx, repl, strlen(repl));
+	/* store and rewrite instead of in-place rewrite */
+	rewritten_query_fragment.emplace(std::make_pair(startIdx, std::make_pair(startToken->getInputStream()->getText(misc::Interval(startIdx, endIdx)), repl ? std::string(repl) : std::string(endIdx - startIdx + 1, ' '))));
 }
 
 void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, const char * repl, ParserRuleContext *baseCtx)
@@ -3857,12 +3909,16 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 		if (base_index == INVALID_INDEX)
 			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(ctx));
 
-		auto *query = itvf_expr->query;
+		/* we must add previous rewrite at first. */
+		add_rewritten_query_fragment_to_mutator(&itvf_mutator);
+
+		std::u32string query = utf8_to_utf32(itvf_expr->query);
 		for (const auto &entry : local_id_positions)
 		{
 			const std::string& local_id = entry.second;
+			const std::u32string& local_id_u32 = utf8_to_utf32(local_id.c_str());
 			size_t offset = entry.first - base_index;
-			if (strncmp(local_id.c_str(), query+offset, local_id.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
+			if (query.substr(offset, local_id_u32.length()) == local_id_u32) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 			{
 				int dno;
 				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id.c_str(), nullptr, nullptr, nullptr);
@@ -3876,7 +3932,6 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 				itvf_mutator.add(entry.first, entry.second, repl_text);
 			}
 		}
-		add_rewritten_query_fragment_to_mutator(&itvf_mutator);
 		itvf_mutator.run();
 		result->query->itvf_query = itvf_expr->query;
 	}

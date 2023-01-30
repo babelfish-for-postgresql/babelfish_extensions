@@ -20,9 +20,9 @@
 %type <node> tsql_CreateUserStmt tsql_DropRoleStmt tsql_AlterUserStmt
 %type <node> tsql_CreateRoleStmt
 %type <node> tsql_nchar
-%type <list> tsql_login_option_list1 tsql_login_option_list2
+%type <list> tsql_login_option_list1 tsql_login_option_list2 tsql_windows_options_list tsql_login_sources
 %type <list> tsql_alter_login_option_list
-%type <defelt> tsql_login_option_elem tsql_alter_login_option_elem
+%type <defelt> tsql_login_option_elem tsql_alter_login_option_elem tsql_windows_options
 %type <boolean> tsql_enable_disable
 %type <defelt> tsql_create_user_options tsql_alter_user_options
 %type <str> tsql_create_user_login
@@ -74,7 +74,7 @@
 %type <str> tsql_table_hint_kw_no_with
 %type <list> tsql_table_hint_expr tsql_opt_table_hint_expr tsql_table_hint_list
 %type <node> tsql_table_hint
-%type <node> tsql_for_clause tsql_xml_common_directive
+%type <node> tsql_for_xml_clause tsql_xml_common_directive
 %type <list> tsql_xml_common_directives
 
 %type <node> tsql_for_json_clause tsql_for_json_common_directive

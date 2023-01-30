@@ -1251,13 +1251,14 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
-      	char *old_db_name = get_cur_db_name();
-      	char *cur_db_name = NULL;
+	int save_nestlevel;
+	char *old_db_name = get_cur_db_name();
+	char *cur_db_name = NULL;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
 	{
-                /*
+        /*
 		* First we evaluate the string expression. Its result is the
 		* querystring we have to execute.
 		*/
@@ -1266,7 +1267,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			/* No op in case of null */
 			return PLTSQL_RC_OK;
 		}
-
+		save_nestlevel = pltsql_new_guc_nest_level();
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
@@ -1284,19 +1285,18 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		/* Pass the control the inline handler */
 		pltsql_inline_handler(fcinfo);
-                cur_db_name = get_cur_db_name();
 
-                if(strcmp(cur_db_name, old_db_name) != 0)
-                        set_session_properties(old_db_name);
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-                cur_db_name = get_cur_db_name();
-                if(strcmp(cur_db_name, old_db_name) != 0)
-                        set_session_properties(old_db_name);
-		PG_RE_THROW();
+		/* Restore past settings */
+		cur_db_name = get_cur_db_name();
+		if(strcmp(cur_db_name, old_db_name) != 0)
+			set_session_properties(old_db_name);
+
+		pltsql_revert_guc(save_nestlevel);
 	}
 	PG_END_TRY();
 
@@ -1907,6 +1907,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			bool	isnull;
 			Oid		restype;
 			int32	restypmod;
+			int save_nestlevel;
 			InlineCodeBlockArgs *args = NULL;
 
 			batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
@@ -1945,15 +1946,26 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 								errmsg("param definition mismatches with inputs")));
 				}
 			}
-			if (strcmp(batchstr, "") != 0) /* check edge cases for sp_executesql */
-			{
-				ret = execute_batch(estate, batchstr, args, stmt->params);
-			}
 
-			if (stmt->return_code_dno != -1)
+			save_nestlevel = pltsql_new_guc_nest_level();
+
+			PG_TRY();
 			{
-				exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
+				if (strcmp(batchstr, "") != 0) /* check edge cases for sp_executesql */
+				{
+					ret = execute_batch(estate, batchstr, args, stmt->params);
+				}
+
+				if (stmt->return_code_dno != -1)
+				{
+					exec_assign_value(estate, estate->datums[stmt->return_code_dno], Int32GetDatum(ret), false, INT4OID, 0);
+				}
 			}
+			PG_FINALLY();
+			{
+				pltsql_revert_guc(save_nestlevel);
+			}
+			PG_END_TRY();
 			break;
 		}
 		case PLTSQL_EXEC_SP_EXECUTE:
@@ -2269,6 +2281,14 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		p = (FunctionParameter *) lfirst(lc);
 		args->argnames[i] = p->name;
 		args->argmodes[i] = p->mode;
+
+		/*
+		 * Handle User defined types with schema qualifiers. Convert logical Schema Name to
+		 * Physical Schema Name. Note: The list length can not be more than 2 since db name
+		 * can not be a qualifier for a UDT and error will be thrown in the parser itself.
+		 */
+		rewrite_plain_name(p->argType->names);
+
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
 		i++;
 	}
@@ -2386,7 +2406,8 @@ read_param_val(PLtsql_execstate *estate, List *params, InlineCodeBlockArgs *args
 		{
 			for (j = i; j < args->numargs; j++)
 			{
-				if (strcmp(p->name, args->argnames[j]) == 0)
+				/* Case insensitive param names can be used. */
+				if (pg_strcasecmp(p->name, args->argnames[j]) == 0)
 				{
 					/* Check if the param's declared mode matches called mode */
 					if (!check_spexecutesql_param(&(args->argmodes[j]), p))

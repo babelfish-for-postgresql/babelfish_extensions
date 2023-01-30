@@ -134,10 +134,18 @@ go
 -- Re-created inner procedures in psql
 drop table if exists t1;
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: table "t1" does not exist, skipping  Server SQLState: 00000)~~
+
 drop procedure if exists psql_outer_proc();
 go
 drop procedure if exists psql_inner_proc();
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: procedure psql_inner_proc() does not exist, skipping  Server SQLState: 00000)~~
+
 
 create table t1 (a1 int);
 go

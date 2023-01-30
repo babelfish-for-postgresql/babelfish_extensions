@@ -21,6 +21,9 @@
 #include "utils/acl.h"
 #include "access/table.h"
 #include "access/genam.h"
+#include "catalog.h"
+
+#include "multidb.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -288,6 +291,10 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	appendStringInfoString(&proc_stmt, inout_str->data);
 	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
 	cstmt  = (CallStmt *) ((RawStmt *) linitial(parsetree))->stmt;
+	Assert(cstmt);
+
+	if (enable_schema_mapping())
+		rewrite_object_refs((Node *) cstmt);
 
 	funccall = cstmt->funccall;
 
@@ -1140,3 +1147,19 @@ split_object_name(char *name)
 	return res;
 }
 
+
+/*
+ * is_schema_from_db
+ *		Given schema_oid and db_id, check if schema belongs to provided database id.
+ */
+bool is_schema_from_db(Oid schema_oid, Oid db_id)
+{
+	Oid db_id_from_schema;
+	char *schema_name = get_namespace_name(schema_oid);
+	if(!schema_name)
+		return false;
+
+	db_id_from_schema = get_dbid_from_physical_schema_name(schema_name, true);
+	pfree(schema_name);
+	return (db_id_from_schema == db_id);
+}
