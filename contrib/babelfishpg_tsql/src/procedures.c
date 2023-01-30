@@ -2211,7 +2211,7 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 						errmsg("current user does not have priviledges on the function")));
 
 		function_id = candidates->oid;
-		full_function_name = psprintf("\"%s\".\"%s\"", physical_schema_name, function_name);
+		full_function_name = (char *)get_pltsql_function_signature_internal(psprintf("\"%s\".\"%s\"", physical_schema_name, function_name), candidates->nargs, candidates->args);
 
 		list_free(function_name_list);
 		pfree(candidates);
