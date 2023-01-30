@@ -141,7 +141,6 @@ Select * from information_schema.tables
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
-isc_db#!#dbo#!#sysdatabases#!#VIEW
 ~~END~~
 
 

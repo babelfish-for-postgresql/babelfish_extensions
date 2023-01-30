@@ -16,5 +16,10 @@ extern void pltsql_validate_set_config_function(char *name, char *value);
 extern MigrationMode get_migration_mode(void);
 
 extern bool metadata_inconsistency_check_enabled(void); 
+/*
+ * Defined in pl_handler.c for managing GUC stack
+ */
+int pltsql_new_guc_nest_level(void);
+void pltsql_revert_guc(int nest_level);
 
 #endif

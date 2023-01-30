@@ -159,6 +159,8 @@ Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
+Test-sp_set_session_context
+Test-sp_set_session_context-dep
 TestTableType
 BABEL-CROSS-DB
 BABEL-LOGIN
@@ -358,6 +360,7 @@ BABEL-CHECK-CONSTRAINT
 BABEL-3640
 sys-sysindexes
 sys-system_objects
+ISC-Views
 ISC-Tables
 ISC-Columns
 #ISC-Check-Constraints
@@ -369,6 +372,7 @@ BABEL-3801
 datediff_big
 app_name
 atn2
+str
 case_insensitive_collation
 linked_servers
 ISC-sequences
@@ -383,3 +387,6 @@ BABEL_OBJECT_ID
 BABEL-3802
 datediff_internal_date
 BABEL_OBJECT_NAME
+Test_user_from_win_login
+BABEL-3914
+Babel_domain_mapping_test

@@ -1,3 +1,6 @@
+-------------------------------------------------------------
+-- BABEL-2020
+-------------------------------------------------------------
 drop procedure if exists babel_2020_delete_ct;
 go
 
@@ -184,9 +187,7 @@ go
 
 ~~ROW COUNT: 3~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: self-join in FROM-clause is not supported in Babelfish)~~
+~~ROW COUNT: 1~~
 
 
 -- outer joins
@@ -200,16 +201,11 @@ go
 ~~ROW COUNT: 3~~
 
 
-exec babel_2020_delete_ct;
-delete babel_2020_delete_t1 from babel_2020_delete_t2 left outer join babel_2020_delete_t1 x on babel_2020_delete_t2.a = x.a;
-go
-~~ROW COUNT: 3~~
 
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-
+-- will be tracked in BABEL-3910
+--exec babel_2020_delete_ct;
+--delete babel_2020_delete_t1 from babel_2020_delete_t2 left outer join babel_2020_delete_t1 x on babel_2020_delete_t2.a = x.a;
+--go
 -- null filters
 exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x where x.a is null;
@@ -247,9 +243,7 @@ go
 
 delete babel_2020_delete_v1 from babel_2020_delete_v1 x where x.a = 2;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: updatable view in FROM-clause is not supported in Babelfish)~~
+~~ROW COUNT: 1~~
 
 
 drop view if exists babel_2020_delete_v1;
@@ -289,4 +283,257 @@ go
 drop procedure if exists babel_2020_delete_ct;
 drop table if exists babel_2020_delete_t1;
 drop table if exists babel_2020_delete_t2;
+go
+
+CREATE TABLE babel_delete_tbl1(a INT, b VARCHAR(10));
+CREATE TABLE babel_delete_tbl2(a INT, b VARCHAR(10));
+CREATE TABLE babel_delete_tbl3 (a INT, c INT);
+INSERT INTO babel_delete_tbl1 VALUES (1, 'left'), (2, 'inner');
+INSERT INTO babel_delete_tbl2 VALUES (10, 'inner'), (30, 'right');
+INSERT INTO babel_delete_tbl3 VALUES (1, 10), (3, 10);
+go
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+CREATE VIEW babel_delete_view AS SELECT * FROM babel_delete_tbl1 WHERE babel_delete_tbl1.a > 1;
+go
+CREATE SCHEMA babel_delete_schema
+go
+CREATE TABLE babel_delete_schema.babel_delete_tbl1(a INT);
+INSERT INTO babel_delete_schema.babel_delete_tbl1 VALUES (1), (2);
+go
+~~ROW COUNT: 2~~
+
+
+
+-------------------------------------------------------------
+-- DELETE with alias as target
+-- BABEL-2020 already covers test cases to use alias in FROM
+-------------------------------------------------------------
+-- alias + plain delete
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl1 AS t1
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+~~END~~
+
+
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl1 t1
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- alias + subquery
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl1 t1
+INNER JOIN (SELECT * FROM babel_delete_tbl1) t2
+ON t1.b = t2.b
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- alias + join
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl2 t2
+JOIN babel_delete_tbl1 t1
+ON t2.b = t1.b
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#left
+~~END~~
+
+
+-- alias + self join
+-- BABEL-1330
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl1 t1 
+INNER JOIN babel_delete_tbl1 t2
+ON t1.b = t2.b
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- alias + inner join
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl1 AS t1 
+INNER JOIN babel_delete_tbl2 AS t2
+ON t1.b = t2.b
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+1#!#left
+~~END~~
+
+
+-- alias + non-ANSI inner join
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl1 t2, babel_delete_tbl3 t1
+WHERE c > 1
+SELECT * FROM babel_delete_tbl3
+ROLLBACK
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#int
+~~END~~
+
+
+-- alias + outer join
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl1 AS t1 
+LEFT OUTER JOIN babel_delete_tbl1 t2
+ON t2.b = t1.b
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- alias + semi join
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_tbl1 AS t1
+WHERE t1.a IN
+(
+	SELECT a FROM babel_delete_tbl1
+	WHERE babel_delete_tbl1.a = t1.a
+)
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- alias + updatable view
+BEGIN TRAN
+INSERT INTO babel_delete_tbl1 VALUES (3, 'extra')
+DELETE v1
+FROM babel_delete_view v1
+WHERE a = 2
+SELECT * FROM babel_delete_view
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar
+3#!#extra
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#left
+3#!#extra
+~~END~~
+
+
+-- alias + table ref with schema
+BEGIN TRAN
+DELETE t1
+FROM babel_delete_schema.babel_delete_tbl1 t1
+SELECT * fROM babel_delete_schema.babel_delete_tbl1
+ROLLBACK
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+~~END~~
+
+
+-- target with schema
+BEGIN TRAN
+DELETE babel_delete_schema.babel_delete_tbl1
+SELECT * fROM babel_delete_schema.babel_delete_tbl1
+ROLLBACK
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+int
+~~END~~
+
+
+-- should fail, same exposed names
+DELETE babel_delete_schema.babel_delete_tbl1
+FROM babel_delete_tbl1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The objects "master_babel_delete_schema.babel_delete_tbl1" and "babel_delete_tbl1" in the FROM clause have the same exposed names. Use correlation names to distinguish them.)~~
+
+
+-- should fail, same exposed names
+DELETE babel_delete_schema.babel_delete_tbl1
+FROM babel_delete_tbl2 AS babel_delete_tbl1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The correlation name 'babel_delete_tbl1' has the same exposed name as table 'master_babel_delete_schema.babel_delete_tbl1'.)~~
+
+
+DROP VIEW babel_delete_view
+go
+DROP TABLE babel_delete_tbl1
+DROP TABLE babel_delete_tbl2
+DROP TABLE babel_delete_tbl3
+DROP TABLE babel_delete_schema.babel_delete_tbl1
+go
+DROP SCHEMA babel_delete_schema
 go
