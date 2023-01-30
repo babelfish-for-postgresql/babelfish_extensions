@@ -248,6 +248,22 @@ typedef struct FormData_bbf_function_ext
 typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 
 /*****************************************
+ *			DOMAIN MAPPING
+ *****************************************/
+#define BBF_DOMAIN_MAPPING_TABLE_NAME "babelfish_domain_mapping"
+#define BBF_DOMAIN_MAPPING_IDX_NAME "babelfish_domain_mapping_pkey"
+
+#define Anum_bbf_domain_mapping_netbios_domain_name 1
+#define Anum_bbf_domain_mapping_fq_domain_name 2
+#define BBF_DOMAIN_MAPPING_NUM_COLS 2
+
+extern Oid bbf_domain_mapping_oid;
+extern Oid bbf_domain_mapping_idx_oid;
+
+extern Oid get_bbf_domain_mapping_oid(void);
+extern Oid get_bbf_domain_mapping_idx_oid(void);
+
+/*****************************************
  *			Metadata Check Rule
  *****************************************/
 
