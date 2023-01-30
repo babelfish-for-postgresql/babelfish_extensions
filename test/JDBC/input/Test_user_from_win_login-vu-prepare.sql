@@ -1,4 +1,4 @@
-create login [xyz\admin] from windows;
+create login [pnq\admin] from windows;
 GO
 
 exec babelfish_add_domain_mapping_entry 'def', 'def.internal'
