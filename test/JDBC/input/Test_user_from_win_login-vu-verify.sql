@@ -4,7 +4,7 @@ GO
 select login_name from sys.babelfish_authid_user_ext where rolname = 'master_admin';
 GO
 
-create user test for login [abc\test]
+create user test for login [def\test]
 GO
 
 select login_name from sys.babelfish_authid_user_ext where rolname = 'master_test';
@@ -16,7 +16,7 @@ GO
 drop user admin;
 GO
 
-drop login [abc\test];
+drop login [def\test];
 GO
 
 drop login [xyz\admin];
