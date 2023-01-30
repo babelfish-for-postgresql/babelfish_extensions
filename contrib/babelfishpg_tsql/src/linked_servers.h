@@ -12,6 +12,7 @@
 #define	XSYBVARBINARY 165	/* 0xA5 */
 #define	XSYBBINARY 173	        /* 0xAD */
 #define	SYBMSXML 241		/* 0xF1 */
+#define	SYBUNIQUE 36		/* 0x24 */
 
 #define TSQL_IMAGE		SYBIMAGE
 #define TSQL_VARBINARY		SYBVARBINARY
@@ -51,6 +52,7 @@
 #define TSQL_MONEY		SYBMONEY
 #define TSQL_MONEYN		SYBMONEYN
 #define TSQL_SMALLMONEY		SYBMONEY4
+#define TSQL_UUID		SYBUNIQUE
 
 typedef struct
 {

@@ -2149,6 +2149,197 @@ prepst#!#exec#!#image|-|a|-|utils/flower.jpg
 ~~ROW COUNT: 1~~
 
 
+# user defined data types
+CREATE TYPE udd_varchar from varchar(15);
+CREATE TYPE udd_nvarchar from nvarchar(15);
+CREATE TYPE udd_int from int;
+CREATE TYPE udd_char from char(25);
+CREATE TYPE udd_nchar from nchar(20) NOT NULL;
+CREATE TYPE udd_datetime from datetime;
+CREATE TYPE udd_numeric from numeric(4,1);
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
+CREATE TABLE udd_dt1 (a udd_varchar UNIQUE, b udd_nvarchar, c udd_int PRIMARY KEY, d udd_char DEFAULT 'Whoops!', e udd_nchar, f udd_datetime, g udd_numeric CHECK (g >= 103.5))
+
+INSERT INTO udd_dt1 VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
+~~ROW COUNT: 1~~
+
+
+#passing a non unique value in column  a
+#throws error: duplicate key value violates unique constraint 
+INSERT INTO udd_dt1 VALUES ('Apple', N'blue', 2, 'Chennai', N'Neutral😐',  '2006-11-11 22:47:23.128', 512.4);
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "udd_dt1_a_key")~~
+
+
+#passing a non unique value in column c
+#throws error: duplicate key value violates unique constraint
+INSERT INTO udd_dt1 VALUES ('Banana', N'green', 1, 'Bangalore', N'Crying😭',  '2007-01-14 23:34:23.749', 908.7);
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "udd_dt1_pkey")~~
+
+
+#passing a NULL value in column c
+#throws error: null value in column "c" violates not-null constraint
+INSERT INTO udd_dt1 VALUES ('Guava', N'yellow', NULL, 'Mumbai', N'Smirk😏',  '1907-05-09 11:14:13.749', 245.6);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "c" of relation "udd_dt1" violates not-null constraint)~~
+
+
+#passing no value for column d
+INSERT INTO udd_dt1(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
+~~ROW COUNT: 1~~
+
+
+#passing a NULL value in column e
+#throws error: domain udd_nchar does not allow null values
+INSERT INTO udd_dt1 VALUES ('Kiwi', N'purple', 4, 'Kolkata', NULL,  '1907-05-09 11:14:13.749', 874.0);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: domain udd_nchar does not allow null values)~~
+
+
+#passing a value less than 103.5 in column g
+#throws error: new row for relation "udd_dt1" violates check constraint "udd_dt1_g_check"
+INSERT INTO udd_dt1 VALUES ('Grape', N'white', 5, 'Pune', N'Angry😠',  '2000-02-28 23:59:59.989', 100.1);
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "udd_dt1" violates check constraint "udd_dt1_g_check")~~
+
+
+CREATE TABLE udd_dt2 (a udd_varchar UNIQUE, b udd_nvarchar, c udd_int PRIMARY KEY, d udd_char DEFAULT 'Whoops!', e udd_nchar, f udd_datetime, g udd_numeric CHECK (g >= 103.5))
+
+prepst#!#INSERT INTO udd_dt2 VALUES (?, ?, ?, ?, ?, ?, ?)#!#varchar|-|a|-|Apple#!#nvarchar|-|b|-|red#!#int|-|c|-|1#!#char|-|d|-|Delhi#!#nchar|-|e|-|Sad😞#!#datetime|-|f|-|2000-12-13 12:58:23.123#!#numeric|-|g|-|123.1|-|4|-|1
+~~ROW COUNT: 1~~
+
+
+#passing a non unique value in column  a
+#throws error: duplicate key value violates unique constraint 
+prepst#!#exec#!#varchar|-|a|-|Apple#!#nvarchar|-|b|-|blue#!#int|-|c|-|2#!#char|-|d|-|Chennai#!#nchar|-|e|-|Neutral😐#!#datetime|-|f|-|2006-11-11 22:47:23.128#!#numeric|-|g|-|512.4|-|4|-|1
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "udd_dt2_a_key")~~
+
+
+#passing a non unique value in column c
+#throws error: duplicate key value violates unique constraint
+prepst#!#exec#!#varchar|-|a|-|Banana#!#nvarchar|-|b|-|green#!#int|-|c|-|1#!#char|-|d|-|Bangalore#!#nchar|-|e|-|Crying😭#!#datetime|-|f|-|2007-01-14 23:34:23.749#!#numeric|-|g|-|908.7|-|4|-|1
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "udd_dt2_pkey")~~
+
+
+#passing a NULL value in column c
+#throws error: null value in column "c" violates not-null constraint
+prepst#!#exec#!#varchar|-|a|-|Guava#!#nvarchar|-|b|-|yellow#!#int|-|c|-|<NULL>#!#char|-|d|-|Mumbai#!#nchar|-|e|-|Smirk😏'#!#datetime|-|f|-|1907-05-09 11:14:13.749#!#numeric|-|g|-|245.6|-|4|-|1
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "c" of relation "udd_dt2" violates not-null constraint)~~
+
+
+#passing a NULL value in column e
+#throws error: domain udd_nchar does not allow null values
+prepst#!#exec#!#varchar|-|a|-|Kiwi#!#nvarchar|-|b|-|purple#!#int|-|c|-|4#!#char|-|d|-|Kolkata#!#nchar|-|e|-|<NULL>#!#datetime|-|f|-|1907-05-09 11:14:13.749#!#numeric|-|g|-|874.0|-|4|-|1
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: domain udd_nchar does not allow null values)~~
+
+
+#passing a value less than 103.5 in column g
+#throws error: new row for relation "udd_dt2" violates check constraint "udd_dt2_g_check"
+prepst#!#exec#!#varchar|-|a|-|Grape#!#nvarchar|-|b|-|white#!#int|-|c|-|5#!#char|-|d|-|Pune#!#nchar|-|e|-|Angry😠#!#datetime|-|f|-|2000-02-28 23:59:59.989#!#numeric|-|g|-|100.1|-|4|-|1
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "udd_dt2" violates check constraint "udd_dt2_g_check")~~
+
+
+#passing no value for column d
+prepst#!#INSERT INTO udd_dt2(a, b, c, e, f, g) VALUES (?, ?, ?, ?, ?, ?)#!#varchar|-|a1|-|Orange#!#nvarchar|-|b1|-|<NULL>#!#int|-|c1|-|5#!#nchar|-|e1|-|Happy😀#!#datetime|-|f1|-|1900-02-28 23:59:59.989#!#numeric|-|g1|-|342.5|-|4|-|1
+~~ROW COUNT: 1~~
+
+
+# uniqueidentifier
+CREATE TABLE uniqueidentifier_dt (a uniqueidentifier);
+
+INSERT INTO uniqueidentifier_dt VALUES ('51f178a6-53c7-472c-9be1-1c08942342d7')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('dd8cb046-461d-411e-be40-d219252ce849')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('b84ebcc9-c927-4cfe-b08e-dc7f25b5087c')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('bab96bc8-60b9-40dd-b0de-c90a80f5739e')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('d424fdef-1404-4bac-8289-c725b540f93d')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('60aeaa5c-e272-4b17-bad0-c25710fd7a60')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('253fb146-7e45-45ef-9d92-bbe14a8ad1b2')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('dba2726c-2131-409f-aefa-5c8079571623')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('b3400fa7-3a60-40ec-b40e-fc85a3eb262d')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES ('851763b5-b068-42ae-88ec-764bfb0e5605')
+~~ROW COUNT: 1~~
+
+INSERT INTO uniqueidentifier_dt VALUES (NULL)
+~~ROW COUNT: 1~~
+
+
+prepst#!#INSERT INTO uniqueidentifier_dt VALUES (?)#!#uniqueidentifier|-|a|-|51f178a6-53c7-472c-9be1-1c08942342d7
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|767392df-87d0-450d-9b24-85a86c02811d
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|9bcb5632-53c3-4695-b617-d9a7055813ce
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|ac81a140-f686-4259-9b90-dd46f10b355f
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|3d08372d-770c-48b9-9740-a667d036680e
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|518d52c7-4d79-4143-ab33-b3765689fdf4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|bc3fa456-7391-4060-b5d8-430048075cf4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|3b75b2dd-01b7-4958-9de7-f92410693547
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|ce8af10a-2709-43b0-9e4e-a02753929d17
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|5b7c2e8d-6d90-411d-8e19-9a81067e6f6c
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+# to demonstrate the truncation of data when the value is too long
+INSERT INTO uniqueidentifier_dt VALUES ('51f178a6-53c7-472c-9be1-1c08942342d7thisIsTooLong')
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|767392df-87d0-450d-9b24-85a86c02811dthisIsTooLong
+~~ROW COUNT: 1~~
+
+
 # Run SELECTs but using OPENQUERY now
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBIGINT_dt');
 ~~START~~
@@ -3023,6 +3214,51 @@ AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjad
 ~~END~~
 
 
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt1');
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+Apple#!#red#!#1#!#Delhi                    #!#Sad😞                                   #!#2000-12-13 12:58:23.123#!#123.1
+Orange#!#<NULL>#!#3#!#Whoops!                  #!#Happy😀                                 #!#1900-02-28 23:59:59.99#!#342.5
+~~END~~
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt2');
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+Apple#!#red#!#1#!#Delhi                    #!#Sad😞                                   #!#2000-12-13 12:58:23.123#!#123.1
+Orange#!#<NULL>#!#5#!#Whoops!                  #!#Happy😀                                 #!#1900-02-28 23:59:59.99#!#342.5
+~~END~~
+
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM uniqueidentifier_dt');
+~~START~~
+uniqueidentifier
+51F178A6-53C7-472C-9BE1-1C08942342D7
+DD8CB046-461D-411E-BE40-D219252CE849
+B84EBCC9-C927-4CFE-B08E-DC7F25B5087C
+BAB96BC8-60B9-40DD-B0DE-C90A80F5739E
+D424FDEF-1404-4BAC-8289-C725B540F93D
+60AEAA5C-E272-4B17-BAD0-C25710FD7A60
+253FB146-7E45-45EF-9D92-BBE14A8AD1B2
+DBA2726C-2131-409F-AEFA-5C8079571623
+B3400FA7-3A60-40EC-B40E-FC85A3EB262D
+851763B5-B068-42AE-88EC-764BFB0E5605
+<NULL>
+51F178A6-53C7-472C-9BE1-1C08942342D7
+767392DF-87D0-450D-9B24-85A86C02811D
+9BCB5632-53C3-4695-B617-D9A7055813CE
+AC81A140-F686-4259-9B90-DD46F10B355F
+3D08372D-770C-48B9-9740-A667D036680E
+518D52C7-4D79-4143-AB33-B3765689FDF4
+BC3FA456-7391-4060-B5D8-430048075CF4
+3B75B2DD-01B7-4958-9DE7-F92410693547
+CE8AF10A-2709-43B0-9E4E-A02753929D17
+5B7C2E8D-6D90-411D-8E19-9A81067E6F6C
+<NULL>
+51F178A6-53C7-472C-9BE1-1C08942342D7
+767392DF-87D0-450D-9B24-85A86C02811D
+~~END~~
+
+
 # Drop all tables
 # bigint
 DROP TABLE testBIGINT_dt;
@@ -3185,6 +3421,23 @@ DROP TABLE IMAGE_dt1
 DROP TABLE IMAGE_dt2
 DROP TABLE IMAGE_dt3
 
+# user defined data types
+DROP TABLE udd_dt1;
+
+DROP TABLE udd_dt2;
+
+DROP TYPE udd_varchar
+DROP TYPE udd_nvarchar
+DROP TYPE udd_int
+DROP TYPE udd_char
+DROP TYPE udd_nchar
+DROP TYPE udd_datetime
+DROP TYPE udd_numeric
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';
+
+# uniqueidentifier
+DROP TABLE uniqueidentifier_dt;
+
 # Test OPENQUERY error handling
 SELECT * FROM OPENQUERY(bbf_server, 'select 1/0 as a')
 ~~START~~
@@ -3199,6 +3452,14 @@ SELECT * FROM OPENQUERY(bbf_server, 'INSERT INTO just_a_table_which_does_not_exi
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Query passed to OPENQUERY did not return a result set)~~
+
+
+# try executing query where column alias does not exist
+SELECT * FROM OPENQUERY(bbf_server, 'select 1')
+~~START~~
+int
+1
+~~END~~
 
 
 # Test view dependent on OPENQUERY

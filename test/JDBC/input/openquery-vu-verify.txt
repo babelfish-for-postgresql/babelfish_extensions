@@ -67,6 +67,12 @@ include#!#input/datatypes/TestBinary-vu-prepare.txt
 # image
 include#!#input/datatypes/TestImage-vu-prepare.txt
 
+# user defined data types
+include#!#input/datatypes/TestUDD-vu-prepare.txt
+
+# uniqueidentifier
+include#!#input/datatypes/TestUniqueIdentifier-vu-prepare.txt
+
 # Run SELECTs but using OPENQUERY now
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBIGINT_dt');
 
@@ -142,6 +148,11 @@ SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt4');
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TEXT_dt');
 
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt1');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt2');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM uniqueidentifier_dt');
+
 # Drop all tables
 # bigint
 include#!#input/datatypes/TestBigInt-vu-cleanup.txt
@@ -209,11 +220,20 @@ include#!#input/datatypes/TestBinary-vu-cleanup.txt
 # image
 include#!#input/datatypes/TestImage-vu-cleanup.txt
 
+# user defined data types
+include#!#input/datatypes/TestUDD-vu-cleanup.txt
+
+# uniqueidentifier
+include#!#input/datatypes/TestUniqueIdentifier-vu-cleanup.txt
+
 # Test OPENQUERY error handling
 SELECT * FROM OPENQUERY(bbf_server, 'select 1/0 as a')
 
 # Try executing a query that does not return a result set
 SELECT * FROM OPENQUERY(bbf_server, 'INSERT INTO just_a_table_which_does_not_exist VALUES (1)')
+
+# try executing query where column alias does not exist
+SELECT * FROM OPENQUERY(bbf_server, 'select 1')
 
 # Test view dependent on OPENQUERY
 SELECT * FROM openquery_vu_prepare__openquery_view

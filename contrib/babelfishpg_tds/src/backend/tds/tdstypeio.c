@@ -3779,6 +3779,8 @@ Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale)
 			return TdsTypeSmallMoneyToDatum(buf);
 		case TDS_TYPE_NUMERICN:
 			return TdsTypeNumericToDatum(buf, scale);
+		case TDS_TYPE_UNIQUEIDENTIFIER:
+			return TdsTypeUIDToDatum(buf);
 		default:
 			return (Datum) 0;
 	}

@@ -125,6 +125,24 @@ getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len
 			 */
 			PG_RETURN_TEXT_P(cstring_to_text_with_len((char *)val, len));
 			break;
+		case TSQL_UUID:
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
+			{
+				StringInfoData pbuf;
+
+				/*
+				 * Rather than copying data around, we just set up a phony
+				 * StringInfoData pointing to the correct portion of the TDS
+				 * message buffer.
+				 */
+				pbuf.data = (char *)val;
+				pbuf.maxlen = 16;
+				pbuf.len = 16;
+				pbuf.cursor = 0;
+
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(&pbuf, TSQL_UUID, 0);
+			}
+			break;
 		case TSQL_DATETIME:
 		case TSQL_DATETIMN:
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
@@ -360,6 +378,8 @@ tdsTypeStrToTypeId(char* datatype)
 		return TSQL_MONEYN;
 	else if (strcmp(datatype, "smallmoney") == 0)
 		return TSQL_SMALLMONEY;
+	else if (strcmp(datatype, "uniqueidentifier") == 0)
+		return TSQL_UUID;
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -450,6 +470,8 @@ tdsTypeToOid(int datatype)
 				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("money");
 			case TSQL_SMALLMONEY:
 				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("smallmoney");
+			case TSQL_UUID:
+				return (*common_utility_plugin_ptr->lookup_tsql_datatype_oid)("uniqueidentifier");
 			default:
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -532,6 +554,7 @@ tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int sc
 		case TSQL_MONEY:
 		case TSQL_MONEYN:
 		case TSQL_SMALLMONEY:
+		case TSQL_UUID:
 			return -1;
 		default:
 			ereport(ERROR,
