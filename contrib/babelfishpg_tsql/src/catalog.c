@@ -76,6 +76,12 @@ Oid			bbf_function_ext_oid;
 Oid			bbf_function_ext_idx_oid;
 
 /*****************************************
+ *			DOMAIN MAPPING
+ *****************************************/
+Oid			bbf_domain_mapping_oid = InvalidOid;
+Oid			bbf_domain_mapping_idx_oid = InvalidOid;
+
+/*****************************************
  * 			Catalog General
  *****************************************/
 
@@ -1260,6 +1266,30 @@ clean_up_bbf_function_ext(int16 dbid)
 	table_endscan(scan);
 	table_close(namespace_rel, AccessShareLock);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+/*****************************************
+ *			DOMAIN MAPPING
+ *****************************************/
+
+Oid
+get_bbf_domain_mapping_oid()
+{
+	if (!OidIsValid(bbf_domain_mapping_oid))
+		bbf_domain_mapping_oid = get_relname_relid(BBF_DOMAIN_MAPPING_TABLE_NAME,
+											 get_namespace_oid("sys", false));
+
+	return bbf_domain_mapping_oid;
+}
+
+Oid
+get_bbf_domain_mapping_idx_oid()
+{
+	if (!OidIsValid(bbf_domain_mapping_idx_oid))
+		bbf_domain_mapping_idx_oid = get_relname_relid(BBF_DOMAIN_MAPPING_IDX_NAME,
+											 get_namespace_oid("sys", false));
+
+	return bbf_domain_mapping_idx_oid;
 }
 
 /*****************************************
