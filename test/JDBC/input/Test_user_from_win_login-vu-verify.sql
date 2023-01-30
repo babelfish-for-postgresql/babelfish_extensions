@@ -7,7 +7,7 @@ GO
 create user win_test for login [def\test]
 GO
 
-select login_name from sys.babelfish_authid_user_ext where rolname = 'win_test';
+select login_name from sys.babelfish_authid_user_ext where rolname = 'master_win_test';
 GO
 
 drop user win_test;
