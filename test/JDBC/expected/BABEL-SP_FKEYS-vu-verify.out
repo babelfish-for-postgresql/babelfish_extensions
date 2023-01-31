@@ -1,3 +1,4 @@
+
 use babel_sp_fkeys_vu_prepare_db1
 go
 
@@ -20,33 +21,33 @@ go
 exec sp_fkeys @pktable_name = 'babel_sp_fkeys_vu_prepare_t1'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t1#!#a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t2#!#b#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t2_b_fkey#!#babel_sp_fkeys_vu_prepare_t1_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t1#!#a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t2#!#b#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t2_b_fkey#!#babel_sp_fkeys_vu_prepare_t1_pkey#!#7
 ~~END~~
 
 
 exec sys.sp_fkeys @pktable_name = 'babel_sp_fkeys_vu_prepare_t1'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t1#!#a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t2#!#b#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t2_b_fkey#!#babel_sp_fkeys_vu_prepare_t1_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t1#!#a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t2#!#b#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t2_b_fkey#!#babel_sp_fkeys_vu_prepare_t1_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'babel_sp_fkeys_vu_prepare_t2', @pktable_qualifier = 'babel_sp_fkeys_vu_prepare_db1'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t1#!#a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t2#!#b#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t2_b_fkey#!#babel_sp_fkeys_vu_prepare_t1_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t1#!#a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t2#!#b#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t2_b_fkey#!#babel_sp_fkeys_vu_prepare_t1_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @pktable_name = 'babel_sp_fkeys_vu_prepare_t3', @pktable_owner = 'dbo'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
 ~~END~~
 
 
@@ -54,9 +55,9 @@ babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_s
 EXEC SP_FKEYS @FKTABLE_NAME = 'babel_sp_fkeys_vu_prepare_t4', @PKTABLE_NAME = 'babel_sp_fkeys_vu_prepare_t3', @PKTABLE_OWNER = 'dbo', @FKTABLE_QUALIFIER = 'babel_sp_fkeys_vu_prepare_db1'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
 ~~END~~
 
 
@@ -64,9 +65,9 @@ babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_s
 exec sp_fkeys @fktable_name = 'babel_sp_fkeys_vu_prepare_T4', @pktable_name = 'babel_sp_fkeys_vu_prepare_T3', @pktable_owner = 'dbo', @fktable_qualifier = 'babel_sp_fkeys_vu_prepare_db1'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
 ~~END~~
 
 
@@ -74,9 +75,9 @@ babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_s
 EXEC [sys].[sp_fkeys] @FKTABLE_NAME = 'babel_sp_fkeys_vu_prepare_t4', @PKTABLE_NAME = 'babel_sp_fkeys_vu_prepare_t3', @PKTABLE_OWNER = 'dbo', @FKTABLE_QUALIFIER = 'babel_sp_fkeys_vu_prepare_db1'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
 ~~END~~
 
 
@@ -84,58 +85,58 @@ babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_s
 exec sp_fkeys @pktable_name = 'babel_sp_fkeys_vu_prepare_mytable5'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @pktable_name = 'babel_sp_fkeys_vu_prepare_MYTABLE5'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'babel_sp_fkeys_vu_prepare_mytable6'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'babel_sp_fkeys_vu_prepare_MYTABLE6'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'babel_sp_fkeys_vu_prepare_mytable7'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
 ~~END~~
 
 
 exec sp_fkeys @fktable_name = 'babel_sp_fkeys_vu_prepare_MYTABLE7'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
-babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
 ~~END~~
 
 -- Delimiter table tests NOTE: THese do not procude correct output due to BABEL-2883
@@ -187,8 +188,8 @@ go
 EXEC SP_FKEYS @FKTABLE_NAME = 'babel_sp_fkeys_vu_prepare_t4'
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
-master#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#master#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
-master#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#master#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+master#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#master#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
+master#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#master#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
 ~~END~~
 
