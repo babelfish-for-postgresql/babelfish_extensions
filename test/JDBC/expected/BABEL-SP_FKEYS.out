@@ -1,3 +1,4 @@
+
 create database db1
 go
 use db1
