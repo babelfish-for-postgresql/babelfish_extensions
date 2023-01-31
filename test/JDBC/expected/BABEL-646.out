@@ -41,6 +41,10 @@ GO
 
 EXEC test_proc3;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: OK  Server SQLState: S0001)~~~~WARNING (Message: OK  Server SQLState: S0001)~~
+
 ~~START~~
 int
 123
@@ -49,6 +53,10 @@ int
 
 EXEC test_proc4;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: OK  Server SQLState: S0001)~~~~WARNING (Message: OK  Server SQLState: S0001)~~
+
 ~~ROW COUNT: 1~~
 
 
@@ -62,6 +70,10 @@ int
 
 EXEC test_proc5;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: OK  Server SQLState: S0001)~~~~WARNING (Message: OK  Server SQLState: S0001)~~
+
 ~~ROW COUNT: 1~~
 
 

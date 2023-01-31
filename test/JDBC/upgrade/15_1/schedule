@@ -137,8 +137,9 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
 forjson
+forjson-datatypes
+forxml
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -363,3 +364,4 @@ sys-all_sql_modules_before-14_7-or-15_2
 sys-sql_modules_before-14_7-or-15_2
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
+BABEL_OBJECT_NAME

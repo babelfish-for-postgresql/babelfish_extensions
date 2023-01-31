@@ -23,6 +23,9 @@ GO
 EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
 GO
 
+EXEC sp_linkedservers
+GO
+
 -- Try to drop a linked server login that does not exist (should throw error)
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "invalid_server", @locallogin = NULL
 GO

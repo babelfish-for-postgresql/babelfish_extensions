@@ -1369,7 +1369,7 @@ BEGIN
     RAISE EXCEPTION 'Invalid option name %', "@resample";
   END IF;
 
-  ANALYZE VERBOSE;
+  ANALYZE;
 
   CALL sys.printarg('Statistics for all tables have been updated. Refer logs for details.');
 END;
@@ -2539,6 +2539,18 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 
+
+CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.sysname, 
+	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
+AS 'babelfishpg_tsql', 'sp_set_session_context'
+LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
+	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
+GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
+
+
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
 AS
 SELECT
@@ -2927,3 +2939,21 @@ BEGIN
 END;
 $$ LANGUAGE pltsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_helplinkedsrvlogin TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
+AS $$
+BEGIN
+    SELECT 
+		name AS "SRV_NAME", 
+		CAST(provider AS sys.nvarchar(128)) AS "SRV_PROVIDERNAME", 
+		CAST(product AS sys.nvarchar(128)) AS "SRV_PRODUCT", 
+		data_source AS "SRV_DATASOURCE",
+		provider_string AS "SRV_PROVIDERSTRING",
+		location AS "SRV_LOCATION",
+		catalog AS "SRV_CAT" 
+	FROM sys.servers
+	ORDER BY SRV_NAME
+END;
+$$ LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
+

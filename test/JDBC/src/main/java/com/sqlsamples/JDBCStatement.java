@@ -8,7 +8,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+import java.sql.SQLWarning;
 import static com.sqlsamples.HandleException.handleSQLExceptionWithFile;
 
 public class JDBCStatement {
@@ -37,15 +37,19 @@ public class JDBCStatement {
             bw.write(strLine);
             bw.newLine();
 
+            SQLWarning sqlwarn = null;
             boolean resultSetExist = false;
+            boolean warningExist = false;
             int resultsProcessed = 0;
             try {
                 resultSetExist = stmt_bbl.execute(SQL);
+                sqlwarn = stmt_bbl.getWarnings();
+                if(sqlwarn != null) warningExist = true;
             } catch (SQLException e) {
                 handleSQLExceptionWithFile(e, bw, logger);
                 resultsProcessed++;
             }
-            CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, logger);
+            CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, warningExist,logger);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }
