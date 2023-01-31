@@ -1,6 +1,6 @@
 -- psql
 select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext
-where rolname in ('aduser@BABEL','babeluser');
+where rolname in ('aduser@BABEL','babeluser') order by rolname;
 GO
 
 select count(*) from pg_roles where rolname = 'aduser@BABEL';
