@@ -27,7 +27,7 @@ int
 
 
 -- psql
-select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+select count(*) from pg_roles where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
 GO
 ~~START~~
 int8

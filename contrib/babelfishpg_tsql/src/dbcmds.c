@@ -457,16 +457,16 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		}
 		set_cur_db(old_dbid, old_dbname);
 		if (dbo_role)
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false, true);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false, true, false);
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true, true);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true, true, false);
 		if (guest)
 		{
 			/* For master, tempdb and msdb databases, the guest user will be enabled by default */
 			if (strcmp(dbname, "master") == 0 || strcmp(dbname, "tempdb") == 0 || strcmp(dbname, "msdb") == 0)
-				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, true);
+				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, true, false);
 			else
-				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false);
+				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false, false);
 		}
 	}
 	PG_CATCH();
