@@ -1,0 +1,11 @@
+create user win_admin for login [pnq\admin]
+GO
+
+select login_name from sys.babelfish_authid_user_ext where rolname = 'master_win_admin';
+GO
+
+drop user win_admin;
+GO
+
+drop login [pnq\admin];
+GO

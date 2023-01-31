@@ -135,8 +135,9 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
 forjson
+forjson-datatypes
+forxml
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -341,6 +342,7 @@ sys-sysindexes
 sys-system_objects
 ISC-Tables
 ISC-Table_Constraints
+ISC-Views
 sys_server_principals_dep
 sys_database_principals_dep
 BABEL-3801

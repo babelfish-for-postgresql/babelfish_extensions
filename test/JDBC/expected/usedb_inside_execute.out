@@ -52,6 +52,10 @@ master
 -- should change the context to db1
 use db1; select db_name();
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'db1'.  Server SQLState: S0001)~~
+
 ~~START~~
 nvarchar
 db1
