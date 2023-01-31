@@ -2,14 +2,14 @@ use db_10;
 go
 
 -- should show schema_11 and schema_12, since we are inside db_10 database
-select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%';
+select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%' AND SCHEMA_NAME NOT LIKE '%custom\\schema%' ORDER BY SCHEMA_NAME;
 go
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
 db_10#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+db_10#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
 db_10#!#schema_11#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 db_10#!#schema_12#!#user1#!#<NULL>#!#<NULL>#!#<NULL>
-db_10#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
 db_10#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -18,13 +18,13 @@ use master;
 go
 
 -- should not show schema_11 and schema_12, since we have switched to master database
-select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%';
+select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%' AND SCHEMA_NAME NOT LIKE '%custom\\schema%' ORDER BY SCHEMA_NAME;
 go
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
 master#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
-master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -51,13 +51,13 @@ schema_13
 ~~END~~
 
 
-select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%';
+select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%' AND SCHEMA_NAME NOT LIKE '%custom\\schema%' ORDER BY SCHEMA_NAME;
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
 master#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
-master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -67,13 +67,13 @@ REVOKE ALL ON SCHEMA master_schema_13 FROM master_schemata_user;
 GO
 
 -- tsql
-select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%';
+select * from information_schema.schemata where SCHEMA_NAME NOT LIKE '%_vu_prepare%' AND SCHEMA_NAME NOT LIKE '%objectproperty%' AND SCHEMA_NAME NOT LIKE '%babel%' AND SCHEMA_NAME NOT LIKE '%_proc_%' AND SCHEMA_NAME NOT LIKE '%resolution%' AND SCHEMA_NAME NOT LIKE 'sch1%' AND SCHEMA_NAME NOT LIKE '%sc1%' AND SCHEMA_NAME NOT LIKE '%custom\\schema%' ORDER BY SCHEMA_NAME;
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
 master#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
-master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 

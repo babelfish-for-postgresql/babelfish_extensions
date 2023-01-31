@@ -16,5 +16,8 @@ go
 use master;
 go
 
+drop schema IF EXISTS schema_13;
+go
+
 drop database IF EXISTS db_10;
 go
