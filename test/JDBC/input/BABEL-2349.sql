@@ -4,7 +4,7 @@ go
 create index i1_t1 on t1 (a, b);
 go
 
-select indid, name from sys.sysindexes where id=OBJECT_ID('t1');
+select name from sys.sysindexes where id=OBJECT_ID('t1');
 go
 
 select count(*) from sys.sysindexes where id=OBJECT_ID('t1');
