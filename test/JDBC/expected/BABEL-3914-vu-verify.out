@@ -1,0 +1,178 @@
+--Degrees Test
+SELECT * FROM BABEL_3914_vu_prepare_t_1
+GO
+~~START~~
+numeric
+52846029059076010366.8765880392063642
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_2
+GO
+~~START~~
+numeric
+-52846029059076010309.5808085261240572
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_3
+GO
+~~START~~
+numeric
+12798274973032.1750311769211282
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_4
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_5
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p1
+GO
+~~START~~
+numeric
+52846029059076010366.8765880392063642
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p2
+GO
+~~START~~
+numeric
+-52846029059076010309.5808085261240572
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p3
+GO
+~~START~~
+numeric
+12798274973032.1750311769211282
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p4
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p5
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p11
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+
+---Radians Test
+SELECT * FROM BABEL_3914_vu_prepare_t_6
+GO
+~~START~~
+numeric
+16097821017949166.1092585854200800
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_7
+GO
+~~START~~
+numeric
+-16097821017949166.0918052929001367
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_8
+GO
+~~START~~
+numeric
+3898577500.0058706301103215
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_9
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+
+SELECT * FROM BABEL_3914_vu_prepare_t_10
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p6
+GO
+~~START~~
+numeric
+16097821017949166.1092585854200800
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p7
+GO
+~~START~~
+numeric
+-16097821017949166.0918052929001367
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p8
+GO
+~~START~~
+numeric
+3898577500.0058706301103215
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p9
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p10
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+EXECUTE BABEL_3914_vu_prepare_t_p12
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+

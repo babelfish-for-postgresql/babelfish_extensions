@@ -134,7 +134,9 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
+forjson
+forjson-datatypes
+forxml
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -334,6 +336,7 @@ sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
+ISC-Views
 sys_server_principals_dep
 sys_database_principals_dep
 case_insensitive_collation
@@ -345,3 +348,4 @@ sys-all_sql_modules_before-14_7
 sys-sql_modules_before-14_7
 AVG-Aggregate-common
 AVG-Aggregate-Dep-before-15-2-or-14-7
+BABEL_OBJECT_NAME
