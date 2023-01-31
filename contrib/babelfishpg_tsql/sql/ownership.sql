@@ -344,9 +344,14 @@ CREATE OR REPLACE VIEW sys.database_principals AS SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
 CAST(Base.oid AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
-CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
-WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
-ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(
+  CASE 
+    WHEN Ext.type = 'S' THEN 'SQL_USER'
+    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL 
+  END 
+  AS SYS.NVARCHAR(60)) AS type_desc,
 CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
