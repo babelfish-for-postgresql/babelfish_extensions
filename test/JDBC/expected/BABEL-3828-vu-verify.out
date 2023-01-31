@@ -9,28 +9,28 @@ babeluser#!#babeluser#!#S#!#master#!#English
 ~~END~~
 
 
-select count(*) from pg_authid where rolname = 'aduser@BABEL';
+select count(*) from pg_roles where rolname = 'aduser@BABEL';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'babeluser';
+select count(*) from pg_roles where rolname = 'babeluser';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'babel\babeluser';
+select count(*) from pg_roles where rolname = 'babel\babeluser';
 GO
 ~~START~~
 int8
 0
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'babeluser@BABEL';
+select count(*) from pg_roles where rolname = 'babeluser@BABEL';
 GO
 ~~START~~
 int8

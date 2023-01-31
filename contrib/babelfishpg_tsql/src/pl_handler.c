@@ -2354,7 +2354,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * is hit that means it is password based authentication and login name contains
 						 * '\', which is not allowed
 						 */
-						if (strchr(stmt->role, '\\') != NULL)
+						if (!from_windows && strchr(stmt->role, '\\') != NULL)
 							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 								errmsg("'%s' is not a valid name because it contains invalid characters.", stmt->role)));
 
@@ -2415,11 +2415,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 												   makeDefElem("original_user_name",
 															   (Node *) makeString(orig_user_name),
 															   -1));
-							/*
-							 * if the user name contains '\', check whether the login is from windows or not
-							 */
-							if (!from_windows)
-								validateUserAndRole(orig_user_name);
 						}
 					}
 					else if (strcmp(headel->defname, "isrole") == 0)
@@ -2520,7 +2515,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				else if (isuser || isrole)
 				{
-					if (isrole)
+					/* check whether sql user name and role name contains '\' or not */
+					if (isrole || !from_windows)
 						validateUserAndRole(stmt->role);
 
 					/* Set current user to dbo user for create permissions */
@@ -2546,7 +2542,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * corresponding login and a schema name
 						 */
 						create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
-						from_windows = false;
 					}
 					PG_CATCH();
 					{
