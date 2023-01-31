@@ -3322,7 +3322,7 @@ modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc)
 	linked_server = TextDatumGetCString(((Const*)linitial(arg_list))->constvalue);
 	query = TextDatumGetCString(((Const*)lsecond(arg_list))->constvalue);
 
-	getOpenqueryTupdescFromMetadata(linked_server, query, tupdesc);
+	GetOpenqueryTupdescFromMetadata(linked_server, query, tupdesc);
 
 	if (linked_server)
 		pfree(linked_server);

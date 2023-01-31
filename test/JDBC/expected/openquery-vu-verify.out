@@ -3142,15 +3142,15 @@ FFD8FFE000104A46494600010200000100010000FFDB004300080606070605080707070909080A0C
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testCHAR_dt');
 ~~START~~
 char#!#nchar
-Dipesh                  #!#Dhameliya                                       
- Dipesh                 #!# Dhameliya                                      
-   D                    #!#   🤣😃                                         
-                        #!#                                                
-                        #!#😊😋😎😍😅😆                                    
+Dipesh                  #!#Dhameliya               
+ Dipesh                 #!# Dhameliya              
+   D                    #!#   🤣😃                 
+                        #!#                        
+                        #!#😊😋😎😍😅😆            
 <NULL>#!#<NULL>
-Dipesh                  #!#Dhameliya                                       
- Dipesh                 #!# Dhameliya                                      
-                        #!#                                                
+Dipesh                  #!#Dhameliya               
+ Dipesh                 #!# Dhameliya              
+                        #!#                        
 <NULL>#!#<NULL>
 ~~END~~
 
@@ -3217,15 +3217,15 @@ AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjad
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt1');
 ~~START~~
 varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
-Apple#!#red#!#1#!#Delhi                    #!#Sad😞                                   #!#2000-12-13 12:58:23.123#!#123.1
-Orange#!#<NULL>#!#3#!#Whoops!                  #!#Happy😀                                 #!#1900-02-28 23:59:59.99#!#342.5
+Apple#!#red#!#1#!#Delhi                    #!#Sad😞               #!#2000-12-13 12:58:23.123#!#123.1
+Orange#!#<NULL>#!#3#!#Whoops!                  #!#Happy😀             #!#1900-02-28 23:59:59.99#!#342.5
 ~~END~~
 
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt2');
 ~~START~~
 varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
-Apple#!#red#!#1#!#Delhi                    #!#Sad😞                                   #!#2000-12-13 12:58:23.123#!#123.1
-Orange#!#<NULL>#!#5#!#Whoops!                  #!#Happy😀                                 #!#1900-02-28 23:59:59.99#!#342.5
+Apple#!#red#!#1#!#Delhi                    #!#Sad😞               #!#2000-12-13 12:58:23.123#!#123.1
+Orange#!#<NULL>#!#5#!#Whoops!                  #!#Happy😀             #!#1900-02-28 23:59:59.99#!#342.5
 ~~END~~
 
 
@@ -3459,6 +3459,14 @@ SELECT * FROM OPENQUERY(bbf_server, 'select 1')
 ~~START~~
 int
 1
+~~END~~
+
+
+# execute query that returns 2 result sets. We should only return the first
+SELECT * FROM OPENQUERY(bbf_server, 'select 123; select 456')
+~~START~~
+int
+123
 ~~END~~
 
 

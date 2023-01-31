@@ -235,5 +235,8 @@ SELECT * FROM OPENQUERY(bbf_server, 'INSERT INTO just_a_table_which_does_not_exi
 # try executing query where column alias does not exist
 SELECT * FROM OPENQUERY(bbf_server, 'select 1')
 
+# execute query that returns 2 result sets. We should only return the first
+SELECT * FROM OPENQUERY(bbf_server, 'select 123; select 456')
+
 # Test view dependent on OPENQUERY
 SELECT * FROM openquery_vu_prepare__openquery_view

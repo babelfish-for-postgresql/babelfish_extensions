@@ -3326,5 +3326,5 @@ CREATE OR REPLACE FUNCTION sys.openquery(
 IN linked_server text,
 IN query text)
 RETURNS SETOF RECORD
-AS 'babelfishpg_tsql', 'openquery_imp'
+AS 'babelfishpg_tsql', 'openquery_internal'
 LANGUAGE C VOLATILE;

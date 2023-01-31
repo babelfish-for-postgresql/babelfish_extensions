@@ -10,9 +10,16 @@
 #include "pltsql.h"
 #include "linked_servers.h"
 
-PG_FUNCTION_INFO_V1(openquery_imp);
+#define NO_CLIENT_LIB_ERROR() \
+	ereport(ERROR, \
+		(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION), \
+		 errmsg("Could not establish connection with remote server as use of TDS client library has been disabled. " \
+			"Please recompile source with 'ENABLE_TDS_LIB' flag to enable client library.")));
 
-void getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc);
+#define LINKED_SERVER_DEBUG(...)	elog(DEBUG1, __VA_ARGS__)
+#define LINKED_SERVER_DEBUG_FINER(...)	elog(DEBUG2, __VA_ARGS__)
+
+PG_FUNCTION_INFO_V1(openquery_internal);
 
 #ifdef ENABLE_TDS_LIB
 
@@ -501,10 +508,8 @@ tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int sc
 			return datalen + VARHDRSZ;
 		case TSQL_VARCHAR:
 		case TSQL_CHAR:
-		case TSQL_NVARCHAR_X:
 		case TSQL_VARCHAR_X:
 		case TSQL_XML:
-		case TSQL_NCHAR_X:
 		case TSQL_CHAR_X:
 			{
 				if (datalen == -1)
@@ -521,9 +526,28 @@ tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int sc
 				else
 					return (datalen/4) + VARHDRSZ;
 			}
+		case TSQL_NCHAR_X:
+		case TSQL_NVARCHAR_X:
+			{
+				if (datalen == -1)
+					return -1;
+
+				/* 
+				 * When modfying the OPENQUERY result-set tuple descriptor, we use sp_describe_first_result_set,
+				 * which gives us the correct data length of character data types. However, the col length that 
+				 * accompanies the actual result set column metadata from client library, is 4 * (max column
+				 * len) and so we divide it by 4 to get appropriate typmod for character data types.
+				 */
+				if (is_metadata)
+					return (datalen/2) + VARHDRSZ;
+				else
+					return (datalen/4) + VARHDRSZ;
+			}
 		case TSQL_DECIMAL:
 		case TSQL_NUMERIC:
 			{
+				LINKED_SERVER_DEBUG_FINER("LINKED SERVER: numeric info - precision: %d, scale: %d", precision, scale);
+
 				/* copied from make_numeric_typmod */
 				return ((precision << 16) | (scale & 0x7ff)) + VARHDRSZ;
 			}
@@ -531,6 +555,8 @@ tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int sc
 		case TSQL_DATETIMEOFFSET:
 		case TSQL_TIME:
 			{
+				LINKED_SERVER_DEBUG_FINER("LINKED SERVER: time info - scale: %d", scale);
+
 				if (scale >= 0 || scale < 7)
 					return scale;
 				else
@@ -559,7 +585,7 @@ tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int sc
 		default:
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Unable to find len for datatype %d", datatype)
+					errmsg("Unable to find typmod for datatype %d", datatype)
 				));
 	}
 
@@ -583,22 +609,17 @@ ValidateLinkedServerDataSource(char* data_src)
 				errmsg("Only fully qualified domain name or IP address are allowed as data source")));
 }
 
-#endif
-
 static void
 linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc)
 {
 	/* Get the foreign server and user mapping */
 	ForeignServer *server = NULL;
 	UserMapping *mapping = NULL;
-
-#ifdef ENABLE_TDS_LIB
 	
 	LinkedServerLogin login;
 	ListCell *option;
-	char *data_src;
-	char *database;
-#endif
+	char *data_src = NULL;
+	char *database = NULL;
 
 	PG_TRY();
 	{
@@ -618,9 +639,12 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Error fetching user mapping with servername '%s'", servername)
 					));
-#ifdef ENABLE_TDS_LIB
 
-		LINKED_SERVER_INIT();
+		if (LINKED_SERVER_INIT() == FAIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("Failed to initialize TDS client library environment")
+					));
 
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
@@ -632,9 +656,15 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 			DefElem    *element = (DefElem *) lfirst(option);
 
 			if (strcmp(element->defname, "username") == 0)
+			{
+				LINKED_SERVER_DEBUG("LINKED SERVER: Setting user as \"%s\" in login request", defGetString(element));
 				LINKED_SERVER_SET_USER(login, defGetString(element));
+			}
 			else if (strcmp(element->defname, "password") == 0)
+			{
+				LINKED_SERVER_DEBUG("LINKED SERVER: Setting password in login request");
 				LINKED_SERVER_SET_PWD(login, defGetString(element));
+			}
 			else
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -663,32 +693,29 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 
 		ValidateLinkedServerDataSource(data_src);
 
+		if (database && strlen(database) > 0)
+		{
+			LINKED_SERVER_DEBUG("LINKED SERVER: Setting database as \"%s\" in login request", database);
+
+			LINKED_SERVER_SET_DBNAME(login, database);
+		}
+
+		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
+
 		*lsproc = LINKED_SERVER_OPEN(login, data_src);
 		if (!(*lsproc))
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Unable to connect to %s", data_src)));
+					errmsg("Unable to connect to \"%s\"", data_src)));
 
 		LINKED_SERVER_FREELOGIN(login);
 
-		if ((strlen(database) != 0) && (LINKED_SERVER_USE_DB(*lsproc, database) != SUCCEED))
-			ereport(ERROR,
-				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-					errmsg("Unable to connect to database %s", database)));
-#else
-
-		ereport(ERROR,
-					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						errmsg("Could not establish connection with remote server as use of TDS client library has been disabled. "
-							"Please recompile source with 'ENABLE_TDS_LIB' flag to enable client library.")
-					));
-#endif
+		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
 	}
 	PG_CATCH();
 	{
-#ifdef ENABLE_TDS_LIB
+		LINKED_SERVER_DEBUG("LINKED SERVER: Closing connections to remote server due to error");
 		LINKED_SERVER_EXIT();
-#endif
 
 		PG_RE_THROW();
 	}
@@ -699,12 +726,10 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
  * Fetch the column medata for the expected result set 
  * from remote server 
  */
-void
+static void
 getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc)
 {
 	LinkedServerProcess lsproc;
-
-#ifdef ENABLE_TDS_LIB
 
 	PG_TRY();
 	{
@@ -713,30 +738,33 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 		StringInfoData buf;
 		int colcount;
 
-#endif
 		linked_server_establish_connection(linked_server, &lsproc);
-
-#ifdef ENABLE_TDS_LIB
 
 		/* prepare the query that will executed on remote server to get column medata of result set*/
 		initStringInfo(&buf);
 		appendStringInfoString(&buf, "EXEC sp_describe_first_result_set N'");
 		appendStringInfoString(&buf, query);
 		appendStringInfoString(&buf, "', NULL, 0");
+
+		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Writing the following query to LinkedServerProcess struct: %s", buf.data);
 		
 		/* populate query in LinkedServerProcess structure */
-		if ((erc = LINKED_SERVER_PUT_CMD(lsproc, buf.data)) != SUCCEED) {
+		if ((erc = LINKED_SERVER_PUT_CMD(lsproc, buf.data)) != SUCCEED)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						errmsg("error writing query to LinkedServerProcess struct")
+						errmsg("error writing query \"%s\" to LinkedServerProcess struct", buf.data)
 					));
-		}
+
+		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Executing query against remote server");
 
 		/* Execute the query on remote server */
-		LINKED_SERVER_EXEC_QUERY(lsproc);
+		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("error executing query \"%s\" against remote server", buf.data)
+					));
 
-		if (buf.data)
-			pfree(buf.data);
+		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Begin fetching results from remote server");
 
 		while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
 		{
@@ -772,44 +800,46 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 				for (i = 0; i < MAX_COLS_SELECT; i++)
 					colname[i] = (char *) palloc0(256 * sizeof(char));
 
-				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 3, LS_NTBSTRINGBING, sizeof(bind_colname), (LS_BYTE *)bind_colname)) != SUCCEED)
+				if (LINKED_SERVER_BIND_VAR(lsproc, 3, LS_NTBSTRINGBING, sizeof(bind_colname), (LS_BYTE *)bind_colname) != SUCCEED)
 					ereport(ERROR,
 						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to bind results for column \"name\" to a variable.")
 					));
 
-				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 5, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_tdsTypeId)) != SUCCEED)
+				if (LINKED_SERVER_BIND_VAR(lsproc, 5, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_tdsTypeId) != SUCCEED)
 					ereport(ERROR,
 						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to bind results for column \"system_type_id\" to a variable.")
 					));
 				
-				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 6, LS_NTBSTRINGBING, sizeof(bind_typename), (LS_BYTE *)&bind_typename)) != SUCCEED)
+				if (LINKED_SERVER_BIND_VAR(lsproc, 6, LS_NTBSTRINGBING, sizeof(bind_typename), (LS_BYTE *)&bind_typename) != SUCCEED)
 					ereport(ERROR,
 						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
 					));
 
-				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 7, INTBIND, sizeof(int), (LS_BYTE *)&bind_collen)) != SUCCEED)
+				if (LINKED_SERVER_BIND_VAR(lsproc, 7, INTBIND, sizeof(int), (LS_BYTE *)&bind_collen) != SUCCEED)
 					ereport(ERROR,
 						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to bind results for column \"max_length\" to a variable.")
 					));
 
-				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 8, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_precision)) != SUCCEED)
+				if (LINKED_SERVER_BIND_VAR(lsproc, 8, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_precision) != SUCCEED)
 					ereport(ERROR,
 						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to bind results for column \"precision\" to a variable.")
 					));
 
-				if ((erc = LINKED_SERVER_BIND_VAR(lsproc, 9, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_scale)) != SUCCEED)
+				if (LINKED_SERVER_BIND_VAR(lsproc, 9, LS_INTBIND, sizeof(int), (LS_BYTE *)&bind_scale) != SUCCEED)
 					ereport(ERROR,
 						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to bind results for column \"scale\" to a variable.")
 					));
 
+				LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Fetching result rows");
+
 				/* fetch the rows */
-				while ((erc = LINKED_SERVER_NEXT_ROW(lsproc)) != NO_MORE_ROWS)
+				while (LINKED_SERVER_NEXT_ROW(lsproc) != NO_MORE_ROWS)
 				{
 					char *typestr;
 					
@@ -869,12 +899,18 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 					++numrows;
 				}
 
+				LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Finished fetching results. Fetched %d rows", numrows);
+
 				if (numrows > 0)
 				{
 					*tupdesc = CreateTemplateTupleDesc(numrows);
 
 					for (i = 0; i < numrows; i++)
+					{
+						LINKED_SERVER_DEBUG_FINER("LINKED SERVER: (Metadata) - Colinfo - index: %d, name: %s, type: %d, len: %d", i + 1, colname[i], tdsTypeId[i], collen[i]);
+
 						TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeToOid(tdsTypeId[i]), tdsTypeTypmod(tdsTypeId[i], collen[i], true, tdsTypePrecision[i], tdsTypeScale[i]), 0);
+					}
 
 					*tupdesc = BlessTupleDesc(*tupdesc);
 				}
@@ -902,33 +938,34 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 				}
 			}
 		}
+
+		if (buf.data)
+			pfree(buf.data);
 	}
 	PG_FINALLY();
 	{
+		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connections to remote server");
 		LINKED_SERVER_EXIT();
 	}
 	PG_END_TRY();
-#endif
 }
 
-Datum
+static Datum
 openquery_imp(PG_FUNCTION_ARGS)
 {
 	LinkedServerProcess lsproc = NULL;
 	char* query; 
 
-#ifdef ENABLE_TDS_LIB
-
 	LINKED_SERVER_RETCODE erc;
 
-	int colcount;
+	int colcount = 0;
+	int rowcount = 0;
 	
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
-#endif
 
 	PG_TRY();
 	{
@@ -936,20 +973,28 @@ openquery_imp(PG_FUNCTION_ARGS)
 	
 		linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
 
-#ifdef ENABLE_TDS_LIB
+		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Writing the following query to LinkedServerProcess struct: %s", query);
 
 		/* populate query in LinkedServerProcess */
-		if ((erc = LINKED_SERVER_PUT_CMD(lsproc, query)) != SUCCEED) {
+		if (LINKED_SERVER_PUT_CMD(lsproc, query) == FAIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("error writing query to lsproc struct")
 					));
-		}
+
+		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Executing query against remote server");
 
 		/* Execute the query on remote server */
-		LINKED_SERVER_EXEC_QUERY(lsproc);
+		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						errmsg("error executing query \"%s\" against remote server", query)
+					));
 
-		while ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
+		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Begin fetching results from remote server");
+
+		/* This is not a while loop because we should only return the first result set */
+		if ((erc = LINKED_SERVER_RESULTS(lsproc)) != NO_MORE_RESULTS)
 		{
 			int i;
 
@@ -965,6 +1010,8 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 			/* store the column count */
 			colcount = LINKED_SERVER_NUM_COLS(lsproc);
+
+			LINKED_SERVER_DEBUG_FINER("LINKED SERVER: (OPENQUERY) - Number of columns in result set: %d", colcount);
 
 			if(colcount > 0)
 			{
@@ -993,6 +1040,8 @@ openquery_imp(PG_FUNCTION_ARGS)
 					
 					tdsTypeOid = tdsTypeToOid(coltype);
 
+					LINKED_SERVER_DEBUG_FINER("LINKED SERVER: (OPENQUERY) - Colinfo - index: %d, name: %s, type: %d, len: %d", i + 1, colname, coltype, collen);
+
 					/* 
 					 * Current TDS client library has a limitation where it can send
 					 * column types like nvarchar as varchar in column metadata, so
@@ -1019,8 +1068,10 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 				MemoryContextSwitchTo(oldcontext);
 
+				LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Fetching result rows");
+
 				/* fetch the rows */
-				while ((erc = LINKED_SERVER_NEXT_ROW(lsproc)) != NO_MORE_ROWS)
+				while (LINKED_SERVER_NEXT_ROW(lsproc) != NO_MORE_ROWS)
 				{
 					/* for each row */
 					Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
@@ -1036,27 +1087,51 @@ openquery_imp(PG_FUNCTION_ARGS)
 							nulls[i] = true;
 						else
 							values[i] = getDatumFromBytePtr(lsproc, val[i], coltype, datalen);
-							
 					}
 
 					tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+					++rowcount;
 				}
+
+				LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Finished fetching results. Fetched %d rows", rowcount);
 
 				tuplestore_donestoring(tupstore);
 			}
 		}
-#endif
 	}
 	PG_FINALLY();
 	{
-#ifdef ENABLE_TDS_LIB
-
+		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connections to remote server");
 		LINKED_SERVER_EXIT();
-#endif
+
 		if (query)
 			pfree(query);
 	}
 	PG_END_TRY();
 
+	return (Datum)0;
+}
+
+#endif
+
+void
+GetOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc)
+{
+#ifdef ENABLE_TDS_LIB
+	getOpenqueryTupdescFromMetadata(linked_server, query, tupdesc);
+#else
+	NO_CLIENT_LIB_ERROR();
+#endif
+}
+
+Datum
+openquery_internal(PG_FUNCTION_ARGS)
+{
+#ifdef ENABLE_TDS_LIB
+	openquery_imp(fcinfo);
+#else
+	NO_CLIENT_LIB_ERROR();
+#endif
 	return (Datum)0;
 }
