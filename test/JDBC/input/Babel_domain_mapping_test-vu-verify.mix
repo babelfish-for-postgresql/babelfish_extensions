@@ -1,0 +1,128 @@
+-- tsql
+-- case insensitive comparison
+select count(*) from sys.babelfish_domain_mapping where netbios_domain_name = 'Xyz';
+GO
+
+-- tsql
+select name from sys.server_principals where name = 'test@XYZ.BABEL';
+GO
+
+-- tsql
+-- case insensitive comparison
+select name from sys.server_principals where name = 'TesT@XYZ.BABEL';
+GO
+
+-- tsql
+DROP LOGIN [xyz\test]
+GO
+
+--tsql
+-- should throw an error because entry is already there
+exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+-- tsql
+-- remove entry for xyz
+exec babelfish_remove_domain_mapping_entry 'xyz'
+GO
+exec babelfish_remove_domain_mapping_entry 'netbios'
+GO
+
+-- tsql
+-- should be zero rows
+select count(*) from sys.babelfish_domain_mapping where netbios_domain_name = 'xyz';
+GO
+select count(*) from sys.babelfish_domain_mapping where netbios_domain_name = 'netbios';
+GO
+
+-- tsql
+select name from sys.server_principals where name = 'test@ABC';
+GO
+
+-- tsql
+-- case insensitive comparison
+select name from sys.server_principals where name = 'tEst@ABC';
+GO
+
+
+-- tsql user=test_login1 password=12345678
+-- test_login1 should not be able to add mapping
+exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+-- tsql user=test_login_sa password=12345678
+-- test_login_sa should be able to add/remove mapping
+exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+-- tsql user=test_login_sa password=12345678
+-- remove entry for xyz
+exec babelfish_remove_domain_mapping_entry 'xyz'
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'test_login_sa' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- psql
+select pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN test_login_sa;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'test_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- psql
+select pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN test_login1;
+GO
+
+-- tsql
+exec babelfish_remove_domain_mapping_entry 'abc'
+GO
+
+-- tsql
+DROP LOGIN [abc\test]
+GO
+
+
+-- tsql
+create user win_test for login [def\test]
+GO
+
+
+-- tsql
+select login_name from sys.babelfish_authid_user_ext where rolname = 'master_win_test';
+GO
+
+-- tsql
+drop user win_test;
+GO
+
+-- tsql
+drop login [def\test];
+GO
+
+-- tsql
+exec babelfish_truncate_domain_mapping_table;
+GO
+
+-- tsql
+-- should be zero rows
+select count(*) from sys.babelfish_domain_mapping;
+GO
+
+-- psql
+DROP ROLE rds_ad
+GO

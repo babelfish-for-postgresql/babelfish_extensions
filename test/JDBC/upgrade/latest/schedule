@@ -387,4 +387,5 @@ BABEL-3802
 BABEL_OBJECT_NAME
 Test_user_from_win_login
 BABEL-3914
+Babel_domain_mapping_test
 openquery_upgrd
