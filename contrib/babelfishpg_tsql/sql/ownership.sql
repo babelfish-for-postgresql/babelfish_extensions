@@ -185,12 +185,22 @@ BEGIN
 
   ALTER PROCEDURE master_dbo.sp_addlinkedsrvlogin OWNER TO sysadmin;
 
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_droplinkedsrvlogin( IN "@rmtsrvname" sys.sysname,
+                                                              IN "@locallogin" sys.sysname)
+  AS 'babelfishpg_tsql', 'sp_droplinkedsrvlogin_internal'
+  LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_droplinkedsrvlogin OWNER TO sysadmin;
+
   CREATE OR REPLACE PROCEDURE master_dbo.sp_dropserver( IN "@server" sys.sysname,
                                                     IN "@droplogins" sys.bpchar(10) DEFAULT NULL)
   AS 'babelfishpg_tsql', 'sp_dropserver_internal'
   LANGUAGE C;
 
   ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
+
+  -- let sysadmin only to update babelfish_domain_mapping
+  GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
 END
 $$;
 
@@ -373,7 +383,7 @@ RETURNS table (
   created varchar(11),
   status varchar(600),
   compatibility_level smallint
-) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C STABLE;
 
 -- internal table function for helpdb with dbname as input
 CREATE OR REPLACE FUNCTION sys.babelfish_helpdb(varchar)
@@ -385,7 +395,7 @@ RETURNS table (
   created varchar(11),
   status varchar(600),
   compatibility_level smallint
-) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_helpdb' LANGUAGE C STABLE;
 
 create or replace view sys.databases as
 select
@@ -492,7 +502,7 @@ RETURNS table (
   schema_name varchar(128),
   object_name varchar(128),
   detail jsonb
-) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C;
+) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.role_id(role_name SYS.SYSNAME)
@@ -500,3 +510,24 @@ RETURNS INT
 AS 'babelfishpg_tsql', 'role_id'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.role_id TO PUBLIC;
+
+CREATE TABLE sys.babelfish_domain_mapping (
+  netbios_domain_name sys.VARCHAR(15) NOT NULL, -- Netbios domain name
+  fq_domain_name sys.VARCHAR(128) NOT NULL, -- DNS domain name
+  PRIMARY KEY (netbios_domain_name)
+);
+GRANT SELECT ON TABLE sys.babelfish_domain_mapping TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_domain_mapping', '');
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_add_domain_mapping_entry(IN sys.VARCHAR(15), IN sys.VARCHAR(128))
+  AS 'babelfishpg_tsql', 'babelfish_add_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_add_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_remove_domain_mapping_entry(IN sys.VARCHAR(15))
+  AS 'babelfishpg_tsql', 'babelfish_remove_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_remove_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_truncate_domain_mapping_table()
+  AS 'babelfishpg_tsql', 'babelfish_truncate_domain_mapping_table_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_truncate_domain_mapping_table TO PUBLIC;
