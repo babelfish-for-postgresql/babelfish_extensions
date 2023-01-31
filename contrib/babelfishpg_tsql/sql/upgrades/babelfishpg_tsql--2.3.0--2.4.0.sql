@@ -1173,9 +1173,9 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE sys.sp_volatility(IN "@function_name" sys.varchar DEFAULT NULL, IN "@volatility" sys.varchar DEFAULT NULL)
-AS 'babelfishpg_tsql', 'sp_volatility' LANGUAGE C;
-GRANT EXECUTE on PROCEDURE sys.sp_volatility(IN sys.varchar, IN sys.varchar) TO PUBLIC;
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_volatility(IN "@function_name" sys.varchar DEFAULT NULL, IN "@volatility" sys.varchar DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_babelfish_volatility' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.varchar) TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.sysname, 
 	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)

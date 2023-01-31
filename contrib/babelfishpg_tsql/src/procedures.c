@@ -56,7 +56,7 @@ PG_FUNCTION_INFO_V1(sp_addrole);
 PG_FUNCTION_INFO_V1(sp_droprole);
 PG_FUNCTION_INFO_V1(sp_addrolemember);
 PG_FUNCTION_INFO_V1(sp_droprolemember);
-PG_FUNCTION_INFO_V1(sp_volatility);
+PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -2068,22 +2068,18 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
-Datum sp_volatility(PG_FUNCTION_ARGS)
+Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 {
 	int rc;
 	int i;
 	char *db_name = get_cur_db_name();
 	char *physical_schema_name = NULL;
-	char *logical_schema_name = NULL;
-	char *full_function_name = NULL;
+	char *function_signature = NULL;
 	char *query = NULL;
 	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 	char *tsql_schema_name = NULL;
-	char **splited_object_name;
 	Oid function_id;
-	List *function_name_list;
-	FuncCandidateList candidates = NULL;
 	Oid user_id = GetUserId();
 
 	if(function_name != NULL)
@@ -2131,6 +2127,12 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 
 	if(function_name != NULL)
 	{	
+		List *function_name_list;
+		FuncCandidateList candidates = NULL;
+		char *full_function_name = NULL;
+		char *logical_schema_name = NULL;
+		char **splited_object_name;
+
 		/* get physical schema name */
 		splited_object_name = split_object_name(function_name);
 
@@ -2203,18 +2205,27 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					errmsg("function does not exist")));
-		
+
 		/* check if the current user has priviledge on the function */
 		if(pg_proc_aclcheck(candidates->oid, user_id, ACL_EXECUTE) != ACLCHECK_OK)
 			ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("current user does not have priviledges on the function")));
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("current user does not have priviledges on the function")));
+		
+		/* check if multiple function with same function name exits */
+		if(candidates->next != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("multiple function with same function name exits")));
 
 		function_id = candidates->oid;
-		full_function_name = (char *)get_pltsql_function_signature_internal(psprintf("\"%s\".\"%s\"", physical_schema_name, function_name), candidates->nargs, candidates->args);
+		full_function_name = psprintf("\"%s\".\"%s\"", physical_schema_name, function_name);
+		function_signature = (char *)get_pltsql_function_signature_internal(full_function_name, candidates->nargs, candidates->args);
 
 		list_free(function_name_list);
 		pfree(candidates);
+		pfree(full_function_name);
+		pfree(logical_schema_name);
 	}
 	
 	/*
@@ -2274,7 +2285,7 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
 
 			/*
-			* According to specifictation, sp_volatility returns a result-set.
+			* According to specifictation, sp_babelfish_volatility returns a result-set.
 			* If there is no destination, it will send the result-set to client, which is not allowed behavior of PG procedures.
 			* To implement this behavior, we added a code to push the result.
 			*/
@@ -2307,7 +2318,7 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("\"%s\" is not a valid volatility", volatility)));
 
-		query = psprintf("ALTER FUNCTION %s %s;", full_function_name, volatility);
+		query = psprintf("ALTER FUNCTION %s %s;", function_signature, volatility);
 
 		PG_TRY();
 		{
@@ -2331,10 +2342,9 @@ Datum sp_volatility(PG_FUNCTION_ARGS)
 	if(function_name)
 	{
 		pfree(function_name);
-		pfree(logical_schema_name);
 		pfree(physical_schema_name);
 		pfree(tsql_schema_name);
-		pfree(full_function_name);
+		pfree(function_signature);
 	}
 	if(volatility)
 		pfree(volatility);
