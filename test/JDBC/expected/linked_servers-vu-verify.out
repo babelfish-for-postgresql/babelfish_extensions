@@ -96,7 +96,7 @@ EXEC sp_helplinkedsrvlogin @rmtsrvname = 'invalid_srv'
 GO
 ~~ERROR (Code: 50000)~~
 
-~~ERROR (Message: The server invalid_srv does not exist)~~
+~~ERROR (Message: The server 'invalid_srv' does not exist)~~
 
 
 EXEC sp_linkedservers
