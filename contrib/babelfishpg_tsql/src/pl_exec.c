@@ -661,7 +661,12 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	if (pltsql_trace_exec_time)
 		config.trace_mode |= TRACE_EXEC_TIME;
 
+	if ((estate.func->fn_prokind == PROKIND_FUNCTION) &&
+			(estate.func->fn_is_trigger == PLTSQL_NOT_TRIGGER) &&
+			(strcmp(estate.func->fn_signature, "inline_code_block") != 0))
+			estate.inside_function = true;
 	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
+	estate.inside_function = false;
 
 	if (rc != PLTSQL_RC_RETURN)
 	{
@@ -4638,7 +4643,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		else
 			estate->schema_name = NULL;
 		if (estate->trigdata)
-			inside_trigger = true;
+		 	inside_trigger = true;
 		need_path_reset = reset_search_path(stmt, old_search_path, &reset_session_properties, inside_trigger);
 	}
 
@@ -5016,8 +5021,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	{
 		if (need_path_reset)
 	 		(void) set_config_option("search_path", old_search_path,
-	 					PGC_USERSET, PGC_S_SESSION,
-	 					GUC_ACTION_SAVE, true, 0, false);
+	 				PGC_USERSET, PGC_S_SESSION,
+	 				GUC_ACTION_SAVE, true, 0, false);
 		if(reset_session_properties)
 		{
 			set_session_properties(cur_dbname);
@@ -5035,9 +5040,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PG_END_TRY();
 
 	if (need_path_reset)
-	 	(void) set_config_option("search_path", old_search_path,
-	 				PGC_USERSET, PGC_S_SESSION,
-	 				GUC_ACTION_SAVE, true, 0, false);
+		(void) set_config_option("search_path", old_search_path,
+					PGC_USERSET, PGC_S_SESSION,
+					GUC_ACTION_SAVE, true, 0, false);
 	if(reset_session_properties)
 	{
 		set_session_properties(cur_dbname);

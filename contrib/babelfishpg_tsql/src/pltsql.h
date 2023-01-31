@@ -1334,6 +1334,7 @@ typedef struct PLtsql_execstate
 
 	int			found_varno;
 	int			fetch_status_varno;
+	bool            inside_function;
 
 	/*
 	 * The datums representing the function's local variables.  Some of these
