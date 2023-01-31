@@ -299,6 +299,11 @@ and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.STR(IN float_expression NUMERIC, IN length INTEGER DEFAULT 10, IN decimal_point INTEGER DEFAULT 0) RETURNS VARCHAR 
+AS
+'babelfishpg_tsql', 'float_str' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.STR(IN NUMERIC, IN INTEGER, IN INTEGER) TO PUBLIC;
+
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
   , CAST(oid as integer) as object_id
@@ -372,6 +377,14 @@ GRANT EXECUTE ON FUNCTION sys.power(SMALLINT,NUMERIC) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC)
 RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(TINYINT,NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 NUMERIC)
+RETURNS numeric  AS 'babelfishpg_tsql','numeric_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.degrees(NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
+RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.partitions AS
 SELECT
@@ -494,6 +507,33 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
                 OR has_sequence_privilege(r.oid, 'SELECT, UPDATE, USAGE'));
 
 GRANT SELECT ON information_schema_tsql.SEQUENCES TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		   CAST(
+			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
+                  ELSE c.relname END
+			 AS sys._ci_sysname) AS "TABLE_NAME",
+
+		   CAST(
+			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
+				  WHEN c.relkind = 'v' THEN 'VIEW'
+				  ELSE null END
+			 AS varchar(10)) AS "TABLE_TYPE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+
+	WHERE c.relkind IN ('r', 'v', 'p')
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = cast(sys.db_id() as oid)
+		AND (NOT c.relname = 'sysdatabases');
+
+GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
 AS $$
@@ -978,6 +1018,29 @@ LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
+
+CREATE TABLE sys.babelfish_domain_mapping (
+  netbios_domain_name sys.VARCHAR(15) NOT NULL, -- Netbios domain name
+  fq_domain_name sys.VARCHAR(128) NOT NULL, -- DNS domain name
+  PRIMARY KEY (netbios_domain_name)
+);
+
+GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
+GRANT SELECT ON TABLE sys.babelfish_domain_mapping TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_domain_mapping', '');
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_add_domain_mapping_entry(IN sys.VARCHAR(15), IN sys.VARCHAR(128))
+  AS 'babelfishpg_tsql', 'babelfish_add_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_add_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_remove_domain_mapping_entry(IN sys.VARCHAR(15))
+  AS 'babelfishpg_tsql', 'babelfish_remove_domain_mapping_entry_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_remove_domain_mapping_entry TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_truncate_domain_mapping_table()
+  AS 'babelfishpg_tsql', 'babelfish_truncate_domain_mapping_table_internal' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.babelfish_truncate_domain_mapping_table TO PUBLIC;
 
 -- For all the views created on previous versions(except 2.4 and onwards), the definition in the catalog should be NULL.
 UPDATE sys.babelfish_view_def AS bvd
