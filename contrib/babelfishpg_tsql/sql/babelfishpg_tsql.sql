@@ -2897,42 +2897,33 @@ CREATE OR REPLACE PROCEDURE sys.sp_helplinkedsrvlogin(
 	IN "@locallogin" sysname DEFAULT NULL
 )
 AS $$
+DECLARE @server_id INT;
+DECLARE @local_principal_id INT;
 BEGIN
-  IF @rmtsrvname IS NULL
-	BEGIN
-    	SELECT 
-    		s.name AS linked_server, 
-    		u.usename AS local_login, 
-    		CAST(0 as smallint) AS is_self_mapping, 
-    		l.remote_name AS remote_name 
-		FROM sys.linked_logins AS l 
-		LEFT JOIN sys.servers AS s ON l.server_id = s.server_id 
-		LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid
-	END
-  ELSE IF @locallogin IS NULL
-	BEGIN
-    	SELECT 
-    		s.name AS linked_server, 
-    		u.usename AS local_login, 
-    		CAST(0 as smallint) AS is_self_mapping, 
-    		l.remote_name AS remote_name 
-		FROM sys.linked_logins AS l 
-		LEFT JOIN sys.servers AS s ON l.server_id = s.server_id 
-		LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid 
-		WHERE s.name = @rmtsrvname;
-	END
-  ELSE
-	BEGIN
-		SELECT 
-    		s.name AS linked_server, 
-    		u.usename AS local_login, 
-    		CAST(0 as smallint) AS is_self_mapping, 
-    		l.remote_name AS remote_name 
-		FROM sys.linked_logins AS l 
-		LEFT JOIN sys.servers AS s ON l.server_id = s.server_id 
-		LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid 
-		WHERE s.name = @rmtsrvname AND u.usename = @locallogin;
-	END
+	IF @rmtsrvname IS NOT NULL
+		BEGIN
+			SELECT @server_id = server_id FROM sys.servers WHERE name = @rmtsrvname;
+
+			IF @server_id IS NULL
+				BEGIN
+					RAISERROR("The server '%s' does not exist", 16, 1, @rmtsrvname);
+				END
+		END
+
+	IF @local_login IS NOT NULL
+		BEGIN
+			SELECT @local_principal_id = usesysid FROM pg_user WHERE usename = @local_login;
+		END
+	
+	SELECT
+		s.name AS "Linked Server",
+		u.usename AS "Local Login", 
+		CAST(0 as smallint) AS "Is Self Mapping", 
+		l.remote_name AS "Remote Login"
+	FROM sys.linked_logins AS l 
+	LEFT JOIN sys.servers AS s ON l.server_id = s.server_id
+	LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid
+	WHERE (@server_id is NULL or @server_id = s.server_id) AND (@local_principal_id is NULL or @local_principal_id = l.local_principal_id);
 END;
 $$ LANGUAGE pltsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_helplinkedsrvlogin TO PUBLIC;
