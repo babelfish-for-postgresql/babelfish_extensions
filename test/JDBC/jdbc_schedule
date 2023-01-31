@@ -19,10 +19,6 @@ ignore#!#BABEL-ROLE
 ignore#!#BABEL-USER
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
-ignore#!#BABEL-SP_FKEYS
-ignore#!#BABEL-SP_FKEYS-vu-prepare
-ignore#!#BABEL-SP_FKEYS-vu-verify
-ignore#!#BABEL-SP_FKEYS-vu-cleanup
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
