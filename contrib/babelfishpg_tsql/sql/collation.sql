@@ -14,6 +14,10 @@ BEGIN
 END
 $$
 LANGUAGE 'plpgsql' STABLE;
+
+CREATE FUNCTION collationproperty (TEXT, TEXT)
+        RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'collationproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 INSERT INTO sys.babelfish_helpcollation VALUES (N'arabic_cs_as', N'Arabic, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'arabic_ci_ai', N'Arabic, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'arabic_ci_as', N'Arabic, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');

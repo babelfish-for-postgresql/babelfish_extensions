@@ -158,6 +158,8 @@ Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
+Test-sp_set_session_context
+Test-sp_set_session_context-dep
 TestTableType
 BABEL-CROSS-DB
 BABEL-LOGIN
@@ -356,6 +358,7 @@ BABEL-CHECK-CONSTRAINT
 BABEL-3640
 sys-sysindexes
 sys-system_objects
+ISC-Views
 ISC-Tables
 ISC-Columns
 #ISC-Check-Constraints
@@ -365,6 +368,7 @@ sys_database_principals_dep
 datediff_big
 atn2
 app_name
+str
 ISC-sequences
 jira-BABEL-3504-upgrade
 case_insensitive_collation
@@ -375,4 +379,6 @@ AVG-Aggregate-common
 AVG-Aggregate-Dep
 bbf_view_def
 BABEL-3802
+BABEL-3914
 BABEL_OBJECT_NAME
+sys-systypes

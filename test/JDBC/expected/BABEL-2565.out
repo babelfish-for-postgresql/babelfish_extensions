@@ -135,7 +135,7 @@ go
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The correlation name 'test_table1' has the same exposed name as table 'test_schema.test_table1'.)~~
+~~ERROR (Message: The correlation name 'test_table1' has the same exposed name as table 'master_test_schema.test_table1'.)~~
 
 drop table tv_t
 go

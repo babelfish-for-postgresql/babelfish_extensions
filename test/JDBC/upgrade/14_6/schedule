@@ -246,6 +246,7 @@ sys-sp_pkeys-dep
 sys-sp_statistics-dep
 BABEL-SPCOLUMNS-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
+BABEL-SP_FKEYS
 BABEL-SP_FKEYS-dep
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_SPROC_COLUMNS-dep
@@ -335,6 +336,7 @@ sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
+ISC-Views
 sys_server_principals_dep
 sys_database_principals_dep
 case_insensitive_collation
