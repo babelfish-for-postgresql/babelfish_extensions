@@ -1,0 +1,39 @@
+-- psql
+select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext
+where rolname in ('aduser@BABEL','babeluser');
+GO
+~~START~~
+name#!#"sys"."varchar"#!#bpchar#!#"sys"."varchar"#!#"sys"."varchar"
+aduser@BABEL#!#babel\aduser#!#U#!#master#!#English
+babeluser#!#babeluser#!#S#!#master#!#English
+~~END~~
+
+
+select count(*) from pg_roles where rolname = 'aduser@BABEL';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+select count(*) from pg_roles where rolname = 'babeluser';
+GO
+~~START~~
+int8
+1
+~~END~~
+
+select count(*) from pg_roles where rolname = 'babel\babeluser';
+GO
+~~START~~
+int8
+0
+~~END~~
+
+select count(*) from pg_roles where rolname = 'babeluser@BABEL';
+GO
+~~START~~
+int8
+0
+~~END~~
+
