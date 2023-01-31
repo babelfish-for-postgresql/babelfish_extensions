@@ -1344,6 +1344,120 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
+SELECT
+CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
+CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
+CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
+CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
+CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
+CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
+CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
+CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
+CAST(nr AS smallint) AS KEY_SEQ,
+CASE
+   WHEN const1.confupdtype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confupdtype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confupdtype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confupdtype = 'd' THEN CAST(3 AS smallint) -- set default
+END AS UPDATE_RULE,
+
+CASE
+   WHEN const1.confdeltype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confdeltype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confdeltype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
+   ELSE CAST(0 AS smallint)
+END AS DELETE_RULE,
+CAST(const1.conname AS sys.sysname) AS FK_NAME,
+CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CASE
+   WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
+   ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
+              ELSE CAST(5 as smallint) -- deferred by default
+         END)
+END AS DEFERRABILITY
+
+FROM (pg_constraint const1
+-- join with nsp_Ext to get constraints in current namespace
+JOIN sys.pg_namespace_ext nsp_ext ON nsp_ext.oid = const1.connamespace
+--get the table names corresponding to foreign keys
+JOIN pg_class c ON const1.conrelid = c.oid AND const1.contype ='f'
+-- join wiht bbf_nsp to get all constraint related to tsql endpoint and the owner of foreign key
+JOIN sys.babelfish_namespace_ext bbf_nsp ON bbf_nsp.nspname = nsp_ext.nspname AND bbf_nsp.dbid = sys.db_id()
+-- lateral join to use the conkey and confkey to join with pg_attribute to get column names
+CROSS JOIN LATERAL unnest(const1.conkey,const1.confkey) WITH ORDINALITY AS ak(j, k, nr)
+            LEFT JOIN pg_attribute a
+                       ON (a.attrelid = const1.conrelid AND a.attnum = ak.j)
+            LEFT JOIN pg_attribute a2
+                       ON (a2.attrelid = const1.confrelid AND a2.attnum = ak.k)
+)
+-- get the index that foreign key depends on
+LEFT JOIN pg_depend d1 ON d1.objid = const1.oid AND d1.classid = 'pg_constraint'::regclass
+           AND d1.refclassid = 'pg_class'::regclass AND d1.refobjsubid = 0
+-- get the pkey/ukey constraint for this index
+LEFT JOIN pg_depend d2 ON d2.refclassid = 'pg_constraint'::regclass AND d2.classid = 'pg_class'::regclass AND d2.objid = d1.refobjid AND d2.objsubid = 0 AND d2.deptype = 'i'
+-- get the constraint name from new pg_constraint
+LEFT JOIN pg_constraint const2 ON const2.oid = d2.refobjid AND const2.contype IN ('p', 'u') AND const2.conrelid = const1.confrelid
+-- get the namespace name for primary key
+LEFT JOIN sys.pg_namespace_ext nsp_ext2 ON const2.connamespace = nsp_ext2.oid
+-- get the owner name for primary key
+LEFT JOIN sys.babelfish_namespace_ext bbf_nsp2 ON bbf_nsp2.nspname = nsp_ext2.nspname AND bbf_nsp2.dbid = sys.db_id()
+-- get the table name for primary key
+LEFT JOIN pg_class c2 ON const2.conrelid = c2.oid AND const2.contype IN ('p', 'u');
+
+GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_fkeys(
+	"@pktable_name" sys.sysname = '',
+	"@pktable_owner" sys.sysname = '',
+	"@pktable_qualifier" sys.sysname = '',
+	"@fktable_name" sys.sysname = '',
+	"@fktable_owner" sys.sysname = '',
+	"@fktable_qualifier" sys.sysname = ''
+)
+AS $$
+BEGIN
+	
+	IF coalesce(@pktable_name,'') = '' AND coalesce(@fktable_name,'') = '' 
+	BEGIN
+		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
+	END
+	
+	IF (@pktable_qualifier != '' AND (SELECT sys.db_name()) != @pktable_qualifier) OR 
+		(@fktable_qualifier != '' AND (SELECT sys.db_name()) != @fktable_qualifier) 
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+  	END
+  	
+  	SELECT 
+	PKTABLE_QUALIFIER,
+	PKTABLE_OWNER,
+	PKTABLE_NAME,
+	PKCOLUMN_NAME,
+	FKTABLE_QUALIFIER,
+	FKTABLE_OWNER,
+	FKTABLE_NAME,
+	FKCOLUMN_NAME,
+	KEY_SEQ,
+	UPDATE_RULE,
+	DELETE_RULE,
+	FK_NAME,
+	PK_NAME,
+	DEFERRABILITY
+	FROM sys.sp_fkeys_view
+	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR LOWER(pktable_name) = LOWER(@pktable_name))
+		AND ((SELECT coalesce(@fktable_name,'')) = '' OR LOWER(fktable_name) = LOWER(@fktable_name))
+		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR LOWER(pktable_owner) = LOWER(@pktable_owner))
+		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR LOWER(pktable_qualifier) = LOWER(@pktable_qualifier))
+		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR LOWER(fktable_owner) = LOWER(@fktable_owner))
+		AND ((SELECT coalesce(@fktable_qualifier,'')) = '' OR LOWER(fktable_qualifier) = LOWER(@fktable_qualifier))
+	ORDER BY fktable_qualifier, fktable_owner, fktable_name, key_seq;
+
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
 AS $$
 BEGIN
@@ -1734,6 +1848,49 @@ CREATE OR REPLACE FUNCTION sys.OBJECT_NAME(IN object_id INT, IN database_id INT 
 RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_name'
 LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.systypes_precision_helper(IN type TEXT, IN max_length SMALLINT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	precision SMALLINT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	CASE
+	WHEN v_type in ('text', 'ntext', 'image') THEN precision = CAST(NULL AS SMALLINT);
+  WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
+  WHEN v_type = 'sql_variant' THEN precision = 0;
+	ELSE
+		precision = max_length;
+	END CASE;
+	RETURN precision;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE VIEW sys.systypes AS
+SELECT CAST(name as sys.sysname) as name
+  , CAST(system_type_id as int) as xtype
+  , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
+  , max_length as length
+  , CAST(precision as sys.tinyint) as xprec
+  , CAST(scale as sys.tinyint) as xscale
+  , CAST(default_object_id as int) as tdefault
+  , CAST(rule_object_id as int) as domain
+  , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
+  , CAST(0 as smallint) as reserved
+  , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
+  , CAST((case when (tsql_base_type_name in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
+  , CAST(is_nullable as sys.bit) as allownulls
+  , CAST(system_type_id as int) as type
+  , CAST(null as sys.varchar(255)) as printfmt
+  , (case when precision <> 0::smallint then precision else sys.systypes_precision_helper(tsql_base_type_name, max_length) end) as prec
+  , CAST(scale as sys.tinyint) as scale
+  , CAST(collation_name as sys.sysname) as collation
+FROM sys.types
+, coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) AS tsql_base_type_name;
+GRANT SELECT ON sys.systypes TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
