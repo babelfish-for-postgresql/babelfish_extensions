@@ -1140,7 +1140,7 @@ SELECT CAST(name as sys.sysname) as name
           in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
   , CAST(is_nullable as sys.bit) as allownulls
   , CAST(system_type_id as int) as type
-  , CAST(null as varchar(255)) as printfmt
+  , CAST(null as sys.varchar(255)) as printfmt
   , CAST(precision as smallint) as prec
   , CAST(scale as sys.tinyint) as scale
   , CAST(collation_name as sys.sysname) as collation
