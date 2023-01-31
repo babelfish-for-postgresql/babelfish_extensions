@@ -1,0 +1,24 @@
+SELECT isc_schemata_vu_prepare_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC isc_schemata_vu_prepare_proc
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM isc_schemata_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
+master#!#isc_schemata_vu_prepare_sch#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
