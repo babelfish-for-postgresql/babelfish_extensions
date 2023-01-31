@@ -155,3 +155,39 @@ name#!#Long Tail#!#1
 
 DROP PROCEDURE BABEL_3702_vu_prepare_p13
 GO
+
+EXEC BABEL_3702_vu_prepare_p14
+GO
+~~START~~
+nchar#!#varchar#!#char#!#nvarchar
+Two       #!#Fluffy#!#F#!#{"id": 1, "age": "Two", "sex": "F", "name": "Fluffy"}
+Three     #!#Long Tail#!#F#!#{"id": 2, "age": "Three", "sex": "F", "name": "Long Tail"}
+Four      #!#Scratch#!#M#!#{"id": 3, "age": "Four", "sex": "M", "name": "Scratch"}
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p14
+GO
+
+EXEC BABEL_3702_vu_prepare_p15
+GO
+~~START~~
+nchar#!#varchar#!#char#!#nvarchar
+Two       #!#Fluffy#!#F#!#{"id": 1, "age": "Two", "sex": "F", "name": "Fluffy"}
+Three     #!#Long Tail#!#F#!#{"id": 2, "age": "Three", "sex": "F", "name": "Long Tail"}
+Four      #!#Scratch#!#M#!#{"id": 3, "age": "Four", "sex": "M", "name": "Scratch"}
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p15
+GO
+
+EXEC BABEL_3702_vu_prepare_p16
+GO
+~~START~~
+nchar#!#varchar#!#char#!#nvarchar
+Two       #!#Fluffy#!#F#!#{"id": 1, "age": "Two", "sex": "F", "name": "Fluffy"}
+Three     #!#Long Tail#!#F#!#{"id": 2, "age": "Three", "sex": "F", "name": "Long Tail"}
+Four      #!#Scratch#!#M#!#{"id": 3, "age": "Four", "sex": "M", "name": "Scratch"}
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p16
+GO

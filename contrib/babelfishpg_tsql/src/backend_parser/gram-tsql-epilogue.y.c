@@ -536,10 +536,6 @@ bool isCharType(char* typenameStr)
     {
         return true;
     }
-    else if(pg_strcasecmp(typenameStr, "pg_catalog.nchar") == 0)
-    {
-        return true;
-    }
     else if(pg_strcasecmp(typenameStr, "pg_catalog.varchar") == 0)
     {
         return true;
@@ -566,10 +562,6 @@ bool isCharType(char* typenameStr)
 bool isNVarCharType(char* typenameStr)
 {
     if(pg_strcasecmp(typenameStr, "nvarchar") == 0)
-    {
-        return true;
-    }
-    else if(pg_strcasecmp(typenameStr, "pg_catalog.nvarchar") == 0)
     {
         return true;
     }

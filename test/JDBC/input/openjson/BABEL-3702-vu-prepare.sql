@@ -173,3 +173,84 @@ BEGIN
     SELECT * FROM OPENJSON(@json, '$.pets.cats[1]')
 END;
 GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p14
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "F", "age" : "Two"},
+                { "id" : 2, "name" : "Long Tail", "sex" : "F", "age" : "Three"},
+                { "id" : 3, "name" : "Scratch", "sex" : "M", "age" : "Four"}
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "M" },
+                { "name" : "Fluffy", "sex" : "M" },
+                { "name" : "Wag", "sex" : "F" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats')
+    WITH  (
+            [Cat Age]   sys.nchar(10)             '$.age',  
+            "Cat Name"  sys.varchar(60)     '$.name', 
+            [Sex]       sys.char(1)      '$.sex', 
+            [Cats]      sys.nvarchar(max)   '$' AS JSON   
+        )
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p15
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "F", "age" : "Two"},
+                { "id" : 2, "name" : "Long Tail", "sex" : "F", "age" : "Three"},
+                { "id" : 3, "name" : "Scratch", "sex" : "M", "age" : "Four"}
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "M" },
+                { "name" : "Fluffy", "sex" : "M" },
+                { "name" : "Wag", "sex" : "F" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats')
+    WITH  (
+            [Cat Age]   nchar(10)             '$.age',  
+            "Cat Name"  varchar(60)     '$.name', 
+            [Sex]       char(1)            '$.sex', 
+            [Cats]      nvarchar(max)   '$' AS JSON   
+        )
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p16
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "F", "age" : "Two"},
+                { "id" : 2, "name" : "Long Tail", "sex" : "F", "age" : "Three"},
+                { "id" : 3, "name" : "Scratch", "sex" : "M", "age" : "Four"}
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "M" },
+                { "name" : "Fluffy", "sex" : "M" },
+                { "name" : "Wag", "sex" : "F" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats')
+    WITH  (
+            [Cat Age]   nchar(10)       '$.age',  
+            "Cat Name"  pg_catalog.varchar(60)     '$.name', 
+            [Sex]       pg_catalog.char(1)            '$.sex', 
+            [Cats]      nvarchar(max)   '$' AS JSON   
+        )
+END;
+GO
