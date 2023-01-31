@@ -2930,7 +2930,7 @@ BEGIN
 	
 	SELECT
 		s.name AS "Linked Server",
-		u.usename AS "Local Login", 
+		CAST(u.usename as sys.sysname) AS "Local Login", 
 		CAST(0 as smallint) AS "Is Self Mapping", 
 		l.remote_name AS "Remote Login"
 	FROM sys.linked_logins AS l 
