@@ -103,7 +103,7 @@ BEGIN
 	return n1;
 END
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql IMMUTABLE;
 
 ALTER FUNCTION sys.datediff_internal_df RENAME TO datediff_internal_df_deprecated_in_3_1_0;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_df_deprecated_in_3_1_0');
@@ -1859,7 +1859,6 @@ ALTER FUNCTION sys.proc_param_helper() STABLE;
 ALTER FUNCTION sys.original_login() STABLE; 
 ALTER FUNCTION sys.objectproperty(id INT, property SYS.VARCHAR) STABLE;
 ALTER FUNCTION sys.OBJECTPROPERTYEX(id INT, property SYS.VARCHAR) STABLE;
-ALTER FUNCTION sys.num_days_in_date(IN d1 BIGINT, IN m1 BIGINT, IN y1 BIGINT) STABLE;
 ALTER FUNCTION sys.nestlevel() STABLE;
 ALTER FUNCTION sys.max_connections() STABLE;
 ALTER FUNCTION sys.lock_timeout() STABLE;

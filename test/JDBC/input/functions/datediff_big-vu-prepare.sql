@@ -118,7 +118,8 @@ GO
 
 
 -- test with time input
--- when datediff
+-- DATEDIFF() and DATEDIFF_BIG() currently does not work when both inputs are in time datatype
+-- need to be fixed: 
 -- Raise error: unit "year" not supported for type time without time zone
 CREATE VIEW datediff_big_vu_prepare_v8 AS (
     SELECT 
@@ -126,6 +127,7 @@ CREATE VIEW datediff_big_vu_prepare_v8 AS (
     );
 GO
 
+-- need to be fixed:
 -- Raise error:  Line 1: operator is not unique: time without time zone sys.- time without time zone
 CREATE VIEW datediff_big_vu_prepare_v9 AS (
     SELECT 
@@ -133,8 +135,26 @@ CREATE VIEW datediff_big_vu_prepare_v9 AS (
     );
 GO
 
--- NULL input
+-- works fine when only one of the inputs is in time datatype
 CREATE VIEW datediff_big_vu_prepare_v10 AS (
+    SELECT 
+        DATEDIFF_BIG(year, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Years,
+        DATEDIFF_BIG(quarter, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Quarters,
+        DATEDIFF_BIG(month, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Months,
+        DATEDIFF_BIG(dayofyear, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS DayofYears,
+        DATEDIFF_BIG(day, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Days,
+        DATEDIFF_BIG(week, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Weeks,
+        DATEDIFF_BIG(hour, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Hours,
+        DATEDIFF_BIG(minute, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Minutes,
+        DATEDIFF_BIG(second, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Seconds,
+        DATEDIFF_BIG(millisecond, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Millisecond,
+        DATEDIFF_BIG(microsecond, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Microsecond,
+        DATEDIFF_BIG(nanosecond, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Nanosecond
+    );
+GO
+
+-- NULL input
+CREATE VIEW datediff_big_vu_prepare_v11 AS (
     SELECT 
         DATEDIFF_BIG(year, NULL, NULL) AS res1,
         DATEDIFF_BIG(year, '2000-01-01 00:00:00.0000000', NULL) AS res2,
@@ -143,9 +163,19 @@ CREATE VIEW datediff_big_vu_prepare_v10 AS (
 GO
 
 -- throws error
-CREATE VIEW datediff_big_vu_prepare_v11 AS (
+CREATE VIEW datediff_big_vu_prepare_v12 AS (
     SELECT 
         DATEDIFF_BIG(NULL, NULL, NULL) AS res1
+);
+GO
+
+-- test internal function num_days_in_date()
+CREATE VIEW datediff_big_vu_prepare_v13 AS (
+    SELECT
+        num_days_in_date(CAST(0 AS BIGINT), CAST(0 AS BIGINT), CAST(0 AS BIGINT)) AS res1,
+        num_days_in_date(CAST(1 AS BIGINT), CAST(1 AS BIGINT), CAST(1 AS BIGINT)) AS res2,
+        num_days_in_date(CAST(8 AS BIGINT), CAST(5 AS BIGINT), CAST(2023 AS BIGINT)) AS res3,
+        num_days_in_date(CAST(31 AS BIGINT), CAST(12 AS BIGINT), CAST(9999 AS BIGINT)) AS res4
 );
 GO
 
@@ -294,6 +324,26 @@ END
 GO
 
 CREATE PROCEDURE datediff_big_vu_prepare_p10
+    @x TIME = '12:10:30.123', @y SMALLDATETIME = '2079-06-06 23:58:59'
+AS
+BEGIN
+    SELECT 
+        DATEDIFF_BIG(year, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Years,
+        DATEDIFF_BIG(quarter, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Quarters,
+        DATEDIFF_BIG(month, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Months,
+        DATEDIFF_BIG(dayofyear, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS DayofYears,
+        DATEDIFF_BIG(day, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Days,
+        DATEDIFF_BIG(week, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Weeks,
+        DATEDIFF_BIG(hour, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Hours,
+        DATEDIFF_BIG(minute, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Minutes,
+        DATEDIFF_BIG(second, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Seconds,
+        DATEDIFF_BIG(millisecond, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Millisecond,
+        DATEDIFF_BIG(microsecond, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Microsecond,
+        DATEDIFF_BIG(nanosecond, CAST('12:10:30.123' AS TIME), CAST('2079-06-06 23:58:59' AS SMALLDATETIME)) AS Nanosecond
+END
+GO
+
+CREATE PROCEDURE datediff_big_vu_prepare_p11
 AS
 BEGIN
     SELECT 
@@ -303,10 +353,21 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE datediff_big_vu_prepare_p11
+CREATE PROCEDURE datediff_big_vu_prepare_p12
 AS
 BEGIN
     SELECT 
         DATEDIFF_BIG(NULL, NULL, NULL) AS res1
+END
+GO
+
+CREATE PROCEDURE datediff_big_vu_prepare_p13
+AS
+BEGIN
+    SELECT
+        num_days_in_date(CAST(0 AS BIGINT), CAST(0 AS BIGINT), CAST(0 AS BIGINT)) AS res1,
+        num_days_in_date(CAST(1 AS BIGINT), CAST(1 AS BIGINT), CAST(1 AS BIGINT)) AS res2,
+        num_days_in_date(CAST(8 AS BIGINT), CAST(5 AS BIGINT), CAST(2023 AS BIGINT)) AS res3,
+        num_days_in_date(CAST(31 AS BIGINT), CAST(12 AS BIGINT), CAST(9999 AS BIGINT)) AS res4
 END
 GO

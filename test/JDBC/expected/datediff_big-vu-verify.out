@@ -70,8 +70,24 @@ GO
 SELECT * FROM datediff_big_vu_prepare_v10
 GO
 ~~START~~
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+179#!#717#!#2153#!#65535#!#65535#!#9362#!#1572851#!#94371108#!#5662266480#!#5662266480000#!#5662266480000000#!#5662266480000000000
+~~END~~
+
+
+SELECT * FROM datediff_big_vu_prepare_v11
+GO
+~~START~~
 bigint#!#bigint#!#bigint
 <NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT * FROM datediff_big_vu_prepare_v13
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint
+0#!#366#!#739013#!#3652424
 ~~END~~
 
 
@@ -147,14 +163,30 @@ GO
 EXEC datediff_big_vu_prepare_p10
 GO
 ~~START~~
-bigint#!#bigint#!#bigint
-<NULL>#!#<NULL>#!#<NULL>
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+179#!#717#!#2153#!#65535#!#65535#!#9362#!#1572851#!#94371108#!#5662266480#!#5662266480000#!#5662266480000000#!#5662266480000000000
 ~~END~~
 
 
 EXEC datediff_big_vu_prepare_p11
 GO
+~~START~~
+bigint#!#bigint#!#bigint
+<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+EXEC datediff_big_vu_prepare_p12
+GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error at or near "NULL")~~
+
+
+EXEC datediff_big_vu_prepare_p13
+GO
+~~START~~
+bigint#!#bigint#!#bigint#!#bigint
+0#!#366#!#739013#!#3652424
+~~END~~
 

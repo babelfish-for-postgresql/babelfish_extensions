@@ -28,6 +28,12 @@ GO
 SELECT * FROM datediff_big_vu_prepare_v10
 GO
 
+SELECT * FROM datediff_big_vu_prepare_v11
+GO
+
+SELECT * FROM datediff_big_vu_prepare_v13
+GO
+
 EXEC datediff_big_vu_prepare_p1
 GO
 
@@ -59,4 +65,10 @@ EXEC datediff_big_vu_prepare_p10
 GO
 
 EXEC datediff_big_vu_prepare_p11
+GO
+
+EXEC datediff_big_vu_prepare_p12
+GO
+
+EXEC datediff_big_vu_prepare_p13
 GO

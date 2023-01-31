@@ -10317,4 +10317,4 @@ BEGIN
 	return n1;
 END
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;

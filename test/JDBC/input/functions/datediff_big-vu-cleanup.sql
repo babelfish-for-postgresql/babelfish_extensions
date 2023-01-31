@@ -28,6 +28,12 @@ GO
 DROP VIEW datediff_big_vu_prepare_v10;
 GO
 
+DROP VIEW datediff_big_vu_prepare_v11;
+GO
+
+DROP VIEW datediff_big_vu_prepare_v13;
+GO
+
 DROP PROCEDURE datediff_big_vu_prepare_p1;
 GO
 
@@ -59,4 +65,10 @@ DROP PROCEDURE datediff_big_vu_prepare_p10;
 GO
 
 DROP PROCEDURE datediff_big_vu_prepare_p11;
+GO
+
+DROP PROCEDURE datediff_big_vu_prepare_p12;
+GO
+
+DROP PROCEDURE datediff_big_vu_prepare_p13;
 GO
