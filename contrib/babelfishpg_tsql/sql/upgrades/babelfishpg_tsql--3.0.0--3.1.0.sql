@@ -1344,6 +1344,22 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
+AS $$
+BEGIN
+    SELECT 
+		name AS "SRV_NAME", 
+		CAST(provider AS sys.nvarchar(128)) AS "SRV_PROVIDERNAME", 
+		CAST(product AS sys.nvarchar(128)) AS "SRV_PRODUCT", 
+		data_source AS "SRV_DATASOURCE",
+		provider_string AS "SRV_PROVIDERSTRING",
+		location AS "SRV_LOCATION",
+		catalog AS "SRV_CAT" 
+	FROM sys.servers
+	ORDER BY SRV_NAME
+END;
+$$ LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
 
 ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN IF NOT EXISTS orig_loginname SYS.NVARCHAR(128);
 
