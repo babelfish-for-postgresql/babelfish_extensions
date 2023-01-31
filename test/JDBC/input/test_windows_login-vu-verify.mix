@@ -1,12 +1,12 @@
 -- psql
 select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext
 where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdbenglish@AD','userpassword','duplicate@BABEL','duplicatedefaultdb@BABEL',
-'كلب@BABEL','өглөө@BABEL','ελπίδα@BABEL','爱@BABEL');
+'كلب@BABEL','өглөө@BABEL','ελπίδα@BABEL','爱@BABEL') order by rolname;
 GO
 
 -- tsql
 select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext
-where orig_loginname in ('PassWordUser','ad\Aduser','ad\AduserdbEnglish','usErpassWord','babel\duplicate','babel\duplicatedefaultdb');
+where orig_loginname in ('PassWordUser','ad\Aduser','ad\AduserdbEnglish','usErpassWord','babel\duplicate','babel\duplicatedefaultdb') order by rolname;
 GO
 
 -- tsql
