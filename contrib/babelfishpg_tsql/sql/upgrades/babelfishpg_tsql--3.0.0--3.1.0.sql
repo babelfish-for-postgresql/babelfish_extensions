@@ -1359,7 +1359,7 @@ BEGIN
 			IF @server_id IS NULL
 				BEGIN
 					RAISERROR('The server ''%s'' does not exist', 16, 1, @rmtsrvname);
-        			RETURN 0;
+        				RETURN 0;
 				END
 		END
 
