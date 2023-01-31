@@ -1539,7 +1539,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_resetstatus",
 	"sp_sequence_get_range",
 	"sp_serveroption",
-	"sp_set_session_context",
 	"sp_setnetname",
 	"sp_settriggerorder",
 	"sp_spaceused",
