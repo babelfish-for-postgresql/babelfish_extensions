@@ -380,7 +380,7 @@ test_windows_login
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_SCHEMATA
-isc-schemata
+isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
 bbf_view_def
