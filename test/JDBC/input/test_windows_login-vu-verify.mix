@@ -28,27 +28,27 @@ select count(*) from sys.server_principals where name = 'BABEL\duplicatedefaultd
 GO
 
 -- psql
-select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+select count(*) from pg_roles where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
 GO
-select count(*) from pg_authid where rolname = 'passworduser';
+select count(*) from pg_roles where rolname = 'passworduser';
 GO
-select count(*) from pg_authid where rolname = 'aduser@AD';
+select count(*) from pg_roles where rolname = 'aduser@AD';
 GO
-select count(*) from pg_authid where rolname = 'aduserdb@AD';
+select count(*) from pg_roles where rolname = 'aduserdb@AD';
 GO
-select count(*) from pg_authid where rolname = 'aduserdbenglish@AD';
+select count(*) from pg_roles where rolname = 'aduserdbenglish@AD';
 GO
-select count(*) from pg_authid where rolname = 'userpassword';
+select count(*) from pg_roles where rolname = 'userpassword';
 GO
-select count(*) from pg_authid where rolname = 'duplicate@BABEL';
+select count(*) from pg_roles where rolname = 'duplicate@BABEL';
 GO
-select count(*) from pg_authid where rolname = 'duplicatedefaultdb@BABEL';
+select count(*) from pg_roles where rolname = 'duplicatedefaultdb@BABEL';
 GO
-select count(*) from pg_authid where rolname = 'كلب@BABEL';
+select count(*) from pg_roles where rolname = 'كلب@BABEL';
 GO
-select count(*) from pg_authid where rolname = 'өглөө@BABEL';
+select count(*) from pg_roles where rolname = 'өглөө@BABEL';
 GO
-select count(*) from pg_authid where rolname = 'ελπίδα@BABEL';
+select count(*) from pg_roles where rolname = 'ελπίδα@BABEL';
 GO
-select count(*) from pg_authid where rolname = '爱@BABEL';
+select count(*) from pg_roles where rolname = '爱@BABEL';
 GO
