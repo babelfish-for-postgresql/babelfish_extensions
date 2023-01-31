@@ -286,13 +286,23 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
-CAST(Base.rolname AS sys.SYSNAME) AS name,
+CAST(
+  CASE
+    WHEN Ext.orig_loginname IS NOT NULL THEN Ext.orig_loginname
+    ELSE cast(Base.rolname as sys.sysname)
+  END
+  AS sys.SYSNAME) AS name,
 CAST(Base.oid As INT) AS principal_id,
 CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
 CAST(Ext.type AS CHAR(1)) as type,
-CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
-WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
-ELSE NULL END AS NVARCHAR(60)) AS type_desc,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL 
+  END
+  AS NVARCHAR(60)) AS type_desc,
 CAST(Ext.is_disabled AS INT) AS is_disabled,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,

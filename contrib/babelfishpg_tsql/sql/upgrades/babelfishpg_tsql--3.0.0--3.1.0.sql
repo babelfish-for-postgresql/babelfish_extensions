@@ -1719,6 +1719,35 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_name'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(
+  CASE
+    WHEN Ext.orig_loginname IS NOT NULL THEN Ext.orig_loginname
+    ELSE cast(Base.rolname as sys.sysname)
+  END
+  AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL 
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

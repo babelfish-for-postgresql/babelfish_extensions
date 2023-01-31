@@ -49,21 +49,21 @@ int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'aduser@AD';
+select count(*) from sys.server_principals where name = 'AD\aduser';
 GO
 ~~START~~
 int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'aduserdb@AD';
+select count(*) from sys.server_principals where name = 'AD\aduserdb';
 GO
 ~~START~~
 int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'aduserdbenglish@AD';
+select count(*) from sys.server_principals where name = 'AD\aduserdbenglish';
 GO
 ~~START~~
 int
@@ -77,14 +77,14 @@ int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'duplicate@BABEL';
+select count(*) from sys.server_principals where name = 'BABEL\duplicate';
 GO
 ~~START~~
 int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'duplicatedefaultdb@BABEL';
+select count(*) from sys.server_principals where name = 'BABEL\duplicatedefaultdb';
 GO
 ~~START~~
 int
