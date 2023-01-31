@@ -14,13 +14,24 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
+-- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
 EXEC sp_helplinkedsrvlogin
 GO
 
+-- Try to call sp_helplinkedsrvlogin with correct server name but invalid login name. Should return zero rows
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with correct server name but login name = NULL.  should return all mapppings of the given server
 EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server'
 GO
 
-EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
+-- Try to call sp_helplinkedsrvlogin with server name = NULL and invalid login name. Should return zero rows
+EXEC sp_helplinkedsrvlogin @locallogin = 'testlogin'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with invalid server name. Should throw error
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'invalid_srv'
 GO
 
 EXEC sp_linkedservers

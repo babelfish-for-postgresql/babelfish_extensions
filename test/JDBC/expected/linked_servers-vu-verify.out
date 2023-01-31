@@ -55,6 +55,7 @@ mssql_server3#!#<NULL>
 ~~END~~
 
 
+-- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
 EXEC sp_helplinkedsrvlogin
 GO
 ~~START~~
@@ -65,6 +66,15 @@ mssql_server3#!#<NULL>#!#0#!#<NULL>
 ~~END~~
 
 
+-- Try to call sp_helplinkedsrvlogin with correct server name but invalid login name. Should return zero rows
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#varchar
+~~END~~
+
+
+-- Try to call sp_helplinkedsrvlogin with correct server name but login name = NULL.  should return all mapppings of the given server
 EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server'
 GO
 ~~START~~
@@ -73,11 +83,20 @@ mssql_server#!#<NULL>#!#0#!#jdbc_user
 ~~END~~
 
 
-EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
+-- Try to call sp_helplinkedsrvlogin with server name = NULL and invalid login name. Should return zero rows
+EXEC sp_helplinkedsrvlogin @locallogin = 'testlogin'
 GO
 ~~START~~
 varchar#!#varchar#!#smallint#!#varchar
 ~~END~~
+
+
+-- Try to call sp_helplinkedsrvlogin with invalid server name. Should throw error
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'invalid_srv'
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: The server invalid_srv does not exist)~~
 
 
 EXEC sp_linkedservers

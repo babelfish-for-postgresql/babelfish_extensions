@@ -1358,13 +1358,14 @@ BEGIN
 
 			IF @server_id IS NULL
 				BEGIN
-					RAISERROR("The server '%s' does not exist", 16, 1, @rmtsrvname);
+					RAISERROR('The server %s does not exist', 16, 1, @rmtsrvname);
+                    RETURN 0;
 				END
 		END
 
-	IF @local_login IS NOT NULL
+	IF @locallogin IS NOT NULL
 		BEGIN
-			SELECT @local_principal_id = usesysid FROM pg_user WHERE usename = @local_login;
+			SELECT @local_principal_id = usesysid FROM pg_user WHERE usename = @locallogin;
 		END
 	
 	SELECT
@@ -1375,7 +1376,7 @@ BEGIN
 	FROM sys.linked_logins AS l 
 	LEFT JOIN sys.servers AS s ON l.server_id = s.server_id
 	LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid
-	WHERE (@server_id is NULL or @server_id = s.server_id) AND (@local_principal_id is NULL or @local_principal_id = l.local_principal_id);
+	WHERE (@server_id is NULL or @server_id = s.server_id) AND ((@local_principal_id is NULL AND @locallogin IS NULL) or @local_principal_id = l.local_principal_id);
 END;
 $$ LANGUAGE pltsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_helplinkedsrvlogin TO PUBLIC;
