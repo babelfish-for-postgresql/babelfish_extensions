@@ -1139,7 +1139,7 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * rollback will cleanup portal data which can lead to
 		 * problems when control returns back to portal level
 		 */
-		if (!pltsql_disable_internal_savepoint && !is_batch_command(stmt) && (IsTransactionBlockActive() || ro_func))
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt))
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);
@@ -1184,6 +1184,13 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		ErrorData *edata;
 		int last_error;
 		bool error_mapped;
+
+		if (ro_func)
+		{
+			MemoryContextSwitchTo(cur_ctxt);
+			PG_RE_THROW();
+		}
+
 		support_tsql_trans = pltsql_support_tsql_transactions();
 
 		/* Close trigger nesting in engine */
