@@ -573,7 +573,6 @@ bool isNVarCharType(char* typenameStr)
     return false;
 }
 
-// TODO: FIX FOR PG15
 int getElemTypMod(TypeName *t)
 {
     List *tmods = (List*) t->typmods;
