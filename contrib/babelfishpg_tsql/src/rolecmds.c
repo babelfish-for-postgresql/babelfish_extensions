@@ -786,7 +786,7 @@ get_original_login_name(char *login)
 	/* original login name should not be NULL. */
 	Assert(!isnull);
 
-	return DatumGetCString(datum);
+	return TextDatumGetCString(datum);
 }
 
 
