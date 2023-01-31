@@ -1793,6 +1793,20 @@ LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME();
 
+CREATE OR REPLACE FUNCTION sys.original_login()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value text;
+begin
+  RETURN (select orig_loginname from sys.babelfish_authid_login_ext where rolname = session_user)::sys.sysname;
+EXCEPTION 
+  WHEN others THEN
+    RETURN NULL;
+END;
+$$;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
