@@ -14,17 +14,17 @@ select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaa
 GO
 select count(*) from sys.server_principals where name = 'passworduser';
 GO
-select count(*) from sys.server_principals where name = 'aduser@AD';
+select count(*) from sys.server_principals where name = 'AD\aduser';
 GO
-select count(*) from sys.server_principals where name = 'aduserdb@AD';
+select count(*) from sys.server_principals where name = 'AD\aduserdb';
 GO
-select count(*) from sys.server_principals where name = 'aduserdbenglish@AD';
+select count(*) from sys.server_principals where name = 'AD\aduserdbenglish';
 GO
 select count(*) from sys.server_principals where name = 'userpassword';
 GO
-select count(*) from sys.server_principals where name = 'duplicate@BABEL';
+select count(*) from sys.server_principals where name = 'BABEL\duplicate';
 GO
-select count(*) from sys.server_principals where name = 'duplicatedefaultdb@BABEL';
+select count(*) from sys.server_principals where name = 'BABEL\duplicatedefaultdb';
 GO
 
 -- psql
