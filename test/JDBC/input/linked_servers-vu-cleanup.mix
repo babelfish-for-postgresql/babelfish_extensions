@@ -11,5 +11,16 @@ DROP VIEW sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
 -- psql
-DROP EXTENSION tds_fdw CASCADE;
+-- Drop extension only if not user mapping exists for bbf_server
+-- Needed so that same test can be reused in upgrade in conjunction
+-- with tests for OPENQUERY
+DO
+$$
+BEGIN
+IF NOT EXISTS (SELECT * FROM pg_user_mappings WHERE srvname = 'bbf_server') THEN
+        SET client_min_messages = 'error';
+        DROP EXTENSION tds_fdw CASCADE;
+END IF;
+END
+$$
 GO
