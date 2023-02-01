@@ -757,6 +757,16 @@ Index Scan using test_identity_index_pkey on test_identity_index  (cost=0.16..8.
 ~~END~~
 
 
+SELECT id, mycol FROM dbo.test_identity_index WHERE id = @@identity;
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE id = @@identity
+Index Scan using test_identity_index_pkey on test_identity_index  (cost=0.16..8.18 rows=1 width=8)
+  Index Cond: (id = babelfish_get_last_identity())
+~~END~~
+
+
 SELECT id, mycol FROM dbo.test_identity_index WHERE dbo.test_identity_index.id = scope_identity();
 go
 ~~START~~
@@ -786,6 +796,18 @@ text
 Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE id != scope_identity()
 Seq Scan on test_identity_index  (cost=0.00..43.90 rows=2259 width=8)
   Filter: (id <> babelfish_get_last_identity())
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE @@identity < id;
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE @@identity < id
+Bitmap Heap Scan on test_identity_index  (cost=9.99..31.29 rows=753 width=8)
+  Filter: (babelfish_get_last_identity() < id)
+  ->  Bitmap Index Scan on test_identity_index_pkey  (cost=0.00..9.80 rows=753 width=0)
+        Index Cond: (id > babelfish_get_last_identity())
 ~~END~~
 
 

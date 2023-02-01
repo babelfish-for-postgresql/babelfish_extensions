@@ -373,6 +373,9 @@ go
 SELECT id, mycol FROM dbo.test_identity_index WHERE scope_identity() = id;
 go
 
+SELECT id, mycol FROM dbo.test_identity_index WHERE id = @@identity;
+go
+
 SELECT id, mycol FROM dbo.test_identity_index WHERE dbo.test_identity_index.id = scope_identity();
 go
 
@@ -380,6 +383,9 @@ SELECT id, mycol FROM dbo.test_identity_index WHERE id > scope_identity();
 go
 
 SELECT id, mycol FROM dbo.test_identity_index WHERE id != scope_identity();
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE @@identity < id;
 go
 
 SELECT id, mycol FROM dbo.test_identity_index WHERE mycol = 10 AND id = scope_identity();
