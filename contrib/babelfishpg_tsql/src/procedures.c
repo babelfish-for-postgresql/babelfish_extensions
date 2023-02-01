@@ -2073,8 +2073,6 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	int rc;
 	int i;
 	char *db_name = get_cur_db_name();
-	char *logical_schema_name = NULL;
-	char *physical_schema_name = NULL;
 	char *function_signature = NULL;
 	char *query = NULL;
 	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
@@ -2130,6 +2128,8 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		List *function_name_list;
 		FuncCandidateList candidates = NULL;
 		char *full_function_name = NULL;
+		char *logical_schema_name = NULL;
+		char *physical_schema_name = NULL;
 		char **splited_object_name;
 
 		/* get physical schema name */
@@ -2182,17 +2182,18 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 			if ((guest_role_name && strcmp(user, guest_role_name) == 0))
 			{	
 				physical_schema_name = pstrdup(get_dbo_schema_name(db_name));
-				logical_schema_name = (char *)get_logical_schema_name(physical_schema_name, true);
 			}
 			else
 			{
 				logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 				physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
+				pfree(logical_schema_name);
 			}
 		}
 		else
 		{
 			physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
+			pfree(logical_schema_name);
 		}
 
 		/* get function id from function name*/
@@ -2224,6 +2225,7 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		list_free(function_name_list);
 		pfree(candidates);
 		pfree(full_function_name);
+		pfree(physical_schema_name);
 	}
 	
 	/*
@@ -2251,13 +2253,15 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		else
 		{
 			query = psprintf(
-					"SELECT CAST('%s' as sys.nvarchar) as SchemaName, CAST('%s' as sys.varchar) as FunctionName, "
+					"SELECT t3.orig_name as SchemaName, CAST('%s' as sys.varchar) as FunctionName, "
 					"CASE "
 						"WHEN provolatile = 'v' THEN 'volatile' "
 						"WHEN provolatile = 's' THEN 'stable' "
 						"ELSE 'immutable' "
-					"END AS Volatility from pg_proc "
-					"where oid = %u", logical_schema_name, function_name, function_id
+					"END AS Volatility from pg_proc t1 "
+					"JOIN pg_namespace t2 ON t1.pronamespace = t2.oid "
+					"JOIN sys.babelfish_namespace_ext t3 ON t3.nspname = t2.nspname "
+					"where t1.oid = %u", function_name, function_id
 				);
 		}
 
@@ -2340,8 +2344,6 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	if(function_name)
 	{
 		pfree(function_name);
-		pfree(logical_schema_name);
-		pfree(physical_schema_name);
 		pfree(function_signature);
 	}
 	if(volatility)
