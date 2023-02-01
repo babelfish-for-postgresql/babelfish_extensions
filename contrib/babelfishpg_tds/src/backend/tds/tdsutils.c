@@ -48,7 +48,7 @@ void tdsutils_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool 
 ProcessUtility_hook_type next_ProcessUtility = NULL;
 static void call_next_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
 static void check_babelfish_droprole_restrictions(char *role);
-static void check_babelfish_alterrole_restictions(char *role, bool allow_alter_operation);
+static void check_babelfish_alterrole_restictions(char *role, bool allow_alter_role_operation);
 static void check_babelfish_renamedb_restrictions(Oid target_db_id);
 static void check_babelfish_dropdb_restrictions(Oid target_db_id);
 static bool is_babelfish_ownership_enabled(ArrayType *array);
@@ -689,15 +689,15 @@ void tdsutils_ProcessUtility(PlannedStmt *pstmt,
 	 */
 	switch (nodeTag(parsetree))
 	{
-		/* Case thar deal with Rename Stmt */
+		/* Case that deal with Rename Stmt */
 		case T_RenameStmt:
 			handle_result = handle_rename((RenameStmt *)parsetree);
 			break;
-		/* Case thar deal with ALTER ROLE WITH Stmt */
+		/* Case that deal with ALTER ROLE WITH Stmt */
 		case T_AlterRoleStmt:
 			handle_result = handle_alter_role((AlterRoleStmt*)parsetree);
 			break;
-		/* Case thar deal with ALTER ROLE SET Stmt */
+		/* Case that deal with ALTER ROLE SET Stmt */
 		case T_AlterRoleSetStmt:
 			handle_result = handle_alter_role_set((AlterRoleSetStmt*)parsetree);
 			break;
@@ -994,11 +994,11 @@ handle_rename(RenameStmt* rename_stmt)
 /*
  * check_babelfish_alterrole_restictions
  *
- * Implements following one additional limitation to drop role stmt
+ * Implements following one additional limitation to alter role stmt
  * block renaming an active babelfish role/user
  */
 static void
-check_babelfish_alterrole_restictions(char *role, bool allow_alter_operation)
+check_babelfish_alterrole_restictions(char *role, bool allow_alter_role_operation)
 {
 	Oid bbf_master_guest_oid;
 	Oid bbf_tempdb_guest_oid;
@@ -1015,7 +1015,7 @@ check_babelfish_alterrole_restictions(char *role, bool allow_alter_operation)
 			&& OidIsValid(bbf_msdb_guest_oid)
 			&& is_member_of_role(objectId, bbf_master_guest_oid)
 			&& is_member_of_role(objectId, bbf_tempdb_guest_oid)
-			&& is_member_of_role(objectId, bbf_msdb_guest_oid) &&!allow_alter_operation) || is_babelfish_role(role))
+			&& is_member_of_role(objectId, bbf_msdb_guest_oid) &&!allow_alter_role_operation) || is_babelfish_role(role))
 	{
 		pfree(role);	/* avoid mem leak */
 		ereport(ERROR,
@@ -1201,7 +1201,7 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 	List *options = alter_role_stmt->options;
 	ListCell *opt;
 	char *name = get_role_name(alter_role_stmt->role);
-	bool allow_alter_operation = enable_alter_babelfish_role;
+	bool allow_alter_role_operation = enable_alter_babelfish_role;
 
 	/*
 	 * If the role does not exist, just let the normal Postgres checks happen.
@@ -1215,10 +1215,10 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 	/*
 	 * If the enable_alter_babelfish_role guc variable is set to true and tried to execute
 	 * ALTER ROLE ... WITH statement(other than password change, connection limit, valid until),
-	 * then change the value of allow_alter_operation variable to false as we disallow
+	 * then change the value of allow_alter_role_operation variable to false as we disallow
 	 * alter operation[WITH statement](other than password change, connection limit, valid until) from PG end.
 	 */
-	if(allow_alter_operation)
+	if(allow_alter_role_operation)
 	{
 		/*
 		 * There are only few operations which need to be allowed for ALTER ROLE <role> WITH namely
@@ -1234,15 +1234,15 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 			if (strcmp(defel->defname, "password") == 0 ||
 				strcmp(defel->defname, "connectionlimit") == 0 ||
 				strcmp(defel->defname, "validUntil") == 0)
-					allow_alter_operation = true;
+					allow_alter_role_operation = true;
 			else
 			{
-				allow_alter_operation = false;
+				allow_alter_role_operation = false;
 				break;
 			}
 		}
 	}
-	check_babelfish_alterrole_restictions(name, allow_alter_operation);
+	check_babelfish_alterrole_restictions(name, allow_alter_role_operation);
 
 	/* We don't need "name" anymore */
 	pfree(name);
