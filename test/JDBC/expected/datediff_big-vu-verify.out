@@ -57,7 +57,7 @@ SELECT * FROM datediff_big_vu_prepare_v8
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: unit "year" not supported for type time without time zone)~~
+~~ERROR (Message: "time" units "year" not recognized)~~
 
 
 SELECT * FROM datediff_big_vu_prepare_v9
@@ -150,14 +150,14 @@ EXEC datediff_big_vu_prepare_p8
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: unit "year" not supported for type time without time zone)~~
+~~ERROR (Message: "time" units "year" not recognized)~~
 
 
 EXEC datediff_big_vu_prepare_p9
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: unit "year" not supported for type time without time zone)~~
+~~ERROR (Message: "time" units "year" not recognized)~~
 
 
 EXEC datediff_big_vu_prepare_p10
