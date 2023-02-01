@@ -1,106 +1,89 @@
 -- psql
 Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
-    Server SQLState: 22023)~~
-
 
 Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter a valid minor version number between 0 and 255
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.-1.3000.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.4.66000.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter a valid micro version number between 0 and 65535
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.4.-1.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "e.4.3000.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "11.4.3000";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = ".4.3000.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "11..3000.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter a valid minor version number between 0 and 255
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "11.4..6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "11.4.3000.";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = NULL;
@@ -114,10 +97,9 @@ GO
 
 Alter system set babelfishpg_tds.product_version = " ";
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
-    Server SQLState: 22023)~~
+~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "test";
@@ -128,13 +110,7 @@ GO
 
 
 ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
-SELECT pg_reload_conf();
 GO
-~~START~~
-bool
-t
-~~END~~
-
 
 -- Test if PG will lose connection when setting GUC more than two times
 Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
@@ -324,4 +300,3 @@ GO
 int
 2
 ~~END~~
-
