@@ -393,3 +393,4 @@ test_windows_alter_login
 sys-systypes
 openjson
 BABEL-3702
+openquery_upgrd
