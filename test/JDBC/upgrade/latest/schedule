@@ -393,3 +393,4 @@ test_windows_alter_login
 sys-systypes
 Test-sp_rename
 Test-sp_rename-dep
+openquery_upgrd
