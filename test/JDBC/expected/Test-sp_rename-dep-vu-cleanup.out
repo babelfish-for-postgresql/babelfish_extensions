@@ -8,6 +8,9 @@ GO
 DROP PROCEDURE sp_rename_dep_proc2
 GO
 
+DROP PROCEDURE sp_rename_dep_proc3
+GO
+
 DROP FUNCTION sp_rename_dep_dummy_func1_new
 GO
 
