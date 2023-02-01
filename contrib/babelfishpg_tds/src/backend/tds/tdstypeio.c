@@ -3764,3 +3764,105 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	return rc;
 }
+
+Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale)
+{	
+	switch (datatype)
+	{
+		case TDS_TYPE_DATETIMEN:
+			return TdsTypeDatetimeToDatum(buf);
+		case TDS_TYPE_SMALLDATETIME:
+			return TdsTypeSmallDatetimeToDatum(buf);
+		case TDS_TYPE_MONEYN:
+			return TdsTypeMoneyToDatum(buf);
+		case TDS_TYPE_SMALLMONEY:
+			return TdsTypeSmallMoneyToDatum(buf);
+		case TDS_TYPE_NUMERICN:
+			return TdsTypeNumericToDatum(buf, scale);
+		case TDS_TYPE_UNIQUEIDENTIFIER:
+			return TdsTypeUIDToDatum(buf);
+		default:
+			return (Datum) 0;
+	}
+}
+
+Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int optional_attr)
+{
+	switch (datatype)
+	{
+		case TDS_TYPE_DATE:
+			{
+				DateADT result;
+				uint64	val;
+
+				/* 
+				 * By default we calculate date from 01-01-0001
+				 * but buf has number of days from 01-01-1900. So adding
+				 * number of days between 01-01-1900 and 01-01-0001
+				 */
+				result = (DateADT)date + (DateADT)TdsGetDayDifferenceHelper(1, 1, 1900, true);
+				TdsCheckDateValidity(result);
+
+				TdsTimeGetDatumFromDays(result, &val);
+
+				PG_RETURN_DATEADT(val);
+			}
+		case TDS_TYPE_TIME:
+			{
+				/* optional attribute here is scale */
+				while (optional_attr--)
+					time /= 10;
+
+				time *= 1000000;
+				if (time < INT64CONST(0) || time > USECS_PER_DAY)
+					ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					errmsg("time out of range")));
+
+				PG_RETURN_TIMEADT((TimeADT)time);
+			}
+		case TDS_TYPE_DATETIME2:
+			{	
+				Timestamp	timestamp;
+
+				/* 
+				 * By default we calculate date from 01-01-0001
+				 * but buf has number of days from 01-01-1900. So adding
+				 * number of days between 01-01-1900 and 01-01-0001
+				 */
+				date += TdsGetDayDifferenceHelper(1, 1, 1900, true);
+
+				/* optional attribute here is scale */
+				TdsGetTimestampFromDayTime(date, time, 0, &timestamp, optional_attr);
+
+				PG_RETURN_TIMESTAMP((Timestamp)timestamp);
+			}
+		case TDS_TYPE_DATETIMEOFFSET:
+			{	
+				tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
+				TimestampTz	timestamp;
+
+				/* 
+				 * By default we calculate date from 01-01-0001
+				 * but buf has number of days from 01-01-1900. So adding
+				 * number of days between 01-01-1900 and 01-01-0001
+				 */
+				date += TdsGetDayDifferenceHelper(1, 1, 1900, true);
+
+				/* optional attribute here is time offset */
+				optional_attr *= -1;
+				TdsGetTimestampFromDayTime(date, time, (int)optional_attr, &timestamp, 7);
+
+				timestamp -= (optional_attr * SECS_PER_MINUTE * USECS_PER_SEC);
+				/* since reverse is done in tm2timestamp() */
+				timestamp -= (optional_attr * USECS_PER_SEC);
+
+				tdt->tsql_ts = timestamp;
+				tdt->tsql_tz = optional_attr;
+
+				PG_RETURN_DATETIMEOFFSET(tdt);
+			}
+		default:
+			return (Datum) 0;
+	}
+}

@@ -1,0 +1,10 @@
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT 123')
+GO
+~~START~~
+int
+123
+~~END~~
+
+
+-- SELECT * FROM openquery_vu_prepare__openquery_view
+GO

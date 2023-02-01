@@ -1,0 +1,14 @@
+EXEC sp_dropserver 'bbf_server', 'droplogins'
+GO
+
+-- psql
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: drop cascades to 3 other objects  Server SQLState: 00000)~~
+
+
+-- tsql
+-- DROP VIEW openquery_vu_prepare__openquery_view
+GO
