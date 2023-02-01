@@ -25,9 +25,6 @@ CREATE FUNCTION databasepropertyex (TEXT, TEXT)
 CREATE FUNCTION connectionproperty (TEXT)
 		RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'connectionproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION collationproperty (TEXT, TEXT)
-        RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'collationproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE FUNCTION sessionproperty (TEXT)
 	   RETURNS  sys.SQL_VARIANT AS 'babelfishpg_tsql', 'sessionproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -1883,74 +1880,65 @@ GRANT EXECUTE on PROCEDURE sys.sp_special_columns_100 TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
--- primary key info
-CAST(t2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
-CAST((select orig_name from sys.babelfish_namespace_ext where dbid = sys.db_id() and nspname COLLATE sys.database_default = ref.table_schema) AS sys.sysname) AS PKTABLE_OWNER,
-CAST(ref.table_name AS sys.sysname) AS PKTABLE_NAME,
-CAST(coalesce(split_part(pkname_table.attoptions[1] COLLATE "C", '=', 2), ref.column_name) AS sys.sysname) AS PKCOLUMN_NAME,
-
--- foreign key info
-CAST(t2.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
-CAST((select orig_name from sys.babelfish_namespace_ext where dbid = sys.db_id() and nspname COLLATE sys.database_default = fk.table_schema) AS sys.sysname) AS FKTABLE_OWNER,
-CAST(fk.table_name AS sys.sysname) AS FKTABLE_NAME,
-CAST(coalesce(split_part(fkname_table.attoptions[1] COLLATE "C", '=', 2), fk.column_name) AS sys.sysname) AS FKCOLUMN_NAME,
-
-CAST(seq AS smallint) AS KEY_SEQ,
+CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
+CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
+CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
+CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
+CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
+CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
+CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
+CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
+CAST(nr AS smallint) AS KEY_SEQ,
 CASE
-    WHEN map.update_rule = 'NO ACTION' THEN CAST(1 AS smallint)
-    WHEN map.update_rule = 'SET NULL' THEN CAST(2 AS smallint)
-    WHEN map.update_rule = 'SET DEFAULT' THEN CAST(3 AS smallint)
-    ELSE CAST(0 AS smallint)
+   WHEN const1.confupdtype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confupdtype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confupdtype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confupdtype = 'd' THEN CAST(3 AS smallint) -- set default
 END AS UPDATE_RULE,
 
 CASE
-    WHEN map.delete_rule = 'NO ACTION' THEN CAST(1 AS smallint)
-    WHEN map.delete_rule = 'SET NULL' THEN CAST(2 AS smallint)
-    WHEN map.delete_rule = 'SET DEFAULT' THEN CAST(3 AS smallint)
-    ELSE CAST(0 AS smallint)
+   WHEN const1.confdeltype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confdeltype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confdeltype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
+   ELSE CAST(0 AS smallint)
 END AS DELETE_RULE,
-CAST(fk.constraint_name AS sys.sysname) AS FK_NAME,
-CAST(ref.constraint_name AS sys.sysname) AS PK_NAME
-        
-FROM information_schema.referential_constraints AS map
+CAST(const1.conname AS sys.sysname) AS FK_NAME,
+CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CASE
+   WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
+   ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
+              ELSE CAST(5 as smallint) -- deferred by default
+         END)
+END AS DEFERRABILITY
 
--- join unique constraints (e.g. PKs constraints) to ref columns info
-INNER JOIN information_schema.key_column_usage AS ref
-	JOIN pg_catalog.pg_class p1 -- Need to join this in order to get oid for original bbf name of pkey
-    JOIN sys.pg_namespace_ext p2 ON p1.relnamespace = p2.oid
-    JOIN information_schema.columns p4 ON p1.relname = p4.table_name AND p1.relnamespace::regnamespace::text = p4.table_schema
-    JOIN pg_constraint p5 ON p1.oid = p5.conrelid
-    ON (p1.relname=ref.table_name AND p4.column_name=ref.column_name AND ref.table_schema = p2.nspname AND ref.table_schema = p4.table_schema)
-    
-    ON ref.constraint_catalog = map.unique_constraint_catalog
-    AND ref.constraint_schema = map.unique_constraint_schema
-    AND ref.constraint_name = map.unique_constraint_name
-
--- join fk columns to the correct ref columns using ordinal positions
-INNER JOIN information_schema.key_column_usage AS fk
-    ON  fk.constraint_catalog = map.constraint_catalog
-    AND fk.constraint_schema = map.constraint_schema
-    AND fk.constraint_name = map.constraint_name
-    AND fk.position_in_unique_constraint = ref.ordinal_position
-
-INNER JOIN pg_catalog.pg_class t1 
-    JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-    JOIN information_schema.columns t4 ON t1.relname = t4.table_name AND t1.relnamespace::regnamespace::text = t4.table_schema
-    JOIN pg_constraint t5 ON t1.oid = t5.conrelid
-    ON (t1.relname=fk.table_name AND t4.column_name=fk.column_name AND fk.table_schema = t2.nspname AND fk.table_schema = t4.table_schema)
-    
--- get original bbf name for foreign key
-JOIN pg_catalog.pg_attribute fkname_table
-	ON (t1.oid = fkname_table.attrelid) AND (fk.column_name = fkname_table.attname)
-
--- get original bbf name for primary key
-JOIN pg_catalog.pg_attribute pkname_table
-	ON (p1.oid = pkname_table.attrelid) AND (ref.column_name = pkname_table.attname)
-	
-	, generate_series(1,16) seq -- BBF has max 16 columns per primary key
-WHERE t5.contype = 'f'
-AND CAST(t4.dtd_identifier AS smallint) = ANY (t5.conkey)
-AND CAST(t4.dtd_identifier AS smallint) = t5.conkey[seq];
+FROM (pg_constraint const1
+-- join with nsp_Ext to get constraints in current namespace
+JOIN sys.pg_namespace_ext nsp_ext ON nsp_ext.oid = const1.connamespace
+--get the table names corresponding to foreign keys
+JOIN pg_class c ON const1.conrelid = c.oid AND const1.contype ='f'
+-- join wiht bbf_nsp to get all constraint related to tsql endpoint and the owner of foreign key
+JOIN sys.babelfish_namespace_ext bbf_nsp ON bbf_nsp.nspname = nsp_ext.nspname AND bbf_nsp.dbid = sys.db_id()
+-- lateral join to use the conkey and confkey to join with pg_attribute to get column names
+CROSS JOIN LATERAL unnest(const1.conkey,const1.confkey) WITH ORDINALITY AS ak(j, k, nr)
+            LEFT JOIN pg_attribute a
+                       ON (a.attrelid = const1.conrelid AND a.attnum = ak.j)
+            LEFT JOIN pg_attribute a2
+                       ON (a2.attrelid = const1.confrelid AND a2.attnum = ak.k)
+)
+-- get the index that foreign key depends on
+LEFT JOIN pg_depend d1 ON d1.objid = const1.oid AND d1.classid = 'pg_constraint'::regclass
+           AND d1.refclassid = 'pg_class'::regclass AND d1.refobjsubid = 0
+-- get the pkey/ukey constraint for this index
+LEFT JOIN pg_depend d2 ON d2.refclassid = 'pg_constraint'::regclass AND d2.classid = 'pg_class'::regclass AND d2.objid = d1.refobjid AND d2.objsubid = 0 AND d2.deptype = 'i'
+-- get the constraint name from new pg_constraint
+LEFT JOIN pg_constraint const2 ON const2.oid = d2.refobjid AND const2.contype IN ('p', 'u') AND const2.conrelid = const1.confrelid
+-- get the namespace name for primary key
+LEFT JOIN sys.pg_namespace_ext nsp_ext2 ON const2.connamespace = nsp_ext2.oid
+-- get the owner name for primary key
+LEFT JOIN sys.babelfish_namespace_ext bbf_nsp2 ON bbf_nsp2.nspname = nsp_ext2.nspname AND bbf_nsp2.dbid = sys.db_id()
+-- get the table name for primary key
+LEFT JOIN pg_class c2 ON const2.conrelid = c2.oid AND const2.contype IN ('p', 'u');
 
 GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
 
@@ -1989,7 +1977,8 @@ BEGIN
 	UPDATE_RULE,
 	DELETE_RULE,
 	FK_NAME,
-	PK_NAME
+	PK_NAME,
+	DEFERRABILITY
 	FROM sys.sp_fkeys_view
 	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR LOWER(pktable_name) = LOWER(@pktable_name))
 		AND ((SELECT coalesce(@fktable_name,'')) = '' OR LOWER(fktable_name) = LOWER(@fktable_name))
@@ -2993,3 +2982,20 @@ BEGIN
 END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
+CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
+AS $$
+BEGIN
+    SELECT 
+		name AS "SRV_NAME", 
+		CAST(provider AS sys.nvarchar(128)) AS "SRV_PROVIDERNAME", 
+		CAST(product AS sys.nvarchar(128)) AS "SRV_PRODUCT", 
+		data_source AS "SRV_DATASOURCE",
+		provider_string AS "SRV_PROVIDERSTRING",
+		location AS "SRV_LOCATION",
+		catalog AS "SRV_CAT" 
+	FROM sys.servers
+	ORDER BY SRV_NAME
+END;
+$$ LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
+

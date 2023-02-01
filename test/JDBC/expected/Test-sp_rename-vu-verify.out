@@ -392,3 +392,4 @@ master_dbo#!#sp_rename_proc1_new2#!#sp_renaME_PRoc1_new2#!#sp_rename_proc1_new2(
 master_sp_rename_schema1#!#sp_rename_func3_new#!#sp_rename_func3_new#!#sp_rename_func3_new(integer)
 master_sp_rename_schema1#!#sp_rename_proc2_new#!#sp_rename_proc2_new#!#sp_rename_proc2_new()
 ~~END~~
+
