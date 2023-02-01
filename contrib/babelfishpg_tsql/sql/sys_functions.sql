@@ -3326,30 +3326,24 @@ CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
 RETURNS sys.NVARCHAR(4000)
 AS $$
 DECLARE
-    type char(2);
+    definition sys.nvarchar(4000);
 BEGIN
 
-    IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE ao.object_id = $1)
+    definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
+    IF (definition IS NULL)
     THEN
-        RETURN NULL;
+        definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
+        IF (definition IS NULL)
+        THEN
+            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            IF (definition IS NULL)
+            THEN
+                RETURN NULL;
+            END IF;
+        END IF;
     END IF;
 
-    type := (SELECT ao.type FROM sys.all_objects ao WHERE ao.object_id = $1);
-
-    IF type = 'C' -- Check Constraints
-    THEN
-        RETURN (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
-
-    ELSEIF type = 'D' -- Default Constraints
-    THEN
-        RETURN (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
-
-    ELSEIF type IN ('P', 'FN', 'R', 'RF', 'TR', 'IF', 'TF', 'V')
-    THEN
-        RETURN (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
-    END IF;
-
-    RETURN NULL;
+    RETURN definition;
 END;
 $$
 LANGUAGE plpgsql STABLE;
