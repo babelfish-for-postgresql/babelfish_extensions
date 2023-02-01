@@ -828,6 +828,19 @@ is_shared_schema(const char *name)
 		return false;
 }
 
+PG_FUNCTION_INFO_V1(is_shared_schema_wrapper);
+Datum
+is_shared_schema_wrapper(PG_FUNCTION_ARGS)
+{
+	char            *schema_name;
+	bool            shared_schema;
+
+	schema_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	shared_schema = is_shared_schema(schema_name);
+
+	PG_RETURN_BOOL(shared_schema);
+}
+
 static void
 rewrite_rangevar_list(List *rvs)
 {

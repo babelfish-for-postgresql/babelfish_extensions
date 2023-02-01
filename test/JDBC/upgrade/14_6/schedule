@@ -349,3 +349,4 @@ sys-sql_modules_before-14_7
 AVG-Aggregate-common
 AVG-Aggregate-Dep-before-15-2-or-14-7
 BABEL_OBJECT_NAME
+BABEL_SCHEMATA
