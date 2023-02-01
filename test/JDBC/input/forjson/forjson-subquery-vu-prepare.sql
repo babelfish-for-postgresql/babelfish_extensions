@@ -123,3 +123,10 @@ SELECT
     FOR JSON PATH
 ) as c1;
 GO
+
+-- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
+CREATE PROCEDURE forjson_subquery_vu_p_empty AS
+SELECT * FROM forjson_subquery_vu_t_countries
+	WHERE 1 = 0
+	FOR JSON PATH
+GO

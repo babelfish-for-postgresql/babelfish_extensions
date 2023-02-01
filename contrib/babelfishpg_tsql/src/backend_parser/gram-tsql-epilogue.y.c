@@ -1278,6 +1278,17 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause)
 						   root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
+	/* In SQL Server if the result is empty then 0 rows are returned. Unfortunately it is not
+	 * possible to mimic this behavior solely using an aggregate, so we use an additional SRF
+	 * and pass the result to that function so that returning 0 rows is possible.
+	 */
+	func_name= list_make2(makeString("sys"), 
+							makeString(return_xml_type ? 
+								"tsql_select_for_xml_result" : 
+								"tsql_select_for_xml_text_result"));
+	func_args = list_make1(fc);
+	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
+
 	rt->name = palloc0(4);
 	strncpy(rt->name, "xml", 3);
 	rt->indirection = NIL;
@@ -1337,7 +1348,7 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
 	}
 	
 	/*
-	 * Finally make function call to tsql_select_for_json_agg
+	 * Make function call to tsql_select_for_json_agg
 	 */
 	func_name= list_make2(makeString("sys"), makeString("tsql_select_for_json_agg"));
 	func_args = list_make5(makeColumnRef(construct_unique_index_name("rows", "tsql_for"), NIL, -1, NULL),
@@ -1345,6 +1356,14 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
 						   makeBoolAConst(include_null_values, -1),
 						   makeBoolAConst(without_array_wrapper, -1),
 						   root_name ? makeStringConst(root_name, -1) : makeNullAConst(-1));
+	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
+
+	/* In SQL Server if the result is empty then 0 rows are returned. Unfortunately it is not
+	 * possible to mimic this behavior solely using an aggregate, so we use an additional SRF
+	 * and pass the result to that function so that returning 0 rows is possible.
+	 */
+	func_name= list_make2(makeString("sys"), makeString("tsql_select_for_json_result"));
+	func_args = list_make1(fc);
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	rt->name = palloc0(5);

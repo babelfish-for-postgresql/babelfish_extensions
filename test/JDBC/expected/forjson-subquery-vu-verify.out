@@ -69,3 +69,19 @@ nvarchar
 
 ~~ERROR (Message: binary types are not supported with FOR JSON)~~
 
+
+-- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
+EXEC forjson_subquery_vu_p_empty
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+SELECT @@rowcount
+GO
+~~START~~
+int
+0
+~~END~~
+

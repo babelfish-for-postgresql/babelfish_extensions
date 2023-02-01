@@ -15,3 +15,10 @@ GO
 
 select * from forxml_subquery_vu_v_correlated_subquery;
 go
+
+-- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
+EXEC forxml_subquery_vu_p_empty
+GO
+
+SELECT @@rowcount
+GO
