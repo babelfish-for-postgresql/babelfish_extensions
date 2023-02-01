@@ -56,6 +56,8 @@ AS
 SELECT * FROM object_definition_t2
 GO
 
--- Dependency Test
-SELECT * FROM object_definition_v2;
+-- Dependency test
+CREATE VIEW object_definition_v2
+AS
+SELECT COUNT(*) FROM OBJECT_DEFINITION(NULL);
 GO
