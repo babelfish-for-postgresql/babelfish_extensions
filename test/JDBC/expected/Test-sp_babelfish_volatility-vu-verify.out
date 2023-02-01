@@ -266,7 +266,7 @@ exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_duplicate'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: multiple function with same function name exits)~~
+~~ERROR (Message: multiple functions with same function name exits)~~
 
 /* test with long names */
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa'
@@ -289,7 +289,7 @@ exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema_very_long_
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
+test_sp_babelfish_volatility_scc62ee1eb13f7c4857c426f2affcc9a16#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
 ~~END~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa.test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa', 'stable'
@@ -298,7 +298,7 @@ exec sys.sp_babelfish_volatility '[test_sp_babelfish_volatility_schema_very_long
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#stable
+test_sp_babelfish_volatility_scc62ee1eb13f7c4857c426f2affcc9a16#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#stable
 ~~END~~
 
 /* test with trucated names */

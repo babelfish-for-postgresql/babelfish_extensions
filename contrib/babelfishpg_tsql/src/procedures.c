@@ -2073,12 +2073,12 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	int rc;
 	int i;
 	char *db_name = get_cur_db_name();
+	char *logical_schema_name = NULL;
 	char *physical_schema_name = NULL;
 	char *function_signature = NULL;
 	char *query = NULL;
 	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
-	char *tsql_schema_name = NULL;
 	Oid function_id;
 	Oid user_id = GetUserId();
 
@@ -2109,7 +2109,7 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 			volatility[--i] = '\0';
 		
 		/* if volatility is empty */
-		if(i==0)
+		if(i == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("volatility is not valid")));
@@ -2130,7 +2130,6 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		List *function_name_list;
 		FuncCandidateList candidates = NULL;
 		char *full_function_name = NULL;
-		char *logical_schema_name = NULL;
 		char **splited_object_name;
 
 		/* get physical schema name */
@@ -2144,17 +2143,23 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		pfree(function_name);
 		logical_schema_name = splited_object_name[2];
 		function_name = splited_object_name[3];
-		pfree(splited_object_name);
 		
 		/* downcase identifier */
 		if(pltsql_case_insensitive_identifiers)
 		{
 			logical_schema_name = downcase_identifier(logical_schema_name, strlen(logical_schema_name), false, false);
 			function_name = downcase_identifier(function_name, strlen(function_name), false, false);
+			for (int i = 0; i < 4; i++)
+				pfree(splited_object_name[i]);
 		}
+		else
+		{
+			pfree(splited_object_name[0]);
+			pfree(splited_object_name[1]);
+		}
+		pfree(splited_object_name);
 
 		/* truncate identifiers if needed */
-		tsql_schema_name = pstrdup(logical_schema_name);
 		truncate_tsql_identifier(logical_schema_name);
 		truncate_tsql_identifier(function_name);
 
@@ -2189,12 +2194,6 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		{
 			physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
 		}
-			
-		if(!strcmp(tsql_schema_name, ""))
-		{	
-			pfree(tsql_schema_name);
-			tsql_schema_name = (char *)get_logical_schema_name(physical_schema_name, true);
-		}
 
 		/* get function id from function name*/
 		function_name_list = list_make2(makeString(physical_schema_name),makeString(function_name));
@@ -2216,7 +2215,7 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		if(candidates->next != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("multiple function with same function name exits")));
+					errmsg("multiple functions with same function name exits")));
 
 		function_id = candidates->oid;
 		full_function_name = psprintf("\"%s\".\"%s\"", physical_schema_name, function_name);
@@ -2225,11 +2224,10 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		list_free(function_name_list);
 		pfree(candidates);
 		pfree(full_function_name);
-		pfree(logical_schema_name);
 	}
 	
 	/*
-	 * If both volatility and function name is not provided the it will return a list of functions present in current database.
+	 * If both volatility and function name is not provided then it will return a list of functions present in current database.
 	 * else if only volatility is not provided the it will return the volatility of the specified function.
 	 * If both volatility and function name is provided it will set the function volatility to the specified volatility
 	 */
@@ -2259,7 +2257,7 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 						"WHEN provolatile = 's' THEN 'stable' "
 						"ELSE 'immutable' "
 					"END AS Volatility from pg_proc "
-					"where oid = %u", tsql_schema_name, function_name, function_id
+					"where oid = %u", logical_schema_name, function_name, function_id
 				);
 		}
 
@@ -2342,8 +2340,8 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	if(function_name)
 	{
 		pfree(function_name);
+		pfree(logical_schema_name);
 		pfree(physical_schema_name);
-		pfree(tsql_schema_name);
 		pfree(function_signature);
 	}
 	if(volatility)
