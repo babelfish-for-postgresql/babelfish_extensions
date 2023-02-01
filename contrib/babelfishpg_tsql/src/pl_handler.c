@@ -148,6 +148,7 @@ static Constraint *get_rowversion_default_constraint(TypeName *typname);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
+static void validateUserAndRole(char* name);
 
 extern bool  pltsql_ansi_defaults;
 extern bool  pltsql_quoted_identifier;
@@ -1941,6 +1942,18 @@ static inline bool process_utility_stmt_explain_only_mode(const char *queryStrin
 }
 
 /*
+ * check whether role contains '\' or not and SQL_USER contains '\' or not
+ * If yes, throw error.
+ */
+static void validateUserAndRole(char* name)
+{
+	if (strchr(name, '\\') != NULL)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a valid name because it contains invalid characters.", name)));
+}
+
+
+/*
  * Use this hook to handle utility statements that needs special treatment, and
  * use the standard ProcessUtility for other statements.
  * CreateFunctionStmt could have elements in the options list that are specific
@@ -2221,6 +2234,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				bool			islogin = false;
 				bool			isuser = false;
 				bool			isrole = false;
+				bool			from_windows = false;
 
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
@@ -2233,7 +2247,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if (strcmp(headel->defname, "islogin") == 0)
 					{
-						bool from_windows = false;
 						char *orig_loginname = NULL;
 
 						islogin = true;
@@ -2334,6 +2347,18 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 									 errmsg("The login name '%s' is too long. Maximum length is %d.",
 											stmt->role, (NAMEDATALEN - 1))));
 						}
+
+						/*
+						 * If the login name contains '\' and it is not a windows login then throw error.
+						 * For windows login, all cases are handled beforehand, so if the below condition
+						 * is hit that means it is password based authentication and login name contains
+						 * '\', which is not allowed
+						 */
+						if (!from_windows && strchr(stmt->role, '\\') != NULL)
+							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("'%s' is not a valid name because it contains invalid characters.", stmt->role)));
+
+						from_windows = false;
 					}
 					else if (strcmp(headel->defname, "isuser") == 0)
 					{
@@ -2370,6 +2395,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 										pfree(login->rolename);
 										login->rolename = upn_login;
 									}
+									from_windows = true;
 								}
 							}
 						}
@@ -2489,6 +2515,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				else if (isuser || isrole)
 				{
+					/* check whether sql user name and role name contains '\' or not */
+					if (isrole || !from_windows)
+						validateUserAndRole(stmt->role);
+
 					/* Set current user to dbo user for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
@@ -2511,7 +2541,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * If the stmt is CREATE USER, it must have a
 						 * corresponding login and a schema name
 						 */
-						create_bbf_authid_user_ext(stmt, isuser, isuser);
+						create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
 					}
 					PG_CATCH();
 					{
@@ -2643,6 +2673,15 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 										 errmsg("Current login does not have privileges to alter password")));
 						}
 					}
+
+					/*
+					 * Leveraging the fact that convertToUPN API returns the login name in UPN format
+					 * if login name contains '\' i,e,. windows login.
+					 * For windows login '\' must be present and for password based login '\' is not 
+					 * acceptable. So, combining these, if the login is of windows then it will be converted
+					 * to UPN format or else it will be as it was
+					 */
+					stmt->role->rolename = convertToUPN(stmt->role->rolename);
 
 					if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
@@ -2856,20 +2895,30 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else
 					{
 						/* Supplied login name might be in windows format i.e, domain\login form */
-						tuple = get_roleform_ext(role_name);
-						if (HeapTupleIsValid(tuple))
+						if (strchr(role_name, '\\') != NULL)
 						{
-							roleform = (Form_pg_authid) GETSTRUCT(tuple);
 							/*
 							 * This means that provided login name is in windows format 
 							 * so let's update role_name with UPN format.
 							 */
-							role_name = pstrdup((roleform->rolname).data);
-							pfree(rolspec->rolename);
-							rolspec->rolename = role_name;
+							role_name = convertToUPN(role_name);
+							tuple = SearchSysCache1(AUTHNAME,
+											PointerGetDatum(role_name));
+							if (HeapTupleIsValid(tuple))
+							{
+								roleform = (Form_pg_authid) GETSTRUCT(tuple);
+								pfree(rolspec->rolename);
+								rolspec->rolename = role_name;
+							}
+							else
+							{
+								continue;
+							}
 						}
 						else
+						{
 							continue;
+						}
 					}
 
 					if (is_login(roleform->oid))

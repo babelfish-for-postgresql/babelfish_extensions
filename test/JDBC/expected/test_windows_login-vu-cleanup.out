@@ -19,14 +19,14 @@ DROP LOGIN [ad\Aduserlanguage];
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the login 'ad\aduserlanguage', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the login 'aduserlanguage@AD', because it does not exist or you do not have permission.)~~
 
 
 DROP LOGIN [ad\Aduserdblanguage];
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the login 'ad\aduserdblanguage', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the login 'aduserdblanguage@AD', because it does not exist or you do not have permission.)~~
 
 
 DROP LOGIN [ad\AduserdbEnglish];
@@ -36,14 +36,14 @@ DROP LOGIN [ad\Aduseroption];
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the login 'ad\aduseroption', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the login 'aduseroption@AD', because it does not exist or you do not have permission.)~~
 
 
 DROP LOGIN [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the login 'babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the login 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL', because it does not exist or you do not have permission.)~~
 
 
 -- test for non-existent login
@@ -51,7 +51,7 @@ DROP LOGIN [babel\non_existent_login]
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the login 'babel\non_existent_login', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot drop the login 'non_existent_login@BABEL', because it does not exist or you do not have permission.)~~
 
 
 -- drop login with different casing
