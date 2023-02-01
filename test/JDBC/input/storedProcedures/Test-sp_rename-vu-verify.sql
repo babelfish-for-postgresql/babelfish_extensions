@@ -35,7 +35,7 @@ FROM sys.babelfish_view_def WHERE object_name LIKE '%sp_rename%'
 ORDER BY schema_name, object_name
 GO
 
-EXEC babelfish_sp_rename_internal 'sp_rename_view1_new2', 'sp_rename_view1_new', 'sp_rename_schema1', 'V';
+EXEC sp_rename 'sp_rename_schema1.sp_rename_view1_new2', 'sp_rename_view1_new', 'OBJECT';
 GO
 
 SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename%' 
@@ -85,7 +85,7 @@ FROM sys.babelfish_view_def WHERE object_name LIKE '%sp_rename%'
 ORDER BY schema_name, object_name
 GO
 
-EXEC sp_rename '', 'sp_rename_view1_new', 'OBJECT';
+EXEC sp_rename NULL, 'sp_rename_view1_new', 'OBJECT';
 GO
 
 SELECT schema_name, object_name 
@@ -95,7 +95,7 @@ GO
 
 
 -- Null input for newname: error, requiring input for newname
-EXEC sp_rename 'sp_rename_view1_new', '', 'OBJECT';
+EXEC sp_rename 'sp_rename_view1_new', NULL, 'OBJECT';
 GO
 
 SELECT schema_name, object_name 

@@ -66,7 +66,7 @@ sp_rename_schema1#!#sp_rename_view1_new2
 ~~END~~
 
 
-EXEC babelfish_sp_rename_internal 'sp_rename_view1_new2', 'sp_rename_view1_new', 'sp_rename_schema1', 'V';
+EXEC sp_rename 'sp_rename_schema1.sp_rename_view1_new2', 'sp_rename_view1_new', 'OBJECT';
 GO
 
 SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename%' 
@@ -174,7 +174,7 @@ sp_rename_schema1#!#sp_rename_view1_new
 ~~END~~
 
 
-EXEC sp_rename '', 'sp_rename_view1_new', 'OBJECT';
+EXEC sp_rename NULL, 'sp_rename_view1_new', 'OBJECT';
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -194,7 +194,7 @@ sp_rename_schema1#!#sp_rename_view1_new
 
 
 -- Null input for newname: error, requiring input for newname
-EXEC sp_rename 'sp_rename_view1_new', '', 'OBJECT';
+EXEC sp_rename 'sp_rename_view1_new', NULL, 'OBJECT';
 GO
 ~~ERROR (Code: 33557097)~~
 
