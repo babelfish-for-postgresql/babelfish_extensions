@@ -21,7 +21,12 @@ exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
 GO
 
 -- psql
-create role rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION;
+do 
+$$ begin 
+    if not exists (select * from pg_catalog.pg_authid where rolname = 'rds_ad') 
+        then create role rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION; 
+    end if; 
+end $$;
 GO
 
 -- tsql
