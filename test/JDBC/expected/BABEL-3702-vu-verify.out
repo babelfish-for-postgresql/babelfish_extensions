@@ -191,3 +191,84 @@ Four      #!#Scratch#!#M#!#{"id": 3, "age": "Four", "sex": "M", "name": "Scratch
 
 DROP PROCEDURE BABEL_3702_vu_prepare_p16
 GO
+
+EXEC BABEL_3702_vu_prepare_p17
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+0#!#ItemPrice#!#2024.9940
+0#!#OrderDate#!#2011-05-31T00:00:00
+0#!#OrderNumber#!#SO43659
+0#!#ItemQuantity#!#1
+0#!#AccountNumber#!#AW29825
+1#!#ItemPrice#!#2024.9940
+1#!#OrderDate#!#2011-06-01T00:00:00
+1#!#OrderNumber#!#SO43661
+1#!#ItemQuantity#!#3
+1#!#AccountNumber#!#AW73565
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p17
+GO
+
+EXEC BABEL_3702_vu_prepare_p18
+GO
+~~START~~
+int#!#nvarchar#!#nvarchar
+1#!#1#!#TV
+1#!#2#!#Laptop
+2#!#1#!#TV
+2#!#2#!#Laptop
+2#!#3#!#Mobile
+~~END~~
+
+drop table p18_data
+DROP PROCEDURE BABEL_3702_vu_prepare_p18
+GO
+
+EXEC BABEL_3702_vu_prepare_p19
+GO
+~~START~~
+varchar#!#int
+Intelligence#!#95
+Strength#!#55
+Speed#!#65
+Durability#!#75
+Power#!#75
+Combat#!#95
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p19
+GO
+
+EXEC BABEL_3702_vu_prepare_p20
+GO
+~~START~~
+varchar#!#int
+Brazil#!#5
+Germany#!#4
+Italy#!#4
+Argentina#!#2
+France#!#2
+England#!#1
+Spain#!#1
+Uruguay#!#2
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p20
+GO
+
+EXEC BABEL_3702_vu_prepare_p21
+GO
+~~START~~
+nvarchar#!#nvarchar#!#int
+current_team#!#<NULL>#!#0
+name#!#Spider-Man#!#1
+created#!#1962#!#2
+is_good#!#true#!#3
+aliases#!#["Bag-Man", "Black Marvel", "Peter Palmer"]#!#4
+vitals#!#{"height": {"unit": "cm", "measure": 178}, "species": "Human"}#!#5
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p21
+GO
