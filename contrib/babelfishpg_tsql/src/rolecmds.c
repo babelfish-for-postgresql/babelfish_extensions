@@ -75,7 +75,7 @@ static void grant_guests_to_login(const char *login);
 static bool has_user_in_db(const char *login, char **db_name);
 static void validateNetBIOS(char* netbios);
 static void validateFQDN(char* fqdn);
-static void handle_windows_login(const char *login);
+static void grant_rds_ad_to_windows_login(const char *login);
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
