@@ -286,12 +286,7 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
-CAST(
-  CASE
-    WHEN Ext.orig_loginname IS NOT NULL THEN Ext.orig_loginname
-    ELSE cast(Base.rolname as sys.sysname)
-  END
-  AS sys.SYSNAME) AS name,
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
 CAST(Base.oid As INT) AS principal_id,
 CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
 CAST(Ext.type AS CHAR(1)) as type,
