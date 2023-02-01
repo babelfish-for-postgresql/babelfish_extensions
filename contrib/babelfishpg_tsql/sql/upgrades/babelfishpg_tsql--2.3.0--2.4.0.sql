@@ -1845,8 +1845,8 @@ DECLARE
 BEGIN
 	CASE
 	WHEN v_type in ('text', 'ntext', 'image') THEN precision = CAST(NULL AS SMALLINT);
-  WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
-  WHEN v_type = 'sql_variant' THEN precision = 0;
+	WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
+	WHEN v_type = 'sql_variant' THEN precision = 0;
 	ELSE
 		precision = max_length;
 	END CASE;
@@ -1868,15 +1868,17 @@ SELECT CAST(name as sys.sysname) as name
   , CAST(0 as smallint) as reserved
   , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
   , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
-  , CAST((case when (tsql_base_type_name in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
+  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
+          else 0 end) as sys.bit) as variable
   , CAST(is_nullable as sys.bit) as allownulls
   , CAST(system_type_id as int) as type
   , CAST(null as sys.varchar(255)) as printfmt
-  , (case when precision <> 0::smallint then precision else sys.systypes_precision_helper(tsql_base_type_name, max_length) end) as prec
+  , (case when precision <> 0::smallint then precision 
+      else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
   , CAST(scale as sys.tinyint) as scale
   , CAST(collation_name as sys.sysname) as collation
-FROM sys.types
-, coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) AS tsql_base_type_name;
+FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.

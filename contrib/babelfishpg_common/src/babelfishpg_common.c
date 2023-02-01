@@ -176,6 +176,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.TdsPGbaseType = &TdsPGbaseType;
 		common_utility_plugin_var.TdsGetMetaData = &TdsGetMetaData;
 		common_utility_plugin_var.TdsGetVariantBaseType = &TdsGetVariantBaseType;
+		common_utility_plugin_var.lookup_tsql_datatype_oid = &lookup_tsql_datatype_oid;
 	}
 	return &common_utility_plugin_var;
 }
