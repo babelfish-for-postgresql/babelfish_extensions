@@ -380,4 +380,6 @@ bbf_view_def
 BABEL-3802
 BABEL-3914
 BABEL_OBJECT_NAME
+Test-sp_rename
+Test-sp_rename-dep
 sys-systypes
