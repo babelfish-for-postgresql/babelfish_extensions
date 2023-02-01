@@ -23,6 +23,12 @@ GO
 SELECT @@rowcount
 GO
 
+EXEC forxml_subquery_vu_p_empty_xml
+GO
+
+SELECT @@rowcount
+GO
+
 -- exercise result internal functions
 SELECT * FROM forxml_subquery_vu_v_internal
 GO

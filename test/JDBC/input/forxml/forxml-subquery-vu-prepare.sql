@@ -51,6 +51,12 @@ SELECT * FROM forxml_subquery_vu_t_t1
 	FOR XML RAW
 GO
 
+CREATE PROCEDURE forxml_subquery_vu_p_empty_xml AS
+SELECT * FROM forxml_subquery_vu_t_t1
+	WHERE 1 = 0
+	FOR XML RAW, TYPE
+GO
+
 -- exercise result internal functions
 CREATE VIEW forxml_subquery_vu_v_internal AS
 SELECT * FROM tsql_select_for_xml_result('<abcd/>')
