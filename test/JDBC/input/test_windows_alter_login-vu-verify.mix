@@ -1,0 +1,87 @@
+-- tsql
+ALTER LOGIN [babel\aduser_alter] DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser_alter@BABEL';
+GO
+
+-- tsql
+ALTER LOGIN [babel\aduser_alter] ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser_alter@BABEL';
+GO
+
+-- tsql
+ALTER LOGIN [babel\aduser_alter] with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser_alter@BABEL';
+GO
+
+-- tsql
+ALTER LOGIN [aduser_alter@BABEL] DISABLE;
+GO
+
+ALTER LOGIN passWORduser_alter DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser_alter';
+GO
+
+-- tsql
+ALTER LOGIN passWORduser_alter ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser_alter';
+GO
+
+-- tsql
+ALTER LOGIN passWORduser_alter with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'passworduser_alter';
+GO
+
+-- tsql
+ALTER LOGIN [aduser_alter@BBF] DISABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser_alter@bbf';
+GO
+
+-- tsql
+ALTER LOGIN [aduser_alter@BBF] ENABLE;
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser_alter@bbf';
+GO
+
+-- tsql
+ALTER LOGIN [aduser_alter@BBF] with default_database=[alter_db];
+GO
+
+-- psql
+select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
+where rolname = 'aduser_alter@bbf';
+GO
+
+-- tsql
+ALTER LOGIN [bbf\aduser_alter] DISABLE;
+GO
