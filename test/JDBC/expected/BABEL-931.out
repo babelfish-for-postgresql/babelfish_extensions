@@ -13,6 +13,10 @@ GO
 
 EXEC babel_931_caller
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: @a (inner): 100  Server SQLState: S0001)~~~~WARNING (Message: @b (inner): 200  Server SQLState: S0001)~~
+
 ~~START~~
 int
 300
@@ -29,6 +33,10 @@ GO
 
 EXEC babel_931_caller_2
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: @a (inner): 100  Server SQLState: S0001)~~~~WARNING (Message: @b (inner): 200  Server SQLState: S0001)~~
+
 ~~START~~
 int
 300
@@ -47,6 +55,10 @@ GO
 
 EXEC babel_931_caller_3
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: @a (inner): 100  Server SQLState: S0001)~~~~WARNING (Message: @b (inner): 200  Server SQLState: S0001)~~
+
 ~~START~~
 int
 300

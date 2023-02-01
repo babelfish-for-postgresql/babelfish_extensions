@@ -139,8 +139,11 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
 forjson
+forjson-subquery
+forjson-datatypes
+forxml
+forxml-subquery
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -156,6 +159,8 @@ Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
+Test-sp_set_session_context
+Test-sp_set_session_context-dep
 TestTableType
 BABEL-CROSS-DB
 BABEL-LOGIN
@@ -246,8 +251,7 @@ BABEL-SPCOLUMNS
 BABEL-SP_TABLES
 BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
-# Re-enable once BABEL-3837 is fixed
-# BABEL-SP_FKEYS
+BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
@@ -355,6 +359,7 @@ BABEL-CHECK-CONSTRAINT
 BABEL-3640
 sys-sysindexes
 sys-system_objects
+ISC-Views
 ISC-Tables
 ISC-Columns
 #ISC-Check-Constraints
@@ -365,6 +370,7 @@ TestVariableDataLength
 BABEL-3801
 app_name
 atn2
+str
 case_insensitive_collation
 linked_servers
 ISC-sequences
@@ -377,3 +383,11 @@ AVG-Aggregate-Dep
 bbf_view_def
 BABEL_OBJECT_ID
 BABEL-3802
+BABEL_OBJECT_NAME
+Test_user_from_win_login
+BABEL-3914
+Babel_domain_mapping_test
+BABEL-3828
+BABEL-3844
+test_windows_alter_login
+sys-systypes

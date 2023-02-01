@@ -60,6 +60,18 @@ mssql_server4#!#<NULL>
 ~~END~~
 
 
+EXEC sp_linkedservers
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+hello.world.com#!#tds_fdw#!##!#hello.world.com#!#<NULL>#!#<NULL>#!#<NULL>
+mssql_server#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
+mssql_server1#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
+mssql_server2#!#tds_fdw#!##!#localhost#!#<NULL>#!#<NULL>#!#master
+mssql_server3#!#tds_fdw#!##!#mssql_server2\ABC#!#<NULL>#!#<NULL>#!#master
+~~END~~
+
+
 -- Try to drop a linked server login that does not exist (should throw error)
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "invalid_server", @locallogin = NULL
 GO

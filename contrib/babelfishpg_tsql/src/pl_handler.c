@@ -148,6 +148,7 @@ static Constraint *get_rowversion_default_constraint(TypeName *typname);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
+static void validateUserAndRole(char* name);
 
 extern bool  pltsql_ansi_defaults;
 extern bool  pltsql_quoted_identifier;
@@ -211,8 +212,6 @@ static bool                            pltsql_guc_dirty;
 static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
-static int pltsql_new_guc_nest_level(void);
-static void pltsql_revert_guc(int nest_level);
 bool current_query_is_create_tbl_check_constraint = false;
 
 /* Configurations */
@@ -579,55 +578,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			}
 			break;
 		}
-		case T_UpdateStmt:
-		{
-			UpdateStmt *updstmt = (UpdateStmt *) parseTree->stmt;
-			Oid relid;
-			Relation rel;
-			TupleDesc tupdesc;
-			AttrNumber attr_num;
-
-			relid = RangeVarGetRelid(updstmt->relation, NoLock, false);
-			rel = RelationIdGetRelation(relid);
-			tupdesc = RelationGetDescr(rel);
-
-			/*
-			* If target table contains a rowversion column, add a new ResTarget node
-			* with a SetToDefault expression into statement's targetList. This will
-			* ensure that the rows which are going to be updated will have new rowversion
-			* value.
-			*/
-			for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
-			{
-				Form_pg_attribute attr;
-
-				attr = TupleDescAttr(tupdesc, attr_num);
-
-				if (attr->attisdropped)
-					continue;
-
-				if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
-				{
-					SetToDefault *def = makeNode(SetToDefault);
-					ResTarget *res;
-
-					def->typeId = attr->atttypid;
-					def->typeMod = attr->atttypmod;
-					def->collation = attr->attcollation;
-					res = makeNode(ResTarget);
-					res->name = pstrdup(NameStr(attr->attname));
-					res->name_location = -1;
-					res->indirection = NIL;
-					res->val = (Node *)def;
-					res->location = -1;
-					updstmt->targetList = lappend(updstmt->targetList, res);
-					break;
-				}
-			}
-
-			RelationClose(rel);
-			break;
-		}
 		case T_GrantStmt:
 		{
 			/* detect object type */
@@ -691,101 +641,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		}
 		default:
 			break;
-	}
-}
-
-/* In UPDATE/DELECT statements, if the target table appears in the FROM-clause again,
- * T_SQL just ignores it.
- * However, in PG, the target table and the FROM-table are regarded as different tables,
- * so it will apply cartesian product.
- * To remove the cartesian product, we add an additional self-join condition using ctid,
- * i.e., target_table.ctid = from_table.ctid
- */
-static inline void
-pltsql_add_ctid_self_join_cond_between_target_and_from_clause(Query *query)
-{
-	Node *node = NULL;
-	RangeTblEntry *rte = NULL;
-	Var *lexpr = NULL;
-	Var *rexpr = NULL;
-	Expr *op = NULL;
-	List *clauses = NULL;
-	AttrNumber ctid_attr_num = InvalidAttrNumber;
-	RangeTblEntry *tt = NULL; /* target table */
-	unsigned int ncond_added = 0; /* number of ctid join conditions added */
-	const FormData_pg_attribute *sysatt;
-	Oid tideq_opoid = InvalidOid;
-
-	if (!query->jointree || !query->jointree->quals || !query->rtable)
-		return;
-
-	if (query->resultRelation < 1 || query->resultRelation > query->rtable->length)
-		return;
-
-	node = (Node *)query->rtable->elements[query->resultRelation - 1].ptr_value;
-	if (node->type != T_RangeTblEntry)
-		return;
-
-	tt = (RangeTblEntry *)node;
-	if (tt->inFromCl)
-		return;
-
-	// Add a ctid join condition
-	for (unsigned int i = 0; i < query->rtable->length; i++)
-	{
-		if (i == query->resultRelation - 1)
-			continue;
-
-		node = (Node *)query->rtable->elements[i].ptr_value;
-		if (node->type != T_RangeTblEntry)
-			continue;
-
-		rte = (RangeTblEntry *)node;
-		if (rte->relid != tt->relid)
-			continue;
-
-		if (rte->enrname && (strcmp(rte->enrname, "inserted") == 0 || strcmp(rte->enrname, "deleted") == 0))
-			continue;
-
-		if (query->returningList)
-		{
-			/* Exclude tables having alias "inserted" or "deleted" if OUTPUT-clause exists */
-			if (rte->alias && (strcmp(rte->alias->aliasname, "inserted") == 0
-				|| strcmp(rte->alias->aliasname, "deleted") == 0))
-				continue;
-		}
-
-		/* Now, we found a table in the FROM-clause which refers to the target table */
-		if (ncond_added >= 1)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("self-join in FROM-clause is not supported in Babelfish")));
-		}
-
-		if (rte->relkind == 'v')
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("updatable view in FROM-clause is not supported in Babelfish")));
-		}
-
-		sysatt = SystemAttributeByName("ctid");
-		if (!sysatt)
-			return;
-		ctid_attr_num = sysatt->attnum;
-		tideq_opoid = OpernameGetOprid(list_make1(makeString("=")), TIDOID, TIDOID);
-		if (tideq_opoid == InvalidOid)
-			return;
-
-		lexpr = makeVar(i + 1, ctid_attr_num, TIDOID, -1, 0, 0); /* from_table.ctid */
-		rexpr = makeVar(query->resultRelation, ctid_attr_num, TIDOID, -1, 0, 0); /* target_table.ctid */
-		op = make_opclause(tideq_opoid, BOOLOID, false, (Expr *)lexpr, (Expr *)rexpr, 0, 0); /* from_table.ctid = target_table.ctid */
-		clauses = lappend(NIL, query->jointree->quals);
-		clauses = lappend(clauses, op);
-
-		query->jointree->quals = (Node *)make_andclause(clauses);
-		ncond_added++;
 	}
 }
 
@@ -1230,11 +1085,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						errmsg("Cannot update a timestamp column.")));
 			}
 		}
-		pltsql_add_ctid_self_join_cond_between_target_and_from_clause(query);
-	}
-	else if (query->commandType == CMD_DELETE)
-	{
-		pltsql_add_ctid_self_join_cond_between_target_and_from_clause(query);
 	}
 	else if (query->commandType == CMD_SELECT)
 	{
@@ -2092,6 +1942,18 @@ static inline bool process_utility_stmt_explain_only_mode(const char *queryStrin
 }
 
 /*
+ * check whether role contains '\' or not and SQL_USER contains '\' or not
+ * If yes, throw error.
+ */
+static void validateUserAndRole(char* name)
+{
+	if (strchr(name, '\\') != NULL)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a valid name because it contains invalid characters.", name)));
+}
+
+
+/*
  * Use this hook to handle utility statements that needs special treatment, and
  * use the standard ProcessUtility for other statements.
  * CreateFunctionStmt could have elements in the options list that are specific
@@ -2372,6 +2234,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				bool			islogin = false;
 				bool			isuser = false;
 				bool			isrole = false;
+				bool			from_windows = false;
 
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
@@ -2384,7 +2247,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if (strcmp(headel->defname, "islogin") == 0)
 					{
-						bool from_windows = false;
 						char *orig_loginname = NULL;
 
 						islogin = true;
@@ -2466,10 +2328,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							stmt->role = convertToUPN(orig_loginname);
 
 							/*
-							* Check for duplicate login
-							*/
+							 * Check for duplicate login
+							 */
 							if (get_role_oid(stmt->role, true) != InvalidOid)
-						  		ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
+								ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
 									errmsg("The Server principal '%s' already exists", stmt->role)));
 						}
 
@@ -2485,6 +2347,18 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 									 errmsg("The login name '%s' is too long. Maximum length is %d.",
 											stmt->role, (NAMEDATALEN - 1))));
 						}
+
+						/*
+						 * If the login name contains '\' and it is not a windows login then throw error.
+						 * For windows login, all cases are handled beforehand, so if the below condition
+						 * is hit that means it is password based authentication and login name contains
+						 * '\', which is not allowed
+						 */
+						if (!from_windows && strchr(stmt->role, '\\') != NULL)
+							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("'%s' is not a valid name because it contains invalid characters.", stmt->role)));
+
+						from_windows = false;
 					}
 					else if (strcmp(headel->defname, "isuser") == 0)
 					{
@@ -2506,6 +2380,23 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								location = defel->location;
 								user_options = lappend(user_options, defel);
+							}
+							else if (strcmp(defel->defname, "rolemembers") == 0)
+							{
+								RoleSpec *login = (RoleSpec *) linitial((List *) defel->arg);
+								if (strchr(login->rolename, '\\') != NULL)
+								{
+									/*
+									 * If login->rolename contains '\' then treat it as windows login.
+									 */
+									char *upn_login = convertToUPN(login->rolename);
+									if (upn_login != login->rolename)
+									{
+										pfree(login->rolename);
+										login->rolename = upn_login;
+									}
+									from_windows = true;
+								}
 							}
 						}
 
@@ -2624,6 +2515,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				else if (isuser || isrole)
 				{
+					/* check whether sql user name and role name contains '\' or not */
+					if (isrole || !from_windows)
+						validateUserAndRole(stmt->role);
+
 					/* Set current user to dbo user for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
@@ -2646,7 +2541,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * If the stmt is CREATE USER, it must have a
 						 * corresponding login and a schema name
 						 */
-						create_bbf_authid_user_ext(stmt, isuser, isuser);
+						create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
 					}
 					PG_CATCH();
 					{
@@ -2778,6 +2673,15 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 										 errmsg("Current login does not have privileges to alter password")));
 						}
 					}
+
+					/*
+					 * Leveraging the fact that convertToUPN API returns the login name in UPN format
+					 * if login name contains '\' i,e,. windows login.
+					 * For windows login '\' must be present and for password based login '\' is not 
+					 * acceptable. So, combining these, if the login is of windows then it will be converted
+					 * to UPN format or else it will be as it was
+					 */
+					stmt->role->rolename = convertToUPN(stmt->role->rolename);
 
 					if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
@@ -2991,20 +2895,30 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else
 					{
 						/* Supplied login name might be in windows format i.e, domain\login form */
-						tuple = get_roleform_ext(role_name);
-						if (HeapTupleIsValid(tuple))
+						if (strchr(role_name, '\\') != NULL)
 						{
-							roleform = (Form_pg_authid) GETSTRUCT(tuple);
 							/*
 							 * This means that provided login name is in windows format 
 							 * so let's update role_name with UPN format.
 							 */
-							role_name = pstrdup((roleform->rolname).data);
-							pfree(rolspec->rolename);
-							rolspec->rolename = role_name;
+							role_name = convertToUPN(role_name);
+							tuple = SearchSysCache1(AUTHNAME,
+											PointerGetDatum(role_name));
+							if (HeapTupleIsValid(tuple))
+							{
+								roleform = (Form_pg_authid) GETSTRUCT(tuple);
+								pfree(rolspec->rolename);
+								rolspec->rolename = role_name;
+							}
+							else
+							{
+								continue;
+							}
 						}
 						else
+						{
 							continue;
+						}
 					}
 
 					if (is_login(roleform->oid))
@@ -4771,12 +4685,6 @@ canCommitTransaction(void)
 	return (AbortCurTransaction == false);
 }
 
-static int
-pltsql_new_guc_nest_level(void)
-{
-       return ++PltsqlGUCNestLevel;
-}
-
 static void
 pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
 {
@@ -4785,10 +4693,6 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
        /* If we're not inside a nest level, do nothing */
        if (PltsqlGUCNestLevel == 0)
                return;
-
-	   /* No need to restore certain gucs */
-	   if (strcmp(gconf->name, "babelfishpg_tsql.identity_insert") == 0)
-		   return;
 
        /* Do we already have a stack entry of the current nest level? */
        stack = gconf->session_stack;
@@ -4841,162 +4745,165 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
        pltsql_guc_dirty = true;
 }
 
-static void
+int
+pltsql_new_guc_nest_level(void)
+{
+       return ++PltsqlGUCNestLevel;
+}
+
+void
 pltsql_revert_guc(int nest_level)
 {
-       bool            still_dirty;
-       int                     i;
-       int                     num_guc_variables;
-       struct config_generic **guc_variables;
+	bool            still_dirty;
+	int                     i;
+	int                     num_guc_variables;
+	struct config_generic **guc_variables;
 
-       Assert(nest_level > 0 && nest_level == PltsqlGUCNestLevel);
+	Assert(nest_level > 0 && nest_level == PltsqlGUCNestLevel);
 
-       /* Quick exit if nothing's changed in this procedure */
-       if (!pltsql_guc_dirty)
-       {
-               PltsqlGUCNestLevel = nest_level - 1;
-               return;
-       }
+	/* Quick exit if nothing's changed in this procedure */
+	if (!pltsql_guc_dirty)
+	{
+		PltsqlGUCNestLevel = nest_level - 1;
+		return;
+	}
 
-       still_dirty = false;
-       num_guc_variables = GetNumConfigOptions();
-       guc_variables = get_guc_variables();
-       for (i = 0; i < num_guc_variables; i++)
-       {
-               struct config_generic *gconf = guc_variables[i];
-               GucStack   *stack =  gconf->session_stack;
+	still_dirty = false;
+	num_guc_variables = GetNumConfigOptions();
+	guc_variables = get_guc_variables();
+	for (i = 0; i < num_guc_variables; i++)
+	{
+		struct config_generic *gconf = guc_variables[i];
+		GucStack   *stack =  gconf->session_stack;
 
-               if (stack != NULL && stack->nest_level == nest_level)
-               {
-                       GucStack   *prev = stack->prev;
+		if (stack != NULL && stack->nest_level == nest_level)
+		{
+			GucStack   *prev = stack->prev;
 
-                       /* Perform appropriate restoration of the stacked value */
-                       config_var_value newvalue = stack->prior;
-                       GucSource       newsource = stack->source;
-                       GucContext      newscontext = stack->scontext;
+			/* Perform appropriate restoration of the stacked value */
+			config_var_value newvalue = stack->prior;
+			GucSource       newsource = stack->source;
+			GucContext      newscontext = stack->scontext;
 
-                       switch (gconf->vartype)
-                       {
-                               case PGC_BOOL:
-                                       {
-                                               struct config_bool *conf = (struct config_bool *) gconf;
-                                               bool            newval = newvalue.val.boolval;
-                                               void       *newextra = newvalue.extra;
+			switch (gconf->vartype)
+			{
+				case PGC_BOOL:
+				{
+					struct config_bool 	*conf = (struct config_bool *) gconf;
+					bool           		newval = newvalue.val.boolval;
+					void       			*newextra = newvalue.extra;
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       *conf->variable = newval;
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
-                                               break;
-                                       }
-                               case PGC_INT:
-                                       {
-                                               struct config_int *conf = (struct config_int *) gconf;
-                                               int                     newval = newvalue.val.intval;
-                                               void       *newextra = newvalue.extra;
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						*conf->variable = newval;
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
+					break;
+				}
+				case PGC_INT:
+				{
+					struct config_int *conf = (struct config_int *) gconf;
+					int                     newval = newvalue.val.intval;
+					void       *newextra = newvalue.extra;
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       *conf->variable = newval;
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
-                                               break;
-                                       }
-                               case PGC_REAL:
-                                       {
-                                               struct config_real *conf = (struct config_real *) gconf;
-                                               double          newval = newvalue.val.realval;
-                                               void       *newextra = newvalue.extra;
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						*conf->variable = newval;
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
+					break;
+				}
+				case PGC_REAL:
+				{
+					struct config_real *conf = (struct config_real *) gconf;
+					double          newval = newvalue.val.realval;
+					void       *newextra = newvalue.extra;
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       *conf->variable = newval;
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
-                                               break;
-                                       }
-                               case PGC_STRING:
-                                       {
-                                               struct config_string *conf = (struct config_string *) gconf;
-                                               char       *newval = newvalue.val.stringval;
-                                               void       *newextra = newvalue.extra;
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						*conf->variable = newval;
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
+					break;
+				}
+				case PGC_STRING:
+				{
+					struct config_string *conf = (struct config_string *) gconf;
+					char       *newval = newvalue.val.stringval;
+					void       *newextra = newvalue.extra;
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       guc_set_string_field(conf, conf->variable, newval);
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
+					/* Special case for identity_insert */
+					if (strcmp(gconf->name, "babelfishpg_tsql.identity_insert") == 0)
+					{
+						tsql_identity_insert = (tsql_identity_insert_fields) 
+							{false, InvalidOid, InvalidOid};
+					}
 
-                                               /*
-                                                * Release stacked values if not used anymore. We
-                                                * could use discard_stack_value() here, but since
-                                                * we have type-specific code anyway, might as
-                                                * well inline it.
-                                                */
-                                               guc_set_string_field(conf, &stack->prior.val.stringval, NULL);
-                                               guc_set_string_field(conf, &stack->masked.val.stringval, NULL);
-                                               break;
-                                       }
-                               case PGC_ENUM:
-                                       {
-                                               struct config_enum *conf = (struct config_enum *) gconf;
-                                               int                     newval = newvalue.val.enumval;
-                                               void       *newextra = newvalue.extra;
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						guc_set_string_field(conf, conf->variable, newval);
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
 
-                                               if (*conf->variable != newval ||
-                                                       conf->gen.extra != newextra)
-                                               {
-                                                       if (conf->assign_hook)
-                                                               conf->assign_hook(newval, newextra);
-                                                       *conf->variable = newval;
-                                                       guc_set_extra_field(&conf->gen, &conf->gen.extra,
-                                                                                       newextra);
-                                               }
-                                               break;
-                                       }
-                       }
+					/*
+					* Release stacked values if not used anymore. We
+					* could use discard_stack_value() here, but since
+					* we have type-specific code anyway, might as
+					* well inline it.
+					*/
+					guc_set_string_field(conf, &stack->prior.val.stringval, NULL);
+					guc_set_string_field(conf, &stack->masked.val.stringval, NULL);
+					break;
+				}
+				case PGC_ENUM:
+				{
+					struct config_enum *conf = (struct config_enum *) gconf;
+					int                     newval = newvalue.val.enumval;
+					void       *newextra = newvalue.extra;
 
-                       /*
-                        * Release stacked extra values if not used anymore.
-                        */
-                       guc_set_extra_field(gconf, &(stack->prior.extra), NULL);
-                       guc_set_extra_field(gconf, &(stack->masked.extra), NULL);
+					if (*conf->variable != newval || conf->gen.extra != newextra)
+					{
+						if (conf->assign_hook)
+							conf->assign_hook(newval, newextra);
+						*conf->variable = newval;
+						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+					}
+					break;
+				}
+			}
 
-                       /* And restore source information */
-                       gconf->source = newsource;
-                       gconf->scontext = newscontext;
+			/*
+			* Release stacked extra values if not used anymore.
+			*/
+			guc_set_extra_field(gconf, &(stack->prior.extra), NULL);
+			guc_set_extra_field(gconf, &(stack->masked.extra), NULL);
 
-                       /* Finish popping the state stack */
-                       gconf->session_stack = prev;
-                       pfree(stack);
-               }                                               /* end of stack-popping loop */
+			/* And restore source information */
+			gconf->source = newsource;
+			gconf->scontext = newscontext;
 
-               if (stack != NULL)
-                       still_dirty = true;
-       }
+			/* Finish popping the state stack */
+			gconf->session_stack = prev;
+			pfree(stack);
+		} /* end of stack-popping loop */
 
-       /* If there are no remaining stack entries, we can reset guc_dirty */
-       pltsql_guc_dirty = still_dirty;
+		if (stack != NULL)
+			still_dirty = true;
+	}
 
-       /* Update nesting level */
-       PltsqlGUCNestLevel = nest_level - 1;
+	/* If there are no remaining stack entries, we can reset guc_dirty */
+	pltsql_guc_dirty = still_dirty;
+
+	/* Update nesting level */
+	PltsqlGUCNestLevel = nest_level - 1;
 
 }
 

@@ -135,8 +135,9 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
 forjson
+forjson-datatypes
+forxml
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -240,8 +241,7 @@ BABEL-SPCOLUMNS
 BABEL-SP_TABLES
 BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
-# Re-enable once BABEL-3837 is fixed
-# BABEL-SP_FKEYS
+BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
@@ -342,6 +342,7 @@ sys-sysindexes
 sys-system_objects
 ISC-Tables
 ISC-Table_Constraints
+ISC-Views
 sys_server_principals_dep
 sys_database_principals_dep
 BABEL-3801
@@ -353,3 +354,4 @@ AVG-Aggregate-Dep-before-15-2-or-14-7
 bbf_view_def-before-14_7-or-15_2
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
+BABEL_OBJECT_NAME

@@ -107,6 +107,7 @@ BABEL-3358
 BABEL-3747
 BABEL-3781
 BABEL-3802
+BABEL-3914
 temp-tables
 table-variable
 TestNotNull
@@ -140,8 +141,11 @@ BABEL-3646
 BABEL-383
 BABEL-405
 BABEL-937
-BABEL-3407
 forjson
+forjson-subquery
+forjson-datatypes
+forxml
+forxml-subquery
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -156,6 +160,7 @@ Test-sp_droprole
 Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
+Test-sp_set_session_context
 Test-sp_helpuser
 TestTableType
 BABEL-CROSS-DB
@@ -247,8 +252,7 @@ BABEL-SPCOLUMNS
 BABEL-SP_TABLES
 BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
-# Re-enable once BABEL-3837 is fixed
-# BABEL-SP_FKEYS
+BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
@@ -362,6 +366,7 @@ sys_server_principals_dep
 sys_database_principals_dep
 atn2
 app_name
+str
 case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
@@ -372,3 +377,4 @@ sys-all_sql_modules
 sys-sql_modules
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
+BABEL_OBJECT_NAME

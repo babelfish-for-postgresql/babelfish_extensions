@@ -20,6 +20,7 @@
 #include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
@@ -70,7 +71,8 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
 static bool has_user_in_db(const char *login, char **db_name);
-
+static void validateNetBIOS(char* netbios);
+static void validateFQDN(char* fqdn);
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -918,7 +920,8 @@ add_to_bbf_authid_user_ext(const char *user_name,
 						   const char *schema_name,
 						   const char *login_name,
 						   bool	is_role,
-						   bool has_dbaccess)
+						   bool has_dbaccess,
+						   bool from_windows)
 {
 	Relation		bbf_authid_user_ext_rel;
 	TupleDesc		bbf_authid_user_ext_dsc;
@@ -947,6 +950,8 @@ add_to_bbf_authid_user_ext(const char *user_name,
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum("");
 	if (is_role)
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("R"); 
+	else if (from_windows)
+		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("U");
 	else
 		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_user_ext[USER_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1); /* placeholder */
@@ -987,7 +992,7 @@ add_to_bbf_authid_user_ext(const char *user_name,
 }
 
 void
-create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login)
+create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login, bool from_windows)
 {
 	ListCell		*option;
 	char			*default_schema = NULL;
@@ -1075,7 +1080,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	}
 
 	/* Add to the catalog table. Adds current database name by default */
-	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login, true);
+	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login, true, from_windows);
 }
 
 PG_FUNCTION_INFO_V1(add_existing_users_to_catalog);
@@ -1125,17 +1130,17 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			rolspec->location = -1;
 			rolspec->rolename = pstrdup(dbo_role);
 			dbo_list = lappend(dbo_list, rolspec);
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true, false);
 		}
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true, false);
 		if (guest)
 		{
 			/* For master, tempdb and msdb databases, the guest user will be enabled by default */
 			if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
-				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true);
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true, false);
 			else
-				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false, false);
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
@@ -1755,6 +1760,74 @@ has_user_in_db(const char *login, char **db_name)
 
 	return false;
 }
+/*
+ * get_fully_qualified_domain_name - Returns fully qualified domain name corresponding to
+ * supplied netbios_domain by looking into sys.babelfish_domain_mapping catalog.
+ * For example, if ('babel', 'babel.internal') entry is present in sys.babelfish_domain_mapping catalog,
+ * and user supplies babel then it would return babel.internal. If any entry could not be found
+ * then it will return simply supplied netbios_domain.
+ */
+static char *
+get_fully_qualified_domain_name(char *netbios_domain)
+{
+	/* TODO: Add test cases for this mapping */
+	Relation	bbf_domain_mapping_rel;
+	TupleDesc	dsc;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	HeapTuple	tuple;
+	char		*fq_domain_name;
+
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowShareLock);
+
+	dsc = RelationGetDescr(bbf_domain_mapping_rel);
+
+	ScanKeyInit(&scanKey,
+				Anum_bbf_domain_mapping_netbios_domain_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(netbios_domain));
+
+	scan = systable_beginscan(bbf_domain_mapping_rel,
+							  get_bbf_domain_mapping_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		char *tmp;
+		bool isnull = true;
+		Datum datum = heap_getattr(tuple, Anum_bbf_domain_mapping_fq_domain_name, dsc, &isnull);
+		/* 
+		 * If tuple is found correpsonding to supplied netbios domain name then
+		 * fully qualified domain should not be null. Throw an error if it is.
+		 */
+		if (isnull)
+		{
+			systable_endscan(scan);
+			table_close(bbf_domain_mapping_rel, AccessShareLock);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("Fully qualified domain name corresponding to supplied domain %s should not be NULL.",
+							netbios_domain)));
+		}
+
+		tmp = TextDatumGetCString(datum);
+		fq_domain_name = str_toupper(tmp, strlen(tmp), C_COLLATION_OID);
+	}
+	else
+	{
+		/* 
+		 * If we could not find fully qualified domain name then 
+		 * assume that user has supplied fully qualified domain name and use it.
+		 */
+		fq_domain_name = str_toupper(netbios_domain, strlen(netbios_domain), C_COLLATION_OID);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_domain_mapping_rel, RowShareLock);
+
+	return fq_domain_name;
+}
 
 /* 
  * convertToUPN - This function is called to convert 
@@ -1767,97 +1840,256 @@ convertToUPN(char* input)
 
 	if ((pos_slash = strchr(input, '\\')) != NULL)
 	{
+		char *output = NULL;
+		char *netbios_domain_name = pnstrdup(input, (pos_slash - input));
 		/*
 		 * This means that provided login name is in windows format 
 		 * so let's update role_name with UPN format.
 		 */
-		return psprintf("%s@%s", 
-						str_tolower(pos_slash + 1, strlen(pos_slash + 1), C_COLLATION_OID),
-						str_toupper(input, (pos_slash - input), C_COLLATION_OID));
+		output = psprintf("%s@%s", 
+				 str_tolower(pos_slash + 1, strlen(pos_slash + 1), C_COLLATION_OID),
+				 get_fully_qualified_domain_name(netbios_domain_name));
+		pfree(netbios_domain_name);
+		return output;
 	}
 	else
 		return input;
 }
 
 /*
- * get_roleform_ext - Useful when someone tries to drop login and that login is in
- * the form of windows format i.e, domain\login
- */
-HeapTuple 
-get_roleform_ext(char *login)
+* Utility function to validate netbios name provided by user
+*/
+
+static void
+validateNetBIOS(char* netbios)
 {
-	Relation	bbf_authid_login_ext_rel;
-	HeapTuple	tuple;
-	ScanKeyData	scanKey;
-	SysScanDesc	scan;
-	char		*upn_login;
-	TupleDesc	dsc;
+	int len = strlen(netbios);
+	int i = 0;
 
-	/* 
-	 * If login being dropped is not valid windows format
-	 * then return the invalid tuple from here only.
-	 */
-	if (!strchr(login, '\\'))
-		return NULL;
+	if (len > NETBIOS_NAME_MAX_LEN || len < NETBIOS_NAME_MIN_LEN)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_NAME),
+				errmsg("The NetBIOS name '%s' has invalid length. NetBIOS name length should be between %d and %d.",
+				netbios, NETBIOS_NAME_MIN_LEN, NETBIOS_NAME_MAX_LEN)));
 
-	upn_login = convertToUPN(login);
+	if (netbios[0] == '.')
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a valid NetBIOS name. It must not start with '.' .", netbios)));
+			
+	while (netbios[i] != '\0')
+	{
+		if (netbios[i] == '\\' || netbios[i] == '/'||
+		netbios[i] == ':' || netbios[i] == '|' ||
+		netbios[i] == '*' || netbios[i] == '?' ||
+		netbios[i] == '<' || netbios[i] == '>' ||
+		netbios[i] == '"')
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("'%s' is not a valid NetBIOS name because it contains invalid characters.", netbios)));
+		
+		i++;
+	}
+}
+
+/*
+* Utility function to validate FQDN provided by user
+*/
+
+static void
+validateFQDN(char* fqdn)
+{
+	int len = strlen(fqdn);
+	int i = 1;
+
+	if (len > FQDN_NAME_MAX_LEN || len < FQDN_NAME_MIN_LEN)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_NAME),
+				errmsg("The FQDN '%s' has invalid length. FQDN length should be between %d and %d.",
+				fqdn, FQDN_NAME_MIN_LEN, FQDN_NAME_MAX_LEN)));
+
+	if (!((fqdn[0] >= 'a' && fqdn[0] <= 'z') || (fqdn[0] >= 'A' && fqdn[0] <= 'Z') || (fqdn[0] >= '0' && fqdn[0] <= '9')))
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a valid FQDN. It must start with alphabetical or numeric character.", fqdn)));
+
+	if (fqdn[len-1] == '-' || fqdn[len-1] == '.')
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a valid FQDN. The last character must not be a minus sign or a period .", fqdn)));
+			
+	while (fqdn[i] != '\0')
+	{
+		if (!((fqdn[i] >= 'a' && fqdn[i] <= 'z') || (fqdn[i] >= 'A' && fqdn[i] <= 'Z') || (fqdn[i] >= '0' && fqdn[i] <= '9') ||
+		(fqdn[i] == '-' || fqdn[i] == '.')))
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("'%s' is not a valid FQDN because it contains invalid characters.", fqdn)));
+		
+		i++;
+	}
+	
+}
+
+PG_FUNCTION_INFO_V1(babelfish_add_domain_mapping_entry_internal);
+
+/*
+ * babelfish_add_domain_mapping_entry_internal - Procedure to create new
+ * domain mapping entry.
+ */
+Datum
+babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
+{
+	Relation			bbf_domain_mapping_rel;
+	HeapTuple			tuple;
+	Datum				*new_record;
+	bool				*new_record_nulls;
+	CatalogIndexState	indstate;
+	MemoryContext		ccxt = CurrentMemoryContext;
+	
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Arguments to babelfish_add_domain_mapping_entry should not be NULL")));
+
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Current login %s does not have permission to add new domain mapping entry",
+					 GetUserNameFromId(GetSessionUserId(), true))));
 
 	/*
-	 * Trying to lookup provided windows user in babelfish_authid_login_ext catalog
-	 * using UPN form.
-	 */
+	* Validate the netbios and fqdn
+	*/
+	validateNetBIOS(TextDatumGetCString(PG_GETARG_DATUM(0)));
+	validateFQDN(TextDatumGetCString(PG_GETARG_DATUM(1)));
 
-	/* Fetch the relation sys.babelfish_authid_login_ext */
-	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
-										  RowExclusiveLock);
-	dsc = RelationGetDescr(bbf_authid_login_ext_rel);
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
 
-	/* Search and drop on the role */
+	/* Write catalog entry */
+	new_record = palloc0(sizeof(Datum) * BBF_DOMAIN_MAPPING_NUM_COLS);
+	new_record_nulls = palloc0(sizeof(bool) * BBF_DOMAIN_MAPPING_NUM_COLS);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	new_record[0] = PG_GETARG_DATUM(0);
+	new_record[1] = PG_GETARG_DATUM(1);
+
+	tuple = heap_form_tuple(RelationGetDescr(bbf_domain_mapping_rel),
+							new_record, new_record_nulls);
+
+	PG_TRY();
+	{
+		indstate = CatalogOpenIndexes(bbf_domain_mapping_rel);
+
+		CatalogTupleInsertWithInfo(bbf_domain_mapping_rel, tuple, indstate);
+
+		CatalogCloseIndexes(indstate);
+		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+		heap_freetuple(tuple);
+		pfree(new_record);
+		pfree(new_record_nulls);
+	}
+	PG_CATCH();
+	{
+		MemoryContext ectx;
+		ErrorData *edata;
+
+		CatalogCloseIndexes(indstate);
+		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+		heap_freetuple(tuple);
+		pfree(new_record);
+		pfree(new_record_nulls);
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		edata = CopyErrorData();
+		MemoryContextSwitchTo(ectx);
+
+		ereport(ERROR,
+				(errcode(edata->sqlerrcode),
+				 errmsg("Domain mapping entry could not be added due to following reason: %s",
+						edata->message)));
+	}
+	PG_END_TRY();
+	
+	return (Datum) 0;
+}
+
+PG_FUNCTION_INFO_V1(babelfish_remove_domain_mapping_entry_internal);
+
+/*
+ * babelfish_remove_domain_mapping_entry_internal - Procedure to drop existing
+ * domain mapping entry.
+ */
+Datum
+babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
+{
+	Relation	bbf_domain_mapping_rel;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	HeapTuple	tuple;
+	
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Argument to babelfish_remove_domain_mapping_entry should not be NULL")));
+
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Current login %s does not have permission to remove domain mapping entry",
+					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
+
 	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_login_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(upn_login));
+				Anum_bbf_domain_mapping_netbios_domain_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				PG_GETARG_DATUM(0));
 
-	scan = systable_beginscan(bbf_authid_login_ext_rel,
-							  get_authid_login_ext_idx_oid(),
+	scan = systable_beginscan(bbf_domain_mapping_rel,
+							  get_bbf_domain_mapping_idx_oid(),
 							  true, NULL, 1, &scanKey);
 
 	tuple = systable_getnext(scan);
-
 	if (HeapTupleIsValid(tuple))
 	{
-		char *type;
-		bool isnull = true;
-		Datum datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_type, dsc, &isnull);
-		if (isnull)
-			tuple = NULL;
-		type = pstrdup(TextDatumGetCString(datum));
-		/* Not a windows login */
-		if (strcasecmp(type, "U") != 0)
-			tuple = NULL;
-		pfree(type);
+		/* Corresponding entry found for supplied netbios dns name, delete it. */
+		CatalogTupleDelete(bbf_domain_mapping_rel, &tuple->t_self);
+	}
+	else
+	{
+		systable_endscan(scan);
+		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("Domain mapping entry corresponding to supplied argument: \"%s\" could not be found.",
+				 		TextDatumGetCString(PG_GETARG_DATUM(0)))));
 	}
 
 	systable_endscan(scan);
-	table_close(bbf_authid_login_ext_rel, AccessShareLock);
-
-	if (!HeapTupleIsValid(tuple))
-	{
-		if (upn_login != login)
-			pfree(upn_login);
-		return tuple;
-	}
-
-	/* It is proven that this rolename is indeed windows login. */
-	tuple = SearchSysCache1(AUTHNAME, PointerGetDatum(upn_login));
-
-	if (upn_login != login)
-		pfree(upn_login);
-
-	/* Return tuple even if it is invalid tuple. */
-	return tuple;
+	table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+	return (Datum) 0;
 }
 
+PG_FUNCTION_INFO_V1(babelfish_truncate_domain_mapping_table_internal);
+/*
+ * babelfish_remove_domain_mapping_entry_internal - Deletes all domain mapping entries
+ */
+Datum
+babelfish_truncate_domain_mapping_table_internal(PG_FUNCTION_ARGS)
+{
+	Relation	bbf_domain_mapping_rel;
+
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Current login %s does not have permission to remove domain mapping entry",
+					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
+
+	/* Truncate the relation */
+	heap_truncate_one_rel(bbf_domain_mapping_rel);
+
+	table_close(bbf_domain_mapping_rel, RowExclusiveLock);
+	return (Datum) 0;
+}
 /*
 * AD does not allow user to have some special characters,
 * from babelfish side, we can not connect to AD directly 

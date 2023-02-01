@@ -24,6 +24,11 @@
 #define LOGON_NAME_MAX_LEN 21
 #define LOGON_NAME_MIN_LEN 0
 
+#define NETBIOS_NAME_MAX_LEN 15
+#define NETBIOS_NAME_MIN_LEN 1
+
+#define FQDN_NAME_MAX_LEN 128
+#define FQDN_NAME_MIN_LEN 2
 
 #define BBF_AUTHID_USER_EXT_NUM_COLS					16
 #define USER_EXT_ROLNAME								0
@@ -58,19 +63,19 @@ extern void check_alter_role_stmt(GrantRoleStmt *stmt);
 extern bool is_empty_role(Oid roleid);
 extern void create_bbf_authid_login_ext(CreateRoleStmt *stmt);
 extern void alter_bbf_authid_login_ext(AlterRoleStmt *stmt);
-extern void create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login);
+extern void create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login, bool from_windows);
 extern void add_to_bbf_authid_user_ext(const char *user_name,
 									   const char *orig_user_name,
 									   const char *db_name,
 									   const char *schema_name,
 									   const char *login_name,
 									   bool is_role,
-									   bool has_dbaccess);
+									   bool has_dbaccess,
+									   bool from_windows);
 extern void drop_related_bbf_users(List *db_users);
 extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
 extern bool is_active_login(Oid role_oid);
 extern char *convertToUPN(char* input);
-extern HeapTuple get_roleform_ext(char *login);
 extern bool windows_login_contains_invalid_chars(char* input);
 extern bool check_windows_logon_length(char* input);
 
