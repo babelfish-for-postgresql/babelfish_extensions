@@ -1641,7 +1641,17 @@ table_ref:	relation_expr tsql_table_hint_expr
 					$2->alias = $3;
 					$$ = (Node *) $2;
 				}
-			| OPENJSON '(' a_expr  ')' opt_alias_clause
+			| TSQL_APPLY openjson_expr
+				{
+					$$ = (Node *) $2;
+				}
+			| openjson_expr
+				{
+					$$ = (Node *) $1;
+				}
+		;
+
+openjson_expr: OPENJSON '(' a_expr  ')' opt_alias_clause
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					n->alias = $5;
@@ -1684,6 +1694,7 @@ table_ref:	relation_expr tsql_table_hint_expr
 					$$ = (Node*) n;
 				}
 		;
+
 
 openjson_col_defs: openjson_col_def
 				{

@@ -258,3 +258,143 @@ BEGIN
         )
 END;
 GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p17
+AS
+BEGIN
+    DECLARE @JSON NVARCHAR(MAX) = N'[
+        {
+            "OrderNumber":"SO43659",
+            "OrderDate":"2011-05-31T00:00:00",
+            "AccountNumber":"AW29825",
+            "ItemPrice":2024.9940,
+            "ItemQuantity":1
+        },
+        {
+            "OrderNumber":"SO43661",
+            "OrderDate":"2011-06-01T00:00:00",
+            "AccountNumber":"AW73565",
+            "ItemPrice":2024.9940,
+            "ItemQuantity":3
+        }
+        ]'
+    SELECT root.[key] AS [Order],TheValues.[key], TheValues.[value]
+    FROM OPENJSON ( @JSON ) AS root
+    CROSS APPLY OPENJSON ( root.value) AS TheValues
+END;
+GO
+
+CREATE TABLE CustomerData (
+   CustomerID int,
+   City nvarchar(50),
+   Product nvarchar(max)
+)
+INSERT INTO CustomerData
+   (CustomerID, City, Product)
+VALUES
+   (1, N'Delhi', N'[{"Products": [{"Id": "1", "Name": "TV"}, {"Id": "2", "Name": "Laptop"}]}]'),
+   (2, N'Bamgalore', N'[{"Products": [{"Id": "1", "Name": "TV"}, {"Id": "2", "Name": "Laptop"}, {"Id": "3", "Name": "Mobile"}]}]')
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "customerdata" already exists)~~
+
+
+create procedure BABEL_3702_vu_prepare_p18 as
+SELECT d.CustomerID, j2.Id, j2.Name
+FROM CustomerData d
+CROSS APPLY OPENJSON(d.Product, '$') j1
+CROSS APPLY OPENJSON(j1.[value], '$.Products') WITH (
+   Id nvarchar(10) '$.Id',
+   Name nvarchar(50) '$.Name'
+) j2
+go
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p19
+AS
+BEGIN
+    DECLARE @spider_man NVARCHAR(MAX)
+    SET @spider_man = N'
+    {
+        "name": "Spider-Man",
+        "aliases": ["Bag-Man","Black Marvel","Peter Palmer"],
+        "power_stats": [
+            {"power": "Intelligence", "value": 95},
+            {"power": "Strength","value": 55},
+            {"power": "Speed", "value": 65},
+            {"power": "Durability", "value": 75},
+            {"power": "Power", "value": 75},
+            {"power": "Combat", "value": 95}
+        ]
+    }'
+    SELECT
+    power_stat.power ,power_stat.value
+    FROM
+        OPENJSON(@spider_man)
+            WITH (
+                power_stats NVARCHAR(MAX) '$.power_stats' AS JSON
+            ) as root_js
+        
+        OUTER APPLY OPENJSON(root_js.power_stats)
+            WITH (
+                power VARCHAR(20) '$.power'
+                ,value INT '$.value'
+            ) as power_stat
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p20
+AS
+BEGIN
+    DECLARE @world_cup_winners NVARCHAR(MAX)
+    SET @world_cup_winners = N'
+        [
+            {"country": "Brazil","tournaments_won": [1958,1962,1970,1994,2002]},
+            {"country": "Germany","tournaments_won": [1954,1974,1990,2014]},
+            {"country": "Italy","tournaments_won": [1934,1938,1982,2006]},
+            {"country": "Argentina","tournaments_won": [1978,1986]},
+            {"country": "France","tournaments_won": [1998,2018]},        
+            {"country": "England","tournaments_won": [1966]},
+            {"country": "Spain","tournaments_won": [2010]},
+            {"country": "Uruguay","tournaments_won": [1930,1950]}
+        ]
+    '
+    SELECT
+    countries.country, tournaments_summary.number_won
+    FROM
+        OPENJSON(@world_cup_winners)
+            WITH(
+                country VARCHAR(20) '$.country',
+                tournaments_won NVARCHAR(MAX) '$.tournaments_won' AS JSON
+            ) as countries
+        
+        OUTER APPLY (
+            SELECT COUNT(*) as number_won FROM OPENJSON(countries.tournaments_won)
+        ) as tournaments_summary
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p21
+AS
+BEGIN
+    DECLARE @json_text NVARCHAR(MAX)
+    SET @json_text = N'
+        {
+            "name": "Spider-Man",
+            "vitals": {
+                "species": "Human",
+                "height": {
+                    "measure": 178,
+                    "unit": "cm"
+                }
+            },
+            "current_team": null,
+            "aliases": ["Bag-Man","Black Marvel","Peter Palmer"],
+            "is_good": true,
+            "created": 1962
+        }
+    '
+    SELECT * FROM OPENJSON(@json_text)
+    ORDER BY [type]
+END;
+GO

@@ -32,6 +32,7 @@
 
 %type <list> tsql_qualified_func_name
 
+%type <node> openjson_expr
 %type <node> openjson_col_def
 %type <list> openjson_col_defs
 %type <str> optional_path
