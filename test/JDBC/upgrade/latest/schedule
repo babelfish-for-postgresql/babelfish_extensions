@@ -383,3 +383,6 @@ BABEL-3914
 BABEL_OBJECT_NAME
 sys-systypes
 datediff_internal_date
+Test-sp_rename
+Test-sp_rename-dep
+

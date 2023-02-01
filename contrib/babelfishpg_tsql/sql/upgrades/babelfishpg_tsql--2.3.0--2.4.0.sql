@@ -1713,6 +1713,95 @@ CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
 	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@schemaname" sys.nvarchar(776),
+	IN "@objtype" char(2) DEFAULT NULL
+) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_internal TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	If @objtype IS NULL
+		BEGIN
+			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
+		END
+	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
+		BEGIN
+			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+		END
+	DECLARE @name_count INT;
+	DECLARE @subname sys.nvarchar(776) = '';
+	DECLARE @schemaname sys.nvarchar(776) = '';
+	DECLARE @dbname sys.nvarchar(776) = '';
+	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
+	IF @name_count > 3
+		BEGIN
+			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+		END
+	IF @name_count = 3
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
+			PRINT 'db_name:  ';
+			PRINT sys.db_name();
+			IF @dbname != sys.db_name()
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+		END
+	IF @name_count = 2
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+		END
+	IF @name_count = 1
+		BEGIN
+			SET @schemaname = sys.schema_name();
+			SET @subname = @objname;
+		END
+	
+	DECLARE @count INT;
+	DECLARE @currtype char(2);
+	SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	IF @count > 1
+		BEGIN
+			THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+		END
+	IF @count < 1
+		BEGIN
+			THROW 33557097, N'There is no object with the given @objname.', 1;
+		END
+	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
+END;
+$$;
+GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
 /* set sys functions as STABLE */
 ALTER FUNCTION sys.schema_id() STABLE;
@@ -2045,8 +2134,8 @@ DECLARE
 BEGIN
 	CASE
 	WHEN v_type in ('text', 'ntext', 'image') THEN precision = CAST(NULL AS SMALLINT);
-  WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
-  WHEN v_type = 'sql_variant' THEN precision = 0;
+	WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
+	WHEN v_type = 'sql_variant' THEN precision = 0;
 	ELSE
 		precision = max_length;
 	END CASE;
@@ -2068,15 +2157,17 @@ SELECT CAST(name as sys.sysname) as name
   , CAST(0 as smallint) as reserved
   , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
   , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
-  , CAST((case when (tsql_base_type_name in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
+  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
+          else 0 end) as sys.bit) as variable
   , CAST(is_nullable as sys.bit) as allownulls
   , CAST(system_type_id as int) as type
   , CAST(null as sys.varchar(255)) as printfmt
-  , (case when precision <> 0::smallint then precision else sys.systypes_precision_helper(tsql_base_type_name, max_length) end) as prec
+  , (case when precision <> 0::smallint then precision 
+      else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
   , CAST(scale as sys.tinyint) as scale
   , CAST(collation_name as sys.sysname) as collation
-FROM sys.types
-, coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) AS tsql_base_type_name;
+FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.

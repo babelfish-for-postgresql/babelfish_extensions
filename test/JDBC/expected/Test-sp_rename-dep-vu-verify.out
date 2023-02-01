@@ -1,0 +1,31 @@
+
+-- tsql
+USE master
+GO
+
+EXEC sp_rename_dep_proc1 
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#sp_rename_dep_schema1#!#sp_rename_dep_dummy_table1_new#!#BASE TABLE
+~~END~~
+
+
+EXEC sp_rename_dep_proc2
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#sp_rename_dep_dummy_func1_new#!#FUNCTION
+master#!#dbo#!#sp_rename_dep_proc1#!#PROCEDURE
+master#!#dbo#!#sp_rename_dep_proc2#!#PROCEDURE
+master#!#dbo#!#sp_rename_dep_proc3#!#PROCEDURE
+~~END~~
+
+
+EXEC sp_rename_dep_proc3
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#sp_rename_dep_schema1#!#sp_rename_dep_dummy_table1#!#BASE TABLE
+~~END~~
+
