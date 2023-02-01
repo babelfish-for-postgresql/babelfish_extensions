@@ -50,3 +50,7 @@ GO
 -- View
 SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_sch.object_definition_v1'))
 GO
+
+-- Dependency Test
+SELECT * FROM object_definition_v2;
+GO

@@ -55,3 +55,7 @@ CREATE VIEW object_definition_sch.object_definition_v1
 AS
 SELECT * FROM object_definition_t2
 GO
+
+-- Dependency Test
+SELECT * FROM object_definition_v2;
+GO

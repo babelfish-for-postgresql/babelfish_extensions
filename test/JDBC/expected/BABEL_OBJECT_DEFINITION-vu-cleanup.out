@@ -19,6 +19,9 @@ GO
 DROP VIEW object_definition_sch.object_definition_v1;
 GO
 
+DROP VIEW object_definition_v2;
+GO
+
 DROP TABLE object_definition_t1;
 GO
 

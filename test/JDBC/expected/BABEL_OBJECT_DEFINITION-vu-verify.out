@@ -109,3 +109,12 @@ nvarchar
 CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2
 ~~END~~
 
+
+-- Dependency Test
+SELECT * FROM object_definition_v2;
+GO
+~~START~~
+int
+1
+~~END~~
+
