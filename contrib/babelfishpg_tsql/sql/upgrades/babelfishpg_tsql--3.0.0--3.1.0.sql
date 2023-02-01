@@ -1961,6 +1961,13 @@ SELECT CAST(name as sys.sysname) as name
 FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.openquery(
+IN linked_server text,
+IN query text)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'openquery_internal'
+LANGUAGE C VOLATILE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

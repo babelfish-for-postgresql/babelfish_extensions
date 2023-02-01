@@ -1,0 +1,18 @@
+-- psql
+SET client_min_messages = 'error';
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+-- tsql
+-- Add localhost as linked server
+EXEC sp_addlinkedserver  @server = N'bbf_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Add jdbc_user as linked server login
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+-- Create a view dependent on OPENQUERY
+-- Commenting this out until we figure out a way to support CREATE VIEW with OPENQUERY in MVU
+-- CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
+GO
