@@ -2638,23 +2638,6 @@ $function$
 ;
 GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
 
-<<<<<<< Updated upstream
-CREATE OR REPLACE FUNCTION sys.schema_id()
-RETURNS INT
-LANGUAGE plpgsql
-STABLE STRICT
-AS $$
-BEGIN
-  RETURN (select oid from sys.pg_namespace_ext where nspname = (select current_schema()))::INT;
-EXCEPTION
-    WHEN others THEN
-        RETURN NULL;
-END;
-$$;
-GRANT EXECUTE ON FUNCTION sys.schema_id() TO PUBLIC;
-
-=======
->>>>>>> Stashed changes
 CREATE OR REPLACE FUNCTION sys.original_login()
 RETURNS sys.sysname
 LANGUAGE plpgsql

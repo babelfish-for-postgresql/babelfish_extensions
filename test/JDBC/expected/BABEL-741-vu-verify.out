@@ -18,7 +18,7 @@ SELECT schema_id(NULL)
 GO
 ~~START~~
 int
-19149
+<NULL>
 ~~END~~
 
 

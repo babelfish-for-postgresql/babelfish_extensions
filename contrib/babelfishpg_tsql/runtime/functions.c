@@ -499,7 +499,8 @@ schema_id(PG_FUNCTION_ARGS)
 	const char *physical_name;
 	List *search_path;
 
-	if(PG_ARGISNULL(0)){
+	/* when no argument is passed, then ID of default schema of the caller */
+	if(PG_NARGS()==0){
 		search_path = fetch_search_path(false);
 
 		if (search_path == NIL)
@@ -509,6 +510,9 @@ schema_id(PG_FUNCTION_ARGS)
 		list_free(search_path);
 	}
 	else{
+		if(PG_ARGISNULL(0))
+			PG_RETURN_NULL();
+
 		name = text_to_cstring(PG_GETARG_TEXT_P(0));
 		if (pltsql_case_insensitive_identifiers)
 			name = downcase_identifier(name, strlen(name), false, false); /* no truncation here. truncation will be handled inside get_physical_schema_name() */
