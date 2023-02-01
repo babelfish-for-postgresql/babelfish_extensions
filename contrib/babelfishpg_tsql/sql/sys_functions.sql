@@ -2603,7 +2603,7 @@ STABLE STRICT
 AS $$
 declare return_value text;
 begin
-	RETURN (select session_user)::sys.sysname;
+	RETURN (select orig_loginname from sys.babelfish_authid_login_ext where rolname = session_user)::sys.sysname;
 EXCEPTION 
 	WHEN others THEN
  		RETURN NULL;
@@ -3353,3 +3353,10 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.openquery(
+IN linked_server text,
+IN query text)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'openquery_internal'
+LANGUAGE C VOLATILE;

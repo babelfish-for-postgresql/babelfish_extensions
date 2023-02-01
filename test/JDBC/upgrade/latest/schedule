@@ -392,3 +392,4 @@ BABEL-3844
 test_windows_alter_login
 sys-systypes
 BABEL_OBJECT_DEFINITION
+openquery_upgrd
