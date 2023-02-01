@@ -786,6 +786,9 @@ get_original_login_name(char *login)
 	/* original login name should not be NULL. */
 	Assert(!isnull);
 
+	systable_endscan(scan);
+	table_close(relation, AccessShareLock);
+
 	return TextDatumGetCString(datum);
 }
 
