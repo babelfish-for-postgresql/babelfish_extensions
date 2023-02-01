@@ -46,6 +46,7 @@ Could not find tests for function sys.stuff
 Could not find tests for function sys.suser_id_internal
 Could not find tests for function sys.suser_name_internal
 Could not find tests for function sys.sysdatetime
+Could not find tests for function sys.systypes_precision_helper
 Could not find tests for function sys.timefromparts
 Could not find tests for function sys.tsql_get_returntypmodvalue
 Could not find tests for function sys.tsql_query_to_json_ffunc
@@ -165,6 +166,7 @@ Could not find upgrade tests for function sys.stuff
 Could not find upgrade tests for function sys.suser_id_internal
 Could not find upgrade tests for function sys.suser_name_internal
 Could not find upgrade tests for function sys.sysdatetime
+Could not find upgrade tests for function sys.systypes_precision_helper
 Could not find upgrade tests for function sys.timefromparts
 Could not find upgrade tests for function sys.tsql_get_functiondef
 Could not find upgrade tests for function sys.tsql_get_returntypmodvalue
