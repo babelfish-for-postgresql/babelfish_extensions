@@ -1643,10 +1643,16 @@ table_ref:	relation_expr tsql_table_hint_expr
 				}
 			| TSQL_APPLY openjson_expr
 				{
+					/*
+					 * This case handles openjson cross/outer apply
+					 */
 					$$ = (Node *) $2;
 				}
 			| openjson_expr
 				{
+					/*
+					 * Standard openjson case
+					 */
 					$$ = (Node *) $1;
 				}
 		;
