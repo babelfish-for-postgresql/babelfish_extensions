@@ -14,9 +14,11 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
+SET NOCOUNT ON
 DECLARE @sp_linkedservers_var table(a sysname, b nvarchar(128), c nvarchar(128), d nvarchar(4000), e nvarchar(4000), f nvarchar(4000), g sysname NULL)
 INSERT INTO @sp_linkedservers_var EXEC sp_linkedservers
 SELECT * FROM @sp_linkedservers_var WHERE a <> 'bbf_server'
+SET NOCOUNT OFF
 GO
 
 -- Try to drop a linked server login that does not exist (should throw error)

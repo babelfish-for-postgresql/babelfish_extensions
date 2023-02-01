@@ -55,12 +55,12 @@ mssql_server3#!#<NULL>
 ~~END~~
 
 
+SET NOCOUNT ON
 DECLARE @sp_linkedservers_var table(a sysname, b nvarchar(128), c nvarchar(128), d nvarchar(4000), e nvarchar(4000), f nvarchar(4000), g sysname NULL)
 INSERT INTO @sp_linkedservers_var EXEC sp_linkedservers
 SELECT * FROM @sp_linkedservers_var WHERE a <> 'bbf_server'
+SET NOCOUNT OFF
 GO
-~~ROW COUNT: 5~~
-
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
 hello.world.com#!#tds_fdw#!##!#hello.world.com#!#<NULL>#!#<NULL>#!#<NULL>
