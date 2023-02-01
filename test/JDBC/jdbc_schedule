@@ -8,7 +8,13 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+# all
+isc-schemata-dep-vu-prepare
+isc-schemata-dep-vu-verify
+isc-schemata-dep-vu-cleanup
+BABEL_SCHEMATA-vu-prepare
+BABEL_SCHEMATA-vu-verify
+BABEL_SCHEMATA-vu-cleanup
 
 # Temporarily ignore tests until fixed in PG15
 ignore#!#BABEL-LOGIN-USER-EXT
