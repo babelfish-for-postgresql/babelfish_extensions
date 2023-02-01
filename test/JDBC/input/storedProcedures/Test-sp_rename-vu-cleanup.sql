@@ -2,38 +2,38 @@
 USE master
 GO
 
-DROP TABLE sp_rename_table2;
+DROP TABLE sp_rename_vu_table2;
 GO
 
-DROP VIEW sp_rename_view1;
+DROP VIEW sp_rename_vu_view1;
 GO
 
-DROP VIEW sp_rename_schema1.sp_rename_view1_new;
+DROP VIEW sp_rename_vu_schema1.sp_rename_vu_view1_new;
 GO
 
-DROP TABLE sp_rename_table1_case_insensitive2;
+DROP TABLE sp_rename_vu_table1_case_insensitive2;
 GO
 
-DROP TABLE sp_rename_schema1.sp_rename_table1;
+DROP TABLE sp_rename_vu_schema1.sp_rename_vu_table1;
 GO
 
-DROP TABLE sp_rename_schema1.sp_rename_table2_new;
+DROP TABLE sp_rename_vu_schema1.sp_rename_vu_table2_new;
 GO
 
-DROP PROCEDURE sp_rename_proc1_new2;
+DROP PROCEDURE sp_rename_vu_proc1_new2;
 GO
 
-DROP PROCEDURE sp_rename_schema1.sp_rename_proc2_new;
+DROP PROCEDURE sp_rename_vu_schema1.sp_rename_vu_proc2_new;
 GO
 
-DROP FUNCTION sp_rename_func2_new;
+DROP FUNCTION sp_rename_vu_func2_new;
 GO
 
-DROP FUNCTION sp_rename_func1_new;
+DROP FUNCTION sp_rename_vu_func1_new;
 GO
 
-DROP FUNCTION sp_rename_schema1.sp_rename_func3_new;
+DROP FUNCTION sp_rename_vu_schema1.sp_rename_vu_func3_new;
 GO
 
-DROP SCHEMA sp_rename_schema1;
+DROP SCHEMA sp_rename_vu_schema1;
 GO
