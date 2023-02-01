@@ -1131,8 +1131,8 @@ DECLARE
 BEGIN
 	CASE
 	WHEN v_type in ('text', 'ntext', 'image') THEN precision = CAST(NULL AS SMALLINT);
-  WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
-  WHEN v_type = 'sql_variant' THEN precision = 0;
+	WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
+	WHEN v_type = 'sql_variant' THEN precision = 0;
 	ELSE
 		precision = max_length;
 	END CASE;

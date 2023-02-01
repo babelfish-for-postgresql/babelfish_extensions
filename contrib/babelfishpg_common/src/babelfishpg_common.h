@@ -39,4 +39,5 @@ typedef struct common_utility_plugin
 					bool *isBaseNum, bool *isBaseChar,
 					bool *isBaseDec, bool *isBaseBin,
 					bool *isBaseDate, int *variantHeaderLen);
+	Oid (*lookup_tsql_datatype_oid) (const char *typestr);
 } common_utility_plugin;

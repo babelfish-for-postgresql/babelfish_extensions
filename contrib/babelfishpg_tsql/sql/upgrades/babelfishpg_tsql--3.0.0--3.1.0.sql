@@ -1849,6 +1849,73 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_name'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL 
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+
+CREATE OR REPLACE VIEW sys.database_principals AS SELECT
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+CAST(Base.oid AS INT) AS principal_id,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE 
+    WHEN Ext.type = 'S' THEN 'SQL_USER'
+    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL 
+  END 
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME();
+
+CREATE OR REPLACE FUNCTION sys.original_login()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value text;
+begin
+  RETURN (select orig_loginname from sys.babelfish_authid_login_ext where rolname = session_user)::sys.sysname;
+EXCEPTION 
+  WHEN others THEN
+    RETURN NULL;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION sys.systypes_precision_helper(IN type TEXT, IN max_length SMALLINT)
 RETURNS SMALLINT
 AS $$
@@ -1858,8 +1925,8 @@ DECLARE
 BEGIN
 	CASE
 	WHEN v_type in ('text', 'ntext', 'image') THEN precision = CAST(NULL AS SMALLINT);
-  WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
-  WHEN v_type = 'sql_variant' THEN precision = 0;
+	WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
+	WHEN v_type = 'sql_variant' THEN precision = 0;
 	ELSE
 		precision = max_length;
 	END CASE;
@@ -1881,16 +1948,25 @@ SELECT CAST(name as sys.sysname) as name
   , CAST(0 as smallint) as reserved
   , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
   , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
-  , CAST((case when (tsql_base_type_name in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
+  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
+          else 0 end) as sys.bit) as variable
   , CAST(is_nullable as sys.bit) as allownulls
   , CAST(system_type_id as int) as type
   , CAST(null as sys.varchar(255)) as printfmt
-  , (case when precision <> 0::smallint then precision else sys.systypes_precision_helper(tsql_base_type_name, max_length) end) as prec
+  , (case when precision <> 0::smallint then precision 
+      else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
   , CAST(scale as sys.tinyint) as scale
   , CAST(collation_name as sys.sysname) as collation
-FROM sys.types
-, coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) AS tsql_base_type_name;
+FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.openquery(
+IN linked_server text,
+IN query text)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'openquery_internal'
+LANGUAGE C VOLATILE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

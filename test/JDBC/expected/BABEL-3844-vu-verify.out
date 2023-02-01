@@ -1,12 +1,12 @@
 -- psql
 select rolname, login_name, type from sys.babelfish_authid_user_ext where login_name in ('aduser1@BABEL','aduser2@BABEL',
-'aduser3@BABEL','pass','pass2','testuser@BABEL');
+'aduser3@BABEL','pass','pass2','testuser@BABEL') order by rolname;
 GO
 ~~START~~
 name#!#name#!#bpchar
+master_abc#!#aduser3@BABEL#!#U
 master_babel\aduser1#!#aduser1@BABEL#!#U
 master_babel\aduser2#!#aduser2@BABEL#!#U
-master_abc#!#aduser3@BABEL#!#U
 master_pass#!#pass#!#S
 master_pass2#!#pass2#!#S
 testdb_babel\aduser1#!#aduser1@BABEL#!#U
@@ -66,52 +66,52 @@ int
 
 
 -- tsql
-select name, type from sys.database_principals where name in ('test_role');
+select name, type, type_desc from sys.database_principals where name in ('test_role');
 GO
 ~~START~~
-varchar#!#char
-test_role#!#R
+varchar#!#char#!#nvarchar
+test_role#!#R#!#DATABASE_ROLE
 ~~END~~
 
 
 -- tsql
-select name, type from sys.database_principals where name in ('babel\aduser1','babel\aduser2',
-'abc','pass','pass2','temp_user');
+select name, type, type_desc from sys.database_principals where name in ('babel\aduser1','babel\aduser2',
+'abc','pass','pass2','temp_user') order by name;
 GO
 ~~START~~
-varchar#!#char
-babel\aduser1#!#U
-babel\aduser2#!#U
-abc#!#U
-pass#!#S
-pass2#!#S
+varchar#!#char#!#nvarchar
+abc#!#U#!#WINDOWS_USER
+babel\aduser1#!#U#!#WINDOWS_USER
+babel\aduser2#!#U#!#WINDOWS_USER
+pass#!#S#!#SQL_USER
+pass2#!#S#!#SQL_USER
 ~~END~~
 
 
 -- tsql
 use testdb;
 GO
-select name, type from sys.database_principals where name in ('babel\testuser');
+select name, type, type_desc from sys.database_principals where name in ('babel\testuser');
 GO
 ~~START~~
-varchar#!#char
-babel\testuser#!#U
+varchar#!#char#!#nvarchar
+babel\testuser#!#U#!#WINDOWS_USER
 ~~END~~
 
 use master;
 GO
 
 -- tsql
-select name, type from sys.server_principals where name in ('aduser1@BABEL','aduser2@BABEL','aduser3@BABEL',
-'pass','pass2','testuser@BABEL');
+select name, type, type_desc from sys.server_principals where name in ('BABEL\aduser1','BABEL\aduser2','BABEL\aduser3',
+'pass','pass2','BABEL\testuser') order by name;
 GO
 ~~START~~
-varchar#!#char
-aduser1@BABEL#!#U
-aduser2@BABEL#!#U
-aduser3@BABEL#!#U
-pass#!#S
-pass2#!#S
-testuser@BABEL#!#U
+varchar#!#char#!#nvarchar
+babel\aduser1#!#U#!#WINDOWS_LOGIN
+babel\aduser2#!#U#!#WINDOWS_LOGIN
+babel\aduser3#!#U#!#WINDOWS_LOGIN
+babel\testuser#!#U#!#WINDOWS_LOGIN
+pass#!#S#!#SQL_LOGIN
+pass2#!#S#!#SQL_LOGIN
 ~~END~~
 
