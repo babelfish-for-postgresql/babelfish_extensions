@@ -8,13 +8,8 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-#all
-BABEL-2869
-BABEL-2833
-BABEL-741
-BABEL-741-vu-verify
-BABEL-2458
-BABEL-2416
+all
+
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
