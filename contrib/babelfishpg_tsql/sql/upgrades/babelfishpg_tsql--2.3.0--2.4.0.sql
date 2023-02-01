@@ -1667,6 +1667,32 @@ SELECT CAST(name as sys.sysname) as name
 FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
+RETURNS sys.NVARCHAR(4000)
+AS $$
+DECLARE
+    definition sys.nvarchar(4000);
+BEGIN
+
+    definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
+    IF (definition IS NULL)
+    THEN
+        definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
+        IF (definition IS NULL)
+        THEN
+            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            IF (definition IS NULL)
+            THEN
+                RETURN NULL;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN definition;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
