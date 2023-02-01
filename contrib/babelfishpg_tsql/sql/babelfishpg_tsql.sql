@@ -25,9 +25,6 @@ CREATE FUNCTION databasepropertyex (TEXT, TEXT)
 CREATE FUNCTION connectionproperty (TEXT)
 		RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'connectionproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION collationproperty (TEXT, TEXT)
-        RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'collationproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE FUNCTION sessionproperty (TEXT)
 	   RETURNS  sys.SQL_VARIANT AS 'babelfishpg_tsql', 'sessionproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 

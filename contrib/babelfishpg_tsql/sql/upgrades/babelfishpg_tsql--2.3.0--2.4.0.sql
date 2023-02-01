@@ -1626,6 +1626,49 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_name'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.systypes_precision_helper(IN type TEXT, IN max_length SMALLINT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	precision SMALLINT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	CASE
+	WHEN v_type in ('text', 'ntext', 'image') THEN precision = CAST(NULL AS SMALLINT);
+  WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
+  WHEN v_type = 'sql_variant' THEN precision = 0;
+	ELSE
+		precision = max_length;
+	END CASE;
+	RETURN precision;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE VIEW sys.systypes AS
+SELECT CAST(name as sys.sysname) as name
+  , CAST(system_type_id as int) as xtype
+  , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
+  , max_length as length
+  , CAST(precision as sys.tinyint) as xprec
+  , CAST(scale as sys.tinyint) as xscale
+  , CAST(default_object_id as int) as tdefault
+  , CAST(rule_object_id as int) as domain
+  , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
+  , CAST(0 as smallint) as reserved
+  , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
+  , CAST((case when (tsql_base_type_name in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 else 0 end) as sys.bit) as variable
+  , CAST(is_nullable as sys.bit) as allownulls
+  , CAST(system_type_id as int) as type
+  , CAST(null as sys.varchar(255)) as printfmt
+  , (case when precision <> 0::smallint then precision else sys.systypes_precision_helper(tsql_base_type_name, max_length) end) as prec
+  , CAST(scale as sys.tinyint) as scale
+  , CAST(collation_name as sys.sysname) as collation
+FROM sys.types
+, coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) AS tsql_base_type_name;
+GRANT SELECT ON sys.systypes TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
