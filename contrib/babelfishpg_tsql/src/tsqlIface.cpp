@@ -917,7 +917,7 @@ public:
 
 			rewritten_query_fragment.emplace(std::make_pair(linked_srv->start->getStartIndex(), std::make_pair(linked_srv_name, str)));
 		}	
-  }
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
