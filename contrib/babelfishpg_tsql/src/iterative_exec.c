@@ -1133,11 +1133,9 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * is active to handle undo of failed command
 		 * We do not start savepoint for batch commands as
 		 * error handling must be taken care of at statement
-		 * level
-		 * For RO functions start savepoint even when transaction
-		 * is not active to retain top level portals. A transaction
-		 * rollback will cleanup portal data which can lead to
-		 * problems when control returns back to portal level
+		 * level.
+		 * For statements inside an RO functions we do not start
+		 * savepoints and let the caller be responsible for handling the error.
 		 */
 		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive())
 		{
@@ -1184,13 +1182,6 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		ErrorData *edata;
 		int last_error;
 		bool error_mapped;
-
-		if (ro_func)
-		{
-			MemoryContextSwitchTo(cur_ctxt);
-			PG_RE_THROW();
-		}
-
 		support_tsql_trans = pltsql_support_tsql_transactions();
 
 		/* Close trigger nesting in engine */
@@ -1236,6 +1227,14 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		}
 
 		MemoryContextSwitchTo(cur_ctxt);
+
+		/* In case of RO functions we want the caller to handle errors. */
+		if (ro_func)
+		{
+			/* Cleanup SPI connections if they exist. */
+			AtEOXact_SPI(false);
+			PG_RE_THROW();
+		}
 
 		edata = CopyErrorData();
 		error_mapped = get_tsql_error_code(edata, &last_error);
