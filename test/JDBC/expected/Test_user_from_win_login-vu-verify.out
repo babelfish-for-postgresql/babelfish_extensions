@@ -1,3 +1,4 @@
+-- tsql
 create user win_admin for login [pnq\admin]
 GO
 
@@ -13,4 +14,8 @@ drop user win_admin;
 GO
 
 drop login [pnq\admin];
+GO
+
+-- psql
+drop role rds_ad
 GO

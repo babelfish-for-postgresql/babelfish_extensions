@@ -1,3 +1,13 @@
+-- psql
+do 
+$$ begin 
+    if not exists (select * from pg_catalog.pg_authid where rolname = 'rds_ad') 
+        then create role rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION; 
+    end if; 
+end $$;
+GO
+
+-- tsql
 CREATE DATABASE ad_db;
 GO
 

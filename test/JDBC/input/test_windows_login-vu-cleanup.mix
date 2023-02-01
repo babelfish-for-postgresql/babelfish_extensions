@@ -1,3 +1,4 @@
+-- tsql
 DROP LOGIN PassWordUser;
 GO
 
@@ -58,4 +59,8 @@ DROP LOGIN [babel\爱];
 GO
 
 DROP DATABASE ad_db;
+GO
+
+-- psql
+DROP ROLE rds_ad
 GO
