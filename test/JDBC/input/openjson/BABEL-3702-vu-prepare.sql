@@ -280,12 +280,12 @@ BEGIN
 END;
 GO
 
-CREATE TABLE CustomerData (
+CREATE TABLE p18_data (
    CustomerID int,
    City nvarchar(50),
    Product nvarchar(max)
 )
-INSERT INTO CustomerData
+INSERT INTO p18_data
    (CustomerID, City, Product)
 VALUES
    (1, N'Delhi', N'[{"Products": [{"Id": "1", "Name": "TV"}, {"Id": "2", "Name": "Laptop"}]}]'),
@@ -294,7 +294,7 @@ GO
 
 create procedure BABEL_3702_vu_prepare_p18 as
 SELECT d.CustomerID, j2.Id, j2.Name
-FROM CustomerData d
+FROM p18_data d
 CROSS APPLY OPENJSON(d.Product, '$') j1
 CROSS APPLY OPENJSON(j1.[value], '$.Products') WITH (
    Id nvarchar(10) '$.Id',

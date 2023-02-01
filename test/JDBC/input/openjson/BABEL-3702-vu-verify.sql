@@ -95,6 +95,7 @@ GO
 
 EXEC BABEL_3702_vu_prepare_p18
 GO
+drop table p18_data
 DROP PROCEDURE BABEL_3702_vu_prepare_p18
 GO
 
