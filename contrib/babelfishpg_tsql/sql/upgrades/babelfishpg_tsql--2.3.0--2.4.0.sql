@@ -109,6 +109,32 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     FINALFUNC = tsql_query_to_xml_text_ffunc
 );
 
+CREATE OR REPLACE FUNCTION sys.tsql_select_for_xml_result(res XML)
+RETURNS setof XML AS
+$$
+BEGIN
+IF res IS NOT NULL THEN
+    return next res;
+ELSE
+    return;
+END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.tsql_select_for_xml_text_result(res NTEXT)
+RETURNS setof NTEXT AS
+$$
+BEGIN
+IF res IS NOT NULL THEN
+    return next res;
+ELSE
+    return;
+END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
     state INTERNAL,
@@ -139,6 +165,19 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
     SFUNC = tsql_query_to_json_sfunc,
     FINALFUNC = tsql_query_to_json_ffunc
 );
+
+CREATE OR REPLACE FUNCTION sys.tsql_select_for_json_result(res sys.NVARCHAR)
+RETURNS setof sys.NVARCHAR AS
+$$
+BEGIN
+IF res IS NOT NULL THEN
+    return next res;
+ELSE
+    return;
+END IF;
+END;
+$$
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
 AS $$
