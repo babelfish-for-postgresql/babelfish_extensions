@@ -69,6 +69,22 @@ int
 ~~END~~
 
 
+-- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
+EXEC forxml_subquery_vu_p_empty_xml
+GO
+~~START~~
+xml
+~~END~~
+
+
+SELECT @@rowcount
+GO
+~~START~~
+int
+0
+~~END~~
+
+
 -- exercise result internal functions
 SELECT * FROM forxml_subquery_vu_v_internal
 GO

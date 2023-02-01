@@ -19,6 +19,8 @@ go
 -- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
 DROP PROCEDURE forxml_subquery_vu_p_empty
 GO
+DROP PROCEDURE forxml_subquery_vu_p_empty_xml
+GO
 DROP VIEW forxml_subquery_vu_v_internal
 GO
 DROP VIEW forxml_subquery_vu_v_internal_text
