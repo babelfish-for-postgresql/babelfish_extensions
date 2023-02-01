@@ -69,7 +69,6 @@ int
 ~~END~~
 
 
--- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
 EXEC forxml_subquery_vu_p_empty_xml
 GO
 ~~START~~
