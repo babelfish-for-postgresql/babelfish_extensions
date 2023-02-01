@@ -132,17 +132,19 @@ check_version_number(char **newval, void **extra, GucSource source)
 		/* check each token contains only digits */
 		if(strspn(token, "0123456789") != strlen(token))
 		{
-			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("Please enter 4 valid numbers separated by \'.\' ")));
+			ereport(WARNING,
+				(errmsg("Please enter 4 valid numbers separated by \'.\' ")));
+			*newval = product_version;
+			return true;
 		}
 
 		/* check Major Version is between 11 and 16 */
 		if(part == 0 && (11 > atoi(token) || atoi(token) > 16))
 		{
-			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("Please enter a valid major version number between 11 and 16")));
+			ereport(WARNING,
+				(errmsg("Please enter a valid major version number between 11 and 16")));
+			*newval = product_version;
+			return true;
 		}
 		/*
 		 * Minor Version takes 1 byte in PreLogin message when doing handshake, 
@@ -150,9 +152,10 @@ check_version_number(char **newval, void **extra, GucSource source)
 		 */
 		if(part == 1 && atoi(token) > 0xFF)
 		{
-			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("Please enter a valid minor version number between 0 and 255")));
+			ereport(WARNING,
+				(errmsg("Please enter a valid minor version number between 0 and 255")));
+			*newval = product_version;
+			return true;
 		}
 		/*
 		 * Micro Version takes 2 bytes in PreLogin message when doing handshake,
@@ -160,18 +163,20 @@ check_version_number(char **newval, void **extra, GucSource source)
 		 */
 		if(part == 2 && atoi(token) > 0xFFFF)
 		{
-			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("Please enter a valid micro version number between 0 and 65535")));
+			ereport(WARNING,
+				(errmsg("Please enter a valid micro version number between 0 and 65535")));
+			*newval = product_version;
+			return true;
 		}
 		part++;
 	}
 
 	if(part != 4)
 	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("Please enter 4 valid numbers separated by \'.\' ")));
+		ereport(WARNING,
+			(errmsg("Please enter 4 valid numbers separated by \'.\' ")));
+		*newval = product_version;
+			return true;
 	}
 
     return true;
