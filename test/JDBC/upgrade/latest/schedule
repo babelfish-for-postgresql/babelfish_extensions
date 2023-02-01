@@ -392,3 +392,4 @@ BABEL-3844
 test_windows_alter_login
 sys-systypes
 openquery_upgrd
+BABEL-3657
