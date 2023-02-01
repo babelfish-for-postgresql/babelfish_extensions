@@ -110,8 +110,8 @@ varchar#!#char#!#nvarchar
 babel\aduser1#!#U#!#WINDOWS_LOGIN
 babel\aduser2#!#U#!#WINDOWS_LOGIN
 babel\aduser3#!#U#!#WINDOWS_LOGIN
+babel\testuser#!#U#!#WINDOWS_LOGIN
 pass#!#S#!#SQL_LOGIN
 pass2#!#S#!#SQL_LOGIN
-babel\testuser#!#U#!#WINDOWS_LOGIN
 ~~END~~
 
