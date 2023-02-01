@@ -1154,3 +1154,14 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
 	pfree(schema_name);
 	return (db_id_from_schema == db_id);
 }
+
+/*
+ * remove_trailing_spaces
+ * 		Remove trailing spaces from a string
+ */
+void remove_trailing_spaces(char *name)
+{
+	int len = strlen(name);
+	while (len > 0 && isspace((unsigned char) name[len - 1]))
+		name[--len] = '\0';
+}

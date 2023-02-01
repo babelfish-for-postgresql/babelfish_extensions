@@ -2083,11 +2083,10 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	if(function_name != NULL)
 	{	
 		/* strip trailing whitespace */
-		i = strlen(function_name);
-		while (i > 0 && isspace((unsigned char) function_name[i - 1]))
-			function_name[--i] = '\0';
+		remove_trailing_spaces(function_name);
 
 		/* if function name is empty */
+		i = strlen(function_name);
 		if(i == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -2102,11 +2101,10 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	if(volatility != NULL)
 	{
 		/* strip trailing whitespace */
-		i = strlen(volatility);
-		while (i > 0 && isspace((unsigned char) volatility[i - 1]))
-			volatility[--i] = '\0';
+		remove_trailing_spaces(volatility);
 		
 		/* if volatility is empty */
+		i = strlen(volatility);
 		if(i == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
