@@ -1,0 +1,2 @@
+DROP VIEW datediff_internal_date_vu_before_14_7_or_15_2_prepare_v1
+GO
