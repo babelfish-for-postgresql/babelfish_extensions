@@ -32,3 +32,7 @@ GO
 
 SELECT @@rowcount
 GO
+
+-- exercise tsql_select_for_json_result internal function
+SELECT * FROM forjson_subquery_vu_v_internal
+GO

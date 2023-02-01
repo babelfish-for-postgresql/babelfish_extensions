@@ -68,3 +68,20 @@ int
 0
 ~~END~~
 
+
+-- exercise result internal functions
+SELECT * FROM forxml_subquery_vu_v_internal
+GO
+~~START~~
+xml
+<abcd/>
+~~END~~
+
+
+SELECT * FROM forxml_subquery_vu_v_internal_text
+GO
+~~START~~
+ntext
+<abcd/>
+~~END~~
+

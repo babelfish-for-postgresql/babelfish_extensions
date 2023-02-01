@@ -22,3 +22,10 @@ GO
 
 SELECT @@rowcount
 GO
+
+-- exercise result internal functions
+SELECT * FROM forxml_subquery_vu_v_internal
+GO
+
+SELECT * FROM forxml_subquery_vu_v_internal_text
+GO

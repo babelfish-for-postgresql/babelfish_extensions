@@ -30,6 +30,10 @@ GO
 DROP PROCEDURE forjson_subquery_vu_p_empty
 GO
 
+-- exercise tsql_select_for_json_result internal function
+DROP VIEW forjson_subquery_vu_v_internal
+GO
+
 DROP TABLE forjson_subquery_vu_t_countries
 GO
 

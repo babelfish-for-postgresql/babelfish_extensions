@@ -64,3 +64,12 @@ SELECT * FROM forxml_subquery_vu_t_t1
 	WHERE 1 = 0
 	FOR XML RAW
 GO
+
+-- exercise result internal functions
+CREATE VIEW forxml_subquery_vu_v_internal AS
+SELECT * FROM tsql_select_for_xml_result('<abcd/>')
+GO
+
+CREATE VIEW forxml_subquery_vu_v_internal_text AS
+SELECT * FROM tsql_select_for_xml_text_result('<abcd/>')
+GO
