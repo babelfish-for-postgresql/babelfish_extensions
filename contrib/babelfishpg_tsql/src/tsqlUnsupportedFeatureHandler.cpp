@@ -1534,7 +1534,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_procoption",
 	"sp_recompile",
 	"sp_refreshview",
-	"sp_rename",
 	"sp_renamedb",
 	"sp_resetstatus",
 	"sp_sequence_get_range",

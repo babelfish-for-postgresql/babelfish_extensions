@@ -147,15 +147,8 @@ go
 create or replace view master_dbo.def_v6 as select 6;
 go
 
-alter view master_dbo.def_v1 rename to def_v1_renamed;
-go
-
 -- tsql
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%def_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
-go
-
--- psql
-alter view master_dbo.def_v1_renamed rename to def_v1;
 go
 
 -- tsql
