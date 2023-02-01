@@ -2603,7 +2603,7 @@ STABLE STRICT
 AS $$
 declare return_value text;
 begin
-	RETURN (select session_user)::sys.sysname;
+	RETURN (select orig_loginname from sys.babelfish_authid_login_ext where rolname = session_user)::sys.sysname;
 EXCEPTION 
 	WHEN others THEN
  		RETURN NULL;
