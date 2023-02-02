@@ -357,6 +357,7 @@ sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
 openjson
+BABEL-3702
 sys-sysindexes
 sys-system_objects
 ISC-Tables

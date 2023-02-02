@@ -272,3 +272,14 @@ vitals#!#{"height": {"unit": "cm", "measure": 178}, "species": "Human"}#!#5
 
 DROP PROCEDURE BABEL_3702_vu_prepare_p21
 GO
+
+EXEC BABEL_3702_vu_prepare_p22
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid json path)~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p22
+GO
