@@ -23,7 +23,7 @@ GO
 -- psql
 do 
 $$ begin 
-    if not exists (select * from pg_catalog.pg_authid where rolname = 'rds_ad') 
+    if not exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
         then create role rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION; 
     end if; 
 end $$;

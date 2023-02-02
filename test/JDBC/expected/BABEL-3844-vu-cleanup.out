@@ -57,7 +57,7 @@ GO
 -- psql
 do 
 $$ begin 
-    if exists (select * from pg_catalog.pg_authid where rolname = 'rds_ad') 
+    if exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
         then DROP ROLE rds_ad; 
     end if; 
 end $$;
