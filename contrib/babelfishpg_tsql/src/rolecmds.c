@@ -599,7 +599,6 @@ grant_rds_ad_to_windows_login(const char *login)
 	List			*parsetree_list;
 	Node			*stmt;
 	RoleSpec		*tmp_role;
-	AccessPriv		*ad_role;
 	PlannedStmt		*wrapper;
 	Oid				roleid;
 
@@ -613,18 +612,11 @@ grant_rds_ad_to_windows_login(const char *login)
 				 errmsg("Role \"%s\" does not exist, please check your kerberos setup.", RDS_AD_NAME)));
 	}
 
-
 	initStringInfo(&query);
-	appendStringInfo(&query, "GRANT dummy TO dummy; ");
+	appendStringInfo(&query, "GRANT %s TO dummy; ", RDS_AD_NAME);
 	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-	if (list_length(parsetree_list) != 1)
-		ereport(ERROR, 
-				(errcode(ERRCODE_SYNTAX_ERROR), 
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(parsetree_list))));
-
-	/* Update the dummy statement with real values */
+	/* Update the dummy statement with real value */
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
 
 	tmp_role = makeNode(RoleSpec);
@@ -632,12 +624,7 @@ grant_rds_ad_to_windows_login(const char *login)
 	tmp_role->location = -1;
 	tmp_role->rolename = pstrdup(login);
 
-	ad_role = makeNode(AccessPriv);
-	/* This should be configurable via server level GUC or something else mechanism */
-	ad_role->priv_name = pstrdup(RDS_AD_NAME);
-	ad_role->cols = NIL;
-
-	update_GrantRoleStmt(stmt, list_make1(ad_role), list_make1(tmp_role));
+	update_GrantRoleStmt(stmt, ((GrantRoleStmt *) stmt)->granted_roles, list_make1(tmp_role));
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
@@ -646,11 +633,11 @@ grant_rds_ad_to_windows_login(const char *login)
 	wrapper->canSetTag = false;
 	wrapper->utilityStmt = stmt;
 	wrapper->stmt_location = 0;
-	wrapper->stmt_len = 20;
+	wrapper->stmt_len = query.len;
 
 	/* do this step */
 	ProcessUtility(wrapper,
-				  "GRANT dummy TO dummy",
+				   query.data,
 				   false,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   NULL,
@@ -660,7 +647,6 @@ grant_rds_ad_to_windows_login(const char *login)
 
 	/* make sure later steps can see the object created here */
 	CommandCounterIncrement();
-
 	pfree(query.data);
 }
 
