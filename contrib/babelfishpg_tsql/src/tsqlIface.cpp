@@ -2444,7 +2444,7 @@ antlr_parser_cpp(const char *sourceText)
 	 * Generally the mutator steps are non-reentrant, if parsetree is created and mutators are run, subsequent parsing may produce
 	 * incorrect error messages
 	*/
-	if (!result.success && !result.parseTreeCreated)
+	if (!result.success && !result.parseTreeCreated && pltsql_enable_sll_parse_mode)
 	{
 		elog(DEBUG1, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
 		result = antlr_parse_query(sourceText, false);
