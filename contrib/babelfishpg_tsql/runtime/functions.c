@@ -91,15 +91,12 @@ PG_FUNCTION_INFO_V1(smallint_degrees);
 PG_FUNCTION_INFO_V1(bigint_radians);
 PG_FUNCTION_INFO_V1(int_radians);
 PG_FUNCTION_INFO_V1(smallint_radians);
-<<<<<<< HEAD
 PG_FUNCTION_INFO_V1(bigint_power);
 PG_FUNCTION_INFO_V1(int_power);
 PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
-=======
 PG_FUNCTION_INFO_V1(object_schema_name);
->>>>>>> 1555d795 (BABEL-733: Support OBJECT_SCHEMA_NAME T-SQL function)
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -1821,9 +1818,9 @@ numeric_radians(PG_FUNCTION_ARGS)
 }
 
 /* Returns the database schema name for schema-scoped objects. */
-Datum 
+Datum
 object_schema_name(PG_FUNCTION_ARGS)
-{	
+{
 	Oid object_id;
 	Oid database_id;
 	Oid	user_id = GetUserId();
@@ -1843,7 +1840,7 @@ object_schema_name(PG_FUNCTION_ARGS)
 		database_id = (Oid) PG_GETARG_INT32(1);
 		user_id = GetSessionUserId();
 	}
-	
+
 	/* lookup namespace_oid in pg_class */
 	temp_nspid = get_rel_namespace(object_id);
 	if(OidIsValid(temp_nspid)){
