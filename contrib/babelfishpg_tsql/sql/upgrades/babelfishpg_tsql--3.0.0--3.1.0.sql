@@ -2576,6 +2576,11 @@ RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'openquery_internal'
 LANGUAGE C VOLATILE;
 
+CREATE OR REPLACE FUNCTION sys.OBJECT_SCHEMA_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
+RETURNS sys.SYSNAME AS
+'babelfishpg_tsql', 'object_schema_name'
+LANGUAGE C STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
