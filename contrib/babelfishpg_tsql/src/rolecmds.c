@@ -615,8 +615,51 @@ grant_rds_ad_to_windows_login(const char *login)
 
 
 	initStringInfo(&query);
-	appendStringInfo(&query, "GRANT %S TO %S; ", RDS_AD_NAME, login);
-	exec_utility_cmd_helper(query.data);
+	appendStringInfo(&query, "GRANT dummy TO dummy; ");
+	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR, 
+				(errcode(ERRCODE_SYNTAX_ERROR), 
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+
+	tmp_role = makeNode(RoleSpec);
+	tmp_role->roletype = ROLESPEC_CSTRING;
+	tmp_role->location = -1;
+	tmp_role->rolename = pstrdup(login);
+
+	ad_role = makeNode(AccessPriv);
+	/* This should be configurable via server level GUC or something else mechanism */
+	ad_role->priv_name = pstrdup(RDS_AD_NAME);
+	ad_role->cols = NIL;
+
+	update_GrantRoleStmt(stmt, list_make1(ad_role), list_make1(tmp_role));
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 20;
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				  "GRANT dummy TO dummy",
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
 
 	pfree(query.data);
 }
