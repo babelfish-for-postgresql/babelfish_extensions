@@ -60,6 +60,7 @@ EXEC sp_helplinkedsrvlogin
 GO
 ~~START~~
 varchar#!#varchar#!#smallint#!#varchar
+bbf_server#!#<NULL>#!#0#!#jdbc_user
 mssql_server#!#<NULL>#!#0#!#jdbc_user
 mssql_server2#!#<NULL>#!#0#!#only_user_no_password
 mssql_server3#!#<NULL>#!#0#!#<NULL>
