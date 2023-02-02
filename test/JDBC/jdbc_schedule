@@ -10,14 +10,6 @@
 
 all
 
-# Temporarily ignore tests until fixed in PG15
-ignore#!#BABEL-LOGIN-USER-EXT
-ignore#!#BABEL-ROLE-vu-prepare
-ignore#!#BABEL-ROLE-vu-verify
-ignore#!#BABEL-ROLE-vu-cleanup
-ignore#!#BABEL-ROLE
-ignore#!#BABEL-USER
-
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
