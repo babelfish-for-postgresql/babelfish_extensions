@@ -1841,6 +1841,13 @@ func_expr_common_subexpr:
 											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
+			| TSQL_DATEDIFF_BIG '(' datediff_arg ',' a_expr ',' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datediff_big"),
+											   list_make3(makeStringConst($3, @3), $5, $7),
+											   COERCE_EXPLICIT_CALL,
+											   @1);
+				}
 			| TSQL_DATEPART '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datepart"),
@@ -4353,6 +4360,7 @@ reserved_keyword:
 			| TSQL_CROSS
 			| TSQL_DATEADD
 			| TSQL_DATEDIFF
+			| TSQL_DATEDIFF_BIG
 			| TSQL_DATENAME
 			| TSQL_DATEPART
 			| TSQL_IIF

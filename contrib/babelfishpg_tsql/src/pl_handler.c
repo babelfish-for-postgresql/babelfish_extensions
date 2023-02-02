@@ -2654,6 +2654,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (islogin)
 				{
 					Oid		datdba;
+					bool	has_password = false;
+					char* 	temp_login_name = NULL;
 
 					datdba = get_role_oid("sysadmin", false);
 
@@ -2671,6 +2673,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								ereport(ERROR,
 										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 										 errmsg("Current login does not have privileges to alter password")));
+
+							has_password = true;	
 						}
 					}
 
@@ -2681,7 +2685,21 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * acceptable. So, combining these, if the login is of windows then it will be converted
 					 * to UPN format or else it will be as it was
 					 */
-					stmt->role->rolename = convertToUPN(stmt->role->rolename);
+					temp_login_name = convertToUPN(stmt->role->rolename);
+
+					/* If the previous rolname is same as current, then it is password based login
+					 * else, it is windows based login. If, user is trying to alter password for
+					 * windows login, throw error
+					 */
+					if (temp_login_name != stmt->role->rolename)
+					{
+						if (has_password)
+							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), 
+									errmsg("Cannot use parameter PASSWORD for a windows login")));
+						
+						pfree(stmt->role->rolename);
+						stmt->role->rolename = temp_login_name;
+					}
 
 					if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
@@ -3164,18 +3182,24 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 		case T_RenameStmt:
+		{
+			RenameStmt *stmt = (RenameStmt *) parsetree;
+			if (prev_ProcessUtility)
+				prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+									params, queryEnv, dest, qc);
+			else
+				standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+										params, queryEnv, dest, qc);
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-				else
-					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-
-				check_extra_schema_restrictions(parsetree);
-
+				rename_update_bbf_catalog(stmt);
+				/* Clean up. Restore previous state. */
 				return;
 			}
+			check_extra_schema_restrictions(parsetree);
+
+			return;
+		}
 		case T_CreateTableAsStmt:
 		{
 			if (sql_dialect == SQL_DIALECT_TSQL)

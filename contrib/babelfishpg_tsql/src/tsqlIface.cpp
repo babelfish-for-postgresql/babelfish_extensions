@@ -617,7 +617,7 @@ static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext
 		TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
 		TSqlParser::IdContext *proc = nullptr;
 
-		if (exBodyCtx != nullptr)
+		if (exBodyCtx != nullptr && exBodyCtx->proc_var == nullptr)
 			proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
 		else if (exBodyBatchCtx != nullptr)
 			proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
@@ -2316,7 +2316,7 @@ antlr_parser_cpp(const char *sourceText)
 	 * Generally the mutator steps are non-reentrant, if parsetree is created and mutators are run, subsequent parsing may produce
 	 * incorrect error messages
 	*/
-	if (!result.success && !result.parseTreeCreated)
+	if (!result.success && !result.parseTreeCreated && pltsql_enable_sll_parse_mode)
 	{
 		elog(DEBUG1, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
 		result = antlr_parse_query(sourceText, false);

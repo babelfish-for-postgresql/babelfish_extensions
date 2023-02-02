@@ -1612,51 +1612,58 @@ $$ LANGUAGE SQL IMMUTABLE;
 
 -- TODO: BABEL-2838
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
-SELECT DISTINCT 
-CAST(1 as smallint) AS SCOPE,
-CAST(coalesce (split_part(pa.attoptions[1] collate "C", '=', 2) ,c1.name) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
-CAST(t6.data_type AS smallint) AS DATA_TYPE,
+SELECT
+CAST(1 AS SMALLINT) AS SCOPE,
+CAST(coalesce (split_part(a.attoptions[1] COLLATE "C", '=', 2) ,a.attname) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
 
 CASE -- cases for when they are of type identity. 
-	WHEN c1.is_identity = 1 AND (t8.name = 'decimal' or t8.name = 'numeric') 
-	THEN CAST(CONCAT(t8.name, '() identity') AS sys.sysname)
-	WHEN c1.is_identity = 1 AND (t8.name != 'decimal' AND t8.name != 'numeric')
-	THEN CAST(CONCAT(t8.name, ' identity') AS sys.sysname)
-	ELSE CAST(t8.name AS sys.sysname)
+	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
+	THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
+	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
+	THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+	ELSE CAST(t1.name AS sys.sysname)
 END AS TYPE_NAME,
 
-CAST(sys.sp_special_columns_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS int) AS PRECISION,
-CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS int) AS LENGTH,
-CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS smallint) AS SCALE,
+CAST(sys.sp_special_columns_precision_helper(COALESCE(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS SMALLINT) AS SCALE,
 CAST(1 AS smallint) AS PSEUDO_COLUMN,
-CAST(c1.is_nullable AS int) AS IS_NULLABLE,
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CASE
+	WHEN a.attnotnull
+	THEN CAST(0 AS INT)
+	ELSE CAST(1 AS INT) END
+AS IS_NULLABLE,
+CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(C.relname AS sys.sysname) AS TABLE_NAME,
 
 CASE 
-	WHEN idx.is_primary_key != 1
-	THEN CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
-	ELSE CAST('p' AS sys.sysname)
+	WHEN X.indisprimary
+	THEN CAST('p' AS sys.sysname)
+	ELSE CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
 END AS CONSTRAINT_TYPE,
-CAST(idx.name AS sys.sysname) AS CONSTRAINT_NAME,
-CAST(idx.index_id AS int) AS INDEX_ID
-        
-FROM pg_catalog.pg_class t1 
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-	LEFT JOIN sys.indexes idx ON idx.object_id = t1.oid
-	INNER JOIN pg_catalog.pg_attribute i2 ON idx.index_id = i2.attrelid
-	INNER JOIN sys.columns c1 ON c1.object_id = idx.object_id AND cast(i2.attname as sys.sysname) = c1.name collate sys.database_default
+CAST(I.relname AS sys.sysname) CONSTRAINT_NAME,
+CAST(X.indexrelid AS int) AS INDEX_ID
 
-	JOIN pg_catalog.pg_type AS t7 ON t7.oid = c1.system_type_id
-	JOIN sys.types AS t8 ON c1.user_type_id = t8.user_type_id 
-	LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON t7.typname = t6.pg_type_name OR t7.typname = t6.type_name --need in order to get accurate DATA_TYPE value
-	LEFT JOIN pg_catalog.pg_attribute AS pa ON t1.oid = pa.attrelid AND c1.name = pa.attname collate sys.database_default
-	, sys.translate_pg_type_to_tsql(t8.user_type_id) AS tsql_type_name
-	, sys.translate_pg_type_to_tsql(t8.system_type_id) AS tsql_base_type_name
-	WHERE has_schema_privilege(s1.schema_id, 'USAGE');
-  
+FROM( pg_index X
+JOIN pg_class C ON X.indrelid = C.oid
+JOIN pg_class I ON I.oid = X.indexrelid
+CROSS JOIN LATERAL unnest(X.indkey) AS ak(k)
+        LEFT JOIN pg_attribute a
+                       ON (a.attrelid = X.indrelid AND a.attnum = ak.k)
+)
+LEFT JOIN sys.pg_namespace_ext nsp_ext ON C.relnamespace = nsp_ext.oid
+LEFT JOIN sys.schemas s1 ON s1.schema_id = C.relnamespace
+LEFT JOIN sys.columns c1 ON c1.object_id = X.indrelid AND cast(a.attname AS sys.sysname) = c1.name COLLATE sys.database_default
+LEFT JOIN pg_catalog.pg_type AS T ON T.oid = c1.system_type_id
+LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
+LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+, sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
+WHERE has_schema_privilege(s1.schema_id, 'USAGE')
+AND X.indislive ;
+
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
 
 
@@ -2892,6 +2899,133 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helplinkedsrvlogin(
+	IN "@rmtsrvname" sysname DEFAULT NULL,
+	IN "@locallogin" sysname DEFAULT NULL
+)
+AS $$
+DECLARE @server_id INT;
+DECLARE @local_principal_id INT;
+BEGIN
+	IF @rmtsrvname IS NOT NULL
+		BEGIN
+			SELECT @server_id = server_id FROM sys.servers WHERE name = @rmtsrvname;
+
+			IF @server_id IS NULL
+				BEGIN
+					RAISERROR('The server ''%s'' does not exist', 16, 1, @rmtsrvname);
+					RETURN 1;
+				END
+		END
+
+	IF @locallogin IS NOT NULL
+		BEGIN
+			SELECT @local_principal_id = usesysid FROM pg_user WHERE CAST(usename as sys.sysname) = @locallogin;
+		END
+	
+	SELECT
+		s.name AS "Linked Server",
+		CAST(u.usename as sys.sysname) AS "Local Login", 
+		CAST(0 as smallint) AS "Is Self Mapping", 
+		l.remote_name AS "Remote Login"
+	FROM sys.linked_logins AS l 
+	LEFT JOIN sys.servers AS s ON l.server_id = s.server_id
+	LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid
+	WHERE (@server_id is NULL or @server_id = s.server_id) AND ((@local_principal_id is NULL AND @locallogin IS NULL) or @local_principal_id = l.local_principal_id);
+END;
+$$ LANGUAGE pltsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_helplinkedsrvlogin TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@schemaname" sys.nvarchar(776),
+	IN "@objtype" char(2) DEFAULT NULL
+) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_internal TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	If @objtype IS NULL
+		BEGIN
+			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
+		END
+	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
+		BEGIN
+			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+		END
+	DECLARE @name_count INT;
+	DECLARE @subname sys.nvarchar(776) = '';
+	DECLARE @schemaname sys.nvarchar(776) = '';
+	DECLARE @dbname sys.nvarchar(776) = '';
+	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
+	IF @name_count > 3
+		BEGIN
+			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+		END
+	IF @name_count = 3
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
+			PRINT 'db_name:  ';
+			PRINT sys.db_name();
+			IF @dbname != sys.db_name()
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+		END
+	IF @name_count = 2
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+		END
+	IF @name_count = 1
+		BEGIN
+			SET @schemaname = sys.schema_name();
+			SET @subname = @objname;
+		END
+	
+	DECLARE @count INT;
+	DECLARE @currtype char(2);
+	SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	IF @count > 1
+		BEGIN
+			THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+		END
+	IF @count < 1
+		BEGIN
+			THROW 33557097, N'There is no object with the given @objname.', 1;
+		END
+	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
+END;
+$$;
+GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
 AS $$
