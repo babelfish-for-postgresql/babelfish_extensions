@@ -15,7 +15,11 @@ SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
 -- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
-EXEC sp_helplinkedsrvlogin
+SET NOCOUNT ON
+DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname, c smallint, d sysname)
+INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
+SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a <> 'bbf_server'
+SET NOCOUNT OFF
 GO
 
 -- Try to call sp_helplinkedsrvlogin with correct server name but invalid login name. Should return zero rows

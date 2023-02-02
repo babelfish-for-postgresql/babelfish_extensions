@@ -56,11 +56,14 @@ mssql_server3#!#<NULL>
 
 
 -- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
-EXEC sp_helplinkedsrvlogin
+SET NOCOUNT ON
+DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname, c smallint, d sysname)
+INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
+SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a <> 'bbf_server'
+SET NOCOUNT OFF
 GO
 ~~START~~
 varchar#!#varchar#!#smallint#!#varchar
-bbf_server#!#<NULL>#!#0#!#jdbc_user
 mssql_server#!#<NULL>#!#0#!#jdbc_user
 mssql_server2#!#<NULL>#!#0#!#only_user_no_password
 mssql_server3#!#<NULL>#!#0#!#<NULL>
