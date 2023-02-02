@@ -50,3 +50,15 @@ go
 
 CREATE USER test_sp_babelfish_volatility_user FOR LOGIN test_sp_babelfish_volatility_login
 GO
+
+use master
+go
+
+create table test_bbf_vol_t1(a int)
+go
+
+create function test_bbf_vol_f1() returns int begin declare @a int; set @a = 1; return @a; end
+go
+
+create function [test_bbf_vol_f1;drop table test_bbf_vol_t1;]() returns int begin declare @a int; set @a = 1; return @a; end
+go
