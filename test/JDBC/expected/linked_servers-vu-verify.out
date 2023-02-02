@@ -57,7 +57,7 @@ mssql_server3#!#<NULL>
 
 -- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
 SET NOCOUNT ON
-DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname, c smallint, d sysname)
+DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname NULL, c smallint, d sysname NULL)
 INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
 SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a <> 'bbf_server'
 SET NOCOUNT OFF
