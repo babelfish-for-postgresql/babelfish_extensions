@@ -1,28 +1,28 @@
-use db_10;
+use db_schemata_10;
 go
 
--- should show schema_11 and schema_12, since we are inside db_10 database
+-- should show schema_schemata_11 and schema_schemata_12, since we are inside db_schemata_10 database
 SELECT * FROM information_schema.schemata ORDER BY SCHEMA_NAME;
 go
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
-db_10#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
-db_10#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
-db_10#!#schema_11#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
-db_10#!#schema_12#!#user1#!#<NULL>#!#<NULL>#!#<NULL>
-db_10#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
+db_schemata_10#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+db_schemata_10#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
+db_schemata_10#!#schema_schemata_11#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+db_schemata_10#!#schema_schemata_12#!#schemata_user1#!#<NULL>#!#<NULL>#!#<NULL>
+db_schemata_10#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
 use master;
 go
 
--- should not show schema_11 and schema_12, since we have switched to master database
-SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_%' ORDER BY SCHEMA_NAME;
+-- should not show schema_schemata_11 and schema_schemata_12, since we have switched to master database
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
 go
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
-master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#schema_schemata_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -44,28 +44,28 @@ SELECT schema_name();
 GO
 ~~START~~
 varchar
-schema_13
+schema_schemata_13
 ~~END~~
 
 
-SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_%' ORDER BY SCHEMA_NAME;
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
-master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#schema_schemata_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
 -- psql
-REVOKE ALL ON SCHEMA master_schema_13 FROM master_schemata_user;
+REVOKE ALL ON SCHEMA master_schema_schemata_13 FROM master_schemata_user;
 GO
 
 -- tsql
-SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_%' ORDER BY SCHEMA_NAME;
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
-master#!#schema_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#schema_schemata_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
