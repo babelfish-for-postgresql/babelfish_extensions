@@ -2234,6 +2234,191 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
+create or replace view sys.indexes as
+select 
+  CAST(object_id as int)
+  , CAST(name as sys.sysname)
+  , CAST(type as sys.tinyint)
+  , CAST(type_desc as sys.nvarchar(60))
+  , CAST(is_unique as sys.bit)
+  , CAST(data_space_id as int)
+  , CAST(ignore_dup_key as sys.bit)
+  , CAST(is_primary_key as sys.bit)
+  , CAST(is_unique_constraint as sys.bit)
+  , CAST(fill_factor as sys.tinyint)
+  , CAST(is_padded as sys.bit)
+  , CAST(is_disabled as sys.bit)
+  , CAST(is_hypothetical as sys.bit)
+  , CAST(allow_row_locks as sys.bit)
+  , CAST(allow_page_locks as sys.bit)
+  , CAST(has_filter as sys.bit)
+  , CAST(filter_definition as sys.nvarchar)
+  , CAST(auto_created as sys.bit)
+  , CAST(index_id as int)
+from 
+(
+  -- Get all indexes from all system and user tables
+  select
+    X.indrelid as object_id
+    , I.relname as name
+    , case when X.indisclustered then 1 else 2 end as type
+    , case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as type_desc
+    , case when X.indisunique then 1 else 0 end as is_unique
+    , I.reltablespace as data_space_id
+    , 0 as ignore_dup_key
+    , case when X.indisprimary then 1 else 0 end as is_primary_key
+    , case when const.oid is null then 0 else 1 end as is_unique_constraint
+    , 0 as fill_factor
+    , case when X.indpred is null then 0 else 1 end as is_padded
+    , case when X.indisready then 0 else 1 end as is_disabled
+    , 0 as is_hypothetical
+    , 1 as allow_row_locks
+    , 1 as allow_page_locks
+    , 0 as has_filter
+    , null as filter_definition
+    , 0 as auto_created
+    , case when X.indisclustered then 1 else 1+row_number() over(partition by C.oid) end as index_id -- use rownumber to get index_id scoped on each objects
+  from (pg_index X 
+  -- get all the objects on which indexes can be created
+  join pg_class C on C.oid=X.indrelid and C.relkind in ('r', 'm', 'p')
+  -- get list of all indexes grouped by objects
+  cross join pg_class I  
+  )
+  -- to get namespace information
+  left join sys.schemas sch on I.relnamespace = sch.schema_id
+  -- check if index is a unique constraint
+  left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
+  where has_schema_privilege(I.relnamespace, 'USAGE')
+  and I.oid = X.indexrelid 
+  and I.relkind = 'i' 
+  -- index is active
+  and X.indislive 
+  -- filter to get all the objects that belong to sys or babelfish schemas
+  and (sch.schema_id is not null or I.relnamespace::regnamespace::text = 'sys')
+
+  union all 
+  
+-- Create HEAP entries for each system and user table
+  select distinct on (t.oid)
+    t.oid as object_id
+    , null as name
+    , 0 as type
+    , 'HEAP' as type_desc
+    , 0 as is_unique
+    , 1 as data_space_id
+    , 0 as ignore_dup_key
+    , 0 as is_primary_key
+    , 0 as is_unique_constraint
+    , 0 as fill_factor
+    , 0 as is_padded
+    , 0 as is_disabled
+    , 0 as is_hypothetical
+    , 1 as allow_row_locks
+    , 1 as allow_page_locks
+    , 0 as has_filter
+    , null as filter_definition
+    , 0 as auto_created
+    , 0 as index_id
+  from pg_class t
+  left join sys.schemas sch on t.relnamespace = sch.schema_id
+  where t.relkind = 'r'
+  -- filter to get all the objects that belong to sys or babelfish schemas
+  and (sch.schema_id is not null or t.relnamespace::regnamespace::text = 'sys')
+  and has_schema_privilege(t.relnamespace, 'USAGE')
+  and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+
+) as indexes_select order by object_id, type_desc;
+GRANT SELECT ON sys.indexes TO PUBLIC;
+
+create or replace view  sys.sysindexes as
+select
+  i.object_id::integer as id
+  , null::integer as status
+  , null::binary(6) as first
+  , i.index_id::smallint as indid
+  , null::binary(6) as root
+  , 0::smallint as minlen
+  , 1::smallint as keycnt
+  , null::smallint as groupid
+  , 0 as dpages
+  , 0 as reserved
+  , 0 as used
+  , 0::bigint as rowcnt
+  , 0 as rowmodctr
+  , 0 as reserved3
+  , 0 as reserved4
+  , 0::smallint as xmaxlen
+  , null::smallint as maxirow
+  , 90::sys.tinyint as "OrigFillFactor"
+  , 0::sys.tinyint as "StatVersion"
+  , 0 as reserved2
+  , null::binary(6) as "FirstIAM"
+  , 0::smallint as impid
+  , 0::smallint as lockflags
+  , 0 as pgmodctr
+  , null::sys.varbinary(816) as keys
+  , i.name::sys.sysname as name
+  , null::sys.image as statblob
+  , 0 as maxlen
+  , 0 as rows
+from sys.indexes i;
+GRANT SELECT ON sys.sysindexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
+SELECT
+CAST(1 AS SMALLINT) AS SCOPE,
+CAST(coalesce (split_part(a.attoptions[1] COLLATE "C", '=', 2) ,a.attname) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
+
+CASE -- cases for when they are of type identity. 
+	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
+	THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
+	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
+	THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+	ELSE CAST(t1.name AS sys.sysname)
+END AS TYPE_NAME,
+
+CAST(sys.sp_special_columns_precision_helper(COALESCE(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS SMALLINT) AS SCALE,
+CAST(1 AS smallint) AS PSEUDO_COLUMN,
+CASE
+	WHEN a.attnotnull
+	THEN CAST(0 AS INT)
+	ELSE CAST(1 AS INT) END
+AS IS_NULLABLE,
+CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(C.relname AS sys.sysname) AS TABLE_NAME,
+
+CASE 
+	WHEN X.indisprimary
+	THEN CAST('p' AS sys.sysname)
+	ELSE CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
+END AS CONSTRAINT_TYPE,
+CAST(I.relname AS sys.sysname) CONSTRAINT_NAME,
+CAST(X.indexrelid AS int) AS INDEX_ID
+
+FROM( pg_index X
+JOIN pg_class C ON X.indrelid = C.oid
+JOIN pg_class I ON I.oid = X.indexrelid
+CROSS JOIN LATERAL unnest(X.indkey) AS ak(k)
+        LEFT JOIN pg_attribute a
+                       ON (a.attrelid = X.indrelid AND a.attnum = ak.k)
+)
+LEFT JOIN sys.pg_namespace_ext nsp_ext ON C.relnamespace = nsp_ext.oid
+LEFT JOIN sys.schemas s1 ON s1.schema_id = C.relnamespace
+LEFT JOIN sys.columns c1 ON c1.object_id = X.indrelid AND cast(a.attname AS sys.sysname) = c1.name COLLATE sys.database_default
+LEFT JOIN pg_catalog.pg_type AS T ON T.oid = c1.system_type_id
+LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
+LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+, sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
+WHERE has_schema_privilege(s1.schema_id, 'USAGE')
+AND X.indislive ;
+
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

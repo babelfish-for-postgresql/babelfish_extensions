@@ -9,6 +9,10 @@ GO
 SELECT COUNT(*) FROM sys.sysindexes WHERE name LIKE '%SYS_SYSINDEXES_VU_PREPARE_T1_I1%'
 GO
 
+--check indid and index_id return same values
+select count(*) from sys.indexes v1 inner join sys.sysindexes v2 on v1.object_id = v2.id and indid=index_id where v1.name LIKE '%SYS_SYSINDEXES_VU_PREPARE_T1_I1%';
+GO
+
 EXEC sys_sysindexes_vu_prepare_p1
 GO
 
