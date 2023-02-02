@@ -395,6 +395,7 @@ BABEL-3828
 BABEL-3844
 test_windows_alter_login
 sys-systypes
+BABEL_OBJECT_DEFINITION
 Test-sp_rename
 Test-sp_rename-dep
 openquery_upgrd
