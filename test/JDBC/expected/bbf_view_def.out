@@ -247,9 +247,6 @@ go
 create or replace view master_dbo.def_v6 as select 6;
 go
 
-alter view master_dbo.def_v1 rename to def_v1_renamed;
-go
-
 -- tsql
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%def_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
@@ -259,10 +256,6 @@ master#!#dbo#!#def_v1#!#create view def_v1 as select c1 as a from vd_t1;
 master#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 as a;
 ~~END~~
 
-
--- psql
-alter view master_dbo.def_v1_renamed rename to def_v1;
-go
 
 -- tsql
 -- CASE: create view in different schema and db
@@ -357,9 +350,9 @@ select vd.object_name, vd.definition, vd.flag_validity, vd.flag_values from babe
 go
 ~~START~~
 varchar#!#ntext#!#bigint#!#bigint
-view_ansinulloff_qidoff#!#create view view_ansinulloff_qidoff as select 1;#!#3#!#0
-view_ansinulloff_qidon#!#create view "view_ansinulloff_qidon" as select 1;#!#3#!#2
-view_ansinullon#!#create view view_ansinullon as select 1;#!#3#!#3
+view_ansinulloff_qidoff#!#create view view_ansinulloff_qidoff as select 1;#!#7#!#4
+view_ansinulloff_qidon#!#create view "view_ansinulloff_qidon" as select 1;#!#7#!#6
+view_ansinullon#!#create view view_ansinullon as select 1;#!#7#!#7
 ~~END~~
 
 

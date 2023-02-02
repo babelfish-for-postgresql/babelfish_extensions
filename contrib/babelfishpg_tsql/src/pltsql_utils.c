@@ -3,6 +3,8 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_trigger.h"
+#include "catalog/pg_constraint.h"
 #include "parser/parser.h"      /* only needed for GUC variables */
 #include "parser/parse_type.h"
 #include "mb/pg_wchar.h"
@@ -14,6 +16,14 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/fmgroids.h"
+#include "utils/catcache.h"
+#include "utils/acl.h"
+#include "access/table.h"
+#include "access/genam.h"
+#include "catalog.h"
+
+#include "multidb.h"
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
@@ -281,6 +291,10 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	appendStringInfoString(&proc_stmt, inout_str->data);
 	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
 	cstmt  = (CallStmt *) ((RawStmt *) linitial(parsetree))->stmt;
+	Assert(cstmt);
+
+	if (enable_schema_mapping())
+		rewrite_object_refs((Node *) cstmt);
 
 	funccall = cstmt->funccall;
 
@@ -905,4 +919,238 @@ void init_and_check_common_utility(void)
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Failed to find common utility plugin.")));
 	}
+}
+
+/*
+ * tsql_get_constraint_oid
+ *	Given name and namespace of a constraint, look up the OID.
+ *
+ * Returns InvalidOid if there is no such constraint.
+ */
+Oid
+tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id)
+{
+	Relation		tgrel;
+	ScanKeyData		skey[2];
+	SysScanDesc		tgscan;
+	HeapTuple		tuple;
+	Oid			result = InvalidOid;
+
+	/* search in pg_constraint by name and namespace */
+	tgrel = table_open(ConstraintRelationId, AccessShareLock);
+	ScanKeyInit(&skey[0],
+			Anum_pg_constraint_conname,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			CStringGetDatum(conname));
+
+	ScanKeyInit(&skey[1],
+			Anum_pg_constraint_connamespace,
+			BTEqualStrategyNumber, F_OIDEQ,
+			ObjectIdGetDatum(connamespace));
+
+	tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId,
+					true, NULL, 2, skey);
+
+	/* we are interested in the first row only */
+	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+		if (OidIsValid(con->oid))
+		{
+			if (OidIsValid(con->conrelid))
+			{
+				if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+					result = con->oid;
+			}
+			else
+				result = con->oid;
+		}
+	}
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+	return result;
+}
+
+/*
+ * tsql_get_trigger_oid
+ *	Given name and namespace of a trigger, look up the OID.
+ *
+ * Returns InvalidOid if there is no such trigger.
+ */
+Oid
+tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id)
+{
+	Relation		tgrel;
+	ScanKeyData 		key;
+	SysScanDesc		tgscan;
+	HeapTuple 		tuple;
+	Oid			result = InvalidOid;
+
+	/* first search in pg_trigger by name */
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
+	ScanKeyInit(&key,
+			Anum_pg_trigger_tgname,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			CStringGetDatum(tgname));
+
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
+					true, NULL, 1, &key);
+	
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		if(!OidIsValid(pg_trigger->tgrelid))
+		{
+			break;
+		}
+		/* then consider only trigger in specified namespace */
+		if (get_rel_namespace(pg_trigger->tgrelid) == tgnamespace && 
+			pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+		{
+			result = pg_trigger->oid;
+			break;
+		}
+	}
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+	return result;
+}
+
+/*
+ * tsql_get_proc_oid
+ *	Given name and namespace of a proc, look up the OID.
+ *
+ * Returns InvalidOid if there is no such proc.
+ */
+Oid
+tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id)
+{
+	HeapTuple		tuple;
+	CatCList		*catlist;
+	Oid			result = InvalidOid;
+
+	/* first search in pg_proc by name */
+	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
+	for (int i = 0; i < catlist->n_members; i++)
+	{
+		Form_pg_proc procform;
+		tuple = &catlist->members[i]->tuple;
+		procform = (Form_pg_proc) GETSTRUCT(tuple);
+		/* then consider only procs in specified namespace */
+		if (procform->pronamespace == pronamespace &&
+			pg_proc_aclcheck(procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+		{
+			result = procform->oid;
+			break;
+		}
+	}
+	ReleaseSysCacheList(catlist);
+	return result;
+}
+
+static int
+babelfish_get_delimiter_pos(char *str)
+{	
+	char *ptr;
+	if (strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
+		return -1;
+	else if (str[0] == '[')
+	{
+		ptr = strstr(str, "].");
+		if (ptr == NULL)
+			return -1;
+		else
+			return (int) (ptr - str) + 1;
+	}
+	else if (str[0] == '"')
+	{
+		ptr = strstr(&str[1], "\".");
+		if (ptr == NULL)
+			return -1;
+		else
+			return (int) (ptr - str) + 1;
+	}
+	else
+	{	
+		ptr = strstr(str, ".");
+		if (ptr == NULL)
+			return -1;
+		else
+			return (int) (ptr - str);
+	}
+	
+	return -1;
+}
+
+/* 
+ * Extract string from input of given length and remove delimited identifiers.
+ */
+static char*
+remove_delimited_identifiers(char *str, int len)
+{	
+	
+	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
+	{	
+		if (len > 2)
+			return pnstrdup(&str[1], len - 2);
+		else
+			return pstrdup("");
+	}
+	else
+		return pnstrdup(str, len);
+}
+
+/*
+ * Split multiple-part object-name into array of pointers, it also remove the delimited identifiers. 
+ */
+char**
+split_object_name(char *name)
+{	
+	char		**res = palloc(4 * sizeof(char *));
+	char		*temp[4];
+	char		*str;
+	int		cur_pos, next_pos;
+	int		count = 0;
+
+	/* extract and remove the delimited identifiers from input into temp array */
+	cur_pos = 0;
+	next_pos = babelfish_get_delimiter_pos(name);
+	while (next_pos != -1 && count < 3)
+	{
+		str = remove_delimited_identifiers(&name[cur_pos], next_pos);
+		temp[count++] = str;
+		cur_pos += next_pos + 1;
+		next_pos = babelfish_get_delimiter_pos(&name[cur_pos]);
+	}
+	str = remove_delimited_identifiers(&name[cur_pos], strlen(&name[cur_pos]));
+	temp[count++] = str;
+
+	/* fill unspecified parts with empty strings */
+	for(int i = 0; i < 4; i++)
+	{
+		if (i < 4 - count)
+			res[i] = pstrdup("");
+		else
+			res[i] = temp[i - (4 - count)];
+	}
+
+	return res;
+}
+
+
+
+/*
+ * is_schema_from_db
+ *		Given schema_oid and db_id, check if schema belongs to provided database id.
+ */
+bool is_schema_from_db(Oid schema_oid, Oid db_id)
+{
+	Oid db_id_from_schema;
+	char *schema_name = get_namespace_name(schema_oid);
+	if(!schema_name)
+		return false;
+
+	db_id_from_schema = get_dbid_from_physical_schema_name(schema_name, true);
+	pfree(schema_name);
+	return (db_id_from_schema == db_id);
 }

@@ -512,9 +512,21 @@ PRINT @handle
 EXEC SP_EXECUTE @handle;
 EXEC SP_UNPREPARE @handle;
 GO
-~~ROW COUNT: 1~~
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
 
 ~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
 
 ~~START~~
 int#!#int
@@ -522,15 +534,27 @@ int#!#int
 3#!#4
 ~~END~~
 
-~~START~~
-int#!#int
-1#!#2
-~~END~~
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
 
 ~~START~~
 int#!#int
 1#!#2
 ~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: 16  Server SQLState: S0001)~~
 
 ~~START~~
 int#!#int
@@ -809,4 +833,140 @@ c100 ,  c101 ,  c102 ,  c103 ,  c104 ,  c105 ,  c106 ,  c107 ,  c108 ,  c109
 GO
 
 DROP Table sp_prepare_table
+GO
+
+-- testing with Schema.User_Defined_Types
+Create schema udt_schema
+GO
+create type udt_schema.int_udt from int
+GO
+
+
+CREATE PROCEDURE udt_schema.udt_proc
+(
+    @TypeId udt_schema.int_udt,
+	@createdBy VARCHAR(100)
+)
+AS
+BEGIN
+		SET NOCOUNT ON;
+	IF @TypeId IS NULL
+	BEGIN
+		RAISERROR('mandatory field TypeId missing', 16, 1);
+		RETURN
+	END
+	IF 1=1
+	BEGIN
+		SELECT 1
+	END
+END
+GO
+
+declare @p0 udt_schema.int_udt
+set @p0 = 1
+exec sp_executesql N'EXEC udt_schema.udt_proc @TypeId = @P0, @CreatedBy = @p1',
+N'@P0 udt_schema.int_udt, @P1 VARCHAR(100)',
+@p0=@p0,@p1=N'abc@xyz1.com'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- testing with Table varaibles
+CREATE TYPE udt_schema.tvp_type AS TABLE (TypeId bigINT, createdBy VARCHAR(100))
+GO
+
+
+CREATE PROCEDURE udt_schema.tvp_proc
+(
+    @TypeId BIGINT,
+	@createdBy VARCHAR(100),
+	@TVPTypeData udt_schema.tvp_type READONLY -- tvp with schema.type_name
+)
+AS
+BEGIN 
+		SET NOCOUNT ON;
+	IF @TypeId IS NULL
+	BEGIN
+		RAISERROR('mandatory field TypeId missing', 16, 1);
+		RETURN
+	END
+	IF 1=1
+	BEGIN
+		SELECT 1
+	END
+END
+GO
+
+
+declare @p2 udt_schema.tvp_type
+insert into @p2 values(307,N'abc@xyz.com ')
+exec sp_executesql N'EXEC udt_schema.tvp_proc @TypeId = @P0, @CreatedBy = @p1, @TVPTypeData = @P2',
+N'@P0 bigint, @P1 VARCHAR(100), @P2 [udt_schema].[tvp_type] READONLY',
+8,N'abc@xyz1.com ', @P2=@p2
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+
+
+DROP PROCEDURE udt_schema.udt_proc;
+DROP PROCEDURE udt_schema.tvp_proc;
+DROP TYPE udt_schema.tvp_type;
+DROP TYPE udt_schema.int_udt;
+DROP SCHEMA udt_schema;
+GO
+
+
+CREATE TABLE [tblEmployees](
+      [fldEmployeeID] [int] NULL,
+      [fldResource] [bit] NOT NULL)
+GO
+
+insert into tblEmployees values (1, 0)
+insert into tblEmployees values (1, 1)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+
+declare  @DSICoreSpecificationEqualsAndOperator1EmpMapIsResource bit
+EXECUTE sp_executesql N'
+SELECT DISTINCT _EmpMap.fldEmployeeID
+FROM tblEmployees AS _EmpMap
+WHERE  ( _EmpMap.fldResource = @DSICoreSpecificationEqualsAndOperator1EmpMapIsResource );'
+,N'@DSICoreSpecificationEqualsAndOperator1EmpMapIsResource Bit'
+,@DSICoreSpecificationEqualsAndOperator1EmpMapIsResource = 0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+
+declare  @dsicorespecificationequalsandoperator1empmapisresource  bit
+EXECUTE sp_executesql N'
+SELECT DISTINCT _EmpMap.fldEmployeeID
+FROM tblEmployees AS _EmpMap
+WHERE  ( _EmpMap.fldResource = @dsicorespecificationequalsandoperator1empmapisresource  );'
+,N'@dsicorespecificationequalsandoperator1empmapisresource  Bit'
+,@dsicorespecificationequalsandoperator1empmapisresource  = 0;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+Drop table tblEmployees
 GO

@@ -1,16 +1,16 @@
 /* Tsql system catalog views */
 
--- The sys.table_types_internal view mimics the logic used in sys.is_table_type function
+/*
+ * Note: this view, although written efficiently might cause perfomance degradation when
+ * joined with other system objects. One should try to use them as part of a materialized CTE.
+ */
 create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
-    INNER JOIN pg_catalog.pg_depend dep
-    ON pt.typrelid = dep.objid
+    INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
+    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
     INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE 
-    pt.typnamespace in (select schema_id from sys.schemas) 
-    and (pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r')
-;
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
 
 create or replace view sys.tables as
 select
@@ -610,7 +610,7 @@ BEGIN
 		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 END;
 $$
-language plpgsql;
+language plpgsql STABLE;
 
 create or replace view sys.columns AS
 select out_object_id as object_id
@@ -1040,10 +1040,14 @@ left join pg_catalog.pg_locks         blocking_locks
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
-with type_code_list as
+with RECURSIVE type_code_list as
 (
     select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
     from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
+(
+  Select * from sys.table_types_internal
 )
 -- For System types
 select 
@@ -1102,7 +1106,7 @@ from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
 left join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
-left join sys.table_types_internal tt on t.typrelid = tt.typrelid
+left join tt_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 , cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
 -- we want to show details of user defined datatypes created under babelfish database
@@ -1117,6 +1121,51 @@ and
     tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.systypes_precision_helper(IN type TEXT, IN max_length SMALLINT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	precision SMALLINT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	CASE
+	WHEN v_type in ('text', 'ntext', 'image') THEN precision = CAST(NULL AS SMALLINT);
+	WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
+	WHEN v_type = 'sql_variant' THEN precision = 0;
+	ELSE
+		precision = max_length;
+	END CASE;
+	RETURN precision;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE VIEW sys.systypes AS
+SELECT CAST(name as sys.sysname) as name
+  , CAST(system_type_id as int) as xtype
+  , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
+  , max_length as length
+  , CAST(precision as sys.tinyint) as xprec
+  , CAST(scale as sys.tinyint) as xscale
+  , CAST(default_object_id as int) as tdefault
+  , CAST(rule_object_id as int) as domain
+  , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
+  , CAST(0 as smallint) as reserved
+  , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
+  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
+          else 0 end) as sys.bit) as variable
+  , CAST(is_nullable as sys.bit) as allownulls
+  , CAST(system_type_id as int) as type
+  , CAST(null as sys.varchar(255)) as printfmt
+  , (case when precision <> 0::smallint then precision 
+      else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
+  , CAST(scale as sys.tinyint) as scale
+  , CAST(collation_name as sys.sysname) as collation
+FROM sys.types;
+GRANT SELECT ON sys.systypes TO PUBLIC;
 
 create or replace view sys.table_types as
 select st.*
@@ -1724,9 +1773,8 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN COALESCE(tsql_get_functiondef(ao.object_id), pg_get_functiondef(ao.object_id))
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF', 'IF', 'TR') THEN COALESCE(f.definition, '')
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
-      WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
       END
     AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
@@ -1736,7 +1784,7 @@ SELECT
   , CAST(0 as sys.bit)  AS uses_database_collation
   , CAST(0 as sys.bit)  AS is_recompiled
   , CAST(
-      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF') THEN
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF', 'IF') THEN
         CASE WHEN p.proisstrict THEN 1
         ELSE 0 
         END
@@ -1756,6 +1804,8 @@ LEFT OUTER JOIN sys.babelfish_view_def bvd
       ao.name = bvd.object_name 
    )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+LEFT JOIN sys.babelfish_function_ext f ON ao.name = f.funcname COLLATE "C" AND ao.schema_id::regnamespace::name = f.nspname
+AND sys.babelfish_get_pltsql_function_signature(ao.object_id) = f.funcsignature COLLATE "C"
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
@@ -1937,7 +1987,7 @@ left join sys.schemas sch on sch.schema_id = pgproc.pronamespace
 where has_schema_privilege(sch.schema_id, 'USAGE');
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE VIEW sys.syscolumns AS
 SELECT out_name as name

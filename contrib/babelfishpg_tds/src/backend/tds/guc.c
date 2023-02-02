@@ -39,6 +39,8 @@ bool	tds_ssl_encrypt = false;
 int 	tds_default_protocol_version = 0;
 int32_t tds_default_packet_size = 4096;
 int	tds_debug_log_level = 1;
+char*	product_version = "default";
+
 #ifdef FAULT_INJECTOR
 static bool TdsFaultInjectionEnabled = false;
 #endif
@@ -111,6 +113,70 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 	return true;
 }
 
+static bool 
+check_version_number(char **newval, void **extra, GucSource source)
+{
+	char 		*copy_version_number;
+	char		*token;
+	int 		part = 0,
+	    		len = 0;
+
+	Assert(*newval != NULL);
+	if(pg_strcasecmp(*newval,"default") == 0)
+		return true;
+	len = strlen(*newval);
+	copy_version_number = palloc0(len + 1);
+	memcpy(copy_version_number, *newval, len);
+	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
+	{	
+		/* check each token contains only digits */
+		if(strspn(token, "0123456789") != strlen(token))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Please enter 4 valid numbers separated by \'.\' ")));
+		}
+		
+		/* check Major Version is between 11 and 15 */
+		if(part == 0 && (11 > atoi(token) || atoi(token) > 15))
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Please enter a valid major version number between 11 and 15")));
+		}
+		/*
+		 * Minor Version takes 1 byte in PreLogin message when doing handshake, 
+		 * here to check it is between 0 and 0xFF
+		 */
+		if(part == 1 && atoi(token) > 0xFF)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Please enter a valid minor version number between 0 and 255")));
+		}
+		/*
+		 * Micro Version takes 2 bytes in PreLogin message when doing handshake,
+		 * here to check it is between 0 and 0xFFFF
+		 */
+		if(part == 2 && atoi(token) > 0xFFFF)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Please enter a valid micro version number between 0 and 65535")));
+		}
+		part++;
+	}
+
+	if(part != 4)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("Please enter 4 valid numbers separated by \'.\' ")));
+	}
+
+    return true;
+}
+
 /*
  * Define various GUCs which are part of TDS protocol
  */
@@ -177,6 +243,15 @@ TdsDefineGucs(void)
                 PGC_SIGHUP,
                 GUC_NOT_IN_SAMPLE,
                 NULL, NULL, NULL);
+
+	DefineCustomStringVariable("babelfishpg_tds.product_version",
+				 gettext_noop("Sets the Product Version returned by Babelfish"),
+				 NULL,
+				 &product_version,
+				 "default",
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE,
+				 check_version_number, NULL, NULL);
 
 	DefineCustomIntVariable(
 		"babelfishpg_tds.tds_default_numeric_precision",

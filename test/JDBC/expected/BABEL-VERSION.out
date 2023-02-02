@@ -1,0 +1,327 @@
+-- psql
+Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid minor version number between 0 and 255
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "15.-1.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "15.4.66000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid micro version number between 0 and 65535
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "15.4.-1.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "e.4.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "11.4.3000";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = ".4.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid major version number between 11 and 15
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "11..3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter a valid minor version number between 0 and 255
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "11.4..6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "11.4.3000.";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
+Alter system set babelfishpg_tds.product_version = NULL;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: syntax error at or near "NULL"
+  Position: 52
+    Server SQLState: 42601)~~
+
+
+Alter system set babelfishpg_tds.product_version = " ";
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Please enter 4 valid numbers separated by '.' 
+    Server SQLState: 22023)~~
+
+
+ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "test";
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION  Server SQLState: 01000)~~
+
+
+ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Test if PG will lose connection when setting GUC more than two times
+Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+~~START~~
+nvarchar
+Babelfish for PostgreSQL with SQL Server Compatibility - 15.4.3000.6
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
+GO
+~~START~~
+sql_variant
+15.4.3000.6
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductMajorVersion') as ProductMajorVersion
+GO
+~~START~~
+sql_variant
+15
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductMinorVersion') as ProductMinorVersion
+GO
+~~START~~
+sql_variant
+4
+~~END~~
+
+
+-- psql
+Alter system set babelfishpg_tds.product_version = "13.45.3.6";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+~~START~~
+nvarchar
+Babelfish for PostgreSQL with SQL Server Compatibility - 13.45.3.6
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
+GO
+~~START~~
+sql_variant
+13.45.3.6
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductMajorVersion') as ProductMajorVersion
+GO
+~~START~~
+sql_variant
+13
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductMinorVersion') as ProductMinorVersion
+GO
+~~START~~
+sql_variant
+45
+~~END~~
+
+
+-- psql
+Alter system set babelfishpg_tds.product_version = "default";
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql 
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+~~START~~
+nvarchar
+Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductVersion') as ProductVersion
+GO
+~~START~~
+sql_variant
+12.0.2000.8
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductMajorVersion') as ProductMajorVersion
+GO
+~~START~~
+sql_variant
+12
+~~END~~
+
+
+SELECT SERVERPROPERTY('ProductMinorVersion') as ProductMinorVersion
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- BABEL-1661
+-- Test CONVERT to VARCHAR applies typmod
+SELECT CONVERT(VARCHAR(10), SERVERPROPERTY('productversion'));
+GO
+~~START~~
+varchar
+12.0.2000.
+~~END~~
+
+
+SELECT DATALENGTH(CONVERT(VARCHAR(10), SERVERPROPERTY('productversion')));
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(2), SERVERPROPERTY('productversion'));
+GO
+~~START~~
+varchar
+12
+~~END~~
+
+
+SELECT DATALENGTH(CONVERT(VARCHAR(2), SERVERPROPERTY('productversion')));
+GO
+~~START~~
+int
+2
+~~END~~
+

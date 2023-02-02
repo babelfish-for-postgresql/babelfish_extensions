@@ -401,156 +401,6 @@ tsql_check_param_readonly(const char *paramname, TypeName *typename, bool readon
 }
 
 /*
- * Make a function call to tsql_query_to_xml for FOR XML clause.
- * For example, it does the following transformation:
- * select a from t for xml path =>
- * select tsql_query_to_xml('select a from t', ... )
- * The first argument of the function is the query string without the for xml clause.
- * The rest of the arguments passe in options and directives allowed by tsql.
- *
- * If the for xml clause has TSQL variables/identifiers that needs to be binded
- * (e.g. @varName that's used as a procedure parameter) during parse analysis,
- * we transform the query to use PG's function FORMAT in order to support the
- * variable binding, for example:
- * select a from t where id = @pid for xml path =>
- * select tsql_query_toxml(FORMAT('select a from t where id = %s', @pid) ... )
- */
-ResTarget *
-TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_location, core_yyscan_t yyscanner)
-{
-	ResTarget *rt = makeNode(ResTarget);
-	FuncCall *fc;
-	size_t len = (forclause)->location - start_location;
-	char *query = palloc(len + 1);
-	List *func_name;
-	List *func_args;
-	int begin_index;
-	int end_index;
-	char *begin_param;
-	char *end_param;
-	StringInfo format_query = makeStringInfo();
-	List *params = NIL;
-	bool binary_base64 = false;
-	bool return_xml_type = false;
-	char* root_name = NULL;
-	Node* arg1;
-
-	/* Resolve the XML common directive list if provided */
-	if (forclause->commonDirectives != NIL)
-	{
-		ListCell *lc;
-		foreach (lc, forclause->commonDirectives)
-		{
-			Node *myNode = lfirst(lc);
-			A_Const *myConst;
-
-			/* commonDirective is either integer const or string const */
-			Assert(IsA(myNode, A_Const));
-			myConst = (A_Const *)myNode;
-			Assert(myConst->val.type == T_Integer || myConst->val.type == T_String);
-			if (myConst->val.type == T_Integer)
-			{
-				if (myConst->val.val.ival == TSQL_XML_DIRECTIVE_BINARY_BASE64)
-					binary_base64 = true;
-				else if (myConst->val.val.ival == TSQL_XML_DIRECTIVE_TYPE)
-					return_xml_type = true;
-			}
-			else if (myConst->val.type == T_String)
-			{
-				root_name = myConst->val.val.str;
-			}
-		}
-	}
-
-	query = memcpy(query,
-				   src_query + start_location,
-				   len);
-	query[len] = '\0';
-
-	/*
-	 * Transform query with tsql identifiers (@pname) to PG's FORMAT function so
-	 * variable binding still works.
-	 * For example:
-	 * select a from t where id = @pid for xml path =>
-	 * select tsql_query_toxml(FORMAT('select a from t where id = %s', @pid) ... )
-	 * Notice the tsql identifiers in the query string has already been
-	 * processed by the babelfishpg_tsql parser at this point and is surrounded by quote
-	 * such as in \"@pid"\.
-	 *
-	 * We achieve the above transformation by extacting all parameters starting
-	 * with \"@ from the query string, and replace them with %s. The StringInfo
-	 * variable format_query is used to assemble the new query in this process.
-	 * end_param points the remaiming query string after the parameter, initially
-	 * we set it to the query string. begin_param points to the begining of a
-	 * parameter or tsql identifer, starting from left to right in the query string.
-	 */
-	end_param = query;
-	while ((begin_param = strstr(end_param, "\"@")) != NULL)
-	{
-		char *before_param;
-
-		begin_index = begin_param - end_param;
-		before_param = palloc(begin_index + 1);
-		before_param = memcpy(before_param, end_param, begin_index);
-		before_param[begin_index] = '\0';
-		if ((end_param = strstr(begin_param+2, "\"")) != NULL)
-		{
-			char *param;
-
-			end_index = (end_param - begin_param) + begin_index;
-			appendStringInfoString(format_query, before_param);
-			appendStringInfoString(format_query, "%L");
-			param = palloc(end_index - begin_index);
-			param = memcpy(param, begin_param + 1, end_index - begin_index - 1);
-			param[end_index - begin_index - 1] = '\0';
-			params = lappend(params, makeColumnRef(param, NIL, -1, yyscanner));
-			/* Move end_param pass the \", so it points to the rest of the query */
-			end_param++;
-		}
-		else
-		{
-			/*
-			 * Unmatched quote around the tsql identification, it shouldn't happen
-			 * because proper quoting is done in babelfishpg_tsql parser.
-			 * But just in case report an error.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("Unmatched quote around TSQL identifier")));
-		}
-	}
-
-
-
-	// Funtion call to get the updated query based on the format_query
-	arg1 = tsql_get_transformed_query(format_query,end_param,query,params);
-
-	/*
-	 * Finally make funtion call to tsql_query_to_xml or tsql_query_to_xml_text
-	 * depending on the return_xml_type flag (TYPE option in the FOR XML clause).
-	 * The only difference of the two functions is the return type. tsql_query_to_xml
-	 * returns XML type, tsql_query_to_xml_text returns text type.
-	 */
-	if (return_xml_type)
-		func_name= list_make2(makeString("sys"), makeString("tsql_query_to_xml"));
-	else
-		func_name= list_make2(makeString("sys"), makeString("tsql_query_to_xml_text"));
-	func_args = list_make4(arg1,
-						   makeIntConst(forclause->mode, -1),
-						   forclause->elementName ? makeStringConst(forclause->elementName, -1) :
-						   makeStringConst("row", -1),
-						   makeBoolAConst(binary_base64, -1));
-	func_args = lappend(func_args, root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
-	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
-
-	rt->name = NULL;
-	rt->indirection = NIL;
-	rt->val = (Node *) fc;
-	rt->location = -1;
-	return rt;
-}
-
-/*
  * helper macro to compare relname in
  * function tsql_update_delete_stmt_with_join
  */
@@ -1395,40 +1245,85 @@ returning_list_has_column_name(List *existing_colnames, char *current_colname)
 }
 
 /*
- * Make a function call to tsql_query_to_json_text for FOR JSON clause.
- * For example, it does the following transformation:
- * select a from t for json path =>
- * select tsql_query_to_json('select a from t', ... )
- * The first argument of the function is the query string without the for json clause.
- * The rest of the arguments passes in options and directives allowed by tsql.
- *
- * If the for json clause has TSQL variables/identifiers that needs to be binded
- * (e.g. @varName that's used as a procedure parameter) during parse analysis,
- * we transform the query to use PG's function FORMAT in order to support the
- * variable binding, for example:
- * select a from t where id = @pid for xml path =>
- * select tsql_query_to_json_text(FORMAT('select a from t where id = %s', @pid) ... )
+ * Make a function call to tsql_select_for_xml_agg() for FOR JSON clause.
  */
 ResTarget *
-TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_location, core_yyscan_t yyscanner)
+TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause)
 {
 	ResTarget *rt = makeNode(ResTarget);
 	FuncCall *fc;
-	size_t len = (forclause)->location - start_location;
-	char *query = palloc(len + 1);
 	List *func_name;
 	List *func_args;
-	int begin_index;
-	int end_index;
-	char *begin_param;
-	char *end_param;
-	char *end_bracket;
-	StringInfo format_query = makeStringInfo();
-	List *params = NIL;
+	bool binary_base64 = false;
+	bool return_xml_type = false;
+	char* root_name = NULL;
+
+	/* Resolve the XML common directive list if provided */
+	if (forclause->commonDirectives != NIL)
+	{
+		ListCell *lc;
+		foreach (lc, forclause->commonDirectives)
+		{
+			Node *myNode = lfirst(lc);
+			A_Const *myConst;
+
+			/* commonDirective is either integer const or string const */
+			Assert(IsA(myNode, A_Const));
+			myConst = (A_Const *)myNode;
+			Assert(myConst->val.type == T_Integer || myConst->val.type == T_String);
+			if (myConst->val.type == T_Integer)
+			{
+				if (myConst->val.val.ival == TSQL_XML_DIRECTIVE_BINARY_BASE64)
+					binary_base64 = true;
+				else if (myConst->val.val.ival == TSQL_XML_DIRECTIVE_TYPE)
+					return_xml_type = true;
+			}
+			else if (myConst->val.type == T_String)
+			{
+				root_name = myConst->val.val.str;
+			}
+		}
+	}
+
+	/*
+	 * Finally make function call to tsql_select_for_xml_agg or tsql_select_for_xml_text_agg
+	 * depending on the return_xml_type flag (TYPE option in the FOR XML clause).
+	 * The only difference of the two functions is the return type. tsql_select_for_xml_agg
+	 * returns XML type, tsql_select_for_xml_text_agg returns text type.
+	 */
+	if (return_xml_type)
+		func_name= list_make2(makeString("sys"), makeString("tsql_select_for_xml_agg"));
+	else
+		func_name= list_make2(makeString("sys"), makeString("tsql_select_for_xml_text_agg"));
+	func_args = list_make5(makeColumnRef(construct_unique_index_name("rows", "tsql_for"), NIL, -1, NULL),
+						   makeIntConst(forclause->mode, -1),
+						   forclause->elementName ? makeStringConst(forclause->elementName, -1) : makeStringConst("row", -1),
+						   makeBoolAConst(binary_base64, -1),
+						   root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
+	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
+
+	rt->name = palloc0(4);
+	strncpy(rt->name, "xml", 3);
+	rt->indirection = NIL;
+	rt->val = (Node *) fc;
+	rt->location = -1;
+	rt->name_location = -1;
+	return rt;
+}
+
+/*
+ * Make a function call to tsql_select_for_json_agg() for FOR JSON clause.
+ */
+static ResTarget *
+TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
+{
+	ResTarget *rt = makeNode(ResTarget);
+	FuncCall *fc;
+	List *func_name;
+	List *func_args;
 	bool include_null_values = false;
 	bool without_array_wrapper = false;
 	char* root_name = NULL;
-	Node* arg1;
 
 	/* Resolve the JSON common directive list if provided */
 	if (forclause->commonDirectives != NIL)
@@ -1464,132 +1359,40 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("ROOT option and WITHOUT_ARRAY_WRAPPER option cannot be used together in FOR JSON. Remove one of these options")));
 	}
-
-	
-	query = memcpy(query,
-				   src_query + start_location,
-				   len);
-	query[len] = '\0';
-
-	/*
-	 * Transform query with tsql identifiers (@pname) to PG's FORMAT function so
-	 * variable binding still works.
-	 * For example:
-	 * select a from t where id = @pid for JSON path =>
-	 * select tsql_query_to_json_text(FORMAT('select a from t where id = %s', @pid) ... )
-	 * Notice the tsql identifiers in the query string has already been
-	 * processed by the babelfishpg_tsql parser at this point and is surrounded by quote
-	 * such as in \"@pid"\.
-	 *
-	 * We achieve the above transformation by extacting all parameters starting
-	 * with \"@ from the query string, and replace them with %s. The StringInfo
-	 * variable format_query is used to assemble the new query in this process.
-	 * end_param points the remaiming query string after the parameter, initially
-	 * we set it to the query string. begin_param points to the begining of a
-	 * parameter or tsql identifer, starting from left to right in the query string.
-	 */
-	end_param = query;
-	while ((begin_param = strstr(end_param, "\"@")) != NULL)
-	{
-		char *before_param;
-
-		begin_index = begin_param - end_param;
-		before_param = palloc(begin_index + 1);
-		before_param = memcpy(before_param, end_param, begin_index);
-		before_param[begin_index] = '\0';
-
-		/*
-		 * To handle the case when "\"@" appears in the Aliases defined in square brackets. 
-		 * For example:
-		 * 'SELECT name as [test"@]'
-		 * This if block makes sure to consider it as an alias by escaping the content inside
-		 * the square brackets.
-		 */
-		if ((strstr(before_param,"[") != NULL) && ((end_bracket = strstr(begin_param+2,"]")) != NULL))
-		{
-			char *before_bracket;
-
-			begin_index = end_bracket - end_param +1;
-			before_bracket = palloc(begin_index);
-			before_bracket = memcpy(before_bracket, end_param, begin_index);
-			before_bracket[begin_index] = '\0';
-			appendStringInfoString(format_query, before_bracket);
-			end_param = end_bracket;
-			end_param++;
-		}
-		else if ((end_param = strstr(begin_param+2, "\"")) != NULL) // To handle the tsql identifiers 
-		{
-			char *param;
-
-			end_index = (end_param - begin_param) + begin_index;
-			appendStringInfoString(format_query, before_param);
-			appendStringInfoString(format_query, "%L");
-			param = palloc(end_index - begin_index);
-			param = memcpy(param, begin_param + 1, end_index - begin_index - 1);
-			param[end_index - begin_index - 1] = '\0';
-			params = lappend(params, makeColumnRef(param, NIL, -1, yyscanner));
-			/* Move end_param pass the \", so it points to the rest of the query */
-			end_param++;
-		}
-		else
-		{
-			/*
-			 * Unmatched quote around the tsql identification, it shouldn't happen
-			 * because proper quoting is done in babelfishpg_tsql parser.
-			 * But just in case report an error.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("Unmatched quote around TSQL identifier")));
-		}
-	}
-
-	// Funtion call to get the updated query based on the format_query
-	arg1 = tsql_get_transformed_query(format_query,end_param,query,params);
 	
 	/*
-	 * Finally make funtion call to tsql_query_to_json_text
+	 * Finally make function call to tsql_select_for_json_agg
 	 */
-	func_name= list_make2(makeString("sys"), makeString("tsql_query_to_json_text"));
-	func_args = list_make4(arg1,
+	func_name= list_make2(makeString("sys"), makeString("tsql_select_for_json_agg"));
+	func_args = list_make5(makeColumnRef(construct_unique_index_name("rows", "tsql_for"), NIL, -1, NULL),
 						   makeIntConst(forclause->mode, -1),
 						   makeBoolAConst(include_null_values, -1),
-						   makeBoolAConst(without_array_wrapper, -1));
-	func_args = lappend(func_args, root_name ? makeStringConst(root_name, -1) : makeNullAConst(-1));
+						   makeBoolAConst(without_array_wrapper, -1),
+						   root_name ? makeStringConst(root_name, -1) : makeNullAConst(-1));
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
-	rt->name = NULL;
+	rt->name = palloc0(5);
+	strncpy(rt->name, "json", 4);
 	rt->indirection = NIL;
 	rt->val = (Node *) fc;
 	rt->location = -1;
+	rt->name_location = -1;
 	return rt;
 }
 
 /*
- * Get the transformed query based on the length of format_query.
- * Transform the query to use PG's function FORMAT in order to support
- * variable binding.
+ * Create an aliased sub-select clause for use in FOR XML/JSON
+ * rule resolution. We re-use construct_unique_index_name to 
+ * generate a unique row name to reference - this makes it virtually
+ * impossible for any query to accidentally use the same alias name.
+ * construct_unique_index_name should only fail in case of OOM, which
+ * is highly unlikely.
  */
-static Node*
-tsql_get_transformed_query(StringInfo format_query, char *end_param, char *query, List *params)
+static RangeSubselect *
+TsqlForClauseSubselect(Node *selectstmt)
 {
-	Node* arg1;
-	/*
-	 * Make a function call to Function FORMAT if format_query has length > 0.
-	 */
-	if (format_query->len > 0)
-	{
-		FuncCall *format_fc;
-		List *format_func_args;
-		appendStringInfoString(format_query, end_param);
-		format_func_args = list_concat(list_make1(makeStringConst(format_query->data, -1)),
-									   params);
-		format_fc = makeFuncCall(list_make2(makeString("pg_catalog"), makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
-		arg1 = (Node *) format_fc;
-	}
-	else
-		arg1 = makeStringConst(query, -1);
-
-	return arg1;
+	RangeSubselect *rss = makeNode(RangeSubselect);
+	rss->subquery = selectstmt;
+	rss->alias = makeAlias(construct_unique_index_name("rows", "tsql_for"), NIL);
+	return rss;
 }
-
