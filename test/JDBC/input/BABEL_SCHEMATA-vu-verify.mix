@@ -1,15 +1,15 @@
-use db_10;
+use db_schemata_10;
 go
 
--- should show schema_11 and schema_12, since we are inside db_10 database
+-- should show schema_schemata_11 and schema_schemata_12, since we are inside db_schemata_10 database
 SELECT * FROM information_schema.schemata ORDER BY SCHEMA_NAME;
 go
 
 use master;
 go
 
--- should not show schema_11 and schema_12, since we have switched to master database
-SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_%' ORDER BY SCHEMA_NAME;
+-- should not show schema_schemata_11 and schema_schemata_12, since we have switched to master database
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
 go
 
 -- Test if user default schema is not dbo schema
@@ -24,15 +24,15 @@ GO
 SELECT schema_name();
 GO
 
-SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_%' ORDER BY SCHEMA_NAME;
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
 GO
 
 -- psql
-REVOKE ALL ON SCHEMA master_schema_13 FROM master_schemata_user;
+REVOKE ALL ON SCHEMA master_schema_schemata_13 FROM master_schemata_user;
 GO
 
 -- tsql
-SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_%' ORDER BY SCHEMA_NAME;
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
 GO
 
 -- psql
