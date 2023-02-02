@@ -1499,19 +1499,19 @@ where s.nspname = 'sys';
 GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 create or replace view sys.all_views as
-select
-    CAST(t.name as sys.SYSNAME) AS name
-  , CAST(t.object_id as int) AS object_id
-  , CAST(t.principal_id as int) AS principal_id
-  , CAST(t.schema_id as int) AS schema_id
-  , CAST(t.parent_object_id as int) AS parent_object_id
-  , CAST(t.type as sys.bpchar(2)) AS type
-  , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
-  , CAST(t.create_date as sys.datetime) AS create_date
-  , CAST(t.modify_date as sys.datetime) AS modify_date
-  , CAST(t.is_ms_shipped as sys.BIT) AS is_ms_shipped
-  , CAST(t.is_published as sys.BIT) AS is_published
-  , CAST(t.is_schema_published as sys.BIT) AS is_schema_published 
+SELECT
+    CAST(c.relname AS sys.SYSNAME) as name
+  , CAST(c.oid AS INT) as object_id
+  , CAST(null AS INT) as principal_id
+  , CAST(c.relnamespace as INT) as schema_id
+  , CAST(0 as INT) as parent_object_id
+  , CAST('V' as sys.bpchar(2)) as type
+  , CAST('VIEW'as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
   , CAST(0 as sys.BIT) AS is_replicated
   , CAST(0 as sys.BIT) AS has_replication_filter
   , CAST(0 as sys.BIT) AS has_opaque_metadata
@@ -1524,10 +1524,15 @@ select
       END
     AS sys.BIT) AS with_check_option
   , CAST(0 as sys.BIT) AS is_date_correlation_view
-from sys.all_objects t
-INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
-INNER JOIN information_schema.views v ON t.name = cast(v.table_name as sys.sysname) AND ns.nspname = v.table_schema
-where t.type = 'V';
+FROM pg_catalog.pg_namespace AS ns
+INNER JOIN pg_class c ON ns.oid = c.relnamespace
+INNER JOIN information_schema.views v ON c.relname = v.table_name AND ns.nspname = v.table_schema
+WHERE c.relkind = 'v' AND ns.nspname in 
+  (SELECT nspname from sys.babelfish_namespace_ext where dbid = sys.db_id() UNION ALL SELECT CAST('sys' AS NAME))
+AND pg_is_other_temp_schema(ns.oid) = false
+AND (pg_has_role(c.relowner, 'USAGE') = true
+OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') = true);
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
 -- TODO: BABELFISH-506
