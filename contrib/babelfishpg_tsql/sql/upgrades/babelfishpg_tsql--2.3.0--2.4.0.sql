@@ -2003,6 +2003,11 @@ SELECT CAST(name as sys.sysname) as name
 FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.OBJECT_SCHEMA_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
+RETURNS sys.SYSNAME AS
+'babelfishpg_tsql', 'object_schema_name'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
 RETURNS sys.NVARCHAR(4000)
 AS $$
