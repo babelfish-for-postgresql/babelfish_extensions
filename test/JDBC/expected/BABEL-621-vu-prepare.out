@@ -38,15 +38,6 @@ go
 ~~ERROR (Message: constraint "uniq_table_4babel_621_vu_prepardeacd0a0f930dee973c93a41c32c3ffc" of relation "babel_621_vu_prepare_table_4" does not exist)~~
 
 
--- Test that `sp_rename` is NOT available. If it is available, we need more tests with index/constraints renames
--- We expect this test to break when `sp_rename` will be implemented
-exec sp_rename N'babel_621_vu_prepare_table_4.uniq_table_4', N'uniq_table_4_a', N'INDEX';
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'sp_rename' is not currently supported in Babelfish)~~
-
-
 -- Very long index name
 create table babel_621_vu_prepare_table_with_long_index_name (a int);
 go
