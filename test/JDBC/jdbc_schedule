@@ -103,6 +103,9 @@ ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-verify
 ignore#!#test_windows_login_before_15_2-vu-prepare
 ignore#!#test_windows_login_before_15_2-vu-verify
 ignore#!#test_windows_login_before_15_2-vu-cleanup
+ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-prepare
+ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-verify
+ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-cleanup
 
 # These tests are meant for only upgrade
 ignore#!#openquery_upgrd-vu-prepare
