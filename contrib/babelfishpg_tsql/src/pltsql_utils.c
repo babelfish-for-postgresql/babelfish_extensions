@@ -1195,7 +1195,7 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
 	HeapTuple tuple;
 	bool isnull;
 
-	/* retrieve connamespace in pg_proc by oid */
+	/* retrieve connamespace in pg_constraint by oid */
 	tuple = SearchSysCache1(CONSTROID, CStringGetDatum(object_id));
 
 	if (HeapTupleIsValid(tuple))
