@@ -2249,6 +2249,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
 	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
 	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(2));
 	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
 	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
 
@@ -2271,11 +2272,17 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * We prepare the following query to create a user mapping. This will
 	 * be executed using ProcessUtility():
 	 *
+	 * if locallogin is NULL
 	 * CREATE USER MAPPING FOR CURRENT_USER SERVER <servername> OPTIONS (username
 	 * 	'<remote server user name>', password '<remote server user password>')
-	 *
+	 * else
+	 * CREATE USER MAPPING FOR <locallogin> SERVER <servername> OPTIONS (username
+	 * 	'<remote server user name>', password '<remote server user password>')
 	 */
-	appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
+	if(locallogin == NULL)
+		appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
+	else
+		appendStringInfo(&query, "CREATE USER MAPPING FOR \"%s\" SERVER \"%s\" ", locallogin, servername);
 
 	/*
 	 * Add the relevant options
@@ -2307,6 +2314,9 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	if (servername)
 		pfree(servername);
 
+	if (locallogin)
+		pfree(locallogin);
+
 	if (useself)
 		pfree(useself);
 
@@ -2333,11 +2343,6 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("@servername cannot be NULL")));
-
-	if (locallogin != NULL)
-		ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Only @locallogin = NULL is supported")));
 	
 	initStringInfo(&query);
 
@@ -2345,10 +2350,15 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * We prepare the following query to drop a linked server login. This will
 	 * be executed using ProcessUtility():
 	 *
+	 * if locallogin is NULL
 	 * DROP USER MAPPING FOR CURRENT_USER SERVER @SERVERNAME
-	 *
+	 * else
+	 * DROP USER MAPPING FOR @LOCALLOGIN SERVER @SERVERNAME
 	 */
-	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
+	if(locallogin == NULL)
+		appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
+	else
+		appendStringInfo(&query, "DROP USER MAPPING FOR \"%s\" SERVER \"%s\" ", locallogin, servername);
 
 	exec_utility_cmd_helper(query.data);
 

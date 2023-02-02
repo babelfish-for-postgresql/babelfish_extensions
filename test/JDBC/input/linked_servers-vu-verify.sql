@@ -29,8 +29,11 @@ GO
 EXEC sp_droplinkedsrvlogin @rmtsrvname = NULL, @locallogin = NULL
 GO
 
--- Try to drop a linked server login with locallogin != NULL (should throw error saying that only localogin = NULL is supported)
-EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = "login_1"
+-- Try to drop a linked server locallogin that does not exist (Should throw error)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = "invalid_login"
+GO
+
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server4", @locallogin = "linked_server_login_861"
 GO
 
 -- drop all the linked server logins that have been created
