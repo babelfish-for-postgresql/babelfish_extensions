@@ -365,6 +365,7 @@ ISC-Columns
 ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
+datediff_big
 atn2
 app_name
 str
@@ -382,3 +383,6 @@ BABEL-3914
 BABEL_OBJECT_NAME
 sys-systypes
 BABEL_OBJECT_DEFINITION
+datediff_internal_date
+Test-sp_rename
+Test-sp_rename-dep

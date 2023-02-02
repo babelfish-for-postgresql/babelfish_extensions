@@ -3012,18 +3012,25 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 		case T_RenameStmt:
+		{
+			RenameStmt *stmt = (RenameStmt *) parsetree;
+			if (prev_ProcessUtility)
+				prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+									params, queryEnv, dest, qc);
+			else
+				standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+										params, queryEnv, dest, qc);
+
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-				else
-					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-
-				check_extra_schema_restrictions(parsetree);
-
+				rename_update_bbf_catalog(stmt);
+				
 				return;
 			}
+			check_extra_schema_restrictions(parsetree);
+
+			return;
+		}
 		case T_CreateTableAsStmt:
 		{
 			if (sql_dialect == SQL_DIALECT_TSQL)
