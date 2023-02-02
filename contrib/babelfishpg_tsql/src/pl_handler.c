@@ -2654,8 +2654,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (islogin)
 				{
 					Oid		datdba;
-					char*	alter_login_name = NULL;
-					bool	is_password = false;
+					bool	has_password = false;
+					char* 	temp_login_name = NULL;
 
 					datdba = get_role_oid("sysadmin", false);
 
@@ -2674,11 +2674,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 										 errmsg("Current login does not have privileges to alter password")));
 
-							is_password = true;	
+							has_password = true;	
 						}
 					}
 
-					alter_login_name = pnstrdup(stmt->role->rolename, strlen(stmt->role->rolename));
 					/*
 					 * Leveraging the fact that convertToUPN API returns the login name in UPN format
 					 * if login name contains '\' i,e,. windows login.
@@ -2686,18 +2685,21 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * acceptable. So, combining these, if the login is of windows then it will be converted
 					 * to UPN format or else it will be as it was
 					 */
-					stmt->role->rolename = convertToUPN(stmt->role->rolename);
+					temp_login_name = convertToUPN(stmt->role->rolename);
 
-					/* If the previous rolname is same as current, then its password based login
+					/* If the previous rolname is same as current, then it is password based login
 					 * else, it is windows based login. If, user is trying to alter password for
 					 * windows login, throw error
 					 */
-					if (strcmp(alter_login_name, stmt->role->rolename) != 0 && is_password)
+					if (temp_login_name != stmt->role->rolename)
 					{
+						if (has_password)
 							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), 
 									errmsg("Cannot use parameter PASSWORD for a windows login")));
+						
+						pfree(stmt->role->rolename);
+						stmt->role->rolename = temp_login_name;
 					}
-					pfree(alter_login_name);
 
 					if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
