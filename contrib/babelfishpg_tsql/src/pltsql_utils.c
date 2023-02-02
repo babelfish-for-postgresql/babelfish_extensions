@@ -1202,20 +1202,18 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
 	{
 		(void) SysCacheGetAttr(CONSTROID, tuple,
 								Anum_pg_constraint_connamespace,
-								&isnull);		
+								&isnull);
 		if(!isnull)
 		{
 			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 			if (OidIsValid(con->oid))
-			{	
+			{
 				/* user should have permission of table associated with constraint */
 				if (OidIsValid(con->conrelid))
 				{
 					if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 						namespace_oid = con->connamespace;
 				}
-				else
-					namespace_oid = con->connamespace;
 			}
 		}
 		ReleaseSysCache(tuple);
@@ -1228,7 +1226,7 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
  * the trigger is on
  * Returns InvalidOid if Oid is not found
  */
-Oid 
+Oid
 tsql_get_trigger_rel_oid(Oid object_id){
 
 	Relation		tgrel;

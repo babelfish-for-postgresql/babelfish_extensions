@@ -1995,7 +1995,7 @@ extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id)
 extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
 extern char** split_object_name(char *name);
 extern bool is_schema_from_db(Oid schema_oid, Oid db_id);
-extern Oid tsql_get_proc_nsp_oid(Oid object_id, Oid user_id);
+extern Oid tsql_get_proc_nsp_oid(Oid object_id);
 extern Oid tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id);
 extern Oid tsql_get_trigger_rel_oid(Oid object_id);
 
