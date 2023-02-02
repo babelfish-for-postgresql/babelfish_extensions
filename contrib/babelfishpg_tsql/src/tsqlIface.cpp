@@ -616,7 +616,7 @@ static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext
 		TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
 		TSqlParser::IdContext *proc = nullptr;
 
-		if (exBodyCtx != nullptr)
+		if (exBodyCtx != nullptr && exBodyCtx->proc_var == nullptr)
 			proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
 		else if (exBodyBatchCtx != nullptr)
 			proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
