@@ -11,6 +11,7 @@
 #include "miscadmin.h"
 #include "pltsql.h"
 #include "storage/lock.h"
+#include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
