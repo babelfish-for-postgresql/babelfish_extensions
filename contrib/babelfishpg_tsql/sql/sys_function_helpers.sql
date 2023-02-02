@@ -10318,3 +10318,8 @@ BEGIN
 END
 $$
 LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_is_shared_schema(IN schemaname TEXT)
+RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_shared_schema_wrapper'
+LANGUAGE C IMMUTABLE STRICT;

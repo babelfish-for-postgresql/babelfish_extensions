@@ -1,0 +1,49 @@
+use db_schemata_10;
+go
+
+-- should show schema_schemata_11 and schema_schemata_12, since we are inside db_schemata_10 database
+SELECT * FROM information_schema.schemata ORDER BY SCHEMA_NAME;
+go
+
+use master;
+go
+
+-- should not show schema_schemata_11 and schema_schemata_12, since we have switched to master database
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
+go
+
+-- Test if user default schema is not dbo schema
+-- Check if after revoking the usage permission/ownership from user, it is still showing in catalog or not.
+-- tsql      user=schemata_login      password=123
+USE master;
+GO
+
+SELECT current_user;
+GO
+
+SELECT schema_name();
+GO
+
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
+GO
+
+-- psql
+REVOKE ALL ON SCHEMA master_schema_schemata_13 FROM master_schemata_user;
+GO
+
+-- tsql
+SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'schemata_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
+DROP user schemata_user;
+GO
+
+DROP LOGIN schemata_login;
+GO
