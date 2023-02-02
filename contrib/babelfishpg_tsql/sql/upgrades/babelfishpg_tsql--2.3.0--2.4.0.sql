@@ -2028,6 +2028,7 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STABLE;
+
 CREATE OR REPLACE FUNCTION sys.OBJECT_SCHEMA_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
 RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_schema_name'
