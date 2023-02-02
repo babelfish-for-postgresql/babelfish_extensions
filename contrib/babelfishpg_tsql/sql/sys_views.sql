@@ -803,34 +803,46 @@ from
 (
   -- Get all indexes from all system and user tables
   select
-    i.indrelid as object_id
-    , c.relname as name
-    , case when i.indisclustered then 1 else 2 end as type
-    , case when i.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as type_desc
-    , case when i.indisunique then 1 else 0 end as is_unique
-    , c.reltablespace as data_space_id
+    X.indrelid as object_id
+    , I.relname as name
+    , case when X.indisclustered then 1 else 2 end as type
+    , case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as type_desc
+    , case when X.indisunique then 1 else 0 end as is_unique
+    , I.reltablespace as data_space_id
     , 0 as ignore_dup_key
-    , case when i.indisprimary then 1 else 0 end as is_primary_key
-    , case when (SELECT count(constr.oid) FROM pg_constraint constr WHERE constr.conindid = c.oid and constr.contype = 'u') > 0 then 1 else 0 end as is_unique_constraint
+    , case when X.indisprimary then 1 else 0 end as is_primary_key
+    , case when const.oid is null then 0 else 1 end as is_unique_constraint
     , 0 as fill_factor
-    , case when i.indpred is null then 0 else 1 end as is_padded
-    , case when i.indisready then 0 else 1 end as is_disabled
+    , case when X.indpred is null then 0 else 1 end as is_padded
+    , case when X.indisready then 0 else 1 end as is_disabled
     , 0 as is_hypothetical
     , 1 as allow_row_locks
     , 1 as allow_page_locks
     , 0 as has_filter
     , null as filter_definition
     , 0 as auto_created
-    , case when i.indisclustered then 1 else c.oid end as index_id
-  from pg_class c
-  inner join pg_index i on i.indexrelid = c.oid
-  where c.relkind = 'i' and i.indislive
-  and (c.relnamespace in (select schema_id from sys.schemas) or c.relnamespace::regnamespace::text = 'sys')
-  and has_schema_privilege(c.relnamespace, 'USAGE')
+    , case when X.indisclustered then 1 else 1+row_number() over(partition by C.oid) end as index_id -- use rownumber to get index_id scoped on each objects
+  from (pg_index X 
+  -- get all the objects on which indexes can be created
+  join pg_class C on C.oid=X.indrelid and C.relkind in ('r', 'm', 'p')
+  -- get list of all indexes grouped by objects
+  cross join pg_class I  
+  )
+  -- to get namespace information
+  left join sys.schemas sch on I.relnamespace = sch.schema_id
+  -- check if index is a unique constraint
+  left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
+  where has_schema_privilege(I.relnamespace, 'USAGE')
+  and I.oid = X.indexrelid 
+  and I.relkind = 'i' 
+  -- index is active
+  and X.indislive 
+  -- filter to get all the objects that belong to sys or babelfish schemas
+  and (sch.schema_id is not null or I.relnamespace::regnamespace::text = 'sys')
 
   union all 
   
-  -- Create HEAP entries for each system and user table
+-- Create HEAP entries for each system and user table
   select distinct on (t.oid)
     t.oid as object_id
     , null as name
@@ -851,9 +863,11 @@ from
     , null as filter_definition
     , 0 as auto_created
     , 0 as index_id
-  from pg_class t 
+  from pg_class t
+  left join sys.schemas sch on t.relnamespace = sch.schema_id
   where t.relkind = 'r'
-  and (t.relnamespace in (select schema_id from sys.schemas) or t.relnamespace::regnamespace::text = 'sys')
+  -- filter to get all the objects that belong to sys or babelfish schemas
+  and (sch.schema_id is not null or t.relnamespace::regnamespace::text = 'sys')
   and has_schema_privilege(t.relnamespace, 'USAGE')
   and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 
@@ -957,7 +971,7 @@ select
   i.object_id::integer as id
   , null::integer as status
   , null::binary(6) as first
-  , i.type::smallint as indid
+  , i.index_id::smallint as indid
   , null::binary(6) as root
   , 0::smallint as minlen
   , 1::smallint as keycnt
