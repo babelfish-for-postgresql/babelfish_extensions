@@ -389,3 +389,4 @@ datediff_internal_date
 Test-sp_rename
 Test-sp_rename-dep
 BABEL-3657
+BABEL-733
