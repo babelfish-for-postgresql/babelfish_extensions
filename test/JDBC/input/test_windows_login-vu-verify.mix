@@ -10,6 +10,22 @@ where orig_loginname in ('PassWordUser','ad\Aduser','ad\AduserdbEnglish','usErpa
 GO
 
 -- tsql
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'aduser@AD');
+GO
+
+-- tsql
+ALTER SERVER ROLE sysadmin DROP MEMBER [ad\Aduser];
+GO
+
+-- tsql
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'aduser@AD');
+GO
+
+-- tsql
 select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
 GO
 select count(*) from sys.server_principals where name = 'passworduser';
