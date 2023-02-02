@@ -596,6 +596,11 @@ static void
 grant_rds_ad_to_windows_login(const char *login)
 {
 	StringInfoData	query;
+	List			*parsetree_list;
+	Node			*stmt;
+	RoleSpec		*tmp_role;
+	AccessPriv		*ad_role;
+	PlannedStmt		*wrapper;
 	Oid				roleid;
 
 	/* First check that rds_ad is available. */
@@ -610,7 +615,7 @@ grant_rds_ad_to_windows_login(const char *login)
 
 
 	initStringInfo(&query);
-	appendStringInfo(&query, "GRANT %s TO %s; ", RDS_AD_NAME, login);
+	appendStringInfo(&query, "GRANT %S TO %S; ", RDS_AD_NAME, login);
 	exec_utility_cmd_helper(query.data);
 
 	pfree(query.data);
