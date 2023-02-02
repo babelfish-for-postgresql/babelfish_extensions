@@ -2908,13 +2908,13 @@ BEGIN
 			IF @server_id IS NULL
 				BEGIN
 					RAISERROR('The server ''%s'' does not exist', 16, 1, @rmtsrvname);
-					RETURN 0;
+					RETURN 1;
 				END
 		END
 
 	IF @locallogin IS NOT NULL
 		BEGIN
-			SELECT @local_principal_id = usesysid FROM pg_user WHERE usename = @locallogin;
+			SELECT @local_principal_id = usesysid FROM pg_user WHERE CAST(usename as sys.sysname) = @locallogin;
 		END
 	
 	SELECT
