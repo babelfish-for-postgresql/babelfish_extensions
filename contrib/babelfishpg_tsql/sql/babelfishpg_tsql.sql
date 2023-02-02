@@ -2893,6 +2893,133 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_helplinkedsrvlogin(
+	IN "@rmtsrvname" sysname DEFAULT NULL,
+	IN "@locallogin" sysname DEFAULT NULL
+)
+AS $$
+DECLARE @server_id INT;
+DECLARE @local_principal_id INT;
+BEGIN
+	IF @rmtsrvname IS NOT NULL
+		BEGIN
+			SELECT @server_id = server_id FROM sys.servers WHERE name = @rmtsrvname;
+
+			IF @server_id IS NULL
+				BEGIN
+					RAISERROR('The server ''%s'' does not exist', 16, 1, @rmtsrvname);
+					RETURN 1;
+				END
+		END
+
+	IF @locallogin IS NOT NULL
+		BEGIN
+			SELECT @local_principal_id = usesysid FROM pg_user WHERE CAST(usename as sys.sysname) = @locallogin;
+		END
+	
+	SELECT
+		s.name AS "Linked Server",
+		CAST(u.usename as sys.sysname) AS "Local Login", 
+		CAST(0 as smallint) AS "Is Self Mapping", 
+		l.remote_name AS "Remote Login"
+	FROM sys.linked_logins AS l 
+	LEFT JOIN sys.servers AS s ON l.server_id = s.server_id
+	LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid
+	WHERE (@server_id is NULL or @server_id = s.server_id) AND ((@local_principal_id is NULL AND @locallogin IS NULL) or @local_principal_id = l.local_principal_id);
+END;
+$$ LANGUAGE pltsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_helplinkedsrvlogin TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@schemaname" sys.nvarchar(776),
+	IN "@objtype" char(2) DEFAULT NULL
+) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_internal TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	If @objtype IS NULL
+		BEGIN
+			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
+		END
+	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
+		BEGIN
+			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+		END
+	DECLARE @name_count INT;
+	DECLARE @subname sys.nvarchar(776) = '';
+	DECLARE @schemaname sys.nvarchar(776) = '';
+	DECLARE @dbname sys.nvarchar(776) = '';
+	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
+	IF @name_count > 3
+		BEGIN
+			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+		END
+	IF @name_count = 3
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
+			PRINT 'db_name:  ';
+			PRINT sys.db_name();
+			IF @dbname != sys.db_name()
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+		END
+	IF @name_count = 2
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+		END
+	IF @name_count = 1
+		BEGIN
+			SET @schemaname = sys.schema_name();
+			SET @subname = @objname;
+		END
+	
+	DECLARE @count INT;
+	DECLARE @currtype char(2);
+	SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	IF @count > 1
+		BEGIN
+			THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+		END
+	IF @count < 1
+		BEGIN
+			THROW 33557097, N'There is no object with the given @objname.', 1;
+		END
+	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
+END;
+$$;
+GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
 AS $$
 BEGIN
