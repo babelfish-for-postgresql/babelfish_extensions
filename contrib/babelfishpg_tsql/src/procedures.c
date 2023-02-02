@@ -2278,7 +2278,10 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 			if (PortalContext == NULL)
 				PortalContext = MessageContext;
 			if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			{
+				PortalContext = savedPortalCxt;
 				elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+			}
 			PortalContext = savedPortalCxt;
 
 			if ((plan = SPI_prepare(query, 0, NULL)) == NULL)
