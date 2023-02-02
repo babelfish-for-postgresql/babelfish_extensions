@@ -14,6 +14,30 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
+-- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
+SET NOCOUNT ON
+DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname NULL, c smallint, d sysname NULL)
+INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
+SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a <> 'bbf_server'
+SET NOCOUNT OFF
+GO
+
+-- Try to call sp_helplinkedsrvlogin with correct server name but invalid login name. Should return zero rows
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with correct server name but login name = NULL.  should return all mapppings of the given server
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with server name = NULL and invalid login name. Should return zero rows
+EXEC sp_helplinkedsrvlogin @locallogin = 'testlogin'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with invalid server name. Should throw error
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'invalid_srv'
+GO
+
 SET NOCOUNT ON
 DECLARE @sp_linkedservers_var table(a sysname, b nvarchar(128), c nvarchar(128), d nvarchar(4000), e nvarchar(4000), f nvarchar(4000), g sysname NULL)
 INSERT INTO @sp_linkedservers_var EXEC sp_linkedservers
