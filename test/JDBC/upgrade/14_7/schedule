@@ -365,6 +365,7 @@ ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
 atn2
+datediff_big
 app_name
 str
 case_insensitive_collation
@@ -377,5 +378,8 @@ sys-all_sql_modules
 sys-sql_modules
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
+datediff_internal_date
 BABEL_OBJECT_NAME
+Test-sp_rename
+Test-sp_rename-dep
 BABEL-3657
