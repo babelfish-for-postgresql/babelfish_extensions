@@ -20,6 +20,9 @@ GO
 SELECT schema_name(schema_id())
 GO
 
+SELECT schema_name(schema_id('dbo'))
+GO
+
 SELECT schema_name(99)
 GO
 
