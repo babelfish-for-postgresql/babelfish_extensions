@@ -364,6 +364,9 @@ go
 SELECT scope_identity();
 go
 
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
 SET babelfish_showplan_all ON;
 go
 
