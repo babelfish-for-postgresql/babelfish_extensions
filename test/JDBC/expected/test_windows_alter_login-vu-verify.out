@@ -48,6 +48,20 @@ GO
 ~~ERROR (Message: Cannot drop the login 'aduser_alter@babel', because it does not exist or you do not have permission.)~~
 
 
+ALTER LOGIN [babel\aduser_alter] WITH PASSWORD='123'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use parameter PASSWORD for a windows login)~~
+
+
+ALTER LOGIN [babel\aduser_alter] WITH  PASSWORD  ='123'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use parameter PASSWORD for a windows login)~~
+
+
 ALTER LOGIN passWORduser_alter DISABLE;
 GO
 
@@ -86,6 +100,30 @@ GO
 ~~START~~
 name#!#int4#!#"sys"."varchar"#!#"sys"."varchar"#!#bpchar
 passworduser_alter#!#0#!#alter_db#!#English#!#S
+~~END~~
+
+
+-- tsql
+ALTER LOGIN passWORduser_alter with PASSWORD='12345678';
+GO
+
+-- tsql user=passWORduser_alter password=12345678;
+SELECT SUSER_NAME();
+GO
+~~START~~
+nvarchar
+passWORduser_alter
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'passworduser_alter' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
 ~~END~~
 
 
