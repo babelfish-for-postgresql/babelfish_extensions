@@ -1488,7 +1488,7 @@ void
 check_alter_server_stmt(GrantRoleStmt *stmt)
 {
 	Oid		grantee;
-	const char 	*grantee_name;
+	char 		*grantee_name;
 	const char 	*granted_name;
 	RoleSpec 	*spec;
 	AccessPriv 	*granted;
