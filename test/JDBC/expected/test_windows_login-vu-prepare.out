@@ -8,10 +8,6 @@ GO
 CREATE LOGIN [ad\Aduser] from windows;
 GO
 
--- add [ad\Aduser] to sysadmin
-ALTER SERVER ROLE sysadmin ADD MEMBER [ad\Aduser];
-GO
-
 -- test for default database
 CREATE LOGIN [ad\Aduserdb] from windows with default_database=[ad_db];
 GO
