@@ -213,6 +213,43 @@ go
 
 ~~ERROR (Message: "rand;om" is not a valid volatility)~~
 
+/* testing injection in function name */
+exec sys.sp_babelfish_volatility 'test_bbf_vol_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_bbf_vol_f1#!#volatile
+~~END~~
+
+exec sys.sp_babelfish_volatility '[test_bbf_vol_f1;drop table test_bbf_vol_t1;]'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_bbf_vol_f1;drop table test_bbf_vol_t1;#!#volatile
+~~END~~
+
+exec sys.sp_babelfish_volatility '[test_bbf_vol_f1;drop table test_bbf_vol_t1;]', 'stable'
+go
+exec sys.sp_babelfish_volatility '[test_bbf_vol_f1;drop table test_bbf_vol_t1;]'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_bbf_vol_f1;drop table test_bbf_vol_t1;#!#stable
+~~END~~
+
+exec sys.sp_babelfish_volatility 'test_bbf_vol_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_bbf_vol_f1#!#volatile
+~~END~~
+
+select * from test_bbf_vol_t1
+go
+~~START~~
+int
+~~END~~
+
 
 /* testing for case insensitive */
 exec sys.sp_babelfish_volatility 'TesT_SP_babelfish_Volatility_f1', 'VolatILe'
@@ -489,7 +526,6 @@ revoke execute on test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatil
 go
 revoke execute on test_sp_babelfish_volatility_f2 from test_sp_babelfish_volatility_user
 go
-
 
 -- psql
 -- Need to terminate active session before cleaning up the login

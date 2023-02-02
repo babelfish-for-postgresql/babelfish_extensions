@@ -52,3 +52,11 @@ go
 drop login test_sp_babelfish_volatility_login
 go
 
+drop table test_bbf_vol_t1
+go
+
+drop function test_bbf_vol_f1
+go
+
+drop function [test_bbf_vol_f1;drop table test_bbf_vol_t1;]
+go
