@@ -180,7 +180,7 @@ protected:
 		antlrcpp::Any visitFunction_call(TSqlParser::Function_callContext *ctx) override;
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
 		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override {
-			if (!ctx->open_json()) {
+			if (!ctx->open_json() && !ctx->open_query()) {
 				handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx));
 			}
 			return visitChildren(ctx);
@@ -1534,7 +1534,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_procoption",
 	"sp_recompile",
 	"sp_refreshview",
-	"sp_rename",
 	"sp_renamedb",
 	"sp_resetstatus",
 	"sp_sequence_get_range",

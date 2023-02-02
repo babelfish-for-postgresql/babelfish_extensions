@@ -1,0 +1,10 @@
+EXEC sp_dropserver 'bbf_server', 'droplogins'
+GO
+
+-- psql
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+GO
+
+-- tsql
+DROP VIEW openquery_vu_prepare__openquery_view
+GO

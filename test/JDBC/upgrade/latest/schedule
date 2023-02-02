@@ -368,6 +368,7 @@ sys_server_principals_dep
 sys_database_principals_dep
 TestVariableDataLength
 BABEL-3801
+datediff_big
 app_name
 atn2
 str
@@ -383,6 +384,7 @@ AVG-Aggregate-Dep
 bbf_view_def
 BABEL_OBJECT_ID
 BABEL-3802
+datediff_internal_date
 BABEL_OBJECT_NAME
 Test_user_from_win_login
 BABEL-3914
@@ -391,3 +393,7 @@ BABEL-3828
 BABEL-3844
 test_windows_alter_login
 sys-systypes
+Test-sp_rename
+Test-sp_rename-dep
+openquery_upgrd
+BABEL-3657

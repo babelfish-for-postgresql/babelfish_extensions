@@ -170,6 +170,7 @@ static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
+static std::string getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id);
 static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
 
 /*
@@ -616,7 +617,7 @@ static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext
 		TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
 		TSqlParser::IdContext *proc = nullptr;
 
-		if (exBodyCtx != nullptr)
+		if (exBodyCtx != nullptr && exBodyCtx->proc_var == nullptr)
 			proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
 		else if (exBodyBatchCtx != nullptr)
 			proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
@@ -1024,6 +1025,27 @@ public:
 		}
 
 	}
+
+	void exitOpen_query(TSqlParser::Open_queryContext *ctx) override
+	{
+		TSqlParser::IdContext *linked_srv = ctx->linked_server;
+
+		/* 
+		 * The calling syntax for T-SQL OPENQUERY is OPENQUERY(linked_server, 'query')
+		 * which means that linked_server is passed as an identifier (without quotes)
+		 * 
+		 * Since we have implemented OPENQUERY as a PG function, the linked_server gets
+		 * interpreted as a column. To fix this, we enclose the linked_server in single
+		 * quotes, so that the function now gets called as OPENQUERY('linked_server', 'query')
+		 */
+		if (linked_srv)
+		{
+			std::string linked_srv_name = getIDName(linked_srv->DOUBLE_QUOTE_ID(), linked_srv->SQUARE_BRACKET_ID(), linked_srv->ID());
+			std::string str = std::string("'") + linked_srv_name + std::string("'");
+
+			rewritten_query_fragment.emplace(std::make_pair(linked_srv->start->getStartIndex(), std::make_pair(linked_srv_name, str)));
+		}	
+    	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1983,48 +2005,6 @@ public:
     {
     }
     
-private:
-    // getIDName() - returns the name found in one of the given TerminalNodes
-    //
-    //	We expect one non-null pointer and two null pointers.  The first (dq)
-    //  will be non-null if we are working with a DOUBLE_QUOTE_ID() - we
-    //  strip off the double-quotes and return the result.  The second (sb)
-    //  will be non-null if we are working with a SQUARE_BRACKET_ID() - we
-    //  strip off the square brackets and return the result.  The last (id)
-    //  will be non-null if we are working on an ID() - we just return the
-    //  name itself.
-    
-    static std::string
-    getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id)
-    {
-	Assert(dq || sb || id);
-
-	if (dq)
-	{
-	    std::string name{dq->getSymbol()->getText()};
-	    Assert(name.front() == '"');
-	    Assert(name.back() == '"');
-
-	    name = name.substr(1, name.size() - 2);
-
-	    return name;
-	}
-	else if (sb)
-	{
-	    std::string name{sb->getSymbol()->getText()};
-	    Assert(name.front() == '[');
-	    Assert(name.back() == ']');
-
-	    name = name.substr(1, name.size() - 2);
-
-	    return name;
-	}
-	else
-	{
-	    return std::string(id->getSymbol()->getText());
-	}	
-    }
-    
 public:
     void enterConstant(TSqlParser::ConstantContext *ctx) override
     {
@@ -2464,7 +2444,7 @@ antlr_parser_cpp(const char *sourceText)
 	 * Generally the mutator steps are non-reentrant, if parsetree is created and mutators are run, subsequent parsing may produce
 	 * incorrect error messages
 	*/
-	if (!result.success && !result.parseTreeCreated)
+	if (!result.success && !result.parseTreeCreated && pltsql_enable_sll_parse_mode)
 	{
 		elog(DEBUG1, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
 		result = antlr_parse_query(sourceText, false);
@@ -6616,4 +6596,44 @@ does_msg_exceeds_params_limit(const std::string& msg)
 	}
 
 	return paramCount > RAISE_ERROR_PARAMS_LIMIT;
+}
+
+// getIDName() - returns the name found in one of the given TerminalNodes
+//
+//	We expect one non-null pointer and two null pointers.  The first (dq)
+//  will be non-null if we are working with a DOUBLE_QUOTE_ID() - we
+//  strip off the double-quotes and return the result.  The second (sb)
+//  will be non-null if we are working with a SQUARE_BRACKET_ID() - we
+//  strip off the square brackets and return the result.  The last (id)
+//  will be non-null if we are working on an ID() - we just return the
+//  name itself.
+static std::string
+getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id)
+{
+	Assert(dq || sb || id);
+
+	if (dq)
+	{
+		std::string name{dq->getSymbol()->getText()};
+		Assert(name.front() == '"');
+		Assert(name.back() == '"');
+
+		name = name.substr(1, name.size() - 2);
+
+		return name;
+	}
+	else if (sb)
+	{
+		std::string name{sb->getSymbol()->getText()};
+		Assert(name.front() == '[');
+		Assert(name.back() == ']');
+
+		name = name.substr(1, name.size() - 2);
+
+		return name;
+	}
+	else
+	{
+		return std::string(id->getSymbol()->getText());
+	}
 }
