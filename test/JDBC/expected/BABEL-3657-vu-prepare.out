@@ -1,0 +1,43 @@
+CREATE PROCEDURE babel_3657_vu_prepare_proc1 (@in varchar(50))
+AS 
+SELECT @in
+GO
+
+EXEC babel_3657_vu_prepare_proc1 'Should work'
+GO
+~~START~~
+varchar
+Should work
+~~END~~
+
+
+
+
+-- Should throw error as currently exec doesn't support calling a procedure with a variable name
+-- it will throw error similar to procedure doesn't exist
+DECLARE @pro varchar(50) = 'babel_3657_vu_prepare_proc1'
+DECLARE @in varchar(50) = 'Will throw error'
+EXEC @pro @in
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure @pro("varchar") does not exist)~~
+
+
+
+-- non existent procedure
+DECLARE @in varchar(50) = 'Will throw error'
+EXEC non_existing_procedure @in
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure non_existing_procedure("varchar") does not exist)~~
+
+
+-- after fix of the crash, it should throw error similar to this
+EXEC non_existing_procedure 'Will throw error'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure non_existing_procedure(unknown) does not exist)~~
+
