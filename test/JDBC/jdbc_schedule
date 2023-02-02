@@ -10,14 +10,6 @@
 
 all
 
-# Temporarily ignore tests until fixed in PG15
-ignore#!#BABEL-LOGIN-USER-EXT
-ignore#!#BABEL-ROLE-vu-prepare
-ignore#!#BABEL-ROLE-vu-verify
-ignore#!#BABEL-ROLE-vu-cleanup
-ignore#!#BABEL-ROLE
-ignore#!#BABEL-USER
-
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
@@ -111,6 +103,9 @@ ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-verify
 ignore#!#test_windows_login_before_15_2-vu-prepare
 ignore#!#test_windows_login_before_15_2-vu-verify
 ignore#!#test_windows_login_before_15_2-vu-cleanup
+ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-prepare
+ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-verify
+ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-cleanup
 
 # These tests are meant for only upgrade
 ignore#!#openquery_upgrd-vu-prepare
