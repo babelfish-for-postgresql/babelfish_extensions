@@ -1,19 +1,76 @@
 -- psql
 Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
+SELECT pg_reload_conf();
 GO
 
-Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
+-- tsql
+exec pg_sleep 1
 GO
 
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+
+-- psql
 Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
+SELECT pg_reload_conf();
 GO
 
+-- tsql
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+
+-- psql
 Alter system set babelfishpg_tds.product_version = "15.-1.3000.6";
+SELECT pg_reload_conf();
 GO
 
+-- tsql
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+
+-- psql
 Alter system set babelfishpg_tds.product_version = "15.4.66000.6";
+SELECT pg_reload_conf();
 GO
 
+-- tsql
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+
+-- psql
+Alter system set babelfishpg_tds.product_version = ".4.3000.6";
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+
+-- psql
+Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+
+-- psql
 Alter system set babelfishpg_tds.product_version = "15.4.-1.6";
 GO
 
@@ -23,8 +80,6 @@ GO
 Alter system set babelfishpg_tds.product_version = "11.4.3000";
 GO
 
-Alter system set babelfishpg_tds.product_version = ".4.3000.6";
-GO
 
 Alter system set babelfishpg_tds.product_version = "11..3000.6";
 GO
@@ -33,9 +88,6 @@ Alter system set babelfishpg_tds.product_version = "11.4..6";
 GO
 
 Alter system set babelfishpg_tds.product_version = "11.4.3000.";
-GO
-
-Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
 GO
 
 Alter system set babelfishpg_tds.product_version = NULL;
@@ -50,6 +102,18 @@ GO
 ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "default";
 GO
 
+Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+exec pg_sleep 1
+GO
+
+SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
+GO
+
+-- psql
 -- Test if PG will lose connection when setting GUC more than two times
 Alter system set babelfishpg_tds.product_version = "15.4.3000.6";
 SELECT pg_reload_conf();
