@@ -59,6 +59,7 @@ PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_dropserver_internal);
+PG_FUNCTION_INFO_V1(sp_rename_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -69,6 +70,7 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
+static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype);
 
 List *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -78,6 +80,7 @@ List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, L
 char *sp_describe_first_result_set_view_name = NULL;
 
 bool sp_describe_first_result_set_inprogress = false;
+char *orig_proc_funcname = NULL;
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -1641,7 +1644,7 @@ gen_sp_addrole_subcmds(const char *user)
 				(Node *) makeString((char *)user),
 						-1));
 	rolestmt->options = list_concat(rolestmt->options, user_options);
-
+	
 	return res;
 }
 
@@ -2365,4 +2368,184 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	}
 
 	return (Datum) 0;
+}
+Datum sp_rename_internal(PG_FUNCTION_ARGS)
+{
+	char *obj_name, *new_name, *schema_name, *objtype, *process_util_querystr;
+	ObjectType objtype_code;
+	size_t len;
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		//1. set dialect to TSQL
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		
+		//2. read the input arguments
+		obj_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		new_name = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+		schema_name = PG_ARGISNULL(2) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(2));
+		objtype =  PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
+
+		//3. check if the input arguments are valid, and parse the objname
+		// objname can have at most 3 parts
+		if (obj_name == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Procedure or function 'sp_rename' expects parameter '@objname', which was not supplied.")));
+		if (new_name == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Procedure or function 'sp_rename' expects parameter '@newname', which was not supplied.")));
+		if (objtype == NULL)
+			objtype = "OBJECT";
+
+		// remove trailing whitespaces for both input
+		len = strlen(obj_name);
+		while(isspace(obj_name[len - 1]))
+			obj_name[--len] = 0;
+		len = strlen(schema_name);
+		while(isspace(schema_name[len - 1]))
+			schema_name[--len] = 0;
+		len = strlen(new_name);
+		while(isspace(new_name[len - 1]))
+			new_name[--len] = 0;
+		len = strlen(objtype);
+		while(isspace(objtype[len - 1]))
+			objtype[--len] = 0;
+
+		// check if inputs are empty after removing trailing spaces
+		if (obj_name == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Procedure or function 'sp_rename' expects parameter '@objname', which was not supplied.")));
+		if (new_name == NULL || strlen(new_name) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Procedure or function 'sp_rename' expects parameter '@newname', which was not supplied.")));
+		
+		//4. for each obj type, generate the corresponding RenameStmt
+		// update variables based on the target objtype
+		if (strcmp(objtype, "U") == 0) {
+			objtype_code = OBJECT_TABLE;
+			process_util_querystr = "(ALTER TABLE )";
+		} else if (strcmp(objtype, "V") == 0) {
+			objtype_code = OBJECT_VIEW;
+			process_util_querystr = "(ALTER VIEW )";
+		} else if (strcmp(objtype, "P") == 0) {
+			objtype_code = OBJECT_PROCEDURE;
+			process_util_querystr = "(ALTER PROCEDURE )";
+		} else if (strcmp(objtype, "AF") == 0 || strcmp(objtype, "FN") == 0 || strcmp(objtype, "FS") == 0 || 
+					strcmp(objtype, "FT") == 0 || strcmp(objtype, "IF") == 0 || strcmp(objtype, "TF") == 0) {
+			objtype_code = OBJECT_FUNCTION;
+			process_util_querystr = "(ALTER FUNCTION )";
+		} else {
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Provided '@objtype' is currently not supported in sp_rename.")));
+		}
+
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		// parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype);
+		parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype_code);
+
+		//5. run all commands
+		foreach(parsetree_item, parsetree_list)
+        {
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+			
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				pstrdup(process_util_querystr),
+				// "(ALTER TABLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+        }
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
+}
+
+static List *
+gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	RenameStmt *renamestmt;
+
+	initStringInfo(&query);
+	if (objtype == OBJECT_TABLE) {
+		appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_VIEW) {
+		appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_PROCEDURE) {
+		appendStringInfo(&query, "ALTER PROCEDURE dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_FUNCTION) {
+		appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
+	} else {
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("Provided objtype is not supported for sp_rename")));
+	}
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+
+	renamestmt = (RenameStmt *) stmt;
+	if (!IsA(renamestmt, RenameStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
+
+	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_VIEW)) {
+		renamestmt->renameType = objtype;
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->relname = pstrdup(lowerstr(objname));
+	} else {
+	// } else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION)) {
+		ObjectWithArgs *objwargs = (ObjectWithArgs *) renamestmt->object;
+		renamestmt->renameType = objtype;
+		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
+		orig_proc_funcname = pstrdup(newname);
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+	}
+	//name mapping
+	rewrite_object_refs(stmt);
+
+	return res;
 }

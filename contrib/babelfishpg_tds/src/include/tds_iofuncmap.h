@@ -97,6 +97,7 @@
 #define TDS_TYPE_NVARCHAR		231		/* 0xE7 */
 #define TDS_TYPE_NCHAR			239		/* 0xEF */
 #define TDS_TYPE_MONEYN			110		/* 0x6E */
+#define TDS_TYPE_SMALLMONEY             122             /* 0x7A */
 #define	TDS_TYPE_CHAR			175		/* 0xAF */
 #define	TDS_TYPE_DATE			40		/* 0x28 */
 #define TDS_TYPE_DATETIMEN		111		/* 0x6F */
@@ -111,6 +112,7 @@
 #define TDS_TYPE_TABLE 			243		/* 0xF3 */
 #define TDS_TYPE_SQLVARIANT		98		/* 0x62 */
 #define TDS_TYPE_DATETIMEOFFSET		43		/* 0x2B */
+#define TDS_TYPE_SMALLDATETIME          58              /* 0x3A */
 
 /*
  * macros for supporting sqlvariant datatype on TDS side

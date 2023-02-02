@@ -835,12 +835,59 @@ user_id(PG_FUNCTION_ARGS)
 	PG_RETURN_OID(ret);
 }
 
+/*
+ * get_original_login_name - returns original login name corresponding to
+ * supplied login by looking into babelfish_authid_login_ext catalog.
+ */
+static char *
+get_original_login_name(char *login)
+{
+	Relation	relation;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	HeapTuple	tuple;
+	bool		isnull;
+	Datum		datum;
+
+	relation = table_open(get_authid_login_ext_oid(), AccessShareLock);
+
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_login_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(login));
+
+	scan = systable_beginscan(relation,
+							  get_authid_login_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (!HeapTupleIsValid(tuple))
+	{
+		systable_endscan(scan);
+		table_close(relation, AccessShareLock);
+		return NULL;
+	}
+
+	datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_orig_loginname, RelationGetDescr(relation), &isnull);
+
+	/* original login name should not be NULL. */
+	Assert(!isnull);
+
+	systable_endscan(scan);
+	table_close(relation, AccessShareLock);
+
+	return TextDatumGetCString(datum);
+}
+
+
 PG_FUNCTION_INFO_V1(suser_name);
 Datum
 suser_name(PG_FUNCTION_ARGS)
 {
 	Oid				server_user_id;
 	char			*ret;
+	char			*orig_loginname;
 
 	server_user_id = PG_ARGISNULL(0) ? InvalidOid : PG_GETARG_OID(0);
 
@@ -849,10 +896,22 @@ suser_name(PG_FUNCTION_ARGS)
 
 	ret = GetUserNameFromId(server_user_id, true);
 
-	if (!ret || !is_login(server_user_id))
+	if (!ret)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(CStringGetTextDatum(ret));
+	if (!is_login(server_user_id))
+	{
+		pfree(ret);
+		PG_RETURN_NULL();
+	}
+
+	orig_loginname = get_original_login_name(ret);
+
+	pfree(ret);
+	if (!orig_loginname)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(CStringGetTextDatum(orig_loginname));
 }
 
 PG_FUNCTION_INFO_V1(suser_id);
