@@ -3,7 +3,7 @@ Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "16.4.3000.6";
@@ -13,77 +13,77 @@ Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.-1.3000.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.4.66000.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.4.-1.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "e.4.3000.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "11.4.3000";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = ".4.3000.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "11..3000.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "11.4..6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "11.4.3000.";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = NULL;
@@ -99,7 +99,7 @@ Alter system set babelfishpg_tds.product_version = " ";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.version = "test";

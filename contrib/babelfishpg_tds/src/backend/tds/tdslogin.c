@@ -410,39 +410,60 @@ ProcessVersionNumber(const char* inputString)
 	return version_arr;
 }
 
-static void
-SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
-						StringInfo reqVal, bool loadSsl, int *loadEncryption)
-{
+static int makeVersionByte(int byteNum){
 	int *version_pnt;
 	int MajorVersion;
 	int MinorVersion;
 	int MicroVersion;
 
+	Assert(product_version != NULL);
+	Assert(byteNum <= 3);
+	if(pg_strcasecmp(product_version,"default") == 0)
+		version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
+	else
+		version_pnt = ProcessVersionNumber(product_version);
+		
+	MajorVersion = *(version_pnt + 0);
+	MinorVersion = *(version_pnt + 1);
+	MicroVersion = *(version_pnt + 2);
+
+	if(byteNum == 0){
+		return MajorVersion & 0xFF;
+	} 
+	else if (byteNum == 1)
+	{
+		return MinorVersion & 0xFF;
+	}
+	else if (byteNum == 2)
+	{
+		if (MicroVersion <= 0xFF)
+		{
+			return 0x00;
+		}
+		else
+		{
+			return (MicroVersion >> 8) & 0xFF;
+		}
+	}
+	else if (byteNum == 3)
+	{
+		return MicroVersion & 0xFF;
+	}
+
+	return 0;
+}
+
+static void
+SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
+						StringInfo reqVal, bool loadSsl, int *loadEncryption)
+{
 	switch(token)
 	{
 		case TDS_PRELOGIN_VERSION:
-			if(pg_strcasecmp(product_version,"default") == 0)
-				version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
-			else
-				version_pnt = ProcessVersionNumber(product_version);
-
-			MajorVersion = *(version_pnt + 0);
-			MinorVersion = *(version_pnt + 1);
-			MicroVersion = *(version_pnt + 2);
-			appendStringInfoChar(val, MajorVersion & 0xFF);
-			appendStringInfoChar(val, MinorVersion & 0xFF);
-			if (MicroVersion <= 0xFF)
-			{
-				appendStringInfoChar(val, 0x00);
-				appendStringInfoChar(val, MicroVersion & 0xFF);
-			} 
-			else 
-			{
-				appendStringInfoChar(val, (MicroVersion >> 8) & 0xFF);
-				appendStringInfoChar(val, MicroVersion & 0xFF);
-			}
-			/* Subbuild Version 0x0000 */
+			appendStringInfoChar(val, makeVersionByte(0));
+			appendStringInfoChar(val, makeVersionByte(1));
+			appendStringInfoChar(val, makeVersionByte(2));
+			appendStringInfoChar(val, makeVersionByte(3));
 			appendStringInfoChar(val, 0x00);
 			appendStringInfoChar(val, 0x00);
 			break;
@@ -1985,10 +2006,6 @@ TdsSendLoginAck(Port *port)
 	char	*user = NULL;
 	MemoryContext  oldContext;
 	uint32_t tdsVersion = pg_hton32(loginInfo->tdsVersion);
-	int	*version_pnt;
-	int	MajorVersion;
-	int	MinorVersion;
-	int	MicroVersion;
 	char	srvVersionBytes[4];
 
 	PG_TRY();
@@ -2238,30 +2255,12 @@ TdsSendLoginAck(Port *port)
 
 		TdsUTF8toUTF16StringInfo(&buf, default_server_name, prognameLen);
 		TdsPutbytes(buf.data, buf.len);
-		Assert(product_version != NULL);
-		if(pg_strcasecmp(product_version,"default") == 0)
-			version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
-		else
-			version_pnt = ProcessVersionNumber(product_version);
 
-		MajorVersion = *(version_pnt + 0);
-		MinorVersion = *(version_pnt + 1);
-		MicroVersion = *(version_pnt + 2);
-		srvVersionBytes[0] = MajorVersion & 0xFF;
-		srvVersionBytes[1] = MinorVersion & 0xFF;
-
-		if (MicroVersion <= 0xFF)
-		{
-
-			srvVersionBytes[2] = 0x00;
-			srvVersionBytes[3] = MicroVersion & 0xFF;
-		}
-		else
-		{	
-			srvVersionBytes[2] = (MicroVersion >> 8) & 0xFF;
-			srvVersionBytes[3] = MicroVersion & 0xFF;
-		}
-
+		srvVersionBytes[0] = makeVersionByte(0);
+		srvVersionBytes[1] = makeVersionByte(1);
+		srvVersionBytes[2] = makeVersionByte(2);
+		srvVersionBytes[3] = makeVersionByte(3);
+		
 		TdsPutbytes(&srvVersionBytes, sizeof(srvVersionBytes));
 
 		pfree(buf.data);
