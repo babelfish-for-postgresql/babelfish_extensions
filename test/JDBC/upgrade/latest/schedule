@@ -382,8 +382,8 @@ BABEL-3802
 BABEL-3914
 BABEL_OBJECT_NAME
 sys-systypes
+BABEL_OBJECT_DEFINITION
 datediff_internal_date
 Test-sp_rename
 Test-sp_rename-dep
 BABEL-3657
-
