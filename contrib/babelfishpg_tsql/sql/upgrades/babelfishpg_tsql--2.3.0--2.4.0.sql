@@ -1469,6 +1469,10 @@ CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
 	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_volatility(IN "@function_name" sys.varchar DEFAULT NULL, IN "@volatility" sys.varchar DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_babelfish_volatility' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.varchar) TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
 	IN "@objname" sys.nvarchar(776),
 	IN "@newname" sys.SYSNAME,
