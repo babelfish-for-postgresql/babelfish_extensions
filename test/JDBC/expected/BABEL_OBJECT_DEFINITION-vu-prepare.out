@@ -1,3 +1,4 @@
+-- tsql
 CREATE DATABASE object_definition_db;
 GO
 
@@ -60,4 +61,20 @@ GO
 CREATE VIEW object_definition_v2
 AS
 SELECT COUNT(*) FROM OBJECT_DEFINITION(NULL);
+GO
+
+-- Test dependency of user's permission on object
+USE master;
+GO
+
+CREATE LOGIN object_definition_login1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER object_definition_master_user1 FOR LOGIN object_definition_login1;
+GO
+
+USE object_definition_db;
+GO
+
+CREATE USER object_definition_user2 FOR LOGIN object_definition_login1;
 GO

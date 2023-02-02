@@ -1,3 +1,4 @@
+-- tsql
 -- Throws an error
 SELECT OBJECT_DEFINITION();
 GO
@@ -116,5 +117,78 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+-- tsql      user=object_definition_login1 password=12345678
+-- Test dependency of user's permission on object
+USE object_definition_db;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+object_definition_user2
+~~END~~
+
+
+-- By default, user will not access to any objects
+-- following should return NULL
+SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tvf'))
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_sch.object_definition_v1'))
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+-- tsql
+-- Grant permission to user
+GRANT EXECUTE ON object_definition_tvf TO object_definition_user2;
+GO
+
+GRANT SELECT ON object_definition_sch.object_definition_v1 TO object_definition_user2;
+GO
+
+-- tsql      user=object_definition_login1 password=12345678
+-- Test dependency of user's permission on object
+USE object_definition_db;
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_tvf'))
+GO
+~~START~~
+nvarchar
+CREATE FUNCTION object_definition_tvf()<newline>RETURNS @testFuncTvf table (tvf int PRIMARY KEY)<newline>AS<newline>BEGIN<newline>INSERT INTO @testFuncTvf VALUES (1)<newline>RETURN<newline>END;
+~~END~~
+
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_sch.object_definition_v1'))
+GO
+~~START~~
+nvarchar
+CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT * FROM object_definition_t2
+~~END~~
+
+
+-- tsql
+-- Test cross database lookup - Returns NULL
+USE master;
+GO
+
+SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_db.dbo.object_definition_tvf'))
+GO
+~~START~~
+nvarchar
+<NULL>
 ~~END~~
 
