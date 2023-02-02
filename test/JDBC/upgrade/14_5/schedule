@@ -323,4 +323,6 @@ BABEL_OBJECT_ID
 Test-sp_babelfish_volatility
 AVG-Aggregate-common
 AVG-Aggregate-Dep-before-15-2-or-14-7
+BABEL_SCHEMATA
 BABEL_OBJECT_NAME
+BABEL-3657

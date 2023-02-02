@@ -900,19 +900,19 @@ GO
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 GO
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
 ~~START~~
 void
 
-~~END~~
-
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
 ~~END~~
 
 
