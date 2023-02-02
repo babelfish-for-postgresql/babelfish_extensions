@@ -185,7 +185,7 @@ CREATE VIEW object_definition_sch.object_definition_v1<newline>AS<newline>SELECT
 USE master;
 GO
 
-SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_db.dbo.object_definition_tvf'))
+SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_db.dbo.object_definition_proc'))
 GO
 ~~START~~
 nvarchar

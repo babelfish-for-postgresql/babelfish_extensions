@@ -96,5 +96,5 @@ GO
 USE master;
 GO
 
-SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_db.dbo.object_definition_tvf'))
+SELECT OBJECT_DEFINITION(OBJECT_ID('object_definition_db.dbo.object_definition_proc'))
 GO
