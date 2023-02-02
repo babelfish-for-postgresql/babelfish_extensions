@@ -1,36 +1,36 @@
 -- psql
 select rolname, orig_loginname, type, default_database_name, default_language_name from sys.babelfish_authid_login_ext
 where rolname in ('passworduser','aduser@AD','aduserdb@AD','aduserdbenglish@AD','userpassword','duplicate@BABEL','duplicatedefaultdb@BABEL',
-'كلب@BABEL','өглөө@BABEL','ελπίδα@BABEL','爱@BABEL');
+'كلب@BABEL','өглөө@BABEL','ελπίδα@BABEL','爱@BABEL') order by rolname;
 GO
 ~~START~~
 name#!#"sys"."varchar"#!#bpchar#!#"sys"."varchar"#!#"sys"."varchar"
-passworduser#!#PassWordUser#!#S#!#master#!#English
 aduser@AD#!#ad\Aduser#!#U#!#master#!#English
 aduserdb@AD#!#ad\Aduserdb#!#U#!#ad_db#!#English
 aduserdbenglish@AD#!#ad\AduserdbEnglish#!#U#!#ad_db#!#English
-userpassword#!#usErpassWord#!#S#!#master#!#English
 duplicate@BABEL#!#babel\duplicate#!#U#!#master#!#English
 duplicatedefaultdb@BABEL#!#babel\duplicatedefaultdb#!#U#!#master#!#English
-كلب@BABEL#!#babel\كلب#!#U#!#master#!#English
-өглөө@BABEL#!#babel\өглөө#!#U#!#master#!#English
+passworduser#!#PassWordUser#!#S#!#master#!#English
+userpassword#!#usErpassWord#!#S#!#master#!#English
 ελπίδα@BABEL#!#babel\ελπίδα#!#U#!#master#!#English
+өглөө@BABEL#!#babel\өглөө#!#U#!#master#!#English
+كلب@BABEL#!#babel\كلب#!#U#!#master#!#English
 爱@BABEL#!#babel\爱#!#U#!#master#!#English
 ~~END~~
 
 
 -- tsql
 select rolname, orig_loginname, default_database_name, default_language_name from sys.babelfish_authid_login_ext
-where orig_loginname in ('PassWordUser','ad\Aduser','ad\AduserdbEnglish','usErpassWord','babel\duplicate','babel\duplicatedefaultdb');
+where orig_loginname in ('PassWordUser','ad\Aduser','ad\AduserdbEnglish','usErpassWord','babel\duplicate','babel\duplicatedefaultdb') order by rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#nvarchar
-passworduser#!#PassWordUser#!#master#!#English
 aduser@AD#!#ad\Aduser#!#master#!#English
 aduserdbenglish@AD#!#ad\AduserdbEnglish#!#ad_db#!#English
-userpassword#!#usErpassWord#!#master#!#English
 duplicate@BABEL#!#babel\duplicate#!#master#!#English
 duplicatedefaultdb@BABEL#!#babel\duplicatedefaultdb#!#master#!#English
+passworduser#!#PassWordUser#!#master#!#English
+userpassword#!#usErpassWord#!#master#!#English
 ~~END~~
 
 
@@ -49,21 +49,21 @@ int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'aduser@AD';
+select count(*) from sys.server_principals where name = 'AD\aduser';
 GO
 ~~START~~
 int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'aduserdb@AD';
+select count(*) from sys.server_principals where name = 'AD\aduserdb';
 GO
 ~~START~~
 int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'aduserdbenglish@AD';
+select count(*) from sys.server_principals where name = 'AD\aduserdbenglish';
 GO
 ~~START~~
 int
@@ -77,14 +77,14 @@ int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'duplicate@BABEL';
+select count(*) from sys.server_principals where name = 'BABEL\duplicate';
 GO
 ~~START~~
 int
 1
 ~~END~~
 
-select count(*) from sys.server_principals where name = 'duplicatedefaultdb@BABEL';
+select count(*) from sys.server_principals where name = 'BABEL\duplicatedefaultdb';
 GO
 ~~START~~
 int
@@ -93,84 +93,84 @@ int
 
 
 -- psql
-select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+select count(*) from pg_roles where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
 GO
 ~~START~~
 int8
 0
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'passworduser';
+select count(*) from pg_roles where rolname = 'passworduser';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'aduser@AD';
+select count(*) from pg_roles where rolname = 'aduser@AD';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'aduserdb@AD';
+select count(*) from pg_roles where rolname = 'aduserdb@AD';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'aduserdbenglish@AD';
+select count(*) from pg_roles where rolname = 'aduserdbenglish@AD';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'userpassword';
+select count(*) from pg_roles where rolname = 'userpassword';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'duplicate@BABEL';
+select count(*) from pg_roles where rolname = 'duplicate@BABEL';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'duplicatedefaultdb@BABEL';
+select count(*) from pg_roles where rolname = 'duplicatedefaultdb@BABEL';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'كلب@BABEL';
+select count(*) from pg_roles where rolname = 'كلب@BABEL';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'өглөө@BABEL';
+select count(*) from pg_roles where rolname = 'өглөө@BABEL';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = 'ελπίδα@BABEL';
+select count(*) from pg_roles where rolname = 'ελπίδα@BABEL';
 GO
 ~~START~~
 int8
 1
 ~~END~~
 
-select count(*) from pg_authid where rolname = '爱@BABEL';
+select count(*) from pg_roles where rolname = '爱@BABEL';
 GO
 ~~START~~
 int8
