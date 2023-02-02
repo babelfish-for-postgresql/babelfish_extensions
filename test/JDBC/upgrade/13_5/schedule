@@ -247,4 +247,3 @@ sys-sysindexes
 sys_server_principals_dep_for_13_x
 case_insensitive_collation-before-13-5
 test_windows_login_before_15_2
-BABEL-3657

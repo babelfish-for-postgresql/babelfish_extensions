@@ -4326,7 +4326,6 @@ keyword
     | DATA_SOURCE
     | DATEADD
     | DATEDIFF
-    | DATEDIFF_BIG
     | DATEFIRST
     | DATEFORMAT
     | DATE_FORMAT

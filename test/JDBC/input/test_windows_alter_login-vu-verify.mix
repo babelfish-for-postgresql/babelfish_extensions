@@ -29,12 +29,6 @@ GO
 ALTER LOGIN [aduser_alter@BABEL] DISABLE;
 GO
 
-ALTER LOGIN [babel\aduser_alter] WITH PASSWORD='123'
-GO
-
-ALTER LOGIN [babel\aduser_alter] WITH  PASSWORD  ='123'
-GO
-
 ALTER LOGIN passWORduser_alter DISABLE;
 GO
 
@@ -59,20 +53,6 @@ GO
 -- psql
 select rolname, is_disabled, default_database_name, default_language_name, type from sys.babelfish_authid_login_ext
 where rolname = 'passworduser_alter';
-GO
-
--- tsql
-ALTER LOGIN passWORduser_alter with PASSWORD='12345678';
-GO
-
--- tsql user=passWORduser_alter password=12345678;
-SELECT SUSER_NAME();
-GO
-
--- psql
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'passworduser_alter' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 
 -- tsql

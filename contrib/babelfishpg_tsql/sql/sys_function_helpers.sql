@@ -10294,10 +10294,10 @@ CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoi
 RETURNS text
 AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 BIGINT, IN m1 BIGINT, IN y1 BIGINT) RETURNS BIGINT AS $$
+CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) RETURNS INTEGER AS $$
 DECLARE
-	i BIGINT;
-	n1 BIGINT;
+	i INTEGER;
+	n1 INTEGER;
 BEGIN
 	n1 = y1 * 365 + d1;
 	FOR i in 0 .. m1-2 LOOP
@@ -10317,9 +10317,4 @@ BEGIN
 	return n1;
 END
 $$
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.bbf_is_shared_schema(IN schemaname TEXT)
-RETURNS BOOL
-AS 'babelfishpg_tsql', 'is_shared_schema_wrapper'
-LANGUAGE C IMMUTABLE STRICT;
+LANGUAGE plpgsql STABLE;

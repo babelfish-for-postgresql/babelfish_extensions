@@ -754,7 +754,7 @@ SELECT name FROM sys.server_principals WHERE principal_id = suser_id('lOgIn1');
 GO
 ~~START~~
 varchar
-LoGiN1
+login1
 ~~END~~
 
 
@@ -762,7 +762,7 @@ SELECT name FROM sys.server_principals WHERE principal_id = suser_id('login1    
 GO
 ~~START~~
 varchar
-LoGiN1
+login1
 ~~END~~
 
 
@@ -770,7 +770,7 @@ SELECT name FROM sys.server_principals WHERE principal_id = suser_id('LOGIN1');
 GO
 ~~START~~
 varchar
-LoGiN1
+login1
 ~~END~~
 
 
@@ -813,7 +813,7 @@ SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('login1'
 GO
 ~~START~~
 varchar
-LoGiN1
+login1
 ~~END~~
 
 
@@ -821,7 +821,7 @@ SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('LOGIN1'
 GO
 ~~START~~
 varchar
-LoGiN1
+login1
 ~~END~~
 
 
@@ -900,19 +900,19 @@ GO
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
 GO
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
 ~~START~~
 void
 
+~~END~~
+
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
 ~~END~~
 
 

@@ -12,7 +12,6 @@
  * 			Catalog General
  *****************************************/
 extern Datum init_catalog(PG_FUNCTION_ARGS);
-extern void rename_update_bbf_catalog(RenameStmt *stmt);
 
 /*****************************************
  * 			Catalog Hooks

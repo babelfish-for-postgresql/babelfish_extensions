@@ -258,96 +258,6 @@ go
 EXEC errorFuncProcOuter4
 go
 
--- stmt terminating
-create function f_with_error()returns int as begin	declare @i int = 0 set @i = 1 / 0 return 1 end
-go
-
--- -1 should be returned
-select 1;
-select dbo.f_with_error();
-select -1;
-go
-
-begin transaction
-go
-
--- second @@trancount should be executed
-select @@trancount
-select dbo.f_with_error();
-select @@trancount
-go
-
--- @@trancount should be 1
-select @@trancount
-go
-
-commit
-go
-
--- batch and transaction aborting
-create function f_batch_tran_abort() returns smallmoney as begin declare @i smallmoney = 1; SELECT @i = CAST('ABC' AS SMALLMONEY); return @i end
-go
-
--- -1 should not be returned
-select 1;
-select dbo.f_batch_tran_abort();
-select -1;
-go
-
-begin transaction
-go
-
--- second @@trancount should not be executed and transaction should rollback
-select @@trancount
-select dbo.f_batch_tran_abort();
-select @@trancount
-go
-
--- @@trancount should be 0
-select @@trancount
-go
-
--- tests for xact_abort
-set xact_abort on
-go
-
-begin transaction
-go
-
--- transaction rollback for simple stmt termination error.
--- we cant have any function execution throwing an error that ignores xact abort
--- since most of the errors are at DDL phase.
-select dbo.f_with_error();
-select @@trancount
-go
-
-select @@trancount
-go
-
-set xact_abort off
-go
-
--- try catch testing
-BEGIN TRY
-	SELECT 'TRY';
-	select dbo.f_with_error();
-	SELECT 'TRY AFTER ERROR'
-END TRY
-BEGIN CATCH
-    SELECT 'CATCH';
-END CATCH
-go
-
-BEGIN TRY
-	SELECT 'TRY';
-	select dbo.f_batch_tran_abort();
-	SELECT 'TRY AFTER ERROR'
-END TRY
-BEGIN CATCH
-    SELECT 'CATCH';
-END CATCH
-go
-
 /* Clean up */
 DROP PROC errorFuncProc1
 go
@@ -374,8 +284,4 @@ DROP PROC errorFuncProcInner
 go
 
 DROP TABLE errorFuncTable
-go
-
-drop function dbo.f_with_error
-drop function dbo.f_batch_tran_abort
 go

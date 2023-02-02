@@ -26,6 +26,11 @@ go
 alter table babel_621_vu_prepare_table_4 drop constraint uniq_table_4;
 go
 
+-- Test that `sp_rename` is NOT available. If it is available, we need more tests with index/constraints renames
+-- We expect this test to break when `sp_rename` will be implemented
+exec sp_rename N'babel_621_vu_prepare_table_4.uniq_table_4', N'uniq_table_4_a', N'INDEX';
+go
+
 -- Very long index name
 create table babel_621_vu_prepare_table_with_long_index_name (a int);
 go

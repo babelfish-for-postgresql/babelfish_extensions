@@ -51,7 +51,6 @@
 #include "parser/scansup.h"
 #include "utils/guc.h"
 #include "utils/acl.h"
-#include "utils/formatting.h"
 #include "utils/lsyscache.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
@@ -1384,20 +1383,6 @@ SendGSSAuthResponse(Port *port, char *extradata, uint16_t extralen)
 	TDSInstrumentation(INSTR_TDS_TOKEN_SSPI);
 }
 
-static char *
-convertUsernameToCanonicalform(char *user_name)
-{
-	char *canonicalUsername = "";
-	char *chr;
-	if ((chr = strchr(user_name, '@')) != NULL)
-	{
-		canonicalUsername = psprintf("%s%s",
-									 str_tolower(user_name, (chr - user_name), C_COLLATION_OID),
-									 str_toupper(chr, strlen(chr), C_COLLATION_OID));
-		return canonicalUsername;
-	}
-	return user_name;
-}
 /*
  * This function is similar to pg_GSS_recvauth() but to authenticate a TDS
  * client.
@@ -1413,7 +1398,6 @@ CheckGSSAuth(Port *port)
 	int			ret;
 	gss_buffer_desc gbuf;
 	MemoryContext	oldContext;
-	char 		*at_pos = NULL;
 
 	if (pg_krb_server_keyfile && strlen(pg_krb_server_keyfile) > 0)
 	{
@@ -1548,12 +1532,13 @@ CheckGSSAuth(Port *port)
 
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	pfree(port->user_name);
-	port->user_name = convertUsernameToCanonicalform(gbuf.value);
-	if ((at_pos = strchr(gbuf.value, '@')) != NULL && loginInfo)
+	port->user_name = pstrdup(gbuf.value);
+	if (strchr(gbuf.value, '@'))
 	{
-		/* skip '@' */
-		at_pos++;
-		loginInfo->domainname = pstrdup(at_pos);
+		char       *cp = strchr(gbuf.value, '@');
+		cp++;
+		if (loginInfo)
+			loginInfo->domainname = pstrdup(cp);
 	}
 	MemoryContextSwitchTo(oldContext);
 
