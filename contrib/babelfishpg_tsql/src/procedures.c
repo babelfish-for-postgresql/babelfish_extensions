@@ -69,7 +69,6 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
-static void exec_utility_cmd_helper(char *query_str);
 
 List *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -2077,52 +2076,6 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 
 	rewrite_object_refs(stmt);
 	return res;
-}
-
-/*
- * Helper function to execute a utility command using
- * ProcessUtility(). Caller should make sure their
- * inputs are sanitized to prevent unexpected behaviour.
- */
-static void
-exec_utility_cmd_helper(char *query_str)
-{
-	List			*parsetree_list;
-	Node			*stmt;
-	PlannedStmt		*wrapper;
-
-	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
-
-	if (list_length(parsetree_list) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(parsetree_list))));
-
-	/* Update the dummy statement with real values */
-	stmt = parsetree_nth_stmt(parsetree_list, 0);
-
-	/* Run the built query */
-	/* need to make a wrapper PlannedStmt */
-	wrapper = makeNode(PlannedStmt);
-	wrapper->commandType = CMD_UTILITY;
-	wrapper->canSetTag = false;
-	wrapper->utilityStmt = stmt;
-	wrapper->stmt_location = 0;
-	wrapper->stmt_len = strlen(query_str);
-
-	/* do this step */
-	ProcessUtility(wrapper,
-				   query_str,
-				   false,
-				   PROCESS_UTILITY_SUBCOMMAND,
-				   NULL,
-				   NULL,
-				   None_Receiver,
-				   NULL);
-
-	/* make sure later steps can see the object created here */
-	CommandCounterIncrement();
 }
 
 Datum
