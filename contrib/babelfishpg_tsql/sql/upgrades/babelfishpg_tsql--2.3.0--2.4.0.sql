@@ -31,6 +31,39 @@ end
 $$
 LANGUAGE plpgsql;
 
+/*
+ * SCHEMATA view
+ */
+CREATE OR REPLACE FUNCTION sys.bbf_is_shared_schema(IN schemaname TEXT)
+RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_shared_schema_wrapper'
+LANGUAGE C STABLE STRICT;
+
+CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
+	SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
+	CAST(CASE WHEN np.nspname LIKE CONCAT(sys.db_name(),'%') THEN RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
+	     ELSE np.nspname END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
+	-- For system-defined schemas, schema-owner name will be same as schema_name
+	-- For user-defined schemas having default owner, schema-owner will be dbo
+	-- For user-defined schemas with explicit owners, rolname contains dbname followed
+	-- by owner name, so need to extract the owner name from rolname always.
+	CAST(CASE WHEN sys.bbf_is_shared_schema(np.nspname) = TRUE THEN np.nspname
+		  WHEN r.rolname LIKE CONCAT(sys.db_name(),'%') THEN
+			CASE WHEN RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) = 'db_owner' THEN 'dbo'
+			     ELSE RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) END ELSE 'dbo' END
+			AS sys.nvarchar(128)) AS "SCHEMA_OWNER",
+	CAST(null AS sys.varchar(6)) AS "DEFAULT_CHARACTER_SET_CATALOG",
+	CAST(null AS sys.varchar(3)) AS "DEFAULT_CHARACTER_SET_SCHEMA",
+	-- TODO: We need to first create mapping of collation name to char-set name;
+	-- Until then return null for DEFAULT_CHARACTER_SET_NAME
+	CAST(null AS sys.sysname) AS "DEFAULT_CHARACTER_SET_NAME"
+	FROM ((pg_catalog.pg_namespace np LEFT JOIN sys.pg_namespace_ext nc on np.nspname = nc.nspname)
+		LEFT JOIN pg_catalog.pg_roles r on r.oid = nc.nspowner) LEFT JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+	WHERE (ext.dbid = cast(sys.db_id() as oid) OR np.nspname in ('sys', 'information_schema_tsql')) AND
+	      (pg_has_role(np.nspowner, 'USAGE') OR has_schema_privilege(np.oid, 'CREATE, USAGE'))
+	ORDER BY nc.nspname, np.nspname;
+
+GRANT SELECT ON information_schema_tsql.schemata TO PUBLIC;
 
 -- please add your SQL here
 create or replace view sys.views as 
@@ -2174,6 +2207,32 @@ CREATE OR REPLACE FUNCTION sys.OBJECT_SCHEMA_NAME(IN object_id INT, IN database_
 RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_schema_name'
 LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
+RETURNS sys.NVARCHAR(4000)
+AS $$
+DECLARE
+    definition sys.nvarchar(4000);
+BEGIN
+
+    definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
+    IF (definition IS NULL)
+    THEN
+        definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
+        IF (definition IS NULL)
+        THEN
+            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            IF (definition IS NULL)
+            THEN
+                RETURN NULL;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN definition;
+END;
+$$
+LANGUAGE plpgsql STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

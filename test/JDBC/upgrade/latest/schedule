@@ -375,6 +375,8 @@ case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID
+BABEL_SCHEMATA
+isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
 bbf_view_def
@@ -382,6 +384,7 @@ BABEL-3802
 BABEL-3914
 BABEL_OBJECT_NAME
 sys-systypes
+BABEL_OBJECT_DEFINITION
 datediff_internal_date
 Test-sp_rename
 Test-sp_rename-dep
