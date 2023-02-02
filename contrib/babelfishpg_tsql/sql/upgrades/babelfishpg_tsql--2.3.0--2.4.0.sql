@@ -1840,6 +1840,44 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
+create or replace view sys.all_views as
+SELECT
+    CAST(c.relname AS sys.SYSNAME) as name
+  , CAST(c.oid AS INT) as object_id
+  , CAST(null AS INT) as principal_id
+  , CAST(c.relnamespace as INT) as schema_id
+  , CAST(0 as INT) as parent_object_id
+  , CAST('V' as sys.bpchar(2)) as type
+  , CAST('VIEW'as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(0 as sys.BIT) AS is_replicated
+  , CAST(0 as sys.BIT) AS has_replication_filter
+  , CAST(0 as sys.BIT) AS has_opaque_metadata
+  , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
+  , CAST(
+      CASE 
+        WHEN (v.check_option = 'NONE') 
+          THEN 0
+        ELSE 1
+      END
+    AS sys.BIT) AS with_check_option
+  , CAST(0 as sys.BIT) AS is_date_correlation_view
+FROM pg_catalog.pg_namespace AS ns
+INNER JOIN pg_class c ON ns.oid = c.relnamespace
+INNER JOIN information_schema.views v ON c.relname = v.table_name AND ns.nspname = v.table_schema
+WHERE c.relkind = 'v' AND ns.nspname in 
+  (SELECT nspname from sys.babelfish_namespace_ext where dbid = sys.db_id() UNION ALL SELECT CAST('sys' AS NAME))
+AND pg_is_other_temp_schema(ns.oid) = false
+AND (pg_has_role(c.relowner, 'USAGE') = true
+OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') = true);
+GRANT SELECT ON sys.all_views TO PUBLIC;
+
+
 /* set sys functions as STABLE */
 ALTER FUNCTION sys.schema_id() STABLE;
 ALTER FUNCTION sys.schema_name() STABLE;
