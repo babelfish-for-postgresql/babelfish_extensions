@@ -396,3 +396,7 @@ BEGIN
     ORDER BY [type]
 END;
 GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p22
+AS SELECT * from openjson(1, 2) with (a nvarchar(20))
+GO
