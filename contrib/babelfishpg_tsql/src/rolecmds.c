@@ -58,8 +58,6 @@
 
 #include <ctype.h>
 
-#define RDS_AD_NAME "rds_ad"
-
 static void drop_bbf_authid_login_ext(ObjectAccessType access,
 										Oid classId,
 										Oid roleid,
@@ -75,7 +73,6 @@ static void grant_guests_to_login(const char *login);
 static bool has_user_in_db(const char *login, char **db_name);
 static void validateNetBIOS(char* netbios);
 static void validateFQDN(char* fqdn);
-static void grant_rds_ad_to_windows_login(const char *login);
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -171,15 +168,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 
 	/* Grant membership to guests */
 	if (!role_is_sa(roleid))
-	{
-		char *rolname = GetUserNameFromId(roleid, false);
-
-		grant_guests_to_login(rolname);
-
-		/* Grant membership to rds_ad role for kerberos authentication */
-		if (from_windows)
-			grant_rds_ad_to_windows_login(rolname);
-	}
+		grant_guests_to_login(GetUserNameFromId(roleid, false));
 }
 
 void
@@ -584,69 +573,6 @@ grant_guests_to_login(const char *login)
 	/* make sure later steps can see the object created here */
 	CommandCounterIncrement();
 
-	pfree(query.data);
-}
-
-/*
- * grant_rds_ad_to_windows_login - Adds newly created windows login to pre-defined role, rds_ad.
- * To ensure interoperability for windows login ie. Any windows login created through TDS endpoint 
- * could also be used with PSQL endpoint, we need to add newly created login to some predefined role.
- */
-static void
-grant_rds_ad_to_windows_login(const char *login)
-{
-	StringInfoData	query;
-	List			*parsetree_list;
-	Node			*stmt;
-	RoleSpec		*tmp_role;
-	PlannedStmt		*wrapper;
-	Oid				roleid;
-
-	/* First check that rds_ad is available. */
-	roleid = get_role_oid(RDS_AD_NAME, true);
-
-	if (!OidIsValid(roleid))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Role \"%s\" does not exist, please check your kerberos setup.", RDS_AD_NAME)));
-	}
-
-	initStringInfo(&query);
-	appendStringInfo(&query, "GRANT %s TO dummy; ", RDS_AD_NAME);
-	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
-
-	/* Update the dummy statement with real value */
-	stmt = parsetree_nth_stmt(parsetree_list, 0);
-
-	tmp_role = makeNode(RoleSpec);
-	tmp_role->roletype = ROLESPEC_CSTRING;
-	tmp_role->location = -1;
-	tmp_role->rolename = pstrdup(login);
-
-	update_GrantRoleStmt(stmt, ((GrantRoleStmt *) stmt)->granted_roles, list_make1(tmp_role));
-
-	/* Run the built query */
-	/* need to make a wrapper PlannedStmt */
-	wrapper = makeNode(PlannedStmt);
-	wrapper->commandType = CMD_UTILITY;
-	wrapper->canSetTag = false;
-	wrapper->utilityStmt = stmt;
-	wrapper->stmt_location = 0;
-	wrapper->stmt_len = query.len;
-
-	/* do this step */
-	ProcessUtility(wrapper,
-				   query.data,
-				   false,
-				   PROCESS_UTILITY_SUBCOMMAND,
-				   NULL,
-				   NULL,
-				   None_Receiver,
-				   NULL);
-
-	/* make sure later steps can see the object created here */
-	CommandCounterIncrement();
 	pfree(query.data);
 }
 
