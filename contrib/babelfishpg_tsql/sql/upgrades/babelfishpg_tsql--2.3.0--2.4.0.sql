@@ -1621,6 +1621,10 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_volatility(IN "@function_name" sys.varchar DEFAULT NULL, IN "@volatility" sys.varchar DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_babelfish_volatility' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.varchar) TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
 SELECT
 CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,

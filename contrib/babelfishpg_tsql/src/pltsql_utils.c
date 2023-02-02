@@ -1154,6 +1154,16 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
 }
 
 /*
+ * remove_trailing_spaces
+ * 		Remove trailing spaces from a string
+ */
+void remove_trailing_spaces(char *name)
+{
+	int len = strlen(name);
+	while (len > 0 && isspace((unsigned char) name[len - 1]))
+		name[--len] = '\0';
+}
+/*
  * tsql_get_proc_nsp_oid
  * Given Oid of pg_proc entry return namespace_oid
  * Returns InvalidOid if Oid is not found
