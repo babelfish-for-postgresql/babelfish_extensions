@@ -610,7 +610,7 @@ grant_rds_ad_to_windows_login(const char *login)
 
 
 	initStringInfo(&query);
-	appendStringInfo(&query, "GRANT %s TO \"%s\"; ", RDS_AD_NAME, login);
+	appendStringInfo(&query, "GRANT %s TO %s; ", RDS_AD_NAME, login);
 	exec_utility_cmd_helper(query.data);
 
 	pfree(query.data);
