@@ -39,7 +39,7 @@ DECLARE
     error_msg text;
     query text;
 BEGIN
-    query := format('alter extension babelfishpg_tsql drop %s %s', obj_type, qualified_obj_name);
+    query := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s', obj_type, qualified_obj_name);
     execute query;
 EXCEPTION
     when object_not_in_prerequisite_state then --if 'alter extension' statement fails
