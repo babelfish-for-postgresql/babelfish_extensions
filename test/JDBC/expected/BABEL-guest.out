@@ -1,0 +1,149 @@
+
+-- tsql
+-- Test for JIRA BABEL-2571. The 'guest' schema should exist by default.
+-- Furthermore, the default schema of guest users should be guest instead of dbo
+-- in order to match the behaviour in SQL Server.
+-- This test creates a guest login in order to verify the guest schema.
+USE master
+GO
+
+CREATE TABLE babel_2571_table1(a int, b int)
+GO
+
+CREATE LOGIN babel_2571_login1 WITH password='123'
+GO
+
+CREATE DATABASE babel_2571_db1
+GO
+
+USE babel_2571_db1
+GO
+
+GRANT CONNECT TO guest
+GO
+
+
+-- This should show two schemas under master
+USE master
+GO
+
+SELECT name, USER_NAME(principal_id) FROM sys.schemas ORDER BY name
+GO
+~~START~~
+varchar#!#nvarchar
+dbo#!#db_owner
+guest#!#guest
+~~END~~
+
+
+-- But also show all databases created have the guest schema
+SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname
+GO
+~~START~~
+varchar
+dbo
+guest
+master_dbo
+master_guest
+msdb_dbo
+msdb_guest
+tempdb_dbo
+tempdb_guest
+~~END~~
+
+
+-- tsql         user=babel_2571_login1 password=12345678
+-- Login as guest to show default schema is guest
+SELECT schema_name()
+GO
+~~START~~
+varchar
+guest
+~~END~~
+
+
+USE babel_2571_db1
+GO
+
+CREATE TABLE babel_2571_table2(a int, b int)
+GO
+
+-- Dropping guest schema should not be allowed regardless of the user
+SELECT user_name()
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+DROP SCHEMA guest
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the schema 'guest')~~
+
+
+-- this should fail
+SELECT * FROM dbo.babel_2571_table2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.babel_2571_table2" does not exist)~~
+
+
+-- This should not
+SELECT * FROM guest.babel_2571_table2
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+-- tsql
+SELECT user_name()
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+DROP SCHEMA guest
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the schema 'master_guest')~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_2571_login1'
+AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+-- (Not a huge fan of this because this could lead to intermittent issue.)
+SELECT pg_sleep(2);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP TABLE babel_2571_table1
+GO
+
+DROP DATABASE babel_2571_db1
+GO
+
+DROP LOGIN babel_2571_login1
+GO

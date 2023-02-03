@@ -1,0 +1,28 @@
+-- tsql
+-- create two databases one with guest schema and one without
+create database babel_2571_db_guest;
+go
+
+create database babel_2571_db_no_guest;
+go
+
+-- no guest schema created 
+select name from sys.schemas where name like '%guest%';
+go
+~~START~~
+varchar
+~~END~~
+
+
+use babel_2571_db_guest;
+go
+
+-- this should succeed prior to 14_7 or 15_2
+create schema guest;
+go
+
+create table guest.babel_2571_table_t1(a int, b int);
+go
+
+create login babel_2571_login1 with password='123456789';
+go

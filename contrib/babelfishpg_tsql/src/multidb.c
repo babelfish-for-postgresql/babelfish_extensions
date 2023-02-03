@@ -10,9 +10,9 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/syscache.h"
 
 #include "catalog.h"
-#include "guc.h"
 #include "multidb.h"
 #include "session.h"
 
@@ -940,11 +940,12 @@ get_current_physical_schema_name(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(CStringGetTextDatum(ret));
 }
 
+
 /* db_name is the logical db that user want to query against
  * retrieve the physical mapped schema for the query
  */
 char *
-get_physical_schema_name(char *db_name, const char *schema_name)
+get_physical_schema_name_by_mode(char *db_name, const char *schema_name, MigrationMode mode)
 {
 	char *name;
 	char *result;
@@ -971,7 +972,7 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 	 */
 	truncate_tsql_identifier(name);
 
-	if (SINGLE_DB == get_migration_mode())
+	if (SINGLE_DB == mode)
 	{
 		if ((strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
 			(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
@@ -988,10 +989,7 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 		}
 		else 
 		{
-			/* db_name is valid. 
-			 * under SINGLE_DB this is only possible 
-			 * when target db is the customer db.
-			 * in such case we only return the schema_name name */
+			/* all schema names are not prepended with db name on single-db */
 			return name;
 		}
 	}
@@ -1004,6 +1002,12 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 	truncate_tsql_identifier(result);
 
 	return result;
+}
+
+char *
+get_physical_schema_name(char *db_name, const char *schema_name)
+{
+	return get_physical_schema_name_by_mode(db_name, schema_name, get_migration_mode());
 }
 
 /*
@@ -1135,6 +1139,11 @@ const char *get_guest_role_name(const char *dbname)
 		return "tempdb_guest";
 	if (0 == strcmp(dbname , "msdb"))
 		return "msdb_guest";
+
+	/*
+	* Always prefix with dbname regardless if single or multidb.
+	* Note that dbo is an exception.
+	*/
 	else
 	{
 		char *name = palloc0(MAX_BBF_NAMEDATALEND);
@@ -1143,6 +1152,48 @@ const char *get_guest_role_name(const char *dbname)
 		return name;
 	}
 }
+
+const char *get_guest_schema_name(const char *dbname)
+{
+	if (0 == strcmp(dbname , "master"))
+		return "master_guest";
+	if (0 == strcmp(dbname , "tempdb"))
+		return "tempdb_guest";
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_guest";
+
+	if (SINGLE_DB == get_migration_mode())
+		return "guest";
+	else
+	{
+		char *name = palloc0(MAX_BBF_NAMEDATALEND);
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
+		truncate_identifier(name, strlen(name), false);
+		return name;
+	}
+}
+
+bool is_builtin_database(const char *dbname)
+{
+	return ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
+            (strlen(dbname) == 6 && (strncmp(dbname, "tempdb", 6) == 0)) ||
+            (strlen(dbname) == 4 && (strncmp(dbname, "msdb", 4) == 0)));
+}
+
+bool physical_schema_name_exists(char *phys_schema_name)
+{
+	return SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(phys_schema_name));
+}
+
+/*
+* Assume the database already exists and it is not a built in database
+*/
+bool is_user_database_singledb(const char *dbname)
+{
+	Assert(DbidIsValid(get_db_id(dbname)));
+	return !is_builtin_database(dbname) && physical_schema_name_exists("dbo");
+}
+
 
 /*************************************************************
  * 					Helper Functions	

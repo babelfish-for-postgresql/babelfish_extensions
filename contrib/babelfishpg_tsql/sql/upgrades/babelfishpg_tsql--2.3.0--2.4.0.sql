@@ -1473,6 +1473,14 @@ CREATE OR REPLACE PROCEDURE sys.sp_babelfish_volatility(IN "@function_name" sys.
 AS 'babelfishpg_tsql', 'sp_babelfish_volatility' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.varchar) TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.babel_create_guest_schemas()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_guest_schema_for_all_dbs';
+
+CALL sys.babel_create_guest_schemas();
+
+DROP PROCEDURE sys.babel_create_guest_schemas();
+
 CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
 	IN "@objname" sys.nvarchar(776),
 	IN "@newname" sys.SYSNAME,

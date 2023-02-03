@@ -137,10 +137,16 @@ set_search_path_for_user_schema(const char* db_name, const char* user)
 	const char		*dbo_role_name = get_dbo_role_name(db_name);
 	const char		*guest_role_name = get_guest_role_name(db_name);
 
-	if ((dbo_role_name && strcmp(user, dbo_role_name) == 0) ||
-		(guest_role_name && strcmp(user, guest_role_name) == 0))
+	if ((dbo_role_name && strcmp(user, dbo_role_name) == 0))
 	{
 		physical_schema = get_dbo_schema_name(db_name);
+	}
+	else if (guest_role_name && strcmp(user, guest_role_name) == 0)
+	{
+		const char *guest_schema = get_authid_user_ext_schema_name(db_name, "guest");
+		if (!guest_schema)
+			guest_schema = "guest";
+		physical_schema = get_physical_schema_name(pstrdup(db_name), guest_schema);
 	}
 	else
 	{

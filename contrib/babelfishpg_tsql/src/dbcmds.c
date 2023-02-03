@@ -12,6 +12,7 @@
 #include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/extension.h"
 #include "commands/sequence.h"
 #include "lib/stringinfo.h"
 #include "nodes/plannodes.h"
@@ -43,11 +44,13 @@ static bool have_createdb_privilege(void);
 static List	*gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
 								  const char *db_owner,
-								  const char *guest);
+								  const char *guest,
+								  const char *guest_schema);
 static List *gen_dropdb_subcmds(const char *schema,
 								const char *db_owner,
 								const char *dbo,
-								List *db_users);
+								List *db_users,
+								const char *guest_schema);
 static Oid do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
@@ -75,7 +78,7 @@ have_createdb_privilege(void)
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
 static List	*
-gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest)
+gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest, const char *guest_schema)
 {
 	StringInfoData	query;
 	List			*res;
@@ -93,6 +96,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
+
 	if (guest)
 	{
 		appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
@@ -106,10 +110,14 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
 	appendStringInfo(&query, "GRANT SELECT ON dummy.sysdatabases TO dummy; ");
 
+	/* create guest schema in the database. This has to be the last statement */
+	if (guest)
+		appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
+
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
+		expected_stmt_num = list_length(logins) > 0 ? 10 : 9;
 	else
 		expected_stmt_num = 7;
 
@@ -157,6 +165,12 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_GrantStmt(stmt, NULL, schema, db_owner);
 
+	if (guest)
+	{
+		stmt = parsetree_nth_stmt(res, i++);
+		update_CreateSchemaStmt(stmt, guest_schema, guest);
+	}
+
 	return res;
 }
 
@@ -167,16 +181,18 @@ static List *
 gen_dropdb_subcmds(const char *schema,
 				   const char *db_owner,
 				   const char *dbo,
-				   List *db_users)
+				   List *db_users,
+				   const char *guest_schema)
 {
 	StringInfoData		query;
 	List				*stmt_list;
 	ListCell			*elem;
 	Node				*stmt;
-	int					expected_stmts = 4;
+	int					expected_stmts = 5;
 	int					i = 0;
 
 	initStringInfo(&query);
+	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
 	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
 	/* First drop guest user and custom users if they exist */
 	foreach (elem, db_users)
@@ -204,6 +220,10 @@ gen_dropdb_subcmds(const char *schema,
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropStmt(stmt, schema);
+
+	/* Drop guest schema */
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropStmt(stmt, guest_schema);
 
 	foreach (elem, db_users)
 	{
@@ -325,9 +345,11 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char  *dbo_scm;
 	const char 	*dbo_role;
 	const char  *db_owner_role;
+	const char	*guest_scm;
 	NameData 	default_collation;
 	const char  *guest;
 	const char	*prev_current_user;
+	int stmt_number = 0;
 
 	/* TODO: Extract options */
 
@@ -367,11 +389,17 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	dbo_role = get_dbo_role_name(dbname);
 	db_owner_role = get_db_owner_name(dbname);
 	guest = get_guest_role_name(dbname);
+	guest_scm = get_guest_schema_name(dbname);
 
 	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(dbo_scm)))
 		ereport(NOTICE,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists, skipping", dbo_scm)));
+
+	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(guest_scm)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_SCHEMA),
+				 errmsg("schema \"%s\" already exists, skipping", guest_scm)));
 
 	if (OidIsValid(get_role_oid(dbo_role, true)))
 		ereport(ERROR,
@@ -415,7 +443,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	/* Advance cmd counter to make the database visible */
 	CommandCounterIncrement();
 
-	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest);
+	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest, guest_scm);
 
 	/* Set current user to session user for create permissions */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -440,7 +468,12 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 18;
+
+			stmt_number++;
+			if(guest && list_length(parsetree_list) == stmt_number)
+				wrapper->stmt_len = 19;
+			else
+				wrapper->stmt_len = 18;
 
 			/* do this step */
 			ProcessUtility(wrapper,
@@ -492,6 +525,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	const char        	*schema_name;
 	const char        	*db_owner_role;
 	const char        	*dbo_role;
+	const char        	*guest_schema_name;
 	List				*db_users_list;
 	List	   			*parsetree_list;
 	ListCell   			*parsetree_item;
@@ -575,11 +609,13 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		db_owner_role = get_db_owner_name(dbname);
 		/* Get a list of all the database's users */
 		db_users_list = get_authid_user_ext_db_users(dbname);
+		guest_schema_name = get_guest_schema_name(dbname);
 
 		parsetree_list = gen_dropdb_subcmds(schema_name,
 											db_owner_role,
 											dbo_role,
-											db_users_list);
+											db_users_list,
+											guest_schema_name);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
@@ -867,4 +903,167 @@ get_owner_of_db(const char *dbname)
 	ReleaseSysCache(tuple);
 
 	return owner;
+}
+
+
+static void
+create_schema_if_not_exists(const uint16 dbid,
+							const char *dbname,
+							const char *schemaname,
+							const char *owner_role)
+{
+	StringInfoData  query;
+	List			*parsetree_list;
+	Oid				datdba;
+	const char  	*prev_current_user;
+	uint16			old_dbid;
+	const char		*old_dbname, *phys_schema_name, *phys_role;
+
+	/*
+	* During upgrade, the migration mode is reset to single-db so
+	* we cannot call get_physical_user_name() directly.
+	* Detect whether the original migration was single-db or multi-db.
+	*/
+	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+	phys_schema_name = get_physical_schema_name_by_mode((char *) dbname, schemaname, baseline_mode);
+
+	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(phys_schema_name)))
+	{
+		ereport(LOG,
+			(errcode(ERRCODE_DUPLICATE_SCHEMA),
+					errmsg("schema \"%s\" already exists, skipping", phys_schema_name)));
+		return;
+	}
+
+	/*
+	* guest role prepends dbname regardless if single-db or multi-db.
+	* If for some reason guest role does not exist, then that is a bigger problem.
+	* We skip creating the guest schema entirely instead of crashing though.
+	*/
+	phys_role = get_physical_user_name((char *) dbname, (char *) owner_role);
+	if (!OidIsValid(get_role_oid(phys_role, true)))
+	{
+		ereport(LOG,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("role \"%s\" does not exist", phys_role)));
+		return;
+	}
+
+	datdba = get_role_oid("sysadmin", false);
+	check_is_member_of_role(GetSessionUserId(), datdba);
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE SCHEMA %s AUTHORIZATION %s; ", schemaname, owner_role);
+
+	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	Assert(list_length(parsetree_list) == 1);
+
+	/* Set current user to session user for create permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+
+	old_dbid = get_cur_db_id();
+	old_dbname = get_cur_db_name();
+	set_cur_db(dbid, dbname);
+
+	PG_TRY();
+	{
+		PlannedStmt *wrapper;
+		Node *stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
+		update_CreateSchemaStmt(stmt, phys_schema_name, phys_role);
+
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
+
+		ProcessUtility(wrapper,
+					query.data,
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+
+		/* make sure later steps can see the object created here */
+		CommandCounterIncrement();
+	}
+	PG_FINALLY();
+	{
+		bbf_set_current_user(prev_current_user);
+		set_cur_db(old_dbid, old_dbname);
+	}
+	PG_END_TRY();
+
+	bbf_set_current_user(prev_current_user);
+	set_cur_db(old_dbid, old_dbname);
+
+}
+
+/*
+* This function is only being used for the purpose of the upgrade script to add
+* the guest schema for each database if the database does not have the guest schema yet.
+*/
+PG_FUNCTION_INFO_V1(create_guest_schema_for_all_dbs);
+Datum create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
+{
+	Relation		sysdatabase_rel;
+	TableScanDesc 	scan;
+	HeapTuple 		tuple;
+	const char		*sql_dialect_value_old;
+	const char		*tsql_dialect = "tsql";
+	Form_sysdatabases   bbf_db;
+	const char		*dbname;
+	bool creating_extension_backup = creating_extension;
+
+	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		/*
+		* Since this is part of upgrade script, PG assumes we would like to set
+		* the babelfish extension depend on this new schema. This is not true
+		* so we tell PG not to set any dependency for us.
+		* Check recordDependencyOnCurrentExtension() for more information.
+		*/
+		creating_extension = false;
+
+		sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+		scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+
+		while (HeapTupleIsValid(tuple)) 
+		{
+			bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
+			dbname = text_to_cstring(&(bbf_db->name));
+
+			create_schema_if_not_exists(bbf_db->dbid, dbname, "guest", "guest");
+
+			tuple = heap_getnext(scan, ForwardScanDirection);
+		}
+		table_endscan(scan);
+		table_close(sysdatabase_rel, RowExclusiveLock);
+
+		creating_extension = creating_extension_backup;
+		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_FINALLY();
+	{
+		creating_extension = creating_extension_backup;
+		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_END_TRY();
+
+	PG_RETURN_INT32(0);
 }

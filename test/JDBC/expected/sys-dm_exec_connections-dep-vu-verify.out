@@ -1,6 +1,23 @@
 -- tsql user=sys_dm_exec_connections_dep_vu_prepare_login password=password
+
 -- if we query the view not as sysadmin, then we will get an error
-exec sys_dm_exec_connections_dep_vu_prepare_p1
+select user_name()
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+select schema_name()
+GO
+~~START~~
+varchar
+guest
+~~END~~
+
+
+exec dbo.sys_dm_exec_connections_dep_vu_prepare_p1
 GO
 ~~ERROR (Code: 33557097)~~
 

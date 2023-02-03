@@ -1,0 +1,90 @@
+-- Test for JIRA BABEL-2571. The 'guest' schema should exist by default.
+-- Furthermore, the default schema of guest users should be guest instead of dbo
+-- in order to match the behaviour in SQL Server.
+-- This test creates a guest login in order to verify the guest schema.
+
+-- tsql
+USE master
+GO
+
+CREATE TABLE babel_2571_table1(a int, b int)
+GO
+
+CREATE LOGIN babel_2571_login1 WITH password='123'
+GO
+
+CREATE DATABASE babel_2571_db1
+GO
+
+USE babel_2571_db1
+GO
+
+GRANT CONNECT TO guest
+GO
+
+
+-- This should show two schemas under master
+USE master
+GO
+
+SELECT name, USER_NAME(principal_id) FROM sys.schemas ORDER BY name
+GO
+
+-- But also show all databases created have the guest schema
+SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname
+GO
+
+-- Login as guest to show default schema is guest
+-- tsql         user=babel_2571_login1 password=12345678
+SELECT schema_name()
+GO
+
+USE babel_2571_db1
+GO
+
+CREATE TABLE babel_2571_table2(a int, b int)
+GO
+
+-- Dropping guest schema should not be allowed regardless of the user
+SELECT user_name()
+GO
+
+DROP SCHEMA guest
+GO
+
+-- this should fail
+SELECT * FROM dbo.babel_2571_table2
+GO
+
+-- This should not
+SELECT * FROM guest.babel_2571_table2
+GO
+
+-- tsql
+SELECT user_name()
+GO
+
+DROP SCHEMA guest
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_2571_login1'
+AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+-- (Not a huge fan of this because this could lead to intermittent issue.)
+SELECT pg_sleep(2);
+GO
+
+-- tsql
+DROP TABLE babel_2571_table1
+GO
+
+DROP DATABASE babel_2571_db1
+GO
+
+DROP LOGIN babel_2571_login1
+GO
