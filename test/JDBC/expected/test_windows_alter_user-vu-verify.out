@@ -1,0 +1,78 @@
+-- tsql
+-- positive test cases
+alter user [bbf\alter_user_test] with name = alter_user_test;
+GO
+
+select rolname, login_name, default_schema_name from babelfish_authid_user_ext where rolname = 'master_alter_user_test';
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+master_alter_user_test#!#alter_user@BBF#!#dbo
+~~END~~
+
+
+alter user alter_user_test with default_schema = ad_schema;
+GO
+
+select rolname, login_name, default_schema_name from babelfish_authid_user_ext where rolname = 'master_alter_user_test';
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+master_alter_user_test#!#alter_user@BBF#!#ad_schema
+~~END~~
+
+
+alter user alter_user_test with default_schema = NULL;
+GO
+
+select rolname, login_name, default_schema_name from babelfish_authid_user_ext where rolname = 'master_alter_user_test';
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+master_alter_user_test#!#alter_user@BBF#!#dbo
+~~END~~
+
+
+-- negative test cases
+alter user alter_user_test with login = [bbf\alter_user2];
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ALTER USER WITH LOGIN' is not currently supported in Babelfish)~~
+
+
+alter user alter_user_test with password = 123;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '123' at line 1 and character position 43)~~
+
+
+alter user alter_user_test with default_language = English;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "default_language")~~
+
+
+alter user alter_user_test with default_language = German;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "default_language")~~
+
+
+alter user alter_user_test with ALLOW_ENCRYPTED_VALUE_MODIFICATIONS = ON;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized role option "allow_encrypted_value_modifications")~~
+
+
+-- random input
+alter user alter_user_test with random = 'testing';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'random' at line 2 and character position 32)~~
+

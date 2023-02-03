@@ -1,0 +1,41 @@
+-- tsql
+select rolname, login_name from babelfish_authid_user_ext where rolname in ('master_bbf\ad_sp_helpuser','master_pass_sp_helpuser');
+GO
+~~START~~
+varchar#!#varchar
+master_bbf\ad_sp_helpuser#!#ad_sp_helpuser@BBF
+master_pass_sp_helpuser#!#pass_sp_helpuser
+~~END~~
+
+
+CREATE TABLE temp_sp_helpuser(UserName sys.sysname, RoleName sys.sysname, LoginName sys.sysname, 
+DefDBName sys.sysname, DefSchemaName sys.sysname, UserID int, SID SYS.VARBINARY(85));
+GO
+
+INSERT INTO temp_sp_helpuser(UserName, RoleName, LoginName, DefDBName, DefSchemaName, UserID, SID) EXEC sp_helpuser 'bbF\AD_sp_HelpUser';
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO temp_sp_helpuser(UserName, RoleName, LoginName, DefDBName, DefSchemaName, UserID, SID) EXEC sp_helpuser 'pass_SP_HELPuser';
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT UserName, Rolename, LoginName, DefDBName, DefSchemaName FROM temp_sp_helpuser
+where UserName = 'bbF\AD_sp_HelpUser';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+bbf\ad_sp_helpuser#!#public#!#bbf\ad_sp_helpuser#!#master#!#dbo
+~~END~~
+
+
+SELECT UserName, Rolename, LoginName, DefDBName, DefSchemaName FROM temp_sp_helpuser
+where UserName = 'pass_SP_HELPuser';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+pass_sp_helpuser#!#public#!#pass_sp_helpuser#!#master#!#dbo
+~~END~~
+
