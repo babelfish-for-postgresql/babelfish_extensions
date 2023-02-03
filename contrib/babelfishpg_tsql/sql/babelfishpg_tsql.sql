@@ -2904,6 +2904,7 @@ CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
 	IN "@objname" sys.nvarchar(776),
 	IN "@newname" sys.SYSNAME,
 	IN "@schemaname" sys.nvarchar(776),
+	IN "@tblname" sys.nvarchar(776),
 	IN "@objtype" char(2) DEFAULT NULL
 ) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_internal TO PUBLIC;
@@ -2920,23 +2921,7 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
 		END
-	IF @objtype = 'COLUMN'
-		BEGIN
-			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Column yet.', 1;
-		END
-	IF @objtype = 'INDEX'
-		BEGIN
-			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Index yet.', 1;
-		END
-	IF @objtype = 'STATISTICS'
-		BEGIN
-			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Statistics yet.', 1;
-		END
-	IF @objtype = 'USERDATATYPE'
-		BEGIN
-			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for User-defined Data Type alias yet.', 1;
-		END
-	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
+	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT') AND (@objtype != 'COLUMN')
 		BEGIN
 			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
 		END
@@ -2944,45 +2929,116 @@ BEGIN
 	DECLARE @subname sys.nvarchar(776) = '';
 	DECLARE @schemaname sys.nvarchar(776) = '';
 	DECLARE @dbname sys.nvarchar(776) = '';
-	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
-	IF @name_count > 3
+	DECLARE @colname sys.nvarchar(776) = NULL;
+
+	IF @objtype IS 'COLUMN'
 		BEGIN
-			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
-		END
-	IF @name_count = 3
-		BEGIN
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
-			IF @dbname != sys.db_name()
+			SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
+			IF @name_count > 4
 				BEGIN
 					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 				END
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+			IF @name_count = 4
+				BEGIN
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @dbname = value FROM nameParseTable WHERE row = 1;
+					IF @dbname != sys.db_name()
+						BEGIN
+							THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+						END
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @schemaname = value FROM nameParseTable WHERE row = 2;
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM nameParseTable WHERE row = 3;
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @colname = value FROM nameParseTable WHERE row = 4;
+				END
+			IF @name_count = 3
+				BEGIN
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @schemaname = value FROM nameParseTable WHERE row = 1;
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM nameParseTable WHERE row = 2;
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @colname = value FROM nameParseTable WHERE row = 3;
+				END
+			IF @name_count = 2
+				BEGIN
+					SET @schemaname = sys.schema_name();
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @relname = value FROM nameParseTable WHERE row = 1;
+					WITH nameParseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @colname = value FROM nameParseTable WHERE row = 2;
+				END
+			IF @name_count = 1
+				BEGIN
+					THROW 33557097, N'Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.', 1;
+				END
+			
 		END
-	IF @name_count = 2
+	
+	IF @objtype IS 'OBJECT'
 		BEGIN
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
-		END
-	IF @name_count = 1
-		BEGIN
-			SET @schemaname = sys.schema_name();
-			SET @subname = @objname;
+			SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
+			IF @name_count > 3
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			IF @name_count = 3
+				BEGIN
+					WITH myTableWithRows AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
+					PRINT 'db_name:  ';
+					PRINT sys.db_name();
+					IF @dbname != sys.db_name()
+						BEGIN
+							THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+						END
+					WITH myTableWithRows AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
+					WITH myTableWithRows AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+				END
+			IF @name_count = 2
+				BEGIN
+					WITH myTableWithRows AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
+					WITH myTableWithRows AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+				END
+			IF @name_count = 1
+				BEGIN
+					SET @schemaname = sys.schema_name();
+					SET @subname = @objname;
+				END
 		END
 	
 	DECLARE @count INT;
@@ -2997,9 +3053,22 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'There is no object with the given @objname.', 1;
 		END
-	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-	WHERE s1.name = @schemaname AND o1.name = @subname;
-	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
+	IF @objtype IS 'OBJECT'
+		BEGIN
+			SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+			WHERE s1.name = @schemaname AND o1.name = @subname;
+		END
+	IF @objtype IS 'COLUMN'
+		BEGIN
+			DECLARE @col_count INT;
+			SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @subname and COLUMN_NAME = @colname;
+			IF @col_count < 0
+				BEGIN
+					THROW 33557097, N'There is no object with the given @objname.', 1;
+				END
+			SET @currtype = 'CO';
+		END
+	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @colname, @currtype;
 END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;

@@ -1321,6 +1321,7 @@ static char *get_db_owner_role_name(const char *dbname);
 /* Helper function Rename BBF catalog update*/
 static void rename_view_update_bbf_catalog(RenameStmt *stmt);
 static void rename_procfunc_update_bbf_catalog(RenameStmt *stmt);
+static void rename_col_update_bbf_catalog(RenameStmt *stmt);
 
 /*****************************************
  * 			Catalog Extra Info
@@ -2330,6 +2331,9 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			break;
 		case OBJECT_SEQUENCE:
 			break;
+		case OBJECT_COLUMN:
+			rename_col_update_bbf_catalog(stmt);
+			break;
 		default:
 			break;	
 	}
@@ -2510,4 +2514,79 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 
 	table_endscan(tblscan);
 	table_close(bbf_func_ext_rel, RowExclusiveLock);
+}
+
+static void
+rename_col_update_bbf_catalog(RenameStmt *stmt)
+{
+	// update the 'object_name' in 'babelfish_view_def'
+	Relation		bbf_view_def_rel;
+	TupleDesc		bbf_view_def_dsc;
+	ScanKeyData		key[3];
+	HeapTuple		usertuple;
+	HeapTuple		new_tuple;
+	TableScanDesc		tblscan;
+	Datum			new_record_view_def[BBF_VIEW_DEF_NUM_COLS];
+	bool			new_record_nulls_view_def[BBF_VIEW_DEF_NUM_COLS];
+	bool			new_record_repl_view_def[BBF_VIEW_DEF_NUM_COLS];
+	int16			dbid;
+	const char		*logical_schema_name;
+
+	// build the tuple to insert
+	MemSet(new_record_view_def, 0, sizeof(new_record_view_def));
+	MemSet(new_record_nulls_view_def, false, sizeof(new_record_nulls_view_def));
+	MemSet(new_record_repl_view_def, false, sizeof(new_record_repl_view_def));
+
+	// open the catalog table
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
+
+	// get the description of the table
+	bbf_view_def_dsc = RelationGetDescr(bbf_view_def_rel);
+
+	// search for the row for update => build the key
+	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, true);
+	ScanKeyInit(&key[0],
+				Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	logical_schema_name = get_logical_schema_name(stmt->relation->schemaname, true);
+	ScanKeyInit(&key[1],
+				Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(logical_schema_name));
+	ScanKeyInit(&key[2],
+				Anum_bbf_view_def_object_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(stmt->relation->relname));
+
+	// scan
+	tblscan = table_beginscan_catalog(bbf_view_def_rel, 3, key);
+	
+	// get the scan result -> original tuple
+	usertuple = heap_getnext(tblscan, ForwardScanDirection);
+
+	if (!HeapTupleIsValid(usertuple)) {
+		table_endscan(tblscan);
+		table_close(bbf_view_def_rel, RowExclusiveLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("Cannot find the view_name \"%s\", because it does not exist or you do not have permission.", stmt->subname)));
+	}
+	
+	// create new tuple to substitute
+	new_record_view_def[Anum_bbf_view_def_object_name - 1] = CStringGetTextDatum(stmt->newname);
+	new_record_repl_view_def[Anum_bbf_view_def_object_name - 1] = true;
+
+	new_tuple = heap_modify_tuple(usertuple,
+								  bbf_view_def_dsc,
+								  new_record_view_def,
+								  new_record_nulls_view_def,
+								  new_record_repl_view_def);
+
+	CatalogTupleUpdate(bbf_view_def_rel, &new_tuple->t_self, new_tuple);
+
+	heap_freetuple(new_tuple);
+
+	table_endscan(tblscan);
+	table_close(bbf_view_def_rel, RowExclusiveLock);
 }

@@ -68,7 +68,8 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
-static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype);
+static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, const char *colname, ObjectType objtype);
+static void rename_col_update_attoption(RenameStmt *stmt, char *col_name, List **alist);
 List *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
 List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets);
@@ -2361,7 +2362,7 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 
 Datum sp_rename_internal(PG_FUNCTION_ARGS)
 {
-	char *obj_name, *new_name, *schema_name, *objtype, *process_util_querystr;
+	char *obj_name, *new_name, *schema_name, *col_name, *objtype, *process_util_querystr;
 	ObjectType objtype_code;
 	size_t len;
 	List *parsetree_list;
@@ -2379,7 +2380,8 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 		obj_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 		new_name = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 		schema_name = PG_ARGISNULL(2) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(2));
-		objtype =  PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
+		col_name = PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
+		objtype =  PG_ARGISNULL(4) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(4));
 
 		//3. check if the input arguments are valid, and parse the objname
 		// objname can have at most 3 parts
@@ -2402,7 +2404,9 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 		len = strlen(new_name);
 		while(isspace(new_name[len - 1]))
 			new_name[--len] = 0;
-		len = strlen(objtype);
+		len = strlen(col_name);
+		while(col_name != NULL || isspace(col_name[len - 1]))
+			col_name[--len] = 0;
 		while(isspace(objtype[len - 1]))
 			objtype[--len] = 0;
 
@@ -2413,6 +2417,9 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 		if (new_name == NULL || strlen(new_name) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				errmsg("Procedure or function 'sp_rename' expects parameter '@newname', which was not supplied.")));
+		if ((strcmp(objtype, "CO") == 0) && (col_name == NULL || strlen(col_name) == 0))
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.")));
 		
 		//4. for each obj type, generate the corresponding RenameStmt
 		// update variables based on the target objtype
@@ -2431,22 +2438,9 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 					strcmp(objtype, "FT") == 0 || strcmp(objtype, "IF") == 0 || strcmp(objtype, "TF") == 0) {
 			objtype_code = OBJECT_FUNCTION;
 			process_util_querystr = "(ALTER FUNCTION )";
-		} else if (strcmp(objtype, "SO") == 0) {
-			objtype_code = OBJECT_SEQUENCE;
-			process_util_querystr = "(ALTER SEQUENCE )";
-		} else if (strcmp(objtype, "TA") == 0 || strcmp(objtype, "TR") == 0) { 
-			// TRIGGER
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Procedure or function 'sp_rename'is not supported for Trigger yet.")));
-		} else if (strcmp(objtype, "C") == 0 || strcmp(objtype, "D") == 0 || strcmp(objtype, "PK") == 0 || 
-					strcmp(objtype, "UQ") == 0 || strcmp(objtype, "EC") == 0) {
-			// CONSTRAINT
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Procedure or function 'sp_rename'is not supported for Constraint yet.")));
-		} else if (strcmp(objtype, "TT") == 0) {
-			// TABLE TYPE
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Procedure or function 'sp_rename'is not supported for Table-Type yet.")));
+		} else if (strcmp(objtype, "CO") == 0) {
+			objtype_code = OBJECT_COLUMN;
+			process_util_querystr = "(ALTER TABLE )";
 		} else {
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("Provided '@objtype' is currently not supported in Babelfish.")));
@@ -2476,7 +2470,6 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 			/* do this step */
 			ProcessUtility(wrapper,
 				pstrdup(process_util_querystr),
-				// "(ALTER TABLE )",
 				false,
 				PROCESS_UTILITY_SUBCOMMAND,
 				NULL,
@@ -2503,7 +2496,7 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 }
 
 static List *
-gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype)
+gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, const char *colname, ObjectType objtype)
 {
 	StringInfoData query;
 	List *res;
@@ -2519,13 +2512,15 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		appendStringInfo(&query, "ALTER PROCEDURE dummy RENAME TO dummy; ");
 	} else if (objtype == OBJECT_FUNCTION) {
 		appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
-	} else if (objtype == OBJECT_SEQUENCE) {
-		appendStringInfo(&query, "ALTER SEQUENCE dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_COLUMN) {
+		// ALTER TABLE relation_expr RENAME opt_column name TO name
+		appendStringInfo(&query, "ALTER TABLE dummy RENAME COLUMN dummy TO dummy; ");
 	} else {
 		ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("Provided objtype is not supported for sp_rename")));
 	}
+
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (list_length(res) != 1)
@@ -2545,17 +2540,69 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		renamestmt->newname = pstrdup(lowerstr(newname));
 		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
 		renamestmt->relation->relname = pstrdup(lowerstr(objname));
-	} else {
-	// } else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION)) {
+	} else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION)) {
 		ObjectWithArgs *objwargs = (ObjectWithArgs *) renamestmt->object;
 		renamestmt->renameType = objtype;
 		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
 		orig_proc_funcname = pstrdup(newname);
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
+	} else if (objtype == OBJECT_COLUMN) {
+		renamestmt->renameType = objtype;
+		renamestmt->relationType = OBJECT_TABLE;
+		renamestmt->subname = pstrdup(lowerstr(colname)); // column name
+		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->relname = pstrdup(lowerstr(objname)); //table name
+		
+		/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET ( column_parameter = value [, ... ] ) */
+		//command:  ALTER opt_column ColId SET reloptions
+		// 		AlterTableCmd *n = makeNode(AlterTableCmd);
+		// 		n->subtype = AT_SetOptions;
+		// 		n->name = $3; 			ColId
+		// 		n->def = (Node *) $5;   reloptions
+		// 		$$ = (Node *) n;
+
+		// add 2nd query for pg_attributes: attoption update
+		rename_col_update_attoption(stmt, colname, res);
+	} else {
+		break;
 	}
+
 	//name mapping
 	rewrite_object_refs(stmt);
-
+	
 	return res;
+}
+
+extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
+
+static void
+rename_col_update_attoption(RenameStmt *renamestmt, char *col_name, List **alist)
+{
+	/* add "ALTER TABLE ALTER COLUMN SET (bbf_original_name=<original_name>)" to alist so that original_name will be stored in pg_attribute.attoptions */
+	AlterTableCmd *cmd;
+
+	/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET ( column_parameter = value [, ... ] ) */
+		//command:  ALTER opt_column ColId SET reloptions
+		// 		AlterTableCmd *n = makeNode(AlterTableCmd);
+		// 		n->subtype = AT_SetOptions;
+		// 		n->name = $3; 			ColId
+		// 		n->def = (Node *) $5;   reloptions
+		// 		$$ = (Node *) n;
+
+	cmd = makeNode(AlterTableCmd);
+	cmd->subtype = AT_SetOptions;
+	cmd->name = col_name;
+	cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(col_name)), -1));
+	cmd->behavior = DROP_RESTRICT;
+	cmd->missing_ok = false;
+
+	stmt = makeNode(AlterTableStmt);
+	stmt->relation = relation;
+	stmt->cmds = NIL;
+	stmt->objtype = OBJECT_TABLE;
+	stmt->cmds = lappend(stmt->cmds, cmd);
+
+	(*alist) = lappend(*alist, stmt);
 }
