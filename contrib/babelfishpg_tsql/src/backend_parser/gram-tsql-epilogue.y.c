@@ -301,17 +301,18 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
         }
         else
         {
-                /* Cast null to typename to take advantage of polymorphic types in Postgres */
-                Node *null_const = makeTypeCast(makeNullAConst(location), typename, location);
+                Node *targetType = makeTypeCast(makeNullAConst(location), typename, location);
                 List *args;
-                if(arg->type == T_TypeCast || arg->type == T_FuncCall)
+                switch(arg->type)
                 {
-                    args = list_make3(arg, null_const, makeIntConst(typmod, location));
-                }
-                else
-                {
-                    Node *arg_const = makeTypeCast(arg, SystemTypeName("text"), location);
-                    args = list_make3(arg_const, null_const, makeIntConst(typmod, location));
+                    case T_A_Const:
+                    case T_TypeCast:
+                    case T_FuncCall:
+                    case T_A_Expr:
+                        args = list_make3(arg, targetType, makeIntConst(typmod, location));
+                        break;
+                    default:
+                        args = list_make3(makeTypeCast(arg, makeTypeName("text"), location), targetType, makeIntConst(typmod, location));
                 }
 
                 result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_any"), args, COERCE_EXPLICIT_CALL, location);

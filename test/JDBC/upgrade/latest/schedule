@@ -393,6 +393,7 @@ BABEL-3914
 Babel_domain_mapping_test
 BABEL-3828
 BABEL-3844
+BABEL-3748
 test_windows_alter_login
 sys-systypes
 openjson
