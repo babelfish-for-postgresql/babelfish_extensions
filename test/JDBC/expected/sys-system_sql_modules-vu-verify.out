@@ -72,3 +72,29 @@ nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 #!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
+
+-- Test for linked server procedures
+SELECT
+    o.name,
+    s.definition,
+    s.uses_ansi_nulls,
+    s.uses_quoted_identifier,
+    s.is_schema_bound,
+    s.uses_database_collation,
+    s.is_recompiled,
+    s.null_on_null_input,
+    s.execute_as_principal_id,
+    s.uses_native_compilation
+FROM sys.objects o
+LEFT JOIN sys.system_sql_modules s ON o.object_id = s.object_id
+WHERE o.name IN ('sp_addlinkedserver', 'sp_addlinkedsrvlogin', 'sp_dropserver', 'sp_droplinkedsrvlogin')
+ORDER BY o.name
+GO
+~~START~~
+varchar#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+sp_addlinkedserver#!##!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+sp_addlinkedsrvlogin#!##!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+sp_droplinkedsrvlogin#!##!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+sp_dropserver#!##!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+~~END~~
+

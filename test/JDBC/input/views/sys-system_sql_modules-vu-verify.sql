@@ -58,3 +58,21 @@ SELECT
 FROM sys.system_sql_modules
 WHERE object_id = OBJECT_ID('sys.user_name')
 GO
+
+-- Test for linked server procedures
+SELECT
+    o.name,
+    s.definition,
+    s.uses_ansi_nulls,
+    s.uses_quoted_identifier,
+    s.is_schema_bound,
+    s.uses_database_collation,
+    s.is_recompiled,
+    s.null_on_null_input,
+    s.execute_as_principal_id,
+    s.uses_native_compilation
+FROM sys.objects o
+LEFT JOIN sys.system_sql_modules s ON o.object_id = s.object_id
+WHERE o.name IN ('sp_addlinkedserver', 'sp_addlinkedsrvlogin', 'sp_dropserver', 'sp_droplinkedsrvlogin')
+ORDER BY o.name
+GO

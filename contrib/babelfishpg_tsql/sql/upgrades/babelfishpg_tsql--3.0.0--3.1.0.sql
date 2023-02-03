@@ -2858,6 +2858,7 @@ select t.name,t.type, ns.oid as schemaid from
 ) t (name, schema_name, type)
 inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
+GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 -- Disassociate procedures under master_dbo schema from the extension
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_addlinkedserver(sys.sysname, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.sysname)');
