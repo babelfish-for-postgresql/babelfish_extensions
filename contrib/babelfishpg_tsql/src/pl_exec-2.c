@@ -1252,8 +1252,8 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
 	volatile int save_nestlevel;
-	volatile char *old_db_name = get_cur_db_name();
-	volatile char *cur_db_name = NULL;
+	char *old_db_name = get_cur_db_name();
+	char *cur_db_name = NULL;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
