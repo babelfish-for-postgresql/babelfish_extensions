@@ -299,43 +299,18 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
         }
         else
         {
-                /* Cast null to typename to take advantage of polymorphic types in Postgres */
-                A_Const *argConst;
-                Node *null_const = makeTypeCast(makeNullAConst(location), typename, location);
+                Node *targetType = makeTypeCast(makeNullAConst(location), typename, location);
                 List *args;
-                if(arg->type == T_A_Const)
+                switch(arg->type)
                 {
-                    Node *arg_node;
-                    TypeName *sysType;
-                    argConst = (A_Const *) arg;
-                    switch(argConst->val.type)
-                    {
-                        /* TSQL treats any literal integer in the range -2147483647 to 2147483647 as a T_Integer integer type */
-                        case T_Integer:
-                            sysType = SystemTypeName("int4");
-                            break;
-
-                        /* TSQL treats any integer outside of the range -2147483647 to 2147483647, and any decimal as a T_Float numeric type */
-                        case T_Float:
-                            sysType = SystemTypeName("numeric");
-                            break;
-
-                        default:
-                            sysType = SystemTypeName("text");
-                            break;
-                    }
-
-                    arg_node = makeTypeCast(arg, sysType, location);
-                    args = list_make3(arg_node, null_const, makeIntConst(typmod, location));
-                }
-                else if(arg->type == T_TypeCast || arg->type == T_FuncCall || arg->type == T_A_Expr)
-                {
-                    args = list_make3(arg, null_const, makeIntConst(typmod, location));
-                }
-                else
-                {
-                    Node *arg_node = makeTypeCast(arg, SystemTypeName("text"), location);
-                    args = list_make3(arg_node, null_const, makeIntConst(typmod, location));
+                    case T_A_Const:
+                    case T_TypeCast:
+                    case T_FuncCall:
+                    case T_A_Expr:
+                        args = list_make3(arg, targetType, makeIntConst(typmod, location));
+                        break;
+                    default:
+                        args = list_make3(makeTypeCast(arg, makeTypeName("text"), location), targetType, makeIntConst(typmod, location));
                 }
 
                 result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_any"), args, COERCE_EXPLICIT_CALL, location);
