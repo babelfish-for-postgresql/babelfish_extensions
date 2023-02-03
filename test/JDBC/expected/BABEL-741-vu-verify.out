@@ -55,6 +55,14 @@ dbo
 ~~END~~
 
 
+SELECT schema_name(schema_id('dbo'))
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
 SELECT schema_name(99)
 GO
 ~~START~~

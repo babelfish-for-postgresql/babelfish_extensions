@@ -491,16 +491,33 @@ schema_name(PG_FUNCTION_ARGS)
 Datum
 schema_id(PG_FUNCTION_ARGS)
 {
-	const char *name = text_to_cstring(PG_GETARG_TEXT_P(0));
+	const char *name;
 	int id;
 	HeapTuple   tup;
 	Oid         nspOid;
 	Form_pg_namespace nspform;
 	const char *physical_name;
+	List *search_path;
 
-	if (pltsql_case_insensitive_identifiers)
-		name = downcase_identifier(name, strlen(name), false, false); /* no truncation here. truncation will be handled inside get_physical_schema_name() */
-	physical_name = get_physical_schema_name(get_cur_db_name(), name);
+	/* when no argument is passed, then ID of default schema of the caller */
+	if(PG_NARGS()==0){
+		search_path = fetch_search_path(false);
+
+		if (search_path == NIL)
+			PG_RETURN_NULL();
+
+		physical_name = get_namespace_name(linitial_oid(search_path));
+		list_free(search_path);
+	}
+	else{
+		if(PG_ARGISNULL(0))
+			PG_RETURN_NULL();
+
+		name = text_to_cstring(PG_GETARG_TEXT_P(0));
+		if (pltsql_case_insensitive_identifiers)
+			name = downcase_identifier(name, strlen(name), false, false); /* no truncation here. truncation will be handled inside get_physical_schema_name() */
+		physical_name = get_physical_schema_name(get_cur_db_name(), name);
+	}
 
 	/*
 	 * If physical schema name is empty or NULL for any reason then return NULL.

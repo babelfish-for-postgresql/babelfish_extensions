@@ -59,9 +59,15 @@ CREATE OR REPLACE FUNCTION is_member(IN a VARCHAR) RETURNS INT
 AS 'babelfishpg_tsql', 'is_member' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION is_member(IN VARCHAR) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION schema_id(IN schema_name VARCHAR) RETURNS INT
-AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-GRANT EXECUTE ON FUNCTION schema_id(IN VARCHAR) TO PUBLIC;
+-- Two declarations of schema_id based on number of parameters.
+--However, both call the same C function
+CREATE OR REPLACE FUNCTION schema_id()
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.schema_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION schema_id(IN schema_name sys.SYSNAME)
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.schema_id(schema_name sys.SYSNAME) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION schema_name(IN id oid) RETURNS VARCHAR
 AS 'babelfishpg_tsql', 'schema_name' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
