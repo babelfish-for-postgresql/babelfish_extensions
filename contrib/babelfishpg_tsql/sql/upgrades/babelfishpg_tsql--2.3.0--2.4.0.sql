@@ -1885,8 +1885,8 @@ OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFEREN
 OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') = true);
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
-ALTER FUNCTION sys.schema_id RENAME TO sys_schema_id_deprecated_in_2_4_0;
-ALTER FUNCTION schema_id RENAME TO object_id_deprecated_in_2_4_0;
+ALTER FUNCTION sys.schema_id() RENAME TO sys_schema_id_deprecated_in_2_4_0;
+ALTER FUNCTION schema_id(schema_name VARCHAR) RENAME TO schema_id_deprecated_in_2_4_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sys_schema_id_deprecated_in_2_4_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'schema_id_deprecated_in_2_4_0');
