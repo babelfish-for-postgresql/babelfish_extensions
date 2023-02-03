@@ -21,7 +21,7 @@ bool enable_metadata_inconsistency_check = true;
 
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
-bool pltsql_enable_sll_parse_mode = false;
+bool pltsql_enable_sll_parse_mode = true;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
 bool  pltsql_ansi_defaults = true;
 bool  pltsql_quoted_identifier = true;
@@ -589,7 +589,7 @@ define_custom_variables(void)
 				 gettext_noop("enable SLL parser mode for ANTLR parser"),
 				 NULL,
 				 &pltsql_enable_sll_parse_mode,
-				 false,
+				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
