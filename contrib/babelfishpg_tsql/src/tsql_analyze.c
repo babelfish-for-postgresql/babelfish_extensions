@@ -182,7 +182,7 @@ handle_rowversion_target_in_update_stmt(RangeVar *target_table, UpdateStmt *stmt
 }
 
 static bool
-target_in_outer_join(Node *expr, RangeVar *target, bool outside_outer)
+search_join_recursive(Node *expr, RangeVar *target, bool outside_outer)
 {
 	JoinExpr *join_expr;
 	RangeVar *arg;
@@ -202,20 +202,35 @@ target_in_outer_join(Node *expr, RangeVar *target, bool outside_outer)
 	switch(join_expr->jointype)
 	{
 		case JOIN_INNER:
-			return target_in_outer_join(join_expr->larg, target, outside_outer)
-				|| target_in_outer_join(join_expr->rarg, target, outside_outer);
+			return search_join_recursive(join_expr->larg, target, outside_outer)
+				|| search_join_recursive(join_expr->rarg, target, outside_outer);
 		case JOIN_LEFT:
-			return target_in_outer_join(join_expr->larg, target, outside_outer)
-				|| target_in_outer_join(join_expr->rarg, target, true);
+			return search_join_recursive(join_expr->larg, target, outside_outer)
+				|| search_join_recursive(join_expr->rarg, target, true);
 		case JOIN_RIGHT:
-			return target_in_outer_join(join_expr->larg, target, true)
-				|| target_in_outer_join(join_expr->rarg, target, outside_outer);
+			return search_join_recursive(join_expr->larg, target, true)
+				|| search_join_recursive(join_expr->rarg, target, outside_outer);
 		case JOIN_FULL:
-			return target_in_outer_join(join_expr->larg, target, true)
-				|| target_in_outer_join(join_expr->rarg, target, true);
+			return search_join_recursive(join_expr->larg, target, true)
+				|| search_join_recursive(join_expr->rarg, target, true);
 		default:
 			return false;
 	}
+}
+
+static bool
+target_in_outer_join(List *fromClause, RangeVar *target)
+{
+	bool result = false;
+	ListCell *lc;
+
+	foreach (lc, fromClause)
+	{
+		Node *node = lfirst(lc);
+		result |= search_join_recursive(node, target, false);
+	}
+	
+	return result;
 }
 
 static void
@@ -259,7 +274,7 @@ rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
 		{
 			UpdateStmt *update_stmt = (UpdateStmt *) stmt;
 			List      *fromClause = update_stmt->fromClause;
-			if (fromClause && target_in_outer_join(linitial(fromClause), target, false))
+			if (fromClause && target_in_outer_join(fromClause, target))
 				add_target_ctid_not_null_clause(&update_stmt->whereClause, target);
 			break;
 		}
@@ -267,7 +282,7 @@ rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
 		{
 			DeleteStmt *delete_stmt = (DeleteStmt *) stmt;
 			List      *fromClause = delete_stmt->usingClause;
-			if (fromClause && target_in_outer_join(linitial(fromClause), target, false))
+			if (fromClause && target_in_outer_join(fromClause, target))
 				add_target_ctid_not_null_clause(&delete_stmt->whereClause, target);			
 			break;
 		}

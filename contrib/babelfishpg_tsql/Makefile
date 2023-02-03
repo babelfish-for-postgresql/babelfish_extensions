@@ -91,9 +91,9 @@ PG_CXXFLAGS += -Wno-register # otherwise C++17 gags on PostgreSQL headers
 PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
 PG_CFLAGS += -g -Werror
 PG_CFLAGS += -fstack-protector-strong
-PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -I$(FREE_TDS_INCLUDE_DIR) -DFAULT_INJECTOR -DENABLE_TDS_LIB
+PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -I$(FREE_TDS_INCLUDE_DIR) -DFAULT_INJECTOR
 
-SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto $(FREE_TDS_LIB) -L$(FREE_TDS_LIB_DIR)
+SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto
 
 UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql))
 

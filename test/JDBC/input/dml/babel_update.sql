@@ -376,6 +376,22 @@ go
 select a from t1_3910;
 go
 
+exec babel_3910_init_tables;
+update t1 set a = 100 from t3_3910 t3, t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a
+where t3.a = t2.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+update t1 set a = 100 from t3_3910 t3, (t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a), t4_3910 t4
+where t3.a = t2.a and t4.a = t3.a;
+go
+
+select a from t1_3910;
+go
+
 drop procedure if exists babel_3910_init_tables;
 drop table if exists t1_3910;
 drop table if exists t2_3910;
