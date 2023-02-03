@@ -133,7 +133,6 @@ Could not find upgrade tests for function sys.ident_seed
 Could not find upgrade tests for function sys.is_collated_ci_as
 Could not find upgrade tests for function sys.is_collated_ci_as_internal
 Could not find upgrade tests for function sys.is_rolemember_internal
-Could not find upgrade tests for function sys.json_query
 Could not find upgrade tests for function sys.language
 Could not find upgrade tests for function sys.max_precision
 Could not find upgrade tests for function sys.microsoftversion
