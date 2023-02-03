@@ -1252,7 +1252,11 @@ select t.name,t.type, ns.oid as schemaid from
     ('xp_instance_regread','master_dbo','P'),
     ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
-    ('syspolicy_system_health_state', 'msdb_dbo', 'V')
+    ('syspolicy_system_health_state', 'msdb_dbo', 'V'),
+    ('sp_addlinkedserver', 'master_dbo', 'P'),
+    ('sp_addlinkedsrvlogin', 'master_dbo', 'P'),
+    ('sp_dropserver', 'master_dbo', 'P'),
+    ('sp_droplinkedsrvlogin', 'master_dbo', 'P')
 ) t(name,schema_name, type)
 inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
 

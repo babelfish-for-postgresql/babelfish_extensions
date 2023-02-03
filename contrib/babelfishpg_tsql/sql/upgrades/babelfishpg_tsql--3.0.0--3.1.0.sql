@@ -31,6 +31,24 @@ end
 $$
 LANGUAGE plpgsql;
 
+-- Removes a member object from the extension. The object is not dropped, only disassociated from the extension.
+-- It is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+CREATE OR REPLACE PROCEDURE babelfish_remove_object_from_extension(obj_type varchar, qualified_obj_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query text;
+BEGIN
+    query := format('alter extension babelfishpg_tsql drop %s %s', obj_type, qualified_obj_name);
+    execute query;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+END
+$$
+LANGUAGE plpgsql;
+
 -- please add your SQL here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
@@ -2810,9 +2828,47 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_schema_name'
 LANGUAGE C STABLE;
 
+create or replace view sys.shipped_objects_not_in_sys AS
+-- This portion of view retrieves information on objects that reside in a schema in one specfic database.
+-- For example, 'master_dbo' schema can only exist in the 'master' database.
+-- Internally stored schema name (nspname) must be provided.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values
+    ('xp_qv','master_dbo','P'),
+    ('xp_instance_regread','master_dbo','P'),
+    ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
+    ('syspolicy_configuration', 'msdb_dbo', 'V'),
+    ('syspolicy_system_health_state', 'msdb_dbo', 'V'),
+    ('sp_addlinkedserver', 'master_dbo', 'P'),
+    ('sp_addlinkedsrvlogin', 'master_dbo', 'P'),
+    ('sp_dropserver', 'master_dbo', 'P'),
+    ('sp_droplinkedsrvlogin', 'master_dbo', 'P')
+) t(name,schema_name, type)
+inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
+
+union all
+
+-- This portion of view retrieves information on objects that reside in a schema in any number of databases.
+-- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values
+    ('sysdatabases','dbo','V')
+) t (name, schema_name, type)
+inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
+inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
+
+-- Disassociate procedures under master_dbo schema from the extension
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_addlinkedserver(sys.sysname, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.sysname)');
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_addlinkedsrvlogin(sys.sysname, sys.varchar, sys.sysname, sys.sysname, sys.sysname)');
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_dropserver(sys.sysname, sys.bpchar)');
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_droplinkedsrvlogin(sys.sysname, sys.sysname)');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+DROP PROCEDURE sys.babelfish_remove_object_from_extension(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
