@@ -387,3 +387,4 @@ Test-sp_rename-dep
 BABEL-3657
 Test-sp_babelfish_volatility
 BABEL-733
+BABEL-3938

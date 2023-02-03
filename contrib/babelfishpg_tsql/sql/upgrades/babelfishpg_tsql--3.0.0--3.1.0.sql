@@ -2878,7 +2878,11 @@ BEGIN
 			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
 		END IF;
 	WHEN 'sys.datetime'::regtype THEN
-		RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+		ELSE
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		END IF;
 	WHEN 'float'::regtype THEN
 		IF v_style = -1 THEN
 			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
@@ -2887,7 +2891,7 @@ BEGIN
 		END IF;
 	WHEN 'sys.money'::regtype THEN
 		IF v_style = -1 THEN
-			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money);
 		ELSE
 			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money, p_style);
 		END IF;
