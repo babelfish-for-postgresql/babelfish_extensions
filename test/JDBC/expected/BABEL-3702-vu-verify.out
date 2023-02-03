@@ -1,0 +1,285 @@
+EXEC BABEL_3702_vu_prepare_p6
+GO
+~~START~~
+nvarchar
+1
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p6
+GO
+
+EXEC BABEL_3702_vu_prepare_p6_2
+GO
+~~START~~
+nchar
+1                   
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p6_2
+GO
+
+EXEC BABEL_3702_vu_prepare_p6_3
+GO
+~~START~~
+char
+1                   
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p6_3
+GO
+
+EXEC BABEL_3702_vu_prepare_p7
+GO
+~~START~~
+nvarchar
+long 
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p7
+GO
+
+EXEC BABEL_3702_vu_prepare_p8
+GO
+~~START~~
+nvarchar
+{"a": 1}
+[1, 2]
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p8
+GO
+
+EXEC BABEL_3702_vu_prepare_p8_2
+GO
+~~START~~
+char
+<NULL>
+<NULL>
+a                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p8_2
+GO
+
+EXEC BABEL_3702_vu_prepare_p8_3
+GO
+~~START~~
+nchar
+<NULL>
+<NULL>
+a                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p8_3
+GO
+
+EXEC BABEL_3702_vu_prepare_p8_4
+GO
+~~START~~
+char
+<NULL>
+<NULL>
+a                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p8_4
+GO
+
+EXEC BABEL_3702_vu_prepare_p8_5
+GO
+~~START~~
+nvarchar
+{"a": 1}
+[1, 2]
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p8_5
+GO
+
+EXEC BABEL_3702_vu_prepare_p9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: AS JSON in WITH clause can only be specified for column of type nvarchar(max))~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p9
+GO
+
+EXEC BABEL_3702_vu_prepare_p10
+GO
+~~START~~
+int#!#varchar#!#varchar#!#nvarchar
+1#!#Fluffy#!#Female#!#{"id": 1, "sex": "Female", "name": "Fluffy"}
+2#!#Long Tail#!#Female#!#{"id": 2, "sex": "Female", "name": "Long Tail"}
+3#!#Scratch#!#Male#!#{"id": 3, "sex": "Male", "name": "Scratch"}
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p10
+GO
+
+EXEC BABEL_3702_vu_prepare_p11
+GO
+~~START~~
+datetime2#!#int#!#bit#!#float
+1969-07-20 02:56:00.0000000#!#24#!#1#!#37.578288100208766
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p11
+GO
+
+
+declare @json nvarchar(max) = '{"udfs":[{"name":"alpha","value":"value1"},{"name":"bravo","value":"value2"}]}'
+exec BABEL_3702_vu_prepare_p12 @json
+go
+~~START~~
+nvarchar
+alpha
+~~END~~
+
+
+drop table fdefs
+drop table ftypes
+drop procedure BABEL_3702_vu_prepare_p12
+go
+
+EXEC BABEL_3702_vu_prepare_p13
+GO
+~~START~~
+nvarchar#!#nvarchar#!#int
+id#!#2#!#2
+sex#!#Female#!#1
+name#!#Long Tail#!#1
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p13
+GO
+
+EXEC BABEL_3702_vu_prepare_p14
+GO
+~~START~~
+nchar#!#varchar#!#char#!#nvarchar
+Two       #!#Fluffy#!#F#!#{"id": 1, "age": "Two", "sex": "F", "name": "Fluffy"}
+Three     #!#Long Tail#!#F#!#{"id": 2, "age": "Three", "sex": "F", "name": "Long Tail"}
+Four      #!#Scratch#!#M#!#{"id": 3, "age": "Four", "sex": "M", "name": "Scratch"}
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p14
+GO
+
+EXEC BABEL_3702_vu_prepare_p15
+GO
+~~START~~
+nchar#!#varchar#!#char#!#nvarchar
+Two       #!#Fluffy#!#F#!#{"id": 1, "age": "Two", "sex": "F", "name": "Fluffy"}
+Three     #!#Long Tail#!#F#!#{"id": 2, "age": "Three", "sex": "F", "name": "Long Tail"}
+Four      #!#Scratch#!#M#!#{"id": 3, "age": "Four", "sex": "M", "name": "Scratch"}
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p15
+GO
+
+EXEC BABEL_3702_vu_prepare_p16
+GO
+~~START~~
+nchar#!#varchar#!#char#!#nvarchar
+Two       #!#Fluffy#!#F#!#{"id": 1, "age": "Two", "sex": "F", "name": "Fluffy"}
+Three     #!#Long Tail#!#F#!#{"id": 2, "age": "Three", "sex": "F", "name": "Long Tail"}
+Four      #!#Scratch#!#M#!#{"id": 3, "age": "Four", "sex": "M", "name": "Scratch"}
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p16
+GO
+
+EXEC BABEL_3702_vu_prepare_p17
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+0#!#ItemPrice#!#2024.9940
+0#!#OrderDate#!#2011-05-31T00:00:00
+0#!#OrderNumber#!#SO43659
+0#!#ItemQuantity#!#1
+0#!#AccountNumber#!#AW29825
+1#!#ItemPrice#!#2024.9940
+1#!#OrderDate#!#2011-06-01T00:00:00
+1#!#OrderNumber#!#SO43661
+1#!#ItemQuantity#!#3
+1#!#AccountNumber#!#AW73565
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p17
+GO
+
+EXEC BABEL_3702_vu_prepare_p18
+GO
+~~START~~
+int#!#nvarchar#!#nvarchar
+1#!#1#!#TV
+1#!#2#!#Laptop
+2#!#1#!#TV
+2#!#2#!#Laptop
+2#!#3#!#Mobile
+~~END~~
+
+drop table p18_data
+DROP PROCEDURE BABEL_3702_vu_prepare_p18
+GO
+
+EXEC BABEL_3702_vu_prepare_p19
+GO
+~~START~~
+varchar#!#int
+Intelligence#!#95
+Strength#!#55
+Speed#!#65
+Durability#!#75
+Power#!#75
+Combat#!#95
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p19
+GO
+
+EXEC BABEL_3702_vu_prepare_p20
+GO
+~~START~~
+varchar#!#int
+Brazil#!#5
+Germany#!#4
+Italy#!#4
+Argentina#!#2
+France#!#2
+England#!#1
+Spain#!#1
+Uruguay#!#2
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p20
+GO
+
+EXEC BABEL_3702_vu_prepare_p21
+GO
+~~START~~
+nvarchar#!#nvarchar#!#int
+current_team#!#<NULL>#!#0
+name#!#Spider-Man#!#1
+created#!#1962#!#2
+is_good#!#true#!#3
+aliases#!#["Bag-Man", "Black Marvel", "Peter Palmer"]#!#4
+vitals#!#{"height": {"unit": "cm", "measure": 178}, "species": "Human"}#!#5
+~~END~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p21
+GO
+
+EXEC BABEL_3702_vu_prepare_p22
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid json path)~~
+
+DROP PROCEDURE BABEL_3702_vu_prepare_p22
+GO

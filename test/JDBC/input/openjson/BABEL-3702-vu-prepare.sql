@@ -1,0 +1,396 @@
+CREATE PROCEDURE BABEL_3702_vu_prepare_p6
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX) = N'{"obj":{"a":1}}'
+    DECLARE @path NVARCHAR(MAX) = N'$.obj'
+    SELECT * FROM OPENJSON(@json, @path) with (a nvarchar(20))
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p6_2
+AS
+BEGIN
+    DECLARE @json NCHAR(4000) = N'{"obj":{"a":1}}'
+    DECLARE @path NCHAR(4000) = N'$.obj'
+    SELECT * FROM OPENJSON(@json, @path) with (a nchar(20))
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p6_3
+AS
+BEGIN
+    DECLARE @json CHAR(50) = N'{"obj":{"a":1}}'
+    DECLARE @path CHAR(50) = N'$.obj'
+    SELECT * FROM OPENJSON(@json, @path) with (a char(20))
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p7 as (select * from openjson(N'{"a":"long string"}') with (a nvarchar(5)));
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name nvarchar(max) '$' AS JSON)
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8_2
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name char(4000) '$')
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8_3
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name nchar(4000) '$')
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8_4
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name pg_catalog.char(4000) '$')
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p8_5
+AS
+BEGIN
+    DECLARE @json NVARCHAR(MAX);
+    SET @json=N'[{"a":1},[1,2],"a"]';
+    SELECT * FROM OPENJSON(@json, '$') with (name sys.nvarchar(max) '$' AS JSON)
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p9 as (SELECT * FROM OPENJSON(N'{"a":1}') WITH (obj nvarchar(20) '$' AS JSON));
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p10
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "Female" },
+                { "id" : 2, "name" : "Long Tail", "sex" : "Female" },
+                { "id" : 3, "name" : "Scratch", "sex" : "Male" }
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "Male" },
+                { "name" : "Fluffy", "sex" : "Male" },
+                { "name" : "Wag", "sex" : "Female" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats')
+    WITH  (
+            [Cat Id]    int             '$.id',  
+            "Cat Name"  varchar(60)     '$.name', 
+            [Sex]       varchar(6)      '$.sex', 
+            [Cats]      nvarchar(max)   '$' AS JSON   
+        )
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p11
+AS
+BEGIN
+DECLARE @json_text NVARCHAR(MAX)
+SET @json_text = N'
+{
+    "moon_landing": "1969-07-20T02:56:00+00:00",
+    "seconds_in_a_day": "86400",
+    "console_is_better_than_pc": true,
+    "hundred_meter_world_record": "9.58"
+}
+'
+
+SELECT
+    random_facts.moon_landing
+    ,random_facts.seconds_in_a_day / 3600 as hours_in_a_day
+    ,random_facts.console_is_better_than_pc
+    ,(100 / random_facts.hundred_meter_world_record) * 3.6 as hmwr_kph
+FROM
+    OPENJSON(@json_text)
+        WITH (
+            moon_landing DATETIME2
+            ,seconds_in_a_day INT
+            ,console_is_better_than_pc BIT
+            ,hundred_meter_world_record FLOAT 
+        ) as random_facts
+END;
+GO
+
+create table fdefs (id int, fname nvarchar(20))
+insert into fdefs values (1, 'alpha'),(2, 'bravo')
+create table ftypes (id int, ftype nvarchar(20))
+insert into ftypes values (1, 'type1'),(3, 'type3')
+go
+
+create procedure BABEL_3702_vu_prepare_p12 @body nvarchar(max) as
+select
+	fname
+from
+	fdefs d
+	join ftypes t on d.id = t.id
+	left join
+		openjson(json_query(@body, '$.udfs'))
+		with (
+			jname nvarchar(40) '$.name',
+			jvalue nvarchar(max) '$.value'
+		) j
+		on j.jname = d.fname
+go
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p13
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "Female" },
+                { "id" : 2, "name" : "Long Tail", "sex" : "Female" },
+                { "id" : 3, "name" : "Scratch", "sex" : "Male" }
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "Male" },
+                { "name" : "Fluffy", "sex" : "Male" },
+                { "name" : "Wag", "sex" : "Female" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats[1]')
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p14
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "F", "age" : "Two"},
+                { "id" : 2, "name" : "Long Tail", "sex" : "F", "age" : "Three"},
+                { "id" : 3, "name" : "Scratch", "sex" : "M", "age" : "Four"}
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "M" },
+                { "name" : "Fluffy", "sex" : "M" },
+                { "name" : "Wag", "sex" : "F" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats')
+    WITH  (
+            [Cat Age]   sys.nchar(10)             '$.age',  
+            "Cat Name"  sys.varchar(60)     '$.name', 
+            [Sex]       sys.char(1)      '$.sex', 
+            [Cats]      sys.nvarchar(max)   '$' AS JSON   
+        )
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p15
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "F", "age" : "Two"},
+                { "id" : 2, "name" : "Long Tail", "sex" : "F", "age" : "Three"},
+                { "id" : 3, "name" : "Scratch", "sex" : "M", "age" : "Four"}
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "M" },
+                { "name" : "Fluffy", "sex" : "M" },
+                { "name" : "Wag", "sex" : "F" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats')
+    WITH  (
+            [Cat Age]   nchar(10)             '$.age',  
+            "Cat Name"  varchar(60)     '$.name', 
+            [Sex]       char(1)            '$.sex', 
+            [Cats]      nvarchar(max)   '$' AS JSON   
+        )
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p16
+AS
+BEGIN
+    DECLARE @json NVARCHAR(4000) = N'{ 
+        "pets" : {
+                "cats" : [
+                { "id" : 1, "name" : "Fluffy", "sex" : "F", "age" : "Two"},
+                { "id" : 2, "name" : "Long Tail", "sex" : "F", "age" : "Three"},
+                { "id" : 3, "name" : "Scratch", "sex" : "M", "age" : "Four"}
+            ],
+                "dogs" : [
+                { "name" : "Fetch", "sex" : "M" },
+                { "name" : "Fluffy", "sex" : "M" },
+                { "name" : "Wag", "sex" : "F" }
+            ]
+        }
+    }';
+    SELECT * FROM OPENJSON(@json, '$.pets.cats')
+    WITH  (
+            [Cat Age]   nchar(10)       '$.age',  
+            "Cat Name"  pg_catalog.varchar(60)     '$.name', 
+            [Sex]       pg_catalog.char(1)            '$.sex', 
+            [Cats]      nvarchar(max)   '$' AS JSON   
+        )
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p17
+AS
+BEGIN
+    DECLARE @JSON NVARCHAR(MAX) = N'[
+        {
+            "OrderNumber":"SO43659",
+            "OrderDate":"2011-05-31T00:00:00",
+            "AccountNumber":"AW29825",
+            "ItemPrice":2024.9940,
+            "ItemQuantity":1
+        },
+        {
+            "OrderNumber":"SO43661",
+            "OrderDate":"2011-06-01T00:00:00",
+            "AccountNumber":"AW73565",
+            "ItemPrice":2024.9940,
+            "ItemQuantity":3
+        }
+        ]'
+    SELECT root.[key] AS [Order],TheValues.[key], TheValues.[value]
+    FROM OPENJSON ( @JSON ) AS root
+    CROSS APPLY OPENJSON ( root.value) AS TheValues
+END;
+GO
+
+CREATE TABLE p18_data (
+   CustomerID int,
+   City nvarchar(50),
+   Product nvarchar(max)
+)
+INSERT INTO p18_data
+   (CustomerID, City, Product)
+VALUES
+   (1, N'Delhi', N'[{"Products": [{"Id": "1", "Name": "TV"}, {"Id": "2", "Name": "Laptop"}]}]'),
+   (2, N'Bamgalore', N'[{"Products": [{"Id": "1", "Name": "TV"}, {"Id": "2", "Name": "Laptop"}, {"Id": "3", "Name": "Mobile"}]}]')
+GO
+
+create procedure BABEL_3702_vu_prepare_p18 as
+SELECT d.CustomerID, j2.Id, j2.Name
+FROM p18_data d
+CROSS APPLY OPENJSON(d.Product, '$') j1
+CROSS APPLY OPENJSON(j1.[value], '$.Products') WITH (
+   Id nvarchar(10) '$.Id',
+   Name nvarchar(50) '$.Name'
+) j2
+go
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p19
+AS
+BEGIN
+    DECLARE @spider_man NVARCHAR(MAX)
+    SET @spider_man = N'
+    {
+        "name": "Spider-Man",
+        "aliases": ["Bag-Man","Black Marvel","Peter Palmer"],
+        "power_stats": [
+            {"power": "Intelligence", "value": 95},
+            {"power": "Strength","value": 55},
+            {"power": "Speed", "value": 65},
+            {"power": "Durability", "value": 75},
+            {"power": "Power", "value": 75},
+            {"power": "Combat", "value": 95}
+        ]
+    }'
+    SELECT
+    power_stat.power ,power_stat.value
+    FROM
+        OPENJSON(@spider_man)
+            WITH (
+                power_stats NVARCHAR(MAX) '$.power_stats' AS JSON
+            ) as root_js
+        
+        OUTER APPLY OPENJSON(root_js.power_stats)
+            WITH (
+                power VARCHAR(20) '$.power'
+                ,value INT '$.value'
+            ) as power_stat
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p20
+AS
+BEGIN
+    DECLARE @world_cup_winners NVARCHAR(MAX)
+    SET @world_cup_winners = N'
+        [
+            {"country": "Brazil","tournaments_won": [1958,1962,1970,1994,2002]},
+            {"country": "Germany","tournaments_won": [1954,1974,1990,2014]},
+            {"country": "Italy","tournaments_won": [1934,1938,1982,2006]},
+            {"country": "Argentina","tournaments_won": [1978,1986]},
+            {"country": "France","tournaments_won": [1998,2018]},        
+            {"country": "England","tournaments_won": [1966]},
+            {"country": "Spain","tournaments_won": [2010]},
+            {"country": "Uruguay","tournaments_won": [1930,1950]}
+        ]
+    '
+    SELECT
+    countries.country, tournaments_summary.number_won
+    FROM
+        OPENJSON(@world_cup_winners)
+            WITH(
+                country VARCHAR(20) '$.country',
+                tournaments_won NVARCHAR(MAX) '$.tournaments_won' AS JSON
+            ) as countries
+        
+        OUTER APPLY (
+            SELECT COUNT(*) as number_won FROM OPENJSON(countries.tournaments_won)
+        ) as tournaments_summary
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p21
+AS
+BEGIN
+    DECLARE @json_text NVARCHAR(MAX)
+    SET @json_text = N'
+        {
+            "name": "Spider-Man",
+            "vitals": {
+                "species": "Human",
+                "height": {
+                    "measure": 178,
+                    "unit": "cm"
+                }
+            },
+            "current_team": null,
+            "aliases": ["Bag-Man","Black Marvel","Peter Palmer"],
+            "is_good": true,
+            "created": 1962
+        }
+    '
+    SELECT * FROM OPENJSON(@json_text)
+    ORDER BY [type]
+END;
+GO
+
+CREATE PROCEDURE BABEL_3702_vu_prepare_p22
+AS SELECT * from openjson(1, 2) with (a nvarchar(20))
+GO

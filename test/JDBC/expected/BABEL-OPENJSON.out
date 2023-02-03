@@ -205,8 +205,6 @@ a
 -- Test invalid column type with AS JSON
 SELECT * FROM OPENJSON(N'{"a":1}') WITH (obj nvarchar(20) '$' AS JSON);
 GO
-~~START~~
-nvarchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: AS JSON in WITH clause can only be specified for column of type nvarchar(max))~~
@@ -214,10 +212,9 @@ nvarchar
 -- TODO fix case with no length specification
 SELECT * from OPENJSON(N'{"a":1}') with (obj nvarchar '$' AS JSON);
 GO
-~~START~~
-nvarchar
-{"a": 1}
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: AS JSON in WITH clause can only be specified for column of type nvarchar(max))~~
 
 -- check lax/strict path
 DECLARE @json NVARCHAR(MAX) = N'{"obj":{"a":1}}'
