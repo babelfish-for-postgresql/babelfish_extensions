@@ -1,0 +1,5 @@
+DROP TABLE table_949;
+GO
+
+DROP SEQUENCE seq_949;
+GO

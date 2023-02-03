@@ -1857,6 +1857,16 @@ public:
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
 		is_function = true;
+		if (ctx->NEXT() && ctx->full_object_name())
+		{
+			std::string seq_name = ::getFullText(ctx->full_object_name());
+			std::string nextval_string = "nextval('" + seq_name + "')";
+
+			rewritten_query_fragment.emplace(std::make_pair(ctx->NEXT()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->NEXT()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->VALUE()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->VALUE()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->FOR()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->FOR()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->full_object_name()->start->getStartIndex(), std::make_pair(::getFullText(ctx->full_object_name()), nextval_string)));
+		}
 		if (ctx->analytic_windowed_function())
 		{
 			auto actx = ctx->analytic_windowed_function();
