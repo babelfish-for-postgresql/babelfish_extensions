@@ -9,10 +9,6 @@ GO
 -- tsql
 DROP LOGIN [babel\babeluser];
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot drop the login 'babeluser@BABEL', because it does not exist or you do not have permission.)~~
-
 
 -- psql
 do 
