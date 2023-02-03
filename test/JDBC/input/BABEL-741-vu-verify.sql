@@ -50,3 +50,11 @@ GO
 SELECT schema_name()
 GO
 
+SELECT * from babel_3836_f1();
+GO
+
+SELECT * from babel_3836_v1;
+GO
+
+EXEC babel_3836_p1;
+GO

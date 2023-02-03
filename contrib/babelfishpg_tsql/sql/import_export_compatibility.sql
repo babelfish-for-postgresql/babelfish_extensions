@@ -66,9 +66,9 @@ RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C IMMUTABLE PARALLEL SAF
 GRANT EXECUTE ON FUNCTION sys.schema_id() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION schema_id(IN schema_name sys.SYSNAME)
-RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.schema_id(schema_name sys.SYSNAME) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION schema_name(IN id oid) RETURNS VARCHAR
-AS 'babelfishpg_tsql', 'schema_name' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'schema_name' LANGUAGE C STABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION schema_name(IN oid) TO PUBLIC;
