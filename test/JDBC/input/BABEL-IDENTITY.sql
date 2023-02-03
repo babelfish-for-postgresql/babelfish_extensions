@@ -348,6 +348,61 @@ go
 SELECT * from dbo.test_identity_range;
 go
 
+-- scope_identity in where clause should use index (BABEL-3384)
+CREATE TABLE dbo.test_identity_index (id INT IDENTITY(1,1) PRIMARY KEY, mycol INT)
+go
+
+INSERT INTO dbo.test_identity_index SELECT 10 FROM generate_series(1,10);
+go
+
+CREATE TABLE dbo.test_numeric_index (num_index NUMERIC PRIMARY KEY, mycol INT)
+go
+
+INSERT INTO dbo.test_numeric_index VALUES(10,10);
+go
+
+SELECT scope_identity();
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
+SET babelfish_showplan_all ON;
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id = scope_identity();
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE scope_identity() = id;
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id = @@identity;
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE dbo.test_identity_index.id = scope_identity();
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id > scope_identity();
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id != scope_identity();
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE @@identity < id;
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE mycol = 10 AND id = scope_identity();
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id <= scope_identity() OR mycol = 11;
+go
+
+SELECT num_index, mycol FROM dbo.test_numeric_index WHERE num_index = scope_identity();
+go
+
+SET babelfish_showplan_all OFF;
+go
+
 -- Clean up
 DROP PROCEDURE insert_test_table1,
 insert_employees,
@@ -363,5 +418,7 @@ dbo.employees,
 dbo.t_neg_inc_1,
 dbo.t1_identity_1,
 dbo.t1_identity_2,
-dbo.test_identity_range
+dbo.test_identity_range,
+dbo.test_identity_index,
+dbo.test_numeric_index
 go
