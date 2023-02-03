@@ -1750,6 +1750,14 @@ CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
 	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.babel_create_guest_schemas()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_guest_schema_for_all_dbs';
+
+CALL sys.babel_create_guest_schemas();
+
+DROP PROCEDURE sys.babel_create_guest_schemas();
+
 CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
 	IN "@objname" sys.nvarchar(776),
 	IN "@newname" sys.SYSNAME,

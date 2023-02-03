@@ -2851,7 +2851,12 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 							&& context == PROCESS_UTILITY_SUBCOMMAND )
-					orig_schema = "dbo";
+				{
+					if (pstmt->stmt_len == 19)
+						orig_schema = "guest";
+					else
+						orig_schema = "dbo";
+				}
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -2903,9 +2908,23 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			if (drop_stmt->removeType != OBJECT_SCHEMA)
 				break;
 
-            if (sql_dialect == SQL_DIALECT_TSQL)
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				del_ns_ext_info(strVal(lfirst(list_head(drop_stmt->objects))), drop_stmt->missing_ok);
+				// Prevent dropping guest schema unless it is part of drop database command.
+				const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
+				if (strcmp(queryString, "(DROP DATABASE )") != 0)
+				{
+					char *cur_db = get_cur_db_name();
+					char *guest_schema_name = get_physical_schema_name(cur_db, "guest");
+
+					if (strcmp(schemaname, guest_schema_name) == 0) {
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("Cannot drop the schema \'%s\'", schemaname)));
+					}
+				}
+
+				del_ns_ext_info(schemaname, drop_stmt->missing_ok);
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
