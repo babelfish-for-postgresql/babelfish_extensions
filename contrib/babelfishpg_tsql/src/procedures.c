@@ -13,6 +13,7 @@
 #include "access/relation.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_proc.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "common/string.h"
@@ -27,11 +28,13 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 #include "pltsql_instr.h"
 #include "parser/parser.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_relation.h"
+#include "parser/scansup.h" 
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
@@ -41,6 +44,7 @@
 #include "multidb.h"
 #include "pltsql.h"
 #include "session.h"
+#include "pltsql.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
@@ -59,6 +63,8 @@ PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_dropserver_internal);
+PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
+PG_FUNCTION_INFO_V1(sp_rename_internal);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 
 extern void delete_cached_batch(int handle);
@@ -2416,6 +2422,476 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 
 	return (Datum) 0;
 }
+
+Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
+{
+	int rc;
+	int i;
+	char *db_name = get_cur_db_name();
+	char *function_signature = NULL;
+	char *query = NULL;
+	char *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+	char *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+	Oid function_id;
+	Oid user_id = GetUserId();
+
+	if(function_name != NULL)
+	{	
+		/* strip trailing whitespace */
+		remove_trailing_spaces(function_name);
+
+		/* if function name is empty */
+		i = strlen(function_name);
+		if(i == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("function name is not valid")));
+		
+		/* length should be restricted to 4000 */
+		if (i > 4000)
+			ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				errmsg("input value is too long for function name")));
+	}
+	if(volatility != NULL)
+	{
+		/* strip trailing whitespace */
+		remove_trailing_spaces(volatility);
+		
+		/* if volatility is empty */
+		i = strlen(volatility);
+		if(i == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("volatility is not valid")));
+
+		/* its length is greater than 9 (len of immutable) */
+		if (i > 9)
+			ereport(ERROR,
+				(errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+				errmsg("input value is too long for volatility")));
+	}
+	if(function_name == NULL && volatility != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("function name cannot be NULL")));
+
+	if(function_name != NULL)
+	{	
+		List *function_name_list;
+		FuncCandidateList candidates = NULL;
+		char *full_function_name = NULL;
+		char *logical_schema_name = NULL;
+		char *physical_schema_name = NULL;
+		char **splited_object_name;
+
+		/* get physical schema name */
+		splited_object_name = split_object_name(function_name);
+
+		if(strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], ""))
+			ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("function \"%s\" is not a valid two part name", function_name)));
+		
+		pfree(function_name);
+		logical_schema_name = splited_object_name[2];
+		function_name = splited_object_name[3];
+		
+		/* downcase identifier */
+		if(pltsql_case_insensitive_identifiers)
+		{
+			logical_schema_name = downcase_identifier(logical_schema_name, strlen(logical_schema_name), false, false);
+			function_name = downcase_identifier(function_name, strlen(function_name), false, false);
+			for (int i = 0; i < 4; i++)
+				pfree(splited_object_name[i]);
+		}
+		else
+		{
+			pfree(splited_object_name[0]);
+			pfree(splited_object_name[1]);
+		}
+		pfree(splited_object_name);
+
+		/* truncate identifiers if needed */
+		truncate_tsql_identifier(logical_schema_name);
+		truncate_tsql_identifier(function_name);
+
+		if(!strcmp(function_name, ""))
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("function name is not valid")));
+
+		/* find the default schema for current user */
+		if (!strcmp(logical_schema_name, ""))
+		{	
+			const char *user = get_user_for_database(db_name);
+			const char *guest_role_name = get_guest_role_name(db_name);
+			if(!user)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						errmsg("user does not exist")));
+
+			pfree(logical_schema_name);
+			if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+			{	
+				physical_schema_name = pstrdup(get_dbo_schema_name(db_name));
+			}
+			else
+			{
+				logical_schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+				physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
+				pfree(logical_schema_name);
+			}
+		}
+		else
+		{
+			physical_schema_name = get_physical_schema_name(db_name,logical_schema_name);
+			pfree(logical_schema_name);
+		}
+
+		/* get function id from function name*/
+		function_name_list = list_make2(makeString(physical_schema_name),makeString(function_name));
+		candidates = FuncnameGetCandidates(function_name_list, -1, NIL, false, false, false, true);
+
+		/* if no function is found */
+		if(candidates == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("function does not exist")));
+
+		/* check if the current user has priviledge on the function */
+		if(pg_proc_aclcheck(candidates->oid, user_id, ACL_EXECUTE) != ACLCHECK_OK)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("current user does not have priviledges on the function")));
+		
+		/* check if multiple function with same function name exits */
+		if(candidates->next != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("multiple functions with same function name exits")));
+
+		function_id = candidates->oid;
+		full_function_name = psprintf("\"%s\".\"%s\"", physical_schema_name, function_name);
+		function_signature = (char *)get_pltsql_function_signature_internal(full_function_name, candidates->nargs, candidates->args);
+
+		list_free(function_name_list);
+		pfree(candidates);
+		pfree(full_function_name);
+		pfree(physical_schema_name);
+	}
+	
+	/*
+	 * If both volatility and function name is not provided then it will return a list of functions present in current database.
+	 * else if only volatility is not provided the it will return the volatility of the specified function.
+	 * If both volatility and function name is provided it will set the function volatility to the specified volatility
+	 */
+	if(volatility == NULL)
+	{	
+		if(function_name == NULL)
+		{	
+			query = psprintf(
+					"SELECT t3.orig_name as SchemaName, t1.proname as FunctionName, "
+					"CASE "
+						"WHEN t1.provolatile = 'v' THEN 'volatile' "
+						"WHEN t1.provolatile = 's' THEN 'stable' "
+						"ELSE 'immutable' "
+					"END AS Volatility "
+					"from (SELECT (aclexplode(proacl)).*, proname, provolatile, pronamespace from pg_proc WHERE prokind = 'f') t1 "
+					"JOIN pg_namespace t2 ON t1.pronamespace = t2.oid "
+					"JOIN sys.babelfish_namespace_ext t3 ON t3.nspname = t2.nspname "
+					"where t1.grantee = %d AND t3.dbid = sys.db_id() ORDER BY t3.orig_name, t1.proname", user_id
+				);
+		}
+		else
+		{
+			query = psprintf(
+					"SELECT t3.orig_name as SchemaName, CAST('%s' as sys.varchar) as FunctionName, "
+					"CASE "
+						"WHEN provolatile = 'v' THEN 'volatile' "
+						"WHEN provolatile = 's' THEN 'stable' "
+						"ELSE 'immutable' "
+					"END AS Volatility from pg_proc t1 "
+					"JOIN pg_namespace t2 ON t1.pronamespace = t2.oid "
+					"JOIN sys.babelfish_namespace_ext t3 ON t3.nspname = t2.nspname "
+					"where t1.oid = %u", function_name, function_id
+				);
+		}
+
+		PG_TRY();
+		{	
+			char nulls = 0;
+			MemoryContext savedPortalCxt;
+			SPIPlanPtr plan;
+			Portal portal;
+			DestReceiver *receiver;
+
+			savedPortalCxt = PortalContext;
+			if (PortalContext == NULL)
+				PortalContext = MessageContext;
+			if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			{	
+				PortalContext = savedPortalCxt;
+				elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+			}
+			PortalContext = savedPortalCxt;
+
+			if ((plan = SPI_prepare(query, 0, NULL)) == NULL)
+				elog(ERROR, "SPI_prepare(\"%s\") failed", query);
+
+			if ((portal = SPI_cursor_open(NULL, plan, NULL, &nulls, true)) == NULL)
+				elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
+
+			/*
+			* According to specifictation, sp_babelfish_volatility returns a result-set.
+			* If there is no destination, it will send the result-set to client, which is not allowed behavior of PG procedures.
+			* To implement this behavior, we added a code to push the result.
+			*/
+			receiver = CreateDestReceiver(DestRemote);
+			SetRemoteDestReceiverParams(receiver, portal);
+
+			/* fetch the result and return the result-set */
+			PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
+
+			receiver->rDestroy(receiver);
+			SPI_cursor_close(portal);
+
+			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+		}
+		PG_CATCH();
+		{
+			SPI_finish();
+			PG_RE_THROW();
+		}
+		PG_END_TRY();	
+	}
+	else
+	{	
+		/* downcase identifier if needed */
+		volatility = downcase_identifier(volatility, strlen(volatility), false, false);
+	
+		if(strcmp(volatility, "volatile") && strcmp(volatility, "stable") && strcmp(volatility, "immutable"))
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("\"%s\" is not a valid volatility", volatility)));
+
+		query = psprintf("ALTER FUNCTION %s %s;", function_signature, volatility);
+
+		PG_TRY();
+		{
+			if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+				elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+			if ((rc = SPI_execute(query, false, 1)) < 0)
+				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+		}
+		PG_CATCH();
+		{
+			SPI_finish();
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+	}
+
+	if(function_name)
+	{
+		pfree(function_name);
+		pfree(function_signature);
+	}
+	if(volatility)
+		pfree(volatility);
+	if(query)
+		pfree(query);
+	pfree(db_name);
+
+  	PG_RETURN_VOID();
+}
+
+Datum sp_rename_internal(PG_FUNCTION_ARGS)
+{
+	char *obj_name, *new_name, *schema_name, *objtype, *process_util_querystr;
+	ObjectType objtype_code;
+	size_t len;
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		//1. set dialect to TSQL
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		
+		//2. read the input arguments
+		obj_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		new_name = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+		schema_name = PG_ARGISNULL(2) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(2));
+		objtype =  PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
+
+		//3. check if the input arguments are valid, and parse the objname
+		// objname can have at most 3 parts
+		if (obj_name == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Procedure or function 'sp_rename' expects parameter '@objname', which was not supplied.")));
+		if (new_name == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Procedure or function 'sp_rename' expects parameter '@newname', which was not supplied.")));
+		if (objtype == NULL)
+			objtype = "OBJECT";
+
+		// remove trailing whitespaces for both input
+		len = strlen(obj_name);
+		while(isspace(obj_name[len - 1]))
+			obj_name[--len] = 0;
+		len = strlen(schema_name);
+		while(isspace(schema_name[len - 1]))
+			schema_name[--len] = 0;
+		len = strlen(new_name);
+		while(isspace(new_name[len - 1]))
+			new_name[--len] = 0;
+		len = strlen(objtype);
+		while(isspace(objtype[len - 1]))
+			objtype[--len] = 0;
+
+		// check if inputs are empty after removing trailing spaces
+		if (obj_name == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Procedure or function 'sp_rename' expects parameter '@objname', which was not supplied.")));
+		if (new_name == NULL || strlen(new_name) == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("Procedure or function 'sp_rename' expects parameter '@newname', which was not supplied.")));
+		
+		//4. for each obj type, generate the corresponding RenameStmt
+		// update variables based on the target objtype
+		if (strcmp(objtype, "U") == 0) {
+			objtype_code = OBJECT_TABLE;
+			process_util_querystr = "(ALTER TABLE )";
+		} else if (strcmp(objtype, "V") == 0) {
+			objtype_code = OBJECT_VIEW;
+			process_util_querystr = "(ALTER VIEW )";
+		} else if (strcmp(objtype, "P") == 0) {
+			objtype_code = OBJECT_PROCEDURE;
+			process_util_querystr = "(ALTER PROCEDURE )";
+		} else if (strcmp(objtype, "AF") == 0 || strcmp(objtype, "FN") == 0 || strcmp(objtype, "FS") == 0 || 
+					strcmp(objtype, "FT") == 0 || strcmp(objtype, "IF") == 0 || strcmp(objtype, "TF") == 0) {
+			objtype_code = OBJECT_FUNCTION;
+			process_util_querystr = "(ALTER FUNCTION )";
+		} else {
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Provided '@objtype' is currently not supported in sp_rename.")));
+		}
+
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		// parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype);
+		parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype_code);
+
+		//5. run all commands
+		foreach(parsetree_item, parsetree_list)
+        {
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+			
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				pstrdup(process_util_querystr),
+				// "(ALTER TABLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+        }
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
+}
+
+static List *
+gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	RenameStmt *renamestmt;
+
+	initStringInfo(&query);
+	if (objtype == OBJECT_TABLE) {
+		appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_VIEW) {
+		appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_PROCEDURE) {
+		appendStringInfo(&query, "ALTER PROCEDURE dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_FUNCTION) {
+		appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
+	} else {
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("Provided objtype is not supported for sp_rename")));
+	}
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+
+	renamestmt = (RenameStmt *) stmt;
+	if (!IsA(renamestmt, RenameStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
+
+	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_VIEW)) {
+		renamestmt->renameType = objtype;
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->relname = pstrdup(lowerstr(objname));
+	} else {
+	// } else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION)) {
+		ObjectWithArgs *objwargs = (ObjectWithArgs *) renamestmt->object;
+		renamestmt->renameType = objtype;
+		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
+		orig_proc_funcname = pstrdup(newname);
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+	}
+	//name mapping
+	rewrite_object_refs(stmt);
+
+	return res;
+}
+
 Datum sp_rename_internal(PG_FUNCTION_ARGS)
 {
 	char *obj_name, *new_name, *schema_name, *objtype, *process_util_querystr;
