@@ -189,3 +189,41 @@ SELECT nspname, funcname, orig_name, funcsignature
 FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
 ORDER BY nspname, funcname, orig_name, funcsignature
 GO
+
+-- SEQUENCE
+SELECT SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME 
+FROM information_schema.sequences WHERE SEQUENCE_NAME LIKE '%sp_rename_vu%' 
+ORDER BY SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
+GO
+
+EXEC sp_rename 'sp_rename_vu_seq1', 'sp_rename_vu_seq1_new', 'OBJECT';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_seq1', 'sp_rename_vu_seq1_new2', 'OBJECT';
+GO
+
+SELECT SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME 
+FROM information_schema.sequences WHERE SEQUENCE_NAME LIKE '%sp_rename_vu%' 
+ORDER BY SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
+GO
+
+-- ****Given objtype is valid but not supported yet****
+-- Column
+EXEC sp_rename 'sp_rename_vu_table2.sp_rename_vu_t2_col1', 'sp_rename_vu_t2_col1_new', 'COLUMN';
+GO
+
+-- Index
+EXEC sp_rename N'sp_rename_vu_index1', N'sp_rename_vu_index2', N'INDEX';
+GO
+
+-- Statistics
+EXEC sp_rename 'sp_rename_vu_stat1', 'sp_rename_vu_stat2', 'STATISTICS';
+GO
+
+-- USERDATATYPE
+EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+-- Trigger
+EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig2', 'OBJECT';
+GO

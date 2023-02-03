@@ -35,5 +35,14 @@ GO
 DROP FUNCTION sp_rename_vu_schema1.sp_rename_vu_func3_new;
 GO
 
+DROP SEQUENCE sp_rename_vu_seq1_new;
+GO
+
+DROP SEQUENCE sp_rename_vu_seq2;
+GO
+
+DROP SEQUENCE sp_rename_vu_schema1.sp_rename_vu_seq1_new2;
+GO
+
 DROP SCHEMA sp_rename_vu_schema1;
 GO
