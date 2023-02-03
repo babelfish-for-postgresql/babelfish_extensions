@@ -6763,6 +6763,7 @@ WHERE
     p.ProductID = od.ProductID
 AND s.SupplierID = p.SupplierID
 AND s.CompanyName = 'Tokyo Traders'
+ORDER BY OrderID, Quantity
 --51 rows, all Quantity = 9999
 ROLLBACK
 GO
@@ -6785,6 +6786,7 @@ WHERE
     p.ProductID = od.ProductID
 AND s.SupplierID = p.SupplierID
 AND s.CompanyName = 'Tokyo Traders'
+ORDER BY OrderID, Quantity
 --51 rows, all Quantity = 9999
 ROLLBACK
 GO
