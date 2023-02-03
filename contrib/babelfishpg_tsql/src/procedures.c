@@ -2136,7 +2136,7 @@ exec_utility_cmd_helper(char *query_str)
 Datum
 sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 {
-	char *linked_server = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(0));
+	char *linked_server = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
 	char *srv_product = PG_ARGISNULL(1) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
 	char *provider = PG_ARGISNULL(2) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(2)));
 	char *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
@@ -2252,7 +2252,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 Datum
 sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
 	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
 	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
@@ -2329,7 +2329,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 Datum
 sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
-	char *servername = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char *locallogin = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
 
 	StringInfoData query;
@@ -2369,7 +2369,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 Datum
 sp_dropserver_internal(PG_FUNCTION_ARGS)
 {
-	char *linked_srv = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(0));
+	char *linked_srv = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_BPCHAR_PP(1)));
 
 	StringInfoData query;
@@ -2392,7 +2392,7 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	 */
 	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
 	{
-		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
+		appendStringInfo(&query, "drop server \"%s\" cascade", linked_srv);
 
 		exec_utility_cmd_helper(query.data);
 		pfree(query.data);
