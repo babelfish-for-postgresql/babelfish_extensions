@@ -55,7 +55,7 @@ exec sp_rename N'table_4.uniq_table_4', N'uniq_table_4_a', N'INDEX';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Procedure or function 'sp_rename' is not supported for Index yet.)~~
+~~ERROR (Message: Feature not supported: renaming object type Index)~~
 
 
 -- Very long index name

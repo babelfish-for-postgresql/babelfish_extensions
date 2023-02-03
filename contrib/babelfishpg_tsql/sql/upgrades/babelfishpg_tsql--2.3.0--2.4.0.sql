@@ -1780,19 +1780,19 @@ BEGIN
 		END
 	IF @objtype = 'COLUMN'
 		BEGIN
-			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Column yet.', 1;
+			THROW 33557097, N'Feature not supported: renaming object type Column', 1;
 		END
 	IF @objtype = 'INDEX'
 		BEGIN
-			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Index yet.', 1;
+			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
 		END
 	IF @objtype = 'STATISTICS'
 		BEGIN
-			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Statistics yet.', 1;
+			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
 		END
 	IF @objtype = 'USERDATATYPE'
 		BEGIN
-			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for User-defined Data Type alias yet.', 1;
+			THROW 33557097, N'Feature not supported: renaming object type User-defined Data Type alias', 1;
 		END
 	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
 		BEGIN
