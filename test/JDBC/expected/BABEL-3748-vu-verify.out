@@ -1,0 +1,350 @@
+SELECT * FROM BABEL_3748_vu_prepare_v1
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP VIEW BABEL_3748_vu_prepare_v1
+GO
+
+EXEC BABEL_3748_vu_prepare_p1
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p1
+GO
+
+SELECT BABEL_3748_vu_prepare_f1()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f1()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v2
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP VIEW BABEL_3748_vu_prepare_v2
+GO
+
+EXEC BABEL_3748_vu_prepare_p2
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p2
+GO
+
+SELECT BABEL_3748_vu_prepare_f2()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f2()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v3
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+DROP VIEW BABEL_3748_vu_prepare_v3
+GO
+
+EXEC BABEL_3748_vu_prepare_p3
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p3
+GO
+
+SELECT BABEL_3748_vu_prepare_f3()
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f3()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v4
+GO
+~~START~~
+money
+1.1000
+~~END~~
+
+DROP VIEW BABEL_3748_vu_prepare_v4
+GO
+
+EXEC BABEL_3748_vu_prepare_p4
+GO
+~~START~~
+money
+1.1000
+~~END~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p4
+GO
+
+SELECT BABEL_3748_vu_prepare_f4()
+GO
+~~START~~
+money
+1.1000
+~~END~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f4()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v5
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP VIEW BABEL_3748_vu_prepare_v5
+GO
+
+EXEC BABEL_3748_vu_prepare_p5
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p5
+GO
+
+SELECT BABEL_3748_vu_prepare_f5()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f5()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v6
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP VIEW BABEL_3748_vu_prepare_v6
+GO
+
+EXEC BABEL_3748_vu_prepare_p6
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p6
+GO
+
+SELECT BABEL_3748_vu_prepare_f6()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f6()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v7
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP VIEW BABEL_3748_vu_prepare_v7
+GO
+
+EXEC BABEL_3748_vu_prepare_p7
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p7
+GO
+
+SELECT BABEL_3748_vu_prepare_f7()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f7()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v8
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+DROP VIEW BABEL_3748_vu_prepare_v8
+GO
+
+EXEC BABEL_3748_vu_prepare_p8
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p8
+GO
+
+SELECT BABEL_3748_vu_prepare_f8()
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f8()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v9
+GO
+~~START~~
+money
+1.1000
+~~END~~
+
+DROP VIEW BABEL_3748_vu_prepare_v9
+GO
+
+EXEC BABEL_3748_vu_prepare_p9
+GO
+~~START~~
+money
+1.1000
+~~END~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p9
+GO
+
+SELECT BABEL_3748_vu_prepare_f9()
+GO
+~~START~~
+money
+1.1000
+~~END~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f9()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v10
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP VIEW BABEL_3748_vu_prepare_v10
+GO
+
+EXEC BABEL_3748_vu_prepare_p10
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p10
+GO
+
+SELECT BABEL_3748_vu_prepare_f10()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type integer to xml.)~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f10()
+GO
+
+SELECT * FROM BABEL_3748_vu_prepare_v11
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP VIEW BABEL_3748_vu_prepare_v11
+GO
+
+EXEC BABEL_3748_vu_prepare_p11
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP PROCEDURE BABEL_3748_vu_prepare_p11
+GO
+
+SELECT BABEL_3748_vu_prepare_f11()
+GO
+~~START~~
+xml
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type numeric to xml.)~~
+
+DROP FUNCTION BABEL_3748_vu_prepare_f11()
+GO
