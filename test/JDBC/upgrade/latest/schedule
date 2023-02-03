@@ -391,3 +391,4 @@ Test-sp_rename
 Test-sp_rename-dep
 BABEL-3657
 BABEL-733
+BABEL-3938
