@@ -7,6 +7,7 @@ go
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
 db_schemata_10#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+db_schemata_10#!#guest#!#guest#!#<NULL>#!#<NULL>#!#<NULL>
 db_schemata_10#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
 db_schemata_10#!#schema_schemata_11#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 db_schemata_10#!#schema_schemata_12#!#schemata_user1#!#<NULL>#!#<NULL>#!#<NULL>
