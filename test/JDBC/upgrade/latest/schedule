@@ -352,6 +352,8 @@ babelfish_integrity_checker
 get_tds_id
 BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-3655
+BABEL-3702
+openjson
 sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
