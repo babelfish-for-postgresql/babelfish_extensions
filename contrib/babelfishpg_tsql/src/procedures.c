@@ -2392,7 +2392,7 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	 */
 	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
 	{
-		appendStringInfo(&query, "drop server \"%s\" cascade", linked_srv);
+		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
 
 		exec_utility_cmd_helper(query.data);
 		pfree(query.data);
