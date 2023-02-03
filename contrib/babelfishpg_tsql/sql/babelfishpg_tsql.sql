@@ -2920,6 +2920,22 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
 		END
+	IF @objtype = 'COLUMN'
+		BEGIN
+			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Column yet.', 1;
+		END
+	IF @objtype = 'INDEX'
+		BEGIN
+			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Index yet.', 1;
+		END
+	IF @objtype = 'STATISTICS'
+		BEGIN
+			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for Statistics yet.', 1;
+		END
+	IF @objtype = 'USERDATATYPE'
+		BEGIN
+			THROW 33557097, N'Procedure or function ''sp_rename'' is not supported for User-defined Data Type alias yet.', 1;
+		END
 	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
 		BEGIN
 			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
@@ -2939,8 +2955,6 @@ BEGIN
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
 				FROM STRING_SPLIT(@objname, '.'))
 			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
-			PRINT 'db_name:  ';
-			PRINT sys.db_name();
 			IF @dbname != sys.db_name()
 				BEGIN
 					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
