@@ -23,6 +23,7 @@ GO
 
 ~~ERROR (Message: syntax error near 'FOR' at line 1 and character position 18)~~
 
+
 SELECT NEXT VALUE FOR not_a_seq;
 GO
 ~~ERROR (Code: 33557097)~~
