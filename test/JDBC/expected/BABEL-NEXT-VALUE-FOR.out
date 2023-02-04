@@ -31,6 +31,14 @@ bigint
 ~~END~~
 
 
+SELECT NEXT VALUE FOR dbo.seq_949;
+GO
+~~START~~
+bigint
+6
+~~END~~
+
+
 DROP TABLE table_949;
 GO
 
