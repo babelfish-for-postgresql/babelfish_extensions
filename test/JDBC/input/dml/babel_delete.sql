@@ -94,9 +94,129 @@ delete babel_2020_delete_t1 from babel_2020_delete_t1 x left outer join babel_20
 go
 
 -- will be tracked in BABEL-3910
---exec babel_2020_delete_ct;
---delete babel_2020_delete_t1 from babel_2020_delete_t2 left outer join babel_2020_delete_t1 x on babel_2020_delete_t2.a = x.a;
---go
+drop procedure if exists babel_3910_init_tables
+go
+
+create procedure babel_3910_init_tables as
+begin
+    drop table if exists t1_3910
+    create table t1_3910 (a int)
+    insert into t1_3910 values (1), (2), (3), (4), (NULL)
+    drop table if exists t2_3910
+    create table t2_3910 (a int)
+    insert into t2_3910 values (2), (3), (4), (5), (NULL)
+    drop table if exists t3_3910
+    create table t3_3910 (a int)
+    insert into t3_3910 values (3), (4), (5), (6), (NULL)
+    drop table if exists t4_3910
+    create table t4_3910 (a int)
+    insert into t4_3910 values (4), (5), (6), (7), (NULL)
+end
+go
+
+exec babel_3910_init_tables;
+delete t1_3910 from t2_3910 left outer join t1_3910 on t2_3910.a = t1_3910.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+delete t1_3910 from t1_3910 right outer join t2_3910 on t2_3910.a = t1_3910.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+delete t1_3910 from t1_3910 full outer join t2_3910 on t2_3910.a = t1_3910.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables
+delete t1_3910 
+from (t1_3910 right join t2_3910 on t1_3910.a = t2_3910.a) 
+    join t3_3910 on t2_3910.a = t3_3910.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables
+delete t1_3910 
+from (t2_3910 left join t1_3910 on t1_3910.a = t2_3910.a) 
+    join t3_3910 on t2_3910.a = t3_3910.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables
+delete t1_3910
+from    
+        (t3_3910 left join 
+            (t1_3910 join t2_3910 on t1_3910.a = t2_3910.a) 
+        on t3_3910.a = t2_3910.a) 
+    join t4_3910 on t3_3910.a = t4_3910.a
+GO
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+delete t1_3910 from t2_3910 left outer join t1_3910 x on t2_3910.a = x.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+delete t1_3910 from t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+delete t1_3910 from t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a
+where t2.a = 2
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+delete t1 from t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a
+where 0 < t1.a OR t1.a < 10;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+delete t1 from t3_3910 t3, t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a
+where t3.a = t2.a;
+go
+
+select a from t1_3910;
+go
+
+exec babel_3910_init_tables;
+delete t1 from t3_3910 t3, (t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a), t4_3910 t4
+where t3.a = t2.a and t4.a = t3.a;
+go
+
+select a from t1_3910;
+go
+
+drop procedure if exists babel_3910_init_tables;
+drop table if exists t1_3910;
+drop table if exists t2_3910;
+drop table if exists t3_3910;
+drop table if exists t4_3910;
+go
 
 -- null filters
 exec babel_2020_delete_ct;
