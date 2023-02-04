@@ -17,6 +17,14 @@ bigint
 ~~END~~
 
 
+SELECT NEXT VALUE FOR dbo.seq_949;
+GO
+~~START~~
+bigint
+6
+~~END~~
+
+
 SELECT NEXT VALUE FOR null;
 GO
 ~~ERROR (Code: 33557097)~~
