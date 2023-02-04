@@ -3262,6 +3262,9 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 	{
 		int res = setTargetTable(pstate, target, inh, false, requiredPerms);
 		pstate->p_rtable = NIL;
+
+		rewrite_update_outer_join(stmt, command, target);
+		
 		return res;
 	}
 
