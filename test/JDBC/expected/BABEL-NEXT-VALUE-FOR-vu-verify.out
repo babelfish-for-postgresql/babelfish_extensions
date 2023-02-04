@@ -17,11 +17,11 @@ bigint
 ~~END~~
 
 
-SELECT NEXT VALUE FOR dbo.seq_949;
+SELECT NEXT VALUE FOR babel_949.seq1;
 GO
 ~~START~~
 bigint
-6
+100
 ~~END~~
 
 
