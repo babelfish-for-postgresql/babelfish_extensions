@@ -1518,3 +1518,26 @@ babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldContext);
 	PG_RETURN_VOID();
 }
+
+
+/*
+ * print_const_collation - determines whether collation needs to be dumped or not
+ * for collatable data types such as varchar, char, nvarchar, nchar, etc.
+ */
+bool
+print_const_collation(Const *constval) {
+    Oid typid = constval->consttype;
+    Oid constcollid = constval->constcollid;
+    Oid typcollation = get_typcollation(typid);
+
+    if ((is_tsql_nvarchar_datatype(typid) ||
+        is_tsql_varchar_datatype(typid) ||
+        is_tsql_bpchar_datatype(typid) ||
+        is_tsql_nchar_datatype(typid)) &&
+        constcollid == DEFAULT_COLLATION_OID &&
+         typcollation != DEFAULT_COLLATION_OID)
+    {
+        return false;
+    }
+    return true;
+}
