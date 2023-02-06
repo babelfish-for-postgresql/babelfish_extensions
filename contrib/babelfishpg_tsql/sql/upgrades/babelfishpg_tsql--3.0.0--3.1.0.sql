@@ -2248,7 +2248,7 @@ END $$;
 -- function schema_id(varchar) needs to change input type to sys.SYSNAME if not changed already
 DO $$
 BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'schema_id' AND (p.pronargs = 1 AND p.proargtypes[0] = 'sys.SYSNAME'::regtype)) = 0 THEN
-    ALTER FUNCTION schema_id(schema_name) RENAME TO schema_id_deprecated_in_3_1_0;
+    ALTER FUNCTION schema_id(schema_name VARCHAR) RENAME TO schema_id_deprecated_in_3_1_0;
     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'schema_id_deprecated_in_3_1_0');
 END IF;
 END $$;
