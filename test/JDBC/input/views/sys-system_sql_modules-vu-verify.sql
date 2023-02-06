@@ -59,20 +59,32 @@ FROM sys.system_sql_modules
 WHERE object_id = OBJECT_ID('sys.user_name')
 GO
 
--- Test for linked server procedures
+/* 
+ * Query to check whether an object is interpreted as both,
+ * a system object and a user defined object
+ *
+ * For such cases, there will be multiple rows for the same object
+ * name where the "is_ms_shipped" column is 0 (for user defined
+ * objects) and 1 (for system objects) which is incorrect.
+ * 
+ * Ideally, for the same object name, either all the rows should have
+ * "is_ms_shipped" 0 or 1 but never both.
+ *
+ * To catch this, we check both the min and max value of "is_ms_shipped"
+ * over partitions by object name. If they are 0 and 1 respectively,
+ * then we show the same.
+ *
+ * Thus, this query should NEVER return any rows. 
+ */
 SELECT
-    o.name,
-    s.definition,
-    s.uses_ansi_nulls,
-    s.uses_quoted_identifier,
-    s.is_schema_bound,
-    s.uses_database_collation,
-    s.is_recompiled,
-    s.null_on_null_input,
-    s.execute_as_principal_id,
-    s.uses_native_compilation
-FROM sys.objects o
-LEFT JOIN sys.system_sql_modules s ON o.object_id = s.object_id
-WHERE o.name IN ('sp_addlinkedserver', 'sp_addlinkedsrvlogin', 'sp_dropserver', 'sp_droplinkedsrvlogin')
-ORDER BY o.name
+    DISTINCT o.name
+FROM
+    (SELECT
+        name,
+        min_val = MIN(is_ms_shipped + 0) OVER(PARTITION BY name),
+        max_val = MAX(is_ms_shipped + 0) OVER(PARTITION BY name)
+    FROM
+        sys.all_objects
+    ) o
+WHERE o.min_val = 0 AND o.max_val = 1
 GO
