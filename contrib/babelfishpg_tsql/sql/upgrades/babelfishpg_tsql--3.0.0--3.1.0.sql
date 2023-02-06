@@ -2239,7 +2239,7 @@ DROP PROCEDURE sys.babel_create_guest_schemas();
 
 -- function sys.schema_id() should be changed from SQL to C-type function if not changed already
 DO $$
-BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'schema_id' AND (p.pronargs = 0 AND p.prolang = 13) = 0 THEN
+BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'schema_id' AND (p.pronargs = 0 AND p.prolang = 13)) = 0 THEN
     ALTER FUNCTION sys.schema_id RENAME TO sys_schema_id_deprecated_in_3_1_0;
     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sys_schema_id_deprecated_in_3_1_0');
 END IF;
@@ -2264,6 +2264,7 @@ RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION schema_id(schema_name sys.SYSNAME) TO PUBLIC;
 
 /* set sys functions as STABLE */
+ALTER FUNCTION sys.schema_name() STABLE;
 ALTER FUNCTION sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),
     in_table_owner sys.nvarchar(384), 
