@@ -1,0 +1,42 @@
+-- psql
+select rolname, login_name, type from sys.babelfish_authid_user_ext where login_name in ('aduser1@BABEL','aduser2@BABEL',
+'aduser3@BABEL','pass','pass2','testuser@BABEL') order by rolname;
+GO
+
+-- tsql
+select count(*) from babelfish_authid_user_ext where rolname = 'master_babel\aduser1';
+GO
+select count(*) from babelfish_authid_user_ext where rolname = 'master_babel\aduser2';
+GO
+select count(*) from babelfish_authid_user_ext where rolname = 'master_abc';
+GO
+select count(*) from babelfish_authid_user_ext where rolname = 'master_pass';
+GO
+select count(*) from babelfish_authid_user_ext where rolname = 'master_pass2';
+GO
+select count(*) from babelfish_authid_user_ext where rolname = 'testdb_temp_user';
+GO
+select count(*) from babelfish_authid_user_ext where rolname = 'testdb_babel\testuser';
+GO
+
+-- tsql
+select name, type, type_desc from sys.database_principals where name in ('test_role');
+GO
+
+-- tsql
+select name, type, type_desc from sys.database_principals where name in ('babel\aduser1','babel\aduser2',
+'abc','pass','pass2','temp_user') order by name;
+GO
+
+-- tsql
+use testdb;
+GO
+select name, type, type_desc from sys.database_principals where name in ('babel\testuser');
+GO
+use master;
+GO
+
+-- tsql
+select name, type, type_desc from sys.server_principals where name in ('BABEL\aduser1','BABEL\aduser2','BABEL\aduser3',
+'pass','pass2','BABEL\testuser') order by name;
+GO

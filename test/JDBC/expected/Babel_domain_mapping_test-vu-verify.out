@@ -9,21 +9,21 @@ int
 
 
 -- tsql
-select name from sys.server_principals where name = 'test@XYZ.BABEL';
+select name, type_desc from sys.server_principals where name = 'XYZ\test';
 GO
 ~~START~~
-varchar
-test@XYZ.BABEL
+varchar#!#nvarchar
+xyz\test#!#WINDOWS_LOGIN
 ~~END~~
 
 
 -- tsql
 -- case insensitive comparison
-select name from sys.server_principals where name = 'TesT@XYZ.BABEL';
+select name, type_desc from sys.server_principals where name = 'XYZ\TesT';
 GO
 ~~START~~
-varchar
-test@XYZ.BABEL
+varchar#!#nvarchar
+xyz\test#!#WINDOWS_LOGIN
 ~~END~~
 
 
@@ -65,21 +65,21 @@ int
 
 
 -- tsql
-select name from sys.server_principals where name = 'test@ABC';
+select name, type_desc from sys.server_principals where name = 'ABC\test';
 GO
 ~~START~~
-varchar
-test@ABC
+varchar#!#nvarchar
+abc\test#!#WINDOWS_LOGIN
 ~~END~~
 
 
 -- tsql
 -- case insensitive comparison
-select name from sys.server_principals where name = 'tEst@ABC';
+select name, type_desc from sys.server_principals where name = 'ABC\tEst';
 GO
 ~~START~~
-varchar
-test@ABC
+varchar#!#nvarchar
+abc\test#!#WINDOWS_LOGIN
 ~~END~~
 
 
@@ -197,5 +197,10 @@ int
 
 
 -- psql
-DROP ROLE rds_ad
+do 
+$$ begin 
+    if exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
+        then DROP ROLE rds_ad; 
+    end if; 
+end $$;
 GO

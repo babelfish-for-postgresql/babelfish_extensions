@@ -462,7 +462,7 @@ static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_functi
 static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
 static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
-bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* reset_session_properties, bool inside_trigger);
+static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool* reset_session_properties, bool inside_trigger);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
@@ -4606,8 +4606,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool            reset_session_properties = false;
 	bool            inside_trigger = false;
 	/* fetch current search_path */
-	List 		*path_oids = fetch_search_path(false);
-	char 		*old_search_path = flatten_search_path(path_oids);
+	char 		*old_search_path = NULL;
 	if (stmt->original_query)
 		original_query_string = stmt->original_query;
 
@@ -4639,7 +4638,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			estate->schema_name = NULL;
 		if (estate->trigdata)
 			inside_trigger = true;
-		need_path_reset = reset_search_path(stmt, old_search_path, &reset_session_properties, inside_trigger);
+		need_path_reset = reset_search_path(stmt, &old_search_path, &reset_session_properties, inside_trigger);
 	}
 
 	PG_TRY();
@@ -5029,7 +5028,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				set_session_properties(cur_dbname);
 			SetCurrentRoleId(current_user_id, false);
 		}
-		list_free(path_oids);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -5049,7 +5047,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			set_session_properties(cur_dbname);
 		SetCurrentRoleId(current_user_id, false);
 	}
-	list_free(path_oids);
 
 	return PLTSQL_RC_OK;
 }
@@ -10093,7 +10090,7 @@ pltsql_clone_estate_err(PLtsql_estate_err *err)
 	return clone;
 }
 
-bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* reset_session_properties, bool inside_trigger)
+static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool* reset_session_properties, bool inside_trigger)
 {
 	PLExecStateCallStack *top_es_entry;
 	char		*cur_dbname = get_cur_db_name();
@@ -10141,7 +10138,13 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 						dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
 					}
 				}
-				new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
+				if (!*old_search_path)
+				{
+					List 		*path_oids = fetch_search_path(false);
+					*old_search_path = flatten_search_path(path_oids);
+					list_free(path_oids);
+				}
+				new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
 				/* Add the schema where the object is referenced and dbo schema to the new search path */
 				(void) set_config_option("search_path", new_search_path,
 								PGC_USERSET, PGC_S_SESSION,
@@ -10179,7 +10182,13 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 				{
 					physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
 					dbo_schema = get_dbo_schema_name(cur_dbname);
-					new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
+					if (!*old_search_path)
+					{
+						List 		*path_oids = fetch_search_path(false);
+						*old_search_path = flatten_search_path(path_oids);
+						list_free(path_oids);
+					}
+					new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
 					/* Add the schema where the object is referenced and dbo schema to the new search path */
 					(void) set_config_option("search_path", new_search_path,
 							PGC_USERSET, PGC_S_SESSION,
@@ -10201,7 +10210,13 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 		cur_dbname = get_cur_db_name();
 		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
 		dbo_schema = get_dbo_schema_name(cur_dbname);
-		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
+		if (!*old_search_path)
+		{
+			List 		*path_oids = fetch_search_path(false);
+			*old_search_path = flatten_search_path(path_oids);
+			list_free(path_oids);
+		}
+		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
 		/* Add the schema where the object is referenced and dbo schema to the new search path */
 		(void) set_config_option("search_path", new_search_path,
 						PGC_USERSET, PGC_S_SESSION,

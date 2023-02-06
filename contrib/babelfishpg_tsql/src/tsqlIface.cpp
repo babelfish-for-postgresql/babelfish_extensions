@@ -170,6 +170,7 @@ static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
+static std::string getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id);
 static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
 
 /*
@@ -616,7 +617,7 @@ static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext
 		TSqlParser::Execute_body_batchContext *exBodyBatchCtx = dynamic_cast<TSqlParser::Execute_body_batchContext *>(ctx->parent);
 		TSqlParser::IdContext *proc = nullptr;
 
-		if (exBodyCtx != nullptr)
+		if (exBodyCtx != nullptr && exBodyCtx->proc_var == nullptr)
 			proc = exBodyCtx->func_proc_name_server_database_schema()->procedure;
 		else if (exBodyBatchCtx != nullptr)
 			proc = exBodyBatchCtx->func_proc_name_server_database_schema()->procedure;
@@ -897,132 +898,25 @@ public:
 		}
 	}
 
-	void exitOpen_json(TSqlParser::Open_jsonContext *ctx) override
+	void exitOpen_query(TSqlParser::Open_queryContext *ctx) override
 	{
-		if (!ctx->WITH())
-		{
-			/* Map to openjson_simple() */
-			rewritten_query_fragment.emplace(std::make_pair(ctx->getStart()->getStartIndex(),
-											 std::make_pair(ctx->getStart()->getText(), "OPENJSON_SIMPLE")));
-		}
-		else
-		{
-			std::string expr,
-						col_str,
-						col_name,
-						col_type,
-						col_path,
-						col_info,
-						token,
-						with_clause;
-			std::vector<std::string> 	col_defs;
-			/* Map to openjson_with */
-			rewritten_query_fragment.emplace(std::make_pair(ctx->getStart()->getStartIndex(),
-											 std::make_pair(ctx->getStart()->getText(), "OPENJSON_WITH")));
-			/* build the rest of the statement after the JSON or PATH expressions. This is to conform to the parameters expected
-			 * by OPENJSON_WITH(json_expr, json_path, [column_definition_list]). For example, this expression:
-			 *
-			 * select * from openjson(@json, '$.obj') WITH
-			 * 		(
-			 *			a varchar(20),
-			 *			b_col varchar(20) '$.b',
-			 *			o nvarchar(max) '$' AS JSON
-			 *		)
-			 *
-			 * would be rewritten as:
-			 *
-			 * select * from openjson_with(@json, '$.obj', '$.a varchar(20)', '$.b varchar(20)', '$ nvarchar AS JSON') AS
-			 *		f(
-			 *			a varchar(20),
-			 *			b_col varchar(20),
-			 *			o nvarchar
-			 *		)
-			 */
-			if (!ctx->COMMA()) /* check for PATH parameter */
-				expr = ",'$'";
-			/* extract column definitions */
-			for (TSqlParser::Json_column_declarationContext *column : ctx->json_declaration()->json_column_declaration())
-			{
-				col_str = ::getFullText(column);
-				/* split col_str by whitespace */
-				std::istringstream buffer(col_str);
-				std::vector<std::string> col_tokens{std::istream_iterator<std::string>(buffer),
-									std::istream_iterator<std::string>()};
-				col_name = "";
-				col_type = "";
-				col_path = "";
-				for (uint i = 0; i < col_tokens.size(); i++)
-				{
-					token = col_tokens[i];
-					if (col_name == "")
-					{
-						col_name = token;
-						/* handle space-separated column names */
-						if (col_name.size() > 0 && col_name.front() == '[')
-						{
-							while (col_name.back() != ']' && i < col_tokens.size() - 1)
-							{
-								col_name += " " + col_tokens[++i];
-							}
-						}
-						if (col_name.size() > 0 && col_name.front() == '"')
-						{
-							while (col_name.back() != '"' && i < col_tokens.size() - 1)
-							{
-								col_name += " " + col_tokens[++i];
-							}
-						}
-					}
-					else if (col_type == "")
-						col_type = token;
-					else if (col_path == "")
-					{
-						/* check if path param was skipped */
-						if (pg_strcasecmp(token.c_str(), "as") == 0)
-							break;
-						col_path = token;
-						/* check for lax/strict and add the rest of the path parameter */
-						if (col_path.compare("'lax") == 0 || col_path.compare("'strict") == 0)
-						{
-							col_path += " " + col_tokens[++i];
-						}
-					}
-				}
-				/* PG cannot handle varchar(max) or nvarchar(max) so just remove the (max) part */
-				if (col_type.length() > 5 && pg_strcasecmp(col_type.substr(col_type.length() - 5).c_str(), "(max)") == 0)
-					col_type.erase(col_type.length() - 5);
-				/* if path is not defined, use col_name as default path */
-				if (col_path == "")
-					col_path = "'$." + col_name + "'";
-				/* Add path and type to main expr and save column definition in list */
-				col_path.pop_back();
-				col_info = col_path + " " + col_type + (column->AS() && column->JSON() ? " AS JSON" : "") + "'";
-				expr += "," + col_info;
-				col_defs.push_back(col_name + " " + col_type);
-			}
-			expr += ") AS f(";
-			/* add AS clause with column definitions */
-			for (auto & col_def : col_defs)
-			{
-				expr += col_def + std::string(",");
-			}
-			if (expr.back() == ',')
-				expr.pop_back();
-			expr += std::string(")");
-			/* replace end of OPENJSON statement with new column definition arguments */
-			rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET(0)->getSymbol()->getStartIndex(),
-											 std::make_pair(ctx->RR_BRACKET(0)->getText(), expr)));
-			/* remove with clause */
-			rewritten_query_fragment.emplace(std::make_pair(ctx->WITH()->getSymbol()->getStartIndex(),
-											 std::make_pair(::getFullText(ctx->WITH()), "")));
-			rewritten_query_fragment.emplace(std::make_pair(ctx->LR_BRACKET(1)->getSymbol()->getStartIndex(),
-											 std::make_pair(ctx->LR_BRACKET(1)->getText(), "")));
-			rewritten_query_fragment.emplace(std::make_pair((ctx->json_declaration()->getStart()->getStartIndex()),
-											 std::make_pair(::getFullText(ctx->json_declaration()), "")));
-			rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET().back()->getSymbol()->getStartIndex(),
-											 std::make_pair(ctx->RR_BRACKET().back()->getText(), "")));
-		}
+		TSqlParser::IdContext *linked_srv = ctx->linked_server;
 
+		/* 
+		 * The calling syntax for T-SQL OPENQUERY is OPENQUERY(linked_server, 'query')
+		 * which means that linked_server is passed as an identifier (without quotes)
+		 * 
+		 * Since we have implemented OPENQUERY as a PG function, the linked_server gets
+		 * interpreted as a column. To fix this, we enclose the linked_server in single
+		 * quotes, so that the function now gets called as OPENQUERY('linked_server', 'query')
+		 */
+		if (linked_srv)
+		{
+			std::string linked_srv_name = getIDName(linked_srv->DOUBLE_QUOTE_ID(), linked_srv->SQUARE_BRACKET_ID(), linked_srv->ID());
+			std::string str = std::string("'") + linked_srv_name + std::string("'");
+
+			rewritten_query_fragment.emplace(std::make_pair(linked_srv->start->getStartIndex(), std::make_pair(linked_srv_name, str)));
+		}	
 	}
 };
 
@@ -1835,6 +1729,24 @@ public:
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
 		is_function = true;
+		if (ctx->NEXT() && ctx->full_object_name())
+		{
+			TSqlParser::Full_object_nameContext *fctx = (TSqlParser::Full_object_nameContext *) ctx->full_object_name();
+			std::string seq_name = ::getFullText(fctx);
+			std::string nextval_string = "nextval('" + seq_name + "')";
+			if (fctx->schema)
+			{
+				TSqlParser::IdContext *sctx = fctx->schema;
+				TSqlParser::IdContext *octx = fctx->object_name;
+				// Need to directly use the backend schema name since nextval is a postgres function
+				nextval_string = "nextval('master_" + ::stripQuoteFromId(sctx) + '.' + ::stripQuoteFromId(octx) + "')";
+			}
+
+			rewritten_query_fragment.emplace(std::make_pair(ctx->NEXT()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->NEXT()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->VALUE()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->VALUE()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->FOR()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->FOR()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->full_object_name()->start->getStartIndex(), std::make_pair(::getFullText(ctx->full_object_name()), nextval_string)));
+		}
 		if (ctx->analytic_windowed_function())
 		{
 			auto actx = ctx->analytic_windowed_function();
@@ -1981,48 +1893,6 @@ public:
     explicit tsqlMutator(MyInputStream &s)
         : stream(s)
     {
-    }
-    
-private:
-    // getIDName() - returns the name found in one of the given TerminalNodes
-    //
-    //	We expect one non-null pointer and two null pointers.  The first (dq)
-    //  will be non-null if we are working with a DOUBLE_QUOTE_ID() - we
-    //  strip off the double-quotes and return the result.  The second (sb)
-    //  will be non-null if we are working with a SQUARE_BRACKET_ID() - we
-    //  strip off the square brackets and return the result.  The last (id)
-    //  will be non-null if we are working on an ID() - we just return the
-    //  name itself.
-    
-    static std::string
-    getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id)
-    {
-	Assert(dq || sb || id);
-
-	if (dq)
-	{
-	    std::string name{dq->getSymbol()->getText()};
-	    Assert(name.front() == '"');
-	    Assert(name.back() == '"');
-
-	    name = name.substr(1, name.size() - 2);
-
-	    return name;
-	}
-	else if (sb)
-	{
-	    std::string name{sb->getSymbol()->getText()};
-	    Assert(name.front() == '[');
-	    Assert(name.back() == ']');
-
-	    name = name.substr(1, name.size() - 2);
-
-	    return name;
-	}
-	else
-	{
-	    return std::string(id->getSymbol()->getText());
-	}	
     }
     
 public:
@@ -2464,7 +2334,7 @@ antlr_parser_cpp(const char *sourceText)
 	 * Generally the mutator steps are non-reentrant, if parsetree is created and mutators are run, subsequent parsing may produce
 	 * incorrect error messages
 	*/
-	if (!result.success && !result.parseTreeCreated)
+	if (!result.success && !result.parseTreeCreated && pltsql_enable_sll_parse_mode)
 	{
 		elog(DEBUG1, "Query failed using SLL parser mode, retrying with LL parser mode query_text: %s", sourceText);
 		result = antlr_parse_query(sourceText, false);
@@ -6616,4 +6486,44 @@ does_msg_exceeds_params_limit(const std::string& msg)
 	}
 
 	return paramCount > RAISE_ERROR_PARAMS_LIMIT;
+}
+
+// getIDName() - returns the name found in one of the given TerminalNodes
+//
+//	We expect one non-null pointer and two null pointers.  The first (dq)
+//  will be non-null if we are working with a DOUBLE_QUOTE_ID() - we
+//  strip off the double-quotes and return the result.  The second (sb)
+//  will be non-null if we are working with a SQUARE_BRACKET_ID() - we
+//  strip off the square brackets and return the result.  The last (id)
+//  will be non-null if we are working on an ID() - we just return the
+//  name itself.
+static std::string
+getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id)
+{
+	Assert(dq || sb || id);
+
+	if (dq)
+	{
+		std::string name{dq->getSymbol()->getText()};
+		Assert(name.front() == '"');
+		Assert(name.back() == '"');
+
+		name = name.substr(1, name.size() - 2);
+
+		return name;
+	}
+	else if (sb)
+	{
+		std::string name{sb->getSymbol()->getText()};
+		Assert(name.front() == '[');
+		Assert(name.back() == ']');
+
+		name = name.substr(1, name.size() - 2);
+
+		return name;
+	}
+	else
+	{
+		return std::string(id->getSymbol()->getText());
+	}
 }

@@ -31,6 +31,24 @@ end
 $$
 LANGUAGE plpgsql;
 
+-- Removes a member object from the extension. The object is not dropped, only disassociated from the extension.
+-- It is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+CREATE OR REPLACE PROCEDURE babelfish_remove_object_from_extension(obj_type varchar, qualified_obj_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query text;
+BEGIN
+    query := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s', obj_type, qualified_obj_name);
+    execute query;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+END
+$$
+LANGUAGE plpgsql;
+
 -- please add your SQL here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
@@ -77,6 +95,423 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
+ALTER FUNCTION sys.num_days_in_date RENAME TO num_days_in_date_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'num_days_in_date_deprecated_in_3_1_0');
+CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 BIGINT, IN m1 BIGINT, IN y1 BIGINT) RETURNS BIGINT AS $$
+DECLARE
+	i BIGINT;
+	n1 BIGINT;
+BEGIN
+	n1 = y1 * 365 + d1;
+	FOR i in 0 .. m1-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n1 = n1 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n1 = n1 + 30;
+		ELSIF (i = 1) THEN
+			n1 = n1 + 28;
+		END IF;
+	END LOOP;
+	IF m1 <= 2 THEN
+		y1 = y1 - 1;
+	END IF;
+	n1 = n1 + (y1/4 - y1/100 + y1/400);
+
+	return n1;
+END
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+ALTER FUNCTION sys.datediff_internal_df RENAME TO datediff_internal_df_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_df_deprecated_in_3_1_0');
+CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS BIGINT AS $$
+DECLARE
+	result BIGINT;
+	year_diff BIGINT;
+	month_diff BIGINT;
+	day_diff BIGINT;
+	hour_diff BIGINT;
+	minute_diff BIGINT;
+	second_diff BIGINT;
+	millisecond_diff BIGINT;
+	microsecond_diff BIGINT;
+	y1 BIGINT;
+	m1 BIGINT;
+	d1 BIGINT;
+	y2 BIGINT;
+	m2 BIGINT;
+	d2 BIGINT;
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
+		result = year_diff;
+	WHEN 'quarter' THEN
+		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
+		month_diff = sys.datepart('month', enddate) - sys.datepart('month', startdate);
+		result = (year_diff * 12 + month_diff) / 3;
+	WHEN 'month' THEN
+		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
+		month_diff = sys.datepart('month', enddate) - sys.datepart('month', startdate);
+		result = year_diff * 12 + month_diff;
+	WHEN 'doy', 'y' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		result = day_diff;
+	WHEN 'day' THEN
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+	WHEN 'week' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		result = day_diff / 7;
+	WHEN 'hour' THEN
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = sys.datepart('hour', enddate) - sys.datepart('hour', startdate);
+		result = day_diff * 24 + hour_diff;
+	WHEN 'minute' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		result = (day_diff * 24 + hour_diff) * 60 + minute_diff;
+	WHEN 'second' THEN
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
+		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
+	WHEN 'millisecond' THEN
+		-- millisecond result from date_part by default contains second value,
+		-- so we do not need to add second_diff again
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
+		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
+	WHEN 'microsecond' THEN
+		-- microsecond result from date_part by default contains second and millisecond values,
+		-- so we do not need to add second_diff and millisecond_diff again
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
+		microsecond_diff = TRUNC(sys.datepart('microsecond', enddate OPERATOR(sys.-) startdate));
+		result = ((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		day_diff = sys.datepart('day', enddate - startdate);
+		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
+		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
+		microsecond_diff = TRUNC(sys.datepart('microsecond', enddate OPERATOR(sys.-) startdate));
+		result = (((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff) * 1000;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
+	END CASE;
+
+	return result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+ALTER FUNCTION sys.datediff_internal_date RENAME TO datediff_internal_date_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_date_deprecated_in_3_1_0');
+CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT AS $$
+DECLARE
+	result BIGINT;
+	year_diff BIGINT;
+	month_diff BIGINT;
+	day_diff BIGINT;
+	hour_diff BIGINT;
+	minute_diff BIGINT;
+	second_diff BIGINT;
+	millisecond_diff BIGINT;
+	microsecond_diff BIGINT;
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		result = year_diff;
+	WHEN 'quarter' THEN
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
+		result = (year_diff * 12 + month_diff) / 3;
+	WHEN 'month' THEN
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
+		result = year_diff * 12 + month_diff;
+	-- for all intervals smaller than month, (DATE - DATE) already returns the integer number of days
+	-- between the dates, so just use that directly as the day_diff. There is no finer resolution
+	-- than days with the DATE type anyways.
+	WHEN 'doy', 'y' THEN
+		day_diff = enddate - startdate;
+		result = day_diff;
+	WHEN 'day' THEN
+		day_diff = enddate - startdate;
+		result = day_diff;
+	WHEN 'week' THEN
+		day_diff = enddate - startdate;
+		result = day_diff / 7;
+	WHEN 'hour' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24;
+	WHEN 'minute' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60;
+	WHEN 'second' THEN
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60;
+	WHEN 'millisecond' THEN
+		-- millisecond result from date_part by default contains second value,
+		-- so we do not need to add second_diff again
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000;
+	WHEN 'microsecond' THEN
+		-- microsecond result from date_part by default contains second and millisecond values,
+		-- so we do not need to add second_diff and millisecond_diff again
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000 * 1000;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		day_diff = enddate - startdate;
+		result = day_diff * 24 * 60 * 60 * 1000 * 1000 * 1000;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
+	END CASE;
+
+	return result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+ALTER FUNCTION sys.datediff_internal RENAME TO datediff_internal_deprecated_in_3_1_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_deprecated_in_3_1_0');
+CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS BIGINT AS $$
+DECLARE
+	result BIGINT;
+	year_diff BIGINT;
+	month_diff BIGINT;
+	day_diff BIGINT;
+	hour_diff BIGINT;
+	minute_diff BIGINT;
+	second_diff BIGINT;
+	millisecond_diff BIGINT;
+	microsecond_diff BIGINT;
+	y1 BIGINT;
+	m1 BIGINT;
+	d1 BIGINT;
+	y2 BIGINT;
+	m2 BIGINT;
+	d2 BIGINT;
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		result = year_diff;
+	WHEN 'quarter' THEN
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
+		result = (year_diff * 12 + month_diff) / 3;
+	WHEN 'month' THEN
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
+		result = year_diff * 12 + month_diff;
+	WHEN 'doy', 'y' THEN
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		result = day_diff;
+	WHEN 'day' THEN
+		y1 = date_part('year', enddate)::BIGINT;
+		m1 = date_part('month', enddate)::BIGINT;
+		d1 = date_part('day', enddate)::BIGINT;
+		y2 = date_part('year', startdate)::BIGINT;
+		m2 = date_part('month', startdate)::BIGINT;
+		d2 = date_part('day', startdate)::BIGINT;
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+	WHEN 'week' THEN
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		result = day_diff / 7;
+	WHEN 'hour' THEN
+		y1 = date_part('year', enddate)::BIGINT;
+		m1 = date_part('month', enddate)::BIGINT;
+		d1 = date_part('day', enddate)::BIGINT;
+		y2 = date_part('year', startdate)::BIGINT;
+		m2 = date_part('month', startdate)::BIGINT;
+		d2 = date_part('day', startdate)::BIGINT;
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = date_part('hour', enddate)::BIGINT - date_part('hour', startdate)::BIGINT;
+		result = day_diff * 24 + hour_diff;
+	WHEN 'minute' THEN
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		result = (day_diff * 24 + hour_diff) * 60 + minute_diff;
+	WHEN 'second' THEN
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
+		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
+	WHEN 'millisecond' THEN
+		-- millisecond result from date_part by default contains second value,
+		-- so we do not need to add second_diff again
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
+		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
+	WHEN 'microsecond' THEN
+		-- microsecond result from date_part by default contains second and millisecond values,
+		-- so we do not need to add second_diff and millisecond_diff again
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
+		microsecond_diff = TRUNC(date_part('microsecond', enddate OPERATOR(sys.-) startdate));
+		result = ((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
+		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
+		microsecond_diff = TRUNC(date_part('microsecond', enddate OPERATOR(sys.-) startdate));
+		result = (((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff) * 1000;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
+	END CASE;
+
+	return result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal_date(datepart, startdate, enddate) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal_df(datepart, startdate, enddate) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate, enddate) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- datediff big
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_date(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_df(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   SELECT 
@@ -1019,6 +1454,40 @@ LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
 
+/*
+ * SCHEMATA view
+ */
+CREATE OR REPLACE FUNCTION sys.bbf_is_shared_schema(IN schemaname TEXT)
+RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_shared_schema_wrapper'
+LANGUAGE C STABLE STRICT;
+
+CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
+	SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
+	CAST(CASE WHEN np.nspname LIKE CONCAT(sys.db_name(),'%') THEN RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
+	     ELSE np.nspname END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
+	-- For system-defined schemas, schema-owner name will be same as schema_name
+	-- For user-defined schemas having default owner, schema-owner will be dbo
+	-- For user-defined schemas with explicit owners, rolname contains dbname followed
+	-- by owner name, so need to extract the owner name from rolname always.
+	CAST(CASE WHEN sys.bbf_is_shared_schema(np.nspname) = TRUE THEN np.nspname
+		  WHEN r.rolname LIKE CONCAT(sys.db_name(),'%') THEN
+			CASE WHEN RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) = 'db_owner' THEN 'dbo'
+			     ELSE RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) END ELSE 'dbo' END
+			AS sys.nvarchar(128)) AS "SCHEMA_OWNER",
+	CAST(null AS sys.varchar(6)) AS "DEFAULT_CHARACTER_SET_CATALOG",
+	CAST(null AS sys.varchar(3)) AS "DEFAULT_CHARACTER_SET_SCHEMA",
+	-- TODO: We need to first create mapping of collation name to char-set name;
+	-- Until then return null for DEFAULT_CHARACTER_SET_NAME
+	CAST(null AS sys.sysname) AS "DEFAULT_CHARACTER_SET_NAME"
+	FROM ((pg_catalog.pg_namespace np LEFT JOIN sys.pg_namespace_ext nc on np.nspname = nc.nspname)
+		LEFT JOIN pg_catalog.pg_roles r on r.oid = nc.nspowner) LEFT JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+	WHERE (ext.dbid = cast(sys.db_id() as oid) OR np.nspname in ('sys', 'information_schema_tsql')) AND
+	      (pg_has_role(np.nspowner, 'USAGE') OR has_schema_privilege(np.oid, 'CREATE, USAGE'))
+	ORDER BY nc.nspname, np.nspname;
+
+GRANT SELECT ON information_schema_tsql.schemata TO PUBLIC;
+
 CREATE TABLE sys.babelfish_domain_mapping (
   netbios_domain_name sys.VARCHAR(15) NOT NULL, -- Netbios domain name
   fq_domain_name sys.VARCHAR(128) NOT NULL, -- DNS domain name
@@ -1383,6 +1852,278 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE PROCEDURE sys.sp_helplinkedsrvlogin(
+	IN "@rmtsrvname" sysname DEFAULT NULL,
+	IN "@locallogin" sysname DEFAULT NULL
+)
+AS $$
+DECLARE @server_id INT;
+DECLARE @local_principal_id INT;
+BEGIN
+	IF @rmtsrvname IS NOT NULL
+		BEGIN
+			SELECT @server_id = server_id FROM sys.servers WHERE name = @rmtsrvname;
+
+			IF @server_id IS NULL
+				BEGIN
+					RAISERROR('The server ''%s'' does not exist', 16, 1, @rmtsrvname);
+        				RETURN 1;
+				END
+		END
+
+	IF @locallogin IS NOT NULL
+		BEGIN
+			SELECT @local_principal_id = usesysid FROM pg_user WHERE CAST(usename as sys.sysname) = @locallogin;
+		END
+	
+	SELECT
+		s.name AS "Linked Server",
+		CAST(u.usename as sys.sysname) AS "Local Login", 
+		CAST(0 as smallint) AS "Is Self Mapping", 
+		l.remote_name AS "Remote Login"
+	FROM sys.linked_logins AS l 
+	LEFT JOIN sys.servers AS s ON l.server_id = s.server_id
+	LEFT JOIN pg_user AS u ON l.local_principal_id = u.usesysid
+	WHERE (@server_id is NULL or @server_id = s.server_id) AND ((@local_principal_id is NULL AND @locallogin IS NULL) or @local_principal_id = l.local_principal_id);
+END;
+$$ LANGUAGE pltsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_helplinkedsrvlogin TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@schemaname" sys.nvarchar(776),
+	IN "@objtype" char(2) DEFAULT NULL
+) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_internal TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776),
+	IN "@newname" sys.SYSNAME,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	If @objtype IS NULL
+		BEGIN
+			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
+		END
+	IF @objtype = 'COLUMN'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Column', 1;
+		END
+	IF @objtype = 'INDEX'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
+		END
+	IF @objtype = 'STATISTICS'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
+		END
+	IF @objtype = 'USERDATATYPE'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type User-defined Data Type alias', 1;
+		END
+	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
+		BEGIN
+			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+		END
+	DECLARE @name_count INT;
+	DECLARE @subname sys.nvarchar(776) = '';
+	DECLARE @schemaname sys.nvarchar(776) = '';
+	DECLARE @dbname sys.nvarchar(776) = '';
+	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
+	IF @name_count > 3
+		BEGIN
+			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+		END
+	IF @name_count = 3
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
+			IF @dbname != sys.db_name()
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+		END
+	IF @name_count = 2
+		BEGIN
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
+			WITH myTableWithRows AS (
+				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+				FROM STRING_SPLIT(@objname, '.'))
+			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+		END
+	IF @name_count = 1
+		BEGIN
+			SET @schemaname = sys.schema_name();
+			SET @subname = @objname;
+		END
+	
+	DECLARE @count INT;
+	DECLARE @currtype char(2);
+	SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	IF @count > 1
+		BEGIN
+			THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+		END
+	IF @count < 1
+		BEGIN
+			THROW 33557097, N'There is no object with the given @objname.', 1;
+		END
+	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+	WHERE s1.name = @schemaname AND o1.name = @subname;
+	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
+END;
+$$;
+GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
+SELECT
+CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
+CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
+CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
+CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
+CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
+CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
+CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
+CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,
+CAST(nr AS smallint) AS KEY_SEQ,
+CASE
+   WHEN const1.confupdtype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confupdtype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confupdtype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confupdtype = 'd' THEN CAST(3 AS smallint) -- set default
+END AS UPDATE_RULE,
+
+CASE
+   WHEN const1.confdeltype = 'c' THEN CAST(0 AS smallint) -- cascade
+   WHEN const1.confdeltype = 'a' THEN CAST(1 AS smallint) -- no action
+   WHEN const1.confdeltype = 'n' THEN CAST(2 AS smallint) -- set null
+   WHEN const1.confdeltype = 'd' THEN CAST(3 AS smallint) -- set default
+   ELSE CAST(0 AS smallint)
+END AS DELETE_RULE,
+CAST(const1.conname AS sys.sysname) AS FK_NAME,
+CAST(const2.conname AS sys.sysname) AS PK_NAME,
+CASE
+   WHEN const1.condeferrable = false THEN CAST(7 as smallint) -- not deferrable
+   ELSE (CASE WHEN const1.condeferred = false THEN CAST(6 as smallint) --  not deferred by default
+              ELSE CAST(5 as smallint) -- deferred by default
+         END)
+END AS DEFERRABILITY
+
+FROM (pg_constraint const1
+-- join with nsp_Ext to get constraints in current namespace
+JOIN sys.pg_namespace_ext nsp_ext ON nsp_ext.oid = const1.connamespace
+--get the table names corresponding to foreign keys
+JOIN pg_class c ON const1.conrelid = c.oid AND const1.contype ='f'
+-- join wiht bbf_nsp to get all constraint related to tsql endpoint and the owner of foreign key
+JOIN sys.babelfish_namespace_ext bbf_nsp ON bbf_nsp.nspname = nsp_ext.nspname AND bbf_nsp.dbid = sys.db_id()
+-- lateral join to use the conkey and confkey to join with pg_attribute to get column names
+CROSS JOIN LATERAL unnest(const1.conkey,const1.confkey) WITH ORDINALITY AS ak(j, k, nr)
+            LEFT JOIN pg_attribute a
+                       ON (a.attrelid = const1.conrelid AND a.attnum = ak.j)
+            LEFT JOIN pg_attribute a2
+                       ON (a2.attrelid = const1.confrelid AND a2.attnum = ak.k)
+)
+-- get the index that foreign key depends on
+LEFT JOIN pg_depend d1 ON d1.objid = const1.oid AND d1.classid = 'pg_constraint'::regclass
+           AND d1.refclassid = 'pg_class'::regclass AND d1.refobjsubid = 0
+-- get the pkey/ukey constraint for this index
+LEFT JOIN pg_depend d2 ON d2.refclassid = 'pg_constraint'::regclass AND d2.classid = 'pg_class'::regclass AND d2.objid = d1.refobjid AND d2.objsubid = 0 AND d2.deptype = 'i'
+-- get the constraint name from new pg_constraint
+LEFT JOIN pg_constraint const2 ON const2.oid = d2.refobjid AND const2.contype IN ('p', 'u') AND const2.conrelid = const1.confrelid
+-- get the namespace name for primary key
+LEFT JOIN sys.pg_namespace_ext nsp_ext2 ON const2.connamespace = nsp_ext2.oid
+-- get the owner name for primary key
+LEFT JOIN sys.babelfish_namespace_ext bbf_nsp2 ON bbf_nsp2.nspname = nsp_ext2.nspname AND bbf_nsp2.dbid = sys.db_id()
+-- get the table name for primary key
+LEFT JOIN pg_class c2 ON const2.conrelid = c2.oid AND const2.contype IN ('p', 'u');
+
+GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_fkeys(
+	"@pktable_name" sys.sysname = '',
+	"@pktable_owner" sys.sysname = '',
+	"@pktable_qualifier" sys.sysname = '',
+	"@fktable_name" sys.sysname = '',
+	"@fktable_owner" sys.sysname = '',
+	"@fktable_qualifier" sys.sysname = ''
+)
+AS $$
+BEGIN
+	
+	IF coalesce(@pktable_name,'') = '' AND coalesce(@fktable_name,'') = '' 
+	BEGIN
+		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
+	END
+	
+	IF (@pktable_qualifier != '' AND (SELECT sys.db_name()) != @pktable_qualifier) OR 
+		(@fktable_qualifier != '' AND (SELECT sys.db_name()) != @fktable_qualifier) 
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+  	END
+  	
+  	SELECT 
+	PKTABLE_QUALIFIER,
+	PKTABLE_OWNER,
+	PKTABLE_NAME,
+	PKCOLUMN_NAME,
+	FKTABLE_QUALIFIER,
+	FKTABLE_OWNER,
+	FKTABLE_NAME,
+	FKCOLUMN_NAME,
+	KEY_SEQ,
+	UPDATE_RULE,
+	DELETE_RULE,
+	FK_NAME,
+	PK_NAME,
+	DEFERRABILITY
+	FROM sys.sp_fkeys_view
+	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR LOWER(pktable_name) = LOWER(@pktable_name))
+		AND ((SELECT coalesce(@fktable_name,'')) = '' OR LOWER(fktable_name) = LOWER(@fktable_name))
+		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR LOWER(pktable_owner) = LOWER(@pktable_owner))
+		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR LOWER(pktable_qualifier) = LOWER(@pktable_qualifier))
+		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR LOWER(fktable_owner) = LOWER(@fktable_owner))
+		AND ((SELECT coalesce(@fktable_qualifier,'')) = '' OR LOWER(fktable_qualifier) = LOWER(@fktable_qualifier))
+	ORDER BY fktable_qualifier, fktable_owner, fktable_name, key_seq;
+
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_linkedservers()
+AS $$
+BEGIN
+    SELECT 
+		name AS "SRV_NAME", 
+		CAST(provider AS sys.nvarchar(128)) AS "SRV_PROVIDERNAME", 
+		CAST(product AS sys.nvarchar(128)) AS "SRV_PRODUCT", 
+		data_source AS "SRV_DATASOURCE",
+		provider_string AS "SRV_PROVIDERSTRING",
+		location AS "SRV_LOCATION",
+		catalog AS "SRV_CAT" 
+	FROM sys.servers
+	ORDER BY SRV_NAME
+END;
+$$ LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
 
 ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN IF NOT EXISTS orig_loginname SYS.NVARCHAR(128);
 
@@ -1424,6 +2165,43 @@ LANGUAGE C;
 ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
 
 
+create or replace view sys.all_views as
+SELECT
+    CAST(c.relname AS sys.SYSNAME) as name
+  , CAST(c.oid AS INT) as object_id
+  , CAST(null AS INT) as principal_id
+  , CAST(c.relnamespace as INT) as schema_id
+  , CAST(0 as INT) as parent_object_id
+  , CAST('V' as sys.bpchar(2)) as type
+  , CAST('VIEW'as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(0 as sys.BIT) AS is_replicated
+  , CAST(0 as sys.BIT) AS has_replication_filter
+  , CAST(0 as sys.BIT) AS has_opaque_metadata
+  , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
+  , CAST(
+      CASE 
+        WHEN (v.check_option = 'NONE') 
+          THEN 0
+        ELSE 1
+      END
+    AS sys.BIT) AS with_check_option
+  , CAST(0 as sys.BIT) AS is_date_correlation_view
+FROM pg_catalog.pg_namespace AS ns
+INNER JOIN pg_class c ON ns.oid = c.relnamespace
+INNER JOIN information_schema.views v ON c.relname = v.table_name AND ns.nspname = v.table_schema
+WHERE c.relkind = 'v' AND ns.nspname in 
+  (SELECT nspname from sys.babelfish_namespace_ext where dbid = sys.db_id() UNION ALL SELECT CAST('sys' AS NAME))
+AND pg_is_other_temp_schema(ns.oid) = false
+AND (pg_has_role(c.relowner, 'USAGE') = true
+OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') = true);
+GRANT SELECT ON sys.all_views TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.sysname, 
 	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
 AS 'babelfishpg_tsql', 'sp_set_session_context'
@@ -1434,6 +2212,17 @@ CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
 	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_volatility(IN "@function_name" sys.varchar DEFAULT NULL, IN "@volatility" sys.varchar DEFAULT NULL)
+AS 'babelfishpg_tsql', 'sp_babelfish_volatility' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.varchar) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babel_create_guest_schemas()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_guest_schema_for_all_dbs';
+
+CALL sys.babel_create_guest_schemas();
+
+DROP PROCEDURE sys.babel_create_guest_schemas();
 
 /* set sys functions as STABLE */
 ALTER FUNCTION sys.schema_id() STABLE;
@@ -1481,7 +2270,6 @@ ALTER FUNCTION sys.proc_param_helper() STABLE;
 ALTER FUNCTION sys.original_login() STABLE; 
 ALTER FUNCTION sys.objectproperty(id INT, property SYS.VARCHAR) STABLE;
 ALTER FUNCTION sys.OBJECTPROPERTYEX(id INT, property SYS.VARCHAR) STABLE;
-ALTER FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) STABLE;
 ALTER FUNCTION sys.nestlevel() STABLE;
 ALTER FUNCTION sys.max_connections() STABLE;
 ALTER FUNCTION sys.lock_timeout() STABLE;
@@ -1661,12 +2449,6 @@ ALTER FUNCTION sys.babelfish_conv_helper_to_time(IN arg anyelement, IN try BOOL,
 ALTER FUNCTION sys.babelfish_try_conv_to_time(IN arg anyelement) STABLE;
 ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg TEXT, IN try BOOL, IN p_style NUMERIC) STABLE;
 ALTER FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement) STABLE;
-ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg TEXT, IN try BOOL, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg ANYELEMENT, IN try BOOL, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg TEXT, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg TEXT, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC) STABLE;
 ALTER FUNCTION sys.babelfish_parse_helper_to_date(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
 ALTER FUNCTION sys.babelfish_parse_helper_to_time(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
 ALTER FUNCTION sys.babelfish_parse_helper_to_datetime(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
@@ -1758,9 +2540,628 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_name'
 LANGUAGE C STABLE;
 
+create or replace view sys.indexes as
+select 
+  CAST(object_id as int)
+  , CAST(name as sys.sysname)
+  , CAST(type as sys.tinyint)
+  , CAST(type_desc as sys.nvarchar(60))
+  , CAST(is_unique as sys.bit)
+  , CAST(data_space_id as int)
+  , CAST(ignore_dup_key as sys.bit)
+  , CAST(is_primary_key as sys.bit)
+  , CAST(is_unique_constraint as sys.bit)
+  , CAST(fill_factor as sys.tinyint)
+  , CAST(is_padded as sys.bit)
+  , CAST(is_disabled as sys.bit)
+  , CAST(is_hypothetical as sys.bit)
+  , CAST(allow_row_locks as sys.bit)
+  , CAST(allow_page_locks as sys.bit)
+  , CAST(has_filter as sys.bit)
+  , CAST(filter_definition as sys.nvarchar)
+  , CAST(auto_created as sys.bit)
+  , CAST(index_id as int)
+from 
+(
+  -- Get all indexes from all system and user tables
+  select
+    X.indrelid as object_id
+    , I.relname as name
+    , case when X.indisclustered then 1 else 2 end as type
+    , case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as type_desc
+    , case when X.indisunique then 1 else 0 end as is_unique
+    , I.reltablespace as data_space_id
+    , 0 as ignore_dup_key
+    , case when X.indisprimary then 1 else 0 end as is_primary_key
+    , case when const.oid is null then 0 else 1 end as is_unique_constraint
+    , 0 as fill_factor
+    , case when X.indpred is null then 0 else 1 end as is_padded
+    , case when X.indisready then 0 else 1 end as is_disabled
+    , 0 as is_hypothetical
+    , 1 as allow_row_locks
+    , 1 as allow_page_locks
+    , 0 as has_filter
+    , null as filter_definition
+    , 0 as auto_created
+    , case when X.indisclustered then 1 else 1+row_number() over(partition by C.oid) end as index_id -- use rownumber to get index_id scoped on each objects
+  from (pg_index X 
+  -- get all the objects on which indexes can be created
+  join pg_class C on C.oid=X.indrelid and C.relkind in ('r', 'm', 'p')
+  -- get list of all indexes grouped by objects
+  cross join pg_class I  
+  )
+  -- to get namespace information
+  left join sys.schemas sch on I.relnamespace = sch.schema_id
+  -- check if index is a unique constraint
+  left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
+  where has_schema_privilege(I.relnamespace, 'USAGE')
+  and I.oid = X.indexrelid 
+  and I.relkind = 'i' 
+  -- index is active
+  and X.indislive 
+  -- filter to get all the objects that belong to sys or babelfish schemas
+  and (sch.schema_id is not null or I.relnamespace::regnamespace::text = 'sys')
+
+  union all 
+  
+-- Create HEAP entries for each system and user table
+  select distinct on (t.oid)
+    t.oid as object_id
+    , null as name
+    , 0 as type
+    , 'HEAP' as type_desc
+    , 0 as is_unique
+    , 1 as data_space_id
+    , 0 as ignore_dup_key
+    , 0 as is_primary_key
+    , 0 as is_unique_constraint
+    , 0 as fill_factor
+    , 0 as is_padded
+    , 0 as is_disabled
+    , 0 as is_hypothetical
+    , 1 as allow_row_locks
+    , 1 as allow_page_locks
+    , 0 as has_filter
+    , null as filter_definition
+    , 0 as auto_created
+    , 0 as index_id
+  from pg_class t
+  left join sys.schemas sch on t.relnamespace = sch.schema_id
+  where t.relkind = 'r'
+  -- filter to get all the objects that belong to sys or babelfish schemas
+  and (sch.schema_id is not null or t.relnamespace::regnamespace::text = 'sys')
+  and has_schema_privilege(t.relnamespace, 'USAGE')
+  and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+
+) as indexes_select order by object_id, type_desc;
+GRANT SELECT ON sys.indexes TO PUBLIC;
+
+create or replace view  sys.sysindexes as
+select
+  i.object_id::integer as id
+  , null::integer as status
+  , null::binary(6) as first
+  , i.index_id::smallint as indid
+  , null::binary(6) as root
+  , 0::smallint as minlen
+  , 1::smallint as keycnt
+  , null::smallint as groupid
+  , 0 as dpages
+  , 0 as reserved
+  , 0 as used
+  , 0::bigint as rowcnt
+  , 0 as rowmodctr
+  , 0 as reserved3
+  , 0 as reserved4
+  , 0::smallint as xmaxlen
+  , null::smallint as maxirow
+  , 90::sys.tinyint as "OrigFillFactor"
+  , 0::sys.tinyint as "StatVersion"
+  , 0 as reserved2
+  , null::binary(6) as "FirstIAM"
+  , 0::smallint as impid
+  , 0::smallint as lockflags
+  , 0 as pgmodctr
+  , null::sys.varbinary(816) as keys
+  , i.name::sys.sysname as name
+  , null::sys.image as statblob
+  , 0 as maxlen
+  , 0 as rows
+from sys.indexes i;
+GRANT SELECT ON sys.sysindexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
+SELECT
+CAST(1 AS SMALLINT) AS SCOPE,
+CAST(coalesce (split_part(a.attoptions[1] COLLATE "C", '=', 2) ,a.attname) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
+
+CASE -- cases for when they are of type identity. 
+	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
+	THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
+	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
+	THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+	ELSE CAST(t1.name AS sys.sysname)
+END AS TYPE_NAME,
+
+CAST(sys.sp_special_columns_precision_helper(COALESCE(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS SMALLINT) AS SCALE,
+CAST(1 AS smallint) AS PSEUDO_COLUMN,
+CASE
+	WHEN a.attnotnull
+	THEN CAST(0 AS INT)
+	ELSE CAST(1 AS INT) END
+AS IS_NULLABLE,
+CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(C.relname AS sys.sysname) AS TABLE_NAME,
+
+CASE 
+	WHEN X.indisprimary
+	THEN CAST('p' AS sys.sysname)
+	ELSE CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
+END AS CONSTRAINT_TYPE,
+CAST(I.relname AS sys.sysname) CONSTRAINT_NAME,
+CAST(X.indexrelid AS int) AS INDEX_ID
+
+FROM( pg_index X
+JOIN pg_class C ON X.indrelid = C.oid
+JOIN pg_class I ON I.oid = X.indexrelid
+CROSS JOIN LATERAL unnest(X.indkey) AS ak(k)
+        LEFT JOIN pg_attribute a
+                       ON (a.attrelid = X.indrelid AND a.attnum = ak.k)
+)
+LEFT JOIN sys.pg_namespace_ext nsp_ext ON C.relnamespace = nsp_ext.oid
+LEFT JOIN sys.schemas s1 ON s1.schema_id = C.relnamespace
+LEFT JOIN sys.columns c1 ON c1.object_id = X.indrelid AND cast(a.attname AS sys.sysname) = c1.name COLLATE sys.database_default
+LEFT JOIN pg_catalog.pg_type AS T ON T.oid = c1.system_type_id
+LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
+LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+, sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
+WHERE has_schema_privilege(s1.schema_id, 'USAGE')
+AND X.indislive ;
+
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
+
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL 
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+
+CREATE OR REPLACE VIEW sys.database_principals AS SELECT
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+CAST(Base.oid AS INT) AS principal_id,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE 
+    WHEN Ext.type = 'S' THEN 'SQL_USER'
+    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL 
+  END 
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME();
+
+CREATE OR REPLACE FUNCTION sys.original_login()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value text;
+begin
+  RETURN (select orig_loginname from sys.babelfish_authid_login_ext where rolname = session_user)::sys.sysname;
+EXCEPTION 
+  WHEN others THEN
+    RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.systypes_precision_helper(IN type TEXT, IN max_length SMALLINT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	precision SMALLINT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	CASE
+	WHEN v_type in ('text', 'ntext', 'image') THEN precision = CAST(NULL AS SMALLINT);
+	WHEN v_type in ('nchar', 'nvarchar', 'sysname') THEN precision = max_length/2;
+	WHEN v_type = 'sql_variant' THEN precision = 0;
+	ELSE
+		precision = max_length;
+	END CASE;
+	RETURN precision;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE VIEW sys.systypes AS
+SELECT CAST(name as sys.sysname) as name
+  , CAST(system_type_id as int) as xtype
+  , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
+  , max_length as length
+  , CAST(precision as sys.tinyint) as xprec
+  , CAST(scale as sys.tinyint) as xscale
+  , CAST(default_object_id as int) as tdefault
+  , CAST(rule_object_id as int) as domain
+  , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
+  , CAST(0 as smallint) as reserved
+  , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
+  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
+          else 0 end) as sys.bit) as variable
+  , CAST(is_nullable as sys.bit) as allownulls
+  , CAST(system_type_id as int) as type
+  , CAST(null as sys.varchar(255)) as printfmt
+  , (case when precision <> 0::smallint then precision 
+      else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
+  , CAST(scale as sys.tinyint) as scale
+  , CAST(collation_name as sys.sysname) as collation
+FROM sys.types;
+GRANT SELECT ON sys.systypes TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
+RETURNS sys.NVARCHAR(4000)
+AS $$
+DECLARE
+    definition sys.nvarchar(4000);
+BEGIN
+
+    definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
+    IF (definition IS NULL)
+    THEN
+        definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
+        IF (definition IS NULL)
+        THEN
+            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            IF (definition IS NULL)
+            THEN
+                RETURN NULL;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN definition;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.openquery(
+IN linked_server text,
+IN query text)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'openquery_internal'
+LANGUAGE C VOLATILE;
+
+CREATE OR REPLACE FUNCTION sys.OBJECT_SCHEMA_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
+RETURNS sys.SYSNAME AS
+'babelfishpg_tsql', 'object_schema_name'
+LANGUAGE C STABLE;
+
+create or replace view sys.shipped_objects_not_in_sys AS
+-- This portion of view retrieves information on objects that reside in a schema in one specfic database.
+-- For example, 'master_dbo' schema can only exist in the 'master' database.
+-- Internally stored schema name (nspname) must be provided.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values
+    ('xp_qv','master_dbo','P'),
+    ('xp_instance_regread','master_dbo','P'),
+    ('sp_addlinkedserver', 'master_dbo', 'P'),
+    ('sp_addlinkedsrvlogin', 'master_dbo', 'P'),
+    ('sp_dropserver', 'master_dbo', 'P'),
+    ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
+    ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
+    ('syspolicy_configuration', 'msdb_dbo', 'V'),
+    ('syspolicy_system_health_state', 'msdb_dbo', 'V')
+) t(name,schema_name, type)
+inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
+
+union all
+
+-- This portion of view retrieves information on objects that reside in a schema in any number of databases.
+-- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values
+    ('sysdatabases','dbo','V')
+) t (name, schema_name, type)
+inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
+inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
+GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
+
+-- Disassociate procedures under master_dbo schema from the extension
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_addlinkedserver(sys.sysname, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.nvarchar, sys.sysname)');
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_addlinkedsrvlogin(sys.sysname, sys.varchar, sys.sysname, sys.sysname, sys.sysname)');
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_dropserver(sys.sysname, sys.bpchar)');
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.sp_droplinkedsrvlogin(sys.sysname, sys.sysname)');
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If security account is not specified, return info about all users
+	IF @name_in_db IS NULL
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public'
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE LogExt.orig_loginname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext1.type != 'R'
+		AND Ext1.orig_username != 'db_owner'
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is the db fixed role - db_owner
+    ELSE IF @name_in_db = 'db_owner'
+	BEGIN
+		-- TODO: Need to change after we can add/drop members to/from db_owner
+		SELECT CAST('db_owner' AS SYS.SYSNAME) AS 'Role_name',
+			   ROLE_ID('db_owner') AS 'Role_id',
+			   CAST('dbo' AS SYS.SYSNAME) AS 'Users_in_role',
+			   USER_ID('dbo') AS 'Userid';
+	END
+	-- If the security account is a db role
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
+			   CAST(Base1.oid AS INT) AS 'Role_id',
+			   CAST(Ext2.orig_username AS SYS.SYSNAME) AS 'Users_in_role',
+			   CAST(Base2.oid AS INT) AS 'Userid'
+		FROM sys.babelfish_authid_user_ext AS Ext2
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.rolname = Ext2.rolname
+		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY Role_name, Users_in_role;
+	END
+	-- If the security account is a user
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type != 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public' 
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE LogExt.orig_loginname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext1.type != 'R'
+		AND Ext1.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is not valid
+	ELSE 
+		RAISERROR ( 'The name supplied (%s) is not a user, role, or aliased login.', 16, 1, @name_in_db);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
+                                                        IN arg TEXT,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+	IF try THEN
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
+    ELSE
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
+                                                        IN arg ANYELEMENT,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+	IF try THEN
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
+    ELSE
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg TEXT,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS sys.VARCHAR);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+
+	CASE pg_typeof(arg)
+	WHEN 'date'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'time'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+		END IF;
+	WHEN 'sys.datetime'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+		ELSE
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		END IF;
+	WHEN 'float'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'sys.money'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money);
+		ELSE
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money, p_style);
+		END IF;
+	ELSE
+		RETURN CAST(arg AS sys.VARCHAR);
+	END CASE;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
+														IN arg TEXT,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+DROP PROCEDURE sys.babelfish_remove_object_from_extension(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

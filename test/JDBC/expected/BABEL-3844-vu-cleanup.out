@@ -1,0 +1,64 @@
+-- tsql
+drop user [babel\aduser1];
+GO
+
+drop user test_user;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_test_user" does not exist)~~
+
+
+drop login [babel\aduser1];
+GO
+
+drop user [babel\aduser2];
+GO
+
+drop login [babel\aduser2];
+GO
+
+drop user [abc];
+GO
+
+drop login [babel\aduser3];
+GO
+
+drop user pass;
+GO
+
+drop login pass;
+GO
+
+drop user pass2;
+GO
+
+drop login pass2;
+GO
+
+use testdb;
+GO
+
+drop user [babel\testuser];
+GO
+
+drop login [babel\testuser];
+GO
+
+use master;
+GO
+
+drop role test_role;
+GO
+
+drop database testdb;
+GO
+
+-- psql
+do 
+$$ begin 
+    if exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
+        then DROP ROLE rds_ad; 
+    end if; 
+end $$;
+GO

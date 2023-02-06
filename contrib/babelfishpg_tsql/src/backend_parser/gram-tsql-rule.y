@@ -1641,6 +1641,109 @@ table_ref:	relation_expr tsql_table_hint_expr
 					$2->alias = $3;
 					$$ = (Node *) $2;
 				}
+			| TSQL_APPLY openjson_expr
+				{
+					/*
+					 * This case handles openjson cross/outer apply
+					 */
+					$$ = (Node *) $2;
+				}
+			| openjson_expr
+				{
+					/*
+					 * Standard openjson case
+					 */
+					$$ = (Node *) $1;
+				}
+		;
+
+openjson_expr: OPENJSON '(' a_expr  ')' opt_alias_clause
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->alias = $5;
+					n->lateral = false;
+					n->ordinality = false;
+					n->is_rowsfrom = false;
+					n->functions = list_make1(list_make2(TsqlOpenJSONSimpleMakeFuncCall($3, NULL), NIL));
+					/* map to OPENJSON_SIMPLE */
+					$$ = (Node*) n;
+				}
+			| OPENJSON '(' a_expr ',' a_expr ')' opt_alias_clause
+				{
+					RangeFunction *n = makeNode(RangeFunction);
+					n->alias = $7;
+					n->lateral = false;
+					n->ordinality = false;
+					n->is_rowsfrom = false;
+					n->functions = list_make1(list_make2(TsqlOpenJSONSimpleMakeFuncCall($3, $5), NIL));
+					/* map to OPENJSON_SIMPLE */
+					$$ = (Node*) n;
+				}
+			| OPENJSON '(' a_expr ')' WITH_paren '(' openjson_col_defs ')' opt_alias_clause
+				{
+					/* map to OPENJSON_WITH */
+
+					RangeFunction *n = (RangeFunction *) TsqlOpenJSONWithMakeFuncCall($3, (Node*) makeStringConst("$", -1), $7, $9);
+					n->lateral = false;
+					n->ordinality = false;
+					n->is_rowsfrom = false;
+					$$ = (Node*) n;
+				}
+			| OPENJSON '(' a_expr ',' a_expr ')' WITH_paren '(' openjson_col_defs ')' opt_alias_clause
+				{
+					/* map to OPENJSON_WITH */
+
+					RangeFunction *n = (RangeFunction *) TsqlOpenJSONWithMakeFuncCall($3, $5, $9, $11);
+					n->lateral = false;
+					n->ordinality = false;
+					n->is_rowsfrom = false;
+					$$ = (Node*) n;
+				}
+		;
+
+
+openjson_col_defs: openjson_col_def
+				{
+					$$ = list_make1($1);
+				}
+			| openjson_col_defs ',' openjson_col_def
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+openjson_col_def: ColId Typename optional_path optional_asJson
+				{
+					/* create col_def_struct */
+					OpenJson_Col_Def *n = (OpenJson_Col_Def *) palloc(sizeof(OpenJson_Col_Def));
+					n->elemName = $1;
+					n->elemType = $2;
+					n->elemPath = $3;
+					n->asJson = $4;
+					$$ = (Node*) n;
+				}
+		;
+
+optional_path:
+			Sconst
+				{
+					$$ = $1;
+				}
+			| /* EMPTY */
+				{
+					$$ = "";
+				}
+		;
+
+optional_asJson:
+			AS TSQL_JSON
+				{
+					$$ = true;
+				}
+			| /* EMPTY */
+				{
+					$$ = false;
+				}
 		;
 
 joined_table:
@@ -1734,6 +1837,13 @@ func_expr_common_subexpr:
 			| TSQL_DATEDIFF '(' datediff_arg ',' a_expr ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datediff"),
+											   list_make3(makeStringConst($3, @3), $5, $7),
+											   COERCE_EXPLICIT_CALL,
+											   @1);
+				}
+			| TSQL_DATEDIFF_BIG '(' datediff_arg ',' a_expr ',' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datediff_big"),
 											   list_make3(makeStringConst($3, @3), $5, $7),
 											   COERCE_EXPLICIT_CALL,
 											   @1);
@@ -4150,6 +4260,7 @@ createdb_opt_item:
 			;
 col_name_keyword:
 			  TSQL_NVARCHAR
+			| OPENJSON
 			;
 
 unreserved_keyword:
@@ -4249,6 +4360,7 @@ reserved_keyword:
 			| TSQL_CROSS
 			| TSQL_DATEADD
 			| TSQL_DATEDIFF
+			| TSQL_DATEDIFF_BIG
 			| TSQL_DATENAME
 			| TSQL_DATEPART
 			| TSQL_IIF

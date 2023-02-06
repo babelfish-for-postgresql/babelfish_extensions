@@ -908,7 +908,7 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 void
 report_info_or_warning(int elevel, char* message)
 {
-	ereport(WARNING, errmsg("%s", message));
+	ereport(elevel, errmsg("%s", message));
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
@@ -1162,4 +1162,117 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
 	db_id_from_schema = get_dbid_from_physical_schema_name(schema_name, true);
 	pfree(schema_name);
 	return (db_id_from_schema == db_id);
+}
+
+/*
+ * remove_trailing_spaces
+ * 		Remove trailing spaces from a string
+ */
+void remove_trailing_spaces(char *name)
+{
+	int len = strlen(name);
+	while (len > 0 && isspace((unsigned char) name[len - 1]))
+		name[--len] = '\0';
+}
+
+/*
+ * tsql_get_proc_nsp_oid
+ * Given Oid of pg_proc entry return namespace_oid
+ * Returns InvalidOid if Oid is not found
+ */
+Oid 
+tsql_get_proc_nsp_oid(Oid object_id)
+{
+	Oid namespace_oid = InvalidOid;
+	HeapTuple tuple;
+	bool isnull;
+
+	/* retrieve pronamespace in pg_proc by oid */
+	tuple = SearchSysCache1(PROCOID, CStringGetDatum(object_id));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		(void) SysCacheGetAttr(PROCOID, tuple,
+								Anum_pg_proc_pronamespace,
+								&isnull);		
+		if(!isnull)
+		{
+			Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tuple);
+			namespace_oid = proc->pronamespace;
+		}
+		ReleaseSysCache(tuple);
+	}
+	return namespace_oid;
+}
+
+/*
+ * tsql_get_constraint_nsp_oid
+ * Given Oid of pg_constraint entry return namespace_oid
+ * Returns InvalidOid if Oid is not found
+ */
+Oid 
+tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
+
+	Oid namespace_oid = InvalidOid;
+	HeapTuple tuple;
+	bool isnull;
+
+	/* retrieve connamespace in pg_constraint by oid */
+	tuple = SearchSysCache1(CONSTROID, CStringGetDatum(object_id));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		(void) SysCacheGetAttr(CONSTROID, tuple,
+								Anum_pg_constraint_connamespace,
+								&isnull);
+		if(!isnull)
+		{
+			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+			if (OidIsValid(con->oid))
+			{
+				/* user should have permission of table associated with constraint */
+				if (OidIsValid(con->conrelid))
+				{
+					if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+						namespace_oid = con->connamespace;
+				}
+			}
+		}
+		ReleaseSysCache(tuple);
+	}
+	return namespace_oid;
+}
+/*
+ * tsql_get_trigger_rel_oid
+ * Given Oid of pg_trigger entry return Oid of table
+ * the trigger is on
+ * Returns InvalidOid if Oid is not found
+ */
+Oid
+tsql_get_trigger_rel_oid(Oid object_id){
+
+	Relation		tgrel;
+	ScanKeyData 	key[1];
+	SysScanDesc 	tgscan;
+	HeapTuple		tuple;
+	Oid tgrelid = InvalidOid;
+
+	/* retrieve tgrelid in pg_trigger by oid */
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
+	ScanKeyInit(&key[0],
+				Anum_pg_trigger_oid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object_id));
+
+	tgscan = systable_beginscan(tgrel, TriggerOidIndexId,
+								true, NULL, 1, key);
+
+	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger trig = (Form_pg_trigger) GETSTRUCT(tuple);
+		tgrelid = trig->tgrelid;
+	}
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+	return tgrelid;
 }

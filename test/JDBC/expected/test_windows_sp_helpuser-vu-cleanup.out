@@ -1,0 +1,24 @@
+-- tsql
+drop user [bbf\ad_sp_helpuser];
+GO
+
+drop login [bbf\ad_sp_helpuser];
+GO
+
+drop user pass_sp_helpuser;
+GO
+
+drop login pass_sp_helpuser;
+GO
+
+drop table temp_sp_helpuser;
+GO
+
+-- psql
+do 
+$$ begin 
+    if exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
+        then DROP ROLE rds_ad; 
+    end if; 
+end $$;
+GO

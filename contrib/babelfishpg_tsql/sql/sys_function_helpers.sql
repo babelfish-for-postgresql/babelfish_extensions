@@ -9649,7 +9649,7 @@ STABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg TEXT,
                                                         IN try BOOL,
-                                                        IN p_style NUMERIC DEFAULT 0)
+                                                        IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.VARCHAR
 AS
 $BODY$
@@ -9667,7 +9667,7 @@ STABLE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg ANYELEMENT,
                                                         IN try BOOL,
-                                                        IN p_style NUMERIC DEFAULT 0)
+                                                        IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.VARCHAR
 AS
 $BODY$
@@ -9684,7 +9684,7 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg TEXT,
-														IN p_style NUMERIC DEFAULT 0)
+														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.VARCHAR
 AS
 $BODY$
@@ -9697,24 +9697,48 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
-														IN p_style NUMERIC DEFAULT 0)
+														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.VARCHAR
 AS
 $BODY$
+DECLARE
+	v_style SMALLINT;
 BEGIN
+	v_style := floor(p_style)::SMALLINT;
+
 	CASE pg_typeof(arg)
 	WHEN 'date'::regtype THEN
-		RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+		END IF;
 	WHEN 'time'::regtype THEN
-		RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+		END IF;
 	WHEN 'sys.datetime'::regtype THEN
-		RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+		ELSE
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		END IF;
 	WHEN 'float'::regtype THEN
-		RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+		END IF;
 	WHEN 'sys.money'::regtype THEN
-		RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money, p_style);
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money);
+		ELSE
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money, p_style);
+		END IF;
 	ELSE
-        RETURN CAST(arg AS sys.VARCHAR);
+		RETURN CAST(arg AS sys.VARCHAR);
 	END CASE;
 END;
 $BODY$
@@ -9723,7 +9747,7 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
 														IN arg TEXT,
-														IN p_style NUMERIC DEFAULT 0)
+														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.VARCHAR
 AS
 $BODY$
@@ -9739,7 +9763,7 @@ STABLE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
 														IN arg anyelement,
-														IN p_style NUMERIC DEFAULT 0)
+														IN p_style NUMERIC DEFAULT -1)
 RETURNS sys.VARCHAR
 AS
 $BODY$
@@ -10294,10 +10318,10 @@ CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoi
 RETURNS text
 AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER) RETURNS INTEGER AS $$
+CREATE OR REPLACE FUNCTION sys.num_days_in_date(IN d1 BIGINT, IN m1 BIGINT, IN y1 BIGINT) RETURNS BIGINT AS $$
 DECLARE
-	i INTEGER;
-	n1 INTEGER;
+	i BIGINT;
+	n1 BIGINT;
 BEGIN
 	n1 = y1 * 365 + d1;
 	FOR i in 0 .. m1-2 LOOP
@@ -10317,4 +10341,9 @@ BEGIN
 	return n1;
 END
 $$
-LANGUAGE plpgsql STABLE;
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_is_shared_schema(IN schemaname TEXT)
+RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_shared_schema_wrapper'
+LANGUAGE C IMMUTABLE STRICT;

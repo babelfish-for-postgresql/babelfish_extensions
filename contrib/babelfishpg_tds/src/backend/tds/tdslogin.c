@@ -51,6 +51,7 @@
 #include "parser/scansup.h"
 #include "utils/guc.h"
 #include "utils/acl.h"
+#include "utils/formatting.h"
 #include "utils/lsyscache.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
@@ -410,39 +411,60 @@ ProcessVersionNumber(const char* inputString)
 	return version_arr;
 }
 
-static void
-SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
-						StringInfo reqVal, bool loadSsl, int *loadEncryption)
-{
+static int makeVersionByte(int byteNum){
 	int *version_pnt;
 	int MajorVersion;
 	int MinorVersion;
 	int MicroVersion;
 
+	Assert(product_version != NULL);
+	Assert(byteNum <= 3);
+	if(pg_strcasecmp(product_version,"default") == 0)
+		version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
+	else
+		version_pnt = ProcessVersionNumber(product_version);
+		
+	MajorVersion = *(version_pnt + 0);
+	MinorVersion = *(version_pnt + 1);
+	MicroVersion = *(version_pnt + 2);
+
+	if(byteNum == 0){
+		return MajorVersion & 0xFF;
+	} 
+	else if (byteNum == 1)
+	{
+		return MinorVersion & 0xFF;
+	}
+	else if (byteNum == 2)
+	{
+		if (MicroVersion <= 0xFF)
+		{
+			return 0x00;
+		}
+		else
+		{
+			return (MicroVersion >> 8) & 0xFF;
+		}
+	}
+	else if (byteNum == 3)
+	{
+		return MicroVersion & 0xFF;
+	}
+
+	return 0;
+}
+
+static void
+SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
+						StringInfo reqVal, bool loadSsl, int *loadEncryption)
+{
 	switch(token)
 	{
 		case TDS_PRELOGIN_VERSION:
-			if(pg_strcasecmp(product_version,"default") == 0)
-				version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
-			else
-				version_pnt = ProcessVersionNumber(product_version);
-
-			MajorVersion = *(version_pnt + 0);
-			MinorVersion = *(version_pnt + 1);
-			MicroVersion = *(version_pnt + 2);
-			appendStringInfoChar(val, MajorVersion & 0xFF);
-			appendStringInfoChar(val, MinorVersion & 0xFF);
-			if (MicroVersion <= 0xFF)
-			{
-				appendStringInfoChar(val, 0x00);
-				appendStringInfoChar(val, MicroVersion & 0xFF);
-			} 
-			else 
-			{
-				appendStringInfoChar(val, (MicroVersion >> 8) & 0xFF);
-				appendStringInfoChar(val, MicroVersion & 0xFF);
-			}
-			/* Subbuild Version 0x0000 */
+			appendStringInfoChar(val, makeVersionByte(0));
+			appendStringInfoChar(val, makeVersionByte(1));
+			appendStringInfoChar(val, makeVersionByte(2));
+			appendStringInfoChar(val, makeVersionByte(3));
 			appendStringInfoChar(val, 0x00);
 			appendStringInfoChar(val, 0x00);
 			break;
@@ -1383,6 +1405,20 @@ SendGSSAuthResponse(Port *port, char *extradata, uint16_t extralen)
 	TDSInstrumentation(INSTR_TDS_TOKEN_SSPI);
 }
 
+static char *
+convertUsernameToCanonicalform(char *user_name)
+{
+	char *canonicalUsername = "";
+	char *chr;
+	if ((chr = strchr(user_name, '@')) != NULL)
+	{
+		canonicalUsername = psprintf("%s%s",
+									 str_tolower(user_name, (chr - user_name), C_COLLATION_OID),
+									 str_toupper(chr, strlen(chr), C_COLLATION_OID));
+		return canonicalUsername;
+	}
+	return user_name;
+}
 /*
  * This function is similar to pg_GSS_recvauth() but to authenticate a TDS
  * client.
@@ -1398,6 +1434,7 @@ CheckGSSAuth(Port *port)
 	int			ret;
 	gss_buffer_desc gbuf;
 	MemoryContext	oldContext;
+	char 		*at_pos = NULL;
 
 	if (pg_krb_server_keyfile && strlen(pg_krb_server_keyfile) > 0)
 	{
@@ -1532,13 +1569,12 @@ CheckGSSAuth(Port *port)
 
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	pfree(port->user_name);
-	port->user_name = pstrdup(gbuf.value);
-	if (strchr(gbuf.value, '@'))
+	port->user_name = convertUsernameToCanonicalform(gbuf.value);
+	if ((at_pos = strchr(gbuf.value, '@')) != NULL && loginInfo)
 	{
-		char       *cp = strchr(gbuf.value, '@');
-		cp++;
-		if (loginInfo)
-			loginInfo->domainname = pstrdup(cp);
+		/* skip '@' */
+		at_pos++;
+		loginInfo->domainname = pstrdup(at_pos);
 	}
 	MemoryContextSwitchTo(oldContext);
 
@@ -1990,11 +2026,7 @@ TdsSendLoginAck(Port *port)
 	Oid roleid = InvalidOid;
 	MemoryContext  oldContext;
 	uint32_t tdsVersion = pg_hton32(loginInfo->tdsVersion);
-
-	/* TODO: should these version numbers be hardcoded? */
-	char srvVersionBytes[] = {
-		0x0C, 0x00, 0x07, 0xd0
-	};
+	char	srvVersionBytes[4];
 
 	PG_TRY();
 	{
@@ -2245,6 +2277,11 @@ TdsSendLoginAck(Port *port)
 		TdsUTF8toUTF16StringInfo(&buf, default_server_name, prognameLen);
 		TdsPutbytes(buf.data, buf.len);
 
+		srvVersionBytes[0] = makeVersionByte(0);
+		srvVersionBytes[1] = makeVersionByte(1);
+		srvVersionBytes[2] = makeVersionByte(2);
+		srvVersionBytes[3] = makeVersionByte(3);
+		
 		TdsPutbytes(&srvVersionBytes, sizeof(srvVersionBytes));
 
 		pfree(buf.data);

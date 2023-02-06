@@ -180,7 +180,7 @@ protected:
 		antlrcpp::Any visitFunction_call(TSqlParser::Function_callContext *ctx) override;
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
 		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override {
-			if (!ctx->open_json()) {
+			if (!ctx->open_json() && !ctx->open_query()) {
 				handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx));
 			}
 			return visitChildren(ctx);
@@ -1296,8 +1296,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunction_call(TSqlParser::Function_callContext *ctx)
 {
-	if (ctx->NEXT())
-		handle(INSTR_UNSUPPORTED_TSQL_NEXT_VALUE_FOR, "NEXT VALUE FOR", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
@@ -1534,7 +1532,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_procoption",
 	"sp_recompile",
 	"sp_refreshview",
-	"sp_rename",
 	"sp_renamedb",
 	"sp_resetstatus",
 	"sp_sequence_get_range",
@@ -1578,7 +1575,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_generate_database_ledger_digest",
 	"sp_grantdbaccess",
 	"sp_grantlogin",
-	"sp_helplinkedsrvlogin",
 	"sp_helplogins",
 	"sp_helpntgroup",
 	"sp_helpremotelogin",

@@ -1,0 +1,9 @@
+-- tsql
+drop login babel_2571_login1
+go
+
+drop database babel_2571_db_guest;
+go
+
+drop database babel_2571_db_no_guest;
+go

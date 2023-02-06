@@ -1,0 +1,39 @@
+-- tsql
+-- positive test cases
+alter user [bbf\alter_user_test] with name = alter_user_test;
+GO
+
+select rolname, login_name, default_schema_name from babelfish_authid_user_ext where rolname = 'master_alter_user_test';
+GO
+
+alter user alter_user_test with default_schema = ad_schema;
+GO
+
+select rolname, login_name, default_schema_name from babelfish_authid_user_ext where rolname = 'master_alter_user_test';
+GO
+
+alter user alter_user_test with default_schema = NULL;
+GO
+
+select rolname, login_name, default_schema_name from babelfish_authid_user_ext where rolname = 'master_alter_user_test';
+GO
+
+-- negative test cases
+alter user alter_user_test with login = [bbf\alter_user2];
+GO
+
+alter user alter_user_test with password = 123;
+GO
+
+alter user alter_user_test with default_language = English;
+GO
+
+alter user alter_user_test with default_language = German;
+GO
+
+alter user alter_user_test with ALLOW_ENCRYPTED_VALUE_MODIFICATIONS = ON;
+GO
+
+-- random input
+alter user alter_user_test with random = 'testing';
+GO

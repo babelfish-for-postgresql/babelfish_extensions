@@ -13,7 +13,7 @@ go
 CREATE SCHEMA babel_2418_schema2
 go
 
-SELECT nspname FROM sys.babelfish_namespace_ext;
+SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname;
 go
 
 USE master
@@ -22,5 +22,5 @@ go
 DROP DATABASE babel_2418_db
 go
 
-SELECT nspname FROM sys.babelfish_namespace_ext;
+SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname;
 go
