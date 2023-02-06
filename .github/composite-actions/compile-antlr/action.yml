@@ -21,6 +21,8 @@ runs:
         unzip -d antlr4 "antlr4-cpp-runtime-$ANTLR_VERSION-source.zip"
         cd antlr4
         mkdir build && cd build
+        export CMAKE_C_COMPILER_LAUNCHER=ccache
+        export CMAKE_CXX_COMPILER_LAUNCHER=ccache
         cmake .. -D ANTLR_JAR_LOCATION="/usr/local/lib/antlr-$ANTLR_VERSION-complete.jar" -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
         make -j 4
         sudo make install
