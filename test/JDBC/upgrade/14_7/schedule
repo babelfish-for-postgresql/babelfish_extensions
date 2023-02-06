@@ -356,6 +356,9 @@ sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
+BABEL-3748
+openjson
+BABEL-3702
 sys-sysindexes
 sys-system_objects
 ISC-Tables
@@ -387,3 +390,4 @@ Test-sp_rename-dep
 BABEL-3657
 Test-sp_babelfish_volatility
 BABEL-733
+BABEL-3938
