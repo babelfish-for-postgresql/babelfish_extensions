@@ -65,3 +65,12 @@ GO
 
 DROP TABLE babel_object_name_t1
 GO
+
+DROP VIEW babel_object_name_shared_schema_v1
+GO
+
+DROP VIEW babel_object_name_shared_schema_v2
+GO
+
+DROP VIEW babel_object_name_shared_schema_v3
+GO
