@@ -26,6 +26,10 @@ GO
 EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
 GO
 
+-- Try to call sp_helplinkedsrvlogin with correct server name but login name = NULL. Also modifying the case of servername.  should return all mapppings of the given server
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'MSSQL_server'
+GO
+
 -- Try to call sp_helplinkedsrvlogin with correct server name but login name = NULL.  should return all mapppings of the given server
 EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server'
 GO
@@ -57,8 +61,8 @@ GO
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = "login_1"
 GO
 
--- drop all the linked server logins that have been created
-EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server2", @locallogin = NULL
+-- drop all the linked server logins that have been created (case insensitive)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "MSSQL_server2", @locallogin = NULL
 GO
 
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server3", @locallogin = NULL
@@ -79,8 +83,8 @@ GO
 EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'definitely_invalid'
 GO
 
--- Dropping a server without droplogins should also drop the server and the linked login
-EXEC sp_dropserver @server = 'mssql_server', @droplogins = NULL
+-- Dropping a server without droplogins should also drop the server and the linked login and modifying the case of servername
+EXEC sp_dropserver @server = 'MSSQL_server', @droplogins = NULL
 GO
 
 SELECT * FROM sys.servers WHERE name = 'mssql_server'
