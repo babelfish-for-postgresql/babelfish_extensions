@@ -52,3 +52,51 @@ t1_a2#!#<row id="2" a="t2_a2"/>
 <NULL>#!#<row id="3"/>
 ~~END~~
 
+
+-- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
+EXEC forxml_subquery_vu_p_empty
+GO
+~~START~~
+ntext
+~~END~~
+
+
+SELECT @@rowcount
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC forxml_subquery_vu_p_empty_xml
+GO
+~~START~~
+xml
+~~END~~
+
+
+SELECT @@rowcount
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- exercise result internal functions
+SELECT * FROM forxml_subquery_vu_v_internal
+GO
+~~START~~
+xml
+<abcd/>
+~~END~~
+
+
+SELECT * FROM forxml_subquery_vu_v_internal_text
+GO
+~~START~~
+ntext
+<abcd/>
+~~END~~
+
