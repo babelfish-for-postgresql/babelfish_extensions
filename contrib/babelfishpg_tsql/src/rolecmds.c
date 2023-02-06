@@ -2059,6 +2059,7 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 		pfree(new_record);
 		pfree(new_record_nulls);
 		edata = CopyErrorData();
+		FlushErrorState();
 		MemoryContextSwitchTo(ectx);
 
 		ereport(ERROR,
