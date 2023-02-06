@@ -135,6 +135,7 @@ BABEL-3486
 BABEL-3474
 BABEL-3614
 BABEL-3646
+BABEL-3748
 BABEL-383
 BABEL-405
 BABEL-937
@@ -352,6 +353,8 @@ babelfish_integrity_checker
 get_tds_id
 BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-3655
+BABEL-3702
+openjson
 sys-table_types_internal
 sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
@@ -391,3 +394,4 @@ Test-sp_rename
 Test-sp_rename-dep
 BABEL-3657
 BABEL-733
+BABEL-3938

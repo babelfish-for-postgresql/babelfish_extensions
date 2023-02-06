@@ -42,6 +42,7 @@ BABEL-3221
 BABEL-3204
 BABEL-3234
 BABEL-3402
+BABEL-3748-before-14_7
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
 sys-all_parameters
@@ -304,3 +305,4 @@ BABEL_SCHEMATA
 BABEL-SP_FKEYS
 BABEL-SP_FKEYS-dep
 BABEL-3657
+BABEL-3938

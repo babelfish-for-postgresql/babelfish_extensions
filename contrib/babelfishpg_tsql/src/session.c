@@ -264,6 +264,7 @@ Datum sp_set_session_context(PG_FUNCTION_ARGS)
 	char *key;
 	bool found;
 	MemoryContext oldContext;
+	int i;
 
 	if (PG_ARGISNULL(0))
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -273,6 +274,11 @@ Datum sp_set_session_context(PG_FUNCTION_ARGS)
 	if (strlen(key) == 0)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			errmsg("The parameters supplied for the procedure \"sp_set_session_context\" are not valid.")));
+
+	/* Strip Whitespace */
+	i = strlen(key);
+	while (i > 0 && isspace((unsigned char) key[i - 1]))
+		key[--i] = '\0';
 
 	if (!session_context_table)
 		initialize_context_table();
@@ -307,6 +313,7 @@ Datum session_context(PG_FUNCTION_ARGS)
 	char *key;
 	SessionCxtEntry *result_entry;
 	VarChar *key_arg;
+	int i;
 
 	if (!session_context_table)
 		PG_RETURN_NULL();
@@ -317,6 +324,11 @@ Datum session_context(PG_FUNCTION_ARGS)
 
 	key_arg = PG_GETARG_VARCHAR_PP(0);
 	key = str_tolower(VARDATA_ANY(key_arg), VARSIZE_ANY_EXHDR(key_arg), DEFAULT_COLLATION_OID);
+			
+	/* Strip Whitespace */
+	i = strlen(key);
+	while (i > 0 && isspace((unsigned char) key[i - 1]))
+		key[--i] = '\0';
 
 	result_entry = (SessionCxtEntry*) hash_search(session_context_table, key, HASH_FIND, NULL);
 	pfree(key);

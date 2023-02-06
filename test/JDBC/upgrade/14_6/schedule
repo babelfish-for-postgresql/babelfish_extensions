@@ -131,6 +131,7 @@ BABEL-3486
 BABEL-3474
 BABEL-3614
 BABEL-3646
+BABEL-3748-before-14_7
 BABEL-383
 BABEL-405
 BABEL-937
@@ -337,6 +338,7 @@ sys-table_types_internal-dep
 BABEL-CHECK-CONSTRAINT
 BABEL-3640
 ISC-Views
+openjson
 sys_server_principals_dep
 sys_database_principals_dep
 case_insensitive_collation
@@ -353,3 +355,4 @@ datediff_internal_date-before-14_7-or-15_2
 BABEL_OBJECT_NAME
 BABEL_SCHEMATA
 BABEL-3657
+BABEL-3938

@@ -709,6 +709,150 @@ int#!#int
 ~~END~~
 
 
+-- scope_identity in where clause should use index (BABEL-3384)
+CREATE TABLE dbo.test_identity_index (id INT IDENTITY(1,1) PRIMARY KEY, mycol INT)
+go
+
+INSERT INTO dbo.test_identity_index SELECT 10 FROM generate_series(1,10);
+go
+~~ROW COUNT: 10~~
+
+
+CREATE TABLE dbo.test_numeric_index (num_index NUMERIC PRIMARY KEY, mycol INT)
+go
+
+INSERT INTO dbo.test_numeric_index VALUES(10,10);
+go
+~~ROW COUNT: 1~~
+
+
+SELECT scope_identity();
+go
+~~START~~
+numeric
+10
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
+SET babelfish_showplan_all ON;
+go
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id = scope_identity();
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE id = scope_identity()
+Index Scan using test_identity_index_pkey on test_identity_index
+  Index Cond: (id = babelfish_get_last_identity())
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE scope_identity() = id;
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE scope_identity() = id
+Index Scan using test_identity_index_pkey on test_identity_index
+  Index Cond: (id = babelfish_get_last_identity())
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id = @@identity;
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE id = @@identity
+Index Scan using test_identity_index_pkey on test_identity_index
+  Index Cond: (id = babelfish_get_last_identity())
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE dbo.test_identity_index.id = scope_identity();
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE dbo.test_identity_index.id = scope_identity()
+Index Scan using test_identity_index_pkey on test_identity_index
+  Index Cond: (id = babelfish_get_last_identity())
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id > scope_identity();
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE id > scope_identity()
+Bitmap Heap Scan on test_identity_index
+  Recheck Cond: (id > babelfish_get_last_identity())
+  ->  Bitmap Index Scan on test_identity_index_pkey
+        Index Cond: (id > babelfish_get_last_identity())
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id != scope_identity();
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE id != scope_identity()
+Seq Scan on test_identity_index
+  Filter: (id <> babelfish_get_last_identity())
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE @@identity < id;
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE @@identity < id
+Bitmap Heap Scan on test_identity_index
+  Filter: (babelfish_get_last_identity() < id)
+  ->  Bitmap Index Scan on test_identity_index_pkey
+        Index Cond: (id > babelfish_get_last_identity())
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE mycol = 10 AND id = scope_identity();
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE mycol = 10 AND id = scope_identity()
+Index Scan using test_identity_index_pkey on test_identity_index
+  Index Cond: (id = babelfish_get_last_identity())
+  Filter: (mycol = 10)
+~~END~~
+
+
+SELECT id, mycol FROM dbo.test_identity_index WHERE id <= scope_identity() OR mycol = 11;
+go
+~~START~~
+text
+Query Text: SELECT id, mycol FROM dbo.test_identity_index WHERE id <= scope_identity() OR mycol = 11
+Seq Scan on test_identity_index
+  Filter: ((id <= babelfish_get_last_identity()) OR (mycol = 11))
+~~END~~
+
+
+SELECT num_index, mycol FROM dbo.test_numeric_index WHERE num_index = scope_identity();
+go
+~~START~~
+text
+Query Text: SELECT num_index, mycol FROM dbo.test_numeric_index WHERE num_index = scope_identity()
+Index Scan using test_numeric_index_pkey on test_numeric_index
+  Index Cond: (num_index = (((babelfish_get_last_identity())::numeric(38,0))::numeric(38,0))::numeric)
+~~END~~
+
+
+SET babelfish_showplan_all OFF;
+go
+
 -- Clean up
 DROP PROCEDURE insert_test_table1,
 insert_employees,
@@ -724,5 +868,7 @@ dbo.employees,
 dbo.t_neg_inc_1,
 dbo.t1_identity_1,
 dbo.t1_identity_2,
-dbo.test_identity_range
+dbo.test_identity_range,
+dbo.test_identity_index,
+dbo.test_numeric_index
 go
