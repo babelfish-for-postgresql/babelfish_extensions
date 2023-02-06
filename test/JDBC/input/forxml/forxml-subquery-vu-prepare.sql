@@ -43,3 +43,25 @@ go
 create view forxml_subquery_vu_v_correlated_subquery as
 select a, (select * from forxml_subquery_vu_t_t2 where id = t.id for xml raw) as mycol from forxml_subquery_vu_t_t1 t
 go
+
+-- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
+CREATE PROCEDURE forxml_subquery_vu_p_empty AS
+SELECT * FROM forxml_subquery_vu_t_t1
+	WHERE 1 = 0
+	FOR XML RAW
+GO
+
+CREATE PROCEDURE forxml_subquery_vu_p_empty_xml AS
+SELECT * FROM forxml_subquery_vu_t_t1
+	WHERE 1 = 0
+	FOR XML RAW, TYPE
+GO
+
+-- exercise result internal functions
+CREATE VIEW forxml_subquery_vu_v_internal AS
+SELECT * FROM tsql_select_for_xml_result('<abcd/>')
+GO
+
+CREATE VIEW forxml_subquery_vu_v_internal_text AS
+SELECT * FROM tsql_select_for_xml_text_result('<abcd/>')
+GO
