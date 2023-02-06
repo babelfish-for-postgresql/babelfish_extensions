@@ -25,6 +25,14 @@ GO
 EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
 
+-- Try to create linked server with same servername but modifying the case (should throw error)
+EXEC sp_addlinkedserver  @server = N'MSSQL_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "mssql_server" already exists)~~
+
+
 -- Create linked server with valid provider. Also call sp_addlinkedserver from master.dbo schema
 EXEC master.dbo.sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
@@ -88,6 +96,14 @@ GO
 -- Create a linked server login with no @rmtpassword (Won't throw error at creation time but will most likely fail remote login attempt)
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
 GO
+
+--Try to add a linked server login with same server name but different case (should throw an error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'MSSQL_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: user mapping for "master_dbo" already exists for server "mssql_server2")~~
+
 
 -- Create a linked server login with no @rmtuser (Won't throw error at creation time but will most likely fail remote login attempt)
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server3', @useself = 'FALSE', @rmtpassword = 'only_password_no_user'
