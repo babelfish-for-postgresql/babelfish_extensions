@@ -1,0 +1,21 @@
+-- psql
+do 
+$$ begin 
+    if not exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
+        then create role rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION; 
+    end if; 
+end $$;
+GO
+
+-- tsql
+create login [bbf\alter_user] from windows;
+GO
+
+create login [bbf\alter_user2] from windows;
+GO
+
+create user [bbf\alter_user_test] for login [bbf\alter_user];
+GO
+
+create schema ad_schema;
+GO

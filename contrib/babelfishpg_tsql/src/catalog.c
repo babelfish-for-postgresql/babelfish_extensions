@@ -2363,6 +2363,8 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 		case OBJECT_FUNCTION:
 			rename_procfunc_update_bbf_catalog(stmt);
 			break;
+		case OBJECT_SEQUENCE:
+			break;
 		default:
 			break;	
 	}

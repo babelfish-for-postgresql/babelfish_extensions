@@ -1852,6 +1852,22 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
 		END
+	IF @objtype = 'COLUMN'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Column', 1;
+		END
+	IF @objtype = 'INDEX'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
+		END
+	IF @objtype = 'STATISTICS'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
+		END
+	IF @objtype = 'USERDATATYPE'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type User-defined Data Type alias', 1;
+		END
 	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
 		BEGIN
 			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
@@ -1871,8 +1887,6 @@ BEGIN
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
 				FROM STRING_SPLIT(@objname, '.'))
 			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
-			PRINT 'db_name:  ';
-			PRINT sys.db_name();
 			IF @dbname != sys.db_name()
 				BEGIN
 					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
@@ -2378,12 +2392,6 @@ ALTER FUNCTION sys.babelfish_conv_helper_to_time(IN arg anyelement, IN try BOOL,
 ALTER FUNCTION sys.babelfish_try_conv_to_time(IN arg anyelement) STABLE;
 ALTER FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg TEXT, IN try BOOL, IN p_style NUMERIC) STABLE;
 ALTER FUNCTION sys.babelfish_try_conv_to_datetime(IN arg anyelement) STABLE;
-ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg TEXT, IN try BOOL, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT, IN arg ANYELEMENT, IN try BOOL, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg TEXT, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg TEXT, IN p_style NUMERIC) STABLE;
-ALTER FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT, IN arg anyelement, IN p_style NUMERIC) STABLE;
 ALTER FUNCTION sys.babelfish_parse_helper_to_date(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
 ALTER FUNCTION sys.babelfish_parse_helper_to_time(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
 ALTER FUNCTION sys.babelfish_parse_helper_to_datetime(IN arg TEXT, IN try BOOL, IN culture TEXT) STABLE;
@@ -2809,6 +2817,251 @@ CREATE OR REPLACE FUNCTION sys.OBJECT_SCHEMA_NAME(IN object_id INT, IN database_
 RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_schema_name'
 LANGUAGE C STABLE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If security account is not specified, return info about all users
+	IF @name_in_db IS NULL
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public'
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE LogExt.orig_loginname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext1.type != 'R'
+		AND Ext1.orig_username != 'db_owner'
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is the db fixed role - db_owner
+    ELSE IF @name_in_db = 'db_owner'
+	BEGIN
+		-- TODO: Need to change after we can add/drop members to/from db_owner
+		SELECT CAST('db_owner' AS SYS.SYSNAME) AS 'Role_name',
+			   ROLE_ID('db_owner') AS 'Role_id',
+			   CAST('dbo' AS SYS.SYSNAME) AS 'Users_in_role',
+			   USER_ID('dbo') AS 'Userid';
+	END
+	-- If the security account is a db role
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
+			   CAST(Base1.oid AS INT) AS 'Role_id',
+			   CAST(Ext2.orig_username AS SYS.SYSNAME) AS 'Users_in_role',
+			   CAST(Base2.oid AS INT) AS 'Userid'
+		FROM sys.babelfish_authid_user_ext AS Ext2
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.rolname = Ext2.rolname
+		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY Role_name, Users_in_role;
+	END
+	-- If the security account is a user
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type != 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public' 
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE LogExt.orig_loginname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext1.type != 'R'
+		AND Ext1.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is not valid
+	ELSE 
+		RAISERROR ( 'The name supplied (%s) is not a user, role, or aliased login.', 16, 1, @name_in_db);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
+                                                        IN arg TEXT,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+	IF try THEN
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
+    ELSE
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
+                                                        IN arg ANYELEMENT,
+                                                        IN try BOOL,
+                                                        IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+	IF try THEN
+	    RETURN sys.babelfish_try_conv_to_varchar(typename, arg, p_style);
+    ELSE
+	    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg TEXT,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS sys.VARCHAR);
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+	v_style SMALLINT;
+BEGIN
+	v_style := floor(p_style)::SMALLINT;
+
+	CASE pg_typeof(arg)
+	WHEN 'date'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_date_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'time'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_time_to_string(typename, 'TIME', arg, p_style);
+		END IF;
+	WHEN 'sys.datetime'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp);
+		ELSE
+			RETURN sys.babelfish_try_conv_datetime_to_string(typename, 'DATETIME', arg::timestamp, p_style);
+		END IF;
+	WHEN 'float'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg);
+		ELSE
+			RETURN sys.babelfish_try_conv_float_to_string(typename, arg, p_style);
+		END IF;
+	WHEN 'sys.money'::regtype THEN
+		IF v_style = -1 THEN
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money);
+		ELSE
+			RETURN sys.babelfish_try_conv_money_to_string(typename, arg::numeric(19,4)::pg_catalog.money, p_style);
+		END IF;
+	ELSE
+		RETURN CAST(arg AS sys.VARCHAR);
+	END CASE;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
+														IN arg TEXT,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_varchar(IN typename TEXT,
+														IN arg anyelement,
+														IN p_style NUMERIC DEFAULT -1)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RETURN sys.babelfish_conv_to_varchar(typename, arg, p_style);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -2766,22 +2766,40 @@ Datum sp_rename_internal(PG_FUNCTION_ARGS)
 		
 		//4. for each obj type, generate the corresponding RenameStmt
 		// update variables based on the target objtype
-		if (strcmp(objtype, "U") == 0) {
+		if (strcmp(objtype, "U") == 0 || strcmp(objtype, "IT") == 0 || strcmp(objtype, "S") == 0 ||
+			strcmp(objtype, "ET") == 0) {
 			objtype_code = OBJECT_TABLE;
 			process_util_querystr = "(ALTER TABLE )";
 		} else if (strcmp(objtype, "V") == 0) {
 			objtype_code = OBJECT_VIEW;
 			process_util_querystr = "(ALTER VIEW )";
-		} else if (strcmp(objtype, "P") == 0) {
+		} else if (strcmp(objtype, "P") == 0 || strcmp(objtype, "PC") == 0 || strcmp(objtype, "RF") == 0 ||
+					strcmp(objtype, "X") == 0) {
 			objtype_code = OBJECT_PROCEDURE;
 			process_util_querystr = "(ALTER PROCEDURE )";
 		} else if (strcmp(objtype, "AF") == 0 || strcmp(objtype, "FN") == 0 || strcmp(objtype, "FS") == 0 || 
 					strcmp(objtype, "FT") == 0 || strcmp(objtype, "IF") == 0 || strcmp(objtype, "TF") == 0) {
 			objtype_code = OBJECT_FUNCTION;
 			process_util_querystr = "(ALTER FUNCTION )";
+		} else if (strcmp(objtype, "SO") == 0) {
+			objtype_code = OBJECT_SEQUENCE;
+			process_util_querystr = "(ALTER SEQUENCE )";
+		} else if (strcmp(objtype, "TA") == 0 || strcmp(objtype, "TR") == 0) { 
+			// TRIGGER
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Feature not supported: renaming object type Trigger")));
+		} else if (strcmp(objtype, "C") == 0 || strcmp(objtype, "D") == 0 || strcmp(objtype, "PK") == 0 || 
+					strcmp(objtype, "UQ") == 0 || strcmp(objtype, "EC") == 0) {
+			// CONSTRAINT
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Feature not supported: renaming object type Constraint")));
+		} else if (strcmp(objtype, "TT") == 0) {
+			// TABLE TYPE
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Feature not supported: renaming object type Table-Type")));
 		} else {
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Provided '@objtype' is currently not supported in sp_rename.")));
+				errmsg("Provided '@objtype' is currently not supported in Babelfish.")));
 		}
 
 
@@ -2851,6 +2869,8 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		appendStringInfo(&query, "ALTER PROCEDURE dummy RENAME TO dummy; ");
 	} else if (objtype == OBJECT_FUNCTION) {
 		appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_SEQUENCE) {
+		appendStringInfo(&query, "ALTER SEQUENCE dummy RENAME TO dummy; ");
 	} else {
 		ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2869,7 +2889,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	if (!IsA(renamestmt, RenameStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
 
-	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_VIEW)) {
+	if ((objtype == OBJECT_TABLE) || (objtype == OBJECT_VIEW) || (objtype == OBJECT_SEQUENCE)) {
 		renamestmt->renameType = objtype;
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
