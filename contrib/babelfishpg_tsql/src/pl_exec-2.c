@@ -664,8 +664,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	char *cur_dbname = get_cur_db_name();
 
 	/* fetch current search_path */
-	List *path_oids = fetch_search_path(false);
-	char *old_search_path = flatten_search_path(path_oids);
+	char *old_search_path = NULL;
 	char *new_search_path;
 	estate->db_name = NULL;
 	if (stmt->proc_name == NULL)
@@ -697,6 +696,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
 			&& ((stmt->schema_name == NULL || stmt->schema_name[0] == (char)'\0') || strcmp(stmt->schema_name, "dbo") == 0))
 			{
+				if (!old_search_path)
+				{
+					List 		*path_oids = fetch_search_path(false);
+					old_search_path = flatten_search_path(path_oids);
+					list_free(path_oids);
+				}
 				new_search_path = psprintf("%s, master_dbo", old_search_path);
 
 				/* Add master_dbo to the new search path */
@@ -1087,7 +1092,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 							GUC_ACTION_SAVE, true, 0, false);
 		SetCurrentRoleId(current_user_id, false);
 	}
-	list_free(path_oids);
 
 	if (expr->plan && !expr->plan->saved)
 	{
