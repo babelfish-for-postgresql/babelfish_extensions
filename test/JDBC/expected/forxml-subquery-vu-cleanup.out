@@ -16,6 +16,15 @@ drop view forxml_subquery_vu_v_cte4;
 go
 drop view forxml_subquery_vu_v_correlated_subquery;
 go
+-- BABEL-3569/BABEL-3690 return 0 rows for empty rowset
+DROP PROCEDURE forxml_subquery_vu_p_empty
+GO
+DROP PROCEDURE forxml_subquery_vu_p_empty_xml
+GO
+DROP VIEW forxml_subquery_vu_v_internal
+GO
+DROP VIEW forxml_subquery_vu_v_internal_text
+GO
 drop table forxml_subquery_vu_t_t1;
 go
 drop table forxml_subquery_vu_t_t2;
