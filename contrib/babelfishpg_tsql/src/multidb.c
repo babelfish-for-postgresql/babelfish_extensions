@@ -970,6 +970,7 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 		{
 			result = palloc0(MAX_BBF_NAMEDATALEND);
 			snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", name, "tsql");
+			pfree(name);
 			return result;
 		}
 		else
