@@ -1805,7 +1805,7 @@ DECLARE @local_principal_id INT;
 BEGIN
 	IF @rmtsrvname IS NOT NULL
 		BEGIN
-			SELECT @server_id = server_id FROM sys.servers WHERE name = LOWER(@rmtsrvname);
+			SELECT @server_id = server_id FROM sys.servers WHERE name = @rmtsrvname;
 
 			IF @server_id IS NULL
 				BEGIN
