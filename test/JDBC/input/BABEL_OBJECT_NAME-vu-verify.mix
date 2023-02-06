@@ -23,6 +23,16 @@ GO
 SELECT * FROM babel_object_name_constraint_view
 GO
 
+-- test shared schema
+SELECT * FROM babel_object_name_shared_schema_v1
+GO
+
+SELECT * FROM babel_object_name_shared_schema_v2
+GO
+
+SELECT * FROM babel_object_name_shared_schema_v3
+GO
+
 -- Negative values/ out of range values
 SELECT OBJECT_NAME(-123)
 GO

@@ -52,6 +52,19 @@ CREATE VIEW babel_object_name_constraint_view AS
 SELECT OBJECT_NAME(OBJECT_ID('babel_object_name_constraint'))
 go
 
+-- To test shared schema
+CREATE VIEW babel_object_name_shared_schema_v1 AS
+SELECT OBJECT_NAME(OBJECT_ID('sys.objects'))
+go
+
+CREATE VIEW babel_object_name_shared_schema_v2 AS
+SELECT OBJECT_NAME(OBJECT_ID('information_schema_tsql.columns'))
+go
+
+CREATE VIEW babel_object_name_shared_schema_v3 AS
+SELECT OBJECT_NAME(OBJECT_ID('information_schema.columns'))
+go
+
 -- To test cross-db lookup
 CREATE DATABASE babel_object_name_db;
 GO

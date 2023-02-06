@@ -964,7 +964,18 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 	strncpy(name, schema_name, len);
 
 	if (is_shared_schema(name))
-		return name;
+	{	
+		/* in case of "information_schema" it will return "information_schema_tsql" */
+		if (strcmp(schema_name, "information_schema") == 0)
+		{
+			result = palloc0(MAX_BBF_NAMEDATALEND);
+			snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", name, "tsql");
+			pfree(name);
+			return result;
+		}
+		else
+			return name;
+	}
 
 	/* Parser guarantees identifier will alsways be truncated to 64B.
 	 * Schema name that comes from other source (e.g scheam_id function)
@@ -1000,6 +1011,7 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 	}
 
 	truncate_tsql_identifier(result);
+	pfree(name);
 
 	return result;
 }
