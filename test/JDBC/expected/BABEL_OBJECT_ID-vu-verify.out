@@ -624,8 +624,18 @@ babel_object_id_db_t2
 ~~END~~
 
 
--- tsql      user=babel_object_id_login2 password=12345678
+-- tsql
 -- to test that it is looking in guest schema by default for guest user
+USE babel_object_id_db
+GO
+
+CREATE TABLE dbo.babel_object_id_table_in_dbo_schema (a int);
+GO
+
+grant connect to guest
+GO
+
+-- tsql      user=babel_object_id_login2 password=12345678
 USE babel_object_id_db
 GO
 
@@ -638,7 +648,11 @@ guest
 ~~END~~
 
 
-SELECT * FROM babel_object_id_view3;
+CREATE TABLE babel_object_id_table_in_guest_schema (a int);
+GO
+
+
+SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_table_in_guest_schema'))
 GO
 ~~START~~
 varchar
@@ -646,11 +660,20 @@ babel_object_id_table_in_guest_schema
 ~~END~~
 
 
-SELECT * FROM babel_object_id_view4;
+SELECT OBJECT_NAME(OBJECT_ID('guest.babel_object_id_table_in_guest_schema'))
 GO
 ~~START~~
 varchar
 babel_object_id_table_in_guest_schema
+~~END~~
+
+
+-- should return null
+SELECT OBJECT_NAME(OBJECT_ID('dbo.babel_object_id_table_in_dbo_schema'))
+GO
+~~START~~
+varchar
+<NULL>
 ~~END~~
 
 
@@ -658,12 +681,9 @@ babel_object_id_table_in_guest_schema
 DROP TABLE babel_object_id_table_in_guest_schema
 GO
 
-DROP VIEW babel_object_id_view3
-GO
-
-DROP VIEW babel_object_id_view4
-GO
-
 -- tsql
 USE babel_object_id_db;
+GO
+
+DROP TABLE dbo.babel_object_id_table_in_dbo_schema;
 GO

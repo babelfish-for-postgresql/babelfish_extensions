@@ -101,30 +101,3 @@ GO
 
 USE babel_object_id_db;
 GO
-
-grant connect to guest
-GO
-
--- tsql      user=babel_object_id_login2 password=12345678
-USE babel_object_id_db
-GO
-
--- guest user
-SELECT current_user;
-GO
-~~START~~
-varchar
-guest
-~~END~~
-
-
-CREATE TABLE babel_object_id_table_in_guest_schema (a int);
-GO
-
-CREATE VIEW babel_object_id_view3 AS
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_table_in_guest_schema'))
-GO
-
-CREATE VIEW babel_object_id_view4 AS
-SELECT OBJECT_NAME(OBJECT_ID('guest.babel_object_id_table_in_guest_schema'))
-GO
