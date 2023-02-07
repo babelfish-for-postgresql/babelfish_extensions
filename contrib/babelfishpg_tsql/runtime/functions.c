@@ -1063,7 +1063,7 @@ object_id(PG_FUNCTION_ARGS)
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
 		{
-			physical_schema_name = pstrdup(get_dbo_schema_name(db_name));
+			physical_schema_name = pstrdup(get_guest_schema_name(db_name));
 		}
 		else
 		{	
