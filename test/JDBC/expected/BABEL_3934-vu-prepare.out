@@ -1,0 +1,9 @@
+CREATE PROCEDURE babel_3934_1 AS BEGIN DECLARE @A AS int DECLARE @C int SELECT TOP(1) @A = A, @B = B FROM tbl END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "@B" is not a known variable)~~
+
+
+CREATE PROCEDURE babel_3934_2 AS BEGIN RETURN 1 END
+GO
