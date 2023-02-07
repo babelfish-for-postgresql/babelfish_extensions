@@ -152,3 +152,5 @@ BabelfishPreCreateCollation_hook(
 
 extern TranslateCollation_hook_type prev_TranslateCollation_hook;
 extern PreCreateCollation_hook_type prev_PreCreateCollation_hook;
+
+extern bool get_tsql_const_collation(Const *constval);
