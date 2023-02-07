@@ -1386,8 +1386,15 @@ public:
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 		Assert(stmt->sqlstmt = statementMutator->expr);
-
-		process_execsql_destination(ctx, stmt);
+		try
+		{
+			process_execsql_destination(ctx, stmt);
+		}
+		catch (PGErrorWrapperException &e)
+		{
+			clear_rewritten_query_fragment();
+			throw;
+		}
 
 		process_execsql_remove_unsupported_tokens(ctx, statementMutator.get());
 
