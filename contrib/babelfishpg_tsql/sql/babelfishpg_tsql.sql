@@ -3000,6 +3000,7 @@ BEGIN
 	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 	WHERE s1.name = @schemaname AND o1.name = @subname;
 	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
+	PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
 END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
