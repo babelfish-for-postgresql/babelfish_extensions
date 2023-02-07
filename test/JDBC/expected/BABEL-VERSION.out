@@ -1,25 +1,33 @@
 -- psql
 Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
 
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
 
 ~~START~~
 bool
 t
 ~~END~~
 
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
+
+~~START~~
+void
+
+~~END~~
+
+
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
@@ -31,25 +39,32 @@ Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
 -- psql
 Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
 
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
 
 ~~START~~
 bool
 t
 ~~END~~
 
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~
+
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
@@ -61,25 +76,32 @@ Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
 -- psql
 Alter system set babelfishpg_tds.product_version = "15.-1.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 ~~START~~
 bool
 t
 ~~END~~
 
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
@@ -91,25 +113,32 @@ Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
 -- psql
 Alter system set babelfishpg_tds.product_version = "15.4.66000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~
 
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~
 
 ~~START~~
 bool
 t
 ~~END~~
 
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~
+
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
@@ -121,25 +150,32 @@ Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
 -- psql
 Alter system set babelfishpg_tds.product_version = ".4.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
 
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
 
 ~~START~~
 bool
 t
 ~~END~~
 
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~
+
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
@@ -151,25 +187,32 @@ Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
 -- psql
 Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16  Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 ~~START~~
 bool
 t
 ~~END~~
 
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 ~~START~~
@@ -183,7 +226,7 @@ Alter system set babelfishpg_tds.product_version = "15.4.-1.6";
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
+~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
 
 
 Alter system set babelfishpg_tds.product_version = "e.4.3000.6";
@@ -198,7 +241,6 @@ GO
 ~~WARNING (Code: 0)~~
 
 ~~WARNING (Message: babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by '.'   Server SQLState: 01000)~~
-
 
 
 Alter system set babelfishpg_tds.product_version = "11..3000.6";
