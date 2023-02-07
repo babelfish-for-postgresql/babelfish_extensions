@@ -1524,21 +1524,19 @@ babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
  * get_tsql_const_collation - determines whether collation needs to be dumped or not
  * for collatable data types such as varchar, char, nvarchar, nchar, etc for Const clause.
  * 
- * This would be required to handle clause like default clause, check constraints, etc in case 
- * of if the server is already upgraded to version > 14.6 (Babelfish v2.3.0) via minor Version 
- * Upgrade and Major Version Upgrade from version > 14.6 (Babelfish v2.3.0) to 15.1 or later 
- * is being performed because the default collation of collatable data types is fixed during Babelfish 
- * v2.3.0 ie., default collation would now be same as T-SQL collation which was DEFAULT_COLLATION_OID
- * previously. And all the existing const clause like default clause and check constraint clause might 
- * still be pointing to PG's default collation. So this function will help to avoid dumping COLLATE 
- * clause in such cases.
+ * This would be required to handle clause such as default clause, check constraints during Major Version 
+ * Upgrade from version 14.6 (Babelfish v2.3.0 or later) to 15.1 (Babelfish v3.0.0 or later) because 
+ * the default collation of mentioned data types would be same as the T-SQL collation which was 
+ * DEFAULT_COLLATION_OID previously (Babelfish version prior to v2.3.0). And all the existing const clause 
+ * like default clause and check constraint clause might still be DEFAULT_COLLATION_OID. So this function 
+ * will help detecting such cases and will avoid dumping COLLATE clause for such cases.
  */
 bool
 get_tsql_const_collation(Const *constval) {
     Oid typid = constval->consttype;
     Oid typcollation = get_typcollation(typid);
 
-	if (typcollation != DEFAULT_COLLATION_OID &&
+	if (constval->constcollid == DEFAULT_COLLATION_OID &&
 		(is_tsql_nvarchar_datatype(typid) ||
 		 is_tsql_varchar_datatype(typid) ||
 		 is_tsql_bpchar_datatype(typid) ||
