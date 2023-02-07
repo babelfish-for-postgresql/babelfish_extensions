@@ -8,5 +8,5 @@ RETURN (
 )
 GO
 
-CREATE PROCEDURE babel_3836_p1 AS SELECT * FROM schema_name(schema_id('dbo'));
+CREATE PROCEDURE babel_3836_p1 AS SELECT * FROM schema_name(schema_id());
 GO
