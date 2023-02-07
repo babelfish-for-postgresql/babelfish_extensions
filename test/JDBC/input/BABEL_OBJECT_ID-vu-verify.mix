@@ -308,6 +308,31 @@ GO
 SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_db_t2'))
 GO
 
+-- to test that it is looking in guest schema by default for guest user
+-- tsql      user=babel_object_id_login2 password=12345678
+USE babel_object_id_db
+GO
+
+-- guest user
+SELECT current_user;
+GO
+
+SELECT * FROM babel_object_id_view3;
+GO
+
+SELECT * FROM babel_object_id_view4;
+GO
+
+-- cleanup guest schema
+DROP TABLE babel_object_id_table_in_guest_schema
+GO
+
+DROP VIEW babel_object_id_view3
+GO
+
+DROP VIEW babel_object_id_view4
+GO
+
 -- tsql
 USE babel_object_id_db;
 GO

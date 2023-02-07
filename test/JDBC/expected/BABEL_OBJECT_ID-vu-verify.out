@@ -624,6 +624,46 @@ babel_object_id_db_t2
 ~~END~~
 
 
+-- tsql      user=babel_object_id_login2 password=12345678
+-- to test that it is looking in guest schema by default for guest user
+USE babel_object_id_db
+GO
+
+-- guest user
+SELECT current_user;
+GO
+~~START~~
+varchar
+guest
+~~END~~
+
+
+SELECT * FROM babel_object_id_view3;
+GO
+~~START~~
+varchar
+babel_object_id_table_in_guest_schema
+~~END~~
+
+
+SELECT * FROM babel_object_id_view4;
+GO
+~~START~~
+varchar
+babel_object_id_table_in_guest_schema
+~~END~~
+
+
+-- cleanup guest schema
+DROP TABLE babel_object_id_table_in_guest_schema
+GO
+
+DROP VIEW babel_object_id_view3
+GO
+
+DROP VIEW babel_object_id_view4
+GO
+
 -- tsql
 USE babel_object_id_db;
 GO
