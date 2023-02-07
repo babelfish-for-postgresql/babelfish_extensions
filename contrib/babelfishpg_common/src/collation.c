@@ -1533,8 +1533,7 @@ babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
  */
 bool
 get_tsql_const_collation(Const *constval) {
-    Oid typid = constval->consttype;
-    Oid typcollation = get_typcollation(typid);
+	Oid typid = constval->consttype;
 
 	if (constval->constcollid == DEFAULT_COLLATION_OID &&
 		(is_tsql_nvarchar_datatype(typid) ||
