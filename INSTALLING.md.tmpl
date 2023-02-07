@@ -171,9 +171,9 @@ export BABELFISH_HOME=/opt/babelfish/{{VERSION}}
 export BABELFISH_DATA=/var/lib/babelfish/{{VERSION}}/data
 ```
 
-### Initiating the Data directory
+### Initializing the Data directory
 
-#### Initiate data with trustable connection for development
+#### Initialize data with trustable connection for development
 
 If you would like to create a local cluster for testing purposes, you can configure trust authentication when initializing the database to simplify authentication. The `--auth-host=trust` flag will create the cluster using trust authentication, and should not be included if you are creating an instance that will contain sensitive information:
 
@@ -181,7 +181,7 @@ If you would like to create a local cluster for testing purposes, you can config
 ${BABELFISH_HOME}/bin/initdb -D ${BABELFISH_DATA}/ -E "UTF8" --auth=trust --auth-host=trust --auth-local=trust
 ```
 
-#### Initiate data with specific HBA configuration
+#### Initialize data with specific HBA configuration
 
 For production or isolated environments, it is recommended to specify the allowed IP addresses that can access the system and a secure authentication method such as `md5` in the `pg_hba.conf`. For other supported methods see [Authentication Methods documentation](https://www.postgresql.org/docs/14/auth-methods.html).
 
