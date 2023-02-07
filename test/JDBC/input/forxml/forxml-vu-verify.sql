@@ -31,6 +31,5 @@ go
 exec forxml_vu_p_strvar 1, 't1_a1';
 go
 -- test NULL parameter
--- TODO fix BABEL-3569 so this returns 0 rows
 exec forxml_vu_p_strvar 1, NULL;
 go

@@ -146,7 +146,7 @@ SELECT CAST(CAST (10 as NUMERIC(1,2)) as SMALLDATETIME)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+~~ERROR (Message: The scale 2 for 'numeric' datatype must be within the range 0 to precision 1)~~
 
 
 --=== Test casting DECIMAL to SMALLDATETIME ===--
@@ -200,7 +200,7 @@ SELECT CAST(CAST (10 as DECIMAL(1,2)) as SMALLDATETIME)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+~~ERROR (Message: The scale 2 for 'decimal' datatype must be within the range 0 to precision 1)~~
 
 
 --=== Test casting FLOAT to SMALLDATETIME ===--

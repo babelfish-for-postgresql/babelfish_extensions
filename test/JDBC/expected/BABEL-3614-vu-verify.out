@@ -118,22 +118,11 @@ datetime2
 DROP FUNCTION BABEL_3614_vu_prepare_f4()
 GO
 
-SELECT * FROM BABEL_3614_vu_prepare_v5
-GO
-~~START~~
-datetime2
-2017-08-25 13:01:10.1234570
-~~END~~
-
-DROP VIEW BABEL_3614_vu_prepare_v5
-GO
-
 EXEC BABEL_3614_vu_prepare_p5
 GO
-~~START~~
-datetime2
-2017-08-25 13:01:10.1234570
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 80 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p5
 GO
@@ -142,8 +131,9 @@ SELECT BABEL_3614_vu_prepare_f5()
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:10.1234570
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 80 is invalid. 'datetime2' datatype must have scale between 0 and 7)~~
 
 DROP FUNCTION BABEL_3614_vu_prepare_f5()
 GO

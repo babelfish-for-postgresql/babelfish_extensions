@@ -1,0 +1,31 @@
+DROP PROC if exists babel_3720_proc1;
+DROP PROC if exists babel_3720_proc2;
+DROP PROC if exists babel_3720_proc3;
+DROP PROC if exists babel_3720_proc4;
+DROP PROC if exists babel_3720_proc5;
+DROP PROC if exists babel_3720_proc6;
+
+drop table if exists babel_3720_tab1;
+drop table if exists babel_3720_tab2;
+drop table if exists babel_3720_tab3;
+drop table if exists babel_3720_tab4;
+drop table if exists babel_3720_tab5;
+drop table if exists babel_3720_tab6;
+drop table if exists babel_3720_tab7;
+drop table if exists babel_3720_tab8;
+
+DROP PROC if exists babel_3793_proc1;
+DROP PROC if exists babel_3793_proc2;
+DROP PROC if exists babel_3793_proc3;
+DROP PROC if exists babel_3793_proc4;
+DROP PROC if exists babel_3793_proc5;
+DROP PROC if exists babel_3793_proc6;
+
+drop table if exists babel_3793_tab1;
+drop table if exists babel_3793_tab3;
+drop table if exists babel_3793_tab4;
+drop table if exists babel_3793_tab5;
+drop table if exists babel_3793_tab6;
+drop table if exists babel_3793_tab7;
+drop table if exists babel_3793_tab8;
+drop table if exists babel_3793_tab9;

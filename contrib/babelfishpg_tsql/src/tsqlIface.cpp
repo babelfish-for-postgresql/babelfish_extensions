@@ -1707,6 +1707,24 @@ public:
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
 		is_function = true;
+		if (ctx->NEXT() && ctx->full_object_name())
+		{
+			TSqlParser::Full_object_nameContext *fctx = (TSqlParser::Full_object_nameContext *) ctx->full_object_name();
+			std::string seq_name = ::getFullText(fctx);
+			std::string nextval_string = "nextval('" + seq_name + "')";
+			if (fctx->schema)
+			{
+				TSqlParser::IdContext *sctx = fctx->schema;
+				TSqlParser::IdContext *octx = fctx->object_name;
+				// Need to directly use the backend schema name since nextval is a postgres function
+				nextval_string = "nextval('master_" + ::stripQuoteFromId(sctx) + '.' + ::stripQuoteFromId(octx) + "')";
+			}
+
+			rewritten_query_fragment.emplace(std::make_pair(ctx->NEXT()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->NEXT()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->VALUE()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->VALUE()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->FOR()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->FOR()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->full_object_name()->start->getStartIndex(), std::make_pair(::getFullText(ctx->full_object_name()), nextval_string)));
+		}
 		if (ctx->analytic_windowed_function())
 		{
 			auto actx = ctx->analytic_windowed_function();
