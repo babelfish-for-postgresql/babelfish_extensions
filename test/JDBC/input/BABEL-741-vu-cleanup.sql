@@ -1,0 +1,8 @@
+DROP FUNCTION babel_3836_f1;
+GO
+
+DROP PROCEDURE babel_3836_p1;
+GO
+
+DROP VIEW babel_3836_v1;
+GO
