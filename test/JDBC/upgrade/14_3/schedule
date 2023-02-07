@@ -182,6 +182,7 @@ BABEL-2765
 BABEL-2917
 BABEL-2955
 BABEL-3646-before-14_6
+BABEL-3748-before-14_7
 temp-tables
 table-variable
 TestNotNull
@@ -295,6 +296,7 @@ BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
+openjson
 sys-sysindexes
 sys-system_objects
 ISC-Tables
@@ -312,6 +314,10 @@ sys-sql_modules_before-14_7-or-15_2
 sys-all_sql_modules_before-14_5
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
+BABEL_SCHEMATA
 BABEL-SP_FKEYS
 BABEL-SP_FKEYS-dep
 BABEL_OBJECT_NAME
+Test-sp_babelfish_volatility
+BABEL-3657
+BABEL-3938

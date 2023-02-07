@@ -1296,8 +1296,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunction_call(TSqlParser::Function_callContext *ctx)
 {
-	if (ctx->NEXT())
-		handle(INSTR_UNSUPPORTED_TSQL_NEXT_VALUE_FOR, "NEXT VALUE FOR", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
@@ -1577,7 +1575,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_generate_database_ledger_digest",
 	"sp_grantdbaccess",
 	"sp_grantlogin",
-	"sp_helplinkedsrvlogin",
 	"sp_helplogins",
 	"sp_helpntgroup",
 	"sp_helpremotelogin",

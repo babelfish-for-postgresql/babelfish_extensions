@@ -2330,11 +2330,14 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	uint64		flag_values = 0, flag_validity = 0;
 	char *original_query = get_original_query_string();
 
+	/* Disallow extended catalog lookup during restore */
+	if (babelfish_dump_restore)
+		return;
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
-	/* Disallow extended catalog lookup during restore */
-	if (!HeapTupleIsValid(proctup) || babelfish_dump_restore)
+	if (!HeapTupleIsValid(proctup))
 		return;
+
 	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
 
 	if (!is_pltsql_language_oid(form_proctup->prolang))
@@ -3392,6 +3395,9 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 	{
 		int res = setTargetTable(pstate, target, inh, false, requiredPerms);
 		pstate->p_rtable = NIL;
+
+		rewrite_update_outer_join(stmt, command, target);
+		
 		return res;
 	}
 

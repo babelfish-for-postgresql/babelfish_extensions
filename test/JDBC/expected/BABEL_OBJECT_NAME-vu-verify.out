@@ -58,6 +58,31 @@ babel_object_name_constraint
 ~~END~~
 
 
+-- test shared schema
+SELECT * FROM babel_object_name_shared_schema_v1
+GO
+~~START~~
+varchar
+objects
+~~END~~
+
+
+SELECT * FROM babel_object_name_shared_schema_v2
+GO
+~~START~~
+varchar
+columns
+~~END~~
+
+
+SELECT * FROM babel_object_name_shared_schema_v3
+GO
+~~START~~
+varchar
+columns
+~~END~~
+
+
 -- Negative values/ out of range values
 SELECT OBJECT_NAME(-123)
 GO

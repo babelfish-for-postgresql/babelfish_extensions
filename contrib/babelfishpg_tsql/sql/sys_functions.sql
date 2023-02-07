@@ -48,6 +48,32 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_xml_text_agg(
     FINALFUNC = tsql_query_to_xml_text_ffunc
 );
 
+CREATE OR REPLACE FUNCTION sys.tsql_select_for_xml_result(res XML)
+RETURNS setof XML AS
+$$
+BEGIN
+IF res IS NOT NULL THEN
+    return next res;
+ELSE
+    return;
+END IF;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_select_for_xml_text_result(res NTEXT)
+RETURNS setof NTEXT AS
+$$
+BEGIN
+IF res IS NOT NULL THEN
+    return next res;
+ELSE
+    return;
+END IF;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 -- SELECT FOR JSON
 CREATE OR REPLACE FUNCTION sys.tsql_query_to_json_sfunc(
     state INTERNAL,
@@ -78,6 +104,19 @@ CREATE OR REPLACE AGGREGATE sys.tsql_select_for_json_agg(
     SFUNC = tsql_query_to_json_sfunc,
     FINALFUNC = tsql_query_to_json_ffunc
 );
+
+CREATE OR REPLACE FUNCTION sys.tsql_select_for_json_result(res sys.NVARCHAR)
+RETURNS setof sys.NVARCHAR AS
+$$
+BEGIN
+IF res IS NOT NULL THEN
+    return next res;
+ELSE
+    return;
+END IF;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE;
 
 -- User and Login Functions
 CREATE OR REPLACE FUNCTION sys.user_name(IN id OID DEFAULT NULL)
@@ -962,7 +1001,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal_date(datepart, startdate, enddate);
+    return CAST(sys.datediff_internal_date(datepart, startdate, enddate) AS INTEGER);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -971,7 +1010,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -980,7 +1019,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal_df(datepart, startdate, enddate);
+    return CAST(sys.datediff_internal_df(datepart, startdate, enddate) AS INTEGER);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -989,7 +1028,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -998,7 +1037,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1007,10 +1046,66 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
+    return CAST(sys.datediff_internal(datepart, startdate, enddate) AS INTEGER);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- datediff big
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_date(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_df(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS BIGINT
+AS
+$body$
+BEGIN
     return sys.datediff_internal(datepart, startdate, enddate);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
+
 
  -- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
@@ -1226,23 +1321,23 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS INTEGER AS $$
+CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS BIGINT AS $$
 DECLARE
-	result INTEGER;
-	year_diff INTEGER;
-	month_diff INTEGER;
-	day_diff INTEGER;
-	hour_diff INTEGER;
-	minute_diff INTEGER;
-	second_diff INTEGER;
-	millisecond_diff INTEGER;
-	microsecond_diff INTEGER;
-	y1 INTEGER;
-	m1 INTEGER;
-	d1 INTEGER;
-	y2 INTEGER;
-	m2 INTEGER;
-	d2 INTEGER;
+	result BIGINT;
+	year_diff BIGINT;
+	month_diff BIGINT;
+	day_diff BIGINT;
+	hour_diff BIGINT;
+	minute_diff BIGINT;
+	second_diff BIGINT;
+	millisecond_diff BIGINT;
+	microsecond_diff BIGINT;
+	y1 BIGINT;
+	m1 BIGINT;
+	d1 BIGINT;
+	y2 BIGINT;
+	m2 BIGINT;
+	d2 BIGINT;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1329,29 +1424,29 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER AS $$
+CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT AS $$
 DECLARE
-	result INTEGER;
-	year_diff INTEGER;
-	month_diff INTEGER;
-	day_diff INTEGER;
-	hour_diff INTEGER;
-	minute_diff INTEGER;
-	second_diff INTEGER;
-	millisecond_diff INTEGER;
-	microsecond_diff INTEGER;
+	result BIGINT;
+	year_diff BIGINT;
+	month_diff BIGINT;
+	day_diff BIGINT;
+	hour_diff BIGINT;
+	minute_diff BIGINT;
+	second_diff BIGINT;
+	millisecond_diff BIGINT;
+	microsecond_diff BIGINT;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
-		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
 		result = year_diff;
 	WHEN 'quarter' THEN
-		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
-		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
 		result = (year_diff * 12 + month_diff) / 3;
 	WHEN 'month' THEN
-		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
-		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
 		result = year_diff * 12 + month_diff;
 	-- for all intervals smaller than month, (DATE - DATE) already returns the integer number of days
 	-- between the dates, so just use that directly as the day_diff. There is no finer resolution
@@ -1398,95 +1493,95 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS INTEGER AS $$
+CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS BIGINT AS $$
 DECLARE
-	result INTEGER;
-	year_diff INTEGER;
-	month_diff INTEGER;
-	day_diff INTEGER;
-	hour_diff INTEGER;
-	minute_diff INTEGER;
-	second_diff INTEGER;
-	millisecond_diff INTEGER;
-	microsecond_diff INTEGER;
-	y1 INTEGER;
-	m1 INTEGER;
-	d1 INTEGER;
-	y2 INTEGER;
-	m2 INTEGER;
-	d2 INTEGER;
+	result BIGINT;
+	year_diff BIGINT;
+	month_diff BIGINT;
+	day_diff BIGINT;
+	hour_diff BIGINT;
+	minute_diff BIGINT;
+	second_diff BIGINT;
+	millisecond_diff BIGINT;
+	microsecond_diff BIGINT;
+	y1 BIGINT;
+	m1 BIGINT;
+	d1 BIGINT;
+	y2 BIGINT;
+	m2 BIGINT;
+	d2 BIGINT;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
-		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
 		result = year_diff;
 	WHEN 'quarter' THEN
-		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
-		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
 		result = (year_diff * 12 + month_diff) / 3;
 	WHEN 'month' THEN
-		year_diff = date_part('year', enddate)::INTEGER - date_part('year', startdate)::INTEGER;
-		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
+		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
+		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
 		result = year_diff * 12 + month_diff;
 	WHEN 'doy', 'y' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
 		result = day_diff;
 	WHEN 'day' THEN
-		y1 = date_part('year', enddate)::INTEGER;
-		m1 = date_part('month', enddate)::INTEGER;
-		d1 = date_part('day', enddate)::INTEGER;
-		y2 = date_part('year', startdate)::INTEGER;
-		m2 = date_part('month', startdate)::INTEGER;
-		d2 = date_part('day', startdate)::INTEGER;
+		y1 = date_part('year', enddate)::BIGINT;
+		m1 = date_part('month', enddate)::BIGINT;
+		d1 = date_part('day', enddate)::BIGINT;
+		y2 = date_part('year', startdate)::BIGINT;
+		m2 = date_part('month', startdate)::BIGINT;
+		d2 = date_part('day', startdate)::BIGINT;
 		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		y1 = date_part('year', enddate)::INTEGER;
-		m1 = date_part('month', enddate)::INTEGER;
-		d1 = date_part('day', enddate)::INTEGER;
-		y2 = date_part('year', startdate)::INTEGER;
-		m2 = date_part('month', startdate)::INTEGER;
-		d2 = date_part('day', startdate)::INTEGER;
+		y1 = date_part('year', enddate)::BIGINT;
+		m1 = date_part('month', enddate)::BIGINT;
+		d1 = date_part('day', enddate)::BIGINT;
+		y2 = date_part('year', startdate)::BIGINT;
+		m2 = date_part('month', startdate)::BIGINT;
+		d2 = date_part('day', startdate)::BIGINT;
 		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
-		hour_diff = date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER;
+		hour_diff = date_part('hour', enddate)::BIGINT - date_part('hour', startdate)::BIGINT;
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
 		result = (day_diff * 24 + hour_diff) * 60 + minute_diff;
 	WHEN 'second' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
 		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
 		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
 	WHEN 'millisecond' THEN
 		-- millisecond result from date_part by default contains second value,
 		-- so we do not need to add second_diff again
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
 		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
 		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
 		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
 	WHEN 'microsecond' THEN
 		-- microsecond result from date_part by default contains second and millisecond values,
 		-- so we do not need to add second_diff and millisecond_diff again
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
 		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
 		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
 		microsecond_diff = TRUNC(date_part('microsecond', enddate OPERATOR(sys.-) startdate));
 		result = ((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
+		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
 		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
 		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
 		microsecond_diff = TRUNC(date_part('microsecond', enddate OPERATOR(sys.-) startdate));
@@ -3321,6 +3416,37 @@ $$
     SELECT current_setting('application_name');
 $$
 LANGUAGE sql PARALLEL SAFE STABLE;
+
+CREATE OR REPLACE FUNCTION sys.OBJECT_SCHEMA_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
+RETURNS sys.SYSNAME AS
+'babelfishpg_tsql', 'object_schema_name'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION OBJECT_DEFINITION(IN object_id INT)
+RETURNS sys.NVARCHAR(4000)
+AS $$
+DECLARE
+    definition sys.nvarchar(4000);
+BEGIN
+
+    definition = (SELECT cc.definition FROM sys.check_constraints cc WHERE cc.object_id = $1);
+    IF (definition IS NULL)
+    THEN
+        definition = (SELECT dc.definition FROM sys.default_constraints dc WHERE dc.object_id = $1);
+        IF (definition IS NULL)
+        THEN
+            definition = (SELECT asm.definition FROM sys.all_sql_modules asm WHERE asm.object_id = $1);
+            IF (definition IS NULL)
+            THEN
+                RETURN NULL;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN definition;
+END;
+$$
+LANGUAGE plpgsql STABLE;
 
 CREATE OR REPLACE FUNCTION sys.openquery(
 IN linked_server text,

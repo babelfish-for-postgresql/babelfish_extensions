@@ -803,34 +803,46 @@ from
 (
   -- Get all indexes from all system and user tables
   select
-    i.indrelid as object_id
-    , c.relname as name
-    , case when i.indisclustered then 1 else 2 end as type
-    , case when i.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as type_desc
-    , case when i.indisunique then 1 else 0 end as is_unique
-    , c.reltablespace as data_space_id
+    X.indrelid as object_id
+    , I.relname as name
+    , case when X.indisclustered then 1 else 2 end as type
+    , case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as type_desc
+    , case when X.indisunique then 1 else 0 end as is_unique
+    , I.reltablespace as data_space_id
     , 0 as ignore_dup_key
-    , case when i.indisprimary then 1 else 0 end as is_primary_key
-    , case when (SELECT count(constr.oid) FROM pg_constraint constr WHERE constr.conindid = c.oid and constr.contype = 'u') > 0 then 1 else 0 end as is_unique_constraint
+    , case when X.indisprimary then 1 else 0 end as is_primary_key
+    , case when const.oid is null then 0 else 1 end as is_unique_constraint
     , 0 as fill_factor
-    , case when i.indpred is null then 0 else 1 end as is_padded
-    , case when i.indisready then 0 else 1 end as is_disabled
+    , case when X.indpred is null then 0 else 1 end as is_padded
+    , case when X.indisready then 0 else 1 end as is_disabled
     , 0 as is_hypothetical
     , 1 as allow_row_locks
     , 1 as allow_page_locks
     , 0 as has_filter
     , null as filter_definition
     , 0 as auto_created
-    , case when i.indisclustered then 1 else c.oid end as index_id
-  from pg_class c
-  inner join pg_index i on i.indexrelid = c.oid
-  where c.relkind = 'i' and i.indislive
-  and (c.relnamespace in (select schema_id from sys.schemas) or c.relnamespace::regnamespace::text = 'sys')
-  and has_schema_privilege(c.relnamespace, 'USAGE')
+    , case when X.indisclustered then 1 else 1+row_number() over(partition by C.oid) end as index_id -- use rownumber to get index_id scoped on each objects
+  from (pg_index X 
+  -- get all the objects on which indexes can be created
+  join pg_class C on C.oid=X.indrelid and C.relkind in ('r', 'm', 'p')
+  -- get list of all indexes grouped by objects
+  cross join pg_class I  
+  )
+  -- to get namespace information
+  left join sys.schemas sch on I.relnamespace = sch.schema_id
+  -- check if index is a unique constraint
+  left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
+  where has_schema_privilege(I.relnamespace, 'USAGE')
+  and I.oid = X.indexrelid 
+  and I.relkind = 'i' 
+  -- index is active
+  and X.indislive 
+  -- filter to get all the objects that belong to sys or babelfish schemas
+  and (sch.schema_id is not null or I.relnamespace::regnamespace::text = 'sys')
 
   union all 
   
-  -- Create HEAP entries for each system and user table
+-- Create HEAP entries for each system and user table
   select distinct on (t.oid)
     t.oid as object_id
     , null as name
@@ -851,9 +863,11 @@ from
     , null as filter_definition
     , 0 as auto_created
     , 0 as index_id
-  from pg_class t 
+  from pg_class t
+  left join sys.schemas sch on t.relnamespace = sch.schema_id
   where t.relkind = 'r'
-  and (t.relnamespace in (select schema_id from sys.schemas) or t.relnamespace::regnamespace::text = 'sys')
+  -- filter to get all the objects that belong to sys or babelfish schemas
+  and (sch.schema_id is not null or t.relnamespace::regnamespace::text = 'sys')
   and has_schema_privilege(t.relnamespace, 'USAGE')
   and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 
@@ -957,7 +971,7 @@ select
   i.object_id::integer as id
   , null::integer as status
   , null::binary(6) as first
-  , i.type::smallint as indid
+  , i.index_id::smallint as indid
   , null::binary(6) as root
   , 0::smallint as minlen
   , 1::smallint as keycnt
@@ -1236,6 +1250,10 @@ select t.name,t.type, ns.oid as schemaid from
   values
     ('xp_qv','master_dbo','P'),
     ('xp_instance_regread','master_dbo','P'),
+    ('sp_addlinkedserver', 'master_dbo', 'P'),
+    ('sp_addlinkedsrvlogin', 'master_dbo', 'P'),
+    ('sp_dropserver', 'master_dbo', 'P'),
+    ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
     ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
     ('syspolicy_system_health_state', 'msdb_dbo', 'V')
@@ -1499,19 +1517,19 @@ where s.nspname = 'sys';
 GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 create or replace view sys.all_views as
-select
-    CAST(t.name as sys.SYSNAME) AS name
-  , CAST(t.object_id as int) AS object_id
-  , CAST(t.principal_id as int) AS principal_id
-  , CAST(t.schema_id as int) AS schema_id
-  , CAST(t.parent_object_id as int) AS parent_object_id
-  , CAST(t.type as sys.bpchar(2)) AS type
-  , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
-  , CAST(t.create_date as sys.datetime) AS create_date
-  , CAST(t.modify_date as sys.datetime) AS modify_date
-  , CAST(t.is_ms_shipped as sys.BIT) AS is_ms_shipped
-  , CAST(t.is_published as sys.BIT) AS is_published
-  , CAST(t.is_schema_published as sys.BIT) AS is_schema_published 
+SELECT
+    CAST(c.relname AS sys.SYSNAME) as name
+  , CAST(c.oid AS INT) as object_id
+  , CAST(null AS INT) as principal_id
+  , CAST(c.relnamespace as INT) as schema_id
+  , CAST(0 as INT) as parent_object_id
+  , CAST('V' as sys.bpchar(2)) as type
+  , CAST('VIEW'as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
   , CAST(0 as sys.BIT) AS is_replicated
   , CAST(0 as sys.BIT) AS has_replication_filter
   , CAST(0 as sys.BIT) AS has_opaque_metadata
@@ -1524,10 +1542,15 @@ select
       END
     AS sys.BIT) AS with_check_option
   , CAST(0 as sys.BIT) AS is_date_correlation_view
-from sys.all_objects t
-INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
-INNER JOIN information_schema.views v ON t.name = cast(v.table_name as sys.sysname) AND ns.nspname = v.table_schema
-where t.type = 'V';
+FROM pg_catalog.pg_namespace AS ns
+INNER JOIN pg_class c ON ns.oid = c.relnamespace
+INNER JOIN information_schema.views v ON c.relname = v.table_name AND ns.nspname = v.table_schema
+WHERE c.relkind = 'v' AND ns.nspname in 
+  (SELECT nspname from sys.babelfish_namespace_ext where dbid = sys.db_id() UNION ALL SELECT CAST('sys' AS NAME))
+AND pg_is_other_temp_schema(ns.oid) = false
+AND (pg_has_role(c.relowner, 'USAGE') = true
+OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') = true);
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
 -- TODO: BABELFISH-506

@@ -1487,8 +1487,8 @@ is_alter_server_stmt(GrantRoleStmt *stmt)
 void
 check_alter_server_stmt(GrantRoleStmt *stmt)
 {
-	Oid grantee;
-	const char 	*grantee_name;
+	Oid		grantee;
+	char 		*grantee_name;
 	const char 	*granted_name;
 	RoleSpec 	*spec;
 	AccessPriv 	*granted;
@@ -1503,7 +1503,15 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	granted_name = granted->priv_name;
 
 	/* grantee MUST be a login */
-	grantee_name = spec->rolename;
+	grantee_name = convertToUPN(spec->rolename);
+
+	/* If spec->rolename was in windows format then update it. */
+	if (spec->rolename != grantee_name)
+	{
+		pfree(spec->rolename);
+		spec->rolename = grantee_name;
+	}
+
 	grantee = get_role_oid(grantee_name, false);  /* missing not OK */
 
 	if(!is_login(grantee))
@@ -1998,7 +2006,6 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	HeapTuple			tuple;
 	Datum				*new_record;
 	bool				*new_record_nulls;
-	CatalogIndexState	indstate;
 	MemoryContext		ccxt = CurrentMemoryContext;
 	
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
@@ -2034,11 +2041,8 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		indstate = CatalogOpenIndexes(bbf_domain_mapping_rel);
+		CatalogTupleInsert(bbf_domain_mapping_rel, tuple);
 
-		CatalogTupleInsertWithInfo(bbf_domain_mapping_rel, tuple, indstate);
-
-		CatalogCloseIndexes(indstate);
 		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
 		heap_freetuple(tuple);
 		pfree(new_record);
@@ -2049,14 +2053,13 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 		MemoryContext ectx;
 		ErrorData *edata;
 
-		CatalogCloseIndexes(indstate);
+		ectx = MemoryContextSwitchTo(ccxt);
 		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
 		heap_freetuple(tuple);
 		pfree(new_record);
 		pfree(new_record_nulls);
-
-		ectx = MemoryContextSwitchTo(ccxt);
 		edata = CopyErrorData();
+		FlushErrorState();
 		MemoryContextSwitchTo(ectx);
 
 		ereport(ERROR,

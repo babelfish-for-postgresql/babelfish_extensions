@@ -691,7 +691,6 @@ is_user(Oid role_oid)
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
-	BpChar		type;
 	char		*type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
@@ -716,9 +715,17 @@ is_user(Oid role_oid)
 
 	if (!HeapTupleIsValid(tuple))
 		is_user = false;
+	else
+	{
+		Datum		datum;
+		bool		isnull;
+		TupleDesc	dsc;
 
-	type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
-	type_str = bpchar_to_cstring(&type);
+		dsc = RelationGetDescr(relation);
+		datum = heap_getattr(tuple, USER_EXT_TYPE + 1, dsc, &isnull);
+		if (!isnull)
+			type_str = pstrdup(TextDatumGetCString(datum));
+	}
 
 	/*
 	 * Only sysadmin can not be dropped. For the rest
@@ -2362,6 +2369,8 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			break;
 		case OBJECT_FUNCTION:
 			rename_procfunc_update_bbf_catalog(stmt);
+			break;
+		case OBJECT_SEQUENCE:
 			break;
 		default:
 			break;	

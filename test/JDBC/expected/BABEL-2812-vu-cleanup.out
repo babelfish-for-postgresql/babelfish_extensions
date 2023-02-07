@@ -135,6 +135,3 @@ GO
 
 DROP VIEW babel_2812_vu_v42;
 GO
-
-DROP VIEW babel_2812_vu_v43;
-GO

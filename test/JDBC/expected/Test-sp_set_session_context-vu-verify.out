@@ -246,6 +246,39 @@ go
 ~~ERROR (Message: value too long for type character varying(128))~~
 
 
+EXEC sp_set_session_context 'a    ', 'trailing spaces'
+go
+
+SELECT sys.session_context('a ')
+go
+~~START~~
+sql_variant
+trailing spaces
+~~END~~
+
+
+EXEC sp_set_session_context 'a        ', 'more spaces'
+go
+
+SELECT sys.session_context('a')
+go
+~~START~~
+sql_variant
+more spaces
+~~END~~
+
+
+EXEC sp_set_session_context '        ', 'only spaces'
+go
+
+SELECT sys.session_context('')
+go
+~~START~~
+sql_variant
+only spaces
+~~END~~
+
+
 -- Ensures that we are allocating enough space to store multi-byte characters
 declare @key nvarchar(4000) = cast (REPLICATE('あ', 128) as nvarchar(4000));
 declare @key1 nvarchar(4000) = cast (REPLICATE('あ', 127) as nvarchar(4000));

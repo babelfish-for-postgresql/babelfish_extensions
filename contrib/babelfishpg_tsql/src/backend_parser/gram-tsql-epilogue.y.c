@@ -301,17 +301,18 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
         }
         else
         {
-                /* Cast null to typename to take advantage of polymorphic types in Postgres */
-                Node *null_const = makeTypeCast(makeNullAConst(location), typename, location);
+                Node *targetType = makeTypeCast(makeNullAConst(location), typename, location);
                 List *args;
-                if(arg->type == T_TypeCast || arg->type == T_FuncCall)
+                switch(arg->type)
                 {
-                    args = list_make3(arg, null_const, makeIntConst(typmod, location));
-                }
-                else
-                {
-                    Node *arg_const = makeTypeCast(arg, SystemTypeName("text"), location);
-                    args = list_make3(arg_const, null_const, makeIntConst(typmod, location));
+                    case T_A_Const:
+                    case T_TypeCast:
+                    case T_FuncCall:
+                    case T_A_Expr:
+                        args = list_make3(arg, targetType, makeIntConst(typmod, location));
+                        break;
+                    default:
+                        args = list_make3(makeTypeCast(arg, makeTypeName("text"), location), targetType, makeIntConst(typmod, location));
                 }
 
                 result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_any"), args, COERCE_EXPLICIT_CALL, location);
@@ -374,6 +375,219 @@ tsql_check_param_readonly(const char *paramname, TypeName *typename, bool readon
 				 "The table-valued parameter \"%s\" must be declared with the READONLY option.",
 				 paramname);
 	}
+}
+
+/*
+* This function takes a JsonExpression, and an optional path then
+* calls the openjson_simple function
+*/
+Node *
+TsqlOpenJSONSimpleMakeFuncCall(Node* jsonExpr, Node* path)
+{
+    FuncCall *fc;
+    if(path)
+    {
+        fc = makeFuncCall(TsqlSystemFuncName("openjson_simple"), list_make2(jsonExpr, path), COERCE_EXPLICIT_CALL, -1);
+    }
+    else
+    {
+        fc = makeFuncCall(TsqlSystemFuncName("openjson_simple"), list_make1(jsonExpr), COERCE_EXPLICIT_CALL, -1);
+    }
+    return (Node*) fc;
+}
+
+/*
+* This function takes a JsonExpression, path, column list, and optional alias
+* It acts as a bridge between the parser and the json_with function by correctly
+* assembling the function arguments, column definitions list, and alias
+*/
+Node *
+TsqlOpenJSONWithMakeFuncCall(Node* jsonExpr, Node* path, List* cols, Alias* alias)
+{
+    FuncCall *fc;
+    List *jsonWithParams = list_make2(jsonExpr, path);
+    ListCell *lc;
+    RangeFunction *rf = makeNode(RangeFunction);
+    Alias *a = makeNode(Alias);
+    a->aliasname = alias != NULL ? alias->aliasname : "f";
+
+    foreach(lc, cols)
+    {
+        OpenJson_Col_Def *cd = (OpenJson_Col_Def*) lfirst(lc);
+        int initialTmod = getElemTypMod(cd->elemType);
+        char* typeNameString = TypeNameToString(cd->elemType);
+        ColumnDef *n = (ColumnDef *) createOpenJsonWithColDef(cd->elemName, cd->elemType);
+        StringInfo format_cols = makeStringInfo();
+
+        if(strcmp(cd->elemPath, "") == 0)
+        {
+            // If not path is provided with use the standard path [$.columnName]
+            appendStringInfo(format_cols, "$.%s ", cd->elemName);
+        }
+        else
+        {
+            appendStringInfo(format_cols, "%s ", cd->elemPath);
+        }
+
+        // character types need to have the typmod appended to them
+        if(isCharType(typeNameString))
+        {
+            int newTypMod = getElemTypMod(n->typeName);
+            appendStringInfo(format_cols, "%s(%d)", typeNameString, newTypMod);
+        }
+        else
+        {
+            appendStringInfoString(format_cols, typeNameString);
+        }
+
+        if(cd->asJson)
+        {
+            if(isNVarCharType(typeNameString) && initialTmod == TSQLMaxTypmod)
+            {
+                appendStringInfoString(format_cols, " AS JSON");
+            }
+            else
+            {
+                // AS JSON can only be used with nvarchar(max)
+                ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+                                errmsg("AS JSON in WITH clause can only be specified for column of type nvarchar(max)")));
+            }
+
+        }
+
+        jsonWithParams = lappend(jsonWithParams, makeStringConst(format_cols->data, -1));
+        rf->coldeflist = lappend(rf->coldeflist, n);
+    }
+
+    fc = makeFuncCall(TsqlSystemFuncName("openjson_with"), jsonWithParams, COERCE_EXPLICIT_CALL, -1);
+    rf->functions = list_make1(list_make2(fc, NULL));
+    rf->alias = alias;
+    return (Node*) rf;
+}
+
+/*
+* Create a column definition node for the given column name and type
+* If the column type is a character type, we need to change the underlying typmod
+*/
+Node *
+createOpenJsonWithColDef(char* elemName, TypeName* elemType)
+{
+    ColumnDef *n = makeNode(ColumnDef);
+    char* typeNameString = TypeNameToString(elemType);
+    n->colname = elemName;
+    if(isCharType(typeNameString))
+    {
+        n->typeName = setCharTypmodForOpenjson(elemType);
+    }
+    else
+    {
+        n->typeName = elemType;
+    }
+    n->inhcount = 0;
+    n->is_local = true;
+    n->is_not_null = false;
+    n->is_from_type = false;
+    n->storage = 0;
+    n->raw_default = NULL;
+    n->cooked_default = NULL;
+    n->collOid = InvalidOid;
+    n->constraints = NIL;
+    n->location = -1;
+    return (Node*) n;
+}
+
+TypeName *
+setCharTypmodForOpenjson(TypeName *t)
+{
+    int curTMod = getElemTypMod(t);
+    List *tmods = (List*) t->typmods;
+    if(tmods == NULL)
+    {
+        // Default value when no typmod is provided is 1
+        t->typmods = list_make1(makeIntConst(1, -1));
+        return t;
+    }
+    else if(curTMod == TSQLMaxTypmod)
+    {
+        // TSQLMaxTypmod is represented as -8000 so we need to change to
+        // the actual max value of 4000
+        t->typmods = list_make1(makeIntConst(4000, -1));
+        return t;
+    }
+    else
+    {
+        return t;
+    }
+}
+
+bool isCharType(char* typenameStr)
+{
+    if(pg_strcasecmp(typenameStr, "char") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "nchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "varchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "pg_catalog.char") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "pg_catalog.varchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "sys.char") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "sys.nchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "sys.varchar") == 0)
+    {
+        return true;
+    }
+    else if(isNVarCharType(typenameStr))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool isNVarCharType(char* typenameStr)
+{
+    if(pg_strcasecmp(typenameStr, "nvarchar") == 0)
+    {
+        return true;
+    }
+    else if(pg_strcasecmp(typenameStr, "sys.nvarchar") == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+int getElemTypMod(TypeName *t)
+{
+    List *tmods = (List*) t->typmods;
+    if(tmods == NULL)
+    {
+        return 1;
+    }
+    else
+    {
+        ListCell *elems = (ListCell*) tmods->elements;
+        A_Expr *expr = (A_Expr*) lfirst(elems);
+        A_Const *constVal = (A_Const*) expr;
+        return constVal->val.ival.ival;
+    }
 }
 
 /*
@@ -1278,6 +1492,17 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause)
 						   root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
+	/* In SQL Server if the result is empty then 0 rows are returned. Unfortunately it is not
+	 * possible to mimic this behavior solely using an aggregate, so we use an additional SRF
+	 * and pass the result to that function so that returning 0 rows is possible.
+	 */
+	func_name= list_make2(makeString("sys"), 
+							makeString(return_xml_type ? 
+								"tsql_select_for_xml_result" : 
+								"tsql_select_for_xml_text_result"));
+	func_args = list_make1(fc);
+	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
+
 	rt->name = palloc0(4);
 	strncpy(rt->name, "xml", 3);
 	rt->indirection = NIL;
@@ -1337,7 +1562,7 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
 	}
 	
 	/*
-	 * Finally make function call to tsql_select_for_json_agg
+	 * Make function call to tsql_select_for_json_agg
 	 */
 	func_name= list_make2(makeString("sys"), makeString("tsql_select_for_json_agg"));
 	func_args = list_make5(makeColumnRef(construct_unique_index_name("rows", "tsql_for"), NIL, -1, NULL),
@@ -1345,6 +1570,14 @@ TsqlForJSONMakeFuncCall(TSQL_ForClause* forclause)
 						   makeBoolAConst(include_null_values, -1),
 						   makeBoolAConst(without_array_wrapper, -1),
 						   root_name ? makeStringConst(root_name, -1) : makeNullAConst(-1));
+	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
+
+	/* In SQL Server if the result is empty then 0 rows are returned. Unfortunately it is not
+	 * possible to mimic this behavior solely using an aggregate, so we use an additional SRF
+	 * and pass the result to that function so that returning 0 rows is possible.
+	 */
+	func_name= list_make2(makeString("sys"), makeString("tsql_select_for_json_result"));
+	func_args = list_make1(fc);
 	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	rt->name = palloc0(5);

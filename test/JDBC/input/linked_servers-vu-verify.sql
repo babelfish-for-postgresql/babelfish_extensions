@@ -14,6 +14,34 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
+-- Try to call sp_helplinkedsrvlogin with server name = NULL and login name = NULL. Should return all mappings
+SET NOCOUNT ON
+DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname NULL, c smallint, d sysname NULL)
+INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
+SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a <> 'bbf_server'
+SET NOCOUNT OFF
+GO
+
+-- Try to call sp_helplinkedsrvlogin with correct server name but invalid login name. Should return zero rows
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server', @locallogin = 'testlogin'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with correct server name but login name = NULL. Also modifying the case of servername.  should return all mapppings of the given server
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'MSSQL_server'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with correct server name but login name = NULL.  should return all mapppings of the given server
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'mssql_server'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with server name = NULL and invalid login name. Should return zero rows
+EXEC sp_helplinkedsrvlogin @locallogin = 'testlogin'
+GO
+
+-- Try to call sp_helplinkedsrvlogin with invalid server name. Should throw error
+EXEC sp_helplinkedsrvlogin @rmtsrvname = 'invalid_srv'
+GO
+
 SET NOCOUNT ON
 DECLARE @sp_linkedservers_var table(a sysname, b nvarchar(128), c nvarchar(128), d nvarchar(4000), e nvarchar(4000), f nvarchar(4000), g sysname NULL)
 INSERT INTO @sp_linkedservers_var EXEC sp_linkedservers
@@ -33,8 +61,8 @@ GO
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = "login_1"
 GO
 
--- drop all the linked server logins that have been created
-EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server2", @locallogin = NULL
+-- drop all the linked server logins that have been created (case insensitive)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "MSSQL_server2", @locallogin = NULL
 GO
 
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server3", @locallogin = NULL
@@ -55,8 +83,8 @@ GO
 EXEC sp_dropserver @server = 'mssql_server', @droplogins = 'definitely_invalid'
 GO
 
--- Dropping a server without droplogins should also drop the server and the linked login
-EXEC sp_dropserver @server = 'mssql_server', @droplogins = NULL
+-- Dropping a server without droplogins should also drop the server and the linked login and modifying the case of servername
+EXEC sp_dropserver @server = 'MSSQL_server', @droplogins = NULL
 GO
 
 SELECT * FROM sys.servers WHERE name = 'mssql_server'

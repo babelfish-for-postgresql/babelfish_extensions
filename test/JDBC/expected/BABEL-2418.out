@@ -13,16 +13,20 @@ go
 CREATE SCHEMA babel_2418_schema2
 go
 
-SELECT nspname FROM sys.babelfish_namespace_ext;
+SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname;
 go
 ~~START~~
 varchar
-master_dbo
-tempdb_dbo
-msdb_dbo
-dbo
 babel_2418_schema1
 babel_2418_schema2
+dbo
+guest
+master_dbo
+master_guest
+msdb_dbo
+msdb_guest
+tempdb_dbo
+tempdb_guest
 ~~END~~
 
 
@@ -32,12 +36,15 @@ go
 DROP DATABASE babel_2418_db
 go
 
-SELECT nspname FROM sys.babelfish_namespace_ext;
+SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname;
 go
 ~~START~~
 varchar
 master_dbo
-tempdb_dbo
+master_guest
 msdb_dbo
+msdb_guest
+tempdb_dbo
+tempdb_guest
 ~~END~~
 

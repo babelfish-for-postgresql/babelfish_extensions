@@ -124,5 +124,10 @@ select count(*) from sys.babelfish_domain_mapping;
 GO
 
 -- psql
-DROP ROLE rds_ad
+do 
+$$ begin 
+    if exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
+        then DROP ROLE rds_ad; 
+    end if; 
+end $$;
 GO
