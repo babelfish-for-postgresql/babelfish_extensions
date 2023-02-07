@@ -1,0 +1,38 @@
+-- tsql
+use babel_2571_db_guest;
+go
+
+grant connect to guest;
+go
+
+grant select on guest.babel_2571_table_t1 to guest;
+go
+
+use babel_2571_db_no_guest;
+go
+
+grant connect to guest;
+go
+
+-- tsql user=babel_2571_login1 password=123456789
+use babel_2571_db_guest;
+go
+
+-- the table we created prior to upgrade should be there
+select user_name()
+go
+
+select schema_name()
+go
+
+select * from guest.babel_2571_table_t1
+go
+
+use babel_2571_db_no_guest;
+go
+
+-- guest schema must be created as part of upgrade
+select schema_name()
+go
+
+

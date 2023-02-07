@@ -82,29 +82,31 @@ GO
 SELECT * FROM babel_2812_vu_v24
 GO
 
+-- test DATETIME + other date and time data types (should not work)
 SELECT * FROM babel_2812_vu_v25
 GO
 
--- test DATETIME + other date and time data types (should not work)
 SELECT * FROM babel_2812_vu_v26
-GO
-SELECT * FROM babel_2812_vu_v27
 GO
 
 -- overflow for datetime, should error
-SELECT * FROM babel_2812_vu_v28
+SELECT * FROM babel_2812_vu_v27
 GO
-SELECT * FROM babel_2812_vu_v29
+
+SELECT * FROM babel_2812_vu_v28
 GO
 
 -- Test DATEDIFF() with DATE type for different dateparts
+SELECT * FROM babel_2812_vu_v29
+GO
+
 SELECT * FROM babel_2812_vu_v30
 GO
 SELECT * FROM babel_2812_vu_v31
 GO
+-- datediff(week) is not 100% the same as SQL Server, needs to be fixed - should return 52
 SELECT * FROM babel_2812_vu_v32
 GO
--- datediff(week) is not 100% the same as SQL Server, needs to be fixed - should return 52
 SELECT * FROM babel_2812_vu_v33
 GO
 SELECT * FROM babel_2812_vu_v34
@@ -115,19 +117,17 @@ SELECT * FROM babel_2812_vu_v36
 GO
 SELECT * FROM babel_2812_vu_v37
 GO
+-- should overflow
 SELECT * FROM babel_2812_vu_v38
 GO
--- should overflow
+-- smaller interval for millisecond
 SELECT * FROM babel_2812_vu_v39
 GO
--- smaller interval for millisecond
+-- should overflow
 SELECT * FROM babel_2812_vu_v40
 GO
--- should overflow
+-- microsecond and nanosecond can only handle diff of 0 for date type
 SELECT * FROM babel_2812_vu_v41
 GO
--- microsecond and nanosecond can only handle diff of 0 for date type
 SELECT * FROM babel_2812_vu_v42
-GO
-SELECT * FROM babel_2812_vu_v43
 GO

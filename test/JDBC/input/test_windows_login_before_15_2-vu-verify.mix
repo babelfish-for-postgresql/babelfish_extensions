@@ -13,5 +13,5 @@ select count(*) from sys.server_principals where name = 'aaaaaaaaaaaaaaaaaaaaaaa
 GO
 
 -- psql
-select count(*) from pg_authid where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
+select count(*) from pg_roles where rolname = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@BABEL';
 GO

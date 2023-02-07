@@ -1,0 +1,117 @@
+-- psql
+select rolname, login_name, type from sys.babelfish_authid_user_ext where login_name in ('aduser1@BABEL','aduser2@BABEL',
+'aduser3@BABEL','pass','pass2','testuser@BABEL') order by rolname;
+GO
+~~START~~
+name#!#name#!#bpchar
+master_abc#!#aduser3@BABEL#!#U
+master_babel\aduser1#!#aduser1@BABEL#!#U
+master_babel\aduser2#!#aduser2@BABEL#!#U
+master_pass#!#pass#!#S
+master_pass2#!#pass2#!#S
+testdb_babel\aduser1#!#aduser1@BABEL#!#U
+testdb_babel\testuser#!#testuser@BABEL#!#U
+~~END~~
+
+
+-- tsql
+select count(*) from babelfish_authid_user_ext where rolname = 'master_babel\aduser1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from babelfish_authid_user_ext where rolname = 'master_babel\aduser2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from babelfish_authid_user_ext where rolname = 'master_abc';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from babelfish_authid_user_ext where rolname = 'master_pass';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from babelfish_authid_user_ext where rolname = 'master_pass2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from babelfish_authid_user_ext where rolname = 'testdb_temp_user';
+GO
+~~START~~
+int
+0
+~~END~~
+
+select count(*) from babelfish_authid_user_ext where rolname = 'testdb_babel\testuser';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+select name, type, type_desc from sys.database_principals where name in ('test_role');
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+test_role#!#R#!#DATABASE_ROLE
+~~END~~
+
+
+-- tsql
+select name, type, type_desc from sys.database_principals where name in ('babel\aduser1','babel\aduser2',
+'abc','pass','pass2','temp_user') order by name;
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+abc#!#U#!#WINDOWS_USER
+babel\aduser1#!#U#!#WINDOWS_USER
+babel\aduser2#!#U#!#WINDOWS_USER
+pass#!#S#!#SQL_USER
+pass2#!#S#!#SQL_USER
+~~END~~
+
+
+-- tsql
+use testdb;
+GO
+select name, type, type_desc from sys.database_principals where name in ('babel\testuser');
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+babel\testuser#!#U#!#WINDOWS_USER
+~~END~~
+
+use master;
+GO
+
+-- tsql
+select name, type, type_desc from sys.server_principals where name in ('BABEL\aduser1','BABEL\aduser2','BABEL\aduser3',
+'pass','pass2','BABEL\testuser') order by name;
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+babel\aduser1#!#U#!#WINDOWS_LOGIN
+babel\aduser2#!#U#!#WINDOWS_LOGIN
+babel\aduser3#!#U#!#WINDOWS_LOGIN
+babel\testuser#!#U#!#WINDOWS_LOGIN
+pass#!#S#!#SQL_LOGIN
+pass2#!#S#!#SQL_LOGIN
+~~END~~
+

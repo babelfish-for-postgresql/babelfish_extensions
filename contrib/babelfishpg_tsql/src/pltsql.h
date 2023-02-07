@@ -1554,6 +1554,8 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
 	char*		(*get_host_name) (void);
+	Datum		(*get_datum_from_byte_ptr) (StringInfo buf, int datatype, int scale);
+	Datum		(*get_datum_from_date_time_struct) (uint64 time, int32 date, int datatype, int optional_attr);
 
 	/* Function pointers set by PL/tsql itself */
 	Datum		(*sql_batch_callback) (PG_FUNCTION_ARGS);
@@ -1996,6 +1998,10 @@ extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id)
 extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
 extern char** split_object_name(char *name);
 extern bool is_schema_from_db(Oid schema_oid, Oid db_id);
+extern void remove_trailing_spaces(char *name);
+extern Oid tsql_get_proc_nsp_oid(Oid object_id);
+extern Oid tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id);
+extern Oid tsql_get_trigger_rel_oid(Oid object_id);
 
 typedef struct
 {
@@ -2067,5 +2073,10 @@ extern int64 last_identity_value(void);
 extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
 extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
+
+/*
+ * Functions in linked_servers.c
+ */
+void GetOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tupdesc);
 
 #endif							/* PLTSQL_H */

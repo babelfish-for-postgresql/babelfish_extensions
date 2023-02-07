@@ -25,6 +25,14 @@ GO
 EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
 
+-- Try to create linked server with same servername but modifying the case (should throw error)
+EXEC sp_addlinkedserver  @server = N'MSSQL_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "mssql_server" already exists)~~
+
+
 -- Create linked server with valid provider. Also call sp_addlinkedserver from master.dbo schema
 EXEC master.dbo.sp_addlinkedserver  @server = N'mssql_server1', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
@@ -89,6 +97,14 @@ GO
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
 GO
 
+--Try to add a linked server login with same server name but different case (should throw an error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'MSSQL_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: user mapping for "master_dbo" already exists for server "mssql_server2")~~
+
+
 -- Create a linked server login with no @rmtuser (Won't throw error at creation time but will most likely fail remote login attempt)
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server3', @useself = 'FALSE', @rmtpassword = 'only_password_no_user'
 GO
@@ -101,19 +117,19 @@ GO
 CREATE FUNCTION sys_linked_servers_vu_prepare__sys_servers_func()
 RETURNS TABLE
 AS
-RETURN (SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers ORDER BY name);
+RETURN (SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name);
 GO
 
 -- Create a view dependent on sys.servers view
 CREATE VIEW sys_linked_servers_vu_prepare__sys_servers_view
 AS
-SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers ORDER BY name
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name
 GO
 
 -- Create a view dependent on sys.linked_logins view
 CREATE VIEW sys_linked_servers_vu_prepare__sys_linked_logins_view
 AS
-SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id ORDER BY linked_srv_name
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE name <> 'bbf_server' ORDER BY linked_srv_name
 GO
 
 -- tsql    user=linked_server_login_861    password=password_861

@@ -96,6 +96,7 @@ PG_FUNCTION_INFO_V1(int_power);
 PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
+PG_FUNCTION_INFO_V1(object_schema_name);
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -1068,7 +1069,7 @@ object_id(PG_FUNCTION_ARGS)
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
 		{
-			physical_schema_name = pstrdup(get_dbo_schema_name(db_name));
+			physical_schema_name = pstrdup(get_guest_schema_name(db_name));
 		}
 		else
 		{
@@ -1364,8 +1365,13 @@ object_name(PG_FUNCTION_ARGS)
 
 	if(result)
 	{	
-		/* check if schema corresponding to found object belongs to specified database */
-		if(!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id)) /* in case of pg_type schema_id will be invalid */
+		/* 
+		 * Check if schema corresponding to found object belongs to specified database,
+		 * schema also can be shared schema like "sys" or "information_schema_tsql".
+		 * In case of pg_type schema_id will be invalid.
+		 */
+		if(!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id) 
+				|| (schema_id == get_namespace_oid("sys", true)) || (schema_id == get_namespace_oid("information_schema_tsql", true)))
 			PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
 	}
 	PG_RETURN_NULL();
@@ -1814,4 +1820,82 @@ numeric_radians(PG_FUNCTION_ARGS)
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
 
 	PG_RETURN_NUMERIC(result);
+}
+
+/* Returns the database schema name for schema-scoped objects. */
+Datum
+object_schema_name(PG_FUNCTION_ARGS)
+{
+	Oid object_id;
+	Oid database_id;
+	Oid	user_id = GetUserId();
+	Oid namespace_oid = InvalidOid;
+	Oid temp_nspid = InvalidOid;
+	char* namespace_name;
+	const char* schema_name;
+
+	if(PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+	else
+		object_id = (Oid) PG_GETARG_INT32(0);
+
+	if(PG_ARGISNULL(1))
+		database_id = get_cur_db_id();
+	else {
+		database_id = (Oid) PG_GETARG_INT32(1);
+		user_id = GetSessionUserId();
+	}
+
+	/* lookup namespace_oid in pg_class */
+	temp_nspid = get_rel_namespace(object_id);
+	if(OidIsValid(temp_nspid)){
+		if(pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+			namespace_oid = temp_nspid;
+		else
+			PG_RETURN_NULL();
+	}
+	if (!OidIsValid(namespace_oid)){  /* if not found earlier */
+		/* Lookup namespace_oid in pg_proc */
+		temp_nspid = tsql_get_proc_nsp_oid(object_id);
+		if(OidIsValid(temp_nspid)){
+			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+				namespace_oid = temp_nspid;
+			else
+				PG_RETURN_NULL();
+		}
+	}
+	if (!OidIsValid(namespace_oid)){  /* if not found earlier */
+		/* Lookup namespace_oid in pg_trigger */
+		temp_nspid = tsql_get_trigger_rel_oid(object_id);
+		if(OidIsValid(temp_nspid))
+		{
+			/*
+			 * Since pg_trigger does not contain namespace oid, we use
+			 * the fact that the schema name of the trigger should be same
+			 * as that of the table the trigger is on
+			 */
+			if (pg_class_aclcheck(temp_nspid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				namespace_oid = get_rel_namespace(temp_nspid);
+			else
+				PG_RETURN_NULL();
+		}
+	}
+	if (!OidIsValid(namespace_oid)){ /* if not found earlier */
+		/* Lookup namespace_oid in pg_constraint */
+		namespace_oid = tsql_get_constraint_nsp_oid(object_id, user_id);
+	}
+
+	/* Find schema name from namespace_oid */
+	if (OidIsValid(namespace_oid)){
+		namespace_name = get_namespace_name(namespace_oid);
+		if (pg_namespace_aclcheck(namespace_oid, user_id, ACL_USAGE) != ACLCHECK_OK ||
+		/* database_id should be same as that of db_id of physical schema name*/
+			database_id != get_dbid_from_physical_schema_name(namespace_name, true))
+				PG_RETURN_NULL();
+		schema_name = get_logical_schema_name(namespace_name, true);
+		pfree(namespace_name);
+		PG_RETURN_TEXT_P(cstring_to_text(schema_name));
+	}
+	else
+		PG_RETURN_NULL();
 }

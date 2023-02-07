@@ -1,0 +1,41 @@
+SELECT * FROM table_949 ORDER BY table_key;
+GO
+~~START~~
+int#!#nvarchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+~~END~~
+
+
+SELECT NEXT VALUE FOR seq_949;
+GO
+~~START~~
+bigint
+5
+~~END~~
+
+
+SELECT NEXT VALUE FOR babel_949.seq1;
+GO
+~~START~~
+bigint
+100
+~~END~~
+
+
+SELECT NEXT VALUE FOR null;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'FOR' at line 1 and character position 18)~~
+
+
+SELECT NEXT VALUE FOR not_a_seq;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "not_a_seq" does not exist)~~
+
+

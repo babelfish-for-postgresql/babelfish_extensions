@@ -51,6 +51,7 @@
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include <math.h>
+#include "executor/nodeFunctionscan.h"
 
 #include "backend_parser/scanner.h"
 #include "hooks.h"
@@ -101,6 +102,7 @@ static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
+static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
 
 /*****************************************
  * 			Commands Hooks
@@ -178,6 +180,7 @@ static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_argu
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
+static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -280,6 +283,9 @@ InstallExtendedHooks(void)
 
 	prev_validate_var_datatype_scale_hook = validate_var_datatype_scale_hook;
 	validate_var_datatype_scale_hook = pltsql_validate_var_datatype_scale;
+	
+	prev_modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc_hook;
+	modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc;
 }
 
 void
@@ -321,6 +327,7 @@ UninstallExtendedHooks(void)
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
+	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 }
 
 /*****************************************
@@ -2323,11 +2330,14 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	uint64		flag_values = 0, flag_validity = 0;
 	char *original_query = get_original_query_string();
 
+	/* Disallow extended catalog lookup during restore */
+	if (babelfish_dump_restore)
+		return;
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
-	/* Disallow extended catalog lookup during restore */
-	if (!HeapTupleIsValid(proctup) || babelfish_dump_restore)
+	if (!HeapTupleIsValid(proctup))
 		return;
+
 	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
 
 	if (!is_pltsql_language_oid(form_proctup->prolang))
@@ -3284,6 +3294,46 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 	}
 }
 
+/*
+ * Modify the Tuple Descriptor to match the expected
+ * result set. Currently used only for T-SQL OPENQUERY.
+ */
+static void 
+modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc)
+{
+	char* linked_server;
+	char* query;
+
+	FuncExpr *funcexpr;
+	List* arg_list;
+
+	/*
+	 * Only override tupdesc for T-SQL OPENQUERY
+	 */
+	if (!funcname || (strlen(funcname) != 9) || (strncasecmp(funcname, "openquery", 9) != 0))
+		return;
+
+	funcexpr = (FuncExpr*) expr;
+	arg_list = funcexpr->args;
+
+	/*
+	 * According to T-SQL OPENQUERY SQL definition, we will get
+	 * linked server name and the query to execute as arguments.
+	 */
+	Assert(list_length(arg_list) == 2);
+
+	linked_server = TextDatumGetCString(((Const*)linitial(arg_list))->constvalue);
+	query = TextDatumGetCString(((Const*)lsecond(arg_list))->constvalue);
+
+	GetOpenqueryTupdescFromMetadata(linked_server, query, tupdesc);
+
+	if (linked_server)
+		pfree(linked_server);
+
+	if (query)
+		pfree(query);
+}
+
 static int
 pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType command)
 {
@@ -3345,6 +3395,9 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 	{
 		int res = setTargetTable(pstate, target, inh, false, requiredPerms);
 		pstate->p_rtable = NIL;
+
+		rewrite_update_outer_join(stmt, command, target);
+		
 		return res;
 	}
 

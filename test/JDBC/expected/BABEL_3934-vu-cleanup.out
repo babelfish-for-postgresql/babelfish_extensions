@@ -1,0 +1,9 @@
+DROP PROCEDURE babel_3934_1 --should fail, procedure should not be created
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "babel_3934_1")~~
+
+
+DROP PROCEDURE babel_3934_2
+GO

@@ -1,0 +1,51 @@
+-- CLEANUP
+DROP VIEW babel_733_sch1.babel_733_v6;
+GO
+
+DROP VIEW babel_733_sch1.babel_733_v5;
+GO
+
+DROP VIEW babel_733_sch1.babel_733_v4;
+GO
+
+DROP VIEW babel_733_sch1.babel_733_v2;
+GO
+
+DROP VIEW babel_733_sch1.babel_733_v1;
+GO
+
+DROP PROCEDURE babel_733_sch1.babel_733_proc1;
+GO
+
+DROP FUNCTION babel_733_sch1.babel_733_func1;
+GO
+
+DROP TRIGGER babel_733_trig1;
+GO
+
+DROP SEQUENCE babel_733_seq1;
+GO
+
+DROP TABLE babel_733_t1;
+GO
+
+DROP SCHEMA babel_733_sch1;
+GO
+
+USE babel_733_db1;
+GO
+
+DROP USER babel_733_user2;
+GO
+
+USE master;
+GO
+
+DROP USER babel_733_user1;
+GO
+
+DROP LOGIN babel_733_log1;
+GO
+
+DROP DATABASE babel_733_db1;
+GO

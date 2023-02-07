@@ -1,0 +1,242 @@
+-- sla 90000
+# Here we run all the datatype related prepare scripts
+
+# bigint
+include#!#input/datatypes/TestBigInt-vu-prepare.txt
+
+# numeric
+include#!#input/datatypes/TestNumeric-vu-prepare.txt
+
+# bit
+include#!#input/datatypes/TestBIT-vu-prepare.txt
+
+# smallint
+include#!#input/datatypes/TestSmallInt-vu-prepare.txt
+
+# decimal
+include#!#input/datatypes/TestDecimal-vu-prepare.txt
+
+# smallmoney
+include#!#input/datatypes/TestSmallMoney-vu-prepare.txt
+
+# int
+include#!#input/datatypes/TestInt-vu-prepare.txt
+
+# tinyint
+include#!#input/datatypes/TestTinyInt-vu-prepare.txt
+
+# money
+include#!#input/datatypes/TestMoney-vu-prepare.txt
+
+# float
+include#!#input/datatypes/TestFloat-vu-prepare.txt
+
+# real
+include#!#input/datatypes/TestReal-vu-prepare.txt
+
+# date
+include#!#input/datatypes/TestDate-vu-prepare.txt
+
+# datetimeoffset
+include#!#input/datatypes/TestDatetimeoffset-vu-prepare.sql
+
+# datetime2
+include#!#input/datatypes/TestDatetime2-vu-prepare.txt
+
+# smalldatetime
+include#!#input/datatypes/TestSmallDatetime-vu-prepare.txt
+
+# datetime
+include#!#input/datatypes/TestDatetime-vu-prepare.txt
+
+# time
+include#!#input/datatypes/TestTime-vu-prepare.txt
+
+# char and nchar
+include#!#input/datatypes/TestChar-vu-prepare.txt
+
+# varchar and nvarchar
+include#!#input/datatypes/TestVarChar-vu-prepare.txt
+
+# text and ntext
+include#!#input/datatypes/TestText-vu-prepare.txt
+
+# binary and varbinary
+include#!#input/datatypes/TestBinary-vu-prepare.txt
+
+# image
+include#!#input/datatypes/TestImage-vu-prepare.txt
+
+# user defined data types
+include#!#input/datatypes/TestUDD-vu-prepare.txt
+
+# uniqueidentifier
+include#!#input/datatypes/TestUniqueIdentifier-vu-prepare.txt
+
+# Run SELECTs but using OPENQUERY now
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBIGINT_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table1');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table2');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table3');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table4');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table5');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table6');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table7');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table8');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM numeric_table9');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBIT_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM SMALLINT_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table1');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table2');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table3');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table4');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table5');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table6');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table7');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table8');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testdecimal_table9');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM smallmoney_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM INT_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TINYINT_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM money_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM FLOAT_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM REAL_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM DATE_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestDatetimeoffset_vu_prepare_testing');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestDatetime2_vu_prepare_t');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM SMALLDATETIME_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TestDatetime_vu_prepare_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime1');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime2');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime3');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime4');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime5');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime6');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * from TestTime7');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt1');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt2');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt3');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testBINARY_dt4');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt1');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt2');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM IMAGE_dt3');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM testCHAR_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt1');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt2');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt3');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM VARCHAR_dt4');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM TEXT_dt');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt1');
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM udd_dt2');
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT * FROM uniqueidentifier_dt');
+
+# Drop all tables
+# bigint
+include#!#input/datatypes/TestBigInt-vu-cleanup.txt
+
+# numeric
+include#!#input/datatypes/TestNumeric-vu-cleanup.txt
+
+# bit
+include#!#input/datatypes/TestBIT-vu-cleanup.txt
+
+# smallint
+include#!#input/datatypes/TestSmallInt-vu-cleanup.txt
+
+# decimal
+include#!#input/datatypes/TestDecimal-vu-cleanup.txt
+
+# smallmoney
+include#!#input/datatypes/TestSmallMoney-vu-cleanup.txt
+
+# int
+include#!#input/datatypes/TestInt-vu-cleanup.txt
+
+# tinyint
+include#!#input/datatypes/TestTinyInt-vu-cleanup.txt
+
+# money
+include#!#input/datatypes/TestMoney-vu-cleanup.txt
+
+# float
+include#!#input/datatypes/TestFloat-vu-cleanup.txt
+
+# real
+include#!#input/datatypes/TestReal-vu-cleanup.txt
+
+# date
+include#!#input/datatypes/TestDate-vu-cleanup.txt
+
+# datetimeoffset
+include#!#input/datatypes/TestDatetimeoffset-vu-cleanup.sql
+
+# datetime2
+include#!#input/datatypes/TestDatetime2-vu-cleanup.txt
+
+# smalldatetime
+include#!#input/datatypes/TestSmallDatetime-vu-cleanup.txt
+
+# datetime
+include#!#input/datatypes/TestDatetime-vu-cleanup.txt
+
+# time
+include#!#input/datatypes/TestTime-vu-cleanup.txt
+
+# char and nchar
+include#!#input/datatypes/TestChar-vu-cleanup.txt
+
+# varchar and nvarchar
+include#!#input/datatypes/TestVarChar-vu-cleanup.txt
+
+# text and ntext
+include#!#input/datatypes/TestText-vu-cleanup.txt
+
+# binary and varbinary
+include#!#input/datatypes/TestBinary-vu-cleanup.txt
+
+# image
+include#!#input/datatypes/TestImage-vu-cleanup.txt
+
+# user defined data types
+include#!#input/datatypes/TestUDD-vu-cleanup.txt
+
+# uniqueidentifier
+include#!#input/datatypes/TestUniqueIdentifier-vu-cleanup.txt
+
+# Test OPENQUERY error handling
+SELECT * FROM OPENQUERY(bbf_server, 'select 1/0 as a')
+
+# Try executing a query that does not return a result set
+SELECT * FROM OPENQUERY(bbf_server, 'INSERT INTO just_a_table_which_does_not_exist VALUES (1)')
+
+# try executing query where column alias does not exist
+SELECT * FROM OPENQUERY(bbf_server, 'select 1')
+
+# execute query that returns 2 result sets. We should only return the first
+SELECT * FROM OPENQUERY(bbf_server, 'select 123; select 456')
+
+# Test view dependent on OPENQUERY
+SELECT * FROM openquery_vu_prepare__openquery_view
