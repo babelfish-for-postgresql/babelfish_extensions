@@ -6,3 +6,12 @@ GO
 
 DROP VIEW babel_3836_v1;
 GO
+
+DROP FUNCTION babel_3836_f2;
+GO
+
+DROP PROCEDURE babel_3836_p2;
+GO
+
+DROP VIEW babel_3836_v2;
+GO
