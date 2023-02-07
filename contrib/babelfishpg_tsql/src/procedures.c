@@ -2533,7 +2533,7 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 			pfree(logical_schema_name);
 			if ((guest_role_name && strcmp(user, guest_role_name) == 0))
 			{	
-				physical_schema_name = pstrdup(get_dbo_schema_name(db_name));
+				physical_schema_name = pstrdup(get_guest_schema_name(db_name));
 			}
 			else
 			{
@@ -2596,10 +2596,12 @@ Datum sp_babelfish_volatility(PG_FUNCTION_ARGS)
 						"WHEN t1.provolatile = 's' THEN 'stable' "
 						"ELSE 'immutable' "
 					"END AS Volatility "
-					"from (SELECT (aclexplode(proacl)).*, proname, provolatile, pronamespace from pg_proc WHERE prokind = 'f') t1 "
+					"from pg_proc t1 "
 					"JOIN pg_namespace t2 ON t1.pronamespace = t2.oid "
 					"JOIN sys.babelfish_namespace_ext t3 ON t3.nspname = t2.nspname "
-					"where t1.grantee = %d AND t3.dbid = sys.db_id() ORDER BY t3.orig_name, t1.proname", user_id
+					"where has_function_privilege(t1.oid, CAST('EXECUTE' as text)) "
+					"AND t3.dbid = sys.db_id() AND prokind = 'f' "
+					"ORDER BY t3.orig_name, t1.proname"
 				);
 		}
 		else
