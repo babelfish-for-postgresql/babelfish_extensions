@@ -91,3 +91,13 @@ GO
 
 GRANT ALL ON babel_object_id_schema2.babel_object_id_db_t2 TO babel_object_id_user2;
 GO
+
+-- to test that it is looking in guest schema by default for guest user
+USE master
+GO
+
+CREATE LOGIN babel_object_id_login2 WITH PASSWORD = '12345678';
+GO
+
+USE babel_object_id_db;
+GO

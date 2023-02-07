@@ -21,6 +21,9 @@ GO
 USE master;
 GO
 
+DROP LOGIN babel_object_id_login2;
+GO
+
 DROP USER babel_object_id_master_user1
 GO
 
