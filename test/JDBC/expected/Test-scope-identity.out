@@ -1,0 +1,232 @@
+
+-- Testcases for BABEL-3907, BABEL-3413
+-- There exist some Identity testing already.
+-- see Test-Identity (MVU and standlone), identity_function (MVU and standalone)
+-- Test 1
+-- Two tables with identity column. First table has a trigger to insert into second table.
+-- SCOPE_IDENTITY should show identity value from first table because it is in the scope
+-- while IDENTITY should show value on second table
+-- This was validated against SQLServer
+CREATE TABLE ScopeIdentityMainTable (
+ ID int IDENTITY(1,1) NOT NULL,
+ FIRSTNAME varchar(255),
+ LASTNAME varchar(255),
+ PRIMARY KEY (ID)
+);
+GO
+
+CREATE TABLE ScopeIdentityTableUpdatedByKey (
+ ID int,
+ FIRSTNAME varchar(255),
+ LASTNAME varchar(255),
+ VALTYPE varchar(255),
+ SQLIDENTITYCOL [int] IDENTITY(1,1) NOT NULL,
+ FOREIGN KEY (ID) REFERENCES ScopeIdentityMainTable(ID)
+);
+GO
+
+CREATE TABLE ScopeIdentityTableUpdatedByTrigger (
+ ID int,
+ VALTYPE varchar(255),
+ SQLIDENTITYCOL [int] IDENTITY(1,1) NOT NULL
+)
+GO
+
+-- Insert a value to make sure this table has a different value than MainTable
+INSERT INTO ScopeIdentityTableUpdatedByTrigger (id, valtype) VALUES ( 5, 'Name');
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE TRIGGER UpdateTableByTrigger
+ON ScopeIdentityMainTable
+FOR INSERT 
+AS
+ INSERT INTO ScopeIdentityTableUpdatedByTrigger(Id, ValType)
+ SELECT Id ,'Name' FROM INSERTED;
+GO
+
+SELECT * FROM ScopeIdentityMainTable;
+GO
+~~START~~
+int#!#varchar#!#varchar
+~~END~~
+
+
+SELECT * FROM ScopeIdentityTableUpdatedByKey;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#int
+~~END~~
+
+
+SELECT * FROM ScopeIdentityTableUpdatedByTrigger;
+GO
+~~START~~
+int#!#varchar#!#int
+5#!#Name#!#1
+~~END~~
+
+
+INSERT INTO ScopeIdentityMainTable (firstname, lastname) values ('Infor', 'HMS');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT @@IDENTITY as [Identity]
+ , SCOPE_IDENTITY() AS [Scope_Identity]
+ , IDENT_CURRENT('ScopeIdentityMainTable') AS IC_MainTable 
+ , IDENT_CURRENT('ScopeIdentityTableUpdatedByKey') AS IC_TableUpdatedByKey 
+ , IDENT_CURRENT('ScopeIdentityTableUpdatedByTrigger') AS IC_TableUpdatedByTrigger
+GO
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#numeric
+2#!#1#!#1#!#1#!#2
+~~END~~
+
+
+-- Test 2
+-- Create a Stored Procedure (SP1) that calls SP2 which does an INSERT to MainTable
+-- The INSERT INTO MainTable does a trigger INSERT INTO TableUpdatedByTrigger
+-- This was validated against SQL Server
+CREATE PROCEDURE ScopeIdentitySP2
+AS
+    INSERT ScopeIdentityMainTable (firstname, lastname) values ('Infor2', 'HMS2');
+    SELECT MAX(id) AS MaximumUsedIdentity FROM ScopeIdentityMainTable
+    SELECT SCOPE_IDENTITY()
+    SELECT @@IDENTITY
+    SELECT IDENT_CURRENT('ScopeIdentityMainTable')
+GO
+
+-- SCOPE_IDENTITY should be NULL because INSERT happened outside scope
+CREATE PROCEDURE ScopeIdentitySP1
+AS
+    EXEC ScopeIdentitySP2
+    SELECT MAX(id) AS MaximumUsedIdentity FROM ScopeIdentityMainTable
+    SELECT SCOPE_IDENTITY()
+    SELECT @@IDENTITY
+    SELECT IDENT_CURRENT('ScopeIdentityMainTable')
+GO
+
+EXEC ScopeIdentitySP1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+numeric
+2
+~~END~~
+
+~~START~~
+numeric
+3
+~~END~~
+
+~~START~~
+numeric
+2
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+~~START~~
+numeric
+3
+~~END~~
+
+~~START~~
+numeric
+2
+~~END~~
+
+
+SELECT @@IDENTITY as [Identity]
+ , SCOPE_IDENTITY() AS [Scope_Identity]
+ , IDENT_CURRENT('ScopeIdentityMainTable') AS IC_MainTable 
+ , IDENT_CURRENT('ScopeIdentityTableUpdatedByKey') AS IC_TableUpdatedByKey 
+ , IDENT_CURRENT('ScopeIdentityTableUpdatedByTrigger') AS IC_TableUpdatedByTrigger
+GO
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#numeric
+3#!#1#!#2#!#1#!#3
+~~END~~
+
+
+
+-- Test 3
+-- Verify scope_identity() inside sp_executesql
+-- Similarly as above, the output was validated against SQL Server
+CREATE FUNCTION ScopeIdentityFunc1()
+RETURNS TINYINT
+AS
+BEGIN
+RETURN SCOPE_IDENTITY()
+END
+GO
+
+-- ScopeIdentityFunc1 should return NULL because insert happened outside scope
+INSERT ScopeIdentityMainTable (firstname, lastname) values ('Infor3', 'HMS3');
+SELECT dbo.ScopeIdentityFunc1();
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+tinyint
+<NULL>
+~~END~~
+
+
+sp_executesql N'INSERT INTO ScopeIdentityMainTable (firstname, lastname) values (@var1, @var2);
+SELECT dbo.ScopeIdentityFunc1(), @@IDENTITY as [Identity], SCOPE_IDENTITY() AS [Scope_Identity]',
+N'@var1 varchar(20), @var2 varchar(20)', @var1='Infor4', @var2='HMS4';
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+tinyint#!#numeric#!#numeric
+<NULL>#!#5#!#4
+~~END~~
+
+
+DROP FUNCTION ScopeIdentityFunc1
+GO
+
+DROP PROCEDURE ScopeIdentitySP1
+GO
+
+DROP PROCEDURE ScopeIdentitySP2
+GO
+
+DROP TRIGGER UpdateTableByTrigger
+GO
+
+DROP TABLE ScopeIdentityTableUpdatedByTrigger
+GO
+
+DROP TABLE ScopeIdentityTableUpdatedByKey
+GO
+
+DROP TABLE ScopeIdentityMainTable
+GO
+

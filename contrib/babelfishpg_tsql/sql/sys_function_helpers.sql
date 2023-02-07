@@ -6,6 +6,11 @@ RETURNS INT8
 AS 'babelfishpg_tsql', 'get_last_identity'
 LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_get_scope_identity()
+RETURNS INT8
+AS 'babelfishpg_tsql', 'get_scope_identity'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.bbf_get_current_physical_schema_name(IN schemaname TEXT)
 RETURNS TEXT
 AS 'babelfishpg_tsql', 'get_current_physical_schema_name'
@@ -20,6 +25,13 @@ CREATE OR REPLACE FUNCTION sys.babelfish_get_last_identity_numeric()
 RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_last_identity()::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_scope_identity_numeric()
+RETURNS numeric(38,0) AS
+$BODY$
+    SELECT sys.babelfish_get_scope_identity()::numeric(38,0);
 $BODY$
 LANGUAGE SQL STABLE;
 

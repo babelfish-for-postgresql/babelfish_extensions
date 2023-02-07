@@ -79,6 +79,12 @@ GO
 INSERT INTO test_identity_vu_prepare_t2 VALUES('Babelfish12')
 GO
 
+-- IDENTITY vs SCOPE_IDENTITY vs IDENT_CURRENT
+-- The value of IDENTITY should not be the same as SCOPE_IDENTITY
+-- IDENTITY should return value of identity from trigger (t3)
+-- SCOPE_IDENTITY should return value of identity in scope of last INSERT (t2)
+-- IDENT_CURRENT(t2) should return value of identity of t2 regardless of scope
+-- The output in expected files are verified against SQL Server
 SELECT MAX(id) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t2
 SELECT MAX(DepartmentID) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t3
 SELECT @@IDENTITY

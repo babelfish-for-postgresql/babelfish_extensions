@@ -8,34 +8,12 @@ GO
 
 INSERT INTO test_identity_vu_prepare_t1 VALUES ('Nirmit_Shah')
 GO
-~~ROW COUNT: 1~~
-
 
 SELECT MAX(id) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
 GO
-~~START~~
-int
-1
-~~END~~
-
-~~START~~
-numeric
-1
-~~END~~
-
-~~START~~
-numeric
-1
-~~END~~
-
-~~START~~
-numeric
-1
-~~END~~
-
 
 CREATE PROCEDURE test_identity_vu_prepare_p1
 AS
@@ -62,8 +40,6 @@ GO
 
 INSERT test_identity_vu_prepare_t2 VALUES ('Babelfish1'),('Babelfish2'),('Babelfish3')
 GO
-~~ROW COUNT: 3~~
-
 
 CREATE PROCEDURE test_identity_vu_prepare_p2
 AS
@@ -91,8 +67,6 @@ GO
 
 INSERT test_identity_vu_prepare_t3 VALUES ('Babelfish6'),('Babelfish7'),('Babelfish8')
 GO
-~~ROW COUNT: 3~~
-
 
 CREATE TRIGGER test_indentity_vu_prepare_trig1  
 ON test_identity_vu_prepare_t2  
@@ -104,48 +78,13 @@ GO
 
 INSERT INTO test_identity_vu_prepare_t2 VALUES('Babelfish12')
 GO
-~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
-
-
--- IDENTITY vs SCOPE_IDENTITY vs IDENT_CURRENT
--- The value of IDENTITY should not be the same as SCOPE_IDENTITY
--- IDENTITY should return value of identity from trigger (t3)
--- SCOPE_IDENTITY should return value of identity in scope of last INSERT (t2)
--- IDENT_CURRENT(t2) should return value of identity of t2 regardless of scope
--- The output in expected files are verified against SQL Server
 SELECT MAX(id) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t2
 SELECT MAX(DepartmentID) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t3
 SELECT @@IDENTITY
 SELECT SCOPE_IDENTITY()
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t2')
 GO
-~~START~~
-smallint
-4
-~~END~~
-
-~~START~~
-int
-115
-~~END~~
-
-~~START~~
-numeric
-115
-~~END~~
-
-~~START~~
-numeric
-4
-~~END~~
-
-~~START~~
-numeric
-4
-~~END~~
-
 
 CREATE FUNCTION test_identity_vu_prepare_func2()
 RETURNS TINYINT
@@ -172,8 +111,6 @@ GO
 
 INSERT test_identity_vu_prepare_t4 VALUES ('Babelfish13',21),('Babelfish14',20),('Babelfish15',23)
 GO
-~~ROW COUNT: 3~~
-
 
 CREATE TABLE test_identity_vu_prepare_t5
 (
@@ -184,8 +121,6 @@ GO
 
 INSERT test_identity_vu_prepare_t5 VALUES ('Babelfish16',21),('Babelfish17',20),('Babelfish18',23)
 GO
-~~ROW COUNT: 3~~
-
 
 CREATE PROCEDURE test_identity_vu_prepare_p4
 AS

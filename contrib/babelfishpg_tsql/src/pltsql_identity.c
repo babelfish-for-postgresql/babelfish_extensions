@@ -37,6 +37,13 @@ typedef struct SeqTableIdentityData
 	int64		last_identity;	/* sequence identity value */
 } SeqTableIdentityData;
 
+typedef struct ScopeIdentityStack
+{
+	struct ScopeIdentityStack	*prev;							/* previous stack item if any */
+	int							nest_level;						/* nesting depth at which we made entry */
+	SeqTableIdentityData		last_used_seq_identity_in_scope;	/* current scope identity value */
+} ScopeIdentityStack;
+
 /*
  * By default, it is set to false.  This is set to true only when we want setval
  * to set the max/min(current identity value, new identity value to be inserted.
@@ -48,6 +55,10 @@ static HTAB *seqhashtabidentity = NULL;
 static SeqTableIdentityData *last_used_seq_identity = NULL;
 
 static Oid get_table_identity(Oid tableOid);
+
+static ScopeIdentityStack *last_used_scope_seq_identity = NULL;
+static int PltsqlScopeIdentityNestLevel = 0;
+static void update_scope_identity_stack(SeqTableIdentityData *elm);
 
 PG_FUNCTION_INFO_V1(get_identity_param);
 
@@ -264,6 +275,9 @@ pltsql_update_last_identity(Oid seqid, int64 val)
 	elm->last_identity = val;
 
 	last_used_seq_identity = elm;
+
+	/* Also update the scope identity */
+	update_scope_identity_stack(elm);
 }
 
 int64
@@ -283,6 +297,41 @@ last_identity_value(void)
 				 errmsg("last identity not valid")));
 
 	return last_used_seq_identity->last_identity;
+}
+
+int64
+last_scope_identity_value(void)
+{
+	SeqTableIdentityData *curr_seq_identity = NULL;
+
+	/* scope_identity is not defined or defined but it is not on the same level as the current scope */
+	if (last_used_scope_seq_identity == NULL ||
+		last_used_scope_seq_identity->nest_level != PltsqlScopeIdentityNestLevel)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("last scope identity not yet defined in this session")));
+	}
+	
+	/* Check the current identity in the scope */
+	curr_seq_identity = &last_used_scope_seq_identity->last_used_seq_identity_in_scope;
+	if (!curr_seq_identity->relid ||
+		!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(curr_seq_identity->relid)))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("last scope identity not yet defined in this session")));
+	}
+
+	if (!curr_seq_identity->last_identity_valid)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("last identity not valid")));
+
+	/* There better be a Global last_used_seq_identity */
+	Assert(last_used_seq_identity && last_used_seq_identity->last_identity);
+
+	return curr_seq_identity->last_identity;
 }
 
 void
@@ -307,6 +356,15 @@ void pltsql_resetcache_identity()
 	}
 
 	last_used_seq_identity = NULL;
+
+	while (last_used_scope_seq_identity) {
+		ScopeIdentityStack *prev = last_used_scope_seq_identity->prev;
+		pfree(last_used_scope_seq_identity);
+
+		last_used_scope_seq_identity = prev;
+	}
+	Assert(last_used_scope_seq_identity == NULL);
+
 }
 
 /*
@@ -343,4 +401,60 @@ pltsql_setval_identity(Oid seqid, int64 val, int64 last_val)
 	}
 
 	return val;
+}
+
+
+static void update_scope_identity_stack(SeqTableIdentityData *elm)
+{
+	ScopeIdentityStack *scope_identity = NULL;
+
+	/*
+	* If current elm is in the same scope (same nest_level) as the current top element in the stack,
+	* then update the top element to point to elm. Otherwise, push elm to the stack and make
+	* it the new scope identity value in the new scope.
+	*/
+	if (last_used_scope_seq_identity && last_used_scope_seq_identity->nest_level == PltsqlScopeIdentityNestLevel)
+	{
+		/* Make a deep copy of elm. We do not know where elm came from */
+		memcpy((void *) &last_used_scope_seq_identity->last_used_seq_identity_in_scope,
+			(void *) elm, sizeof(SeqTableIdentityData));
+		return;
+	}
+
+	/* The previous nest_level should be less than the one we are adding */
+	Assert(!last_used_scope_seq_identity || last_used_scope_seq_identity->nest_level < PltsqlScopeIdentityNestLevel);
+
+	scope_identity = (ScopeIdentityStack *) MemoryContextAllocZero(TopMemoryContext,
+		sizeof(ScopeIdentityStack));
+
+	scope_identity->prev = last_used_scope_seq_identity;
+	scope_identity->nest_level = PltsqlScopeIdentityNestLevel;
+
+	/* Make a deep copy of elm. We do not know where elm came from */
+	memcpy((void *) &scope_identity->last_used_seq_identity_in_scope,
+			(void *) elm, sizeof(SeqTableIdentityData));
+
+	last_used_scope_seq_identity = scope_identity;
+}
+
+int pltsql_new_scope_identity_nest_level(void)
+{
+	return ++PltsqlScopeIdentityNestLevel;
+}
+
+void pltsql_revert_last_scope_identity(int nest_level)
+{
+	ScopeIdentityStack *old_top = NULL;
+
+	if (last_used_scope_seq_identity == NULL ||
+		last_used_scope_seq_identity->nest_level != PltsqlScopeIdentityNestLevel)
+	{
+		PltsqlScopeIdentityNestLevel = nest_level - 1;
+		return;
+	}
+
+	PltsqlScopeIdentityNestLevel = nest_level - 1;
+	old_top = last_used_scope_seq_identity;
+	last_used_scope_seq_identity = old_top->prev;
+	pfree(old_top);
 }
