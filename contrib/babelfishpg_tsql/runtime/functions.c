@@ -517,6 +517,7 @@ schema_id(PG_FUNCTION_ARGS)
 		if (pltsql_case_insensitive_identifiers)
 			name = downcase_identifier(name, strlen(name), false, false); /* no truncation here. truncation will be handled inside get_physical_schema_name() */
 		physical_name = get_physical_schema_name(get_cur_db_name(), name);
+		pfree(name);
 	}
 
 	/*
@@ -536,6 +537,7 @@ schema_id(PG_FUNCTION_ARGS)
 	nspOid = nspform->oid;
 	id = (int) nspOid;
 	
+	pfree(physical_name);
 	ReleaseSysCache(tup);
 	PG_RETURN_INT32(id);
 }

@@ -1645,9 +1645,6 @@ ALTER FUNCTION schema_id(schema_name VARCHAR) RENAME TO schema_id_deprecated_in_
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sys_schema_id_deprecated_in_2_4_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'schema_id_deprecated_in_2_4_0');
 
--- function schema_id
--- Two declarations of schema_id based on number of parameters.
---However, both call the same C function
 CREATE OR REPLACE FUNCTION schema_id()
 RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION schema_id() TO PUBLIC;

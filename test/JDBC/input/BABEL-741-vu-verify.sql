@@ -58,3 +58,12 @@ GO
 
 EXEC babel_3836_p1;
 GO
+
+SELECT * from babel_3836_f2();
+GO
+
+SELECT * from babel_3836_v2;
+GO
+
+EXEC babel_3836_p2;
+GO
