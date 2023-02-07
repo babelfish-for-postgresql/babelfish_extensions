@@ -10,6 +10,7 @@
 #include "parser/parse_target.h"
 #include "parser/scansup.h"  /* downcase_identifier */
 #include "utils/guc.h"
+#include "utils/ruleutils.h"
 
 #include "babelfishpg_common.h"
 #include "collation.h"
@@ -131,6 +132,8 @@ _PG_init(void)
 
 	prev_PreCreateCollation_hook = PreCreateCollation_hook;
 	PreCreateCollation_hook = BabelfishPreCreateCollation_hook;
+
+	get_tsql_const_collation_hook = get_tsql_const_collation;
 }
 void
 _PG_fini(void)
@@ -141,6 +144,7 @@ _PG_fini(void)
 	CLUSTER_COLLATION_OID_hook = prev_CLUSTER_COLLATION_OID_hook;
 	TranslateCollation_hook = prev_TranslateCollation_hook;
 	PreCreateCollation_hook = prev_PreCreateCollation_hook;
+	get_tsql_const_collation_hook = NULL;
 }
 
 common_utility_plugin *
@@ -165,6 +169,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_datetime2_datatype = &is_tsql_datetime2_datatype;
 		common_utility_plugin_var.is_tsql_smalldatetime_datatype = &is_tsql_smalldatetime_datatype;
 		common_utility_plugin_var.is_tsql_datetimeoffset_datatype = &is_tsql_datetimeoffset_datatype;
+		common_utility_plugin_var.is_tsql_decimal_datatype = &is_tsql_decimal_datatype;
 		common_utility_plugin_var.is_tsql_rowversion_or_timestamp_datatype = &is_tsql_rowversion_or_timestamp_datatype;
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;

@@ -1299,8 +1299,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunction_call(TSqlParser::Function_callContext *ctx)
 {
-	if (ctx->NEXT())
-		handle(INSTR_UNSUPPORTED_TSQL_NEXT_VALUE_FOR, "NEXT VALUE FOR", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 

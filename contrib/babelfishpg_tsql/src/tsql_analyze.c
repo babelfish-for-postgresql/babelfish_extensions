@@ -180,3 +180,113 @@ handle_rowversion_target_in_update_stmt(RangeVar *target_table, UpdateStmt *stmt
 
 	RelationClose(rel);
 }
+
+static bool
+search_join_recursive(Node *expr, RangeVar *target, bool outside_outer)
+{
+	JoinExpr *join_expr;
+	RangeVar *arg;
+
+	if (!expr)
+		return false;
+	else if (IsA(expr, RangeVar)) // Base condition
+	{
+		arg = (RangeVar *)expr;
+		return outside_outer && strcmp(arg->relname, target->relname) == 0;
+	}
+	else if(!IsA(expr, JoinExpr))
+		return false;
+	join_expr = (JoinExpr *) expr;
+
+	// Check if 'target' is on the 'outside' of a join, i.e. right on a left join or left on a right join
+	switch(join_expr->jointype)
+	{
+		case JOIN_INNER:
+			return search_join_recursive(join_expr->larg, target, outside_outer)
+				|| search_join_recursive(join_expr->rarg, target, outside_outer);
+		case JOIN_LEFT:
+			return search_join_recursive(join_expr->larg, target, outside_outer)
+				|| search_join_recursive(join_expr->rarg, target, true);
+		case JOIN_RIGHT:
+			return search_join_recursive(join_expr->larg, target, true)
+				|| search_join_recursive(join_expr->rarg, target, outside_outer);
+		case JOIN_FULL:
+			return search_join_recursive(join_expr->larg, target, true)
+				|| search_join_recursive(join_expr->rarg, target, true);
+		default:
+			return false;
+	}
+}
+
+static bool
+target_in_outer_join(List *fromClause, RangeVar *target)
+{
+	bool result = false;
+	ListCell *lc;
+
+	foreach (lc, fromClause)
+	{
+		Node *node = lfirst(lc);
+		result |= search_join_recursive(node, target, false);
+	}
+	
+	return result;
+}
+
+static void
+add_target_ctid_not_null_clause(Node **where_clause, RangeVar *target)
+{
+	NullTest  *new_clause;
+	ColumnRef *col_ref;
+	char      *rel_name = target->relname;
+
+	new_clause = makeNode(NullTest);
+	new_clause->nulltesttype = IS_NOT_NULL;
+	new_clause->argisrow = false;
+	new_clause->location = -1;
+
+	if (target->alias && target->alias->aliasname)
+		rel_name = target->alias->aliasname;
+	col_ref = makeNode(ColumnRef);
+	col_ref->location = -1;
+	col_ref->fields = list_make2(makeString(rel_name), makeString("ctid"));
+	new_clause->arg = (Expr*) col_ref;
+
+	if (!*where_clause)
+		*where_clause = (Node *)new_clause;
+	else
+	{
+		BoolExpr *bool_expr = makeNode(BoolExpr);;
+		bool_expr->boolop = AND_EXPR;
+		bool_expr->location = -1;
+		bool_expr->args = list_make2(*where_clause, new_clause);
+		*where_clause = (Node*) bool_expr;
+	}
+		
+}
+
+void
+rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
+{
+	switch (command)
+	{
+		case CMD_UPDATE:
+		{
+			UpdateStmt *update_stmt = (UpdateStmt *) stmt;
+			List      *fromClause = update_stmt->fromClause;
+			if (fromClause && target_in_outer_join(fromClause, target))
+				add_target_ctid_not_null_clause(&update_stmt->whereClause, target);
+			break;
+		}
+		case CMD_DELETE:
+		{
+			DeleteStmt *delete_stmt = (DeleteStmt *) stmt;
+			List      *fromClause = delete_stmt->usingClause;
+			if (fromClause && target_in_outer_join(fromClause, target))
+				add_target_ctid_not_null_clause(&delete_stmt->whereClause, target);			
+			break;
+		}
+		default:
+			return;
+	}
+}

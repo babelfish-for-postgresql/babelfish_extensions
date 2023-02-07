@@ -181,6 +181,7 @@ BABEL-2765
 BABEL-2917
 BABEL-2955
 BABEL-3646-before-14_6
+BABEL-3748-before-14_7
 temp-tables
 table-variable
 TestNotNull
@@ -294,6 +295,7 @@ BABEL-3655
 sys-table_types_internal
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-3640
+openjson
 sys-sysindexes
 sys-system_objects
 ISC-Tables
