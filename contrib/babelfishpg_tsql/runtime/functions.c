@@ -1365,8 +1365,13 @@ object_name(PG_FUNCTION_ARGS)
 
 	if(result)
 	{	
-		/* check if schema corresponding to found object belongs to specified database */
-		if(!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id)) /* in case of pg_type schema_id will be invalid */
+		/* 
+		 * Check if schema corresponding to found object belongs to specified database,
+		 * schema also can be shared schema like "sys" or "information_schema_tsql".
+		 * In case of pg_type schema_id will be invalid.
+		 */
+		if(!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id) 
+				|| (schema_id == get_namespace_oid("sys", true)) || (schema_id == get_namespace_oid("information_schema_tsql", true)))
 			PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
 	}
 	PG_RETURN_NULL();
