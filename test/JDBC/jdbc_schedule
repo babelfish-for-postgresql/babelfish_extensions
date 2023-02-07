@@ -10,32 +10,6 @@
 
 all
 
-# Temporarily ignore tests until fixed in PG15
-ignore#!#BABEL-LOGIN-USER-EXT
-ignore#!#BABEL-ROLE-vu-prepare
-ignore#!#BABEL-ROLE-vu-verify
-ignore#!#BABEL-ROLE-vu-cleanup
-ignore#!#BABEL-ROLE
-ignore#!#BABEL-USER
-
-# TO-DO: re-enable these tests when pg_hint_plan extension gets supported in PG15
-ignore#!#BABEL-3291
-ignore#!#BABEL-3292
-ignore#!#BABEL-3293
-ignore#!#BABEL-3294
-ignore#!#BABEL-3295
-ignore#!#BABEL-3512
-ignore#!#BABEL-3592
-ignore#!#BABEL-3513-vu-prepare
-ignore#!#BABEL-3513-vu-verify
-
-# BABEL-SP_FKEYS test is very slow and causing github action timeout.
-ignore#!#BABEL-SP_FKEYS
-ignore#!#BABEL-SP_FKEYS-vu-prepare
-ignore#!#BABEL-SP_FKEYS-vu-verify
-ignore#!#BABEL-SP_FKEYS-vu-cleanup
->>>>>>> fc345ac7c (PG15: Fix tests related to Numeric datatype in REL3_X_DEV branch; Create table or proc should throw error for declaring non-permissible datalength in variable length datatypes (#923))
-
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
