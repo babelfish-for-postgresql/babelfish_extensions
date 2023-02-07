@@ -1,72 +1,61 @@
 -- psql
 Alter system set babelfishpg_tds.product_version = "9.4.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
+
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
 -- psql
 Alter system set babelfishpg_tds.product_version = "15.400.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
 -- psql
 Alter system set babelfishpg_tds.product_version = "15.-1.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
 -- psql
 Alter system set babelfishpg_tds.product_version = "15.4.66000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
 -- psql
 Alter system set babelfishpg_tds.product_version = ".4.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
 -- psql
 Alter system set babelfishpg_tds.product_version = "15.4e.3000.6";
 SELECT pg_reload_conf();
+SELECT pg_sleep(1);
 GO
 
 -- tsql
-exec pg_sleep 1
-GO
-
 SELECT SUBSTRING(@@VERSION, 1, CHARINDEX(CHAR(10), @@VERSION) - 1);
 GO
 
@@ -79,7 +68,6 @@ GO
 
 Alter system set babelfishpg_tds.product_version = "11.4.3000";
 GO
-
 
 Alter system set babelfishpg_tds.product_version = "11..3000.6";
 GO
