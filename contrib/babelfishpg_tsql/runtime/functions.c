@@ -491,12 +491,12 @@ schema_name(PG_FUNCTION_ARGS)
 Datum
 schema_id(PG_FUNCTION_ARGS)
 {
-	const char *name;
+	char *name;
 	int id;
 	HeapTuple   tup;
 	Oid         nspOid;
 	Form_pg_namespace nspform;
-	const char *physical_name;
+	char *physical_name;
 	List *search_path;
 
 	/* when no argument is passed, then ID of default schema of the caller */
