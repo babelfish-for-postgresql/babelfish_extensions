@@ -5,6 +5,10 @@ GO
 
 EXEC sp_rename_dep_proc1 
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Caution: Changing any part of an object name could break scripts and stored procedures.  Server SQLState: S0001)~~
+
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#sp_rename_dep_schema1#!#sp_rename_dep_dummy_table1_new#!#BASE TABLE
@@ -13,6 +17,10 @@ master#!#sp_rename_dep_schema1#!#sp_rename_dep_dummy_table1_new#!#BASE TABLE
 
 EXEC sp_rename_dep_proc2
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Caution: Changing any part of an object name could break scripts and stored procedures.  Server SQLState: S0001)~~
+
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 master#!#dbo#!#sp_rename_dep_dummy_func1_new#!#FUNCTION
