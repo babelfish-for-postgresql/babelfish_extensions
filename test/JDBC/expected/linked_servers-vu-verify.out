@@ -149,7 +149,7 @@ EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server", @locallogin = "login_1"
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Only @locallogin = NULL is supported. Configuring Remote server access specific to local login is not yet supported)~~
+~~ERROR (Message: Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported)~~
 
 
 -- drop all the linked server logins that have been created (case insensitive)
