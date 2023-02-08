@@ -89,6 +89,33 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 }
 
 /*
+ * Handle any error encountered in TDS client library itself
+ */
+static int
+linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error, int os_error, char *db_err_str, char *os_err_str)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
+	appendStringInfo(
+		&buf,
+		"TDS client library error: DB #: %i, DB Msg: %s, OS #: %i, OS Msg: %s, Level: %i",
+		db_error,
+		db_err_str ? db_err_str : "",
+		os_error,
+		os_err_str ? os_err_str : "",
+		severity
+	);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+			errmsg("%s", buf.data)));
+
+	return LS_INT_CANCEL;
+}
+
+/*
  * Given data from TDS client library, convert it to Datum.
  * Used for T-SQL OPENQUERY.
  */
@@ -646,6 +673,8 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 						errmsg("Failed to initialize TDS client library environment")
 					));
 
+
+		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
 		login = LINKED_SERVER_LOGIN();
