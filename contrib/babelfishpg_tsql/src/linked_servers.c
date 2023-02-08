@@ -53,17 +53,23 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	/* If error severity is greater than 10, we interpret it as a T-SQL error; otheriwse, a T-SQL info */
 	appendStringInfo(
 		&buf,
-		"TDS client library %s: Msg #: %i, Msg state: %i, Msg: %s, Server: %s, Process: %s, Line: %i, Level: %i",
+		"TDS client library %s: Msg #: %i, Msg state: %i, ",
 		severity > 10 ? "error" : "info",
 		error_code,
-		state,
-		error_msg ? error_msg : "",
-		svr_name ? svr_name : "",
-		proc_name ? proc_name : "",
-		line,
-		severity
+		state
 	);
-	
+
+	if (error_msg)
+		appendStringInfo(&buf, "Msg: %s, ", error_msg);
+
+	if (srv_name)
+		appendStringInfo(&buf, "Server: %s, ", srv_name);
+
+	if (proc_name)
+		appendStringInfo(&buf, "Process: %s, ", proc_name);
+
+	appendStringInfo(&buf, "Line: %i, Level: %i", line, severity);
+
 	if (severity > 10)
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -98,15 +104,17 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 
 	initStringInfo(&buf);
 
-	appendStringInfo(
-		&buf,
-		"TDS client library error: DB #: %i, DB Msg: %s, OS #: %i, OS Msg: %s, Level: %i",
-		db_error,
-		db_err_str ? db_err_str : "",
-		os_error,
-		os_err_str ? os_err_str : "",
-		severity
-	);
+	appendStringInfo(&buf, "TDS client library error: DB #: %i, ", db_error);
+
+	if (db_err_str)
+		appendStringInfo(&buf, "DB Msg: %s, ", db_err_str);
+
+	appendStringInfo(&buf, "OS #: %i, ", os_error);
+
+	if (os_err_str)
+		appendStringInfo(&buf, "OS Msg: %s, ", os_err_str);
+
+	appendStringInfo(&buf, "Level: %i", severity);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -672,7 +680,7 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to initialize TDS client library environment")
 					));
-
+l
 		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
