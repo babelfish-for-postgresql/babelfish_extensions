@@ -7,12 +7,14 @@ SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
+SELECT sys.babelfish_get_scope_identity()
+SELECT * FROM scope_identity_view
 GO
 
 EXEC test_identity_vu_prepare_p1
 GO
 
-SELECT * FROM test_identity_vu_prepare_t1
+SELECT * FROM test_identity_vu_prepare_t1 ORDER BY id
 GO
 
 -- SCOPE_IDENTITY should not be the same as IDENTITY
@@ -28,9 +30,9 @@ GO
 EXEC test_identity_vu_prepare_p3
 GO
 
-SELECT * FROM test_identity_vu_prepare_t2
+SELECT * FROM test_identity_vu_prepare_t2 ORDER BY id
 GO
-SELECT * FROM test_identity_vu_prepare_t3
+SELECT * FROM test_identity_vu_prepare_t3 ORDER BY DepartmentID
 GO
 
 SELECT test_identity_vu_prepare_func1()
@@ -42,7 +44,7 @@ GO
 SELECT test_identity_vu_prepare_func3()
 GO
 
-SELECT * FROM test_identity_vu_prepare_t4
+SELECT * FROM test_identity_vu_prepare_t4 ORDER BY Name
 GO
 
 -- SCOPE_IDENTITY is NULL because all INSERTs so far happened inside a function
@@ -50,21 +52,23 @@ GO
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
+SELECT sys.babelfish_get_scope_identity()
 GO
 
 ALTER TABLE test_identity_vu_prepare_t4 ADD id INT IDENTITY(1,1) NOT NULL
 GO
 
-SELECT * FROM test_identity_vu_prepare_t4
+SELECT * FROM test_identity_vu_prepare_t4 ORDER BY Name
 GO
 
 SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t4
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
+SELECT sys.babelfish_get_scope_identity()
 GO
 
-SELECT * FROM test_identity_vu_prepare_t5
+SELECT * FROM test_identity_vu_prepare_t5 ORDER BY Name
 GO
 
 SELECT test_identity_vu_prepare_func4()

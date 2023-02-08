@@ -15,6 +15,10 @@ SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
 GO
 
+-- should succeed on atleast 14_7 or 15_2, should still succeed after upgrade
+SELECT sys.babelfish_get_scope_identity()
+GO
+
 CREATE PROCEDURE test_identity_vu_prepare_p1
 AS
 INSERT INTO test_identity_vu_prepare_t1 VALUES ('Nirmit_Shah')
@@ -22,6 +26,7 @@ SELECT MAX(id) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
+SELECT sys.babelfish_get_scope_identity()
 GO
 
 CREATE FUNCTION test_identity_vu_prepare_func1()
@@ -48,6 +53,7 @@ SELECT MAX(id) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t2
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t2')
+SELECT sys.babelfish_get_scope_identity()
 GO
 
 CREATE TABLE test_identity_vu_prepare_t3
@@ -63,6 +69,7 @@ SELECT MAX(DepartmentID) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t3
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t3')
+SELECT sys.babelfish_get_scope_identity()
 GO
 
 INSERT test_identity_vu_prepare_t3 VALUES ('Babelfish6'),('Babelfish7'),('Babelfish8')
@@ -90,6 +97,7 @@ SELECT MAX(DepartmentID) AS MaximumUsedIdentity FROM test_identity_vu_prepare_t3
 SELECT @@IDENTITY
 SELECT SCOPE_IDENTITY()
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t2')
+SELECT sys.babelfish_get_scope_identity()
 GO
 
 CREATE FUNCTION test_identity_vu_prepare_func2()
@@ -149,10 +157,13 @@ CREATE TABLE test_identity_vu_prepare_t6
 )
 GO
 
-
 CREATE PROCEDURE test_identity_vu_prepare_p5
 AS
 INSERT INTO test_identity_vu_prepare_t6 
 OUTPUT INSERTED.ID
 VALUES ('Babelfish19')
+GO
+
+CREATE VIEW scope_identity_view AS
+SELECT sys.babelfish_get_scope_identity()
 GO

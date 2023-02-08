@@ -15,6 +15,10 @@ SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
 GO
 
+-- should fail before 14_7 or 15_2, should succeed after upgrade to 14_7 or 15_2
+SELECT sys.babelfish_get_scope_identity()
+GO
+
 CREATE PROCEDURE test_identity_vu_prepare_p1
 AS
 INSERT INTO test_identity_vu_prepare_t1 VALUES ('Nirmit_Shah')
@@ -149,4 +153,8 @@ AS
 INSERT INTO test_identity_vu_prepare_t6 
 OUTPUT INSERTED.ID
 VALUES ('Babelfish19')
+GO
+
+CREATE VIEW scope_identity_view AS
+SELECT sys.babelfish_get_scope_identity()
 GO

@@ -23,12 +23,17 @@ numeric
 ~~END~~
 
 
+CREATE VIEW scope_identity_view AS
+SELECT sys.babelfish_get_scope_identity()
+GO
+
 -- SCOPE_IDENTITY should return NULL because insert into t1 happened inside a function
 -- Validated the same behaviour in SQLServer
 SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
+SELECT * FROM scope_identity_view
 GO
 ~~START~~
 int
@@ -48,6 +53,11 @@ numeric
 ~~START~~
 numeric
 2
+~~END~~
+
+~~START~~
+bigint
+<NULL>
 ~~END~~
 
 

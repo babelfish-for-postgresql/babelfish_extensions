@@ -22,6 +22,11 @@ numeric
 2
 ~~END~~
 
+~~START~~
+bigint
+2
+~~END~~
+
 
 -- SCOPE_IDENTITY should return NULL because insert into t1 happened inside a function
 -- Validated the same behaviour in SQLServer
@@ -29,6 +34,8 @@ SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
+SELECT sys.babelfish_get_scope_identity()
+SELECT * FROM scope_identity_view
 GO
 ~~START~~
 int
@@ -48,6 +55,16 @@ numeric
 ~~START~~
 numeric
 2
+~~END~~
+
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+~~START~~
+bigint
+<NULL>
 ~~END~~
 
 
@@ -75,8 +92,13 @@ numeric
 3
 ~~END~~
 
+~~START~~
+bigint
+3
+~~END~~
 
-SELECT * FROM test_identity_vu_prepare_t1
+
+SELECT * FROM test_identity_vu_prepare_t1 ORDER BY id
 GO
 ~~START~~
 int#!#nvarchar
@@ -116,6 +138,11 @@ numeric
 5
 ~~END~~
 
+~~START~~
+bigint
+5
+~~END~~
+
 
 -- insert into t3, no triggers during insert into t3
 -- all identities should be the same
@@ -144,8 +171,13 @@ numeric
 125
 ~~END~~
 
+~~START~~
+bigint
+125
+~~END~~
 
-SELECT * FROM test_identity_vu_prepare_t2
+
+SELECT * FROM test_identity_vu_prepare_t2 ORDER BY id
 GO
 ~~START~~
 smallint#!#nvarchar
@@ -156,7 +188,7 @@ smallint#!#nvarchar
 5#!#Babelfish4
 ~~END~~
 
-SELECT * FROM test_identity_vu_prepare_t3
+SELECT * FROM test_identity_vu_prepare_t3 ORDER BY DepartmentID
 GO
 ~~START~~
 int#!#varchar
@@ -193,7 +225,7 @@ tinyint
 ~~END~~
 
 
-SELECT * FROM test_identity_vu_prepare_t4
+SELECT * FROM test_identity_vu_prepare_t4 ORDER BY Name
 GO
 ~~START~~
 varchar#!#int
@@ -208,6 +240,7 @@ Babelfish15#!#23
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
+SELECT sys.babelfish_get_scope_identity()
 GO
 ~~START~~
 numeric
@@ -224,11 +257,16 @@ numeric
 <NULL>
 ~~END~~
 
+~~START~~
+bigint
+<NULL>
+~~END~~
+
 
 ALTER TABLE test_identity_vu_prepare_t4 ADD id INT IDENTITY(1,1) NOT NULL
 GO
 
-SELECT * FROM test_identity_vu_prepare_t4
+SELECT * FROM test_identity_vu_prepare_t4 ORDER BY Name
 GO
 ~~START~~
 varchar#!#int#!#int
@@ -242,6 +280,7 @@ SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t4
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
+SELECT sys.babelfish_get_scope_identity()
 GO
 ~~START~~
 int
@@ -263,8 +302,13 @@ numeric
 3
 ~~END~~
 
+~~START~~
+bigint
+3
+~~END~~
 
-SELECT * FROM test_identity_vu_prepare_t5
+
+SELECT * FROM test_identity_vu_prepare_t5 ORDER BY Name
 GO
 ~~START~~
 varchar#!#int
