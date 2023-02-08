@@ -3159,6 +3159,24 @@ $BODY$
 LANGUAGE plpgsql
 STABLE;
 
+create or replace view sys.index_columns
+as
+select i.indrelid::integer as object_id
+  , CAST(CASE WHEN i.indisclustered THEN 1 ELSE 1+row_number() OVER(PARTITION BY c.oid) END AS INTEGER) AS index_id
+  , a.attrelid::integer as index_column_id
+  , a.attnum::integer as column_id
+  , a.attnum::sys.tinyint as key_ordinal
+  , 0::sys.tinyint as partition_ordinal
+  , 0::sys.bit as is_descending_key
+  , 1::sys.bit as is_included_column
+from pg_index as i
+inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid
+inner join pg_class c on i.indrelid = c.oid
+inner join sys.schemas sch on sch.schema_id = c.relnamespace
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.index_columns TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
