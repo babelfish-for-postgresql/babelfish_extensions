@@ -79,6 +79,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "tsql_analyze.h"
 
 #include "access/xact.h"
 
@@ -637,6 +638,23 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			else if (grant->objtype == OBJECT_TYPE)
 				grant->objects = list_make1(plan_name);
 
+			break;
+		}
+		case T_SelectStmt:
+		{
+			SelectStmt *select = (SelectStmt *)parseTree->stmt;
+			ListCell   *lc;
+
+			if (!select->sortClause || 
+				(select->op != SETOP_UNION && select->op != SETOP_INTERSECT && select->op != SETOP_EXCEPT))
+				break;
+			
+			foreach(lc, select->sortClause)
+			{
+				Node *node = lfirst(lc);
+				if (IsA(node, SortBy))
+					rewrite_union_orderby_target(select, (SortBy*) node);
+			}
 			break;
 		}
 		default:
