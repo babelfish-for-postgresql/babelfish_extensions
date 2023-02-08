@@ -2274,7 +2274,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	if (locallogin != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("Only @locallogin = NULL is supported")));
+					errmsg("Only @locallogin = NULL is supported. Configuring Remote server access specific to local login is not yet supported")));
 							
 	initStringInfo(&query);
 
@@ -2348,7 +2348,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	if (locallogin != NULL)
 		ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Only @locallogin = NULL is supported")));
+							errmsg("Only @locallogin = NULL is supported. Configuring Remote server access specific to local login is not yet supported")));
 	
 	initStringInfo(&query);
 

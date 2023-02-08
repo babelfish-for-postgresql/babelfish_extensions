@@ -94,7 +94,7 @@ EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @loc
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Only @locallogin = NULL is supported)~~
+~~ERROR (Message: Only @locallogin = NULL is supported. Configuring Remote server access specific to local login is not yet supported)~~
 
 
 -- Create a linked server login with @useself = FALSE. Also call sp_addlinkedsrvlogin from master.dbo schema
