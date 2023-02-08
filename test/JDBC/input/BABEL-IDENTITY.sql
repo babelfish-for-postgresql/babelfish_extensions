@@ -349,16 +349,25 @@ SELECT * from dbo.test_identity_range;
 go
 
 -- scope_identity in where clause should use index (BABEL-3384)
-CREATE TABLE dbo.test_identity_index (id INT IDENTITY(1,1) PRIMARY KEY, mycol INT)
+CREATE TABLE dbo.test_id_index_bigint (id BIGINT IDENTITY PRIMARY KEY, mycol INT)
 go
 
-INSERT INTO dbo.test_identity_index SELECT 10 FROM generate_series(1,10);
+CREATE TABLE dbo.test_id_index_smallint (id SMALLINT IDENTITY PRIMARY KEY, mycol INT)
 go
 
-CREATE TABLE dbo.test_numeric_index (num_index NUMERIC PRIMARY KEY, mycol INT)
+CREATE TABLE dbo.test_id_index_tinyint (id TINYINT IDENTITY PRIMARY KEY, mycol INT)
 go
 
-INSERT INTO dbo.test_numeric_index VALUES(10,10);
+CREATE TABLE dbo.test_id_index_numeric (id NUMERIC IDENTITY PRIMARY KEY, mycol INT)
+go
+
+CREATE TABLE dbo.test_numeric_index_no_id (num_index NUMERIC PRIMARY KEY, mycol INT)
+go
+
+CREATE TABLE dbo.test_id_index (id INT IDENTITY(1,1) PRIMARY KEY, mycol INT)
+go
+
+INSERT INTO dbo.test_id_index SELECT 10 FROM generate_series(1,10);
 go
 
 SELECT scope_identity();
@@ -370,34 +379,55 @@ go
 SET babelfish_showplan_all ON;
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE id = scope_identity();
+SELECT id, mycol FROM dbo.test_id_index WHERE id = scope_identity();
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE scope_identity() = id;
+SELECT id, mycol FROM dbo.test_id_index WHERE scope_identity() = id;
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE id = @@identity;
+SELECT id, mycol FROM dbo.test_id_index WHERE id = @@identity;
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE dbo.test_identity_index.id = scope_identity();
+SELECT id, mycol FROM dbo.test_id_index WHERE dbo.test_id_index.id = scope_identity();
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE id > scope_identity();
+SELECT id, mycol FROM dbo.test_id_index WHERE id > scope_identity();
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE id != scope_identity();
+SELECT id, mycol FROM dbo.test_id_index WHERE id != scope_identity();
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE @@identity < id;
+SELECT id, mycol FROM dbo.test_id_index WHERE @@identity < id;
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE mycol = 10 AND id = scope_identity();
+SELECT id, mycol FROM dbo.test_id_index WHERE mycol = 10 AND id = scope_identity();
 go
 
-SELECT id, mycol FROM dbo.test_identity_index WHERE id <= scope_identity() OR mycol = 11;
+SELECT id, mycol FROM dbo.test_id_index WHERE id <= scope_identity() OR mycol = 11;
 go
 
-SELECT num_index, mycol FROM dbo.test_numeric_index WHERE num_index = scope_identity();
+SELECT id, mycol FROM dbo.test_id_index_tinyint WHERE id = scope_identity()
+go
+
+SELECT id, mycol FROM dbo.test_id_index_smallint WHERE id = scope_identity()
+go
+
+SELECT id, mycol FROM dbo.test_id_index_bigint WHERE id = scope_identity()
+go
+
+SELECT id, mycol FROM dbo.test_id_index_numeric WHERE id = scope_identity()
+go
+
+SET babelfish_showplan_all OFF;
+go
+
+INSERT INTO dbo.test_numeric_index_no_id VALUES(10,10);
+go
+
+SET babelfish_showplan_all ON;
+go
+
+SELECT num_index, mycol FROM dbo.test_numeric_index_no_id WHERE num_index = scope_identity();
 go
 
 SET babelfish_showplan_all OFF;
@@ -419,6 +449,10 @@ dbo.t_neg_inc_1,
 dbo.t1_identity_1,
 dbo.t1_identity_2,
 dbo.test_identity_range,
-dbo.test_identity_index,
-dbo.test_numeric_index
+dbo.test_id_index,
+dbo.test_id_index_tinyint,
+dbo.test_id_index_smallint,
+dbo.test_id_index_bigint,
+dbo.test_id_index_numeric,
+dbo.test_numeric_index_no_id
 go
