@@ -60,7 +60,7 @@ AS 'babelfishpg_tsql', 'is_member' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION is_member(IN VARCHAR) TO PUBLIC;
 
 -- Two declarations of schema_id are required because if default value is used
--- for no paramters then we can't differentiate between cases when no argument
+-- for no paramters then we cant differentiate between cases when no argument
 -- is passed and when default value is passed as parameter. However, same C 
 -- function is called where both the cases are handled.
 CREATE OR REPLACE FUNCTION schema_id()
