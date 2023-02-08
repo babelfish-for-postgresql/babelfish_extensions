@@ -1955,7 +1955,7 @@ GRANT SELECT ON sys.endpoints TO PUBLIC;
 create or replace view sys.index_columns
 as
 select i.indrelid::integer as object_id
-  , i.indexrelid::integer as index_id
+  , CAST(CASE WHEN i.indisclustered THEN 1 ELSE 1+row_number() OVER(PARTITION BY c.oid) END AS INTEGER) AS index_id
   , a.attrelid::integer as index_column_id
   , a.attnum::integer as column_id
   , a.attnum::sys.tinyint as key_ordinal
