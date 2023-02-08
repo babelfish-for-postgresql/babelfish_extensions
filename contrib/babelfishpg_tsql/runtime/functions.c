@@ -492,6 +492,7 @@ Datum
 schema_id(PG_FUNCTION_ARGS)
 {
 	char *name;
+	char *input_name;
 	char *physical_name;
 	int id;
 
@@ -518,9 +519,14 @@ schema_id(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(0))
 			PG_RETURN_NULL();
 
-		name = text_to_cstring(PG_GETARG_TEXT_P(0));
-		if (pltsql_case_insensitive_identifiers)
-			name = downcase_identifier(name, strlen(name), false, false); /* no truncation here. truncation will be handled inside get_physical_schema_name() */
+		input_name = text_to_cstring(PG_GETARG_TEXT_P(0));
+		if (pltsql_case_insensitive_identifiers){
+			name = downcase_identifier(input_name, strlen(input_name), false, false); /* no truncation here. truncation will be handled inside get_physical_schema_name() */
+			pfree(input_name);
+		}
+		else
+			name = input_name;
+
 		physical_name = get_physical_schema_name(get_cur_db_name(), name);
 	}
 
