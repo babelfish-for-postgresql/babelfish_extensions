@@ -89,6 +89,14 @@ GO
 ~~ERROR (Message: Only @useself = FALSE is supported. Remote login using user's self credentials is not supported.)~~
 
 
+-- Create a linked server login with @locallogin != NULL (Should throw error as locallogin is not yet supported)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @locallogin = 'login1', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only @locallogin = NULL is supported)~~
+
+
 -- Create a linked server login with @useself = FALSE. Also call sp_addlinkedsrvlogin from master.dbo schema
 EXEC master.dbo.sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
