@@ -673,7 +673,6 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 						errmsg("Failed to initialize TDS client library environment")
 					));
 
-
 		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
