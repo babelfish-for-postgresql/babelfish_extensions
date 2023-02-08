@@ -62,8 +62,8 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	if (error_msg)
 		appendStringInfo(&buf, "Msg: %s, ", error_msg);
 
-	if (srv_name)
-		appendStringInfo(&buf, "Server: %s, ", srv_name);
+	if (svr_name)
+		appendStringInfo(&buf, "Server: %s, ", svr_name);
 
 	if (proc_name)
 		appendStringInfo(&buf, "Process: %s, ", proc_name);
@@ -680,7 +680,7 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 						errmsg("Failed to initialize TDS client library environment")
 					));
-l
+
 		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
