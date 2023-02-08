@@ -10,6 +10,7 @@
 #include "pltsql-2.h"
 #include "pltsql_instr.h"
 #include "utils/builtins.h"
+#include "utils/numeric.h"
 #include "utils/syscache.h"
 
 static int cmpfunc(const void *a, const void *b)

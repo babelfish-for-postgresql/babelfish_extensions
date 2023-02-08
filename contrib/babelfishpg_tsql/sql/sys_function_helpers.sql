@@ -28,13 +28,6 @@ $BODY$
 $BODY$
 LANGUAGE SQL STABLE;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_get_scope_identity_numeric()
-RETURNS numeric(38,0) AS
-$BODY$
-    SELECT sys.babelfish_get_scope_identity()::numeric(38,0);
-$BODY$
-LANGUAGE SQL STABLE;
-
 CREATE OR REPLACE FUNCTION sys.user_name_sysname()
 RETURNS sys.SYSNAME AS
 $BODY$

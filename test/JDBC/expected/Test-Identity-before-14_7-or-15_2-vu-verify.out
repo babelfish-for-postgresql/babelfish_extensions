@@ -76,7 +76,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM test_identity_vu_prepare_t1
+SELECT * FROM test_identity_vu_prepare_t1 ORDER BY id
 GO
 ~~START~~
 int#!#nvarchar
@@ -145,7 +145,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM test_identity_vu_prepare_t2
+SELECT * FROM test_identity_vu_prepare_t2 ORDER BY id
 GO
 ~~START~~
 smallint#!#nvarchar
@@ -156,7 +156,7 @@ smallint#!#nvarchar
 5#!#Babelfish4
 ~~END~~
 
-SELECT * FROM test_identity_vu_prepare_t3
+SELECT * FROM test_identity_vu_prepare_t3 ORDER BY DepartmentID
 GO
 ~~START~~
 int#!#varchar
@@ -193,7 +193,7 @@ tinyint
 ~~END~~
 
 
-SELECT * FROM test_identity_vu_prepare_t4
+SELECT * FROM test_identity_vu_prepare_t4 ORDER BY Name
 GO
 ~~START~~
 varchar#!#int
@@ -228,7 +228,7 @@ numeric
 ALTER TABLE test_identity_vu_prepare_t4 ADD id INT IDENTITY(1,1) NOT NULL
 GO
 
-SELECT * FROM test_identity_vu_prepare_t4
+SELECT * FROM test_identity_vu_prepare_t4 ORDER BY Name
 GO
 ~~START~~
 varchar#!#int#!#int
@@ -264,7 +264,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM test_identity_vu_prepare_t5
+SELECT * FROM test_identity_vu_prepare_t5 ORDER BY Name
 GO
 ~~START~~
 varchar#!#int

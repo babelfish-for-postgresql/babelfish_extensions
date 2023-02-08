@@ -61,6 +61,7 @@ SELECT @@IDENTITY as [Identity]
  , IDENT_CURRENT('ScopeIdentityMainTable') AS IC_MainTable 
  , IDENT_CURRENT('ScopeIdentityTableUpdatedByKey') AS IC_TableUpdatedByKey 
  , IDENT_CURRENT('ScopeIdentityTableUpdatedByTrigger') AS IC_TableUpdatedByTrigger
+ , sys.babelfish_get_scope_identity() AS [BB_Scope_Identity]
 GO
 
 -- Test 2
@@ -94,6 +95,7 @@ SELECT @@IDENTITY as [Identity]
  , IDENT_CURRENT('ScopeIdentityMainTable') AS IC_MainTable 
  , IDENT_CURRENT('ScopeIdentityTableUpdatedByKey') AS IC_TableUpdatedByKey 
  , IDENT_CURRENT('ScopeIdentityTableUpdatedByTrigger') AS IC_TableUpdatedByTrigger
+ , sys.babelfish_get_scope_identity() AS [BB_Scope_Identity]
 GO
 
 
@@ -118,6 +120,33 @@ SELECT dbo.ScopeIdentityFunc1(), @@IDENTITY as [Identity], SCOPE_IDENTITY() AS [
 N'@var1 varchar(20), @var2 varchar(20)', @var1='Infor4', @var2='HMS4';
 GO
 
+-- Test 4
+-- Test SP -> sp_executesql -> trigger nesting
+CREATE PROCEDURE ScopeIdentitySP3
+AS
+    EXEC sp_executesql N'INSERT INTO ScopeIdentityMainTable (firstname, lastname) values (@var1, @var2);
+    SELECT dbo.ScopeIdentityFunc1(), @@IDENTITY as [Identity], SCOPE_IDENTITY() AS [Scope_Identity]',
+    N'@var1 varchar(20), @var2 varchar(20)', @var1='Infor5', @var2='HMS5';
+
+    SELECT MAX(id) AS MaximumUsedIdentity FROM ScopeIdentityMainTable
+    SELECT SCOPE_IDENTITY()
+    SELECT @@IDENTITY
+    SELECT IDENT_CURRENT('ScopeIdentityMainTable')
+    SELECT sys.babelfish_get_scope_identity() AS [BB_Scope_Identity]
+GO
+
+EXEC ScopeIdentitySP3
+GO
+
+SELECT @@IDENTITY as [Identity]
+ , SCOPE_IDENTITY() AS [Scope_Identity]
+ , IDENT_CURRENT('ScopeIdentityMainTable') AS IC_MainTable 
+ , IDENT_CURRENT('ScopeIdentityTableUpdatedByKey') AS IC_TableUpdatedByKey 
+ , IDENT_CURRENT('ScopeIdentityTableUpdatedByTrigger') AS IC_TableUpdatedByTrigger
+ , sys.babelfish_get_scope_identity() AS [BB_Scope_Identity]
+GO
+
+
 DROP FUNCTION ScopeIdentityFunc1
 GO
 
@@ -125,6 +154,9 @@ DROP PROCEDURE ScopeIdentitySP1
 GO
 
 DROP PROCEDURE ScopeIdentitySP2
+GO
+
+DROP PROCEDURE ScopeIdentitySP3
 GO
 
 DROP TRIGGER UpdateTableByTrigger
