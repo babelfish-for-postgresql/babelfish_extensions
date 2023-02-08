@@ -492,11 +492,8 @@ Datum
 schema_id(PG_FUNCTION_ARGS)
 {
 	char *name;
-	int id;
-	HeapTuple   tup;
-	Oid         nspOid;
-	Form_pg_namespace nspform;
 	char *physical_name;
+	int id;
 
 	/* when no argument is passed, then ID of default schema of the caller */
 	if (PG_NARGS() == 0){
@@ -509,7 +506,7 @@ schema_id(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0)){
-			physical_name = pstrdup(get_dbo_schema_name(db_name));
+			physical_name = pstrdup(get_guest_schema_name(db_name));
 		}
 		else{	
 			name  = get_authid_user_ext_schema_name((const char *) db_name, user);
@@ -533,20 +530,13 @@ schema_id(PG_FUNCTION_ARGS)
 	if (physical_name == NULL || strlen(physical_name) == 0)
 		PG_RETURN_NULL();
 
-	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(physical_name));
-
-	if (!HeapTupleIsValid(tup))
-	{
-		PG_RETURN_NULL();
-	}
-
-	nspform = (Form_pg_namespace) GETSTRUCT(tup);
-	nspOid = nspform->oid;
-	id = (int) nspOid;
+	id = get_namespace_oid(physical_name, true);
 	
+	if(!id)
+		PG_RETURN_NULL();
+
 	pfree(name);
 	pfree(physical_name);
-	ReleaseSysCache(tup);
 	PG_RETURN_INT32(id);
 }
 
