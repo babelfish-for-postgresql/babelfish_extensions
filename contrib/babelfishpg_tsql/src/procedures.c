@@ -2273,8 +2273,8 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	if (locallogin != NULL)
 		ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Only @locallogin = NULL is supported")));
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Only @locallogin = NULL is supported")));
 							
 	initStringInfo(&query);
 
