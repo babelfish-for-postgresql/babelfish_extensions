@@ -82,3 +82,8 @@ go
 declare @table_variable_vu_type_var table_variable_vu_type
 select * from @table_variable_vu_type_var -- should return 0 rows
 go
+-- check that table variables defined within for loops keep their values
+declare @ret int
+exec @ret = table_variable_vu_persist_table_variable
+select @ret -- should return 55
+go

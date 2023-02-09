@@ -215,6 +215,25 @@ go
 
 create proc table_variable_vu_proc1 (@x table_variable_vu_type readonly) as
 begin
-select * from @x
+	select * from @x
 end
+go
+
+create function table_variable_vu_persist_table_variable () returns int as
+begin
+	declare @tt int
+	declare @ret int
+	set @tt = 10
+	set @ret = 0
+	while @tt > 0 
+	begin
+		declare @i int
+		declare @test_table table (a int)
+		insert into @test_table values(@tt)
+		select @i = count(*) from @test_table
+		select @ret = @ret + @i 
+		set @tt=@tt-1 
+	end
+	return @ret 
+end;
 go

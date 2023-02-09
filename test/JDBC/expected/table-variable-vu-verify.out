@@ -210,3 +210,13 @@ go
 int
 ~~END~~
 
+-- check that table variables defined within for loops keep their values
+declare @ret int
+exec @ret = table_variable_vu_persist_table_variable
+select @ret -- should return 55
+go
+~~START~~
+int
+55
+~~END~~
+
