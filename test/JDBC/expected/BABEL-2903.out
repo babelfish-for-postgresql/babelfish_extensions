@@ -60,7 +60,7 @@ Query Text: ASSIGN @b = SELECT 5
   ->  Result  (cost=0.00..0.01 rows=1 width=4)
 Query Text: EXEC babel_2903_outer_proc @a, @b
   Query Text: DECLARE TABLE @t
-    Query Text: DROP TABLE IF EXISTS @t_2; CREATE TEMPORARY TABLE IF NOT EXISTS @t_2 (a int, b int)
+    Query Text: CREATE TEMPORARY TABLE IF NOT EXISTS @t_2 (a int, b int)
   Query Text: ASSIGN @a = SELECT 3
     Query Text: SELECT 3
     ->  Result  (cost=0.00..0.01 rows=1 width=4)

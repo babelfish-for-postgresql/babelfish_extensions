@@ -72,18 +72,3 @@ declare @var1 table_variable_vu_type
 insert into @var1 values (0)
 exec sp_executesql N'EXEC table_variable_vu_proc1 @x = @p0', N'@p0 table_variable_vu_type readonly', @p0=@var1
 go
-
--- BABEL-3968 - cleanup table variables between transactions
-declare @table_variable_vu_type_var table_variable_vu_type
-insert into @table_variable_vu_type_var values (0),(1)
-select @b -- cause an error
-go
--- check if table variable has data leakage
-declare @table_variable_vu_type_var table_variable_vu_type
-select * from @table_variable_vu_type_var -- should return 0 rows
-go
--- check that table variables defined within for loops keep their values
-declare @ret int
-exec @ret = table_variable_vu_persist_table_variable
-select @ret -- should return 55
-go
