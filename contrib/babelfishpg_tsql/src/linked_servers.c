@@ -16,8 +16,8 @@
 		 errmsg("Could not establish connection with remote server as use of TDS client library has been disabled. " \
 			"Please recompile source with 'ENABLE_TDS_LIB' flag to enable client library.")));
 
-#define LINKED_SERVER_DEBUG(...)	elog(LOG, __VA_ARGS__)
-#define LINKED_SERVER_DEBUG_FINER(...)	elog(LOG, __VA_ARGS__)
+#define LINKED_SERVER_DEBUG(...)	elog(DEBUG1, __VA_ARGS__)
+#define LINKED_SERVER_DEBUG_FINER(...)	elog(DEBUG2, __VA_ARGS__)
 
 PG_FUNCTION_INFO_V1(openquery_internal);
 
