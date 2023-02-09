@@ -10,6 +10,7 @@
 #include "pltsql-2.h"
 #include "pltsql_instr.h"
 #include "utils/builtins.h"
+#include "utils/numeric.h"
 #include "utils/syscache.h"
 
 static int cmpfunc(const void *a, const void *b)
@@ -121,6 +122,23 @@ get_last_identity(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 	PG_END_TRY();
+}
+
+PG_FUNCTION_INFO_V1(get_scope_identity);
+
+Datum
+get_scope_identity(PG_FUNCTION_ARGS)
+{
+    PG_TRY();
+    {
+        PG_RETURN_INT64(last_scope_identity_value());
+    }
+    PG_CATCH();
+    {
+        FlushErrorState();
+        PG_RETURN_NULL();
+    }
+    PG_END_TRY();
 }
 
 /*

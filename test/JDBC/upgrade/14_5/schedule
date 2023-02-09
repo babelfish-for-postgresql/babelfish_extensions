@@ -105,7 +105,7 @@ BABEL-2955
 temp-tables
 table-variable
 TestNotNull
-Test-Identity
+Test-Identity-before-14_7-or-15_2
 Test-Computed-Columns
 BABEL-1189
 BABEL-1243

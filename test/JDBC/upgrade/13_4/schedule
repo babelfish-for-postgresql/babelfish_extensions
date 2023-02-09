@@ -115,7 +115,7 @@ BABEL-3314
 BABEL-TABLEOPTIONS
 temp-tables
 TestNotNull
-Test-Identity
+Test-Identity-before-14_7-or-15_2
 TestTableType
 BABEL-CROSS-DB
 BABEL-LOGIN

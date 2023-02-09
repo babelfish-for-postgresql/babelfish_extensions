@@ -904,7 +904,7 @@ go
 text
 Query Text: SELECT num_index, mycol FROM dbo.test_numeric_index_no_id WHERE num_index = scope_identity()
 Index Scan using test_numeric_index_no_id_pkey on test_numeric_index_no_id
-  Index Cond: (num_index = (((babelfish_get_last_identity())::numeric(38,0))::numeric(38,0))::numeric)
+  Index Cond: (num_index = ((babelfish_get_scope_identity())::numeric(38,0))::numeric)
 ~~END~~
 
 

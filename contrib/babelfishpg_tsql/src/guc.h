@@ -22,4 +22,6 @@ extern bool metadata_inconsistency_check_enabled(void);
 int pltsql_new_guc_nest_level(void);
 void pltsql_revert_guc(int nest_level);
 
+extern int pltsql_new_scope_identity_nest_level(void);
+extern void pltsql_revert_last_scope_identity(int nest_level);
 #endif

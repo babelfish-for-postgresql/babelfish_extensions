@@ -113,3 +113,6 @@ ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-cleanup
 ignore#!#openquery_upgrd-vu-prepare
 ignore#!#openquery_upgrd-vu-verify
 ignore#!#openquery_upgrd-vu-cleanup
+ignore#!#Test-Identity-before-14_7-or-15_2-vu-prepare
+ignore#!#Test-Identity-before-14_7-or-15_2-vu-verify
+ignore#!#Test-Identity-before-14_7-or-15_2-vu-cleanup

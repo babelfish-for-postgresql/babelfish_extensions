@@ -236,7 +236,7 @@ LANGUAGE C STABLE;
 CREATE OR REPLACE FUNCTION sys.scope_identity()
 RETURNS numeric(38,0) AS
 $BODY$
-	SELECT sys.babelfish_get_last_identity_numeric()::numeric(38,0);
+	SELECT sys.babelfish_get_scope_identity()::numeric(38,0);
 $BODY$
 LANGUAGE SQL STABLE;
 

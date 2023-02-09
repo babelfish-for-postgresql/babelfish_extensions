@@ -3902,6 +3902,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	int			rc;
 	int                     save_nestlevel;
+	int			scope_level;
 	MemoryContext	savedPortalCxt;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	Oid prev_procid = InvalidOid;
@@ -3956,6 +3957,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		func->use_count++;
 
 		save_nestlevel = pltsql_new_guc_nest_level();
+		scope_level = pltsql_new_scope_identity_nest_level();
 
 		prev_procid = procid_var;
 		PG_TRY();
@@ -3997,6 +3999,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			ENRDropTempTables(currentQueryEnv);
 			remove_queryEnv();
 			pltsql_revert_guc(save_nestlevel);
+			pltsql_revert_last_scope_identity(scope_level);
 			terminate_batch(true /* send_error */, false /* compile_error */);
 			sql_dialect = saved_dialect;
 			return retval;
@@ -4016,6 +4019,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	ENRDropTempTables(currentQueryEnv);
 	remove_queryEnv();
 	pltsql_revert_guc(save_nestlevel);
+	pltsql_revert_last_scope_identity(scope_level);
 
 	terminate_batch(false /* send_error */, false /* compile_error */);
 
