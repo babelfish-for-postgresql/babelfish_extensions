@@ -858,6 +858,9 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	{
 		/* The purpose of this try-catch to call clean-up routines for estate. Errors will be re-thrwon. */
 
+		/* Drop the tables linked to table variables */
+		pltsql_clean_table_variables(&estate, func);
+
 		/* Close/Deallocate LOCAL cursors */
 		pltsql_cleanup_local_cursors(&estate);
 
@@ -6864,7 +6867,7 @@ exec_eval_datum(PLtsql_execstate *estate,
 				 * pass-by-reference, which will cause problems since our usage
 				 * here is not. Setting isnull to true will bypass the problem.
 				 */
-				*isnull = true;
+				// *isnull = true;
 
 				break;
 			}
