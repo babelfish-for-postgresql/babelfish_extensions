@@ -36,11 +36,13 @@ int
 ~~END~~
 
 
+-- scope_identity returns NULL because proc is runs in a different scope.
+-- This was validated against SQL Server
 exec indentity_function_tests_proc
 GO
 ~~START~~
 numeric#!#numeric#!#numeric#!#bigint
-1#!#1#!#1#!#1
+<NULL>#!#1#!#1#!#1
 ~~END~~
 
 
