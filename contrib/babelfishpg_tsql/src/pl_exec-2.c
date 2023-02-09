@@ -1132,7 +1132,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
  * Create an underlying temporary table for the table variable, with name
  * "<varname>_<@@NESTLEVEL>", and record the name and type in the variable
  * in estate.
- * If the table already exists, the just use it.
  */
 static int
 exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
