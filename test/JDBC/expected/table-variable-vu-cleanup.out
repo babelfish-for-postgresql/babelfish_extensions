@@ -46,4 +46,10 @@ go
 drop function table_variable_vu_preparemstvf_conditional
 go
 
+-- BABEL-3967 - table variable in sp_executesql is null error
+drop procedure table_variable_vu_proc1
+go
 
+-- BABEL-3968 - cleanup table variables between transactions
+drop type table_variable_vu_type
+go

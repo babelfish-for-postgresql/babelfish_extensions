@@ -70,7 +70,7 @@ Query Text: ASSIGN @b = SELECT 5
   ->  Result  (cost=0.00..0.01 rows=1 width=4)
 Query Text: EXEC table_variable_vu_prepareouter_proc @a, @b
   Query Text: DECLARE TABLE @t
-    Query Text: CREATE TEMPORARY TABLE IF NOT EXISTS @t_2 (a int, b int)
+    Query Text: DROP TABLE IF EXISTS @t_2; CREATE TEMPORARY TABLE IF NOT EXISTS @t_2 (a int, b int)
   Query Text: ASSIGN @a = SELECT 3
     Query Text: SELECT 3
     ->  Result  (cost=0.00..0.01 rows=1 width=4)
@@ -178,4 +178,35 @@ hello1
 ~~END~~
 
 
+-- BABEL-3967 - table variable in sp_executesql is null error
+declare @var1 table_variable_vu_type
+insert into @var1 values (0)
+exec sp_executesql N'EXEC table_variable_vu_proc1 @x = @p0', N'@p0 table_variable_vu_type readonly', @p0=@var1
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+-- BABEL-3968 - cleanup table variables between transactions
+declare @table_variable_vu_type_var table_variable_vu_type
+insert into @table_variable_vu_type_var values (0),(1)
+select @b -- cause an error
+go
+~~ROW COUNT: 2~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@b" does not exist)~~
+
+-- check if table variable has data leakage
+declare @table_variable_vu_type_var table_variable_vu_type
+select * from @table_variable_vu_type_var -- should return 0 rows
+go
+~~START~~
+int
+~~END~~
 

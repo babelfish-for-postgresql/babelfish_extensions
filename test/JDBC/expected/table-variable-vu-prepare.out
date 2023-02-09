@@ -208,4 +208,13 @@ begin
 end
 go
 
+-- BABEL-3967 - table variable in sp_executesql is null error
+-- BABEL-3968 - cleanup table variables between transactions
+create type table_variable_vu_type as table (x int)
+go
 
+create proc table_variable_vu_proc1 (@x table_variable_vu_type readonly) as
+begin
+select * from @x
+end
+go
