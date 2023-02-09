@@ -11,6 +11,14 @@ GO
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
 
+-- Add a linked server that cannot be connected to
+EXEC sp_addlinkedserver  @server = N'bbf_server_unreachable', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'blahblahblah', @catalog=N'master'
+GO
+
+-- Add dummy as linked server login for this server
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_unreachable', @useself = 'FALSE', @rmtuser = 'dummy_usr', @rmtpassword = 'dummy_pwd'
+GO
+
 -- Create a view dependent on OPENQUERY
 CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
 GO
