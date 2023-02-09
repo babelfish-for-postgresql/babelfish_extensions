@@ -53,3 +53,5 @@ go
 -- BABEL-3968 - cleanup table variables between transactions
 drop type table_variable_vu_type
 go
+drop function table_variable_vu_persist_table_variable
+go
