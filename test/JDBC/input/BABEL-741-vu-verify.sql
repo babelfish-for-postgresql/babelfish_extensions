@@ -20,6 +20,9 @@ GO
 SELECT schema_name(schema_id())
 GO
 
+SELECT schema_name(schema_id('dbo'))
+GO
+
 SELECT schema_name(99)
 GO
 
@@ -47,3 +50,20 @@ GO
 SELECT schema_name()
 GO
 
+SELECT * from babel_3836_f1();
+GO
+
+SELECT * from babel_3836_v1;
+GO
+
+EXEC babel_3836_p1;
+GO
+
+SELECT * from babel_3836_f2();
+GO
+
+SELECT * from babel_3836_v2;
+GO
+
+EXEC babel_3836_p2;
+GO

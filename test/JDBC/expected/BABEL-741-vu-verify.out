@@ -55,6 +55,14 @@ dbo
 ~~END~~
 
 
+SELECT schema_name(schema_id('dbo'))
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
 SELECT schema_name(99)
 GO
 ~~START~~
@@ -124,4 +132,51 @@ varchar
 dbo
 ~~END~~
 
+
+SELECT * from babel_3836_f1();
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT * from babel_3836_v1;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+EXEC babel_3836_p1;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT * from babel_3836_f2();
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT * from babel_3836_v2;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+EXEC babel_3836_p2;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
 

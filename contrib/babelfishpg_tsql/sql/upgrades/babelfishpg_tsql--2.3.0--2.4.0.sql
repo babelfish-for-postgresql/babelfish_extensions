@@ -1639,9 +1639,21 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
+ALTER FUNCTION sys.schema_id() RENAME TO sys_schema_id_deprecated_in_2_4_0;
+ALTER FUNCTION schema_id(schema_name VARCHAR) RENAME TO schema_id_deprecated_in_2_4_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sys_schema_id_deprecated_in_2_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'schema_id_deprecated_in_2_4_0');
+
+CREATE OR REPLACE FUNCTION schema_id()
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION schema_id(IN schema_name sys.SYSNAME)
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_id(schema_name sys.SYSNAME) TO PUBLIC;
 
 /* set sys functions as STABLE */
-ALTER FUNCTION sys.schema_id() STABLE;
 ALTER FUNCTION sys.schema_name() STABLE;
 ALTER FUNCTION sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),
