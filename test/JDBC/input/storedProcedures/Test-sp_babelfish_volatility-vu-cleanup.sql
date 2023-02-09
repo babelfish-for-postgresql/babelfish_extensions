@@ -43,6 +43,9 @@ go
 drop user test_sp_babelfish_volatility_user
 go
 
+drop login test_sp_babelfish_volatility_login_2
+go
+
 use master
 go
 
