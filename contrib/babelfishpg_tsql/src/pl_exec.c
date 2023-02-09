@@ -6859,13 +6859,6 @@ exec_eval_datum(PLtsql_execstate *estate,
 				*typeid = tbl->tbltypeid;
 				*typetypmod = -1;
 				*value = CStringGetDatum(tbl->tblname);
-				/*
-				 * Set isnull to true because by default composite type is
-				 * pass-by-reference, which will cause problems since our usage
-				 * here is not. Setting isnull to true will bypass the problem.
-				 */
-				// *isnull = true;
-
 				break;
 			}
 
