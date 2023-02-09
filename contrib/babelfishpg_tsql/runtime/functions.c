@@ -537,12 +537,13 @@ schema_id(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	id = get_namespace_oid(physical_name, true);
-	
-	if(!OidIsValid(id))
-		PG_RETURN_NULL();
 
 	pfree(name);
 	pfree(physical_name);
+
+	if(!OidIsValid(id))
+		PG_RETURN_NULL();
+
 	PG_RETURN_INT32(id);
 }
 
