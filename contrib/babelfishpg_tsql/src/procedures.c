@@ -2254,6 +2254,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 {
 	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char *useself = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *locallogin = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(2));
 	char *username = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(3));
 	char *password = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(4));
 
@@ -2270,6 +2271,11 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FDW_ERROR),
 					errmsg("Only @useself = FALSE is supported. Remote login using user's self credentials is not supported.")));
 
+	if (locallogin != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported")));
+							
 	initStringInfo(&query);
 
 	/*
@@ -2342,7 +2348,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	if (locallogin != NULL)
 		ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Only @locallogin = NULL is supported")));
+							errmsg("Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported")));
 	
 	initStringInfo(&query);
 
