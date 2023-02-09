@@ -1,13 +1,16 @@
 EXEC test_identity_vu_prepare_p1
 GO
 
+CREATE VIEW scope_identity_view AS
+SELECT sys.babelfish_get_scope_identity()
+GO
+
 -- SCOPE_IDENTITY should return NULL because insert into t1 happened inside a function
 -- Validated the same behaviour in SQLServer
 SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
-SELECT sys.babelfish_get_scope_identity()
 SELECT * FROM scope_identity_view
 GO
 
@@ -52,7 +55,6 @@ GO
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
-SELECT sys.babelfish_get_scope_identity()
 GO
 
 ALTER TABLE test_identity_vu_prepare_t4 ADD id INT IDENTITY(1,1) NOT NULL
@@ -65,7 +67,6 @@ SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t4
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
-SELECT sys.babelfish_get_scope_identity()
 GO
 
 SELECT * FROM test_identity_vu_prepare_t5 ORDER BY Name
