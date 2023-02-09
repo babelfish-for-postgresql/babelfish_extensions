@@ -772,14 +772,27 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 		LINKED_SERVER_RETCODE erc;
 
 		StringInfoData buf;
-		int colcount;
+		int colcount, i;
 
 		linked_server_establish_connection(linked_server, &lsproc);
 
 		/* prepare the query that will executed on remote server to get column medata of result set*/
 		initStringInfo(&buf);
 		appendStringInfoString(&buf, "EXEC sp_describe_first_result_set N'");
-		appendStringInfoString(&buf, query);
+
+		for (i = 0; i < strlen(query); i++)
+		{
+			appendStringInfoChar(&buf, query[i]);
+
+			/*
+			 * If character is a single quote, we append another single quote
+			 * because we want to escape it when we feed the query as a parameter
+			 * to sp_describe_first_result_set stored procedure.
+			 */
+			if (query[i] == '\'')
+				appendStringInfoChar(&buf, '\'');
+		}
+
 		appendStringInfoString(&buf, "', NULL, 0");
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Writing the following query to LinkedServerProcess struct: %s", buf.data);
