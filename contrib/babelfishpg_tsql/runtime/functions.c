@@ -538,7 +538,7 @@ schema_id(PG_FUNCTION_ARGS)
 
 	id = get_namespace_oid(physical_name, true);
 	
-	if(!id)
+	if(!OidIsValid(id))
 		PG_RETURN_NULL();
 
 	pfree(name);
