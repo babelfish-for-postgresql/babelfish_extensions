@@ -1,0 +1,38 @@
+-- psql
+CREATE TABLE master_dbo.owner_amounts ( 
+"tax" DECIMAL(26, 6) NULL , 
+"active" smallint NULL DEFAULT ((1)), 
+"moment_id" INT NOT NULL DEFAULT ((0)) 
+) ; 
+GO
+
+grant select on master_dbo.owner_amounts to public; 
+GO
+
+insert into master_dbo.owner_amounts 
+select 0,1,862 from generate_series(1,200000);
+GO
+~~ROW COUNT: 200000~~
+
+
+-- tsql
+SELECT avg([owner_amounts].[tax]) FROM [owner_amounts] WHERE moment_id = 862 and ISNULL([owner_amounts].[active], 0) = 1 AND   [owner_amounts].[tax] is not null
+GO
+~~START~~
+numeric
+0E-8
+~~END~~
+
+
+SELECT sum([owner_amounts].[tax]) FROM [owner_amounts] WHERE moment_id = 862 and ISNULL([owner_amounts].[active], 0) = 1 AND   [owner_amounts].[tax] is not null
+GO
+~~START~~
+numeric
+0E-8
+~~END~~
+
+
+
+--cleanup
+drop table owner_amounts
+GO
