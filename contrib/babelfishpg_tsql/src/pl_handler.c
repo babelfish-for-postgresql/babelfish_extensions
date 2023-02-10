@@ -640,23 +640,23 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 
 			break;
 		}
-		case T_SelectStmt:
-		{
-			SelectStmt *select = (SelectStmt *)parseTree->stmt;
-			ListCell   *lc;
+		// case T_SelectStmt:
+		// {
+		// 	SelectStmt *select = (SelectStmt *)parseTree->stmt;
+		// 	ListCell   *lc;
 
-			if (!select->sortClause || 
-				(select->op != SETOP_UNION && select->op != SETOP_INTERSECT && select->op != SETOP_EXCEPT))
-				break;
+		// 	if (!select->sortClause || 
+		// 		(select->op != SETOP_UNION && select->op != SETOP_INTERSECT && select->op != SETOP_EXCEPT))
+		// 		break;
 			
-			foreach(lc, select->sortClause)
-			{
-				Node *node = lfirst(lc);
-				if (IsA(node, SortBy))
-					rewrite_union_orderby_target(select, (SortBy*) node);
-			}
-			break;
-		}
+		// 	foreach(lc, select->sortClause)
+		// 	{
+		// 		Node *node = lfirst(lc);
+		// 		if (IsA(node, SortBy))
+		// 			rewrite_union_orderby_target(select, (SortBy*) node);
+		// 	}
+		// 	break;
+		// }
 		default:
 			break;
 	}
