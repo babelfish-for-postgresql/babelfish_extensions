@@ -195,11 +195,19 @@ end
 go
 
 -- BABEL-3967 - table variable in sp_executesql is null error
-create type table_variable_vu_type as table (x int)
+create type table_variable_vu_type as table (a text not null, b int primary key, c int, d int)
 go
 
 create proc table_variable_vu_proc1 (@x table_variable_vu_type readonly) as
 begin
-	select * from @x
+	select tvp.b from @x tvp
 end
+go
+
+create function table_variable_vu_tvp_function (@tvp table_variable_vu_type READONLY) returns int as 
+begin 
+	declare @result int 
+	select @result = count(*) from @tvp 
+	return @result 
+end;
 go

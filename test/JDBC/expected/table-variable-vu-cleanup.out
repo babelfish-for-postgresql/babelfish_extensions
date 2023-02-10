@@ -49,5 +49,7 @@ go
 -- BABEL-3967 - table variable in sp_executesql is null error
 drop procedure table_variable_vu_proc1
 go
+drop function table_variable_vu_tvp_function
+go
 drop type table_variable_vu_type
 go
