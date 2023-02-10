@@ -3478,6 +3478,14 @@ int
 ~~END~~
 
 
+#Test OPENQUERY where argument has quotes
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Query having both ''''single'''' and "double" quotes''')
+~~START~~
+varchar
+Query having both 'single' and "double" quotes
+~~END~~
+
+
 # Test OPENQUERY with an unreachable server
 SELECT * FROM OPENQUERY(bbf_server_unreachable, 'select 1')
 ~~ERROR (Code: 33557097)~~
