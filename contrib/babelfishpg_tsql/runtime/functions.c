@@ -12,6 +12,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
+#include "commands/extension.h"
 #include "common/md5.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
@@ -97,6 +98,7 @@ PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
 PG_FUNCTION_INFO_V1(object_schema_name);
+PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 
 void* string_to_tsql_varchar(const char *input_str);
 void* get_servername_internal(void);
@@ -1922,4 +1924,35 @@ object_schema_name(PG_FUNCTION_ARGS)
 	}
 	else
 		PG_RETURN_NULL();
+}
+
+Datum
+pg_extension_config_remove(PG_FUNCTION_ARGS)
+{
+	Oid 	tableoid = PG_GETARG_OID(0);
+	char	*tablename = get_rel_name(tableoid);
+
+	/*
+	 * We only allow this to be called from an extension's SQL script. We
+	 * shouldn't need any permissions check beyond that.
+	 */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"pg_extension_config_remove()")));
+	if (tablename == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("OID %u does not refer to a table", tableoid)));
+	if (getExtensionOfObject(RelationRelationId, tableoid) !=
+		CurrentExtensionObject)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("table \"%s\" is not a member of the extension being created",
+						tablename)));
+	
+	extension_config_remove(CurrentExtensionObject, tableoid);
+
+	PG_RETURN_VOID();
 }

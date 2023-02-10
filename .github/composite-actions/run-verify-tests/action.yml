@@ -1,0 +1,57 @@
+name: 'Dump Restore Utility'
+inputs:
+  is_final_ver:
+    description: "Is this the final version"
+    required: true
+  pg_new_dir:
+    description: "Install new version in this directory"
+    required: true
+  migration_mode:
+    description: "Database migration mode for Babelfish"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run JDBC Verify Tests
+      if: always()
+      id: jdbc-verify-tests
+      env:
+        migr_mode: ${{ inputs.migration_mode }}
+      run: |
+        cd test/JDBC/
+        touch dummy_schedule
+        echo "all" > dummy_schedule
+        export scheduleFile=dummy_schedule
+        export isUpgradeTestMode=false
+
+        if [[ "$migr_mode" == "multi-db" ]];then
+          base_dir=${{ matrix.upgrade-path.path[0] }}
+          tar_dir=${{ matrix.upgrade-path.last_version }}
+          if [[ "$base_dir" == *"latest"* ]]; then
+            base_dir="latest"
+          fi
+          if [[ "$tar_dir" == *"latest"* ]]; then
+            tar_dir="latest"
+          fi
+          export inputFilesPath=upgrade/$tar_dir/verification_cleanup/$base_dir
+        else
+          base_dir="singledb"
+          export inputFilesPath=upgrade/singledb/verification_cleanup
+        fi
+        mvn test
+        export inputFilesPath=input
+
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/$base_dir/schedule
+        done
+        export scheduleFile=upgrade/$base_dir/schedule
+        mvn test
+      shell: bash
+
+    - name: Cleanup babelfish database
+      id: cleanup
+      if: always() && steps.jdbc-verify-tests.outcome == 'success' && inputs.is_final_ver == 'true'
+      run: |
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+      shell: bash

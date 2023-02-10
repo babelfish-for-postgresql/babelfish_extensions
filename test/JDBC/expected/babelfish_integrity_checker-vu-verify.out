@@ -21,3 +21,21 @@ bit
 1
 ~~END~~
 
+
+-- List down all configuration tables of babelfishpg_tsql extension
+SELECT relname FROM pg_class WHERE oid IN
+	(SELECT unnest(extconfig) FROM pg_extension WHERE extname = 'babelfishpg_tsql')
+	ORDER BY relname;
+GO
+~~START~~
+varchar
+babelfish_authid_login_ext
+babelfish_authid_user_ext
+babelfish_db_seq
+babelfish_domain_mapping
+babelfish_function_ext
+babelfish_namespace_ext
+babelfish_sysdatabases
+babelfish_view_def
+~~END~~
+
