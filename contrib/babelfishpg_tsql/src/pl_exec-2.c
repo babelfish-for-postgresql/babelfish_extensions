@@ -1132,7 +1132,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
  * Create an underlying temporary table for the table variable, with name
  * "<varname>_<@@NESTLEVEL>", and record the name and type in the variable
  * in estate.
- * If the table already exists, the just use it.
  */
 static int
 exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
@@ -1159,11 +1158,11 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 
 		tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
 		if (stmt->tbltypname)
-			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-							tblname, stmt->tbltypname);
+			query = psprintf("DROP TABLE IF EXISTS %s; CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
+							tblname, tblname, stmt->tbltypname);
 		else
-			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
-							tblname, stmt->coldef);
+			query = psprintf("DROP TABLE IF EXISTS %s; CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
+							tblname, tblname, stmt->coldef);
 
 		/*
 		* If a table with the same name already exists, we should just use that
