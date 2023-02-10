@@ -188,7 +188,7 @@ is_exec_stmt_on_scalar_func(const char *stmt, int *first_arg_location, const cha
 	/* safety check */
 	if (nargs > FUNC_MAX_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				errmsg("cannot pass more than %d arguments to a function",
+				errmsg("cannot pass more than %d arguments to a procedure",
 						FUNC_MAX_ARGS)));
 	
 	for (i = 0; i < nargs; ++i)

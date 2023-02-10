@@ -8,7 +8,7 @@ NULL,  NULL,  NULL,  NULL,  NULL
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot pass more than 100 arguments to a function)~~
+~~ERROR (Message: cannot pass more than 100 arguments to a procedure)~~
 
 
 EXEC NoSuchProcedure 
@@ -18,7 +18,7 @@ EXEC NoSuchProcedure
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot pass more than 100 arguments to a function)~~
+~~ERROR (Message: cannot pass more than 100 arguments to a procedure)~~
 
 
 
@@ -39,7 +39,7 @@ EXEC NoSuchProcedure @a0, @a1, @a2, @a3, @a4, @a5, @a6, @a7, @a8, @a9, @a10, @a1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot pass more than 100 arguments to a function)~~
+~~ERROR (Message: cannot pass more than 100 arguments to a procedure)~~
 
 
 
@@ -131,7 +131,7 @@ EXEC babel_3984_procedure
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: cannot pass more than 100 arguments to a function)~~
+~~ERROR (Message: cannot pass more than 100 arguments to a procedure)~~
 
 
 -- create for more than allowed should also throw error
