@@ -2369,7 +2369,7 @@ read_param_val(PLtsql_execstate *estate, List *params, InlineCodeBlockArgs *args
 		Datum		paramval;
 		Oid		restype;
 		int32		restypmod;
-		bool		isnull;
+		bool		isnull = false;
 
 		p = (tsql_exec_param *) lfirst(lc);
 
