@@ -707,6 +707,16 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 
 			/*
+			 * If we recieve typmod as -1 we should fallback to default scale and precision
+			 * Rather than using -1 typmod to calculate scale and precision which leads to 
+			 * TDS protocol error.
+			 */
+			if (typmod == -1)
+			{
+				scale = tds_default_numeric_scale;
+				precision = tds_default_numeric_precision;
+			}
+			/*
 			 * [BABEL-3074] NUMERIC overflow causes TDS error for aggregate
 			 * function sum(); resultant precision should be tds_default_numeric_precision 
 			 */
