@@ -241,8 +241,8 @@ SELECT * FROM OPENQUERY(bbf_server, 'select 123; select 456')
 # Test view dependent on OPENQUERY
 SELECT * FROM openquery_vu_prepare__openquery_view
 
-#Test OPENQUERY where argument has quotes
-SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Query having both ''''single'''' and "double" quotes''')
-
 # Test OPENQUERY with an unreachable server
 SELECT * FROM OPENQUERY(bbf_server_unreachable, 'select 1')
+
+#Test OPENQUERY where argument has quotes
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Query having both ''''single'''' and "double" quotes''')

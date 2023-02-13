@@ -750,8 +750,7 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 	}
 	PG_CATCH();
 	{
-		LINKED_SERVER_DEBUG("LINKED SERVER: Closing connections to remote server due to error");
-		LINKED_SERVER_EXIT();
+		LINKED_SERVER_DEBUG("LINKED SERVER: Failed to establish connection to remote server due to error");
 
 		PG_RE_THROW();
 	}
