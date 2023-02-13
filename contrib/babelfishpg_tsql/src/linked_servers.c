@@ -1122,7 +1122,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 				while (LINKED_SERVER_NEXT_ROW(lsproc) != NO_MORE_ROWS)
 				{
 					/* for each row */
-					Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
+					Datum	*values = palloc0(sizeof(Datum) * colcount);
 					bool	*nulls = palloc0(sizeof(bool) * colcount);
 
 					for (i = 0; i < colcount; i++)
