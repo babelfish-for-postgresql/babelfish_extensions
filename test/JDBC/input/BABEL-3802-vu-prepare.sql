@@ -129,3 +129,6 @@ CREATE VIEW BABEL_3802_vu_prepare_t_v4 AS (
         power(CAST(100 AS TINYINT),1.2) AS res6
     );
 GO
+
+CREATE PROCEDURE babel_3802_vu_prepare_t_p8 AS (SELECT power(CAST(100 AS SMALLINT),3));
+GO

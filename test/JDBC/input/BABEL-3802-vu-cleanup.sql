@@ -45,3 +45,6 @@ GO
 
 DROP VIEW BABEL_3802_vu_prepare_t_v4
 GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p7
+GO
