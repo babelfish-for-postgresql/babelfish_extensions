@@ -1,0 +1,126 @@
+select set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+exec babel_3939_vu_prepare_p1;
+GO
+~~START~~
+binary#!#int
+BAADF00D#!#1234
+~~END~~
+
+~~START~~
+binary#!#int
+BAADF00D#!#1234
+~~END~~
+
+~~START~~
+binary#!#int
+BAADF00D#!#1234
+~~END~~
+
+~~START~~
+int
+10000
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+10001
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+exec sp_babelfish_configure 'explain_costs', 'off';
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+
+
+exec babel_3939_vu_prepare_p1;
+GO
+~~START~~
+text
+Query Text: EXEC babel_3939_vu_prepare_p1
+  Query Text: select * from tab_binary where a = 0xBAADF00D
+  ->  Index Scan using ix_tab_binary_atab_binary30474ea5eaee4ec0e0a5a86377abb1ac on tab_binary
+        Index Cond: ((a)::bbf_binary = '0xbaadf00d'::bbf_varbinary)
+  Query Text: select * from tab_binary where a = cast (0xBAADF00D as  binary )
+  ->  Index Scan using ix_tab_binary_atab_binary30474ea5eaee4ec0e0a5a86377abb1ac on tab_binary
+        Index Cond: ((a)::bbf_binary = '0xbaadf00d'::bbf_binary)
+  Query Text: select * from tab_binary where a = 0xBAADF00D
+  ->  Index Scan using ix_tab_binary_atab_binary30474ea5eaee4ec0e0a5a86377abb1ac on tab_binary
+        Index Cond: ((a)::bbf_binary = '0xbaadf00d'::bbf_varbinary)
+  Query Text: select count(*) from tab_binary where a > 0xBAADF00D
+  ->  Aggregate
+        ->  Seq Scan on tab_binary
+              Filter: ((a)::bbf_varbinary > '0xbaadf00d'::bbf_varbinary)
+  Query Text: select count(*) from tab_binary where a < 0xBAADF00D
+  ->  Aggregate
+        ->  Seq Scan on tab_binary
+              Filter: ((a)::bbf_varbinary < '0xbaadf00d'::bbf_varbinary)
+  Query Text: select count(*) from tab_binary where a >= 0xBAADF00D
+  ->  Aggregate
+        ->  Seq Scan on tab_binary
+              Filter: ((a)::bbf_varbinary >= '0xbaadf00d'::bbf_varbinary)
+  Query Text: select count(*) from tab_binary where a <= 0xBAADF00D
+  ->  Aggregate
+        ->  Seq Scan on tab_binary
+              Filter: ((a)::bbf_varbinary <= '0xbaadf00d'::bbf_varbinary)
+~~END~~
+
+
+exec babel_3939_vu_prepare_p2;
+GO
+~~START~~
+text
+Query Text: EXEC babel_3939_vu_prepare_p2
+  Query Text: select * from tab_varbinary where a = 0xBAADF00D
+  ->  Index Scan using ix_tab_binary_btab_varbinary785ec2330c9a18520469e01cd1dc6f53 on tab_varbinary
+        Index Cond: ((a)::bbf_varbinary = '0xbaadf00d'::bbf_varbinary)
+  Query Text: select * from tab_varbinary where a = cast(0xBAADF00D as  binary )
+  ->  Index Scan using ix_tab_binary_btab_varbinary785ec2330c9a18520469e01cd1dc6f53 on tab_varbinary
+        Index Cond: ((a)::bbf_varbinary = '0xbaadf00d'::bbf_binary)
+  Query Text: select * from tab_varbinary where a > cast(0xBAADF00D as  binary )
+  ->  Seq Scan on tab_varbinary
+        Filter: ((a)::bbf_varbinary > '0xbaadf00d'::bbf_varbinary)
+  Query Text: select * from tab_varbinary where a < cast(0xBAADF00D as  binary )
+  ->  Seq Scan on tab_varbinary
+        Filter: ((a)::bbf_varbinary < '0xbaadf00d'::bbf_varbinary)
+  Query Text: select * from tab_varbinary where a >= cast(0xBAADF00D as  binary )
+  ->  Seq Scan on tab_varbinary
+        Filter: ((a)::bbf_varbinary >= '0xbaadf00d'::bbf_varbinary)
+  Query Text: select * from tab_varbinary where a <= cast(0xBAADF00D as  binary )
+  ->  Seq Scan on tab_varbinary
+        Filter: ((a)::bbf_varbinary <= '0xbaadf00d'::bbf_varbinary)
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+select set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+exec sp_babelfish_configure 'explain_costs', 'on';
+GO

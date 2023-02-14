@@ -1,0 +1,60 @@
+create table tab_binary (a binary(4), b int)
+GO
+
+insert into tab_binary
+select 0xDEADC0DE, 1234 from generate_series(1,10000) as i
+GO
+
+insert into tab_binary
+values (0xBAADF00D, 1234)
+GO
+
+create index ix_tab_binary_a on tab_binary (a)
+GO
+
+create procedure babel_3939_vu_prepare_p1 AS BEGIN
+select * from tab_binary where a = 0xBAADF00D;
+select * from tab_binary where a = cast (0xBAADF00D as binary);
+select * from tab_binary where a = 0xBAADF00D;
+select count(*) from tab_binary where a > 0xBAADF00D;
+select count(*) from tab_binary where a < 0xBAADF00D;
+select count(*) from tab_binary where a >= 0xBAADF00D;
+select count(*) from tab_binary where a <= 0xBAADF00D;
+END;
+GO
+
+create table tab_varbinary (a varbinary(4), b int)
+GO
+
+insert into tab_varbinary
+select 0xDEADC0DE, 1234 from generate_series(1,10000) as i
+GO
+
+insert into tab_varbinary
+values (0xBAADF00D, 1234)
+GO
+
+create index ix_tab_binary_b on tab_varbinary (a)
+GO
+
+create procedure babel_3939_vu_prepare_p2 AS BEGIN
+select * from tab_varbinary where a = 0xBAADF00D;
+select * from tab_varbinary where a = cast(0xBAADF00D as binary);
+select * from tab_varbinary where a > cast(0xBAADF00D as binary);
+select * from tab_varbinary where a < cast(0xBAADF00D as binary);
+select * from tab_varbinary where a >= cast(0xBAADF00D as binary);
+select * from tab_varbinary where a <= cast(0xBAADF00D as binary);
+END;
+GO
+
+CREATE VIEW babel_3939_vu_prepare_view_1 as 
+    select * from tab_varbinary where a = cast(0xBAADF00D as binary);
+GO
+
+CREATE VIEW babel_3939_vu_prepare_view_2 as 
+    select * from tab_varbinary where a = 0xBAADF00D;
+GO
+
+CREATE VIEW babel_3939_vu_prepare_view_3 as 
+    select * from tab_binary where a = 0xBAADF00D;
+GO
