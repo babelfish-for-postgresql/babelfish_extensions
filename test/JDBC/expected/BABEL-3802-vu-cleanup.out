@@ -46,9 +46,5 @@ GO
 DROP VIEW BABEL_3802_vu_prepare_t_v4
 GO
 
-DROP PROCEDURE BABEL_3802_vu_prepare_t_p7
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p8
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: could not find a procedure named "babel_3802_vu_prepare_t_p7")~~
-
