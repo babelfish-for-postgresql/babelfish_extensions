@@ -3293,10 +3293,42 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					RangeVar *rel = create_stmt->relation;
 					List *name;
+					
+					Relation	catalog;
+					TypeName   *typename;
+					HeapTuple	tup;
+					
+					Datum		values[Natts_pg_type];
+					bool		nulls[Natts_pg_type];
+					bool		replaces[Natts_pg_type];
+					HeapTuple	newtup;
+
 					if (rel->schemaname)
 						name = list_make2(makeString(rel->schemaname), makeString(rel->relname));
 					else
 						name = list_make1(makeString(rel->relname));
+
+					/*
+					 * Table types need to set the typbyval column in pg_type to 't'
+					 */
+					catalog = table_open(TypeRelationId, RowExclusiveLock);
+					typename = makeTypeNameFromNameList(name);
+					tup = typenameType(NULL, typename, NULL);
+
+					/* Update the current type's tuple */
+					memset(values, 0, sizeof(values));
+					memset(nulls, 0, sizeof(nulls));
+					memset(replaces, 0, sizeof(replaces));
+					replaces[Anum_pg_type_typbyval - 1] = true;
+					values[Anum_pg_type_typbyval - 1] = BoolGetDatum(true);
+
+					newtup = heap_modify_tuple(tup, RelationGetDescr(catalog), values, nulls, replaces);
+					CatalogTupleUpdate(catalog, &newtup->t_self, newtup);
+
+					/* Clean up */
+					ReleaseSysCache(tup);
+
+					table_close(catalog, RowExclusiveLock);
 
 					revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, name);
 				}
