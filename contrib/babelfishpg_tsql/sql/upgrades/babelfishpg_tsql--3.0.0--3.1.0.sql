@@ -60,7 +60,7 @@ LANGUAGE plpgsql;
 -- to be regenerated, mVU (minor version upgrade) does not, so we need to manually fix it here.
 UPDATE pg_type SET typbyval = 't' 
 FROM sys.babelfish_namespace_ext AS ns 
-WHERE typtype = 'c'
+WHERE typtype = 'c' AND
     typacl IS NOT NULL AND
     typacl::TEXT LIKE '%' || ns.nspname || '%';
 
