@@ -195,7 +195,8 @@ CREATE OPERATOR sys.= (
     LEFTARG = sys.bbf_binary,
     RIGHTARG = sys.bbf_binary,
     FUNCTION = sys.binary_eq,
-    COMMUTATOR = =
+    COMMUTATOR = =,
+    RESTRICT = eqsel
 );
 
 
@@ -273,3 +274,46 @@ DEFAULT FOR TYPE sys.bbf_binary USING btree AS
     OPERATOR    5   >  (sys.bbf_binary, sys.bbf_binary),
     FUNCTION    1   sys.bbf_binary_cmp(sys.bbf_binary, sys.bbf_binary);
 
+CREATE OR REPLACE FUNCTION sys.binary_varbinary_eq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_eq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary)
+RETURNS int
+AS 'babelfishpg_common', 'varbinary_cmp'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.= (
+    LEFTARG = sys.bbf_binary,
+    RIGHTARG = sys.bbf_varbinary,
+    FUNCTION = sys.binary_varbinary_eq,
+    COMMUTATOR = =,
+    RESTRICT = eqsel
+);
+
+alter OPERATOR family bbf_binary_ops USING btree add
+    OPERATOR 3 sys.= (sys.bbf_binary, sys.bbf_varbinary),
+    FUNCTION 1 sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary);
+
+CREATE OR REPLACE FUNCTION sys.varbinary_binary_eq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
+RETURNS boolean
+AS 'babelfishpg_common', 'varbinary_eq'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary)
+RETURNS int
+AS 'babelfishpg_common', 'varbinary_cmp'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.= (
+    LEFTARG = sys.bbf_varbinary,
+    RIGHTARG = sys.bbf_binary,
+    FUNCTION = sys.varbinary_binary_eq,
+    COMMUTATOR = =,
+    RESTRICT = eqsel
+);
+
+alter OPERATOR family bbf_varbinary_ops USING btree add
+    OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
+    FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);

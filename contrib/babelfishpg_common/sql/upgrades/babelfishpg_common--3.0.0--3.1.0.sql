@@ -75,5 +75,95 @@ ALTER FUNCTION sys.newid() STABLE;
 ALTER FUNCTION sys.NEWSEQUENTIALID() STABLE;
 ALTER FUNCTION sys.babelfish_typecode_list() STABLE;
 
+alter OPERATOR sys.= (sys.bbf_binary, sys.bbf_binary) 
+set (
+    RESTRICT = eqsel
+);
+
+alter OPERATOR sys.= (sys.bbf_varbinary, sys.bbf_varbinary) 
+set (
+    RESTRICT = eqsel
+);
+
+create or replace function get_bbf_binary_ops_count(opffamily varchar) returns int as $$
+    begin
+        return (select count(*) FROM pg_am am, pg_opfamily opf, pg_amop amop WHERE 
+            opf.opfmethod = am.oid AND amop.amopfamily = opf.oid and opf.opfname = opffamily);
+    end; 
+$$ LANGUAGE plpgsql;
+
+DO $$
+    DECLARE bbf_binary_ops_c INT:=(select * from get_bbf_binary_ops_count('bbf_binary_ops'));
+BEGIN
+    IF bbf_binary_ops_c = 5 then
+        CREATE OR REPLACE FUNCTION sys.binary_varbinary_eq(leftarg sys.bbf_binary, rightarg sys.bbf_varbinary)
+        RETURNS boolean
+        AS 'babelfishpg_common', 'varbinary_eq'
+        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+        CREATE OR REPLACE FUNCTION sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary)
+        RETURNS int
+        AS 'babelfishpg_common', 'varbinary_cmp'
+        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+        CREATE OPERATOR sys.= (
+            LEFTARG = sys.bbf_binary,
+            RIGHTARG = sys.bbf_varbinary,
+            FUNCTION = sys.binary_varbinary_eq,
+            COMMUTATOR = =,
+            RESTRICT = eqsel
+        );
+
+        -- PG will create operator family when creating operator class for bbf_binary_ops
+        -- when didn't assign a operator family when creating
+        alter OPERATOR family bbf_binary_ops USING btree add
+            OPERATOR 3 sys.= (sys.bbf_binary, sys.bbf_varbinary),
+            FUNCTION 1 sys.bbf_binary_varbinary_cmp(sys.bbf_binary, sys.bbf_varbinary);
+
+    else if bbf_binary_ops_c = 6 THEN
+            raise notice 'operator of bbf_binary_ops is installed';
+        else 
+            raise exception 'wrong operator numbers in bbf_binary_ops';
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$
+    DECLARE bbf_varbinary_ops_c INT:=(select * from get_bbf_binary_ops_count('bbf_varbinary_ops'));
+BEGIN
+    IF bbf_varbinary_ops_c = 5 then
+        CREATE OR REPLACE FUNCTION sys.varbinary_binary_eq(leftarg sys.bbf_varbinary, rightarg sys.bbf_binary)
+        RETURNS boolean
+        AS 'babelfishpg_common', 'varbinary_eq'
+        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+        CREATE OR REPLACE FUNCTION sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary)
+        RETURNS int
+        AS 'babelfishpg_common', 'varbinary_cmp'
+        LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+        CREATE OPERATOR sys.= (
+            LEFTARG = sys.bbf_varbinary,
+            RIGHTARG = sys.bbf_binary,
+            FUNCTION = sys.varbinary_binary_eq,
+            COMMUTATOR = =,
+            RESTRICT = eqsel
+        );
+
+        alter OPERATOR family bbf_varbinary_ops USING btree add
+            OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
+            FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
+    else if bbf_varbinary_ops_c = 6 THEN
+            raise notice 'operator of bbf_binary_ops is installed';
+        else 
+            raise exception 'wrong operator numbers in bbf_binary_ops';
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+drop function get_bbf_binary_ops_count(varchar);
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
