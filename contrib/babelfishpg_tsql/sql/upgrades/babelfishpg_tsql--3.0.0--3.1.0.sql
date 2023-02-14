@@ -58,14 +58,12 @@ LANGUAGE plpgsql;
 
 -- 3.1 introduces a change to how table types are stored in pg_type. While MVU forces the catalog
 -- to be regenerated, mVU (minor version upgrade) does not, so we need to manually fix it here.
-$$
 BEGIN
     UPDATE pg_type SET typbyval = 'f' 
     FROM sys.babelfish_namespace_ext AS ns 
     WHERE typacl IS NOT NULL AND
         typacl::TEXT LIKE '%' || ns.nspname || '%';
-END
-$$
+END;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_scope_identity()
 RETURNS INT8
