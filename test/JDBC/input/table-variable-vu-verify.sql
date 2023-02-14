@@ -67,7 +67,7 @@ go
 select * from table_variable_vu_preparemstvf_conditional(1)
 go
 
--- BABEL-3967 - table variable in sp_executesql is null error
+-- BABEL-3967 - table variable in sp_executesql
 declare @var1 table_variable_vu_type
 insert into @var1 values ('1', 2, 3, 4)
 exec sp_executesql N'EXEC table_variable_vu_proc1 @x = @p0', N'@p0 table_variable_vu_type readonly', @p0=@var1
@@ -78,4 +78,8 @@ insert into @tableVar values('1', 2, 3, 4);
 declare @ret int;
 select @ret = table_variable_vu_tvp_function(@tableVar);
 select @ret 
+go
+
+-- double-check that the underlying type for table_variable_vu_type is pass-by-val
+select typbyval from pg_type where typname = 'table_variable_vu_type';
 go

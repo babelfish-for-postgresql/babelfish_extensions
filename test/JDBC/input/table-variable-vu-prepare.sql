@@ -194,7 +194,7 @@ begin
 end
 go
 
--- BABEL-3967 - table variable in sp_executesql is null error
+-- BABEL-3967 - table variable in sp_executesql
 create type table_variable_vu_type as table (a text not null, b int primary key, c int, d int)
 go
 
