@@ -101,6 +101,61 @@ SELECT u.c1, u.c1 FROM unionorder1 u
 ORDER BY u1.c1
 go
 
+SELECT u1.c1 FROM unionorder1 u1
+UNION 
+SELECT c2 FROM unionorder2
+WHERE c2 IN (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    WHERE c1 IN (
+        SELECT TOP 5 c1 FROM unionorder1
+        UNION
+        SELECT TOP 5 c2 FROM unionorder2
+        ORDER BY unionorder1.c1
+    )
+    ORDER BY unionorder2.c2
+)
+ORDER BY u1.c1;
+go
+
+SELECT u1.c1, (SELECT TOP 1 c2 FROM unionorder2) AS col2
+FROM unionorder1 u1
+UNION 
+SELECT c2, c2 FROM unionorder2
+WHERE c2 IN (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    ORDER BY unionorder2.c2
+)
+ORDER BY col2;
+go
+
+SELECT c1 FROM unionorder1
+WHERE c1 IN (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    ORDER BY unionorder2.c2
+)
+UNION 
+SELECT c2 FROM unionorder2
+ORDER BY unionorder1.c1;
+go
+
+SELECT c1 FROM unionorder1
+WHERE c1 IN (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    ORDER BY unionorder2.c2
+)
+UNION 
+SELECT c2 FROM unionorder2
+ORDER BY unionorder2.c2;
+go
+
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 go

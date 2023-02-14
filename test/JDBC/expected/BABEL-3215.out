@@ -204,6 +204,90 @@ int#!#int
 ~~END~~
 
 
+SELECT u1.c1 FROM unionorder1 u1
+UNION 
+SELECT c2 FROM unionorder2
+WHERE c2 IN (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    WHERE c1 IN (
+        SELECT TOP 5 c1 FROM unionorder1
+        UNION
+        SELECT TOP 5 c2 FROM unionorder2
+        ORDER BY unionorder1.c1
+    )
+    ORDER BY unionorder2.c2
+)
+ORDER BY u1.c1;
+go
+~~START~~
+int
+1
+2
+3
+4
+~~END~~
+
+
+SELECT u1.c1, (SELECT TOP 1 c2 FROM unionorder2) AS col2
+FROM unionorder1 u1
+UNION 
+SELECT c2, c2 FROM unionorder2
+WHERE c2 IN (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    ORDER BY unionorder2.c2
+)
+ORDER BY col2;
+go
+~~START~~
+int#!#int
+3#!#2
+1#!#2
+2#!#2
+3#!#3
+4#!#4
+~~END~~
+
+
+SELECT c1 FROM unionorder1
+WHERE c1 IN (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    ORDER BY unionorder2.c2
+)
+UNION 
+SELECT c2 FROM unionorder2
+ORDER BY unionorder1.c1;
+go
+~~START~~
+int
+1
+2
+3
+4
+~~END~~
+
+
+SELECT c1 FROM unionorder1
+WHERE c1 IN (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    ORDER BY unionorder2.c2
+)
+UNION 
+SELECT c2 FROM unionorder2
+ORDER BY unionorder2.c2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "unionorder2")~~
+
+
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 go

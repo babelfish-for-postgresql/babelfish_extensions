@@ -3408,30 +3408,11 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 }
 
 static void
-pltsql_pre_transform_sort_from_set_hook(ParseState *pstate, Query *qry, Query *leftmostQuery, List* fromClause)
+pltsql_pre_transform_sort_from_set_hook(ParseState *pstate, Query *qry, Query *leftmostQuery, List* saved_ns)
 {
-	List 	*sv_rtable;
-	ListCell *fl;
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	sv_rtable = pstate->p_rtable;
-	pstate->p_rtable = NIL;
-
-	foreach(fl, leftmostQuery->rtable)
-	{
-		RangeTblEntry *rte = lfirst(fl);
-		Relation rel;
-		ParseNamespaceItem *nsitem;
-		if (rte->rtekind == RTE_RELATION)
-		{
-			rel = relation_open(rte->relid, AccessShareLock);
-			nsitem = addRangeTableEntryForRelation(pstate, rel, AccessShareLock, 
-											rte->alias, rte->inh, rte->inFromCl);
-			addNSItemToQuery(pstate, nsitem, false, true, true);
-			relation_close(rel, AccessShareLock);
-		}
-	}
-	pstate->p_rtable = sv_rtable;
+	pstate->p_namespace = saved_ns;
 	qry->targetList = leftmostQuery->targetList;
 }
