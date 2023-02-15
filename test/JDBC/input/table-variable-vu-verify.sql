@@ -94,3 +94,7 @@ insert into @tableVar values (1),(2),(3)
 select * from @tableVar
 select typbyval from pg_catalog.pg_type where typname like '@tablevar%';
 go
+
+select * from table_variable_vu_func2()
+select typbyval from pg_catalog.pg_type where typname like '@sometable_table_variable_vu_func2%';
+go

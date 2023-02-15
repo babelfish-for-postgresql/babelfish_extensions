@@ -250,3 +250,17 @@ bit
 1
 ~~END~~
 
+
+select * from table_variable_vu_func2()
+select typbyval from pg_catalog.pg_type where typname like '@sometable_table_variable_vu_func2%';
+go
+~~START~~
+int#!#varchar
+1234#!#abcd
+~~END~~
+
+~~START~~
+bit
+1
+~~END~~
+
