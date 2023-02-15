@@ -94,7 +94,10 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	return 0;
 }
 
-/* Copied from babelfishRemoveSubstr() defined in PG engine */
+/*
+ * Helper function to remove all occurrences
+ * of a substring from a source string
+ */
 static char *
 remove_substr(char *src, const char *substr)
 {
@@ -141,7 +144,9 @@ static int
 linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error, int os_error, char *db_err_str, char *os_err_str)
 {
 	StringInfoData buf;
+
 	char* err_msg = NULL;
+	char* str =  NULL;
 	char* pos = NULL;
 
 	initStringInfo(&buf);
@@ -151,12 +156,19 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 	 * supporting remote servers that use T-SQL and communicate over TDS
 	 */
 	err_msg = remove_substr(pstrdup(db_err_str), "Adaptive ");
+	str = err_msg;
 
 	/* "Server" --> "server" */
-	pos = strstr(err_msg, "Server");
-
-	if (pos)
+	while((pos = strstr(str, "Server")) != NULL)
+	{
 		*pos = 's';
+
+		/* skip length of "Server" */
+		str = pos + 6;
+
+		if (!str)
+			break;
+	}
 
 	appendStringInfo(&buf, "TDS client library error: DB #: %i, ", db_error);
 
