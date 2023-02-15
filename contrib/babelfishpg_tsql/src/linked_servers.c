@@ -94,6 +94,45 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	return 0;
 }
 
+static char *
+remove_substr(char *src, const char *substr)
+{
+	char *str;
+	char *result = pstrdup("");
+	int substr_len = strlen(substr);
+
+	if (!strstr(src, substr))
+		return src;
+
+	while ((str = strstr(src, substr)) != NULL)
+	{
+		char *tmp = psprintf("%s%s", result, pnstrdup(src, str - src));
+		if (result)
+		{
+			pfree(result);
+			result = tmp;
+		}
+
+		/* skip substr part */
+		src = str + substr_len;
+
+		if (!src)
+			break;
+	}
+
+	if (src)
+	{
+		char *tmp = psprintf("%s%s", result, src);
+		if (result)
+		{
+			pfree(result);
+			result = tmp;
+		}
+	}
+
+	return result;
+}
+
 /*
  * Handle any error encountered in TDS client library itself
  */
@@ -101,13 +140,27 @@ static int
 linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error, int os_error, char *db_err_str, char *os_err_str)
 {
 	StringInfoData buf;
+	char* err_msg = NULL;
+	char* pos = NULL;
 
 	initStringInfo(&buf);
 
+	/*
+	 * We remove "Adaptive" from error message since we are only
+	 * supporting remote servers that use T-SQL and communicate over TDS
+	 */
+	err_msg = remove_substr(db_err_str, "Adaptive ");
+
+	/* "Server" --> "server" */
+	pos = strstr(err_msg, "Server");
+
+	if (pos)
+		*pos = 's';
+
 	appendStringInfo(&buf, "TDS client library error: DB #: %i, ", db_error);
 
-	if (db_err_str)
-		appendStringInfo(&buf, "DB Msg: %s, ", db_err_str);
+	if (err_msg)
+		appendStringInfo(&buf, "DB Msg: %s, ", err_msg);
 
 	appendStringInfo(&buf, "OS #: %i, ", os_error);
 
