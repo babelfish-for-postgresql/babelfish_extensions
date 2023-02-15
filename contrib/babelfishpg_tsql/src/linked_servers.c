@@ -94,6 +94,7 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	return 0;
 }
 
+/* Copied from babelfishRemoveSubstr() defined in PG engine */
 static char *
 remove_substr(char *src, const char *substr)
 {
