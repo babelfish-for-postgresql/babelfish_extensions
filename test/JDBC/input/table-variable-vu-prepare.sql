@@ -217,3 +217,11 @@ go
 
 create type table_variable_vu_schema.table_variable_vu_type as table (a nvarchar, b ntext)
 go
+
+create function table_variable_vu_func2 () returns @SomeTable table (col1 int, col2 varchar(16))
+AS
+BEGIN
+    INSERT @SomeTable SELECT 1234, 'abcd'
+    RETURN
+END
+go
