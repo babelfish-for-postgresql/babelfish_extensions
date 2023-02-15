@@ -231,6 +231,7 @@ c#!#d
 declare @tableVar as table (x int)
 insert into @tableVar values (1),(2),(3)
 select * from @tableVar
+select typbyval from pg_catalog.pg_type where typname like '@tablevar%';
 go
 ~~ROW COUNT: 3~~
 
@@ -239,5 +240,13 @@ int
 1
 2
 3
+~~END~~
+
+~~START~~
+bit
+1
+1
+1
+1
 ~~END~~
 

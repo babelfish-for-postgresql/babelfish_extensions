@@ -92,4 +92,5 @@ go
 declare @tableVar as table (x int)
 insert into @tableVar values (1),(2),(3)
 select * from @tableVar
+select typbyval from pg_catalog.pg_type where typname like '@tablevar%';
 go
