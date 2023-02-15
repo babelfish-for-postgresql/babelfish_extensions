@@ -53,3 +53,7 @@ drop function table_variable_vu_tvp_function
 go
 drop type table_variable_vu_type
 go
+drop type table_variable_vu_schema.table_variable_vu_type
+go
+drop schema table_variable_vu_schema
+go

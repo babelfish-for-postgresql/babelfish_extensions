@@ -83,3 +83,13 @@ go
 -- double-check that the underlying type for table_variable_vu_type is pass-by-val
 select typbyval from pg_type where typname = 'table_variable_vu_type';
 go
+
+declare @tableVar table_variable_vu_schema.table_variable_vu_type
+insert into @tableVar values ('a', 'b'), ('c', 'd')
+select * from @tableVar
+go
+
+declare @tableVar as table (x int)
+insert into @tableVar values (1),(2),(3)
+select * from @tableVar
+go

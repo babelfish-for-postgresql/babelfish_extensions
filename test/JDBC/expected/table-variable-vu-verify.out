@@ -211,5 +211,33 @@ go
 ~~START~~
 bit
 1
+1
+~~END~~
+
+
+declare @tableVar table_variable_vu_schema.table_variable_vu_type
+insert into @tableVar values ('a', 'b'), ('c', 'd')
+select * from @tableVar
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+nvarchar#!#ntext
+a#!#b
+c#!#d
+~~END~~
+
+
+declare @tableVar as table (x int)
+insert into @tableVar values (1),(2),(3)
+select * from @tableVar
+go
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+1
+2
+3
 ~~END~~
 

@@ -225,3 +225,9 @@ begin
 	return @result 
 end;
 go
+
+create schema table_variable_vu_schema
+go
+
+create type table_variable_vu_schema.table_variable_vu_type as table (a nvarchar, b ntext)
+go

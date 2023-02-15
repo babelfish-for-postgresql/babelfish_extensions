@@ -56,13 +56,13 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
--- 3.1 introduces a change to how table types are stored in pg_type. While MVU forces the catalog
+-- 3.1 changes table types to explicitly be stored as pass-by-value in pg_type. While MVU forces the catalog
 -- to be regenerated, mVU (minor version upgrade) does not, so we need to manually fix it here.
 UPDATE pg_type SET typbyval = 't' 
 FROM sys.babelfish_namespace_ext AS ns 
-WHERE typtype = 'c' AND
+WHERE typtype = 'c' AND -- only modify composite types
     typacl IS NOT NULL AND
-    typacl::TEXT LIKE '%' || ns.nspname || '%';
+    typacl::TEXT LIKE '%' || ns.nspname || '%'; -- only modify babelfish-defined types
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_scope_identity()
 RETURNS INT8

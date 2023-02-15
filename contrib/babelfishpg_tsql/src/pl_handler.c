@@ -3351,8 +3351,8 @@ static void set_pgtype_byval(List *name, bool byval)
 	HeapTuple	newtup;
 
 	/*
-		* Table types need to set the typbyval column in pg_type to 't'
-		*/
+	* Table types need to set the typbyval column in pg_type to 't'
+	*/
 	catalog = table_open(TypeRelationId, RowExclusiveLock);
 	typename = makeTypeNameFromNameList(name);
 	tup = typenameType(NULL, typename, NULL);
