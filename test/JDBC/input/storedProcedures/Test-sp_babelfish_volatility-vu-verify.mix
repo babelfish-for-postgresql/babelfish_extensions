@@ -196,7 +196,7 @@ exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f2'
 go
 
 /* function on which user has privilege is only visible */
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 use test_sp_babelfish_volatility_db1
 go
 select current_user
@@ -223,7 +223,7 @@ go
 grant execute on test_sp_babelfish_volatility_f2 to test_sp_babelfish_volatility_user
 go
 
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 use test_sp_babelfish_volatility_db1
 go
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1'
@@ -246,7 +246,7 @@ go
 ALTER USER test_sp_babelfish_volatility_user WITH DEFAULT_SCHEMA=test_sp_babelfish_volatility_schema2
 GO
 
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 use test_sp_babelfish_volatility_db1
 go
 select current_user
@@ -278,7 +278,7 @@ go
 grant connect to guest
 go
 
--- tsql     user=test_sp_babelfish_volatility_login_2 password='abc'
+-- tsql     user=test_sp_babelfish_volatility_login_2 password=12345678
 use test_sp_babelfish_volatility_db1
 go
 SELECT current_user
