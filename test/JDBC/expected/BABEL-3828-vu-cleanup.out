@@ -14,11 +14,4 @@ GO
 ~~ERROR (Message: Cannot drop the login 'babeluser@BABEL', because it does not exist or you do not have permission.)~~
 
 
--- psql
-do 
-$$ begin 
-    if exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
-        then DROP ROLE rds_ad; 
-    end if; 
-end $$;
-GO
+

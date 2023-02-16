@@ -1,5 +1,5 @@
 -- tsql
-select rolname, login_name from babelfish_authid_user_ext where rolname in ('master_bbf\ad_sp_helpuser','master_pass_sp_helpuser');
+select rolname, login_name from babelfish_authid_user_ext where rolname in ('master_bbf\ad_sp_helpuser','master_pass_sp_helpuser') order by rolname;
 GO
 
 CREATE TABLE temp_sp_helpuser(UserName sys.sysname, RoleName sys.sysname, LoginName sys.sysname, 
