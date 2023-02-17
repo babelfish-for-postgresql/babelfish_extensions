@@ -88,7 +88,6 @@ extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 extern bool pltsql_nocount;
-extern bool pltsql_is_windows_allowed;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
