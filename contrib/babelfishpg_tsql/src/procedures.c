@@ -70,6 +70,7 @@ extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
 extern void read_param_def(InlineCodeBlockArgs * args, const char *paramdefstr);
 extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
+extern bool pltsql_linked_servers_enabled;
 extern PLtsql_execstate *get_current_tsql_estate(void);
 static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);

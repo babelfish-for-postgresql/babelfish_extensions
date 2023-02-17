@@ -62,6 +62,7 @@ declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
+declare_escape_hatch(pltsql_linked_servers_enabled);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
