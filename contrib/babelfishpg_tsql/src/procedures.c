@@ -70,6 +70,7 @@ extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
 extern void read_param_def(InlineCodeBlockArgs * args, const char *paramdefstr);
 extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
+extern bool pltsql_linked_servers_enabled;
 extern PLtsql_execstate *get_current_tsql_estate(void);
 static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
@@ -2147,6 +2148,11 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	bool provider_warning = false, provstr_warning = false;
 
+	if(!pltsql_linked_servers_enabled)
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("'sp_addlinkedserver' is not currently supported in Babelfish")));
+
 	if (linked_server == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
@@ -2260,6 +2266,11 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	StringInfoData query;
 
+	if(!pltsql_linked_servers_enabled)
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("'sp_addlinkedsrvlogin' is not currently supported in Babelfish")));
+
 	if (servername == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
@@ -2340,6 +2351,11 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	StringInfoData query;
 
+	if(!pltsql_linked_servers_enabled)
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("'sp_droplinkedsrvlogin' is not currently supported in Babelfish")));
+
 	if (servername == NULL)
 		ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2379,6 +2395,11 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	char *droplogins = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_BPCHAR_PP(1)));
 
 	StringInfoData query;
+
+	if(!pltsql_linked_servers_enabled)
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("'sp_dropserver' is not currently supported in Babelfish")));
 
 	if (linked_srv == NULL)
 		ereport(ERROR,

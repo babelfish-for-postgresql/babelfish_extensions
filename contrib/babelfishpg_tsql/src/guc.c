@@ -42,7 +42,7 @@ int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
 int pltsql_lock_timeout = -1;
-
+bool pltsql_linked_servers_enabled = false;
 
 bool	pltsql_xact_abort = false;
 bool	pltsql_implicit_transactions = false;
@@ -1092,6 +1092,15 @@ define_custom_variables(void)
 				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.pltsql_linked_servers_enabled",
+				 gettext_noop("Enables linked servers"),
+				 NULL,
+				 &pltsql_linked_servers_enabled,
+				 false,
+				 PGC_INTERNAL,
+				 GUC_NO_SHOW_ALL,
 				 NULL, NULL, NULL);
 }
 

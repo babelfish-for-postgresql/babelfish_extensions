@@ -62,6 +62,7 @@ declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
+declare_escape_hatch(pltsql_linked_servers_enabled);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -180,7 +181,7 @@ protected:
 		antlrcpp::Any visitFunction_call(TSqlParser::Function_callContext *ctx) override;
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
 		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override {
-			if (!ctx->open_json() && !ctx->open_query()) {
+			if (!ctx->open_json() && (!pltsql_linked_servers_enabled || !ctx->open_query())) {
 				handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx));
 			}
 			return visitChildren(ctx);
