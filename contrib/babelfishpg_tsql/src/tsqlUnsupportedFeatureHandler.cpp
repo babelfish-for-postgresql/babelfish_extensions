@@ -909,7 +909,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_login(TSqlParser::C
 	if (!pltsql_is_windows_allowed)
 	{
 		if (ctx->WINDOWS())
-			handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_MISC_OPTIONS, ctx->WINDOWS(), &st_pltsql_is_windows_allowed);
+			handle(INSTR_UNSUPPORTED_LOGIN_FROM_WINDOWS, ctx->WINDOWS(), &st_pltsql_is_windows_allowed);
 	}
 	
 	if (ctx->CERTIFICATE())

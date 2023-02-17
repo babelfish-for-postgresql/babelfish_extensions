@@ -612,7 +612,7 @@ define_custom_variables(void)
 				 NULL,
 				 &pltsql_is_windows_allowed,
 				 false,
-				 PGC_SUSET,  /* only superuser can set */
+				 PGC_INTERNAL,
 				 GUC_NO_SHOW_ALL,
 				 NULL, NULL, NULL);
 
