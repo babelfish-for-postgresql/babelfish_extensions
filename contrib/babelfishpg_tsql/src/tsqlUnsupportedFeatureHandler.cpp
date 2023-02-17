@@ -62,6 +62,7 @@ declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
+declare_escape_hatch(pltsql_is_windows_allowed);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -904,7 +905,13 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_login(TSqlParser::C
 
 	if (ctx->MUST_CHANGE())
 		handle(INSTR_UNSUPPORTED_TSQL_LOGIN_PASSWORD_MUST_CHANGE, ctx->MUST_CHANGE(), &st_escape_hatch_login_password_must_change);
-
+	
+	if (!pltsql_is_windows_allowed)
+	{
+		if (ctx->WINDOWS())
+			handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_MISC_OPTIONS, ctx->WINDOWS(), &st_pltsql_is_windows_allowed);
+	}
+	
 	if (ctx->CERTIFICATE())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_MISC_OPTIONS, ctx->CERTIFICATE(), &st_escape_hatch_login_misc_options);
 
