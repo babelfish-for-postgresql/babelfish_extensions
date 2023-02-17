@@ -1,30 +1,11 @@
--- Test case 1: Verify that the function returns the expected number of rows affected after each insert, update, or delete statement.
-INSERT INTO babel_3478 (FirstName, LastName, Salary)
-VALUES ('Mary', 'Smith', 45000);
+SELECT * FROM BABEL_3478_t1;
 SELECT ROWCOUNT_BIG();
 GO
 ~~START~~
-varchar
-Number of rows affected = 1
+int#!#varchar#!#varchar#!#money
+1#!#John#!#Doe#!#65000.0000
+2#!#Jane#!#Doe#!#65000.0000
 ~~END~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-bigint
-1
-~~END~~
-
-
-UPDATE babel_3478 SET Salary = Salary * 1.1 WHERE LastName = 'Doe';
-SELECT ROWCOUNT_BIG();
-GO
-~~START~~
-varchar
-Number of rows affected = 2
-~~END~~
-
-~~ROW COUNT: 2~~
 
 ~~START~~
 bigint
@@ -32,46 +13,18 @@ bigint
 ~~END~~
 
 
-DELETE FROM babel_3478 WHERE Salary < 55000;
+SELECT * FROM BABEL_3478_InfoView;
 SELECT ROWCOUNT_BIG();
 GO
-~~START~~
-varchar
-Number of rows affected = 1
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~START~~
-bigint
-1
-~~END~~
+~~ERROR (Message: relation "babel_3478_infoview" does not exist)~~
 
 
--- Test case 2: Verify that the function returns zero if no rows were affected by the last statement.
-SELECT * FROM babel_3478 WHERE LastName = 'Johnson';
+
+EXEC Insert_BABEL_3478_p1;
 SELECT ROWCOUNT_BIG();
 GO
-~~START~~
-int#!#varchar#!#varchar#!#money
-~~END~~
-
-~~START~~
-bigint
-0
-~~END~~
-
-
--- Test case 3: Verify that the function returns the correct value if a large number of rows were affected.
-INSERT INTO babel_3478 (FirstName, LastName, Salary)
-SELECT FirstName, LastName, Salary FROM babel_3478;
-SELECT ROWCOUNT_BIG();
-GO
-~~START~~
-varchar
-Number of rows affected = 3
-~~END~~
-
 ~~ROW COUNT: 3~~
 
 ~~START~~
@@ -80,62 +33,26 @@ bigint
 ~~END~~
 
 
--- Test case 4: Verify that the function returns the correct value when used in a stored procedure that includes multiple SQL statements.
-EXEC test_procedure;
-GO
-~~START~~
-varchar
-Number of rows affected = 1
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-varchar
-Number of rows affected by first statement = 1
-~~END~~
-
-~~START~~
-varchar
-Number of rows affected = 1
-~~END~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-varchar
-Number of rows affected by second statement = 1
-~~END~~
 
 
--- Test case 5: Verify that the function returns the correct value when used in a trigger that is executed as a result of an insert, update, or delete operation.
-INSERT INTO babel_3478 (FirstName, LastName, Salary) VALUES ('Bob', 'Brown', 45000);
+SELECT * FROM Updated_BABEL_3478_InfoView;
 SELECT ROWCOUNT_BIG();
 GO
 ~~START~~
-varchar
-Number of rows affected = 1
+int#!#varchar#!#varchar#!#money
+1#!#John#!#Doe#!#65000.0000
+2#!#Jane#!#Doe#!#65000.0000
 ~~END~~
-
-~~ROW COUNT: 1~~
 
 ~~START~~
 bigint
-1
+2
 ~~END~~
 
 
--- Test case 6: Verify that the function returns the expected value when used in a transaction that is rolled back.
-BEGIN TRANSACTION;
-DELETE FROM babel_3478 WHERE Salary > 60000;
+EXEC Update_BABEL_3478_Salary 'Doe', 700000;
 SELECT ROWCOUNT_BIG();
-ROLLBACK
 GO
-~~START~~
-varchar
-Number of rows affected = 2
-~~END~~
-
 ~~ROW COUNT: 2~~
 
 ~~START~~
@@ -144,22 +61,13 @@ bigint
 ~~END~~
 
 
--- Test case 7: Verify that the view returns a row count greater than 0.
-SELECT * FROM babel_3478_View;
+EXEC Delete_BABEL_3478_p2 'Doe';
 SELECT ROWCOUNT_BIG();
 GO
-~~START~~
-int#!#varchar#!#varchar#!#money
-3#!#Jim#!#Smith#!#55000.0000
-1#!#John#!#Doe#!#55000.0000
-2#!#Jane#!#Doe#!#66000.0000
-5#!#Jim#!#Smith#!#55000.0000
-6#!#John#!#Doe#!#55000.0000
-7#!#Jane#!#Doe#!#66000.0000
-~~END~~
+~~ROW COUNT: 2~~
 
 ~~START~~
 bigint
-6
+2
 ~~END~~
 

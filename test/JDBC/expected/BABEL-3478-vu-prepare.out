@@ -1,47 +1,104 @@
--- Create a table
-CREATE TABLE babel_3478 (
-  ID INT PRIMARY KEY IDENTITY(1,1),
-  FirstName VARCHAR(50),
-  LastName VARCHAR(50),
-  Salary MONEY
+CREATE TABLE BABEL_3478_t1 (
+    ID INT PRIMARY KEY IDENTITY(1,1),
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    Salary MONEY
 );
 GO
-
--- Insert some data
-INSERT INTO babel_3478 (FirstName, LastName, Salary)
+-- Inserting data into the BABEL_3478_t1 table
+INSERT INTO BABEL_3478_t1 (FirstName, LastName, Salary)
 VALUES ('John', 'Doe', 50000), ('Jane', 'Doe', 60000), ('Jim', 'Smith', 55000);
-SELECT ROWCOUNT_BIG();
 GO
 ~~ROW COUNT: 3~~
 
+
+-- Checking the number of inserted rows
+SELECT ROWCOUNT_BIG();
+GO
 ~~START~~
 bigint
 3
 ~~END~~
 
 
--- Create a stored procedure that includes multiple SQL statements
-CREATE PROCEDURE test_procedure
+-- Updating the salary of BABEL_3478_t1 with last name 'Doe'
+UPDATE BABEL_3478_t1 SET Salary = 65000 WHERE LastName = 'Doe';
+GO
+~~ROW COUNT: 2~~
+
+
+-- Checking the number of updated rows
+SELECT ROWCOUNT_BIG();
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+-- Deleting BABEL_3478_t1 with last name 'Smith'
+DELETE FROM BABEL_3478_t1 WHERE LastName = 'Smith';
+GO
+~~ROW COUNT: 1~~
+
+
+-- Checking the number of deleted rows
+SELECT ROWCOUNT_BIG();
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+
+
+CREATE VIEW BABEL_3478_t1_InfoView AS
+SELECT ID, FirstName, LastName, Salary
+FROM BABEL_3478_t1;
+GO
+
+
+CREATE PROCEDURE Insert_BABEL_3478_p1
 AS
 BEGIN
-  INSERT INTO babel_3478 (FirstName, LastName, Salary) VALUES ('Jack', 'Johnson', 40000);
-  SELECT 'Number of rows affected by first statement = ' + CAST(ROWCOUNT_BIG() AS VARCHAR);
-  UPDATE babel_3478 SET Salary = Salary * 1.05 WHERE Salary < 55000;
-  SELECT 'Number of rows affected by second statement = ' + CAST(ROWCOUNT_BIG() AS VARCHAR);
+    -- Creating the BABEL_3478_t2 table
+    CREATE TABLE BABEL_3478_t2 (
+        ID INT PRIMARY KEY IDENTITY(1,1),
+        FirstName VARCHAR(50),
+        LastName VARCHAR(50),
+        Salary MONEY
+    );
+    -- Inserting data into the BABEL_3478_t2 table
+    INSERT INTO BABEL_3478_t2 (FirstName, LastName, Salary)
+    VALUES ('John', 'Doe', 50000), ('Jane', 'Doe', 60000), ('Jim', 'Smith', 55000);
 END;
 GO
 
--- Create a trigger that is executed as a result of an insert, update, or delete operation
-CREATE TRIGGER test_trigger
-ON babel_3478
-FOR INSERT, UPDATE, DELETE
+
+CREATE VIEW Updated_BABEL_3478_InfoView AS
+SELECT ID, FirstName, LastName, Salary
+FROM BABEL_3478_t1
+WHERE LastName = 'Doe';
+GO
+
+CREATE PROCEDURE Update_BABEL_3478_Salary
+    @LastName VARCHAR(50),
+    @NewSalary MONEY
 AS
 BEGIN
-  SELECT 'Number of rows affected = ' + CAST(ROWCOUNT_BIG() AS VARCHAR);
+    UPDATE BABEL_3478_t1
+    SET Salary = @NewSalary 
+    WHERE LastName = @LastName;
+END
+GO
+
+
+CREATE PROCEDURE Delete_BABEL_3478_p2
+  @LastName VARCHAR(50)
+AS
+BEGIN
+  DELETE FROM BABEL_3478_t1 WHERE LastName = @LastName;
 END;
 GO
 
--- Create a view that will return a row count greater than 0
-CREATE VIEW babel_3478_View AS
-SELECT * FROM babel_3478 WHERE Salary >= 50000;
-GO
+
