@@ -63,6 +63,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
+#include "utils/guc.h"
 
 #include "analyzer.h"
 #include "catalog.h"
@@ -87,6 +88,7 @@ extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 extern bool pltsql_nocount;
+extern bool pltsql_is_windows_allowed;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -2270,6 +2272,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 							else if (strcmp(defel->defname, "from_windows") == 0)
 							{
+								if (!pltsql_is_windows_allowed)
+									ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+											errmsg("Windows login is not supported in babelfish")));
 								from_windows = true;
 								login_options = lappend(login_options, defel);
 							}

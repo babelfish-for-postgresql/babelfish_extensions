@@ -55,6 +55,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "dbcmds.h"
+#include "utils/guc.h"
 
 #include <ctype.h>
 
@@ -73,6 +74,7 @@ static void grant_guests_to_login(const char *login);
 static bool has_user_in_db(const char *login, char **db_name);
 static void validateNetBIOS(char* netbios);
 static void validateFQDN(char* fqdn);
+extern bool pltsql_is_windows_allowed;
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -2007,6 +2009,11 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	Datum				*new_record;
 	bool				*new_record_nulls;
 	MemoryContext		ccxt = CurrentMemoryContext;
+
+	if (!pltsql_is_windows_allowed)
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("Domain mapping is not supported yet in babelfish")));
 	
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		ereport(ERROR,
@@ -2085,6 +2092,11 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	ScanKeyData	scanKey;
 	SysScanDesc	scan;
 	HeapTuple	tuple;
+
+	if (!pltsql_is_windows_allowed)
+	ereport(ERROR,
+		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			errmsg("Domain mapping is not supported yet in babelfish")));
 	
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
@@ -2137,6 +2149,11 @@ Datum
 babelfish_truncate_domain_mapping_table_internal(PG_FUNCTION_ARGS)
 {
 	Relation	bbf_domain_mapping_rel;
+
+	if (!pltsql_is_windows_allowed)
+	ereport(ERROR,
+		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			errmsg("Domain mapping is not supported yet in babelfish")));
 
 	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
 			ereport(ERROR,
