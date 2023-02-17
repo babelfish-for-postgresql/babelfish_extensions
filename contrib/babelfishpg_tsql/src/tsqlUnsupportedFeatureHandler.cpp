@@ -22,6 +22,7 @@ extern "C" {
 #pragma GCC diagnostic pop
 
 extern bool pltsql_allow_antlr_to_unsupported_grammar_for_testing;
+extern bool pltsql_linked_servers_enabled;
 
 /* escape hatches */
 typedef struct escape_hatch_t {
@@ -62,7 +63,6 @@ declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
 declare_escape_hatch(escape_hatch_checkpoint);
-declare_escape_hatch(pltsql_linked_servers_enabled);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
