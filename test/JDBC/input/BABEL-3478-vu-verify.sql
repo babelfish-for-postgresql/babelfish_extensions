@@ -1,23 +1,40 @@
--- Inserting data into the babel_3478_vu_prepare_t table
-INSERT INTO babel_3478_vu_prepare_t(FirstName, LastName, Salary)
-VALUES ('John', 'Doe', 50000), ('Jane', 'Doe', 60000), ('Jim', 'Smith', 55000);
-GO
--- Checking the number of inserted rows
+-- Test case 1: Verify that the function returns the expected number of rows affected after each insert, update, or delete statement.
+INSERT INTO Employee (FirstName, LastName, Salary)
+VALUES ('Mary', 'Smith', 45000);
 SELECT ROWCOUNT_BIG();
 GO
 
-
--- Updating the salary of babel_3478_vu_prepare_t with last name 'Doe'
-UPDATE babel_3478_vu_prepare_t SET Salary = 65000 WHERE LastName = 'Doe';
-GO
--- Checking the number of updated rows
+UPDATE Employee SET Salary = Salary * 1.1 WHERE LastName = 'Doe';
 SELECT ROWCOUNT_BIG();
 GO
 
-
--- Deleting babel_3478_vu_prepare_t with last name 'Smith'
-DELETE FROM babel_3478_vu_prepare_t WHERE LastName = 'Smith';
-GO
--- Checking the number of deleted rows
+DELETE FROM Employee WHERE Salary < 55000;
 SELECT ROWCOUNT_BIG();
+GO
+
+-- Test case 2: Verify that the function returns zero if no rows were affected by the last statement.
+SELECT * FROM Employee WHERE LastName = 'Johnson';
+SELECT ROWCOUNT_BIG();
+GO
+
+-- Test case 3: Verify that the function returns the correct value if a large number of rows were affected.
+INSERT INTO Employee (FirstName, LastName, Salary)
+SELECT FirstName, LastName, Salary FROM Employee;
+SELECT ROWCOUNT_BIG();
+GO
+
+-- Test case 4: Verify that the function returns the correct value when used in a stored procedure that includes multiple SQL statements.
+EXEC test_procedure;
+GO
+
+-- Test case 5: Verify that the function returns the correct value when used in a trigger that is executed as a result of an insert, update, or delete operation.
+INSERT INTO Employee (FirstName, LastName, Salary) VALUES ('Bob', 'Brown', 45000);
+SELECT ROWCOUNT_BIG();
+GO
+
+-- Test case 6: Verify that the function returns the expected value when used in a transaction that is rolled back.
+BEGIN TRANSACTION;
+DELETE FROM Employee WHERE Salary > 60000;
+SELECT ROWCOUNT_BIG();
+ROLLBACK
 GO
