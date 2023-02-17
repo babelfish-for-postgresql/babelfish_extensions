@@ -924,7 +924,7 @@ FetchLoginRequest(LoginRequest request)
 			if (!is_windows_allowed)
 				ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("SSPI authentication is not supported in babelfish")));
+						errmsg("Kerberos authentication is not supported in babelfish")));
 			/* XXX: large SSPI data when length==USHORT_MAX - not supported yet */
 			if (request->sspiLen == -1)
 			{
