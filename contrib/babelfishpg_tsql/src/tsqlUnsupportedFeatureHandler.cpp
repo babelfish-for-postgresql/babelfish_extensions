@@ -22,7 +22,6 @@ extern "C" {
 #pragma GCC diagnostic pop
 
 extern bool pltsql_allow_antlr_to_unsupported_grammar_for_testing;
-extern bool pltsql_linked_servers_enabled;
 
 /* escape hatches */
 typedef struct escape_hatch_t {
