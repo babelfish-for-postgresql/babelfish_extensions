@@ -373,7 +373,6 @@ app_name
 atn2
 str
 case_insensitive_collation
-linked_servers
 ISC-sequences
 jira-BABEL-3504-upgrade
 test_windows_login
@@ -402,7 +401,6 @@ Test-sp_babelfish_volatility
 BABEL_OBJECT_DEFINITION
 Test-sp_rename
 Test-sp_rename-dep
-openquery_upgrd
 BABEL-3657
 test_windows_alter_user
 BABEL-733

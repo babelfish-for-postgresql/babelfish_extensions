@@ -120,3 +120,11 @@ ignore#!#openquery_upgrd-vu-cleanup
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-prepare
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-verify
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-cleanup
+
+# These tests are ignored because linked servers GUC is disabled
+ignore#!linked_servers-vu-prepare
+ignore#!linked_servers-vu-verify
+ignore#!linked_servers-vu-cleanup
+ignore#!openquery-vu-prepare
+ignore#!openquery-vu-verify
+ignore#!openquery-vu-cleanup
