@@ -32,7 +32,7 @@ GO
 
 
 CREATE VIEW BABEL_3478_t1_InfoView AS
-SELECT ID, FirstName, LastName, Salary
+SELECT ROWCOUNT_BIG()
 FROM BABEL_3478_t1;
 GO
 
@@ -50,12 +50,13 @@ BEGIN
     -- Inserting data into the BABEL_3478_t2 table
     INSERT INTO BABEL_3478_t2 (FirstName, LastName, Salary)
     VALUES ('John', 'Doe', 50000), ('Jane', 'Doe', 60000), ('Jim', 'Smith', 55000);
+    SELECT ROWCOUNT_BIG()
 END;
 GO
 
 
 CREATE VIEW Updated_BABEL_3478_InfoView AS
-SELECT ID, FirstName, LastName, Salary
+SELECT ROWCOUNT_BIG()
 FROM BABEL_3478_t1
 WHERE LastName = 'Doe';
 GO
@@ -68,6 +69,7 @@ BEGIN
     UPDATE BABEL_3478_t1
     SET Salary = @NewSalary 
     WHERE LastName = @LastName;
+    SELECT ROWCOUNT_BIG()
 END
 GO
 
@@ -77,7 +79,7 @@ CREATE PROCEDURE Delete_BABEL_3478_p2
 AS
 BEGIN
   DELETE FROM BABEL_3478_t1 WHERE LastName = @LastName;
+  SELECT ROWCOUNT_BIG()
 END;
 GO
-
 

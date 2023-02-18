@@ -13,17 +13,17 @@ bigint
 ~~END~~
 
 
-SELECT * FROM BABEL_3478_InfoView;
-SELECT ROWCOUNT_BIG();
+SELECT * FROM BABEL_3478_t1_InfoView;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_3478_infoview" does not exist)~~
+~~START~~
+bigint
+1
+1
+~~END~~
 
 
 
 EXEC Insert_BABEL_3478_p1;
-SELECT ROWCOUNT_BIG();
 GO
 ~~ROW COUNT: 3~~
 
@@ -36,22 +36,15 @@ bigint
 
 
 SELECT * FROM Updated_BABEL_3478_InfoView;
-SELECT ROWCOUNT_BIG();
 GO
 ~~START~~
-int#!#varchar#!#varchar#!#money
-1#!#John#!#Doe#!#65000.0000
-2#!#Jane#!#Doe#!#65000.0000
-~~END~~
-
-~~START~~
 bigint
-2
+1
+1
 ~~END~~
 
 
 EXEC Update_BABEL_3478_Salary 'Doe', 700000;
-SELECT ROWCOUNT_BIG();
 GO
 ~~ROW COUNT: 2~~
 
@@ -62,7 +55,6 @@ bigint
 
 
 EXEC Delete_BABEL_3478_p2 'Doe';
-SELECT ROWCOUNT_BIG();
 GO
 ~~ROW COUNT: 2~~
 
