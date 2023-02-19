@@ -95,13 +95,6 @@ GO
 ~~ERROR (Message: 'DEADLOCK_PRIORITY' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
 
 
-SET CONTEXT_INFO 0;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'CONTEXT_INFO' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
-
-
 SET LANGUAGE 'english'
 GO
 ~~ERROR (Code: 33557097)~~
@@ -261,8 +254,6 @@ GO
 SET DATEFORMAT dmy;
 GO
 SET DEADLOCK_PRIORITY 0;
-GO
-SET CONTEXT_INFO 0;
 GO
 SET LANGUAGE 'english';
 GO
