@@ -155,10 +155,10 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 	 * We remove "Adaptive" from error message since we are only
 	 * supporting remote servers that use T-SQL and communicate over TDS
 	 */
-	err_msg = remove_substr(pstrdup(db_err_str), "Adaptive ");
+	err_msg = remove_substr(pnstrdup(db_err_str, strlen(db_err_str)), "Adaptive ");
 	str = err_msg;
 
-	/* "Server" --> "server" */
+	/* We convert the 'S' in "Server" to lowercase */
 	while((pos = strstr(str, "Server")) != NULL)
 	{
 		*pos = 's';
