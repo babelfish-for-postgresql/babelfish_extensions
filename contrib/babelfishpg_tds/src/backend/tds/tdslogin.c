@@ -920,11 +920,6 @@ FetchLoginRequest(LoginRequest request)
 
 		if (request->sspiLen > 0)
 		{
-			bool is_windows_allowed = GetConfigOptionFlags("babelfishpg_tsql.pltsql_is_windows_allowed", true);
-			if (!is_windows_allowed)
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Kerberos authentication is not supported in babelfish")));
 			/* XXX: large SSPI data when length==USHORT_MAX - not supported yet */
 			if (request->sspiLen == -1)
 			{
