@@ -10,11 +10,4 @@ GO
 DROP LOGIN [babel\babeluser];
 GO
 
--- psql
-do 
-$$ begin 
-    if exists (select * from pg_catalog.pg_roles where rolname = 'rds_ad') 
-        then DROP ROLE rds_ad; 
-    end if; 
-end $$;
-GO
+

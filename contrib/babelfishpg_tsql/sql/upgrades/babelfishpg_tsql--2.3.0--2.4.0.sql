@@ -80,6 +80,16 @@ CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 GRANT SELECT ON information_schema_tsql.schemata TO PUBLIC;
 
 -- please add your SQL here
+
+-- 2.4 changes table types to explicitly be stored as pass-by-value in pg_type. While MVU forces the catalog
+-- to be regenerated, mVU (minor version upgrade) does not, so we need to manually fix it here.
+UPDATE pg_catalog.pg_type AS t SET typbyval = 't' 
+FROM sys.babelfish_namespace_ext AS b,
+    pg_catalog.pg_namespace AS n
+WHERE b.nspname = n.nspname AND t.typnamespace = n.oid -- only update types in babelfish namespaces
+    AND typtype = 'c' -- only update composite types
+    AND typacl IS NOT NULL; -- table types have non-NULL typacl, while normal tables have it as NULL
+
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
