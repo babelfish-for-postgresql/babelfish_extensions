@@ -1,11 +1,28 @@
-SELECT * FROM BABEL_3478_t1;
+SELECT * FROM BABEL_3478_t1 ORDER BY LastName ASC;
 SELECT ROWCOUNT_BIG();
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#money
-1#!#John#!#Doe#!#65000.0000
-2#!#Jane#!#Doe#!#65000.0000
+1#!#John#!#Doe#!#50000.0000
+2#!#Jane#!#Doe#!#60000.0000
+6#!#Jennifer#!#Garcia#!#55000.0000
+4#!#Sarah#!#Johnson#!#65000.0000
+5#!#David#!#Lee#!#70000.0000
+3#!#Jim#!#Smith#!#55000.0000
 ~~END~~
+
+~~START~~
+bigint
+6
+~~END~~
+
+
+
+-- Updating the salary of BABEL_3478_t1 with last name 'Doe'
+UPDATE BABEL_3478_t1 SET Salary = 65000 WHERE LastName = 'Doe';
+SELECT ROWCOUNT_BIG();
+GO
+~~ROW COUNT: 2~~
 
 ~~START~~
 bigint
@@ -13,10 +30,27 @@ bigint
 ~~END~~
 
 
+
+-- Deleting BABEL_3478_t1 with last name 'Smith'
+DELETE FROM BABEL_3478_t1 WHERE LastName = 'Smith';
+SELECT ROWCOUNT_BIG();
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+bigint
+1
+~~END~~
+
+
+
 SELECT * FROM BABEL_3478_t1_InfoView;
 GO
 ~~START~~
 bigint
+1
+1
+1
 1
 1
 ~~END~~

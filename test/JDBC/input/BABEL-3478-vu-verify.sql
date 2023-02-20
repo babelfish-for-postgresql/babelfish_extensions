@@ -1,6 +1,19 @@
-SELECT * FROM BABEL_3478_t1;
+SELECT * FROM BABEL_3478_t1 ORDER BY LastName ASC;
 SELECT ROWCOUNT_BIG();
 GO
+
+
+-- Updating the salary of BABEL_3478_t1 with last name 'Doe'
+UPDATE BABEL_3478_t1 SET Salary = 65000 WHERE LastName = 'Doe';
+SELECT ROWCOUNT_BIG();
+GO
+
+
+-- Deleting BABEL_3478_t1 with last name 'Smith'
+DELETE FROM BABEL_3478_t1 WHERE LastName = 'Smith';
+SELECT ROWCOUNT_BIG();
+GO
+
 
 SELECT * FROM BABEL_3478_t1_InfoView;
 GO
