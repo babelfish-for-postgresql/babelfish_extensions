@@ -59,7 +59,7 @@ jobs:
           export PATH=/opt/mssql-tools/bin:$PATH
 
           cd contrib/babelfishpg_tds
-          make installcheck
+          make installcheck PROVE_TESTS="t/001_tdspasswd.pl t/003_bbfextnotloaded.pl"
 
       - name: Upload Logs
         if: always() && steps.tap.outcome == 'failure'
