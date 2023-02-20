@@ -3482,7 +3482,7 @@ int
 SELECT * FROM OPENQUERY(bbf_server_unreachable, 'select 1')
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: DB #: 20012, DB Msg: Server name not found in configuration files, OS #: 0, OS Msg: Success, Level: 2)~~
+~~ERROR (Message: TDS client library error: DB #: 20012, DB Msg: server name not found in configuration files, OS #: 0, OS Msg: Success, Level: 2)~~
 
 
 #Test OPENQUERY where argument has quotes
