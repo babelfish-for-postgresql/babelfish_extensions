@@ -151,23 +151,26 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 
 	initStringInfo(&buf);
 
-	/*
-	 * We remove "Adaptive" from error message since we are only
-	 * supporting remote servers that use T-SQL and communicate over TDS
-	 */
-	err_msg = remove_substr(pnstrdup(db_err_str, strlen(db_err_str)), "Adaptive ");
-	str = err_msg;
-
-	/* We convert the 'S' in "Server" to lowercase */
-	while((pos = strstr(str, "Server")) != NULL)
+	if (db_err_str)
 	{
-		*pos = 's';
+		/*
+		 * We remove "Adaptive" from error message since we are only
+		 * supporting remote servers that use T-SQL and communicate over TDS
+		 */
+		err_msg = remove_substr(pnstrdup(db_err_str, strlen(db_err_str) + 1), "Adaptive ");
+		str = err_msg;
 
-		/* skip length of "Server" */
-		str = pos + 6;
+		/* We convert the 'S' in "Server" to lowercase */
+		while((pos = strstr(str, "Server")) != NULL)
+		{
+			*pos = 's';
 
-		if (!str)
-			break;
+			/* skip length of "Server" */
+			str = pos + 6;
+
+			if (!str)
+				break;
+		}
 	}
 
 	appendStringInfo(&buf, "TDS client library error: DB #: %i, ", db_error);
