@@ -1098,7 +1098,7 @@ define_custom_variables(void)
 				 gettext_noop("Enables linked servers"),
 				 NULL,
 				 &pltsql_linked_servers_enabled,
-				 false,
+				 true,
 				 PGC_INTERNAL,
 				 GUC_NO_SHOW_ALL,
 				 NULL, NULL, NULL);
