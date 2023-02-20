@@ -42,7 +42,7 @@ int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
 int pltsql_lock_timeout = -1;
-bool pltsql_is_windows_allowed = true;
+bool pltsql_is_windows_allowed = false;
 
 
 bool	pltsql_xact_abort = false;
@@ -611,7 +611,7 @@ define_custom_variables(void)
 				 gettext_noop("GUC for enable or disable windows login"),
 				 NULL,
 				 &pltsql_is_windows_allowed,
-				 true,
+				 false,
 				 PGC_INTERNAL,
 				 GUC_NO_SHOW_ALL,
 				 NULL, NULL, NULL);
