@@ -70,6 +70,9 @@ Could not find tests for procedure remove_babelfish
 Could not find tests for procedure sys.babel_drop_all_dbs
 Could not find tests for procedure sys.babel_drop_all_logins
 Could not find tests for procedure sys.babel_initialize_logins
+Could not find upgrade tests for procedure sys.babelfish_add_domain_mapping_entry
+Could not find upgrade tests for procedure sys.babelfish_remove_domain_mapping_entry
+Could not find upgrade tests for procedure sys.babelfish_truncate_domain_mapping_table
 Could not find tests for procedure sys.printarg
 Could not find tests for table sys.babelfish_helpcollation
 Could not find tests for table sys.babelfish_syslanguages
@@ -205,6 +208,7 @@ Could not find upgrade tests for procedure sys.sp_updatestats
 Could not find upgrade tests for procedure xp_instance_regread
 Could not find upgrade tests for procedure xp_qv
 Could not find upgrade tests for table sys.babelfish_configurations
+Could not find upgrade tests for table sys.babelfish_domain_mapping
 Could not find upgrade tests for table sys.babelfish_helpcollation
 Could not find upgrade tests for table sys.babelfish_syslanguages
 Could not find upgrade tests for table sys.service_settings
