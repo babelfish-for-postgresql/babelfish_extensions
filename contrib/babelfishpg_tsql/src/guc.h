@@ -6,7 +6,7 @@ typedef enum EscapeHatchOption { EH_STRICT, EH_IGNORE, EH_NULL } EscapeHatchOpti
 
 extern bool pltsql_fmtonly;
 extern bool pltsql_enable_create_alter_view_from_pg;
-extern bool pltsql_linked_servers_enabled;
+extern bool pltsql_enable_linked_servers;
 
 extern void define_custom_variables(void);
 extern void pltsql_validate_set_config_function(char *name, char *value);
