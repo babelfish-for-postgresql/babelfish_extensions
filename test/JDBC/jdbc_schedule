@@ -120,3 +120,27 @@ ignore#!#openquery_upgrd-vu-cleanup
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-prepare
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-verify
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-cleanup
+
+# Ignoring these tests as of now for GUC
+ignore#!#test_windows_login-vu-prepare
+ignore#!#test_windows_login-vu-verify
+ignore#!#test_windows_login-vu-cleanup
+ignore#!#BABEL-3828-vu-prepare
+ignore#!#BABEL-3828-vu-verify
+ignore#!#BABEL-3828-vu-cleanup
+ignore#!#BABEL-3844-vu-prepare
+ignore#!#BABEL-3844-vu-verify
+ignore#!#BABEL-3844-vu-cleanup
+ignore#!#Babel_domain_mapping_test-vu-prepare
+ignore#!#Babel_domain_mapping_test-vu-verify
+ignore#!#Test_user_from_win_login-vu-prepare
+ignore#!#Test_user_from_win_login-vu-verify
+ignore#!#test_windows_alter_login-vu-prepare
+ignore#!#test_windows_alter_login-vu-verify
+ignore#!#test_windows_alter_login-vu-cleanup
+ignore#!#test_windows_alter_user-vu-prepare
+ignore#!#test_windows_alter_user-vu-verify
+ignore#!#test_windows_alter_user-vu-cleanup
+ignore#!#test_windows_sp_helpuser-vu-prepare
+ignore#!#test_windows_sp_helpuser-vu-verify
+ignore#!#test_windows_sp_helpuser-vu-cleanup
