@@ -2009,7 +2009,7 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	bool				*new_record_nulls;
 	MemoryContext		ccxt = CurrentMemoryContext;
 
-	if (!pltsql_is_windows_allowed)
+	if (!pltsql_allow_windows_login)
 		ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("Domain mapping is not supported in babelfish")));
@@ -2092,7 +2092,7 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	SysScanDesc	scan;
 	HeapTuple	tuple;
 
-	if (!pltsql_is_windows_allowed)
+	if (!pltsql_allow_windows_login)
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("Domain mapping is not supported in babelfish")));
@@ -2149,7 +2149,7 @@ babelfish_truncate_domain_mapping_table_internal(PG_FUNCTION_ARGS)
 {
 	Relation	bbf_domain_mapping_rel;
 
-	if (!pltsql_is_windows_allowed)
+	if (!pltsql_allow_windows_login)
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("Domain mapping is not supported in babelfish")));

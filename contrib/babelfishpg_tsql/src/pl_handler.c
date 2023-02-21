@@ -2271,7 +2271,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 							else if (strcmp(defel->defname, "from_windows") == 0)
 							{
-								if (!pltsql_is_windows_allowed)
+								if (!pltsql_allow_windows_login)
 									ereport(ERROR,
 										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 											errmsg("Windows login is not supported in babelfish")));
@@ -2402,7 +2402,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 										login->rolename = upn_login;
 									}
 									from_windows = true;
-									if (!pltsql_is_windows_allowed)
+									if (!pltsql_allow_windows_login)
 										ereport(ERROR,
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 											 errmsg("Windows login is not supported in babelfish")));

@@ -42,7 +42,7 @@ int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
 int pltsql_lock_timeout = -1;
-bool pltsql_is_windows_allowed = true;
+bool pltsql_allow_windows_login = true;
 
 
 bool	pltsql_xact_abort = false;
@@ -607,10 +607,10 @@ define_custom_variables(void)
 				 NULL, NULL, NULL);
 
 	/* temporary GUC for enable or disable windows login */
-	DefineCustomBoolVariable("babelfishpg_tsql.pltsql_is_windows_allowed",
+	DefineCustomBoolVariable("babelfishpg_tsql.allow_windows_login",
 				 gettext_noop("GUC for enable or disable windows login"),
 				 NULL,
-				 &pltsql_is_windows_allowed,
+				 &pltsql_allow_windows_login,
 				 true,
 				 PGC_INTERNAL,
 				 GUC_NO_SHOW_ALL,
