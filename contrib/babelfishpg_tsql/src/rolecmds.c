@@ -2012,7 +2012,7 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	if (!pltsql_allow_windows_login)
 		ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("Domain mapping is not supported in babelfish")));
+			 errmsg("Windows login is not supported in babelfish")));
 	
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		ereport(ERROR,
@@ -2095,7 +2095,7 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	if (!pltsql_allow_windows_login)
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("Domain mapping is not supported in babelfish")));
+			errmsg("Windows login is not supported in babelfish")));
 	
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
@@ -2152,7 +2152,7 @@ babelfish_truncate_domain_mapping_table_internal(PG_FUNCTION_ARGS)
 	if (!pltsql_allow_windows_login)
 	ereport(ERROR,
 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			errmsg("Domain mapping is not supported in babelfish")));
+			errmsg("Windows login is not supported in babelfish")));
 
 	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
 			ereport(ERROR,

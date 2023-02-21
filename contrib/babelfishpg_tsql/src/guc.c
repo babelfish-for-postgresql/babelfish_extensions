@@ -612,8 +612,8 @@ define_custom_variables(void)
 				 NULL,
 				 &pltsql_allow_windows_login,
 				 true,
-				 PGC_INTERNAL,
-				 GUC_NO_SHOW_ALL,
+				 PGC_SUSET,
+				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 
 	/* ISO standard settings */
