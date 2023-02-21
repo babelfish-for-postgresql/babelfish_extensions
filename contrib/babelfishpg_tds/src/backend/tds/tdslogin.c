@@ -920,6 +920,12 @@ FetchLoginRequest(LoginRequest request)
 
 		if (request->sspiLen > 0)
 		{
+			const char* is_windows_allowed = GetConfigOption("babelfishpg_tsql.allow_windows_login", true, false);
+			if (is_windows_allowed && strncasecmp(is_windows_allowed, "false", 5) == 0)
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Windows login is not supported in babelfish")));
+
 			/* XXX: large SSPI data when length==USHORT_MAX - not supported yet */
 			if (request->sspiLen == -1)
 			{
