@@ -42,7 +42,7 @@ int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
 int pltsql_lock_timeout = -1;
-bool enable_linked_servers = true;
+bool pltsql_enable_linked_servers = true;
 
 bool	pltsql_xact_abort = false;
 bool	pltsql_implicit_transactions = false;
@@ -1097,7 +1097,7 @@ define_custom_variables(void)
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_linked_servers",
 				 gettext_noop("Enables linked servers"),
 				 NULL,
-				 &enable_linked_servers,
+				 &pltsql_enable_linked_servers,
 				 true,
 				 PGC_INTERNAL,
 				 GUC_NO_SHOW_ALL,
