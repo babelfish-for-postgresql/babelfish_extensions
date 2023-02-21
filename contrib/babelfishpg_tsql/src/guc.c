@@ -42,6 +42,7 @@ int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
 int pltsql_lock_timeout = -1;
+bool pltsql_enable_linked_servers = true;
 bool pltsql_allow_windows_login = false;
 
 bool	pltsql_xact_abort = false;
