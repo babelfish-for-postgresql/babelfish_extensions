@@ -3748,8 +3748,10 @@ _PG_init(void)
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
-	prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
-	tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
+	if(pltsql_enable_linked_servers){
+		prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
+		tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
+	}
 
 	InstallExtendedHooks();
 
