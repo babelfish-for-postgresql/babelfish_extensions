@@ -2147,7 +2147,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	bool provider_warning = false, provstr_warning = false;
 
-	if(!pltsql_linked_servers_enabled)
+	if(!enable_linked_servers)
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
 				errmsg("'sp_addlinkedserver' is not currently supported in Babelfish")));
@@ -2265,7 +2265,7 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	StringInfoData query;
 
-	if(!pltsql_linked_servers_enabled)
+	if(!enable_linked_servers)
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
 				errmsg("'sp_addlinkedsrvlogin' is not currently supported in Babelfish")));
@@ -2350,7 +2350,7 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 
 	StringInfoData query;
 
-	if(!pltsql_linked_servers_enabled)
+	if(!enable_linked_servers)
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
 				errmsg("'sp_droplinkedsrvlogin' is not currently supported in Babelfish")));
@@ -2395,7 +2395,7 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 
 	StringInfoData query;
 
-	if(!pltsql_linked_servers_enabled)
+	if(!enable_linked_servers)
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
 				errmsg("'sp_dropserver' is not currently supported in Babelfish")));

@@ -180,7 +180,7 @@ protected:
 		antlrcpp::Any visitFunction_call(TSqlParser::Function_callContext *ctx) override;
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
 		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override {
-			if (!ctx->open_json() && (!pltsql_linked_servers_enabled || !ctx->open_query())) {
+			if (!ctx->open_json() && (!enable_linked_servers || !ctx->open_query())) {
 				handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx));
 			}
 			return visitChildren(ctx);
