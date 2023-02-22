@@ -1051,7 +1051,7 @@ SPCustomType(TDSRequestSP req)
 	codeblock->atomic = false;
 
 	/* Just to satisfy argument requirement */
-	fcinfo = palloc0(SizeForFunctionCallInfo(req->nTotalParams + 2));
+	fcinfo = palloc0(SizeForFunctionCallInfo(req->nTotalParams + 3));
 	fcinfo->nargs = 1;
 	fcinfo->args[0].value = PointerGetDatum(codeblock);
 	fcinfo->args[0].isnull = false;
