@@ -156,6 +156,17 @@ SELECT c2 FROM unionorder2
 ORDER BY unionorder2.c2;
 go
 
+SELECT c2 FROM (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    ORDER BY unionorder2.c2
+) u
+UNION 
+SELECT c1 FROM unionorder1
+ORDER BY u.c2;
+go
+
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 go

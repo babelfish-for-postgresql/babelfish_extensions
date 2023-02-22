@@ -288,6 +288,25 @@ go
 ~~ERROR (Message: missing FROM-clause entry for table "unionorder2")~~
 
 
+SELECT c2 FROM (
+    SELECT TOP 5 c2 FROM unionorder2
+    UNION
+    SELECT TOP 5 c1 FROM unionorder1
+    ORDER BY unionorder2.c2
+) u
+UNION 
+SELECT c1 FROM unionorder1
+ORDER BY u.c2;
+go
+~~START~~
+int
+1
+2
+3
+4
+~~END~~
+
+
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 go
