@@ -101,40 +101,25 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 static char *
 remove_substr(char *src, const char *substr)
 {
-	char *str;
-	char *result = pstrdup("");
-	int substr_len = strlen(substr);
+	char *start, *end;
+	size_t len;
 
-	if (!strstr(src, substr))
+	if (!*substr)
 		return src;
 
-	while ((str = strstr(src, substr)) != NULL)
+	len = strlen(substr);
+
+	if (len > 0)
 	{
-		char *tmp = psprintf("%s%s", result, pnstrdup(src, str - src));
-		if (result)
+		start = src;
+		while ((start = strstr(start, substr)) != NULL)
 		{
-			pfree(result);
-			result = tmp;
-		}
-
-		/* skip substr part */
-		src = str + substr_len;
-
-		if (!src)
-			break;
-	}
-
-	if (src)
-	{
-		char *tmp = psprintf("%s%s", result, src);
-		if (result)
-		{
-			pfree(result);
-			result = tmp;
+			end = start + len;
+			memmove(start, end, strlen(end) + 1);
 		}
 	}
 
-	return result;
+	return src;
 }
 
 /*
@@ -147,7 +132,6 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 
 	char* err_msg = NULL;
 	char* str =  NULL;
-	char* pos = NULL;
 
 	initStringInfo(&buf);
 
@@ -161,16 +145,8 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 		str = err_msg;
 
 		/* We convert the 'S' in "Server" to lowercase */
-		while((pos = strstr(str, "Server")) != NULL)
-		{
-			*pos = 's';
-
-			/* skip length of "Server" */
-			str = pos + 6;
-
-			if (!str)
-				break;
-		}
+		while((str = strstr(str, "Server")) != NULL)
+			*str = 's';
 	}
 
 	appendStringInfo(&buf, "TDS client library error: DB #: %i, ", db_error);
