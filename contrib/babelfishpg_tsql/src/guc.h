@@ -31,4 +31,5 @@ void		pltsql_revert_guc(int nest_level);
 
 extern int	pltsql_new_scope_identity_nest_level(void);
 extern void pltsql_revert_last_scope_identity(int nest_level);
+extern void pltsql_remove_current_query_env(void);
 #endif
