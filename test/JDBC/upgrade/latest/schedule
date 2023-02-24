@@ -398,6 +398,7 @@ test_windows_alter_login
 sys-systypes
 openjson
 BABEL-3702
+BABEL-3696
 Test-sp_babelfish_volatility
 BABEL_OBJECT_DEFINITION
 Test-sp_rename

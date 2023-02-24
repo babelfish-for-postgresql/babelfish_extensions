@@ -590,6 +590,52 @@ int getElemTypMod(TypeName *t)
     }
 }
 
+Node*
+TsqlJsonModifyMakeFuncCall(Node* expr, Node* path, Node* newValue)
+{
+	FuncCall* fc;
+	List* func_args = list_make3(expr, path, newValue);
+	if(IsA(newValue, FuncCall))
+	{
+		FuncCall* fc_newval = (FuncCall*) newValue;
+		if(is_json_modify(fc_newval->funcname) || is_json_query(fc_newval->funcname))
+		{
+			fc = makeFuncCall(TsqlSystemFuncName("json_modify_no_escape"), func_args, COERCE_EXPLICIT_CALL, -1);
+		}
+		else
+			fc = makeFuncCall(TsqlSystemFuncName("json_modify"), func_args, COERCE_EXPLICIT_CALL, -1);
+	}
+	else
+		fc = makeFuncCall(TsqlSystemFuncName("json_modify"), func_args, COERCE_EXPLICIT_CALL, -1);
+	return (Node*) fc;
+}
+
+bool
+is_json_query(List *name)
+{
+    switch(list_length(name))
+    {
+        case 1:
+        {
+            Node *func = (Node *) linitial(name);
+            if(strcmp("json_query", strVal(func)) == 0)
+                return true;
+            return false;
+        }
+        case 2:
+        {
+            Node *schema = (Node *) linitial(name);
+            Node *func = (Node *) lsecond(name);
+            if(strcmp("sys", strVal(schema)) == 0 &&
+                strcmp("json_query", strVal(func)) == 0)
+                return true;
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
 /*
  * helper macro to compare relname in
  * function tsql_update_delete_stmt_with_join

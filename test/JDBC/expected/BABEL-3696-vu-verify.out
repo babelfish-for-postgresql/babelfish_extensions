@@ -1,0 +1,63 @@
+SELECT * FROM babel_3696_1
+GO
+~~START~~
+nvarchar
+{"Brand": "HP", "Product": "Laptop", "Accessories": ["Mouse", "Monitor"]}
+~~END~~
+
+
+SELECT * FROM babel_3696_2
+GO
+~~START~~
+nvarchar
+{"Brand": "HP", "Product": "Laptop", "Accessories": ["Keyboard", "Mouse", "Monitor"]}
+~~END~~
+
+
+SELECT * FROM babel_3696_3
+GO
+~~START~~
+nvarchar
+{"Brand": "HP", "Parts": "Laptop"}
+~~END~~
+
+
+SELECT * FROM babel_3696_4
+GO
+~~START~~
+nvarchar
+{"Brand": "Lenovo", "Product": "Laptop", "Accessories": ["HDMI", "USB"]}
+~~END~~
+
+
+SELECT * FROM babel_3696_5
+GO
+~~START~~
+nvarchar
+{"name": "John", "skills": ["C#", "T-SQL", "Azure"]}
+~~END~~
+
+
+SELECT * FROM babel_3696_6
+GO
+~~START~~
+nvarchar
+{"a": [{"x": "some string"}]}
+~~END~~
+
+
+SELECT * FROM babel_3696_7
+GO
+~~START~~
+nvarchar
+{"a": "{\"x\":\"some string\"}"}
+~~END~~
+
+
+SELECT * FROM babel_3696_8
+GO
+~~START~~
+nvarchar
+{"a": {"a": "c"}}
+~~END~~
+

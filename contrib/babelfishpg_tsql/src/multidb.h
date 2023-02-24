@@ -29,5 +29,10 @@ extern void truncate_tsql_identifier(char *ident);
 extern bool physical_schema_name_exists(char *phys_schema_name);
 extern bool is_builtin_database(const char *dbname);
 extern bool is_user_database_singledb(const char *dbname);
+extern bool is_json_modify(List *name);
+extern bool is_select_for_json(SelectStmt *stmt);
+extern void select_json_modify(SelectStmt *stmt);
+extern bool is_for_json(FuncCall *fc);
+extern bool get_array_wrapper(List* for_json_args);
 
 #endif

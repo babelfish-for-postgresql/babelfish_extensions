@@ -69,6 +69,15 @@ rewrite_object_refs(Node *stmt)
 	switch (stmt->type)
 	{
 		case T_SelectStmt:
+		{
+		    SelectStmt* selectStmt = (SelectStmt*) stmt;
+		    select_json_modify(selectStmt);
+			/* walker supported stmts */
+		    raw_expression_tree_walker(stmt,
+                                       rewrite_relation_walker,
+                                       (void *) NULL);
+		    break;
+		}
 		case T_UpdateStmt:
 		case T_DeleteStmt:
 		case T_InsertStmt:
@@ -665,6 +674,110 @@ rewrite_relation_walker(Node *node, void *context)
 	}
 	else
 		return raw_expression_tree_walker(node, rewrite_relation_walker, context);			
+}
+
+void select_json_modify(SelectStmt* stmt)
+{
+	List* targList = stmt->targetList;
+	List* fromList = stmt->fromClause;
+	if(list_length(targList) != 0 && list_length(fromList) != 0)
+	{
+		Node* n = linitial(targList);
+		Node* n_from = linitial(fromList);
+		if(IsA(n, ResTarget) && IsA(n_from, RangeSubselect))
+		{
+			ResTarget* rt = (ResTarget*) n;
+			RangeSubselect* rs = (RangeSubselect*) n_from;
+			if(IsA(rt->val, FuncCall) && IsA(rs->subquery, SelectStmt))
+			{
+				FuncCall* json_mod_fc = (FuncCall*) rt->val;
+				SelectStmt* from_sel_stmt = (SelectStmt*) rs->subquery;
+				rewrite_plain_name(json_mod_fc->funcname);
+				if((is_json_modify(json_mod_fc->funcname) && list_length(json_mod_fc->args) == 3) && is_select_for_json(from_sel_stmt))
+				{
+					json_mod_fc->funcname = list_delete_last(json_mod_fc->funcname);
+					json_mod_fc->funcname = lappend(json_mod_fc->funcname, makeString("json_modify_no_escape"));
+				}
+			}
+		}
+	}
+}
+
+bool
+is_json_modify(List *name)
+{
+    switch(list_length(name))
+    {
+        case 1:
+        {
+            Node *func = (Node *) linitial(name);
+            if(strcmp("json_modify", strVal(func)) == 0)
+                return true;
+            return false;
+        }
+        case 2:
+        {
+            Node *schema = (Node *) linitial(name);
+            Node *func = (Node *) lsecond(name);
+            if(strcmp("sys", strVal(schema)) == 0 &&
+                strcmp("json_modify", strVal(func)) == 0)
+                return true;
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
+bool
+is_for_json(FuncCall *fc)
+{
+    // In this case, we need to check that the function name is correct, and also that the without_array_wrapper param is not true
+    List* funcname = fc->funcname;
+    List* fc_args = fc->args;
+
+    switch(list_length(funcname))
+    {
+        case 2:
+        {
+            Node *schema = (Node *) linitial(funcname);
+            Node *func = (Node *) lsecond(funcname);
+            if(strcmp("sys", strVal(schema)) == 0 &&
+                strcmp("tsql_select_for_json_result", strVal(func)) == 0)
+            {
+                // If without array wrapper is true, we want to keep the escape characters so we return false
+                return !get_array_wrapper(fc_args);
+            }
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
+bool is_select_for_json(SelectStmt *stmt)
+{
+    List* targetList = stmt->targetList;
+    ListCell* lc = (ListCell*) targetList->elements;
+    Node* n = lfirst(lc);
+    if(IsA(n, ResTarget))
+    {
+        ResTarget* rt = (ResTarget*) n;
+        if(IsA(rt->val, FuncCall))
+        {
+            FuncCall* fc = (FuncCall*) rt->val;
+            return is_for_json(fc);
+        }
+    }
+    return false;
+}
+
+bool get_array_wrapper(List* for_json_args) {
+    FuncCall* agg_fc = (FuncCall *) linitial(for_json_args);
+    List* agg_fc_args = agg_fc->args;
+
+    Node* arr_wrap = lfourth(agg_fc_args);
+    return ((A_Const*) arr_wrap)->val.boolval.boolval;
 }
 
 /*************************************************************
