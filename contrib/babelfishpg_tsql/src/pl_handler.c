@@ -80,6 +80,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "table_variable_mvcc.h"
 
 #include "access/xact.h"
 
@@ -1958,6 +1959,7 @@ PLTsqlProcessTransaction(Node *parsetree,
 				 * haven't implemented this yet so we throw an error if
 				 * ROLLBACK is used with table variables.
 				 */
+/*
 				if (exec_state_call_stack &&
 					exec_state_call_stack->estate &&
 					exec_state_call_stack->estate->func &&
@@ -1965,6 +1967,7 @@ PLTsqlProcessTransaction(Node *parsetree,
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("ROLLBACK statement with active table variables is not yet supported.")));
+*/
 				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
 			}
 			break;
@@ -4241,8 +4244,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
 			func->use_count--;
 			func->cur_estate = save_cur_estate;
-			ENRDropTempTables(currentQueryEnv);
-			remove_queryEnv();
+			pltsql_remove_current_query_env();
 			pltsql_revert_guc(save_nestlevel);
 			pltsql_revert_last_scope_identity(scope_level);
 			terminate_batch(true /* send_error */ , false /* compile_error */ );
@@ -4261,8 +4263,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 
 	func->cur_estate = save_cur_estate;
 
-	ENRDropTempTables(currentQueryEnv);
-	remove_queryEnv();
+	pltsql_remove_current_query_env();
 	pltsql_revert_guc(save_nestlevel);
 	pltsql_revert_last_scope_identity(scope_level);
 
@@ -5291,4 +5292,17 @@ set_current_query_is_create_tbl_check_constraint(Node *expr)
 			}
 		}
 	}
+}
+
+void
+pltsql_remove_current_query_env(void)
+{
+	ENRDropTempTables(currentQueryEnv);
+	remove_queryEnv();
+
+	if (!currentQueryEnv ||
+		(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
+	{
+		destroy_failed_transactions_map();
+	} 
 }
