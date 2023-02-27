@@ -4298,7 +4298,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	char	   *argmodes;
 	bool		is_dml_trigger = false;
 	bool		is_event_trigger = false;
-	bool		create_has_tvp = false;
+	bool		has_table_var = false;
 	char		prokind;
 	int			i;
 	/* Special handling is neede for Inline Table-Valued Functions */
@@ -4449,7 +4449,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			if(func && func->table_varnos)
 			{	
 				is_mstvf = func->is_mstvf;
-				create_has_tvp = true;
+				has_table_var = true;
 			}
 
 			/*
@@ -4462,7 +4462,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		ReleaseSysCache(tuple);
 		
 		/* If the function has TVP it should be declared as VOLATILE by default */
-		if(prokind == PROKIND_FUNCTION && !is_mstvf && !is_itvf && create_has_tvp)
+		if(prokind == PROKIND_FUNCTION && !is_mstvf && !is_itvf && has_table_var)
 		{
 			Relation rel;
 			HeapTuple tup;
