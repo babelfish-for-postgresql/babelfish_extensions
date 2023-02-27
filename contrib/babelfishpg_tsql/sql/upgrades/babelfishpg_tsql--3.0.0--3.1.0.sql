@@ -56,6 +56,27 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+-- 3.1 changes table types to explicitly be stored as pass-by-value in pg_type. While MVU forces the catalog
+-- to be regenerated, mVU (minor version upgrade) does not, so we need to manually fix it here.
+UPDATE pg_catalog.pg_type AS t SET typbyval = 't' 
+FROM sys.babelfish_namespace_ext AS b,
+    pg_catalog.pg_namespace AS n
+WHERE b.nspname = n.nspname AND t.typnamespace = n.oid -- only update types in babelfish namespaces
+    AND typtype = 'c' -- only update composite types
+    AND typacl IS NOT NULL; -- table types have non-NULL typacl, while normal tables have it as NULL
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_scope_identity()
+RETURNS INT8
+AS 'babelfishpg_tsql', 'get_scope_identity'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.scope_identity()
+RETURNS numeric(38,0) AS
+$BODY$
+ SELECT sys.babelfish_get_scope_identity()::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
 create or replace view sys.views as 
 select 
   t.relname as name
@@ -2225,8 +2246,31 @@ CALL sys.babel_create_guest_schemas();
 
 DROP PROCEDURE sys.babel_create_guest_schemas();
 
+-- function sys.schema_id() should be changed from SQL to C-type function if not changed already
+DO $$
+BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'schema_id' AND (p.pronargs = 0 AND (select l.lanname from pg_language as l where l.oid = p.prolang) = 'c'::name)) = 0 THEN
+    ALTER FUNCTION sys.schema_id() RENAME TO sys_schema_id_deprecated_in_3_1_0;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sys_schema_id_deprecated_in_3_1_0');
+END IF;
+END $$;
+
+-- function schema_id(varchar) needs to change input type to sys.SYSNAME if not changed already
+DO $$
+BEGIN IF (SELECT count(*) FROM pg_proc as p where p.proname = 'schema_id' AND (p.pronargs = 1 AND p.proargtypes[0] = 'sys.SYSNAME'::regtype)) = 0 THEN
+    ALTER FUNCTION schema_id(schema_name VARCHAR) RENAME TO schema_id_deprecated_in_3_1_0;
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'schema_id_deprecated_in_3_1_0');
+END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION schema_id()
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION schema_id(IN schema_name sys.SYSNAME)
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_id(schema_name sys.SYSNAME) TO PUBLIC;
+
 /* set sys functions as STABLE */
-ALTER FUNCTION sys.schema_id() STABLE;
 ALTER FUNCTION sys.schema_name() STABLE;
 ALTER FUNCTION sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),

@@ -31,6 +31,20 @@ end
 $$
 LANGUAGE plpgsql;
 
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_scope_identity()
+RETURNS INT8
+AS 'babelfishpg_tsql', 'get_scope_identity'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.scope_identity()
+RETURNS numeric(38,0) AS
+$BODY$
+ SELECT sys.babelfish_get_scope_identity()::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
+
 /*
  * SCHEMATA view
  */
@@ -66,6 +80,16 @@ CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 GRANT SELECT ON information_schema_tsql.schemata TO PUBLIC;
 
 -- please add your SQL here
+
+-- 2.4 changes table types to explicitly be stored as pass-by-value in pg_type. While MVU forces the catalog
+-- to be regenerated, mVU (minor version upgrade) does not, so we need to manually fix it here.
+UPDATE pg_catalog.pg_type AS t SET typbyval = 't' 
+FROM sys.babelfish_namespace_ext AS b,
+    pg_catalog.pg_namespace AS n
+WHERE b.nspname = n.nspname AND t.typnamespace = n.oid -- only update types in babelfish namespaces
+    AND typtype = 'c' -- only update composite types
+    AND typacl IS NOT NULL; -- table types have non-NULL typacl, while normal tables have it as NULL
+
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
@@ -1625,9 +1649,21 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
+ALTER FUNCTION sys.schema_id() RENAME TO sys_schema_id_deprecated_in_2_4_0;
+ALTER FUNCTION schema_id(schema_name VARCHAR) RENAME TO schema_id_deprecated_in_2_4_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sys_schema_id_deprecated_in_2_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'schema_id_deprecated_in_2_4_0');
+
+CREATE OR REPLACE FUNCTION schema_id()
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION schema_id(IN schema_name sys.SYSNAME)
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_id(schema_name sys.SYSNAME) TO PUBLIC;
 
 /* set sys functions as STABLE */
-ALTER FUNCTION sys.schema_id() STABLE;
 ALTER FUNCTION sys.schema_name() STABLE;
 ALTER FUNCTION sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),

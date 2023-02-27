@@ -53,17 +53,23 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	/* If error severity is greater than 10, we interpret it as a T-SQL error; otheriwse, a T-SQL info */
 	appendStringInfo(
 		&buf,
-		"TDS client library %s: Msg #: %i, Msg state: %i, Msg: %s, Server: %s, Process: %s, Line: %i, Level: %i",
+		"TDS client library %s: Msg #: %i, Msg state: %i, ",
 		severity > 10 ? "error" : "info",
 		error_code,
-		state,
-		error_msg ? error_msg : "",
-		svr_name ? svr_name : "",
-		proc_name ? proc_name : "",
-		line,
-		severity
+		state
 	);
-	
+
+	if (error_msg)
+		appendStringInfo(&buf, "Msg: %s, ", error_msg);
+
+	if (svr_name)
+		appendStringInfo(&buf, "Server: %s, ", svr_name);
+
+	if (proc_name)
+		appendStringInfo(&buf, "Process: %s, ", proc_name);
+
+	appendStringInfo(&buf, "Line: %i, Level: %i", line, severity);
+
 	if (severity > 10)
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -86,6 +92,80 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 	}
 
 	return 0;
+}
+
+/*
+ * Helper function to remove all occurrences
+ * of a substring from a source string
+ */
+static char *
+remove_substr(char *src, const char *substr)
+{
+	char *start, *end;
+	size_t len;
+
+	if (!*substr)
+		return src;
+
+	len = strlen(substr);
+
+	if (len > 0)
+	{
+		start = src;
+		while ((start = strstr(start, substr)) != NULL)
+		{
+			end = start + len;
+			memmove(start, end, strlen(end) + 1);
+		}
+	}
+
+	return src;
+}
+
+/*
+ * Handle any error encountered in TDS client library itself
+ */
+static int
+linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error, int os_error, char *db_err_str, char *os_err_str)
+{
+	StringInfoData buf;
+
+	char* err_msg = NULL;
+	char* str =  NULL;
+
+	initStringInfo(&buf);
+
+	if (db_err_str)
+	{
+		/*
+		 * We remove "Adaptive" from error message since we are only
+		 * supporting remote servers that use T-SQL and communicate over TDS
+		 */
+		err_msg = remove_substr(pnstrdup(db_err_str, strlen(db_err_str) + 1), "Adaptive ");
+		str = err_msg;
+
+		/* We convert the 'S' in "Server" to lowercase */
+		while((str = strstr(str, "Server")) != NULL)
+			*str = 's';
+	}
+
+	appendStringInfo(&buf, "TDS client library error: DB #: %i, ", db_error);
+
+	if (err_msg)
+		appendStringInfo(&buf, "DB Msg: %s, ", err_msg);
+
+	appendStringInfo(&buf, "OS #: %i, ", os_error);
+
+	if (os_err_str)
+		appendStringInfo(&buf, "OS Msg: %s, ", os_err_str);
+
+	appendStringInfo(&buf, "Level: %i", severity);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+			errmsg("%s", buf.data)));
+
+	return LS_INT_CANCEL;
 }
 
 /*
@@ -646,6 +726,7 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 						errmsg("Failed to initialize TDS client library environment")
 					));
 
+		LINKED_SERVER_ERR_HANDLE(linked_server_err_handler);
 		LINKED_SERVER_MSG_HANDLE(linked_server_msg_handler);
 
 		login = LINKED_SERVER_LOGIN();
@@ -714,8 +795,7 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 	}
 	PG_CATCH();
 	{
-		LINKED_SERVER_DEBUG("LINKED SERVER: Closing connections to remote server due to error");
-		LINKED_SERVER_EXIT();
+		LINKED_SERVER_DEBUG("LINKED SERVER: Failed to establish connection to remote server due to error");
 
 		PG_RE_THROW();
 	}
@@ -743,7 +823,20 @@ getOpenqueryTupdescFromMetadata(char* linked_server, char* query, TupleDesc *tup
 		/* prepare the query that will executed on remote server to get column medata of result set*/
 		initStringInfo(&buf);
 		appendStringInfoString(&buf, "EXEC sp_describe_first_result_set N'");
-		appendStringInfoString(&buf, query);
+
+		for (int i = 0; i < strlen(query); i++)
+		{
+			appendStringInfoChar(&buf, query[i]);
+
+			/*
+			 * If character is a single quote, we append another single quote
+			 * because we want to escape it when we feed the query as a parameter
+			 * to sp_describe_first_result_set stored procedure.
+			 */
+			if (query[i] == '\'')
+				appendStringInfoChar(&buf, '\'');
+		}
+
 		appendStringInfoString(&buf, "', NULL, 0");
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Writing the following query to LinkedServerProcess struct: %s", buf.data);
@@ -1074,7 +1167,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 				while (LINKED_SERVER_NEXT_ROW(lsproc) != NO_MORE_ROWS)
 				{
 					/* for each row */
-					Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
+					Datum	*values = palloc0(sizeof(Datum) * colcount);
 					bool	*nulls = palloc0(sizeof(bool) * colcount);
 
 					for (i = 0; i < colcount; i++)

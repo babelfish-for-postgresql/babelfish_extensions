@@ -49,6 +49,53 @@ nvarchar#!#varchar#!#text
 dbo#!#test_sp_babelfish_volatility_f1#!#volatile
 ~~END~~
 
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'stable'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'immutable'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'volatile'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'random'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "random" is not a valid volatility)~~
+
+sp_babelfish_volatility '.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
 
 /* test with schema name */
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
@@ -92,6 +139,53 @@ go
 ~~ERROR (Message: "random" is not a valid volatility)~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1', 'stable'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
+sp_babelfish_volatility '"test_sp_babelfish_volatility_schema1".test_sp_babelfish_volatility_f1', 'immutable'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+sp_babelfish_volatility '[test_sp_babelfish_volatility_schema1].test_sp_babelfish_volatility_f1', 'volatile'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1', 'random'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "random" is not a valid volatility)~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
@@ -400,7 +494,7 @@ dbo#!#test_sp_babelfish_volatility_f2#!#stable
 ~~END~~
 
 
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 /* function on which user has privilege is only visible */
 use test_sp_babelfish_volatility_db1
 go
@@ -429,6 +523,24 @@ go
 nvarchar#!#varchar#!#text
 ~~END~~
 
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function does not exist)~~
+
+sp_babelfish_volatility 'dbo.test_sp_babelfish_volatility_f2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: current user does not have priviledges on the function)~~
+
+sp_babelfish_volatility
+go
+~~START~~
+nvarchar#!#varchar#!#text
+~~END~~
+
 
 -- tsql
 /* grant access to current user */
@@ -439,7 +551,7 @@ go
 grant execute on test_sp_babelfish_volatility_f2 to test_sp_babelfish_volatility_user
 go
 
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 use test_sp_babelfish_volatility_db1
 go
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1'
@@ -464,6 +576,28 @@ dbo#!#test_sp_babelfish_volatility_f2#!#stable
 test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
 ~~END~~
 
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f2'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f2#!#stable
+~~END~~
+
+sp_babelfish_volatility
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f2#!#stable
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
 
 -- tsql 
 /* test for default schema */
@@ -472,7 +606,7 @@ go
 ALTER USER test_sp_babelfish_volatility_user WITH DEFAULT_SCHEMA=test_sp_babelfish_volatility_schema2
 GO
 
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 use test_sp_babelfish_volatility_db1
 go
 select current_user
@@ -525,6 +659,63 @@ go
 revoke execute on test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1 from test_sp_babelfish_volatility_user
 go
 revoke execute on test_sp_babelfish_volatility_f2 from test_sp_babelfish_volatility_user
+go
+
+-- tsql
+/* test default schema in guest user */
+use test_sp_babelfish_volatility_db1
+go
+grant connect to guest
+go
+
+-- tsql     user=test_sp_babelfish_volatility_login_2 password=12345678
+use test_sp_babelfish_volatility_db1
+go
+SELECT current_user
+go
+~~START~~
+varchar
+guest
+~~END~~
+
+create function test_sp_babelfish_volatility_f1() returns int begin declare @a int; set @a = 1; return @a; end
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+guest#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'stable';
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+guest#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
+sp_babelfish_volatility 'dbo.test_sp_babelfish_volatility_f2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: current user does not have priviledges on the function)~~
+
+sp_babelfish_volatility
+go
+~~START~~
+nvarchar#!#varchar#!#text
+guest#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
+drop function test_sp_babelfish_volatility_f1
+go
+
+-- tsql
+use test_sp_babelfish_volatility_db1
+go
+revoke connect from guest
 go
 
 -- psql

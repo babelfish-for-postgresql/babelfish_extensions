@@ -186,7 +186,7 @@ BABEL-3748-before-14_7
 temp-tables
 table-variable
 TestNotNull
-Test-Identity
+Test-Identity-before-14_7-or-15_2
 Test-Computed-Columns
 babel_char
 BABEL-SQUARE
@@ -321,3 +321,4 @@ BABEL_OBJECT_NAME
 Test-sp_babelfish_volatility
 BABEL-3657
 BABEL-3938
+binary-index

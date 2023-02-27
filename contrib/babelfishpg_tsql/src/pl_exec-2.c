@@ -1256,6 +1256,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
 	volatile int save_nestlevel;
+	volatile int scope_level;
 	char *old_db_name = get_cur_db_name();
 	char *cur_db_name = NULL;
 	LOCAL_FCINFO(fcinfo,1);
@@ -1272,6 +1273,8 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			return PLTSQL_RC_OK;
 		}
 		save_nestlevel = pltsql_new_guc_nest_level();
+		scope_level = pltsql_new_scope_identity_nest_level();
+
 		/* Get the C-String representation */
 		querystr = convert_value_to_string(estate, query, restype);
 
@@ -1301,6 +1304,7 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 			set_session_properties(old_db_name);
 
 		pltsql_revert_guc(save_nestlevel);
+		pltsql_revert_last_scope_identity(scope_level);
 	}
 	PG_END_TRY();
 
@@ -1912,6 +1916,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			Oid		restype;
 			int32	restypmod;
 			int save_nestlevel;
+			int scope_level;
 			InlineCodeBlockArgs *args = NULL;
 
 			batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
@@ -1952,6 +1957,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			}
 
 			save_nestlevel = pltsql_new_guc_nest_level();
+			scope_level = pltsql_new_scope_identity_nest_level();
 
 			PG_TRY();
 			{
@@ -1968,6 +1974,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			PG_FINALLY();
 			{
 				pltsql_revert_guc(save_nestlevel);
+				pltsql_revert_last_scope_identity(scope_level);
 			}
 			PG_END_TRY();
 			break;
