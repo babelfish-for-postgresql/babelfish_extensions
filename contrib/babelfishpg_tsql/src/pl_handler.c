@@ -4303,6 +4303,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	int			i;
 	/* Special handling is neede for Inline Table-Valued Functions */
 	bool 		is_itvf;
+	bool		is_mstvf = false;
 	char		*prosrc = NULL;
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
 	int 		saved_dialect = sql_dialect;
@@ -4446,7 +4447,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 				func = pltsql_compile(fake_fcinfo, true);
 
 			if(func && func->table_varnos)
+			{	
+				is_mstvf = func->is_mstvf;
 				create_has_tvp = true;
+			}
 
 			/*
 			 * Disconnect from SPI manager
@@ -4458,7 +4462,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		ReleaseSysCache(tuple);
 		
 		/* If the function has TVP it should be declared as VOLATILE by default */
-		if(prokind == PROKIND_FUNCTION && create_has_tvp)
+		if(prokind == PROKIND_FUNCTION && !is_mstvf && !is_itvf && create_has_tvp)
 		{
 			Relation rel;
 			HeapTuple tup;
