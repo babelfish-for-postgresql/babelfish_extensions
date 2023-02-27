@@ -2073,8 +2073,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (isCompleteQuery)
 						EventTriggerDDLCommandStart(parsetree);
 					
-					//stmt->options = lappend(stmt->options, makeDefElem("volatility", (Node *) makeInteger(115), -1));
-
 					foreach (option, stmt->options)
 					{
 						DefElem *defel = (DefElem *) lfirst(option);

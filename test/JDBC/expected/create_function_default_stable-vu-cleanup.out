@@ -1,0 +1,71 @@
+-- tsql
+
+use test_create_function_default_stable_db
+go
+
+drop function test_create_function_default_stable_f1
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a function named "test_create_function_default_stable_f1")~~
+
+
+drop function test_create_function_default_stable_f2
+go
+
+drop function test_create_function_default_stable_f3
+go
+
+drop function test_create_function_default_stable_f4
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a function named "test_create_function_default_stable_f4")~~
+
+
+drop function test_create_function_default_stable_tvp_f1
+go
+
+drop function test_create_function_default_stable_tvp_f2
+go
+
+drop function test_create_function_default_stable_tvp_f3
+go
+
+drop function test_create_function_default_stable_tvp_f4
+go
+
+drop function test_create_function_default_stable_tvp_f5
+go
+
+drop function test_create_function_default_stable_tvf_f1
+go
+
+drop function test_create_function_default_stable_tvf_f2
+go
+
+drop function test_create_function_default_stable_tvptvf_f1
+go
+
+drop function test_create_function_default_stable_tvptvf_f2
+go
+
+drop table test_create_function_default_stable_t1
+go
+
+drop type test_create_function_default_stable_type
+go
+
+use master 
+go
+
+drop database test_create_function_default_stable_db
+go
+
+
+-- psql
+drop function test_create_function_default_stable_psql_f1;
+go
+
+drop function test_create_function_default_stable_psql_f2;
+go

@@ -1,0 +1,139 @@
+-- tsql
+use test_create_function_default_stable_db
+go
+
+-- not having tvp or tvf
+sp_babelfish_volatility 'test_create_function_default_stable_f2'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_f2#!#stable
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_f3'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_f3#!#stable
+~~END~~
+
+
+-- functions with tvp
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvp_f1#!#volatile
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f2'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvp_f2#!#volatile
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f3'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvp_f3#!#volatile
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f4'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvp_f4#!#volatile
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f5'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvp_f5#!#volatile
+~~END~~
+
+
+-- functions with tvf
+sp_babelfish_volatility 'test_create_function_default_stable_tvf_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvf_f1#!#volatile
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvf_f2'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvf_f2#!#volatile
+~~END~~
+
+
+-- function with both tvp and tvf
+sp_babelfish_volatility 'test_create_function_default_stable_tvptvf_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvptvf_f1#!#volatile
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvptvf_f2'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_tvptvf_f2#!#volatile
+~~END~~
+
+
+-- check with procedure
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_p1'
+go
+~~START~~
+varchar
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_p2'
+go
+~~START~~
+varchar
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_p3'
+go
+~~START~~
+varchar
+v
+~~END~~
+
+
+
+-- psql
+-- check volatility for psql functions
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f1';
+go
+~~START~~
+char
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f2';
+go
+~~START~~
+char
+v
+~~END~~
+
