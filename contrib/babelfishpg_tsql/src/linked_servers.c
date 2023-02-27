@@ -9,6 +9,7 @@
 
 #include "pltsql.h"
 #include "linked_servers.h"
+#include "guc.h"
 
 #define NO_CLIENT_LIB_ERROR() \
 	ereport(ERROR, \
@@ -700,6 +701,11 @@ linked_server_establish_connection(char* servername, LinkedServerProcess *lsproc
 	ListCell *option;
 	char *data_src = NULL;
 	char *database = NULL;
+
+	if(!pltsql_enable_linked_servers)
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("'openquery' is not currently supported in Babelfish")));
 
 	PG_TRY();
 	{
