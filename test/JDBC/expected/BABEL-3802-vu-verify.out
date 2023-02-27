@@ -51,9 +51,10 @@ int#!#int#!#int#!#int#!#int#!#int
 
 EXECUTE BABEL_3802_vu_prepare_t_p3
 GO
-~~ERROR (Code: 220)~~
-
-~~ERROR (Message: smallint out of range)~~
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+-32768#!#32767#!#0#!#8969#!#22266#!#55320
+~~END~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p4
@@ -80,9 +81,9 @@ GO
 
 EXECUTE BABEL_3802_vu_prepare_t_p7
 GO
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 8115)~~
 
-~~ERROR (Message: smallint out of range)~~
+~~ERROR (Message: integer out of range)~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v8
@@ -122,5 +123,13 @@ GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int
 0#!#255#!#0#!#89#!#158#!#251
+~~END~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p8
+GO
+~~START~~
+int
+1000000
 ~~END~~
 

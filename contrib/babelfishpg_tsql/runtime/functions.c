@@ -1815,7 +1815,7 @@ smallint_power(PG_FUNCTION_ARGS)
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int2_numeric,arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), Int16GetDatum (arg2)));
 
-	result = DatumGetInt32(DirectFunctionCall1(numeric_int2, NumericGetDatum(result_numeric)));
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_numeric)));
 
 	PG_RETURN_INT32(result); 
 }
