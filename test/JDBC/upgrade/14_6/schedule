@@ -232,7 +232,6 @@ sys-all_sql_modules-dep
 sys-sql_modules-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
-BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
