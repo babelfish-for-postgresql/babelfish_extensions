@@ -61,3 +61,12 @@ nvarchar
 {"a": {"a": "c"}}
 ~~END~~
 
+
+SELECT * FROM babel_3696_9
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON path is not properly formatted)~~
+

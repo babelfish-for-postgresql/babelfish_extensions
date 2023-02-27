@@ -24,3 +24,6 @@ GO
 
 DROP TABLE t1
 GO
+
+DROP VIEW babel_3696_9
+GO

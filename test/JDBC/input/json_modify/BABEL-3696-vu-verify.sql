@@ -21,3 +21,6 @@ GO
 
 SELECT * FROM babel_3696_8
 GO
+
+SELECT * FROM babel_3696_9
+GO
