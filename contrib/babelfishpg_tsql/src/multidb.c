@@ -676,6 +676,12 @@ rewrite_relation_walker(Node *node, void *context)
 		return raw_expression_tree_walker(node, rewrite_relation_walker, context);			
 }
 
+/*
+ * select_json_modify takes in a select statement
+ * If the target is json_modify and the from clause is for json we change the function name
+ * to json_modify_no_escape which handles this case properly
+ * Otherwise we do not change anything
+ */
 void select_json_modify(SelectStmt* stmt)
 {
 	List* targList = stmt->targetList;
@@ -729,6 +735,28 @@ is_json_modify(List *name)
     }
 }
 
+/*
+ * is_select_for_json takes in a select statement
+ * returns true if the target function call is for json and array_wrapper is false
+ * returns false otherwise
+ */
+bool is_select_for_json(SelectStmt *stmt)
+{
+    List* targetList = stmt->targetList;
+    ListCell* lc = (ListCell*) targetList->elements;
+    Node* n = lfirst(lc);
+    if(IsA(n, ResTarget))
+    {
+        ResTarget* rt = (ResTarget*) n;
+        if(IsA(rt->val, FuncCall))
+        {
+            FuncCall* fc = (FuncCall*) rt->val;
+            return is_for_json(fc);
+        }
+    }
+    return false;
+}
+
 bool
 is_for_json(FuncCall *fc)
 {
@@ -753,23 +781,6 @@ is_for_json(FuncCall *fc)
         default:
             return false;
     }
-}
-
-bool is_select_for_json(SelectStmt *stmt)
-{
-    List* targetList = stmt->targetList;
-    ListCell* lc = (ListCell*) targetList->elements;
-    Node* n = lfirst(lc);
-    if(IsA(n, ResTarget))
-    {
-        ResTarget* rt = (ResTarget*) n;
-        if(IsA(rt->val, FuncCall))
-        {
-            FuncCall* fc = (FuncCall*) rt->val;
-            return is_for_json(fc);
-        }
-    }
-    return false;
 }
 
 bool get_array_wrapper(List* for_json_args) {

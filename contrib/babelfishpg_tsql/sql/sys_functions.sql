@@ -2968,8 +2968,8 @@ LANGUAGE plpgsql STABLE;
 /*
  * JSON MODIFY NO ESCAPE
  * This function implements JSON Modify in the cases where the new value parameter is the result of 
- * json_modify, json_query, or for json where array_wrapper is false
- * This version of the json_modufy function does not escape special characters in new value
+ * json_modify, json_query, or for json when array_wrapper is false
+ * This version of the json_modify function does not escape special characters in new value
  */
 CREATE OR REPLACE FUNCTION sys.json_modify_no_escape(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
 RETURNS sys.NVARCHAR

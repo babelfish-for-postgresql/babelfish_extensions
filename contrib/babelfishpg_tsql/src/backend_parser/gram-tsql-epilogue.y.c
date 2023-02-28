@@ -590,6 +590,11 @@ int getElemTypMod(TypeName *t)
     }
 }
 
+/*
+ * TsqlJsonModifyMakeFuncCall checks if the new value argument for json_modify is
+ * a json_modify or json_query function call. If it is one of these two arguments it
+ * calls json_modify_no_escape. Otherwise it continues with the standard json_modify call
+ */
 Node*
 TsqlJsonModifyMakeFuncCall(Node* expr, Node* path, Node* newValue)
 {
