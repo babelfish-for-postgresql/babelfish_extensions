@@ -38,5 +38,5 @@ go
 
 
 create view babel_3696_9 as
-select json_modify_no_escape('{"a":"b"}', '$.a', json_modify('{"a":"b"}', 'STRICT $.a', 'c'))
+select json_modify('{"a":"b"}', '$.a', json_modify('{"a":"b"}', 'STRICT $.a', 'c'))
 go
