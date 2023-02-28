@@ -95,6 +95,34 @@ linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state,
 }
 
 /*
+ * Helper function to remove all occurrences
+ * of a substring from a source string
+ */
+static char *
+remove_substr(char *src, const char *substr)
+{
+	char *start, *end;
+	size_t len;
+
+	if (!*substr)
+		return src;
+
+	len = strlen(substr);
+
+	if (len > 0)
+	{
+		start = src;
+		while ((start = strstr(start, substr)) != NULL)
+		{
+			end = start + len;
+			memmove(start, end, strlen(end) + 1);
+		}
+	}
+
+	return src;
+}
+
+/*
  * Handle any error encountered in TDS client library itself
  */
 static int
@@ -102,12 +130,29 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 {
 	StringInfoData buf;
 
+	char* err_msg = NULL;
+	char* str =  NULL;
+
 	initStringInfo(&buf);
+
+	if (db_err_str)
+	{
+		/*
+		 * We remove "Adaptive" from error message since we are only
+		 * supporting remote servers that use T-SQL and communicate over TDS
+		 */
+		err_msg = remove_substr(pnstrdup(db_err_str, strlen(db_err_str) + 1), "Adaptive ");
+		str = err_msg;
+
+		/* We convert the 'S' in "Server" to lowercase */
+		while((str = strstr(str, "Server")) != NULL)
+			*str = 's';
+	}
 
 	appendStringInfo(&buf, "TDS client library error: DB #: %i, ", db_error);
 
-	if (db_err_str)
-		appendStringInfo(&buf, "DB Msg: %s, ", db_err_str);
+	if (err_msg)
+		appendStringInfo(&buf, "DB Msg: %s, ", err_msg);
 
 	appendStringInfo(&buf, "OS #: %i, ", os_error);
 
@@ -1122,7 +1167,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 				while (LINKED_SERVER_NEXT_ROW(lsproc) != NO_MORE_ROWS)
 				{
 					/* for each row */
-					Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
+					Datum	*values = palloc0(sizeof(Datum) * colcount);
 					bool	*nulls = palloc0(sizeof(bool) * colcount);
 
 					for (i = 0; i < colcount; i++)

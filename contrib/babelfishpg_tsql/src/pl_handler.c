@@ -63,6 +63,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
+#include "utils/guc.h"
 
 #include "analyzer.h"
 #include "catalog.h"
@@ -118,6 +119,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		QueryEnvironment *queryEnv,
 		DestReceiver *dest,
 		QueryCompletion *qc);
+static void set_pgtype_byval(List *name, bool byval);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -2269,6 +2271,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 							else if (strcmp(defel->defname, "from_windows") == 0)
 							{
+								if (!pltsql_allow_windows_login)
+									ereport(ERROR,
+										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+											errmsg("Windows login is not supported in babelfish")));
 								from_windows = true;
 								login_options = lappend(login_options, defel);
 							}
@@ -2396,6 +2402,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 										login->rolename = upn_login;
 									}
 									from_windows = true;
+									if (!pltsql_allow_windows_login)
+										ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+											 errmsg("Windows login is not supported in babelfish")));
 								}
 							}
 						}
@@ -3278,6 +3288,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		case T_CreateStmt:
 			{
 				CreateStmt *create_stmt = (CreateStmt *) parsetree;
+				RangeVar *rel = create_stmt->relation;
+				bool isTableVariable = (rel->relname[0] == '@');
 
 				if(restore_tsql_tabletype)
 					create_stmt->tsql_tabletype = true;
@@ -3289,16 +3301,19 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 
-				if (create_stmt->tsql_tabletype)
+				if (create_stmt->tsql_tabletype || isTableVariable)
 				{
-					RangeVar *rel = create_stmt->relation;
 					List *name;
+
 					if (rel->schemaname)
 						name = list_make2(makeString(rel->schemaname), makeString(rel->relname));
 					else
 						name = list_make1(makeString(rel->relname));
+					
+					set_pgtype_byval(name, true);
 
-					revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, name);
+					if (create_stmt->tsql_tabletype)
+						revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, name);
 				}
 
 				return;
@@ -3327,6 +3342,45 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 				queryEnv, dest, qc);
+}
+
+/*
+ * Update the pg_type catalog entry for the given name to have
+ * typbyval set to the given value.
+ */
+static void set_pgtype_byval(List *name, bool byval)
+{
+	Relation	catalog;
+	TypeName   *typename;
+	HeapTuple	tup;
+	
+	Datum		values[Natts_pg_type];
+	bool		nulls[Natts_pg_type];
+	bool		replaces[Natts_pg_type];
+	HeapTuple	newtup;
+
+	/*
+	* Table types need to set the typbyval column in pg_type to 't'
+	*/
+	catalog = table_open(TypeRelationId, RowExclusiveLock);
+	typename = makeTypeNameFromNameList(name);
+	tup = typenameType(NULL, typename, NULL);
+
+	/* Update the current type's tuple */
+	memset(values, 0, sizeof(values));
+	memset(nulls, 0, sizeof(nulls));
+	memset(replaces, 0, sizeof(replaces));
+	replaces[Anum_pg_type_typbyval - 1] = true;
+	values[Anum_pg_type_typbyval - 1] = BoolGetDatum(byval);
+
+	newtup = heap_modify_tuple(tup, RelationGetDescr(catalog), values, nulls, replaces);
+	CatalogTupleUpdate(catalog, &newtup->t_self, newtup);
+
+	/* Clean up */
+	ReleaseSysCache(tup);
+
+	table_close(catalog, RowExclusiveLock);
+
 }
 
 /*
@@ -3703,8 +3757,10 @@ _PG_init(void)
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
-	prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
-	tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
+	if(pltsql_enable_linked_servers){
+		prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
+		tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
+	}
 
 	InstallExtendedHooks();
 
