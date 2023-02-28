@@ -215,7 +215,6 @@ static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
 bool current_query_is_create_tbl_check_constraint = false;
-bool is_volatility_specified_for_create;
 
 /* Configurations */
 bool        pltsql_trace_tree = false;
@@ -2067,8 +2066,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				ObjectAddress 	address;
 				int 			origname_location = -1;
 
-				is_volatility_specified_for_create = false;
-
 				/* All event trigger calls are done only when isCompleteQuery is true */
 				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
@@ -2111,11 +2108,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							origname_location = intVal((Node *) defel->arg);
 							location_cell = option;
 							pfree(defel);
-						}
-						else if (strcmp(defel->defname, "volatility") == 0)
-						{
-							/* check if volatility is specified */
-							is_volatility_specified_for_create = true;
 						}
 					}
 
@@ -4524,7 +4516,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		ReleaseSysCache(tuple);
 		
 		/* If the function has TVP it should be declared as VOLATILE by default */
-		if(prokind == PROKIND_FUNCTION && !is_volatility_specified_for_create && !(is_mstvf || is_itvf || has_table_var))
+		if(prokind == PROKIND_FUNCTION && !(is_mstvf || is_itvf || has_table_var))
 		{
 			Relation rel;
 			HeapTuple tup;
