@@ -3221,14 +3221,20 @@ where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.index_columns TO PUBLIC;
 
------------------------------------
+
+ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_1_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_1_0');
+
 /*
- * JSON MODIFY NO ESCAPE
- * This function implements JSON Modify in the cases where the new value parameter is the result of 
- * json_modify, json_query, or for json where array_wrapper is false
- * This version of the json_modufy function does not escape special characters in new value
+ * JSON MODIFY
+ * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+ * It has been implemented in three parts:
+ *  1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+ *  2) To convert the input path into the expected jsonb_path.
+ *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
  */
-CREATE OR REPLACE FUNCTION sys.json_modify_no_escape(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT, in escape bool)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
@@ -3246,7 +3252,7 @@ DECLARE
     key_exists BOOL;
     key_value JSONB;
     json_expression JSONB = expression::JSONB;
-    json_new_value JSONB = new_value::JSONB;
+    json_new_value JSONB;
     result_json sys.NVARCHAR;
 BEGIN
     path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
@@ -3300,6 +3306,12 @@ BEGIN
 
     key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
 
+    IF escape THEN
+        json_new_value = new_value::JSONB;
+    ELSE
+        json_new_value = to_jsonb(new_value);
+    END IF;
+
     --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
     IF append_modifier THEN
         IF key_exists THEN
@@ -3327,8 +3339,8 @@ BEGIN
         ELSE
             IF NOT create_if_missing THEN
                 RAISE sql_json_object_not_found;
-            ELSE -- TODO: MAKE SURE THIS CASE WORKS WITH ARRAY_AGG AND NO TO_JSONB CALL
-                result_json = jsonb_insert(json_expression,new_jsonb_path,array_agg(new_value)::JSONB); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+            ELSE
+                result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
             END IF;
         END IF;
     ELSE --When no append modifier is present
@@ -3368,7 +3380,6 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql STABLE;
------------------------------------
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
