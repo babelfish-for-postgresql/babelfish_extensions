@@ -1,32 +1,32 @@
 SELECT * FROM view_current_principal_id;
 GO
 ~~START~~
-int
-19235
+nvarchar
+dbo
 ~~END~~
 
 
 EXEC proc_current_principal_id;
 GO
 ~~START~~
-int
-19235
+nvarchar
+dbo
 ~~END~~
 
 
 SELECT * FROM view_db_owner_principal_id;
 GO
 ~~START~~
-int
-19234
+nvarchar
+db_owner
 ~~END~~
 
 
 EXEC proc_db_owner_principal_id;
 GO
 ~~START~~
-int
-19234
+nvarchar
+db_owner
 ~~END~~
 
 
@@ -35,5 +35,20 @@ GO
 ~~START~~
 int
 <NULL>
+~~END~~
+
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('db_owner'));
+SELECT user_name(DATABASE_PRINCIPAL_ID('testuser'));
+GO
+~~START~~
+nvarchar
+db_owner
+~~END~~
+
+~~START~~
+nvarchar
+testuser
 ~~END~~
 
