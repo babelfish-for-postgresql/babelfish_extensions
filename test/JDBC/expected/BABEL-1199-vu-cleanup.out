@@ -1,6 +1,3 @@
-DROP VIEW view_database_principal_id_v1;
-GO
-
 DROP VIEW view_current_principal_id;
 GO
 

@@ -1,9 +1,3 @@
-CREATE VIEW view_database_principal_id_v1
-AS
-SELECT principal_id AS database_principal_id
-FROM sys.database_principals;
-GO
-
 CREATE VIEW dbo.view_current_principal_id AS
 SELECT DATABASE_PRINCIPAL_ID();
 GO
