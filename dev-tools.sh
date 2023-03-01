@@ -237,8 +237,6 @@ elif [ "$1" == "pg_upgrade" ]; then
     cd $TARGET_WS
     if [ ! -d "./upgrade" ]; then
         mkdir upgrade
-    #else
-    #    rm upgrade/*
     fi
     cd upgrade
     ../postgres/bin/pg_upgrade -U $USER \
@@ -290,51 +288,15 @@ elif [ "$1" == "test" ]; then
         export scheduleFile=temp_schedule
     elif [ "$TEST_MODE" == "verify" ]; then
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" $TEST_BASE_DIR/schedule); do
-        #   sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" temp_schedule
-        #    sed -i "s/$filename[ ]*$/$filename-vu-verify/g" temp_schedule
-        trimmed=$(awk '{$1=$1;print}' <<< "$filename")
-        echo $trimmed-vu-verify >> temp_schedule;
-        echo $trimmed-vu-cleanup >> temp_schedule;
+          trimmed=$(awk '{$1=$1;print}' <<< "$filename")
+          echo $trimmed-vu-verify >> temp_schedule;
+          echo $trimmed-vu-cleanup >> temp_schedule;
         done
         export scheduleFile=temp_schedule
     fi
 
     mvn test
     rm -rf temp_schedule
-    exit 0
-elif [ "$1" == "bbf_dump_test" ]; then
-    cd $TARGET_WS/babelfish_extensions
-    ./dev-tools.sh initdb
-    ./dev-tools.sh initbbf
-    ./dev-tools.sh test prepare multi-db latest
-
-    cd $TARGET_WS/postgres
-    ./bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_upgrade_dump_globals.sql
-    ./bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_upgrade_dump.sql" --dbname=jdbc_testdb
-
-    cd $TARGET_WS/babelfish_extensions
-    ./dev-tools.sh initdb
-
-    cd $TARGET_WS/postgres
-    ./bin/psql -U $USER -d postgres -f pg_upgrade_dump_globals.sql
-
-    bin/psql -d postgres -U $USER -c \
-        "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
-
-    ./bin/psql -U jdbc_user -d jdbc_testdb -f pg_upgrade_dump.sql
-
-    bin/psql -d jdbc_testdb -U jdbc_user -c \
-        "GRANT ALL ON SCHEMA sys to jdbc_user;"
-    bin/psql -d jdbc_testdb -U jdbc_user -c \
-        "ALTER USER jdbc_user CREATEDB;"
-    bin/psql -d jdbc_testdb -U jdbc_user -c \
-        "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-    bin/psql -d jdbc_testdb -U $USER -c \
-        "SELECT pg_reload_conf();"
-
-    cd $TARGET_WS/babelfish_extensions
-    ./dev-tools.sh test verify multi-db latest
-
     exit 0
 elif [ "$1" == "minor_version_upgrade" ]; then
     echo "Building from $SOURCE_WS..."
