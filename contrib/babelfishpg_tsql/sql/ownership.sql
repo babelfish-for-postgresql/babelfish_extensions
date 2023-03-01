@@ -277,12 +277,6 @@ orig_loginname SYS.NVARCHAR(128) NOT NULL,
 PRIMARY KEY (rolname));
 GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
 
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_sysdatabases', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_db_seq', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
-
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
@@ -333,6 +327,12 @@ PRIMARY KEY (rolname));
 CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);
 
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_sysdatabases', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_db_seq', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
 
 -- DATABASE_PRINCIPALS
 CREATE OR REPLACE VIEW sys.database_principals AS SELECT

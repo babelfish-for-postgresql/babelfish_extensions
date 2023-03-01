@@ -22,97 +22,28 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Build Modified Postgres using latest version
-      id: build-modified-postgres-new
+    - name: Setup latest version
+      id: setup-new-version
       if: always()
-      uses: ./.github/composite-actions/build-modified-postgres
+      uses: ./.github/composite-actions/setup-new-version
       with:
         engine_branch: ${{ inputs.engine_branch }}
-        install_dir: ${{ inputs.pg_new_dir }}
-
-    - name: Copy ANTLR
-      id: copy-antlr
-      if: always() && steps.build-modified-postgres-new.outcome == 'success'
-      run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{ inputs.pg_new_dir }}/lib/
-      shell: bash
-
-    - name: Build Extensions
-      id: build-extensions-new
-      if: always() && steps.copy-antlr.outcome == 'success'
-      uses: ./.github/composite-actions/build-extensions
-      with:
-        install_dir: ${{ inputs.pg_new_dir }}
         extension_branch: ${{ inputs.extension_branch }}
-
-    - uses: actions/checkout@v2
-
-    - name: Build tds_fdw Extension
-      id: build-tds_fdw-extension
-      if: always() && steps.build-extensions-new.outcome == 'success'
-      uses: ./.github/composite-actions/build-tds_fdw-extension
-      with:
-        install_dir: ${{ inputs.pg_new_dir }}
-
-    - name: Setup new data directory
-      id: setup-new-datadir
-      if: always() && steps.build-tds_fdw-extension.outcome == 'success'
-      run: |
-        cd ~
-        ~/${{ inputs.pg_new_dir }}/bin/initdb -D ~/${{ inputs.pg_new_dir }}/data
-        cd ~/${{ inputs.pg_new_dir }}/data
-        sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
-        sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds'/g" postgresql.conf
-        ipaddress=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
-        sudo echo "host    all             all             $ipaddress/32            trust" >> pg_hba.conf
-      shell: bash
+        pg_new_dir: ${{ inputs.pg_new_dir }}
 
     - name: Run pg_upgrade
       id: run-pg_upgrade
-      if: always() && steps.setup-new-datadir.outcome == 'success'
+      if: always() && steps.setup-new-version.outcome == 'success'
       uses: ./.github/composite-actions/run-pg-upgrade
       with: 
         migration_mode: ${{ inputs.migration_mode }}
         pg_old_dir: ${{ inputs.pg_old_dir }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
 
-    - name: Run JDBC Verify Tests
-      if: always() && inputs.is_final_ver == 'true'
-      id: jdbc-verify-tests
-      env:
-        migr_mode: ${{ inputs.migration_mode }}
-      run: |
-        cd test/JDBC/
-        touch dummy_schedule
-        echo "all" > dummy_schedule
-        export scheduleFile=dummy_schedule
-        export isUpgradeTestMode=false
-
-        if [[ "$migr_mode" == "multi-db" ]];then
-          base_dir=${{ matrix.upgrade-path.path[0] }}
-          tar_dir=${{ matrix.upgrade-path.last_version }}
-          if [[ "$base_dir" == *"latest"* ]]; then
-            base_dir="latest"
-          fi
-          if [[ "$tar_dir" == *"latest"* ]]; then
-            tar_dir="latest"
-          fi
-          export inputFilesPath=upgrade/$tar_dir/verification_cleanup/$base_dir
-        else
-          base_dir="singledb"
-          export inputFilesPath=upgrade/singledb/verification_cleanup
-        fi
-        mvn test
-        export inputFilesPath=input
-        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
-          sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/$base_dir/schedule
-        done
-        export scheduleFile=upgrade/$base_dir/schedule
-        mvn test
-      shell: bash
-
-    - name: Cleanup babelfish database
-      id: cleanup
-      if: always() && steps.jdbc-verify-tests.outcome == 'success' && inputs.is_final_ver == 'true'
-      run: |
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
-      shell: bash
+    - name: Run Verify Tests
+      if: always() && steps.run-pg_upgrade.outcome == 'success' && inputs.is_final_ver == 'true'
+      uses: ./.github/composite-actions/run-verify-tests
+      with:
+        is_final_ver: ${{ inputs.is_final_ver }}
+        pg_new_dir: ${{ inputs.pg_new_dir }}
+        migration_mode: ${{ inputs.migration_mode }}
