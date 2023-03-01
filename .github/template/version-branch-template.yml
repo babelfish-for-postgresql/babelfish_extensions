@@ -26,11 +26,14 @@
   engine_branch: BABEL_2_3_STABLE__PG_14_6
   extension_branch: BABEL_2_3_STABLE
 '14.7':
+  engine_branch: BABEL_2_4_STABLE__PG_14_7
+  extension_branch: BABEL_2_4_STABLE
+'14.8':
   engine_branch: BABEL_2_X_DEV__PG_14_X
   extension_branch: BABEL_2_X_DEV
-'15.1':
-  engine_branch: BABEL_3_0_STABLE__PG_15_1
-  extension_branch: BABEL_3_0_STABLE
+'15.2':
+  engine_branch: BABEL_3_1_STABLE__PG_15_2
+  extension_branch: BABEL_3_1_STABLE
 'source.latest':
   engine_branch: latest
   extension_branch: latest
