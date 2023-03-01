@@ -22,6 +22,7 @@
 #include "commands/view.h"
 #include "common/logging.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -45,6 +46,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
@@ -58,6 +60,7 @@
 #include "pltsql.h"
 #include "pl_explain.h"
 #include "catalog.h"
+#include "dbcmds.h"
 #include "rolecmds.h"
 #include "session.h"
 #include "multidb.h"
@@ -109,6 +112,7 @@ static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDes
  *****************************************/
 static int find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
 static void pltsql_drop_func_default_positions(Oid objectId);
+static void fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls);
 
 /*****************************************
  * 			Utility Hooks
@@ -181,6 +185,7 @@ static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
+static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -286,6 +291,9 @@ InstallExtendedHooks(void)
 	
 	prev_modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc_hook;
 	modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc;
+
+	prev_fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom_hook;
+	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
 }
 
 void
@@ -328,6 +336,7 @@ UninstallExtendedHooks(void)
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
+	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 }
 
 /*****************************************
@@ -3402,4 +3411,65 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 	}
 
 	return setTargetTable(pstate, relation, inh, true, requiredPerms);
+}
+
+/*
+ * Update values and nulls arrays with missing column values if any.
+ * Mainly used for Babelfish catalog tables during restore.
+ */
+static void
+fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
+{
+	Oid relid;
+
+	if (!babelfish_dump_restore || IsBinaryUpgrade)
+		return;
+
+	relid = RelationGetRelid(rel);
+	/*
+	 * Insert new dbid column value in babelfish catalog if dump did
+	 * not provide it.
+	 */
+	if (relid == sysdatabases_oid ||
+		relid == namespace_ext_oid ||
+		relid == bbf_view_def_oid)
+	{
+		int16		dbid = 0;
+		AttrNumber	attnum;
+		const char	*prev_current_user;
+
+		attnum = (AttrNumber) attnameAttNum(rel, "dbid", false);
+		Assert(attnum != InvalidAttrNumber);
+
+		if (!nulls[attnum - 1])
+			return;
+
+		/* Get new DB ID. Need sysadmin to do that. */
+		prev_current_user = GetUserNameFromId(GetUserId(), false);
+		bbf_set_current_user("sysadmin");
+		/* For sysdatabases table we need to generate new dbid for the database we are currently restoring. */
+		if (relid == sysdatabases_oid)
+		{
+			if ((dbid = getAvailDbid()) == InvalidDbid)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
+							errmsg("cannot find an available ID for new database.")));
+		}
+		/*
+		 * For all the other catalog tables which contain dbid column, get dbid using current value of the
+		 * babelfish_db_seq sequence. It is ok to fetch current value of the sequence here since we already
+		 * have generated new dbid while inserting into sysdatabases catalog.
+		 */
+		else
+		{
+			RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
+			Oid     	 seqid = RangeVarGetRelid(sequence, NoLock, false);
+
+			dbid = DirectFunctionCall1(currval_oid, seqid);
+		}
+		bbf_set_current_user(prev_current_user);
+
+		values[attnum - 1] = Int16GetDatum(dbid);
+		nulls[attnum - 1] = false;
+	}
 }

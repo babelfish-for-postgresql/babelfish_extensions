@@ -289,7 +289,9 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
  * If we can't find one after looping the entire range of sequence values
  * (1 to 32767), we should bail out.
  */
-static int16 getAvailDbid() {
+int16
+getAvailDbid(void)
+{
 	int16  dbid;
 	int16  start = 0;
 

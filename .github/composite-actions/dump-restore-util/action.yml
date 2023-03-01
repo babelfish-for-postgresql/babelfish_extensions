@@ -18,6 +18,10 @@ inputs:
   migration_mode:
     description: "Database migration mode for Babelfish"
     required: true
+  logical_database:
+    description: "Logical Babelfish database to dump and restore"
+    required: false
+    default: 'null'
 
 runs:
   using: "composite"
@@ -39,24 +43,39 @@ runs:
         cd ~
         mkdir -p upgrade
         cd upgrade
-        echo 'Runinng pg_dumpall and pg_dump'
-        ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>>error.log
-        ~/${{ inputs.pg_new_dir }}/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+        if [[ '${{ inputs.logical_database }}' == 'null' ]];then
+          echo 'Starting to dump whole Babelfish physical database'
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dump --create --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+        else
+          echo "Starting to dump Babelfish logical database ${{ inputs.logical_database }}"
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --bbf-database-name='${{ inputs.logical_database }}' -f pg_dump_globals.sql 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --bbf-database-name='${{ inputs.logical_database }}' --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+        fi
+
+        # Stop old server and start the new.
         ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_old_dir }}/data stop
-        echo 'Done dumping the database, proceeding to restore dumped SQL script on new server.'
-        echo 'Restoring from pg_dumpall'
         ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile start
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -f pg_dump_globals.sql 2>>error.log
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
-        echo 'Restoring from pg_dump'
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -f pg_dump.sql 2>>error.log
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE jdbc_testdb TO sysadmin WITH GRANT OPTION;"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER USER jdbc_user CREATEDB;"
+        cd ~/work/babelfish_extensions/babelfish_extensions/
+        echo 'Database dump complete.'
+
+        if [[ '${{ inputs.logical_database }}' == 'null' ]];then
+          echo 'Restoring from pg_dumpall'
+          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
+          echo 'Restoring from pg_dump'
+          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U jdbc_user -f ~/upgrade/pg_dump.sql 2>> ~/upgrade/error.log
+        else
+          # Create and initialise Babelfish extensions in the new server if we are restoring a logical database.
+          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
+          echo 'Restoring from pg_dumpall'
+          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
+          echo 'Restoring from pg_dump'
+          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -f ~/upgrade/pg_dump.sql 2>> ~/upgrade/error.log
+        fi
+
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT pg_reload_conf();"
-        cd ~/work/babelfish_extensions/babelfish_extensions/
         export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
@@ -76,6 +95,10 @@ runs:
           base_dir="singledb"
         fi
 
+        if [[ '${{ inputs.logical_database }}' != 'null' ]];then
+          base_dir="${{ inputs.logical_database }}"
+        fi
+
         # Temporarily disable certain tests until fixed
         sed -i "/BABEL-3513/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/BABEL_OBJECT_ID/d" test/JDBC/upgrade/$base_dir/schedule
@@ -83,7 +106,6 @@ runs:
         sed -i "/TestNotNull/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/TestSQLVariant/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/babel_datatype_sqlvariant/d" test/JDBC/upgrade/$base_dir/schedule
-        sed -i "/schema_resolution_proc/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/sp_tablecollations/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/sys-sql_modules/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/sys-system_sql_modules/d" test/JDBC/upgrade/$base_dir/schedule
@@ -96,3 +118,4 @@ runs:
         is_final_ver: ${{ inputs.is_final_ver }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
         migration_mode: ${{ inputs.migration_mode }}
+        logical_database: ${{ inputs.logical_database }}

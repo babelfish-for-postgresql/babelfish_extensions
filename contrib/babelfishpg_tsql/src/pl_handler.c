@@ -58,6 +58,7 @@
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
 #include "utils/queryenvironment.h"
+#include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
@@ -432,6 +433,98 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 {
 	if (prev_pre_parse_analyze_hook)
 	  prev_pre_parse_analyze_hook(pstate, parseTree);
+
+	switch (parseTree->stmt->type)
+	{
+		case T_InsertStmt:
+		{
+			InsertStmt	*stmt = (InsertStmt *) parseTree->stmt;
+			SelectStmt	*selectStmt = (SelectStmt *) stmt->selectStmt;
+			A_Const   	*value;
+			Oid     	 relid;
+			ListCell	*lc;
+
+			if (!babelfish_dump_restore || IsBinaryUpgrade)
+				break;
+
+			relid = RangeVarGetRelid(stmt->relation, NoLock, false);
+
+			/*
+			 * Insert new dbid column value in babelfish catalog if dump did
+			 * not provide it.
+			 */
+			if (relid == sysdatabases_oid ||
+				relid == namespace_ext_oid ||
+				relid == bbf_view_def_oid)
+			{
+				int16    	 dbid = 0;
+				ResTarget	*dbidCol;
+				const char	*prev_current_user;
+				bool		 found = false;
+
+				/* Skip if dbid column already exists */
+				foreach(lc, stmt->cols)
+				{
+					ResTarget *col = (ResTarget *) lfirst(lc);
+
+					if (strcasecmp(col->name, "dbid") == 0)
+						found = true;
+				}
+				if (found)
+					break;
+
+				/* Get new DB ID. Need sysadmin to do that. */
+				prev_current_user = GetUserNameFromId(GetUserId(), false);
+				bbf_set_current_user("sysadmin");
+				/* For sysdatabases table we need to generate new dbid for the database we are currently restoring. */
+				if (relid == sysdatabases_oid)
+				{
+					if ((dbid = getAvailDbid()) == InvalidDbid)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
+								 errmsg("cannot find an available ID for new database.")));
+				}
+				/*
+				 * For all the other catalog tables which contain dbid column, get dbid using current value of the
+				 * babelfish_db_seq sequence. It is ok to fetch current value of the sequence here since we already
+				 * have generated new dbid while inserting into sysdatabases catalog.
+				 */
+				else
+				{
+					RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
+					Oid     	 seqid = RangeVarGetRelid(sequence, NoLock, false);
+
+					dbid = DirectFunctionCall1(currval_oid, seqid);
+				}
+				bbf_set_current_user(prev_current_user);
+
+				/* const value node to store into values clause */
+				value = makeNode(A_Const);
+				value->val.ival.type = T_Integer;
+				value->val.ival.ival = dbid;
+				value->location = -1;
+
+				/* dbid column to store into InsertStmt's target list */
+				dbidCol = makeNode(ResTarget);
+				dbidCol->name = "dbid";
+				dbidCol->name_location = -1;
+				dbidCol->indirection = NIL;
+				dbidCol->val = NULL;
+				dbidCol->location = -1;
+				stmt->cols = lappend(stmt->cols, dbidCol);
+
+				foreach(lc, selectStmt->valuesLists)
+				{
+					List	*sublist = (List *) lfirst(lc);
+
+					sublist = lappend(sublist, value);
+				}
+			}
+			break;
+		}
+		default:
+			break;
+	}
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
