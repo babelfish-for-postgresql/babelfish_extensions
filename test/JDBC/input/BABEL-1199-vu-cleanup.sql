@@ -18,3 +18,6 @@ GO
 
 DROP USER testuser;
 GO
+
+DROP ROLE test_role;
+GO

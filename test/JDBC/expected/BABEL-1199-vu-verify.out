@@ -40,15 +40,41 @@ int
 
 
 SELECT user_name(DATABASE_PRINCIPAL_ID('db_owner'));
-SELECT user_name(DATABASE_PRINCIPAL_ID('testuser'));
 GO
 ~~START~~
 nvarchar
 db_owner
 ~~END~~
 
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('dbo'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('testuser'));
+GO
 ~~START~~
 nvarchar
 testuser
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('test_role'));
+GO
+~~START~~
+nvarchar
+test_role
 ~~END~~
 

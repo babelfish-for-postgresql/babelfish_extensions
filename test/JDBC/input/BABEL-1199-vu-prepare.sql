@@ -26,4 +26,5 @@ GO
 
 CREATE LOGIN testuser WITH PASSWORD = 'testpassword';
 CREATE USER testuser FOR LOGIN testuser;
+CREATE ROLE test_role;
 GO

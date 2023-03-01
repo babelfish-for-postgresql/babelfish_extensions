@@ -15,5 +15,16 @@ GO
 
 
 SELECT user_name(DATABASE_PRINCIPAL_ID('db_owner'));
+GO
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('dbo'));
+GO
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('guest'));
+GO
+
 SELECT user_name(DATABASE_PRINCIPAL_ID('testuser'));
+GO
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('test_role'));
 GO
