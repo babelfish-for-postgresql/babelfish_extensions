@@ -678,9 +678,9 @@ rewrite_relation_walker(Node *node, void *context)
 
 /*
  * select_json_modify takes in a select statement
- * If the target is json_modify and the from clause is for json we change the function name
- * to json_modify_no_escape which handles this case properly
- * Otherwise we do not change anything
+ * If the target is json_modify and the from clause is for json we set the escape
+ * parameter to true
+ * Otherwise we set it to false
  */
 void select_json_modify(SelectStmt* stmt)
 {
