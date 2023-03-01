@@ -15,6 +15,7 @@
 
 #include "access/hash.h"
 #include "catalog/pg_collation.h"
+#include "collation.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"
 #include "lib/hyperloglog.h"
@@ -31,6 +32,7 @@
 #include "utils/pg_locale.h"
 #include "utils/sortsupport.h"
 #include "utils/varlena.h"
+#include "encoding/encoding.h"
 
 #include "instr.h"
 
@@ -695,15 +697,29 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	size_t len = VARSIZE_ANY_EXHDR(source);
 	int32 typmod = PG_GETARG_INT32(1);
 	int32 maxlen = typmod - VARHDRSZ;
-	VarChar *result;
+	coll_info	collInfo;
+	char 		*result;
+	int		encodedByteLen;
 
-	/* Cast the entire input binary data if maxlen is invalid or supplied data fits it */
-	if (maxlen < 0 || len <= maxlen)
-		result = (VarChar *) cstring_to_text_with_len(data, len);
-	/* Else truncate it */
+	/* 
+	 * Try to find the lcid corresponding to the collation of the target column.
+	 */
+	if (fcinfo->flinfo->fn_expr)
+	{
+		collInfo = lookup_collation_table(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
+	}
 	else
-		result = (VarChar *) cstring_to_text_with_len(data, maxlen);
-	PG_RETURN_VARCHAR_P(result);
+	{
+		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+	}
+
+	/* Encode the input string encoding to UTF8(server) encoding */
+	if (maxlen < 0 || len <= maxlen)
+		result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
+	else
+		result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(result, encodedByteLen));
 }
 
 Datum

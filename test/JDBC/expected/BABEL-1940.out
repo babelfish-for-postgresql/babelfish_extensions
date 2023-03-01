@@ -1,0 +1,91 @@
+-- Earlier following queries were hanging indefinetely
+SELECT CONVERT(VARCHAR(MAX), 0x123456789)
+GO
+~~START~~
+varchar
+#Eg‰
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(MAX), 0x80)
+GO
+~~START~~
+varchar
+€
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(MAX), 0xaaa)
+GO
+~~START~~
+varchar
+<newline>ª
+~~END~~
+
+
+declare @key varchar(20) = 'part1'
+declare @email varchar(20) = 'part2'
+SELECT CONVERT(VARCHAR(MAX), HASHBYTES('SHA1', @key + LOWER(@email)))
+GO
+~~START~~
+varchar
+æ/fact¢+ÓÈrÆY¹ÈÎé8
+~~END~~
+
+
+create table babel_1940_t1 (a varbinary(9))
+GO
+
+INSERT INTO babel_1940_t1 VALUES(0x80)
+INSERT INTO babel_1940_t1 VALUES(0xaaa)
+INSERT INTO babel_1940_t1 VALUES(0x123456789)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_1940_t1
+GO
+~~START~~
+varbinary
+80
+0AAA
+0123456789
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(9), a) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+SELECT CAST(a as VARCHAR(9)) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+SELECT CAST(a as VARCHAR(MAX)) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+DROP TABLE babel_1940_t1
+GO
