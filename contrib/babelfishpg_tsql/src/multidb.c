@@ -699,14 +699,11 @@ void select_json_modify(SelectStmt* stmt)
 				FuncCall* json_mod_fc = (FuncCall*) rt->val;
 				SelectStmt* from_sel_stmt = (SelectStmt*) rs->subquery;
 				rewrite_plain_name(json_mod_fc->funcname);
-				if(is_json_modify(json_mod_fc->funcname))
+				if(is_json_modify(json_mod_fc->funcname) && is_select_for_json(from_sel_stmt))
 				{
-					A_Const *escape = makeNode(A_Const);
-					escape->val.boolval.type = T_Boolean;
-					escape->val.boolval.boolval = is_select_for_json(from_sel_stmt);
-					escape->location = -1;
-					json_mod_fc->args = list_delete_last(json_mod_fc->args);
-					json_mod_fc->args = lappend(json_mod_fc->args, (Node*) escape);
+					Node *n = lfourth(json_mod_fc->args);
+					A_Const *escape = (A_Const*) n;
+					escape->val.boolval.boolval = true;
 				}
 			}
 		}
