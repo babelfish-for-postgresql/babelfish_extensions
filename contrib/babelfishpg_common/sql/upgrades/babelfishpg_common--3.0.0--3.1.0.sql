@@ -163,6 +163,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE CAST (NUMERIC AS sys.BIT)
+WITH FUNCTION sys.numeric_bit (NUMERIC) AS IMPLICIT;
+
 drop function get_bbf_binary_ops_count(varchar);
 
 -- Reset search_path to not affect any subsequent scripts
