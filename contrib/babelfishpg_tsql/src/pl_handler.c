@@ -2108,7 +2108,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					stmt->actions = list_delete_cell(stmt->actions, location_cell);
 
 				/* make a CreateFunctionStmt to pass into CreateFunction() */
-				cfs = (CreateFunctionStmt *) makeNode(CreateFunctionStmt);
+				cfs = makeNode(CreateFunctionStmt);
 				cfs->is_procedure = true;
 				cfs->replace = true;
 				cfs->funcname = stmt->func->objname;
