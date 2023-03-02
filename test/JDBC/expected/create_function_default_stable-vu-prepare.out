@@ -27,7 +27,7 @@ go
 create function test_create_function_default_stable_f2() returns int as begin return 0; end
 go
 
-create function test_create_function_default_stable_f3(@a int, @b char, @c date, @d money, @e float, @f Image, @g text, @h xml, @i sql_variant) 
+create function test_create_function_default_stable_f3(@a int, @b char, @c date, @d money, @e float, @f text, @g xml) 
 returns int as begin return 0; end
 go
 
@@ -108,7 +108,9 @@ select * from @tvp;
 go
 
 -- psql
+
 -- create function in psql endpoint
+-- with language plpgsql
 create function test_create_function_default_stable_psql_f1()
 returns int
 language plpgsql
@@ -122,5 +124,24 @@ end;
 $$;
 go
 
+-- with language sql
 create function test_create_function_default_stable_psql_f2() RETURNS char(20) language SQL return 'abc';
+go
+
+-- with language pltsql
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f3() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	RETURN @a
+END;
+$$ LANGUAGE pltsql;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f4() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	declare @tvp table(a int);
+	RETURN @a
+END;
+$$ LANGUAGE pltsql;
 go

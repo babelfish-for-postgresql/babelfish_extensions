@@ -61,3 +61,9 @@ go
 
 drop function test_create_function_default_stable_psql_f2;
 go
+
+drop function test_create_function_default_stable_psql_f3;
+go
+
+drop function test_create_function_default_stable_psql_f4;
+go
