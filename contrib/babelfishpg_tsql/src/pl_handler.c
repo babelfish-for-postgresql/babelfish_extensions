@@ -4516,7 +4516,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		ReleaseSysCache(tuple);
 		
 		/* If the function has TVP it should be declared as VOLATILE by default */
-		if(prokind == PROKIND_FUNCTION && !(is_mstvf || is_itvf || has_table_var || is_dml_trigger))
+		if(!babelfish_dump_restore && prokind == PROKIND_FUNCTION && !(is_mstvf || is_itvf || has_table_var || is_dml_trigger))
 		{
 			Relation rel;
 			HeapTuple tup;
