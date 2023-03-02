@@ -38,11 +38,42 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+CREATE OR REPLACE VIEW sys.syslanguages
+AS
+SELECT
+    lang_id AS langid,
+    CAST(lower(lang_data_jsonb ->> 'date_format'::TEXT) AS SYS.NCHAR(3)) AS dateformat,
+    CAST(lang_data_jsonb -> 'date_first'::TEXT AS SYS.TINYINT) AS datefirst,
+    CAST(NULL AS INT) AS upgrade,
+    CAST(coalesce(lang_name_mssql, lang_name_pg) AS SYS.SYSNAME) AS name,
+    CAST(coalesce(lang_alias_mssql, lang_alias_pg) AS SYS.SYSNAME) AS alias,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_names'::TEXT)), ',') AS SYS.NVARCHAR(372)) AS months,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_shortnames'::TEXT)),',') AS SYS.NVARCHAR(132)) AS shortmonths,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'days_shortnames'::TEXT)),',') AS SYS.NVARCHAR(217)) AS days,
+    CAST(NULL AS INT) AS lcid,
+    CAST(NULL AS SMALLINT) AS msglangid
+FROM sys.babelfish_syslanguages;
+GRANT SELECT ON sys.syslanguages TO PUBLIC;
+
+-- Mark babelfish_authid_user_ext as configuration table
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
+
+-- Function to unmark a configuration table.
+-- Currently PG has not exposed this as a function so we have implemented
+-- the following function as a wrapper over original PG function.
+CREATE OR REPLACE FUNCTION sys.pg_extension_config_remove(IN tableoid REGCLASS)
+RETURNS VOID
+AS 'babelfishpg_tsql', 'pg_extension_config_remove'
+LANGUAGE C VOLATILE;
+
+-- Unmark babelfish_configurations as configuration table
+SELECT sys.pg_extension_config_remove('sys.babelfish_configurations');
 
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+DROP FUNCTION sys.pg_extension_config_remove(REGCLASS);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
