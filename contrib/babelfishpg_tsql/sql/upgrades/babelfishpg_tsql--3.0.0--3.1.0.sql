@@ -842,17 +842,14 @@ CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION Database_principal_id(user_name sysname)
+CREATE OR REPLACE FUNCTION Database_principal_id(user_name sysname DEFAULT NULL)
 RETURNS OID AS $$
 BEGIN
-    RETURN sys.user_id(user_name);
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION Database_principal_id()
-RETURNS OID AS $$
-BEGIN
-    RETURN (SELECT oid FROM pg_roles WHERE rolname = current_user);
+    IF user_name IS NULL THEN
+        RETURN (SELECT oid FROM pg_roles WHERE rolname = current_user collate "C");
+    ELSE
+        RETURN sys.user_id(user_name collate "C");
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 

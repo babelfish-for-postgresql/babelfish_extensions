@@ -1707,17 +1707,14 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.rowcount()
 RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION Database_principal_id(user_name sysname)
+CREATE OR REPLACE FUNCTION Database_principal_id(user_name sysname DEFAULT NULL)
 RETURNS OID AS $$
 BEGIN
-    RETURN sys.user_id(user_name);
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION Database_principal_id()
-RETURNS OID AS $$
-BEGIN
-    RETURN (SELECT oid FROM pg_roles WHERE rolname = current_user);
+    IF user_name IS NULL THEN
+        RETURN (SELECT oid FROM pg_roles WHERE rolname = current_user collate "C");
+    ELSE
+        RETURN sys.user_id(user_name collate "C");
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
