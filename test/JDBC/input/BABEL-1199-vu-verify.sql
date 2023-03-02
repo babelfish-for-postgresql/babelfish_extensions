@@ -26,5 +26,5 @@ GO
 SELECT user_name(DATABASE_PRINCIPAL_ID('testuser'));
 GO
 
-SELECT user_name(DATABASE_PRINCIPAL_ID('test_role'));
+SELECT user_name(DATABASE_PRINCIPAL_ID('roletest'));
 GO

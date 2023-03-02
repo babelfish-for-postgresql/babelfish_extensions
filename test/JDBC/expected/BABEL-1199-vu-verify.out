@@ -71,10 +71,10 @@ testuser
 ~~END~~
 
 
-SELECT user_name(DATABASE_PRINCIPAL_ID('test_role'));
+SELECT user_name(DATABASE_PRINCIPAL_ID('roletest'));
 GO
 ~~START~~
 nvarchar
-test_role
+roletest
 ~~END~~
 

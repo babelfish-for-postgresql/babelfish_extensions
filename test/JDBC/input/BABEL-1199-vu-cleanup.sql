@@ -19,5 +19,5 @@ GO
 DROP USER testuser;
 GO
 
-DROP ROLE test_role;
+DROP ROLE roletest;
 GO
