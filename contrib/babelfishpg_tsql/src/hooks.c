@@ -1,6 +1,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/heapam.h"
 #include "access/htup.h"
 #include "access/table.h"
 #include "catalog/heap.h"
@@ -2309,6 +2310,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 
 /*
  * Stores argument positions of default values of a PL/tsql function to bbf_function_ext catalog
+ * Updates the existing catalog entry if it already exists.
  */
 void
 pltsql_store_func_default_positions(ObjectAddress address, List *parameters, const char *queryString, int origname_location)
@@ -2393,7 +2395,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
+	MemSet(new_record_replaces, true, sizeof(new_record_replaces)); // if the entry already exists, we need to update it.
 
 	if (origname_location != -1 && queryString)
 	{
@@ -2459,6 +2461,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
 	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	new_record_replaces[Anum_bbf_function_ext_create_date - 1] = false; // never overwrite create date
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	/*
 	 * Save the original query in the catalog.
@@ -2503,6 +2506,188 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	ReleaseSysCache(proctup);
 	heap_freetuple(tuple);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+/*
+ * Update 'funcsignature', 'default_positions', 'flag_validity', 'flag_values', 
+ * 'modify_date', and 'definition' in 'babelfish_function_ext'
+ */
+void
+alter_bbf_function_ext(ObjectAddress address, ObjectWithArgs *owa, List *parameters, const char *queryString, int origname_location)
+{
+	Relation		rel;
+	TupleDesc		tupDesc;
+	ScanKeyData		key[2];
+	HeapTuple		proctup, oldtup, tup, sec_tuple;
+	NameData		*objname_data, *schemaname_data;
+	Form_pg_proc	form_proctup;
+	char			*func_signature;
+	char			*original_name = NULL;
+	List			*default_positions = NIL;
+	ListCell		*x;
+	int				idx;
+	uint64			flag_values = 0, flag_validity = 0;
+	char			*original_query = get_original_query_string();
+	Datum			values[BBF_FUNCTION_EXT_NUM_COLS];
+	bool			nulls[BBF_FUNCTION_EXT_NUM_COLS];
+	bool			replaces[BBF_FUNCTION_EXT_NUM_COLS];
+	char			*schemaname, *funcname;
+	TableScanDesc	tblscan;
+
+	// prepare to update the catalog
+	rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+	tupDesc = RelationGetDescr(rel);
+
+	// search for the row for update => build the key
+	// Keys: schema_name, obj_name
+
+	/* Fetch the object details from function */
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
+	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+
+	schemaname = get_namespace_name(form_proctup->pronamespace);
+	schemaname_data = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(schemaname_data->data, NAMEDATALEN, "%s", schemaname);
+	ScanKeyInit(&key[0],
+					Anum_bbf_function_ext_nspname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					NameGetDatum(schemaname_data));
+	DeconstructQualifiedName(owa->objname, &schemaname, &funcname);
+	objname_data = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(objname_data->data, NAMEDATALEN, "%s", funcname);
+	ScanKeyInit(&key[1],
+				Anum_bbf_function_ext_funcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(objname_data));
+
+	// scan
+	tblscan = table_beginscan_catalog(rel, 2, key);
+	
+	// get the scan result -> original tuple
+	oldtup = heap_getnext(tblscan, ForwardScanDirection);
+
+	if (!HeapTupleIsValid(oldtup)) {
+		table_endscan(tblscan);
+		table_close(rel, RowExclusiveLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("Cannot find the object \"%s\", because it does not exist or you do not have permission.", funcname)));
+	}
+
+	// build the tuple to insert
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, true, sizeof(replaces));
+
+	func_signature = (char *) get_pltsql_function_signature_internal(funcname,
+															parameters->length,
+															form_proctup->proargtypes.values);
+
+	idx = 0;
+	foreach(x, parameters)
+	{
+		FunctionParameter *fp = (FunctionParameter *) lfirst(x);
+
+		if (fp->defexpr)
+		{
+			default_positions = lappend(default_positions, (Node *) makeInteger(idx));
+		}
+		idx++;
+	}
+
+	if (origname_location != -1 && queryString)
+	{
+		/* To get original function name, utilize location of original name and query string. */
+		char *func_name_start, *temp;
+
+		func_name_start = (char *) queryString + origname_location;
+
+		/*
+		 * Could be the case that the fully qualified name is included,
+		 * so just find the text after '.' in the identifier.
+		 * We need to be careful as there can be '.' in the function name
+		 * itself, so we will break the loop if current string matches
+		 * with actual funcname.
+		 */
+		temp = strpbrk(func_name_start, ". ");
+		while (temp && temp[0] != ' ' &&
+			strncasecmp(funcname, func_name_start, strlen(funcname)) != 0 &&
+			strncasecmp(funcname, func_name_start + 1, strlen(funcname)) != 0) /* match after skipping delimiter */
+		{
+			temp += 1;
+			func_name_start = temp;
+			temp = strpbrk(func_name_start, ". ");
+		}
+
+		original_name = extract_identifier(func_name_start);
+		if (original_name == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("can't extract original function name.")));
+	}
+
+	/*
+	 * To store certain flag, Set corresponding bit in flag_validity which
+	 * tracks currently supported flag bits and then set/unset flag_values bit
+	 * according to flag settings.
+	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
+	 * being inserted in catalog if it is used.
+	 * Currently, Only two flags are supported.
+	 */
+	flag_validity |= FLAG_IS_ANSI_NULLS_ON;
+	if (!Transform_null_equals)
+		flag_values |= FLAG_IS_ANSI_NULLS_ON;
+	flag_validity |= FLAG_USES_QUOTED_IDENTIFIER;
+	if (pltsql_quoted_identifier)
+		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
+
+	values[Anum_bbf_function_ext_nspname -1] = NameGetDatum(schemaname_data);
+	values[Anum_bbf_function_ext_funcname -1] = NameGetDatum(objname_data);
+	if (original_name)
+		values[Anum_bbf_function_ext_orig_name -1] = CStringGetTextDatum(original_name);
+	else
+		nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
+	values[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(func_signature);
+	if (default_positions != NIL)
+		values[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
+	else
+		nulls[Anum_bbf_function_ext_default_positions - 1] = true;
+	values[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
+	values[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
+	replaces[Anum_bbf_function_ext_create_date - 1] = false; // never overwrite create date
+	values[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	/*
+	 * Save the original query in the catalog.
+	 */
+	if (original_query)
+		values[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(original_query);
+	else
+		nulls[Anum_bbf_function_ext_definition - 1] = true;
+	replaces[Anum_bbf_function_ext_default_positions - 1] = true;
+
+	tup = heap_modify_tuple(oldtup,
+							tupDesc,
+							values,
+							nulls,
+							replaces);
+
+	// if there is more than 1 match, throw error
+	sec_tuple = heap_getnext(tblscan, ForwardScanDirection);
+	if (HeapTupleIsValid(sec_tuple)) {
+		table_endscan(tblscan);
+		table_close(rel, RowExclusiveLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("There are multiple objects with the given name \"%s\".", funcname)));
+	}
+
+	CatalogTupleUpdate(rel, &tup->t_self, tup);
+
+	pfree(func_signature);
+	heap_freetuple(tup);
+	ReleaseSysCache(proctup);
+	table_endscan(tblscan);
+	table_close(rel, RowExclusiveLock);
 }
 
 /*

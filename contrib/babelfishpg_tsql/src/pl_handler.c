@@ -120,6 +120,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		DestReceiver *dest,
 		QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
+static void pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc);
+static void pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl acl);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
@@ -2054,6 +2056,85 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 	switch (nodeTag(parsetree))
 	{
+		case T_AlterFunctionStmt:
+		{
+			/*
+			* For ALTER PROC, we will:
+			* 1. Save important pg_proc metadata from the current proc (oid, proacl)
+			* 2. drop the current proc
+			* 3. create the new proc
+			* 4. update the pg_proc entry for the new proc with metadata from the old proc
+			* 5. update the babelfish_function_ext entry for the existing proc with new metadata based on the new proc
+			*/
+			AlterFunctionStmt *stmt = (AlterFunctionStmt *) parsetree;
+			bool 				isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+			bool 				needCleanup;
+			Oid					oldoid;
+			Acl					*proacl;
+			bool				isSameProc;
+			ObjectAddress 		address;
+			CreateFunctionStmt	*cfs;
+			ListCell 			*option, *location_cell = NULL;
+			int 				origname_location = -1;
+
+			/* All event trigger calls are done only when isCompleteQuery is true */
+			needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+
+			/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
+			PG_TRY();
+			{
+				if (isCompleteQuery)
+					EventTriggerDDLCommandStart(parsetree);
+			
+				foreach (option, stmt->actions)
+				{
+					DefElem *defel = (DefElem *) lfirst(option);
+					if (strcmp(defel->defname, "location") == 0)
+					{
+						/*
+						* location is an implicit option in tsql dialect,
+						* we use this mechanism to store location of function
+						* name so that we can extract original input function
+						* name from queryString.
+						*/
+						origname_location = intVal((Node *) defel->arg);
+						location_cell = option;
+						pfree(defel);
+					}
+				}
+
+				/* delete location cell if it exists as it is for internal use only */
+				if (location_cell)
+					stmt->actions = list_delete_cell(stmt->actions, location_cell);
+
+				/* make a CreateFunctionStmt to pass into CreateFunction() */
+				cfs = (CreateFunctionStmt *) makeNode(CreateFunctionStmt);
+				cfs->is_procedure = true;
+				cfs->replace = true;
+				cfs->funcname = stmt->func->objname;
+				cfs->parameters = stmt->func->objfuncargs;
+				cfs->returnType = NULL;
+				cfs->options = stmt->actions;
+
+				pltsql_proc_get_oid_proname_proacl(stmt, pstate, &oldoid, &proacl, &isSameProc);
+				if (!isSameProc) /* i.e. different signature */
+					RemoveFunctionById(oldoid);
+				address = CreateFunction(pstate, cfs); // if this is the same proc, will just update the existing one
+				pg_proc_update_oid_acl(address, oldoid, *proacl);
+				/* Update function/procedure related metadata in babelfish catalog */
+				if (isSameProc)
+					pltsql_store_func_default_positions(address, cfs->parameters, queryString, origname_location);
+				else // use a different function to lookup the catalog entry manually and update it
+					alter_bbf_function_ext(address, stmt->func, cfs->parameters, queryString, origname_location);
+			}
+			PG_FINALLY();
+			{
+				if (needCleanup)
+					EventTriggerEndCompleteQuery();
+			}
+			PG_END_TRY();
+			return;
+		}
 		case T_CreateFunctionStmt:
 			{
 				CreateFunctionStmt *stmt = (CreateFunctionStmt *) parsetree;
@@ -2191,18 +2272,13 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						EventTriggerSQLDrop(parsetree);
 						EventTriggerDDLCommandEnd(parsetree);
 					}
-
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					if (needCleanup)
 						EventTriggerEndCompleteQuery();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-
-				if (needCleanup)
-					EventTriggerEndCompleteQuery();
 				return;
 			}
         case T_TransactionStmt:
@@ -3342,6 +3418,106 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 				queryEnv, dest, qc);
+}
+
+/*
+ * Get the oid and acl of a TSQL proc by name. Raises an error if the proc doesn't exist, or if there are
+ * multiple procs with the same name (and different parameters). Also sets isSameFunc based on whether
+ * the found proc is the exact same proc as requested (i.e. the parameters match).
+ */
+static void 
+pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, Oid *oid, Acl **acl, bool *isSameFunc)
+{
+	int					spi_rc;
+	char				*funcname, *query;
+	bool				isnull;
+	Oid					funcOid;
+	
+	/* Look up the proc */
+	QualifiedNameGetCreationNamespace(stmt->func->objname, &funcname);
+	
+	if ((spi_rc = SPI_connect()) != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
+
+	query = psprintf("SELECT oid, proacl FROM pg_catalog.pg_proc WHERE proname = '%s'", funcname);
+	SPI_execute(query, true, 0);
+
+	if (SPI_processed > 1)
+		ereport(ERROR, 
+			(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+				errmsg("Multiple procedures are defined with the same name and different parameters. Please ensure that there is only one procedure with the target name before calling ALTER PROCEDURE")));
+
+	if (SPI_processed == 0)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				errmsg("No existing procedure found with the name for ALTER PROCEDURE")));
+	
+	/* exactly one existing procedure with the given name found, retrieve its oid and acl */
+	*oid = DatumGetObjectId(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
+	*acl = DatumGetAclPCopy(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 2, &isnull));
+
+	if ((spi_rc = SPI_finish()) != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
+
+	/* now we need to check if the function is exactly the same proc (i.e. the params match as well) or else
+	 * we will run into issues if we try to delete it.
+	 */
+	funcOid = LookupFuncWithArgs(stmt->objtype, stmt->func, true);
+
+	*isSameFunc = OidIsValid(funcOid);
+}
+
+/*
+ * Update the oid and acl of a pg_proc entry given its address
+ */
+static void
+pg_proc_update_oid_acl(ObjectAddress address, Oid oid, Acl acl)
+{
+	Relation		rel;
+	HeapTuple		proctup;
+	Form_pg_proc	form_proctup;
+	char		*physical_schemaname;
+
+	Datum		values[Natts_pg_proc];
+	bool		nulls[Natts_pg_proc];
+	bool		replaces[Natts_pg_proc];
+	HeapTuple	newtup;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
+	if (!HeapTupleIsValid(proctup))
+		return;
+
+	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+
+	if (!is_pltsql_language_oid(form_proctup->prolang))
+	{
+		ReleaseSysCache(proctup);
+		return;
+	}
+
+	physical_schemaname = get_namespace_name(form_proctup->pronamespace);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form_proctup->pronamespace);
+	}
+	
+	rel = table_open(ProcedureRelationId, RowExclusiveLock);
+
+	memset(values, 0, sizeof(values));
+	memset(nulls, 0, sizeof(nulls));
+	memset(replaces, 0, sizeof(replaces));
+	values[Anum_pg_proc_oid - 1] = ObjectIdGetDatum(oid);
+	replaces[Anum_pg_proc_oid - 1] = true;
+	
+	newtup = heap_modify_tuple(proctup, RelationGetDescr(rel), values, nulls, replaces);
+	CatalogTupleUpdate(rel, &newtup->t_self, newtup);
+
+	/* Clean up */
+	ReleaseSysCache(proctup);
+
+	table_close(rel, RowExclusiveLock);
 }
 
 /*

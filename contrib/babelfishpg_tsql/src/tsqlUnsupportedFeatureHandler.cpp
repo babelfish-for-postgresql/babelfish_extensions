@@ -321,9 +321,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx)
 {
-	if (ctx->ALTER())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE, "ALTER PROCEDURE", getLineAndPos(ctx->ALTER()));
-
 	/* escape hatch of SCHEMABINDING option*/
 	if (escape_hatch_schemabinding_procedure != EH_IGNORE)
 	{

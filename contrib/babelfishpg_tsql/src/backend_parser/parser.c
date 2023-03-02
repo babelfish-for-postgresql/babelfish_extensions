@@ -179,6 +179,9 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case OUTER_P:
 			cur_token_length = 5;
 			break;
+		case ALTER:
+			cur_token_length = 5;
+			break;
 		default:
 			return cur_token;
 	}
@@ -311,6 +314,15 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case OUTER_P:
 			if (next_token == TSQL_APPLY)
 				cur_token = TSQL_OUTER;
+			break;
+		case ALTER:
+			switch (next_token)
+			{
+				case PROCEDURE:
+				case TSQL_PROC:
+					cur_token = TSQL_ALTER;
+					break;
+			}
 			break;
 		default:
 			break;

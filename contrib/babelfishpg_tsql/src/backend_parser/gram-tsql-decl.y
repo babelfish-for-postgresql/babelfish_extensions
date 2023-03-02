@@ -14,6 +14,7 @@
 
 %type <node> tsql_stmt
 
+%type <node> tsql_AlterFunctionStmt
 %type <node> tsql_CreateFunctionStmt tsql_VariableSetStmt tsql_CreateTrigStmt tsql_TransactionStmt tsql_UpdateStmt tsql_DeleteStmt tsql_IndexStmt
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <node> tsql_CreateLoginStmt tsql_AlterLoginStmt tsql_DropLoginStmt
@@ -114,7 +115,7 @@
 	TSQL_MUST_CHANGE TSQL_CHECK_EXPIRATION TSQL_CHECK_POLICY TSQL_CREDENTIAL TSQL_SID TSQL_OLD_PASSWORD
 	TSQL_UNLOCK TSQL_VALUES
 	TSQL_NVARCHAR
-	TSQL_CROSS TSQL_OUTER TSQL_APPLY
+	TSQL_CROSS TSQL_OUTER TSQL_APPLY TSQL_ALTER
 
 /*
  * WITH_paren is added to support table hints syntax WITH (<table_hint> [[,]...n]),

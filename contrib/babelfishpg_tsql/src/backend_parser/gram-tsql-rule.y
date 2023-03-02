@@ -2192,6 +2192,7 @@ tsql_stmt :
 			| AlterExtensionContentsStmt
 			| AlterFdwStmt
 			| AlterFunctionStmt
+			| tsql_AlterFunctionStmt
 			| AlterGroupStmt
 			| tsql_AlterLoginStmt
 			| AlterObjectDependsStmt
@@ -3726,6 +3727,29 @@ tsql_CreateFunctionStmt:
 					n->options = list_make3(lang, body, location);
 
 					$$ = (Node *)n;
+				}
+		;
+
+tsql_AlterFunctionStmt:
+			TSQL_ALTER proc_keyword tsql_func_name tsql_createproc_args
+			tsql_createfunc_options AS tokens_remaining
+				{
+					ObjectWithArgs *owa = makeNode(ObjectWithArgs);
+					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
+					DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
+					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($7)), @7);
+					DefElem *location = makeDefElem("location", (Node *) makeInteger(@3), @3);
+
+					/* Fill in the ObjectWithArgs node */
+					owa->objname = $3;
+					owa->objargs = extractArgTypes($4);
+					owa->objfuncargs = $4;
+
+					/* now fill in the AlterFunctionStmt node */
+					n->objtype = OBJECT_PROCEDURE;
+					n->func = owa;
+					n->actions = list_concat(list_make3(lang, body, location), $5); // piggy-back on actions to just put the new proc body instead
+					$$ = (Node *) n;
 				}
 		;
 
