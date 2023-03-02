@@ -100,6 +100,12 @@ select case when dbts_after_insert > prev_dbts then 'increasing' else 'not incre
     where prev_dbts is not null;
 go
 
+-- tests for BABEL-3819
+select case when CAST(rv as int) = CAST(CAST(xmin AS varchar) AS int) then 'equal' else 'not-equal' end from babel_3139_t;
+go
+
+select case when CAST(timestamp as int) = CAST(CAST(xmin AS varchar) AS int) then 'equal' else 'not-equal' end from babel_3819_t;
+go
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go
