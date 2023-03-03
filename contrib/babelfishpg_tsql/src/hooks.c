@@ -2580,7 +2580,7 @@ alter_bbf_function_ext(ObjectAddress address, ObjectWithArgs *owa, List *paramet
 	MemSet(replaces, false, sizeof(replaces));
 
 	func_signature = (char *) get_pltsql_function_signature_internal(funcname,
-															parameters->length,
+															parameters ? parameters->length : 0,
 															form_proctup->proargtypes.values);
 
 	idx = 0;
