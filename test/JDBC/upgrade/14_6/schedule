@@ -23,7 +23,6 @@ TestInt
 TestMoney
 TestNumeric
 TestReal
-TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
