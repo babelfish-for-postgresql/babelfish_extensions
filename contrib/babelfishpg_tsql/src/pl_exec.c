@@ -4627,8 +4627,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * When there is cross db reference to sys or information_schema schemas,
 		 * Change the session property.
 		 */
+		if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
+		{
+			func_check(expr);
+			stmt->schema_name = "sys";
+		}
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 			set_session_properties(stmt->db_name);
+	}
+	if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
+	{
+		func_check(expr);
 	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
@@ -10227,4 +10236,97 @@ char *
 get_original_query_string(void)
 {
 	return original_query_string;
+}
+
+void func_check(PLtsql_expr *expr)
+{
+	/* remove between spaces.*/
+	while(true)
+	{
+		if(strcasestr(expr->query, "dbo. "))
+		{
+			char* match;
+			match = strcasestr(expr->query, "dbo. ");
+			if (match != NULL)
+			{
+				size_t len = strlen(expr->query);
+				size_t n1 = match - expr->query;   // # bytes before the match
+				size_t n2 = strlen("dbo. ");      // # bytes in the pattern string
+				size_t n3 = strlen("dbo.");  // # bytes in the replacement string
+				size_t n4 = len - n1 - n2;        // # bytes after the pattern in the source string
+				char *result = malloc(n1 + n3 + n4 + 1);
+				if (result != NULL) {
+					// copy the initial portion
+					memcpy(result, expr->query, n1);
+					// copy the replacement string
+					memcpy(result + n1, "sys.", n3);
+					// copy the trailing bytes, including the null terminator
+					memcpy(result + n1 + n3, match + n2, n4 + 1);
+				}
+				expr->query = result;
+			}
+		}
+		else
+			break;
+	}
+	while(true)
+	{
+		char* match;
+		if(strcasestr(expr->query, "dbo.sysprocesses"))
+		{
+			match = strcasestr(expr->query, "dbo.sysprocesses");
+		}
+		else if(strcasestr(expr->query, "dbo.syscharsets"))
+		{
+			match = strcasestr(expr->query, "dbo.syscharsets");
+		}
+		else if(strcasestr(expr->query, "dbo.sysconfigures"))
+		{
+			match = strcasestr(expr->query, "dbo.sysconfigures");
+		}
+		else if(strcasestr(expr->query, "dbo.syscurconfigs"))
+		{
+			match = strcasestr(expr->query, "dbo.syscurconfigs");
+		}
+		else if(strcasestr(expr->query, "dbo.syslanguages"))
+		{
+			match = strcasestr(expr->query, "dbo.syslanguages");
+		}
+		else if(strcasestr(expr->query, "dbo.syscolumns"))
+		{
+			match = strcasestr(expr->query, "dbo.syscolumns");
+		}
+		else if(strcasestr(expr->query, "dbo.sysforeignkeys"))
+		{
+			match = strcasestr(expr->query, "dbo.sysforeignkeys");
+		}
+		else if(strcasestr(expr->query, "dbo.sysindexes"))
+		{
+			match = strcasestr(expr->query, "dbo.sysindexes");
+		}
+		else if(strcasestr(expr->query, "dbo.sysobjects"))
+		{
+			match = strcasestr(expr->query, "dbo.sysobjects");
+		}
+		else
+			break;
+		if (match != NULL)
+		{
+			size_t len = strlen(expr->query);
+			size_t n1 = match - expr->query;   // # bytes before the match
+			size_t n2 = strlen("dbo.");      // # bytes in the pattern string
+			size_t n3 = strlen("sys.");  // # bytes in the replacement string
+			size_t n4 = len - n1 - n2;        // # bytes after the pattern in the source string
+			char *result = malloc(n1 + n3 + n4 + 1);
+			if (result != NULL) {
+				// copy the initial portion
+				memcpy(result, expr->query, n1);
+				// copy the replacement string
+				memcpy(result + n1, "sys.", n3);
+				// copy the trailing bytes, including the null terminator
+				memcpy(result + n1 + n3, match + n2, n4 + 1);
+			}
+			expr->query = result;
+		}
+	}
 }
