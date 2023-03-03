@@ -3434,15 +3434,15 @@ pltsql_proc_get_oid_proname_proacl(AlterFunctionStmt *stmt, ParseState *pstate, 
 	int					spi_rc;
 	char				*funcname, *query;
 	bool				isnull;
-	Oid					funcOid;
+	Oid					schemaOid, funcOid;
 	
 	/* Look up the proc */
-	QualifiedNameGetCreationNamespace(stmt->func->objname, &funcname);
+	schemaOid = QualifiedNameGetCreationNamespace(stmt->func->objname, &funcname);
 	
 	if ((spi_rc = SPI_connect()) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect() failed in pltsql_proc_get_oid_proname_proacl with return code %d", spi_rc);
 
-	query = psprintf("SELECT oid, proacl FROM pg_catalog.pg_proc WHERE proname = '%s'", funcname);
+	query = psprintf("SELECT oid, proacl FROM pg_catalog.pg_proc WHERE proname = '%s' AND pronamespace = %d", funcname, schemaOid);
 	SPI_execute(query, true, 0);
 
 	if (SPI_processed > 1)
