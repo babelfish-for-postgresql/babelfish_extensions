@@ -2077,6 +2077,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			ListCell 			*option, *location_cell = NULL;
 			int 				origname_location = -1;
 
+			if (stmt->objtype != OBJECT_PROCEDURE)
+				break;
+
 			/* All event trigger calls are done only when isCompleteQuery is true */
 			needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
