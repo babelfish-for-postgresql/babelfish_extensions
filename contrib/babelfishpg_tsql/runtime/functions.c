@@ -1952,7 +1952,7 @@ pg_extension_config_remove(PG_FUNCTION_ARGS)
 				 errmsg("table \"%s\" is not a member of the extension being created",
 						tablename)));
 	
-	extension_config_remove(CurrentExtensionObject, tableoid);
+	extension_config_remove_wrapper(CurrentExtensionObject, tableoid);
 
 	PG_RETURN_VOID();
 }
