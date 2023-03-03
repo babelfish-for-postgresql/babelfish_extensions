@@ -2577,7 +2577,7 @@ alter_bbf_function_ext(ObjectAddress address, ObjectWithArgs *owa, List *paramet
 	// build the tuple to insert
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, false, sizeof(nulls));
-	MemSet(replaces, true, sizeof(replaces));
+	MemSet(replaces, false, sizeof(replaces));
 
 	func_signature = (char *) get_pltsql_function_signature_internal(funcname,
 															parameters->length,
@@ -2641,21 +2641,19 @@ alter_bbf_function_ext(ObjectAddress address, ObjectWithArgs *owa, List *paramet
 	if (pltsql_quoted_identifier)
 		flag_values |= FLAG_USES_QUOTED_IDENTIFIER;
 
-	values[Anum_bbf_function_ext_nspname -1] = NameGetDatum(schemaname_data);
-	values[Anum_bbf_function_ext_funcname -1] = NameGetDatum(objname_data);
-	if (original_name)
-		values[Anum_bbf_function_ext_orig_name -1] = CStringGetTextDatum(original_name);
-	else
-		nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
 	values[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(func_signature);
+	replaces[Anum_bbf_function_ext_funcsignature - 1] = true;
 	if (default_positions != NIL)
 		values[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
 	else
 		nulls[Anum_bbf_function_ext_default_positions - 1] = true;
+	replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 	values[Anum_bbf_function_ext_flag_validity - 1] = UInt64GetDatum(flag_validity);
+	replaces[Anum_bbf_function_ext_flag_validity - 1] = true;
 	values[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
-	replaces[Anum_bbf_function_ext_create_date - 1] = false; // never overwrite create date
+	replaces[Anum_bbf_function_ext_flag_values - 1] = true;
 	values[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	replaces[Anum_bbf_function_ext_modify_date - 1] = true;
 	/*
 	 * Save the original query in the catalog.
 	 */
@@ -2663,7 +2661,7 @@ alter_bbf_function_ext(ObjectAddress address, ObjectWithArgs *owa, List *paramet
 		values[Anum_bbf_function_ext_definition - 1] = CStringGetTextDatum(original_query);
 	else
 		nulls[Anum_bbf_function_ext_definition - 1] = true;
-	replaces[Anum_bbf_function_ext_default_positions - 1] = true;
+	replaces[Anum_bbf_function_ext_definition - 1] = true;
 
 	tup = heap_modify_tuple(oldtup,
 							tupDesc,
