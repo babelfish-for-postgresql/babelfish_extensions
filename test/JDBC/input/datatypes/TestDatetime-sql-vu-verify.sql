@@ -814,3 +814,44 @@ GO
 DROP TABLE Datetime_source_type_table
 GO
 
+SELECT * FROM dateadd_numeric_representation_helper_view
+GO
+
+DROP VIEW dateadd_numeric_representation_helper_view
+GO
+
+SELECT * FROM dateadd_view_1
+GO
+
+DROP VIEW dateadd_view_1
+GO
+
+SELECT * FROM dateadd_view_2
+GO
+
+DROP VIEW dateadd_view_2
+GO
+
+SELECT * FROM dateadd_view_3
+GO
+
+DROP VIEW dateadd_view_3
+GO
+
+SELECT * FROM dateadd_view_4
+GO
+
+DROP VIEW dateadd_view_4
+GO
+
+SELECT * FROM dateadd_view_5
+GO
+
+DROP VIEW dateadd_view_5
+GO
+
+SELECT * FROM dateadd_view_6
+GO
+
+DROP VIEW dateadd_view_6
+GO

@@ -1130,7 +1130,7 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-        return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
+        RAISE EXCEPTION 'Argument data type bit is invalid for argument 2 of dateadd function.';
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
