@@ -222,7 +222,6 @@ smalldatetime
 
 CREATE VIEW Datetime_view5 as (
     SELECT 
-        DATEADD(minute, CAST(1 as BIT), CAST(2.5 as DECIMAL)) as re1,
         DATEADD(minute, CAST(1 as DECIMAL), CAST(2.5 as DECIMAL)) as re2,
         DATEADD(minute, CAST(1 as NUMERIC(30,8)), CAST(2.5 as NUMERIC(30,8))) as re3,
         DATEADD(minute, CAST(1 as FLOAT), CAST(2.5 as FLOAT)) as re4,
@@ -233,7 +232,6 @@ CREATE VIEW Datetime_view5 as (
         DATEADD(minute, CAST(1 as TINYINT), CAST(2.5 as TINYINT)) as re9,
         DATEADD(minute, CAST(1 as MONEY), CAST(2.5 as MONEY)) as re10,
         DATEADD(minute, CAST(1 as SMALLMONEY), CAST(2.5 as SMALLMONEY)) as re11,
-        DATEADD(minute, CAST(-1 as BIT), CAST(-2.5 as BIT)) as re12,
         DATEADD(minute, CAST(-1 as DECIMAL), CAST(-2.5 as DECIMAL)) as re13,
         DATEADD(minute, CAST(-1 as NUMERIC(30,8)), CAST(-2.5 as NUMERIC(30,8))) as re14,
         DATEADD(minute, CAST(-1 as FLOAT), CAST(-2.5 as FLOAT)) as re15,
@@ -506,3 +504,31 @@ GO
 ~~ROW COUNT: 1~~
 
 
+CREATE VIEW dateadd_numeric_representation_helper_view AS
+SELECT * FROM dateadd_numeric_representation_helper('year',1,1.5)
+GO
+
+
+CREATE VIEW dateadd_view_1 AS
+SELECT * FROM sys.dateadd('year',1,cast(1.5 as REAL))
+GO
+
+CREATE VIEW dateadd_view_2 AS
+SELECT * FROM sys.dateadd('year',1,cast(1.5 as NUMERIC(30,8)))
+GO
+
+CREATE VIEW dateadd_view_3 AS
+SELECT * FROM sys.dateadd('year',1,cast(1.5 as DECIMAL))
+GO
+
+CREATE VIEW dateadd_view_4 AS
+SELECT * FROM sys.dateadd('year',1,cast(1 as BIT))
+GO
+
+CREATE VIEW dateadd_view_5 AS
+SELECT * FROM sys.dateadd('year',1,cast(1.5 as FLOAT))
+GO
+
+CREATE VIEW dateadd_view_6 AS
+SELECT * FROM sys.dateadd('year',1,cast(1.5 as FLOAT))
+GO
