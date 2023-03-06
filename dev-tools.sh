@@ -32,8 +32,11 @@ if [ ! $1 ]; then
     echo "  pg_upgrade SOURCE_WS [TARGET_WS]"
     echo "      run pg_upgrade from SOURCE_WS to TARGET_WS"
     echo ""
-    echo "  test INPUT_DIR [MIGRATION_MODE]"
-    echo "      run JDBC test, default migration_mode is single-db"
+    echo "  test normal [MIGRATION_MODE] [TEST_BASE_DIR]"
+    echo "      run a normal JDBC test, default migration mode and test dir are single-db and input, respectively"
+    echo ""
+    echo "  test TEST_MODE MIGRATION_MODE TEST_BASE_DIR"
+    echo "      run a prepare/verify JDBC test using a schedule file in TEST_BASE_DIR"
     echo ""
     echo "  minor_version_upgrade SOURCE_WS [TARGET_WS]"
     echo "      upgrade minor version using ALTER EXTENSION ... UPDATE"
@@ -60,9 +63,32 @@ if [ "$1" == "pg_upgrade" ] || [ "$1" == "minor_version_upgrade" ] || [ "$1" == 
     TARGET_WS=$3
 elif [ "$1" == "test" ]; then
     TARGET_WS=$CUR_WS
+    TEST_MODE=$2
+    if [ ! $TEST_MODE ]; then
+        echo "Error: TEST_MODE should be specified, normal, prepare or verify" 1>&2
+        exit 1
+    elif [ "${TEST_MODE}" != "normal" ] && [ "${TEST_MODE}" != "prepare" ] && [ "${TEST_MODE}" != "verify" ]; then
+        echo "Error: TEST_MODE should be one of: normal, prepare or verify" 1>&2
+        exit 1
+    fi
+
     MIGRATION_MODE=$3
-    if [ ! $MIGRATION_MODE ]; then
-        MIGRATION_MODE="single-db"
+    if [ ! ${MIGRATION_MODE} ]; then
+        if [ "${TEST_MODE?}" == "normal" ]; then
+            MIGRATION_MODE="single-db"
+        else
+            echo "Error: MIGRATION_MODE should be specified, single-db or multi-db" 1>&2
+            exit 1
+        fi
+    fi
+
+    TEST_BASE_DIR=$4
+    if [ ! $TEST_BASE_DIR ]; then
+        if [ "${TEST_MODE?}" == "normal" ]; then
+            TEST_BASE_DIR="input"
+        else
+            echo "Error: TEST_BASE_DIR should be specified" 1>&2
+        fi
     fi
 fi
 if [ ! $TARGET_WS ]; then
@@ -211,8 +237,6 @@ elif [ "$1" == "pg_upgrade" ]; then
     cd $TARGET_WS
     if [ ! -d "./upgrade" ]; then
         mkdir upgrade
-    else
-        rm upgrade/*
     fi
     cd upgrade
     ../postgres/bin/pg_upgrade -U $USER \
@@ -235,18 +259,44 @@ elif [ "$1" == "pg_upgrade" ]; then
         "SELECT pg_reload_conf();"
     exit 0
 elif [ "$1" == "test" ]; then
-    INPUT_DIR=$2
-    cd $TARGET_WS/postgres
 
+    # Set migration_mode
+    cd $TARGET_WS/postgres
     bin/psql -d $TEST_DB -U $USER -c \
         "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '$MIGRATION_MODE';"
     bin/psql -d $TEST_DB -U $USER -c \
         "SELECT pg_reload_conf();"
 
+    # Remove output directory
     cd $CUR_WS/babelfish_extensions/test/JDBC
-    rm -rf output
-    export inputFilesPath=$INPUT_DIR
+    rm -rf output temp_schedule
+
+    export inputFilesPath=input
+    if [ "$TEST_MODE" == "normal" ]; then
+        export inputFilesPath=${TEST_BASE_DIR?}
+    elif [ "$TEST_MODE" == "prepare" ]; then
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" $TEST_BASE_DIR/schedule); do
+          if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 
+            printf '%s\n' "ERROR: Cannot find Test file "$filename"-vu-prepare or "$filename"-vu-verify in input directory !!" >&2
+            exit 1
+          fi
+        done
+        cat $TEST_BASE_DIR/schedule > temp_schedule
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" temp_schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" temp_schedule
+        done
+        export scheduleFile=temp_schedule
+    elif [ "$TEST_MODE" == "verify" ]; then
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" $TEST_BASE_DIR/schedule); do
+          trimmed=$(awk '{$1=$1;print}' <<< "$filename")
+          echo $trimmed-vu-verify >> temp_schedule;
+          echo $trimmed-vu-cleanup >> temp_schedule;
+        done
+        export scheduleFile=temp_schedule
+    fi
+
     mvn test
+    rm -rf temp_schedule
     exit 0
 elif [ "$1" == "minor_version_upgrade" ]; then
     echo "Building from $SOURCE_WS..."
