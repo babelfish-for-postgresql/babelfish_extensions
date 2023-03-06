@@ -41,5 +41,8 @@ go
 drop table babel_3139_t;
 go
 
+drop table babel_3819_t;
+go
+
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go
