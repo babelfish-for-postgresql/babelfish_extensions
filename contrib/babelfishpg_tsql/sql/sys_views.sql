@@ -1523,7 +1523,10 @@ SELECT
   , CAST('VIEW'as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
-  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(case when (c.relnamespace::regnamespace::text = 'sys') then 1
+	when c.relname in (select name from sys.shipped_objects_not_in_sys nis
+		where nis.name = c.relname and nis.schemaid = c.relnamespace and nis.type = 'V') then 1
+	else 0 end as sys.bit) AS is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(0 as sys.BIT) AS is_replicated
