@@ -48,3 +48,29 @@ go
 
 select cast('12:15:04.1234567' as TIME(7))
 go
+
+-- BABEL-3570
+CREATE FUNCTION BABEL_3570_function (@p datetime2(7)) RETURNS INT 
+AS
+BEGIN
+RETURN 0
+END
+GO
+
+SELECT BABEL_3570_function(getdate())
+GO
+
+DECLARE @BABEL_3570_dt datetime = getdate()
+SELECT BABEL_3570_function(@BABEL_3570_dt)
+GO
+
+CREATE PROC BABEL_3570_proc @p datetime2(7) as print 'pass'
+GO
+
+DECLARE @BABEL_3570_dt datetime = getdate()
+EXEC BABEL_3570_proc @BABEL_3570_dt
+GO
+
+DROP FUNCTION BABEL_3570_function
+DROP PROC BABEL_3570_proc
+GO
