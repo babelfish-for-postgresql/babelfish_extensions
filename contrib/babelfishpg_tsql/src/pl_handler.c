@@ -222,6 +222,7 @@ bool        pltsql_trace_exec_codes = false;
 bool        pltsql_trace_exec_counts = false;
 bool        pltsql_trace_exec_time = false;
 
+bool		is_volatility_specified = false;
 tsql_identity_insert_fields tsql_identity_insert = {false, InvalidOid, InvalidOid};
 
 /* Hook for plugins */
@@ -2109,6 +2110,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							location_cell = option;
 							pfree(defel);
 						}
+						else if (strcmp(defel->defname, "volatility") == 0)
+						{
+							is_volatility_specified = true;
+						}
 					}
 
 					/* delete location cell if it exists as it is for internal use only */
@@ -2147,7 +2152,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 
 					address = CreateFunction(pstate, stmt);
-
+					is_volatility_specified = false;
 					/* Store function/procedure related metadata in babelfish catalog */
 					pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
 
@@ -4516,7 +4521,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		ReleaseSysCache(tuple);
 		
 		/* If the function has TVP it should be declared as VOLATILE by default */
-		if(!babelfish_dump_restore && prokind == PROKIND_FUNCTION && !(is_mstvf || is_itvf || has_table_var || is_dml_trigger))
+		if(!babelfish_dump_restore && !is_volatility_specified && prokind == PROKIND_FUNCTION && !(is_mstvf || is_itvf || has_table_var || is_dml_trigger))
 		{
 			Relation rel;
 			HeapTuple tup;
