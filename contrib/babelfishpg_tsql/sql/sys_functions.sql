@@ -2850,8 +2850,8 @@ BEGIN
      * This if else block is added to set the create_if_missing and append_modifier flags.
      * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
      * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
-     * Comparisons for comparison_string are case-sensitive.
-     */    
+     * Comparisons for comparison_string are case-sensitive.    
+     */
     IF word_count = 1 THEN
         json_path = path_split_array[1];
         create_if_missing = TRUE;
@@ -2969,7 +2969,6 @@ EXCEPTION
 END;        
 $BODY$
 LANGUAGE plpgsql STABLE;
-
 
 
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)

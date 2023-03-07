@@ -726,7 +726,7 @@ is_json_modify(List *name)
         {
             Node *schema = (Node *) linitial(name);
             Node *func = (Node *) lsecond(name);
-            if(strcmp("sys", strVal(schema)) == 0 &&
+            if(strncmp("sys", strVal(schema), 3) == 0 &&
                 strncmp("json_modify", strVal(func), 11) == 0)
                 return true;
             return false;
