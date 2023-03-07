@@ -10,8 +10,6 @@
 
 /* Maximum precision for datetime2 */
 #define MAX_DATETIME2_PRECISION 7
-/* Maximum precision for round off datetime2 */
-#define MAX_TIMESTAMP_PRECISION_TSQL 7
 
 /* Datetime2 limits */
 /* lower bound: 0001-01-01 00:00:00.000 */

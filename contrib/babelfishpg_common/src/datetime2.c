@@ -154,7 +154,7 @@ datetime2_in(PG_FUNCTION_ARGS)
 static void
 AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod)
 {
-	static const int64 TimestampScales[MAX_TIMESTAMP_PRECISION_TSQL + 1] = {
+	static const int64 TimestampScales[MAX_DATETIME2_PRECISION + 1] = {
 		INT64CONST(1000000),
 		INT64CONST(100000),
 		INT64CONST(10000),
@@ -165,7 +165,7 @@ AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod)
 		INT64CONST(1)
 	};
 
-	static const int64 TimestampOffsets[MAX_TIMESTAMP_PRECISION_TSQL + 1] = {
+	static const int64 TimestampOffsets[MAX_DATETIME2_PRECISION + 1] = {
 		INT64CONST(500000),
 		INT64CONST(50000),
 		INT64CONST(5000),
@@ -177,7 +177,7 @@ AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod)
 	};
 
 	/* new offset for negative timestamp value */
-	static const int64 TimestampOffsetsNegative[MAX_TIMESTAMP_PRECISION_TSQL + 1] = {
+	static const int64 TimestampOffsetsNegative[MAX_DATETIME2_PRECISION + 1] = {
 		INT64CONST(499999),
 		INT64CONST(49999),
 		INT64CONST(4999),
@@ -193,11 +193,11 @@ AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod)
 	if (!TIMESTAMP_NOT_FINITE(*time)
 		&& (typmod != -1))
 	{
-		if (typmod < 0 || typmod > MAX_TIMESTAMP_PRECISION_TSQL)
+		if (typmod < 0 || typmod > MAX_DATETIME2_PRECISION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("datetime2(%d) precision must be between %d and %d",
-							typmod, 0, MAX_TIMESTAMP_PRECISION_TSQL)));
+							typmod, 0, MAX_DATETIME2_PRECISION)));
 
 		if (*time >= INT64CONST(0))
 		{	
