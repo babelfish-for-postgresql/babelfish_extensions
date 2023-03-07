@@ -4610,6 +4610,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	if (stmt->original_query)
 		original_query_string = stmt->original_query;
 
+	/* For the list of sys% to be accessible from dbo, if there are white spaces
+	 * then removes the white spaces between the schema name and view name
+	 */
+	replace_schema_name(expr, "dbo. ", "dbo.");
+
 	if (stmt->is_cross_db)
 	{
 		char *login = GetUserNameFromId(GetSessionUserId(), false);
@@ -4627,7 +4632,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * When there is cross db reference to sys or information_schema schemas,
 		 * Change the session property.
 		 */
-		if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
+		if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0 && strcasestr(expr->query, "dbo.sys"))
 		{
 			func_check(expr);
 			stmt->schema_name = "sys";
@@ -10238,28 +10243,30 @@ get_original_query_string(void)
 	return original_query_string;
 }
 
-void func_check(PLtsql_expr *expr)
+/*
+ * For the given expr query, replace the catalog_name with the new_catalog_name.
+ */
+void replace_schema_name(PLtsql_expr *expr, char* catalog_name, char* new_catalog_name)
 {
-	/* remove between spaces.*/
 	while(true)
 	{
-		if(strcasestr(expr->query, "dbo. "))
+		if(strcasestr(expr->query, catalog_name))
 		{
 			char* match;
-			match = strcasestr(expr->query, "dbo. ");
+			match = strcasestr(expr->query, catalog_name);
 			if (match != NULL)
 			{
 				size_t len = strlen(expr->query);
 				size_t n1 = match - expr->query;   // # bytes before the match
-				size_t n2 = strlen("dbo. ");      // # bytes in the pattern string
-				size_t n3 = strlen("dbo.");  // # bytes in the replacement string
+				size_t n2 = strlen(catalog_name);      // # bytes in the pattern string
+				size_t n3 = strlen(new_catalog_name);  // # bytes in the replacement string
 				size_t n4 = len - n1 - n2;        // # bytes after the pattern in the source string
 				char *result = malloc(n1 + n3 + n4 + 1);
 				if (result != NULL) {
 					// copy the initial portion
 					memcpy(result, expr->query, n1);
 					// copy the replacement string
-					memcpy(result + n1, "sys.", n3);
+					memcpy(result + n1, new_catalog_name, n3);
 					// copy the trailing bytes, including the null terminator
 					memcpy(result + n1 + n3, match + n2, n4 + 1);
 				}
@@ -10269,64 +10276,22 @@ void func_check(PLtsql_expr *expr)
 		else
 			break;
 	}
-	while(true)
+}
+
+/*
+ * In the given expr query if the query contains the list_of_dbo_catalog then
+ * these dbo catalog are replaced with the respective list_of_sys_catalog.
+ */
+void func_check(PLtsql_expr *expr)
+{
+	char* list_of_dbo_catalog[10]= {"dbo.sysprocesses", "dbo.syscharsets", "dbo.sysconfigures", "dbo.syscurconfigs", "dbo.syslanguages", "dbo.syscolumns", "dbo.sysforeignkeys", "dbo.sysindexes", "dbo.sysobjects"};
+	char* list_of_sys_catalog[10]= {"sys.sysprocesses", "sys.syscharsets", "sys.sysconfigures", "sys.syscurconfigs", "sys.syslanguages", "sys.syscolumns", "sys.sysforeignkeys", "sys.sysindexes", "sys.sysobjects"};
+
+	for(int i=0; i<9; i++)
 	{
-		char* match;
-		if(strcasestr(expr->query, "dbo.sysprocesses"))
+		if(strcasestr(expr->query, list_of_dbo_catalog[i]))
 		{
-			match = strcasestr(expr->query, "dbo.sysprocesses");
-		}
-		else if(strcasestr(expr->query, "dbo.syscharsets"))
-		{
-			match = strcasestr(expr->query, "dbo.syscharsets");
-		}
-		else if(strcasestr(expr->query, "dbo.sysconfigures"))
-		{
-			match = strcasestr(expr->query, "dbo.sysconfigures");
-		}
-		else if(strcasestr(expr->query, "dbo.syscurconfigs"))
-		{
-			match = strcasestr(expr->query, "dbo.syscurconfigs");
-		}
-		else if(strcasestr(expr->query, "dbo.syslanguages"))
-		{
-			match = strcasestr(expr->query, "dbo.syslanguages");
-		}
-		else if(strcasestr(expr->query, "dbo.syscolumns"))
-		{
-			match = strcasestr(expr->query, "dbo.syscolumns");
-		}
-		else if(strcasestr(expr->query, "dbo.sysforeignkeys"))
-		{
-			match = strcasestr(expr->query, "dbo.sysforeignkeys");
-		}
-		else if(strcasestr(expr->query, "dbo.sysindexes"))
-		{
-			match = strcasestr(expr->query, "dbo.sysindexes");
-		}
-		else if(strcasestr(expr->query, "dbo.sysobjects"))
-		{
-			match = strcasestr(expr->query, "dbo.sysobjects");
-		}
-		else
-			break;
-		if (match != NULL)
-		{
-			size_t len = strlen(expr->query);
-			size_t n1 = match - expr->query;   // # bytes before the match
-			size_t n2 = strlen("dbo.");      // # bytes in the pattern string
-			size_t n3 = strlen("sys.");  // # bytes in the replacement string
-			size_t n4 = len - n1 - n2;        // # bytes after the pattern in the source string
-			char *result = malloc(n1 + n3 + n4 + 1);
-			if (result != NULL) {
-				// copy the initial portion
-				memcpy(result, expr->query, n1);
-				// copy the replacement string
-				memcpy(result + n1, "sys.", n3);
-				// copy the trailing bytes, including the null terminator
-				memcpy(result + n1 + n3, match + n2, n4 + 1);
-			}
-			expr->query = result;
+			replace_schema_name(expr, list_of_dbo_catalog[i], list_of_sys_catalog[i]);
 		}
 	}
 }

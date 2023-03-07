@@ -6,8 +6,16 @@ int
 ~~END~~
 
 
--- ignore white space between schema name and view name
-SELECT (case when count(*)>=0 THEN 1 END) FROM dbo. sysprocesses;
+-- should ignore white space between schema name and view name
+SELECT (case when count(*)>=0 THEN 1 END) FROM dbo. sysconfigures;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT (case when count(*)>=0 THEN 1 END) FROM dbo.             syscurconfigs;
 GO
 ~~START~~
 int
@@ -17,6 +25,15 @@ int
 
 -- case-insensitive
 SELECT (case when count(*)>=0 THEN 1 END) FROM DBo.SySObjEcTS
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- should ignore case-insensitive and whitespaces
+SELECT (case when count(*)>=0 THEN 1 END) FROM DBo.                  sYsLANGuAgEs
 GO
 ~~START~~
 int
@@ -36,8 +53,26 @@ int
 ~~END~~
 
 
+-- ignore case-sensitive and white space between schema name and view name
+SELECT (case when count(*)>=0 THEN 1 END) FROM db1.dbo.       sYspROceSSes;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 -- multiple select statements
 select (select (case when count(*)>=0 THEN 1 END) from dbo.sysprocesses) as x, (select (case when count(*)>=0 THEN 1 END) from db1.dbo.sysobjects) as y, (select (case when count(*)>=0 THEN 1 END) from dbo.syscharsets) as z;
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+
+-- multiple select stataments with white-spaces and case-sensitive
+select (select (case when count(*)>=0 THEN 1 END) from dbo.sysprocesses) as x, (select (case when count(*)>=0 THEN 1 END) from db1.dbo.SySproCESses) as y, (select (case when count(*)>=0 THEN 1 END) from dbo.    sysprocesses) as z;
 GO
 ~~START~~
 int#!#int#!#int

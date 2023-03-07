@@ -1893,6 +1893,7 @@ extern int get_insert_bulk_rows_per_batch(void);
 extern int get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
 extern void func_check(PLtsql_expr *expr);
+extern void replace_schema_name(PLtsql_expr *expr, char* old, char* newtext);
 
 /*
  * Functions for namespace handling in pl_funcs.c
