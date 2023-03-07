@@ -1,5 +1,38 @@
+
+-- psql
+
+
+-- tsql
+-- PG nextval_internal is sensitive to Checkpoint and automation scripts in pipeline
+-- do not run checkpoint before upgrades. In order to keep the testcase stable across
+-- all pipelines, the following commands reset the sequence
+-- values to something we expect when checkpoint was run
+select setval('master_dbo.test_identity_vu_prepare_t1_id_seq', 1, true);
+select setval('master_dbo.test_identity_vu_prepare_t3_departmentid_seq', 115, true);
+select setval('master_dbo.test_identity_vu_prepare_t2_id_seq', 4, true);
+select setval('master_dbo.test_identity_vu_prepare_t6_id_seq', 1, false);
 EXEC test_identity_vu_prepare_p1
 GO
+~~START~~
+bigint
+1
+~~END~~
+
+~~START~~
+bigint
+115
+~~END~~
+
+~~START~~
+bigint
+4
+~~END~~
+
+~~START~~
+bigint
+1
+~~END~~
+
 ~~ROW COUNT: 1~~
 
 ~~START~~

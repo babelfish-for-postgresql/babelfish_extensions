@@ -1,8 +1,18 @@
-EXEC test_identity_vu_prepare_p1
-GO
+-- PG nextval_internal is sensitive to Checkpoint and automation scripts in pipeline
+-- do not run checkpoint before upgrades. In order to keep the testcase stable across
+-- all pipelines, the following commands reset the sequence
+-- values to something we expect when checkpoint was run
 
-CREATE VIEW scope_identity_view AS
-SELECT sys.babelfish_get_scope_identity()
+
+-- psql
+select setval('master_dbo.test_identity_vu_prepare_t1_id_seq', 1, true);
+select setval('master_dbo.test_identity_vu_prepare_t3_departmentid_seq', 115, true);
+select setval('master_dbo.test_identity_vu_prepare_t2_id_seq', 4, true);
+select setval('master_dbo.test_identity_vu_prepare_t6_id_seq', 1, false);
+
+
+-- tsql
+EXEC test_identity_vu_prepare_p1
 GO
 
 -- SCOPE_IDENTITY should return NULL because insert into t1 happened inside a function
@@ -11,6 +21,7 @@ SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
+SELECT sys.babelfish_get_scope_identity()
 SELECT * FROM scope_identity_view
 GO
 
@@ -55,6 +66,7 @@ GO
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
+SELECT sys.babelfish_get_scope_identity()
 GO
 
 ALTER TABLE test_identity_vu_prepare_t4 ADD id INT IDENTITY(1,1) NOT NULL
@@ -67,6 +79,7 @@ SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t4
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
 SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
+SELECT sys.babelfish_get_scope_identity()
 GO
 
 SELECT * FROM test_identity_vu_prepare_t5 ORDER BY Name
