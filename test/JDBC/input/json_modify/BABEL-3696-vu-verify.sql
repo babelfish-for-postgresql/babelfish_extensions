@@ -24,3 +24,9 @@ GO
 
 SELECT * FROM babel_3696_9
 GO
+
+EXEC babel_3696_10
+GO
+
+EXEC babel_3696_11
+GO

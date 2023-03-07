@@ -70,3 +70,19 @@ nvarchar
 
 ~~ERROR (Message: JSON path is not properly formatted)~~
 
+
+EXEC babel_3696_10
+GO
+~~START~~
+nvarchar
+{"Suspect": {"Name": "Homer Simpson", "Address": {"City": "Timaru", "Region": "Otago", "Country": "New Zealand"}, "Hobbies": ["Eating", "Sleeping", "Base Jumping"]}}
+~~END~~
+
+
+EXEC babel_3696_11
+GO
+~~START~~
+nvarchar
+{"Suspect": {"Name": "Homer Simpson", "Address": {"City": "Dunedin", "Region": "Otago", "Country": "New Zealand"}, "Hobbies": ["Chess", "Brain Surgery"]}}
+~~END~~
+

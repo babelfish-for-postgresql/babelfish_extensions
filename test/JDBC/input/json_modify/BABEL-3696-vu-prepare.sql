@@ -40,3 +40,41 @@ go
 create view babel_3696_9 as
 select json_modify('{"a":"b"}', '$.a', json_modify('{"a":"b"}', 'STRICT $.a', 'c'))
 go
+
+create procedure babel_3696_10
+as
+begin
+DECLARE @data NVARCHAR(4000)
+SET @data=N'{  
+    "Suspect": {    
+       "Name": "Homer Simpson",  
+       "Address": {    
+         "City": "Dunedin",  
+         "Region": "Otago",  
+         "Country": "New Zealand"  
+       },  
+       "Hobbies": ["Eating", "Sleeping", "Base Jumping"]  
+    }
+ }'
+select JSON_MODIFY(@data,'$.Suspect.Address.City', 'Timaru') AS 'Modified Array';
+end;
+go
+
+create procedure babel_3696_11
+as
+begin
+DECLARE @data NVARCHAR(4000)
+SET @data=N'{  
+    "Suspect": {    
+       "Name": "Homer Simpson",  
+       "Address": {    
+         "City": "Dunedin",  
+         "Region": "Otago",  
+         "Country": "New Zealand"  
+       },  
+       "Hobbies": ["Eating", "Sleeping", "Base Jumping"]  
+    }
+ }'
+select JSON_MODIFY(@data,'$.Suspect.Hobbies', JSON_QUERY('["Chess", "Brain Surgery"]')) AS 'Updated Hobbies';
+end;
+go

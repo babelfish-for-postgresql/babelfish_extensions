@@ -718,7 +718,7 @@ is_json_modify(List *name)
         case 1:
         {
             Node *func = (Node *) linitial(name);
-            if(strcmp("json_modify", strVal(func)) == 0)
+            if(strncmp("json_modify", strVal(func), 11) == 0)
                 return true;
             return false;
         }
@@ -727,7 +727,7 @@ is_json_modify(List *name)
             Node *schema = (Node *) linitial(name);
             Node *func = (Node *) lsecond(name);
             if(strcmp("sys", strVal(schema)) == 0 &&
-                strcmp("json_modify", strVal(func)) == 0)
+                strncmp("json_modify", strVal(func), 11) == 0)
                 return true;
             return false;
         }
@@ -771,8 +771,8 @@ is_for_json(FuncCall *fc)
         {
             Node *schema = (Node *) linitial(funcname);
             Node *func = (Node *) lsecond(funcname);
-            if(strcmp("sys", strVal(schema)) == 0 &&
-                strcmp("tsql_select_for_json_result", strVal(func)) == 0)
+            if(strncmp("sys", strVal(schema), 3) == 0 &&
+                strncmp("tsql_select_for_json_result", strVal(func), 27) == 0)
             {
                 // If without array wrapper is true, we want to keep the escape characters so we return false
                 return !get_array_wrapper(fc_args);

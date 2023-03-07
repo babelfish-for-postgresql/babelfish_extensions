@@ -2846,17 +2846,17 @@ DECLARE
 BEGIN
     path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
     word_count = array_length(path_split_array,1);
-    /*
+    /* 
      * This if else block is added to set the create_if_missing and append_modifier flags.
      * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
      * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
      * Comparisons for comparison_string are case-sensitive.
-     */
+     */    
     IF word_count = 1 THEN
         json_path = path_split_array[1];
         create_if_missing = TRUE;
         append_modifier = FALSE;
-    ELSIF word_count = 2 THEN
+    ELSIF word_count = 2 THEN 
         json_path = path_split_array[2];
         comparison_string = path_split_array[1]; -- append or lax/strict mode
         IF comparison_string = 'append' THEN
@@ -2870,7 +2870,7 @@ BEGIN
         END IF;
     ELSIF word_count = 3 THEN
         json_path = path_split_array[3];
-        comparison_string = path_split_array[1]; -- append mode
+        comparison_string = path_split_array[1]; -- append mode 
         IF comparison_string = 'append' THEN
             append_modifier = TRUE;
         ELSE
@@ -2902,7 +2902,7 @@ BEGIN
     END IF;
 
     --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
-    IF append_modifier THEN
+    IF append_modifier THEN 
         IF key_exists THEN
             key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
             key_value_type = jsonb_typeof(key_value);
@@ -2966,7 +2966,7 @@ EXCEPTION
                         HINT = 'Change JSON path to target array property and try again.';
     WHEN sql_json_object_not_found THEN
             RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
-END;
+END;        
 $BODY$
 LANGUAGE plpgsql STABLE;
 

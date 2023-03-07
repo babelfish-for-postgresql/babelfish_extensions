@@ -622,7 +622,7 @@ is_json_query(List *name)
         case 1:
         {
             Node *func = (Node *) linitial(name);
-            if(strcmp("json_query", strVal(func)) == 0)
+            if(strncmp("json_query", strVal(func), 10) == 0)
                 return true;
             return false;
         }
@@ -630,8 +630,8 @@ is_json_query(List *name)
         {
             Node *schema = (Node *) linitial(name);
             Node *func = (Node *) lsecond(name);
-            if(strcmp("sys", strVal(schema)) == 0 &&
-                strcmp("json_query", strVal(func)) == 0)
+            if(strncmp("sys", strVal(schema), 3) == 0 &&
+                strncmp("json_query", strVal(func), 10) == 0)
                 return true;
             return false;
         }
