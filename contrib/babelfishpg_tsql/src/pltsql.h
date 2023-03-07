@@ -1892,7 +1892,7 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 extern int get_insert_bulk_rows_per_batch(void);
 extern int get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
-extern void func_check(PLtsql_expr *expr);
+extern void func_check(PLtsql_expr *expr, PLtsql_stmt_execsql *stmt, bool is_cross_db);
 extern void replace_schema_name(PLtsql_expr *expr, char* old, char* newtext);
 
 /*

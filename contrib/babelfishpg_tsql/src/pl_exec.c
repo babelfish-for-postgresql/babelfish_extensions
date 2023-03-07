@@ -4632,17 +4632,16 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * When there is cross db reference to sys or information_schema schemas,
 		 * Change the session property.
 		 */
-		if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0 && strcasestr(expr->query, "dbo.sys"))
+		if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
 		{
-			func_check(expr);
-			stmt->schema_name = "sys";
+			func_check(expr, stmt, true);
 		}
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 			set_session_properties(stmt->db_name);
 	}
 	if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
 	{
-		func_check(expr);
+		func_check(expr, stmt, false);
 	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
@@ -10281,8 +10280,9 @@ void replace_schema_name(PLtsql_expr *expr, char* catalog_name, char* new_catalo
 /*
  * In the given expr query if the query contains the list_of_dbo_catalog then
  * these dbo catalog are replaced with the respective list_of_sys_catalog.
+ * If the given stmt is cross-db then replace the schema name of stmt to "sys".
  */
-void func_check(PLtsql_expr *expr)
+void func_check(PLtsql_expr *expr, PLtsql_stmt_execsql *stmt, bool is_cross_db)
 {
 	char* list_of_dbo_catalog[10]= {"dbo.sysprocesses", "dbo.syscharsets", "dbo.sysconfigures", "dbo.syscurconfigs", "dbo.syslanguages", "dbo.syscolumns", "dbo.sysforeignkeys", "dbo.sysindexes", "dbo.sysobjects"};
 	char* list_of_sys_catalog[10]= {"sys.sysprocesses", "sys.syscharsets", "sys.sysconfigures", "sys.syscurconfigs", "sys.syslanguages", "sys.syscolumns", "sys.sysforeignkeys", "sys.sysindexes", "sys.sysobjects"};
@@ -10291,6 +10291,10 @@ void func_check(PLtsql_expr *expr)
 	{
 		if(strcasestr(expr->query, list_of_dbo_catalog[i]))
 		{
+			if(is_cross_db)
+			{
+				stmt->schema_name = "sys";
+			}
 			replace_schema_name(expr, list_of_dbo_catalog[i], list_of_sys_catalog[i]);
 		}
 	}
