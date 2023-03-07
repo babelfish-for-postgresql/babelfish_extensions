@@ -132,8 +132,61 @@ go
 CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f4() RETURNS int AS $$
 BEGIN
 	DECLARE @a int = 1;
+	RETURN @a
+END;
+$$ LANGUAGE pltsql VOLATILE;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f5() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	RETURN @a
+END;
+$$ LANGUAGE pltsql STABLE;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f6() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	RETURN @a
+END;
+$$ LANGUAGE pltsql IMMUTABLE;
+go
+
+-- with table variable
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f7() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
 	declare @tvp table(a int);
 	RETURN @a
 END;
 $$ LANGUAGE pltsql;
 go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f8() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	declare @tvp table(a int);
+	RETURN @a
+END;
+$$ LANGUAGE pltsql VOLATILE;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f9() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	declare @tvp table(a int);
+	RETURN @a
+END;
+$$ LANGUAGE pltsql STABLE;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f10() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	declare @tvp table(a int);
+	RETURN @a
+END;
+$$ LANGUAGE pltsql IMMUTABLE;
+go
+

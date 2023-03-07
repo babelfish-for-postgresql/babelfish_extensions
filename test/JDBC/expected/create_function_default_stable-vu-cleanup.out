@@ -75,3 +75,21 @@ go
 
 drop function test_create_function_default_stable_psql_f4;
 go
+
+drop function test_create_function_default_stable_psql_f5;
+go
+
+drop function test_create_function_default_stable_psql_f6;
+go
+
+drop function test_create_function_default_stable_psql_f7;
+go
+
+drop function test_create_function_default_stable_psql_f8;
+go
+
+drop function test_create_function_default_stable_psql_f9;
+go
+
+drop function test_create_function_default_stable_psql_f10;
+go

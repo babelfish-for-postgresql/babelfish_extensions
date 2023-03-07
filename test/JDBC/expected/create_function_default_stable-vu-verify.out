@@ -187,3 +187,53 @@ char
 v
 ~~END~~
 
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f5';
+go
+~~START~~
+char
+s
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f6';
+go
+~~START~~
+char
+i
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f7';
+go
+~~START~~
+char
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f8';
+go
+~~START~~
+char
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f9';
+go
+~~START~~
+char
+s
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f10';
+go
+~~START~~
+char
+i
+~~END~~
+
+
+
