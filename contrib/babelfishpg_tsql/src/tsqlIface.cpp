@@ -934,7 +934,6 @@ class tsqlSelectStatementMutator : public TSqlParserBaseListener
 	 */
 public:
 	PLtsql_expr_query_mutator *mutator;
-	
 public:
 	tsqlSelectStatementMutator() = default;
 	/* Corner case check. If a view is created on a temporary table, we should throw an exception.
@@ -951,7 +950,7 @@ public:
 	}
 
 	void exitSelect_statement(TSqlParser::Select_statementContext *ctx) override
-	{	
+	{
 		if (mutator)
 			process_select_statement(ctx, mutator);
 	}
