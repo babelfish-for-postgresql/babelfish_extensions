@@ -1,0 +1,25 @@
+sp_helpdb 'MaSTeR'
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+master#!#<NULL>#!#jdbc_user#!#1#!#2023-03-08 #!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+nchar#!#smallint#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+sp_helpdb 'master'
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+master#!#<NULL>#!#jdbc_user#!#1#!#2023-03-08 #!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+nchar#!#smallint#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+

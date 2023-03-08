@@ -17,6 +17,7 @@
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/formatting.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tuplestore.h"
@@ -344,6 +345,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 	if (PG_NARGS() > 0)
 	{
 		dbname = TextDatumGetCString(PG_GETARG_DATUM(0));
+		dbname = str_tolower(dbname, strlen(dbname), DEFAULT_COLLATION_OID);
 		if (!DbidIsValid(get_db_id(dbname)))
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
