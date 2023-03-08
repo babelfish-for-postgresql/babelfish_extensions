@@ -750,8 +750,17 @@ public:
 	}
 
 	void enterExecute_statement(TSqlParser::Execute_statementContext *ctx) override {
-		if (in_create_or_alter_function && (ctx->EXEC() || ctx->EXECUTE() ) ){
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'EXECUTE STRING' within a function.", 0, 0);
+		if (in_create_or_alter_function && (ctx->EXEC() || ctx->EXECUTE())){
+			TSqlParser::Execute_bodyContext *body = ctx->execute_body();
+			if (body->LR_BRACKET())
+			{
+				std::vector<TSqlParser::Execute_var_stringContext *> exec_strings = body->execute_var_string();
+				if (!exec_strings.empty())
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'EXECUTE STRING' within a function.", 0, 0);
+				}
+				
+			}
 		}
 	}
 
