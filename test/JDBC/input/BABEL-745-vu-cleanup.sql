@@ -1,0 +1,17 @@
+DROP VIEW IF EXISTS v_SalesData;
+GO
+
+DROP TABLE IF EXISTS SalesData;
+GO
+
+DROP PROCEDURE IF EXISTS sp_CalculateStdev;
+GO
+
+DROP PROCEDURE IF EXISTS sp1_CalculateStdev;
+GO
+
+DROP PROCEDURE IF EXISTS sp2_CalculateStdev;
+GO
+
+DROP PROCEDURE IF EXISTS sp3_CalculateStdev;
+GO

@@ -1,0 +1,96 @@
+Select * from SalesData 
+ORDER BY Product;
+GO
+~~START~~
+varchar#!#numeric
+Product A#!#100.50
+Product A#!#150.25
+Product A#!#200.75
+Product B#!#50.75
+Product B#!#75.25
+Product B#!#100.50
+Product C#!#25.50
+Product C#!#50.75
+Product C#!#75.25
+~~END~~
+
+
+SELECT Product, STDEV(SalesAmount) AS SalesAmountStdev
+FROM SalesData
+GROUP BY Product
+GO
+~~START~~
+varchar#!#float
+Product C#!#24.875942193211497
+Product B#!#24.875942193211497
+Product A#!#50.125467578866534
+~~END~~
+
+
+SELECT Product, STDEVP(SalesAmount) AS SalesAmountStdev
+FROM SalesData
+GROUP BY Product
+GO
+~~START~~
+varchar#!#float
+Product C#!#20.311121748112946
+Product B#!#20.311121748112946
+Product A#!#40.92727289554811
+~~END~~
+
+
+SELECT Product, VAR(SalesAmount) AS SalesAmountStdev
+FROM SalesData
+GROUP BY Product
+GO
+~~START~~
+varchar#!#float
+Product C#!#618.8125
+Product B#!#618.8125
+Product A#!#2512.5625
+~~END~~
+
+
+SELECT Product, VARP(SalesAmount) AS SalesAmountStdev
+FROM SalesData
+GROUP BY Product
+GO
+~~START~~
+varchar#!#float
+Product C#!#412.5416666666667
+Product B#!#412.5416666666667
+Product A#!#1675.0416666666667
+~~END~~
+
+
+EXEC sp_CalculateStdev 'Product A';
+GO
+~~START~~
+float
+50.125467578866534
+~~END~~
+
+
+EXEC sp1_CalculateStdev 'Product A';
+GO
+~~START~~
+float
+40.92727289554811
+~~END~~
+
+
+EXEC sp2_CalculateStdev 'Product A';
+GO
+~~START~~
+float
+2512.5625
+~~END~~
+
+
+EXEC sp3_CalculateStdev 'Product A';
+GO
+~~START~~
+float
+1675.0416666666667
+~~END~~
+

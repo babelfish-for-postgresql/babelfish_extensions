@@ -842,6 +842,42 @@ CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
 
+CREATE AGGREGATE STDEV(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_stddev_samp,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE STDEVP(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_stddev_pop,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE VAR(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_var_samp,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE VARP(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_var_pop,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
 CREATE OR REPLACE VIEW sys.partitions AS
 SELECT
  (to_char( i.object_id, 'FM9999999999' ) || to_char( i.index_id, 'FM9999999999' ) || '1')::bigint AS partition_id
