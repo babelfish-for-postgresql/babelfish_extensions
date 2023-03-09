@@ -46,7 +46,6 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
-#include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
@@ -3436,7 +3435,6 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 	{
 		int16		dbid = 0;
 		AttrNumber	attnum;
-		const char	*prev_current_user;
 
 		attnum = (AttrNumber) attnameAttNum(rel, "dbid", false);
 		Assert(attnum != InvalidAttrNumber);
@@ -3444,31 +3442,7 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		if (!nulls[attnum - 1])
 			return;
 
-		/* Get new DB ID. Need sysadmin to do that. */
-		prev_current_user = GetUserNameFromId(GetUserId(), false);
-		bbf_set_current_user("sysadmin");
-		/* For sysdatabases table we need to generate new dbid for the database we are currently restoring. */
-		if (relid == sysdatabases_oid)
-		{
-			if ((dbid = getAvailDbid()) == InvalidDbid)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
-							errmsg("cannot find an available ID for new database.")));
-		}
-		/*
-		 * For all the other catalog tables which contain dbid column, get dbid using current value of the
-		 * babelfish_db_seq sequence. It is ok to fetch current value of the sequence here since we already
-		 * have generated new dbid while inserting into sysdatabases catalog.
-		 */
-		else
-		{
-			RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
-			Oid     	 seqid = RangeVarGetRelid(sequence, NoLock, false);
-
-			dbid = DirectFunctionCall1(currval_oid, seqid);
-		}
-		bbf_set_current_user(prev_current_user);
-
+		dbid = getDbidForLogicalDbRestore(relid);
 		values[attnum - 1] = Int16GetDatum(dbid);
 		nulls[attnum - 1] = false;
 	}

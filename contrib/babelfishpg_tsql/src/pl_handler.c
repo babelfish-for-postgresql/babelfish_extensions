@@ -58,7 +58,6 @@
 #include "utils/plancache.h"
 #include "utils/ps_status.h"
 #include "utils/queryenvironment.h"
-#include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
@@ -459,7 +458,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			{
 				int16    	 dbid = 0;
 				ResTarget	*dbidCol;
-				const char	*prev_current_user;
 				bool		 found = false;
 
 				/* Skip if dbid column already exists */
@@ -473,30 +471,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				if (found)
 					break;
 
-				/* Get new DB ID. Need sysadmin to do that. */
-				prev_current_user = GetUserNameFromId(GetUserId(), false);
-				bbf_set_current_user("sysadmin");
-				/* For sysdatabases table we need to generate new dbid for the database we are currently restoring. */
-				if (relid == sysdatabases_oid)
-				{
-					if ((dbid = getAvailDbid()) == InvalidDbid)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
-								 errmsg("cannot find an available ID for new database.")));
-				}
-				/*
-				 * For all the other catalog tables which contain dbid column, get dbid using current value of the
-				 * babelfish_db_seq sequence. It is ok to fetch current value of the sequence here since we already
-				 * have generated new dbid while inserting into sysdatabases catalog.
-				 */
-				else
-				{
-					RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
-					Oid     	 seqid = RangeVarGetRelid(sequence, NoLock, false);
-
-					dbid = DirectFunctionCall1(currval_oid, seqid);
-				}
-				bbf_set_current_user(prev_current_user);
+				dbid = getDbidForLogicalDbRestore(relid);
 
 				/* const value node to store into values clause */
 				value = makeNode(A_Const);

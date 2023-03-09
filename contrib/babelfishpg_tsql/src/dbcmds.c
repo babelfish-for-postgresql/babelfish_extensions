@@ -27,6 +27,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
@@ -289,9 +290,7 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
  * If we can't find one after looping the entire range of sequence values
  * (1 to 32767), we should bail out.
  */
-int16
-getAvailDbid(void)
-{
+static int16 getAvailDbid(void) {
 	int16  dbid;
 	int16  start = 0;
 
@@ -302,6 +301,49 @@ getAvailDbid(void)
 		else if (start == dbid)
 			return InvalidDbid;
 	} while (dbid == 3 || get_db_name(dbid) != NULL);
+
+	return dbid;
+}
+
+/*
+ * Only called while restoring a Babelfish logical database to get new
+ * dbid for database being restored. The value returned will be used in
+ * filling missing dbid column values in a tuple being inserted into catalog
+ * table.
+ * The function will return either new generated dbid in case we are inserting
+ * into sys.babelfish_sysdatabases catalog or last used dbid for all other
+ * catalogs.
+ */
+int16
+getDbidForLogicalDbRestore(Oid relid)
+{
+	const char	*prev_current_user;
+	int16		dbid;
+
+	/* Get new DB ID. Need sysadmin to do that. */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+	/* For sysdatabases table we need to generate new dbid for the database we are currently restoring. */
+	if (relid == sysdatabases_oid)
+	{
+		if ((dbid = getAvailDbid()) == InvalidDbid)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
+					 errmsg("cannot find an available ID for new database.")));
+	}
+	/*
+	 * For all the other catalog tables which contain dbid column, get dbid using current value of the
+	 * babelfish_db_seq sequence. It is ok to fetch current value of the sequence here since we already
+	 * have generated new dbid while inserting into sysdatabases catalog.
+	 */
+	else
+	{
+		RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
+		Oid     	 seqid = RangeVarGetRelid(sequence, NoLock, false);
+
+		dbid = DirectFunctionCall1(currval_oid, seqid);
+	}
+	bbf_set_current_user(prev_current_user);
 
 	return dbid;
 }
