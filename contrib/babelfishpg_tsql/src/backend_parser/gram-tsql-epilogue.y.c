@@ -591,6 +591,56 @@ int getElemTypMod(TypeName *t)
 }
 
 /*
+ * TsqlJsonModifyMakeFuncCall checks if the new value argument for json_modify is
+ * a json_modify or json_query function call. If it is one of these two arguments it
+ * sets the escape parameter to true
+ */
+Node*
+TsqlJsonModifyMakeFuncCall(Node* expr, Node* path, Node* newValue)
+{
+	FuncCall* fc;
+	List* func_args = list_make3(expr, path, newValue);
+	bool escape = false;
+	if(IsA(newValue, FuncCall))
+	{
+		FuncCall* fc_newval = (FuncCall*) newValue;
+		if(is_json_modify(fc_newval->funcname) || is_json_query(fc_newval->funcname))
+		{
+			escape = true;
+		}
+	}
+	func_args = lappend(func_args, makeBoolAConst(escape, -1));
+	fc = makeFuncCall(TsqlSystemFuncName("json_modify"), func_args, COERCE_EXPLICIT_CALL, -1);
+	return (Node*) fc;
+}
+
+bool
+is_json_query(List *name)
+{
+    switch(list_length(name))
+    {
+        case 1:
+        {
+            Node *func = (Node *) linitial(name);
+            if(strncmp("json_query", strVal(func), 10) == 0)
+                return true;
+            return false;
+        }
+        case 2:
+        {
+            Node *schema = (Node *) linitial(name);
+            Node *func = (Node *) lsecond(name);
+            if(strncmp("sys", strVal(schema), 3) == 0 &&
+                strncmp("json_query", strVal(func), 10) == 0)
+                return true;
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
+/*
  * helper macro to compare relname in
  * function tsql_update_delete_stmt_with_join
  */

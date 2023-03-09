@@ -32,6 +32,10 @@ static void rewrite_role_list(List *rolespecs); /* list of RoleSpecs */
 
 static bool rewrite_relation_walker(Node *node, void *context);
 
+static bool is_select_for_json(SelectStmt *stmt);
+static void select_json_modify(SelectStmt *stmt);
+static bool is_for_json(FuncCall *fc);
+static bool get_array_wrapper(List* for_json_args);
 
 
 
@@ -69,6 +73,15 @@ rewrite_object_refs(Node *stmt)
 	switch (stmt->type)
 	{
 		case T_SelectStmt:
+		{
+		    SelectStmt* selectStmt = (SelectStmt*) stmt;
+		    select_json_modify(selectStmt);
+			/* walker supported stmts */
+		    raw_expression_tree_walker(stmt,
+                                       rewrite_relation_walker,
+                                       (void *) NULL);
+		    break;
+		}
 		case T_UpdateStmt:
 		case T_DeleteStmt:
 		case T_InsertStmt:
@@ -665,6 +678,137 @@ rewrite_relation_walker(Node *node, void *context)
 	}
 	else
 		return raw_expression_tree_walker(node, rewrite_relation_walker, context);			
+}
+
+/*
+ * select_json_modify takes in a select statement
+ * If the target is json_modify and the from clause is for json we set the escape
+ * parameter to true
+ * Otherwise we set it to false
+ */
+static void select_json_modify(SelectStmt* stmt)
+{
+	List* targList = stmt->targetList;
+	List* fromList = stmt->fromClause;
+	if(list_length(targList) != 0 && list_length(fromList) != 0)
+	{
+		Node* n = linitial(targList);
+		Node* n_from = linitial(fromList);
+		if(IsA(n, ResTarget) && IsA(n_from, RangeSubselect))
+		{
+			ResTarget* rt = (ResTarget*) n;
+			RangeSubselect* rs = (RangeSubselect*) n_from;
+			if(IsA(rt->val, FuncCall) && IsA(rs->subquery, SelectStmt))
+			{
+				FuncCall* json_mod_fc = (FuncCall*) rt->val;
+				SelectStmt* from_sel_stmt = (SelectStmt*) rs->subquery;
+				rewrite_plain_name(json_mod_fc->funcname);
+				if(is_json_modify(json_mod_fc->funcname) && is_select_for_json(from_sel_stmt))
+				{
+					Node *n = lfourth(json_mod_fc->args);
+					A_Const *escape = (A_Const*) n;
+					escape->val.boolval.boolval = true;
+				}
+			}
+		}
+	}
+}
+
+/*
+ * is_json_modify takes in a string list and returns true if the list is
+ * ["json_modify"] or ["sys", "json_modify"] and false otherwise
+ * It is the caller's responsibility to pass in a list of strings
+ */
+bool
+is_json_modify(List *name)
+{
+    switch(list_length(name))
+    {
+        case 1:
+        {
+            Node *func = (Node *) linitial(name);
+            if(strncmp("json_modify", strVal(func), 11) == 0)
+                return true;
+            return false;
+        }
+        case 2:
+        {
+            Node *schema = (Node *) linitial(name);
+            Node *func = (Node *) lsecond(name);
+            if(strncmp("sys", strVal(schema), 3) == 0 &&
+                strncmp("json_modify", strVal(func), 11) == 0)
+                return true;
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
+/*
+ * is_select_for_json takes in a select statement
+ * returns true if the target function call is for json and array_wrapper is false
+ * returns false otherwise
+ */
+static bool is_select_for_json(SelectStmt *stmt)
+{
+    List* targetList = stmt->targetList;
+    ListCell* lc = (ListCell*) targetList->elements;
+    Node* n = lfirst(lc);
+    if(IsA(n, ResTarget))
+    {
+        ResTarget* rt = (ResTarget*) n;
+        if(IsA(rt->val, FuncCall))
+        {
+            FuncCall* fc = (FuncCall*) rt->val;
+            return is_for_json(fc);
+        }
+    }
+    return false;
+}
+
+/*
+ * is_for_json takes a FuncCall and returns true if the function name is sys.tsql_select_for_json_result
+ * where the get_array_wrapper parameter is false. This function is specifically used to determine
+ * how to set the json_modify escape parameter
+ */
+static bool
+is_for_json(FuncCall *fc)
+{
+    // In this case, we need to check that the function name is correct, and also that the without_array_wrapper param is not true
+    List* funcname = fc->funcname;
+    List* fc_args = fc->args;
+
+    switch(list_length(funcname))
+    {
+        case 2:
+        {
+            Node *schema = (Node *) linitial(funcname);
+            Node *func = (Node *) lsecond(funcname);
+            if(strncmp("sys", strVal(schema), 3) == 0 &&
+                strncmp("tsql_select_for_json_result", strVal(func), 27) == 0)
+            {
+                // If without array wrapper is true, we want to keep the escape characters so we return false
+                return !get_array_wrapper(fc_args);
+            }
+            return false;
+        }
+        default:
+            return false;
+    }
+}
+
+/*
+ * get_array_wrapper takes the arguments from sys.tsql_select_for_json_result function call
+ * and returns the value of the array_wrapper parameter. It is the caller's responsibility
+ * to ensure they are passing the correct input
+ */
+static bool get_array_wrapper(List* for_json_args) {
+    FuncCall* agg_fc = (FuncCall *) linitial(for_json_args);
+    List* agg_fc_args = agg_fc->args;
+
+    Node* arr_wrap = lfourth(agg_fc_args);
+    return ((A_Const*) arr_wrap)->val.boolval.boolval;
 }
 
 /*************************************************************

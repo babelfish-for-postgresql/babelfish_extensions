@@ -29,5 +29,6 @@ extern void truncate_tsql_identifier(char *ident);
 extern bool physical_schema_name_exists(char *phys_schema_name);
 extern bool is_builtin_database(const char *dbname);
 extern bool is_user_database_singledb(const char *dbname);
+extern bool is_json_modify(List *name);
 
 #endif

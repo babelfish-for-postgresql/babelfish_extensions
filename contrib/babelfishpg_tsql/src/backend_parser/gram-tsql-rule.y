@@ -1889,7 +1889,11 @@ func_expr_common_subexpr:
 			| TSQL_ATAT LANGUAGE
 	 			{
 	 				$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("language"),NIL, COERCE_EXPLICIT_CALL, @1);
-	 			}	
+				}
+			| JSON_MODIFY '(' a_expr ',' a_expr ',' a_expr ')'
+				{
+					$$ = (Node *) TsqlJsonModifyMakeFuncCall($3, $5, $7);
+				}
 		;
 
 target_el:
@@ -4261,6 +4265,7 @@ createdb_opt_item:
 col_name_keyword:
 			  TSQL_NVARCHAR
 			| OPENJSON
+			| JSON_MODIFY
 			;
 
 unreserved_keyword:
