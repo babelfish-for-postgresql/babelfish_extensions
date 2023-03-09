@@ -1,0 +1,413 @@
+SELECT * FROM BABEL_3474_vu_prepare_v1
+GO
+~~START~~
+datetimeoffset
+2016-12-26 12:15:01.0000560 +00:00
+~~END~~
+
+DROP VIEW BABEL_3474_vu_prepare_v1
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v2
+GO
+~~START~~
+datetime2
+2016-12-26 12:15:01.0017000
+~~END~~
+
+DROP VIEW BABEL_3474_vu_prepare_v2
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v3
+GO
+~~START~~
+time
+12:16:00.0000140
+~~END~~
+
+DROP VIEW BABEL_3474_vu_prepare_v3
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v4
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type datetime.)~~
+
+DROP VIEW BABEL_3474_vu_prepare_v4
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type smalldatetime.)~~
+
+DROP VIEW BABEL_3474_vu_prepare_v5
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v6
+GO
+~~START~~
+datetimeoffset
+2016-12-26 12:15:01.0000000 +00:00
+~~END~~
+
+DROP VIEW BABEL_3474_vu_prepare_v6
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v7
+GO
+~~START~~
+datetime2
+2016-12-26 12:15:01.0000010
+~~END~~
+
+DROP VIEW BABEL_3474_vu_prepare_v7
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v8
+GO
+~~START~~
+time
+12:16:00.0000000
+~~END~~
+
+DROP VIEW BABEL_3474_vu_prepare_v8
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type datetime.)~~
+
+DROP VIEW BABEL_3474_vu_prepare_v9
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v10
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type smalldatetime.)~~
+
+DROP VIEW BABEL_3474_vu_prepare_v10
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v11
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
+
+DROP VIEW BABEL_3474_vu_prepare_v11
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v12
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart second is not supported by date function dateadd for data type date.)~~
+
+DROP VIEW BABEL_3474_vu_prepare_v12
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v13
+GO
+~~START~~
+datetimeoffset
+2016-12-27 00:40:05.5234560 +08:00
+~~END~~
+
+DROP VIEW BABEL_3474_vu_prepare_v13
+GO
+
+SELECT * FROM BABEL_3474_vu_prepare_v14
+GO
+~~START~~
+datetimeoffset
+2017-02-26 23:30:05.5234560 +08:00
+~~END~~
+
+DROP VIEW BABEL_3474_vu_prepare_v14
+GO
+
+EXEC BABEL_3474_vu_prepare_p1
+GO
+~~START~~
+datetimeoffset
+2016-12-26 12:15:01.0000560 +00:00
+~~END~~
+
+DROP procedure BABEL_3474_vu_prepare_p1
+GO
+
+EXEC BABEL_3474_vu_prepare_p2
+GO
+~~START~~
+datetime2
+2016-12-26 12:15:01.0017000
+~~END~~
+
+DROP procedure BABEL_3474_vu_prepare_p2
+GO
+
+EXEC BABEL_3474_vu_prepare_p3
+GO
+~~START~~
+time
+12:16:00.0000140
+~~END~~
+
+DROP procedure BABEL_3474_vu_prepare_p3
+GO
+
+EXEC BABEL_3474_vu_prepare_p4
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type datetime.)~~
+
+DROP procedure BABEL_3474_vu_prepare_p4
+GO
+
+EXEC BABEL_3474_vu_prepare_p5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type smalldatetime.)~~
+
+DROP procedure BABEL_3474_vu_prepare_p5
+GO
+
+EXEC BABEL_3474_vu_prepare_p6
+GO
+~~START~~
+datetimeoffset
+2016-12-26 12:15:01.0000000 +00:00
+~~END~~
+
+DROP procedure BABEL_3474_vu_prepare_p6
+GO
+
+EXEC BABEL_3474_vu_prepare_p7
+GO
+~~START~~
+datetime2
+2016-12-26 12:15:01.0000010
+~~END~~
+
+DROP procedure BABEL_3474_vu_prepare_p7
+GO
+
+EXEC BABEL_3474_vu_prepare_p8
+GO
+~~START~~
+time
+12:15:59.9999010
+~~END~~
+
+DROP procedure BABEL_3474_vu_prepare_p8
+GO
+
+EXEC BABEL_3474_vu_prepare_p9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type datetime.)~~
+
+DROP procedure BABEL_3474_vu_prepare_p9
+GO
+
+EXEC BABEL_3474_vu_prepare_p10
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type smalldatetime.)~~
+
+DROP procedure BABEL_3474_vu_prepare_p10
+GO
+
+EXEC BABEL_3474_vu_prepare_p11
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
+
+DROP procedure BABEL_3474_vu_prepare_p11
+GO
+
+EXEC BABEL_3474_vu_prepare_p12
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart second is not supported by date function dateadd for data type date.)~~
+
+DROP procedure BABEL_3474_vu_prepare_p12
+GO
+
+EXEC BABEL_3474_vu_prepare_p13
+GO
+~~START~~
+datetimeoffset
+2016-12-27 00:40:05.5234560 +08:00
+~~END~~
+
+DROP procedure BABEL_3474_vu_prepare_p13
+GO
+
+EXEC BABEL_3474_vu_prepare_p14
+GO
+~~START~~
+datetimeoffset
+2017-02-26 23:30:05.5234560 +08:00
+~~END~~
+
+DROP procedure BABEL_3474_vu_prepare_p14
+GO
+
+SELECT BABEL_3474_vu_prepare_f1()
+GO
+~~START~~
+datetime
+2016-12-26 12:15:01.0
+~~END~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f1
+GO
+
+SELECT BABEL_3474_vu_prepare_f2()
+GO
+~~START~~
+datetime2
+2016-12-26 12:15:01.0017000
+~~END~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f2
+GO
+
+SELECT BABEL_3474_vu_prepare_f3()
+GO
+~~START~~
+time
+12:16:00.0000140
+~~END~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f3
+GO
+
+SELECT BABEL_3474_vu_prepare_f4()
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type datetime.)~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f4
+GO
+
+SELECT BABEL_3474_vu_prepare_f5()
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type smalldatetime.)~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f5
+GO
+
+SELECT BABEL_3474_vu_prepare_f6()
+GO
+~~START~~
+datetimeoffset
+2016-12-26 12:15:01.0000000 +00:00
+~~END~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f6
+GO
+
+SELECT BABEL_3474_vu_prepare_f7()
+GO
+~~START~~
+datetime2
+2016-12-26 12:15:01.0000010
+~~END~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f7
+GO
+
+SELECT BABEL_3474_vu_prepare_f8()
+GO
+~~START~~
+time
+12:16:00.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f8
+GO
+
+SELECT BABEL_3474_vu_prepare_f9()
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type datetime.)~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f9
+GO
+
+SELECT BABEL_3474_vu_prepare_f10()
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type smalldatetime.)~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f10
+GO
+
+SELECT BABEL_3474_vu_prepare_f11()
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f11
+GO
+
+SELECT BABEL_3474_vu_prepare_f12()
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart second is not supported by date function dateadd for data type date.)~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f12
+GO
+
+SELECT BABEL_3474_vu_prepare_f13()
+GO
+~~START~~
+date
+2016-12-26
+~~END~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f13
+GO
+
+SELECT BABEL_3474_vu_prepare_f14()
+GO
+~~START~~
+date
+2017-02-26
+~~END~~
+
+DROP FUNCTION BABEL_3474_vu_prepare_f14
+GO

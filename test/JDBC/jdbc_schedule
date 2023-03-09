@@ -116,3 +116,9 @@ ignore#!#openquery_upgrd-vu-cleanup
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-prepare
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-verify
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-cleanup
+ignore#!#dateadd_internal_df-vu-prepare
+ignore#!#dateadd_internal_df-vu-verify
+ignore#!#BABEL-3474-vu-prepare
+ignore#!#BABEL-3474-vu-verify
+ignore#!#BABEL-1625-vu-prepare
+ignore#!#BABEL-1625-vu-verify

@@ -1,0 +1,189 @@
+declare @dt datetimeoffset(6);
+set @dt = '1912-10-25 12:24:32 +10:0';
+select dateadd(month,1,@dt);
+GO
+~~START~~
+datetimeoffset
+1912-11-25 02:24:32.0000000 +10:00
+~~END~~
+
+
+SELECT * FROM BABEL_1625_vu_prepare_v1
+GO
+~~START~~
+datetimeoffset
+1912-11-25 02:24:32.0000000 +10:00
+~~END~~
+
+DROP VIEW BABEL_1625_vu_prepare_v1
+GO
+
+SELECT * FROM BABEL_1625_vu_prepare_v2
+GO
+~~START~~
+datetimeoffset
+1914-10-25 23:16:32.0000000 -10:52
+~~END~~
+
+DROP VIEW BABEL_1625_vu_prepare_v2
+GO
+
+SELECT * FROM BABEL_1625_vu_prepare_v3
+GO
+~~START~~
+datetimeoffset
+1912-10-28 05:39:32.0000000 +06:45
+~~END~~
+
+DROP VIEW BABEL_1625_vu_prepare_v3
+GO
+
+SELECT * FROM BABEL_1625_vu_prepare_v4
+GO
+~~START~~
+datetimeoffset
+1912-10-26 04:01:32.0000000 -11:37
+~~END~~
+
+DROP VIEW BABEL_1625_vu_prepare_v4
+GO
+
+SELECT * FROM BABEL_1625_vu_prepare_v5
+GO
+~~START~~
+datetimeoffset
+1912-10-25 07:45:32.0000000 +04:44
+~~END~~
+
+DROP VIEW BABEL_1625_vu_prepare_v5
+GO
+
+SELECT * FROM BABEL_1625_vu_prepare_v6
+GO
+~~START~~
+datetimeoffset
+1912-10-25 14:47:38.0000000 -02:23
+~~END~~
+
+DROP VIEW BABEL_1625_vu_prepare_v6
+GO
+
+EXEC BABEL_1625_vu_prepare_p1
+GO
+~~START~~
+datetimeoffset
+2001-02-28 02:24:32.0000000 +10:00
+~~END~~
+
+DROP procedure  BABEL_1625_vu_prepare_p1
+GO
+
+EXEC BABEL_1625_vu_prepare_p2
+GO
+~~START~~
+datetimeoffset
+2000-03-28 02:24:32.0000000 +10:00
+~~END~~
+
+DROP procedure  BABEL_1625_vu_prepare_p2
+GO
+
+EXEC BABEL_1625_vu_prepare_p3
+GO
+~~START~~
+datetimeoffset
+2000-02-29 02:24:32.0000000 +10:00
+~~END~~
+
+DROP procedure  BABEL_1625_vu_prepare_p3
+GO
+
+EXEC BABEL_1625_vu_prepare_p4
+GO
+~~START~~
+datetimeoffset
+2000-02-28 03:24:32.0000000 +10:00
+~~END~~
+
+DROP procedure  BABEL_1625_vu_prepare_p4
+GO
+
+EXEC BABEL_1625_vu_prepare_p5
+GO
+~~START~~
+datetimeoffset
+2000-02-28 02:25:32.0000000 +10:00
+~~END~~
+
+DROP procedure  BABEL_1625_vu_prepare_p5
+GO
+
+EXEC BABEL_1625_vu_prepare_p6
+GO
+~~START~~
+datetimeoffset
+2000-02-28 02:24:33.0000000 +10:00
+~~END~~
+
+DROP procedure  BABEL_1625_vu_prepare_p6
+GO
+
+SELECT BABEL_1625_vu_prepare_f1()
+GO
+~~START~~
+datetimeoffset
+1919-10-25 05:57:28.0000000 +11:59
+~~END~~
+
+DROP FUNCTION BABEL_1625_vu_prepare_f1()
+GO
+
+SELECT BABEL_1625_vu_prepare_f2()
+GO
+~~START~~
+datetimeoffset
+1913-05-25 05:57:28.0000000 +11:59
+~~END~~
+
+DROP FUNCTION BABEL_1625_vu_prepare_f2()
+GO
+
+SELECT BABEL_1625_vu_prepare_f3()
+GO
+~~START~~
+datetimeoffset
+1912-11-01 05:57:28.0000000 +11:59
+~~END~~
+
+DROP FUNCTION BABEL_1625_vu_prepare_f3()
+GO
+
+SELECT BABEL_1625_vu_prepare_f4()
+GO
+~~START~~
+datetimeoffset
+1912-10-25 12:57:28.0000000 +11:59
+~~END~~
+
+DROP FUNCTION BABEL_1625_vu_prepare_f4()
+GO
+
+SELECT BABEL_1625_vu_prepare_f5()
+GO
+~~START~~
+datetimeoffset
+1912-10-25 06:04:28.0000000 +11:59
+~~END~~
+
+DROP FUNCTION BABEL_1625_vu_prepare_f5()
+GO
+
+SELECT BABEL_1625_vu_prepare_f6()
+GO
+~~START~~
+datetimeoffset
+1912-10-25 05:57:35.0000000 +11:59
+~~END~~
+
+DROP FUNCTION BABEL_1625_vu_prepare_f6()
+GO

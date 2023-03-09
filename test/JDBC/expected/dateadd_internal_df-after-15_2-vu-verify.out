@@ -1,0 +1,40 @@
+SELECT SYS.dateadd_internal_df('minute', -70, cast('2016-12-26 00:30:05.523456+8' as DATETIMEOFFSET))
+GO
+~~START~~
+datetimeoffset
+2016-12-25 23:20:05.5234560 +08:00
+~~END~~
+
+
+SELECT * FROM dateadd_internal_df_view_vu_prepare
+GO
+~~START~~
+datetimeoffset
+2016-12-25 23:20:05.5234560 +08:00
+~~END~~
+
+
+EXEC dateadd_internal_df_proc_vu_prepare
+GO
+~~START~~
+datetimeoffset
+2016-12-25 23:20:05.5234560 +08:00
+~~END~~
+
+
+SELECT dateadd_internal_df_func_vu_prepare()
+GO
+~~START~~
+datetimeoffset
+2016-12-25 23:20:05.5234560 +08:00
+~~END~~
+
+
+DROP VIEW dateadd_internal_df_view_vu_prepare
+GO
+
+DROP PROC dateadd_internal_df_proc_vu_prepare
+GO
+
+DROP FUNCTION dateadd_internal_df_func_vu_prepare
+GO
