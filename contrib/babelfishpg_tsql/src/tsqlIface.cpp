@@ -244,8 +244,6 @@ static int find_hint_offset(const char * queryTxt);
 
 static bool pltsql_parseonly = false;
 
-static bool in_create_or_alter_view = false;
-
 static void
 breakHere()
 {
@@ -934,6 +932,7 @@ class tsqlSelectStatementMutator : public TSqlParserBaseListener
 	 */
 public:
 	PLtsql_expr_query_mutator *mutator;
+	bool in_create_or_alter_view = false;
 public:
 	tsqlSelectStatementMutator() = default;
 	/* Corner case check. If a view is created on a temporary table, we should throw an exception.
@@ -959,6 +958,17 @@ public:
 	{
 		if (mutator)
 			process_query_specification(ctx, mutator);
+	}
+
+	void exitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override 
+	{
+		std::string table_name = extractTableName(nullptr, ctx);
+
+		if (in_create_or_alter_view && !table_name.empty() && table_name.at(0)=='#')
+		{	
+			in_create_or_alter_view = false;
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Views or functions are not allowed on temporary tables. Table names that begin with '#' denote temporary tables.", 0, 0);
+		}
 	}
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
@@ -5299,11 +5309,6 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		post_process_table_source(cctx, expr, baseCtx);
 
 	std::string table_name = extractTableName(nullptr, ctx);
-
-	if (in_create_or_alter_view && !table_name.empty() && table_name.at(0)=='#')
-	{
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Views or functions are not allowed on temporary tables. Table names that begin with '#' denote temporary tables.", 0, 0);
-	}
 
 	for (auto wctx : ctx->with_table_hints())
 	{
