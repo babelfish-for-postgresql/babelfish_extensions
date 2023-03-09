@@ -58,6 +58,9 @@ static TypeName* setCharTypmodForOpenjson(TypeName *t);
 static bool isCharType(char* typenameStr);
 static bool isNVarCharType(char* typenameStr);
 
+static Node *TsqlJsonModifyMakeFuncCall(Node* expr, Node* path, Node* newValue);
+static bool is_json_query(List *name);
+
 char * construct_unique_index_name(char *index_name, char *relation_name);
 
 static Node *tsql_update_delete_stmt_with_join(Node *n, List* from_clause, Node*

@@ -2900,7 +2900,7 @@ AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
  *  2) To convert the input path into the expected jsonb_path.
  *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
  */
-CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT, in escape bool)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
@@ -2918,6 +2918,7 @@ DECLARE
     key_exists BOOL;
     key_value JSONB;
     json_expression JSONB = expression::JSONB;
+    json_new_value JSONB;
     result_json sys.NVARCHAR;
 BEGIN
     path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
@@ -2970,7 +2971,13 @@ BEGIN
     new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
 
     key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
-    
+
+    IF escape THEN
+        json_new_value = new_value::JSONB;
+    ELSE
+        json_new_value = to_jsonb(new_value);
+    END IF;
+
     --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
     IF append_modifier THEN 
         IF key_exists THEN
@@ -2986,7 +2993,7 @@ BEGIN
                 IF new_value IS NULL THEN
                     result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
                 ELSE
-                    result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,json_new_value);
                 END IF;
             ELSE
                 IF NOT create_if_missing THEN
@@ -3005,22 +3012,22 @@ BEGIN
     ELSE --When no append modifier is present
         IF new_value IS NOT NULL THEN
             IF key_exists OR create_if_missing THEN
-                result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,create_if_missing);
             ELSE
                 RAISE sql_json_object_not_found;
             END IF;
         ELSE
             IF key_exists THEN
                 IF NOT create_if_missing THEN
-                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value);
                 ELSE
-                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,create_if_missing,'delete_key');
                 END IF;
             ELSE
                 IF NOT create_if_missing THEN
                     RAISE sql_json_object_not_found;
                 ELSE
-                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,FALSE);
                 END IF;
             END IF;
         END IF;
