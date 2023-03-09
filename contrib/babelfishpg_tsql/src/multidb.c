@@ -32,6 +32,10 @@ static void rewrite_role_list(List *rolespecs); /* list of RoleSpecs */
 
 static bool rewrite_relation_walker(Node *node, void *context);
 
+static bool is_select_for_json(SelectStmt *stmt);
+static void select_json_modify(SelectStmt *stmt);
+static bool is_for_json(FuncCall *fc);
+static bool get_array_wrapper(List* for_json_args);
 
 
 
@@ -682,7 +686,7 @@ rewrite_relation_walker(Node *node, void *context)
  * parameter to true
  * Otherwise we set it to false
  */
-void select_json_modify(SelectStmt* stmt)
+static void select_json_modify(SelectStmt* stmt)
 {
 	List* targList = stmt->targetList;
 	List* fromList = stmt->fromClause;
@@ -710,6 +714,11 @@ void select_json_modify(SelectStmt* stmt)
 	}
 }
 
+/*
+ * is_json_modify takes in a string list and returns true if the list is
+ * ["json_modify"] or ["sys", "json_modify"] and false otherwise
+ * It is the caller's responsibility to pass in a list of strings
+ */
 bool
 is_json_modify(List *name)
 {
@@ -741,7 +750,7 @@ is_json_modify(List *name)
  * returns true if the target function call is for json and array_wrapper is false
  * returns false otherwise
  */
-bool is_select_for_json(SelectStmt *stmt)
+static bool is_select_for_json(SelectStmt *stmt)
 {
     List* targetList = stmt->targetList;
     ListCell* lc = (ListCell*) targetList->elements;
@@ -758,7 +767,12 @@ bool is_select_for_json(SelectStmt *stmt)
     return false;
 }
 
-bool
+/*
+ * is_for_json takes a FuncCall and returns true if the function name is sys.tsql_select_for_json_result
+ * where the get_array_wrapper parameter is false. This function is specifically used to determine
+ * how to set the json_modify escape parameter
+ */
+static bool
 is_for_json(FuncCall *fc)
 {
     // In this case, we need to check that the function name is correct, and also that the without_array_wrapper param is not true
@@ -784,7 +798,12 @@ is_for_json(FuncCall *fc)
     }
 }
 
-bool get_array_wrapper(List* for_json_args) {
+/*
+ * get_array_wrapper takes the arguments from sys.tsql_select_for_json_result function call
+ * and returns the value of the array_wrapper parameter. It is the caller's responsibility
+ * to ensure they are passing the correct input
+ */
+static bool get_array_wrapper(List* for_json_args) {
     FuncCall* agg_fc = (FuncCall *) linitial(for_json_args);
     List* agg_fc_args = agg_fc->args;
 
