@@ -12,3 +12,16 @@ SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_help
 GO
 SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('  wrongInput');
 GO
+
+-- Executing sp_helpdb with a existing dbname but in mixed upper, lower cases as an input
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('MaSteR');
+GO
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('bAbeL_sP_helPdb_Db');
+GO
+
+-- Executing sp_helpdb with a existing dbname but end with trailing spaces as an input
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('MaSteR        ');
+GO
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('bAbeL_sP_helPdb_Db ');
+GO
+
