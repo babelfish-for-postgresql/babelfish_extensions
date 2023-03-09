@@ -101,7 +101,6 @@ runs:
 
         # Temporarily disable certain tests until fixed
         sed -i "/BABEL-3513/d" test/JDBC/upgrade/$base_dir/schedule
-        sed -i "/BABEL_OBJECT_ID/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/TestNotNull/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/TestSQLVariant/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/babel_datatype_sqlvariant/d" test/JDBC/upgrade/$base_dir/schedule
