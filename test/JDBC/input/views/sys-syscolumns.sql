@@ -79,6 +79,28 @@ go
 SELECT COUNT(*) FROM sys.syscolumns where name = '@thirdparam'
 go
 
+-- syscolumns should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT COUNT(*) FROM dbo.    SySCOluMNs where name = '@thirdparam';
+go
+
+-- In case of cross-db, syscolumns should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT COUNT(*) FROM db1.sys.     SySCOluMNs where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+
+SELECT COUNT(*) FROM db1.dbo.     SySCOluMNs where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+
+-- should not be visible here
+SELECT COUNT(*) FROM db1.sys.     SySCOluMNs where name = '@thirdparam';
+GO
+
+SELECT COUNT(*) FROM db1.dbo.     SySCOluMNs where name = '@thirdparam';
+GO
+
 -- should not be visible here
 SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
 go

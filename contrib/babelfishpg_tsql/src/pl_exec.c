@@ -464,6 +464,9 @@ static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *d
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool* reset_session_properties, bool inside_trigger);
 
+static void check_list_of_dbo_catalog(PLtsql_expr *expr, PLtsql_stmt_execsql *stmt, bool is_cross_db);
+static void replace_schema_name(PLtsql_expr *expr, char* old, char* newtext);
+
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
 extern void pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int* cursor_options);
@@ -4610,10 +4613,15 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	if (stmt->original_query)
 		original_query_string = stmt->original_query;
 
-	/* For the list of sys% to be accessible from dbo, if there are white spaces
-	 * then removes the white spaces between the schema name and view name
+	/*
+	 * For the list of sys% to be accessible from dbo, if there are white spaces
+	 * present between the schema name and view name then
+	 * these spaces need to be removed
 	 */
-	replace_schema_name(expr, "dbo. ", "dbo.");
+	if(strcasestr(expr->query, "dbo. "))
+	{
+		replace_schema_name(expr, "dbo. ", "dbo.");
+	}
 
 	if (stmt->is_cross_db)
 	{
@@ -4634,14 +4642,14 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 */
 		if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
 		{
-			func_check(expr, stmt, true);
+			check_list_of_dbo_catalog(expr, stmt, true);
 		}
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 			set_session_properties(stmt->db_name);
 	}
 	if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
 	{
-		func_check(expr, stmt, false);
+		check_list_of_dbo_catalog(expr, stmt, false);
 	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
@@ -10282,7 +10290,7 @@ void replace_schema_name(PLtsql_expr *expr, char* catalog_name, char* new_catalo
  * these dbo catalog are replaced with the respective list_of_sys_catalog.
  * If the given stmt is cross-db then replace the schema name of stmt to "sys".
  */
-void func_check(PLtsql_expr *expr, PLtsql_stmt_execsql *stmt, bool is_cross_db)
+void check_list_of_dbo_catalog(PLtsql_expr *expr, PLtsql_stmt_execsql *stmt, bool is_cross_db)
 {
 	char* list_of_dbo_catalog[10]= {"dbo.sysprocesses", "dbo.syscharsets", "dbo.sysconfigures", "dbo.syscurconfigs", "dbo.syslanguages", "dbo.syscolumns", "dbo.sysforeignkeys", "dbo.sysindexes", "dbo.sysobjects"};
 	char* list_of_sys_catalog[10]= {"sys.sysprocesses", "sys.syscharsets", "sys.sysconfigures", "sys.syscurconfigs", "sys.syslanguages", "sys.syscolumns", "sys.sysforeignkeys", "sys.sysindexes", "sys.sysobjects"};

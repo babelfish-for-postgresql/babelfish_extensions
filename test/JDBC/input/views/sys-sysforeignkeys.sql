@@ -13,6 +13,18 @@ GO
 select count(*) from sys.sysforeignkeys where fkeyid = object_id('fk_2');
 GO
 
+-- sysforeignkeys should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT COUNT(*) FROM dbo.    SySFoReIGNkeYs where fkeyid = object_id('fk_2');
+go
+
+-- In case of cross-db, sysforeignkeys should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT COUNT(*) FROM db1.dbo.     SySFoReIGNkeYs where fkeyid = object_id('fk_2');
+go
+
 select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2');
 GO
 
@@ -33,6 +45,19 @@ GO
 
 select count(*) from sys.sysforeignkeys where fkeyid = object_id('fk_4');
 GO
+
+-- sysforeignkeys should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT COUNT(*) FROM dbo.    SySFoReIGNkeYs where fkeyid = object_id('fk_4');
+go
+
+-- In case of cross-db, sysforeignkeys should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+-- should not be visible here
+SELECT COUNT(*) FROM db1.dbo.     SySFoReIGNkeYs where fkeyid = object_id('fk_4');
+go
 
 select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_4');
 GO

@@ -9,6 +9,53 @@ int
 ~~END~~
 
 
+-- sysobjects should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT COUNT(*) FROM dbo.    SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- In case of cross-db, sysobjects should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT COUNT(*) FROM db1.sys.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM db1.dbo.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- should not be visible here
+SELECT COUNT(*) FROM db1.sys.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM db1.dbo.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+go
+~~START~~
+int
+0
+~~END~~
+
+
 SELECT * FROM sys_sysobjects_vu_prepare_view
 GO
 ~~START~~

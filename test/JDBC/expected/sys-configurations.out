@@ -26,7 +26,106 @@ sql_variant#!#int#!#nvarchar#!#smallint
 ~~END~~
 
 
+CREATE DATABASE DB1;
+GO
+
+-- syscurconfigs should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+select * from dbo.    SySCuRConFIgS;
+go
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+-- In case of cross-db, syscurconfigs should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT * FROM db1.sys.     SySCuRConFIgS;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+SELECT * FROM db1.dbo.     SySCuRConFIgS;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
 SELECT * FROM sys.sysconfigures;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+-- sysconfigures should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+select * from dbo.    SySConFIGuReS;
+go
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+-- In case of cross-db, sysconfigures should also exist in dbo schema
+-- If there are white spaces between schema name and catalog name then those need to be ignored
+-- case insensitive check
+SELECT * FROM db1.sys.     SySConFIGuReS;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+SELECT * FROM db1.dbo.     SySConFIGuReS;
 GO
 ~~START~~
 sql_variant#!#int#!#nvarchar#!#smallint
@@ -65,3 +164,6 @@ GO
 
 ~~ERROR (Message: permission denied for table babelfish_configurations)~~
 
+
+DROP DATABASE DB1;
+GO
