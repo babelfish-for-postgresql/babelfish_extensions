@@ -94,7 +94,7 @@ static bool check_arithabort (bool *newval, void **extra, GucSource source);
 static bool check_babelfish_dump_restore_min_oid (char **newval, void **extra, GucSource source);
 static bool check_numeric_roundabort (bool *newval, void **extra, GucSource source);
 static bool check_cursor_close_on_commit (bool *newval, void **extra, GucSource source);
-static bool check_rowcount (int *newval, void **extra, GucSource source);
+// static bool check_rowcount (int *newval, void **extra, GucSource source);
 static bool check_language (char **newval, void **extra, GucSource source);
 static bool check_noexec (bool *newval, void **extra, GucSource source);
 static bool check_showplan_all (bool *newval, void **extra, GucSource source);
@@ -263,21 +263,21 @@ static bool check_cursor_close_on_commit (bool *newval, void **extra, GucSource 
     return true;
 }
 
-static bool check_rowcount (int *newval, void **extra, GucSource source)
-{
-	if (*newval != 0 && *newval != INT_MAX && escape_hatch_session_settings != EH_IGNORE)
-    {
-	TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_OPTION_ROWCOUNT);
-	ereport(ERROR,
-		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("Settings other than 0 are not allowed for option ROWCOUNT. please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
-    }
-	else if (escape_hatch_session_settings == EH_IGNORE)
-	{
-		*newval = 0; /* overwrite to a default value. This would change the value if it was set to INT_MAX before. but, it would not cause a pratical problem */
-	}
-    return true;
-}
+// static bool check_rowcount (int *newval, void **extra, GucSource source)
+// {
+// 	if (*newval != 0 && *newval != INT_MAX && escape_hatch_session_settings != EH_IGNORE)
+//     {
+// 	TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_OPTION_ROWCOUNT);
+// 	ereport(ERROR,
+// 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+// 		 errmsg("Settings other than 0 are not allowed for option ROWCOUNT. please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
+//     }
+// 	else if (escape_hatch_session_settings == EH_IGNORE)
+// 	{
+// 		*newval = 0; /* overwrite to a default value. This would change the value if it was set to INT_MAX before. but, it would not cause a pratical problem */
+// 	}
+//     return true;
+// }
 
 static bool check_language (char **newval, void **extra, GucSource source)
 {
@@ -762,7 +762,7 @@ define_custom_variables(void)
 				 0, 0, INT_MAX,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 check_rowcount, NULL, NULL);
+				 NULL, NULL, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.lock_timeout",
 				 gettext_noop("Specifies the number of milliseconds a statement waits for a lock to be released."),
