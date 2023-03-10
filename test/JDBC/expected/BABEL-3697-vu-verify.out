@@ -63,3 +63,11 @@ nvarchar
 {"click_count": 241}
 ~~END~~
 
+
+SELECT * FROM babel_3697_multi_function
+GO
+~~START~~
+nvarchar#!#nvarchar
+{"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}#!#{"Price": 49.99}
+~~END~~
+

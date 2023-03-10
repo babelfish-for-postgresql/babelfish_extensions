@@ -21,3 +21,6 @@ GO
 
 EXEC babel_3697_8
 GO
+
+SELECT * FROM babel_3697_multi_function
+GO

@@ -21,3 +21,6 @@ GO
 
 DROP PROCEDURE babel_3697_8
 GO
+
+DROP VIEW babel_3697_multi_function
+GO

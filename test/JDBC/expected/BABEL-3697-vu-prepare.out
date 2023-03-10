@@ -39,3 +39,9 @@ DECLARE @data NVARCHAR(100)='{"click_count": 12345}'
 SELECT JSON_MODIFY(@data, '$.click_count', 6 + 235)
 end;
 go
+
+-- To check multi function call query
+create view babel_3697_multi_function as
+SELECT JSON_MODIFY(JSON_MODIFY(JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike'),'$.surname','Smith'),'append $.skills','Azure') AS mf_1, 
+       JSON_MODIFY(JSON_MODIFY('{"price":49.99}','$.Price',CAST(JSON_VALUE('{"price":49.99}','$.price') AS NUMERIC(4,2))),'$.price',NULL) AS mf_2;
+go

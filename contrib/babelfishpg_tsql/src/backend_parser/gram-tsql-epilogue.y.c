@@ -599,12 +599,13 @@ Node*
 TsqlJsonModifyMakeFuncCall(Node* expr, Node* path, Node* newValue)
 {
 	FuncCall* fc;
+	FuncCall* fc_newval;
 	List* func_args = list_make2(expr, path);
 	bool escape = false;
 	switch(newValue->type)
 	{
 		case T_FuncCall:
-			FuncCall* fc_newval = (FuncCall*) newValue;
+			fc_newval = (FuncCall*) newValue;
 			if(is_json_modify(fc_newval->funcname) || is_json_query(fc_newval->funcname))
 			{
 				escape = true;
