@@ -2,24 +2,25 @@ Select * from SalesData
 ORDER BY Product;
 GO
 
-SELECT Product, STDEV(CAST(SalesAmount AS float8)) AS SalesAmountStdev
-FROM SalesData
-GROUP BY Product
+SELECT STDEV(SalesAmount) AS SalesAmountStdev
+FROM SalesData;
 GO
 
-SELECT Product, STDEVP(CAST(SalesAmount AS float8)) AS SalesAmountStdev
-FROM SalesData
-GROUP BY Product
+-- This should throw an error since STDEV cannot be applied to a non-numeric data type
+SELECT STDEV(Product) AS ProductStdev
+FROM SalesData;
 GO
 
-SELECT Product, VAR(CAST(SalesAmount AS float8)) AS SalesAmountStdev
+SELECT VAR(SalesAmount) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
+ORDER BY Product ASC;
 GO
 
-SELECT Product, VARP(CAST(SalesAmount AS float8)) AS SalesAmountStdev
+SELECT VARP(SalesAmount) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
+ORDER BY Product ASC;
 GO
 
 EXEC sp_CalculateStdev 'Product A';
@@ -32,4 +33,16 @@ EXEC sp2_CalculateStdev 'Product A';
 GO
 
 EXEC sp3_CalculateStdev 'Product A';
+GO
+
+SELECT
+  VARP(col1) AS col1_VARP,
+  VAR(col2) AS col2_VAR
+FROM FloatTest;
+GO
+
+SELECT
+  STDEVP(col1) AS col1_STDEVP,
+  STDEV(col2) AS col2_STDEV
+FROM FloatTest;
 GO

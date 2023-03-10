@@ -2,64 +2,62 @@ Select * from SalesData
 ORDER BY Product;
 GO
 ~~START~~
-varchar#!#numeric
-Product A#!#100.00
-Product A#!#150.00
-Product A#!#200.00
-Product B#!#50.00
-Product B#!#75.00
-Product B#!#100.00
-Product C#!#25.00
-Product C#!#50.00
-Product C#!#75.00
-~~END~~
-
-
-SELECT Product, STDEV(CAST(SalesAmount AS float8)) AS SalesAmountStdev
-FROM SalesData
-GROUP BY Product
-GO
-~~START~~
 varchar#!#float
+Product A#!#100.0
+Product A#!#150.0
+Product A#!#200.0
+Product B#!#50.0
+Product B#!#75.0
+Product B#!#100.0
 Product C#!#25.0
-Product B#!#25.0
-Product A#!#50.0
+Product C#!#50.0
+Product C#!#75.0
 ~~END~~
 
 
-SELECT Product, STDEVP(CAST(SalesAmount AS float8)) AS SalesAmountStdev
-FROM SalesData
-GROUP BY Product
+SELECT STDEV(SalesAmount) AS SalesAmountStdev
+FROM SalesData;
 GO
 ~~START~~
-varchar#!#float
-Product C#!#20.412414523193153
-Product B#!#20.412414523193153
-Product A#!#40.824829046386306
+float
+54.48623679425842
 ~~END~~
 
 
-SELECT Product, VAR(CAST(SalesAmount AS float8)) AS SalesAmountStdev
-FROM SalesData
-GROUP BY Product
+-- This should throw an error since STDEV cannot be applied to a non-numeric data type
+SELECT STDEV(Product) AS ProductStdev
+FROM SalesData;
 GO
 ~~START~~
-varchar#!#float
-Product C#!#625.0
-Product B#!#625.0
-Product A#!#2500.0
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "Product A")~~
+
+
+SELECT VAR(SalesAmount) AS SalesAmountStdev
+FROM SalesData
+GROUP BY Product
+ORDER BY Product ASC;
+GO
+~~START~~
+float
+2500.0
+625.0
+625.0
 ~~END~~
 
 
-SELECT Product, VARP(CAST(SalesAmount AS float8)) AS SalesAmountStdev
+SELECT VARP(SalesAmount) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
+ORDER BY Product ASC;
 GO
 ~~START~~
-varchar#!#float
-Product C#!#416.6666666666667
-Product B#!#416.6666666666667
-Product A#!#1666.6666666666667
+float
+1666.6666666666667
+416.6666666666667
+416.6666666666667
 ~~END~~
 
 
@@ -92,5 +90,27 @@ GO
 ~~START~~
 float
 1666.6666666666667
+~~END~~
+
+
+SELECT
+  VARP(col1) AS col1_VARP,
+  VAR(col2) AS col2_VAR
+FROM FloatTest;
+GO
+~~START~~
+float#!#float
+NaN#!#NaN
+~~END~~
+
+
+SELECT
+  STDEVP(col1) AS col1_STDEVP,
+  STDEV(col2) AS col2_STDEV
+FROM FloatTest;
+GO
+~~START~~
+float#!#float
+NaN#!#NaN
 ~~END~~
 

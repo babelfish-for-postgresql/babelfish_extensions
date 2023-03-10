@@ -1834,7 +1834,7 @@ AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.ceiling(tinyint) RETURNS TINYINT
 AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE AGGREGATE STDEV(float8) (
+CREATE AGGREGATE sys.STDEV(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_stddev_samp,
     STYPE = float8[],
@@ -1843,7 +1843,7 @@ CREATE AGGREGATE STDEV(float8) (
     INITCOND = '{0,0,0}'
 );
 
-CREATE AGGREGATE STDEVP(float8) (
+CREATE AGGREGATE sys.STDEVP(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_stddev_pop,
     STYPE = float8[],
@@ -1852,7 +1852,7 @@ CREATE AGGREGATE STDEVP(float8) (
     INITCOND = '{0,0,0}'
 );
 
-CREATE AGGREGATE VAR(float8) (
+CREATE AGGREGATE sys.VAR(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_var_samp,
     STYPE = float8[],
@@ -1861,7 +1861,7 @@ CREATE AGGREGATE VAR(float8) (
     INITCOND = '{0,0,0}'
 );
 
-CREATE AGGREGATE VARP(float8) (
+CREATE AGGREGATE sys.VARP(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_var_pop,
     STYPE = float8[],

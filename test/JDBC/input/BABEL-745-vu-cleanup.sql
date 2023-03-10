@@ -15,3 +15,6 @@ GO
 
 DROP PROCEDURE IF EXISTS sp3_CalculateStdev;
 GO
+
+DROP TABLE FloatTest;
+GO

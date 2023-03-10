@@ -78,7 +78,7 @@ DROP FUNCTION sys.pg_extension_config_remove(REGCLASS);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
-CREATE AGGREGATE STDEV(float8) (
+CREATE AGGREGATE sys.STDEV(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_stddev_samp,
     STYPE = float8[],
@@ -87,7 +87,7 @@ CREATE AGGREGATE STDEV(float8) (
     INITCOND = '{0,0,0}'
 );
 
-CREATE AGGREGATE STDEVP(float8) (
+CREATE AGGREGATE sys.STDEVP(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_stddev_pop,
     STYPE = float8[],
@@ -96,7 +96,7 @@ CREATE AGGREGATE STDEVP(float8) (
     INITCOND = '{0,0,0}'
 );
 
-CREATE AGGREGATE VAR(float8) (
+CREATE AGGREGATE sys.VAR(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_var_samp,
     STYPE = float8[],
@@ -105,7 +105,7 @@ CREATE AGGREGATE VAR(float8) (
     INITCOND = '{0,0,0}'
 );
 
-CREATE AGGREGATE VARP(float8) (
+CREATE AGGREGATE sys.VARP(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_var_pop,
     STYPE = float8[],
