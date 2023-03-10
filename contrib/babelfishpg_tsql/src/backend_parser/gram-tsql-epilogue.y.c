@@ -599,15 +599,24 @@ Node*
 TsqlJsonModifyMakeFuncCall(Node* expr, Node* path, Node* newValue)
 {
 	FuncCall* fc;
-	List* func_args = list_make3(expr, path, newValue);
+	List* func_args = list_make2(expr, path);
 	bool escape = false;
-	if(IsA(newValue, FuncCall))
+	switch(newValue->type)
 	{
-		FuncCall* fc_newval = (FuncCall*) newValue;
-		if(is_json_modify(fc_newval->funcname) || is_json_query(fc_newval->funcname))
-		{
-			escape = true;
-		}
+		case T_FuncCall:
+			FuncCall* fc_newval = (FuncCall*) newValue;
+			if(is_json_modify(fc_newval->funcname) || is_json_query(fc_newval->funcname))
+			{
+				escape = true;
+			}
+			func_args = lappend(func_args, newValue);
+			break;
+		case T_TypeCast:
+		case T_A_Expr:
+			func_args = lappend(func_args, newValue);
+			break;
+		default:
+			func_args = lappend(func_args, makeTypeCast(newValue, makeTypeName("text"), -1));
 	}
 	func_args = lappend(func_args, makeBoolAConst(escape, -1));
 	fc = makeFuncCall(TsqlSystemFuncName("json_modify"), func_args, COERCE_EXPLICIT_CALL, -1);

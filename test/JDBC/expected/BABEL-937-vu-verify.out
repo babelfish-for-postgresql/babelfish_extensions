@@ -133,7 +133,7 @@ select * from babel_937_multi_function
 go
 ~~START~~
 nvarchar#!#nvarchar
-{"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}#!#{"Price": "49.99"}
+{"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}#!#{"Price": 49.99}
 ~~END~~
 
 
