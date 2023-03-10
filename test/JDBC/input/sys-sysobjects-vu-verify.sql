@@ -19,6 +19,9 @@ go
 SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
 go
 
+SELECT COUNT(*) as dbo      FROM sys_sysobjects_vu_prepare_db1.    dbo        .     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
+go
+
 -- should not be visible here
 SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.sys.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
 go

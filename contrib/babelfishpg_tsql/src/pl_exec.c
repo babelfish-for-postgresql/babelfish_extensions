@@ -4614,6 +4614,25 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		original_query_string = stmt->original_query;
 
 	/*
+	 * In the query if there are multiple white spaces after dbo then
+	 * replace the multiple spaces with 1 single white space
+	 */
+	if(strcasestr(expr->query, "dbo  "))
+	{
+		replace_schema_name(expr, "dbo  ", "dbo ");
+	}
+
+	/*
+	 * For the list of sys% to be accessible from dbo, if there are white spaces
+	 * present between the schema name and "." then
+	 * these spaces need to be removed
+	 */
+	if(strcasestr(expr->query, "dbo ."))
+	{
+		replace_schema_name(expr, "dbo .", "dbo.");
+	}
+
+	/*
 	 * For the list of sys% to be accessible from dbo, if there are white spaces
 	 * present between the schema name and view name then
 	 * these spaces need to be removed
