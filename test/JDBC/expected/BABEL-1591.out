@@ -1,0 +1,61 @@
+
+-- Allow normal function creation
+CREATE FUNCTION babel1591foo1() RETURNS INT AS BEGIN RETURN 10 END
+GO
+
+SELECT babel1591foo1();
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+DROP FUNCTION IF EXISTS babel1591foo1;
+GO
+
+-- Below Create function statements having specific keywords should fail
+CREATE FUNCTION foocommittest(@p int) RETURNS int AS BEGIN COMMIT RETURN 0 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'COMMIT TRANSACTION' within a function.)~~
+
+
+CREATE FUNCTION foorollbacktest(@p int) RETURNS int AS BEGIN ROLLBACK RETURN 0 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'ROLLBACK TRANSACTION' within a function.)~~
+
+
+CREATE FUNCTION fooexecutetest(@p int) RETURNS int AS BEGIN EXECUTE('select 1') RETURN 0 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'EXECUTE STRING' within a function.)~~
+
+
+CREATE FUNCTION fooexectest(@p int) RETURNS int AS BEGIN EXEC('select 1') RETURN 0 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'EXECUTE STRING' within a function.)~~
+
+
+-- clean up
+DROP FUNCTION IF EXISTS foocommittest
+GO
+
+DROP FUNCTION IF EXISTS foorollbacktest
+GO
+
+DROP FUNCTION IF EXISTS fooexecutetest
+GO
+
+DROP FUNCTION IF EXISTS fooexectest
+GO
+
+
+
+

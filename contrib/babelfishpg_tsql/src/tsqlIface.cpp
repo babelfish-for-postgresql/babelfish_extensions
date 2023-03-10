@@ -730,6 +730,39 @@ class tsqlCommonMutator : public TSqlParserBaseListener
 	/* see comment above. */
 public:
 	explicit tsqlCommonMutator() = default;
+	bool in_create_or_alter_function = false;
+
+	void enterCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
+		in_create_or_alter_function = true;
+	}
+
+	void exitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
+		in_create_or_alter_function = false;
+	}
+
+	void enterTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override {
+		if (in_create_or_alter_function && ctx->COMMIT()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'COMMIT TRANSACTION' within a function.", 0, 0);
+		}
+		if (in_create_or_alter_function && ctx->ROLLBACK()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'ROLLBACK TRANSACTION' within a function.", 0, 0);
+		}
+	}
+
+	void enterExecute_statement(TSqlParser::Execute_statementContext *ctx) override {
+		if (in_create_or_alter_function && (ctx->EXEC() || ctx->EXECUTE())){
+			TSqlParser::Execute_bodyContext *body = ctx->execute_body();
+			if (body->LR_BRACKET())
+			{
+				std::vector<TSqlParser::Execute_var_stringContext *> exec_strings = body->execute_var_string();
+				if (!exec_strings.empty())
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'EXECUTE STRING' within a function.", 0, 0);
+				}
+				
+			}
+		}
+	}
 
 	/* Column Name */
 	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
