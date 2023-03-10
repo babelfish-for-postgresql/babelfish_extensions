@@ -5,9 +5,9 @@ CREATE TABLE SalesData (
 );
 -- Insert some sample data
 INSERT INTO SalesData (Product, SalesAmount)
-VALUES ('Product A', 100.50), ('Product A', 150.25), ('Product A', 200.75),
-       ('Product B', 50.75), ('Product B', 75.25), ('Product B', 100.50),
-       ('Product C', 25.50), ('Product C', 50.75), ('Product C', 75.25);
+VALUES ('Product A', 100.00), ('Product A', 150.00), ('Product A', 200.00),
+       ('Product B', 50.00), ('Product B', 75.00), ('Product B', 100.00),
+       ('Product C', 25.00), ('Product C', 50.00), ('Product C', 75.00);
 GO
 
 -- Create a view for SalesData
