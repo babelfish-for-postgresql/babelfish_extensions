@@ -176,7 +176,7 @@ select provolatile from pg_proc where proname = 'test_create_function_default_st
 go
 ~~START~~
 char
-s
+v
 ~~END~~
 
 
@@ -224,7 +224,7 @@ select provolatile from pg_proc where proname = 'test_create_function_default_st
 go
 ~~START~~
 char
-s
+v
 ~~END~~
 
 
@@ -232,7 +232,7 @@ select provolatile from pg_proc where proname = 'test_create_function_default_st
 go
 ~~START~~
 char
-i
+v
 ~~END~~
 
 

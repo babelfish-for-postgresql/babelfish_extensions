@@ -3616,12 +3616,13 @@ tsql_CreateFunctionStmt:
 						DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 						DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($10)), @10);
 						DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
+						DefElem *vol = makeDefElem("volatility", (Node *) makeString("stable"), @1);
 						n->is_procedure = false;
 						n->replace = $2;
 						n->funcname = $4;
 						n->parameters = $5;
 						n->returnType = $7;
-						n->options = list_concat(list_make3(lang, body, location), $8);
+						n->options = list_concat(list_make4(lang, body, location, vol), $8);
 						$$ = (Node *)n;
 					}
 			| CREATE opt_or_replace proc_keyword tsql_func_name tsql_createproc_args
