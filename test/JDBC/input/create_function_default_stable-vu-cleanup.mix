@@ -42,6 +42,29 @@ go
 drop function test_create_function_default_stable_tvptvf_f2
 go
 
+-- psql
+drop function test_create_function_default_stable_tsql_f1
+go
+
+drop function test_create_function_default_stable_tsql_f2
+go
+
+drop function test_create_function_default_stable_tsql_f3
+go
+
+drop function test_create_function_default_stable_tsql_f4
+go
+
+drop function test_create_function_default_stable_tsql_f5
+go
+
+drop table test_create_function_default_stable_tsql_t1
+go
+
+drop type test_create_function_default_stable_tsql_type
+go
+
+-- tsql
 drop table test_create_function_default_stable_t1
 go
 

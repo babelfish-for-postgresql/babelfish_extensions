@@ -153,6 +153,48 @@ v
 ~~END~~
 
 
+-- psql
+-- check for tsql dialect
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f1'
+go
+~~START~~
+char
+s
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f2'
+go
+~~START~~
+char
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f3'
+go
+~~START~~
+char
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f4'
+go
+~~START~~
+char
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f5'
+go
+~~START~~
+char
+v
+~~END~~
+
+
 
 -- psql
 -- check volatility for psql functions
