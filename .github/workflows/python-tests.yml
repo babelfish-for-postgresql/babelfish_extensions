@@ -50,6 +50,7 @@ jobs:
           mkdir sqltoolsservice
           cd sqltoolsservice
           wget https://github.com/microsoft/sqltoolsservice/releases/download/4.4.0.12/Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz && tar -xzvf Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz
+          cd ../
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
           pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
       

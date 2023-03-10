@@ -28,10 +28,21 @@ def batch_run(bbl_cnxn, file_handler, file, logger):
                     line = f.readline()
                     continue
                 else:
-                    if line.lower() == "go" or line.lower() == "go;":
+                    if line == "--DROP":
+                        dest = Path.cwd().joinpath("output",cfg["driver"], filename.split(".")[0] + ".out")
+                        f_obj = open(dest, 'a')
+                        work_dir = Path.cwd().joinpath("sqltoolsservice")
+                        script_path = Path.cwd().joinpath("SMO_script.ps1")
+                        params="?".join([cfg["fileGenerator_URL"],cfg["fileGenerator_port"],cfg["fileGenerator_databaseName"],cfg["fileGenerator_user"],cfg["fileGenerator_password"]])
+                        args = []
+                        args.append("pwsh -WorkingDirectory {} -File {} {}".format(work_dir,script_path,params))
+                        p=subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,shell=True,text=True)
+                        p_out, p_err = p.communicate()
+                        f_obj.write(p_out)
+
+                    elif line.lower() == "go" or line.lower() == "go;":
                         flag = True
                         flag = process_statement_in_file_mode_ddl(bbl_cnxn, file_handler, sqlbatch, True)
-
                         if flag:
                             passed += 1
                         else:
@@ -41,18 +52,6 @@ def batch_run(bbl_cnxn, file_handler, file, logger):
                     else:
                         sqlbatch += line + os.linesep
                     line = f.readline()
-
-        dest = Path.cwd().joinpath("output",cfg["driver"], filename.split(".")[0] + ".out")
-        f_obj = open(dest, 'a')
-        work_dir = Path.cwd().joinpath("sqltoolsservice")
-        script_path = Path.cwd().joinpath("SMO_script.ps1")
-        params="?".join([cfg["fileGenerator_URL"],cfg["fileGenerator_port"],cfg["fileGenerator_databaseName"],cfg["fileGenerator_user"],cfg["fileGenerator_password"]])
-        args = []
-        print(filename.split(".")[0][:4])
-        args.append("pwsh -WorkingDirectory {} -File {} {}".format(work_dir,script_path,params))
-        p=subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,shell=True,text=True)
-        p_out, p_err = p.communicate()
-        f_obj.write(p_out)
     
     elif f_type == "sql":
         with open(file, "r") as f:

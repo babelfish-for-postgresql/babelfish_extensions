@@ -4,8 +4,8 @@ CREATE TABLE [dbo].[isc_check_constraints_t1](
 	[a] [varchar](1) NULL
 ) ON [PRIMARY]
 
-ALTER TABLE [dbo].[isc_check_constraints_t1]  WITH CHECK ADD  CONSTRAINT [isc_check_constraints_t1_a_chec94886565777cab6407b25d293b6c3f6d] CHECK  (((a = 'provvwstdjtlyzygsx')))
-ALTER TABLE [dbo].[isc_check_constraints_t1] CHECK CONSTRAINT [isc_check_constraints_t1_a_chec94886565777cab6407b25d293b6c3f6d]
+ALTER TABLE [dbo].[isc_check_constraints_t1]  WITH CHECK ADD  CONSTRAINT [isc_check_constraints_t1_a_check] CHECK  (((a = 'provvwstdjtlyzygsx')))
+ALTER TABLE [dbo].[isc_check_constraints_t1] CHECK CONSTRAINT [isc_check_constraints_t1_a_check]
 GO
 
 SET ANSI_NULLS ON
@@ -26,7 +26,7 @@ CREATE TABLE [dbo].[t](
 	[a] [int] NOT NULL,
 	[b] [int] NOT NULL,
 	[c] [int] NULL,
- CONSTRAINT [t_a_keyt54ab6cfff8401f426f77ab54e695d429] UNIQUE NONCLUSTERED 
+ CONSTRAINT [t_a_key] UNIQUE NONCLUSTERED 
 (
 	[a]
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
@@ -75,18 +75,18 @@ CREATE TABLE [dbo].[test_datetime](
 	[c_smalldatetime] [smalldatetime] NULL
 ) ON [PRIMARY]
 
-ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_date_checktest_72841dd5cc64cf8f4cb0e6f6fa17752c] CHECK  (((c_date < '2001-01-01')))
-ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_date_checktest_72841dd5cc64cf8f4cb0e6f6fa17752c]
-ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetime_checktffe3ad7d09120654801e51a21956b018] CHECK  (((c_datetime < '2020-10-20 09:00:00')))
-ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetime_checktffe3ad7d09120654801e51a21956b018]
-ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetime2_checkb417e0667897a532bda873b1069aeda9] CHECK  ((((c_datetime2 < '2020-10-20 09:00:00') AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6))))))
-ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetime2_checkb417e0667897a532bda873b1069aeda9]
-ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetimeoffset_aa0ace0aa32f0856faf71c5a03615a84] CHECK  ((((c_datetimeoffset < '2025-12-10 12:32:10 +01:00') AND (c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset(4))))))
-ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetimeoffset_aa0ace0aa32f0856faf71c5a03615a84]
-ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_smalldatetime_cf96b658bbd72fe7ffbed53444623d06d] CHECK  (((c_smalldatetime < '2007-05-08 12:35:00')))
-ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_smalldatetime_cf96b658bbd72fe7ffbed53444623d06d]
-ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_time_checktest_4934030405ebad8f40ce9369b10f8fa5] CHECK  ((((c_time < '09:00:00') AND (c_time < CAST('09:00:00' AS time(6))))))
-ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_time_checktest_4934030405ebad8f40ce9369b10f8fa5]
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_date_check] CHECK  (((c_date < '2001-01-01')))
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_date_check]
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetime_check] CHECK  (((c_datetime < '2020-10-20 09:00:00')))
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetime_check]
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetime2_check] CHECK  ((((c_datetime2 < '2020-10-20 09:00:00') AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6))))))
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetime2_check]
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_datetimeoffset_check] CHECK  ((((c_datetimeoffset < '2025-12-10 12:32:10 +01:00') AND (c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset(4))))))
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_datetimeoffset_check]
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_smalldatetime_check] CHECK  (((c_smalldatetime < '2007-05-08 12:35:00')))
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_smalldatetime_check]
+ALTER TABLE [dbo].[test_datetime]  WITH CHECK ADD  CONSTRAINT [test_datetime_c_time_check] CHECK  ((((c_time < '09:00:00') AND (c_time < CAST('09:00:00' AS time(6))))))
+ALTER TABLE [dbo].[test_datetime] CHECK CONSTRAINT [test_datetime_c_time_check]
 GO
 
 SET ANSI_NULLS ON
@@ -96,10 +96,10 @@ CREATE TABLE [dbo].[test_null](
 	[b] [int] NULL
 ) ON [PRIMARY]
 
-ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [constraint1test_null987b8e55c775e4742a4a6c9438761a3c90e97e0bafd] CHECK  (((a > 10)))
-ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [constraint1test_null987b8e55c775e4742a4a6c9438761a3c90e97e0bafd]
-ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [test_null_a_checktest_nullb44dd0722fa9a34929c9a1d1abe92326] CHECK  (((a IS NOT NULL)))
-ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [test_null_a_checktest_nullb44dd0722fa9a34929c9a1d1abe92326]
+ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [constraint1test_null987b8e55c77de33d095778885ecd84f4] CHECK  (((a > 10)))
+ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [constraint1test_null987b8e55c77de33d095778885ecd84f4]
+ALTER TABLE [dbo].[test_null]  WITH CHECK ADD  CONSTRAINT [test_null_a_check] CHECK  (((a IS NOT NULL)))
+ALTER TABLE [dbo].[test_null] CHECK CONSTRAINT [test_null_a_check]
 GO
 
 SET ANSI_NULLS ON
@@ -110,22 +110,22 @@ CREATE TABLE [dbo].[test_tsql_const](
 	[c_smallint] [smallint] NULL,
 	[c_binary] [binary](8) NULL,
 	[c_varbinary] [varbinary](8) NULL,
- CONSTRAINT [test_tsql_const_pkeytest_tsql_ce4c656688dee20abf938221645306a5a] PRIMARY KEY NONCLUSTERED 
+ CONSTRAINT [test_tsql_const_pkey] PRIMARY KEY NONCLUSTERED 
 (
 	[c_int]
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 ) ON [PRIMARY]
 
-ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_binary_checkt79364405a828e6d103c768b40a2c4e42] CHECK  (((c_binary > CAST(('0x30786665') AS binary(8)))))
-ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_binary_checkt79364405a828e6d103c768b40a2c4e42]
-ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_bit_checktest6043e4e21e928d6598cfa4dbad8b1993] CHECK  (((c_bit <> CAST((1) AS bit))))
-ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_bit_checktest6043e4e21e928d6598cfa4dbad8b1993]
-ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_int_checktest97f153119a095396cf99ab5b4c46a15c] CHECK  (((c_int < 10)))
-ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_int_checktest97f153119a095396cf99ab5b4c46a15c]
-ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_smallint_checd640c74630fb84c0db1d605c61bd3f5f] CHECK  (((c_smallint < CAST(('20') AS smallint))))
-ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_smallint_checd640c74630fb84c0db1d605c61bd3f5f]
-ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_varbinary_che264abaf127bfef13035f249e6b78912b] CHECK  (((c_varbinary > CAST(('0x30786665') AS varbinary(8)))))
-ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_varbinary_che264abaf127bfef13035f249e6b78912b]
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_binary_check] CHECK  (((c_binary > CAST(('0xfe') AS binary(8)))))
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_binary_check]
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_bit_check] CHECK  (((c_bit <> CAST((1) AS bit))))
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_bit_check]
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_int_check] CHECK  (((c_int < 10)))
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_int_check]
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_smallint_check] CHECK  (((c_smallint < CAST((CAST(('20') AS sql_variant)) AS smallint))))
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_smallint_check]
+ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_varbinary_check] CHECK  (((c_varbinary > CAST('0xfe' AS varbinary(8)))))
+ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_varbinary_check]
 GO
 
 SET ANSI_NULLS ON
@@ -134,11 +134,11 @@ CREATE TABLE [dbo].[test_upper](
 	[a] [char](1) NULL
 ) ON [PRIMARY]
 
-ALTER TABLE [dbo].[test_upper]  WITH CHECK ADD  CONSTRAINT [test_upper_a_checktest_upperd88004bfe8db559d3b360ebd64c12b58] CHECK  (((upper(a) IN ('A', 'B'))))
-ALTER TABLE [dbo].[test_upper] CHECK CONSTRAINT [test_upper_a_checktest_upperd88004bfe8db559d3b360ebd64c12b58]
+ALTER TABLE [dbo].[test_upper]  WITH CHECK ADD  CONSTRAINT [test_upper_a_check] CHECK  (((upper(a) IN ('A', 'B'))))
+ALTER TABLE [dbo].[test_upper] CHECK CONSTRAINT [test_upper_a_check]
 GO
 
-ALTER TABLE [dbo].[t] ADD  CONSTRAINT [t_a_keyt54ab6cfff8401f426f77ab54e695d429] UNIQUE NONCLUSTERED 
+ALTER TABLE [dbo].[t] ADD  CONSTRAINT [t_a_key] UNIQUE NONCLUSTERED 
 (
 	[a]
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
@@ -156,7 +156,7 @@ ALTER TABLE [dbo].[t2] ADD  CONSTRAINT [t2_pkey] PRIMARY KEY NONCLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 GO
 
-ALTER TABLE [dbo].[test_tsql_const] ADD  CONSTRAINT [test_tsql_const_pkeytest_tsql_ce4c656688dee20abf938221645306a5a] PRIMARY KEY NONCLUSTERED 
+ALTER TABLE [dbo].[test_tsql_const] ADD  CONSTRAINT [test_tsql_const_pkey] PRIMARY KEY NONCLUSTERED 
 (
 	[c_int]
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)

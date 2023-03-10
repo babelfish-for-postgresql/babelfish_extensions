@@ -38,7 +38,7 @@ outputErrorCode = true
 ############################ ALLOW TO RUN ISOLATION TESTS (IF TRUE THEN RUNS ALL THE .SPEC FILES FROM INPUT DIRECTORY OTHERWISE SKIP THEM) ##################################################
 runIsolationTests = false
 
-############################ ALLOW TO RUN DDL EXPORT TESTS (IF TRUE THEN RUNS ALL THE .SQL FILES AND PREFIX WITH ddl_ FROM INPUT DIRECTORY OTHERWISE SKIP THEM) ##################################################
+############################ ALLOW TO RUN DDL EXPORT TESTS (IF TRUE THEN RUNS ALL THE .SQL FILES WITH PREFIX ddl_ FROM INPUT DIRECTORY OTHERWISE SKIP THEM) ##################################################
 ddlExport = true
 ############################ MAX TIME LIMIT FOR SINGLE STEP QUERY EXECUTION IN SECONDS(FOR ISOLATION TESTS ONLY)  ############################
 stepTimeLimit = 30

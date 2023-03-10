@@ -55,3 +55,30 @@ Create table test_null(a int, b int, check(a IS NOT NULL), CONSTRAINT constraint
 GO
 Create table test_upper(a char, check (upper(a) in ('A','B')));
 GO
+
+--DROP
+
+DROP TABLE IF EXISTS rec
+GO
+DROP TABLE IF EXISTS t2
+GO
+DROP TABLE IF EXISTS t1
+GO
+DROP TABLE IF EXISTS t
+GO
+DROP TABLE IF EXISTS isc_check_constraints_t1
+GO
+DROP TABLE IF EXISTS test_tsql_const
+GO
+DROP TABLE IF EXISTS test_tsql_cast
+GO
+DROP TABLE IF EXISTS test_tsql_collate
+GO
+DROP TABLE IF EXISTS test_datetime
+GO
+DROP TABLE IF EXISTS test_functioncall
+GO
+DROP TABLE IF EXISTS test_null
+GO
+DROP TABLE IF EXISTS test_upper
+GO
