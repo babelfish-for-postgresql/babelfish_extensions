@@ -15,7 +15,7 @@ Product C#!#75.00
 ~~END~~
 
 
-SELECT Product, STDEV(SalesAmount) AS SalesAmountStdev
+SELECT Product, STDEV(CAST(SalesAmount AS float8)) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
 GO
@@ -27,7 +27,7 @@ Product A#!#50.0
 ~~END~~
 
 
-SELECT Product, STDEVP(SalesAmount) AS SalesAmountStdev
+SELECT Product, STDEVP(CAST(SalesAmount AS float8)) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
 GO
@@ -39,7 +39,7 @@ Product A#!#40.824829046386306
 ~~END~~
 
 
-SELECT Product, VAR(SalesAmount) AS SalesAmountStdev
+SELECT Product, VAR(CAST(SalesAmount AS float8)) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
 GO
@@ -51,7 +51,7 @@ Product A#!#2500.0
 ~~END~~
 
 
-SELECT Product, VARP(SalesAmount) AS SalesAmountStdev
+SELECT Product, VARP(CAST(SalesAmount AS float8)) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
 GO

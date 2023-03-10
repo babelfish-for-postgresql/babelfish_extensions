@@ -2,22 +2,22 @@ Select * from SalesData
 ORDER BY Product;
 GO
 
-SELECT Product, STDEV(SalesAmount) AS SalesAmountStdev
+SELECT Product, STDEV(CAST(SalesAmount AS float8)) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
 GO
 
-SELECT Product, STDEVP(SalesAmount) AS SalesAmountStdev
+SELECT Product, STDEVP(CAST(SalesAmount AS float8)) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
 GO
 
-SELECT Product, VAR(SalesAmount) AS SalesAmountStdev
+SELECT Product, VAR(CAST(SalesAmount AS float8)) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
 GO
 
-SELECT Product, VARP(SalesAmount) AS SalesAmountStdev
+SELECT Product, VARP(CAST(SalesAmount AS float8)) AS SalesAmountStdev
 FROM SalesData
 GROUP BY Product
 GO
