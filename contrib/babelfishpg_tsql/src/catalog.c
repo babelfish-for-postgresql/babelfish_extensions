@@ -17,6 +17,7 @@
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/formatting.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tuplestore.h"
@@ -284,6 +285,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 {
     ReturnSetInfo 		*rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	char 				*dbname;
+	char				*dbname_lower;
 	ScanKeyData 		scanKey;
     TupleDesc 			tupdesc;
     Tuplestorestate 	*tupstore;
@@ -297,7 +299,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 	bool				typIsVarlena;
 	Oid 				datetime_type;
     Oid 				sys_nspoid = get_namespace_oid("sys", false);
-
+	int					index;
 
     /* check to see if caller supports us returning a tuplestore */
     if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -344,14 +346,25 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 	if (PG_NARGS() > 0)
 	{
 		dbname = TextDatumGetCString(PG_GETARG_DATUM(0));
-		if (!DbidIsValid(get_db_id(dbname)))
+		dbname_lower = str_tolower(dbname, strlen(dbname), DEFAULT_COLLATION_OID);
+		/* Remove trailing spaces at the end of user typed dbname */
+		index = -1;
+		for (int i = 0; dbname_lower[i]!='\0'; i++)
+		{
+			if (dbname_lower[i]!=' ')
+			{
+				index = i;
+			}
+		}
+		dbname_lower[index + 1] = '\0';
+		if (!DbidIsValid(get_db_id(dbname_lower)))
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("The database '%s' does not exist. Supply a valid database name. To see available databases, use sys.databases.", dbname)));
 		ScanKeyInit(&scanKey,
 			Anum_sysdatabaese_name,
 			BTEqualStrategyNumber, F_TEXTEQ,
-			CStringGetTextDatum(dbname));
+			CStringGetTextDatum(dbname_lower));
 		scan = systable_beginscan(rel, sysdatabaese_idx_name_oid, true,
 								NULL, 1, &scanKey);
 	}
