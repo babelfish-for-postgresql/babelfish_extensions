@@ -2941,7 +2941,8 @@ CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
 	IN "@objname" sys.nvarchar(776),
 	IN "@newname" sys.SYSNAME,
 	IN "@schemaname" sys.nvarchar(776),
-	IN "@objtype" char(2) DEFAULT NULL
+	IN "@objtype" char(2) DEFAULT NULL,
+	IN "@curr_relname" sys.nvarchar(776) DEFAULT NULL
 ) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_internal TO PUBLIC;
 
@@ -2981,6 +2982,7 @@ BEGIN
 	DECLARE @subname sys.nvarchar(776) = '';
 	DECLARE @schemaname sys.nvarchar(776) = '';
 	DECLARE @dbname sys.nvarchar(776) = '';
+	DECLARE @curr_relname sys.nvarchar(776) = NULL;
 	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
 	IF @name_count > 3
 		BEGIN
@@ -2988,33 +2990,33 @@ BEGIN
 		END
 	IF @name_count = 3
 		BEGIN
-			WITH myTableWithRows AS (
+			WITH parseTable AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
 				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
+			SELECT @dbname = value FROM parseTable WHERE row = 1;
 			IF @dbname != sys.db_name()
 				BEGIN
 					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 				END
-			WITH myTableWithRows AS (
+			WITH parseTable AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
 				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
-			WITH myTableWithRows AS (
+			SELECT @schemaname = value FROM parseTable WHERE row = 2;
+			WITH parseTable AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
 				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+			SELECT @subname = value FROM parseTable WHERE row = 3;
 		END
 	IF @name_count = 2
 		BEGIN
-			WITH myTableWithRows AS (
+			WITH parseTable AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
 				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
-			WITH myTableWithRows AS (
+			SELECT @schemaname = value FROM parseTable WHERE row = 1;
+			WITH parseTable AS (
 				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
 				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+			SELECT @subname = value FROM parseTable WHERE row = 2;
 		END
 	IF @name_count = 1
 		BEGIN
@@ -3032,11 +3034,35 @@ BEGIN
 		END
 	IF @count < 1
 		BEGIN
-			THROW 33557097, N'There is no object with the given @objname.', 1;
+			-- TODO: TABLE TYPE: check if there is a match in sys.table_types (if we cannot alter sys.objects table_type naming)
+			SELECT @count = COUNT(*) FROM sys.table_types tt1 INNER JOIN sys.schemas s1 ON tt1.schema_id = s1.schema_id 
+			WHERE s1.name = @schemaname AND tt1.name = @subname;
+			IF @count > 1
+				BEGIN
+					THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+				END
+			IF @count < 1
+				BEGIN
+					THROW 33557097, N'There is no object with the given @objname.', 1;
+				END
+			IF @count = 1
+				BEGIN
+					SET @currtype = 'TT'
+				END
 		END
-	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-	WHERE s1.name = @schemaname AND o1.name = @subname;
-	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
+	IF @currtype IS NULL
+		BEGIN
+			PRINT 'HAHAHAHA';
+			SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+			WHERE s1.name = @schemaname AND o1.name = @subname;
+		END
+	-- TODO: If current match is TRIGGER, retrieve relname
+	IF @currtype = 'TR' OR @currtype = 'TA'
+		BEGIN
+			SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
+			WHERE tr.tgname = @subname AND n.nspname = (sys.db_name() + '_' + @schemaname);
+		END
+	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
 	PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
 END;
 $$;
