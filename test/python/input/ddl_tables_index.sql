@@ -1,10 +1,12 @@
-DROP TABLE IF EXISTS rec
+/* This test files will check for scripting of tables with constraints including check , primary keys, foreign keys , NULL , unique and  single , composite indexes */
+
+DROP TABLE IF EXISTS table_check
 GO
-DROP TABLE IF EXISTS t2
+DROP TABLE IF EXISTS table_foreign 
 GO
-DROP TABLE IF EXISTS t1
+DROP TABLE IF EXISTS table_primary
 GO
-DROP TABLE IF EXISTS t
+DROP TABLE IF EXISTS table_unique
 GO
 DROP TABLE IF EXISTS isc_check_constraints_t1
 GO
@@ -23,13 +25,13 @@ GO
 DROP TABLE IF EXISTS test_upper
 GO
 
-Create table t (a int NOT NULL UNIQUE , b int NOT NULL,c int )
+Create table table_unique (a int NOT NULL UNIQUE , b int NOT NULL,c int )
 GO
-Create table t1 (a int NOT NULL , b int NOT NULL,c int, PRIMARY KEY(a) )
+Create table table_primary (a int NOT NULL , b int NOT NULL,c int, PRIMARY KEY(a) )
 GO
-Create table t2 (aa int NOT NULL , bb int NOT NULL,a int, PRIMARY KEY(aa) ,FOREIGN KEY (a) REFERENCES t1(a) )
+Create table table_foreign (aa int NOT NULL , bb int NOT NULL,a int, PRIMARY KEY(aa) ,FOREIGN KEY (a) REFERENCES table_primary(a))
 GO
-Create table rec (ID int NOT NULL,NAME varchar(10)  NOT NULL,AGE int NOT NULL CHECK (AGE >= 18))
+Create table table_check (ID int NOT NULL,NAME varchar(10)  NOT NULL,AGE int NOT NULL CHECK (AGE >= 18))
 GO
 Create table isc_check_constraints_t1( a varchar, check(a = 'provvwstdjtlyzygsx'));
 GO
@@ -55,16 +57,19 @@ Create table test_null(a int, b int, check(a IS NOT NULL), CONSTRAINT constraint
 GO
 Create table test_upper(a char, check (upper(a) in ('A','B')));
 GO
-
+Create index test_index on test_upper(a)
+GO
+Create index test_comp_index on table_unique(a,b)
+GO
 --DROP
 
-DROP TABLE IF EXISTS rec
+DROP TABLE IF EXISTS table_check
 GO
-DROP TABLE IF EXISTS t2
+DROP TABLE IF EXISTS table_foreign 
 GO
-DROP TABLE IF EXISTS t1
+DROP TABLE IF EXISTS table_primary
 GO
-DROP TABLE IF EXISTS t
+DROP TABLE IF EXISTS table_unique
 GO
 DROP TABLE IF EXISTS isc_check_constraints_t1
 GO

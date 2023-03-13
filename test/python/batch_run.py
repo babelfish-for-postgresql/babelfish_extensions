@@ -42,7 +42,7 @@ def batch_run(bbl_cnxn, file_handler, file, logger):
 
                     elif line.lower() == "go" or line.lower() == "go;":
                         flag = True
-                        flag = process_statement_in_file_mode_ddl(bbl_cnxn, file_handler, sqlbatch, True)
+                        flag = process_statement_in_file_mode_ddl(bbl_cnxn, file_handler, sqlbatch)
                         if flag:
                             passed += 1
                         else:
