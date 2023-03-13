@@ -69,15 +69,6 @@ LANGUAGE C VOLATILE;
 -- Unmark babelfish_configurations as configuration table
 SELECT sys.pg_extension_config_remove('sys.babelfish_configurations');
 
-
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-DROP FUNCTION sys.pg_extension_config_remove(REGCLASS);
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 CREATE AGGREGATE sys.STDEV(float8) (
     SFUNC = float8_accum,
     FINALFUNC = float8_stddev_samp,
@@ -113,3 +104,11 @@ CREATE AGGREGATE sys.VARP(float8) (
     PARALLEL = SAFE,
     INITCOND = '{0,0,0}'
 );
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+DROP FUNCTION sys.pg_extension_config_remove(REGCLASS);
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
