@@ -2823,7 +2823,7 @@ AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
  *  2) To convert the input path into the expected jsonb_path.
  *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
  */
-CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT, in escape bool)
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value ANYELEMENT, in escape bool)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
