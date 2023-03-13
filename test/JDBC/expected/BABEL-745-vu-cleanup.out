@@ -18,3 +18,7 @@ GO
 
 DROP TABLE FloatTest;
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "floattest" does not exist)~~
+

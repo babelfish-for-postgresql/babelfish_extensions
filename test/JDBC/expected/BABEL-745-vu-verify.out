@@ -1,5 +1,5 @@
 Select * from SalesData 
-ORDER BY Product;
+ORDER BY Product, SalesAmount;
 GO
 ~~START~~
 varchar#!#float
@@ -15,7 +15,17 @@ Product C#!#75.0
 ~~END~~
 
 
-SELECT STDEV(SalesAmount) AS SalesAmountStdev
+SELECT * FROM v_SalesData
+GO
+~~START~~
+varchar#!#float
+Product A#!#50.0
+Product B#!#25.0
+Product C#!#25.0
+~~END~~
+
+
+SELECT STDEV(SalesAmount) AS SalesAmount
 FROM SalesData;
 GO
 ~~START~~
@@ -93,24 +103,51 @@ float
 ~~END~~
 
 
-SELECT
-  VARP(col1) AS col1_VARP,
-  VAR(col2) AS col2_VAR
-FROM FloatTest;
+--Float8
+SELECT VARP(CAST(1.0 AS float8)), VAR(CAST(2.0 AS float8));
 GO
 ~~START~~
 float#!#float
-NaN#!#NaN
+0.0#!#<NULL>
 ~~END~~
 
 
-SELECT
-  STDEVP(col1) AS col1_STDEVP,
-  STDEV(col2) AS col2_STDEV
-FROM FloatTest;
+SELECT STDEVP(CAST(3.0 AS float8)), STDEV(CAST(4.0 AS float8));
 GO
 ~~START~~
 float#!#float
-NaN#!#NaN
+0.0#!#<NULL>
+~~END~~
+
+
+SELECT VARP(CAST('inf' AS float8)), VAR(CAST('inf' AS float8));
+GO
+~~START~~
+float#!#float
+NaN#!#<NULL>
+~~END~~
+
+
+SELECT STDEVP(CAST('inf' AS float8)), STDEV(CAST('inf' AS float8));
+GO
+~~START~~
+float#!#float
+NaN#!#<NULL>
+~~END~~
+
+
+SELECT VARP(CAST('nan' AS float8)), VAR(CAST('nan' AS float8));
+GO
+~~START~~
+float#!#float
+NaN#!#<NULL>
+~~END~~
+
+
+SELECT STDEVP(CAST('nan' AS float8)), STDEV(CAST('nan' AS float8));
+GO
+~~START~~
+float#!#float
+NaN#!#<NULL>
 ~~END~~
 

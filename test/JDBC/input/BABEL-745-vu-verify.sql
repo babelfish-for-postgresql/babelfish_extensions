@@ -1,8 +1,11 @@
 Select * from SalesData 
-ORDER BY Product;
+ORDER BY Product, SalesAmount;
 GO
 
-SELECT STDEV(SalesAmount) AS SalesAmountStdev
+SELECT * FROM v_SalesData
+GO
+
+SELECT STDEV(SalesAmount) AS SalesAmount
 FROM SalesData;
 GO
 
@@ -35,14 +38,21 @@ GO
 EXEC sp3_CalculateStdev 'Product A';
 GO
 
-SELECT
-  VARP(col1) AS col1_VARP,
-  VAR(col2) AS col2_VAR
-FROM FloatTest;
+--Float8
+SELECT VARP(CAST(1.0 AS float8)), VAR(CAST(2.0 AS float8));
 GO
 
-SELECT
-  STDEVP(col1) AS col1_STDEVP,
-  STDEV(col2) AS col2_STDEV
-FROM FloatTest;
+SELECT STDEVP(CAST(3.0 AS float8)), STDEV(CAST(4.0 AS float8));
+GO
+
+SELECT VARP(CAST('inf' AS float8)), VAR(CAST('inf' AS float8));
+GO
+
+SELECT STDEVP(CAST('inf' AS float8)), STDEV(CAST('inf' AS float8));
+GO
+
+SELECT VARP(CAST('nan' AS float8)), VAR(CAST('nan' AS float8));
+GO
+
+SELECT STDEVP(CAST('nan' AS float8)), STDEV(CAST('nan' AS float8));
 GO
