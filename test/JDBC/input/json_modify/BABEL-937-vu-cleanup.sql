@@ -36,8 +36,5 @@ go
 drop view babel_937_spaces
 go
 
-drop view babel_937_multi_function
-go
-
 drop view babel_937_test_array
 go

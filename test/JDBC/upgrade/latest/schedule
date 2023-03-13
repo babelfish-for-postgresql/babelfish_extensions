@@ -400,6 +400,7 @@ sys-systypes
 openjson
 BABEL-3702
 BABEL-3696
+BABEL-3697
 Test-sp_babelfish_volatility
 BABEL_OBJECT_DEFINITION
 Test-sp_rename
