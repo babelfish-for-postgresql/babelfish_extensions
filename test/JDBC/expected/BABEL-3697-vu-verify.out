@@ -18,7 +18,7 @@ SELECT * FROM babel_3697_3
 GO
 ~~START~~
 nvarchar
-{"click_count": "25"}
+{"click_count": 25}
 ~~END~~
 
 
@@ -52,7 +52,7 @@ EXEC babel_3697_7
 GO
 ~~START~~
 nvarchar
-{"click_count": "0"}
+{"click_count": 0}
 ~~END~~
 
 

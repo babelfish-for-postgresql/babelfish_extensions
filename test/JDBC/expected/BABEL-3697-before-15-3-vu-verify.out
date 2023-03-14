@@ -1,0 +1,73 @@
+SELECT * FROM babel_3697_before_15_3_1
+GO
+~~START~~
+nvarchar
+{"click_count": "174"}
+~~END~~
+
+
+SELECT * FROM babel_3697_before_15_3_2
+GO
+~~START~~
+nvarchar
+{"click_count": "173.123"}
+~~END~~
+
+
+SELECT * FROM babel_3697_before_15_3_3
+GO
+~~START~~
+nvarchar
+{"click_count": "25"}
+~~END~~
+
+
+SELECT * FROM babel_3697_before_15_3_4
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type json)~~
+
+
+SELECT * FROM babel_3697_before_15_3_5
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type json)~~
+
+
+EXEC babel_3697_before_15_3_6
+GO
+~~START~~
+nvarchar
+{"click_count": "12"}
+~~END~~
+
+
+EXEC babel_3697_before_15_3_7
+GO
+~~START~~
+nvarchar
+{"click_count": "0"}
+~~END~~
+
+
+EXEC babel_3697_before_15_3_8
+GO
+~~START~~
+nvarchar
+{"click_count": "241"}
+~~END~~
+
+
+SELECT * FROM babel_3697_before_15_3_multi_function
+GO
+~~START~~
+nvarchar#!#nvarchar
+{"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}#!#{"Price": "49.99"}
+~~END~~
+
