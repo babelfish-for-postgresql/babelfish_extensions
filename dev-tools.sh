@@ -41,11 +41,13 @@ if [ ! $1 ]; then
     echo "  minor_version_upgrade SOURCE_WS [TARGET_WS]"
     echo "      upgrade minor version using ALTER EXTENSION ... UPDATE"
     echo ""
-    echo "  pg_dump [TARGET_WS]"
+    echo "  pg_dump [TARGET_WS] LOGICAL_DATBABSE_NAME"
     echo "      dump [TARGET_WS using pg_dump"
+    echo "      LOGICAL_DATBABSE_NAME is optional if provided then only that bbf database will be dumped."
     echo ""
-    echo "  restore SOURCE_WS [TARGET_WS]"
+    echo "  restore SOURCE_WS [TARGET_WS] LOGICAL_DATBABSE_NAME"
     echo "      restore dump files from SOURCE_WS on [TARGET_WS]"
+    echo "      LOGICAL_DATBABSE_NAME is optional if provided then only that bbf database will be restored."
     echo ""
     echo "  dumprestore SOURCE_WS [TARGET_WS]"
     echo "      dump SOURCE_WS using pg_dump and restore it on TARGET_WS"
@@ -181,8 +183,14 @@ pg_dump() {
     echo "Runinng pg_dumpall and pg_dump on ($1)"
     cd $1/postgres
     rm -f pg_dump_globals.sql pg_dump.sql error.log
-    $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>error.log
-    $1/postgres/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+
+    if [[ ! $2 ]];then
+        $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>error.log
+        $1/postgres/bin/pg_dump --create --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+    else
+        $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose --bbf-database-name=$2 -f pg_dump_globals.sql 2>error.log
+        $1/postgres/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --bbf-database-name=$2 --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+    fi
     stop $1
 }
 
@@ -196,12 +204,13 @@ restore() {
     $2/postgres/bin/psql -d postgres -U $USER -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
 
     echo "Restoring from pg_dump"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE jdbc_testdb TO sysadmin WITH GRANT OPTION;"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER USER jdbc_user CREATEDB;"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT pg_reload_conf();"
+    if [[ ! $3 ]];then
+        $2/postgres/bin/psql -d postgres -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT pg_reload_conf();"
+    else
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
+    fi
 }
 
 if [ "$1" == "initdb" ]; then
@@ -320,14 +329,14 @@ elif [ "$1" == "minor_version_upgrade" ]; then
     exit 0
 elif [ "$1" == "pg_dump" ]; then
     restart $TARGET_WS || true
-    pg_dump $TARGET_WS
+    pg_dump $TARGET_WS $3
     exit 0
 elif [ "$1" == "restore" ]; then
     SOURCE_WS=$2
     init_db $TARGET_WS
     echo "Init target workspace ($TARGET_WS) done!"
 
-    restore $SOURCE_WS $TARGET_WS
+    restore $SOURCE_WS $TARGET_WS $4
     echo "Restored on target workspace ($TARGET_WS)!"
     exit 0
 elif [ "$1" == "dumprestore" ]; then
