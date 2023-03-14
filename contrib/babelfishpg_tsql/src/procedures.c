@@ -2962,23 +2962,6 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
 	} else {
-		// ALTER TYPE_P any_name RENAME TO name
-		// 		{
-		// 			RenameStmt *n = makeNode(RenameStmt);
-		// 			n->renameType = OBJECT_TYPE;
-		// 			n->object = (Node *) $3;
-		// 			n->newname = $6;
-		// 			n->missing_ok = false;
-		// 			$$ = (Node *)n;
-
-		// function
-		// RenameStmt *n = makeNode(RenameStmt);
-		// 			n->renameType = OBJECT_FUNCTION;
-		// 			n->object = (Node *) $3;
-		// 			n->newname = $6;
-		// 			n->missing_ok = false;
-		// 			$$ = (Node *)n;
-
 		renamestmt->renameType = OBJECT_TABLE;
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));

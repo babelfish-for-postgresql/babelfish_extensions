@@ -3052,7 +3052,6 @@ BEGIN
 		END
 	IF @currtype IS NULL
 		BEGIN
-			PRINT 'HAHAHAHA';
 			SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 			WHERE s1.name = @schemaname AND o1.name = @subname;
 		END
