@@ -433,6 +433,74 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (prev_pre_parse_analyze_hook)
 	  prev_pre_parse_analyze_hook(pstate, parseTree);
 
+	switch (parseTree->stmt->type)
+	{
+		case T_InsertStmt:
+		{
+			InsertStmt	*stmt = (InsertStmt *) parseTree->stmt;
+			SelectStmt	*selectStmt = (SelectStmt *) stmt->selectStmt;
+			A_Const   	*value;
+			Oid     	 relid;
+			ListCell	*lc;
+
+			if (!babelfish_dump_restore || IsBinaryUpgrade)
+				break;
+
+			relid = RangeVarGetRelid(stmt->relation, NoLock, false);
+
+			/*
+			 * Insert new dbid column value in babelfish catalog if dump did
+			 * not provide it.
+			 */
+			if (relid == sysdatabases_oid ||
+				relid == namespace_ext_oid ||
+				relid == bbf_view_def_oid)
+			{
+				int16    	 dbid = 0;
+				ResTarget	*dbidCol;
+				bool		 found = false;
+
+				/* Skip if dbid column already exists */
+				foreach(lc, stmt->cols)
+				{
+					ResTarget *col = (ResTarget *) lfirst(lc);
+
+					if (strcasecmp(col->name, "dbid") == 0)
+						found = true;
+				}
+				if (found)
+					break;
+
+				dbid = getDbidForLogicalDbRestore(relid);
+
+				/* const value node to store into values clause */
+				value = makeNode(A_Const);
+				value->val.ival.type = T_Integer;
+				value->val.ival.ival = dbid;
+				value->location = -1;
+
+				/* dbid column to store into InsertStmt's target list */
+				dbidCol = makeNode(ResTarget);
+				dbidCol->name = "dbid";
+				dbidCol->name_location = -1;
+				dbidCol->indirection = NIL;
+				dbidCol->val = NULL;
+				dbidCol->location = -1;
+				stmt->cols = lappend(stmt->cols, dbidCol);
+
+				foreach(lc, selectStmt->valuesLists)
+				{
+					List	*sublist = (List *) lfirst(lc);
+
+					sublist = lappend(sublist, value);
+				}
+			}
+			break;
+		}
+		default:
+			break;
+	}
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 

@@ -23,10 +23,10 @@ runs:
             echo "ERROR: Dump restore path length less than 2" 1>&2
             exit 1
         fi
-        
+
         # Initial installed version is the base version
         previous_installed_version=${{ inputs.base_version }}
-        
+
         # For every next dump+restore, below 'For' loop will add a step in dump-restore composite action which will dump the current version and restore it into next version
         for (( i=1 ; i<$LEN ; i++ )); 
         do
@@ -43,7 +43,15 @@ runs:
           uses_file=./.github/composite-actions/dump-restore-util
           temp="&& steps.dump-restore-version-$(($i-1)).outcome == 'success'"; [[ i -eq 1 ]] && temp=""
 
-          printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n\n"   >> $dump_restore_version_dir_path/action.yml
+          logical_database_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].\"logical-database\""
+          logical_database=$(yq $logical_database_var ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
+
+          if [[ $logical_database == 'null' ]]
+          then
+            printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n\n"   >> $dump_restore_version_dir_path/action.yml
+          else
+            printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        logical_database: ${logical_database}\n\n"   >> $dump_restore_version_dir_path/action.yml
+          fi
 
           previous_installed_version=$dump_restore_version
         done

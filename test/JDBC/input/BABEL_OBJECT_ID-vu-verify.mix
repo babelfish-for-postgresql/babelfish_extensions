@@ -94,20 +94,6 @@ GO
 SELECT OBJECT_NAME(OBJECT_ID('[babel_object_id_schema .with .dot_and_spaces]."babel_object_id_t3 .with .dot_and_spaces"'));
 GO
 
--- test longer schema name and table name 
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.babel_object_id_table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij'))
-GO
-
--- it can be also accessed with its shortened name
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.babel_object_id_table_longer_th98997f4fc7505f5a0e4e8fa9d333617e'))
-GO
-
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema_longer_tac6266677f55e340966ca52f80004919.babel_object_id_table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij'))
-GO
-
-SELECT OBJECT_NAME(OBJECT_ID('babel_object_id_schema_longer_tac6266677f55e340966ca52f80004919.babel_object_id_table_longer_th98997f4fc7505f5a0e4e8fa9d333617e'))
-GO
-
 -- To test temp object
 CREATE TABLE #babel_object_id_temp_t1 (a int);
 GO

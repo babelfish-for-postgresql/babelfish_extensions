@@ -22,7 +22,7 @@ CREATE TABLE create_check_constraint(
 GO
 
 -- psql
-CREATE TABLE tbl_creation_should_fail (
+CREATE TABLE master_dbo.tbl_creation_should_fail (
     a sys.varchar(20),
     CONSTRAINT tbl1_a_check CHECK 
           ((NOT (((a)::text ~~* '11%'::text) AND (((a)::text >= '11'::text) 
@@ -30,7 +30,7 @@ CREATE TABLE tbl_creation_should_fail (
 );
 GO
 
-CREATE TABLE tbl_creation_should_succeed (
+CREATE TABLE master_dbo.tbl_creation_should_succeed (
     a sys.varchar(20) COLLATE sys.bbf_unicode_cp1_cs_as ,
     CONSTRAINT tbl1_a_check CHECK 
           ((NOT (((a)::text ~~* '11%'::text) AND (((a)::text >= '11'::text) 
