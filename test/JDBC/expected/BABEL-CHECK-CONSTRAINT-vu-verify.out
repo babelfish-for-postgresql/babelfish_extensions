@@ -34,12 +34,12 @@ GO
 
 
 -- psql
-INSERT INTO tbl_creation_should_succeed VALUES ('abcd');
+INSERT INTO master_dbo.tbl_creation_should_succeed VALUES ('abcd');
 GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO tbl_creation_should_succeed VALUES ('11dsjkdnb');
+INSERT INTO master_dbo.tbl_creation_should_succeed VALUES ('11dsjkdnb');
 GO
 ~~ERROR (Code: 0)~~
 
