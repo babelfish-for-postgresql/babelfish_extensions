@@ -94,7 +94,6 @@ static bool check_arithabort (bool *newval, void **extra, GucSource source);
 static bool check_babelfish_dump_restore_min_oid (char **newval, void **extra, GucSource source);
 static bool check_numeric_roundabort (bool *newval, void **extra, GucSource source);
 static bool check_cursor_close_on_commit (bool *newval, void **extra, GucSource source);
-// static bool check_rowcount (int *newval, void **extra, GucSource source);
 static bool check_language (char **newval, void **extra, GucSource source);
 static bool check_noexec (bool *newval, void **extra, GucSource source);
 static bool check_showplan_all (bool *newval, void **extra, GucSource source);
@@ -262,22 +261,6 @@ static bool check_cursor_close_on_commit (bool *newval, void **extra, GucSource 
     }
     return true;
 }
-
-// static bool check_rowcount (int *newval, void **extra, GucSource source)
-// {
-// 	if (*newval != 0 && *newval != INT_MAX && escape_hatch_session_settings != EH_IGNORE)
-//     {
-// 	TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_OPTION_ROWCOUNT);
-// 	ereport(ERROR,
-// 		(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-// 		 errmsg("Settings other than 0 are not allowed for option ROWCOUNT. please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
-//     }
-// 	else if (escape_hatch_session_settings == EH_IGNORE)
-// 	{
-// 		*newval = 0; /* overwrite to a default value. This would change the value if it was set to INT_MAX before. but, it would not cause a pratical problem */
-// 	}
-//     return true;
-// }
 
 static bool check_language (char **newval, void **extra, GucSource source)
 {
