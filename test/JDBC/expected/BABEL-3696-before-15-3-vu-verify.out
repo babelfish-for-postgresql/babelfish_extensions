@@ -2,7 +2,7 @@ SELECT * FROM babel_3696_before_15_3_1
 GO
 ~~START~~
 nvarchar
-{"Brand": "HP", "Product": "Laptop", "Accessories": ["Mouse", "Monitor"]}
+{"Brand": "HP", "Product": "Laptop", "Accessories": "[\"Mouse\", \"Monitor\"]"}
 ~~END~~
 
 
@@ -10,7 +10,7 @@ SELECT * FROM babel_3696_before_15_3_2
 GO
 ~~START~~
 nvarchar
-{"Brand": "HP", "Product": "Laptop", "Accessories": ["Keyboard", "Mouse", "Monitor"]}
+{"Brand": "HP", "Product": "Laptop", "Accessories": "[\"Keyboard\", \"Mouse\", \"Monitor\"]"}
 ~~END~~
 
 
@@ -26,7 +26,7 @@ SELECT * FROM babel_3696_before_15_3_4
 GO
 ~~START~~
 nvarchar
-{"Brand": "Lenovo", "Product": "Laptop", "Accessories": ["HDMI", "USB"]}
+{"Brand": "Lenovo", "Product": "Laptop", "Accessories": "[\"HDMI\", \"USB\"]"}
 ~~END~~
 
 
@@ -34,7 +34,7 @@ SELECT * FROM babel_3696_before_15_3_5
 GO
 ~~START~~
 nvarchar
-{"name": "John", "skills": ["C#", "T-SQL", "Azure"]}
+{"name": "John", "skills": "[\"C#\", \"T-SQL\", \"Azure\"]"}
 ~~END~~
 
 
@@ -42,7 +42,7 @@ SELECT * FROM babel_3696_before_15_3_6
 GO
 ~~START~~
 nvarchar
-{"a": [{"x": "some string"}]}
+{"a": "[{\"x\":\"some string\"}]"}
 ~~END~~
 
 
@@ -58,7 +58,7 @@ SELECT * FROM babel_3696_before_15_3_8
 GO
 ~~START~~
 nvarchar
-{"a": {"a": "c"}}
+{"a": "{\"a\": \"c\"}"}
 ~~END~~
 
 
