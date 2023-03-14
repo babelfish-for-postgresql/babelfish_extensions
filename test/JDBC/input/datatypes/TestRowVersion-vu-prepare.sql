@@ -88,6 +88,9 @@ go
 create table babel_3139_t(c1 int, rv rowversion, dbts_after_insert binary(8));
 go
 
+CREATE TABLE babel_3819_t(col1 int, timestamp);
+GO
+
 begin tran;
 insert into babel_3139_t(c1) values(1);
 update babel_3139_t set dbts_after_insert = @@dbts where c1 = 1;
@@ -97,6 +100,13 @@ update babel_3139_t set dbts_after_insert = @@dbts where c1 = 2;
 
 insert into babel_3139_t(c1) values(3);
 update babel_3139_t set dbts_after_insert = @@dbts where c1 = 3;
+commit;
+go
+
+begin tran;
+insert into babel_3819_t(col1) values(1);
+insert into babel_3819_t(col1) values(2);
+insert into babel_3819_t(col1) values(3);
 commit;
 go
 

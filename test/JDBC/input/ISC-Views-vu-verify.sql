@@ -59,6 +59,6 @@ use master
 go
 
 -- Tests for numeric scale and precision
-select column_name,numeric_precision, numeric_scale from information_schema.columns where column_name like '_numcol_%';
+select column_name,numeric_precision, numeric_scale from information_schema.columns where column_name like '_numcol_%' order by column_name;
 GO
 

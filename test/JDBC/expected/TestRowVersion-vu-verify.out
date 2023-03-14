@@ -185,6 +185,26 @@ increasing
 ~~END~~
 
 
+-- tests for BABEL-3819
+select case when CAST(rv as int) = CAST(CAST(xmin AS varchar) AS int) then 'equal' else 'not-equal' end from babel_3139_t;
+go
+~~START~~
+text
+equal
+equal
+equal
+~~END~~
+
+
+select case when CAST(timestamp as int) = CAST(CAST(xmin AS varchar) AS int) then 'equal' else 'not-equal' end from babel_3819_t;
+go
+~~START~~
+text
+equal
+equal
+equal
+~~END~~
+
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go

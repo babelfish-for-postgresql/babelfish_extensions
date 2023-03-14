@@ -15,7 +15,7 @@ jobs:
         run: |
           config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)'"
           config=$(echo $config | sed "s/\"/\\\\\"/g")
-          DUMP_RESTORE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['dump-restore-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), title: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
+          DUMP_RESTORE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['dump-restore-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), title: (itm[itm.length - 1]['logical-database'] == null ? 'Instance-level-' : 'Database-level-') + itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
           echo "::set-output name=dump-restore-path-list::$DUMP_RESTORE_PATH_LIST"
 
   run-dump-restore-test:
@@ -43,6 +43,9 @@ jobs:
           )" && 
           echo "::set-output name=final-version::$(
             yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}][-1].version' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml
+          )" && 
+          echo "::set-output name=logical-database::$(
+            yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}][-1].logical-database' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml
           )"
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
@@ -66,6 +69,7 @@ jobs:
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
           migration_mode: 'multi-db'
+          logical_database: ${{ steps.read-base-and-final-version.outputs.logical-database }}
 
       - name: Setup Dump Restore Composite Action
         id: setup-dump-restore-ca

@@ -1,8 +1,20 @@
 dump-restore-version: [[
   {
-    version: source.latest
+    version: source.latest,
+    logical-database: null
   },
-  { 
-    version: target.latest
+  {
+    version: target.latest,
+    logical-database: null
+  }
+],
+[
+  {
+    version: source.latest,
+    logical-database: master
+  },
+  {
+    version: target.latest,
+    logical-database: master 
   }
 ]]
