@@ -568,7 +568,7 @@ update_AlterTableStmt(Node *n, const char *tbl_schema, const char *newowner)
 				break;
 		}
 	}
-}
+}  
 
 void
 update_CreateRoleStmt(Node *n, const char *role, const char *member, const char *addto)
@@ -893,16 +893,16 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 	const char	*func_signature;
 
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcoid);
-	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
-
-	func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+	if (HeapTupleIsValid(proctup)){
+		form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+		func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
 															form_proctup->pronargs,
 															form_proctup->proargtypes.values);
 
-	ReleaseSysCache(proctup);
-	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
+		ReleaseSysCache(proctup);
+		PG_RETURN_TEXT_P(cstring_to_text(func_signature));
+	}
+	PG_RETURN_NULL();
 }
 
 void
