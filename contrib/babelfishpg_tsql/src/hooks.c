@@ -436,10 +436,13 @@ pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, 
 
 	queryDesc->estate->tsql_row_count = pltsql_rowcount;
 
+	if ((count == 0 || count > pltsql_rowcount) && queryDesc->operation == CMD_SELECT)
+		count = pltsql_rowcount;
+	
 	if (prev_ExecutorRun)
-		prev_ExecutorRun(queryDesc, direction, pltsql_rowcount, execute_once);
+		prev_ExecutorRun(queryDesc, direction, count, execute_once);
 	else
-		standard_ExecutorRun(queryDesc, direction, pltsql_rowcount, execute_once);
+		standard_ExecutorRun(queryDesc, direction, count, execute_once);
 }
 
 static void
