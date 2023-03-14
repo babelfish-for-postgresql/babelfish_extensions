@@ -1,0 +1,53 @@
+exec rowcountinsert;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+exec rowcountselect;
+GO
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+exec rowcountupdate;
+GO
+~~START~~
+int
+4
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+exec rowcountdelete;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+0
+~~END~~
+
