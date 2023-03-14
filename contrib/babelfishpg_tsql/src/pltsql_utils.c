@@ -568,7 +568,7 @@ update_AlterTableStmt(Node *n, const char *tbl_schema, const char *newowner)
 				break;
 		}
 	}
-}  
+}
 
 void
 update_CreateRoleStmt(Node *n, const char *role, const char *member, const char *addto)

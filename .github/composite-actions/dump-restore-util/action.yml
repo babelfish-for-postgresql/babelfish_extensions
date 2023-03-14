@@ -104,9 +104,7 @@ runs:
         sed -i "/TestNotNull/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/TestSQLVariant/d" test/JDBC/upgrade/$base_dir/schedule
         sed -i "/babel_datatype_sqlvariant/d" test/JDBC/upgrade/$base_dir/schedule
-        sed -i "/sp_tablecollations/d" test/JDBC/upgrade/$base_dir/schedule
-        sed -i "/sys-sql_modules/d" test/JDBC/upgrade/$base_dir/schedule
-        sed -i "/sys-system_sql_modules/d" test/JDBC/upgrade/$base_dir/schedule
+        sed -i "/schema_resolution_proc/d" test/JDBC/upgrade/$base_dir/schedule
       shell: bash
 
     - name: Run Verify Tests
