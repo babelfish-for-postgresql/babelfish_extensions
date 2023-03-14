@@ -1,9 +1,9 @@
 # SET THIS CONNECTION STRING TO GENERATE THE EXPECTED OUTPUT FILE
-fileGenerator_URL = localhost
-fileGenerator_port = 1433
-fileGenerator_databaseName = master
-fileGenerator_user = jdbc_user
-fileGenerator_password = 12345678
+fileGenerator_URL = 
+fileGenerator_port = 
+fileGenerator_databaseName = 
+fileGenerator_user = 
+fileGenerator_password = 
 
 # PATH TO INPUT TEST FILES FOLDER
 inputFilesPath = ./input
