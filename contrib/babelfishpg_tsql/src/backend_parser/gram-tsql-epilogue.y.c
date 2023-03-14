@@ -616,6 +616,12 @@ TsqlJsonModifyMakeFuncCall(Node* expr, Node* path, Node* newValue)
 		case T_A_Expr:
 			func_args = lappend(func_args, newValue);
 			break;
+		case T_A_Const:
+			if(((A_Const*) newValue)->isnull || ((A_Const*) newValue)->val.sval.type == T_String)
+				func_args = lappend(func_args, makeTypeCast(newValue, makeTypeName("text"), -1));
+			else
+				func_args = lappend(func_args, newValue);
+			break;
 		default:
 			func_args = lappend(func_args, makeTypeCast(newValue, makeTypeName("text"), -1));
 	}
