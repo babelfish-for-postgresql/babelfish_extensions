@@ -52,7 +52,7 @@ EXEC babel_3697_before_15_3_7
 GO
 ~~START~~
 nvarchar
-{"click_count": "0"}
+{"click_count": 0}
 ~~END~~
 
 
@@ -60,7 +60,7 @@ EXEC babel_3697_before_15_3_8
 GO
 ~~START~~
 nvarchar
-{"click_count": "241"}
+{"click_count": 241}
 ~~END~~
 
 
