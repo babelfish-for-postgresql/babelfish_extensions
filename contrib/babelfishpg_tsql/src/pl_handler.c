@@ -4571,6 +4571,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			if(func && func->table_varnos)
 			{	
 				is_mstvf = func->is_mstvf;
+				/* 
+				 * if a function has tvp declared or as argument in the function
+				 * or it is a TVF has_table_var will be true
+				 */
 				has_table_var = true;
 			}
 
@@ -4586,6 +4590,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		/* 
 		 * If the function has TVP in its arguments or function body 
 		 * it should be declared as VOLATILE by default 
+		 * TVF are VOLATILE by default so we donot need to update tuple for it
 		 */
 		if(prokind == PROKIND_FUNCTION && (has_table_var && !is_itvf && !is_mstvf))
 		{

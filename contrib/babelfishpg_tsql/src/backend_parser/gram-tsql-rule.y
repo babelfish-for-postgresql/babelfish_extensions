@@ -3620,6 +3620,11 @@ tsql_CreateFunctionStmt:
 						DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 						DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($10)), @10);
 						DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
+						/* 
+						 *	Adding a option for volatility with value STABLE. 
+						 *	Function created from tsql dialect will be created as STABLE
+						 *	by default
+						 */
 						DefElem *vol = makeDefElem("volatility", (Node *) makeString("stable"), @1);
 						n->is_procedure = false;
 						n->replace = $2;

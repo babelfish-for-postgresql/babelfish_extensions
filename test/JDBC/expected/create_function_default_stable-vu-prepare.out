@@ -8,38 +8,16 @@ go
 create table test_create_function_default_stable_t1(a int)
 go
 
-create table #test_create_function_default_stable_tmp(a int)
-go
-
 create type test_create_function_default_stable_type AS TABLE(a int)
 go
 
 -- create functions not having tvp or tvf
-create function test_create_function_default_stable_f1() 
-returns int as begin
-insert into test_create_function_default_stable_t1 values(1); return 0; end
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'INSERT' cannot be used within a function)~~
-
-
-create function test_create_function_default_stable_f2() returns int as begin return 0; end
+create function test_create_function_default_stable_f1() returns int as begin return 0; end
 go
 
-create function test_create_function_default_stable_f3(@a int, @b char, @c date, @d money, @e float, @f text, @g xml) 
+create function test_create_function_default_stable_f2(@a int, @b char, @c date, @d money, @e float, @f text, @g xml) 
 returns int as begin return 0; end
 go
-
--- test with temp table
-create function test_create_function_default_stable_f4() 
-returns int as begin
-insert into #test_create_function_default_stable_tmp values(1); return 0; end
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'INSERT' cannot be used within a function)~~
-
 
 -- create functions with tvp
 -- 1. tvp is declared inside the function
@@ -88,6 +66,50 @@ returns @tvp2 table(b int)
 AS BEGIN
 update @tvp2 set b = 1 where b = 2
 return end
+go
+
+-- nested functions
+create function test_create_function_default_stable_nested_f1()
+returns int as begin 
+exec test_create_function_default_stable_tvp_f1;
+return 0; end
+go
+
+create function test_create_function_default_stable_nested_f2()
+returns int as begin 
+declare @tvp test_create_function_default_stable_type
+exec test_create_function_default_stable_tvp_f4 @tvp;
+return 0; end
+go
+
+create function test_create_function_default_stable_nested_f3() 
+returns table as 
+return (SELECT * from test_create_function_default_stable_tvf_f2(1))
+go
+
+create function test_create_function_default_stable_nested_f4() 
+returns table as 
+return (SELECT * from test_create_function_default_stable_tvp_f1())
+go
+
+create function test_create_function_default_stable_nested_f5() 
+returns table as 
+return (SELECT * from test_create_function_default_stable_f1())
+go
+
+create function test_create_function_default_stable_nested_f6(@a int)
+returns @tv table(b int)
+AS BEGIN
+Declare @b int;
+exec test_create_function_default_stable_f1;
+update @tv set b = 1 where b = 2
+return end
+go
+
+create function test_create_function_default_stable_nested_f7()
+returns int as begin 
+exec test_create_function_default_stable_f1;
+return 0; end
 go
 
 -- create procedure and check
@@ -245,3 +267,18 @@ END;
 $$ LANGUAGE pltsql IMMUTABLE;
 go
 
+-- with record datatypes
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f11() RETURNS int AS $$
+declare rec record;
+begin
+return 1;
+end;
+$$ LANGUAGE plpgsql;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f12(rec record) RETURNS int AS $$
+begin
+return 1;
+end;
+$$ LANGUAGE pltsql;
+go

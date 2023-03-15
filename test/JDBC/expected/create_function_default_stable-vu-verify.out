@@ -3,6 +3,16 @@ use test_create_function_default_stable_db
 go
 
 -- not having tvp or tvf
+sp_babelfish_volatility 'test_create_function_default_stable_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_f1#!#stable
+~~END~~
+
+exec test_create_function_default_stable_f1
+go
+
 sp_babelfish_volatility 'test_create_function_default_stable_f2'
 go
 ~~START~~
@@ -10,17 +20,7 @@ nvarchar#!#varchar#!#text
 dbo#!#test_create_function_default_stable_f2#!#stable
 ~~END~~
 
-exec test_create_function_default_stable_f2
-go
-
-sp_babelfish_volatility 'test_create_function_default_stable_f3'
-go
-~~START~~
-nvarchar#!#varchar#!#text
-dbo#!#test_create_function_default_stable_f3#!#stable
-~~END~~
-
-exec test_create_function_default_stable_f3 1, 'a', '10/10/10', 1, 1.1, 'abcd', 'aaa'
+exec test_create_function_default_stable_f2 1, 'a', '10/10/10', 1, 1.1, 'abcd', 'aaa'
 go
 
 -- functions with tvp
@@ -125,6 +125,100 @@ select * from test_create_function_default_stable_tvptvf_f2(1, @tvp)
 go
 ~~START~~
 int
+~~END~~
+
+
+-- nested functions
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_nested_f1#!#stable
+~~END~~
+
+exec test_create_function_default_stable_nested_f1
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f2'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_nested_f2#!#volatile
+~~END~~
+
+exec test_create_function_default_stable_nested_f2
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f3'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_nested_f3#!#volatile
+~~END~~
+
+select * from test_create_function_default_stable_nested_f3()
+go
+~~START~~
+int
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f4'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_nested_f4#!#volatile
+~~END~~
+
+select * from test_create_function_default_stable_nested_f4()
+go
+~~START~~
+int
+0
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f5'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_nested_f5#!#volatile
+~~END~~
+
+select * from test_create_function_default_stable_nested_f5()
+go
+~~START~~
+int
+0
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f6'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_nested_f6#!#volatile
+~~END~~
+
+select * from test_create_function_default_stable_nested_f6(1)
+go
+~~START~~
+int
+~~END~~
+
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f7'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_create_function_default_stable_nested_f7#!#stable
+~~END~~
+
+select test_create_function_default_stable_nested_f7()
+go
+~~START~~
+int
+0
 ~~END~~
 
 
@@ -278,4 +372,18 @@ v
 ~~END~~
 
 
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f11';
+go
+~~START~~
+char
+v
+~~END~~
+
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f12';
+go
+~~START~~
+char
+v
+~~END~~
 

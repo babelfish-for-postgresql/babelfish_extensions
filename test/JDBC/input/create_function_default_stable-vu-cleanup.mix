@@ -9,12 +9,6 @@ go
 drop function test_create_function_default_stable_f2
 go
 
-drop function test_create_function_default_stable_f3
-go
-
-drop function test_create_function_default_stable_f4
-go
-
 drop function test_create_function_default_stable_tvp_f1
 go
 
@@ -40,6 +34,27 @@ drop function test_create_function_default_stable_tvptvf_f1
 go
 
 drop function test_create_function_default_stable_tvptvf_f2
+go
+
+drop function test_create_function_default_stable_nested_f1
+go
+
+drop function test_create_function_default_stable_nested_f2
+go
+
+drop function test_create_function_default_stable_nested_f3
+go
+
+drop function test_create_function_default_stable_nested_f4
+go
+
+drop function test_create_function_default_stable_nested_f5
+go
+
+drop function test_create_function_default_stable_nested_f6
+go
+
+drop function test_create_function_default_stable_nested_f7
 go
 
 -- psql
@@ -77,7 +92,6 @@ go
 drop database test_create_function_default_stable_db
 go
 
-
 -- psql
 drop function test_create_function_default_stable_psql_f1;
 go
@@ -107,4 +121,10 @@ drop function test_create_function_default_stable_psql_f9;
 go
 
 drop function test_create_function_default_stable_psql_f10;
+go
+
+drop function test_create_function_default_stable_psql_f11;
+go
+
+drop function test_create_function_default_stable_psql_f12;
 go
