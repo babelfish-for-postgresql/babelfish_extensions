@@ -747,6 +747,20 @@ public:
 		if (in_create_or_alter_function && ctx->ROLLBACK()){
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'ROLLBACK TRANSACTION' within a function.", 0, 0);
 		}
+		if (in_create_or_alter_function && ctx->SAVE()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'SAVEPOINT' within a function.", 0, 0);
+		}
+	}
+
+	void enterPrint_statement(TSqlParser::Print_statementContext *ctx) override { 
+		if (in_create_or_alter_function && ctx->PRINT()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'PRINT' within a function.", 0, 0);
+		}
+	}
+	void enterRaiseerror_statement(TSqlParser::Raiseerror_statementContext * ctx) override { 
+		if (in_create_or_alter_function && ctx->RAISERROR()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'RAISERROR' within a function.", 0, 0);
+		}
 	}
 
 	void enterExecute_statement(TSqlParser::Execute_statementContext *ctx) override {
@@ -761,6 +775,18 @@ public:
 				}
 				
 			}
+		}
+	}
+
+	void enterWaitfor_statement(TSqlParser::Waitfor_statementContext *ctx) override {
+		if (in_create_or_alter_function && ctx->WAITFOR()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'WAITFOR' within a function.", 0, 0);
+		}
+	 }
+	 
+	void enterWaitfor_receive_statement(TSqlParser::Waitfor_receive_statementContext * ctx) override { 
+		if (in_create_or_alter_function && ctx->WAITFOR()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'WAITFOR' within a function.", 0, 0);
 		}
 	}
 
