@@ -321,7 +321,7 @@ sys-syscharsets
 # sys-syscolumns
 # sys-sysforeignkeys
 sys-syslanguages
-sys-system_sql_modules
+# sys-system_sql_modules
 # sys-sql_modules
 sys-table_types
 # sys-tables
