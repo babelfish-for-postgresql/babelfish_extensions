@@ -778,6 +778,18 @@ public:
 		}
 	}
 
+	void enterWaitfor_statement(TSqlParser::Waitfor_statementContext *ctx) override {
+		if (in_create_or_alter_function && ctx->WAITFOR()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'WAITFOR' within a function.", 0, 0);
+		}
+	 }
+	 
+	void enterWaitfor_receive_statement(TSqlParser::Waitfor_receive_statementContext * ctx) override { 
+		if (in_create_or_alter_function && ctx->WAITFOR()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'WAITFOR' within a function.", 0, 0);
+		}
+	}
+
 	/* Column Name */
 	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
 	{

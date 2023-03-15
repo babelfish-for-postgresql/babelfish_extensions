@@ -64,6 +64,20 @@ GO
 ~~ERROR (Message: Invalid use of a side-effecting operator 'SAVEPOINT' within a function.)~~
 
 
+CREATE FUNCTION fwaitfordelay(@p int) RETURNS int AS BEGIN WAITFOR DELAY '00:00:20' RETURN 0 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'WAITFOR' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION fwaitfortime(@p int) RETURNS int AS BEGIN WAITFOR TIME '00:00:20' RETURN 0 END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'WAITFOR' is not currently supported in Babelfish)~~
+
+
 CREATE FUNCTION fprinttest (@p int) RETURNS int AS BEGIN PRINT 'hello there' RETURN 0 END
 GO
 ~~ERROR (Code: 33557097)~~
@@ -98,6 +112,12 @@ DROP FUNCTION IF EXISTS fsavetrantest
 GO
 
 DROP FUNCTION IF EXISTS fsavetransactiontest
+GO
+
+DROP FUNCTION IF EXISTS fwaitfordelay
+GO
+
+DROP FUNCTION IF EXISTS fwaitfortime
 GO
 
 DROP FUNCTION IF EXISTS fprinttest
