@@ -1,6 +1,15 @@
 DROP VIEW IF EXISTS v_SalesData;
 GO
 
+DROP VIEW IF EXISTS v1_SalesData;
+GO
+
+DROP VIEW IF EXISTS v2_SalesData;
+GO
+
+DROP VIEW IF EXISTS v3_SalesData;
+GO
+
 DROP TABLE IF EXISTS SalesData;
 GO
 
@@ -14,7 +23,4 @@ DROP PROCEDURE IF EXISTS sp2_CalculateStdev;
 GO
 
 DROP PROCEDURE IF EXISTS sp3_CalculateStdev;
-GO
-
-DROP TABLE FloatTest;
 GO

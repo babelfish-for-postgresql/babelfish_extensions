@@ -25,6 +25,36 @@ Product C#!#25.0
 ~~END~~
 
 
+SELECT * FROM v1_SalesData
+GO
+~~START~~
+varchar#!#float
+Product A#!#40.824829046386306
+Product B#!#20.412414523193153
+Product C#!#20.412414523193153
+~~END~~
+
+
+SELECT * FROM v2_SalesData
+GO
+~~START~~
+varchar#!#float
+Product A#!#2500.0
+Product B#!#625.0
+Product C#!#625.0
+~~END~~
+
+
+SELECT * FROM v3_SalesData
+GO
+~~START~~
+varchar#!#float
+Product A#!#1666.6666666666667
+Product B#!#416.6666666666667
+Product C#!#416.6666666666667
+~~END~~
+
+
 SELECT STDEV(SalesAmount) AS SalesAmount
 FROM SalesData;
 GO

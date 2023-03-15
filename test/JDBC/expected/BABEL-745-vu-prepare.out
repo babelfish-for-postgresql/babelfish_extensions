@@ -20,6 +20,27 @@ GROUP BY Product
 ORDER BY Product, SalesAmount;
 GO
 
+CREATE VIEW v1_SalesData AS
+SELECT Product, STDEVP(SalesAmount) AS SalesAmount
+FROM SalesData
+GROUP BY Product
+ORDER BY Product, SalesAmount;
+GO
+
+CREATE VIEW v2_SalesData AS
+SELECT Product, VAR(SalesAmount) AS SalesAmount
+FROM SalesData
+GROUP BY Product
+ORDER BY Product, SalesAmount;
+GO
+
+CREATE VIEW v3_SalesData AS
+SELECT Product, VARP(SalesAmount) AS SalesAmount
+FROM SalesData
+GROUP BY Product
+ORDER BY Product, SalesAmount;
+GO
+
 -- Create a stored procedure for STDEV calculation
 CREATE PROCEDURE sp_CalculateStdev
   @Product varchar(50)

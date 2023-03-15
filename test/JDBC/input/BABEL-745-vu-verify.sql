@@ -5,6 +5,15 @@ GO
 SELECT * FROM v_SalesData
 GO
 
+SELECT * FROM v1_SalesData
+GO
+
+SELECT * FROM v2_SalesData
+GO
+
+SELECT * FROM v3_SalesData
+GO
+
 SELECT STDEV(SalesAmount) AS SalesAmount
 FROM SalesData;
 GO
