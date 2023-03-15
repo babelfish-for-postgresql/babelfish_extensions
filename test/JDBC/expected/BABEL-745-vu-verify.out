@@ -1,0 +1,183 @@
+Select * from SalesData 
+ORDER BY Product, SalesAmount;
+GO
+~~START~~
+varchar#!#float
+Product A#!#100.0
+Product A#!#150.0
+Product A#!#200.0
+Product B#!#50.0
+Product B#!#75.0
+Product B#!#100.0
+Product C#!#25.0
+Product C#!#50.0
+Product C#!#75.0
+~~END~~
+
+
+SELECT * FROM v_SalesData
+GO
+~~START~~
+varchar#!#float
+Product A#!#50.0
+Product B#!#25.0
+Product C#!#25.0
+~~END~~
+
+
+SELECT * FROM v1_SalesData
+GO
+~~START~~
+varchar#!#float
+Product A#!#40.824829046386306
+Product B#!#20.412414523193153
+Product C#!#20.412414523193153
+~~END~~
+
+
+SELECT * FROM v2_SalesData
+GO
+~~START~~
+varchar#!#float
+Product A#!#2500.0
+Product B#!#625.0
+Product C#!#625.0
+~~END~~
+
+
+SELECT * FROM v3_SalesData
+GO
+~~START~~
+varchar#!#float
+Product A#!#1666.6666666666667
+Product B#!#416.6666666666667
+Product C#!#416.6666666666667
+~~END~~
+
+
+SELECT STDEV(SalesAmount) AS SalesAmount
+FROM SalesData;
+GO
+~~START~~
+float
+54.48623679425842
+~~END~~
+
+
+-- This should throw an error since STDEV cannot be applied to a non-numeric data type
+SELECT STDEV(Product) AS ProductStdev
+FROM SalesData;
+GO
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "Product A")~~
+
+
+SELECT VAR(SalesAmount) AS SalesAmountStdev
+FROM SalesData
+GROUP BY Product
+ORDER BY Product ASC;
+GO
+~~START~~
+float
+2500.0
+625.0
+625.0
+~~END~~
+
+
+SELECT VARP(SalesAmount) AS SalesAmountStdev
+FROM SalesData
+GROUP BY Product
+ORDER BY Product ASC;
+GO
+~~START~~
+float
+1666.6666666666667
+416.6666666666667
+416.6666666666667
+~~END~~
+
+
+EXEC sp_CalculateStdev 'Product A';
+GO
+~~START~~
+float
+50.0
+~~END~~
+
+
+EXEC sp1_CalculateStdev 'Product A';
+GO
+~~START~~
+float
+40.824829046386306
+~~END~~
+
+
+EXEC sp2_CalculateStdev 'Product A';
+GO
+~~START~~
+float
+2500.0
+~~END~~
+
+
+EXEC sp3_CalculateStdev 'Product A';
+GO
+~~START~~
+float
+1666.6666666666667
+~~END~~
+
+
+--Float8
+SELECT VARP(CAST(1.0 AS float8)), VAR(CAST(2.0 AS float8));
+GO
+~~START~~
+float#!#float
+0.0#!#<NULL>
+~~END~~
+
+
+SELECT STDEVP(CAST(3.0 AS float8)), STDEV(CAST(4.0 AS float8));
+GO
+~~START~~
+float#!#float
+0.0#!#<NULL>
+~~END~~
+
+
+SELECT VARP(CAST('inf' AS float8)), VAR(CAST('inf' AS float8));
+GO
+~~START~~
+float#!#float
+NaN#!#<NULL>
+~~END~~
+
+
+SELECT STDEVP(CAST('inf' AS float8)), STDEV(CAST('inf' AS float8));
+GO
+~~START~~
+float#!#float
+NaN#!#<NULL>
+~~END~~
+
+
+SELECT VARP(CAST('nan' AS float8)), VAR(CAST('nan' AS float8));
+GO
+~~START~~
+float#!#float
+NaN#!#<NULL>
+~~END~~
+
+
+SELECT STDEVP(CAST('nan' AS float8)), STDEV(CAST('nan' AS float8));
+GO
+~~START~~
+float#!#float
+NaN#!#<NULL>
+~~END~~
+
