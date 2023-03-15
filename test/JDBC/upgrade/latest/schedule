@@ -410,6 +410,7 @@ openquery_upgrd
 BABEL-3657
 test_windows_alter_user
 BABEL-733
+BABEL-745
 BABEL-3938
 BABEL-NEXT-VALUE-FOR
 binary-index
