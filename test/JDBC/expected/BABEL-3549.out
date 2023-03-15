@@ -29,8 +29,8 @@ SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_help
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint
-master#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
-babel_3549_db1#!#<NULL>#!#babel_3549_login1#!#<NULL>#!#<NULL>
+master#!#<NULL>#!#jdbc_user#!#<NULL>#!#120
+babel_3549_db1#!#<NULL>#!#babel_3549_login1#!#<NULL>#!#120
 ~~END~~
 
 

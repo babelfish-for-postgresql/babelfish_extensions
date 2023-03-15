@@ -2,8 +2,8 @@ SELECT name, compatibility_level FROM sys.babelfish_helpdb() WHERE name IN ('mas
 GO
 ~~START~~
 varchar#!#smallint
-master#!#<NULL>
-babel_sp_helpdb_db#!#<NULL>
+master#!#120
+babel_sp_helpdb_db#!#120
 ~~END~~
 
 
@@ -12,14 +12,14 @@ SELECT name, compatibility_level FROM sys.babelfish_helpdb('master');
 GO
 ~~START~~
 varchar#!#smallint
-master#!#<NULL>
+master#!#120
 ~~END~~
 
 SELECT name, compatibility_level FROM sys.babelfish_helpdb('babel_sp_helpdb_db');
 GO
 ~~START~~
 varchar#!#smallint
-babel_sp_helpdb_db#!#<NULL>
+babel_sp_helpdb_db#!#120
 ~~END~~
 
 
@@ -46,14 +46,14 @@ SELECT name, compatibility_level FROM sys.babelfish_helpdb('MaSteR');
 GO
 ~~START~~
 varchar#!#smallint
-master#!#<NULL>
+master#!#120
 ~~END~~
 
 SELECT name, compatibility_level FROM sys.babelfish_helpdb('bAbeL_sP_helPdb_Db');
 GO
 ~~START~~
 varchar#!#smallint
-babel_sp_helpdb_db#!#<NULL>
+babel_sp_helpdb_db#!#120
 ~~END~~
 
 
@@ -62,14 +62,14 @@ SELECT name, compatibility_level FROM sys.babelfish_helpdb('MaSteR        ');
 GO
 ~~START~~
 varchar#!#smallint
-master#!#<NULL>
+master#!#120
 ~~END~~
 
 SELECT name, compatibility_level FROM sys.babelfish_helpdb('bAbeL_sP_helPdb_Db ');
 GO
 ~~START~~
 varchar#!#smallint
-babel_sp_helpdb_db#!#<NULL>
+babel_sp_helpdb_db#!#120
 ~~END~~
 
 
