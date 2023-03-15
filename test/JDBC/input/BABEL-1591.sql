@@ -22,6 +22,21 @@ GO
 CREATE FUNCTION fooexectest(@p int) RETURNS int AS BEGIN EXEC('select 1') RETURN 0 END
 GO
 
+CREATE FUNCTION fooexectestV(@p int) RETURNS int AS BEGIN EXEC(@@trancount) RETURN 0 END
+GO
+
+CREATE FUNCTION fsavetrantest(@p int) RETURNS int AS BEGIN SAVE TRAN sp1 RETURN 0 END
+GO
+
+CREATE FUNCTION fsavetransactiontest(@p int) RETURNS int AS BEGIN SAVE TRANSACTION sp2 RETURN 0 END
+GO
+
+CREATE FUNCTION fprinttest (@p int) RETURNS int AS BEGIN PRINT 'hello there' RETURN 0 END
+GO
+
+CREATE FUNCTION fraiserrortest (@p int) RETURNS int AS BEGIN RAISERROR(5005, 10, 1, N'ErrorMessage') RETURN 0 END
+GO
+
 -- clean up
 DROP FUNCTION IF EXISTS foocommittest
 GO
@@ -33,6 +48,21 @@ DROP FUNCTION IF EXISTS fooexecutetest
 GO
 
 DROP FUNCTION IF EXISTS fooexectest
+GO
+
+DROP FUNCTION IF EXISTS fooexectestV
+GO
+
+DROP FUNCTION IF EXISTS fsavetrantest
+GO
+
+DROP FUNCTION IF EXISTS fsavetransactiontest
+GO
+
+DROP FUNCTION IF EXISTS fprinttest
+GO
+
+DROP FUNCTION IF EXISTS fraiserrortest
 GO
 
 --This needs to be uncommented and tested later when support for alter function is added, 
