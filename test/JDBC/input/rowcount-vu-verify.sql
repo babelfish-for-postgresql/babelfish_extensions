@@ -9,3 +9,6 @@ GO
 
 exec rowcountdelete;
 GO
+
+set rowcount -1
+GO

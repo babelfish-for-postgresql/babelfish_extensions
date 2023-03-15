@@ -9,6 +9,10 @@ begin
     insert into testing1 select a + 1 from testing1;
     insert into testing1 select a + 1 from testing1;
     set rowcount 0;
+    set rowcount 5;
+    insert into testing1 select a from testing1;
+    insert into testing1 select a from testing1;
+    set rowcount 0;
 end
 GO
 
