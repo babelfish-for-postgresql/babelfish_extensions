@@ -7,9 +7,23 @@ master
 ~~END~~
 
 
+
+-- Ensure public, sys and INFORMATION_SCHEMA
+-- are in database_principals after an upgrade
+SELECT name, type, type_desc
+FROM sys.database_principals
+WHERE name IN ('public', 'sys', 'INFORMATION_SCHEMA')
+ORDER BY name
 -- Test CREATE ROLE
 CREATE ROLE babel_role_vu_prepare_role1
 GO
+~~START~~
+varchar#!#char#!#nvarchar
+INFORMATION_SCHEMA#!#S#!#SQL_USER
+public#!#R#!#DATABASE_ROLE
+sys#!#S#!#SQL_USER
+~~END~~
+
 
 EXEC babel_role_vu_prepare_user_ext_master
 GO
