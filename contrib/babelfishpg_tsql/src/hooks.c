@@ -136,6 +136,7 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
+static bool bbf_check_rowcount_hook(int es_processed);
 
 /*****************************************
  * 			Replication Hooks
@@ -185,6 +186,7 @@ static transform_check_constraint_expr_hook_type prev_transform_check_constraint
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
+static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -293,6 +295,8 @@ InstallExtendedHooks(void)
 
 	prev_fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom_hook;
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
+	prev_check_rowcount_hook = check_rowcount_hook;
+	check_rowcount_hook = bbf_check_rowcount_hook;
 }
 
 void
@@ -336,6 +340,7 @@ UninstallExtendedHooks(void)
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
+	check_rowcount_hook = prev_check_rowcount_hook;
 }
 
 /*****************************************
@@ -433,8 +438,6 @@ pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, 
 		MemoryContextSwitchTo(oldcontext);
 		return;
 	}
-
-	queryDesc->estate->tsql_row_count = pltsql_rowcount;
 
 	if ((count == 0 || count > pltsql_rowcount) && queryDesc->operation == CMD_SELECT)
 		count = pltsql_rowcount;
@@ -3451,4 +3454,10 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		values[attnum - 1] = Int16GetDatum(dbid);
 		nulls[attnum - 1] = false;
 	}
+}
+
+static bool bbf_check_rowcount_hook(int es_processed){
+	if (pltsql_rowcount == es_processed && es_processed > 0)
+		return true;
+	else return false;
 }
