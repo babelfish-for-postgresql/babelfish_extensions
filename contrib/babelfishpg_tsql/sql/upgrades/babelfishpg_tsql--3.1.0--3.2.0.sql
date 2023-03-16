@@ -105,6 +105,10 @@ CREATE AGGREGATE sys.VARP(float8) (
     INITCOND = '{0,0,0}'
 );
 
+
+CREATE OR REPLACE FUNCTION sys.rowcount_big()
+RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
 ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_2_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_2_0');
