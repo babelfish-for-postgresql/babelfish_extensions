@@ -21,19 +21,19 @@ go
 ~~ROW COUNT: 1~~
 
 
-select * from sys.sp_databases_view where database_name='db1';
+select database_name, remarks from sys.sp_databases_view where database_name='db1';
 go
 ~~START~~
-varchar#!#int#!#varchar
-db1#!#8#!#<NULL>
+varchar#!#varchar
+db1#!#<NULL>
 ~~END~~
 
 
-select * from sys.sp_databases_view where database_name='DB1';
+select database_name, remarks from sys.sp_databases_view where database_name='DB1';
 go
 ~~START~~
-varchar#!#int#!#varchar
-db1#!#8#!#<NULL>
+varchar#!#varchar
+db1#!#<NULL>
 ~~END~~
 
 
