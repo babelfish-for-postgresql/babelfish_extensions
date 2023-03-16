@@ -409,4 +409,5 @@ BABEL-733
 BABEL-3938
 BABEL-NEXT-VALUE-FOR
 binary-index
+rowcount
 # test_windows_sp_helpuser
