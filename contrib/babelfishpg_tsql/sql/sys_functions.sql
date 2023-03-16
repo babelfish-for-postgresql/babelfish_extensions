@@ -2889,7 +2889,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
   OUT database_id int2,
-  OUT host_name varchar(128))
+  OUT host_name varchar(128),
+  OUT context_info bytea)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
@@ -3392,6 +3393,9 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.context_info()
+RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
