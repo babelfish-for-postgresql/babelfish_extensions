@@ -392,6 +392,7 @@ Test-sp_babelfish_volatility
 BABEL-733
 BABEL-3938
 babel_context_info
+BABEL-1199
 binary-index
 BABEL-745
 rowcount
