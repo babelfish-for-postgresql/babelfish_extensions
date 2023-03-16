@@ -105,6 +105,9 @@ CREATE AGGREGATE sys.VARP(float8) (
     INITCOND = '{0,0,0}'
 );
 
+CREATE OR REPLACE FUNCTION sys.rowcount_big()
+RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
 ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_in_3_2_0;
 CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_in_3_2_0(
   IN view_name text,
