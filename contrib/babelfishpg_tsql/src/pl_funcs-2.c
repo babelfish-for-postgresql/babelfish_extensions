@@ -99,6 +99,14 @@ rowcount(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(rowcount_var);
 }
 
+PG_FUNCTION_INFO_V1(rowcount_big);
+
+Datum
+rowcount_big(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(rowcount_var);
+}
+
 PG_FUNCTION_INFO_V1(fetch_status);
 
 Datum
