@@ -4,8 +4,8 @@ go
 exec sys_sp_databases_dep_vu_prepare_p1
 go
 ~~START~~
-varchar#!#int#!#varchar
-sys_sp_databases_dep_vu_prepare_db1#!#8#!#<NULL>
+varchar#!#varchar
+sys_sp_databases_dep_vu_prepare_db1#!#<NULL>
 ~~END~~
 
 
@@ -20,7 +20,7 @@ int
 select * from sys_sp_databases_dep_vu_prepare_v1
 go
 ~~START~~
-varchar#!#int#!#varchar
-sys_sp_databases_dep_vu_prepare_db1#!#8#!#<NULL>
+varchar#!#varchar
+sys_sp_databases_dep_vu_prepare_db1#!#<NULL>
 ~~END~~
 

@@ -1,0 +1,64 @@
+exec rowcountinsert;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 5~~
+
+
+exec rowcountselect;
+GO
+~~START~~
+int
+13
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+exec rowcountupdate;
+GO
+~~START~~
+int
+13
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+exec rowcountdelete;
+GO
+~~START~~
+int
+6
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+5
+~~END~~
+
+
+set rowcount -1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: -1 is outside the valid range for parameter "babelfishpg_tsql.rowcount" (0 .. 2147483647))~~
+
