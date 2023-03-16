@@ -842,6 +842,11 @@ CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION Database_principal_id(IN user_name sysname DEFAULT NULL)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE VIEW sys.partitions AS
 SELECT
  (to_char( i.object_id, 'FM9999999999' ) || to_char( i.index_id, 'FM9999999999' ) || '1')::bigint AS partition_id
