@@ -30,3 +30,7 @@ SET QUOTED_IDENTIFIER ON
 CREATE VIEW sys_views_dep_vu_prepare_t1 AS select 1;
 GO
 
+GO
+
+GO
+
