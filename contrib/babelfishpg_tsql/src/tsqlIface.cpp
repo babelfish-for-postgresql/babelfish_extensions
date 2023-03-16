@@ -4393,7 +4393,33 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			{
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("unrecognized configuration parameter: %s", val.c_str()), getLineAndPos(set_special_ctx->id().front()));
 			}
-			return makeSQL(ctx);
+			if (pg_strcasecmp("CONTEXT_INFO", val.c_str()) == 0)
+			{
+				std::string param = getFullText(set_special_ctx->constant_LOCAL_ID());
+				if (pg_strncasecmp(param.c_str(), "NULL", 4) == 0 || param.length() == 0 || (pg_strncasecmp(param.c_str(), "0x", 2) == 0 && param.length() - 2 > 256))
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "SET CONTEXT_INFO option requires varbinary (128) NOT NULL parameter.", getLineAndPos(set_special_ctx->constant_LOCAL_ID()));
+
+				PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(PLtsql_stmt_execsql));
+				std::string query;
+				query += "CALL bbf_set_context_info(convert(varbinary(128), ";
+				query += param;
+				query += "));";
+
+				stmt->cmd_type = PLTSQL_STMT_EXECSQL;
+				stmt->lineno = getLineNo(ctx);
+				stmt->sqlstmt = makeTsqlExpr(query, false);
+				stmt->into = false;
+				stmt->strict = false;
+				stmt->target = NULL;
+				stmt->need_to_push_result = false;
+				stmt->is_tsql_select_assign_stmt = false;
+				stmt->insert_exec = false;
+
+				attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+				return (PLtsql_stmt *) stmt;
+			}
+			else
+				return makeSQL(ctx);
 		}
 		else if (set_special_ctx->OFFSETS())
 			return nullptr;
