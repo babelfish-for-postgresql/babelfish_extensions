@@ -4,6 +4,9 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+CREATE OR REPLACE FUNCTION sys.rowcount_big()
+RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
 -- Drops an object if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
