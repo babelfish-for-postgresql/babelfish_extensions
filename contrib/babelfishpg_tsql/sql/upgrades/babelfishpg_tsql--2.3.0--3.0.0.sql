@@ -31,9 +31,6 @@ end
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.rowcount_big()
-RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-
 -- Created to to fetch default collation Oid which is being used to set collation of system objects
 CREATE OR REPLACE FUNCTION sys.babelfishpg_tsql_get_babel_server_collation_oid() RETURNS OID
 LANGUAGE C
