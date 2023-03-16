@@ -196,6 +196,8 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->get_stat_values = &tds_stat_get_activity;
 	pltsql_plugin_handler_ptr->invalidate_stat_view = &invalidate_stat_table;
 	pltsql_plugin_handler_ptr->get_host_name = &get_tds_host_name;
+	pltsql_plugin_handler_ptr->get_context_info = &get_tds_context_info;
+	pltsql_plugin_handler_ptr->set_context_info = &set_tds_context_info;
 	pltsql_plugin_handler_ptr->get_datum_from_byte_ptr = &TdsBytePtrToDatum;
 	pltsql_plugin_handler_ptr->get_datum_from_date_time_struct = &TdsDateTimeTypeToDatum;
 

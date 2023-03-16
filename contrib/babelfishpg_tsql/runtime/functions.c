@@ -49,7 +49,7 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
 
-#define TSQL_STAT_GET_ACTIVITY_COLS 25
+#define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 
 PG_FUNCTION_INFO_V1(trancount);
@@ -75,6 +75,7 @@ PG_FUNCTION_INFO_V1(default_domain);
 PG_FUNCTION_INFO_V1(tsql_exp);
 PG_FUNCTION_INFO_V1(host_os);
 PG_FUNCTION_INFO_V1(tsql_stat_get_activity_deprecated_in_2_2_0);
+PG_FUNCTION_INFO_V1(tsql_stat_get_activity_deprecated_in_3_2_0);
 PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
@@ -84,6 +85,8 @@ PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
+PG_FUNCTION_INFO_V1(context_info);
+PG_FUNCTION_INFO_V1(bbf_set_context_info);
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 PG_FUNCTION_INFO_V1(bigint_degrees);
@@ -742,7 +745,7 @@ tsql_stat_get_activity_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/* Build tupdesc for result tuples. */
-	tupdesc = CreateTemplateTupleDesc(TSQL_STAT_GET_ACTIVITY_COLS - 1);
+	tupdesc = CreateTemplateTupleDesc(TSQL_STAT_GET_ACTIVITY_COLS - 2);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "procid", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "client_version", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "library_name", VARCHAROID, 32, 0);
@@ -783,11 +786,126 @@ tsql_stat_get_activity_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
 	{
 		/* for each row */
+		Datum		values[TSQL_STAT_GET_ACTIVITY_COLS - 2];
+		bool		nulls[TSQL_STAT_GET_ACTIVITY_COLS - 2];
+
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_stat_values &&
+			(*pltsql_protocol_plugin_ptr)->get_stat_values(values, nulls, TSQL_STAT_GET_ACTIVITY_COLS - 2, pid, curr_backend))
+				tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		else continue;
+
+		/* If only a single backend was requested, and we found it, break. */
+		if (pid != -1)
+			break;
+	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->invalidate_stat_view)
+				(*pltsql_protocol_plugin_ptr)->invalidate_stat_view();
+
+	return (Datum) 0;
+}
+
+Datum
+tsql_stat_get_activity_deprecated_in_3_2_0(PG_FUNCTION_ARGS)
+{
+	Oid			sysadmin_oid = get_role_oid("sysadmin", false);
+	int			num_backends = pgstat_fetch_stat_numbackends();
+	int			curr_backend;
+	char*			view_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int			pid = -1;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+
+	/* For sys.dm_exec_sessions view:
+	 *     - If user is sysadmin, we show info of all the sessions
+	 *     - If user is not sysadmin, we only show info of current session
+	 * For sys.dm_exec_connections view:
+	 *     - If user is sysadmin, we show info of all the connections
+	 *     - If user is not sysadmin, we throw an error since user does not
+	 *       have the required permissions to query this view
+	 */
+	if (strcmp(view_name, "sessions") == 0)
+	{
+		if (has_privs_of_role(GetSessionUserId(), sysadmin_oid))
+			pid = -1;
+		else
+			pid = MyProcPid;
+	}
+	else if (strcmp(view_name, "connections") == 0)
+	{
+		if (has_privs_of_role(GetSessionUserId(), sysadmin_oid))
+			pid = -1;
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("The user does not have permission to perform this action")));
+	}
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* Build tupdesc for result tuples. */
+	tupdesc = CreateTemplateTupleDesc(TSQL_STAT_GET_ACTIVITY_COLS - 1);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "procid", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "client_version", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "library_name", VARCHAROID, 32, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "language", VARCHAROID, 128, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "quoted_identifier", BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "arithabort", BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "ansi_null_dflt_on", BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "ansi_defaults", BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "ansi_warnings", BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "ansi_padding", BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "ansi_nulls", BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "concat_null_yields_null", BOOLOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 13, "textsize", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 14, "datefirst", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 15, "lock_timeout", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 16, "transaction_isolation", INT2OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 17, "client_pid", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 18, "row_count", INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 19, "prev_error", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 20, "trancount", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 21, "protocol_version", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 22, "packet_size", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "encrypt_option", VARCHAROID, 40, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 24, "database_id", INT2OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 25, "host_name", VARCHAROID, 128, 0);
+	tupdesc = BlessTupleDesc(tupdesc);
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/* 1-based index */
+	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
+	{
+		/* for each row */
 		Datum		values[TSQL_STAT_GET_ACTIVITY_COLS - 1];
 		bool		nulls[TSQL_STAT_GET_ACTIVITY_COLS - 1];
 
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_stat_values &&
-			(*pltsql_protocol_plugin_ptr)->get_stat_values(values, nulls, TSQL_STAT_GET_ACTIVITY_COLS, pid, curr_backend))
+			(*pltsql_protocol_plugin_ptr)->get_stat_values(values, nulls, TSQL_STAT_GET_ACTIVITY_COLS - 1, pid, curr_backend))
 				tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 		else continue;
 
@@ -882,6 +1000,7 @@ tsql_stat_get_activity(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "encrypt_option", VARCHAROID, 40, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 24, "database_id", INT2OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 25, "host_name", VARCHAROID, 128, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 26, "context_info", BYTEAOID, 128, 0);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -1647,6 +1766,29 @@ host_name(PG_FUNCTION_ARGS)
 		PG_RETURN_VARCHAR_P(string_to_tsql_varchar((*pltsql_protocol_plugin_ptr)->get_host_name()));
 	else
 		PG_RETURN_NULL();
+}
+
+Datum
+context_info(PG_FUNCTION_ARGS)
+{
+	Datum context_info;
+
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_context_info)
+		context_info = (*pltsql_protocol_plugin_ptr)->get_context_info();
+
+	if (DatumGetPointer(context_info))
+		PG_RETURN_DATUM(context_info);
+	else
+		PG_RETURN_NULL();
+}
+
+Datum
+bbf_set_context_info(PG_FUNCTION_ARGS)
+{
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_context_info)
+		(*pltsql_protocol_plugin_ptr)->set_context_info(PG_GETARG_BYTEA_P(0));
+
+	PG_RETURN_VOID();
 }
 
 /*

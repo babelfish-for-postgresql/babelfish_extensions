@@ -105,6 +105,325 @@ CREATE AGGREGATE sys.VARP(float8) (
     INITCOND = '{0,0,0}'
 );
 
+ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_in_3_2_0;
+CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_in_3_2_0(
+  IN view_name text,
+  OUT procid int,
+  OUT client_version int,
+  OUT library_name VARCHAR(32),
+  OUT language VARCHAR(128),
+  OUT quoted_identifier bool,
+  OUT arithabort bool,
+  OUT ansi_null_dflt_on bool,
+  OUT ansi_defaults bool,
+  OUT ansi_warnings bool,
+  OUT ansi_padding bool,
+  OUT ansi_nulls bool,
+  OUT concat_null_yields_null bool,
+  OUT textsize int,
+  OUT datefirst int,
+  OUT lock_timeout int,
+  OUT transaction_isolation int2,
+  OUT client_pid int,
+  OUT row_count bigint,
+  OUT error int,
+  OUT trancount int,
+  OUT protocol_version int,
+  OUT packet_size int,
+  OUT encrypyt_option VARCHAR(40),
+  OUT database_id int2,
+  OUT host_name varchar(128))
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'tsql_stat_get_activity_deprecated_in_3_2_0'
+LANGUAGE C VOLATILE STRICT;
+CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
+  IN view_name text,
+  OUT procid int,
+  OUT client_version int,
+  OUT library_name VARCHAR(32),
+  OUT language VARCHAR(128),
+  OUT quoted_identifier bool,
+  OUT arithabort bool,
+  OUT ansi_null_dflt_on bool,
+  OUT ansi_defaults bool,
+  OUT ansi_warnings bool,
+  OUT ansi_padding bool,
+  OUT ansi_nulls bool,
+  OUT concat_null_yields_null bool,
+  OUT textsize int,
+  OUT datefirst int,
+  OUT lock_timeout int,
+  OUT transaction_isolation int2,
+  OUT client_pid int,
+  OUT row_count bigint,
+  OUT error int,
+  OUT trancount int,
+  OUT protocol_version int,
+  OUT packet_size int,
+  OUT encrypyt_option VARCHAR(40),
+  OUT database_id int2,
+  OUT host_name varchar(128),
+  OUT context_info bytea)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
+LANGUAGE C VOLATILE STRICT;
+
+ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_in_3_2_0;
+create or replace view sys.sysprocesses_deprecated_in_3_2_0 as
+select
+  a.pid as spid
+  , null::integer as kpid
+  , coalesce(blocking_activity.pid, 0) as blocked
+  , null::bytea as waittype
+  , 0 as waittime
+  , a.wait_event_type as lastwaittype
+  , null::text as waitresource
+  , coalesce(t.database_id, 0)::oid as dbid
+  , a.usesysid as uid
+  , 0 as cpu
+  , 0 as physical_io
+  , 0 as memusage
+  , a.backend_start as login_time
+  , a.query_start as last_batch
+  , 0 as ecid
+  , 0 as open_tran
+  , a.state as status
+  , null::bytea as sid
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
+  , a.application_name as program_name
+  , null::varchar(10) as hostprocess
+  , a.query as cmd
+  , null::varchar(128) as nt_domain
+  , null::varchar(128) as nt_username
+  , null::varchar(12) as net_address
+  , null::varchar(12) as net_library
+  , a.usename as loginname
+  , null::bytea as context_info
+  , null::bytea as sql_handle
+  , 0 as stmt_start
+  , 0 as stmt_end
+  , 0 as request_id
+from pg_stat_activity a
+left join sys.tsql_stat_get_activity_deprecated_in_3_2_0('sessions') as t on a.pid = t.procid
+left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
+left join pg_catalog.pg_locks         blocking_locks
+        ON blocking_locks.locktype = blocked_locks.locktype
+        AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+        AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+        AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+        AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+        AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+        AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+        AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+        AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+        AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+        AND blocking_locks.pid != blocked_locks.pid
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ where a.datname = current_database(); /* current physical database will always be babelfish database */
+GRANT SELECT ON sys.sysprocesses_deprecated_in_3_2_0 TO PUBLIC;
+create or replace view sys.sysprocesses as
+select
+  a.pid as spid
+  , null::integer as kpid
+  , coalesce(blocking_activity.pid, 0) as blocked
+  , null::bytea as waittype
+  , 0 as waittime
+  , a.wait_event_type as lastwaittype
+  , null::text as waitresource
+  , coalesce(t.database_id, 0)::oid as dbid
+  , a.usesysid as uid
+  , 0 as cpu
+  , 0 as physical_io
+  , 0 as memusage
+  , a.backend_start as login_time
+  , a.query_start as last_batch
+  , 0 as ecid
+  , 0 as open_tran
+  , a.state as status
+  , null::bytea as sid
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
+  , a.application_name as program_name
+  , null::varchar(10) as hostprocess
+  , a.query as cmd
+  , null::varchar(128) as nt_domain
+  , null::varchar(128) as nt_username
+  , null::varchar(12) as net_address
+  , null::varchar(12) as net_library
+  , a.usename as loginname
+  , t.context_info::bytea as context_info
+  , null::bytea as sql_handle
+  , 0 as stmt_start
+  , 0 as stmt_end
+  , 0 as request_id
+from pg_stat_activity a
+left join sys.tsql_stat_get_activity('sessions') as t on a.pid = t.procid
+left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
+left join pg_catalog.pg_locks         blocking_locks
+        ON blocking_locks.locktype = blocked_locks.locktype
+        AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+        AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+        AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+        AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+        AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+        AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+        AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+        AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+        AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+        AND blocking_locks.pid != blocked_locks.pid
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ where a.datname = current_database(); /* current physical database will always be babelfish database */
+GRANT SELECT ON sys.sysprocesses TO PUBLIC;
+
+ALTER VIEW sys.dm_exec_sessions RENAME TO dm_exec_sessions_deprecated_in_3_2_0;
+create or replace view sys.dm_exec_sessions_deprecated_in_3_2_0
+  as
+  select a.pid as session_id
+    , a.backend_start::sys.datetime as login_time
+    , d.host_name::sys.nvarchar(128) as host_name
+    , a.application_name::sys.nvarchar(128) as program_name
+    , d.client_pid as host_process_id
+    , d.client_version as client_version
+    , d.library_name::sys.nvarchar(32) as client_interface_name
+    , null::sys.varbinary(85) as security_id
+    , a.usename::sys.nvarchar(128) as login_name
+    , (select sys.default_domain())::sys.nvarchar(128) as nt_domain
+    , null::sys.nvarchar(128) as nt_user_name
+    , a.state::sys.nvarchar(30) as status
+    , null::sys.nvarchar(128) as context_info
+    , null::integer as cpu_time
+    , null::integer as memory_usage
+    , null::integer as total_scheduled_time
+    , null::integer as total_elapsed_time
+    , a.client_port as endpoint_id
+    , a.query_start::sys.datetime as last_request_start_time
+    , a.state_change::sys.datetime as last_request_end_time
+    , null::bigint as "reads"
+    , null::bigint as "writes"
+    , null::bigint as logical_reads
+    , case when a.client_port > 0 then 1::sys.bit else 0::sys.bit end as is_user_process
+    , d.textsize as text_size
+    , d.language::sys.nvarchar(128) as language
+    , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
+    , d.datefirst::smallint as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
+    , CAST(CAST(d.quoted_identifier as integer) as sys.bit) as quoted_identifier
+    , CAST(CAST(d.arithabort as integer) as sys.bit) as arithabort
+    , CAST(CAST(d.ansi_null_dflt_on as integer) as sys.bit) as ansi_null_dflt_on
+    , CAST(CAST(d.ansi_defaults as integer) as sys.bit) as ansi_defaults
+    , CAST(CAST(d.ansi_warnings as integer) as sys.bit) as ansi_warnings
+    , CAST(CAST(d.ansi_padding as integer) as sys.bit) as ansi_padding
+    , CAST(CAST(d.ansi_nulls as integer) as sys.bit) as ansi_nulls
+    , CAST(CAST(d.concat_null_yields_null as integer) as sys.bit) as concat_null_yields_null
+    , d.transaction_isolation::smallint as transaction_isolation_level
+    , d.lock_timeout as lock_timeout
+    , 0 as deadlock_priority
+    , d.row_count as row_count
+    , d.error as prev_error
+    , null::sys.varbinary(85) as original_security_id
+    , a.usename::sys.nvarchar(128) as original_login_name
+    , null::sys.datetime as last_successful_logon
+    , null::sys.datetime as last_unsuccessful_logon
+    , null::bigint as unsuccessful_logons
+    , null::int as group_id
+    , d.database_id::smallint as database_id
+    , 0 as authenticating_database_id
+    , d.trancount as open_transaction_count
+  from pg_catalog.pg_stat_activity AS a
+  RIGHT JOIN sys.tsql_stat_get_activity_deprecated_in_3_2_0('sessions') AS d ON (a.pid = d.procid);
+GRANT SELECT ON sys.dm_exec_sessions_deprecated_in_3_2_0 TO PUBLIC;
+create or replace view sys.dm_exec_sessions
+  as
+  select a.pid as session_id
+    , a.backend_start::sys.datetime as login_time
+    , d.host_name::sys.nvarchar(128) as host_name
+    , a.application_name::sys.nvarchar(128) as program_name
+    , d.client_pid as host_process_id
+    , d.client_version as client_version
+    , d.library_name::sys.nvarchar(32) as client_interface_name
+    , null::sys.varbinary(85) as security_id
+    , a.usename::sys.nvarchar(128) as login_name
+    , (select sys.default_domain())::sys.nvarchar(128) as nt_domain
+    , null::sys.nvarchar(128) as nt_user_name
+    , a.state::sys.nvarchar(30) as status
+    , d.context_info::sys.varbinary(128) as context_info
+    , null::integer as cpu_time
+    , null::integer as memory_usage
+    , null::integer as total_scheduled_time
+    , null::integer as total_elapsed_time
+    , a.client_port as endpoint_id
+    , a.query_start::sys.datetime as last_request_start_time
+    , a.state_change::sys.datetime as last_request_end_time
+    , null::bigint as "reads"
+    , null::bigint as "writes"
+    , null::bigint as logical_reads
+    , case when a.client_port > 0 then 1::sys.bit else 0::sys.bit end as is_user_process
+    , d.textsize as text_size
+    , d.language::sys.nvarchar(128) as language
+    , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
+    , d.datefirst::smallint as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
+    , CAST(CAST(d.quoted_identifier as integer) as sys.bit) as quoted_identifier
+    , CAST(CAST(d.arithabort as integer) as sys.bit) as arithabort
+    , CAST(CAST(d.ansi_null_dflt_on as integer) as sys.bit) as ansi_null_dflt_on
+    , CAST(CAST(d.ansi_defaults as integer) as sys.bit) as ansi_defaults
+    , CAST(CAST(d.ansi_warnings as integer) as sys.bit) as ansi_warnings
+    , CAST(CAST(d.ansi_padding as integer) as sys.bit) as ansi_padding
+    , CAST(CAST(d.ansi_nulls as integer) as sys.bit) as ansi_nulls
+    , CAST(CAST(d.concat_null_yields_null as integer) as sys.bit) as concat_null_yields_null
+    , d.transaction_isolation::smallint as transaction_isolation_level
+    , d.lock_timeout as lock_timeout
+    , 0 as deadlock_priority
+    , d.row_count as row_count
+    , d.error as prev_error
+    , null::sys.varbinary(85) as original_security_id
+    , a.usename::sys.nvarchar(128) as original_login_name
+    , null::sys.datetime as last_successful_logon
+    , null::sys.datetime as last_unsuccessful_logon
+    , null::bigint as unsuccessful_logons
+    , null::int as group_id
+    , d.database_id::smallint as database_id
+    , 0 as authenticating_database_id
+    , d.trancount as open_transaction_count
+  from pg_catalog.pg_stat_activity AS a
+  RIGHT JOIN sys.tsql_stat_get_activity('sessions') AS d ON (a.pid = d.procid);
+GRANT SELECT ON sys.dm_exec_sessions TO PUBLIC;
+
+create or replace view sys.dm_exec_connections
+ as
+ select a.pid as session_id
+   , a.pid as most_recent_session_id
+   , a.backend_start::sys.datetime as connect_time
+   , 'TCP'::sys.nvarchar(40) as net_transport
+   , 'TSQL'::sys.nvarchar(40) as protocol_type
+   , d.protocol_version as protocol_version
+   , 4 as endpoint_id
+   , d.encrypyt_option::sys.nvarchar(40) as encrypt_option
+   , null::sys.nvarchar(40) as auth_scheme
+   , null::smallint as node_affinity
+   , null::int as num_reads
+   , null::int as num_writes
+   , null::sys.datetime as last_read
+   , null::sys.datetime as last_write
+   , d.packet_size as net_packet_size
+   , a.client_addr::varchar(48) as client_net_address
+   , a.client_port as client_tcp_port
+   , null::varchar(48) as local_net_address
+   , null::int as local_tcp_port
+   , null::sys.uniqueidentifier as connection_id
+   , null::sys.uniqueidentifier as parent_connection_id
+   , a.pid::sys.varbinary(64) as most_recent_sql_handle
+ from pg_catalog.pg_stat_activity AS a
+ RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
+GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysprocesses_deprecated_in_3_2_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_sessions_deprecated_in_3_2_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_stat_get_activity_deprecated_in_3_2_0');
+
+CREATE OR REPLACE FUNCTION sys.context_info()
+RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE PROCEDURE sys.bbf_set_context_info(IN context_info sys.VARBINARY(128))
+AS 'babelfishpg_tsql' LANGUAGE C;
+
 ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_2_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_2_0');

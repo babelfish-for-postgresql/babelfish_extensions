@@ -1556,6 +1556,8 @@ typedef struct PLtsql_protocol_plugin
 	char*		(*get_host_name) (void);
 	Datum		(*get_datum_from_byte_ptr) (StringInfo buf, int datatype, int scale);
 	Datum		(*get_datum_from_date_time_struct) (uint64 time, int32 date, int datatype, int optional_attr);
+	Datum		(*get_context_info) (void);
+	void		(*set_context_info) (bytea* context_info);
 
 	/* Function pointers set by PL/tsql itself */
 	Datum		(*sql_batch_callback) (PG_FUNCTION_ARGS);
