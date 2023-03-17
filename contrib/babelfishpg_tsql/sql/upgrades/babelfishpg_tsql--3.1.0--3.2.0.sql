@@ -431,6 +431,11 @@ ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_2_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_2_0');
 
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 /*
  * JSON MODIFY
  * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
