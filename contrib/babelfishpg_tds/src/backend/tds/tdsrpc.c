@@ -1027,6 +1027,7 @@ SPCustomType(TDSRequestSP req)
 	bool *nulls;
 	char *activity;
 
+	tvp_lookup_list = NIL;
 	TdsErrorContext->err_text = "Processing SP_CUSTOMTYPE Request";
 	if ((req->nTotalParams) > PREPARE_STMT_MAX_ARGS)
 	    ereport(ERROR,
@@ -1134,6 +1135,7 @@ SPCustomType(TDSRequestSP req)
 	 */
 	TDSLogDuration(req->name.data);
 	pfree(codeblock);
+	tvp_lookup_list = NIL;
 }
 
 static void
@@ -1754,37 +1756,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 		 */
 		SetParamMetadataCommonInfo(&(temp->paramMeta), tempFuncInfo);
 
-		/* Explicity retrieve the oid for TVP type and map it. */
-		if (temp->paramMeta.pgTypeOid == InvalidOid && tdsType == TDS_TYPE_TABLE)
-		{
-			int rc;
-			HeapTuple                               row;
-			bool isnull;
-			TupleDesc tupdesc;
-			char * query;
 
-			StartTransactionCommand();
-			PushActiveSnapshot(GetTransactionSnapshot());
-			if ((rc = SPI_connect()) < 0)
-				elog(ERROR, "SPI_connect() failed in TDS Listener "
-											"with return code %d", rc);
-
-			query = psprintf("SELECT '%s'::regtype::oid", temp->tvpInfo->tvpTypeName);
-
-			rc = SPI_execute(query, false, 1);
-			if(rc != SPI_OK_SELECT)
-				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
-
-			tupdesc = SPI_tuptable->tupdesc;
-			row = SPI_tuptable->vals[0];
-
-			temp->paramMeta.pgTypeOid = DatumGetObjectId(SPI_getbinval(row, tupdesc,
-																					1, &isnull));
-
-			SPI_finish();
-			PopActiveSnapshot();
-			CommitTransactionCommand();
-		}
 
 		temp->next = NULL;
 		if (prev == NULL)
