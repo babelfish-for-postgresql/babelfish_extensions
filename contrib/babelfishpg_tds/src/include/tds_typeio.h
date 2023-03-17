@@ -222,6 +222,7 @@ typedef struct TvpRowData
 typedef struct TvpData
 {
 	char 			*tvpTypeName;
+	char 			*tvpTypeSchemaName;
 	char 			*tableName;
 	int 			colCount;
 	int 			rowCount;
