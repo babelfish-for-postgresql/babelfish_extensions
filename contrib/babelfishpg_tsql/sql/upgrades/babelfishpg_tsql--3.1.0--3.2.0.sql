@@ -723,7 +723,6 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
     WHERE
         c.is_sparse = 0 AND p.attnum >= 0;
-GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
