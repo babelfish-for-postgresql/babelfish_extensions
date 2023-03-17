@@ -2073,6 +2073,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		pfree(tvpTypeName);
 		tvpTypeName = tempStr;
 
+		pfree(logical_schema);
 		pfree(physical_schema);
 		pfree(db_name);
 	}
