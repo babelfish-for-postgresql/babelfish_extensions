@@ -116,7 +116,7 @@ SELECT * FROM BABEL_3474_vu_prepare_v13
 GO
 ~~START~~
 datetimeoffset
-2016-12-26 16:40:05.5234560 +08:00
+2016-12-27 00:40:05.5234560 +08:00
 ~~END~~
 
 DROP VIEW BABEL_3474_vu_prepare_v13
@@ -126,7 +126,7 @@ SELECT * FROM BABEL_3474_vu_prepare_v14
 GO
 ~~START~~
 datetimeoffset
-2017-02-26 15:30:05.5234560 +08:00
+2017-02-26 23:30:05.5234560 +08:00
 ~~END~~
 
 DROP VIEW BABEL_3474_vu_prepare_v14
@@ -250,7 +250,7 @@ EXEC BABEL_3474_vu_prepare_p13
 GO
 ~~START~~
 datetimeoffset
-2016-12-26 16:40:05.5234560 +08:00
+2016-12-27 00:40:05.5234560 +08:00
 ~~END~~
 
 DROP procedure BABEL_3474_vu_prepare_p13
@@ -260,7 +260,7 @@ EXEC BABEL_3474_vu_prepare_p14
 GO
 ~~START~~
 datetimeoffset
-2017-02-26 15:30:05.5234560 +08:00
+2017-02-26 23:30:05.5234560 +08:00
 ~~END~~
 
 DROP procedure BABEL_3474_vu_prepare_p14
