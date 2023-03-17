@@ -428,7 +428,7 @@ ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_2_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_2_0');
 
-CREATE OR REPLACE FUNCTION Database_principal_id(IN user_name sysname DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;

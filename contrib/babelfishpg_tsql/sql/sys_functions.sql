@@ -1731,7 +1731,7 @@ CREATE OR REPLACE FUNCTION sys.servername()
 CREATE OR REPLACE FUNCTION sys.servicename()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION Database_principal_id(IN user_name sysname DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
