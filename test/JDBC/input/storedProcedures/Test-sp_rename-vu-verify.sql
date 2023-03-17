@@ -216,11 +216,11 @@ FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%'
 ORDER BY nspname, funcname, orig_name, funcsignature
 GO
 
---EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig1_new', 'OBJECT';
---GO
---
---EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_trig1', 'sp_rename_vu_trig1_schema1_new', 'OBJECT';
---GO
+EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig1_new', 'OBJECT';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_trig1', 'sp_rename_vu_trig1_schema1_new', 'OBJECT';
+GO
 
 SELECT name, parent_class
 FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
