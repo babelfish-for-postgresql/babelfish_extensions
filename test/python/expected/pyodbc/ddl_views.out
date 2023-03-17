@@ -25,11 +25,6 @@ CREATE VIEW sys_all_views_select_vu_prepare AS
 SELECT * FROM sys_all_views_table_vu_prepare
 GO
 
-SET ANSI_NULLS ON
-SET QUOTED_IDENTIFIER ON
-CREATE VIEW sys_views_dep_vu_prepare_t1 AS select 1;
-GO
-
 GO
 
 GO
