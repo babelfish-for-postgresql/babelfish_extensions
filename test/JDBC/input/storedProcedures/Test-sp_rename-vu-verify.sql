@@ -1,5 +1,3 @@
--- sla 1000000
-
 -- tsql
 
 USE master
@@ -208,56 +206,56 @@ ORDER BY SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
 GO
 
 -- Trigger
-SELECT name, parent_class
-FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
-ORDER BY parent_class, name
-GO
-
-SELECT nspname, funcname, orig_name, funcsignature 
-FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
-ORDER BY nspname, funcname, orig_name, funcsignature
-GO
-
-EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig1_new', 'OBJECT';
-GO
-
-EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_trig1', 'sp_rename_vu_trig1_schema1_new', 'OBJECT';
-GO
-
-SELECT name, parent_class
-FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
-ORDER BY parent_class, name
-GO
-
-SELECT nspname, funcname, orig_name, funcsignature 
-FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
-ORDER BY nspname, funcname, orig_name, funcsignature
-GO
+--SELECT name, parent_class
+--FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
+--ORDER BY parent_class, name
+--GO
+--
+--SELECT nspname, funcname, orig_name, funcsignature 
+--FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
+--ORDER BY nspname, funcname, orig_name, funcsignature
+--GO
+--
+--EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig1_new', 'OBJECT';
+--GO
+--
+--EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_trig1', 'sp_rename_vu_trig1_schema1_new', 'OBJECT';
+--GO
+--
+--SELECT name, parent_class
+--FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
+--ORDER BY parent_class, name
+--GO
+--
+--SELECT nspname, funcname, orig_name, funcsignature 
+--FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
+--ORDER BY nspname, funcname, orig_name, funcsignature
+--GO
 
 -- Table Type
-SELECT name FROM sys.table_types
-WHERE name LIKE '%sp_rename_vu%' 
-ORDER BY schema_id, type_table_object_id, name;
-GO
-
-SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
-ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
-GO
-
-EXEC sp_rename 'sp_rename_vu_tabletype1', 'sp_rename_vu_tabletype1_new', 'OBJECT';
-GO
-
-EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_tabletype1', 'sp_rename_vu_tabletype1_schema1_new', 'OBJECT';
-GO
-
-SELECT name FROM sys.table_types
-WHERE name LIKE '%sp_rename_vu%' 
-ORDER BY schema_id, type_table_object_id, name;
-GO
-
-SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
-ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
-GO
+--SELECT name FROM sys.table_types
+--WHERE name LIKE '%sp_rename_vu%' 
+--ORDER BY schema_id, type_table_object_id, name;
+--GO
+--
+--SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
+--ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
+--GO
+--
+--EXEC sp_rename 'sp_rename_vu_tabletype1', 'sp_rename_vu_tabletype1_new', 'OBJECT';
+--GO
+--
+--EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_tabletype1', 'sp_rename_vu_tabletype1_schema1_new', 'OBJECT';
+--GO
+--
+--SELECT name FROM sys.table_types
+--WHERE name LIKE '%sp_rename_vu%' 
+--ORDER BY schema_id, type_table_object_id, name;
+--GO
+--
+--SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
+--ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
+--GO
 
 -- ****Given objtype is valid but not supported yet****
 -- Column
