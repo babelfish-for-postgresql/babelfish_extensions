@@ -25,6 +25,10 @@ SET ROWCOUNT 1;
 SELECT @@rowcount;
 GO
 
+set ROWCOUNT 0;
+SELECT @@rowcount;
+GO
+
 -- clean up
 DROP TABLE t1;
 GO

@@ -1154,8 +1154,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_DATEFORMAT, "DATEFORMAT", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 			if (pg_strcasecmp("DEADLOCK_PRIORITY", val.c_str()) == 0)
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_DEADLOCK_PRIORITY, "DEADLOCK_PRIORITY", &st_escape_hatch_session_settings, getLineAndPos(sctx));
-			if (pg_strcasecmp("CONTEXT_INFO", val.c_str()) == 0)
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_CONTEXT_INFO, "CONTEXT_INFO", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 			if (pg_strcasecmp("QUERY_GOVERNOR_COST_LIMIT", val.c_str()) == 0)
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_QUERY_GOVERNOR_COST_LIMIT, "QUERY_GOVERNOR_COST_LIMIT", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 
@@ -1301,14 +1299,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunction_call(TSqlParser::
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx)
 {
-	if (ctx->STDEV())
-		handle(INSTR_UNSUPPORTED_TSQL_STDEV_FUNCTION, ctx->STDEV());
-	if (ctx->STDEVP())
-		handle(INSTR_UNSUPPORTED_TSQL_STDEVP_FUNCTION, ctx->STDEVP());
-	if (ctx->VAR())
-		handle(INSTR_UNSUPPORTED_TSQL_VAR_FUNCTION, ctx->VAR());
-	if (ctx->VARP())
-		handle(INSTR_UNSUPPORTED_TSQL_VARP_FUNCTION, ctx->VARP());
 	if (ctx->CHECKSUM_AGG())
 		handle(INSTR_UNSUPPORTED_TSQL_CHECKSUM_AGG_FUNCTION, ctx->CHECKSUM_AGG());
 	if (ctx->GROUPING_ID())

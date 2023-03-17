@@ -151,6 +151,7 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
+static bool bbf_check_rowcount_hook(int es_processed);
 
 /*****************************************
  * 			Replication Hooks
@@ -201,6 +202,7 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static CreateFunctionStmt_hook_type prev_CreateFunctionStmt_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
+static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 
 
 /*****************************************
@@ -315,6 +317,11 @@ InstallExtendedHooks(void)
 	prev_fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom_hook;
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
 
+
+
+	prev_check_rowcount_hook = check_rowcount_hook;
+	check_rowcount_hook = bbf_check_rowcount_hook;
+
 }
 
 void
@@ -359,6 +366,7 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	CreateFunctionStmt_hook = prev_CreateFunctionStmt_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
+	check_rowcount_hook = prev_check_rowcount_hook;
 }
 
 /*****************************************
@@ -620,6 +628,9 @@ pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, 
 		return;
 	}
 
+	if ((count == 0 || count > pltsql_rowcount) && queryDesc->operation == CMD_SELECT)
+		count = pltsql_rowcount;
+	
 	if (prev_ExecutorRun)
 		prev_ExecutorRun(queryDesc, direction, count, execute_once);
 	else
@@ -3632,4 +3643,10 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		values[attnum - 1] = Int16GetDatum(dbid);
 		nulls[attnum - 1] = false;
 	}
+}
+
+static bool bbf_check_rowcount_hook(int es_processed){
+	if (pltsql_rowcount == es_processed && es_processed > 0)
+		return true;
+	else return false;
 }

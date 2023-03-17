@@ -1707,6 +1707,9 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.rowcount()
 RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.rowcount_big()
+RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.error()
 	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
@@ -1833,6 +1836,42 @@ AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ceiling(tinyint) RETURNS TINYINT
 AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE AGGREGATE sys.STDEV(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_stddev_samp,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE sys.STDEVP(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_stddev_pop,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE sys.VAR(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_var_samp,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE sys.VARP(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_var_pop,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
 
 CREATE OR REPLACE FUNCTION sys.microsoftversion()
 RETURNS INTEGER AS
@@ -2776,7 +2815,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
   OUT database_id int2,
-  OUT host_name varchar(128))
+  OUT host_name varchar(128),
+  OUT context_info bytea)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
@@ -3279,6 +3319,9 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.context_info()
+RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
