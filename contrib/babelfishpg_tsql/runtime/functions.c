@@ -1771,7 +1771,7 @@ host_name(PG_FUNCTION_ARGS)
 Datum
 context_info(PG_FUNCTION_ARGS)
 {
-	Datum context_info;
+	Datum context_info = (Datum) 0;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_context_info)
 		context_info = (*pltsql_protocol_plugin_ptr)->get_context_info();
