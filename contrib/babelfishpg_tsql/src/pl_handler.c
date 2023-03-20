@@ -486,6 +486,25 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		}
 	}
 
+	if(parseTree->stmt->type == T_SelectStmt)
+	{
+		SelectStmt *selectStmt = (SelectStmt *) parseTree->stmt;
+		char* list_of_dbo_catalog[10]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages", "syscolumns", "sysforeignkeys", "sysindexes", "sysobjects"};
+		ListCell *cell;
+		foreach (cell, selectStmt->fromClause)
+		{
+			RangeVar *rv = (RangeVar *) lfirst(cell);
+			if (rv-> schemaname && strcmp(rv-> schemaname, "dbo") == 0)
+			{
+				for(int i =0; i<9;i++)
+				{
+					if(rv-> relname && strcmp(rv-> relname, list_of_dbo_catalog[i]) == 0)
+						rv->schemaname = "sys";
+				}
+			}
+		}
+	}
+
 	if (enable_schema_mapping())
 		rewrite_object_refs(parseTree->stmt);
 

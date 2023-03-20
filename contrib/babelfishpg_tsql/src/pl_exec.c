@@ -464,9 +464,6 @@ static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *d
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool* reset_session_properties, bool inside_trigger);
 
-static void check_list_of_dbo_catalog(PLtsql_expr *expr, PLtsql_stmt_execsql *stmt, bool is_cross_db);
-static void replace_schema_name(PLtsql_expr *expr, char* old, char* newtext);
-
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
 extern void pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int* cursor_options);
@@ -4613,35 +4610,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	if (stmt->original_query)
 		original_query_string = stmt->original_query;
 
-	/*
-	 * In the query if there are multiple white spaces after dbo then
-	 * replace the multiple spaces with 1 single white space
-	 */
-	if(strcasestr(expr->query, "dbo  "))
-	{
-		replace_schema_name(expr, "dbo  ", "dbo ");
-	}
-
-	/*
-	 * For the list of sys% to be accessible from dbo, if there are white spaces
-	 * present between the schema name and "." then
-	 * these spaces need to be removed
-	 */
-	if(strcasestr(expr->query, "dbo ."))
-	{
-		replace_schema_name(expr, "dbo .", "dbo.");
-	}
-
-	/*
-	 * For the list of sys% to be accessible from dbo, if there are white spaces
-	 * present between the schema name and view name then
-	 * these spaces need to be removed
-	 */
-	if(strcasestr(expr->query, "dbo. "))
-	{
-		replace_schema_name(expr, "dbo. ", "dbo.");
-	}
-
 	if (stmt->is_cross_db)
 	{
 		char *login = GetUserNameFromId(GetSessionUserId(), false);
@@ -4659,16 +4627,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * When there is cross db reference to sys or information_schema schemas,
 		 * Change the session property.
 		 */
-		if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
-		{
-			check_list_of_dbo_catalog(expr, stmt, true);
-		}
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 			set_session_properties(stmt->db_name);
-	}
-	if(stmt->is_dml && stmt->is_schema_specified && strcmp(stmt->schema_name, "dbo") == 0)
-	{
-		check_list_of_dbo_catalog(expr, stmt, false);
 	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
@@ -10267,62 +10227,4 @@ char *
 get_original_query_string(void)
 {
 	return original_query_string;
-}
-
-/*
- * For the given expr query, replace the catalog_name with the new_catalog_name.
- */
-void replace_schema_name(PLtsql_expr *expr, char* catalog_name, char* new_catalog_name)
-{
-	while(true)
-	{
-		if(strcasestr(expr->query, catalog_name))
-		{
-			char* match;
-			match = strcasestr(expr->query, catalog_name);
-			if (match != NULL)
-			{
-				size_t len = strlen(expr->query);
-				size_t n1 = match - expr->query;   // # bytes before the match
-				size_t n2 = strlen(catalog_name);      // # bytes in the pattern string
-				size_t n3 = strlen(new_catalog_name);  // # bytes in the replacement string
-				size_t n4 = len - n1 - n2;        // # bytes after the pattern in the source string
-				char *result = malloc(n1 + n3 + n4 + 1);
-				if (result != NULL) {
-					// copy the initial portion
-					memcpy(result, expr->query, n1);
-					// copy the replacement string
-					memcpy(result + n1, new_catalog_name, n3);
-					// copy the trailing bytes, including the null terminator
-					memcpy(result + n1 + n3, match + n2, n4 + 1);
-				}
-				expr->query = result;
-			}
-		}
-		else
-			break;
-	}
-}
-
-/*
- * In the given expr query if the query contains the list_of_dbo_catalog then
- * these dbo catalog are replaced with the respective list_of_sys_catalog.
- * If the given stmt is cross-db then replace the schema name of stmt to "sys".
- */
-void check_list_of_dbo_catalog(PLtsql_expr *expr, PLtsql_stmt_execsql *stmt, bool is_cross_db)
-{
-	char* list_of_dbo_catalog[10]= {"dbo.sysprocesses", "dbo.syscharsets", "dbo.sysconfigures", "dbo.syscurconfigs", "dbo.syslanguages", "dbo.syscolumns", "dbo.sysforeignkeys", "dbo.sysindexes", "dbo.sysobjects"};
-	char* list_of_sys_catalog[10]= {"sys.sysprocesses", "sys.syscharsets", "sys.sysconfigures", "sys.syscurconfigs", "sys.syslanguages", "sys.syscolumns", "sys.sysforeignkeys", "sys.sysindexes", "sys.sysobjects"};
-
-	for(int i=0; i<9; i++)
-	{
-		if(strcasestr(expr->query, list_of_dbo_catalog[i]))
-		{
-			if(is_cross_db)
-			{
-				stmt->schema_name = "sys";
-			}
-			replace_schema_name(expr, list_of_dbo_catalog[i], list_of_sys_catalog[i]);
-		}
-	}
 }

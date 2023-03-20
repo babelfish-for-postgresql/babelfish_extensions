@@ -5,13 +5,29 @@
 SELECT DISTINCT db_name(dbid), loginname FROM sys.sysprocesses WHERE spid = @@SPID
 GO
 
+SELECT DISTINCT db_name(dbid), loginname FROM dbo.sysprocesses WHERE spid = @@SPID
+GO
+
+SELECT DISTINCT db_name(dbid), loginname FROM [sys].[sysprocesses] WHERE spid = @@SPID
+GO
+
+SELECT DISTINCT db_name(dbid), loginname FROM [dbo].[sysprocesses] WHERE spid = @@SPID
+GO
+
 CREATE DATABASE db_2829
 GO
 USE db_2829
 GO
 SELECT DISTINCT db_name(dbid), loginname FROM sys.sysprocesses WHERE spid = @@SPID
 GO
+SELECT DISTINCT db_name(dbid), loginname FROM dbo.sysprocesses WHERE spid = @@SPID
+GO
 USE master
+GO
+
+SELECT DISTINCT db_name(dbid), loginname FROM db_2829.sys.sysprocesses WHERE spid = @@SPID
+GO
+SELECT DISTINCT db_name(dbid), loginname FROM db_2829.dbo.sysprocesses WHERE spid = @@SPID
 GO
 DROP DATABASE db_2829
 GO
