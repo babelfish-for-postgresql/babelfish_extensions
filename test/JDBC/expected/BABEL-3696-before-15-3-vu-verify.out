@@ -1,0 +1,88 @@
+SELECT * FROM babel_3696_before_15_3_1
+GO
+~~START~~
+nvarchar
+{"Brand": "HP", "Product": "Laptop", "Accessories": "[\"Mouse\", \"Monitor\"]"}
+~~END~~
+
+
+SELECT * FROM babel_3696_before_15_3_2
+GO
+~~START~~
+nvarchar
+{"Brand": "HP", "Product": "Laptop", "Accessories": "[\"Keyboard\", \"Mouse\", \"Monitor\"]"}
+~~END~~
+
+
+SELECT * FROM babel_3696_before_15_3_3
+GO
+~~START~~
+nvarchar
+{"Brand": "HP", "Parts": "Laptop"}
+~~END~~
+
+
+SELECT * FROM babel_3696_before_15_3_4
+GO
+~~START~~
+nvarchar
+{"Brand": "Lenovo", "Product": "Laptop", "Accessories": "[\"HDMI\", \"USB\"]"}
+~~END~~
+
+
+SELECT * FROM babel_3696_before_15_3_5
+GO
+~~START~~
+nvarchar
+{"name": "John", "skills": "[\"C#\", \"T-SQL\", \"Azure\"]"}
+~~END~~
+
+
+SELECT * FROM babel_3696_before_15_3_6
+GO
+~~START~~
+nvarchar
+{"a": "[{\"x\":\"some string\"}]"}
+~~END~~
+
+
+SELECT * FROM babel_3696_before_15_3_7
+GO
+~~START~~
+nvarchar
+{"a": "{\"x\":\"some string\"}"}
+~~END~~
+
+
+SELECT * FROM babel_3696_before_15_3_8
+GO
+~~START~~
+nvarchar
+{"a": "{\"a\": \"c\"}"}
+~~END~~
+
+
+SELECT * FROM babel_3696_before_15_3_9
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON path is not properly formatted)~~
+
+
+EXEC babel_3696_before_15_3_10
+GO
+~~START~~
+nvarchar
+{"Suspect": {"Name": "Homer Simpson", "Address": {"City": "Timaru", "Region": "Otago", "Country": "New Zealand"}, "Hobbies": ["Eating", "Sleeping", "Base Jumping"]}}
+~~END~~
+
+
+EXEC babel_3696_before_15_3_11
+GO
+~~START~~
+nvarchar
+{"Suspect": {"Name": "Homer Simpson", "Address": {"City": "Dunedin", "Region": "Otago", "Country": "New Zealand"}, "Hobbies": ["Chess", "Brain Surgery"]}}
+~~END~~
+
