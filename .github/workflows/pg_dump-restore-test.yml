@@ -1,0 +1,137 @@
+name: pg_dump/restore Test Framework
+on: [push, pull_request]
+
+jobs:
+  generate-dump-restore-tests:
+    name: Generate Dump/Restore Tests
+    runs-on: ubuntu-20.04
+    outputs:
+      dump-restore-path-list: ${{ steps.generate-dump-restore-path.outputs.dump-restore-path-list }}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: "Read and setup dump-restore path list from configuration"
+        id: generate-dump-restore-path
+        run: |
+          config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)'"
+          config=$(echo $config | sed "s/\"/\\\\\"/g")
+          DUMP_RESTORE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['dump-restore-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), title: (itm[itm.length - 1]['logical-database'] == null ? 'Instance-level-' : 'Database-level-') + itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
+          echo "::set-output name=dump-restore-path-list::$DUMP_RESTORE_PATH_LIST"
+
+  run-dump-restore-test:
+    needs: generate-dump-restore-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        upgrade-path: ${{ fromJson(needs.generate-dump-restore-tests.outputs.dump-restore-path-list) }}
+    name: Run Dump Restore Test for ${{ matrix.upgrade-path.title }}
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install yq - yaml parser
+        id: install-yq
+        if: always()
+        run: sudo snap install yq
+
+      - name: Read Base Version and Final Version
+        id: read-base-and-final-version
+        if: always() && steps.install-yq.outcome == 'success'
+        run: > 
+          echo "::set-output name=base-version::$(
+            yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}][0].version' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml
+          )" && 
+          echo "::set-output name=final-version::$(
+            yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}][-1].version' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml
+          )" && 
+          echo "::set-output name=logical-database::$(
+            yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}][-1].logical-database' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml
+          )"
+
+      - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
+        id: find-branch
+        if: always() && steps.read-base-and-final-version.outcome == 'success'
+        run: >
+          echo "::set-output name=base-engine-branch::$(
+            yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+          )" &&
+          echo "::set-output name=base-extension-branch::$(
+            yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+          )" &&
+          echo "::set-output name=base-dir::$(echo psql$(awk -F. '{print $1}' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))"
+
+      - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
+        id: setup-base-version
+        if: always() && steps.find-branch.outcome == 'success'
+        uses: ./.github/composite-actions/setup-base-version
+        with:
+          engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
+          extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
+          install_dir: ${{ steps.find-branch.outputs.base-dir }}
+          migration_mode: 'multi-db'
+          logical_database: ${{ steps.read-base-and-final-version.outputs.logical-database }}
+
+      - name: Setup Dump Restore Composite Action
+        id: setup-dump-restore-ca
+        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        uses: ./.github/composite-actions/setup-dump-restore-ca
+        with: 
+          base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
+
+      - name: Dump and restore till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
+        id: dump-restore-and-test
+        if: always() && steps.setup-dump-restore-ca.outcome == 'success' 
+        uses: ./.github/composite-actions/dump-restore
+
+      # Due to some action/checkout's in previous step the dynamically generated dump-restore composite action isn't available,
+      # hence to avoid error in post action step recreated the dump-restore composite action
+      - name: Recreate Dump Restore Composite Action
+        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        uses: ./.github/composite-actions/setup-dump-restore-ca
+        with: 
+          base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
+
+      - name: Rename Test Summary Files
+        id: test-file-rename
+        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
+        run: |
+          cd ~/work/babelfish_extensions/babelfish_extensions/
+          cd test/JDBC/Info
+          timestamp=`ls -Art | tail -n 1`
+          cd $timestamp
+          mkdir -p ~/upgrade
+          cp $timestamp.diff ~/upgrade/output-diff.diff
+          cp "$timestamp"_runSummary.log ~/upgrade/run-summary.log
+          mkdir -p ~/failed-testscript-outputs
+          # copy output files of failed test scripts
+          BASE_VERSION=${{ steps.read-base-and-final-version.outputs.base-version }}
+          BASE_VERSION=${BASE_VERSION/./_}
+          FINAL_VERSION=${{ steps.read-base-and-final-version.outputs.final-version }}
+          FINAL_VERSION=${FINAL_VERSION/./_}
+          if [[ "$BASE_VERSION" == *"latest"* ]]; then
+            BASE_VERSION="latest"
+          fi
+          if [[ "$FINAL_VERSION" == *"latest"* ]]; then
+            FINAL_VERSION="latest"
+          fi
+          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
+          do 
+            if [[ -f ../../output/$f".out" ]]; then
+              cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
+            elif [[ -f ../../output/$BASE_VERSION"__preparation__"$f".out" ]]; then
+              cp ../../output/$BASE_VERSION"__preparation__"$f".out" ~/failed-testscript-outputs/$BASE_VERSION"__preparation__"$f".out"
+            else
+              cp ../../output/$FINAL_VERSION"__verification_cleanup__"$BASE_VERSION"__"$f".out" ~/failed-testscript-outputs/$FINAL_VERSION"__verification_cleanup__"$BASE_VERSION"__"$f".out"
+            fi
+          done
+ 
+      - name: Upload Logs
+        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
+        uses: actions/upload-artifact@v2
+        with:
+          name: upgrade-logs-${{ matrix.upgrade-path.title }}
+          path: |
+            ~/upgrade/*
+            ~/psql*/data/logfile
+            ~/failed-testscript-outputs
+            

@@ -1,0 +1,26 @@
+DROP VIEW babel_3697_1
+GO
+
+DROP VIEW babel_3697_2
+GO
+
+DROP VIEW babel_3697_3
+GO
+
+DROP VIEW babel_3697_4
+GO
+
+DROP VIEW babel_3697_5
+GO
+
+DROP PROCEDURE babel_3697_6
+GO
+
+DROP PROCEDURE babel_3697_7
+GO
+
+DROP PROCEDURE babel_3697_8
+GO
+
+DROP VIEW babel_3697_multi_function
+GO

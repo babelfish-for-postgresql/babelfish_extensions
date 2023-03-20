@@ -730,6 +730,65 @@ class tsqlCommonMutator : public TSqlParserBaseListener
 	/* see comment above. */
 public:
 	explicit tsqlCommonMutator() = default;
+	bool in_create_or_alter_function = false;
+
+	void enterCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
+		in_create_or_alter_function = true;
+	}
+
+	void exitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
+		in_create_or_alter_function = false;
+	}
+
+	void enterTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override {
+		if (in_create_or_alter_function && ctx->COMMIT()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'COMMIT TRANSACTION' within a function.", 0, 0);
+		}
+		if (in_create_or_alter_function && ctx->ROLLBACK()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'ROLLBACK TRANSACTION' within a function.", 0, 0);
+		}
+		if (in_create_or_alter_function && ctx->SAVE()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'SAVEPOINT' within a function.", 0, 0);
+		}
+	}
+
+	void enterPrint_statement(TSqlParser::Print_statementContext *ctx) override { 
+		if (in_create_or_alter_function && ctx->PRINT()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'PRINT' within a function.", 0, 0);
+		}
+	}
+	void enterRaiseerror_statement(TSqlParser::Raiseerror_statementContext * ctx) override { 
+		if (in_create_or_alter_function && ctx->RAISERROR()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'RAISERROR' within a function.", 0, 0);
+		}
+	}
+
+	void enterExecute_statement(TSqlParser::Execute_statementContext *ctx) override {
+		if (in_create_or_alter_function && (ctx->EXEC() || ctx->EXECUTE())){
+			TSqlParser::Execute_bodyContext *body = ctx->execute_body();
+			if (body->LR_BRACKET())
+			{
+				std::vector<TSqlParser::Execute_var_stringContext *> exec_strings = body->execute_var_string();
+				if (!exec_strings.empty())
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'EXECUTE STRING' within a function.", 0, 0);
+				}
+				
+			}
+		}
+	}
+
+	void enterWaitfor_statement(TSqlParser::Waitfor_statementContext *ctx) override {
+		if (in_create_or_alter_function && ctx->WAITFOR()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'WAITFOR' within a function.", 0, 0);
+		}
+	 }
+	 
+	void enterWaitfor_receive_statement(TSqlParser::Waitfor_receive_statementContext * ctx) override { 
+		if (in_create_or_alter_function && ctx->WAITFOR()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'WAITFOR' within a function.", 0, 0);
+		}
+	}
 
 	/* Column Name */
 	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
@@ -932,9 +991,21 @@ class tsqlSelectStatementMutator : public TSqlParserBaseListener
 	 */
 public:
 	PLtsql_expr_query_mutator *mutator;
-
+	bool in_create_or_alter_view = false;
 public:
 	tsqlSelectStatementMutator() = default;
+	/* Corner case check. If a view is created on a temporary table, we should throw an exception.
+	 * Here we are setting up flags for later check.
+	 */ 
+	void enterCreate_or_alter_view(TSqlParser::Create_or_alter_viewContext *ctx)
+	{
+		in_create_or_alter_view = true;
+	}
+	
+	void exitCreate_or_alter_view(TSqlParser::Create_or_alter_viewContext *ctx)
+	{
+		in_create_or_alter_view = false;
+	}
 
 	void exitSelect_statement(TSqlParser::Select_statementContext *ctx) override
 	{
@@ -946,6 +1017,17 @@ public:
 	{
 		if (mutator)
 			process_query_specification(ctx, mutator);
+	}
+
+	void exitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override 
+	{
+		std::string table_name = extractTableName(nullptr, ctx);
+
+		if (in_create_or_alter_view && !table_name.empty() && table_name.at(0)=='#')
+		{	
+			in_create_or_alter_view = false;
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Views or functions are not allowed on temporary tables. Table names that begin with '#' denote temporary tables.", 0, 0);
+		}
 	}
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
@@ -4311,7 +4393,33 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			{
 				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("unrecognized configuration parameter: %s", val.c_str()), getLineAndPos(set_special_ctx->id().front()));
 			}
-			return makeSQL(ctx);
+			if (pg_strcasecmp("CONTEXT_INFO", val.c_str()) == 0)
+			{
+				std::string param = getFullText(set_special_ctx->constant_LOCAL_ID());
+				if (pg_strncasecmp(param.c_str(), "NULL", 4) == 0 || param.length() == 0 || (pg_strncasecmp(param.c_str(), "0x", 2) == 0 && param.length() - 2 > 256))
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "SET CONTEXT_INFO option requires varbinary (128) NOT NULL parameter.", getLineAndPos(set_special_ctx->constant_LOCAL_ID()));
+
+				PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(PLtsql_stmt_execsql));
+				std::string query;
+				query += "CALL bbf_set_context_info(convert(varbinary(128), ";
+				query += param;
+				query += "));";
+
+				stmt->cmd_type = PLTSQL_STMT_EXECSQL;
+				stmt->lineno = getLineNo(ctx);
+				stmt->sqlstmt = makeTsqlExpr(query, false);
+				stmt->into = false;
+				stmt->strict = false;
+				stmt->target = NULL;
+				stmt->need_to_push_result = false;
+				stmt->is_tsql_select_assign_stmt = false;
+				stmt->insert_exec = false;
+
+				attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+				return (PLtsql_stmt *) stmt;
+			}
+			else
+				return makeSQL(ctx);
 		}
 		else if (set_special_ctx->OFFSETS())
 			return nullptr;

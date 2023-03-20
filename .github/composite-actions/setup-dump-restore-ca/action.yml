@@ -1,0 +1,60 @@
+name: 'Setup Dump Restore Composite Action'
+inputs:
+  base_version: 
+    description: "Base version"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: setup dump restore composite action
+      run: |
+        dump_restore_version_dir_path=${{ github.workspace }}/.github/composite-actions/dump-restore/
+
+        # Creating the dump-restore composite action and printing some initial content in it
+        mkdir $dump_restore_version_dir_path
+        touch $dump_restore_version_dir_path/action.yml
+        printf 'name: "Dump and restore till final version and run verify tests"\nruns:\n  using: "composite"\n  steps:\n' > $dump_restore_version_dir_path/action.yml
+
+        # Length of the dump-restore path
+        LEN=$(yq '."dump-restore-version"[${{ matrix.upgrade-path.id }}] | length' ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
+        if [[ $LEN -le 1 ]]
+        then
+            echo "ERROR: Dump restore path length less than 2" 1>&2
+            exit 1
+        fi
+
+        # Initial installed version is the base version
+        previous_installed_version=${{ inputs.base_version }}
+
+        # For every next dump+restore, below 'For' loop will add a step in dump-restore composite action which will dump the current version and restore it into next version
+        for (( i=1 ; i<$LEN ; i++ )); 
+        do
+          # Computing input parameters that need to pass
+          version_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].version"
+          dump_restore_version=$(yq $version_var ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
+          dump_restore_version_engb=".\""${dump_restore_version}"\".engine_branch"
+          engine_branch=$(yq $dump_restore_version_engb ${{ github.workspace }}/.github/template/version-branch-template.yml)
+          dump_restore_version_extb=".\""${dump_restore_version}"\".extension_branch"
+          extension_branch=$(yq $dump_restore_version_extb ${{ github.workspace }}/.github/template/version-branch-template.yml)
+          is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
+          pg_old_dir=$(echo psql$(awk -F. '{print $1}' <<< $previous_installed_version))
+          pg_new_dir=$(echo psql$(awk -F. '{print $1}' <<< $dump_restore_version))
+          uses_file=./.github/composite-actions/dump-restore-util
+          temp="&& steps.dump-restore-version-$(($i-1)).outcome == 'success'"; [[ i -eq 1 ]] && temp=""
+
+          logical_database_var=".\"dump-restore-version\"[${{ matrix.upgrade-path.id }}][$i].\"logical-database\""
+          logical_database=$(yq $logical_database_var ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)
+
+          if [[ $logical_database == 'null' ]]
+          then
+            printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n\n"   >> $dump_restore_version_dir_path/action.yml
+          else
+            printf "    - name: Dump and Restore to version $dump_restore_version\n      id: dump-restore-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        logical_database: ${logical_database}\n\n"   >> $dump_restore_version_dir_path/action.yml
+          fi
+
+          previous_installed_version=$dump_restore_version
+        done
+      shell: bash
+          
+          

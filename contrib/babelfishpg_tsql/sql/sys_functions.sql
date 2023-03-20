@@ -1222,7 +1222,11 @@ LANGUAGE plpgsql IMMUTABLE;
     but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
 */
 CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
+DECLARE
+	timezone INTEGER;
 BEGIN
+	timezone = sys.babelfish_get_datetimeoffset_tzoffset(startdate)::INTEGER * 2;
+	startdate = startdate OPERATOR(sys.+) make_interval(mins => timezone);
 	CASE datepart
 	WHEN 'year' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
@@ -1707,6 +1711,9 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.rowcount()
 RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.rowcount_big()
+RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.error()
 	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
@@ -1730,6 +1737,11 @@ CREATE OR REPLACE FUNCTION sys.servername()
 
 CREATE OR REPLACE FUNCTION sys.servicename()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- In tsql @@max_precision represents max precision that server supports
 -- As of now, we do not support change in max_precision. So, returning default value
@@ -1833,6 +1845,42 @@ AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.ceiling(tinyint) RETURNS TINYINT
 AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE AGGREGATE sys.STDEV(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_stddev_samp,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE sys.STDEVP(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_stddev_pop,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE sys.VAR(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_var_samp,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
+
+CREATE AGGREGATE sys.VARP(float8) (
+    SFUNC = float8_accum,
+    FINALFUNC = float8_var_pop,
+    STYPE = float8[],
+    COMBINEFUNC = float8_combine,
+    PARALLEL = SAFE,
+    INITCOND = '{0,0,0}'
+);
 
 CREATE OR REPLACE FUNCTION sys.microsoftversion()
 RETURNS INTEGER AS
@@ -2776,7 +2824,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
   OUT database_id int2,
-  OUT host_name varchar(128))
+  OUT host_name varchar(128),
+  OUT context_info bytea)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
@@ -2823,7 +2872,7 @@ AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
  *  2) To convert the input path into the expected jsonb_path.
  *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
  */
-CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value ANYELEMENT, in escape bool)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
@@ -2841,6 +2890,7 @@ DECLARE
     key_exists BOOL;
     key_value JSONB;
     json_expression JSONB = expression::JSONB;
+    json_new_value JSONB;
     result_json sys.NVARCHAR;
 BEGIN
     path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
@@ -2893,7 +2943,13 @@ BEGIN
     new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
 
     key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
-    
+
+    IF escape THEN
+        json_new_value = new_value::JSONB;
+    ELSE
+        json_new_value = to_jsonb(new_value);
+    END IF;
+
     --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
     IF append_modifier THEN 
         IF key_exists THEN
@@ -2909,7 +2965,7 @@ BEGIN
                 IF new_value IS NULL THEN
                     result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
                 ELSE
-                    result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,json_new_value);
                 END IF;
             ELSE
                 IF NOT create_if_missing THEN
@@ -2928,22 +2984,22 @@ BEGIN
     ELSE --When no append modifier is present
         IF new_value IS NOT NULL THEN
             IF key_exists OR create_if_missing THEN
-                result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,create_if_missing);
             ELSE
                 RAISE sql_json_object_not_found;
             END IF;
         ELSE
             IF key_exists THEN
                 IF NOT create_if_missing THEN
-                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value);
                 ELSE
-                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,create_if_missing,'delete_key');
                 END IF;
             ELSE
                 IF NOT create_if_missing THEN
                     RAISE sql_json_object_not_found;
                 ELSE
-                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,json_new_value,FALSE);
                 END IF;
             END IF;
         END IF;
@@ -3272,6 +3328,9 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.context_info()
+RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;

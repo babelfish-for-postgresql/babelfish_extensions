@@ -9,5 +9,5 @@ DROP TABLE create_check_constraint
 GO
 
 -- psql
-DROP TABLE tbl_creation_should_succeed;
+DROP TABLE master_dbo.tbl_creation_should_succeed;
 GO
