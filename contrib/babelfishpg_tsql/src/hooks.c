@@ -65,8 +65,8 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 
-#include "tcop/cmdtag.h"
-#include "tcop/tcopprot.h"
+//#include "tcop/cmdtag.h"
+//#include "tcop/tcopprot.h"
 
 
 #define TDS_NUMERIC_MAX_PRECISION	38
