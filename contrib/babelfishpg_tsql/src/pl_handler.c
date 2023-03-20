@@ -2142,7 +2142,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					if (isCompleteQuery)
 						EventTriggerDDLCommandStart(parsetree);
-					
+
 					foreach (option, stmt->options)
 					{
 						DefElem *defel = (DefElem *) lfirst(option);
