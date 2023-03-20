@@ -1,0 +1,95 @@
+name: Code Coverage
+on: [push, pull_request]
+
+jobs:
+  run-all-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+      
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+      
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
+      - name: Run JDBC Tests
+        id: jdbc
+        if: always() && steps.install-extensions.outcome == 'success'
+        timeout-minutes: 60
+        run: |
+          cd test/JDBC/
+          mvn test
+
+      - name: Generate code coverage HTML report
+        id: code-coverage
+        if: always()
+        run: |
+          export PG_CONFIG=~/postgres/bin/pg_config
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+          export cmake=$(which cmake)
+          cd contrib/babelfishpg_tsql
+          make coverage-html
+          cd ../babelfishpg_tds
+          make coverage-html
+          cd ../babelfishpg_common
+          make coverage-html
+          cd ../babelfishpg_money
+          make coverage-html
+        shell: bash
+
+      - name: Summarize code coverage
+        id: code-coverage-summary
+        if: always()
+        run: |
+          cd contrib/
+          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o lcov.info
+          lcov --list lcov.info
+
+      - name: Upload Coverage Report for babelfishpg_tsql extension
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage_tsql
+          path: contrib/babelfishpg_tsql/coverage/
+
+      - name: Upload Coverage Report for babelfishpg_tds extension
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage_tds
+          path: contrib/babelfishpg_tds/coverage/
+
+      - name: Upload Coverage Report for babelfishpg_common extension
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage_common
+          path: contrib/babelfishpg_common/coverage/
+
+      - name: Upload Coverage Report for babelfishpg_money extension
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage_money
+          path: contrib/babelfishpg_money/coverage/
