@@ -42,6 +42,8 @@
 #include "parser/scansup.h"
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
+#include "tcop/cmdtag.h"
+#include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -65,16 +67,11 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 
-#include "tcop/cmdtag.h"
-#include "tcop/tcopprot.h"
-
-
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
-
 extern bool restore_tsql_tabletype;
 
 /*****************************************
@@ -139,9 +136,6 @@ static void pltsql_CreateFunctionStmt(ParseState *pstate,
 									  bool readOnlyTree,
 									  ProcessUtilityContext context,
 									  ParamListInfo params);
-									  //QueryEnvironment *queryEnv,
-									  //DestReceiver *dest,
-									  //QueryCompletion *qc);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -369,15 +363,13 @@ UninstallExtendedHooks(void)
  * 			Hook Functions
  *****************************************/
 
-void pltsql_CreateFunctionStmt(ParseState *pstate,
+static void
+pltsql_CreateFunctionStmt(ParseState *pstate,
 							   PlannedStmt *pstmt,
 							   const char *queryString,
 							   bool readOnlyTree,
 							   ProcessUtilityContext context,
 							   ParamListInfo params)
-							   //QueryEnvironment *queryEnv,
-							   //DestReceiver *dest,
-							   //QueryCompletion *qc
 {
 	
 	Node *parsetree = pstmt->utilityStmt;
@@ -471,7 +463,7 @@ void pltsql_CreateFunctionStmt(ParseState *pstate,
 			/* Need CCI between commands */
 			CommandCounterIncrement();
 		}
-
+		
 		address = CreateFunction(pstate, stmt);
 
 		/* Store function/procedure related metadata in babelfish catalog */
