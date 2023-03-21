@@ -130,9 +130,12 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
-static void pltsql_CreateFunctionStmt(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, 
-									  ProcessUtilityContext context, ParamListInfo params);
-
+static void pltsql_CreateFunctionStmt(ParseState *pstate,
+									  PlannedStmt *pstmt,
+									  const char *queryString,
+									  bool readOnlyTree,
+									  ProcessUtilityContext context,
+									  ParamListInfo params);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -356,8 +359,6 @@ UninstallExtendedHooks(void)
 /*****************************************
  * 			Hook Functions
  *****************************************/
-
-static void
 pltsql_CreateFunctionStmt(ParseState *pstate,
 							   PlannedStmt *pstmt,
 							   const char *queryString,
