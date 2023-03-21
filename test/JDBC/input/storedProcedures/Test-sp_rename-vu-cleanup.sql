@@ -44,5 +44,11 @@ GO
 DROP SEQUENCE sp_rename_vu_schema1.sp_rename_vu_seq1_new2;
 GO
 
+DROP TYPE sp_rename_vu_tabletype1_new;
+GO
+
+DROP TYPE sp_rename_vu_schema1.sp_rename_vu_tabletype1_schema1_new;
+GO
+
 DROP SCHEMA sp_rename_vu_schema1;
 GO

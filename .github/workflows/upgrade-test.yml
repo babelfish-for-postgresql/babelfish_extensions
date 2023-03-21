@@ -133,4 +133,3 @@ jobs:
             ~/psql*/data/logfile
             ~/psql*/data/pg_upgrade_output.d/*
             ~/failed-testscript-outputs
-            
