@@ -138,10 +138,10 @@ static void pltsql_CreateFunctionStmt(ParseState *pstate,
 									  const char *queryString,
 									  bool readOnlyTree,
 									  ProcessUtilityContext context,
-									  ParamListInfo params,
-									  QueryEnvironment *queryEnv,
-									  DestReceiver *dest,
-									  QueryCompletion *qc);
+									  ParamListInfo params);
+									  //QueryEnvironment *queryEnv,
+									  //DestReceiver *dest,
+									  //QueryCompletion *qc);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -310,18 +310,14 @@ InstallExtendedHooks(void)
 	prev_modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc_hook;
 	modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc;
 
-
 	prev_CreateFunctionStmt_hook = CreateFunctionStmt_hook;
 	CreateFunctionStmt_hook = pltsql_CreateFunctionStmt;
 
 	prev_fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom_hook;
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
 
-
-
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
-
 }
 
 void
@@ -378,12 +374,12 @@ void pltsql_CreateFunctionStmt(ParseState *pstate,
 							   const char *queryString,
 							   bool readOnlyTree,
 							   ProcessUtilityContext context,
-								ParamListInfo params,
-							   QueryEnvironment *queryEnv,
-							   DestReceiver *dest,
-							   QueryCompletion *qc)
+							   ParamListInfo params)
+							   //QueryEnvironment *queryEnv,
+							   //DestReceiver *dest,
+							   //QueryCompletion *qc
 {
-
+	
 	Node *parsetree = pstmt->utilityStmt;
 	CreateFunctionStmt *stmt = (CreateFunctionStmt *)parsetree;
 	bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
