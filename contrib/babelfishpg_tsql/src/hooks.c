@@ -130,12 +130,9 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
-static void pltsql_CreateFunctionStmt(ParseState *pstate,
-									  PlannedStmt *pstmt,
-									  const char *queryString,
-									  bool readOnlyTree,
-									  ProcessUtilityContext context,
-									  ParamListInfo params);
+static void pltsql_CreateFunctionStmt(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, 
+									  ProcessUtilityContext context, ParamListInfo params);
+
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -197,7 +194,6 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static CreateFunctionStmt_hook_type prev_CreateFunctionStmt_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
-
 
 /*****************************************
  * 			Install / Uninstall
@@ -318,9 +314,7 @@ void
 UninstallExtendedHooks(void)
 {
 	IsExtendedCatalogHook = PrevIsExtendedCatalogHook;
-
 	object_access_hook = prev_object_access_hook;
-
 	core_yylex_hook = prev_core_yylex_hook;
 	set_target_table_alternative_hook = NULL;
 	get_output_clause_status_hook = NULL;
