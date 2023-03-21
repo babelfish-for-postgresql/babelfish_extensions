@@ -2137,8 +2137,8 @@ Datum
 sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 {
 	char *linked_server = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(0)));
-	char *srv_product = PG_ARGISNULL(1) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
-	char *provider = PG_ARGISNULL(2) ? "" : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(2)));
+	char *srv_product = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
+	char *provider = PG_ARGISNULL(2) ? NULL : lowerstr(text_to_cstring(PG_GETARG_TEXT_P(2)));
 	char *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
 	char *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
@@ -2157,7 +2157,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FDW_ERROR),
 					errmsg("@server parameter cannot be NULL")));
 	
-	if (strlen(srv_product) == 10 && (strncmp(srv_product, "sql server", 10) == 0))
+	if (srv_product && (strlen(srv_product) == 10) && (strncmp(srv_product, "sql server", 10) == 0))
 	{
 		/*
 		 * if server product is "SQL Server", rest of the arguments need not be
@@ -2168,14 +2168,14 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		if (((strlen(provider) == 7) && (strncmp(provider, "sqlncli", 7) == 0)) ||
+		if (provider && (((strlen(provider) == 7) && (strncmp(provider, "sqlncli", 7) == 0)) ||
 			((strlen(provider) == 10) && (strncmp(provider, "msoledbsql", 10) == 0)) ||
-			((strlen(provider) == 8) && (strncmp(provider, "sqloledb", 8) == 0)))
+			((strlen(provider) == 8) && (strncmp(provider, "sqloledb", 8) == 0))))
 		{
 			/* if provider is a valid T-SQL provider, we throw a warning indicating internally, we will be using tds_fdw */
 			provider_warning = true;
 		}
-		else if ((strlen(provider) != 7) || (strncmp(provider, "tds_fdw", 7) != 0))
+		else if (!provider || (strlen(provider) != 7) || (strncmp(provider, "tds_fdw", 7) != 0))
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
 				 	errmsg("Unsupported provider '%s'. Supported provider is 'tds_fdw'", provider)));

@@ -3063,8 +3063,12 @@ BEGIN
 	-- TODO: If current match is TRIGGER, retrieve relname
 	IF @currtype = 'TR' OR @currtype = 'TA'
 		BEGIN
+			DECLARE @physical_schema_name sys.nvarchar(776) = '';
+			SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = cast(sys.db_id() as oid) AND orig_name = @schemaname;
 			SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
-			WHERE tr.tgname = @subname AND n.nspname = (sys.db_name() + '_' + @schemaname);
+			WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
+			PRINT @physical_schema_name;
+			-- WHERE tr.tgname = @subname AND n.nspname = (sys.db_name() + '_' + @schemaname);
 		END
 	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
 	PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';

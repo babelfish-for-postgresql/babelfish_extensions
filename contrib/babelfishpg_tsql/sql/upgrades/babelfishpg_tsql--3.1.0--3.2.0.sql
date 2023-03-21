@@ -431,6 +431,11 @@ ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_2_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_2_0');
 
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 /*
  * JSON MODIFY
  * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
@@ -764,8 +769,12 @@ BEGIN
 	-- TODO: If current match is TRIGGER, retrieve relname
 	IF @currtype = 'TR' OR @currtype = 'TA'
 		BEGIN
+			DECLARE @physical_schema_name sys.nvarchar(776) = '';
+			SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = cast(sys.db_id() as oid) AND orig_name = @schemaname;
 			SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
-			WHERE tr.tgname = @subname AND n.nspname = (sys.db_name() + '_' + @schemaname);
+			WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
+			PRINT @physical_schema_name;
+			-- WHERE tr.tgname = @subname AND n.nspname = (sys.db_name() + '_' + @schemaname);
 		END
 	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
 	PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
@@ -775,6 +784,66 @@ GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, I
 
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'babelfish_sp_rename_internal_deprecated_in_3_2_0');
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_rename_deprecated_in_3_2_0');
+-- DATABASE_PRINCIPALS: Include Hard coded public, sys, INFORMATION_SCHEMA users
+ALTER VIEW sys.database_principals RENAME TO database_principals_deprecated_3_2_0;
+
+CREATE OR REPLACE VIEW sys.database_principals AS
+SELECT
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+CAST(Base.oid AS INT) AS principal_id,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_USER'
+    WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME()
+UNION ALL
+SELECT
+CAST(name AS SYS.SYSNAME) AS name,
+CAST(-1 AS INT) AS principal_id,
+CAST(type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN type = 'S' THEN 'SQL_USER'
+    WHEN type = 'R' THEN 'DATABASE_ROLE'
+    WHEN type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_schema_name,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(-1 AS INT) AS owning_principal_id,
+CAST(CAST(0 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(0 AS SYS.BIT) AS is_fixed_role,
+CAST(-1 AS INT) AS authentication_type,
+CAST(NULL AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(-1 AS INT) AS default_language_lcid,
+CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
+
+GRANT SELECT ON sys.database_principals TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_principals_deprecated_3_2_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
