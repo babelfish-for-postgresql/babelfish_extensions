@@ -19,14 +19,11 @@ runs:
   steps:
     - name: Run pg_upgrade
       run: |
-        ulimit -c unlimited
-        ulimit -c
         echo 'Starting pg_upgrade...'
         cd ~
         mkdir -p upgrade
         cd upgrade
         ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_old_dir }}//data stop
-        ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_old_dir }}//data stop
         export PATH="$HOME/${{ inputs.pg_new_dir }}/bin:$HOME/${{ inputs.pg_old_dir }}/bin:$PATH"
         export LD_LIBRARY_PATH="$HOME/${{ inputs.pg_new_dir }}/lib:$HOME/${{ inputs.pg_old_dir }}/lib:$LD_LIBRARY_PATH"
         ~/${{ inputs.pg_new_dir }}/bin/pg_upgrade -U runner -b ~/${{ inputs.pg_old_dir }}/bin -B ~/${{ inputs.pg_new_dir }}/bin \
@@ -35,7 +32,6 @@ runs:
         echo 'Updating babelfish extensions...'
         cd ~/work/babelfish_extensions/babelfish_extensions/
         ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile14 start
-        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile14 start
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
         echo 'Reset bbf database settings...'
