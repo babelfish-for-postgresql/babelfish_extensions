@@ -1,10 +1,5 @@
 exec sp_tablecollations_100 'foo'
 GO
-~~START~~
-int#!#varchar#!#binary#!#nvarchar
-1#!#test_collation#!#<NULL>#!#default
-~~END~~
-
 
 -- psql
 select
@@ -18,8 +13,3 @@ where
     c.relname = 'spt_tablecollations_view'
     and a.attname = 'name';
 GO
-~~START~~
-text
-true
-~~END~~
-

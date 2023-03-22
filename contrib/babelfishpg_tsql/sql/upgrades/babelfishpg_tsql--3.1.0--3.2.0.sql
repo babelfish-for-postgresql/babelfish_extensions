@@ -700,10 +700,7 @@ FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dumm
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_principals_deprecated_3_2_0');
-ALTER FUNCTION sys.spt_tablecollations_view RENAME TO spt_tablecollations_view_depracated_in_3_2_0;
-ALTER VIEW sys.spt_tablecollations_view RENAME TO spt_tablecollations_view_depracated_in_3_2_0;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_tablecollations_view_depracated_in_3_2_0');
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
         o.object_id         AS object_id,
