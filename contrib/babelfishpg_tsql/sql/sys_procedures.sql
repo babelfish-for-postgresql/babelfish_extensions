@@ -257,3 +257,6 @@ TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_volatility(IN "@function_name" sys.varchar DEFAULT NULL, IN "@volatility" sys.varchar DEFAULT NULL)
 AS 'babelfishpg_tsql', 'sp_babelfish_volatility' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.varchar) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.bbf_set_context_info(IN context_info sys.VARBINARY(128))
+AS 'babelfishpg_tsql' LANGUAGE C;

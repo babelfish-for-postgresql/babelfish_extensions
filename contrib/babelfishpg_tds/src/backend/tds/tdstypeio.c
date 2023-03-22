@@ -120,6 +120,8 @@ Datum TdsTypeXMLToDatum(StringInfo buf);
 Datum TdsTypeUIDToDatum(StringInfo buf);
 Datum TdsTypeSqlVariantToDatum(StringInfo buf);
 
+static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
+
 /* Local structures for the Function Cache by TDS Type ID */
 typedef struct FunctionCacheByTdsIdKey
 {
@@ -1983,6 +1985,53 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	PG_RETURN_NUMERIC(res);
 }
 
+/*
+ * FetchTvpTypeOid - Fetches the table type to store in
+ * ParameterToken->TdsColumnMetaData which is later used to declare
+ * the bind varaibles.
+ * The caller should be in a Transaction and in PSQL dialect.
+ */
+static void
+FetchTvpTypeOid(const ParameterToken token, char *tvpName)
+{
+	int rc;
+	HeapTuple                               row;
+	bool isnull;
+	TupleDesc tupdesc;
+	char *query;
+
+	if ((rc = SPI_connect()) < 0)
+	{
+		/* Reset dialect. */
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+									PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		elog(ERROR, "SPI_connect() failed in TDS Listener "
+									"with return code %d", rc);
+	}
+
+	query = psprintf("SELECT '%s'::regtype::oid", tvpName);
+
+	rc = SPI_execute(query, false, 1);
+	if(rc != SPI_OK_SELECT)
+	{
+		/* Reset dialect. */
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+									PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
+	}
+	tupdesc = SPI_tuptable->tupdesc;
+	row = SPI_tuptable->vals[0];
+
+	token->paramMeta.pgTypeOid = DatumGetObjectId(SPI_getbinval(row, tupdesc,
+																			1, &isnull));
+
+	pfree(query);
+	SPI_finish();
+}
+
+
 /* --------------------------------
  * TdsRecvTypeTable - creates a temp-table from the data being recevied on the wire
  * and sends this temp-table's name to the engine.
@@ -1991,22 +2040,54 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeTable(const char *message, const ParameterToken token)
 {
-	char * tableName;
-	char * query;
+	char *tableName;
+	char *query;
 	StringInfo temp;
 	int rc;
 	TvpRowData *row = token->tvpInfo->rowData;
 	TvpColMetaData *colMetaData = token->tvpInfo->colMetaData;
 	bool xactStarted = IsTransactionOrTransactionBlock();
 	char *finalTableName;
+	char *tvpTypeName;
 	TvpLookupItem *item; 
 	temp = palloc(sizeof(StringInfoData));
 	initStringInfo(temp);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_TABLE_VALUED_PARAMETER);
 
+	tvpTypeName = downcase_truncate_identifier(token->tvpInfo->tvpTypeName,
+						strlen(token->tvpInfo->tvpTypeName), true);
+
+	/*
+	 * If schema is provided we convert it to physical schema
+	 * and then update the tvpTypeName to have 2 part names.
+	 */
+	if (token->tvpInfo->tvpTypeSchemaName)
+	{
+		char *db_name =  pltsql_plugin_handler_ptr->get_cur_db_name();
+		char *logical_schema = downcase_truncate_identifier(token->tvpInfo->tvpTypeSchemaName,
+										strlen(token->tvpInfo->tvpTypeSchemaName), true);
+		char *physical_schema = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_schema);
+		char *tempStr = psprintf("%s.%s", physical_schema, tvpTypeName);
+
+		pfree(tvpTypeName);
+		tvpTypeName = tempStr;
+
+		pfree(logical_schema);
+		pfree(physical_schema);
+		pfree(db_name);
+	}
+
 	 /* Setting a unique name for TVP temp table. */
 	tableName = psprintf("%s_TDS_TVP_TEMP_TABLE_%d", token->tvpInfo->tableName, rand());
+	finalTableName = downcase_truncate_identifier(tableName, strlen(tableName), true);
+	pfree(tableName);
+
+	/* Connect to the SPI manager. */
+	if ((rc = SPI_connect()) < 0)
+		elog(ERROR, "SPI_connect() failed in TDS Listener "
+					"with return code %d", rc);
+
 
 	/*
 	 * We change the dialect to postgres to create temp tables
@@ -2016,19 +2097,17 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 						  (superuser() ? PGC_SUSET : PGC_USERSET),
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-	/* Connect to the SPI manager. */
-	if ((rc = SPI_connect()) < 0)
-		elog(ERROR, "SPI_connect() failed in TDS Listener "
-					"with return code %d", rc);
-
 	if (!xactStarted)
 		StartTransactionCommand();
 	PushActiveSnapshot(GetTransactionSnapshot()); 
 
-
+	/* Explicity retrieve the oid for TVP type and map it. */
+	if (token->paramMeta.pgTypeOid == InvalidOid)
+		FetchTvpTypeOid(token, tvpTypeName);
 
 	query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-		tableName, token->tvpInfo->tvpTypeName);
+		finalTableName, tvpTypeName);
+	pfree(tvpTypeName);
 
 
 	/*
@@ -2038,7 +2117,13 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 	rc = SPI_execute(query, false, 1);
 
 	if (rc != SPI_OK_UTILITY)
+	{
+		/* Reset dialect. */
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+									PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "Failed to create the underlying table for table-valued parameter: %d", rc);
+	}
 
 	SPI_finish();
 	PopActiveSnapshot();
@@ -2151,10 +2236,16 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		{
 			query[1] = ' '; /* Convert the first ',' into a blank space. */
 
-			src = psprintf("Insert into %s values %s", tableName, query);
+			src = psprintf("Insert into %s values %s", finalTableName, query);
 			if ((rc = SPI_connect()) < 0)
+			{
+				/* Reset dialect. */
+				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+									PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "SPI_connect() failed in TDS Listener "
 							"with return code %d", rc);
+			}
 
 			rc = SPI_execute_with_args(src,
 				  nargs, argtypes,
@@ -2162,7 +2253,13 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 				  false, 1);
 
 			if (rc != SPI_OK_INSERT)
+			{
+				/* Reset dialect. */
+				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+									PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
+			}
 
 			SPI_finish();
 			PopActiveSnapshot();
@@ -2183,8 +2280,6 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		pfree(tempRow);
 	}
 	pfree(token->tvpInfo->colMetaData);
-
-	finalTableName = downcase_truncate_identifier(tableName, strlen(tableName), true);
 
 	item = (TvpLookupItem *) palloc(sizeof(TvpLookupItem));
 	item->name = downcase_truncate_identifier(token->paramMeta.colName.data,

@@ -1,0 +1,100 @@
+SELECT * FROM BABEL_3478_t1
+ORDER BY FirstName, LastName;
+SELECT ROWCOUNT_BIG();
+GO
+~~START~~
+int#!#varchar#!#varchar#!#money
+5#!#David#!#Lee#!#70000.0000
+2#!#Jane#!#Doe#!#60000.0000
+6#!#Jennifer#!#Garcia#!#55000.0000
+3#!#Jim#!#Smith#!#55000.0000
+1#!#John#!#Doe#!#50000.0000
+4#!#Sarah#!#Johnson#!#65000.0000
+~~END~~
+
+~~START~~
+bigint
+6
+~~END~~
+
+
+
+-- Updating the salary of BABEL_3478_t1 with last name 'Doe'
+UPDATE BABEL_3478_t1 SET Salary = 65000 WHERE LastName = 'Doe';
+SELECT ROWCOUNT_BIG();
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+bigint
+2
+~~END~~
+
+
+
+-- Deleting BABEL_3478_t1 with last name 'Smith'
+DELETE FROM BABEL_3478_t1 WHERE LastName = 'Smith';
+SELECT ROWCOUNT_BIG();
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+bigint
+1
+~~END~~
+
+
+
+SELECT * FROM BABEL_3478_t1_InfoView;
+GO
+~~START~~
+bigint
+1
+1
+1
+1
+1
+~~END~~
+
+
+
+EXEC Insert_BABEL_3478_p1;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+bigint
+3
+~~END~~
+
+
+
+
+SELECT * FROM Updated_BABEL_3478_InfoView;
+GO
+~~START~~
+bigint
+1
+1
+~~END~~
+
+
+EXEC Update_BABEL_3478_Salary 'Doe', 700000;
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+bigint
+2
+~~END~~
+
+
+EXEC Delete_BABEL_3478_p2 'Doe';
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+bigint
+2
+~~END~~
+

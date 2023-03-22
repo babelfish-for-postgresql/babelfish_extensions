@@ -13,10 +13,10 @@ go
 insert into t_spdatabases(a) values(10);
 go
 
-select * from sys.sp_databases_view where database_name='db1';
+select database_name, remarks from sys.sp_databases_view where database_name='db1';
 go
 
-select * from sys.sp_databases_view where database_name='DB1';
+select database_name, remarks from sys.sp_databases_view where database_name='DB1';
 go
 
 EXEC sp_databases;

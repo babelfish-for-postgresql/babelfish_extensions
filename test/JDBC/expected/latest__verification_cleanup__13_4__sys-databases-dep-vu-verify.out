@@ -2,7 +2,7 @@ SELECT name, compatibility_level, collation_name FROM sys_databases_view_dep_vu_
 GO
 ~~START~~
 text#!#tinyint#!#nvarchar
-db_sys_databases_dep_vu_prepare#!#<NULL>#!#bbf_unicode_cp1_ci_as
+db_sys_databases_dep_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 

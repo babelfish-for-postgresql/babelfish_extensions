@@ -133,7 +133,6 @@ BABEL-3117
 BABEL-3118
 BABEL-3249
 BABEL-3486
-BABEL-3474
 BABEL-3614
 BABEL-3646
 BABEL-383
@@ -270,7 +269,6 @@ Test-sp_helprole-dep
 Test-sp_helprolemember-dep
 format
 msdb-dbo-syspolicy_system_health_state
-dateadd_internal_df
 sys-all_columns
 sys-all_columns-dep
 sys-all_sql_modules
@@ -409,4 +407,8 @@ BABEL-733
 BABEL-3938
 BABEL-NEXT-VALUE-FOR
 binary-index
+rowcount
 # test_windows_sp_helpuser
+BABEL-1625
+BABEL-3474
+dateadd_internal_df

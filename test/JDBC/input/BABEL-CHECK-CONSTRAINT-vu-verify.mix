@@ -18,8 +18,8 @@ INSERT INTO create_check_constraint VALUES ('11E')
 GO
 
 -- psql
-INSERT INTO tbl_creation_should_succeed VALUES ('abcd');
+INSERT INTO master_dbo.tbl_creation_should_succeed VALUES ('abcd');
 GO
 
-INSERT INTO tbl_creation_should_succeed VALUES ('11dsjkdnb');
+INSERT INTO master_dbo.tbl_creation_should_succeed VALUES ('11dsjkdnb');
 GO

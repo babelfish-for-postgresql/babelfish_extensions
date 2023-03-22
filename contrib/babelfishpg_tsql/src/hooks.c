@@ -22,6 +22,7 @@
 #include "commands/view.h"
 #include "common/logging.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -58,6 +59,7 @@
 #include "pltsql.h"
 #include "pl_explain.h"
 #include "catalog.h"
+#include "dbcmds.h"
 #include "rolecmds.h"
 #include "session.h"
 #include "multidb.h"
@@ -110,6 +112,7 @@ static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDes
  *****************************************/
 static int find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
 static void pltsql_drop_func_default_positions(Oid objectId);
+static void fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls);
 
 /*****************************************
  * 			Utility Hooks
@@ -135,6 +138,7 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
+static bool bbf_check_rowcount_hook(int es_processed);
 
 /*****************************************
  * 			Replication Hooks
@@ -184,6 +188,8 @@ static transform_check_constraint_expr_hook_type prev_transform_check_constraint
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static CreateDbStmt_hook_type prev_CreateDbStmt_hook = NULL;
+static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
+static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -292,6 +298,12 @@ InstallExtendedHooks(void)
 
 	prev_CreateDbStmt_hook = CreateDbStmt_hook;
     CreateDbStmt_hook = pltsql_CreateDbStmt;
+    
+	prev_fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom_hook;
+	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
+	prev_check_rowcount_hook = check_rowcount_hook;
+	check_rowcount_hook = bbf_check_rowcount_hook;
+
 }
 
 void
@@ -335,6 +347,8 @@ UninstallExtendedHooks(void)
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	CreateDbStmt_hook = prev_CreateDbStmt_hook;
+	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
+	check_rowcount_hook = prev_check_rowcount_hook;
 }
 
 /*****************************************
@@ -441,6 +455,9 @@ pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, 
 		return;
 	}
 
+	if ((count == 0 || count > pltsql_rowcount) && queryDesc->operation == CMD_SELECT)
+		count = pltsql_rowcount;
+	
 	if (prev_ExecutorRun)
 		prev_ExecutorRun(queryDesc, direction, count, execute_once);
 	else
@@ -3417,4 +3434,46 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 	}
 
 	return setTargetTable(pstate, relation, inh, true, requiredPerms);
+}
+
+/*
+ * Update values and nulls arrays with missing column values if any.
+ * Mainly used for Babelfish catalog tables during restore.
+ */
+static void
+fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
+{
+	Oid relid;
+
+	if (!babelfish_dump_restore || IsBinaryUpgrade)
+		return;
+
+	relid = RelationGetRelid(rel);
+	/*
+	 * Insert new dbid column value in babelfish catalog if dump did
+	 * not provide it.
+	 */
+	if (relid == sysdatabases_oid ||
+		relid == namespace_ext_oid ||
+		relid == bbf_view_def_oid)
+	{
+		int16		dbid = 0;
+		AttrNumber	attnum;
+
+		attnum = (AttrNumber) attnameAttNum(rel, "dbid", false);
+		Assert(attnum != InvalidAttrNumber);
+
+		if (!nulls[attnum - 1])
+			return;
+
+		dbid = getDbidForLogicalDbRestore(relid);
+		values[attnum - 1] = Int16GetDatum(dbid);
+		nulls[attnum - 1] = false;
+	}
+}
+
+static bool bbf_check_rowcount_hook(int es_processed){
+	if (pltsql_rowcount == es_processed && es_processed > 0)
+		return true;
+	else return false;
 }
