@@ -7,16 +7,14 @@ int#!#varchar#!#binary#!#nvarchar
 
 
 -- psql
+-- Verify if datatype of column 'name' of spt_tablecollations_view used
+-- internally is varchar
 select
-    case when t.typname = 'varchar' then 'true'
-        else 'false' end
-from
-    pg_attribute a left join
-    pg_class c on a.attrelid = c.oid left join
-    pg_type t on a.atttypid = t.oid
-where
-    c.relname = 'spt_tablecollations_view'
-    and a.attname = 'name';
+    case when atttypid::regtype::text = 'sys."varchar"' then 'true'
+    else 'false' end
+from pg_attribute 
+where 
+   attrelid = 'sys.spt_tablecollations_view'::regclass and attname = 'name';
 GO
 ~~START~~
 text
