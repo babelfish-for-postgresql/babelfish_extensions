@@ -612,8 +612,8 @@ float_str(PG_FUNCTION_ARGS)
 		length--;
 	if (decimal > 0 && length > int_digits)
 	{
-		//result will have decimal part and it will take up 1 space
-			has_deci_point = 1;
+		/* result will have decimal part and it will take up 1 space */
+		has_deci_point = 1;
 		length--;
 	}
 
@@ -628,19 +628,19 @@ float_str(PG_FUNCTION_ARGS)
 
 	if (decimal > 0)
 	{
-		//max scale is 16, so actual deci_digits is min(decimal, 16),
+		/* max scale is 16, so actual deci_digits is min(decimal, 16), */
 		/* rest of the decimal digits will be disgarded */
 
 		/*
 		 * STR(0.123456789012345678, 20, 18), decimal=18, deci_digits=16. will
 		 * return "  0.1234567890123457"
 		 */
-			deci_digits = Min(decimal, 16);
+		deci_digits = Min(decimal, 16);
 	}
 	else
 	{
-		//no decimal digits
-			deci_digits = 0;
+		/* no decimal digits */
+		deci_digits = 0;
 	}
 
 	num_spaces = length - int_digits - deci_digits;
@@ -648,10 +648,11 @@ float_str(PG_FUNCTION_ARGS)
 	/* comp space for the decimal point */
 	if (has_deci_point && !deci_digits)
 	{
-		//no enough space for decimal
-			part, remove the decimal point and add one space
-			/* STR(1.234, 2, 1) returns " 1" */
-				num_spaces++;
+		/*
+		 * no enough space for decimal part, remove the decimal point and add
+		 * one space. STR(1.234, 2, 1) returns " 1"
+		 */
+		num_spaces++;
 		has_deci_point--;
 	}
 
@@ -664,26 +665,26 @@ float_str(PG_FUNCTION_ARGS)
 	/* compute deci_part_zeros and update actual deci_sig */
 	if (deci_digits > 0 && length > 17 && deci_digits > deci_sig)
 	{
-		//total significant digits > 17 and last sig digit in decimal part
+		/* total significant digits > 17 and last sig digit in decimal part */
 		/* STR(1234567890.1234567890, 22, 20) returns "1234567890.12345670000" */
-			deci_part_zeros = deci_digits - deci_sig;
+		deci_part_zeros = deci_digits - deci_sig;
 	}
 	else if (deci_digits > input_deci_digits)
 	{
-		//decimal digits needed more than input
+		/* decimal digits needed more than input */
 
 		/*
 		 * STR(1.1234, 8, 6) returns "1.123400", deci_sig = 4, deci_part_zeros
 		 * = 2
 		 */
-			deci_part_zeros = deci_digits - input_deci_digits;
+		deci_part_zeros = deci_digits - input_deci_digits;
 		deci_sig = input_deci_digits;
 	}
 	else
 	{
-		//no zeros in the decimal part
+		/* no zeros in the decimal part */
 		/* STR(1.1234, 5, 3) returns "1.123" */
-			deci_sig = deci_digits;
+		deci_sig = deci_digits;
 	}
 
 
@@ -707,8 +708,11 @@ float_str(PG_FUNCTION_ARGS)
 				/* STR(-999.9, 6, 0) returns " -1000" */
 				if (has_neg_sign)
 				{
-					//set '-' after the spaces and increment num_spaces to skip '-' when copying number
-						memset(buf + num_spaces - 1, '-', 1);
+					/*
+					 * set '-' after the spaces and increment num_spaces to
+					 * skip '-' when copying number
+					 */
+					memset(buf + num_spaces - 1, '-', 1);
 					num_spaces++;
 				}
 				memset(buf + num_spaces - 1, '1', 1);
@@ -783,22 +787,22 @@ find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digi
 		 */
 		if (int_digits > 17)
 		{
-			//round in int part
+			/* round in int part */
 			/* STR(12345678901234567890, 20) returns "1234567890123456800" */
-						curr_digit = float_char[17 + has_neg_sign] - '0';
+			curr_digit = float_char[17 + has_neg_sign] - '0';
 
 			if (curr_digit >= 5)
 				round_pos = 16 + has_neg_sign;
 		}
 		else
 		{
-			//round in decimal part
+			/* round in decimal part */
 
 			/*
 			 * STR(1234567890.1234567890, 22, 20) returns
 			 * "1234567890.12345670000"
 			 */
-				curr_digit = float_char[17 + has_neg_sign + input_deci_point] - '0';
+			curr_digit = float_char[17 + has_neg_sign + input_deci_point] - '0';
 			if (curr_digit >= 5)
 				round_pos = 16 + has_neg_sign + input_deci_point;
 		}
@@ -818,7 +822,7 @@ find_round_pos(char *float_char, int has_neg_sign, int int_digits, int deci_digi
 		curr_digit = float_char[has_neg_sign + int_digits + 1] - '0';
 		if (curr_digit >= 5)
 			round_pos = has_neg_sign + int_digits - 1;
-		//last digit of integer
+		/* last digit of integer */
 	}
 
 	return round_pos;
@@ -843,8 +847,8 @@ round_float_char(char *float_char, int round_pos, int has_neg_sign)
 		curr_digit = float_char[round_pos] - '0' + carry;
 		carry = curr_digit / 10;
 		memset(float_char + round_pos, '0' + curr_digit % 10, 1);
-		//update the curr digit
-			round_pos--;
+		/* update the curr digit */
+		round_pos--;
 	}
 
 	return carry;

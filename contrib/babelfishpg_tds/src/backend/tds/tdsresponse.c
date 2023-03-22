@@ -422,7 +422,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				if (con->consttype != NUMERICOID || con->constisnull)
 				{
 					return 0;
-					//Typmod doesn 't really matter since it' s a const NULL.
+					/* Typmod doesn 't really matter since it' s a const NULL. */
 				}
 				else
 				{
@@ -430,12 +430,13 @@ resolve_numeric_typmod_from_exp(Node *expr)
 					return numeric_get_typmod(num);
 				}
 			}
-			case		T_Var:
+		case T_Var:
 			{
 				Var		   *var = (Var *) expr;
-							return var->vartypmod;
+
+				return var->vartypmod;
 			}
-			case		T_OpExpr:
+		case T_OpExpr:
 			{
 				OpExpr	   *op = (OpExpr *) expr;
 				Node	   *arg1,
@@ -458,8 +459,8 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				 */
 				bool		has_aggregate_operand = false;
 
-							Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
-				if			(list_length(op->args) == 2)
+				Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
+				if (list_length(op->args) == 2)
 				{
 					arg1 = linitial(op->args);
 					arg2 = lsecond(op->args);
@@ -470,7 +471,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 					scale2 = (typmod2 - VARHDRSZ) & 0xffff;
 					precision2 = ((typmod2 - VARHDRSZ) >> 16) & 0xffff;
 				}
-				else if		(list_length(op->args) == 1)
+				else if (list_length(op->args) == 1)
 				{
 					arg1 = linitial(op->args);
 					typmod1 = resolve_numeric_typmod_from_exp(arg1);
@@ -501,18 +502,18 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				 * casting the operand without typmod to the other operand's
 				 * type and typmod then do the operation.
 				 */
-				if			(typmod1 == -1 && typmod2 == -1)
+				if (typmod1 == -1 && typmod2 == -1)
 				{
 					precision = tds_default_numeric_precision;
 					scale = tds_default_numeric_scale;
 					return ((precision << 16) | scale) + VARHDRSZ;
 				}
-				else if		(typmod1 == -1)
+				else if (typmod1 == -1)
 				{
 					precision1 = precision2;
 					scale1 = scale2;
 				}
-				else if		(typmod2 == -1)
+				else if (typmod2 == -1)
 				{
 					precision2 = precision1;
 					scale2 = scale1;
@@ -523,13 +524,13 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				 * following link:
 				 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
 				 */
-							has_aggregate_operand = arg1->type == T_Aggref ||
-				(list_length(op->args) == 2 && arg2->type == T_Aggref);
+				has_aggregate_operand = arg1->type == T_Aggref ||
+					(list_length(op->args) == 2 && arg2->type == T_Aggref);
 
-				switch		(op->opfuncid)
+				switch (op->opfuncid)
 				{
-						case NUMERIC_ADD_OID:
-						case NUMERIC_SUB_OID:
+					case NUMERIC_ADD_OID:
+					case NUMERIC_SUB_OID:
 						integralDigitCount = Max(precision1 - scale1, precision2 - scale2);
 						scale = Max(scale1, scale2);
 						precision = integralDigitCount + 1 + scale;
@@ -549,7 +550,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 						if (precision > TDS_MAX_NUM_PRECISION)
 							precision = TDS_MAX_NUM_PRECISION;
 						break;
-						case NUMERIC_MUL_OID:
+					case NUMERIC_MUL_OID:
 						scale = scale1 + scale2;
 						precision = precision1 + precision2 + 1;
 
@@ -561,21 +562,21 @@ resolve_numeric_typmod_from_exp(Node *expr)
 						if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
 							precision = TDS_MAX_NUM_PRECISION;
 						break;
-						case NUMERIC_DIV_OID:
+					case NUMERIC_DIV_OID:
 						scale = Max(6, scale1 + precision2 + 1);
 						precision = precision1 - scale1 + scale2 + scale;
 						break;
-						case NUMERIC_MOD_OID:
-						case NUMERIC_MOD_OID2:
+					case NUMERIC_MOD_OID:
+					case NUMERIC_MOD_OID2:
 						scale = Max(scale1, scale2);
 						precision = Min(precision1 - scale1, precision2 - scale2) + scale;
 						break;
-						case NUMERIC_UPLUS_OID:
-						case NUMERIC_UMINUS_OID:
+					case NUMERIC_UPLUS_OID:
+					case NUMERIC_UMINUS_OID:
 						scale = scale1;
 						precision = precision1;
 						break;
-						default:
+					default:
 						return -1;
 				}
 
@@ -584,7 +585,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				 * Otherwise it simply won't fit in 38 precision and let an
 				 * overflow error be thrown in PrepareRowDescription.
 				 */
-				if			(precision > TDS_MAX_NUM_PRECISION)
+				if (precision > TDS_MAX_NUM_PRECISION)
 				{
 					if (precision - scale > 32 && scale > 6)
 					{
@@ -604,8 +605,9 @@ resolve_numeric_typmod_from_exp(Node *expr)
 						 * operand)
 						 */
 						int			delta = precision - TDS_MAX_NUM_PRECISION;
-									precision = TDS_MAX_NUM_PRECISION;
-									scale = Max(scale - delta, 0);
+
+						precision = TDS_MAX_NUM_PRECISION;
+						scale = Max(scale - delta, 0);
 					}
 
 					/*
@@ -613,32 +615,32 @@ resolve_numeric_typmod_from_exp(Node *expr)
 					 * cases
 					 */
 				}
-							return ((precision << 16) | scale) + VARHDRSZ;
+				return ((precision << 16) | scale) + VARHDRSZ;
 			}
-			case		T_FuncExpr:
+		case T_FuncExpr:
 			{
 				FuncExpr   *func = (FuncExpr *) expr;
 				Oid			func_oid = InvalidOid;
 				int			rettypmod = -1;
 
 				/* Be smart about length-coercion functions... */
-				if			(exprIsLengthCoercion(expr, &rettypmod))
-								return rettypmod;
+				if (exprIsLengthCoercion(expr, &rettypmod))
+					return rettypmod;
 
 				/*
 				 * Look up the return type typmod from a persistent store
 				 * using the function oid.
 				 */
-							func_oid = func->funcid;
-							Assert(func_oid != InvalidOid);
+				func_oid = func->funcid;
+				Assert(func_oid != InvalidOid);
 
-				if			(func->funcresulttype != VOIDOID)
-								rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
-																								  func->args == NIL ? 0 : func->args->length,
-																								  func->funcresulttype);
-							return rettypmod;
+				if (func->funcresulttype != VOIDOID)
+					rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
+																					  func->args == NIL ? 0 : func->args->length,
+																					  func->funcresulttype);
+				return rettypmod;
 			}
-			case		T_NullIfExpr:
+		case T_NullIfExpr:
 			{
 				/*
 				 * Nullif returns a null value if the two specified
@@ -648,12 +650,12 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				NullIfExpr *nullif = (NullIfExpr *) expr;
 				Node	   *arg1;
 
-							Assert(nullif->args != NIL);
+				Assert(nullif->args != NIL);
 
-							arg1 = linitial(nullif->args);
-							return resolve_numeric_typmod_from_exp(arg1);
+				arg1 = linitial(nullif->args);
+				return resolve_numeric_typmod_from_exp(arg1);
 			}
-			case		T_CoalesceExpr:
+		case T_CoalesceExpr:
 			{
 				/*
 				 * Find max possible integral_precision and scale (fractional
@@ -668,10 +670,10 @@ resolve_numeric_typmod_from_exp(Node *expr)
 							scale,
 							max_scale = 0;
 
-							Assert(coale->args != NIL);
+				Assert(coale->args != NIL);
 
 				/* Loop through the list of Coalesce arguments */
-							foreach(lc, coale->args)
+				foreach(lc, coale->args)
 				{
 					arg = lfirst(lc);
 					arg_typmod = resolve_numeric_typmod_from_exp(arg);
@@ -690,9 +692,9 @@ resolve_numeric_typmod_from_exp(Node *expr)
 					max_scale = Max(scale, max_scale);
 					max_integral_precision = Max(precision - scale, max_integral_precision);
 				}
-							return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
+				return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
 			}
-			case		T_CaseExpr:
+		case T_CaseExpr:
 			{
 				/*
 				 * Find max possible integral_precision and scale (fractional
@@ -708,10 +710,10 @@ resolve_numeric_typmod_from_exp(Node *expr)
 							scale,
 							max_scale = 0;
 
-							Assert(case_expr->args != NIL);
+				Assert(case_expr->args != NIL);
 
 				/* Loop through the list of WHEN clauses */
-							foreach(lc, case_expr->args)
+				foreach(lc, case_expr->args)
 				{
 					casewhen = lfirst(lc);
 					casewhen_result = (Node *) casewhen->result;
@@ -735,9 +737,9 @@ resolve_numeric_typmod_from_exp(Node *expr)
 					max_scale = Max(scale, max_scale);
 					max_integral_precision = Max(precision - scale, max_integral_precision);
 				}
-							return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
+				return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
 			}
-			case		T_Aggref:
+		case T_Aggref:
 			{
 				/* select max(a) from t; max(a) is an Aggref */
 				Aggref	   *aggref = (Aggref *) expr;
@@ -747,14 +749,14 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				uint8_t		precision,
 							scale;
 
-							Assert(aggref->args != NIL);
+				Assert(aggref->args != NIL);
 
-							te = (TargetEntry *) linitial(aggref->args);
-							typmod = resolve_numeric_typmod_from_exp((Node *) te->expr);
-							aggFuncName = get_func_name(aggref->aggfnoid);
+				te = (TargetEntry *) linitial(aggref->args);
+				typmod = resolve_numeric_typmod_from_exp((Node *) te->expr);
+				aggFuncName = get_func_name(aggref->aggfnoid);
 
-							scale = (typmod - VARHDRSZ) & 0xffff;
-							precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+				scale = (typmod - VARHDRSZ) & 0xffff;
+				precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 
 				/*
 				 * If we recieve typmod as -1 we should fallback to default
@@ -762,7 +764,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				 * calculate scale and precision which leads to TDS protocol
 				 * error.
 				 */
-				if			(typmod == -1)
+				if (typmod == -1)
 				{
 					scale = tds_default_numeric_scale;
 					precision = tds_default_numeric_precision;
@@ -773,8 +775,8 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				 * aggregate function sum(); resultant precision should be
 				 * tds_default_numeric_precision
 				 */
-				if			(aggFuncName && strlen(aggFuncName) == 3 &&
-							 (strncmp(aggFuncName, "sum", 3) == 0))
+				if (aggFuncName && strlen(aggFuncName) == 3 &&
+					(strncmp(aggFuncName, "sum", 3) == 0))
 					precision = tds_default_numeric_precision;
 
 				/*
@@ -782,34 +784,34 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				 * tds_default_numeric_precision and resultant scale =
 				 * max(input scale, 6)
 				 */
-				if			(aggFuncName && strlen(aggFuncName) == 3 &&
-							 (strncmp(aggFuncName, "avg", 3) == 0))
+				if (aggFuncName && strlen(aggFuncName) == 3 &&
+					(strncmp(aggFuncName, "avg", 3) == 0))
 				{
 					precision = tds_default_numeric_precision;
 					scale = Max(scale, 6);
 				}
 
-							pfree(aggFuncName);
-							return ((precision << 16) | scale) + VARHDRSZ;
+				pfree(aggFuncName);
+				return ((precision << 16) | scale) + VARHDRSZ;
 			}
-			case		T_PlaceHolderVar:
+		case T_PlaceHolderVar:
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) expr;
 
-							return resolve_numeric_typmod_from_exp((Node *) phv->phexpr);
+				return resolve_numeric_typmod_from_exp((Node *) phv->phexpr);
 			}
-			case		T_RelabelType:
+		case T_RelabelType:
 			{
 				RelabelType *rlt = (RelabelType *) expr;
 
-				if			(rlt->resulttypmod != -1)
-								return rlt->resulttypmod;
+				if (rlt->resulttypmod != -1)
+					return rlt->resulttypmod;
 				else
-								return resolve_numeric_typmod_from_exp((Node *) rlt->arg);
+					return resolve_numeric_typmod_from_exp((Node *) rlt->arg);
 			}
 			/* TODO handle more Expr types if needed */
-			default:
-						return -1;
+		default:
+			return -1;
 	}
 }
 

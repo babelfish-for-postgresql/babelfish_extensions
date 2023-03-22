@@ -169,9 +169,8 @@ SPI_sql_row_to_xmlelement_path(uint64 rownum, StringInfo result,
 	}
 
 	if (element_name[0] != '\0')
-		/* if "''" */
-		is the input path, ignore it per SQL Server behavior
-			appendStringInfo(result, "<%s>", element_name);
+		/* if "''" is the input path, ignore it per SQL Server behavior */
+		appendStringInfo(result, "<%s>", element_name);
 
 	for (i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{

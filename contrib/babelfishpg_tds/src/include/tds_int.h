@@ -371,3 +371,5 @@ extern char *TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, 
 extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 extern Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale);
 extern Datum TdsDateTimeTypeToDatum(uint64 time, int32 date, int datatype, int scale);
+
+#endif							/* TDS_INT_H */

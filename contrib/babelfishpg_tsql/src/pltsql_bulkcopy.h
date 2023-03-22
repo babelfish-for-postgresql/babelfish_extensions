@@ -81,3 +81,4 @@ typedef struct BulkCopyStmt
 } BulkCopyStmt;
 
 extern void BulkCopy(BulkCopyStmt *stmt, uint64 *processed);
+extern void EndBulkCopy(BulkCopyState cstate);

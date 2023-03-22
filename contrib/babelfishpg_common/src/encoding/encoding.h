@@ -30,3 +30,4 @@ extern int	win_to_utf8(int src_encoding, int dest_encoding, const unsigned char 
 extern int	big5_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len);
 extern int	gbk_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
 extern int	uhc_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	sjis_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);

@@ -194,7 +194,7 @@ search_join_recursive(Node *expr, RangeVar *target, bool outside_outer)
 	if (!expr)
 		return false;
 	else if (IsA(expr, RangeVar))
-		//Base condition
+		/* Base condition */
 	{
 		arg = (RangeVar *) expr;
 		return outside_outer && strcmp(arg->relname, target->relname) == 0;

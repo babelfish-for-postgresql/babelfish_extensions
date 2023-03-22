@@ -258,9 +258,8 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	 * element_name is an empty string
 	 */
 	if (element_name[0] != '\0')
-		/* if "''" */
-		is the input path, ignore it per SQL Server behavior
-			appendStringInfo(state, "<%s>", element_name);
+		/* if "''" is the input path, ignore it per SQL Server behavior */
+		appendStringInfo(state, "<%s>", element_name);
 
 	/* process the tuple into tags */
 	for (int i = 0; i < tupdesc->natts; i++)

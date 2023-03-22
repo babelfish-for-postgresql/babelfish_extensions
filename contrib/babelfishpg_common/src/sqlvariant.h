@@ -128,3 +128,4 @@ extern void TdsGetVariantBaseType(int pgBaseType, int *variantBaseType,
 								  bool *isBaseNum, bool *isBaseChar,
 								  bool *isBaseDec, bool *isBaseBin,
 								  bool *isBaseDate, int *variantHeaderLen);
+#endif
