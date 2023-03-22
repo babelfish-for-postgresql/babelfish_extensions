@@ -201,14 +201,6 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static CreateFunctionStmt_hook_type prev_CreateFunctionStmt_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
-<<<<<<< Updated upstream
-
-=======
-<<<<<<< HEAD
-=======
-
->>>>>>> 53795d5c (Create proc/func not visible in the pg_stat_statements view)
->>>>>>> Stashed changes
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
