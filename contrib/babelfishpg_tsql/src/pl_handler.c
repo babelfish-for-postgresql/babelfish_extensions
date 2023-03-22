@@ -3126,13 +3126,13 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				return;
 			}
 		}
-		case T_CreatedbStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL)
-            {
-				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
-				return;
-			}
-			break;
+		// case T_CreatedbStmt:
+        //     if (sql_dialect == SQL_DIALECT_TSQL)
+        //     {
+		// 		create_bbf_db(pstate, (CreatedbStmt *) parsetree);
+		// 		return;
+		// 	}
+		// 	break;
         case T_DropdbStmt:
             if (sql_dialect == SQL_DIALECT_TSQL)
             {
