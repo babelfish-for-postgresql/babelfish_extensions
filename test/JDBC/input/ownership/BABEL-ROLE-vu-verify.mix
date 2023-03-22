@@ -2,6 +2,13 @@
 SELECT DB_NAME()
 GO
 
+-- Ensure public, sys and INFORMATION_SCHEMA
+-- are in database_principals after an upgrade
+SELECT name, type, type_desc
+FROM sys.database_principals
+WHERE name IN ('public', 'sys', 'INFORMATION_SCHEMA')
+ORDER BY name
+
 -- Test CREATE ROLE
 CREATE ROLE babel_role_vu_prepare_role1
 GO
