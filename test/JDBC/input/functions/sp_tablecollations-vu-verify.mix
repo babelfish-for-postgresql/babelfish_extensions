@@ -3,7 +3,7 @@ GO
 
 -- psql
 select
-    case when t.typname = 'sysname' then 'true'
+    case when t.typname = 'varchar' then 'true'
         else 'false' end
 from
     pg_attribute a left join
