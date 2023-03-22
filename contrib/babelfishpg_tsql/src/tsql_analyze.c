@@ -36,39 +36,39 @@ static RangeVar *find_matching_table(RangeVar *target, Node *tblref);
 RangeVar *
 pltsql_get_target_table(RangeVar *orig_target, List *fromClause)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	if (!orig_target || !fromClause || !IsA(orig_target, RangeVar) || orig_target->alias)
 		return NULL;
-	
+
 	/*
-	 * For each table reference in fromClause, check if the table name or table alias
-	 * name matches the target table.
-	 * If yes, we'll return the table reference.
+	 * For each table reference in fromClause, check if the table name or
+	 * table alias name matches the target table. If yes, we'll return the
+	 * table reference.
 	 */
 	foreach(lc, fromClause)
 	{
-		Node *n = lfirst(lc);
-		RangeVar *rv = find_matching_table(orig_target, n);
+		Node	   *n = lfirst(lc);
+		RangeVar   *rv = find_matching_table(orig_target, n);
 
 		if (rv)
 			return rv;
 	}
-	
+
 	return NULL;
 }
 
 static RangeVar *
 find_matching_table(RangeVar *target, Node *tblref)
 {
-	/* 
- 	 * If the table refenrence is a JoinExpr, recursively check the 
- 	 * join tree's left child and right child.
- 	 */
+	/*
+	 * If the table refenrence is a JoinExpr, recursively check the join
+	 * tree's left child and right child.
+	 */
 	if (IsA(tblref, JoinExpr))
 	{
-		JoinExpr *je = (JoinExpr *) tblref;
-		RangeVar *rv = NULL;
+		JoinExpr   *je = (JoinExpr *) tblref;
+		RangeVar   *rv = NULL;
 
 		rv = find_matching_table(target, (Node *) je->larg);
 
@@ -77,23 +77,25 @@ find_matching_table(RangeVar *target, Node *tblref)
 
 		return rv;
 	}
+
 	/*
-	 * If the table reference is an actual table (RangeVar), check if
-	 * the table name or table alias is the same as the target table name.
-	 * Return the matching table if exists.
+	 * If the table reference is an actual table (RangeVar), check if the
+	 * table name or table alias is the same as the target table name. Return
+	 * the matching table if exists.
 	 */
 	else if (IsA(tblref, RangeVar))
 	{
-		RangeVar *rv = (RangeVar *) tblref;
+		RangeVar   *rv = (RangeVar *) tblref;
+
 		if (pg_strcasecmp(target->relname, rv->relname) == 0)
 		{
-			if (target->schemaname && 
+			if (target->schemaname &&
 				(!rv->schemaname || pg_strcasecmp(target->schemaname, rv->schemaname) != 0))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("The objects \"%s.%s\" and \"%s\" in the FROM clause have the same exposed names. " \
-								"Use correlation names to distinguish them.", 
+								"Use correlation names to distinguish them.",
 								target->schemaname, target->relname, rv->relname)));
 			}
 			return rv;
@@ -103,27 +105,29 @@ find_matching_table(RangeVar *target, Node *tblref)
 			if (target->schemaname)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("The correlation name \'%s\' has the same exposed name as table \'%s.%s\'.", 
+						 errmsg("The correlation name \'%s\' has the same exposed name as table \'%s.%s\'.",
 								rv->alias->aliasname, target->schemaname, target->relname)));
 			return rv;
 		}
 	}
-	/* 
- 	 * Currently we only consider RangeVar and JoinExpr cases. In the
- 	 * future, if there are concrete use cases, we'll add support for 
- 	 * more table reference types
- 	 */
+
+	/*
+	 * Currently we only consider RangeVar and JoinExpr cases. In the future,
+	 * if there are concrete use cases, we'll add support for more table
+	 * reference types
+	 */
 	return NULL;
 }
 
 void
 pltsql_update_query_result_relation(Query *qry, Relation target_rel, List *rtable)
 {
-	Oid target_relid = RelationGetRelid(target_rel);
+	Oid			target_relid = RelationGetRelid(target_rel);
 
 	for (int i = 0; i < list_length(rtable); i++)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) list_nth(rtable, i);
+
 		if (rte->relid == target_relid)
 		{
 			qry->resultRelation = i + 1;
@@ -135,21 +139,21 @@ pltsql_update_query_result_relation(Query *qry, Relation target_rel, List *rtabl
 void
 handle_rowversion_target_in_update_stmt(RangeVar *target_table, UpdateStmt *stmt)
 {
-	Oid relid;
-	Relation rel;
-	TupleDesc tupdesc;
-	AttrNumber attr_num;
+	Oid			relid;
+	Relation	rel;
+	TupleDesc	tupdesc;
+	AttrNumber	attr_num;
 
 	relid = RangeVarGetRelid(target_table, NoLock, false);
 	rel = RelationIdGetRelation(relid);
 	tupdesc = RelationGetDescr(rel);
 
 	/*
-	* If target table contains a rowversion column, add a new ResTarget node
-	* with a SetToDefault expression into statement's targetList. This will
-	* ensure that the rows which are going to be updated will have new rowversion
-	* value.
-	*/
+	 * If target table contains a rowversion column, add a new ResTarget node
+	 * with a SetToDefault expression into statement's targetList. This will
+	 * ensure that the rows which are going to be updated will have new
+	 * rowversion value.
+	 */
 	for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
 	{
 		Form_pg_attribute attr;
@@ -159,10 +163,10 @@ handle_rowversion_target_in_update_stmt(RangeVar *target_table, UpdateStmt *stmt
 		if (attr->attisdropped)
 			continue;
 
-		if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
+		if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (attr->atttypid))
 		{
 			SetToDefault *def = makeNode(SetToDefault);
-			ResTarget *res;
+			ResTarget  *res;
 
 			def->typeId = attr->atttypid;
 			def->typeMod = attr->atttypmod;
@@ -171,7 +175,7 @@ handle_rowversion_target_in_update_stmt(RangeVar *target_table, UpdateStmt *stmt
 			res->name = pstrdup(NameStr(attr->attname));
 			res->name_location = -1;
 			res->indirection = NIL;
-			res->val = (Node *)def;
+			res->val = (Node *) def;
 			res->location = -1;
 			stmt->targetList = lappend(stmt->targetList, res);
 			break;
@@ -184,22 +188,26 @@ handle_rowversion_target_in_update_stmt(RangeVar *target_table, UpdateStmt *stmt
 static bool
 search_join_recursive(Node *expr, RangeVar *target, bool outside_outer)
 {
-	JoinExpr *join_expr;
-	RangeVar *arg;
+	JoinExpr   *join_expr;
+	RangeVar   *arg;
 
 	if (!expr)
 		return false;
-	else if (IsA(expr, RangeVar)) // Base condition
+	else if (IsA(expr, RangeVar))
+		//Base condition
 	{
-		arg = (RangeVar *)expr;
+		arg = (RangeVar *) expr;
 		return outside_outer && strcmp(arg->relname, target->relname) == 0;
 	}
-	else if(!IsA(expr, JoinExpr))
+	else if (!IsA(expr, JoinExpr))
 		return false;
 	join_expr = (JoinExpr *) expr;
 
-	// Check if 'target' is on the 'outside' of a join, i.e. right on a left join or left on a right join
-	switch(join_expr->jointype)
+	/*
+	 * Check if 'target' is on the 'outside' of a join, i.e. right on a left
+	 * join or left on a right join
+	 */
+	switch (join_expr->jointype)
 	{
 		case JOIN_INNER:
 			return search_join_recursive(join_expr->larg, target, outside_outer)
@@ -222,23 +230,23 @@ static bool
 target_in_outer_join(List *fromClause, RangeVar *target)
 {
 	bool result = false;
-	ListCell *lc;
+	ListCell   *lc;
 
-	foreach (lc, fromClause)
+	foreach(lc, fromClause)
 	{
-		Node *node = lfirst(lc);
-		result |= search_join_recursive(node, target, false);
+		Node	   *node = lfirst(lc);
+		result	  |=search_join_recursive(node, target, false);
 	}
-	
+
 	return result;
 }
 
 static void
 add_target_ctid_not_null_clause(Node **where_clause, RangeVar *target)
 {
-	NullTest  *new_clause;
-	ColumnRef *col_ref;
-	char      *rel_name = target->relname;
+	NullTest   *new_clause;
+	ColumnRef  *col_ref;
+	char	   *rel_name = target->relname;
 
 	new_clause = makeNode(NullTest);
 	new_clause->nulltesttype = IS_NOT_NULL;
@@ -250,19 +258,19 @@ add_target_ctid_not_null_clause(Node **where_clause, RangeVar *target)
 	col_ref = makeNode(ColumnRef);
 	col_ref->location = -1;
 	col_ref->fields = list_make2(makeString(rel_name), makeString("ctid"));
-	new_clause->arg = (Expr*) col_ref;
+	new_clause->arg = (Expr *) col_ref;
 
 	if (!*where_clause)
-		*where_clause = (Node *)new_clause;
+		*where_clause = (Node *) new_clause;
 	else
 	{
-		BoolExpr *bool_expr = makeNode(BoolExpr);;
+		BoolExpr   *bool_expr = makeNode(BoolExpr);;
 		bool_expr->boolop = AND_EXPR;
 		bool_expr->location = -1;
 		bool_expr->args = list_make2(*where_clause, new_clause);
-		*where_clause = (Node*) bool_expr;
+		*where_clause = (Node *) bool_expr;
 	}
-		
+
 }
 
 void
@@ -271,21 +279,23 @@ rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
 	switch (command)
 	{
 		case CMD_UPDATE:
-		{
-			UpdateStmt *update_stmt = (UpdateStmt *) stmt;
-			List      *fromClause = update_stmt->fromClause;
-			if (fromClause && target_in_outer_join(fromClause, target))
-				add_target_ctid_not_null_clause(&update_stmt->whereClause, target);
-			break;
-		}
+			{
+				UpdateStmt *update_stmt = (UpdateStmt *) stmt;
+				List	   *fromClause = update_stmt->fromClause;
+
+				if (fromClause && target_in_outer_join(fromClause, target))
+					add_target_ctid_not_null_clause(&update_stmt->whereClause, target);
+				break;
+			}
 		case CMD_DELETE:
-		{
-			DeleteStmt *delete_stmt = (DeleteStmt *) stmt;
-			List      *fromClause = delete_stmt->usingClause;
-			if (fromClause && target_in_outer_join(fromClause, target))
-				add_target_ctid_not_null_clause(&delete_stmt->whereClause, target);			
-			break;
-		}
+			{
+				DeleteStmt *delete_stmt = (DeleteStmt *) stmt;
+				List	   *fromClause = delete_stmt->usingClause;
+
+				if (fromClause && target_in_outer_join(fromClause, target))
+					add_target_ctid_not_null_clause(&delete_stmt->whereClause, target);
+				break;
+			}
 		default:
 			return;
 	}

@@ -17,7 +17,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"	/* for GETSTRUCT() to extract tuple data */
-#include "access/printtup.h"		/* for SetRemoteDestReceiverParams() */
+#include "access/printtup.h"	/* for SetRemoteDestReceiverParams() */
 #include "access/table.h"
 #include "access/relation.h"
 #include "access/relscan.h"
@@ -61,18 +61,18 @@
  */
 typedef struct ResetConnectionData
 {
-	StringInfo		message;
-	uint8_t			messageType;
-	uint8_t			status;
+	StringInfo	message;
+	uint8_t		messageType;
+	uint8_t		status;
 } ResetConnectionData;
-typedef ResetConnectionData* ResetConnection;
+typedef ResetConnectionData *ResetConnection;
 
 /*
  * Local structures
  */
 TdsRequestCtrlData *TdsRequestCtrl = NULL;
 
-ResetConnection	resetCon = NULL;
+ResetConnection resetCon = NULL;
 
 /* Local functions */
 static void ResetTDSConnection(void);
@@ -85,7 +85,8 @@ static void disable_statement_timeout(void);
  * TDSDiscardAll - copy of DiscardAll
  */
 static
-void TdsDiscardAll()
+void
+TdsDiscardAll()
 {
 	/*
 	 * Disallow DISCARD ALL in a transaction block. This is arguably
@@ -129,8 +130,8 @@ ResetTDSConnection(void)
 	AbortOutOfAnyTransaction();
 
 	/*
-	 * Save the transaction isolation level that should be restored after connection
-	 * reset.
+	 * Save the transaction isolation level that should be restored after
+	 * connection reset.
 	 */
 	isolationOld = GetConfigOption("default_transaction_isolation", false, false);
 
@@ -144,8 +145,8 @@ ResetTDSConnection(void)
 	CommitTransactionCommand();
 
 	/*
-	 * Now reset the TDS top memory context and re-initialize everything.  Also,
-	 * restore the transaction isolation level.
+	 * Now reset the TDS top memory context and re-initialize everything.
+	 * Also, restore the transaction isolation level.
 	 */
 	MemoryContextReset(TdsMemoryContext);
 	TdsCommReset();
@@ -173,10 +174,10 @@ ResetTDSConnection(void)
 static TDSRequest
 GetTDSRequest(bool *resetProtocol)
 {
-	uint8_t			messageType;
-	uint8_t			status;
-	TDSRequest		request;
-	StringInfoData	message;
+	uint8_t		messageType;
+	uint8_t		status;
+	TDSRequest	request;
+	StringInfoData message;
 
 	initStringInfo(&message);
 
@@ -184,13 +185,13 @@ GetTDSRequest(bool *resetProtocol)
 	 * Setup error traceback support for ereport()
 	 */
 	TdsErrorContext->err_text = "Fetching TDS Request";
-	TdsErrorContext->spType  = "Unknown (Pre-Parsing Request)";
+	TdsErrorContext->spType = "Unknown (Pre-Parsing Request)";
 	TdsErrorContext->txnType = "Unknown (Pre-Parsing Request)";
 	PG_TRY();
 	{
 		/*
-		 * If we've saved the TDS request earlier, process the same instead of trying
-		 * to fetch a new request.
+		 * If we've saved the TDS request earlier, process the same instead of
+		 * trying to fetch a new request.
 		 */
 		if (resetCon != NULL)
 		{
@@ -207,13 +208,13 @@ GetTDSRequest(bool *resetProtocol)
 		else
 		{
 			/*
-			 * If TdsRequestCtrl->request is not NULL then
-			 * there are mutliple RPCs in a Batch and we would restore the message
-			 * Otherwise we would fetch the next packet.]
+			 * If TdsRequestCtrl->request is not NULL then there are mutliple
+			 * RPCs in a Batch and we would restore the message Otherwise we
+			 * would fetch the next packet.]
 			 */
-			if(TdsRequestCtrl->request == NULL)
+			if (TdsRequestCtrl->request == NULL)
 			{
-				int ret;
+				int			ret;
 
 				/*
 				 * We should hold the interrupts untill we read the entire
@@ -242,21 +243,23 @@ GetTDSRequest(bool *resetProtocol)
 
 		TdsErrorContext->reqType = messageType;
 
-		#ifdef FAULT_INJECTOR
+#ifdef FAULT_INJECTOR
 		{
-			TdsMessageWrapper	wrapper;
+			TdsMessageWrapper wrapper;
+
 			wrapper.message = &message;
 			wrapper.messageType = messageType;
 
 			FAULT_INJECT(PreParsingType, &wrapper);
 		}
-		#endif
+#endif
 
 		Assert(messageType != 0);
 
 		/*
-		 * If we have to reset the connection, we save the TDS request in top memory
-		 * context before exit so that we can process the request later.
+		 * If we have to reset the connection, we save the TDS request in top
+		 * memory context before exit so that we can process the request
+		 * later.
 		 */
 		if (status & TDS_PACKET_HEADER_STATUS_RESETCON)
 		{
@@ -271,14 +274,14 @@ GetTDSRequest(bool *resetProtocol)
 			resetCon->status = (status & ~TDS_PACKET_HEADER_STATUS_RESETCON);
 
 			ResetTDSConnection();
-                      TdsErrorContext->err_text = "Fetching TDS Request";
+			TdsErrorContext->err_text = "Fetching TDS Request";
 			*resetProtocol = true;
 			return NULL;
 		}
 
 		/*
-		 * XXX: We don't support the following feature.  But, throw an error to
-		 * detect the case in case we get such a request.
+		 * XXX: We don't support the following feature.  But, throw an error
+		 * to detect the case in case we get such a request.
 		 */
 		if (status & TDS_PACKET_HEADER_STATUS_RESETCONSKIPTRAN)
 			ereport(ERROR,
@@ -294,8 +297,8 @@ GetTDSRequest(bool *resetProtocol)
 		}
 
 		/*
-		 * Enable statement timeout. Note we add this function here to
-		 * include the time taken by the protocol in the timeout.
+		 * Enable statement timeout. Note we add this function here to include
+		 * the time taken by the protocol in the timeout.
 		 */
 		enable_statement_timeout();
 
@@ -314,7 +317,7 @@ GetTDSRequest(bool *resetProtocol)
 					request = GetRPCRequest(&message);
 				}
 				break;
-			case TDS_TXN:	/* Transaction management request */
+			case TDS_TXN:		/* Transaction management request */
 				{
 					request = GetTxnMgmtRequest(&message);
 				}
@@ -324,7 +327,7 @@ GetTDSRequest(bool *resetProtocol)
 					request = GetBulkLoadRequest(&message);
 				}
 				break;
-			case TDS_ATTENTION: 	/* Attention request */
+			case TDS_ATTENTION: /* Attention request */
 				{
 					/* Return an empty request with the attention type. */
 					request = palloc0(sizeof(TDSRequest));
@@ -364,8 +367,8 @@ ProcessTDSRequest(TDSRequest request)
 
 	/*
 	 * We shouldn't be in this state as we handle the aborted case on
-	 * babelfishpg_tsql extension itself.  But, if we somehow end up
-	 * in this state, throw error and disconnect immediately.
+	 * babelfishpg_tsql extension itself.  But, if we somehow end up in this
+	 * state, throw error and disconnect immediately.
 	 */
 	if (IsAbortedTransactionBlockState())
 		elog(FATAL, "terminating connection due to unexpected TSQL transaction state");
@@ -418,8 +421,8 @@ ProcessTDSRequest(TDSRequest request)
 	}
 	PG_CATCH();
 	{
-		int token_type;
-		int command_type = TDS_CMD_UNKNOWN;
+		int			token_type;
+		int			command_type = TDS_CMD_UNKNOWN;
 
 		disable_statement_timeout();
 		CommitTransactionCommand();
@@ -441,7 +444,7 @@ ProcessTDSRequest(TDSRequest request)
 void
 TdsProtocolInit(void)
 {
-	MemoryContext	oldContext;
+	MemoryContext oldContext;
 
 	SetConfigOption("babelfishpg_tsql.sql_dialect", "tsql", PGC_SU_BACKEND, PGC_S_OVERRIDE);
 	SetConfigOption("babelfishpg_tsql.enable_tsql_information_schema", "true", PGC_USERSET, PGC_S_SESSION);
@@ -486,8 +489,9 @@ TdsProtocolFinish(void)
 int
 TdsSocketBackend(void)
 {
-	bool resetProtocol;
-	bool loop = true;
+	bool		resetProtocol;
+	bool		loop = true;
+
 	while (loop)
 	{
 		PG_TRY();
@@ -496,13 +500,15 @@ TdsSocketBackend(void)
 			{
 				case TDS_REQUEST_PHASE_INIT:
 					{
-						MemoryContext	oldContext;
+						MemoryContext oldContext;
+
 						resetProtocol = false;
 
 						TdsErrorContext->phase = "TDS_REQUEST_PHASE_INIT";
+
 						/*
-						 * Switch to the request context.  We reset this context once
-						 * once TDSfunctionCache is loaded
+						 * Switch to the request context.  We reset this
+						 * context once once TDSfunctionCache is loaded
 						 */
 						oldContext = MemoryContextSwitchTo(TdsMemoryContext);
 
@@ -512,9 +518,9 @@ TdsSocketBackend(void)
 
 						/*
 						 * Loading the cache tables in TdsMemoryContext Memory
-						 * context and is loaded only once during the INIT step.
-						 * TODO: Cache invalidate & reload if some enteries have
-						 * changed
+						 * context and is loaded only once during the INIT
+						 * step. TODO: Cache invalidate & reload if some
+						 * enteries have changed
 						 */
 						TdsLoadTypeFunctionCache();
 						TdsLoadEncodingLCIDCache();
@@ -523,7 +529,10 @@ TdsSocketBackend(void)
 
 						MemoryContextSwitchTo(oldContext);
 
-						/* we should have exec callbacks initialized by this time */
+						/*
+						 * we should have exec callbacks initialized by this
+						 * time
+						 */
 						if (!(pltsql_plugin_handler_ptr->sql_batch_callback))
 							elog(FATAL, "sql_batch_callback is not initialized");
 						if (!(pltsql_plugin_handler_ptr->sp_executesql_callback))
@@ -563,24 +572,26 @@ TdsSocketBackend(void)
 					}
 				case TDS_REQUEST_PHASE_FETCH:
 					{
-						MemoryContext	oldContext;
+						MemoryContext oldContext;
+
 						TdsErrorContext->phase = "TDS_REQUEST_PHASE_FETCH";
 
 						/*
-						 * Switch to the request context.  We reset this context once
-						 * we send the response.
+						 * Switch to the request context.  We reset this
+						 * context once we send the response.
 						 */
 						oldContext = MemoryContextSwitchTo(TdsRequestCtrl->requestContext);
 
 						/*
-						 * Also consider releasing our catalog snapshot if any, so that it's
-						 * not preventing advance of global xmin while we wait for the client.
+						 * Also consider releasing our catalog snapshot if
+						 * any, so that it's not preventing advance of global
+						 * xmin while we wait for the client.
 						 */
 						InvalidateCatalogSnapshotConditionally();
 
 						/*
-						 * We should hold the interrupts untill we read the entire
-						 * request.
+						 * We should hold the interrupts untill we read the
+						 * entire request.
 						 */
 						resetProtocol = false;
 						TdsRequestCtrl->request = GetTDSRequest(&resetProtocol);
@@ -627,22 +638,22 @@ TdsSocketBackend(void)
 						Assert(CurrentMemoryContext == MessageContext);
 
 						/*
-						 * If there are RPC packets left to
-						 * fetch in the packet then we go back
-						 * to the fetch phase
+						 * If there are RPC packets left to fetch in the
+						 * packet then we go back to the fetch phase
 						 */
-						if(TdsRequestCtrl->request->reqType == TDS_REQUEST_SP_NUMBER && RPCBatchExists(TdsRequestCtrl->request->sp))
+						if (TdsRequestCtrl->request->reqType == TDS_REQUEST_SP_NUMBER && RPCBatchExists(TdsRequestCtrl->request->sp))
 							TdsRequestCtrl->phase = TDS_REQUEST_PHASE_FETCH;
 						else
+
 							/*
-							 * No more message to send to the TCOP loop.  Send the
-							 * response.
+							 * No more message to send to the TCOP loop.  Send
+							 * the response.
 							 */
 							TdsRequestCtrl->phase = TDS_REQUEST_PHASE_FLUSH;
 
 						/*
-						 * Break here. We will Flush or Fetch the next request in the
-						 * next iteration of PostgresMain function.
+						 * Break here. We will Flush or Fetch the next request
+						 * in the next iteration of PostgresMain function.
 						 */
 						loop = false;
 						break;
@@ -668,23 +679,23 @@ TdsSocketBackend(void)
 					TdsErrorContext->phase = "TDS_REQUEST_PHASE_ERROR";
 
 					/*
-					 * We've already sent an error token. If required, we can send
-					 * more error tokens before flushing the response.
+					 * We've already sent an error token. If required, we can
+					 * send more error tokens before flushing the response.
 					 * N.B. We can reach this state only for some unexpected
-					 * error condition. For normal execution error, babelfishpg_tsql
-					 * extension already handles the error and doesn't
-					 * rethrow to TDS. So, if we're getting some error at this
-					 * level, we should investigate the error.
+					 * error condition. For normal execution error,
+					 * babelfishpg_tsql extension already handles the error
+					 * and doesn't rethrow to TDS. So, if we're getting some
+					 * error at this level, we should investigate the error.
 					 */
 
 					/*
-					 * Send the done token that follows error
-					 * XXX: Does it matter whether it's DONE or DONEPROC? This
-					 * is anyway not an expected place to throw an error. Find
-					 * a valid usecase before making this logic more complicated.
+					 * Send the done token that follows error XXX: Does it
+					 * matter whether it's DONE or DONEPROC? This is anyway
+					 * not an expected place to throw an error. Find a valid
+					 * usecase before making this logic more complicated.
 					 */
 					TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR,
-								   TDS_CMD_UNKNOWN, 0);
+								TDS_CMD_UNKNOWN, 0);
 
 					/* We're done.  Send the response. */
 					TdsRequestCtrl->phase = TDS_REQUEST_PHASE_FLUSH;
@@ -696,9 +707,9 @@ TdsSocketBackend(void)
 			TdsRequestCtrl->phase = TDS_REQUEST_PHASE_ERROR;
 
 			/*
-			 * We need to rethrow the error as the error handling code in
-			 * the main postgres tcop loop does a lot of necessary cleanups.
-			 * But, if we want to do any further cleanup or take any further
+			 * We need to rethrow the error as the error handling code in the
+			 * main postgres tcop loop does a lot of necessary cleanups. But,
+			 * if we want to do any further cleanup or take any further
 			 * action, we can do that here as a pre-processing or in
 			 * TDS_REQUEST_PHASE_ERROR state as post-processing.
 			 */
@@ -713,10 +724,11 @@ TdsSocketBackend(void)
 int
 TestGetTdsRequest(uint8_t reqType, const char *expectedStr)
 {
-	int res = 0;
-	bool	resetProtocol;
-	TDSRequest request = GetTDSRequest(&resetProtocol);
-	switch(reqType)
+	int			res = 0;
+	bool		resetProtocol;
+	TDSRequest	request = GetTDSRequest(&resetProtocol);
+
+	switch (reqType)
 	{
 		case TDS_TXN:
 			res = TestTxnMgmtRequest(request, expectedStr);

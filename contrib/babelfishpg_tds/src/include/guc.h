@@ -13,17 +13,16 @@
  *-------------------------------------------------------------------------
  */
 
-extern int pe_port;
+extern int	pe_port;
 extern char *pe_listen_addrs;
 extern char *pe_unix_socket_directories;
 extern char *product_version;
-extern int pe_unix_socket_permissions;
+extern int	pe_unix_socket_permissions;
 extern char *pe_unix_socket_group;
 extern bool tds_ssl_encrypt;
-extern int tds_default_numeric_precision;
-extern int tds_default_numeric_scale;
+extern int	tds_default_numeric_precision;
+extern int	tds_default_numeric_scale;
 extern int32_t tds_default_protocol_version;
 extern int32_t tds_default_packet_size;
-extern int tds_debug_log_level;
+extern int	tds_debug_log_level;
 extern char *default_server_name;
-extern bool enable_drop_babelfish_role;

@@ -31,31 +31,32 @@
 #include "src/include/faultinjection.h"
 
 /* Globals */
-MemoryContext	TdsMemoryContext = NULL;
+MemoryContext TdsMemoryContext = NULL;
 
 
 static uint32_t TdsBufferSize;
-static char		*TdsSendBuffer;
-static int		TdsSendCur;			/* Next index to store a byte in TdsSendBuffer */
-static int		TdsSendStart;		/* Next index to send a byte in TdsSendBuffer */
-static uint8_t	TdsSendMessageType; /* Current TDS message in progress */
+static char *TdsSendBuffer;
+static int	TdsSendCur;			/* Next index to store a byte in TdsSendBuffer */
+static int	TdsSendStart;		/* Next index to send a byte in TdsSendBuffer */
+static uint8_t TdsSendMessageType;	/* Current TDS message in progress */
 
-static bool		TdsDoProcessHeader;	/* Header is processed or not. */
-static char		*TdsRecvBuffer;
-static int		TdsRecvStart;		/* Next index to read a byte from TdsRecvBuffer */
-static int		TdsRecvEnd;			/* End of data available in TdsRecvBuffer */
-static uint8_t	TdsRecvMessageType; /* Current TDS message in progress */
-static uint8_t	TdsRecvPacketStatus;
-static int		TdsLeftInPacket;
+static bool TdsDoProcessHeader; /* Header is processed or not. */
+static char *TdsRecvBuffer;
+static int	TdsRecvStart;		/* Next index to read a byte from
+								 * TdsRecvBuffer */
+static int	TdsRecvEnd;			/* End of data available in TdsRecvBuffer */
+static uint8_t TdsRecvMessageType;	/* Current TDS message in progress */
+static uint8_t TdsRecvPacketStatus;
+static int	TdsLeftInPacket;
 
 static TdsSecureSocketApi tds_secure_read;
 static TdsSecureSocketApi tds_secure_write;
 
 
 /* Internal functions */
-static void		SocketSetNonblocking(bool nonblocking);
-static int		InternalFlush(bool);
-static void		TdsConsumedBytes(int bytes);
+static void SocketSetNonblocking(bool nonblocking);
+static int	InternalFlush(bool);
+static void TdsConsumedBytes(int bytes);
 
 /* Inline functions */
 
@@ -68,8 +69,8 @@ static void		TdsConsumedBytes(int bytes);
 static inline int
 InternalPutbytes(void *bytes, size_t len)
 {
-	size_t			amount;
-	unsigned char  *s = bytes;
+	size_t		amount;
+	unsigned char *s = bytes;
 
 	while (len > 0)
 	{
@@ -137,7 +138,7 @@ SocketSetNonblocking(bool nonblocking)
 static int
 TdsReadsocket(void)
 {
-      TdsErrorContext->err_text = "Reading data from socket";
+	TdsErrorContext->err_text = "Reading data from socket";
 	if (TdsRecvStart > 0)
 	{
 		if (TdsRecvEnd > TdsRecvStart)
@@ -203,10 +204,10 @@ TdsReadsocket(void)
 static int
 TdsProcessHeader(void)
 {
-	uint16_t data16;
+	uint16_t	data16;
 
 	FAULT_INJECT(ParseHeaderType, TdsRecvBuffer);
-      TdsErrorContext->err_text = "Processing TDS header";
+	TdsErrorContext->err_text = "Processing TDS header";
 
 	if (TdsLeftInPacket != 0)
 		ereport(FATAL,
@@ -222,7 +223,7 @@ TdsProcessHeader(void)
 	/* Message type */
 	TdsRecvMessageType = TdsRecvBuffer[TdsRecvStart];
 	/* Packet status */
-	TdsRecvPacketStatus = TdsRecvBuffer[TdsRecvStart+1];
+	TdsRecvPacketStatus = TdsRecvBuffer[TdsRecvStart + 1];
 
 	/* Packet length in network byte order (includes header size) */
 	memcpy(&data16, TdsRecvBuffer + TdsRecvStart + 2, sizeof(data16));
@@ -236,7 +237,7 @@ TdsProcessHeader(void)
 	TdsLeftInPacket = data16 - TDS_PACKET_HEADER_SIZE;
 	TdsRecvStart += TDS_PACKET_HEADER_SIZE;
 
-	/* [BABEL-648] TDS packet with no TDS data is valid packet.*/
+	/* [BABEL-648] TDS packet with no TDS data is valid packet. */
 	if (TdsLeftInPacket < 0)
 		ereport(FATAL,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -244,7 +245,7 @@ TdsProcessHeader(void)
 
 	TdsDoProcessHeader = false;
 	TDS_DEBUG(TDS_DEBUG3, "TDS packet MessageType %d LeftInPacket %d Status %d",
-				TdsRecvMessageType, TdsLeftInPacket, TdsRecvPacketStatus);
+			  TdsRecvMessageType, TdsLeftInPacket, TdsRecvPacketStatus);
 	TDS_DEBUG(TDS_DEBUG3, "TDS receive buffer start %d end %d", TdsRecvStart, TdsRecvEnd);
 	return 0;
 }
@@ -258,7 +259,7 @@ TdsProcessHeader(void)
 static int
 TdsRecvbuf(void)
 {
-      TdsErrorContext->err_text = "Loading data into input buffer";
+	TdsErrorContext->err_text = "Loading data into input buffer";
 	/* Need to process the packet header */
 	if (TdsLeftInPacket == 0 && TdsRecvStart < TdsRecvEnd)
 	{
@@ -278,9 +279,10 @@ TdsRecvbuf(void)
 			{
 				return EOF;
 			}
-			/* 
-			 * Last socket read only got header worth of data and 
-			 * if something is left to read.
+
+			/*
+			 * Last socket read only got header worth of data and if something
+			 * is left to read.
 			 */
 			if ((TdsRecvStart == TdsRecvEnd) && (TdsLeftInPacket > 0))
 			{
@@ -324,7 +326,8 @@ TdsGetbyte(void)
 static void
 TdsFillHeader(bool lastPacket)
 {
-	uint16_t net16;
+	uint16_t	net16;
+
 	/* Message type */
 	TdsSendBuffer[0] = TdsSendMessageType;
 	/* Packet status */
@@ -333,9 +336,9 @@ TdsFillHeader(bool lastPacket)
 	net16 = pg_hton16(TdsSendCur - TdsSendStart);
 	memcpy(TdsSendBuffer + 2, &net16, sizeof(net16));
 	net16 = 0;
-	memcpy(TdsSendBuffer + 4, &net16, sizeof(net16)); /* TODO  get server pid */
-	TdsSendBuffer[6] = 0; /* TODO  generate packet id */
-	TdsSendBuffer[7] = 0; /* unused */
+	memcpy(TdsSendBuffer + 4, &net16, sizeof(net16));	/* TODO  get server pid */
+	TdsSendBuffer[6] = 0;		/* TODO  generate packet id */
+	TdsSendBuffer[7] = 0;		/* unused */
 }
 
 /* --------------------------------
@@ -353,7 +356,7 @@ InternalFlush(bool lastPacket)
 	char	   *bufptr = TdsSendBuffer + TdsSendStart;
 	char	   *bufend = TdsSendBuffer + TdsSendCur;
 
-      TdsErrorContext->err_text = "TDS InternalFlush - Sending data to the client";
+	TdsErrorContext->err_text = "TDS InternalFlush - Sending data to the client";
 	/* Writing the packet for the first time */
 	if (TdsSendStart == 0)
 	{
@@ -431,16 +434,16 @@ InternalFlush(bool lastPacket)
  */
 void
 TdsCommInit(uint32_t bufferSize,
-			   TdsSecureSocketApi secure_read,
-			   TdsSecureSocketApi secure_write)
+			TdsSecureSocketApi secure_read,
+			TdsSecureSocketApi secure_write)
 {
 	tds_secure_read = secure_read;
 	tds_secure_write = secure_write;
 	TdsDoProcessHeader = true;
 
 	/*
-	 * Create our own long term memory context for things like the send
-	 * and recieve buffers and caches.
+	 * Create our own long term memory context for things like the send and
+	 * recieve buffers and caches.
 	 */
 	Assert(TdsMemoryContext == NULL);
 	TdsMemoryContext = AllocSetContextCreate(TopMemoryContext,
@@ -459,7 +462,7 @@ TdsCommInit(uint32_t bufferSize,
 void
 TdsCommReset(void)
 {
-	MemoryContext	oldContext;
+	MemoryContext oldContext;
 
 	TdsRecvMessageType = TdsSendMessageType = 0;
 	TdsRecvPacketStatus = 0;
@@ -481,9 +484,10 @@ void
 TdsCommShutdown(void)
 {
 	Assert(TdsSendMessageType == 0);
+
 	/*
-	 * Both send and receive buffers should not have any
-	 * valid data at this point in time
+	 * Both send and receive buffers should not have any valid data at this
+	 * point in time
 	 */
 	Assert(TdsSendStart == 0 && TdsSendCur == TDS_PACKET_HEADER_SIZE);
 	Assert(TdsRecvStart == TdsRecvEnd && TdsLeftInPacket == 0);
@@ -508,13 +512,14 @@ void
 TdsSetBufferSize(uint32_t newSize)
 {
 	TDS_DEBUG(TDS_DEBUG3, "TdsSetBufferSize current size %u new size %u",
-			TdsBufferSize, newSize);
+			  TdsBufferSize, newSize);
 
 	if (newSize == TdsBufferSize)
 		return;
+
 	/*
-	 * Both send and receive buffers should not have any
-	 * valid data at this point in time
+	 * Both send and receive buffers should not have any valid data at this
+	 * point in time
 	 */
 	if (TdsSendStart != 0 ||
 		TdsSendCur != TDS_PACKET_HEADER_SIZE ||
@@ -522,10 +527,10 @@ TdsSetBufferSize(uint32_t newSize)
 		TdsLeftInPacket != 0)
 	{
 		TDS_DEBUG(TDS_DEBUG1, "TDS buffers in inconsistent state; "
-			 "TdsSendStart: %d TdsSendCur: %d TdsRecvStart: %d "
-			 "TdsRecvEnd: %d TdsLeftInPacket: %d",
-			 TdsSendStart, TdsSendCur, TdsRecvStart,
-			 TdsRecvEnd, TdsLeftInPacket);
+				  "TdsSendStart: %d TdsSendCur: %d TdsRecvStart: %d "
+				  "TdsRecvEnd: %d TdsLeftInPacket: %d",
+				  TdsSendStart, TdsSendCur, TdsRecvStart,
+				  TdsRecvEnd, TdsLeftInPacket);
 		ereport(FATAL,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("TDS buffers in inconsistent state")));
@@ -574,11 +579,11 @@ TdsPeekbyte(void)
 int
 TdsReadNextBuffer(void)
 {
-      TdsErrorContext->err_text = "Reading buffer from socket";
+	TdsErrorContext->err_text = "Reading buffer from socket";
 	while ((TdsLeftInPacket > 0 && TdsRecvStart >= TdsRecvEnd) || TdsDoProcessHeader)
 	{
-		if (TdsRecvbuf())       /* If nothing in buffer, then recv some */
-			return EOF;     /* Failed to recv data */
+		if (TdsRecvbuf())		/* If nothing in buffer, then recv some */
+			return EOF;			/* Failed to recv data */
 	}
 	return 0;
 }
@@ -607,7 +612,7 @@ TdsGetbytes(char *s, size_t len)
 	size_t		amount;
 
 	TDS_DEBUG(TDS_DEBUG3, "TdsGetbytes LeftInPacket %d RecvStart %d RecvEnd %d",
-		 TdsLeftInPacket, TdsRecvStart, TdsRecvEnd);
+			  TdsLeftInPacket, TdsRecvStart, TdsRecvEnd);
 	while (len > 0)
 	{
 		while (TdsLeftInPacket == 0 || TdsRecvStart >= TdsRecvEnd)
@@ -615,7 +620,7 @@ TdsGetbytes(char *s, size_t len)
 			if (TdsRecvbuf())	/* If nothing in buffer, then recv some */
 				return EOF;		/* Failed to recv data */
 		}
-              TdsErrorContext->err_text = "";
+		TdsErrorContext->err_text = "";
 		amount = Min(TdsLeftInPacket, TdsRecvEnd - TdsRecvStart);
 		if (amount > len)
 			amount = len;
@@ -649,7 +654,7 @@ TdsDiscardbytes(size_t len)
 			if (TdsRecvbuf())	/* If nothing in buffer, then recv some */
 				return EOF;		/* Failed to recv data */
 		}
-              TdsErrorContext->err_text = "";
+		TdsErrorContext->err_text = "";
 		amount = Min(TdsLeftInPacket, TdsRecvEnd - TdsRecvStart);
 		if (amount > len)
 			amount = len;
@@ -725,7 +730,7 @@ TdsPutInt64LE(int64_t value)
 int
 TdsPutUInt16LE(uint16_t value)
 {
-	uint16_t         tmp = htoLE16(value);
+	uint16_t	tmp = htoLE16(value);
 
 	return InternalPutbytes(&tmp, sizeof(tmp));
 }
@@ -755,6 +760,7 @@ TdsPutInt16LE(int16_t value)
 
 	return InternalPutbytes(&tmp, sizeof(tmp));
 }
+
 /* --------------------------------
  *	TdsPutInt32LE - send one 32-bit integer in LITTLE_ENDIAN
  *
@@ -768,6 +774,7 @@ TdsPutInt32LE(int32_t value)
 
 	return InternalPutbytes(&tmp, sizeof(tmp));
 }
+
 /* --------------------------------
  *      TdsPutUInt32LE - send one 32-bit unsigned integer in LITTLE_ENDIAN
  *
@@ -781,6 +788,7 @@ TdsPutUInt32LE(uint32_t value)
 
 	return InternalPutbytes(&tmp, sizeof(tmp));
 }
+
 /* --------------------------------
  *	TdsPutUInt64LE - send one unsigned 64-bit integer in LITTLE_ENDIAN
  *
@@ -855,7 +863,8 @@ TdsSocketFlush(void)
 int
 TdsReadNextPendingBcpRequest(StringInfo message)
 {
-	int		readBytes = 0;
+	int			readBytes = 0;
+
 	if (TdsReadNextBuffer() == EOF)
 		return EOF;
 	Assert(TdsRecvMessageType == TDS_BULK_LOAD);
@@ -876,7 +885,8 @@ TdsReadNextPendingBcpRequest(StringInfo message)
 int
 TdsDiscardAllPendingBcpRequest()
 {
-	int		readBytes = 0;
+	int			readBytes = 0;
+
 	while (1)
 	{
 		if (TdsReadNextBuffer() == EOF)
@@ -907,13 +917,14 @@ TdsDiscardAllPendingBcpRequest()
 int
 TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 {
-	int		readBytes = 0;
-	bool	isFirst = true;
-	while(1)
+	int			readBytes = 0;
+	bool		isFirst = true;
+
+	while (1)
 	{
 		if (TdsReadNextBuffer() == EOF)
 			return EOF;
-              TdsErrorContext->err_text = "Save the status from first packet header";
+		TdsErrorContext->err_text = "Save the status from first packet header";
 
 		/*
 		 * If this is the first packet header for this TDS request, save the
@@ -940,8 +951,9 @@ TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 		}
 
 		/*
-		 * If this is a Bulk Load Request then read only the first packet of the request.
-		 * We will fetch the rest of the data as and when required during the processing phase.
+		 * If this is a Bulk Load Request then read only the first packet of
+		 * the request. We will fetch the rest of the data as and when
+		 * required during the processing phase.
 		 */
 		if (TdsRecvMessageType == TDS_BULK_LOAD)
 		{
@@ -962,8 +974,8 @@ TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 int
 TdsReadMessage(StringInfo message, uint8_t messageType)
 {
-	uint8_t curMsgType;
-	uint8_t status;
+	uint8_t		curMsgType;
+	uint8_t		status;
 
 	/* Make sure that last write is flushed */
 	if (TdsSendStart != 0 || TdsSendCur != TDS_PACKET_HEADER_SIZE)
@@ -973,7 +985,7 @@ TdsReadMessage(StringInfo message, uint8_t messageType)
 
 	if (TdsReadNextRequest(message, &status, &curMsgType))
 		return EOF;
-	// TODO Map to proper error code for TDS client
+	/* TODO Map to proper error code for TDS client */
 	if (messageType != curMsgType)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1007,7 +1019,8 @@ TdsWriteMessage(StringInfo message, uint8_t messageType)
 	return 0;
 }
 
-bool TdsGetRecvPacketEomStatus(void)
+bool
+TdsGetRecvPacketEomStatus(void)
 {
 	return TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM;
 }

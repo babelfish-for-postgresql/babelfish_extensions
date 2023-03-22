@@ -13,28 +13,33 @@
 #include "utils/numeric.h"
 #include "utils/syscache.h"
 
-static int cmpfunc(const void *a, const void *b)
+static int
+cmpfunc(const void *a, const void *b)
 {
-  return ( *(int*)a - *(int*)b );
+	return (*(int *) a - *(int *) b);
 }
 
 PG_FUNCTION_INFO_V1(updated);
 Datum
-updated(PG_FUNCTION_ARGS){
+updated(PG_FUNCTION_ARGS)
+{
 	char	   *column = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	char       *real_column;
-	List       *curr_columns_list;
+	char	   *real_column;
+	List	   *curr_columns_list;
 	ListCell   *l;
 
-	if (pltsql_trigger_depth-1<list_length(columns_updated_list))
-		curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth - 1);
-	else curr_columns_list = NIL;
-	foreach(l, curr_columns_list){
-			real_column = ((UpdatedColumn *)lfirst(l))->column_name;
-			if (pg_strcasecmp(real_column, column) == 0){
-				PG_RETURN_BOOL(true);
-			}
+	if (pltsql_trigger_depth - 1 < list_length(columns_updated_list))
+		curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth - 1);
+	else
+		curr_columns_list = NIL;
+	foreach(l, curr_columns_list)
+	{
+		real_column = ((UpdatedColumn *) lfirst(l))->column_name;
+		if (pg_strcasecmp(real_column, column) == 0)
+		{
+			PG_RETURN_BOOL(true);
 		}
+	}
 	PG_RETURN_BOOL(false);
 }
 
@@ -43,48 +48,60 @@ Datum
 columnsupdated(PG_FUNCTION_ARGS)
 {
 	StringInfoData buf;
-	ListCell *l;
+	ListCell   *l;
 	UpdatedColumn *column;
-	List* curr_columns_list;
-	int *columnIndex;
-	int i;
-	int length, bufSize, curByteIndex, total_columns = 0;
-	int8 curBuf;
-	int j;
+	List	   *curr_columns_list;
+	int		   *columnIndex;
+	int			i;
+	int			length,
+				bufSize,
+				curByteIndex,
+				total_columns = 0;
+	int8		curBuf;
+	int			j;
+
 	if (columns_updated_list == NULL)
 	{
 		PG_RETURN_NULL();
 	}
-	if (pltsql_trigger_depth-1<list_length(columns_updated_list))
-		curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth - 1);
-	else curr_columns_list = NIL;
+	if (pltsql_trigger_depth - 1 < list_length(columns_updated_list))
+		curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth - 1);
+	else
+		curr_columns_list = NIL;
 	length = list_length(curr_columns_list);
 	curBuf = 0;
 	pq_begintypsend(&buf);
-	if (length > 0){
-		columnIndex =  (int *) palloc(sizeof(int) * length);
+	if (length > 0)
+	{
+		columnIndex = (int *) palloc(sizeof(int) * length);
 		i = 0;
-		foreach(l, curr_columns_list){
-			column = (UpdatedColumn *)lfirst(l);
+		foreach(l, curr_columns_list)
+		{
+			column = (UpdatedColumn *) lfirst(l);
 			columnIndex[i] = column->x_attnum;
 			total_columns = column->total_columns;
 			++i;
 		}
 		qsort(columnIndex, length, sizeof(int), cmpfunc);
-		bufSize = total_columns/8 + 1;
+		bufSize = total_columns / 8 + 1;
 		curByteIndex = 0;
-		for (i = 0; i < length; ++i){
-			if ( columnIndex[i]/8 > curByteIndex){
-				for(j = curByteIndex; j<columnIndex[i]/8; ++j){
+		for (i = 0; i < length; ++i)
+		{
+			if (columnIndex[i] / 8 > curByteIndex)
+			{
+				for (j = curByteIndex; j < columnIndex[i] / 8; ++j)
+				{
 					pq_writeint8(&buf, curBuf);
 					curBuf = 0;
 				}
-				curByteIndex = columnIndex[i]/8;
+				curByteIndex = columnIndex[i] / 8;
 			}
-			curBuf = curBuf | (1<<(columnIndex[i]%8-1));
+			curBuf = curBuf | (1 << (columnIndex[i] % 8 - 1));
 		}
-		while(curByteIndex++<bufSize){
-			pq_writeint8(&buf, curBuf);//the last one
+		while (curByteIndex++ < bufSize)
+		{
+			pq_writeint8(&buf, curBuf);
+			/* the last one */
 			curBuf = 0;
 		}
 	}
@@ -137,16 +154,16 @@ PG_FUNCTION_INFO_V1(get_scope_identity);
 Datum
 get_scope_identity(PG_FUNCTION_ARGS)
 {
-    PG_TRY();
-    {
-        PG_RETURN_INT64(last_scope_identity_value());
-    }
-    PG_CATCH();
-    {
-        FlushErrorState();
-        PG_RETURN_NULL();
-    }
-    PG_END_TRY();
+	PG_TRY();
+	{
+		PG_RETURN_INT64(last_scope_identity_value());
+	}
+	PG_CATCH();
+	{
+		FlushErrorState();
+		PG_RETURN_NULL();
+	}
+	PG_END_TRY();
 }
 
 /*
@@ -157,9 +174,9 @@ pltsqlMakeRangeVarFromName(const char *ident)
 {
 	const char *str = "SELECT * FROM ";
 	StringInfoData query;
-	List *parsetree;
+	List	   *parsetree;
 	SelectStmt *sel_stmt;
-	Node *n;
+	Node	   *n;
 
 	/* Create a fake SELECT statement to get the identifier names */
 	initStringInfo(&query);
@@ -241,18 +258,18 @@ pltsql_convert_ident(const char *s, char **output, int numidents)
 		{
 			/* Bracket-quoted identifier: extends till close bracket */
 			/* FIXME: how do you escape a close-bracket? */
-			const char *close = strchr(s+1, ']');
+			const char *close = strchr(s + 1, ']');
 			size_t		identlen;
 
 			if (close == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("unterminated [ in name: %s", sstart)));
-			
+
 			identlen = (close - s) - 1;
 
 			curident = palloc(identlen + 1);
-			memcpy(curident, s+1, identlen);
+			memcpy(curident, s + 1, identlen);
 			curident[identlen] = '\0';
 
 			/* Truncate to NAMEDATALEN */
@@ -301,10 +318,12 @@ pltsql_convert_ident(const char *s, char **output, int numidents)
 }
 
 static char
-*replace_with_underscore(const char *s)
+		   *
+replace_with_underscore(const char *s)
 {
-	int	i, n = strlen(s);
-	char	*s_copy = palloc(n + 1);
+	int			i,
+				n = strlen(s);
+	char	   *s_copy = palloc(n + 1);
 
 	s_copy[0] = '\0';
 	strncat(s_copy, s, n);
@@ -322,16 +341,17 @@ void
 pre_function_call_hook_impl(const char *funcName)
 {
 	if ((pltsql_instr_plugin_ptr &&
-				(*pltsql_instr_plugin_ptr) &&
-				(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
+		 (*pltsql_instr_plugin_ptr) &&
+		 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
 	{
-	        char	*prefix = "instr_tsql_";
-	        char	*funcname_edited = replace_with_underscore(funcName);
-	        StringInfoData metricName;
-	        initStringInfo(&metricName);
+		char	   *prefix = "instr_tsql_";
+		char	   *funcname_edited = replace_with_underscore(funcName);
+		StringInfoData metricName;
 
-	        appendStringInfoString(&metricName, prefix);
-	        appendStringInfoString(&metricName, funcname_edited);
+		initStringInfo(&metricName);
+
+		appendStringInfoString(&metricName, prefix);
+		appendStringInfoString(&metricName, funcname_edited);
 
 		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
 		{
@@ -344,10 +364,10 @@ pre_function_call_hook_impl(const char *funcName)
 			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
 		}
 
-              if(funcname_edited != NULL)
-                      pfree(funcname_edited);
-              if(metricName.data != NULL)
-                      pfree(metricName.data);
+		if (funcname_edited != NULL)
+			pfree(funcname_edited);
+		if (metricName.data != NULL)
+			pfree(metricName.data);
 	}
 }
 
@@ -355,12 +375,14 @@ int32
 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
 {
 	/*
-	 * For T-SQL ISNULL, the typmod depends only on the first argument of
-	 * the function unlike PG COALESCE, which checks whether all the data
-	 * types and their typmods are in agreement.
+	 * For T-SQL ISNULL, the typmod depends only on the first argument of the
+	 * function unlike PG COALESCE, which checks whether all the data types
+	 * and their typmods are in agreement.
 	 */
 
-	Oid nspoid, pg_catalog_numericoid, sys_decimaloid;
+	Oid			nspoid,
+				pg_catalog_numericoid,
+				sys_decimaloid;
 
 	nspoid = get_namespace_oid("pg_catalog", false);
 	pg_catalog_numericoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("numeric"), ObjectIdGetDatum(nspoid));
@@ -369,8 +391,8 @@ coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
 	sys_decimaloid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("decimal"), ObjectIdGetDatum(nspoid));
 
 	/*
-	 * If data type is numeric/decimal, resolve_numeric_typmod_from_exp
-	 * will figure out the precision and scale.
+	 * If data type is numeric/decimal, resolve_numeric_typmod_from_exp will
+	 * figure out the precision and scale.
 	 */
 	if (cexpr->coalescetype == pg_catalog_numericoid || cexpr->coalescetype == sys_decimaloid)
 		return -1;
@@ -391,148 +413,152 @@ free_stmt2(PLtsql_stmt *stmt)
 	switch (stmt->cmd_type)
 	{
 		case PLTSQL_STMT_GOTO:
-		{
-			PLtsql_stmt_goto *go = (PLtsql_stmt_goto *) stmt;
+			{
+				PLtsql_stmt_goto *go = (PLtsql_stmt_goto *) stmt;
 
-			free_expr(go->cond);
+				free_expr(go->cond);
 
-			break;
-		}
+				break;
+			}
 
 		case PLTSQL_STMT_PRINT:
-		{
-			PLtsql_stmt_print *print = (PLtsql_stmt_print *) stmt;
-			ListCell *l;
+			{
+				PLtsql_stmt_print *print = (PLtsql_stmt_print *) stmt;
+				ListCell   *l;
 
-			foreach(l, print->exprs)
-				free_expr((PLtsql_expr *) lfirst(l));
-			break;
-		}
+				foreach(l, print->exprs)
+					free_expr((PLtsql_expr *) lfirst(l));
+				break;
+			}
 
-	    case PLTSQL_STMT_INIT:
-		{
-			PLtsql_stmt_init *init = (PLtsql_stmt_init *) stmt;
-			ListCell *l;
+		case PLTSQL_STMT_INIT:
+			{
+				PLtsql_stmt_init *init = (PLtsql_stmt_init *) stmt;
+				ListCell   *l;
 
-			foreach(l, init->inits)
-				free_stmt((PLtsql_stmt *) lfirst(l));
-			break;
-		}
+				foreach(l, init->inits)
+					free_stmt((PLtsql_stmt *) lfirst(l));
+				break;
+			}
 
-	    case PLTSQL_STMT_QUERY_SET:
-		{
-			PLtsql_stmt_query_set *select = (PLtsql_stmt_query_set *) stmt;
+		case PLTSQL_STMT_QUERY_SET:
+			{
+				PLtsql_stmt_query_set *select = (PLtsql_stmt_query_set *) stmt;
 
-			free_expr(select->sqlstmt);
+				free_expr(select->sqlstmt);
 
-			break;
-		}
+				break;
+			}
 
-        case PLTSQL_STMT_TRY_CATCH:
-        {
-            PLtsql_stmt_try_catch *try_catch = (PLtsql_stmt_try_catch *) stmt;
-            free_stmt((PLtsql_stmt *) try_catch->body);
-            free_stmt((PLtsql_stmt *) try_catch->handler);
-            break;
-        }
+		case PLTSQL_STMT_TRY_CATCH:
+			{
+				PLtsql_stmt_try_catch *try_catch = (PLtsql_stmt_try_catch *) stmt;
 
-	    case PLTSQL_STMT_PUSH_RESULT:
-		{
-			PLtsql_stmt_push_result *push = (PLtsql_stmt_push_result *) stmt;
-			free_expr(push->query);
-			break;
-		}
+				free_stmt((PLtsql_stmt *) try_catch->body);
+				free_stmt((PLtsql_stmt *) try_catch->handler);
+				break;
+			}
 
-	    case PLTSQL_STMT_EXEC:
-		{
-			PLtsql_stmt_exec *exec = (PLtsql_stmt_exec *) stmt;
-			free_expr(exec->expr);
-			break;
-		}
+		case PLTSQL_STMT_PUSH_RESULT:
+			{
+				PLtsql_stmt_push_result *push = (PLtsql_stmt_push_result *) stmt;
+
+				free_expr(push->query);
+				break;
+			}
+
+		case PLTSQL_STMT_EXEC:
+			{
+				PLtsql_stmt_exec *exec = (PLtsql_stmt_exec *) stmt;
+
+				free_expr(exec->expr);
+				break;
+			}
 		case PLTSQL_STMT_EXEC_BATCH:
-		{
-			PLtsql_stmt_exec_batch *exec = (PLtsql_stmt_exec_batch *) stmt;
+			{
+				PLtsql_stmt_exec_batch *exec = (PLtsql_stmt_exec_batch *) stmt;
 
-			free_expr(exec->expr);
+				free_expr(exec->expr);
 
-			break;
-		}
+				break;
+			}
 		case PLTSQL_STMT_EXEC_SP:
-		{
-			PLtsql_stmt_exec_sp *exec = (PLtsql_stmt_exec_sp *) stmt;
-			ListCell *l;
+			{
+				PLtsql_stmt_exec_sp *exec = (PLtsql_stmt_exec_sp *) stmt;
+				ListCell   *l;
 
-			if (exec->handle)
-				free_expr(exec->handle);
-			if (exec->query)
-				free_expr(exec->query);
-			if (exec->param_def)
-				free_expr(exec->param_def);
-			foreach(l, exec->params)
-				free_expr((PLtsql_expr *) ((tsql_exec_param *) lfirst(l))->expr);
-			if (exec->opt1)
-				free_expr(exec->opt1);
-			if (exec->opt2)
-				free_expr(exec->opt2);
-			if (exec->opt3)
-				free_expr(exec->opt3);
-			break;
-		}
+				if (exec->handle)
+					free_expr(exec->handle);
+				if (exec->query)
+					free_expr(exec->query);
+				if (exec->param_def)
+					free_expr(exec->param_def);
+				foreach(l, exec->params)
+					free_expr((PLtsql_expr *) ((tsql_exec_param *) lfirst(l))->expr);
+				if (exec->opt1)
+					free_expr(exec->opt1);
+				if (exec->opt2)
+					free_expr(exec->opt2);
+				if (exec->opt3)
+					free_expr(exec->opt3);
+				break;
+			}
 		case PLTSQL_STMT_DECL_TABLE:
-		{
-			/* Nothing to free */
-			break;
-		}
+			{
+				/* Nothing to free */
+				break;
+			}
 		case PLTSQL_STMT_RETURN_TABLE:
-		{
-			free_return_query((PLtsql_stmt_return_query *) stmt);
-			break;
-		}
+			{
+				free_return_query((PLtsql_stmt_return_query *) stmt);
+				break;
+			}
 		case PLTSQL_STMT_DEALLOCATE:
-		{
-			/* Nothing to free */
-			break;
-		}
+			{
+				/* Nothing to free */
+				break;
+			}
 		case PLTSQL_STMT_DECL_CURSOR:
-		{
-			PLtsql_stmt_decl_cursor *decl = (PLtsql_stmt_decl_cursor *) stmt;
-			free_expr(decl->cursor_explicit_expr);
-			break;
-		}
-	    case PLTSQL_STMT_LABEL:
+			{
+				PLtsql_stmt_decl_cursor *decl = (PLtsql_stmt_decl_cursor *) stmt;
+
+				free_expr(decl->cursor_explicit_expr);
+				break;
+			}
+		case PLTSQL_STMT_LABEL:
 		case PLTSQL_STMT_USEDB:
-        case PLTSQL_STMT_INSERT_BULK:
+		case PLTSQL_STMT_INSERT_BULK:
 		case PLTSQL_STMT_GRANTDB:
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
-		{
-			/* Nothing to free */
-			break;
-		}
+			{
+				/* Nothing to free */
+				break;
+			}
 		case PLTSQL_STMT_RAISERROR:
-		{
-			PLtsql_stmt_raiserror *raiserror = (PLtsql_stmt_raiserror *) stmt;
-			ListCell *l;
+			{
+				PLtsql_stmt_raiserror *raiserror = (PLtsql_stmt_raiserror *) stmt;
+				ListCell   *l;
 
-			foreach(l, raiserror->params)
-				free_expr((PLtsql_expr *) lfirst(l));
-			break;
-		}
+				foreach(l, raiserror->params)
+					free_expr((PLtsql_expr *) lfirst(l));
+				break;
+			}
 		case PLTSQL_STMT_THROW:
-		{
-			PLtsql_stmt_throw *throw = (PLtsql_stmt_throw *) stmt;
-			ListCell *l;
+			{
+				PLtsql_stmt_throw *throw = (PLtsql_stmt_throw *) stmt;
+				ListCell   *l;
 
-			foreach(l, throw->params)
-				free_expr((PLtsql_expr *) lfirst(l));
-			break;
-		}
-        case PLTSQL_STMT_SAVE_CTX:
-        case PLTSQL_STMT_RESTORE_CTX_FULL:
-        case PLTSQL_STMT_RESTORE_CTX_PARTIAL:
-        {
-            break;
-        }
-	    default:
+				foreach(l, throw->params)
+					free_expr((PLtsql_expr *) lfirst(l));
+				break;
+			}
+		case PLTSQL_STMT_SAVE_CTX:
+		case PLTSQL_STMT_RESTORE_CTX_FULL:
+		case PLTSQL_STMT_RESTORE_CTX_PARTIAL:
+			{
+				break;
+			}
+		default:
 			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
 			break;
 	}
@@ -542,85 +568,86 @@ free_stmt2(PLtsql_stmt *stmt)
  *                            DUMP FUNCTIONS
  **********************************************************************************/
 
-void dump_stmt2(PLtsql_stmt *stmt);
+void		dump_stmt2(PLtsql_stmt *stmt);
 
-void dump_stmt_print(PLtsql_stmt_print *stmt_print);
-void dump_stmt_init(PLtsql_stmt_init *stmt_init);
-void dump_stmt_push_result(PLtsql_stmt_push_result *stmt_push_result);
-void dump_stmt_exec(PLtsql_stmt_exec *stmt_exec);
-void dump_stmt_goto(PLtsql_stmt_goto *stmt_goto);
-void dump_stmt_label(PLtsql_stmt_label *stmt_label);
-void dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror);
-void dump_stmt_throw(PLtsql_stmt_throw *stmt_throw);
-void dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb);
-void dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb);
-void dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
-void dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
-void dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
-void dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch);
-void get_grantees_names(List *grantees, StringInfo grantees_names);
+void		dump_stmt_print(PLtsql_stmt_print *stmt_print);
+void		dump_stmt_init(PLtsql_stmt_init *stmt_init);
+void		dump_stmt_push_result(PLtsql_stmt_push_result *stmt_push_result);
+void		dump_stmt_exec(PLtsql_stmt_exec *stmt_exec);
+void		dump_stmt_goto(PLtsql_stmt_goto *stmt_goto);
+void		dump_stmt_label(PLtsql_stmt_label *stmt_label);
+void		dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror);
+void		dump_stmt_throw(PLtsql_stmt_throw *stmt_throw);
+void		dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb);
+void		dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb);
+void		dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
+void		dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
+void		dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
+void		dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch);
+void		get_grantees_names(List *grantees, StringInfo grantees_names);
 
 void
 dump_stmt_print(PLtsql_stmt_print *stmt_print)
 {
-    ListCell *l;
+	ListCell   *l;
 
-    printf("PRINT ");
-    foreach(l, stmt_print->exprs)
-    {
-        dump_expr((PLtsql_expr *) lfirst(l));
-        printf(" ,");
-    }
-    printf("\n");
+	printf("PRINT ");
+	foreach(l, stmt_print->exprs)
+	{
+		dump_expr((PLtsql_expr *) lfirst(l));
+		printf(" ,");
+	}
+	printf("\n");
 }
 
 void
 dump_stmt_init(PLtsql_stmt_init *stmt_init)
 {
-    ListCell *l;
-    printf("DECLARE ");
-    foreach(l, stmt_init->inits)
-    {
-        if (l)
-            dump_assign((PLtsql_stmt_assign *)lfirst(l));
+	ListCell   *l;
 
-        printf(" ,");  /* could not print some variables */
-    }
-    printf("\n");
+	printf("DECLARE ");
+	foreach(l, stmt_init->inits)
+	{
+		if (l)
+			dump_assign((PLtsql_stmt_assign *) lfirst(l));
+
+		printf(" ,");			/* could not print some variables */
+	}
+	printf("\n");
 }
 
 void
 dump_stmt_push_result(PLtsql_stmt_push_result *stmt_push_result)
 {
-    printf("PUSH RESULT: ");
-    dump_expr(stmt_push_result->query);
-    printf("\n");
+	printf("PUSH RESULT: ");
+	dump_expr(stmt_push_result->query);
+	printf("\n");
 }
 
 void
 dump_stmt_exec(PLtsql_stmt_exec *stmt_exec)
 {
-    printf("EXEC ");
-    dump_expr(stmt_exec->expr);
-    printf("\n");
+	printf("EXEC ");
+	dump_expr(stmt_exec->expr);
+	printf("\n");
 }
 
 void
 dump_stmt_goto(PLtsql_stmt_goto *stmt_goto)
 {
-    printf("GOTO %s\n", stmt_goto->target_label);
+	printf("GOTO %s\n", stmt_goto->target_label);
 }
 
 void
 dump_stmt_label(PLtsql_stmt_label *stmt_label)
 {
-    printf("%s:\n", stmt_label->label);
+	printf("%s:\n", stmt_label->label);
 }
 
 void
 dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror)
 {
-	ListCell *l;
+	ListCell   *l;
 
 	printf("RAISERROR ");
 	foreach(l, stmt_raiserror->params)
@@ -634,7 +661,7 @@ dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror)
 void
 dump_stmt_throw(PLtsql_stmt_throw *stmt_throw)
 {
-	ListCell *l;
+	ListCell   *l;
 
 	if (stmt_throw->params == NIL)
 		printf("THROW\n");
@@ -656,12 +683,14 @@ dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb)
 	printf("USE %s\n", stmt_usedb->db_name);
 }
 
-void get_grantees_names(List *grantees, StringInfo grantees_names)
-{	
-	for(int i = 0; i < list_length(grantees); i++)
+void
+get_grantees_names(List *grantees, StringInfo grantees_names)
+{
+	for (int i = 0; i < list_length(grantees); i++)
 	{
-		char *grantee_name = (char *) list_nth(grantees, i);
-		if(i < list_length(grantees) - 1)
+		char	   *grantee_name = (char *) list_nth(grantees, i);
+
+		if (i < list_length(grantees) - 1)
 			appendStringInfo(grantees_names, "%s, ", grantee_name);
 		else
 			appendStringInfo(grantees_names, "%s", grantee_name);
@@ -670,11 +699,12 @@ void get_grantees_names(List *grantees, StringInfo grantees_names)
 
 void
 dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb)
-{	
+{
 	StringInfoData grantees_names;
+
 	initStringInfo(&grantees_names);
 	get_grantees_names(stmt_grantdb->grantees, &grantees_names);
-	if(stmt_grantdb->is_grant)
+	if (stmt_grantdb->is_grant)
 		printf("GRANT CONNECT TO %s\n", grantees_names.data);
 	else
 		printf("REVOKE CONNECT FROM %s\n", grantees_names.data);
@@ -684,25 +714,25 @@ dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb)
 void
 dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk)
 {
-    printf("INSERT BULK %s\n", stmt_insert_bulk->table_name);
+	printf("INSERT BULK %s\n", stmt_insert_bulk->table_name);
 }
 
 void
 dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch)
 {
-    printf("TRY BEGIN\n");
-    dump_indent +=2;
+	printf("TRY BEGIN\n");
+	dump_indent += 2;
 	dump_stmt(stmt_try_catch->body);
-    dump_indent -=2;
-    dump_ind();
-    printf("TRY END\n");
-    dump_ind();
-    printf("CATCH BEGIN\n");
-    dump_indent +=2;
+	dump_indent -= 2;
+	dump_ind();
+	printf("TRY END\n");
+	dump_ind();
+	printf("CATCH BEGIN\n");
+	dump_indent += 2;
 	dump_stmt(stmt_try_catch->handler);
-    dump_indent -=2;
-    dump_ind();
-    printf("CATCH END\n");
+	dump_indent -= 2;
+	dump_ind();
+	printf("CATCH END\n");
 }
 
 void
@@ -727,95 +757,95 @@ dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch)
 static void
 dump_stmt2(PLtsql_stmt *stmt)
 {
-    switch (stmt->cmd_type)
-    {
-        case PLTSQL_STMT_GOTO:
-        {
-            dump_stmt_goto((PLtsql_stmt_goto *) stmt);
-            break;
-        }
-        case PLTSQL_STMT_PRINT:
-        {
-            dump_stmt_print((PLtsql_stmt_print *) stmt);
-            break;
-        }
-        case PLTSQL_STMT_INIT:
-        {
-            dump_stmt_init((PLtsql_stmt_init *) stmt);
-            break;
-        }
-	    case PLTSQL_STMT_QUERY_SET:
-		{
-			dump_stmt_query_set((PLtsql_stmt_query_set *) stmt);
-			break;
-		}
-        case PLTSQL_STMT_TRY_CATCH:
-        {
-            dump_stmt_try_catch((PLtsql_stmt_try_catch *) stmt);
-            break;
-        }
-        case PLTSQL_STMT_PUSH_RESULT:
-        {
-            dump_stmt_push_result((PLtsql_stmt_push_result *) stmt);
-            break;
-        }
-        case PLTSQL_STMT_EXEC:
-        {
-            dump_stmt_exec((PLtsql_stmt_exec *) stmt);
-            break;
-        }
+	switch (stmt->cmd_type)
+	{
+		case PLTSQL_STMT_GOTO:
+			{
+				dump_stmt_goto((PLtsql_stmt_goto *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_PRINT:
+			{
+				dump_stmt_print((PLtsql_stmt_print *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_INIT:
+			{
+				dump_stmt_init((PLtsql_stmt_init *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_QUERY_SET:
+			{
+				dump_stmt_query_set((PLtsql_stmt_query_set *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_TRY_CATCH:
+			{
+				dump_stmt_try_catch((PLtsql_stmt_try_catch *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_PUSH_RESULT:
+			{
+				dump_stmt_push_result((PLtsql_stmt_push_result *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_EXEC:
+			{
+				dump_stmt_exec((PLtsql_stmt_exec *) stmt);
+				break;
+			}
 		case PLTSQL_STMT_EXEC_BATCH:
-		{
-			dump_stmt_exec_batch((PLtsql_stmt_exec_batch *) stmt);
-			break;
-		}
+			{
+				dump_stmt_exec_batch((PLtsql_stmt_exec_batch *) stmt);
+				break;
+			}
 		case PLTSQL_STMT_DECL_TABLE:
-		{
-			printf("DECLARE TABLE");
-			break;
-		}
+			{
+				printf("DECLARE TABLE");
+				break;
+			}
 		case PLTSQL_STMT_RETURN_TABLE:
-		{
-			dump_return_query((PLtsql_stmt_return_query *) stmt);
-			break;
-		}
+			{
+				dump_return_query((PLtsql_stmt_return_query *) stmt);
+				break;
+			}
 		case PLTSQL_STMT_DEALLOCATE:
-		{
-			printf("DEALLOCATE");
-			break;
-		}
-        case PLTSQL_STMT_LABEL:
-        {
-            dump_stmt_label((PLtsql_stmt_label *) stmt);
-            break;
-        }
+			{
+				printf("DEALLOCATE");
+				break;
+			}
+		case PLTSQL_STMT_LABEL:
+			{
+				dump_stmt_label((PLtsql_stmt_label *) stmt);
+				break;
+			}
 		case PLTSQL_STMT_RAISERROR:
-		{
-			dump_stmt_raiserror((PLtsql_stmt_raiserror *) stmt);
-			break;
-		}
+			{
+				dump_stmt_raiserror((PLtsql_stmt_raiserror *) stmt);
+				break;
+			}
 		case PLTSQL_STMT_THROW:
-		{
-			dump_stmt_throw((PLtsql_stmt_throw *) stmt);
-			break;
-		}
+			{
+				dump_stmt_throw((PLtsql_stmt_throw *) stmt);
+				break;
+			}
 		case PLTSQL_STMT_USEDB:
-		{
-			dump_stmt_usedb((PLtsql_stmt_usedb *) stmt);
-			break;
-		}
+			{
+				dump_stmt_usedb((PLtsql_stmt_usedb *) stmt);
+				break;
+			}
 		case PLTSQL_STMT_GRANTDB:
-		{
-			dump_stmt_grantdb((PLtsql_stmt_grantdb *) stmt);
+			{
+				dump_stmt_grantdb((PLtsql_stmt_grantdb *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_INSERT_BULK:
+			{
+				dump_stmt_insert_bulk((PLtsql_stmt_insert_bulk *) stmt);
+				break;
+			}
+		default:
+			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
 			break;
-		}
-        case PLTSQL_STMT_INSERT_BULK:
-        {
-            dump_stmt_insert_bulk((PLtsql_stmt_insert_bulk *) stmt);
-            break;
-        }
-        default:
-            elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
-            break;
-    }
+	}
 }

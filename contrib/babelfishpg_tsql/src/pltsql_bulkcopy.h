@@ -11,7 +11,8 @@ typedef struct CopyMultiInsertInfo
 {
 	List	   *multiInsertBuffers; /* List of tracked CopyMultiInsertBuffers */
 	int			bufferedTuples; /* number of tuples buffered over all buffers */
-	BulkCopyState cstate;		/* Bulk Copy state for this CopyMultiInsertInfo */
+	BulkCopyState cstate;		/* Bulk Copy state for this
+								 * CopyMultiInsertInfo */
 	EState	   *estate;			/* Executor state used for BULK COPY */
 	CommandId	mycid;			/* Command Id used for BULK COPY */
 	int			ti_options;		/* table insert options */
@@ -46,8 +47,8 @@ typedef struct BulkCopyStateData
 	int		   *defmap;			/* array of default att numbers */
 	ExprState **defexprs;		/* array of default att expressions */
 	List	   *range_table;
-	int 		seq_index; 		/* index for an identity column */
-	Oid			seqid; 			/* oid of the sequence for an identity column */
+	int			seq_index;		/* index for an identity column */
+	Oid			seqid;			/* oid of the sequence for an identity column */
 	int			rv_index;		/* index for a rowversion datatype column */
 
 } BulkCopyStateData;
@@ -62,18 +63,21 @@ typedef struct BulkCopyStmt
 	List	   *attlist;		/* List of column names (as Strings), or NIL
 								 * for all columns */
 
-	int 		cur_batch_num;  /* Inserts can be batched implicitly depending on protocol side,
-								 * we should hold a counter for the current batch */
-	uint64 		rows_processed; /* Number of rows processed helps in tracking the progress */
+	int			cur_batch_num;	/* Inserts can be batched implicitly depending
+								 * on protocol side, we should hold a counter
+								 * for the current batch */
+	uint64		rows_processed; /* Number of rows processed helps in tracking
+								 * the progress */
 
-	int 		ncol;			/* Holds the number of columns */
-	int 		nrow;			/* Holds the number of rows for the current batch */
-	Datum	   *Values;			/* List of Values (as Datums) that need to be inserted
-								 * for the current batch */
-	bool 	   *Nulls;			/* List of Nulls (as Datums) that need to be inserted
-								 * for the current batch */
-	BulkCopyState cstate;   /* Contains all the state variables used throughout a BULK COPY */
+	int			ncol;			/* Holds the number of columns */
+	int			nrow;			/* Holds the number of rows for the current
+								 * batch */
+	Datum	   *Values;			/* List of Values (as Datums) that need to be
+								 * inserted for the current batch */
+	bool	   *Nulls;			/* List of Nulls (as Datums) that need to be
+								 * inserted for the current batch */
+	BulkCopyState cstate;		/* Contains all the state variables used
+								 * throughout a BULK COPY */
 } BulkCopyStmt;
 
 extern void BulkCopy(BulkCopyStmt *stmt, uint64 *processed);
-extern void EndBulkCopy(BulkCopyState cstate);

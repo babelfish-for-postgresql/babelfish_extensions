@@ -19,5 +19,3 @@
 
 /* Range-check a datetime */
 #define IS_VALID_DATETIME2(t)  (MIN_DATETIME2 <= (t) && (t) < END_DATETIME2)
-
-#endif							/* PLTSQL_DATETIME2_H */
