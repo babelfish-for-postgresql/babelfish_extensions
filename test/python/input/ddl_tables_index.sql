@@ -14,8 +14,6 @@ DROP TABLE IF EXISTS test_tsql_const
 GO
 DROP TABLE IF EXISTS test_tsql_cast
 GO
-DROP TABLE IF EXISTS test_tsql_collate
-GO
 DROP TABLE IF EXISTS test_datetime
 GO
 DROP TABLE IF EXISTS test_functioncall
@@ -76,8 +74,6 @@ GO
 DROP TABLE IF EXISTS test_tsql_const
 GO
 DROP TABLE IF EXISTS test_tsql_cast
-GO
-DROP TABLE IF EXISTS test_tsql_collate
 GO
 DROP TABLE IF EXISTS test_datetime
 GO
