@@ -136,10 +136,7 @@ static void pltsql_CreateFunctionStmt(ParseState *pstate,
 									  bool readOnlyTree,
 									  ProcessUtilityContext context,
 									  ParamListInfo params);
-<<<<<<< HEAD
-=======
 
->>>>>>> 53795d5c (Create proc/func not visible in the pg_stat_statements view)
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -201,6 +198,7 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static CreateFunctionStmt_hook_type prev_CreateFunctionStmt_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
+
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -320,7 +318,9 @@ void
 UninstallExtendedHooks(void)
 {
 	IsExtendedCatalogHook = PrevIsExtendedCatalogHook;
+
 	object_access_hook = prev_object_access_hook;
+
 	core_yylex_hook = prev_core_yylex_hook;
 	set_target_table_alternative_hook = NULL;
 	get_output_clause_status_hook = NULL;
@@ -362,6 +362,7 @@ UninstallExtendedHooks(void)
 /*****************************************
  * 			Hook Functions
  *****************************************/
+
 static void
 pltsql_CreateFunctionStmt(ParseState *pstate,
 							   PlannedStmt *pstmt,
@@ -370,7 +371,7 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 							   ProcessUtilityContext context,
 							   ParamListInfo params)
 {
-	
+
 	Node *parsetree = pstmt->utilityStmt;
 	CreateFunctionStmt *stmt = (CreateFunctionStmt *)parsetree;
 	bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
@@ -462,7 +463,7 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 			/* Need CCI between commands */
 			CommandCounterIncrement();
 		}
-		
+
 		address = CreateFunction(pstate, stmt);
 
 		/* Store function/procedure related metadata in babelfish catalog */
