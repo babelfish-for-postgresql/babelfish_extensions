@@ -1067,3 +1067,4 @@ Datum create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(0);
 }
+

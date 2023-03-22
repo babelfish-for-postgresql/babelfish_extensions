@@ -40,7 +40,7 @@
 #include "src/include/err_handler.h"
 #include "src/include/guc.h"
 
-static listen_init_hook_type    prev_listen_init;
+static listen_init_hook_type prev_listen_init;
 
 static bool LoadedSSL = false;
 
@@ -52,18 +52,18 @@ static ErrorContextCallback tdserrcontext;
 
 TdsErrorContextData *TdsErrorContext = NULL;
 
-static int  pe_accept(pgsocket server_fd, Port *port);
+static int	pe_accept(pgsocket server_fd, Port *port);
 static void pe_listen_init(void);
 static void pe_close(pgsocket server_fd);
 static void pe_tds_init(void);
-static int  pe_start(Port *port);
+static int	pe_start(Port *port);
 static void pe_authenticate(Port *port, const char **username);
 static void pe_mainfunc(Port *port,
-						   int argc, char *argv[]) pg_attribute_noreturn();
+						int argc, char *argv[]) pg_attribute_noreturn();
 static void pe_send_message(ErrorData *edata);
 static void pe_send_ready_for_query(CommandDest dest);
-static int  pe_read_command(StringInfo inBuf);
-static int  pe_process_command(void);
+static int	pe_read_command(StringInfo inBuf);
+static int	pe_process_command(void);
 static void pe_end_command(QueryCompletion *qc, CommandDest dest);
 static void pe_report_param_status(const char *name, char *val);
 static void socket_close(int code, Datum arg);
@@ -79,7 +79,7 @@ static ProtocolExtensionConfig pe_config = {
 	pe_authenticate,
 	pe_mainfunc,
 	pe_send_message,
-	NULL,                       /* not interested in cancel key */
+	NULL,						/* not interested in cancel key */
 	NULL,
 	NULL,
 	pe_send_ready_for_query,
@@ -162,14 +162,13 @@ pe_tds_init(void)
 
 	/*
 	 * If this is a TDS client, we install the TDS specific protocol function
-	 * hooks.
-	 * XXX: All of them should be removed in future.
+	 * hooks. XXX: All of them should be removed in future.
 	 */
 	lookup_param_hook = TdsFindParam;
 
 	/* Set up a rendezvous point with pltsql plugin */
 	pltsql_plugin_handler_ptr_tmp = (PLtsql_protocol_plugin **)
-	find_rendezvous_variable("PLtsql_protocol_plugin");
+		find_rendezvous_variable("PLtsql_protocol_plugin");
 
 	/* unlikely */
 	if (!pltsql_plugin_handler_ptr_tmp)
@@ -217,19 +216,19 @@ pe_tds_init(void)
 static int
 pe_start(Port *port)
 {
-	int rc;
-	MemoryContext	oldContext;
+	int			rc;
+	MemoryContext oldContext;
 
 	/* we're ready to begin the communication with the TDS client */
-	if((pltsql_plugin_handler_ptr))
+	if ((pltsql_plugin_handler_ptr))
 		pltsql_plugin_handler_ptr->is_tds_client = true;
 
 	/*
-	 * Initialise The Global Variable TdsErrorContext, which is
-	 * to be used throughout TDS.  We could have allocated the same
-	 * in TdsMemoryContext.  But, during reset connection, we reset
-	 * the same.  We don't want to reset TdsErrorContext at that point
-	 * of time.  So, allocate the memory in TopMemoryContext.
+	 * Initialise The Global Variable TdsErrorContext, which is to be used
+	 * throughout TDS.  We could have allocated the same in TdsMemoryContext.
+	 * But, during reset connection, we reset the same.  We don't want to
+	 * reset TdsErrorContext at that point of time.  So, allocate the memory
+	 * in TopMemoryContext.
 	 */
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	TdsErrorContext = palloc(sizeof(TdsErrorContextData));
@@ -316,7 +315,7 @@ pe_authenticate(Port *port, const char **username)
 	/*
 	 * Now perform authentication exchange.
 	 */
-	TdsClientAuthentication(port); /* might not return, if failure */
+	TdsClientAuthentication(port);	/* might not return, if failure */
 
 	/*
 	 * Done with authentication.  Disable the timeout, and log if needed.
@@ -333,7 +332,7 @@ pe_authenticate(Port *port, const char **username)
 						 port->user_name);
 		if (port->application_name)
 			appendStringInfo(&logmsg, _(" application=%s,"),
-				port->application_name);
+							 port->application_name);
 
 		appendStringInfo(&logmsg, _(" Tds Version=0x%X."), GetClientTDSVersion());
 
@@ -343,7 +342,7 @@ pe_authenticate(Port *port, const char **username)
 
 	set_ps_display("startup");
 
-	ClientAuthInProgress = false;   /* client_min_messages is active now */
+	ClientAuthInProgress = false;	/* client_min_messages is active now */
 
 	*username = port->user_name;
 }
@@ -352,10 +351,9 @@ static void
 pe_mainfunc(Port *port, int argc, char *argv[])
 {
 	/*
-	 * This protocol doesn't need anything other than the default
-	 * behavior of PostgresMain(). Note that PostgresMain() will
-	 * connect to the database and in turn will call our
-	 * pe_authenticate() function.
+	 * This protocol doesn't need anything other than the default behavior of
+	 * PostgresMain(). Note that PostgresMain() will connect to the database
+	 * and in turn will call our pe_authenticate() function.
 	 */
 	PostgresMain(argc, argv, port->database_name,
 				 port->user_name);
@@ -397,7 +395,7 @@ pe_send_ready_for_query(CommandDest dest)
 static int
 pe_read_command(StringInfo inBuf)
 {
-	int rc;
+	int			rc;
 
 	/* Push the error context */
 	tdserrcontext.callback = TdsErrorContextCallback;
@@ -415,7 +413,7 @@ pe_read_command(StringInfo inBuf)
 static int
 pe_process_command()
 {
-	int result;
+	int			result;
 
 	/* Push the error context */
 	tdserrcontext.callback = TdsErrorContextCallback;
@@ -424,12 +422,14 @@ pe_process_command()
 	error_context_stack = &tdserrcontext;
 
 	result = TdsSocketBackend();
+
 	/*
 	 * If no transaction is on-going, enforce transaction state cleanup before
-	 * calling pgstat_report_stat function which requires a clean transaction state.
+	 * calling pgstat_report_stat function which requires a clean transaction
+	 * state.
 	 */
 	if (!IsTransactionOrTransactionBlock())
-			Cleanup_xact_PgStat();
+		Cleanup_xact_PgStat();
 
 	/* Pop the error context stack */
 	error_context_stack = tdserrcontext.previous;

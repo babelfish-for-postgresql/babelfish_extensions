@@ -73,39 +73,39 @@ extern bool pltsql_ansi_nulls;
  *****************************************/
 IsExtendedCatalogHookType PrevIsExtendedCatalogHook = NULL;
 static bool PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
-							     bool include_out_arguments, int pronargs,
-							     int **argnumbers, List **defaults);
+								 bool include_out_arguments, int pronargs,
+								 int **argnumbers, List **defaults);
 static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 								   bool include_out_arguments, int **argnumbers,
 								   List **defaults, bool expand_defaults, bool expand_variadic,
 								   bool *use_defaults, bool *any_special,
 								   bool *variadic, Oid *va_elem_type);
-static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok,bool object_from_input);
-Oid get_tsql_trigger_oid(List *object, const char *tsql_trigger_name,bool object_from_input);
-static Node* transform_like_in_add_constraint (Node* node);
+static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input);
+Oid			get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input);
+static Node *transform_like_in_add_constraint(Node *node);
 
 /*****************************************
  * 			Analyzer Hooks
  *****************************************/
-static int pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType command);
+static int	pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType command);
 static void set_output_clause_transformation_info(bool enabled);
 static bool get_output_clause_transformation_info(void);
 static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query);
 static void handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstate);
 static void check_insert_row(List *icolumns, List *exprList, Oid relid);
-static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, ColumnDef *column, List **alist);
-static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist);
+static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist);
+static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
-static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
+static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
 
 /*****************************************
  * 			Commands Hooks
  *****************************************/
-static int find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
+static int	find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
 static void pltsql_drop_func_default_positions(Oid objectId);
 
 /*****************************************
@@ -116,12 +116,13 @@ extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern PLtsql_execstate *get_current_tsql_estate();
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
 static void pltsql_drop_view_definition(Oid objectId);
-static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
+static void preserve_view_constraints_from_base_table(ColumnDef *col, Oid tableOid, AttrNumber colId);
 static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base);
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
-static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
+static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
+
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -148,7 +149,7 @@ static char *gen_func_arg_list(Oid objectId);
 /*****************************************
  * 			Planner Hook
  *****************************************/
-static PlannedStmt * pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
+static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -294,7 +295,7 @@ UninstallExtendedHooks(void)
 	get_output_clause_status_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
-	pre_transform_insert_hook = prev_pre_transform_insert_hook ;
+	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
@@ -330,7 +331,7 @@ UninstallExtendedHooks(void)
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
 {
-	Oid minOid;
+	Oid			minOid;
 
 	if (!babelfish_dump_restore || !babelfish_dump_restore_min_oid)
 		return;
@@ -347,10 +348,12 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
-	int ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
+	int			ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
+
 	if (pltsql_explain_analyze)
 	{
 		PLtsql_execstate *estate = get_current_tsql_estate();
+
 		Assert(estate != NULL);
 		INSTR_TIME_SET_CURRENT(estate->execution_start);
 	}
@@ -448,25 +451,25 @@ pltsql_ExecutorEnd(QueryDesc *queryDesc)
 }
 
 /**
- * @brief 
- *  the function will depend on PLtsql_execstate to find whether 
- *  the trigger is called before on this query stack, so that's why we 
+ * @brief
+ *  the function will depend on PLtsql_execstate to find whether
+ *  the trigger is called before on this query stack, so that's why we
  *  have to add a hook into Postgres code to callback into babel code,
- *  since we need to get access to PLtsql_execstate to iterate the 
+ *  since we need to get access to PLtsql_execstate to iterate the
  *  stack triggers
- *  
+ *
  *  return true if it's a recursive call of trigger
  *  return false if it's not
- * 
- * @param resultRelInfo 
- * @return true 
- * @return false 
+ *
+ * @param resultRelInfo
+ * @return true
+ * @return false
  */
 static bool
 plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 {
-	int i;
-	PLExecStateCallStack * cur;
+	int			i;
+	PLExecStateCallStack *cur;
 	PLtsql_execstate *estate;
 
 	if (resultRelInfo->ri_TrigDesc == NULL)
@@ -474,16 +477,21 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 	if (pltsql_recursive_triggers)
 		return false;
 	cur = exec_state_call_stack;
-	while (cur != NULL){
+	while (cur != NULL)
+	{
 		estate = cur->estate;
 		if (estate->trigdata != NULL && estate->trigdata->tg_trigger != NULL
-		&& resultRelInfo->ri_TrigDesc != NULL 
-		&& (resultRelInfo->ri_TrigDesc->trig_insert_instead_statement
-		|| resultRelInfo->ri_TrigDesc->trig_delete_instead_statement 
-		|| resultRelInfo->ri_TrigDesc->trig_update_instead_statement)){
-			for (i = 0; i<resultRelInfo->ri_TrigDesc->numtriggers; ++i){
+			&& resultRelInfo->ri_TrigDesc != NULL
+			&& (resultRelInfo->ri_TrigDesc->trig_insert_instead_statement
+				|| resultRelInfo->ri_TrigDesc->trig_delete_instead_statement
+				|| resultRelInfo->ri_TrigDesc->trig_update_instead_statement))
+		{
+			for (i = 0; i < resultRelInfo->ri_TrigDesc->numtriggers; ++i)
+			{
 				Trigger    *trigger = &resultRelInfo->ri_TrigDesc->triggers[i];
-				if (trigger->tgoid == estate->trigdata->tg_trigger->tgoid){
+
+				if (trigger->tgoid == estate->trigdata->tg_trigger->tgoid)
+				{
 					return true;
 				}
 			}
@@ -496,26 +504,31 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 static Node *
 output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query)
 {
-	Node	    *qual = NULL, *pre_transform_qual = NULL;
-	RangeVar	*from_table = NULL;
-	ColumnRef	*l_expr, *r_expr;
-	A_Expr 		*where_ctid = NULL;
-	Node 		*where_clone = NULL;
+	Node	   *qual = NULL,
+			   *pre_transform_qual = NULL;
+	RangeVar   *from_table = NULL;
+	ColumnRef  *l_expr,
+			   *r_expr;
+	A_Expr	   *where_ctid = NULL;
+	Node	   *where_clone = NULL;
 
-	/* 
-	* Invoke transformWhereClause() to check for ambiguities in column name
-	* of the original query before self-join transformation.
-	*/
+	/*
+	 * Invoke transformWhereClause() to check for ambiguities in column name
+	 * of the original query before self-join transformation.
+	 */
 	where_clone = copyObject(stmt->whereClause);
 	pre_transform_qual = transformWhereClause(pstate, stmt->whereClause,
-							EXPR_KIND_WHERE, "WHERE");
+											  EXPR_KIND_WHERE, "WHERE");
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return pre_transform_qual;
 
 	if (get_output_clause_transformation_info())
 	{
-		/* Unset the OUTPUT clause info variable to prevent unintended side-effects */
+		/*
+		 * Unset the OUTPUT clause info variable to prevent unintended
+		 * side-effects
+		 */
 		set_output_clause_transformation_info(false);
 
 		/* Add target table with deleted alias to the from clause */
@@ -532,32 +545,40 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 		r_expr = makeNode(ColumnRef);
 		r_expr->fields = list_make2(makeString("deleted"), makeString("ctid"));
 		r_expr->location = -1;
-		where_ctid = makeA_Expr(AEXPR_OP, list_make1(makeString("=")), (Node*) l_expr, (Node*) r_expr, -1);
+		where_ctid = makeA_Expr(AEXPR_OP, list_make1(makeString("=")), (Node *) l_expr, (Node *) r_expr, -1);
 
 		/* Add the self-join condition to the where clause */
 		if (where_clone)
 		{
-			BoolExpr *self_join_condition;
-			self_join_condition = (BoolExpr*) makeBoolExpr(AND_EXPR, list_make2(where_clone, where_ctid), -1);
-			stmt->whereClause = (Node*) self_join_condition;
+			BoolExpr   *self_join_condition;
+
+			self_join_condition = (BoolExpr *) makeBoolExpr(AND_EXPR, list_make2(where_clone, where_ctid), -1);
+			stmt->whereClause = (Node *) self_join_condition;
 		}
 		else
-			stmt->whereClause = (Node*) where_ctid;
+			stmt->whereClause = (Node *) where_ctid;
 
-		/* Set the OUTPUT clause info variable to be used in transformColumnRef() */
+		/*
+		 * Set the OUTPUT clause info variable to be used in
+		 * transformColumnRef()
+		 */
 		set_output_clause_transformation_info(true);
 
 		/*
-		* We let transformWhereClause() be called before the invokation of this hook
-		* to handle ambiguity errors. If there are any ambiguous references in the
-		* query an error is thrown. At this point, we have cleared that check and 
-		* know that there are no ambiguities. Therefore, we can go ahead with the
-		* where clause transformation without worrying about ambiguous references.
-		*/
+		 * We let transformWhereClause() be called before the invokation of
+		 * this hook to handle ambiguity errors. If there are any ambiguous
+		 * references in the query an error is thrown. At this point, we have
+		 * cleared that check and know that there are no ambiguities.
+		 * Therefore, we can go ahead with the where clause transformation
+		 * without worrying about ambiguous references.
+		 */
 		qual = transformWhereClause(pstate, stmt->whereClause,
-								EXPR_KIND_WHERE, "WHERE");
+									EXPR_KIND_WHERE, "WHERE");
 
-		/* Unset the OUTPUT clause info variable because we do not need it anymore */
+		/*
+		 * Unset the OUTPUT clause info variable because we do not need it
+		 * anymore
+		 */
 		set_output_clause_transformation_info(false);
 	}
 	else
@@ -582,14 +603,16 @@ get_output_clause_transformation_info(void)
 static void
 handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstate)
 {
-	ListCell   			*o_target, *expr;
-	Node	   			*field1;
-	char	   			*qualifier = NULL; 
-	ParseNamespaceItem  *nsitem = NULL;
-	int 				levels_up;
-	bool 				inserted = false, deleted = false;
-	List				*queue = NIL;
-	CmdType 			command = query->commandType;
+	ListCell   *o_target,
+			   *expr;
+	Node	   *field1;
+	char	   *qualifier = NULL;
+	ParseNamespaceItem *nsitem = NULL;
+	int			levels_up;
+	bool		inserted = false,
+				deleted = false;
+	List	   *queue = NIL;
+	CmdType		command = query->commandType;
 
 	if (prev_pre_transform_returning_hook)
 		prev_pre_transform_returning_hook(query, returningList, pstate);
@@ -597,12 +620,13 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	/* 
- 	 * For UPDATE/DELETE statement, we'll need to update the result relation index after 
- 	 * analyzing FROM clause and getting the final range table entries.
- 	 * post_parse_analyze hook, won't be triggered by CTE parse analyze. So we perform the
- 	 * operation here instead, which will be triggered by all INSERT/UPDATE/DELETE statements.
- 	 */
+	/*
+	 * For UPDATE/DELETE statement, we'll need to update the result relation
+	 * index after analyzing FROM clause and getting the final range table
+	 * entries. post_parse_analyze hook, won't be triggered by CTE parse
+	 * analyze. So we perform the operation here instead, which will be
+	 * triggered by all INSERT/UPDATE/DELETE statements.
+	 */
 	if (command == CMD_DELETE || command == CMD_UPDATE)
 		pltsql_update_query_result_relation(query, pstate->p_target_relation, pstate->p_rtable);
 
@@ -614,12 +638,14 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 		foreach(o_target, returningList)
 		{
 			ResTarget  *res = (ResTarget *) lfirst(o_target);
+
 			queue = NIL;
 			queue = list_make1(res->val);
 
 			foreach(expr, queue)
 			{
-				Node *node = (Node *) lfirst(expr);
+				Node	   *node = (Node *) lfirst(expr);
+
 				if (IsA(node, ColumnRef))
 				{
 					ColumnRef  *cref = (ColumnRef *) node;
@@ -647,18 +673,19 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 							cref->fields = list_delete_first(cref->fields);
 					}
 				}
-				else if(IsA(node, A_Expr))
+				else if (IsA(node, A_Expr))
 				{
-					A_Expr  *a_expr = (A_Expr *) node;
+					A_Expr	   *a_expr = (A_Expr *) node;
 
 					if (a_expr->lexpr)
 						queue = lappend(queue, a_expr->lexpr);
 					if (a_expr->rexpr)
 						queue = lappend(queue, a_expr->rexpr);
 				}
-				else if(IsA(node, FuncCall))
+				else if (IsA(node, FuncCall))
 				{
-					FuncCall *func_call = (FuncCall*) node;
+					FuncCall   *func_call = (FuncCall *) node;
+
 					if (func_call->args)
 						queue = list_concat(queue, func_call->args);
 				}
@@ -670,22 +697,24 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 		foreach(o_target, returningList)
 		{
 			ResTarget  *res = (ResTarget *) lfirst(o_target);
+
 			queue = NIL;
 			queue = list_make1(res->val);
 
 			foreach(expr, queue)
 			{
-				Node *node = (Node *) lfirst(expr);
+				Node	   *node = (Node *) lfirst(expr);
 
 				if (IsA(node, ColumnRef))
 				{
 					/*
-					* Checks for RTEs could have been performed outside of the loop
-					* but we need to perform them inside the loop so that we can pass
-					* cref->location to refnameRangeTblEntry() and keep error messages
-					* correct.
-					*/
+					 * Checks for RTEs could have been performed outside of
+					 * the loop but we need to perform them inside the loop so
+					 * that we can pass cref->location to
+					 * refnameRangeTblEntry() and keep error messages correct.
+					 */
 					ColumnRef  *cref = (ColumnRef *) node;
+
 					nsitem = refnameNamespaceItem(pstate, NULL, "inserted",
 												  cref->location,
 												  &levels_up);
@@ -702,18 +731,19 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 					if (inserted && deleted)
 						break;
 				}
-				else if(IsA(node, A_Expr))
+				else if (IsA(node, A_Expr))
 				{
-					A_Expr  *a_expr = (A_Expr *) node;
+					A_Expr	   *a_expr = (A_Expr *) node;
 
 					if (a_expr->lexpr)
 						queue = lappend(queue, a_expr->lexpr);
 					if (a_expr->rexpr)
 						queue = lappend(queue, a_expr->rexpr);
 				}
-				else if(IsA(node, FuncCall))
+				else if (IsA(node, FuncCall))
 				{
-					FuncCall *func_call = (FuncCall*) node;
+					FuncCall   *func_call = (FuncCall *) node;
+
 					if (func_call->args)
 						queue = list_concat(queue, func_call->args);
 				}
@@ -722,16 +752,18 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 		foreach(o_target, returningList)
 		{
 			ResTarget  *res = (ResTarget *) lfirst(o_target);
+
 			queue = NIL;
 			queue = list_make1(res->val);
 
 			foreach(expr, queue)
 			{
-				Node *node = (Node *) lfirst(expr);
+				Node	   *node = (Node *) lfirst(expr);
 
 				if (IsA(node, ColumnRef))
 				{
 					ColumnRef  *cref = (ColumnRef *) node;
+
 					if (list_length(cref->fields) == 2)
 					{
 						field1 = (Node *) linitial(cref->fields);
@@ -740,6 +772,7 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 						if ((!inserted && !strcmp(qualifier, "inserted")) || (!deleted && !strcmp(qualifier, "deleted")))
 						{
 							if (update_delete_target_alias)
+
 								/*
 								 * If target relation is specified by an alias
 								 * in FROM clause, we should use the alias
@@ -753,18 +786,19 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 						}
 					}
 				}
-				else if(IsA(node, A_Expr))
+				else if (IsA(node, A_Expr))
 				{
-					A_Expr  *a_expr = (A_Expr *) node;
+					A_Expr	   *a_expr = (A_Expr *) node;
 
 					if (a_expr->lexpr)
 						queue = lappend(queue, a_expr->lexpr);
 					if (a_expr->rexpr)
 						queue = lappend(queue, a_expr->rexpr);
 				}
-				else if(IsA(node, FuncCall))
+				else if (IsA(node, FuncCall))
 				{
-					FuncCall *func_call = (FuncCall*) node;
+					FuncCall   *func_call = (FuncCall *) node;
+
 					if (func_call->args)
 						queue = list_concat(queue, func_call->args);
 				}
@@ -783,23 +817,27 @@ check_insert_row(List *icolumns, List *exprList, Oid relid)
 				 errmsg("Number of given values does not match target table definition")));
 }
 
-char*
+char *
 extract_identifier(const char *start)
 {
 	/*
-	 * We will extract original identifier from source query string. 'start' is a char potiner to start of identifier, which is provided from caller based on location of each token.
-	 * The remaning task is to find the end position of identifier. For this, we will mimic the lexer rule.
-	 * This includes plain identifier (and un-reserved keyword) as well as delimited by double-quote and squared bracket (T-SQL).
+	 * We will extract original identifier from source query string. 'start'
+	 * is a char potiner to start of identifier, which is provided from caller
+	 * based on location of each token. The remaning task is to find the end
+	 * position of identifier. For this, we will mimic the lexer rule. This
+	 * includes plain identifier (and un-reserved keyword) as well as
+	 * delimited by double-quote and squared bracket (T-SQL).
 	 *
-	 * Please note that, this function assumes that identifier is already valid. (otherwise, syntax error should be already thrown).
+	 * Please note that, this function assumes that identifier is already
+	 * valid. (otherwise, syntax error should be already thrown).
 	 */
 
-	bool dq = false;
-	bool sqb = false;
-	int i = 0;
-	char *original_name = NULL;
-	bool valid = false;
-	bool found_escaped_in_dq = false;
+	bool		dq = false;
+	bool		sqb = false;
+	int			i = 0;
+	char	   *original_name = NULL;
+	bool		valid = false;
+	bool		found_escaped_in_dq = false;
 
 	/* check identifier is delimited */
 	Assert(start);
@@ -807,14 +845,21 @@ extract_identifier(const char *start)
 		dq = true;
 	else if (start[0] == '[')
 		sqb = true;
-	++i; /* advance cursor by one. As it is already a valid identiifer, its length should be greater than 1 */
+	++i;						/* advance cursor by one. As it is already a
+								 * valid identiifer, its length should be
+								 * greater than 1 */
 
-	/* valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server allows up to 128 bascially. And escape character can take additional one byte for each character in worst case. And additional 2 byes for delimiter */
+	/*
+	 * valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server
+	 * allows up to 128 bascially. And escape character can take additional
+	 * one byte for each character in worst case. And additional 2 byes for
+	 * delimiter
+	 */
 	while (i < 258)
 	{
-		char c = start[i];
+		char		c = start[i];
 
-		if (!dq && !sqb) /* normal case */
+		if (!dq && !sqb)		/* normal case */
 		{
 			/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 			valid = is_identifier_char(c);
@@ -830,9 +875,10 @@ extract_identifier(const char *start)
 		{
 			/* please see xdinside in scan.l */
 			valid = (c != '"');
-			if (!valid && start[i+1] == '"') /* escaped */
+			if (!valid && start[i + 1] == '"')	/* escaped */
 			{
-				++i; ++i; /* advance two characters */
+				++i;
+				++i;			/* advance two characters */
 				found_escaped_in_dq = true;
 				continue;
 			}
@@ -842,18 +888,24 @@ extract_identifier(const char *start)
 				if (!found_escaped_in_dq)
 				{
 					/* no escaped character. copy whole string at once */
-					original_name = palloc(i); /* exclude first/last double quote */
-					memcpy(original_name, start + 1, i -1);
+					original_name = palloc(i);	/* exclude first/last double
+												 * quote */
+					memcpy(original_name, start + 1, i - 1);
 					original_name[i - 1] = '\0';
 					return original_name;
 				}
 				else
 				{
-					/* there is escaped character. copy one by one to handle escaped character */
-					int rcur = 1; /* read-cursor */
-					int wcur = 0; /* write-cursor */
-					original_name = palloc(i); /* exclude first/last double quote */
-					for (; rcur<i; ++rcur, ++wcur)
+					/*
+					 * there is escaped character. copy one by one to handle
+					 * escaped character
+					 */
+					int			rcur = 1;	/* read-cursor */
+					int			wcur = 0;	/* write-cursor */
+
+					original_name = palloc(i);	/* exclude first/last double
+												 * quote */
+					for (; rcur < i; ++rcur, ++wcur)
 					{
 						original_name[wcur] = start[rcur];
 						if (start[rcur] == '"')
@@ -870,8 +922,9 @@ extract_identifier(const char *start)
 			valid = (c != ']');
 			if (!valid)
 			{
-				original_name = palloc(i); /* exclude first/last square bracket */
-				memcpy(original_name, start + 1, i -1);
+				original_name = palloc(i);	/* exclude first/last square
+											 * bracket */
+				memcpy(original_name, start + 1, i - 1);
 				original_name[i - 1] = '\0';
 				return original_name;
 			}
@@ -886,15 +939,24 @@ extract_identifier(const char *start)
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
 
 static void
-pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, ColumnDef *column, List **alist)
+pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist)
 {
-	/* add "ALTER TABLE ALTER COLUMN SET (bbf_original_name=<original_name>)" to alist so that original_name will be stored in pg_attribute.attoptions */
+	/*
+	 * add "ALTER TABLE ALTER COLUMN SET (bbf_original_name=<original_name>)"
+	 * to alist so that original_name will be stored in
+	 * pg_attribute.attoptions
+	 */
 
 	AlterTableStmt *stmt;
 	AlterTableCmd *cmd;
-	// To get original column name, utilize location of ColumnDef and query string.
-	const char* column_name_start = pstate->p_sourcetext + column->location;
-	char* original_name = extract_identifier(column_name_start);
+
+	/*
+	 * To get original column name, utilize location of ColumnDef and query
+	 * string.
+	 */
+	const char *column_name_start = pstate->p_sourcetext + column->location;
+	char	   *original_name = extract_identifier(column_name_start);
+
 	if (original_name == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -921,33 +983,41 @@ extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
 extern const char *ATTOPTION_BBF_TABLE_CREATE_DATE;
 
 static void
-pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist)
+pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, char *relname, List **alist)
 {
 	AlterTableStmt *stmt;
 	AlterTableCmd *cmd_orig_name;
 	AlterTableCmd *cmd_crdate;
-	char *curr_datetime;
+	char	   *curr_datetime;
 
-	/* To get original column name, utilize location of relation and query string. */
-	char *table_name_start, *original_name, *temp;
+	/*
+	 * To get original column name, utilize location of relation and query
+	 * string.
+	 */
+	char	   *table_name_start,
+			   *original_name,
+			   *temp;
 
-	/* Skip during restore since reloptions are also dumped using separate ALTER command */
+	/*
+	 * Skip during restore since reloptions are also dumped using separate
+	 * ALTER command
+	 */
 	if (babelfish_dump_restore)
 		return;
 
 	table_name_start = (char *) pstate->p_sourcetext + relation->location;
 
 	/*
-	 * Could be the case that the fully qualified name is included,
-	 * so just find the text after '.' in the identifier.
-	 * We need to be careful as there can be '.' in the table name
-	 * itself, so we will break the loop if current string matches
-	 * with actual relname.
+	 * Could be the case that the fully qualified name is included, so just
+	 * find the text after '.' in the identifier. We need to be careful as
+	 * there can be '.' in the table name itself, so we will break the loop if
+	 * current string matches with actual relname.
 	 */
 	temp = strpbrk(table_name_start, ". ");
 	while (temp && temp[0] != ' ' &&
-		strncasecmp(relname, table_name_start, strlen(relname)) != 0 &&
-		strncasecmp(relname, table_name_start + 1, strlen(relname)) != 0) /* match after skipping delimiter */
+		   strncasecmp(relname, table_name_start, strlen(relname)) != 0 &&
+		   strncasecmp(relname, table_name_start + 1, strlen(relname)) != 0)	/* match after skipping
+																				 * delimiter */
 	{
 		temp += 1;
 		table_name_start = temp;
@@ -965,10 +1035,16 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 	stmt->cmds = NIL;
 	stmt->objtype = OBJECT_TABLE;
 
-	/* Only store original_name if there's a difference, and if the difference is only in capitalization */
+	/*
+	 * Only store original_name if there's a difference, and if the difference
+	 * is only in capitalization
+	 */
 	if (strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0)
 	{
-		/* add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to alist so that original_name will be stored in pg_class.reloptions */
+		/*
+		 * add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to
+		 * alist so that original_name will be stored in pg_class.reloptions
+		 */
 		cmd_orig_name = makeNode(AlterTableCmd);
 		cmd_orig_name->subtype = AT_SetRelOptions;
 		cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
@@ -977,7 +1053,10 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 		stmt->cmds = lappend(stmt->cmds, cmd_orig_name);
 	}
 
-	/* add "ALTER TABLE SET (bbf_rel_create_date=<datetime>)" to alist so that create_date will be stored in pg_class.reloptions */
+	/*
+	 * add "ALTER TABLE SET (bbf_rel_create_date=<datetime>)" to alist so that
+	 * create_date will be stored in pg_class.reloptions
+	 */
 	curr_datetime = DatumGetCString(DirectFunctionCall1(timestamp_out, TimestampGetDatum(GetSQLLocalTimestamp(3))));
 	cmd_crdate = makeNode(AlterTableCmd);
 	cmd_crdate->subtype = AT_SetRelOptions;
@@ -999,7 +1078,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 
 	foreach(l, targetlist)
 	{
-		Const 		*con;
+		Const	   *con;
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		Oid			restype = exprType((Node *) tle->expr);
 
@@ -1012,23 +1091,27 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 		con = (Const *) tle->expr;
 		if (con->constisnull)
 		{
-			/* In T-SQL, NULL const (without explicit datatype) should be resolved as INT4 */
+			/*
+			 * In T-SQL, NULL const (without explicit datatype) should be
+			 * resolved as INT4
+			 */
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) con,
-												restype, INT4OID, -1,
-												COERCION_IMPLICIT,
-												COERCE_IMPLICIT_CAST,
-												-1);
+											 restype, INT4OID, -1,
+											 COERCION_IMPLICIT,
+											 COERCE_IMPLICIT_CAST,
+											 -1);
 		}
 		else
 		{
-			Oid sys_nspoid = get_namespace_oid("sys", false);
-			Oid sys_varchartypoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-													CStringGetDatum("varchar"), ObjectIdGetDatum(sys_nspoid));
+			Oid			sys_nspoid = get_namespace_oid("sys", false);
+			Oid			sys_varchartypoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+															CStringGetDatum("varchar"), ObjectIdGetDatum(sys_nspoid));
+
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) con,
-												restype, sys_varchartypoid, -1,
-												COERCION_IMPLICIT,
-												COERCE_IMPLICIT_CAST,
-												-1);
+											 restype, sys_varchartypoid, -1,
+											 COERCION_IMPLICIT,
+											 COERCE_IMPLICIT_CAST,
+											 -1);
 		}
 	}
 }
@@ -1037,11 +1120,11 @@ static inline bool
 is_identifier_char(char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
-	bool valid = ((c >= 'A' && c <= 'Z') ||
-		      (c >= 'a' && c <= 'z') ||
-		      (c >= 0200 && c <= 0377) ||
-		      (c >= '0' && c <= '9') ||
-		      c == '_' || c == '$' || c == '#');
+	bool		valid = ((c >= 'A' && c <= 'Z') ||
+						 (c >= 'a' && c <= 'z') ||
+						 (c >= 0200 && c <= 0377) ||
+						 (c >= '0' && c <= '9') ||
+						 c == '_' || c == '$' || c == '#');
 
 	return valid;
 }
@@ -1049,10 +1132,10 @@ is_identifier_char(char c)
 static int
 find_attr_by_name_from_column_def_list(const char *attributeName, List *schema)
 {
-	char *attrname = downcase_identifier(attributeName, strlen(attributeName), false, false);
-	int attrlen = strlen(attrname);
-	int i = 1;
-	ListCell *s;
+	char	   *attrname = downcase_identifier(attributeName, strlen(attributeName), false, false);
+	int			attrlen = strlen(attrname);
+	int			i = 1;
+	ListCell   *s;
 
 	foreach(s, schema)
 	{
@@ -1060,14 +1143,16 @@ find_attr_by_name_from_column_def_list(const char *attributeName, List *schema)
 
 		if (strlen(def->colname) == attrlen)
 		{
-			char *defname;
+			char	   *defname;
 
-			if (strcmp(attributeName, def->colname) == 0) // compare with original strings
-				return i;
+			if (strcmp(attributeName, def->colname) == 0)
+				//compare with original strings
+					return i;
 
 			defname = downcase_identifier(def->colname, strlen(def->colname), false, false);
-			if (strncmp(attrname, defname, attrlen) == 0) // compare with downcased strings
-				return i;
+			if (strncmp(attrname, defname, attrlen) == 0)
+				//compare with downcased strings
+					return i;
 		}
 		i++;
 	}
@@ -1097,28 +1182,30 @@ specialAttNum(const char *attname)
 static int
 find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK)
 {
-	int i;
+	int			i;
 
 	for (i = 0; i < RelationGetNumberOfAttributes(rd); i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(rd->rd_att, i);
 		const char *origname = NameStr(att->attname);
-		int rdattlen = strlen(origname);
+		int			rdattlen = strlen(origname);
 		const char *rdattname;
 
 		if (strlen(attname) == rdattlen && !att->attisdropped)
 		{
-			if (namestrcmp(&(att->attname), attname) == 0) // compare with original strings
-				return i + 1;
+			if (namestrcmp(&(att->attname), attname) == 0)
+				//compare with original strings
+					return i + 1;
 
 			/*
-			 * Currently, we don't have any cases where attname needs to be downcased
-			 * If exists, we have to take a deeper look
-			 * whether the downcasing is needed here or gram.y
+			 * Currently, we don't have any cases where attname needs to be
+			 * downcased If exists, we have to take a deeper look whether the
+			 * downcasing is needed here or gram.y
 			 */
 			rdattname = downcase_identifier(origname, rdattlen, false, false);
-			if (strcmp(rdattname, attname) == 0) // compare with downcased strings
-				return i + 1;
+			if (strcmp(rdattname, attname) == 0)
+				//compare with downcased strings
+					return i + 1;
 		}
 	}
 
@@ -1134,31 +1221,33 @@ find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK)
 
 static void
 pre_transform_target_entry(ResTarget *res, ParseState *pstate,
-									   ParseExprKind exprKind)
+						   ParseExprKind exprKind)
 {
 	if (prev_pre_transform_target_entry_hook)
 		(*prev_pre_transform_target_entry_hook) (res, pstate, exprKind);
 
-	/* In the TSQL dialect construct an AS clause for each target list
-	 * item that is a column using the capitalization from the sourcetext.
+	/*
+	 * In the TSQL dialect construct an AS clause for each target list item
+	 * that is a column using the capitalization from the sourcetext.
 	 */
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
 	if (exprKind == EXPR_KIND_SELECT_TARGET)
 	{
-		int alias_len = 0;
+		int			alias_len = 0;
 		const char *colname_start;
 		const char *identifier_name = NULL;
 
 		if (res->name == NULL && res->location != -1 &&
 			IsA(res->val, ColumnRef))
 		{
-			ColumnRef *cref = (ColumnRef *) res->val;
+			ColumnRef  *cref = (ColumnRef *) res->val;
 
-			/* If no alias is specified on a ColumnRef, then
-			 * get the length of the name from the ColumnRef and
-			 * copy the column name from the sourcetext
+			/*
+			 * If no alias is specified on a ColumnRef, then get the length of
+			 * the name from the ColumnRef and copy the column name from the
+			 * sourcetext
 			 */
 			if (list_length(cref->fields) == 1 &&
 				IsA(linitial(cref->fields), String))
@@ -1177,13 +1266,13 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 
 		if (alias_len > 0)
 		{
-			char *alias = palloc0(alias_len + 1);
-			bool dq = *colname_start == '"';
-			bool sqb = *colname_start == '[';
-			bool sq = *colname_start == '\'';
-			int a = 0;
+			char	   *alias = palloc0(alias_len + 1);
+			bool		dq = *colname_start == '"';
+			bool		sqb = *colname_start == '[';
+			bool		sq = *colname_start == '\'';
+			int			a = 0;
 			const char *colname_end;
-			bool closing_quote_reached = false;
+			bool		closing_quote_reached = false;
 
 			if (dq || sqb || sq)
 			{
@@ -1200,7 +1289,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 						if ((*(++colname_end) != '"'))
 						{
 							closing_quote_reached = true;
-							break; /* end of dbl-quoted identifier */
+							break;	/* end of dbl-quoted identifier */
 						}
 					}
 					else if (sq && *colname_end == '\'')
@@ -1208,14 +1297,14 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 						if ((*(++colname_end) != '\''))
 						{
 							closing_quote_reached = true;
-							break; /* end of single-quoted identifier */
+							break;	/* end of single-quoted identifier */
 						}
 					}
 
 					alias[a++] = *colname_end;
 				}
 
-				// Assert(a == alias_len);
+				/* Assert(a == alias_len); */
 			}
 			else
 			{
@@ -1223,18 +1312,18 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				memcpy(alias, colname_start, alias_len);
 			}
 
-			/* If the end of the string is a uniquifier, then copy
-			 * the uniquifier into the last 32 characters of
-			 * the alias
+			/*
+			 * If the end of the string is a uniquifier, then copy the
+			 * uniquifier into the last 32 characters of the alias
 			 */
-			if (alias_len == NAMEDATALEN-1 &&
-			    (((sq || dq) && !closing_quote_reached) ||
-			     is_identifier_char(*colname_end)))
+			if (alias_len == NAMEDATALEN - 1 &&
+				(((sq || dq) && !closing_quote_reached) ||
+				 is_identifier_char(*colname_end)))
 
 			{
-				memcpy(alias+(NAMEDATALEN-1)-32,
-				       identifier_name+(NAMEDATALEN-1)-32,
-				       32);
+				memcpy(alias + (NAMEDATALEN - 1) - 32,
+					   identifier_name + (NAMEDATALEN - 1) - 32,
+					   32);
 				alias[NAMEDATALEN] = '\0';
 			}
 
@@ -1248,23 +1337,25 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		Oid			targetRelid = InvalidOid;
 		char	   *relname = NULL;
 		char	   *schemaname = NULL;
-		
-		switch(list_length(res->indirection))
+
+		switch (list_length(res->indirection))
 		{
 			case 1:
 				/* update t set x.y, try to resolve as t.c if it's not x[i] */
-				if(!IsA(linitial(res->indirection), A_Indices))
+				if (!IsA(linitial(res->indirection), A_Indices))
 				{
 					relname = res->name;
 				}
 				break;
 			case 2:
 				/* if it's set x.y[i], try to resolve as t.c[i] */
-				if(IsA(lsecond(res->indirection), A_Indices))
+				if (IsA(lsecond(res->indirection), A_Indices))
 				{
 					relname = res->name;
 				}
-				/* otherwise try to resolve as s.t.c. Do not resolve as t.c.f
+
+				/*
+				 * otherwise try to resolve as s.t.c. Do not resolve as t.c.f
 				 * because we don't want to extend the legacy case c.f to have
 				 * qualifiers.
 				 */
@@ -1275,11 +1366,13 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				}
 				break;
 			case 3:
-				/* if it's set x.y.z[i], try to resolve as s.t.c[i]. Do not
+
+				/*
+				 * if it's set x.y.z[i], try to resolve as s.t.c[i]. Do not
 				 * resolve as t.c.f.ff because we don't want to extend the
 				 * legecy case c.f.ff to have qualifiers.
 				 */
-				if(IsA(lthird(res->indirection), A_Indices))
+				if (IsA(lthird(res->indirection), A_Indices))
 				{
 					schemaname = res->name;
 					relname = strVal(linitial(res->indirection));
@@ -1290,84 +1383,91 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		}
 
 		/* Get relid either by s.t or t */
-		if(schemaname && relname)
+		if (schemaname && relname)
 		{
 			relid = RangeVarGetRelid(makeRangeVar(schemaname, relname, res->location),
-										NoLock,
-										true);
+									 NoLock,
+									 true);
 		}
-		else if(relname)
+		else if (relname)
 		{
 			relid = RelnameGetRelid(relname);
 		}
 		targetRelid = RelationGetRelid(pstate->p_target_relation);
 		/* If relid matches or alias matches, try to resolve the qualifiers */
-		if(relname
-			/* relid matches */
+		if (relname
+		/* relid matches */
 			&& (targetRelid == relid
-				/* or alias name matches */
+		/* or alias name matches */
 				|| (!schemaname
-					&& strcmp(pstate->p_target_nsitem->p_rte->eref->aliasname,relname) == 0)))
+					&& strcmp(pstate->p_target_nsitem->p_rte->eref->aliasname, relname) == 0)))
 		{
-			/* If set x.y... happens to match legacy case set c.f..., treat it as c.f... for
-			 * backward compatability.
+			/*
+			 * If set x.y... happens to match legacy case set c.f..., treat it
+			 * as c.f... for backward compatability.
 			 */
-			AttrNumber x_attnum = get_attnum(targetRelid, res->name);
-			bool	   isLegacy = false;
-			Oid		   atttype = get_atttype(targetRelid, x_attnum);
+			AttrNumber	x_attnum = get_attnum(targetRelid, res->name);
+			bool		isLegacy = false;
+			Oid			atttype = get_atttype(targetRelid, x_attnum);
+
 			/* If x is a column of target table t and x is a composite type */
-			if(x_attnum != InvalidAttrNumber
+			if (x_attnum != InvalidAttrNumber
 				&& get_typtype(atttype) == TYPTYPE_COMPOSITE)
 			{
-				char *subfield = strVal(linitial(res->indirection));
-				Oid	  x_relid = get_typ_typrelid(atttype);
-				AttrNumber y_attnum = get_attnum(x_relid, subfield);
+				char	   *subfield = strVal(linitial(res->indirection));
+				Oid			x_relid = get_typ_typrelid(atttype);
+				AttrNumber	y_attnum = get_attnum(x_relid, subfield);
+
 				/* Check if y is a subfield of composite type column x */
-				if(y_attnum != InvalidAttrNumber)
+				if (y_attnum != InvalidAttrNumber)
 				{
 					/* set c.f.z, further check if it is c.f.ff */
-					if(schemaname)
+					if (schemaname)
 					{
 						atttype = get_atttype(x_relid, y_attnum);
-						/* If y is composite type*/
-						if(get_typtype(atttype) == TYPTYPE_COMPOSITE)
+						/* If y is composite type */
+						if (get_typtype(atttype) == TYPTYPE_COMPOSITE)
 						{
-							char *subsubfield = strVal(lsecond(res->indirection));
-							Oid	  y_relid = get_typ_typrelid(atttype);
-							AttrNumber z_attnum = get_attnum(y_relid, subsubfield);
+							char	   *subsubfield = strVal(lsecond(res->indirection));
+							Oid			y_relid = get_typ_typrelid(atttype);
+							AttrNumber	z_attnum = get_attnum(y_relid, subsubfield);
+
 							/* if z is a subfield of y */
-							if(z_attnum != InvalidAttrNumber)
+							if (z_attnum != InvalidAttrNumber)
 							{
 								/*
-								 * if z is also a column of the target table, then we face an ambiguity here: should do we interpret it (x.y.z) as
-								 * s.t.z or c.f.ff? We don't know, log an ERROR to avoid silent data corruption.
+								 * if z is also a column of the target table,
+								 * then we face an ambiguity here: should do
+								 * we interpret it (x.y.z) as s.t.z or c.f.ff?
+								 * We don't know, log an ERROR to avoid silent
+								 * data corruption.
 								 */
 								z_attnum = get_attnum(targetRelid, subsubfield);
-								if(z_attnum != InvalidAttrNumber)
+								if (z_attnum != InvalidAttrNumber)
 								{
 									ereport(ERROR,
-												(errcode(ERRCODE_AMBIGUOUS_COLUMN),
-													errmsg("\"%s\" can be interpreted either as a schema name or a column name.",
-															res->name),
-													errdetail("\"%s.%s\" has column \"%s\" that is a composite type with \"%s\" as a subfield, " \
-															"which is a composite type with \"%s\" as a subfield, as well as column \"%s\".",
-																res->name,
-																subfield,
-																res->name,
-																subfield,
-																subsubfield,
-																res->name),
-													errhint("Use a table alias other than \"%s.%s\" to remove the ambiguity.",
-																res->name,
-																subfield),
-													parser_errposition(pstate, exprLocation((Node *)res))));
+											(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+											 errmsg("\"%s\" can be interpreted either as a schema name or a column name.",
+													res->name),
+											 errdetail("\"%s.%s\" has column \"%s\" that is a composite type with \"%s\" as a subfield, " \
+													   "which is a composite type with \"%s\" as a subfield, as well as column \"%s\".",
+													   res->name,
+													   subfield,
+													   res->name,
+													   subfield,
+													   subsubfield,
+													   res->name),
+											 errhint("Use a table alias other than \"%s.%s\" to remove the ambiguity.",
+													 res->name,
+													 subfield),
+											 parser_errposition(pstate, exprLocation((Node *) res))));
 								}
 								else
 								{
 									elog(DEBUG1,
-											"\"%s\" will be interpreted as a column name because it has a composite type and \"%s\" is a subfield "
-											"of \"%s\" and \"%s\" is a subfield of \"%s\".",
-											res->name, subfield, res->name, subsubfield, subfield);
+										 "\"%s\" will be interpreted as a column name because it has a composite type and \"%s\" is a subfield "
+										 "of \"%s\" and \"%s\" is a subfield of \"%s\".",
+										 res->name, subfield, res->name, subsubfield, subfield);
 									isLegacy = true;
 								}
 							}
@@ -1377,48 +1477,54 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					else
 					{
 						/*
-						 * if y is also a column of the target table, then we face an ambiguity here: should do we interpret it (x.y) as
-						 * t.y or c.y? We don't know, log an ERROR to avoid silent data corruption.
+						 * if y is also a column of the target table, then we
+						 * face an ambiguity here: should do we interpret it
+						 * (x.y) as t.y or c.y? We don't know, log an ERROR to
+						 * avoid silent data corruption.
 						 */
 						y_attnum = get_attnum(targetRelid, subfield);
-						if(y_attnum != InvalidAttrNumber)
+						if (y_attnum != InvalidAttrNumber)
 						{
 							ereport(ERROR,
-										(errcode(ERRCODE_AMBIGUOUS_COLUMN),
-											errmsg("\"%s\" can be interpreted either as a table name or a column name.",
-													res->name),
-											errdetail("\"%s\" has column \"%s\" that is a composite type with \"%s\" as a subfield, " \
-													"as well as column \"%s\".",
-														res->name,
-														res->name,
-														subfield,
-														subfield),
-											errhint("Use a table alias other than \"%s\" to remove the ambiguity.",
-														res->name),
-											parser_errposition(pstate, exprLocation((Node *)res))));
+									(errcode(ERRCODE_AMBIGUOUS_COLUMN),
+									 errmsg("\"%s\" can be interpreted either as a table name or a column name.",
+											res->name),
+									 errdetail("\"%s\" has column \"%s\" that is a composite type with \"%s\" as a subfield, " \
+											   "as well as column \"%s\".",
+											   res->name,
+											   res->name,
+											   subfield,
+											   subfield),
+									 errhint("Use a table alias other than \"%s\" to remove the ambiguity.",
+											 res->name),
+									 parser_errposition(pstate, exprLocation((Node *) res))));
 						}
 						else
 						{
 							elog(DEBUG1,
-									"\"%s\" will be interpreted as a column name because it has a composite type and \"%s\" is a subfield of \"%s\".",
-									res->name, subfield, res->name);
+								 "\"%s\" will be interpreted as a column name because it has a composite type and \"%s\" is a subfield of \"%s\".",
+								 res->name, subfield, res->name);
 							isLegacy = true;
 						}
 					}
 				}
 			}
-			/* If it's not the legacy case then it's safe to resolve x.y... as qualified name */
-			if(!isLegacy)
+
+			/*
+			 * If it's not the legacy case then it's safe to resolve x.y... as
+			 * qualified name
+			 */
+			if (!isLegacy)
 			{
-				if(schemaname)
+				if (schemaname)
 				{
 					res->name = strVal(lsecond(res->indirection));
-					res->indirection = list_copy_tail(res->indirection,2);
+					res->indirection = list_copy_tail(res->indirection, 2);
 				}
 				else
 				{
 					res->name = strVal(linitial(res->indirection));
-					res->indirection = list_copy_tail(res->indirection,1);
+					res->indirection = list_copy_tail(res->indirection, 1);
 				}
 			}
 		}
@@ -1431,14 +1537,14 @@ tle_name_comparison(const char *tlename, const char *identifier)
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
-		int tlelen = strlen(tlename);
+		int			tlelen = strlen(tlename);
 
 		if (tlelen != strlen(identifier))
 			return false;
 
 		if (pltsql_case_insensitive_identifiers)
 			return (0 == strcmp(downcase_identifier(tlename, tlelen, false, false),
-					    downcase_identifier(identifier, tlelen, false, false)));
+								downcase_identifier(identifier, tlelen, false, false)));
 		else
 			return (0 == strcmp(tlename, identifier));
 	}
@@ -1449,64 +1555,67 @@ tle_name_comparison(const char *tlename, const char *identifier)
 }
 
 Oid
-get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input){
-	Oid				trigger_rel_oid = InvalidOid;
-	Relation		tgrel;
-	ScanKeyData		key;
-	SysScanDesc 	tgscan;
-	HeapTuple		tuple;
-	Oid				reloid;
-	Relation		relation = NULL;
-	const char		*pg_trigger_physical_schema = NULL;
-	const char 		*cur_physical_schema = NULL;
-	const char		*tsql_trigger_physical_schema = NULL;
-	const char		*tsql_trigger_logical_schema = NULL;
-	List	   		*search_path = fetch_search_path(false);
+get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input)
+{
+	Oid			trigger_rel_oid = InvalidOid;
+	Relation	tgrel;
+	ScanKeyData key;
+	SysScanDesc tgscan;
+	HeapTuple	tuple;
+	Oid			reloid;
+	Relation	relation = NULL;
+	const char *pg_trigger_physical_schema = NULL;
+	const char *cur_physical_schema = NULL;
+	const char *tsql_trigger_physical_schema = NULL;
+	const char *tsql_trigger_logical_schema = NULL;
+	List	   *search_path = fetch_search_path(false);
 
-	if(list_length(object) == 1)
+	if (list_length(object) == 1)
 	{
 		cur_physical_schema = get_namespace_name(linitial_oid(search_path));
 		list_free(search_path);
 	}
 	else
 	{
-		if(object_from_input)
-			tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
+		if (object_from_input)
+			tsql_trigger_logical_schema = ((Value *) linitial(object))->val.str;
 		else
 		{
-			tsql_trigger_physical_schema = ((Value *)linitial(object))->val.str;
+			tsql_trigger_physical_schema = ((Value *) linitial(object))->val.str;
 			tsql_trigger_logical_schema = get_logical_schema_name(tsql_trigger_physical_schema, true);
 		}
-		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),tsql_trigger_logical_schema);
+		cur_physical_schema = get_physical_schema_name(get_cur_db_name(), tsql_trigger_logical_schema);
 	}
 
-	/* 
-	* Get the table name of the trigger from pg_trigger. We know that
-	* trigger names are forced to be unique in the tsql dialect, so we
-	* can rely on searching for trigger name and schema name to find 
-	* the corresponding relation name.
-	*/
+	/*
+	 * Get the table name of the trigger from pg_trigger. We know that trigger
+	 * names are forced to be unique in the tsql dialect, so we can rely on
+	 * searching for trigger name and schema name to find the corresponding
+	 * relation name.
+	 */
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&key,
-					Anum_pg_trigger_tgname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(tsql_trigger_name));
+				Anum_pg_trigger_tgname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(tsql_trigger_name));
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
-									NULL, 1, &key);
+								NULL, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		if(!OidIsValid(pg_trigger->tgrelid))
+
+		if (!OidIsValid(pg_trigger->tgrelid))
 		{
 			break;
 		}
-		
-		if(namestrcmp(&(pg_trigger->tgname), tsql_trigger_name) == 0){
+
+		if (namestrcmp(&(pg_trigger->tgname), tsql_trigger_name) == 0)
+		{
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-			if(strcasecmp(pg_trigger_physical_schema,cur_physical_schema) == 0)
+			if (strcasecmp(pg_trigger_physical_schema, cur_physical_schema) == 0)
 			{
 				trigger_rel_oid = reloid;
 				RelationClose(relation);
@@ -1536,15 +1645,15 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 static ObjectAddress
 get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input)
 {
-	ObjectAddress 	address;
-	const char 		*depname;
-	Oid 			trigger_rel_oid = InvalidOid;
+	ObjectAddress address;
+	const char *depname;
+	Oid			trigger_rel_oid = InvalidOid;
 
 
 	address.classId = InvalidOid;
 	address.objectId = InvalidOid;
 	address.objectSubId = InvalidAttrNumber;
-		
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 	{
 		return address;
@@ -1553,11 +1662,11 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool o
 	depname = strVal(llast(object));
 
 	if (prev_get_trigger_object_address_hook)
-		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok,object_from_input);
+		return (*prev_get_trigger_object_address_hook) (object, relp, missing_ok, object_from_input);
 
-	trigger_rel_oid = get_tsql_trigger_oid(object,depname,object_from_input);
+	trigger_rel_oid = get_tsql_trigger_oid(object, depname, object_from_input);
 
-	if(!OidIsValid(trigger_rel_oid))
+	if (!OidIsValid(trigger_rel_oid))
 		return address;
 
 	address.classId = TriggerRelationId;
@@ -1573,41 +1682,55 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool o
 void
 pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs, ParseState *pstate, int location, bool proc_call)
 {
-	FuncCandidateList candidates = NULL, current_candidate = NULL;
-	int max_nargs = -1;
-	int min_nargs = INT_MAX;
-	int ncandidates = 0;
-	bool found = false;
+	FuncCandidateList candidates = NULL,
+				current_candidate = NULL;
+	int			max_nargs = -1;
+	int			min_nargs = INT_MAX;
+	int			ncandidates = 0;
+	bool		found = false;
 	const char *obj_type = proc_call ? "procedure" : "function";
 
-	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true); /* search all possible candidate regardless of the # of arguments */
+	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);	/* search all possible
+																					 * candidate regardless
+																					 * of the # of arguments */
 	if (candidates == NULL)
-		return; /* no candidates at all. let backend handle the proc-not-found error */
+		return;					/* no candidates at all. let backend handle
+								 * the proc-not-found error */
 
 	for (current_candidate = candidates; current_candidate != NULL; current_candidate = current_candidate->next)
 	{
-		if (current_candidate->nargs == nargs) /* Found the proc/func having the same number of arguments. */
+		if (current_candidate->nargs == nargs)	/* Found the proc/func having
+												 * the same number of
+												 * arguments. */
 			found = true;
-		
+
 		ncandidates++;
 		min_nargs = (current_candidate->nargs < min_nargs) ? current_candidate->nargs : min_nargs;
 		max_nargs = (current_candidate->nargs > max_nargs) ? current_candidate->nargs : max_nargs;
 	}
 
-	if (max_nargs == -1 || min_nargs == INT_MAX) /* Unexpected number of arguments, let PG backend handle the error message */
+	if (max_nargs == -1 || min_nargs == INT_MAX)	/* Unexpected number of
+													 * arguments, let PG
+													 * backend handle the
+													 * error message */
 		return;
 
-	if (ncandidates > 1) /* More than one candidates exist, throwing an error message with possible number of arguments */
+	if (ncandidates > 1)		/* More than one candidates exist, throwing an
+								 * error message with possible number of
+								 * arguments */
 	{
 		const char *arg_str = (max_nargs < 2) ? "argument" : "arguments";
 
-		/* Found the proc/func having the same number of arguments. possibly data-type mistmatch. */
+		/*
+		 * Found the proc/func having the same number of arguments. possibly
+		 * data-type mistmatch.
+		 */
 		if (found)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),
-					 parser_errposition(pstate, location));
+					parser_errposition(pstate, location));
 		}
 
 		if (max_nargs == min_nargs)
@@ -1617,14 +1740,14 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
 						 errmsg("%s %s has too many arguments specified.", obj_type, NameListToString(names))),
-						 parser_errposition(pstate, location));
+						parser_errposition(pstate, location));
 			}
 			else
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
 						 errmsg("The %s %s requires %d %s", NameListToString(names), obj_type, max_nargs, arg_str)),
-						 parser_errposition(pstate, location));
+						parser_errposition(pstate, location));
 			}
 		}
 		else
@@ -1632,49 +1755,49 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("The %s %s requires %d to %d %s", NameListToString(names), obj_type, min_nargs, max_nargs, arg_str)),
-					 parser_errposition(pstate, location));
+					parser_errposition(pstate, location));
 		}
 	}
-	else /* Only one candidate exists, */
+	else						/* Only one candidate exists, */
 	{
-		HeapTuple tup;
-		bool isnull;
+		HeapTuple	tup;
+		bool		isnull;
 
 		tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(candidates->oid));
 		if (HeapTupleIsValid(tup))
 		{
 			(void) SysCacheGetAttr(PROCOID, tup,
-									Anum_pg_proc_proargnames,
-									&isnull);
-			
-			if(!isnull)
+								   Anum_pg_proc_proargnames,
+								   &isnull);
+
+			if (!isnull)
 			{
 				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tup);
-				HeapTuple bbffunctuple;
-				int pronargs = procform->pronargs;
-				int first_arg_with_default = pronargs - procform->pronargdefaults;
-				int pronallargs;
-				int ap;
-				int pp;
-				int numposargs = nargs - list_length(given_argnames);
-				Oid *p_argtypes;
-				char **p_argnames;
-				char *p_argmodes;
-				char *first_unknown_argname = NULL;
-				bool arggiven[FUNC_MAX_ARGS];
-				bool default_positions_available = false;
-				List *default_positions = NIL;
-				ListCell *lc;
-				char *langname = get_language_name(procform->prolang, true);
+				HeapTuple	bbffunctuple;
+				int			pronargs = procform->pronargs;
+				int			first_arg_with_default = pronargs - procform->pronargdefaults;
+				int			pronallargs;
+				int			ap;
+				int			pp;
+				int			numposargs = nargs - list_length(given_argnames);
+				Oid		   *p_argtypes;
+				char	  **p_argnames;
+				char	   *p_argmodes;
+				char	   *first_unknown_argname = NULL;
+				bool		arggiven[FUNC_MAX_ARGS];
+				bool		default_positions_available = false;
+				List	   *default_positions = NIL;
+				ListCell   *lc;
+				char	   *langname = get_language_name(procform->prolang, true);
 
-				if (nargs > pronargs) /* Too many parameters provided. */
+				if (nargs > pronargs)	/* Too many parameters provided. */
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_FUNCTION),
-							 errmsg("%s %s has too many arguments specified.",obj_type, NameListToString(names))),
-							 parser_errposition(pstate, location));
+							 errmsg("%s %s has too many arguments specified.", obj_type, NameListToString(names))),
+							parser_errposition(pstate, location));
 				}
-				
+
 				pronallargs = get_func_arg_info(tup,
 												&p_argtypes,
 												&p_argnames,
@@ -1687,9 +1810,9 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 
 				foreach(lc, given_argnames)
 				{
-					char *argname = (char *) lfirst(lc);
-					bool match_found;
-					int i;
+					char	   *argname = (char *) lfirst(lc);
+					bool		match_found;
+					int			i;
 
 					pp = 0;
 					match_found = false;
@@ -1697,7 +1820,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 					{
 						/* consider only input parameters */
 						if (p_argmodes &&
-						    (p_argmodes[i] != FUNC_PARAM_IN &&
+							(p_argmodes[i] != FUNC_PARAM_IN &&
 							 p_argmodes[i] != FUNC_PARAM_INOUT &&
 							 p_argmodes[i] != FUNC_PARAM_VARIADIC))
 							continue;
@@ -1714,15 +1837,15 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 					if (!match_found && first_unknown_argname == NULL)
 						first_unknown_argname = argname;
 				}
-				
+
 				if (langname && pg_strcasecmp("pltsql", langname) == 0 && nargs < pronargs)
 				{
 					bbffunctuple = get_bbf_function_tuple_from_proctuple(tup);
 
 					if (HeapTupleIsValid(bbffunctuple))
 					{
-						Datum	arg_default_positions;
-						char	*str;
+						Datum		arg_default_positions;
+						char	   *str;
 
 						/* Fetch default positions */
 						arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
@@ -1743,28 +1866,32 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 					}
 				}
 
-				/* Traverse arggiven list to check if a non-default parameter is not supplied. */
+				/*
+				 * Traverse arggiven list to check if a non-default parameter
+				 * is not supplied.
+				 */
 				for (pp = numposargs; pp < pronargs; pp++)
 				{
 					if (arggiven[pp])
 						continue;
 
 					/*
-					 * If the positions of default arguments are available then we need
-					 * special handling. Look into default_positions list to find out
-					 * the default expression for pp'th argument.
+					 * If the positions of default arguments are available
+					 * then we need special handling. Look into
+					 * default_positions list to find out the default
+					 * expression for pp'th argument.
 					 */
 					if (default_positions_available)
 					{
-						bool has_default = false;
-						
+						bool		has_default = false;
+
 						/*
-						 * Iterate over argdefaults list to find out the default expression
-						 * for current argument.
+						 * Iterate over argdefaults list to find out the
+						 * default expression for current argument.
 						 */
 						while (lc != NULL)
 						{
-							int position = intVal((Node *) lfirst(lc));
+							int			position = intVal((Node *) lfirst(lc));
 
 							if (position == pp)
 							{
@@ -1781,43 +1908,52 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_FUNCTION),
 									 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), p_argnames[pp])),
-									 parser_errposition(pstate, location));
+									parser_errposition(pstate, location));
 					}
 					else if (pp < first_arg_with_default)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_FUNCTION),
 								 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), p_argnames[pp])),
-								 parser_errposition(pstate, location));
+								parser_errposition(pstate, location));
 					}
 				}
-				/* Default arguments are also supplied but parameter name is unknown. */
-				if(first_unknown_argname)
+
+				/*
+				 * Default arguments are also supplied but parameter name is
+				 * unknown.
+				 */
+				if (first_unknown_argname)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_FUNCTION),
 							 errmsg("\"%s\" is not an parameter for %s %s.", first_unknown_argname, obj_type, NameListToString(names))),
-							 parser_errposition(pstate, location));
+							parser_errposition(pstate, location));
 				}
-				/* Still no issue with the arguments provided, possibly data-type mistmatch. */
+
+				/*
+				 * Still no issue with the arguments provided, possibly
+				 * data-type mistmatch.
+				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
 						 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),
-						 parser_errposition(pstate, location));
-				
+						parser_errposition(pstate, location));
+
 				if (default_positions_available)
 				{
 					ReleaseSysCache(bbffunctuple);
 				}
 				pfree(langname);
 			}
-			else if(nargs > 0) /* proargnames is NULL. Procedure/function has no parameters but arguments are specified. */
+			else if (nargs > 0) /* proargnames is NULL. Procedure/function has
+								 * no parameters but arguments are specified. */
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
 						 errmsg("%s %s has no parameters and arguments were supplied.", obj_type, NameListToString(names))),
-						 parser_errposition(pstate, location));
-			}	
+						parser_errposition(pstate, location));
+			}
 		}
 		ReleaseSysCache(tup);
 	}
@@ -1844,13 +1980,13 @@ logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot)
 			continue;
 
 		/*
-		 * If it is rowversion/timestamp column, then re-evaluate the column default
-		 * and replace the slot with this new value.
+		 * If it is rowversion/timestamp column, then re-evaluate the column
+		 * default and replace the slot with this new value.
 		 */
-		if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
+		if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (attr->atttypid))
 		{
-			Expr *defexpr;
-			ExprState *def;
+			Expr	   *defexpr;
+			ExprState  *def;
 
 			defexpr = (Expr *) build_column_default(rel, attnum + 1);
 
@@ -1860,10 +1996,11 @@ logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot)
 				defexpr = expression_planner(defexpr);
 				def = ExecInitExpr(defexpr, NULL);
 				slot->tts_values[attnum] = ExecEvalExpr(def, econtext, &slot->tts_isnull[attnum]);
+
 				/*
-				* No need to check for other columns since we can only
-				* have one rowversion/timestamp column in a table.
-				*/
+				 * No need to check for other columns since we can only have
+				 * one rowversion/timestamp column in a table.
+				 */
 				break;
 			}
 		}
@@ -1893,16 +2030,17 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 		revoke_func_permission_from_public(objectId);
 }
 
-static void revoke_func_permission_from_public(Oid objectId)
+static void
+revoke_func_permission_from_public(Oid objectId)
 {
-	const char 	*query;
-	List		*res;
-	GrantStmt   *revoke;
+	const char *query;
+	List	   *res;
+	GrantStmt  *revoke;
 	PlannedStmt *wrapper;
-	const char	*obj_name;
+	const char *obj_name;
 	Oid			phy_sch_oid;
-	const char	*phy_sch_name;
-	const char  *arg_list;
+	const char *phy_sch_name;
+	const char *arg_list;
 	char		kind;
 
 	/* TSQL specific behavior */
@@ -1954,21 +2092,23 @@ static void revoke_func_permission_from_public(Oid objectId)
 	/* Command Counter will be increased by validator */
 }
 
-static char *gen_func_arg_list(Oid objectId)
+static char *
+gen_func_arg_list(Oid objectId)
 {
-	Oid *argtypes;
-	int nargs = 0;
+	Oid		   *argtypes;
+	int			nargs = 0;
 	StringInfoData arg_list;
+
 	initStringInfo(&arg_list);
 
 	get_func_signature(objectId, &argtypes, &nargs);
 
 	for (int i = 0; i < nargs; i++)
 	{
-		Oid typoid = argtypes[i];
-		char *nsp_name;
-		char *type_name;
-		HeapTuple   typeTuple;
+		Oid			typoid = argtypes[i];
+		char	   *nsp_name;
+		char	   *type_name;
+		HeapTuple	typeTuple;
 
 		typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typoid));
 
@@ -1982,7 +2122,7 @@ static char *gen_func_arg_list(Oid objectId)
 		appendStringInfoString(&arg_list, nsp_name);
 		appendStringInfoString(&arg_list, ".");
 		appendStringInfoString(&arg_list, type_name);
-		if (i < nargs -1)
+		if (i < nargs - 1)
 			appendStringInfoString(&arg_list, ", ");
 	}
 
@@ -1991,20 +2131,21 @@ static char *gen_func_arg_list(Oid objectId)
 
 /*
 * This function adds column names to the insert target relation in rewritten
-* CTE for OUTPUT INTO clause. 
+* CTE for OUTPUT INTO clause.
 */
-static void 
+static void
 modify_insert_stmt(InsertStmt *stmt, Oid relid)
 {
 	Relation	pg_attribute;
 	ScanKeyData scankey;
 	SysScanDesc scan;
 	HeapTuple	tuple;
-	List		*insert_col_list = NIL, *temp_col_list;
-		
+	List	   *insert_col_list = NIL,
+			   *temp_col_list;
+
 	if (prev_pre_transform_insert_hook)
 		(*prev_pre_transform_insert_hook) (stmt, relid);
-	
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
@@ -2021,14 +2162,15 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 				ObjectIdGetDatum(relid));
 
 	pg_attribute = table_open(AttributeRelationId, AccessShareLock);
-	
+
 	scan = systable_beginscan(pg_attribute, AttributeRelidNumIndexId, true,
 							  NULL, 1, &scankey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
-		ResTarget *col = makeNode(ResTarget);
+		ResTarget  *col = makeNode(ResTarget);
 		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+
 		temp_col_list = NIL;
 
 		if (att->attnum > 0)
@@ -2061,13 +2203,15 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	TupleDesc	bbf_view_def_rel_dsc;
 	Datum		new_record[BBF_VIEW_DEF_NUM_COLS];
 	bool		new_record_nulls[BBF_VIEW_DEF_NUM_COLS];
-	HeapTuple	tuple, reltup;
-	Form_pg_class	form_reltup;
+	HeapTuple	tuple,
+				reltup;
+	Form_pg_class form_reltup;
 	int16		dbid;
-	uint64		flag_values = 0, flag_validity = 0;
-	char		*physical_schemaname;
-	const char  *logical_schemaname;
-	char *original_query = get_original_query_string();
+	uint64		flag_values = 0,
+				flag_validity = 0;
+	char	   *physical_schemaname;
+	const char *logical_schemaname;
+	char	   *original_query = get_original_query_string();
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -2084,13 +2228,13 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	if (physical_schemaname == NULL)
 	{
 		elog(ERROR,
-				"Could not find physical schemaname for %u",
-				 form_reltup->relnamespace);
+			 "Could not find physical schemaname for %u",
+			 form_reltup->relnamespace);
 	}
 
 	/*
-	 * Do not store definition/data in case of sys, information_schema_tsql and
-	 * other shared schemas.
+	 * Do not store definition/data in case of sys, information_schema_tsql
+	 * and other shared schemas.
 	 */
 	if (is_shared_schema(physical_schemaname))
 	{
@@ -2101,12 +2245,12 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 
 	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
 	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
-	if(!DbidIsValid(dbid) || logical_schemaname == NULL)
+	if (!DbidIsValid(dbid) || logical_schemaname == NULL)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Could not find dbid or logical schema for this physical schema '%s'." \
-				"CREATE VIEW from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
+				 errmsg("Could not find dbid or logical schema for this physical schema '%s'." \
+						"CREATE VIEW from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
 	}
 
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
@@ -2117,10 +2261,10 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	/*
 	 * To use particular flag bit to store certain flag, Set corresponding bit
 	 * in flag_validity which tracks currently supported flag bits and then
-	 * set/unset flag_values bit according to flag settings.
-	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
-	 * being inserted in catalog if it is used.
-	 * Currently, Only two flags are supported.
+	 * set/unset flag_values bit according to flag settings. Used
+	 * !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
+	 * being inserted in catalog if it is used. Currently, Only two flags are
+	 * supported.
 	 */
 	flag_validity |= BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON;
 	if (!Transform_null_equals)
@@ -2128,6 +2272,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	flag_validity |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
 	if (pltsql_quoted_identifier)
 		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
+
 	/*
 	 * Need to set this flag for MVU from 2.4 or after to 3.1.
 	 */
@@ -2165,10 +2310,13 @@ static void
 pltsql_drop_view_definition(Oid objectId)
 {
 	Relation	bbf_view_def_rel;
-	HeapTuple	reltuple, scantup;
-	Form_pg_class	form;
+	HeapTuple	reltuple,
+				scantup;
+	Form_pg_class form;
 	int16		dbid;
-	char		*physical_schemaname, *logical_schemaname, *objectname;
+	char	   *physical_schemaname,
+			   *logical_schemaname,
+			   *objectname;
 
 	/* return if it is not a view */
 	reltuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objectId));
@@ -2185,16 +2333,16 @@ pltsql_drop_view_definition(Oid objectId)
 	if (physical_schemaname == NULL)
 	{
 		elog(ERROR,
-				"Could not find physical schemaname for %u",
-				 form->relnamespace);
+			 "Could not find physical schemaname for %u",
+			 form->relnamespace);
 	}
 	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
 	logical_schemaname = (char *) get_logical_schema_name(physical_schemaname, true);
 	objectname = NameStr(form->relname);
 
 	/*
-	 * If any of these entries are NULL then there
-	 * must not be any entry in catalog
+	 * If any of these entries are NULL then there must not be any entry in
+	 * catalog
 	 */
 	if (!DbidIsValid(dbid) || logical_schemaname == NULL || objectname == NULL)
 	{
@@ -2224,7 +2372,7 @@ pltsql_drop_view_definition(Oid objectId)
 }
 
 static void
-preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId)
+preserve_view_constraints_from_base_table(ColumnDef *col, Oid tableOid, AttrNumber colId)
 {
 	/*
 	 * In TSQL Dialect Preserve the constraints only for the internal view
@@ -2232,19 +2380,19 @@ preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNum
 	 */
 	if (sp_describe_first_result_set_inprogress && sql_dialect == SQL_DIALECT_TSQL)
 	{
-		HeapTuple	  tp;
+		HeapTuple	tp;
 		Form_pg_attribute att_tup;
 
-		tp = SearchSysCache2(ATTNUM, 
-					ObjectIdGetDatum(tableOid),
-					Int16GetDatum(colId));
+		tp = SearchSysCache2(ATTNUM,
+							 ObjectIdGetDatum(tableOid),
+							 Int16GetDatum(colId));
 
 		if (HeapTupleIsValid(tp))
 		{
 			att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 			col->is_not_null = att_tup->attnotnull;
-			col->identity 	 = att_tup->attidentity;
-			col->generated 	 = att_tup->attgenerated;
+			col->identity = att_tup->attidentity;
+			col->generated = att_tup->attgenerated;
 			ReleaseSysCache(tp);
 		}
 	}
@@ -2257,38 +2405,39 @@ preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNum
 bool
 pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base)
 {
-	int partially_filled_numeric_block = 0;
-	int total_digit_count = 0;
-	
+	int			partially_filled_numeric_block = 0;
+	int			total_digit_count = 0;
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
 
 
 	total_digit_count = (dscale == 0) ? (weight * numeric_base) :
-					    ((weight + 1) * numeric_base);
+		((weight + 1) * numeric_base);
+
 	/*
-	 * calculating exact #digits in the first partially filled numeric block, if any)
-	 * Ex. - in 12345.12345 var is of type struct NumericVar; first_block = var->digits[0]= 1,
-	 * var->digits[1] = 2345, var->digits[2] = 1234,
-	 * var->digits[3] = 5000; numeric_base = 4, var->ndigits = #numeric blocks i.e., 4,
-	 * var->weight = 1, var->dscale = 5
+	 * calculating exact #digits in the first partially filled numeric block,
+	 * if any) Ex. - in 12345.12345 var is of type struct NumericVar;
+	 * first_block = var->digits[0]= 1, var->digits[1] = 2345, var->digits[2]
+	 * = 1234, var->digits[3] = 5000; numeric_base = 4, var->ndigits =
+	 * #numeric blocks i.e., 4, var->weight = 1, var->dscale = 5
 	 */
 	partially_filled_numeric_block = first_block;
 
 	/*
-	 * check if the first numeric block is partially filled
-	 * If yes, add those digit count
-	 * Else if fully filled, Ignore as those digits are already added to total_digit_count
+	 * check if the first numeric block is partially filled If yes, add those
+	 * digit count Else if fully filled, Ignore as those digits are already
+	 * added to total_digit_count
 	 */
 	if (partially_filled_numeric_block < pow(10, numeric_base - 1))
 		total_digit_count += (partially_filled_numeric_block > 0) ?
-				     log10(partially_filled_numeric_block) + 1 : 1;
+			log10(partially_filled_numeric_block) + 1 : 1;
 
 	/*
-	 * calculating exact #digits in last block if decimal point exists
-	 * If dscale is an exact multiple of numeric_base, last block is not partially filled,
-	 * then, ignore as those digits are already added to total_digit_count
-	 * Else, add the remainder digits
+	 * calculating exact #digits in last block if decimal point exists If
+	 * dscale is an exact multiple of numeric_base, last block is not
+	 * partially filled, then, ignore as those digits are already added to
+	 * total_digit_count Else, add the remainder digits
 	 */
 	if (dscale > 0)
 		total_digit_count += (dscale % numeric_base);
@@ -2307,17 +2456,20 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	Datum		new_record[BBF_FUNCTION_EXT_NUM_COLS];
 	bool		new_record_nulls[BBF_FUNCTION_EXT_NUM_COLS];
 	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
-	HeapTuple	tuple, proctup, oldtup;
-	Form_pg_proc	form_proctup;
-	NameData		*schema_name_NameData;
-	char		*physical_schemaname;
-	char		*func_signature;
-	char		*original_name = NULL;
-	List		*default_positions = NIL;
-	ListCell	*x;
+	HeapTuple	tuple,
+				proctup,
+				oldtup;
+	Form_pg_proc form_proctup;
+	NameData   *schema_name_NameData;
+	char	   *physical_schemaname;
+	char	   *func_signature;
+	char	   *original_name = NULL;
+	List	   *default_positions = NIL;
+	ListCell   *x;
 	int			idx;
-	uint64		flag_values = 0, flag_validity = 0;
-	char *original_query = get_original_query_string();
+	uint64		flag_values = 0,
+				flag_validity = 0;
+	char	   *original_query = get_original_query_string();
 
 	/* Disallow extended catalog lookup during restore */
 	if (babelfish_dump_restore)
@@ -2339,13 +2491,13 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	if (physical_schemaname == NULL)
 	{
 		elog(ERROR,
-				"Could not find physical schemaname for %u",
-				 form_proctup->pronamespace);
+			 "Could not find physical schemaname for %u",
+			 form_proctup->pronamespace);
 	}
 
 	/*
-	 * Do not store data in case of sys, information_schema_tsql and
-	 * other shared schemas.
+	 * Do not store data in case of sys, information_schema_tsql and other
+	 * shared schemas.
 	 */
 	if (is_shared_schema(physical_schemaname))
 	{
@@ -2355,8 +2507,8 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	}
 
 	func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
-															form_proctup->pronargs,
-															form_proctup->proargtypes.values);
+																	 form_proctup->pronargs,
+																	 form_proctup->proargtypes.values);
 
 	idx = 0;
 	foreach(x, parameters)
@@ -2371,7 +2523,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	}
 
 	if (!OidIsValid(get_bbf_function_ext_idx_oid()))
-	{	
+	{
 		pfree(func_signature);
 		pfree(physical_schemaname);
 		ReleaseSysCache(proctup);
@@ -2386,23 +2538,27 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 
 	if (origname_location != -1 && queryString)
 	{
-		/* To get original function name, utilize location of original name and query string. */
-		char *func_name_start, *temp;
+		/*
+		 * To get original function name, utilize location of original name
+		 * and query string.
+		 */
+		char	   *func_name_start,
+				   *temp;
 		const char *funcname = NameStr(form_proctup->proname);
 
 		func_name_start = (char *) queryString + origname_location;
 
 		/*
-		 * Could be the case that the fully qualified name is included,
-		 * so just find the text after '.' in the identifier.
-		 * We need to be careful as there can be '.' in the function name
-		 * itself, so we will break the loop if current string matches
-		 * with actual funcname.
+		 * Could be the case that the fully qualified name is included, so
+		 * just find the text after '.' in the identifier. We need to be
+		 * careful as there can be '.' in the function name itself, so we will
+		 * break the loop if current string matches with actual funcname.
 		 */
 		temp = strpbrk(func_name_start, ". ");
 		while (temp && temp[0] != ' ' &&
-			strncasecmp(funcname, func_name_start, strlen(funcname)) != 0 &&
-			strncasecmp(funcname, func_name_start + 1, strlen(funcname)) != 0) /* match after skipping delimiter */
+			   strncasecmp(funcname, func_name_start, strlen(funcname)) != 0 &&
+			   strncasecmp(funcname, func_name_start + 1, strlen(funcname)) != 0)	/* match after skipping
+																					 * delimiter */
 		{
 			temp += 1;
 			func_name_start = temp;
@@ -2413,16 +2569,15 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 		if (original_name == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("can't extract original function name.")));
+					 errmsg("can't extract original function name.")));
 	}
 
 	/*
 	 * To store certain flag, Set corresponding bit in flag_validity which
 	 * tracks currently supported flag bits and then set/unset flag_values bit
-	 * according to flag settings.
-	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
-	 * being inserted in catalog if it is used.
-	 * Currently, Only two flags are supported.
+	 * according to flag settings. Used !Transform_null_equals instead of
+	 * pltsql_ansi_nulls because NULL is being inserted in catalog if it is
+	 * used. Currently, Only two flags are supported.
 	 */
 	flag_validity |= FLAG_IS_ANSI_NULLS_ON;
 	if (!Transform_null_equals)
@@ -2434,12 +2589,13 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	schema_name_NameData = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(schema_name_NameData->data, NAMEDATALEN, "%s", physical_schemaname);
 
-	new_record[Anum_bbf_function_ext_nspname -1] = NameGetDatum(schema_name_NameData);
-	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
+	new_record[Anum_bbf_function_ext_nspname - 1] = NameGetDatum(schema_name_NameData);
+	new_record[Anum_bbf_function_ext_funcname - 1] = NameGetDatum(&form_proctup->proname);
 	if (original_name)
-		new_record[Anum_bbf_function_ext_orig_name -1] = CStringGetTextDatum(original_name);
+		new_record[Anum_bbf_function_ext_orig_name - 1] = CStringGetTextDatum(original_name);
 	else
-		new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
+		new_record_nulls[Anum_bbf_function_ext_orig_name - 1] = true;	/* TODO: Fill users'
+																		 * original input name */
 	new_record[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(func_signature);
 	if (default_positions != NIL)
 		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
@@ -2449,6 +2605,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	new_record[Anum_bbf_function_ext_flag_values - 1] = UInt64GetDatum(flag_values);
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+
 	/*
 	 * Save the original query in the catalog.
 	 */
@@ -2472,14 +2629,15 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 	else
 	{
 		ObjectAddress index;
+
 		tuple = heap_form_tuple(bbf_function_ext_rel_dsc,
 								new_record, new_record_nulls);
 
 		CatalogTupleInsert(bbf_function_ext_rel, tuple);
 
 		/*
-		 * Add function's dependency on catalog table's index so
-		 * that table gets restored before function during MVU.
+		 * Add function's dependency on catalog table's index so that table
+		 * gets restored before function during MVU.
 		 */
 		index.classId = IndexRelationId;
 		index.objectId = get_bbf_function_ext_idx_oid();
@@ -2500,7 +2658,8 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters, con
 static void
 pltsql_drop_func_default_positions(Oid objectId)
 {
-	HeapTuple	 proctuple, bbffunctuple;
+	HeapTuple	proctuple,
+				bbffunctuple;
 
 	/* return if it is not a PL/tsql function */
 	proctuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(objectId));
@@ -2511,7 +2670,7 @@ pltsql_drop_func_default_positions(Oid objectId)
 
 	if (HeapTupleIsValid(bbffunctuple))
 	{
-		Relation	 bbf_function_ext_rel;
+		Relation	bbf_function_ext_rel;
 
 		/* Fetch the relation */
 		bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
@@ -2552,7 +2711,7 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 		/*
 		 * Check argument count.
 		 */
-		Assert(nargs >= 0); /* -1 not supported with argnames */
+		Assert(nargs >= 0);		/* -1 not supported with argnames */
 
 		if (pronargs > nargs && expand_defaults)
 		{
@@ -2582,9 +2741,8 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 		/*
 		 * Call uses positional notation
 		 *
-		 * Check if function is variadic, and get variadic element type if
-		 * so.  If expand_variadic is false, we should just ignore
-		 * variadic-ness.
+		 * Check if function is variadic, and get variadic element type if so.
+		 * If expand_variadic is false, we should just ignore variadic-ness.
 		 */
 		if (pronargs <= nargs && expand_variadic)
 		{
@@ -2617,8 +2775,8 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 			return false;
 
 		/*
-		 * If call uses all positional arguments, then validate if all
-		 * the remaining arguments have defaults.
+		 * If call uses all positional arguments, then validate if all the
+		 * remaining arguments have defaults.
 		 */
 		if (*use_defaults)
 		{
@@ -2626,8 +2784,8 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 
 			if (HeapTupleIsValid(bbffunctuple))
 			{
-				Datum	 arg_default_positions;
-				bool	 isnull;
+				Datum		arg_default_positions;
+				bool		isnull;
 
 				/* Fetch default positions */
 				arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
@@ -2637,10 +2795,10 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 
 				if (!isnull)
 				{
-					char	 *str;
-					List	 *default_positions = NIL;
-					ListCell *def_idx = NULL;
-					int		 idx = nargs;
+					char	   *str;
+					List	   *default_positions = NIL;
+					ListCell   *def_idx = NULL;
+					int			idx = nargs;
 
 					str = TextDatumGetCString(arg_default_positions);
 					default_positions = castNode(List, stringToNode(str));
@@ -2648,7 +2806,7 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 
 					foreach(def_idx, default_positions)
 					{
-						int position = intVal((Node *) lfirst(def_idx));
+						int			position = intVal((Node *) lfirst(def_idx));
 
 						if (position == idx)
 							idx++;
@@ -2698,16 +2856,16 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 					 int **argnumbers, List **defaults)
 {
 	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
-	int			 numposargs = nargs - list_length(argnames);
-	int			 pronallargs;
-	Oid		    *p_argtypes;
-	char	   **p_argnames;
-	char	    *p_argmodes;
-	bool		 arggiven[FUNC_MAX_ARGS];
-	bool		 isnull;
-	int			 ap;				/* call args position */
-	int			 pp;				/* proargs position */
-	ListCell    *lc;
+	int			numposargs = nargs - list_length(argnames);
+	int			pronallargs;
+	Oid		   *p_argtypes;
+	char	  **p_argnames;
+	char	   *p_argmodes;
+	bool		arggiven[FUNC_MAX_ARGS];
+	bool		isnull;
+	int			ap;				/* call args position */
+	int			pp;				/* proargs position */
+	ListCell   *lc;
 
 	Assert(argnames != NIL);
 	Assert(numposargs >= 0);
@@ -2782,11 +2940,11 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 	{
 		int			first_arg_with_default = pronargs - procform->pronargdefaults;
 		HeapTuple	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
-		List		*argdefaults = NIL,
-					*default_positions = NIL;
+		List	   *argdefaults = NIL,
+				   *default_positions = NIL;
 		bool		default_positions_available = false;
-		ListCell	*def_item = NULL,
-					*def_idx = NULL;
+		ListCell   *def_item = NULL,
+				   *def_idx = NULL;
 		bool		match_found = true;
 
 		if (HeapTupleIsValid(bbffunctuple))
@@ -2796,12 +2954,12 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 
 			/* Fetch argument defaults */
 			proargdefaults = SysCacheGetAttr(PROCOID, proctup,
-											Anum_pg_proc_proargdefaults,
-											&isnull);
+											 Anum_pg_proc_proargdefaults,
+											 &isnull);
 
 			if (!isnull)
 			{
-				char *str;
+				char	   *str;
 
 				str = TextDatumGetCString(proargdefaults);
 				argdefaults = castNode(List, stringToNode(str));
@@ -2817,7 +2975,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 
 			if (!isnull)
 			{
-				char *str;
+				char	   *str;
 
 				str = TextDatumGetCString(arg_default_positions);
 				default_positions = castNode(List, stringToNode(str));
@@ -2835,21 +2993,21 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 				continue;
 
 			/*
-			 * If the positions of default arguments are available then we need
-			 * special handling. Look into default_positions list to find out
-			 * the default expression for pp'th argument.
+			 * If the positions of default arguments are available then we
+			 * need special handling. Look into default_positions list to find
+			 * out the default expression for pp'th argument.
 			 */
 			if (default_positions_available)
 			{
-				bool has_default = false;
+				bool		has_default = false;
 
 				/*
-				 * Iterate over argdefaults list to find out the default expression
-				 * for current argument.
+				 * Iterate over argdefaults list to find out the default
+				 * expression for current argument.
 				 */
 				while (def_item != NULL && def_idx != NULL)
 				{
-					int position = intVal((Node *) lfirst(def_idx));
+					int			position = intVal((Node *) lfirst(def_idx));
 
 					if (position == pp)
 					{
@@ -2912,8 +3070,8 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 
 	if (HeapTupleIsValid(bbffunctuple))
 	{
-		Datum				  arg_default_positions;
-		bool				  isnull;
+		Datum		arg_default_positions;
+		bool		isnull;
 
 		/* Fetch default positions */
 		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
@@ -2923,10 +3081,10 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 
 		if (!isnull)
 		{
-			char				  *str;
-			List				  *default_positions = NIL;
-			ListCell			  *def_idx = NULL,
-								  *def_item = NULL;
+			char	   *str;
+			List	   *default_positions = NIL;
+			ListCell   *def_idx = NULL,
+					   *def_item = NULL;
 
 			str = TextDatumGetCString(arg_default_positions);
 			default_positions = castNode(List, stringToNode(str));
@@ -2934,7 +3092,7 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 
 			forboth(def_idx, default_positions, def_item, defaults)
 			{
-				int position = intVal((Node *) lfirst(def_idx));
+				int			position = intVal((Node *) lfirst(def_idx));
 
 				if (argarray[position] == NULL)
 					argarray[position] = (Node *) lfirst(def_item);
@@ -2946,8 +3104,8 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 	else
 	{
 		Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-		int			 i;
-		ListCell	*lc = NULL;
+		int			i;
+		ListCell   *lc = NULL;
 
 		i = funcform->pronargs - funcform->pronargdefaults;
 		foreach(lc, defaults)
@@ -3121,8 +3279,8 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 		{
 			if (nextdefaultposition != NULL)
 			{
-				int position = intVal((Node *) lfirst(nextdefaultposition));
-				Node *defexpr;
+				int			position = intVal((Node *) lfirst(nextdefaultposition));
+				Node	   *defexpr;
 
 				Assert(nextargdefault != NULL);
 				defexpr = (Node *) lfirst(nextargdefault);
@@ -3167,7 +3325,7 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 static PlannedStmt *
 pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams)
 {
-	PlannedStmt * plan;
+	PlannedStmt *plan;
 	PLtsql_execstate *estate = NULL;
 
 	if (pltsql_explain_analyze)
@@ -3189,17 +3347,17 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 	return plan;
 }
 
-static Node* 
-transform_like_in_add_constraint (Node* node)
+static Node *
+transform_like_in_add_constraint(Node *node)
 {
 	PG_TRY();
 	{
-		if (!babelfish_dump_restore && current_query_is_create_tbl_check_constraint 
-				&& has_ilike_node_and_ci_as_coll(node))
+		if (!babelfish_dump_restore && current_query_is_create_tbl_check_constraint
+			&& has_ilike_node_and_ci_as_coll(node))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("nondeterministic collations are not supported for ILIKE")));
+					 errmsg("nondeterministic collations are not supported for ILIKE")));
 		}
 	}
 	PG_FINALLY();
@@ -3207,61 +3365,65 @@ transform_like_in_add_constraint (Node* node)
 		current_query_is_create_tbl_check_constraint = false;
 	}
 	PG_END_TRY();
-	
+
 	return pltsql_predicate_transformer(node);
 }
 
 static int
 pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType command)
 {
-	RangeVar *target = NULL;
-	RangeVar *relation;
-	bool inh;
-	AclMode requiredPerms;
+	RangeVar   *target = NULL;
+	RangeVar   *relation;
+	bool		inh;
+	AclMode		requiredPerms;
 
 	switch (command)
 	{
-		/*
-		 * For DELETE and UPDATE statement, we need to properly handle target table
-		 * based on FROM clause and clean up the duplicate table references.
-		 */
+			/*
+			 * For DELETE and UPDATE statement, we need to properly handle
+			 * target table based on FROM clause and clean up the duplicate
+			 * table references.
+			 */
 		case CMD_DELETE:
-		{
-			DeleteStmt *delete_stmt = (DeleteStmt *) stmt;
-			
-			relation = delete_stmt->relation;
-			inh = delete_stmt->relation->inh;
-			requiredPerms = ACL_DELETE;
+			{
+				DeleteStmt *delete_stmt = (DeleteStmt *) stmt;
 
-			if (sql_dialect != SQL_DIALECT_TSQL || output_update_transformation)
+				relation = delete_stmt->relation;
+				inh = delete_stmt->relation->inh;
+				requiredPerms = ACL_DELETE;
+
+				if (sql_dialect != SQL_DIALECT_TSQL || output_update_transformation)
+					break;
+
+				target = pltsql_get_target_table(relation, delete_stmt->usingClause);
+
 				break;
-
-			target = pltsql_get_target_table(relation, delete_stmt->usingClause);
-
-			break;
-		}
+			}
 		case CMD_UPDATE:
-		{
-			UpdateStmt *update_stmt = (UpdateStmt *) stmt;
+			{
+				UpdateStmt *update_stmt = (UpdateStmt *) stmt;
 
-			relation = update_stmt->relation;
-			inh = update_stmt->relation->inh;
-			requiredPerms = ACL_UPDATE;
+				relation = update_stmt->relation;
+				inh = update_stmt->relation->inh;
+				requiredPerms = ACL_UPDATE;
 
-			if (sql_dialect != SQL_DIALECT_TSQL)
+				if (sql_dialect != SQL_DIALECT_TSQL)
+					break;
+
+				if (!output_update_transformation)
+					target = pltsql_get_target_table(relation, update_stmt->fromClause);
+
+				/*
+				 * Special handling when target table contains a rowversion
+				 * column
+				 */
+				if (target)
+					handle_rowversion_target_in_update_stmt(target, update_stmt);
+				else
+					handle_rowversion_target_in_update_stmt(relation, update_stmt);
+
 				break;
-
-			if (!output_update_transformation)
-				target = pltsql_get_target_table(relation, update_stmt->fromClause);
-
-			/* Special handling when target table contains a rowversion column */
-			if (target)
-				handle_rowversion_target_in_update_stmt(target, update_stmt);
-			else
-				handle_rowversion_target_in_update_stmt(relation, update_stmt);
-
-			break;
-		}
+			}
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
@@ -3270,11 +3432,12 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 
 	if (target)
 	{
-		int res = setTargetTable(pstate, target, inh, false, requiredPerms);
+		int			res = setTargetTable(pstate, target, inh, false, requiredPerms);
+
 		pstate->p_rtable = NIL;
 
 		rewrite_update_outer_join(stmt, command, target);
-		
+
 		return res;
 	}
 
@@ -3283,22 +3446,25 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 
 /*
  * pltsql_validate_var_datatype_scale()
- * - Checks whether variable length datatypes like numeric, decimal, time, datetime2, datetimeoffset 
+ * - Checks whether variable length datatypes like numeric, decimal, time, datetime2, datetimeoffset
  * are declared with permissible datalength at the time of table or stored procedure creation
  */
-void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
+void
+pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 {
-	Oid datatype_oid = InvalidOid;
-	int count = 0;
+	Oid			datatype_oid = InvalidOid;
+	int			count = 0;
 	ListCell   *l;
-	int scale[2] = {-1, -1};
-	char *dataTypeName, *schemaName;
+	int			scale[2] = {-1, -1};
+	char	   *dataTypeName,
+			   *schemaName;
 
 	DeconstructQualifiedName(typeName->names, &schemaName, &dataTypeName);
 
 	foreach(l, typeName->typmods)
 	{
-		Node       *tm = (Node *) lfirst(l);
+		Node	   *tm = (Node *) lfirst(l);
+
 		if (IsA(tm, A_Const))
 		{
 			A_Const    *ac = (A_Const *) tm;
@@ -3314,41 +3480,42 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 	datatype_oid = ((Form_pg_type) GETSTRUCT(typ))->oid;
 
 	if ((datatype_oid == DATEOID ||
-		(*common_utility_plugin_ptr->is_tsql_timestamp_datatype)(datatype_oid) ||
-		(*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(datatype_oid)) &&
+		 (*common_utility_plugin_ptr->is_tsql_timestamp_datatype) (datatype_oid) ||
+		 (*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype) (datatype_oid)) &&
 		scale[0] == -1)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Cannot specify a column width on datatype \'%s\'",
-					 dataTypeName)));
+						dataTypeName)));
 	}
 	else if ((datatype_oid == TIMEOID ||
-		(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(datatype_oid) ||
-		(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(datatype_oid)) &&
-		(scale[0] < 0 || scale[0] > 7))
+			  (*common_utility_plugin_ptr->is_tsql_datetime2_datatype) (datatype_oid) ||
+			  (*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype) (datatype_oid)) &&
+			 (scale[0] < 0 || scale[0] > 7))
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("Specified scale %d is invalid. \'%s\' datatype must have scale between 0 and 7",
-					 scale[0], dataTypeName)));
+						scale[0], dataTypeName)));
 	}
 	else if (datatype_oid == NUMERICOID ||
-		(*common_utility_plugin_ptr->is_tsql_decimal_datatype)(datatype_oid))
+			 (*common_utility_plugin_ptr->is_tsql_decimal_datatype) (datatype_oid))
 	{
 		/*
-		 * Since numeric/decimal datatype stores precision in scale[0] and scale in scale[1]
+		 * Since numeric/decimal datatype stores precision in scale[0] and
+		 * scale in scale[1]
 		 */
 		if (scale[0] < 1 || scale[0] > TDS_NUMERIC_MAX_PRECISION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("Specified column precision %d for \'%s\' datatype must be within the range 1 to maximum precision(38)",
-						 scale[0], dataTypeName)));
+							scale[0], dataTypeName)));
 
 		if (scale[1] < 0 || scale[1] > scale[0])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("The scale %d for \'%s\' datatype must be within the range 0 to precision %d",
-						 scale[1], dataTypeName, scale[0])));
+							scale[1], dataTypeName, scale[0])));
 	}
 }

@@ -9,7 +9,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "access/parallel.h" /* InitializingParallelWorker */
+#include "access/parallel.h"	/* InitializingParallelWorker */
 #include "miscadmin.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
@@ -40,8 +40,9 @@
  * (i.e. real datatype to integral type - PG uses round but T-SQL uses trunc)
  */
 
-// dtrunc in float.c
-inline static float8 dtrunc_(float8 arg1)
+/*  dtrunc in float.c */
+inline static float8
+dtrunc_(float8 arg1)
 {
 	float8		result;
 
@@ -53,7 +54,8 @@ inline static float8 dtrunc_(float8 arg1)
 	return result;
 }
 
-inline static float4 ftrunc_(float4 arg1)
+inline static float4
+ftrunc_(float4 arg1)
 {
 	float8		result;
 
@@ -71,7 +73,7 @@ PG_FUNCTION_INFO_V1(dtrunci8);
 Datum
 dtrunci8(PG_FUNCTION_ARGS)
 {
-	float8	num = PG_GETARG_FLOAT8(0);
+	float8		num = PG_GETARG_FLOAT8(0);
 
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
@@ -96,7 +98,7 @@ PG_FUNCTION_INFO_V1(dtrunci4);
 Datum
 dtrunci4(PG_FUNCTION_ARGS)
 {
-	float8	num = PG_GETARG_FLOAT8(0);
+	float8		num = PG_GETARG_FLOAT8(0);
 
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
@@ -121,7 +123,7 @@ PG_FUNCTION_INFO_V1(dtrunci2);
 Datum
 dtrunci2(PG_FUNCTION_ARGS)
 {
-	float8	num = PG_GETARG_FLOAT8(0);
+	float8		num = PG_GETARG_FLOAT8(0);
 
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
@@ -146,7 +148,7 @@ PG_FUNCTION_INFO_V1(ftrunci8);
 Datum
 ftrunci8(PG_FUNCTION_ARGS)
 {
-	float4	num = PG_GETARG_FLOAT4(0);
+	float4		num = PG_GETARG_FLOAT4(0);
 
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
@@ -171,7 +173,7 @@ PG_FUNCTION_INFO_V1(ftrunci4);
 Datum
 ftrunci4(PG_FUNCTION_ARGS)
 {
-	float4	num = PG_GETARG_FLOAT4(0);
+	float4		num = PG_GETARG_FLOAT4(0);
 
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
@@ -196,7 +198,7 @@ PG_FUNCTION_INFO_V1(ftrunci2);
 Datum
 ftrunci2(PG_FUNCTION_ARGS)
 {
-	float4	num = PG_GETARG_FLOAT4(0);
+	float4		num = PG_GETARG_FLOAT4(0);
 
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
@@ -223,9 +225,9 @@ PG_FUNCTION_INFO_V1(pltsql_bpchar_name);
 Datum
 pltsql_text_name(PG_FUNCTION_ARGS)
 {
-	text *s = PG_GETARG_TEXT_PP(0);
-	Name result;
-	int len;
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	Name		result;
+	int			len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	len = VARSIZE_ANY_EXHDR(s);
@@ -233,28 +235,29 @@ pltsql_text_name(PG_FUNCTION_ARGS)
 	/* Truncate oversize input */
 	if (len >= NAMEDATALEN)
 	{
-		if (cstr_to_name_hook) /* to apply special truncation logic */
+		if (cstr_to_name_hook)	/* to apply special truncation logic */
 		{
-			Name n;
+			Name		n;
+
 			PG_TRY();
 			{
 				/* T-SQL casting. follow T-SQL truncation rule */
 				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-				n = (*cstr_to_name_hook)(VARDATA_ANY(s), len);
+								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+				n = (*cstr_to_name_hook) (VARDATA_ANY(s), len);
 			}
 			PG_CATCH();
 			{
 				set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				PG_RE_THROW();
 			}
 			PG_END_TRY();
 			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						(superuser() ? PGC_SUSET : PGC_USERSET),
-						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 			PG_RETURN_NAME(n);
 		}
@@ -273,10 +276,10 @@ pltsql_text_name(PG_FUNCTION_ARGS)
 Datum
 pltsql_bpchar_name(PG_FUNCTION_ARGS)
 {
-	BpChar *s = PG_GETARG_BPCHAR_PP(0);
-	char *s_data;
-	Name result;
-	int len;
+	BpChar	   *s = PG_GETARG_BPCHAR_PP(0);
+	char	   *s_data;
+	Name		result;
+	int			len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	len = VARSIZE_ANY_EXHDR(s);
@@ -285,9 +288,9 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 	/* Truncate oversize input */
 	if (len >= NAMEDATALEN)
 	{
-		if (cstr_to_name_hook) /* to apply special truncation logic */
+		if (cstr_to_name_hook)	/* to apply special truncation logic */
 		{
-			Name n;
+			Name		n;
 
 			/* Remove trailing blanks */
 			while (len > 0)
@@ -301,21 +304,21 @@ pltsql_bpchar_name(PG_FUNCTION_ARGS)
 			{
 				/* T-SQL casting. follow T-SQL truncation rule */
 				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-				n = (*cstr_to_name_hook)(VARDATA_ANY(s), len);
+								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+				n = (*cstr_to_name_hook) (VARDATA_ANY(s), len);
 			}
 			PG_CATCH();
 			{
 				set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				PG_RE_THROW();
 			}
 			PG_END_TRY();
 			set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						(superuser() ? PGC_SUSET : PGC_USERSET),
-						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 			PG_RETURN_NAME(n);
 		}

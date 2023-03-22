@@ -458,3 +458,4 @@ void pltsql_revert_last_scope_identity(int nest_level)
 	last_used_scope_seq_identity = old_top->prev;
 	pfree(old_top);
 }
+

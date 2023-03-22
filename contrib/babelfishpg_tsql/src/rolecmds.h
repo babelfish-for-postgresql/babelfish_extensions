@@ -36,10 +36,10 @@
 #define USER_EXT_USER_CAN_CONNECT					15
 
 extern void drop_bbf_roles(ObjectAccessType access,
-										Oid classId,
-										Oid roleid,
-										int subId,
-										void *arg);
+						   Oid classId,
+						   Oid roleid,
+						   int subId,
+						   void *arg);
 extern bool role_is_sa(Oid roleid);
 extern bool tsql_has_pgstat_permissions(Oid roleid);
 extern bool is_alter_server_stmt(GrantRoleStmt *stmt);

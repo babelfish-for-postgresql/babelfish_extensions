@@ -76,7 +76,7 @@ static bool dummy_ssl_passwd_cb_called = false;
 static bool ssl_is_server_start;
 static BIO_METHOD *my_bio_methods = NULL;
 
-static int ssl_protocol_version_to_openssl(int v);
+static int	ssl_protocol_version_to_openssl(int v);
 static const char *ssl_protocol_version_to_string(int v);
 
 /* ------------------------------------------------------------ */
@@ -85,7 +85,7 @@ static const char *ssl_protocol_version_to_string(int v);
 int
 Tds_be_tls_init(bool isServerStart)
 {
-	STACK_OF(X509_NAME) *root_cert_list = NULL;
+	STACK_OF(X509_NAME) * root_cert_list = NULL;
 	SSL_CTX    *context;
 	int			ssl_ver_min = -1;
 	int			ssl_ver_max = -1;
@@ -201,16 +201,16 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_min_protocol_version)
 	{
-		int ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version);
+		int			ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version);
 
 		if (ssl_ver_min == -1)
 		{
 			/*- translator: first %s is a GUC option name, second %s is its value */
 			ereport(isServerStart ? FATAL : LOG,
-				(errmsg("\"%s\" setting \"%s\" not supported by this build",
-						"babelfishpg_tds.tds_ssl_min_protocol_version",
-						GetConfigOption("babelfishpg_tds.tds_ssl_min_protocol_version",
-										false, false))));
+					(errmsg("\"%s\" setting \"%s\" not supported by this build",
+							"babelfishpg_tds.tds_ssl_min_protocol_version",
+							GetConfigOption("babelfishpg_tds.tds_ssl_min_protocol_version",
+											false, false))));
 			goto error;
 		}
 
@@ -224,16 +224,16 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_max_protocol_version)
 	{
-		int ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version);
+		int			ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version);
 
 		if (ssl_ver_max == -1)
 		{
 			/*- translator: first %s is a GUC option name, second %s is its value */
 			ereport(isServerStart ? FATAL : LOG,
-				(errmsg("\"%s\" setting \"%s\" not supported by this build",
-						"babelfishpg_tds.tds_ssl_max_protocol_version",
-						GetConfigOption("babelfishpg_tds.tds_ssl_max_protocol_version",
-										false, false))));
+					(errmsg("\"%s\" setting \"%s\" not supported by this build",
+							"babelfishpg_tds.tds_ssl_max_protocol_version",
+							GetConfigOption("babelfishpg_tds.tds_ssl_max_protocol_version",
+											false, false))));
 			goto error;
 		}
 		if (!SSL_CTX_set_max_proto_version(context, ssl_ver_max))
@@ -365,7 +365,7 @@ Tds_be_tls_init(bool isServerStart)
 		}
 	}
 #if 0 // TDS specific
- 	/* TDS specific - TSQL doesn't support multual certificate authentication */
+	/* TDS specific - TSQL doesn't support multual certificate authentication */
 	if (ssl_ca_file[0])
 	{
 		/*
@@ -386,6 +386,7 @@ Tds_be_tls_init(bool isServerStart)
 		SSL_CTX_set_client_CA_list(context, root_cert_list);
 	}
 #endif
+
 	/*
 	 * Success!  Replace any existing SSL_context.
 	 */
@@ -396,6 +397,7 @@ Tds_be_tls_init(bool isServerStart)
 
 	ssl_loaded_verify_locations = false;
 #if 0 // TDS specific
+
 	/*
 	 * Set flag to remember whether CA store has been loaded into SSL_context.
 	 */
@@ -521,19 +523,19 @@ aloop:
 			case SSL_ERROR_SSL:
 				switch (ERR_GET_REASON(ecode))
 				{
-					/*
-					 * UNSUPPORTED_PROTOCOL, WRONG_VERSION_NUMBER, and
-					 * TLSV1_ALERT_PROTOCOL_VERSION have been observed
-					 * when trying to communicate with an old OpenSSL
-					 * library, or when the client and server specify
-					 * disjoint protocol ranges.  NO_PROTOCOLS_AVAILABLE
-					 * occurs if there's a local misconfiguration (which
-					 * can happen despite our checks, if openssl.cnf
-					 * injects a limit we didn't account for).  It's not
-					 * very clear what would make OpenSSL return the other
-					 * codes listed here, but a hint about protocol
-					 * versions seems like it's appropriate for all.
-					 */
+						/*
+						 * UNSUPPORTED_PROTOCOL, WRONG_VERSION_NUMBER, and
+						 * TLSV1_ALERT_PROTOCOL_VERSION have been observed
+						 * when trying to communicate with an old OpenSSL
+						 * library, or when the client and server specify
+						 * disjoint protocol ranges.  NO_PROTOCOLS_AVAILABLE
+						 * occurs if there's a local misconfiguration (which
+						 * can happen despite our checks, if openssl.cnf
+						 * injects a limit we didn't account for).  It's not
+						 * very clear what would make OpenSSL return the other
+						 * codes listed here, but a hint about protocol
+						 * versions seems like it's appropriate for all.
+						 */
 					case SSL_R_NO_PROTOCOLS_AVAILABLE:
 					case SSL_R_UNSUPPORTED_PROTOCOL:
 					case SSL_R_BAD_PROTOCOL_VERSION_NUMBER:
@@ -1206,7 +1208,7 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("DH: could not set DH parameters: %s",
-						 SSLerrmessage(ERR_get_error()))));
+						SSLerrmessage(ERR_get_error()))));
 		DH_free(dh);
 		return false;
 	}

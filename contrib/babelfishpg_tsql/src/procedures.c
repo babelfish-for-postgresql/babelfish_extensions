@@ -2561,3 +2561,4 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 
 	return res;
 }
+

@@ -13,14 +13,14 @@ PG_FUNCTION_INFO_V1(babel_list_mapped_error_deprecated_in_2_2_0);
 
 /*
  * Certain tsql error code can behave differently depending on when it is
- * raised or what operations were being executed. 
+ * raised or what operations were being executed.
  * For example, tsql error code 547 can behave in 2 different ways:
  * 1. Error code 547 will behave as if it is statement terminating error if
  *    It is raised when DML was being executed.
  * 2. Same error code will behave as transaction aborting error for any other cases.
- * 
- * Scenario described in point no. 1 is happening probably because another tsql error 
- * token (i.e. 3621) also being raised after original token. But Babelfish does not  
+ *
+ * Scenario described in point no. 1 is happening probably because another tsql error
+ * token (i.e. 3621) also being raised after original token. But Babelfish does not
  * have support to raise multiple token.
  *
  * So, This function override_txn_behaviour could be used to override behaviour of
@@ -31,37 +31,43 @@ PG_FUNCTION_INFO_V1(babel_list_mapped_error_deprecated_in_2_2_0);
  * flag & CUR_BATCH_ABORTING_ERROR (0x02) --> current batch terminating
  * flag & TXN_ABORTING_ERROR (0x04) --> transaction aborting
  * flag & IGNORE_XACT_ERROR (0x08) --> ignore xact_abort
- */ 
-uint8_t 
+ */
+uint8_t
 override_txn_behaviour(PLtsql_stmt *stmt)
 {
-	uint8_t override_flag = 0;
+	uint8_t		override_flag = 0;
 
 	if (!stmt)
 		return 0;
+
 	/*
-	 * If tsql error code 547 is raised while executing DML statement
-	 * then error code should behave as if it is statement terminating
-	 * error.
+	 * If tsql error code 547 is raised while executing DML statement then
+	 * error code should behave as if it is statement terminating error.
 	 */
 	if (latest_error_code == SQL_ERROR_547 && stmt->cmd_type == PLTSQL_STMT_EXECSQL)
 	{
 		PLtsql_expr *expr = ((PLtsql_stmt_execsql *) stmt)->sqlstmt;
+
 		if (expr && expr->plan)
 		{
-			ListCell *lc;
-			/* Below loop will iterate one time only for every statement in the batch. */
+			ListCell   *lc;
+
+			/*
+			 * Below loop will iterate one time only for every statement in
+			 * the batch.
+			 */
 			foreach(lc, SPI_plan_get_plan_sources(expr->plan))
 			{
 				CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+
 				if (plansource &&
 					plansource->commandTag &&
 					(plansource->commandTag == CMDTAG_INSERT ||
-						plansource->commandTag == CMDTAG_UPDATE ||
-						plansource->commandTag == CMDTAG_DELETE))
-					{
-						override_flag |= IGNORABLE_ERROR;
-					}
+					 plansource->commandTag == CMDTAG_UPDATE ||
+					 plansource->commandTag == CMDTAG_DELETE))
+				{
+					override_flag |= IGNORABLE_ERROR;
+				}
 			}
 		}
 	}
@@ -69,11 +75,12 @@ override_txn_behaviour(PLtsql_stmt *stmt)
 }
 
 /* error could be ignored within exec_stmt_execsql */
-bool is_ignorable_error(int pg_error_code, uint8_t override_flag)
+bool
+is_ignorable_error(int pg_error_code, uint8_t override_flag)
 {
 	/*
-	 * Check if override transactional behaviour flag is set,
-	 * And use the same to determine the transactional behaviour.
+	 * Check if override transactional behaviour flag is set, And use the same
+	 * to determine the transactional behaviour.
 	 */
 	if (override_flag)
 	{
@@ -83,11 +90,11 @@ bool is_ignorable_error(int pg_error_code, uint8_t override_flag)
 			return false;
 	}
 
-	/* 
-	 * As of now, Trying do classification based on SQL error code.
-	 * If it does not work then doing classification based on pg_error_code.
+	/*
+	 * As of now, Trying do classification based on SQL error code. If it does
+	 * not work then doing classification based on pg_error_code.
 	 */
-	switch(latest_error_code)
+	switch (latest_error_code)
 	{
 		case SQL_ERROR_232:
 		case SQL_ERROR_3902:
@@ -124,31 +131,32 @@ bool is_ignorable_error(int pg_error_code, uint8_t override_flag)
 		case SQL_ERROR_8145:
 		case SQL_ERROR_8146:
 		case SQL_ERROR_213:
-		{
-			elog(DEBUG1, "TSQL TXN is_ignorable_error %d", latest_error_code);
-			return true;
-		}
+			{
+				elog(DEBUG1, "TSQL TXN is_ignorable_error %d", latest_error_code);
+				return true;
+			}
 		default:
 			break;
 	}
-    switch(pg_error_code)
-    {
+	switch (pg_error_code)
+	{
 		case ERRCODE_PLTSQL_RAISERROR:
-		{
-			elog(DEBUG1, "TSQL TXN is_ignorable_error raise error %d", latest_error_code);
-            return true;
-		}
-        default:
-            return false;
-    }
+			{
+				elog(DEBUG1, "TSQL TXN is_ignorable_error raise error %d", latest_error_code);
+				return true;
+			}
+		default:
+			return false;
+	}
 }
 
 /* Tsql errors which terminate only the batch where error was raised  */
-bool is_current_batch_aborting_error(int pg_error_code, uint8_t override_flag)
+bool
+is_current_batch_aborting_error(int pg_error_code, uint8_t override_flag)
 {
 	/*
-	 * Check if override transactional behaviour flag is set,
-	 * And use the same to determine the transactional behaviour.
+	 * Check if override transactional behaviour flag is set, And use the same
+	 * to determine the transactional behaviour.
 	 */
 	if (override_flag)
 	{
@@ -158,31 +166,32 @@ bool is_current_batch_aborting_error(int pg_error_code, uint8_t override_flag)
 			return false;
 	}
 
-	/* 
-	 * As of now, Trying do classification based on SQL error code.
-	 * If it does not work then doing classification based on pg_error_code.
+	/*
+	 * As of now, Trying do classification based on SQL error code. If it does
+	 * not work then doing classification based on pg_error_code.
 	 */
-	switch(latest_error_code)
+	switch (latest_error_code)
 	{
 		case SQL_ERROR_306:
 		case SQL_ERROR_477:
 		case SQL_ERROR_1752:
 		case SQL_ERROR_10793:
-		{
-			elog(DEBUG1, "TSQL TXN is_current_batch_aborting_error %d", latest_error_code);
-			return true;
-		}
+			{
+				elog(DEBUG1, "TSQL TXN is_current_batch_aborting_error %d", latest_error_code);
+				return true;
+			}
 		default:
 			return false;
 	}
 }
 
 /* Tsql errors which lead to batch abort and transaction rollback */
-bool is_batch_txn_aborting_error(int pg_error_code, uint8_t override_flag)
+bool
+is_batch_txn_aborting_error(int pg_error_code, uint8_t override_flag)
 {
 	/*
-	 * Check if override transactional behaviour flag is set,
-	 * And use the same to determine the transactional behaviour.
+	 * Check if override transactional behaviour flag is set, And use the same
+	 * to determine the transactional behaviour.
 	 */
 	if (override_flag)
 	{
@@ -192,11 +201,11 @@ bool is_batch_txn_aborting_error(int pg_error_code, uint8_t override_flag)
 			return false;
 	}
 
-	/* 
-	 * As of now, Trying do classification based on SQL error code.
-	 * If it does not work then doing classification based on pg_error_code.
+	/*
+	 * As of now, Trying do classification based on SQL error code. If it does
+	 * not work then doing classification based on pg_error_code.
 	 */
-	switch(latest_error_code)
+	switch (latest_error_code)
 	{
 		case SQL_ERROR_628:
 		case SQL_ERROR_3723:
@@ -238,21 +247,22 @@ bool is_batch_txn_aborting_error(int pg_error_code, uint8_t override_flag)
 		case SQL_ERROR_9451:
 		case SQL_ERROR_11701:
 		case SQL_ERROR_3616:
-                case SQL_ERROR_911:
-		{
-			elog(DEBUG1, "TSQL TXN is_batch_txn_aborting_error %d", latest_error_code);
-			return true;
-		}
+		case SQL_ERROR_911:
+			{
+				elog(DEBUG1, "TSQL TXN is_batch_txn_aborting_error %d", latest_error_code);
+				return true;
+			}
 		default:
 			return false;
 	}
 }
 
-bool ignore_xact_abort_error(int pg_error_code, uint8_t override_flag)
+bool
+ignore_xact_abort_error(int pg_error_code, uint8_t override_flag)
 {
 	/*
-	 * Check if override transactional behaviour flag is set,
-	 * And use the same to determine the transactional behaviour.
+	 * Check if override transactional behaviour flag is set, And use the same
+	 * to determine the transactional behaviour.
 	 */
 	if (override_flag)
 	{
@@ -262,11 +272,11 @@ bool ignore_xact_abort_error(int pg_error_code, uint8_t override_flag)
 			return false;
 	}
 
-	/* 
-	 * As of now, Trying do classification based on SQL error code.
-	 * If it does not work then doing classification based on pg_error_code.
+	/*
+	 * As of now, Trying do classification based on SQL error code. If it does
+	 * not work then doing classification based on pg_error_code.
 	 */
-	switch(latest_error_code)
+	switch (latest_error_code)
 	{
 		case SQL_ERROR_3701:
 		case SQL_ERROR_129:
@@ -287,14 +297,14 @@ bool ignore_xact_abort_error(int pg_error_code, uint8_t override_flag)
 		case SQL_ERROR_487:
 		case SQL_ERROR_153:
 		case SQL_ERROR_11709:
-		{
-			elog(DEBUG1, "TSQL TXN ignore_xact_abort_error %d", latest_error_code);
-			return true;
-		}
+			{
+				elog(DEBUG1, "TSQL TXN ignore_xact_abort_error %d", latest_error_code);
+				return true;
+			}
 		default:
 			break;
 	}
-	switch(pg_error_code)
+	switch (pg_error_code)
 	{
 		case ERRCODE_PLTSQL_RAISERROR:
 			return true;
@@ -306,9 +316,10 @@ bool ignore_xact_abort_error(int pg_error_code, uint8_t override_flag)
 /*
  * Compile time errors which abort transactions by default
  */
-bool is_txn_aborting_compilation_error(int sql_error_code)
+bool
+is_txn_aborting_compilation_error(int sql_error_code)
 {
-	switch(sql_error_code)
+	switch (sql_error_code)
 	{
 		default:
 			break;
@@ -320,18 +331,19 @@ bool is_txn_aborting_compilation_error(int sql_error_code)
  * Compile time error which abort transactions when xact_abort
  * is set to ON
  */
-bool is_xact_abort_txn_compilation_error(int sql_error_code)
+bool
+is_xact_abort_txn_compilation_error(int sql_error_code)
 {
-	switch(sql_error_code)
+	switch (sql_error_code)
 	{
 		case SQL_ERROR_2747:
 		case SQL_ERROR_8159:
 		case SQL_ERROR_11717:
 		case SQL_ERROR_16948:
-		{
-			elog(DEBUG1, "TSQL TXN is_xact_abort_txn_compilation_error %d", latest_error_code);
-			return true;
-		}
+			{
+				elog(DEBUG1, "TSQL TXN is_xact_abort_txn_compilation_error %d", latest_error_code);
+				return true;
+			}
 		default:
 			break;
 	}
@@ -339,34 +351,39 @@ bool is_xact_abort_txn_compilation_error(int sql_error_code)
 }
 
 /* translate PG error code to  error code */
-bool get_tsql_error_code(ErrorData *edata, int *last_error)
+bool
+get_tsql_error_code(ErrorData *edata, int *last_error)
 {
-    /* xxx: if (*pltsql_protocol_plugin_ptr)->get_tsql_error is initialised then use it
-     * directly. If it is not initialised or in other words, babelfishpg_tds is not loaded
-     * then use older approach. 
-     * But we need to handle error neatly when only babelfishpg_tsql is loaded. We will address that case
-     * as part of BABEL-1204.
-     */
+	/*
+	 * xxx: if (*pltsql_protocol_plugin_ptr)->get_tsql_error is initialised
+	 * then use it directly. If it is not initialised or in other words,
+	 * babelfishpg_tds is not loaded then use older approach. But we need to
+	 * handle error neatly when only babelfishpg_tsql is loaded. We will
+	 * address that case as part of BABEL-1204.
+	 */
 	*last_error = ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
-    if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tsql_error)
-    {
-        int tsql_error_sev, tsql_error_state;
-        return (*pltsql_protocol_plugin_ptr)->get_tsql_error (edata,
-								last_error,
-								&tsql_error_sev,
-								&tsql_error_state,
-								"babelfishpg_tsql");
-    }
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_tsql_error)
+	{
+		int			tsql_error_sev,
+					tsql_error_state;
+
+		return (*pltsql_protocol_plugin_ptr)->get_tsql_error(edata,
+															 last_error,
+															 &tsql_error_sev,
+															 &tsql_error_state,
+															 "babelfishpg_tsql");
+	}
 	return false;
 }
 
 static int
 get_err_lineno(const char *context)
 {
-	int lineno = -1;
+	int			lineno = -1;
 	const char *pattern1 = "line ";
 	const char *pattern2 = " at";
-	char *start, *end;
+	char	   *start,
+			   *end;
 
 	if ((start = strstr(context, pattern1)))
 	{
@@ -379,14 +396,14 @@ get_err_lineno(const char *context)
 	return lineno;
 }
 
-/* 
+/*
  * Do error mapping to get the mapped error info, including error number, error
  * severity and error state.
  */
 static void
 do_error_mapping(PLtsql_estate_err *err)
 {
-	if (!(*pltsql_protocol_plugin_ptr) || 
+	if (!(*pltsql_protocol_plugin_ptr) ||
 		!(*pltsql_protocol_plugin_ptr)->get_tsql_error)
 		return;
 
@@ -398,7 +415,7 @@ do_error_mapping(PLtsql_estate_err *err)
 												  "babelfishpg_tsql");
 }
 
-/* 
+/*
  * If there is no error in current estate, try to check previous estates one by
  * one, in case we are inside a previous estate's CATCH block.
  */
@@ -422,17 +439,18 @@ Datum
 babel_list_mapped_error_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
 {
 	/* To hold the list of supported SQL error code */
-	int *list = NULL;
+	int		   *list = NULL;
 
 	/* SRF related things to keep enough state between calls */
 	FuncCallContext *funcctx;
-	int call_cntr;
-	int max_calls;
+	int			call_cntr;
+	int			max_calls;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext   oldcontext;
+		MemoryContext oldcontext;
+
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_mapped_error_list)
@@ -465,11 +483,11 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	Tuplestorestate *tupstore;
 	TupleDesc	tupdesc;
-	int		call_cntr = 0;
-	MemoryContext	oldcontext;
-	MemoryContext	per_query_ctx;
-	Oid		nspoid = get_namespace_oid("sys", false);
-	Oid		sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("nvarchar"), ObjectIdGetDatum(nspoid));
+	int			call_cntr = 0;
+	MemoryContext oldcontext;
+	MemoryContext per_query_ctx;
+	Oid			nspoid = get_namespace_oid("sys", false);
+	Oid			sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("nvarchar"), ObjectIdGetDatum(nspoid));
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -529,8 +547,8 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 	return (Datum) 0;
 }
 
-/* 
- * ERROR_*() functions 
+/*
+ * ERROR_*() functions
  */
 PG_FUNCTION_INFO_V1(pltsql_error_line);
 PG_FUNCTION_INFO_V1(pltsql_error_message);
@@ -543,7 +561,7 @@ Datum
 pltsql_error_line(PG_FUNCTION_ARGS)
 {
 	PLtsql_execstate *estate;
-	int lineno = -1;
+	int			lineno = -1;
 
 	if (exec_state_call_stack == NULL)
 		PG_RETURN_NULL();
@@ -555,8 +573,8 @@ pltsql_error_line(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	/*
-	 * TODO: This function is just a temporary workaround for error line number.
-	 * We should cache line number as soon as an error is raised.
+	 * TODO: This function is just a temporary workaround for error line
+	 * number. We should cache line number as soon as an error is raised.
 	 */
 	lineno = get_err_lineno(estate->cur_error->error->context);
 
@@ -571,7 +589,7 @@ pltsql_error_message(PG_FUNCTION_ARGS)
 {
 	PLtsql_execstate *estate;
 	StringInfoData temp;
-	void *message = NULL;
+	void	   *message = NULL;
 
 	if (exec_state_call_stack == NULL)
 		PG_RETURN_NULL();
@@ -584,7 +602,7 @@ pltsql_error_message(PG_FUNCTION_ARGS)
 
 	initStringInfo(&temp);
 	appendStringInfoString(&temp, estate->cur_error->error->message);
-	message = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+	message = (*common_utility_plugin_ptr->tsql_varchar_input) (temp.data, temp.len, -1);
 
 	pfree(temp.data);
 
@@ -617,7 +635,7 @@ pltsql_error_procedure(PG_FUNCTION_ARGS)
 {
 	PLtsql_execstate *estate;
 	StringInfoData temp;
-	void *procedure = NULL;
+	void	   *procedure = NULL;
 
 	if (exec_state_call_stack == NULL)
 		PG_RETURN_NULL();
@@ -630,7 +648,7 @@ pltsql_error_procedure(PG_FUNCTION_ARGS)
 
 	initStringInfo(&temp);
 	appendStringInfoString(&temp, estate->cur_error->procedure);
-	procedure = (*common_utility_plugin_ptr->tsql_varchar_input)(temp.data, temp.len, -1);
+	procedure = (*common_utility_plugin_ptr->tsql_varchar_input) (temp.data, temp.len, -1);
 
 	pfree(temp.data);
 

@@ -341,18 +341,18 @@ static Plan *find_recursive_union(deparse_namespace *dpns,
 								  WorkTableScan *wtscan);
 static text *string_to_text(char *str);
 static char *tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
-										 int prettyFlags, bool missing_ok);
+										   int prettyFlags, bool missing_ok);
 static text *tsql_get_expr_worker(text *expr, Oid relid, const char *relname,
-                                         int prettyFlags);
+								  int prettyFlags);
 static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
 static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
-int tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
-		bool print_table_args, bool print_defaults, int** typmod_arr_arg, bool* has_tvp);
-char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
+int			tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
+										  bool print_table_args, bool print_defaults, int **typmod_arr_arg, bool *has_tvp);
+char	   *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
-char* generate_tsql_collation_name(Oid collOid);
-int adjustTypmod(Oid oid, int typmod);
-static void tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args);
+char	   *generate_tsql_collation_name(Oid collOid);
+int			adjustTypmod(Oid oid, int typmod);
+static void tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int **typmod_arr_ret, int number_args);
 
 PG_FUNCTION_INFO_V1(tsql_get_constraintdef);
 
@@ -398,56 +398,57 @@ PG_FUNCTION_INFO_V1(tsql_get_expr);
 Datum
 tsql_get_expr(PG_FUNCTION_ARGS)
 {
-    text       *expr = PG_GETARG_TEXT_PP(0);
-    Oid         relid = PG_GETARG_OID(1);
-    int         prettyFlags;
-    char       *relname;
+	text	   *expr = PG_GETARG_TEXT_PP(0);
+	Oid			relid = PG_GETARG_OID(1);
+	int			prettyFlags;
+	char	   *relname;
 
-    prettyFlags = PRETTYFLAG_INDENT;
+	prettyFlags = PRETTYFLAG_INDENT;
 
-    if (OidIsValid(relid))
-    {
-        /* Get the name for the relation */
-        relname = get_rel_name(relid);
-    }
-    else
-    {
-        relname = NULL;
-    }
-    /*
-     * If the relname is NULL, don't throw an error, just return
-     * NULL.  This is a bit questionable, but it's what we've done
-     * historically, and it can help avoid unwanted failures when
-     * examining catalog entries for just-deleted relations.
-     */
-    if (relname == NULL)
-	PG_RETURN_NULL();
+	if (OidIsValid(relid))
+	{
+		/* Get the name for the relation */
+		relname = get_rel_name(relid);
+	}
+	else
+	{
+		relname = NULL;
+	}
 
-    PG_RETURN_TEXT_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
+	/*
+	 * If the relname is NULL, don't throw an error, just return NULL.  This
+	 * is a bit questionable, but it's what we've done historically, and it
+	 * can help avoid unwanted failures when examining catalog entries for
+	 * just-deleted relations.
+	 */
+	if (relname == NULL)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(tsql_get_expr_worker(expr, relid, relname, prettyFlags));
 }
 
 static text *
 tsql_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
 {
-    Node       *node;
-    List       *context;
-    char       *exprstr;
+	Node	   *node;
+	List	   *context;
+	char	   *exprstr;
 
-    /* Convert input TEXT object to C string */
-    exprstr = text_to_cstring(expr);
+	/* Convert input TEXT object to C string */
+	exprstr = text_to_cstring(expr);
 
-    /* Convert expression to node tree */
-    node = (Node *) stringToNode(exprstr);
+	/* Convert expression to node tree */
+	node = (Node *) stringToNode(exprstr);
 
-    pfree(exprstr);
+	pfree(exprstr);
 
-    /* Prepare deparse context if needed */
-    if (OidIsValid(relid))
-        context = deparse_context_for(relname, relid);
-    else
-        context = NIL;
-							 /* Deparse */
-    return string_to_text(deparse_expression_pretty(node, context, false, false,prettyFlags, 0));
+	/* Prepare deparse context if needed */
+	if (OidIsValid(relid))
+		context = deparse_context_for(relname, relid);
+	else
+		context = NIL;
+	/* Deparse */
+	return string_to_text(deparse_expression_pretty(node, context, false, false, prettyFlags, 0));
 }
 
 /*
@@ -467,19 +468,19 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 {
 	Oid			funcid = PG_GETARG_OID(0);
 	StringInfoData buf;
-	HeapTuple      proctup;
+	HeapTuple	proctup;
 	Form_pg_proc proc;
 	bool		isfunction;
 	Datum		tmp;
-	bool	   isnull;
+	bool		isnull;
 	const char *prosrc;
 	const char *name;
 	const char *nsp;
 	const char *nnsp;
-	bool has_tvp = false;
-	int* typmod_arr = NULL;
-	int number_args;
-	char *probin_c = NULL;
+	bool		has_tvp = false;
+	int		   *typmod_arr = NULL;
+	int			number_args;
+	char	   *probin_c = NULL;
 
 	/* Look up the function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
@@ -498,16 +499,18 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	 * replaced.
 	 */
 	nsp = get_namespace_name(proc->pronamespace);
-	nnsp = get_logical_schema_name(nsp,true);
+	nnsp = get_logical_schema_name(nsp, true);
 	appendStringInfo(&buf, "CREATE %s %s",
 					 isfunction ? "FUNCTION" : "PROCEDURE",
 					 tsql_quote_qualified_identifier(nnsp, name));
-	if(isfunction || proc->pronargs > 0)
+	if (isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, "(");
-	
-	/* we will not pfree name because as we can see name = NameStr(proc->proname) 
-	 * here we are not allocating extra space for name, we’re just using proc-> proname.
-	 * also at the end, we’re releasing proctup (that will free proc->proname).  
+
+	/*
+	 * we will not pfree name because as we can see name =
+	 * NameStr(proc->proname) here we are not allocating extra space for name,
+	 * we’re just using proc-> proname. also at the end, we’re releasing
+	 * proctup (that will free proc->proname).
 	 */
 	pfree((char *) nsp);
 	if (nnsp)
@@ -517,14 +520,14 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 
 	if (!isnull)
 		probin_c = TextDatumGetCString(tmp);
-	if(!probin_c || probin_c[0] != '{')
+	if (!probin_c || probin_c[0] != '{')
 		PG_RETURN_NULL();
-	
+
 	number_args = proc->pronargs;
 	if (isfunction)
 		number_args++;
 	/* Return NULL for the definition if procedure language is not pltsql. */
-	if(strcmp(get_language_name(proc->prolang, false), "pltsql") != 0)
+	if (strcmp(get_language_name(proc->prolang, false), "pltsql") != 0)
 		PG_RETURN_NULL();
 
 	probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
@@ -534,26 +537,26 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	if (has_tvp)
 		PG_RETURN_NULL();
 
-	if(isfunction || proc->pronargs > 0)
+	if (isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, ")");
 	if (isfunction)
 	{
 		appendStringInfoString(&buf, " RETURNS ");
 		tsql_print_function_rettype(&buf, proctup, &typmod_arr, number_args);
 	}
-	if(typmod_arr)
+	if (typmod_arr)
 		pfree(typmod_arr);
- 
+
 	/* Emit some miscellaneous options on one line */
 	if (proc->proisstrict)
 		appendStringInfoString(&buf, " WITH RETURNS NULL ON NULL INPUT");
 
 	/* And finally the function definition ... */
 	(void) SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosqlbody, &isnull);
-	
+
 	appendStringInfoString(&buf, " AS ");
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
-	prosrc = TextDatumGetCString(tmp); 
+	prosrc = TextDatumGetCString(tmp);
 	appendStringInfoString(&buf, prosrc);
 
 	ReleaseSysCache(proctup);
@@ -566,50 +569,51 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 PG_FUNCTION_INFO_V1(tsql_get_returnTypmodValue);
 /*
  * function that will return the typmod value of return type
- */ 
-Datum 
-tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
-        Oid                     funcid = PG_GETARG_OID(0);
-        HeapTuple      proctup;
-        Form_pg_proc proc;
-        bool            isfunction;
-        Datum           tmp;
-        bool       isnull;
-        char *probin_c = NULL;
-        int* typmod_arr = NULL;
-        int number_args;
+ */
+Datum
+tsql_get_returnTypmodValue(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	HeapTuple	proctup;
+	Form_pg_proc proc;
+	bool		isfunction;
+	Datum		tmp;
+	bool		isnull;
+	char	   *probin_c = NULL;
+	int		   *typmod_arr = NULL;
+	int			number_args;
 
-        proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
-        if (!HeapTupleIsValid(proctup)) 
-                PG_RETURN_INT32(-1);
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(proctup))
+		PG_RETURN_INT32(-1);
 
-        proc = (Form_pg_proc) GETSTRUCT(proctup);   
+	proc = (Form_pg_proc) GETSTRUCT(proctup);
 
-        isfunction = (proc->prokind != PROKIND_PROCEDURE);
+	isfunction = (proc->prokind != PROKIND_PROCEDURE);
 
-        if (!isfunction)
-        {
-            ReleaseSysCache(proctup);
-            PG_RETURN_INT32(-1) ;
-        }
+	if (!isfunction)
+	{
+		ReleaseSysCache(proctup);
+		PG_RETURN_INT32(-1);
+	}
 
-        tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
+	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
 
-        if (!isnull)
-            probin_c = TextDatumGetCString(tmp);
-        if(!probin_c || probin_c[0] != '{')
-            PG_RETURN_INT32(-1);
+	if (!isnull)
+		probin_c = TextDatumGetCString(tmp);
+	if (!probin_c || probin_c[0] != '{')
+		PG_RETURN_INT32(-1);
 
-        number_args = proc->pronargs;
-        number_args++;  
+	number_args = proc->pronargs;
+	number_args++;
 
-        probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
-        pfree(probin_c);
-        if (typmod_arr[number_args-1] != -1)
-               typmod_arr[number_args-1] += adjustTypmod(proc->prorettype, typmod_arr[number_args-1]);
-        
-        ReleaseSysCache(proctup);
-        PG_RETURN_INT32(typmod_arr[number_args-1]);
+	probin_json_reader(cstring_to_text(probin_c), &typmod_arr, number_args);
+	pfree(probin_c);
+	if (typmod_arr[number_args - 1] != -1)
+		typmod_arr[number_args - 1] += adjustTypmod(proc->prorettype, typmod_arr[number_args - 1]);
+
+	ReleaseSysCache(proctup);
+	PG_RETURN_INT32(typmod_arr[number_args - 1]);
 
 }
 
@@ -618,7 +622,7 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
  */
 static char *
 tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
-							int prettyFlags, bool missing_ok)
+							  int prettyFlags, bool missing_ok)
 {
 	HeapTuple	tup;
 	Form_pg_constraint conForm;
@@ -759,12 +763,12 @@ tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
  * to the specified buffer.
  */
 static void
-tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args)
+tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int **typmod_arr_ret, int number_args)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	int			ntabargs = 0;
 	StringInfoData rbuf;
-	bool has_tvp = false;
+	bool		has_tvp = false;
 
 	initStringInfo(&rbuf);
 
@@ -784,13 +788,13 @@ tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_
 		/* Not a table function, so do the normal thing */
 		if (proc->proretset)
 			appendStringInfoString(&rbuf, "SETOF ");
-	        if ((*typmod_arr_ret)[number_args-1] != -1)
-                        (*typmod_arr_ret)[number_args-1] += adjustTypmod(proc->prorettype, (*typmod_arr_ret)[number_args-1]);
-		appendStringInfoString(&rbuf, tsql_format_type_extended(proc->prorettype, (*typmod_arr_ret)[number_args-1], FORMAT_TYPE_TYPEMOD_GIVEN));
+		if ((*typmod_arr_ret)[number_args - 1] != -1)
+			(*typmod_arr_ret)[number_args - 1] += adjustTypmod(proc->prorettype, (*typmod_arr_ret)[number_args - 1]);
+		appendStringInfoString(&rbuf, tsql_format_type_extended(proc->prorettype, (*typmod_arr_ret)[number_args - 1], FORMAT_TYPE_TYPEMOD_GIVEN));
 	}
 
 	appendBinaryStringInfo(buf, rbuf.data, rbuf.len);
-        pfree(rbuf.data);
+	pfree(rbuf.data);
 }
 
 /*
@@ -801,7 +805,7 @@ tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_
  */
 int
 tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
-						 bool print_table_args, bool print_defaults, int** typmod_arr_arg, bool* has_tvp)
+							  bool print_table_args, bool print_defaults, int **typmod_arr_arg, bool *has_tvp)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	HeapTuple	bbffunctuple = NULL;
@@ -922,20 +926,20 @@ tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 			appendStringInfoString(buf, ", ");
 
 		if (argname && argname[0])
-			appendStringInfo(buf,"%s ", tsql_quote_identifier(argname));
-	        if ((*typmod_arr_arg)[i] != -1)
-	       	        (*typmod_arr_arg)[i] += adjustTypmod(argtype, (*typmod_arr_arg)[i]);
+			appendStringInfo(buf, "%s ", tsql_quote_identifier(argname));
+		if ((*typmod_arr_arg)[i] != -1)
+			(*typmod_arr_arg)[i] += adjustTypmod(argtype, (*typmod_arr_arg)[i]);
 		appendStringInfoString(buf, tsql_format_type_extended(argtype, (*typmod_arr_arg)[i], FORMAT_TYPE_TYPEMOD_GIVEN));
 
 		if (modename && strcmp(modename, "") != 0)
-		       	appendStringInfo(buf," %s", modename);
+			appendStringInfo(buf, " %s", modename);
 
 		if (print_defaults && isinput && default_positions_available)
 		{
 			if (nextdefaultposition != NULL)
 			{
-				int position = intVal((Node *) lfirst(nextdefaultposition));
-				Node *expr;
+				int			position = intVal((Node *) lfirst(nextdefaultposition));
+				Node	   *expr;
 
 				Assert(nextargdefault != NULL);
 				expr = (Node *) lfirst(nextargdefault);
@@ -1038,7 +1042,7 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 	operform = (Form_pg_operator) GETSTRUCT(opertup);
 	oprname = NameStr(operform->oprname);
 
-	if(strcmp(oprname,"~~") == 0)
+	if (strcmp(oprname, "~~") == 0)
 		oprname = "LIKE";
 
 
@@ -1274,16 +1278,16 @@ get_rule_expr(Node *node, deparse_context *context,
 				List	   *args = expr->args;
 				Node	   *arg1 = (Node *) linitial(args);
 				Node	   *arg2 = (Node *) lsecond(args);
-				char		*opername;
+				char	   *opername;
 
 				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, '(');
 				get_rule_expr_paren(arg1, context, true, node);
 				opername = generate_operator_name(expr->opno, exprType(arg1),
-									get_base_element_type(exprType(arg2)));
-				if (strcmp(opername,"=")==0)
+												  get_base_element_type(exprType(arg2)));
+				if (strcmp(opername, "=") == 0)
 					appendStringInfoString(buf, " IN (");
-				else if (strcmp(opername,"<>")==0)
+				else if (strcmp(opername, "<>") == 0)
 					appendStringInfoString(buf, " NOT IN (");
 
 				get_rule_expr_paren(arg2, context, true, node);
@@ -1459,6 +1463,7 @@ string_to_text(char *str)
 	text	   *result;
 
 	result = cstring_to_text(str);
+
 	pfree(str);
 	return result;
 }
@@ -1699,9 +1704,9 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		appendStringInfoChar(buf, '*');
 		if (istoplevel)
 			appendStringInfo(buf, " AS %s)",
-							tsql_format_type_extended(var->vartype,
-									var->vartypmod,
-									FORMAT_TYPE_TYPEMOD_GIVEN));
+							 tsql_format_type_extended(var->vartype,
+													   var->vartypmod,
+													   FORMAT_TYPE_TYPEMOD_GIVEN));
 	}
 
 	return attname;
@@ -1745,8 +1750,8 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		{
 			appendStringInfo(buf, "CAST(%s AS %s)", valbuf->data,
 							 tsql_format_type_extended(constval->consttype,
-								 		constval->consttypmod,
-										FORMAT_TYPE_TYPEMOD_GIVEN));
+													   constval->consttypmod,
+													   FORMAT_TYPE_TYPEMOD_GIVEN));
 			get_const_collation(constval, context);
 		}
 		else
@@ -1824,7 +1829,8 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		return;
 	}
 
-	/* XXX this code has to be kept in sync with the behavior of the parser,
+	/*
+	 * XXX this code has to be kept in sync with the behavior of the parser,
 	 * especially make_const.
 	 */
 	switch (constval->consttype)
@@ -1856,8 +1862,8 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 	{
 		appendStringInfo(buf, "CAST(%s AS %s)", valbuf->data,
 						 tsql_format_type_extended(constval->consttype,
-							 		constval->consttypmod,
-									FORMAT_TYPE_TYPEMOD_GIVEN));
+												   constval->consttypmod,
+												   FORMAT_TYPE_TYPEMOD_GIVEN));
 	}
 	else
 	{
@@ -2051,10 +2057,10 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 									  context->special_exprkind);
 
 	/*
-	 * AT TIMEZONE from TSQL is parsed to timezone function internally.
-	 * While de-parsing, convert it to AT TIME ZONE explicitly.
+	 * AT TIMEZONE from TSQL is parsed to timezone function internally. While
+	 * de-parsing, convert it to AT TIME ZONE explicitly.
 	 */
-	if (strcmp(funcname,"timezone") == 0)
+	if (strcmp(funcname, "timezone") == 0)
 	{
 		get_rule_expr((Node *) list_nth(expr->args, 1), context, false);
 		appendStringInfoString(buf, " AT TIME ZONE ");
@@ -2362,9 +2368,10 @@ const char *
 tsql_quote_identifier(const char *ident)
 {
 	/*
-	 * Can avoid quoting if ident starts with a lowercase letter, underscore or at the rate(@)
-	 * and contains only lowercase letters, digits, at the rate or  underscores, *and* is
-	 * not any SQL keyword.  Otherwise, supply quotes.
+	 * Can avoid quoting if ident starts with a lowercase letter, underscore
+	 * or at the rate(@) and contains only lowercase letters, digits, at the
+	 * rate or  underscores, *and* is not any SQL keyword.  Otherwise, supply
+	 * quotes.
 	 */
 	int			nquotes = 0;
 	bool		safe;
@@ -2376,7 +2383,7 @@ tsql_quote_identifier(const char *ident)
 	 * would like to use <ctype.h> macros here, but they might yield unwanted
 	 * locale-specific results...
 	 */
-	safe = ((ident[0] >= 'a' && ident[0] <= 'z') || ident[0] == '_' || ident[0] == '@' );
+	safe = ((ident[0] >= 'a' && ident[0] <= 'z') || ident[0] == '_' || ident[0] == '@');
 
 	for (ptr = ident; *ptr; ptr++)
 	{
@@ -2384,7 +2391,7 @@ tsql_quote_identifier(const char *ident)
 
 		if ((ch >= 'a' && ch <= 'z') ||
 			(ch >= '0' && ch <= '9') ||
-			(ch == '_') || (ch == '@') )
+			(ch == '_') || (ch == '@'))
 		{
 			/* okay */
 		}
@@ -2396,7 +2403,7 @@ tsql_quote_identifier(const char *ident)
 		}
 	}
 
-        if (quote_all_identifiers)
+	if (quote_all_identifiers)
 		safe = false;
 
 	if (safe)
@@ -2416,11 +2423,12 @@ tsql_quote_identifier(const char *ident)
 	}
 
 	if (safe)
-	        return ident;			/* no change needed */
+		return ident;			/* no change needed */
 
 	result = (char *) palloc(strlen(ident) + nquotes + 2 + 1);
 
 	optr = result;
+
 	*optr++ = '"';
 	for (ptr = ident; *ptr; ptr++)
 	{
@@ -2444,7 +2452,7 @@ tsql_quote_identifier(const char *ident)
  */
 char *
 tsql_quote_qualified_identifier(const char *qualifier,
-						   const char *ident)
+								const char *ident)
 {
 	StringInfoData buf;
 
@@ -2609,6 +2617,7 @@ get_coercion_expr(Node *arg, deparse_context *context,
 	StringInfo	buf = context->buf;
 
 	appendStringInfoString(buf, "CAST(");
+
 	/*
 	 * Since parse_coerce.c doesn't immediately collapse application of
 	 * length-coercion functions to constants, what we'll typically see in
@@ -2649,7 +2658,7 @@ get_coercion_expr(Node *arg, deparse_context *context,
 	 */
 	appendStringInfo(buf, " AS %s)",
 					 tsql_format_type_extended(resulttype, resulttypmod,
-						 		FORMAT_TYPE_TYPEMOD_GIVEN));
+											   FORMAT_TYPE_TYPEMOD_GIVEN));
 }
 
 /*
@@ -2784,12 +2793,13 @@ find_recursive_union(deparse_namespace *dpns, WorkTableScan *wtscan)
 static char *
 tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 {
-	HeapTuple		tuple;
-	Form_pg_type	typeform;
-	Datum			tsql_typename;
-	char		   *buf;
-	char		   *nspname;
-	bool			with_typemod;
+	HeapTuple	tuple;
+	Form_pg_type typeform;
+	Datum		tsql_typename;
+	char	   *buf;
+	char	   *nspname;
+	bool		with_typemod;
+
 	LOCAL_FCINFO(fcinfo, 1);
 
 	if (type_oid == InvalidOid && (flags & FORMAT_TYPE_ALLOW_INVALID) != 0)
@@ -2809,7 +2819,7 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	 * Assign -1 as typmod which is equivalent to not printing the typmod for
 	 * smalldatetime
 	 */
-	if ((*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype)(type_oid))
+	if ((*common_utility_plugin_ptr->is_tsql_smalldatetime_datatype) (type_oid))
 		typemod = -1;
 
 	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
@@ -2851,25 +2861,25 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 		 * Assign correct typename in case of sys.binary, it gives bbf_binary
 		 * internally
 		 */
-		if ((*common_utility_plugin_ptr->is_tsql_binary_datatype)(type_oid))
-				buf = pstrdup("binary");
-		if ((*common_utility_plugin_ptr->is_tsql_varbinary_datatype)(type_oid))
-				buf = pstrdup("varbinary");
+		if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (type_oid))
+			buf = pstrdup("binary");
+		if ((*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (type_oid))
+			buf = pstrdup("varbinary");
 	}
 
 	if (with_typemod)
 	{
-		int		typmodout = typeform->typmodout;
+		int			typmodout = typeform->typmodout;
+
 		/*
-		* In case of time, datetime2 or datetimeoffset print typmod
-		* info directly because it uses timestamp typmodout function
-		* which appends timezone data along with typmod which is not
-		* required. Directly print typename for smalldatetime as it
-		* doesn't support typmod.
-		*/
+		 * In case of time, datetime2 or datetimeoffset print typmod info
+		 * directly because it uses timestamp typmodout function which appends
+		 * timezone data along with typmod which is not required. Directly
+		 * print typename for smalldatetime as it doesn't support typmod.
+		 */
 		if (type_oid == TIMEOID ||
-			(*common_utility_plugin_ptr->is_tsql_datetime2_datatype)(type_oid) ||
-			(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype)(type_oid))
+			(*common_utility_plugin_ptr->is_tsql_datetime2_datatype) (type_oid) ||
+			(*common_utility_plugin_ptr->is_tsql_datetimeoffset_datatype) (type_oid))
 		{
 			typmodout = InvalidOid;
 		}
@@ -2903,7 +2913,7 @@ tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout)
 		char	   *tmstr;
 
 		tmstr = DatumGetCString(OidFunctionCall1(typmodout,
-													Int32GetDatum(typmod)));
+												 Int32GetDatum(typmod)));
 		res = psprintf("%s%s", typname, tmstr);
 	}
 	return res;
@@ -2915,14 +2925,15 @@ tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout)
  * name exists. If exists, it returns the TSQL collation name. Otherwise,
  * it returns the BBF collation name.
  */
-char*
+char *
 generate_tsql_collation_name(Oid collOid)
 {
-	char* res = NULL;
-	char* translated_res = NULL;
+	char	   *res = NULL;
+	char	   *translated_res = NULL;
+
 	res = generate_collation_name(collOid);
 	if (res)
-		translated_res = (char*)tsql_translate_bbf_collation_to_tsql_collation(res);
+		translated_res = (char *) tsql_translate_bbf_collation_to_tsql_collation(res);
 
 	if (translated_res)
 	{
@@ -2931,4 +2942,3 @@ generate_tsql_collation_name(Oid collOid)
 	}
 	return res;
 }
-

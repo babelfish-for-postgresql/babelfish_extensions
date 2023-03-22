@@ -22,7 +22,7 @@ extern bool IsPLtsqlExtendedCatalog(Oid relationId);
 /*****************************************
  *			SYS schema
  *****************************************/
-extern Oid sys_schema_oid;
+extern Oid	sys_schema_oid;
 
 /*****************************************
  *			SYSDATABASES
@@ -31,9 +31,9 @@ extern Oid sys_schema_oid;
 #define SYSDATABASES_PK_NAME "babelfish_sysdatabases_pkey"
 #define SYSDATABASES_OID_IDX_NAME "babelfish_sysdatabases_dboid_key"
 
-extern Oid sysdatabases_oid;
-extern Oid sysdatabaese_idx_oid_oid;
-extern Oid sysdatabaese_idx_name_oid;
+extern Oid	sysdatabases_oid;
+extern Oid	sysdatabaese_idx_oid_oid;
+extern Oid	sysdatabaese_idx_name_oid;
 
 /* MUST comply with babelfish_sysdatabases table */
 #define SYSDATABASES_NUM_COLS 8
@@ -44,11 +44,11 @@ extern Oid sysdatabaese_idx_name_oid;
 /* MUST comply with babelfish_sysdatabases table */
 typedef struct FormData_sysdatabases
 {
-	int16  		dbid;
+	int16		dbid;
 	int32		status;
-	int32       status2;
-	NameData 	owner;
-	NameData    default_collation;
+	int32		status2;
+	NameData	owner;
+	NameData	default_collation;
 	text		name;
 	TimestampTz crdate;
 	text		properties;
@@ -59,14 +59,14 @@ typedef FormData_sysdatabases *Form_sysdatabases;
 /* MUST comply with babelfish_authid_login_ext table */
 typedef struct FormData_authid_login_ext
 {
-	NameData  	rolname;
+	NameData	rolname;
 	int32		is_disabled;
-	char        type;
-	int32 	    credential_id;
-	int32     	owning_principal_id;
-	int32     	is_fixed_role;
-	TimestampTz	create_date;
-	TimestampTz	modify_date;
+	char		type;
+	int32		credential_id;
+	int32		owning_principal_id;
+	int32		is_fixed_role;
+	TimestampTz create_date;
+	TimestampTz modify_date;
 	VarChar		default_database_name;
 	VarChar		default_language_name;
 	Jsonb		properties;
@@ -95,9 +95,9 @@ extern bool guest_has_dbaccess(char *db_name);
 #define Anum_namespace_ext_orig_name 3
 #define NAMESPACE_EXT_NUM_COLS 4
 
-extern Oid namespace_ext_oid;
-extern Oid namespace_ext_idx_oid_oid;
-extern int namespace_ext_num_cols;
+extern Oid	namespace_ext_oid;
+extern Oid	namespace_ext_idx_oid_oid;
+extern int	namespace_ext_num_cols;
 
 extern const char *get_logical_schema_name(const char *physical_schema_name, bool missingOk);
 extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk);
@@ -108,14 +108,14 @@ extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name
 #define BBF_AUTHID_LOGIN_EXT_TABLE_NAME "babelfish_authid_login_ext"
 #define BBF_AUTHID_LOGIN_EXT_IDX_NAME "babelfish_authid_login_ext_pkey"
 #define Anum_bbf_authid_login_ext_rolname 1
-extern Oid			bbf_authid_login_ext_oid;
-extern Oid			bbf_authid_login_ext_idx_oid;
+extern Oid	bbf_authid_login_ext_oid;
+extern Oid	bbf_authid_login_ext_idx_oid;
 
 extern bool is_login(Oid role_oid);
 extern bool is_login_name(char *rolname);
 extern char *get_login_default_db(char *login_name);
-extern Oid get_authid_login_ext_oid(void);
-extern Oid get_authid_login_ext_idx_oid(void);
+extern Oid	get_authid_login_ext_oid(void);
+extern Oid	get_authid_login_ext_idx_oid(void);
 
 /*****************************************
  *			USER EXT
@@ -128,13 +128,13 @@ extern Oid get_authid_login_ext_idx_oid(void);
 #define Anum_bbf_authid_user_ext_database_name			12
 #define Anum_bbf_authid_user_ext_default_schema_name	13
 #define Anum_bbf_authid_user_ext_user_can_connect		16
-extern Oid			bbf_authid_user_ext_oid;
-extern Oid			bbf_authid_user_ext_idx_oid;
+extern Oid	bbf_authid_user_ext_oid;
+extern Oid	bbf_authid_user_ext_idx_oid;
 
 extern bool is_user(Oid role_oid);
 extern bool is_role(Oid role_oid);
-extern Oid get_authid_user_ext_oid(void);
-extern Oid get_authid_user_ext_idx_oid(void);
+extern Oid	get_authid_user_ext_oid(void);
+extern Oid	get_authid_user_ext_idx_oid(void);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
 extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
 extern List *get_authid_user_ext_db_users(const char *db_name);
@@ -145,7 +145,7 @@ extern bool guest_role_exists_for_db(const char *dbname);
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext
 {
-	NameData  	rolname;
+	NameData	rolname;
 	NameData	login_name;
 	BpChar		type;
 	int32		owning_principal_id;
@@ -153,8 +153,8 @@ typedef struct FormData_authid_user_ext
 	int32		authentication_type;
 	int32		default_language_lcid;
 	int32		allow_encrypted_value_modifications;
-	TimestampTz	create_date;
-	TimestampTz	modify_date;
+	TimestampTz create_date;
+	TimestampTz modify_date;
 	VarChar		orig_username;
 	VarChar		database_name;
 	VarChar		default_schema_name;
@@ -178,13 +178,13 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 #define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
 #define BBF_VIEW_DEF_FLAG_CREATED_IN_OR_AFTER_2_4 (1<<2)
-extern Oid			bbf_view_def_oid;
-extern Oid			bbf_view_def_idx_oid;
+extern Oid	bbf_view_def_oid;
+extern Oid	bbf_view_def_idx_oid;
 
-extern Oid get_bbf_view_def_oid(void);
-extern Oid get_bbf_view_def_idx_oid(void);
+extern Oid	get_bbf_view_def_oid(void);
+extern Oid	get_bbf_view_def_idx_oid(void);
 extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid,
-								const char *logical_schema_name, const char *view_name);
+									 const char *logical_schema_name, const char *view_name);
 extern bool check_is_tsql_view(Oid relid);
 extern void clean_up_bbf_view_def(int16 dbid);
 
@@ -198,9 +198,9 @@ typedef struct FormData_bbf_view_def
 	uint64		flag_values;
 	Timestamp	create_date;
 	Timestamp	modify_date;
-} FormData_bbf_view_def;
+}			FormData_bbf_view_def;
 
-typedef FormData_bbf_view_def *Form_bbf_view_def;
+typedef FormData_bbf_view_def * Form_bbf_view_def;
 
 /*****************************************
  *			FUNCTION_EXT
@@ -220,11 +220,11 @@ typedef FormData_bbf_view_def *Form_bbf_view_def;
 #define BBF_FUNCTION_EXT_NUM_COLS 10
 #define FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define FLAG_USES_QUOTED_IDENTIFIER (1<<1)
-extern Oid			bbf_function_ext_oid;
-extern Oid			bbf_function_ext_idx_oid;
+extern Oid	bbf_function_ext_oid;
+extern Oid	bbf_function_ext_idx_oid;
 
-extern Oid get_bbf_function_ext_oid(void);
-extern Oid get_bbf_function_ext_idx_oid(void);
+extern Oid	get_bbf_function_ext_oid(void);
+extern Oid	get_bbf_function_ext_idx_oid(void);
 extern HeapTuple get_bbf_function_tuple_from_proctuple(HeapTuple proctuple);
 extern void clean_up_bbf_function_ext(int16 dbid);
 
@@ -262,13 +262,13 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
  */
 typedef struct RelData
 {
-	const char		*tblname;	/* table name */
-	Oid				tbl_oid;	/* table oid */
-	Oid				idx_oid;	/* index oid */
-	bool			index_ok;	/* if false, forces a heap scan */
-	Oid				atttype;	/* index column's type oid */
-	AttrNumber		attnum;		/* index column's attribute num */
-	RegProcedure	regproc;	/* regproc used to scan through the index */
+	const char *tblname;		/* table name */
+	Oid			tbl_oid;		/* table oid */
+	Oid			idx_oid;		/* index oid */
+	bool		index_ok;		/* if false, forces a heap scan */
+	Oid			atttype;		/* index column's type oid */
+	AttrNumber	attnum;			/* index column's attribute num */
+	RegProcedure regproc;		/* regproc used to scan through the index */
 } RelData;
 
 /*
@@ -286,17 +286,15 @@ typedef struct RelData
  */
 typedef struct Rule
 {
-	const char	*desc;		/* rule description, mandatory field */
-	const char	*tblname;	/* catalog name, mandatory field */
-	const char	*colname;	/* column name, mandatory field */
+	const char *desc;			/* rule description, mandatory field */
+	const char *tblname;		/* catalog name, mandatory field */
+	const char *colname;		/* column name, mandatory field */
 
-	/* 
-	 * The expected value should be the result of a value function.
-	 * A value function reads a tuple and output a Datum. 
-	 * Must have rules: Input tuple is NULL.
-	 * Must match rules: Input tuple is provided by a catalog (often different
-	 *					 from tblname.
-	 * tupdesc is the description for the input tuple.
+	/*
+	 * The expected value should be the result of a value function. A value
+	 * function reads a tuple and output a Datum. Must have rules: Input tuple
+	 * is NULL. Must match rules: Input tuple is provided by a catalog (often
+	 * different from tblname. tupdesc is the description for the input tuple.
 	 */
 	TupleDesc	tupdesc;
 	Datum		(*func_val) (HeapTuple tuple, TupleDesc dsc);
@@ -306,7 +304,7 @@ typedef struct Rule
 	/* function to validate the rule */
 	bool		(*func_check) (void *rule_arg, HeapTuple tuple);
 
-	RelData		*tbldata;	/* extra catalog info */
+	RelData    *tbldata;		/* extra catalog info */
 } Rule;
 
 #endif
