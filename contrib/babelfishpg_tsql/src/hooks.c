@@ -136,6 +136,10 @@ static void pltsql_CreateFunctionStmt(ParseState *pstate,
 									  bool readOnlyTree,
 									  ProcessUtilityContext context,
 									  ParamListInfo params);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 53795d5c (Create proc/func not visible in the pg_stat_statements view)
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -359,6 +363,7 @@ UninstallExtendedHooks(void)
 /*****************************************
  * 			Hook Functions
  *****************************************/
+static void
 pltsql_CreateFunctionStmt(ParseState *pstate,
 							   PlannedStmt *pstmt,
 							   const char *queryString,
