@@ -1,6 +1,3 @@
---Check if the extension is installed
-Select * from pg_extension WHERE extname = 'babelfish_tsql';
-GO
 DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
 GO
 create table babel_select_distinct_top (a int);
