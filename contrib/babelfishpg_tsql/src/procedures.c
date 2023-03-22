@@ -2887,6 +2887,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	List *res;
 	Node *stmt;
 	RenameStmt *renamestmt;
+	int old_dialect;
 
 	initStringInfo(&query);
 	if (objtype == OBJECT_TABLE) {
@@ -2904,7 +2905,13 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("Provided objtype is not supported for sp_rename")));
 	}
+	old_dialect = sql_dialect;
+	sql_dialect = SQL_DIALECT_PG;
+	/* this query must be run in PG dialect or we will get a syntax error due to different
+	 * ALTER behavior between PG and TSQL
+	 */
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	sql_dialect = old_dialect;
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
