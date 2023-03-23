@@ -66,10 +66,10 @@
  */
 typedef struct
 {
-	MemoryContext	requestContext; /* temporary request context */
-	TDSRequest		request;		/* current request in-progress */
-	uint8_t			phase;			/* current TDS_REQUEST_PHASE_* (see above) */
-	uint8_t			status;			/* current status of the request */
+	MemoryContext requestContext;	/* temporary request context */
+	TDSRequest	request;		/* current request in-progress */
+	uint8_t		phase;			/* current TDS_REQUEST_PHASE_* (see above) */
+	uint8_t		status;			/* current status of the request */
 
 	/* denotes whether we've sent at least one done token */
 	bool		isEmptyResponse;
@@ -78,4 +78,4 @@ typedef struct
 
 extern TdsRequestCtrlData *TdsRequestCtrl;
 
-#endif	/* TDS_PROTOCOL_H */
+#endif							/* TDS_PROTOCOL_H */

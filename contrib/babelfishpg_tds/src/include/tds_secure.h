@@ -38,24 +38,25 @@
 #endif
 #endif
 
-BIO_METHOD *TdsBioSecureSocket(BIO_METHOD *my_bio_methods);
+BIO_METHOD *TdsBioSecureSocket(BIO_METHOD * my_bio_methods);
 
 extern int	tds_ssl_min_protocol_version;
 extern int	tds_ssl_max_protocol_version;
 
 /* TDS specific function defined in tds-secure-openssl.c (modified copy of be-secure-openssl.c) */
-int Tds_be_tls_init(bool isServerStart);
-void Tds_be_tls_destroy(void); /* TODO: call through our signal handler(SIGHUP_handler)/PG_TDS_fin */
-int Tds_be_tls_open_server(Port *port);
+int			Tds_be_tls_init(bool isServerStart);
+void		Tds_be_tls_destroy(void);	/* TODO: call through our signal
+										 * handler(SIGHUP_handler)/PG_TDS_fin */
+int			Tds_be_tls_open_server(Port *port);
 extern void Tds_be_tls_close(Port *port);
-ssize_t Tds_be_tls_read(Port *port, void *ptr, size_t len, int *waitfor);
-ssize_t Tds_be_tls_write(Port *port, void *ptr, size_t len, int *waitfor);
+ssize_t		Tds_be_tls_read(Port *port, void *ptr, size_t len, int *waitfor);
+ssize_t		Tds_be_tls_write(Port *port, void *ptr, size_t len, int *waitfor);
 
 /* function defined in tdssecure.c and called from tdscomm.c */
 ssize_t
-tds_secure_read(Port *port, void *ptr, size_t len);
+			tds_secure_read(Port *port, void *ptr, size_t len);
 ssize_t
-tds_secure_write(Port *port, void *ptr, size_t len);
+			tds_secure_write(Port *port, void *ptr, size_t len);
 
 /* function defined in tdssecure.c and called from tdslogin.c */
-void TdsFreeSslStruct(Port *port);
+void		TdsFreeSslStruct(Port *port);
