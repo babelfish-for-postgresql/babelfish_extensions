@@ -3330,8 +3330,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					return;
 				}
 			}
-
-		}
         case T_DropdbStmt:
             if (sql_dialect == SQL_DIALECT_TSQL)
             {
