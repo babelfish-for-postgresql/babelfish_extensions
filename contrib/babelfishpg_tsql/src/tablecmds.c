@@ -40,136 +40,150 @@
 #include "catalog.h"
 #include "hooks.h"
 
-const char* ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
-const char* ATTOPTION_BBF_ORIGINAL_TABLE_NAME = "bbf_original_rel_name";
-const char* ATTOPTION_BBF_TABLE_CREATE_DATE = "bbf_rel_create_date";
+const char *ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
+const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME = "bbf_original_rel_name";
+const char *ATTOPTION_BBF_TABLE_CREATE_DATE = "bbf_rel_create_date";
 
 typedef struct ComputedColumnContextData
 {
 	Relation	rel;
-	ParseState	*pstate;
-	List		*gen_column_list;
+	ParseState *pstate;
+	List	   *gen_column_list;
 } ComputedColumnContextData;
 
 typedef ComputedColumnContextData *ComputedColumnContext;
 
-void assign_object_access_hook_drop_relation(void);
-void uninstall_object_access_hook_drop_relation(void);
-static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId, 
-                                                Oid relOid, int subId, void *arg);
-void assign_tablecmds_hook(void);
+void		assign_object_access_hook_drop_relation(void);
+void		uninstall_object_access_hook_drop_relation(void);
+static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
+									 Oid relOid, int subId, void *arg);
+void		assign_tablecmds_hook(void);
 static void pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum);
 static void pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefaults);
 static bool checkAllowedTsqlAttoptions(Node *options);
+
 /* Hook to tablecmds.c in the engine */
 static object_access_hook_type prev_object_access_hook = NULL;
 static InvokePreDropColumnHook_type prev_InvokePreDropColumnHook = NULL;
 static InvokePreAddConstraintsHook_type prev_InvokePreAddConstraintsHook = NULL;
 
-void pre_check_trigger_schema(List *object, bool missing_ok);
+void		pre_check_trigger_schema(List *object, bool missing_ok);
 
-void pre_check_trigger_schema(List *object, bool missing_ok){
-	const char 		*depname;
-	Oid 			trigger_rel_oid = InvalidOid;
-	const char 		*tsql_trigger_logical_schema = NULL;
+void
+pre_check_trigger_schema(List *object, bool missing_ok)
+{
+	const char *depname;
+	Oid			trigger_rel_oid = InvalidOid;
+	const char *tsql_trigger_logical_schema = NULL;
 
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
-	if (list_length(object) > 1){
-		tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
+	if (list_length(object) > 1)
+	{
+		tsql_trigger_logical_schema = ((Value *) linitial(object))->val.str;
 	}
 
-	trigger_rel_oid = get_tsql_trigger_oid(object,depname,true);
-	
+	trigger_rel_oid = get_tsql_trigger_oid(object, depname, true);
+
 	if (!missing_ok && !OidIsValid(trigger_rel_oid))
 	{
-		if(list_length(object) == 1){
+		if (list_length(object) == 1)
+		{
 			ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			errmsg("trigger \"%s\" does not exist",
-						depname)));
-		}else{
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("trigger \"%s\" does not exist",
+							depname)));
+		}
+		else
+		{
 			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("trigger \"%s.%s\" does not exist",
-							tsql_trigger_logical_schema ,depname)));	
-		}		
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("trigger \"%s.%s\" does not exist",
+							tsql_trigger_logical_schema, depname)));
+		}
 	}
 }
 
-static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId, 
-                                                Oid relOid, int subId, void *arg)
+static void
+lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
+						 Oid relOid, int subId, void *arg)
 {
-    Relation	tgrel;
-	ScanKeyData	key;
+	Relation	tgrel;
+	ScanKeyData key;
 	SysScanDesc tgscan;
 	HeapTuple	tuple;
-	DropBehavior 	behavior = DROP_CASCADE;
-	ObjectAddress 	trigAddress;
-	Relation 	trigRelation;
-	List 		*trigobjlist;
-	char * trig_physical_schema;
+	DropBehavior behavior = DROP_CASCADE;
+	ObjectAddress trigAddress;
+	Relation	trigRelation;
+	List	   *trigobjlist;
+	char	   *trig_physical_schema;
 
-    /* Call previous hook if exists */
-    if (prev_object_access_hook)
-        (*prev_object_access_hook) (access, classId, relOid, subId, arg);
+	/* Call previous hook if exists */
+	if (prev_object_access_hook)
+		(*prev_object_access_hook) (access, classId, relOid, subId, arg);
 
-    /* babelfishpg_tsql extension is loaded does not mean dialect is necessarily tsql */
-    if (sql_dialect != SQL_DIALECT_TSQL)
-        return;
+	/*
+	 * babelfishpg_tsql extension is loaded does not mean dialect is
+	 * necessarily tsql
+	 */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
 
-    /* We only want to execute this function for the DROP TABLE case */
-    if (classId != RelationRelationId || access != OAT_DROP)
-        return;
+	/* We only want to execute this function for the DROP TABLE case */
+	if (classId != RelationRelationId || access != OAT_DROP)
+		return;
 
-    /* 
-    * If the relation is a table, we must look for triggers and drop them 
-    * when in the tsql dialect because the user does not create a function for
-    * the trigger - we create it internally, and so the table cannot be dropped
-    * if there is a tsql trigger on it because of the dependency of the function.
-    */
-    tgrel = table_open(TriggerRelationId, AccessShareLock);
+	/*
+	 * If the relation is a table, we must look for triggers and drop them
+	 * when in the tsql dialect because the user does not create a function
+	 * for the trigger - we create it internally, and so the table cannot be
+	 * dropped if there is a tsql trigger on it because of the dependency of
+	 * the function.
+	 */
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
 
-    ScanKeyInit(&key,
-                    Anum_pg_trigger_tgrelid,
-                    BTEqualStrategyNumber, F_OIDEQ,
-                    relOid);
+	ScanKeyInit(&key,
+				Anum_pg_trigger_tgrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				relOid);
 
-    tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
-                                    NULL, 1, &key);
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
+								NULL, 1, &key);
 
-    while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
-    {
-        Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-        
-        if (pg_trigger->tgrelid == relOid && !pg_trigger->tgisinternal)
-        {
-            trigRelation = RelationIdGetRelation(relOid);
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+
+		if (pg_trigger->tgrelid == relOid && !pg_trigger->tgisinternal)
+		{
+			trigRelation = RelationIdGetRelation(relOid);
 			trig_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-            trigobjlist = list_make2(makeString(trig_physical_schema),makeString(NameStr(pg_trigger->tgname)));
-			trigAddress = (*get_trigger_object_address_hook)(trigobjlist, &trigRelation, true, false);
-            performDeletion(&trigAddress, behavior, PERFORM_DELETION_INTERNAL);
-            RelationClose(trigRelation);
-        }
-    }
-	
-    systable_endscan(tgscan);
-    table_close(tgrel, AccessShareLock); 
+			trigobjlist = list_make2(makeString(trig_physical_schema), makeString(NameStr(pg_trigger->tgname)));
+			trigAddress = (*get_trigger_object_address_hook) (trigobjlist, &trigRelation, true, false);
+			performDeletion(&trigAddress, behavior, PERFORM_DELETION_INTERNAL);
+			RelationClose(trigRelation);
+		}
+	}
+
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
 }
 
-void assign_object_access_hook_drop_relation()
+void
+assign_object_access_hook_drop_relation()
 {
-    if (object_access_hook)
-    {
-        prev_object_access_hook = object_access_hook;
-    }
+	if (object_access_hook)
+	{
+		prev_object_access_hook = object_access_hook;
+	}
 	object_access_hook = lookup_and_drop_triggers;
 }
 
-void uninstall_object_access_hook_drop_relation()
+void
+uninstall_object_access_hook_drop_relation()
 {
-    if (prev_object_access_hook)
-        object_access_hook = prev_object_access_hook;
+	if (prev_object_access_hook)
+		object_access_hook = prev_object_access_hook;
 }
 
 void
@@ -243,8 +257,8 @@ pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum)
 				Form_pg_attribute att = TupleDescAttr(rel->rd_att, attnum - 1);
 
 				/*
-				 * Dropping the type of a column that is used by a
-				 * generated column is not allowed by SQL standard.
+				 * Dropping the type of a column that is used by a generated
+				 * column is not allowed by SQL standard.
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -268,20 +282,20 @@ check_nested_computed_column(Node *node, void *context)
 		return false;
 	else if (IsA(node, ColumnRef))
 	{
-		ColumnRef *cref = (ColumnRef *) node;
-		ParseState  *pstate = ((ComputedColumnContext) context)->pstate;
+		ColumnRef  *cref = (ColumnRef *) node;
+		ParseState *pstate = ((ComputedColumnContext) context)->pstate;
 
 		switch (list_length(cref->fields))
 		{
 			case 1:
 				{
-					Node	*field1 = (Node *) linitial(cref->fields);
-					List	*colList;
-					char	*col1name;
+					Node	   *field1 = (Node *) linitial(cref->fields);
+					List	   *colList;
+					char	   *col1name;
 					ListCell   *lc;
 					Relation	rel;
 
-					colList =  ((ComputedColumnContext) context)->gen_column_list;
+					colList = ((ComputedColumnContext) context)->gen_column_list;
 					rel = ((ComputedColumnContext) context)->rel;
 
 					Assert(IsA(field1, String));
@@ -289,7 +303,7 @@ check_nested_computed_column(Node *node, void *context)
 
 					foreach(lc, colList)
 					{
-						char *col2name = (char *) lfirst(lc);
+						char	   *col2name = (char *) lfirst(lc);
 
 						if (strcmp(col1name, col2name) == 0)
 							ereport(ERROR,
@@ -306,8 +320,8 @@ check_nested_computed_column(Node *node, void *context)
 			default:
 
 				/*
-				 * In CREATE/ALTER TABLE command, the name of the column should have
-				 * only one field.
+				 * In CREATE/ALTER TABLE command, the name of the column
+				 * should have only one field.
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -341,10 +355,9 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 	 * For a computed column, datatype is not provided by the user.  Hence,
 	 * we've to evaluate the computed column expression in order to determine
 	 * the datatype.  By now, we should've already made an entry for the
-	 * relatio in the catalog, which means we can execute transformExpr on
-	 * the computed column expression.
-	 * Once we determine the datatype of the column, we'll update the
-	 * corresponding entry in the catalog.
+	 * relatio in the catalog, which means we can execute transformExpr on the
+	 * computed column expression. Once we determine the datatype of the
+	 * column, we'll update the corresponding entry in the catalog.
 	 */
 	context = palloc0(sizeof(ComputedColumnContextData));
 	context->pstate = pstate;
@@ -352,13 +365,13 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 	context->gen_column_list = NIL;
 
 	/*
-	 * Collect the names of all computed columns first.  We need this in
-	 * order to detect nested computed columns later.
+	 * Collect the names of all computed columns first.  We need this in order
+	 * to detect nested computed columns later.
 	 */
 	foreach(cell, newColDefaults)
 	{
-		RawColumnDefault	*colDef = (RawColumnDefault *) lfirst(cell);
-		Form_pg_attribute	atp = TupleDescAttr(rel->rd_att, colDef->attnum - 1);
+		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(cell);
+		Form_pg_attribute atp = TupleDescAttr(rel->rd_att, colDef->attnum - 1);
 
 		if (!atp->attgenerated)
 			continue;
@@ -370,30 +383,28 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 
 	foreach(cell, newColDefaults)
 	{
-		RawColumnDefault	*colDef = (RawColumnDefault *) lfirst(cell);
-		Form_pg_attribute	atp = TupleDescAttr(rel->rd_att, colDef->attnum - 1);
-		Node	   			*expr;
-		Oid					targettype;
-		int32				targettypmod;
-		HeapTuple			heapTup;
-		Type				targetType;
-		Form_pg_attribute	attTup;
-		Form_pg_type		tform;
+		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(cell);
+		Form_pg_attribute atp = TupleDescAttr(rel->rd_att, colDef->attnum - 1);
+		Node	   *expr;
+		Oid			targettype;
+		int32		targettypmod;
+		HeapTuple	heapTup;
+		Type		targetType;
+		Form_pg_attribute attTup;
+		Form_pg_type tform;
 
 		/* skip if not a computed column */
 		if (!atp->attgenerated)
 			continue;
 
 		/*
-		 * Since we're using a dummy datatype for a computed column, we
-		 * need to check for a nested computed column usage in the
-		 * expression before evaluating the expression through
-		 * transformExpr.
-		 * N.B. When we add a new column through ALTER command, it's
-		 * possible that the expression includes another computed
-		 * column in the table.  We'll not be able to detetct that case
-		 * here.  That'll be handled later in check_nested_generated
-		 * that works on the executable expression.
+		 * Since we're using a dummy datatype for a computed column, we need
+		 * to check for a nested computed column usage in the expression
+		 * before evaluating the expression through transformExpr. N.B. When
+		 * we add a new column through ALTER command, it's possible that the
+		 * expression includes another computed column in the table.  We'll
+		 * not be able to detetct that case here.  That'll be handled later in
+		 * check_nested_generated that works on the executable expression.
 		 */
 		Assert(context->gen_column_list != NULL);
 		check_nested_computed_column(colDef->raw_default, context);
@@ -428,15 +439,14 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 		attTup->atttypmod = targettypmod;
 
 		/*
-		 * The target column should already be having a collation
-		 * associated with it due to explicit COLLATE clause
-		 * If suppose collation is not valid or there is no explicit
-		 * COLLATE clause, we try to find column collation from
-		 * finished expession.
+		 * The target column should already be having a collation associated
+		 * with it due to explicit COLLATE clause If suppose collation is not
+		 * valid or there is no explicit COLLATE clause, we try to find column
+		 * collation from finished expession.
 		 */
 		if (!OidIsValid(attTup->attcollation) || !colDef->hasCollClause)
 		{
-			Oid	targetcollid;
+			Oid			targetcollid;
 
 			/* take care of collations in the finished expression */
 			assign_expr_collations(pstate, expr);
@@ -456,9 +466,9 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 
 		/*
 		 * Instead of invalidating and refetching the relcache entry, just
-		 * update the entry that we've fetched previously.  This works
-		 * because no one else can see our in-progress changes.  Also note
-		 * that we only updated the fixed part of Form_pg_attribute.
+		 * update the entry that we've fetched previously.  This works because
+		 * no one else can see our in-progress changes.  Also note that we
+		 * only updated the fixed part of Form_pg_attribute.
 		 */
 		memcpy(atp, attTup, ATTRIBUTE_FIXED_PART_SIZE);
 
@@ -481,23 +491,23 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 	pfree(context);
 }
 
-static bool checkAllowedTsqlAttoptions(Node *options)
+static bool
+checkAllowedTsqlAttoptions(Node *options)
 {
 	if (castNode(List, options) == NIL)
 		return true;
 
-	if (strcmp(((DefElem *) linitial(castNode(List, options)))->defname, 
-				ATTOPTION_BBF_ORIGINAL_NAME) == 0)
+	if (strcmp(((DefElem *) linitial(castNode(List, options)))->defname,
+			   ATTOPTION_BBF_ORIGINAL_NAME) == 0)
 		return true;
 
 	if (strcmp(((DefElem *) linitial(castNode(List, options)))->defname,
-				ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0)
+			   ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0)
 		return true;
 
 	if (strcmp(((DefElem *) linitial(castNode(List, options)))->defname,
-				ATTOPTION_BBF_TABLE_CREATE_DATE) == 0)
+			   ATTOPTION_BBF_TABLE_CREATE_DATE) == 0)
 		return true;
 
 	return false;
 }
-

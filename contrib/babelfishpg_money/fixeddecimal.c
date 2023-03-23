@@ -66,7 +66,7 @@
 
 #ifndef HAVE_BUILTIN_OVERFLOW
 #define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 #define FIXEDDECIMAL_MAX (INT64_MAX/FIXEDDECIMAL_MULTIPLIER)
 #define FIXEDDECIMAL_MIN (INT64_MIN/FIXEDDECIMAL_MULTIPLIER)
@@ -247,24 +247,24 @@ static int64 int8fixeddecimal_internal(int64 arg, const char *typename);
  *---------------------------------------------------------*/
 
  /*
- * pg_int64tostr
- *		Converts 'value' into a decimal string representation of the number.
- *
- * Caller must ensure that 'str' points to enough memory to hold the result
- * (at least 21 bytes, counting a leading sign and trailing NUL).
- * Return value is a pointer to the new NUL terminated end of string.
- */
+  * pg_int64tostr Converts 'value' into a decimal string representation of the
+  * number.
+  *
+  * Caller must ensure that 'str' points to enough memory to hold the result
+  * (at least 21 bytes, counting a leading sign and trailing NUL). Return
+  * value is a pointer to the new NUL terminated end of string.
+  */
 static char *
 pg_int64tostr(char *str, int64 value)
 {
-	char *start;
-	char *end;
+	char	   *start;
+	char	   *end;
 
 	/*
 	 * Handle negative numbers in a special way. We can't just append a '-'
 	 * prefix and reverse the sign as on two's complement machines negative
-	 * numbers can be 1 further from 0 than positive numbers, we do it this way
-	 * so we properly handle the smallest possible value.
+	 * numbers can be 1 further from 0 than positive numbers, we do it this
+	 * way so we properly handle the smallest possible value.
 	 */
 	if (value < 0)
 	{
@@ -307,6 +307,7 @@ pg_int64tostr(char *str, int64 value)
 	while (start < str)
 	{
 		char		swap = *start;
+
 		*start++ = *str;
 		*str-- = swap;
 	}
@@ -332,15 +333,15 @@ pg_int64tostr_zeropad(char *str, int64 value, int64 padding)
 {
 	char	   *start = str;
 	char	   *end = &str[padding];
-	int64 		num = value;
+	int64		num = value;
 
 	Assert(padding > 0);
 
 	/*
 	 * Handle negative numbers in a special way. We can't just append a '-'
 	 * prefix and reverse the sign as on two's complement machines negative
-	 * numbers can be 1 further from 0 than positive numbers, we do it this way
-	 * so we properly handle the smallest possible value.
+	 * numbers can be 1 further from 0 than positive numbers, we do it this
+	 * way so we properly handle the smallest possible value.
 	 */
 	if (num < 0)
 	{
@@ -441,7 +442,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 	/* skip leading spaces */
 	while (isspace((unsigned char) *ptr))
 		ptr++;
-		
+
 	/* handle sign */
 	if (*ptr == '-')
 	{
@@ -471,33 +472,37 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		   (unsigned int) *ptr != '+' &&
 		   (unsigned int) *ptr != ' ' &&
 		   (unsigned int) *ptr != '\0')
+	{
+		/*
+		 * Current workaround for BABEL-704 - this will accept multiple
+		 * currency symbols until BABEL-704 is fixed
+		 */
+		if ((*ptr >= 'a' && *ptr <= 'z') || (*ptr >= 'A' && *ptr <= 'Z'))
 		{
-			/* Current workaround for BABEL-704 - this will accept multiple currency symbols
-			* until BABEL-704 is fixed */
-			if ((*ptr >= 'a' && *ptr <= 'z') || (*ptr >= 'A' && *ptr <= 'Z'))
-			{
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("invalid characters found: cannot cast value \"%s\" to money",
+					 errmsg("invalid characters found: cannot cast value \"%s\" to money",
 							str)));
-			}
-			ptr++;
 		}
+		ptr++;
+	}
 
 	/* skip leading spaces */
 	while (isspace((unsigned char) *ptr))
 		ptr++;
-	
-	/* Handle sign again. This is needed so that a sign after the currency symbol
-	* can be recognized */
+
+	/*
+	 * Handle sign again. This is needed so that a sign after the currency
+	 * symbol can be recognized
+	 */
 	if (*ptr == '-')
 	{
 		if (has_seen_sign)
 		{
 			ereport(ERROR,
-			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-			errmsg("invalid characters found: cannot cast value \"%s\" to money",
-					str)));
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("invalid characters found: cannot cast value \"%s\" to money",
+							str)));
 		}
 		negative = true;
 		ptr++;
@@ -511,16 +516,16 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 			int64		tmp = integralpart * 10 - (*ptr++ - '0');
 
 			vprecision++;
-			if ((tmp / 10) != integralpart)		/* underflow? */
+			if ((tmp / 10) != integralpart) /* underflow? */
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("value \"%s\" is out of range for type fixeddecimal",
-							str)));
+						 errmsg("value \"%s\" is out of range for type fixeddecimal",
+								str)));
 			}
 			integralpart = tmp;
 			/* skip thousand separator */
-			if(*ptr == ',')
+			if (*ptr == ',')
 				ptr++;
 		}
 	}
@@ -534,9 +539,9 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 			if (has_seen_sign)
 			{
 				ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("invalid characters found: cannot cast value \"%s\" to money",
-						str)));
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("invalid characters found: cannot cast value \"%s\" to money",
+								str)));
 			}
 			ptr++;
 		}
@@ -544,34 +549,35 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		/* skip leading spaces */
 		while (isspace((unsigned char) *ptr))
 			ptr++;
-		
+
 		while (isdigit((unsigned char) *ptr))
 		{
 			int64		tmp;
-			
+
 			if (!negative)
 				tmp = integralpart * 10 + (*ptr++ - '0');
 			else
 				tmp = integralpart * 10 - (*ptr++ - '0');
 
 			vprecision++;
-			if ((tmp / 10) != integralpart)		/* overflow? */
+			if ((tmp / 10) != integralpart) /* overflow? */
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("value \"%s\" is out of range for type fixeddecimal",
-							str)));
+						 errmsg("value \"%s\" is out of range for type fixeddecimal",
+								str)));
 			}
 			integralpart = tmp;
-		/* skip thousand separator */
-		if(*ptr == ',')
-			ptr++;
+			/* skip thousand separator */
+			if (*ptr == ',')
+				ptr++;
 		}
 	}
 	/* process the part after the decimal point */
 	if (*ptr == '.')
 	{
-		int64 multiplier = FIXEDDECIMAL_MULTIPLIER;
+		int64		multiplier = FIXEDDECIMAL_MULTIPLIER;
+
 		ptr++;
 
 		while (isdigit((unsigned char) *ptr) && multiplier > 1)
@@ -582,9 +588,9 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 		}
 
 		/*
-		 * Eat into any excess precision digits.
-		 * For first digit, apply "Round half away from zero"
-		 * XXX These are ignored, should we error instead?
+		 * Eat into any excess precision digits. For first digit, apply "Round
+		 * half away from zero" XXX These are ignored, should we error
+		 * instead?
 		 */
 		if (isdigit((unsigned char) *ptr) && (unsigned char) *ptr >= '5')
 		{
@@ -603,7 +609,7 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 	if (*ptr != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-			   errmsg("value \"%s\" is out of range for type fixeddecimal", str)));
+				 errmsg("value \"%s\" is out of range for type fixeddecimal", str)));
 
 	*precision = vprecision;
 	*scale = vscale;
@@ -611,21 +617,22 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 	if (negative)
 	{
 
-		int64 value;
+		int64		value;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
-		int64 multiplier = FIXEDDECIMAL_MULTIPLIER;
+		int64		multiplier = FIXEDDECIMAL_MULTIPLIER;
+
 		if (__builtin_mul_overflow(integralpart, multiplier, &value))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				   errmsg("value \"%s\" is out of range for type fixeddecimal",
-						  str)));
+					 errmsg("value \"%s\" is out of range for type fixeddecimal",
+							str)));
 
 		if (__builtin_sub_overflow(value, fractionalpart, &value))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				   errmsg("value \"%s\" is out of range for type fixeddecimal",
-						  str)));
+					 errmsg("value \"%s\" is out of range for type fixeddecimal",
+							str)));
 		return value;
 
 #else
@@ -635,29 +642,29 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 						   !SAMESIGN(value - fractionalpart, value)))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				   errmsg("value \"%s\" is out of range for type fixeddecimal",
-						  str)));
+					 errmsg("value \"%s\" is out of range for type fixeddecimal",
+							str)));
 
 		return value - fractionalpart;
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	}
 	else
 	{
-		int64 value;
+		int64		value;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
 		if (__builtin_mul_overflow(integralpart, FIXEDDECIMAL_MULTIPLIER, &value))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				   errmsg("value \"%s\" is out of range for type fixeddecimal",
-						  str)));
+					 errmsg("value \"%s\" is out of range for type fixeddecimal",
+							str)));
 
 		if (__builtin_add_overflow(value, fractionalpart, &value))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				   errmsg("value \"%s\" is out of range for type fixeddecimal",
-						  str)));
+					 errmsg("value \"%s\" is out of range for type fixeddecimal",
+							str)));
 		return value;
 #else
 		value = integralpart * FIXEDDECIMAL_MULTIPLIER;
@@ -666,11 +673,11 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 						   !SAMESIGN(value + fractionalpart, value)))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				   errmsg("value \"%s\" is out of range for type fixeddecimal",
-						  str)));
+					 errmsg("value \"%s\" is out of range for type fixeddecimal",
+							str)));
 
 		return value + fractionalpart;
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	}
 }
@@ -710,11 +717,11 @@ apply_typmod(int64 value, int32 typmod, int precision, int scale)
 
 	if (scale > scalelimit)
 
-	if (scale != FIXEDDECIMAL_SCALE)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("FIXEDDECIMAL scale must be %d",
-						FIXEDDECIMAL_SCALE)));
+		if (scale != FIXEDDECIMAL_SCALE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("FIXEDDECIMAL scale must be %d",
+							FIXEDDECIMAL_SCALE)));
 
 	if (precision > maxdigits)
 		ereport(ERROR,
@@ -722,7 +729,7 @@ apply_typmod(int64 value, int32 typmod, int precision, int scale)
 				 errmsg("FIXEDDECIMAL field overflow"),
 				 errdetail("A field with precision %d, scale %d must round to an absolute value less than %s%d.",
 						   precision, scale,
-						   /* Display 10^0 as 1 */
+		/* Display 10^0 as 1 */
 						   maxdigits ? "10^" : "",
 						   maxdigits ? maxdigits : 1
 						   )));
@@ -807,6 +814,7 @@ fixeddecimalout(PG_FUNCTION_ARGS)
 	int64		val = PG_GETARG_INT64(0);
 	char		buf[MAXINT8LEN + 1];
 	char	   *end = fixeddecimal2str(val, buf);
+
 	PG_RETURN_CSTRING(pnstrdup(buf, end - buf));
 }
 
@@ -1189,13 +1197,13 @@ fixeddecimal_int8_eq(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val2 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(false);
-    else if (val2 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(false);
-    
-    val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 == val2;
+	if (val2 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(false);
+	else if (val2 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(false);
+
+	val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 == val2;
 }
 
 Datum
@@ -1204,13 +1212,13 @@ fixeddecimal_int8_ne(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val2 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(true);
-    else if (val2 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(true);
-    
-    val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 != val2;
+	if (val2 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(true);
+	else if (val2 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(true);
+
+	val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 != val2;
 }
 
 Datum
@@ -1219,13 +1227,13 @@ fixeddecimal_int8_lt(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val2 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(true);
-    else if (val2 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(false);
-    
-    val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 < val2;
+	if (val2 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(true);
+	else if (val2 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(false);
+
+	val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 < val2;
 }
 
 Datum
@@ -1234,13 +1242,13 @@ fixeddecimal_int8_gt(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val2 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(false);
-    else if (val2 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(true);
-    
-    val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 > val2;
+	if (val2 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(false);
+	else if (val2 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(true);
+
+	val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 > val2;
 }
 
 Datum
@@ -1249,13 +1257,13 @@ fixeddecimal_int8_le(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val2 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(true);
-    else if (val2 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(false);
-    
-    val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 <= val2;
+	if (val2 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(true);
+	else if (val2 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(false);
+
+	val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 <= val2;
 }
 
 Datum
@@ -1264,13 +1272,13 @@ fixeddecimal_int8_ge(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val2 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(false);
-    else if (val2 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(true);
-    
-    val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 >= val2;
+	if (val2 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(false);
+	else if (val2 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(true);
+
+	val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 >= val2;
 }
 
 Datum
@@ -1279,12 +1287,12 @@ fixeddecimal_int8_cmp(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val2 > FIXEDDECIMAL_MAX)
-        PG_RETURN_INT32(-1);
-    else if (val2 < FIXEDDECIMAL_MIN)
-        PG_RETURN_INT32(1);
-    
-    val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
+	if (val2 > FIXEDDECIMAL_MAX)
+		PG_RETURN_INT32(-1);
+	else if (val2 < FIXEDDECIMAL_MIN)
+		PG_RETURN_INT32(1);
+
+	val2 = val2 * FIXEDDECIMAL_MULTIPLIER;
 	if (val1 == val2)
 		PG_RETURN_INT32(0);
 	else if (val1 < val2)
@@ -1299,13 +1307,13 @@ int8_fixeddecimal_eq(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val1 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(false);
-    else if (val1 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(false);
-    
-    val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 == val2;
+	if (val1 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(false);
+	else if (val1 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(false);
+
+	val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 == val2;
 }
 
 Datum
@@ -1314,13 +1322,13 @@ int8_fixeddecimal_ne(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val1 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(true);
-    else if (val1 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(true);
-    
-    val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 != val2;
+	if (val1 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(true);
+	else if (val1 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(true);
+
+	val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 != val2;
 }
 
 Datum
@@ -1329,13 +1337,13 @@ int8_fixeddecimal_lt(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val1 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(false);
-    else if (val1 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(true);
-    
-    val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 < val2;
+	if (val1 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(false);
+	else if (val1 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(true);
+
+	val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 < val2;
 }
 
 Datum
@@ -1344,13 +1352,13 @@ int8_fixeddecimal_gt(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val1 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(true);
-    else if (val1 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(false);
-    
-    val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 > val2;
+	if (val1 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(true);
+	else if (val1 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(false);
+
+	val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 > val2;
 }
 
 Datum
@@ -1359,13 +1367,13 @@ int8_fixeddecimal_le(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val1 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(false);
-    else if (val1 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(true);
-    
-    val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 <= val2;
+	if (val1 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(false);
+	else if (val1 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(true);
+
+	val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 <= val2;
 }
 
 Datum
@@ -1374,13 +1382,13 @@ int8_fixeddecimal_ge(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val1 > FIXEDDECIMAL_MAX)
-        PG_RETURN_BOOL(true);
-    else if (val1 < FIXEDDECIMAL_MIN)
-        PG_RETURN_BOOL(false);
-    
-    val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
-    return val1 >= val2;
+	if (val1 > FIXEDDECIMAL_MAX)
+		PG_RETURN_BOOL(true);
+	else if (val1 < FIXEDDECIMAL_MIN)
+		PG_RETURN_BOOL(false);
+
+	val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
+	return val1 >= val2;
 }
 
 Datum
@@ -1389,12 +1397,12 @@ int8_fixeddecimal_cmp(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
-    if (val1 > FIXEDDECIMAL_MAX)
-        PG_RETURN_INT32(1);
-    else if (val1 < FIXEDDECIMAL_MIN)
-        PG_RETURN_INT32(-1);
-    
-    val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
+	if (val1 > FIXEDDECIMAL_MAX)
+		PG_RETURN_INT32(1);
+	else if (val1 < FIXEDDECIMAL_MIN)
+		PG_RETURN_INT32(-1);
+
+	val1 = val1 * FIXEDDECIMAL_MULTIPLIER;
 	if (val1 == val2)
 		PG_RETURN_INT32(0);
 	else if (val1 < val2)
@@ -1604,9 +1612,9 @@ fixeddecimalum(PG_FUNCTION_ARGS)
 	int64		result;
 
 #ifdef HAVE_BUILTIN_OVERFLOW
-	int64 zero = 0;
+	int64		zero = 0;
 
- 	if (__builtin_sub_overflow(zero, arg, &result))
+	if (__builtin_sub_overflow(zero, arg, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
@@ -1617,7 +1625,7 @@ fixeddecimalum(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 	PG_RETURN_INT64(result);
 }
 
@@ -1653,7 +1661,7 @@ fixeddecimalpl(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1682,7 +1690,7 @@ fixeddecimalmi(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1694,10 +1702,10 @@ fixeddecimalmul(PG_FUNCTION_ARGS)
 	int64		arg2 = PG_GETARG_INT64(1);
 	int128		result;
 
-	/* We need to promote this to 128bit as we may overflow int64 here.
-	 * Remember that arg2 is the number multiplied by
-	 * FIXEDDECIMAL_MULTIPLIER, we must divide the result by this to get
-	 * the correct result.
+	/*
+	 * We need to promote this to 128bit as we may overflow int64 here.
+	 * Remember that arg2 is the number multiplied by FIXEDDECIMAL_MULTIPLIER,
+	 * we must divide the result by this to get the correct result.
 	 */
 	result = (int128) arg1 * arg2 / FIXEDDECIMAL_MULTIPLIER;
 
@@ -1811,7 +1819,7 @@ fixeddecimalint8pl(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1841,7 +1849,7 @@ fixeddecimalint8mi(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1876,7 +1884,7 @@ fixeddecimalint8mul(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1906,7 +1914,8 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 	if (arg2 == -1)
 	{
 #ifdef HAVE_BUILTIN_OVERFLOW
-		int64 zero = 0;
+		int64		zero = 0;
+
 		if (__builtin_sub_overflow(zero, arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -1918,7 +1927,7 @@ fixeddecimalint8div(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 		PG_RETURN_INT64(result);
 	}
@@ -1954,7 +1963,7 @@ int8fixeddecimalpl(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -1983,7 +1992,7 @@ int8fixeddecimalmi(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2018,7 +2027,7 @@ int8fixeddecimalmul(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2066,7 +2075,7 @@ fixeddecimalint4pl(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2096,7 +2105,7 @@ fixeddecimalint4mi(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2131,7 +2140,7 @@ fixeddecimalint4mul(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2161,7 +2170,8 @@ fixeddecimalint4div(PG_FUNCTION_ARGS)
 	if (arg2 == -1)
 	{
 #ifdef HAVE_BUILTIN_OVERFLOW
-		int64 zero = 0;
+		int64		zero = 0;
+
 		if (__builtin_sub_overflow(zero, arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -2173,7 +2183,7 @@ fixeddecimalint4div(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 		PG_RETURN_INT64(result);
 	}
@@ -2209,7 +2219,7 @@ int4fixeddecimalpl(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2238,7 +2248,7 @@ int4fixeddecimalmi(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2273,7 +2283,7 @@ int4fixeddecimalmul(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2321,7 +2331,7 @@ fixeddecimalint2pl(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2350,7 +2360,7 @@ fixeddecimalint2mi(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2385,7 +2395,7 @@ fixeddecimalint2mul(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2415,7 +2425,8 @@ fixeddecimalint2div(PG_FUNCTION_ARGS)
 	if (arg2 == -1)
 	{
 #ifdef HAVE_BUILTIN_OVERFLOW
-		int64 zero = 0;
+		int64		zero = 0;
+
 		if (__builtin_sub_overflow(zero, arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
@@ -2427,7 +2438,7 @@ fixeddecimalint2div(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 		PG_RETURN_INT64(result);
 	}
@@ -2462,7 +2473,7 @@ int2fixeddecimalpl(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2491,7 +2502,7 @@ int2fixeddecimalmi(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2512,9 +2523,9 @@ int2fixeddecimalmul(PG_FUNCTION_ARGS)
 	result = arg1 * arg2;
 
 	/*
-	 * Overflow check.  We basically check to see if result / arg2 gives
-	 * arg1 again.  There is one case where this fails: arg2 = 0 (which
-	 * cannot overflow).
+	 * Overflow check.  We basically check to see if result / arg2 gives arg1
+	 * again.  There is one case where this fails: arg2 = 0 (which cannot
+	 * overflow).
 	 *
 	 * Since the division is likely much more expensive than the actual
 	 * multiplication, we'd like to skip it where possible.  The best bang for
@@ -2526,7 +2537,7 @@ int2fixeddecimalmul(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("fixeddecimal out of range")));
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 
 	PG_RETURN_INT64(result);
 }
@@ -2580,6 +2591,7 @@ int8_to_money(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
 	int64		result = int8fixeddecimal_internal(arg, "money");
+
 	PG_RETURN_INT64(result);
 }
 
@@ -2588,6 +2600,7 @@ int8_to_smallmoney(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
 	int64		result = int8fixeddecimal_internal(arg, "smallmoney");
+
 	PG_RETURN_INT64(result);
 }
 
@@ -2596,6 +2609,7 @@ int8fixeddecimal(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
 	int64		result = int8fixeddecimal_internal(arg, "fixeddecimal");
+
 	PG_RETURN_INT64(result);
 }
 
@@ -2603,9 +2617,9 @@ static int64
 int8fixeddecimal_internal(int64 arg, const char *typename)
 {
 	int64		result;
-	
+
 	/* check for INT64 overflow on multiplication */
-	if(unlikely(pg_mul_s64_overflow(arg, FIXEDDECIMAL_MULTIPLIER, &result)))
+	if (unlikely(pg_mul_s64_overflow(arg, FIXEDDECIMAL_MULTIPLIER, &result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("value \"%ld\" is out of range for type %s", arg, typename)));
@@ -2823,7 +2837,7 @@ fixeddecimal_accum(FixedDecimalAggState *state, int64 newval)
 #else
 	if (state->N++ > 0)
 	{
-		int64 result = state->sumX + newval;
+		int64		result = state->sumX + newval;
 
 		if (SAMESIGN(state->sumX, newval) && !SAMESIGN(result, state->sumX))
 			ereport(ERROR,
@@ -2834,7 +2848,7 @@ fixeddecimal_accum(FixedDecimalAggState *state, int64 newval)
 	}
 	else
 		state->sumX = newval;
-#endif /* HAVE_BUILTIN_OVERFLOW */
+#endif							/* HAVE_BUILTIN_OVERFLOW */
 }
 
 Datum
@@ -2892,9 +2906,9 @@ fixeddecimal_sum(PG_FUNCTION_ARGS)
 Datum
 fixeddecimalaggstatein(PG_FUNCTION_ARGS)
 {
-	char   				   *str = pstrdup(PG_GETARG_CSTRING(0));
-	FixedDecimalAggState   *state;
-	char				   *token;
+	char	   *str = pstrdup(PG_GETARG_CSTRING(0));
+	FixedDecimalAggState *state;
+	char	   *token;
 
 	state = (FixedDecimalAggState *) palloc(sizeof(FixedDecimalAggState));
 
@@ -2931,8 +2945,9 @@ fixeddecimalaggstateout(PG_FUNCTION_ARGS)
 Datum
 fixeddecimalaggstaterecv(PG_FUNCTION_ARGS)
 {
-	StringInfo      		buf = (StringInfo) PG_GETARG_POINTER(0);
-	FixedDecimalAggState   *state;
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	FixedDecimalAggState *state;
+
 	state = (FixedDecimalAggState *) palloc(sizeof(FixedDecimalAggState));
 
 	state->sumX = pq_getmsgint(buf, sizeof(int64));
@@ -2947,13 +2962,13 @@ fixeddecimalaggstaterecv(PG_FUNCTION_ARGS)
 Datum
 fixeddecimalaggstatesend(PG_FUNCTION_ARGS)
 {
-	FixedDecimalAggState   *state = (FixedDecimalAggState *) PG_GETARG_POINTER(0);
-	StringInfoData 			buf;
+	FixedDecimalAggState *state = (FixedDecimalAggState *) PG_GETARG_POINTER(0);
+	StringInfoData buf;
 
 	pq_begintypsend(&buf);
 
-	pq_sendint(&buf, state->sumX, sizeof (int64));
-	pq_sendint(&buf, state->N, sizeof (int64));
+	pq_sendint(&buf, state->sumX, sizeof(int64));
+	pq_sendint(&buf, state->N, sizeof(int64));
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
@@ -3037,7 +3052,7 @@ fixeddecimalaggstatecombine(PG_FUNCTION_ARGS)
 	if (collectstate == NULL)
 	{
 		collectstate = (FixedDecimalAggState *) palloc(sizeof
-				(FixedDecimalAggState));
+													   (FixedDecimalAggState));
 		collectstate->sumX = 0;
 		collectstate->N = 0;
 	}
@@ -3049,9 +3064,9 @@ fixeddecimalaggstatecombine(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(collectstate);
 
 	collectstate->sumX = DatumGetInt64(DirectFunctionCall2(fixeddecimalpl,
-				Int64GetDatum(collectstate->sumX), Int64GetDatum(transstate->sumX)));
+														   Int64GetDatum(collectstate->sumX), Int64GetDatum(transstate->sumX)));
 	collectstate->N = DatumGetInt64(DirectFunctionCall2(int8pl,
-				Int64GetDatum(collectstate->N), Int64GetDatum(transstate->N)));
+														Int64GetDatum(collectstate->N), Int64GetDatum(transstate->N)));
 
 	MemoryContextSwitchTo(old_context);
 

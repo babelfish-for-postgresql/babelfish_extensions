@@ -290,3 +290,4 @@ rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
 			return;
 	}
 }
+

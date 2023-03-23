@@ -23,19 +23,19 @@ extern void assign_text_var(PLtsql_execstate *estate, PLtsql_var *var, const cha
 /* cursor handle */
 const uint32 CURSOR_HANDLE_INVALID = 0xABCDEF0; /* magic number used in T-SQL */
 static uint32 current_cursor_handle;
-uint32 get_next_cursor_handle(void);
+uint32		get_next_cursor_handle(void);
 
 const uint32 CURSOR_PREPARED_HANDLE_START = 1073741824;
 const uint32 CURSOR_PREPARED_HANDLE_INVALID = 0xFFFFFFFF;
-static int current_cursor_prepared_handle;
-uint32 get_next_cursor_prepared_handle(void);
+static int	current_cursor_prepared_handle;
+uint32		get_next_cursor_prepared_handle(void);
 
 /* functions called in pl_exec */
-bool pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_expr* explicit_expr, int cursor_options);
-void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
-void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
+bool		pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_expr *explicit_expr, int cursor_options);
+void		pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
+void		pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
 
-char *pltsql_demangle_curname(char *curname);
+char	   *pltsql_demangle_curname(char *curname);
 
 /* sp_cursor parameter handling */
 static lookup_param_hook_type prev_lookup_param_hook;
@@ -43,34 +43,35 @@ static List *sp_cursor_params = NIL;
 
 static Node *sp_cursor_find_param(ParseState *pstate, ColumnRef *cref);
 
-void enable_sp_cursor_find_param_hook(void);
-void disable_sp_cursor_find_param_hook(void);
-void add_sp_cursor_param(char *name);
-void reset_sp_cursor_params(void);
+void		enable_sp_cursor_find_param_hook(void);
+void		disable_sp_cursor_find_param_hook(void);
+void		add_sp_cursor_param(char *name);
+void		reset_sp_cursor_params(void);
 
 /* cursor information hashtab */
 typedef struct cursorhashent
 {
-	char curname[NAMEDATALEN + 1];
+	char		curname[NAMEDATALEN + 1];
 	PLtsql_expr *explicit_expr;
-	uint32 cursor_options;
-	int16 fetch_status;
-	int16 last_operation;
-	uint64 row_count;
-	int32 cursor_handle;
-	bool api_cursor; /* only used in cursor_list now. can be deprecated once we supprot global cursor */
-	TupleDesc tupdesc;
+	uint32		cursor_options;
+	int16		fetch_status;
+	int16		last_operation;
+	uint64		row_count;
+	int32		cursor_handle;
+	bool		api_cursor;		/* only used in cursor_list now. can be
+								 * deprecated once we supprot global cursor */
+	TupleDesc	tupdesc;
 	Tuplestorestate *fetch_buffer;
-	char *textptr_only_bitmap;
+	char	   *textptr_only_bitmap;
 } CursorHashEnt;
 
 static HTAB *CursorHashTable = NULL;
 
 typedef struct cursorpreparedhandlehashent
 {
-	uint32 handle;
-	SPIPlanPtr plan;
-	int cursor_options;
+	uint32		handle;
+	SPIPlanPtr	plan;
+	int			cursor_options;
 } CurosrPreparedHandleHashEnt;
 
 static HTAB *CursorPreparedHandleHashTable = NULL;
@@ -78,32 +79,32 @@ static HTAB *CursorPreparedHandleHashTable = NULL;
 static MemoryContext CursorHashtabContext = NULL;
 
 /* cursor hashtab operations */
-void pltsql_create_cursor_htab(void);
-CursorHashEnt *pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_expr, int cursor_options, int* cursor_handle);
-void pltsql_delete_cursor_entry(char *curname, bool missing_ok);
-void pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int* cursor_options);
-void pltsql_update_cursor_fetch_status(char *curname, int fetch_status);
-void pltsql_update_cursor_row_count(char *curname, int64 row_count);
-void pltsql_update_cursor_last_operation(char *curname, int last_operation);
+void		pltsql_create_cursor_htab(void);
+CursorHashEnt *pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_expr, int cursor_options, int *cursor_handle);
+void		pltsql_delete_cursor_entry(char *curname, bool missing_ok);
+void		pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int *cursor_options);
+void		pltsql_update_cursor_fetch_status(char *curname, int fetch_status);
+void		pltsql_update_cursor_row_count(char *curname, int64 row_count);
+void		pltsql_update_cursor_last_operation(char *curname, int last_operation);
 
 static const char *LOCAL_CURSOR_INFIX = "##sys_gen##";
 
-bool is_cursor_datatype(Oid oid);
-static Oid tsql_cursor_oid = InvalidOid;
-static Oid lookup_tsql_cursor_oid(void);
+bool		is_cursor_datatype(Oid oid);
+static Oid	tsql_cursor_oid = InvalidOid;
+static Oid	lookup_tsql_cursor_oid(void);
 
 /* keep the name of last opened cursor name for @@cursor_rows */
 static char last_opened_cursor[NAMEDATALEN + 1];
 
 /* implementation function shared between cursor functions and procedures */
-static int cursor_status_impl(PLtsql_var *var);
-static int cursor_status_impl2(const char *curname);
-static int cursor_rows_impl(const char *curname);
-static int cursor_column_count_impl(const char *curname);
+static int	cursor_status_impl(PLtsql_var *var);
+static int	cursor_status_impl2(const char *curname);
+static int	cursor_rows_impl(const char *curname);
+static int	cursor_column_count_impl(const char *curname);
 
-static int execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls, bool prepare, bool save_plan, bool execute);
+static int	execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls, bool prepare, bool save_plan, bool execute);
 static void validate_sp_cursor_params(int opttype, int rownum, const char *tablename, List *values);
-static int validate_and_get_sp_cursoropen_params(int scrollopt, int ccopt);
+static int	validate_and_get_sp_cursoropen_params(int scrollopt, int ccopt);
 static void validate_and_get_sp_cursorfetch_params(int *fetchtype_in, int *rownum_in, int *nrows_in, int *fetchtype_out, int *rownum_out, int *nrows_out);
 static void validate_sp_cursoroption_params(int code, int value);
 
@@ -120,10 +121,11 @@ PG_FUNCTION_INFO_V1(pltsql_get_last_cursor_handle);
 PG_FUNCTION_INFO_V1(pltsql_get_last_stmt_handle);
 
 /* Start of implementation */
-uint32 get_next_cursor_handle()
+uint32
+get_next_cursor_handle()
 {
-	char curname[NAMEDATALEN];
-	uint32 old_handle = current_cursor_handle;
+	char		curname[NAMEDATALEN];
+	uint32		old_handle = current_cursor_handle;
 
 	while (true)
 	{
@@ -134,14 +136,15 @@ uint32 get_next_cursor_handle()
 			elog(ERROR, "out of sp cursor handles");
 		snprintf(curname, NAMEDATALEN, "%u", current_cursor_handle);
 		if (hash_search(CursorHashTable, curname, HASH_FIND, NULL) == NULL)
-			break; /* found */
+			break;				/* found */
 	}
 	return current_cursor_handle;
 }
 
-uint32 get_next_cursor_prepared_handle()
+uint32
+get_next_cursor_prepared_handle()
 {
-	uint32 old_handle = current_cursor_prepared_handle;
+	uint32		old_handle = current_cursor_prepared_handle;
 
 	while (true)
 	{
@@ -151,13 +154,14 @@ uint32 get_next_cursor_prepared_handle()
 		if (unlikely(current_cursor_prepared_handle == old_handle))
 			elog(ERROR, "out of sp cursor prepared handles");
 		if (hash_search(CursorPreparedHandleHashTable, &current_cursor_prepared_handle, HASH_FIND, NULL) == NULL)
-			break; /* found */
+			break;				/* found */
 	}
 
 	return current_cursor_prepared_handle;
 }
 
-bool is_cursor_datatype(Oid oid)
+bool
+is_cursor_datatype(Oid oid)
 {
 	if (oid == REFCURSOROID)
 		return true;
@@ -171,8 +175,8 @@ bool is_cursor_datatype(Oid oid)
 static Oid
 lookup_tsql_cursor_oid()
 {
-	Oid nspoid;
-	Oid typoid;
+	Oid			nspoid;
+	Oid			typoid;
 
 	nspoid = get_namespace_oid("sys", true);
 	if (nspoid == InvalidOid)
@@ -182,45 +186,48 @@ lookup_tsql_cursor_oid()
 	return typoid;
 }
 
-bool pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_expr* explicit_expr, int cursor_options)
+bool
+pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_expr *explicit_expr, int cursor_options)
 {
-	char *curname;
+	char	   *curname;
 	CursorHashEnt *hentry;
-	Portal portal;
-	char mangled_name[NAMEDATALEN];
+	Portal		portal;
+	char		mangled_name[NAMEDATALEN];
 
 	if (!var->isnull)
 	{
 		curname = TextDatumGetCString(var->value);
 
 		hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
-		if (hentry != NULL) /* already declared */
+		if (hentry != NULL)		/* already declared */
 		{
 			portal = SPI_cursor_find(hentry->curname);
 			if (portal != NULL)
-				return false; /* already opened portal */
+				return false;	/* already opened portal */
 
 			if (hentry->last_operation != 7)
-				return false; /* not dealloc'd */
+				return false;	/* not dealloc'd */
 
 			pltsql_delete_cursor_entry(curname, false);
 		}
 	}
 
 	/*
-	 * For local cursor, the same cursor name may be already taken by parent function/procedure
-	 * To avoid conflict, generate a unique name by using var pointer.
+	 * For local cursor, the same cursor name may be already taken by parent
+	 * function/procedure To avoid conflict, generate a unique name by using
+	 * var pointer.
 	 *
-	 * SPI proc memory context is used here intentionally.
-	 * It will be destoryed at the end of function/procedure call.
-	 * It has the same lifecycle with LOCAL cursor by its definition.
-	 * When we implement GLOBAL cursor, its lifespan is longer so we have to use different memory context.
+	 * SPI proc memory context is used here intentionally. It will be
+	 * destoryed at the end of function/procedure call. It has the same
+	 * lifecycle with LOCAL cursor by its definition. When we implement GLOBAL
+	 * cursor, its lifespan is longer so we have to use different memory
+	 * context.
 	 */
 	Assert(var->refname != NULL);
 	if (strlen(var->refname) + strlen(LOCAL_CURSOR_INFIX) + 19 > NAMEDATALEN)
 		ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-			 errmsg("internal cursor name is too long: %s", var->refname)));
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("internal cursor name is too long: %s", var->refname)));
 
 	snprintf(mangled_name, NAMEDATALEN, "%s%s%p", var->refname, LOCAL_CURSOR_INFIX, var);
 
@@ -234,24 +241,34 @@ bool pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_exp
 	return true;
 }
 
-void pltsql_init_anonymous_cursors(PLtsql_execstate *estate)
+void
+pltsql_init_anonymous_cursors(PLtsql_execstate *estate)
 {
-	/* This a rountine to handle anonymous (impliicitly declaring cursor via SET @curvar = CURSOR FOR <query>) */
+	/*
+	 * This a rountine to handle anonymous (impliicitly declaring cursor via
+	 * SET @curvar = CURSOR FOR <query>)
+	 */
 
-	char* curname;
-	int cursor_options;
-	int i;
+	char	   *curname;
+	int			cursor_options;
+	int			i;
 
-	/* find cursor variables, assign cursor name and put cursor information to cursor hash. */
+	/*
+	 * find cursor variables, assign cursor name and put cursor information to
+	 * cursor hash.
+	 */
 	for (i = 0; i < estate->ndatums; ++i)
 	{
 		if (estate->datums[i]->dtype == PLTSQL_DTYPE_VAR)
 		{
 			PLtsql_var *var = (PLtsql_var *) estate->datums[i];
+
 			if (is_cursor_datatype(var->datatype->typoid) &&
-			    var->isconst && /* if cursor variable, it means it just refers to another constant cursor. skip it */
-			    !(var->cursor_options & TSQL_CURSOR_OPT_GLOBAL) && /* GLOBAL cursor is not supported yet */
-				  var->cursor_options & PGTSQL_CURSOR_ANONYMOUS)
+				var->isconst && /* if cursor variable, it means it just refers
+								 * to another constant cursor. skip it */
+				!(var->cursor_options & TSQL_CURSOR_OPT_GLOBAL) &&	/* GLOBAL cursor is not
+																	 * supported yet */
+				var->cursor_options & PGTSQL_CURSOR_ANONYMOUS)
 			{
 				Assert(var->isnull);
 
@@ -259,7 +276,10 @@ void pltsql_init_anonymous_cursors(PLtsql_execstate *estate)
 				assign_text_var(estate, var, var->refname);
 				curname = TextDatumGetCString(var->value);
 
-				/* remove PGTSQL_ANONYMOUS_CURSOR from cursor option since the entry can be shared among with refcursor */
+				/*
+				 * remove PGTSQL_ANONYMOUS_CURSOR from cursor option since the
+				 * entry can be shared among with refcursor
+				 */
 				cursor_options = (var->cursor_options & ~PGTSQL_CURSOR_ANONYMOUS);
 				pltsql_insert_cursor_entry(curname, var->cursor_explicit_expr, cursor_options, NULL);
 			}
@@ -267,11 +287,12 @@ void pltsql_init_anonymous_cursors(PLtsql_execstate *estate)
 	}
 }
 
-void pltsql_cleanup_local_cursors(PLtsql_execstate *estate)
+void
+pltsql_cleanup_local_cursors(PLtsql_execstate *estate)
 {
-	Portal portal;
-	char *curname;
-	int i;
+	Portal		portal;
+	char	   *curname;
+	int			i;
 
 	/* close local cursor made by this estate */
 	for (i = 0; i < estate->ndatums; ++i)
@@ -279,15 +300,21 @@ void pltsql_cleanup_local_cursors(PLtsql_execstate *estate)
 		if (estate->datums[i]->dtype == PLTSQL_DTYPE_VAR)
 		{
 			PLtsql_var *var = (PLtsql_var *) estate->datums[i];
+
 			if (is_cursor_datatype(var->datatype->typoid) &&
-			    var->isconst && /* if cursor variable, it means it just refers to another constant cursor. skip it */
-			    !var->isnull &&
-			    !(var->cursor_options & TSQL_CURSOR_OPT_GLOBAL))
+				var->isconst && /* if cursor variable, it means it just refers
+								 * to another constant cursor. skip it */
+				!var->isnull &&
+				!(var->cursor_options & TSQL_CURSOR_OPT_GLOBAL))
 			{
 				curname = TextDatumGetCString(var->value);
 				portal = SPI_cursor_find(curname);
-				if (portal) {
-					if (portal->portalPinned) /* LOCAL cursor should be closed/deallocated at the end of block. unpin portal if already pinned */
+				if (portal)
+				{
+					if (portal->portalPinned)	/* LOCAL cursor should be
+												 * closed/deallocated at the
+												 * end of block. unpin portal
+												 * if already pinned */
 						UnpinPortal(portal);
 
 					SPI_cursor_close(portal);
@@ -298,12 +325,13 @@ void pltsql_cleanup_local_cursors(PLtsql_execstate *estate)
 	}
 }
 
-char *pltsql_demangle_curname(char *curname)
+char *
+pltsql_demangle_curname(char *curname)
 {
-	char *infix_substr;
-	char *p;
-	char *p2;
-	Size len;
+	char	   *infix_substr;
+	char	   *p;
+	char	   *p2;
+	Size		len;
 
 	if (curname == NULL)
 		return NULL;
@@ -311,7 +339,10 @@ char *pltsql_demangle_curname(char *curname)
 	infix_substr = NULL;
 	p = curname;
 
-	/* cursor name given from user may contain LOCAL_CURSOR_INFIX. find the last LOCAL_CURSOR_INFIX */
+	/*
+	 * cursor name given from user may contain LOCAL_CURSOR_INFIX. find the
+	 * last LOCAL_CURSOR_INFIX
+	 */
 	while ((p2 = strstr(p, LOCAL_CURSOR_INFIX)) != NULL)
 	{
 		infix_substr = p2;
@@ -319,7 +350,7 @@ char *pltsql_demangle_curname(char *curname)
 	}
 
 	if (infix_substr == NULL)
-		return curname; /* can't find LOCAL_CURSOR_INFIX */
+		return curname;			/* can't find LOCAL_CURSOR_INFIX */
 
 	len = infix_substr - curname;
 	return pnstrdup(curname, len);
@@ -339,16 +370,17 @@ char *pltsql_demangle_curname(char *curname)
 Node *
 sp_cursor_find_param(ParseState *pstate, ColumnRef *cref)
 {
-	ParamRef *pref;
-	char *colname;
-	ListCell *cell;
-	int i = 1;
-	int param_no = 0;
-	Node *result;
+	ParamRef   *pref;
+	char	   *colname;
+	ListCell   *cell;
+	int			i = 1;
+	int			param_no = 0;
+	Node	   *result;
 
 	if (prev_lookup_param_hook)
 	{
-		Node *found = (*prev_lookup_param_hook) (pstate, cref);
+		Node	   *found = (*prev_lookup_param_hook) (pstate, cref);
+
 		if (found)
 			return found;
 	}
@@ -363,6 +395,7 @@ sp_cursor_find_param(ParseState *pstate, ColumnRef *cref)
 	foreach(cell, sp_cursor_params)
 	{
 		const char *param_name = lfirst(cell);
+
 		if (pg_strcasecmp(colname, param_name) == 0)
 		{
 			param_no = i;
@@ -372,7 +405,7 @@ sp_cursor_find_param(ParseState *pstate, ColumnRef *cref)
 	}
 
 	if (param_no == 0)
-		return NULL; /* not found */
+		return NULL;			/* not found */
 
 	pref = makeNode(ParamRef);
 	pref->number = param_no;
@@ -384,6 +417,7 @@ sp_cursor_find_param(ParseState *pstate, ColumnRef *cref)
 	 */
 	if (pstate->p_paramref_hook != NULL)
 		result = pstate->p_paramref_hook(pstate, pref);
+
 	else
 		result = NULL;
 
@@ -396,33 +430,38 @@ sp_cursor_find_param(ParseState *pstate, ColumnRef *cref)
 	return result;
 }
 
-void enable_sp_cursor_find_param_hook()
+void
+enable_sp_cursor_find_param_hook()
 {
 	prev_lookup_param_hook = lookup_param_hook;
 	lookup_param_hook = sp_cursor_find_param;
 }
 
-void disable_sp_cursor_find_param_hook()
+void
+disable_sp_cursor_find_param_hook()
 {
 	lookup_param_hook = prev_lookup_param_hook;
 	prev_lookup_param_hook = NULL;
 }
 
-void add_sp_cursor_param(char *name)
+void
+add_sp_cursor_param(char *name)
 {
 	sp_cursor_params = lappend(sp_cursor_params, name);
 }
 
-void reset_sp_cursor_params()
+void
+reset_sp_cursor_params()
 {
 	sp_cursor_params = NIL;
 }
 
-void pltsql_create_cursor_htab()
+void
+pltsql_create_cursor_htab()
 {
 	HASHCTL		ctl;
 
-	if (CursorHashtabContext == NULL) /* intialize memory context */
+	if (CursorHashtabContext == NULL)	/* intialize memory context */
 	{
 		CursorHashtabContext = AllocSetContextCreateInternal(NULL, "PLtsql Cursor hashtab Memory Context", ALLOCSET_DEFAULT_SIZES);
 	}
@@ -433,7 +472,7 @@ void pltsql_create_cursor_htab()
 	ctl.entrysize = sizeof(CursorHashEnt);
 	ctl.hcxt = CursorHashtabContext;
 
-	CursorHashTable = hash_create("T-SQL cursor information", 16 /*PORTALS_PER_USER*/, &ctl, HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
+	CursorHashTable = hash_create("T-SQL cursor information", 16 /* PORTALS_PER_USER */ , &ctl, HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
 
 	current_cursor_handle = CURSOR_HANDLE_INVALID;
 
@@ -443,15 +482,16 @@ void pltsql_create_cursor_htab()
 	ctl.entrysize = sizeof(CurosrPreparedHandleHashEnt);
 	ctl.hcxt = CursorHashtabContext;
 
-	CursorPreparedHandleHashTable = hash_create("T-SQL cursor prepared handle", 16 /*PORTALS_PER_USER*/, &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+	CursorPreparedHandleHashTable = hash_create("T-SQL cursor prepared handle", 16 /* PORTALS_PER_USER */ , &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	current_cursor_prepared_handle = CURSOR_PREPARED_HANDLE_START;
 }
 
-CursorHashEnt *pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_expr, int cursor_options, int* cursor_handle)
+CursorHashEnt *
+pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_expr, int cursor_options, int *cursor_handle)
 {
 	CursorHashEnt *hentry;
-	bool found;
+	bool		found;
 
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_ENTER, &found);
 	if (found)
@@ -464,9 +504,10 @@ CursorHashEnt *pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_e
 	hentry->fetch_status = -9;
 	hentry->row_count = 0;
 	hentry->last_operation = 0;
-	if (cursor_handle) /* use given cursor_handle. mostly api cursor */
+	if (cursor_handle)			/* use given cursor_handle. mostly api cursor */
 		hentry->cursor_handle = *cursor_handle;
-	else /* assign a new cursor handle. mostly language cursor */
+	else						/* assign a new cursor handle. mostly language
+								 * cursor */
 		hentry->cursor_handle = get_next_cursor_handle();
 	hentry->api_cursor = false;
 	hentry->tupdesc = NULL;
@@ -476,7 +517,8 @@ CursorHashEnt *pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_e
 	return hentry;
 }
 
-void pltsql_delete_cursor_entry(char *curname, bool missing_ok)
+void
+pltsql_delete_cursor_entry(char *curname, bool missing_ok)
 {
 	CursorHashEnt *hentry;
 
@@ -504,7 +546,8 @@ void pltsql_delete_cursor_entry(char *curname, bool missing_ok)
 		elog(WARNING, "trying to delete cursor name that does not exist");
 }
 
-void pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int* cursor_options)
+void
+pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int *cursor_options)
 {
 	CursorHashEnt *hentry;
 
@@ -521,7 +564,8 @@ void pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, in
 	}
 }
 
-void pltsql_update_cursor_fetch_status(char *curname, int fetch_status)
+void
+pltsql_update_cursor_fetch_status(char *curname, int fetch_status)
 {
 	CursorHashEnt *hentry;
 
@@ -530,7 +574,8 @@ void pltsql_update_cursor_fetch_status(char *curname, int fetch_status)
 		hentry->fetch_status = fetch_status;
 }
 
-void pltsql_update_cursor_row_count(char *curname, int64 row_count)
+void
+pltsql_update_cursor_row_count(char *curname, int64 row_count)
 {
 	CursorHashEnt *hentry;
 
@@ -539,7 +584,8 @@ void pltsql_update_cursor_row_count(char *curname, int64 row_count)
 		hentry->row_count = row_count;
 }
 
-void pltsql_update_cursor_last_operation(char *curname, int last_operation)
+void
+pltsql_update_cursor_last_operation(char *curname, int last_operation)
 {
 	CursorHashEnt *hentry;
 
@@ -548,7 +594,7 @@ void pltsql_update_cursor_last_operation(char *curname, int last_operation)
 		hentry->last_operation = last_operation;
 
 	/* keep the last opened cursor for @@cursor_rows */
-	if (last_operation == 1) /* open */
+	if (last_operation == 1)	/* open */
 	{
 		last_opened_cursor[0] = '\0';
 		strncat(last_opened_cursor, curname, NAMEDATALEN);
@@ -569,9 +615,9 @@ Datum
 cursor_status(PG_FUNCTION_ARGS)
 {
 	PLtsql_execstate *estate;
-	char *curtype;
-	char *refname;
-	int i;
+	char	   *curtype;
+	char	   *refname;
+	int			i;
 
 	/* get current tsql estate */
 	estate = get_current_tsql_estate();
@@ -600,6 +646,7 @@ cursor_status(PG_FUNCTION_ARGS)
 		if (estate->datums[i]->dtype == PLTSQL_DTYPE_VAR)
 		{
 			PLtsql_var *var = (PLtsql_var *) estate->datums[i];
+
 			if (is_cursor_datatype(var->datatype->typoid) && strcasecmp(var->refname, refname) == 0)
 			{
 				/* ignore cursor not matching with cursor source */
@@ -617,9 +664,10 @@ cursor_status(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(-3);
 }
 
-static int cursor_status_impl(PLtsql_var *var)
+static int
+cursor_status_impl(PLtsql_var *var)
 {
-	char *curname;
+	char	   *curname;
 
 	if (var->isnull)
 	{
@@ -630,10 +678,11 @@ static int cursor_status_impl(PLtsql_var *var)
 	return cursor_status_impl2(curname);
 }
 
-static int cursor_status_impl2(const char *curname)
+static int
+cursor_status_impl2(const char *curname)
 {
 	CursorHashEnt *hentry;
-	Portal portal;
+	Portal		portal;
 
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
@@ -641,7 +690,7 @@ static int cursor_status_impl2(const char *curname)
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("cursor_status() cannot find cursor entry")));
 
-	if (hentry->last_operation == 7) /* dealloc'd */
+	if (hentry->last_operation == 7)	/* dealloc'd */
 		return -3;
 
 	portal = SPI_cursor_find(curname);
@@ -653,20 +702,22 @@ static int cursor_status_impl2(const char *curname)
 	else
 	{
 		/*
-		 * Note:
-		 * For STATIC and KEYSET CURSOR, TSQL CURSOR_STATUS() can return 0 if result set is empty
-		 * even though cursor is not fetched yet. It is thought that it's because T-SQL store the
-		 * result set (full or key only) to temporary storage when cursor is opened.
-		 * PG doesn't behave like that for INSENSTIVE (=STATIC) cursor (maybe by virtue of its MVCC)
-		 * Hence, always return 1 here for now. It will be discussed further with DBE, and documented if needed.
+		 * Note: For STATIC and KEYSET CURSOR, TSQL CURSOR_STATUS() can return
+		 * 0 if result set is empty even though cursor is not fetched yet. It
+		 * is thought that it's because T-SQL store the result set (full or
+		 * key only) to temporary storage when cursor is opened. PG doesn't
+		 * behave like that for INSENSTIVE (=STATIC) cursor (maybe by virtue
+		 * of its MVCC) Hence, always return 1 here for now. It will be
+		 * discussed further with DBE, and documented if needed.
 		 */
 		return 1;
 	}
 }
 
-static int cursor_rows_impl(const char *curname)
+static int
+cursor_rows_impl(const char *curname)
 {
-	Portal portal;
+	Portal		portal;
 
 	portal = SPI_cursor_find(curname);
 	if (portal == NULL)
@@ -677,17 +728,19 @@ static int cursor_rows_impl(const char *curname)
 	else
 	{
 		/*
-		 * Note: PG cursor is INSENSITIVE (=STATIC) cursor but its implemenation doesn't store
-		 * the result into temporary storage other than T-SQL does.
-		 * We don't know the # of rows. So return -1 here as same as DYNAMIC cursor does.
+		 * Note: PG cursor is INSENSITIVE (=STATIC) cursor but its
+		 * implemenation doesn't store the result into temporary storage other
+		 * than T-SQL does. We don't know the # of rows. So return -1 here as
+		 * same as DYNAMIC cursor does.
 		 */
 		return -1;
 	}
 }
 
-static int cursor_column_count_impl(const char *curname)
+static int
+cursor_column_count_impl(const char *curname)
 {
-	Portal portal;
+	Portal		portal;
 
 	portal = SPI_cursor_find(curname);
 	if (portal == NULL || portal->tupDesc == NULL)
@@ -706,15 +759,15 @@ Datum
 cursor_list(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc tupdesc;
+	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	CursorHashEnt *hentry;
 	HASH_SEQ_STATUS hash_seq;
 	PLtsql_execstate *estate;
-	int cursor_scope_required;
-	int i;
+	int			cursor_scope_required;
+	int			i;
 
 	cursor_scope_required = PG_GETARG_INT32(0);
 	if (cursor_scope_required < 1 || cursor_scope_required > 3)
@@ -771,7 +824,10 @@ cursor_list(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 14, "cursor_handle",
 					   INT4OID, -1, 0);
 
-	/* Hidden attributes used in sp_describe_cursor. Will not be projected to user. */
+	/*
+	 * Hidden attributes used in sp_describe_cursor. Will not be projected to
+	 * user.
+	 */
 	TupleDescInitEntry(tupdesc, (AttrNumber) 15, "cursor_source",
 					   INT2OID, -1, 0);
 
@@ -798,24 +854,26 @@ cursor_list(PG_FUNCTION_ARGS)
 		if (estate->datums[i]->dtype == PLTSQL_DTYPE_VAR)
 		{
 			PLtsql_var *var = (PLtsql_var *) estate->datums[i];
+
 			if (is_cursor_datatype(var->datatype->typoid)
-			 && !var->isnull
-			 && !(var->cursor_options & PGTSQL_CURSOR_ANONYMOUS))
+				&& !var->isnull
+				&& !(var->cursor_options & PGTSQL_CURSOR_ANONYMOUS))
 			{
-				char *curname;
+				char	   *curname;
 				Datum		values[15];
 				bool		nulls[15];
-				int cursor_scope;
+				int			cursor_scope;
 
 				MemSet(nulls, 0, sizeof(nulls));
 
 				curname = TextDatumGetCString(var->value);
 				hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 
-				if (hentry == NULL) /* This can happen for PG internal cursor. skip it */
+				if (hentry == NULL) /* This can happen for PG internal cursor.
+									 * skip it */
 					continue;
 
-				cursor_scope = 1; /* cursor_scope: always LOCAL for now */
+				cursor_scope = 1;	/* cursor_scope: always LOCAL for now */
 
 				if (!(cursor_scope & cursor_scope_required))
 					continue;
@@ -824,8 +882,8 @@ cursor_list(PG_FUNCTION_ARGS)
 				values[1] = CStringGetTextDatum(pltsql_demangle_curname(curname));
 				values[2] = cursor_scope;
 				values[3] = cursor_status_impl(var);
-				values[4] = 1; /* model: always STATIC for now */
-				values[5] = 1; /* concurreny: always READ_ONLY for now */
+				values[4] = 1;	/* model: always STATIC for now */
+				values[5] = 1;	/* concurreny: always READ_ONLY for now */
 				values[6] = (var->cursor_options & CURSOR_OPT_NO_SCROLL) ? 0 : 1;
 				values[7] = (SPI_cursor_find(curname) == NULL) ? 0 : 1; /* open status */
 				values[8] = cursor_rows_impl(curname);
@@ -834,7 +892,7 @@ cursor_list(PG_FUNCTION_ARGS)
 				values[11] = hentry->row_count;
 				values[12] = hentry->last_operation;
 				values[13] = hentry->cursor_handle; /* cursor handle */
-				values[14] = var->isconst ? values[2] : 3; /* cursor source */
+				values[14] = var->isconst ? values[2] : 3;	/* cursor source */
 
 				tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 			}
@@ -846,13 +904,13 @@ cursor_list(PG_FUNCTION_ARGS)
 
 	while ((hentry = hash_seq_search(&hash_seq)) != NULL)
 	{
-		Datum values[15];
-		bool nulls[15];
-		int cursor_scope;
+		Datum		values[15];
+		bool		nulls[15];
+		int			cursor_scope;
 
 		MemSet(nulls, 0, sizeof(nulls));
 
-		cursor_scope = 2; /* cursor_scope: always GLOBAL for api cursor */
+		cursor_scope = 2;		/* cursor_scope: always GLOBAL for api cursor */
 
 		if (!(cursor_scope & cursor_scope_required))
 			continue;
@@ -860,12 +918,14 @@ cursor_list(PG_FUNCTION_ARGS)
 		if (!hentry->api_cursor)
 			continue;
 
-		values[0] = CStringGetTextDatum("NULL"); /* reference name */
-		values[1] = CStringGetTextDatum("NULL"); /* cursor name. TODO: handle renaming via sp_cursoroption */
+		values[0] = CStringGetTextDatum("NULL");	/* reference name */
+		values[1] = CStringGetTextDatum("NULL");	/* cursor name. TODO:
+													 * handle renaming via
+													 * sp_cursoroption */
 		values[2] = cursor_scope;
 		values[3] = cursor_status_impl2(hentry->curname);
-		values[4] = 1; /* model: always STATIC for now */
-		values[5] = 1; /* concurreny: always READ_ONLY for now */
+		values[4] = 1;			/* model: always STATIC for now */
+		values[5] = 1;			/* concurreny: always READ_ONLY for now */
 		values[6] = (hentry->cursor_options & CURSOR_OPT_NO_SCROLL) ? 0 : 1;
 		values[7] = (SPI_cursor_find(hentry->curname) == NULL) ? 0 : 1; /* open status */
 		values[8] = cursor_rows_impl(hentry->curname);
@@ -874,7 +934,7 @@ cursor_list(PG_FUNCTION_ARGS)
 		values[11] = hentry->row_count;
 		values[12] = hentry->last_operation;
 		values[13] = hentry->cursor_handle; /* cursor handle */
-		values[14] = cursor_scope; /* cursor source */
+		values[14] = cursor_scope;	/* cursor source */
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
@@ -927,9 +987,12 @@ init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS)
 #define SP_CURSOR_SCROLLOPT_FAST_FORWARD_ACCEPTABLE 0x100000
 
 #define SP_CURSOR_CCOPT_READ_ONLY               0x0001
-#define SP_CURSOR_CCOPT_SCROLL_LOCKS            0x0002 /* previously known as LOCKCC */
-#define SP_CURSOR_CCOPT_OPTIMISTIC1             0x0004 /* previously known as OPTCC */
-#define SP_CURSOR_CCOPT_OPTIMISTIC2             0x0008 /* previously known as OPTCCVAL */
+#define SP_CURSOR_CCOPT_SCROLL_LOCKS            0x0002	/* previously known as
+														 * LOCKCC */
+#define SP_CURSOR_CCOPT_OPTIMISTIC1             0x0004	/* previously known as
+														 * OPTCC */
+#define SP_CURSOR_CCOPT_OPTIMISTIC2             0x0008	/* previously known as
+														 * OPTCCVAL */
 #define SP_CURSOR_CCOPT_ALLOW_DIRECT            0x2000
 #define SP_CURSOR_CCOPT_UPDT_IN_PLACE           0x4000
 #define SP_CURSOR_CCOPT_CHECK_ACCEPTED_OPTS     0x8000
@@ -957,17 +1020,21 @@ init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS)
 #define SP_CURSOR_OPTION_CODE_ROWCOUNT     0x6
 
 
-int execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List* values)
+int
+execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List *values)
 {
-	int rc;
-	char curname[NAMEDATALEN];
+	int			rc;
+	char		curname[NAMEDATALEN];
 	CursorHashEnt *hentry;
-	Portal portal;
+	Portal		portal;
 	DestReceiver *receiver;
 	TupleTableSlot *slot;
 	MemoryContext savedPortalCxt;
 
-	/* Connect to SPI manager. should be handled in the same way with pltsql_inline_handler() */
+	/*
+	 * Connect to SPI manager. should be handled in the same way with
+	 * pltsql_inline_handler()
+	 */
 	savedPortalCxt = PortalContext;
 	if (PortalContext == NULL)
 		PortalContext = MessageContext;
@@ -1006,41 +1073,50 @@ int execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *ta
 	return 0;
 }
 
-int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls)
+int
+execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls)
 {
-	return execute_sp_cursoropen_common(NULL, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, nBindParams, boundParamsOidList, values, nulls, true/*prepare*/, false/*save_plan*/, true/*execute*/);
+	return execute_sp_cursoropen_common(NULL, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, nBindParams, boundParamsOidList, values, nulls, true /* prepare */ , false /* save_plan */ , true /* execute */ );
 }
 
 /* old interface to be compatabile with TDS */
-int execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, Datum *values, const char *nulls)
+int
+execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, Datum *values, const char *nulls)
 {
-	return execute_sp_cursoropen_common(NULL, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, 0, NULL, values, nulls, true/*prepare*/, false/*save_plan*/, true/*execute*/);
+	return execute_sp_cursoropen_common(NULL, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, 0, NULL, values, nulls, true /* prepare */ , false /* save_plan */ , true /* execute */ );
 }
 
-int execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int nBindParams, Oid *boundParamsOidList)
+int
+execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int nBindParams, Oid *boundParamsOidList)
 {
 	/* TODO: options handling */
-	return execute_sp_cursoropen_common(stmt_handle, NULL, stmt, pscrollopt, pccopt, NULL, 0, nBindParams, boundParamsOidList, NULL, NULL, true/*prepare*/, true/*save_plan*/, false/*execute*/);
+	return execute_sp_cursoropen_common(stmt_handle, NULL, stmt, pscrollopt, pccopt, NULL, 0, nBindParams, boundParamsOidList, NULL, NULL, true /* prepare */ , true /* save_plan */ , false /* execute */ );
 }
 
-int execute_sp_cursorexecute(int stmt_handle, int *cursor_handle, int *pscrollopt, int *pccopt, int *rowcount, int nparams, Datum *values, const char *nulls)
+int
+execute_sp_cursorexecute(int stmt_handle, int *cursor_handle, int *pscrollopt, int *pccopt, int *rowcount, int nparams, Datum *values, const char *nulls)
 {
-	return execute_sp_cursoropen_common(&stmt_handle, cursor_handle, NULL, pscrollopt, pccopt, rowcount, nparams, 0, NULL, values, nulls, false/*prepare*/, false/*save_plan*/, true/*execute*/);
+	return execute_sp_cursoropen_common(&stmt_handle, cursor_handle, NULL, pscrollopt, pccopt, rowcount, nparams, 0, NULL, values, nulls, false /* prepare */ , false /* save_plan */ , true /* execute */ );
 }
 
-int execute_sp_cursorprepexec(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls)
+int
+execute_sp_cursorprepexec(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls)
 {
-	return execute_sp_cursoropen_common(stmt_handle, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, nBindParams, boundParamsOidList, values, nulls, true/*prepare*/, true/*save_plan*/, true/*execute*/);
+	return execute_sp_cursoropen_common(stmt_handle, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, nBindParams, boundParamsOidList, values, nulls, true /* prepare */ , true /* save_plan */ , true /* execute */ );
 }
 
-int execute_sp_cursorunprepare(int stmt_handle)
+int
+execute_sp_cursorunprepare(int stmt_handle)
 {
-	int rc;
+	int			rc;
 	MemoryContext savedPortalCxt;
 	CurosrPreparedHandleHashEnt *phentry;
-	bool found;
+	bool		found;
 
-	/* Connect to SPI manager. should be handled in the same way with pltsql_inline_handler() */
+	/*
+	 * Connect to SPI manager. should be handled in the same way with
+	 * pltsql_inline_handler()
+	 */
 	savedPortalCxt = PortalContext;
 	if (PortalContext == NULL)
 		PortalContext = MessageContext;
@@ -1055,7 +1131,7 @@ int execute_sp_cursorunprepare(int stmt_handle)
 	if (phentry->plan)
 	{
 		SPI_freeplan(phentry->plan);
-		phentry->plan= NULL;
+		phentry->plan = NULL;
 	}
 
 	hash_search(CursorPreparedHandleHashTable, &stmt_handle, HASH_REMOVE, &found);
@@ -1067,22 +1143,26 @@ int execute_sp_cursorunprepare(int stmt_handle)
 	return 0;
 }
 
-int execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pnrows)
+int
+execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pnrows)
 {
-	int rc;
-	char curname[NAMEDATALEN];
+	int			rc;
+	char		curname[NAMEDATALEN];
 	CursorHashEnt *hentry;
-	Portal portal;
-	int fetchtype;
-	int rownum;
-	int nrows;
+	Portal		portal;
+	int			fetchtype;
+	int			rownum;
+	int			nrows;
 	DestReceiver *receiver;
 	TupleTableSlot *slot;
-	int rno;
+	int			rno;
 	MemoryContext oldcontext;
 	MemoryContext savedPortalCxt;
 
-	/* Connect to SPI manager. should be handled in the same way with pltsql_inline_handler() */
+	/*
+	 * Connect to SPI manager. should be handled in the same way with
+	 * pltsql_inline_handler()
+	 */
 	savedPortalCxt = PortalContext;
 	if (PortalContext == NULL)
 		PortalContext = MessageContext;
@@ -1156,7 +1236,11 @@ int execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int
 	if (SPI_result != 0)
 		elog(ERROR, "error in SPI_scroll_cursor_fetch: %d", SPI_result);
 
-	/* In case of FETCH_FIRST/FETCH_LAST with 0 nrows, we just moved cursor and no actual fetch is called. SPI_tuptable can be NULL. skip storing the result */
+	/*
+	 * In case of FETCH_FIRST/FETCH_LAST with 0 nrows, we just moved cursor
+	 * and no actual fetch is called. SPI_tuptable can be NULL. skip storing
+	 * the result
+	 */
 	if (SPI_tuptable)
 	{
 		/* store result in fetch buffer */
@@ -1187,7 +1271,7 @@ int execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int
 
 	/* If AUTO_CLOSE is set and we fetched all the result, close the cursor */
 	if ((hentry->cursor_options & TSQL_CURSOR_OPT_AUTO_CLOSE) &&
-	    portal->atEnd)
+		portal->atEnd)
 	{
 		execute_sp_cursorclose(cursor_handle);
 	}
@@ -1200,16 +1284,20 @@ int execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int
 
 #define BITMAPSIZE(natts) (((natts-1)/8)+1)
 
-int execute_sp_cursoroption(int cursor_handle, int code, int value)
+int
+execute_sp_cursoroption(int cursor_handle, int code, int value)
 {
-	int rc;
-	char curname[NAMEDATALEN];
+	int			rc;
+	char		curname[NAMEDATALEN];
 	CursorHashEnt *hentry;
-	Portal portal;
+	Portal		portal;
 	MemoryContext oldcontext;
 	MemoryContext savedPortalCxt;
 
-	/* Connect to SPI manager. should be handled in the same way with pltsql_inline_handler() */
+	/*
+	 * Connect to SPI manager. should be handled in the same way with
+	 * pltsql_inline_handler()
+	 */
 	savedPortalCxt = PortalContext;
 	if (PortalContext == NULL)
 		PortalContext = MessageContext;
@@ -1233,49 +1321,51 @@ int execute_sp_cursoroption(int cursor_handle, int code, int value)
 	switch (code)
 	{
 		case SP_CURSOR_OPTION_CODE_TEXTPTR_ONLY:
-		{
-			if (hentry->textptr_only_bitmap == NULL)
 			{
-				oldcontext = MemoryContextSwitchTo(CursorHashtabContext);
-				hentry->textptr_only_bitmap = (char *) palloc0(BITMAPSIZE(portal->tupDesc->natts));
-				MemoryContextSwitchTo(oldcontext);
-			}
+				if (hentry->textptr_only_bitmap == NULL)
+				{
+					oldcontext = MemoryContextSwitchTo(CursorHashtabContext);
+					hentry->textptr_only_bitmap = (char *) palloc0(BITMAPSIZE(portal->tupDesc->natts));
+					MemoryContextSwitchTo(oldcontext);
+				}
 
-			if (value == 0) /* ALL */
-			{
-				memset(hentry->textptr_only_bitmap, 0xff, BITMAPSIZE(portal->tupDesc->natts));
+				if (value == 0) /* ALL */
+				{
+					memset(hentry->textptr_only_bitmap, 0xff, BITMAPSIZE(portal->tupDesc->natts));
+				}
+				else if (value > 0 && value <= portal->tupDesc->natts)
+				{
+					int			idx = value - 1;
+
+					hentry->textptr_only_bitmap[idx / 8] |= (0x1 << (idx & 7));
+				}
+				else
+					elog(ERROR, "cursoroption value %d is out of range", value);
+				break;
 			}
-			else if (value > 0 && value <= portal->tupDesc->natts)
-			{
-				int idx = value-1;
-				hentry->textptr_only_bitmap[idx/8] |= (0x1 << (idx & 7));
-			}
-			else
-				elog(ERROR, "cursoroption value %d is out of range", value);
-			break;
-		}
 		case SP_CURSOR_OPTION_CODE_TEXTDATA:
-		{
-			if (hentry->textptr_only_bitmap == NULL)
 			{
-				oldcontext = MemoryContextSwitchTo(CursorHashtabContext);
-				hentry->textptr_only_bitmap = (char *) palloc0(BITMAPSIZE(portal->tupDesc->natts));
-				MemoryContextSwitchTo(oldcontext);
-			}
+				if (hentry->textptr_only_bitmap == NULL)
+				{
+					oldcontext = MemoryContextSwitchTo(CursorHashtabContext);
+					hentry->textptr_only_bitmap = (char *) palloc0(BITMAPSIZE(portal->tupDesc->natts));
+					MemoryContextSwitchTo(oldcontext);
+				}
 
-			if (value == 0) /* ALL */
-			{
-				memset(hentry->textptr_only_bitmap, 0x00, BITMAPSIZE(portal->tupDesc->natts));
+				if (value == 0) /* ALL */
+				{
+					memset(hentry->textptr_only_bitmap, 0x00, BITMAPSIZE(portal->tupDesc->natts));
+				}
+				else if (value > 0 && value <= portal->tupDesc->natts)
+				{
+					int			idx = value - 1;
+
+					hentry->textptr_only_bitmap[idx / 8] &= ~(0x1 << (idx & 7));
+				}
+				else
+					elog(ERROR, "cursoroption value %d is out of range", value);
+				break;
 			}
-			else if (value > 0 && value <= portal->tupDesc->natts)
-			{
-				int idx = value-1;
-				hentry->textptr_only_bitmap[idx/8] &= ~(0x1 << (idx & 7));
-			}
-			else
-				elog(ERROR, "cursoroption value %d is out of range", value);
-			break;
-		}
 		default:
 			Assert(0);
 	}
@@ -1286,21 +1376,26 @@ int execute_sp_cursoroption(int cursor_handle, int code, int value)
 	return 0;
 }
 
-int execute_sp_cursoroption2(int cursor_handle, int code, const char *value)
+int
+execute_sp_cursoroption2(int cursor_handle, int code, const char *value)
 {
 	/* TODO: handled along with updable cursor */
 	return 0;
 }
 
-int execute_sp_cursorclose(int cursor_handle)
+int
+execute_sp_cursorclose(int cursor_handle)
 {
-	int rc;
-	char curname[NAMEDATALEN];
+	int			rc;
+	char		curname[NAMEDATALEN];
 	CursorHashEnt *hentry;
-	Portal portal;
+	Portal		portal;
 	MemoryContext savedPortalCxt;
 
-	/* Connect to SPI manager. should be handled in the same way with pltsql_inline_handler() */
+	/*
+	 * Connect to SPI manager. should be handled in the same way with
+	 * pltsql_inline_handler()
+	 */
 	savedPortalCxt = PortalContext;
 	if (PortalContext == NULL)
 		PortalContext = MessageContext;
@@ -1341,21 +1436,24 @@ int execute_sp_cursorclose(int cursor_handle)
  * sp_cursorprepexec: prepare + save_plan + exectue
  */
 static int
-execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls, bool prepare, bool save_plan, bool execute)
+execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls, bool prepare, bool save_plan, bool execute)
 {
-	int rc;
-	int scrollopt;
-	int ccopt;
-	int cursor_options;
-	bool found;
-	SPIPlanPtr plan;
+	int			rc;
+	int			scrollopt;
+	int			ccopt;
+	int			cursor_options;
+	bool		found;
+	SPIPlanPtr	plan;
 	CurosrPreparedHandleHashEnt *phentry;
 	CursorHashEnt *hentry;
-	Portal portal;
+	Portal		portal;
 	MemoryContext oldcontext;
 	MemoryContext savedPortalCxt;
 
-	/* Connect to SPI manager. should be handled in the same way with pltsql_inline_handler() */
+	/*
+	 * Connect to SPI manager. should be handled in the same way with
+	 * pltsql_inline_handler()
+	 */
 	savedPortalCxt = PortalContext;
 	if (PortalContext == NULL)
 		PortalContext = MessageContext;
@@ -1373,13 +1471,14 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 		/* prepare plan and insert a cursor entry */
 		plan = SPI_prepare_cursor(stmt, nBindParams, boundParamsOidList, cursor_options);
 		if (plan == NULL)
-			return 1; /* procedure failed */
+			return 1;			/* procedure failed */
 
 		if (save_plan)
 		{
 			*stmt_handle = get_next_cursor_prepared_handle();
 			phentry = (CurosrPreparedHandleHashEnt *) hash_search(CursorPreparedHandleHashTable, stmt_handle, HASH_ENTER, &found);
-			Assert(!found); /* already checked in get_next_cursor_prepared_handle() */
+			Assert(!found);		/* already checked in
+								 * get_next_cursor_prepared_handle() */
 
 			phentry->handle = *stmt_handle;
 			phentry->plan = plan;
@@ -1388,7 +1487,7 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 			SPI_keepplan(plan);
 		}
 	}
-	else /* !prepare */
+	else						/* !prepare */
 	{
 		phentry = (CurosrPreparedHandleHashEnt *) hash_search(CursorPreparedHandleHashTable, stmt_handle, HASH_FIND, NULL);
 		if (phentry == NULL)
@@ -1404,13 +1503,13 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 
 	if (execute)
 	{
-		bool read_only;
-		char curname[NAMEDATALEN];
-		bool snapshot_pushed = false;
+		bool		read_only;
+		char		curname[NAMEDATALEN];
+		bool		snapshot_pushed = false;
 
 		if (SPI_getargcount(plan) != nparams)
 			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("the numeber of arguments in plan mismatches with inputs")));
+							errmsg("the numeber of arguments in plan mismatches with inputs")));
 
 		read_only = (cursor_options & TSQL_CURSOR_OPT_READ_ONLY);
 
@@ -1428,8 +1527,10 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 			if (read_only && !ActiveSnapshotSet())
 			{
 				/*
-				 * Other than SPI_execute, SPI_cursor_open expects there is already an active snapshot in read-only mode.
-				 * If sp_cursoropen is used in SQL batch, there maybe no active snapshot because we don't use normal PG path.
+				 * Other than SPI_execute, SPI_cursor_open expects there is
+				 * already an active snapshot in read-only mode. If
+				 * sp_cursoropen is used in SQL batch, there maybe no active
+				 * snapshot because we don't use normal PG path.
 				 */
 				PushActiveSnapshot(GetTransactionSnapshot());
 				snapshot_pushed = true;
@@ -1445,7 +1546,8 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 
 			/*
 			 * row_count can be ignored if AUTO_FETCH is not specified.
-			 * Currently we don't support AUTO_FETCH so we do not need to handle row_count
+			 * Currently we don't support AUTO_FETCH so we do not need to
+			 * handle row_count
 			 */
 			Assert(row_count == NULL || (scrollopt & SP_CURSOR_SCROLLOPT_AUTO_FETCH) == 0);
 		}
@@ -1473,17 +1575,18 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 	if ((rc = SPI_finish()) != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
-	return 0; // success
+	return 0;
+	//success
 }
 
 static int
 validate_and_get_sp_cursoropen_params(int scrollopt, int ccopt)
 {
-	int curoptions = 0;
+	int			curoptions = 0;
 
 	/*
-	 * As of now, only READ ONLY cursors are supported.  Scroll locks, optimistic
-	 * and update-in-place cursors are not yet supported.
+	 * As of now, only READ ONLY cursors are supported.  Scroll locks,
+	 * optimistic and update-in-place cursors are not yet supported.
 	 */
 	if ((ccopt & SP_CURSOR_CCOPT_READ_ONLY) == 0)
 	{
@@ -1497,9 +1600,10 @@ validate_and_get_sp_cursoropen_params(int scrollopt, int ccopt)
 
 	curoptions |= TSQL_CURSOR_OPT_READ_ONLY;
 
-	/* Also, allow-direct cursors are not supported, but we'll allow it to be
-	 * executed as normal cursor.  So, clear the flag unconditionally so that we
-	 * can send the correct scrollopt OUT parameter value.
+	/*
+	 * Also, allow-direct cursors are not supported, but we'll allow it to be
+	 * executed as normal cursor.  So, clear the flag unconditionally so that
+	 * we can send the correct scrollopt OUT parameter value.
 	 */
 	scrollopt &= ~SP_CURSOR_CCOPT_ALLOW_DIRECT;
 
@@ -1515,10 +1619,10 @@ validate_and_get_sp_cursoropen_params(int scrollopt, int ccopt)
 	/* TODO: cursor sensitivity option handling */
 
 	/*
-	 * We're always going to fetch in binary format.
-	 * Also, cursor opened via sp_cursoropen is global.
-	 * We will set OPT_HOLD to make the portal accessible even if transaction is committed.
-	 * Portal should be released via sp_cursorclose()
+	 * We're always going to fetch in binary format. Also, cursor opened via
+	 * sp_cursoropen is global. We will set OPT_HOLD to make the portal
+	 * accessible even if transaction is committed. Portal should be released
+	 * via sp_cursorclose()
 	 */
 	curoptions = CURSOR_OPT_BINARY | CURSOR_OPT_HOLD;
 
@@ -1527,7 +1631,7 @@ validate_and_get_sp_cursoropen_params(int scrollopt, int ccopt)
 		curoptions |= CURSOR_OPT_NO_SCROLL;
 	}
 	else if ((ccopt & SP_CURSOR_SCROLLOPT_CHECK_ACCEPTED_TYPES) &&
-	         (ccopt & SP_CURSOR_SCROLLOPT_FORWARD_ONLY_ACCEPTABLE))
+			 (ccopt & SP_CURSOR_SCROLLOPT_FORWARD_ONLY_ACCEPTABLE))
 	{
 		curoptions |= CURSOR_OPT_NO_SCROLL;
 	}
@@ -1577,11 +1681,13 @@ validate_and_get_sp_cursorfetch_params(int *fetchtype_in, int *rownum_in, int *n
 			case SP_CURSOR_FETCH_LAST:
 			case SP_CURSOR_FETCH_ABSOLUTE:
 				break;
-			/*
-			 * The following cursor options are not supported in postgres.  Although
-			 * postgres supports the relative cursor fetch option, but the behaviour
-			 * in TDS protocol is very different from postgres.
-			 */
+
+				/*
+				 * The following cursor options are not supported in postgres.
+				 * Although postgres supports the relative cursor fetch
+				 * option, but the behaviour in TDS protocol is very different
+				 * from postgres.
+				 */
 			case SP_CURSOR_FETCH_RELATIVE:
 			case SP_CURSOR_FETCH_REFRESH:
 			case SP_CURSOR_FETCH_INFO:
@@ -1605,13 +1711,13 @@ validate_and_get_sp_cursorfetch_params(int *fetchtype_in, int *rownum_in, int *n
 	if (rownum_in != NULL)
 	{
 		/*
-		 * Rownum is used to specify the row position for the ABSOLUTE and INFO
-		 * fetchtype.  And, it serves as the row offset for the fetchtype bit
-		 * value RELATIVE.  It is ignored for all other values.
+		 * Rownum is used to specify the row position for the ABSOLUTE and
+		 * INFO fetchtype.  And, it serves as the row offset for the fetchtype
+		 * bit value RELATIVE.  It is ignored for all other values.
 		 */
 		if (*fetchtype_in != SP_CURSOR_FETCH_ABSOLUTE &&
-		    *fetchtype_in != SP_CURSOR_FETCH_RELATIVE &&
-		    *fetchtype_in != SP_CURSOR_FETCH_INFO)
+			*fetchtype_in != SP_CURSOR_FETCH_RELATIVE &&
+			*fetchtype_in != SP_CURSOR_FETCH_INFO)
 			*rownum_out = -1;
 		else
 			*rownum_out = *rownum_in;
@@ -1631,10 +1737,10 @@ validate_and_get_sp_cursorfetch_params(int *fetchtype_in, int *rownum_in, int *n
 		if (*nrows_in == 0)
 		{
 			if (*fetchtype_in == SP_CURSOR_FETCH_NEXT ||
-			    *fetchtype_in == SP_CURSOR_FETCH_PREV ||
-			    *fetchtype_in == SP_CURSOR_FETCH_ABSOLUTE ||
-			    *fetchtype_in == SP_CURSOR_FETCH_RELATIVE ||
-			    *fetchtype_in == SP_CURSOR_FETCH_PREV_NOADJUST)
+				*fetchtype_in == SP_CURSOR_FETCH_PREV ||
+				*fetchtype_in == SP_CURSOR_FETCH_ABSOLUTE ||
+				*fetchtype_in == SP_CURSOR_FETCH_RELATIVE ||
+				*fetchtype_in == SP_CURSOR_FETCH_PREV_NOADJUST)
 				elog(ERROR, "invalid nrow value 0 for cursor type %X", *fetchtype_in);
 		}
 
@@ -1647,29 +1753,33 @@ validate_and_get_sp_cursorfetch_params(int *fetchtype_in, int *rownum_in, int *n
 	}
 }
 
-static void validate_sp_cursoroption_params(int code, int value)
+static void
+validate_sp_cursoroption_params(int code, int value)
 {
 	if ((code == SP_CURSOR_OPTION_CODE_SCROLLOPT) ||
-	    (code == SP_CURSOR_OPTION_CODE_CCOPT) ||
-	    (code == SP_CURSOR_OPTION_CODE_ROWCOUNT))
+		(code == SP_CURSOR_OPTION_CODE_CCOPT) ||
+		(code == SP_CURSOR_OPTION_CODE_ROWCOUNT))
 		elog(ERROR, "cursoroption code %X not supported", code);
 }
 
 Datum
 pltsql_cursor_show_textptr_only_column_indexes(PG_FUNCTION_ARGS)
 {
-	uint32 cursor_handle;
-	char curname[NAMEDATALEN];
+	uint32		cursor_handle;
+	char		curname[NAMEDATALEN];
 	CursorHashEnt *hentry;
-	Portal portal;
+	Portal		portal;
 	StringInfoData buffer;
-	int i, j, k;
+	int			i,
+				j,
+				k;
 
 	cursor_handle = PG_GETARG_INT32(0);
 	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
 
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
-	if (hentry == NULL) {
+	if (hentry == NULL)
+	{
 		elog(ERROR, "cursor_handle %u does not exist", cursor_handle);
 	}
 
@@ -1686,7 +1796,7 @@ pltsql_cursor_show_textptr_only_column_indexes(PG_FUNCTION_ARGS)
 
 	k = 1;
 	initStringInfo(&buffer);
-	for (i = 0; i<BITMAPSIZE(portal->tupDesc->natts); ++i)
+	for (i = 0; i < BITMAPSIZE(portal->tupDesc->natts); ++i)
 	{
 		for (j = 0; j < 8; ++j, k++)
 		{

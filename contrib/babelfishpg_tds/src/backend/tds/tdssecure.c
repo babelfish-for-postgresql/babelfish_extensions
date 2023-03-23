@@ -38,8 +38,8 @@
 #include "src/include/tds_secure.h"
 #include "src/include/tds_int.h"
 
-int	tds_ssl_min_protocol_version;
-int	tds_ssl_max_protocol_version;
+int			tds_ssl_min_protocol_version;
+int			tds_ssl_max_protocol_version;
 #ifdef USE_SSL
 /*
  * SslRead - TDS secure read function, similar to my_sock_read
@@ -74,7 +74,7 @@ SslRead(BIO *h, char *buf, int size)
 static int
 SslHandShakeRead(BIO *h, char *buf, int size)
 {
-	int res = 0;
+	int			res = 0;
 
 	if ((res = SslRead(h, buf, size)) <= 0)
 		return res;
@@ -85,32 +85,38 @@ SslHandShakeRead(BIO *h, char *buf, int size)
 
 		if (res < TDS_PACKET_HEADER_SIZE)
 		{
-					int remainingRead = TDS_PACKET_HEADER_SIZE - res;
-					char tempBuf[TDS_PACKET_HEADER_SIZE];
-					res = 0;
+			int			remainingRead = TDS_PACKET_HEADER_SIZE - res;
+			char		tempBuf[TDS_PACKET_HEADER_SIZE];
 
-					/* Read the complete remaining of the header and throw away the bytes */
-					while(res < remainingRead)
-					{
-						int tmp_res = 0;
-						if ((tmp_res = SslRead(h, tempBuf, remainingRead - res)) <= 0)
-						{
-							return tmp_res;
-						}
-						res += tmp_res;
-					}
+			res = 0;
 
-					/*
-					 * Read the actual data and return the res of the actual data read
-					 * Don't worry if complete read, Openssl library will take care
-					 */
-					if ((res = SslRead(h, buf, size)) <= 0)
-						return res;
+			/*
+			 * Read the complete remaining of the header and throw away the
+			 * bytes
+			 */
+			while (res < remainingRead)
+			{
+				int			tmp_res = 0;
+
+				if ((tmp_res = SslRead(h, tempBuf, remainingRead - res)) <= 0)
+				{
+					return tmp_res;
+				}
+				res += tmp_res;
+			}
+
+			/*
+			 * Read the actual data and return the res of the actual data read
+			 * Don't worry if complete read, Openssl library will take care
+			 */
+			if ((res = SslRead(h, buf, size)) <= 0)
+				return res;
 		}
 		else
 		{
-			int tmp_res = 0;
-			int i = TDS_PACKET_HEADER_SIZE;
+			int			tmp_res = 0;
+			int			i = TDS_PACKET_HEADER_SIZE;
+
 			for (i = TDS_PACKET_HEADER_SIZE; i < res; i++)
 			{
 				buf[i - TDS_PACKET_HEADER_SIZE] = buf[i];
@@ -119,9 +125,9 @@ SslHandShakeRead(BIO *h, char *buf, int size)
 
 			/*
 			 * Read remaining of the data. Even if the read is less than
-			 * requested size due to whatever reasons, we are good, since
-			 * we are returning the correct res value, so caller will take
-			 * care of reading the remaining data
+			 * requested size due to whatever reasons, we are good, since we
+			 * are returning the correct res value, so caller will take care
+			 * of reading the remaining data
 			 */
 			if ((tmp_res = SslRead(h, &buf[res], TDS_PACKET_HEADER_SIZE)) <= 0)
 				return tmp_res;
@@ -138,7 +144,7 @@ SslHandShakeRead(BIO *h, char *buf, int size)
 static int
 SslWrite(BIO *h, const char *buf, int size)
 {
-	int res = 0;
+	int			res = 0;
 
 	res = secure_raw_write(((Port *) BIO_get_data(h)), buf, size);
 	BIO_clear_retry_flags(h);
@@ -162,10 +168,10 @@ SslWrite(BIO *h, const char *buf, int size)
 static int
 SslHandShakeWrite(BIO *h, const char *buf, int size)
 {
-	StringInfoData	str;
-	char tmp[2];
-	uint16_t tsize;
-	int res = 0;
+	StringInfoData str;
+	char		tmp[2];
+	uint16_t	tsize;
+	int			res = 0;
 
 	/* Nothing to write */
 	if (size < 0)
@@ -175,7 +181,7 @@ SslHandShakeWrite(BIO *h, const char *buf, int size)
 	appendStringInfoChar(&str, TDS_PRELOGIN);
 	appendStringInfoChar(&str, TDS_PACKET_HEADER_STATUS_EOM);
 	tsize = pg_hton16(size + TDS_PACKET_HEADER_SIZE);
-	memcpy(&tmp,(char *) &tsize, 2);
+	memcpy(&tmp, (char *) &tsize, 2);
 
 	appendStringInfoChar(&str, tmp[0]);
 	appendStringInfoChar(&str, tmp[1]);
@@ -191,23 +197,25 @@ SslHandShakeWrite(BIO *h, const char *buf, int size)
 	/* Write the complete data */
 	while (res < size)
 	{
-		int tmp_res = 0;
+		int			tmp_res = 0;
+
 		if ((tmp_res = SslWrite(h, &buf[res], size - res)) <= 0)
 			return tmp_res;
 		res += tmp_res;
 	}
 
 	/*
-	 * Below assertion should not be failed in ideal case. If it gets failed then
-	 * it means that we wrote TDS HEADER and buf on the wire without any error above
-	 * but number of bytes written is still less than TDS_PACKET_HEADER_SIZE which is
-	 * unexpected in any case.
+	 * Below assertion should not be failed in ideal case. If it gets failed
+	 * then it means that we wrote TDS HEADER and buf on the wire without any
+	 * error above but number of bytes written is still less than
+	 * TDS_PACKET_HEADER_SIZE which is unexpected in any case.
 	 */
 	Assert(res >= TDS_PACKET_HEADER_SIZE);
 
 	/*
-	 * We are returning (res - TDS_PACKET_HEADER_SIZE) here because we are asked to write "size" number of bytes
-	 * and callee does not know anything about TDS packet header.
+	 * We are returning (res - TDS_PACKET_HEADER_SIZE) here because we are
+	 * asked to write "size" number of bytes and callee does not know anything
+	 * about TDS packet header.
 	 */
 	return (res - TDS_PACKET_HEADER_SIZE);
 }
@@ -269,8 +277,7 @@ TdsFreeSslStruct(Port *port)
 	if (port->ssl)
 	{
 		/*
-		 * Don't call the SSL_shutdown -
-		 * since it shutdowns the connection
+		 * Don't call the SSL_shutdown - since it shutdowns the connection
 		 */
 		SSL_free(port->ssl);
 		port->ssl = NULL;

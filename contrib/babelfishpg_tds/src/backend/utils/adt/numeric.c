@@ -289,7 +289,7 @@ typedef struct
 	NumericVar	current;
 	NumericVar	stop;
 	NumericVar	step;
-} generate_series_numeric_fctx;
+}			generate_series_numeric_fctx;
 
 
 /* ----------
@@ -303,7 +303,7 @@ typedef struct
 	bool		estimating;		/* true if estimating cardinality */
 
 	hyperLogLogState abbr_card; /* cardinality estimator */
-} NumericSortSupport;
+}			NumericSortSupport;
 
 
 /* ----------
@@ -345,7 +345,7 @@ typedef struct NumericSumAccum
 	bool		have_carry_space;
 	int32	   *pos_digits;
 	int32	   *neg_digits;
-} NumericSumAccum;
+}			NumericSumAccum;
 
 
 /*
@@ -400,7 +400,7 @@ static void dump_var(const char *str, NumericVar *var);
 static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
 static const char *set_var_from_str(const char *str, const char *cp,
-				 NumericVar *dest);
+									NumericVar *dest);
 static Numeric make_result(const NumericVar *var);
 static void strip_var(NumericVar *var);
 
@@ -739,8 +739,9 @@ strip_var(NumericVar *var)
 Numeric
 TdsSetVarFromStrWrapper(const char *str)
 {
-	NumericVar value;
-	Numeric res;
+	NumericVar	value;
+	Numeric		res;
+
 	init_var(&value);
 	set_var_from_str(str, str, &value);
 	res = make_result(&value);
@@ -748,20 +749,20 @@ TdsSetVarFromStrWrapper(const char *str)
 	return res;
 }
 
-/* 
+/*
  * Get Precision & Scale from Numeric Value
  */
 int32_t
 numeric_get_typmod(Numeric num)
 {
-	int32_t scale = NUMERIC_DSCALE(num);
-	int32_t weight = NUMERIC_WEIGHT(num);
-	int32_t precision;
+	int32_t		scale = NUMERIC_DSCALE(num);
+	int32_t		weight = NUMERIC_WEIGHT(num);
+	int32_t		precision;
 
 	/*
-	 * We can identify a zero by the fact that there are no digits at all.
-	 * In case of zero both precision and scale will be evaluated to zero,
-	 * so we will set (precision,scale) to T-SQL default (18,0).
+	 * We can identify a zero by the fact that there are no digits at all. In
+	 * case of zero both precision and scale will be evaluated to zero, so we
+	 * will set (precision,scale) to T-SQL default (18,0).
 	 */
 	if (NUMERIC_NDIGITS(num) == 0)
 	{
@@ -776,14 +777,15 @@ numeric_get_typmod(Numeric num)
 			10,
 			1,
 		};
-		int leading_digits = NUMERIC_DIGITS(num)[0];
+		int			leading_digits = NUMERIC_DIGITS(num)[0];
+
 		precision = weight * DEC_DIGITS + scale;
 
-		for(int i = 0; i < DEC_DIGITS; i++)
+		for (int i = 0; i < DEC_DIGITS; i++)
 		{
-			if(leading_digits >= timescales[i])
+			if (leading_digits >= timescales[i])
 			{
-				precision += (4-i);
+				precision += (4 - i);
 				break;
 			}
 		}
@@ -792,5 +794,5 @@ numeric_get_typmod(Numeric num)
 		/* weight < 0 means the integral part of the number is 0 */
 		precision = 1 + scale;
 
-	return (((precision & 0xFFFF) << 16 ) | (scale & 0xFFFF)) + VARHDRSZ;
+	return (((precision & 0xFFFF) << 16) | (scale & 0xFFFF)) + VARHDRSZ;
 }

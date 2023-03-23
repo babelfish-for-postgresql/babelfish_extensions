@@ -290,7 +290,7 @@ typedef struct
 	NumericVar	current;
 	NumericVar	stop;
 	NumericVar	step;
-} generate_series_numeric_fctx;
+}			generate_series_numeric_fctx;
 
 
 /* ----------
@@ -304,7 +304,7 @@ typedef struct
 	bool		estimating;		/* true if estimating cardinality */
 
 	hyperLogLogState abbr_card; /* cardinality estimator */
-} NumericSortSupport;
+}			NumericSortSupport;
 
 
 /* ----------
@@ -346,7 +346,7 @@ typedef struct NumericSumAccum
 	bool		have_carry_space;
 	int32	   *pos_digits;
 	int32	   *neg_digits;
-} NumericSumAccum;
+}			NumericSumAccum;
 
 
 /*
@@ -414,7 +414,7 @@ PG_FUNCTION_INFO_V1(int4int2_avg);
 static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
 static const char *set_var_from_str(const char *str, const char *cp,
-				 NumericVar *dest);
+									NumericVar *dest);
 static Numeric make_result(const NumericVar *var);
 static void strip_var(NumericVar *var);
 
@@ -753,8 +753,9 @@ strip_var(NumericVar *var)
 Numeric
 tsql_set_var_from_str_wrapper(const char *str)
 {
-	NumericVar value;
-	Numeric res;
+	NumericVar	value;
+	Numeric		res;
+
 	init_var(&value);
 	set_var_from_str(str, str, &value);
 	res = make_result(&value);
@@ -787,7 +788,7 @@ set_var_from_num(Numeric num, NumericVar *dest)
  * tsql_round_var
  *
  * This function is similar to round_var,
- * but we check if rounding up will cause an overflow 
+ * but we check if rounding up will cause an overflow
  */
 static void
 tsql_round_var(NumericVar *var, int rscale)
@@ -805,8 +806,8 @@ tsql_round_var(NumericVar *var, int rscale)
 	/* checking numeric overflow for TSQL */
 	if (rscale < 0)
 	{
-		int integral_digits = di - DEC_DIGITS;
-		int	leading_digits = digits[0];
+		int			integral_digits = di - DEC_DIGITS;
+		int			leading_digits = digits[0];
 		static const int32 timescales[DEC_DIGITS] = {
 			1000,
 			100,
@@ -814,19 +815,19 @@ tsql_round_var(NumericVar *var, int rscale)
 			1,
 		};
 
-		for(int i = 0; i < DEC_DIGITS; i++)
+		for (int i = 0; i < DEC_DIGITS; i++)
 		{
-			if(leading_digits >= timescales[i])
+			if (leading_digits >= timescales[i])
 			{
-				integral_digits += (4-i);
+				integral_digits += (4 - i);
 				break;
 			}
 		}
-		/* Overflow when rounding up*/
+		/* Overflow when rounding up */
 		if (integral_digits == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("value overflows for numeric format")));
+					 errmsg("value overflows for numeric format")));
 		/* should lose all digits */
 		else if (integral_digits < 0)
 			di = -1;
@@ -930,8 +931,9 @@ tsql_numeric_round(PG_FUNCTION_ARGS)
 	int32		scale;
 	Numeric		res;
 	NumericVar	arg;
+
 	/* when num or scale is NULL, return NULL */
-	if(PG_ARGISNULL(0) || PG_ARGISNULL(1))
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
 
 	num = PG_GETARG_NUMERIC(0);
@@ -972,7 +974,7 @@ tsql_numeric_round(PG_FUNCTION_ARGS)
 
 /*
  * tsql_numeric_round() -
- * 
+ *
  * Directly call numeric_trunc() or
  * call tsql_numeric_round() when 'function' is 0 or null
 */
@@ -980,32 +982,33 @@ Datum
 tsql_numeric_trunc(PG_FUNCTION_ARGS)
 {
 	Numeric		num;
-	int32		scale ;
+	int32		scale;
+
 	/* when num or scale is NULL, return NULL */
-	if(PG_ARGISNULL(0) || PG_ARGISNULL(1))
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
 	num = PG_GETARG_NUMERIC(0);
 	scale = PG_GETARG_INT32(1);
-	if(PG_ARGISNULL(2) || PG_GETARG_INT32(2) == 0)
+	if (PG_ARGISNULL(2) || PG_GETARG_INT32(2) == 0)
 		return DirectFunctionCall2(tsql_numeric_round,
-							NumericGetDatum(num),
-							Int32GetDatum(scale));
-	
+								   NumericGetDatum(num),
+								   Int32GetDatum(scale));
+
 
 	return DirectFunctionCall2(numeric_trunc,
-							NumericGetDatum(num),
-							Int32GetDatum(scale));
+							   NumericGetDatum(num),
+							   Int32GetDatum(scale));
 }
 
-/* 
+/*
  * Get Precision & Scale from Numeric Value
  */
 int32_t
 tsql_numeric_get_typmod(Numeric num)
 {
-	int32_t scale = NUMERIC_DSCALE(num);
-	int32_t weight = NUMERIC_WEIGHT(num);
-	int32_t precision;
+	int32_t		scale = NUMERIC_DSCALE(num);
+	int32_t		weight = NUMERIC_WEIGHT(num);
+	int32_t		precision;
 
 	if (weight >= 0)
 	{
@@ -1015,14 +1018,15 @@ tsql_numeric_get_typmod(Numeric num)
 			10,
 			1,
 		};
-		int leading_digits = NUMERIC_DIGITS(num)[0];
+		int			leading_digits = NUMERIC_DIGITS(num)[0];
+
 		precision = weight * DEC_DIGITS + scale;
 
-		for(int i = 0; i < DEC_DIGITS; i++)
+		for (int i = 0; i < DEC_DIGITS; i++)
 		{
-			if(leading_digits >= timescales[i])
+			if (leading_digits >= timescales[i])
 			{
-				precision += (4-i);
+				precision += (4 - i);
 				break;
 			}
 		}
@@ -1031,10 +1035,10 @@ tsql_numeric_get_typmod(Numeric num)
 		/* weight < 0 means the integral part of the number is 0 */
 		precision = 1 + scale;
 
-	return (((precision & 0xFFFF) << 16 ) | (scale & 0xFFFF)) + VARHDRSZ;
+	return (((precision & 0xFFFF) << 16) | (scale & 0xFFFF)) + VARHDRSZ;
 }
 
-/* 
+/*
  * Final function to be used by SUM(BIGINT) aggregate
  */
 Datum
@@ -1043,26 +1047,27 @@ bigint_sum(PG_FUNCTION_ARGS)
 	return bigint_poly_aggr_final(fcinfo, TSQL_SUM);
 }
 
-/* 
+/*
  * Final function to be used by SUM(INT),SUM(SMALLINT),SUM(TINYINT) aggregates
  */
 Datum
 int4int2_sum(PG_FUNCTION_ARGS)
 {
 
-	int64 result;
- 	if (PG_ARGISNULL(0))
+	int64		result;
+
+	if (PG_ARGISNULL(0))
 	{
 		PG_RETURN_NULL();
 	}
 	else
 	{
-		result  = PG_GETARG_INT64(0);
+		result = PG_GETARG_INT64(0);
 
 		if (unlikely(result < PG_INT32_MIN || result > PG_INT32_MAX))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					errmsg("Arithmetic overflow error converting expression to data type int.")));
+					 errmsg("Arithmetic overflow error converting expression to data type int.")));
 
 		PG_RETURN_INT32((int32) result);
 	}
@@ -1077,14 +1082,14 @@ typedef struct Int8TransTypeData
 Datum
 int4int2_avg(PG_FUNCTION_ARGS)
 {
-	ArrayType *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	Int8TransTypeData *transdata;
 
 	if (ARR_HASNULL(transarray) ||
-			ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
-			ereport(ERROR,
-					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-					errmsg("expected 2-element int8 array")));
+		ARR_SIZE(transarray) != ARR_OVERHEAD_NONULLS(1) + sizeof(Int8TransTypeData))
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("expected 2-element int8 array")));
 	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 
 	/* SQL defines AVG of no values to be NULL */
@@ -1092,9 +1097,9 @@ int4int2_avg(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (unlikely(transdata->sum < PG_INT32_MIN || transdata->sum > PG_INT32_MAX))
-{
-		ereport(ERROR,(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("Arithmetic overflow error converting expression to data type int.")));
+	{
+		ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("Arithmetic overflow error converting expression to data type int.")));
 	}
 
 	PG_RETURN_INT32((int32) transdata->sum / transdata->count);

@@ -92,47 +92,47 @@ parse_bit_with_len(const char *value, size_t len, bool *result)
 			}
 			break;
 		default:
-		{
-			int i = 0;
+			{
+				int			i = 0;
 
-			/* Skip the minus sign */
-			if (*value == '-')
-				i = 1;
-			/* Is it all 0's? */
-			for (; i < len; i++)
-			{
-				if (value[i] != '0')
-					break;
-			}
-			/* all 0's */
-			if (i == len)
-			{
-				if (result)
-					*result = false;
-				return true;
-			}
+				/* Skip the minus sign */
+				if (*value == '-')
+					i = 1;
+				/* Is it all 0's? */
+				for (; i < len; i++)
+				{
+					if (value[i] != '0')
+						break;
+				}
+				/* all 0's */
+				if (i == len)
+				{
+					if (result)
+						*result = false;
+					return true;
+				}
 
-			/* So it's not all 0's, is it all digits? */
-			/* Skip the minus sign */
-			if (*value == '-')
-				i = 1;
-			else
-				i = 0;
-			for (; i < len; i++)
-			{
-				if (!isdigit(value[i]))
-					break;
+				/* So it's not all 0's, is it all digits? */
+				/* Skip the minus sign */
+				if (*value == '-')
+					i = 1;
+				else
+					i = 0;
+				for (; i < len; i++)
+				{
+					if (!isdigit(value[i]))
+						break;
+				}
+				/* all digits and not all 0's, result should be true */
+				if (i == len)
+				{
+					if (result)
+						*result = true;
+					return true;
+				}
+				/* not all digits, meaning invalid input */
+				break;
 			}
-			/* all digits and not all 0's, result should be true */
-			if (i == len)
-			{
-				if (result)
-					*result = true;
-				return true;
-			}
-			/* not all digits, meaning invalid input */
-			break;
-		}
 	}
 
 	if (result)
@@ -237,8 +237,8 @@ bitsend(PG_FUNCTION_ARGS)
 Datum
 int2bit(PG_FUNCTION_ARGS)
 {
-	int input = PG_GETARG_INT16(0);
-	bool result = input == 0 ? false : true;
+	int			input = PG_GETARG_INT16(0);
+	bool		result = input == 0 ? false : true;
 
 	PG_RETURN_BOOL(result);
 }
@@ -246,8 +246,8 @@ int2bit(PG_FUNCTION_ARGS)
 Datum
 int4bit(PG_FUNCTION_ARGS)
 {
-	int32 input = PG_GETARG_INT32(0);
-	bool result = input == 0 ? false : true;
+	int32		input = PG_GETARG_INT32(0);
+	bool		result = input == 0 ? false : true;
 
 	PG_RETURN_BOOL(result);
 }
@@ -255,8 +255,8 @@ int4bit(PG_FUNCTION_ARGS)
 Datum
 int8bit(PG_FUNCTION_ARGS)
 {
-	int64 input = PG_GETARG_INT64(0);
-	bool result = input == 0 ? false : true;
+	int64		input = PG_GETARG_INT64(0);
+	bool		result = input == 0 ? false : true;
 
 	PG_RETURN_BOOL(result);
 }
@@ -265,8 +265,8 @@ int8bit(PG_FUNCTION_ARGS)
 Datum
 ftobit(PG_FUNCTION_ARGS)
 {
-	float4 arg = PG_GETARG_FLOAT4(0);
-	bool result = arg == 0 ? false : true;
+	float4		arg = PG_GETARG_FLOAT4(0);
+	bool		result = arg == 0 ? false : true;
 
 	PG_RETURN_BOOL(result);
 }
@@ -275,8 +275,8 @@ ftobit(PG_FUNCTION_ARGS)
 Datum
 dtobit(PG_FUNCTION_ARGS)
 {
-	float8 arg = PG_GETARG_FLOAT8(0);
-	bool result = arg == 0 ? false : true;
+	float8		arg = PG_GETARG_FLOAT8(0);
+	bool		result = arg == 0 ? false : true;
 
 	PG_RETURN_BOOL(result);
 }
@@ -284,11 +284,11 @@ dtobit(PG_FUNCTION_ARGS)
 Datum
 numeric_bit(PG_FUNCTION_ARGS)
 {
-	Numeric num = PG_GETARG_NUMERIC(0);
-	char *tmp;
-	bool result = false;
-	int len;
-	int i;
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	char	   *tmp;
+	bool		result = false;
+	int			len;
+	int			i;
 
 	if (numeric_is_nan(num))
 		ereport(ERROR,
@@ -299,7 +299,7 @@ numeric_bit(PG_FUNCTION_ARGS)
 											  NumericGetDatum(num)));
 
 	len = strlen(tmp);
-	for(i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 	{
 		/* Skip the decimal point */
 		if (tmp[i] == '.')
@@ -318,7 +318,7 @@ numeric_bit(PG_FUNCTION_ARGS)
 Datum
 bitneg(PG_FUNCTION_ARGS)
 {
-	bool arg = PG_GETARG_BOOL(0);
+	bool		arg = PG_GETARG_BOOL(0);
 
 	PG_RETURN_BOOL(!arg);
 }
@@ -390,174 +390,174 @@ bit_cmp(PG_FUNCTION_ARGS)
 Datum
 int4biteq(PG_FUNCTION_ARGS)
 {
-    int  input1 = PG_GETARG_INT32(0);
-    bool arg1 = input1 == 0 ? false : true;
-    bool arg2 = PG_GETARG_BOOL(1);
+	int			input1 = PG_GETARG_INT32(0);
+	bool		arg1 = input1 == 0 ? false : true;
+	bool		arg2 = PG_GETARG_BOOL(1);
 
-    PG_RETURN_BOOL(arg1 == arg2);
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
 Datum
 int4bitne(PG_FUNCTION_ARGS)
 {
-    int  input1 = PG_GETARG_INT32(0);
-    bool arg1 = input1 == 0 ? false : true;
-    bool arg2 = PG_GETARG_BOOL(1);
+	int			input1 = PG_GETARG_INT32(0);
+	bool		arg1 = input1 == 0 ? false : true;
+	bool		arg2 = PG_GETARG_BOOL(1);
 
-    PG_RETURN_BOOL(arg1 != arg2);
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
 Datum
 int4bitlt(PG_FUNCTION_ARGS)
 {
-    int  input1 = PG_GETARG_INT32(0);
-    bool arg1 = input1 == 0 ? false : true;
-    bool arg2 = PG_GETARG_BOOL(1);
+	int			input1 = PG_GETARG_INT32(0);
+	bool		arg1 = input1 == 0 ? false : true;
+	bool		arg2 = PG_GETARG_BOOL(1);
 
-    PG_RETURN_BOOL(arg1 < arg2);
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
 Datum
 int4bitle(PG_FUNCTION_ARGS)
 {
-    int  input1 = PG_GETARG_INT32(0);
-    bool arg1 = input1 == 0 ? false : true;
-    bool arg2 = PG_GETARG_BOOL(1);
+	int			input1 = PG_GETARG_INT32(0);
+	bool		arg1 = input1 == 0 ? false : true;
+	bool		arg2 = PG_GETARG_BOOL(1);
 
-    PG_RETURN_BOOL(arg1 <= arg2);
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
 Datum
 int4bitgt(PG_FUNCTION_ARGS)
 {
-    int  input1 = PG_GETARG_INT32(0);
-    bool arg1 = input1 == 0 ? false : true;
-    bool arg2 = PG_GETARG_BOOL(1);
+	int			input1 = PG_GETARG_INT32(0);
+	bool		arg1 = input1 == 0 ? false : true;
+	bool		arg2 = PG_GETARG_BOOL(1);
 
-    PG_RETURN_BOOL(arg1 > arg2);
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
 Datum
 int4bitge(PG_FUNCTION_ARGS)
 {
-    int  input1 = PG_GETARG_INT32(0);
-    bool arg1 = input1 == 0 ? false : true;
-    bool arg2 = PG_GETARG_BOOL(1);
+	int			input1 = PG_GETARG_INT32(0);
+	bool		arg1 = input1 == 0 ? false : true;
+	bool		arg2 = PG_GETARG_BOOL(1);
 
-    PG_RETURN_BOOL(arg1 >= arg2);
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
 /* Comparison between bit and int */
 Datum
 bitint4eq(PG_FUNCTION_ARGS)
 {
-    bool arg1 = PG_GETARG_BOOL(0);
-    int  input2 = PG_GETARG_INT32(1);
-    bool arg2 = input2 == 0 ? false : true;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	int			input2 = PG_GETARG_INT32(1);
+	bool		arg2 = input2 == 0 ? false : true;
 
-    PG_RETURN_BOOL(arg1 == arg2);
+	PG_RETURN_BOOL(arg1 == arg2);
 }
 
 Datum
 bitint4ne(PG_FUNCTION_ARGS)
 {
-    bool arg1 = PG_GETARG_BOOL(0);
-    int  input2 = PG_GETARG_INT32(1);
-    bool arg2 = input2 == 0 ? false : true;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	int			input2 = PG_GETARG_INT32(1);
+	bool		arg2 = input2 == 0 ? false : true;
 
-    PG_RETURN_BOOL(arg1 != arg2);
+	PG_RETURN_BOOL(arg1 != arg2);
 }
 
 Datum
 bitint4lt(PG_FUNCTION_ARGS)
 {
-    bool arg1 = PG_GETARG_BOOL(0);
-    int  input2 = PG_GETARG_INT32(1);
-    bool arg2 = input2 == 0 ? false : true;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	int			input2 = PG_GETARG_INT32(1);
+	bool		arg2 = input2 == 0 ? false : true;
 
-    PG_RETURN_BOOL(arg1 < arg2);
+	PG_RETURN_BOOL(arg1 < arg2);
 }
 
 Datum
 bitint4le(PG_FUNCTION_ARGS)
 {
-    bool arg1 = PG_GETARG_BOOL(0);
-    int  input2 = PG_GETARG_INT32(1);
-    bool arg2 = input2 == 0 ? false : true;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	int			input2 = PG_GETARG_INT32(1);
+	bool		arg2 = input2 == 0 ? false : true;
 
-    PG_RETURN_BOOL(arg1 <= arg2);
+	PG_RETURN_BOOL(arg1 <= arg2);
 }
 
 Datum
 bitint4gt(PG_FUNCTION_ARGS)
 {
-    bool arg1 = PG_GETARG_BOOL(0);
-    int  input2 = PG_GETARG_INT32(1);
-    bool arg2 = input2 == 0 ? false : true;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	int			input2 = PG_GETARG_INT32(1);
+	bool		arg2 = input2 == 0 ? false : true;
 
-    PG_RETURN_BOOL(arg1 > arg2);
+	PG_RETURN_BOOL(arg1 > arg2);
 }
 
 Datum
 bitint4ge(PG_FUNCTION_ARGS)
 {
-    bool arg1 = PG_GETARG_BOOL(0);
-    int  input2 = PG_GETARG_INT32(1);
-    bool arg2 = input2 == 0 ? false : true;
+	bool		arg1 = PG_GETARG_BOOL(0);
+	int			input2 = PG_GETARG_INT32(1);
+	bool		arg2 = input2 == 0 ? false : true;
 
-    PG_RETURN_BOOL(arg1 >= arg2);
+	PG_RETURN_BOOL(arg1 >= arg2);
 }
 
 Datum
 bit2int2(PG_FUNCTION_ARGS)
 {
-    bool bit = PG_GETARG_BOOL(0);
+	bool		bit = PG_GETARG_BOOL(0);
 
-    PG_RETURN_INT16(bit ? 1 : 0);
+	PG_RETURN_INT16(bit ? 1 : 0);
 }
 
 Datum
 bit2int4(PG_FUNCTION_ARGS)
 {
-    bool bit = PG_GETARG_BOOL(0);
+	bool		bit = PG_GETARG_BOOL(0);
 
-    PG_RETURN_INT32(bit ? 1 : 0);
+	PG_RETURN_INT32(bit ? 1 : 0);
 }
 
 Datum
 bit2int8(PG_FUNCTION_ARGS)
 {
-    bool bit = PG_GETARG_BOOL(0);
+	bool		bit = PG_GETARG_BOOL(0);
 
-    PG_RETURN_INT64(bit ? 1 : 0);
+	PG_RETURN_INT64(bit ? 1 : 0);
 }
 
 Datum
 bit2numeric(PG_FUNCTION_ARGS)
 {
-    bool bit = PG_GETARG_BOOL(0);
-    Numeric num = bit ? tsql_set_var_from_str_wrapper("1") : tsql_set_var_from_str_wrapper("0");
+	bool		bit = PG_GETARG_BOOL(0);
+	Numeric		num = bit ? tsql_set_var_from_str_wrapper("1") : tsql_set_var_from_str_wrapper("0");
 
-    PG_RETURN_NUMERIC(num);
+	PG_RETURN_NUMERIC(num);
 }
 
 Datum
 bit2fixeddec(PG_FUNCTION_ARGS)
 {
-    bool bit = PG_GETARG_BOOL(0);
+	bool		bit = PG_GETARG_BOOL(0);
 
-    PG_RETURN_INT64(bit ? 1*FIXEDDECIMAL_MULTIPLIER : 0);
+	PG_RETURN_INT64(bit ? 1 * FIXEDDECIMAL_MULTIPLIER : 0);
 }
 
 Datum
 varchar2bit(PG_FUNCTION_ARGS)
 {
-	bool result;
-	char	*str;
+	bool		result;
+	char	   *str;
 
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
 	const char *s_data = VARDATA_ANY(source);
-	int len = VARSIZE_ANY_EXHDR(source);
+	int			len = VARSIZE_ANY_EXHDR(source);
 
 	str = (char *) palloc(len + 1);
 	memcpy(str, s_data, len);

@@ -791,3 +791,4 @@ return_varchar_pointer(char *buf, int size)
     pfree(buf);
     PG_RETURN_VARCHAR_P(result);
 }
+

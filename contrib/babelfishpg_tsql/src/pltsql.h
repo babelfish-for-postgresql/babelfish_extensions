@@ -56,7 +56,7 @@
 		(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric(metric);		\
 })
 
-#define TSQL_TXN_NAME_LIMIT 64 /* Transaction name limit */
+#define TSQL_TXN_NAME_LIMIT 64	/* Transaction name limit */
 
 /* Max number of Args allowed for Prepared stmts. */
 #define PREPARE_STMT_MAX_ARGS 2100
@@ -77,7 +77,7 @@ typedef enum PLtsql_nsitem_type
  */
 typedef enum PLtsql_label_type
 {
-	PLTSQL_LABEL_BLOCK,		/* DECLARE/BEGIN block */
+	PLTSQL_LABEL_BLOCK,			/* DECLARE/BEGIN block */
 	PLTSQL_LABEL_LOOP,			/* looping construct */
 	PLTSQL_LABEL_OTHER			/* anything else */
 } PLtsql_label_type;
@@ -134,34 +134,34 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_BLOCK,
 	PLTSQL_STMT_ASSIGN,
 	PLTSQL_STMT_IF,
-	PLTSQL_STMT_CASE,  /*PLPGSQL*/
-	PLTSQL_STMT_LOOP,  /*PLPGSQL*/
+	PLTSQL_STMT_CASE,			/* PLPGSQL */
+	PLTSQL_STMT_LOOP,			/* PLPGSQL */
 	PLTSQL_STMT_WHILE,
-	PLTSQL_STMT_FORI,  /*PLPGSQL*/
-	PLTSQL_STMT_FORS,  /*PLPGSQL*/
-	PLTSQL_STMT_FORC,  /*PLPGSQL*/
-	PLTSQL_STMT_FOREACH_A,    /*PLPGSQL*/
+	PLTSQL_STMT_FORI,			/* PLPGSQL */
+	PLTSQL_STMT_FORS,			/* PLPGSQL */
+	PLTSQL_STMT_FORC,			/* PLPGSQL */
+	PLTSQL_STMT_FOREACH_A,		/* PLPGSQL */
 	PLTSQL_STMT_EXIT,
 	PLTSQL_STMT_RETURN,
-	PLTSQL_STMT_RETURN_NEXT,  /*PLPGSQL*/
-	PLTSQL_STMT_RETURN_QUERY,  /*PLPGSQL*/
-	PLTSQL_STMT_RAISE,  /*PLPGSQL*/
-	PLTSQL_STMT_ASSERT, /*PLPGSQL*/
+	PLTSQL_STMT_RETURN_NEXT,	/* PLPGSQL */
+	PLTSQL_STMT_RETURN_QUERY,	/* PLPGSQL */
+	PLTSQL_STMT_RAISE,			/* PLPGSQL */
+	PLTSQL_STMT_ASSERT,			/* PLPGSQL */
 	PLTSQL_STMT_EXECSQL,
-	PLTSQL_STMT_DYNEXECUTE,  /*PLPGSQL*/
-	PLTSQL_STMT_DYNFORS,  /*PLPGSQL*/
-	PLTSQL_STMT_GETDIAG,  /*PLPGSQL*/
+	PLTSQL_STMT_DYNEXECUTE,		/* PLPGSQL */
+	PLTSQL_STMT_DYNFORS,		/* PLPGSQL */
+	PLTSQL_STMT_GETDIAG,		/* PLPGSQL */
 	PLTSQL_STMT_OPEN,
 	PLTSQL_STMT_FETCH,
 	PLTSQL_STMT_CLOSE,
-	PLTSQL_STMT_PERFORM,  /*PLPGSQL*/
-	PLTSQL_STMT_CALL,  /*PLPGSQL*/
+	PLTSQL_STMT_PERFORM,		/* PLPGSQL */
+	PLTSQL_STMT_CALL,			/* PLPGSQL */
 	PLTSQL_STMT_COMMIT,
 	PLTSQL_STMT_ROLLBACK,
-	PLTSQL_STMT_SET,  /*PLPGSQL*/
+	PLTSQL_STMT_SET,			/* PLPGSQL */
 	/* TSQL-only statement types follow */
 	PLTSQL_STMT_GOTO,
-    PLTSQL_STMT_PRINT,
+	PLTSQL_STMT_PRINT,
 	PLTSQL_STMT_INIT,
 	PLTSQL_STMT_QUERY_SET,
 	PLTSQL_STMT_TRY_CATCH,
@@ -173,17 +173,17 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RETURN_TABLE,
 	PLTSQL_STMT_DEALLOCATE,
 	PLTSQL_STMT_DECL_CURSOR,
-    PLTSQL_STMT_LABEL,
+	PLTSQL_STMT_LABEL,
 	PLTSQL_STMT_RAISERROR,
 	PLTSQL_STMT_THROW,
 	PLTSQL_STMT_USEDB,
 	PLTSQL_STMT_SET_EXPLAIN_MODE,
-    /* TSQL-only executable node */
-    PLTSQL_STMT_SAVE_CTX,
-    PLTSQL_STMT_RESTORE_CTX_FULL,
-    PLTSQL_STMT_RESTORE_CTX_PARTIAL,
-    PLTSQL_STMT_INSERT_BULK,
-    PLTSQL_STMT_GRANTDB
+	/* TSQL-only executable node */
+	PLTSQL_STMT_SAVE_CTX,
+	PLTSQL_STMT_RESTORE_CTX_FULL,
+	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
+	PLTSQL_STMT_INSERT_BULK,
+	PLTSQL_STMT_GRANTDB
 } PLtsql_stmt_type;
 
 /*
@@ -251,7 +251,7 @@ typedef enum PLtsql_schema_mapping
 	PLTSQL_DB_SCHEMA,
 	PLTSQL_DB,
 	PLTSQL_SCHEMA
-} PLtsql_schema_mapping;
+}			PLtsql_schema_mapping;
 
 #define TSQL_TRIGGER_STARTED 0x1
 #define TSQL_TRAN_STARTED 0x2
@@ -267,18 +267,20 @@ typedef struct PLtsql_type
 {
 	char	   *typname;		/* (simple) name of the type */
 	Oid			typoid;			/* OID of the data type */
-	PLtsql_type_type ttype;	/* PLTSQL_TTYPE_ code */
+	PLtsql_type_type ttype;		/* PLTSQL_TTYPE_ code */
 	int16		typlen;			/* stuff copied from its pg_type entry */
 	bool		typbyval;
 	char		typtype;
 	Oid			collation;		/* from pg_type, but can be overridden */
 	bool		typisarray;		/* is "true" array, or domain over one */
 	int32		atttypmod;		/* typmod (taken from someplace else) */
+
 	/*
-	 * This field is only used when a table variable does not have a pre-defined
-	 * type, e.g. DECLARE @tableVar TABLE (a int, b int)
+	 * This field is only used when a table variable does not have a
+	 * pre-defined type, e.g. DECLARE @tableVar TABLE (a int, b int)
 	 */
 	char	   *coldef;
+
 	/*
 	 * Remaining fields are used only for named composite types (not RECORD)
 	 * and table types
@@ -309,7 +311,7 @@ typedef struct PLtsql_expr
 	int			expr_simple_generation; /* plancache generation we checked */
 	Oid			expr_simple_type;	/* result type Oid, if simple */
 	int32		expr_simple_typmod; /* result typmod, if simple */
-      bool            expr_simple_mutable;    /* true if simple expr is mutable */
+	bool		expr_simple_mutable;	/* true if simple expr is mutable */
 
 	/*
 	 * if expr is simple AND prepared in current transaction,
@@ -322,7 +324,8 @@ typedef struct PLtsql_expr
 	LocalTransactionId expr_simple_lxid;
 
 	/* here for itvf? queries with all idents replaced with NULLs */
-	char 	   *itvf_query; // make sure always set to NULL
+	char	   *itvf_query;
+			  //make sure always set to NULL
 } PLtsql_expr;
 
 /*
@@ -488,14 +491,14 @@ typedef struct PLtsql_tbl
 	/* end of PLtsql_variable fields */
 
 	PLtsql_type *datatype;
-	Oid			tbltypeid;	/* declared type of variable */
-	char		*tblname;	/* name of the underlying table */
+	Oid			tbltypeid;		/* declared type of variable */
+	char	   *tblname;		/* name of the underlying table */
+
 	/*
 	 * If a table variable is declared inside a function, then we need to drop
-	 * its underlying table at the end of execution.
-	 * If a table variable is passed in as a table-valued parameter, then we
-	 * don't need to drop its underlying table - it's the caller's
-	 * responsibility.
+	 * its underlying table at the end of execution. If a table variable is
+	 * passed in as a table-valued parameter, then we don't need to drop its
+	 * underlying table - it's the caller's responsibility.
 	 */
 	bool		need_drop;
 } PLtsql_tbl;
@@ -706,9 +709,9 @@ typedef struct PLtsql_stmt_if
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	PLtsql_expr *cond;			/* boolean expression for THEN */
-	PLtsql_stmt	*then_body;		/* List of statements */
+	PLtsql_stmt *then_body;		/* List of statements */
 	List	   *elsif_list;		/* List of PLtsql_if_elsif structs */
-	PLtsql_stmt	*else_body;		/* List of statements */
+	PLtsql_stmt *else_body;		/* List of statements */
 } PLtsql_stmt_if;
 
 /*
@@ -915,16 +918,16 @@ typedef struct PLtsql_stmt_exit
 typedef struct PLtsql_stmt_insert_bulk
 {
 	PLtsql_stmt_type cmd_type;
-	int         lineno;
-	char  *table_name;
-	char  *schema_name;
-	char  *db_name;
-	List *column_refs;
+	int			lineno;
+	char	   *table_name;
+	char	   *schema_name;
+	char	   *db_name;
+	List	   *column_refs;
 
 	/* Insert Bulk Options. */
-	char *kilobytes_per_batch;
-	char *rows_per_batch;
-	bool keep_nulls;
+	char	   *kilobytes_per_batch;
+	char	   *rows_per_batch;
+	bool		keep_nulls;
 } PLtsql_stmt_insert_bulk;
 
 /*
@@ -956,7 +959,7 @@ typedef struct PLtsql_stmt_return_query
 {
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
-	PLtsql_expr *query;		/* if static query */
+	PLtsql_expr *query;			/* if static query */
 	PLtsql_expr *dynquery;		/* if dynamic query (RETURN QUERY EXECUTE) */
 	List	   *params;			/* USING arguments for dynamic query */
 } PLtsql_stmt_return_query;
@@ -989,10 +992,10 @@ typedef struct PLtsql_raise_option
  */
 typedef struct PLtsql_stmt_grantdb
 {
-	PLtsql_stmt_type    cmd_type;
-	int 				lineno;
-	bool				is_grant;
-	List	   			*grantees;		/* list of users */
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	bool		is_grant;
+	List	   *grantees;		/* list of users */
 } PLtsql_stmt_grantdb;
 
 /*
@@ -1008,9 +1011,9 @@ typedef struct PLtsql_stmt_assert
 
 typedef struct PLtsql_txn_data
 {
-	TransactionStmtKind	stmt_kind; /* Commit or rollback */
-	char *txn_name; /* Transaction name */
-	PLtsql_expr	*txn_name_expr; /* Transaction name variable */
+	TransactionStmtKind stmt_kind;	/* Commit or rollback */
+	char	   *txn_name;		/* Transaction name */
+	PLtsql_expr *txn_name_expr; /* Transaction name variable */
 } PLtsql_txn_data;
 
 /*
@@ -1025,23 +1028,25 @@ typedef struct PLtsql_stmt_execsql
 								 * mod_stmt is set when we plan the query */
 	bool		into;			/* INTO supplied? */
 	bool		strict;			/* INTO STRICT flag */
-	PLtsql_txn_data	*txn_data;	/* Transaction data */
+	PLtsql_txn_data *txn_data;	/* Transaction data */
 	PLtsql_variable *target;	/* INTO target (record or row) */
-	bool 		mod_stmt_tablevar; /* is the stmt INSERT/UPDATE/DELETE on a
-									* table variable?  Note: mod_stmt_tablevar
-									* is set when we plan the query*/
-	bool		need_to_push_result; /* push result to client */
-	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e. SELECT @a=1) */
-	bool 		insert_exec; 	/* INSERT-EXEC stmt? */
+	bool		mod_stmt_tablevar;	/* is the stmt INSERT/UPDATE/DELETE on a
+									 * table variable?  Note:
+									 * mod_stmt_tablevar is set when we plan
+									 * the query */
+	bool		need_to_push_result;	/* push result to client */
+	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e.
+											 * SELECT @a=1) */
+	bool		insert_exec;	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_dml;			/* DML statement? */
 	bool		is_ddl;			/* DDL statement? */
 	bool		func_call;		/* Function call? */
-	char		*schema_name;	/* Schema specified */
-	char		*db_name;		/* db_name: only for cross db query */
-	bool            is_schema_specified;    /*is schema name specified? */
-	bool		is_create_view;		/* CREATE VIEW? */
-	char		*original_query;    /* Only for batch level statement. */
+	char	   *schema_name;	/* Schema specified */
+	char	   *db_name;		/* db_name: only for cross db query */
+	bool		is_schema_specified;	/* is schema name specified? */
+	bool		is_create_view; /* CREATE VIEW? */
+	char	   *original_query; /* Only for batch level statement. */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1052,11 +1057,11 @@ typedef struct PLtsql_stmt_execsql
 typedef struct PLtsql_stmt_set_explain_mode
 {
 	PLtsql_stmt_type cmd_type;
-	int lineno;
-	char *query;
-	bool is_explain_only;
-	bool is_explain_analyze;
-	bool val;
+	int			lineno;
+	char	   *query;
+	bool		is_explain_only;
+	bool		is_explain_analyze;
+	bool		val;
 } PLtsql_stmt_set_explain_mode;
 
 /*
@@ -1066,7 +1071,7 @@ typedef struct PLtsql_stmt_dynexecute
 {
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
-	PLtsql_expr *query;		/* string expression */
+	PLtsql_expr *query;			/* string expression */
 	bool		into;			/* INTO supplied? */
 	bool		strict;			/* INTO STRICT flag */
 	PLtsql_variable *target;	/* INTO target (record or row) */
@@ -1078,7 +1083,10 @@ typedef struct PLtsql_stmt_dynexecute
  */
 typedef struct PLtsql_func_hashkey
 {
-	/* lower 32bit for stored procedure's OID, upper 32bit for prepared batch's handle */
+	/*
+	 * lower 32bit for stored procedure's OID, upper 32bit for prepared
+	 * batch's handle
+	 */
 	uint64_t	funcOid;
 
 	bool		isTrigger;		/* true if called as a DML trigger */
@@ -1127,14 +1135,14 @@ typedef enum PLtsql_trigtype
 
 typedef struct InlineCodeBlockArgs
 {
-	int				numargs;
-	Oid				*argtypes;
-	int32			*argtypmods;
-	char			**argnames;
-	char			*argmodes;
-	int				*varnos;
-	unsigned long 	options;
-	int 		handle;
+	int			numargs;
+	Oid		   *argtypes;
+	int32	   *argtypmods;
+	char	  **argnames;
+	char	   *argmodes;
+	int		   *varnos;
+	unsigned long options;
+	int			handle;
 } InlineCodeBlockArgs;
 
 #define OPTION_ENABLED(args, option) \
@@ -1171,13 +1179,13 @@ typedef struct PLtsql_function
 	int			new_varno;
 	int			old_varno;
 
-	TupleDesc	fn_tupdesc;  /* tuple descriptor for return info */
+	TupleDesc	fn_tupdesc;		/* tuple descriptor for return info */
 
 	/* table variables */
 	List	   *table_varnos;
 
-	bool 		is_itvf;
-	bool 		is_mstvf;
+	bool		is_itvf;
+	bool		is_mstvf;
 
 	PLtsql_resolve_option resolve_option;
 
@@ -1199,9 +1207,9 @@ typedef struct PLtsql_function
 	struct PLtsql_execstate *cur_estate;
 	unsigned long use_count;
 
-    /* execution codes for new executor */
-    struct ExecCodes   *exec_codes;
-    bool                exec_codes_valid;
+	/* execution codes for new executor */
+	struct ExecCodes *exec_codes;
+	bool		exec_codes_valid;
 
 	/* arguments for inline code block */
 	InlineCodeBlockArgs *inline_args;
@@ -1221,7 +1229,7 @@ typedef struct PLtsql_function
  *  BEGIN CATCH
  *    STMT_BLOCK2
  *  END CATCH
- *  
+ *
  *  1. Preparation (before entering STMT_BLOCK1)
  *     1.1 Save context before entering STMT_BLOCK1, including
  *         a) stack for error signal handling (setjmp longjmp)
@@ -1237,7 +1245,7 @@ typedef struct PLtsql_function
  *     3.3 move error context to active_err_ctx_stack before entering STMT_BLOCK2
  *         a) this is needed because STMT_BLOCK2 could also be a try-catch block
  *            and it may also raise error
- *     3.4 retrieve active error context and restore the remaining 
+ *     3.4 retrieve active error context and restore the remaining
  *         save_cur_error : error data existed before entering try catch
  *         stmt_mcontext : memory containing current error
  *
@@ -1253,7 +1261,7 @@ typedef struct PLtsql_function
  *           END CATCH
  *         END TRY
  *         BEGIN CATCH STMT_BLOCK_A END CATCH        -- handling error3
- *         Before entering STMT_BLOCK_A, one unknown active error context will be found, 
+ *         Before entering STMT_BLOCK_A, one unknown active error context will be found,
  *         which was pushed into stack before entering STMT_BLOCK_Z.
  *         It contains error1 and stmt_mcontext for STMT_BLOCK_Y for saving its error (error2)
  *         memory will be reclaimed through top level memory context deallocation
@@ -1262,8 +1270,8 @@ typedef struct PLtsql_function
 
 typedef struct PLtsql_estate_err
 {
-	ErrorData	*error;
-	char		*procedure;
+	ErrorData  *error;
+	char	   *procedure;
 	int			number;
 	int			severity;
 	int			state;
@@ -1271,33 +1279,33 @@ typedef struct PLtsql_estate_err
 
 typedef struct
 {
-    /* for error handling */
-    sigjmp_buf              *save_exception_stack;
-    ErrorContextCallback    *save_context_stack;
-    sigjmp_buf              local_sigjmp_buf;
+	/* for error handling */
+	sigjmp_buf *save_exception_stack;
+	ErrorContextCallback *save_context_stack;
+	sigjmp_buf	local_sigjmp_buf;
 
-    /* location of error handling statements */
-    int                     target_pc;
+	/* location of error handling statements */
+	int			target_pc;
 
-    /* various contexts */
-    MemoryContext           oldcontext;
-    ResourceOwner           oldowner;
-    ExprContext             *old_eval_econtext;
+	/* various contexts */
+	MemoryContext oldcontext;
+	ResourceOwner oldowner;
+	ExprContext *old_eval_econtext;
 
-	PLtsql_estate_err		*save_cur_error;
-	
-    MemoryContext           stmt_mcontext;
+	PLtsql_estate_err *save_cur_error;
 
-    bool                    partial_restored;  /* set true before executing catch block */
+	MemoryContext stmt_mcontext;
+
+	bool		partial_restored;	/* set true before executing catch block */
 } PLtsql_errctx;
 
 typedef struct ExplainInfo
 {
 	/* Estimated (or Actual) Query Execution Plan for a single statement */
-	char *data;
+	char	   *data;
 
 	/* indent for the next ExplainInfo */
-	size_t next_indent;
+	size_t		next_indent;
 
 	/* used to restore session to original schema if "use db" is invoked */
 	const char *initial_database;
@@ -1320,7 +1328,8 @@ typedef struct PLtsql_execstate
 
 	bool		readonly_func;
 	bool		atomic;
-	PLtsql_impl_txn_type	impl_txn_type;		/* status of implicit transaction associated */
+	PLtsql_impl_txn_type impl_txn_type; /* status of implicit transaction
+										 * associated */
 
 	char	   *exitlabel;		/* the "target" label of the current EXIT or
 								 * CONTINUE stmt, if any */
@@ -1380,15 +1389,16 @@ typedef struct PLtsql_execstate
 
 	/*
 	 * @@NESTLEVEL is needed to determine the name of underlying tables that
-	 * need to be created for table variables. So we cache it here so that when
-	 * there are multiple table variable declarations, we only need to calculate
-	 * it once.
+	 * need to be created for table variables. So we cache it here so that
+	 * when there are multiple table variable declarations, we only need to
+	 * calculate it once.
 	 */
 	int			nestlevel;
-    /* iterative executor status */
-    size_t         pc;                     /* programe counter to current stmt in exec_code_buf */
-    DynaVec      *err_ctx_stack;         /* stack for nested try catch block */
-    size_t         cur_err_ctx_idx;
+	/* iterative executor status */
+	size_t		pc;				/* programe counter to current stmt in
+								 * exec_code_buf */
+	DynaVec    *err_ctx_stack;	/* stack for nested try catch block */
+	size_t		cur_err_ctx_idx;
 
 	int			tsql_trigger_flags;
 
@@ -1396,15 +1406,15 @@ typedef struct PLtsql_execstate
 	 * A same procedure can be invoked by either normal EXECUTE or INSERT ...
 	 * EXECUTE, and can behave differently.
 	 */
-	bool 		insert_exec;
+	bool		insert_exec;
 
-	List 		*explain_infos;
-	char		*schema_name;
-	const char		*db_name;
+	List	   *explain_infos;
+	char	   *schema_name;
+	const char *db_name;
 	instr_time	planning_start;
 	instr_time	planning_end;
-	instr_time execution_start;
-	instr_time execution_end;
+	instr_time	execution_start;
+	instr_time	execution_end;
 } PLtsql_execstate;
 
 /*
@@ -1457,26 +1467,27 @@ typedef struct PLtsql_plugin
  * "PLtsql_instr_plugin" that points to an instance of type PLtsql_instr_plugin.
  *
  * We use this rendezvous variable to safely share information with
- * the engine even before the extension is loaded.  If you call 
+ * the engine even before the extension is loaded.  If you call
  * find_rendezvous_variable("PLtsql_config") and find  that *result
  * is NULL, then the extension has not been loaded.  If you find
- * that *result is non-NULL, it points to an instance of the 
+ * that *result is non-NULL, it points to an instance of the
  * PLtsql_config struct shown here.
  */
 typedef struct PLtsql_instr_plugin
 {
 	/* Function pointers set up by the plugin */
-	void (*pltsql_instr_increment_metric) (int metric);
-	bool (*pltsql_instr_increment_func_metric) (const char *funcName);
+	void		(*pltsql_instr_increment_metric) (int metric);
+	bool		(*pltsql_instr_increment_func_metric) (const char *funcName);
 } PLtsql_instr_plugin;
 
-typedef struct error_map_details_t{
-	char sql_state[5];
+typedef struct error_map_details_t
+{
+	char		sql_state[5];
 	const char *error_message;
-	int tsql_error_code;
-	int tsql_error_severity;
-	char *error_msg_keywords;
-}error_map_details_t;
+	int			tsql_error_code;
+	int			tsql_error_severity;
+	char	   *error_msg_keywords;
+} error_map_details_t;
 
 /*
  * A PLtsql_protocol_plugin structure represents a protocol plugin that can be
@@ -1514,138 +1525,138 @@ typedef struct error_map_details_t{
 typedef struct PLtsql_protocol_plugin
 {
 	/* True if Protocol being used by client is TDS. */
-	bool is_tds_client;
+	bool		is_tds_client;
 
 	/*
-	 * List of GUCs used/set by protocol plugin.  We can always use this pointer
-	 * to read the GUC value directly.  We've declared volatile so that the
-	 * compiler always reads the value from the memory location instead of
-	 * the register.
-	 * We should be careful while setting data using this pointer - as the value
-	 * will not be verified and changes can't be rolled back automatically in
-	 * case of an error.
+	 * List of GUCs used/set by protocol plugin.  We can always use this
+	 * pointer to read the GUC value directly.  We've declared volatile so
+	 * that the compiler always reads the value from the memory location
+	 * instead of the register. We should be careful while setting data using
+	 * this pointer - as the value will not be verified and changes can't be
+	 * rolled back automatically in case of an error.
 	 */
 	volatile bool *pltsql_nocount_addr;
 
-	/* 
-	 * stmt_need_logging checks whether stmt needs to be logged at babelfishpg_tsql parser
-	 * and logs the statement at the end of statement execution on TDS
+	/*
+	 * stmt_need_logging checks whether stmt needs to be logged at
+	 * babelfishpg_tsql parser and logs the statement at the end of statement
+	 * execution on TDS
 	 */
-	bool            stmt_needs_logging;
+	bool		stmt_needs_logging;
 	/* Function pointers set up by the plugin */
 	void		(*send_info) (int number, int state, int info_class,
-									   char *message, int line_no);
+							  char *message, int line_no);
 	void		(*send_done) (int tag, int status,
-									   int curcmd, uint64_t nprocessed);
+							  int curcmd, uint64_t nprocessed);
 	void		(*send_env_change) (int envid, const char *new_val, const char *old_val);
-	bool 		(*get_tsql_error) (ErrorData *edata,
-						int *tsql_error_code,
-						int *tsql_error_severity,
-						int *tsql_error_state,
-						char *error_context);
+	bool		(*get_tsql_error) (ErrorData *edata,
+								   int *tsql_error_code,
+								   int *tsql_error_severity,
+								   int *tsql_error_state,
+								   char *error_context);
 	void		(*stmt_beg) (PLtsql_execstate *estate, PLtsql_stmt *stmt);
 	void		(*stmt_end) (PLtsql_execstate *estate, PLtsql_stmt *stmt);
 	void		(*stmt_exception) (PLtsql_execstate *estate, PLtsql_stmt *stmt,
 								   bool terminate_batch);
-	char*		(*get_login_domainname) (void);
+	char	   *(*get_login_domainname) (void);
 	void		(*set_guc_stat_var) (const char *guc, bool boolVal, const char *strVal, int intVal);
 	void		(*set_at_at_stat_var) (const char *at_at_var, int intVal, uint64 bigintVal);
 	void		(*set_db_stat_var) (int16 db_id);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
-	char*		(*get_host_name) (void);
+	char	   *(*get_host_name) (void);
 
 	/* Function pointers set by PL/tsql itself */
 	Datum		(*sql_batch_callback) (PG_FUNCTION_ARGS);
 	Datum		(*sp_executesql_callback) (PG_FUNCTION_ARGS);
-	Datum 		(*sp_prepare_callback) (PG_FUNCTION_ARGS);
-	Datum 		(*sp_execute_callback) (PG_FUNCTION_ARGS);
-	Datum 		(*sp_prepexec_callback) (PG_FUNCTION_ARGS);
-	Datum 		(*sp_unprepare_callback) (PG_FUNCTION_ARGS);
+	Datum		(*sp_prepare_callback) (PG_FUNCTION_ARGS);
+	Datum		(*sp_execute_callback) (PG_FUNCTION_ARGS);
+	Datum		(*sp_prepexec_callback) (PG_FUNCTION_ARGS);
+	Datum		(*sp_unprepare_callback) (PG_FUNCTION_ARGS);
 
-	void 		(*reset_session_properties) (void);
+	void		(*reset_session_properties) (void);
 
 	void		(*sqlvariant_set_metadata) (bytea *result, int pgBaseType, int scale, int precision, int maxLen);
 	void		(*sqlvariant_get_metadata) (bytea *result, int pgBaseType, int *scale,
-	 	                                                 			int *precision, int *maxLen);
- 	int		(*sqlvariant_inline_pg_base_type)(bytea *vlena);
- 	void		(*sqlvariant_get_pg_base_type) (uint8 variantBaseType, int *pgBaseType, int tempLen,
- 										int *dataLen, int *variantHeaderLen);
- 	void		(*sqlvariant_get_variant_base_type) (int pgBaseType, int *variantBaseType,
-							bool *isBaseNum, bool *isBaseChar,
-	 	                         		bool *isBaseDec, bool *isBaseBin, bool *isBaseDate, int *variantHeaderLen);
+											int *precision, int *maxLen);
+	int			(*sqlvariant_inline_pg_base_type) (bytea *vlena);
+	void		(*sqlvariant_get_pg_base_type) (uint8 variantBaseType, int *pgBaseType, int tempLen,
+												int *dataLen, int *variantHeaderLen);
+	void		(*sqlvariant_get_variant_base_type) (int pgBaseType, int *variantBaseType,
+													 bool *isBaseNum, bool *isBaseChar,
+													 bool *isBaseDec, bool *isBaseBin, bool *isBaseDate, int *variantHeaderLen);
 
-	void (*pltsql_declare_var_callback) (Oid type, int32 typmod, char *name,
-										char mode, Datum value, bool isnull,
-										int index, InlineCodeBlockArgs **args,
-										FunctionCallInfo *fcinfo);
-	void (*pltsql_read_out_param_callback) (Datum comp_value, Datum **values,
-										   bool **nulls);
-	int (*sp_cursoropen_callback)(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt,
-								  int *row_count, int nparams, Datum *values, const char *nulls);
-	int (*sp_cursorprepare_callback)(int *stmt_handle, const char *stmt, int options, int *scrollopt, int *ccopt,
-									 int nBindParams, Oid *boundParamsOidList);
-	int (*sp_cursorexecute_callback)(int stmt_handle, int *cursor_handle, int *scrollopt, int *ccopt,
-									 int *rowcount, int nparams, Datum *values, const char *nulls);
-	int (*sp_cursorprepexec_callback)(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *scrollopt, int *ccopt,
-									  int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
-	int (*sp_cursorunprepare_callback)(int stmt_handle);
-	int (*sp_cursoroption_callback)(int cursor_handle, int code, int value);
-	int (*sp_cursor_callback)(int cursor_handle, int opttype, int rownum, const char *tablename, List* values);
-	int (*sp_cursorfetch_callback)(int cursor_handle, int *fetchtype, int *rownum, int *nrows);
-	int (*sp_cursorclose_callback)(int cursor_handle);
+	void		(*pltsql_declare_var_callback) (Oid type, int32 typmod, char *name,
+												char mode, Datum value, bool isnull,
+												int index, InlineCodeBlockArgs **args,
+												FunctionCallInfo *fcinfo);
+	void		(*pltsql_read_out_param_callback) (Datum comp_value, Datum **values,
+												   bool **nulls);
+	int			(*sp_cursoropen_callback) (int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt,
+										   int *row_count, int nparams, Datum *values, const char *nulls);
+	int			(*sp_cursorprepare_callback) (int *stmt_handle, const char *stmt, int options, int *scrollopt, int *ccopt,
+											  int nBindParams, Oid *boundParamsOidList);
+	int			(*sp_cursorexecute_callback) (int stmt_handle, int *cursor_handle, int *scrollopt, int *ccopt,
+											  int *rowcount, int nparams, Datum *values, const char *nulls);
+	int			(*sp_cursorprepexec_callback) (int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *scrollopt, int *ccopt,
+											   int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
+	int			(*sp_cursorunprepare_callback) (int stmt_handle);
+	int			(*sp_cursoroption_callback) (int cursor_handle, int code, int value);
+	int			(*sp_cursor_callback) (int cursor_handle, int opttype, int rownum, const char *tablename, List *values);
+	int			(*sp_cursorfetch_callback) (int cursor_handle, int *fetchtype, int *rownum, int *nrows);
+	int			(*sp_cursorclose_callback) (int cursor_handle);
 
-	int			*pltsql_read_proc_return_status;
+	int		   *pltsql_read_proc_return_status;
 
-	void        (*send_column_metadata) (TupleDesc typeinfo, List *targetlist, int16 *formats);
-	void (*pltsql_read_procedure_info) (StringInfo inout_str,
-										bool *is_proc,
-										Oid *atttypid,
-										Oid *atttypmod,
-										int *attcollation);
+	void		(*send_column_metadata) (TupleDesc typeinfo, List *targetlist, int16 *formats);
+	void		(*pltsql_read_procedure_info) (StringInfo inout_str,
+											   bool *is_proc,
+											   Oid *atttypid,
+											   Oid *atttypmod,
+											   int *attcollation);
 
-	int *pltsql_current_lineno;
+	int		   *pltsql_current_lineno;
 
-	int (*pltsql_read_numeric_typmod) (Oid funcid, int nargs, Oid declared_oid);
+	int			(*pltsql_read_numeric_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
-	bool (*pltsql_get_errdata) (int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
+	bool		(*pltsql_get_errdata) (int *tsql_error_code, int *tsql_error_severity, int *tsql_error_state);
 
-	int16 (*pltsql_get_database_oid) (const char *dbname);
+	int16		(*pltsql_get_database_oid) (const char *dbname);
 
-	bool (*pltsql_is_login) (Oid role_oid);
+	bool		(*pltsql_is_login) (Oid role_oid);
 
-	char* (*pltsql_get_login_default_db) (char *login_name);
+	char	   *(*pltsql_get_login_default_db) (char *login_name);
 
-	void* (*get_mapped_error_list) (void);
+	void	   *(*get_mapped_error_list) (void);
 
-	int* (*get_mapped_tsql_error_code_list) (void);
+	int		   *(*get_mapped_tsql_error_code_list) (void);
 
-	uint64 (*bulk_load_callback) (int ncol, int nrow,
-				Datum *Values, bool *Nulls);
+	uint64		(*bulk_load_callback) (int ncol, int nrow,
+									   Datum *Values, bool *Nulls);
 
-	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
+	int			(*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
-	const char* (*pltsql_get_logical_schema_name) (const char *physical_schema_name, bool missingOk);
+	const char *(*pltsql_get_logical_schema_name) (const char *physical_schema_name, bool missingOk);
 
-	bool *pltsql_is_fmtonly_stmt;
+	bool	   *pltsql_is_fmtonly_stmt;
 
-	char* (*pltsql_get_user_for_database) (const char *db_name);
+	char	   *(*pltsql_get_user_for_database) (const char *db_name);
 
-	char* (*TsqlEncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
+	char	   *(*TsqlEncodingConversion) (const char *s, int len, int encoding, int *encodedByteLen);
 
-	int (*TdsGetEncodingFromLcid)(int32_t lcid);
+	int			(*TdsGetEncodingFromLcid) (int32_t lcid);
 
-	int (*get_insert_bulk_rows_per_batch) ();
-	
-	int (*get_insert_bulk_kilobytes_per_batch) ();
+	int			(*get_insert_bulk_rows_per_batch) ();
 
-	void* (*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
+	int			(*get_insert_bulk_kilobytes_per_batch) ();
 
-	void* (*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
+	void	   *(*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
 
-	char* (*get_cur_db_name) ();
+	void	   *(*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
 
-	char* (*get_physical_schema_name) (char *db_name, const char *schema_name);
+	char	   *(*get_cur_db_name) ();
+
+	char	   *(*get_physical_schema_name) (char *db_name, const char *schema_name);
 
 	/* Session level GUCs */
 	bool		quoted_identifier;
@@ -1656,11 +1667,11 @@ typedef struct PLtsql_protocol_plugin
 	bool		ansi_padding;
 	bool		ansi_nulls;
 	bool		concat_null_yields_null;
-	int		textsize;
-	int		datefirst;
-	int		lock_timeout;
-	const char*	language;
-	
+	int			textsize;
+	int			datefirst;
+	int			lock_timeout;
+	const char *language;
+
 } PLtsql_protocol_plugin;
 
 /*
@@ -1697,21 +1708,21 @@ typedef enum
 	IDENTIFIER_LOOKUP_EXPR		/* In SQL expression --- special case */
 } IdentifierLookup;
 
-typedef struct 
+typedef struct
 {
-	AttrNumber    x_attnum;
-	int trigger_depth;
-	int total_columns;
-	char        *column_name;
+	AttrNumber	x_attnum;
+	int			trigger_depth;
+	int			total_columns;
+	char	   *column_name;
 } UpdatedColumn;
 
 extern IdentifierLookup pltsql_IdentifierLookup;
 
 typedef struct tsql_identity_insert_fields
 {
-        bool valid;
-        Oid rel_oid;
-        Oid schema_oid;
+	bool		valid;
+	Oid			rel_oid;
+	Oid			schema_oid;
 } tsql_identity_insert_fields;
 
 extern tsql_identity_insert_fields tsql_identity_insert;
@@ -1724,7 +1735,7 @@ extern plansource_revalidate_hook_type prev_plansource_revalidate_hook;
 extern pltsql_nextval_hook_type prev_pltsql_nextval_hook;
 extern pltsql_resetcache_hook_type prev_pltsql_resetcache_hook;
 
-extern int  pltsql_variable_conflict;
+extern int	pltsql_variable_conflict;
 
 /* extra compile-time checks */
 #define PLTSQL_XCHECK_NONE			0
@@ -1752,29 +1763,29 @@ extern common_utility_plugin *common_utility_plugin_ptr;
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
 
-extern Oid procid_var;
+extern Oid	procid_var;
 extern uint64 rowcount_var;
-extern List* columns_updated_list;
-extern int pltsql_trigger_depth;
-extern int latest_error_code;
-extern int latest_pg_error_code;
+extern List *columns_updated_list;
+extern int	pltsql_trigger_depth;
+extern int	latest_error_code;
+extern int	latest_pg_error_code;
 extern bool last_error_mapping_failed;
 
-extern int fetch_status_var;
-extern int pltsql_proc_return_code;
+extern int	fetch_status_var;
+extern int	pltsql_proc_return_code;
 
-extern char* pltsql_version;
+extern char *pltsql_version;
 
 typedef struct PLtsqlErrorData
 {
-	bool				xact_abort_on;
-	bool				rethrow_error;
-	bool				trigger_error;
-	PLtsql_execstate	*error_estate;
-	char				*error_procedure;
-	int					error_number;
-	int					error_severity;
-	int					error_state;
+	bool		xact_abort_on;
+	bool		rethrow_error;
+	bool		trigger_error;
+	PLtsql_execstate *error_estate;
+	char	   *error_procedure;
+	int			error_number;
+	int			error_severity;
+	int			error_state;
 } PLtsqlErrorData;
 
 typedef struct PLExecStateCallStack
@@ -1794,12 +1805,12 @@ extern bool pltsql_disable_internal_savepoint;
 extern bool pltsql_disable_txn_in_triggers;
 extern bool pltsql_recursive_triggers;
 
-extern int text_size;
-extern int pltsql_rowcount;
-extern int pltsql_lock_timeout;
+extern int	text_size;
+extern int	pltsql_rowcount;
+extern int	pltsql_lock_timeout;
 extern Portal pltsql_snapshot_portal;
-extern int pltsql_non_tsql_proc_entry_count;
-extern int pltsql_sys_func_entry_count;
+extern int	pltsql_non_tsql_proc_entry_count;
+extern int	pltsql_sys_func_entry_count;
 extern bool current_query_is_create_tbl_check_constraint;
 
 extern char *bulk_load_table_name;
@@ -1808,8 +1819,8 @@ extern char *bulk_load_table_name;
 #define DEFAULT_INSERT_BULK_ROWS_PER_BATCH 1000
 #define DEFAULT_INSERT_BULK_PACKET_SIZE 8
 
-extern int insert_bulk_rows_per_batch;
-extern int insert_bulk_kilobytes_per_batch;
+extern int	insert_bulk_rows_per_batch;
+extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
 
 /**********************************************************************
@@ -1820,37 +1831,37 @@ extern bool insert_bulk_keep_nulls;
  * Functions in pl_comp.c
  */
 extern PLtsql_function *pltsql_compile(FunctionCallInfo fcinfo,
-				bool forValidator);
+									   bool forValidator);
 extern PLtsql_function *pltsql_compile_inline(char *proc_source,
-					      InlineCodeBlockArgs *args);
+											  InlineCodeBlockArgs *args);
 extern void pltsql_parser_setup(struct ParseState *pstate,
-					 PLtsql_expr *expr);
+								PLtsql_expr *expr);
 extern bool pltsql_parse_word(char *word1, const char *yytxt,
-				   PLwdatum *wdatum, PLword *word);
+							  PLwdatum *wdatum, PLword *word);
 extern bool pltsql_parse_dblword(char *word1, char *word2,
-					  PLwdatum *wdatum, PLcword *cword);
+								 PLwdatum *wdatum, PLcword *cword);
 extern bool pltsql_parse_tripword(char *word1, char *word2, char *word3,
-					   PLwdatum *wdatum, PLcword *cword);
+								  PLwdatum *wdatum, PLcword *cword);
 extern PLtsql_type *pltsql_parse_wordtype(char *ident);
 extern PLtsql_type *pltsql_parse_cwordtype(List *idents);
 extern PLtsql_type *pltsql_parse_wordrowtype(char *ident);
 extern PLtsql_type *pltsql_parse_cwordrowtype(List *idents);
 extern PLtsql_type *pltsql_build_datatype(Oid typeOid, int32 typmod,
-					   Oid collation, TypeName *origtypname);
+										  Oid collation, TypeName *origtypname);
 extern PLtsql_type *pltsql_build_table_datatype_coldef(const char *coldef);
 extern PLtsql_variable *pltsql_build_variable(const char *refname, int lineno,
-					   PLtsql_type *dtype,
-					   bool add2namespace);
+											  PLtsql_type *dtype,
+											  bool add2namespace);
 extern PLtsql_rec *pltsql_build_record(const char *refname, int lineno,
-					 PLtsql_type *dtype, Oid rectypeid,
-					 bool add2namespace);
+									   PLtsql_type *dtype, Oid rectypeid,
+									   bool add2namespace);
 extern PLtsql_tbl *pltsql_build_table(const char *refname, int lineno,
-					 PLtsql_type *dtype, Oid tbltypeid,
-					 bool add2namespace);
+									  PLtsql_type *dtype, Oid tbltypeid,
+									  bool add2namespace);
 extern PLtsql_recfield *pltsql_build_recfield(PLtsql_rec *rec,
-					   const char *fldname);
-extern int pltsql_recognize_err_condition(const char *condname,
-								bool allow_sqlstate);
+											  const char *fldname);
+extern int	pltsql_recognize_err_condition(const char *condname,
+										   bool allow_sqlstate);
 extern PLtsql_condition *pltsql_parse_err_condition(char *condname);
 extern void pltsql_adddatum(PLtsql_datum *newdatum);
 extern int	pltsql_add_initdatums(int **varnos);
@@ -1866,29 +1877,30 @@ extern Datum sp_unprepare(PG_FUNCTION_ARGS);
 extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
 extern uint64 execute_bulk_load_insert(int ncol, int nrow,
-				Datum *Values, bool *Nulls);
+									   Datum *Values, bool *Nulls);
+
 /*
  * Functions in pl_exec.c
  */
 extern Datum pltsql_exec_function(PLtsql_function *func,
-					  FunctionCallInfo fcinfo,
-					  EState *simple_eval_estate,
-					  bool atomic);
+								  FunctionCallInfo fcinfo,
+								  EState *simple_eval_estate,
+								  bool atomic);
 extern HeapTuple pltsql_exec_trigger(PLtsql_function *func,
-					 TriggerData *trigdata);
+									 TriggerData *trigdata);
 extern void pltsql_exec_event_trigger(PLtsql_function *func,
-						   EventTriggerData *trigdata);
+									  EventTriggerData *trigdata);
 extern void pltsql_xact_cb(XactEvent event, void *arg);
 extern void pltsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
-				   SubTransactionId parentSubid, void *arg);
-extern Oid pltsql_exec_get_datum_type(PLtsql_execstate *estate,
-							PLtsql_datum *datum);
+							  SubTransactionId parentSubid, void *arg);
+extern Oid	pltsql_exec_get_datum_type(PLtsql_execstate *estate,
+									   PLtsql_datum *datum);
 extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
-								 PLtsql_datum *datum,
-								 Oid *typeId, int32 *typMod, Oid *collation);
+											PLtsql_datum *datum,
+											Oid *typeId, int32 *typMod, Oid *collation);
 
-extern int get_insert_bulk_rows_per_batch(void);
-extern int get_insert_bulk_kilobytes_per_batch(void);
+extern int	get_insert_bulk_rows_per_batch(void);
+extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
 
 /*
@@ -1896,15 +1908,15 @@ extern char *get_original_query_string(void);
  */
 extern void pltsql_ns_init(void);
 extern void pltsql_ns_push(const char *label,
-				PLtsql_label_type label_type);
+						   PLtsql_label_type label_type);
 extern void pltsql_ns_pop(void);
 extern PLtsql_nsitem *pltsql_ns_top(void);
 extern void pltsql_ns_additem(PLtsql_nsitem_type itemtype, int itemno, const char *name);
 extern PLtsql_nsitem *pltsql_ns_lookup(PLtsql_nsitem *ns_cur, bool localmode,
-				  const char *name1, const char *name2,
-				  const char *name3, int *names_used);
+									   const char *name1, const char *name2,
+									   const char *name3, int *names_used);
 extern PLtsql_nsitem *pltsql_ns_lookup_label(PLtsql_nsitem *ns_cur,
-						const char *name);
+											 const char *name);
 extern PLtsql_nsitem *pltsql_ns_find_nearest_loop(PLtsql_nsitem *ns_cur);
 
 /*
@@ -1926,11 +1938,11 @@ extern void pltsql_push_back_token(int token);
 extern bool pltsql_token_is_unreserved_keyword(int token);
 extern void pltsql_append_source_text(StringInfo buf,
 									  int startlocation, int endlocation);
-extern int  pltsql_get_yyleng(void);
+extern int	pltsql_get_yyleng(void);
 extern char *pltsql_get_source(int startlocation, int len);
 extern int	pltsql_peek(void);
 extern void pltsql_peek2(int *tok1_p, int *tok2_p, int *tok1_loc,
-			  int *tok2_loc);
+						 int *tok2_loc);
 extern bool pltsql_peek_word_matches(const char *pattern);
 extern int	pltsql_scanner_errposition(int location);
 extern void pltsql_yyerror(const char *message) pg_attribute_noreturn();
@@ -1945,20 +1957,20 @@ extern void pltsql_scanner_finish(void);
 extern int	pltsql_yyparse(void);
 
 /* functions in pltsql_utils.c */
-extern int TsqlUTF8LengthInUTF16(const void *vin, int len);
+extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
 extern void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen);
 extern void pltsql_declare_variable(Oid type, int32 typmod, char *name, char mode, Datum value,
-				    bool isnull, int index, InlineCodeBlockArgs **args,
-				    FunctionCallInfo *fcinfo);
+									bool isnull, int index, InlineCodeBlockArgs **args,
+									FunctionCallInfo *fcinfo);
 extern void pltsql_read_composite_out_param(Datum comp_value, Datum **values, bool **nulls);
 extern void pltsql_read_procedure_info(StringInfo inout_str,
-								bool *is_proc,
-								Oid *atttypid,
-								Oid *atttypmod,
-								int *attcollation);
+									   bool *is_proc,
+									   Oid *atttypid,
+									   Oid *atttypmod,
+									   int *attcollation);
 
 extern void PLTsqlStartTransaction(char *txnName);
 extern void PLTsqlCommitTransaction(QueryCompletion *qc, bool chain);
@@ -1982,7 +1994,7 @@ extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
 extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
-extern void pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_cast);
+extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
 extern char *bpchar_to_cstring(const BpChar *bpchar);
@@ -1990,25 +2002,26 @@ extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern void init_and_check_common_utility(void);
-extern Oid tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
-extern Oid tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id);
-extern Oid tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
-extern char** split_object_name(char *name);
+extern Oid	tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id);
+extern Oid	tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id);
+extern Oid	tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id);
+extern char **split_object_name(char *name);
 extern bool is_schema_from_db(Oid schema_oid, Oid db_id);
 extern void remove_trailing_spaces(char *name);
-extern Oid tsql_get_proc_nsp_oid(Oid object_id);
-extern Oid tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id);
-extern Oid tsql_get_trigger_rel_oid(Oid object_id);
+extern Oid	tsql_get_proc_nsp_oid(Oid object_id);
+extern Oid	tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id);
+extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
 
 typedef struct
 {
-	bool success;
-	bool parseTreeCreated; /* used to determine if on error should retry with a different parse mode */
-	size_t errpos;
-	int errcod;
+	bool		success;
+	bool		parseTreeCreated;	/* used to determine if on error should
+									 * retry with a different parse mode */
+	size_t		errpos;
+	int			errcod;
 	const char *errfmt;
-	size_t n_errargs;
-	const void *errargs[5]; /* support up to 5 args */
+	size_t		n_errargs;
+	const void *errargs[5];		/* support up to 5 args */
 } ANTLR_result;
 
 extern ANTLR_result antlr_parser_cpp(const char *sourceText);
@@ -2022,37 +2035,38 @@ extern bool pltsql_trace_exec_codes;
 extern bool pltsql_trace_exec_counts;
 extern bool pltsql_trace_exec_time;
 
-/* 
+/*
  * Functions in cursor.c
  */
-int execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List* values);
-int execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, Datum *values, const char *nulls); /* old interface to be compatabile with TDS */
-int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
-int execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int nBindParams, Oid *boundParamsOidList);
-int execute_sp_cursorexecute(int stmt_handle, int *cursor_handle, int *scrollopt, int *ccopt, int *rowcount, int nparams, Datum *values, const char *nulls);
-int execute_sp_cursorprepexec(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
-int execute_sp_cursorunprepare(int stmt_handle);
-int execute_sp_cursorfetch(int cursor_handle, int *fetchtype, int *rownum, int *nrows);
-int execute_sp_cursoroption(int cursor_handle, int code, int value);
-int execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
-int execute_sp_cursorclose(int cursor_handle);
+int			execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List *values);
+int			execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, Datum *values, const char *nulls); /* old interface to be
+																																										 * compatabile with TDS */
+int			execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
+int			execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int nBindParams, Oid *boundParamsOidList);
+int			execute_sp_cursorexecute(int stmt_handle, int *cursor_handle, int *scrollopt, int *ccopt, int *rowcount, int nparams, Datum *values, const char *nulls);
+int			execute_sp_cursorprepexec(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
+int			execute_sp_cursorunprepare(int stmt_handle);
+int			execute_sp_cursorfetch(int cursor_handle, int *fetchtype, int *rownum, int *nrows);
+int			execute_sp_cursoroption(int cursor_handle, int code, int value);
+int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
+int			execute_sp_cursorclose(int cursor_handle);
 
 /*
  * Functions in string.c
  */
-void prepare_format_string(StringInfo buf, char *msg_string, int nargs, 
-						   Datum *args, Oid *argtypes, bool *argisnull);
+void		prepare_format_string(StringInfo buf, char *msg_string, int nargs,
+								  Datum *args, Oid *argtypes, bool *argisnull);
 
 /*
  * Functions in pltsql_function_probin_handler.c
  */
-void probin_read_args_typmods(HeapTuple procTup, int nargs, Oid *argtypes, int **typmods);
-int	probin_read_ret_typmod(Oid funcid, int nargs, Oid declared_oid);
-bool pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p);
-void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char** probin_str_p);
-void pltsql_function_probin_reader(ParseState *pstate,
-						List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
-extern void probin_json_reader(text* probin, int** typmod_arr_p, int typmod_arr_len);
+void		probin_read_args_typmods(HeapTuple procTup, int nargs, Oid *argtypes, int **typmods);
+int			probin_read_ret_typmod(Oid funcid, int nargs, Oid declared_oid);
+bool		pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p);
+void		pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **probin_str_p);
+void		pltsql_function_probin_reader(ParseState *pstate,
+										  List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
+extern void probin_json_reader(text *probin, int **typmod_arr_p, int typmod_arr_len);
 
 /*
  * This variable is set to true, if setval should behave in T-SQL way, i.e.,

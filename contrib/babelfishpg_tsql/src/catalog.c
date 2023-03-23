@@ -2518,3 +2518,4 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	table_endscan(tblscan);
 	table_close(bbf_func_ext_rel, RowExclusiveLock);
 }
+

@@ -82,10 +82,10 @@ typedef struct TdsStatus
 	 * use the macros defined below for manipulating st_changecount, rather
 	 * than touching it directly.
 	 */
-	int		st_changecount;
+	int			st_changecount;
 
 	/* The entry is valid iff st_procpid > 0, unused if st_procpid == 0 */
-	int		st_procpid;
+	int			st_procpid;
 
 	/* Add more TDS info */
 	uint32_t	client_version;
@@ -98,24 +98,24 @@ typedef struct TdsStatus
 	bool		ansi_padding;
 	bool		ansi_nulls;
 	bool		concat_null_yields_null;
-	int		textsize;
-	int		datefirst;
-	int		lock_timeout;
-	int		transaction_isolation;
+	int			textsize;
+	int			datefirst;
+	int			lock_timeout;
+	int			transaction_isolation;
 
-	char		*st_library_name;	/* Library */
-	char		*st_host_name;		/* Hostname */
-	char		*st_language;		/* Language */
+	char	   *st_library_name;	/* Library */
+	char	   *st_host_name;	/* Hostname */
+	char	   *st_language;	/* Language */
 
 	uint32_t	client_pid;
 
 	uint64		rowcount;
-	int		error;
-	int		trancount;
+	int			error;
+	int			trancount;
 
 	uint32_t	protocol_version;
 	uint32_t	packet_size;
-	int		encrypt_option;
+	int			encrypt_option;
 
 	int16		database_id;
 } TdsStatus;
@@ -125,7 +125,7 @@ typedef struct LocalTdsStatus
 	/*
 	 * Local version of the tds status entry.
 	 */
-	TdsStatus tdsStatus;
+	TdsStatus	tdsStatus;
 
 	/*
 	 * The xid of the current transaction if available, InvalidTransactionId
@@ -144,18 +144,18 @@ static TdsStatus *TdsStatusArray = NULL;
 static TdsStatus *MyTdsStatusEntry;
 static LocalTdsStatus *localTdsStatusTable = NULL;
 
-uint32_t MyTdsClientVersion = 0;
-uint32_t MyTdsClientPid = -1;
-char *MyTdsLibraryName = NULL;
-char *MyTdsHostName = NULL;
-uint32_t MyTdsProtocolVersion = TDS_DEFAULT_VERSION;
-uint32_t MyTdsPacketSize = 0;
-int MyTdsEncryptOption = TDS_ENCRYPT_OFF;
+uint32_t	MyTdsClientVersion = 0;
+uint32_t	MyTdsClientPid = -1;
+char	   *MyTdsLibraryName = NULL;
+char	   *MyTdsHostName = NULL;
+uint32_t	MyTdsProtocolVersion = TDS_DEFAULT_VERSION;
+uint32_t	MyTdsPacketSize = 0;
+int			MyTdsEncryptOption = TDS_ENCRYPT_OFF;
 static char *TdsLibraryNameBuffer = NULL;
 static char *TdsHostNameBuffer = NULL;
 static char *TdsLanguageBuffer = NULL;
 
-static int localNumBackends = 0;
+static int	localNumBackends = 0;
 static bool isLocalStatusTableValid = false;
 
 TdsInstrPlugin **tds_instr_plugin_ptr = NULL;
@@ -167,7 +167,7 @@ extern void _PG_fini(void);
 static struct PLtsql_protocol_plugin pltsql_plugin_handler;
 PLtsql_protocol_plugin *pltsql_plugin_handler_ptr = &pltsql_plugin_handler;
 
-static Oid tvp_lookup(const char *relname, Oid relnamespace);
+static Oid	tvp_lookup(const char *relname, Oid relnamespace);
 static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 
 /* Shmem hook */
@@ -180,7 +180,7 @@ static void tds_status_shmem_startup(void);
 static void tds_stats_shmem_shutdown(int code, Datum arg);
 
 static void tdsstat_read_current_status(void);
-static LocalTdsStatus * tdsstat_fetch_stat_local_tdsentry (int beid);
+static LocalTdsStatus *tdsstat_fetch_stat_local_tdsentry(int beid);
 
 /*
  * Module initialization function
@@ -197,7 +197,7 @@ _PG_init(void)
 	/* Must be loaded with shared_preload_libaries */
 	if (!process_shared_preload_libraries_in_progress)
 		ereport(ERROR, (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg("babelfishpg_tds must be loaded via shared_preload_libraries")));
+						errmsg("babelfishpg_tds must be loaded via shared_preload_libraries")));
 
 	TdsDefineGucs();
 
@@ -269,7 +269,7 @@ TdsLanguageBufferSize()
 static Size
 tds_memsize()
 {
-	Size	size;
+	Size		size;
 
 	size = TdsStatusArraySize();
 	size = add_size(size, TdsLibraryNameBufferSize());
@@ -285,7 +285,7 @@ tds_memsize()
 static void
 tds_status_shmem_startup(void)
 {
-	bool	found;
+	bool		found;
 	char	   *buffer;
 
 	/*
@@ -294,8 +294,8 @@ tds_status_shmem_startup(void)
 	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
 
 	TdsStatusArray = (TdsStatus *) ShmemInitStruct("TDS Status Array",
-								TdsStatusArraySize(),
-								&found);
+												   TdsStatusArraySize(),
+												   &found);
 	if (!found)
 	{
 		/*
@@ -312,7 +312,7 @@ tds_status_shmem_startup(void)
 
 	if (!found)
 	{
-		int i;
+		int			i;
 
 		MemSet(TdsLibraryNameBuffer, 0, TdsLibraryNameBufferSize());
 
@@ -331,7 +331,7 @@ tds_status_shmem_startup(void)
 
 	if (!found)
 	{
-		int i;
+		int			i;
 
 		MemSet(TdsHostNameBuffer, 0, TdsHostNameBufferSize());
 
@@ -350,7 +350,7 @@ tds_status_shmem_startup(void)
 
 	if (!found)
 	{
-		int i;
+		int			i;
 
 		MemSet(TdsLanguageBuffer, 0, TdsLanguageBufferSize());
 
@@ -365,7 +365,8 @@ tds_status_shmem_startup(void)
 
 	LWLockRelease(AddinShmemInitLock);
 
-	/* If we're in the postmaster (or a standalone backend...), set up a shmem
+	/*
+	 * If we're in the postmaster (or a standalone backend...), set up a shmem
 	 * exit hook to persist the dirty outlines
 	 */
 	if (!IsUnderPostmaster)
@@ -417,16 +418,16 @@ void
 tdsstat_bestart(void)
 {
 	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
-	TdsStatus ltdsentry;
+	TdsStatus	ltdsentry;
 
-	int len;
-	char *library_name = NULL;
-	char *host_name = NULL;
+	int			len;
+	char	   *library_name = NULL;
+	char	   *host_name = NULL;
 	const char *language = NULL;
 
 	/*
-	 * To minimize the time spent modifying the TdsStatus entry, and
-	 * avoid risk of errors inside the critical section, we first copy the
+	 * To minimize the time spent modifying the TdsStatus entry, and avoid
+	 * risk of errors inside the critical section, we first copy the
 	 * shared-memory struct to a local variable, then modify the data in the
 	 * local variable, then copy the local variable back to shared memory.
 	 * Only the last step has to be inside the critical section.
@@ -519,7 +520,7 @@ tdsstat_bestart(void)
 }
 
 static LocalTdsStatus *
-tdsstat_fetch_stat_local_tdsentry (int beid)
+tdsstat_fetch_stat_local_tdsentry(int beid)
 {
 	LocalTdsStatus *localentry;
 
@@ -549,7 +550,7 @@ tdsstat_read_current_status(void)
 	volatile TdsStatus *tdsentry;
 	LocalTdsStatus *localtable;
 	LocalTdsStatus *localentry;
-	int i;
+	int			i;
 
 	if (isLocalStatusTableValid)
 		return;					/* already done */
@@ -593,7 +594,7 @@ tdsstat_read_current_status(void)
 
 				if (tdsentry->st_library_name)
 					localentry->tdsStatus.st_library_name = tdsentry->st_library_name;
-				
+
 				if (tdsentry->st_host_name)
 					localentry->tdsStatus.st_host_name = tdsentry->st_host_name;
 
@@ -688,8 +689,8 @@ bool
 tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend)
 {
 	LocalTdsStatus *local_tdsentry;
-	TdsStatus *tdsentry;
-	int tsql_isolation_level;
+	TdsStatus  *tdsentry;
+	int			tsql_isolation_level;
 
 	MemSet(values, 0, len);
 	MemSet(nulls, false, len);
@@ -712,13 +713,13 @@ tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_bac
 		values[1] = Int32GetDatum(tdsentry->client_version);
 
 	/* Library name must be valid */
-	if(tdsentry->st_library_name)
+	if (tdsentry->st_library_name)
 		values[2] = CStringGetTextDatum(tdsentry->st_library_name);
 	else
 		nulls[2] = true;
 
 	/* Language must be valid */
-	if(tdsentry->st_language)
+	if (tdsentry->st_language)
 		values[3] = CStringGetTextDatum(tdsentry->st_language);
 	else
 		nulls[3] = true;
@@ -737,25 +738,20 @@ tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_bac
 
 	/*
 	 * In postgres, transaction isolation level mapping is as follows:
-	 * XACT_READ_UNCOMMITTED	0
-	 * XACT_READ_COMMITTED		1
-	 * XACT_REPEATABLE_READ		2
-	 * XACT_SERIALIZABLE		3
+	 * XACT_READ_UNCOMMITTED	0 XACT_READ_COMMITTED		1
+	 * XACT_REPEATABLE_READ		2 XACT_SERIALIZABLE		3
 	 *
 	 * In T-SQL, transaction isolation level mapping is as follows:
-	 * XACT_READ_UNCOMMITTED	1
-	 * XACT_READ_COMMITTED		2
-	 * XACT_REPEATABLE_READ		3
-	 * XACT_SERIALIZABLE		4
-	 * XACT_SNAPSHOT		5
+	 * XACT_READ_UNCOMMITTED	1 XACT_READ_COMMITTED		2
+	 * XACT_REPEATABLE_READ		3 XACT_SERIALIZABLE		4 XACT_SNAPSHOT		5
 	 *
-	 * So adding 1 while storing value in tuples with one exception. 
-	 * We are treating T-SQL SNAPSHOT isolation as REPEATABLE_READ in
-	 * Babelfish so handling this case separately. We don't support
-	 * T-SQL REPEATABLE_READ isolation level in Babelfish yet so this
-	 * logic holds for now. Once we support REPEATABLE_READ isolation
-	 * level in Babelfish, we need to figure out if XACT_REPEATABLE_READ
-	 * PG isolation level represents T-SQL SNAPSHOT or REPEATABLE_READ.
+	 * So adding 1 while storing value in tuples with one exception. We are
+	 * treating T-SQL SNAPSHOT isolation as REPEATABLE_READ in Babelfish so
+	 * handling this case separately. We don't support T-SQL REPEATABLE_READ
+	 * isolation level in Babelfish yet so this logic holds for now. Once we
+	 * support REPEATABLE_READ isolation level in Babelfish, we need to figure
+	 * out if XACT_REPEATABLE_READ PG isolation level represents T-SQL
+	 * SNAPSHOT or REPEATABLE_READ.
 	 */
 	if (tdsentry->transaction_isolation == XACT_REPEATABLE_READ)
 		tsql_isolation_level = XACT_SNAPSHOT;
@@ -774,7 +770,10 @@ tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_bac
 	values[18] = Int32GetDatum(tdsentry->error);
 	values[19] = Int32GetDatum(tdsentry->trancount);
 
-	/* ValidateLoginRequest() already checks if protocol version is valid or not */
+	/*
+	 * ValidateLoginRequest() already checks if protocol version is valid or
+	 * not
+	 */
 	values[20] = Int32GetDatum(tdsentry->protocol_version);
 
 	/* ValidateLoginRequest() already checks if packet size is valid or not */
@@ -784,7 +783,7 @@ tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_bac
 	values[23] = Int16GetDatum(tdsentry->database_id);
 
 	/* Host name must be valid */
-	if(tdsentry->st_host_name)
+	if (tdsentry->st_host_name)
 		values[24] = CStringGetTextDatum(tdsentry->st_host_name);
 	else
 		nulls[24] = true;
@@ -796,7 +795,7 @@ void
 TdsSetGucStatVariable(const char *guc, bool boolVal, const char *strVal, int intVal)
 {
 	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
-	int len;
+	int			len;
 
 	PGSTAT_BEGIN_WRITE_ACTIVITY(vtdsentry);
 
@@ -855,6 +854,7 @@ void
 TdsSetDatabaseStatVariable(int16 db_id)
 {
 	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
+
 	PGSTAT_BEGIN_WRITE_ACTIVITY(vtdsentry);
 
 	vtdsentry->database_id = db_id;
@@ -869,8 +869,8 @@ TdsSetDatabaseStatVariable(int16 db_id)
 static Oid
 tvp_lookup(const char *relname, Oid relnamespace)
 {
-	Oid 		relid;
-	ListCell 	*lc;
+	Oid			relid;
+	ListCell   *lc;
 
 	if (prev_relname_lookup_hook)
 		relid = (*prev_relname_lookup_hook) (relname, relnamespace);
@@ -878,10 +878,10 @@ tvp_lookup(const char *relname, Oid relnamespace)
 		relid = get_relname_relid(relname, relnamespace);
 
 	/*
-	 * If we find a TVP whose name matches relname, return its
-	 * underlying table's relid. Otherwise, just return relname's relid.
+	 * If we find a TVP whose name matches relname, return its underlying
+	 * table's relid. Otherwise, just return relname's relid.
 	 */
-	foreach (lc, tvp_lookup_list)
+	foreach(lc, tvp_lookup_list)
 	{
 		TvpLookupItem *item = (TvpLookupItem *) lfirst(lc);
 
@@ -903,7 +903,7 @@ invalidate_stat_table(void)
 	isLocalStatusTableValid = false;
 }
 
-char*
+char *
 get_tds_host_name(void)
 {
 	return MyTdsHostName;

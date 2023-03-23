@@ -71,7 +71,7 @@ IsValidTxnName(char *txnName, int len)
 {
 	if (len > 0 && IsValidIdentFirstChar(txnName[0]))
 	{
-		for(int i=1; i < len; ++i)
+		for (int i = 1; i < len; ++i)
 			if (!IsValidIdentChar(txnName[i]))
 				return false;
 		return true;
@@ -83,7 +83,8 @@ IsValidTxnName(char *txnName, int len)
 static int
 GetTxnName(const StringInfo message, TDSRequestTxnMgmt request, int offset)
 {
-	uint8_t len;
+	uint8_t		len;
+
 	memcpy(&len, message->data + offset, sizeof(len));
 	offset += sizeof(len);
 
@@ -97,8 +98,8 @@ GetTxnName(const StringInfo message, TDSRequestTxnMgmt request, int offset)
 
 		initStringInfo(&(request->txnName));
 		TdsUTF16toUTF8StringInfo(&(request->txnName),
-									message->data + offset,
-									len);
+								 message->data + offset,
+								 len);
 		if (!IsValidTxnName(request->txnName.data, request->txnName.len))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
@@ -133,7 +134,7 @@ GetNewTxnRequest(const StringInfo message,
 static const char *
 GetIsolationLevelStr(uint8_t isolationLevel)
 {
-	switch(isolationLevel)
+	switch (isolationLevel)
 	{
 		case TDS_ISOLATION_LEVEL_READ_UNCOMMITTED:
 			return "READ UNCOMMITTED ";
@@ -154,6 +155,7 @@ static void
 BuildTxnMgmtRequestQuery(TDSRequest requestParam, StringInfo cmdStr)
 {
 	TDSRequestTxnMgmt request = (TDSRequestTxnMgmt) requestParam;
+
 	switch (request->txnReqType)
 	{
 		case TDS_TM_BEGIN_XACT:
@@ -166,7 +168,7 @@ BuildTxnMgmtRequestQuery(TDSRequest requestParam, StringInfo cmdStr)
 					appendStringInfoString(cmdStr, "; SET TRANSACTION ISOLATION LEVEL ");
 					appendStringInfoString(cmdStr,
 										   GetIsolationLevelStr(
-												request->isolationLevel));
+																request->isolationLevel));
 				}
 			}
 			break;
@@ -184,14 +186,14 @@ BuildTxnMgmtRequestQuery(TDSRequest requestParam, StringInfo cmdStr)
 					appendStringInfoString(cmdStr, "; BEGIN TRANSACTION ");
 					if (request->nextTxn->txnName.len != 0)
 						appendStringInfoString(cmdStr,
-										   request->nextTxn->txnName.data);
+											   request->nextTxn->txnName.data);
 					if (request->nextTxn->isolationLevel !=
 						TDS_ISOLATION_LEVEL_NONE)
 					{
 						appendStringInfoString(cmdStr, "; SET TRANSACTION ISOLATION LEVEL ");
 						appendStringInfoString(cmdStr,
-							GetIsolationLevelStr(
-								request->nextTxn->isolationLevel));
+											   GetIsolationLevelStr(
+																	request->nextTxn->isolationLevel));
 					}
 				}
 			}
@@ -210,18 +212,20 @@ BuildTxnMgmtRequestQuery(TDSRequest requestParam, StringInfo cmdStr)
 TDSRequest
 GetTxnMgmtRequest(const StringInfo message)
 {
-	TDSRequestTxnMgmt	request;
-	int					txnReqOffset = 0;
-	uint8_t				flags;
-	uint32_t 			tdsVersion = GetClientTDSVersion();
+	TDSRequestTxnMgmt request;
+	int			txnReqOffset = 0;
+	uint8_t		flags;
+	uint32_t	tdsVersion = GetClientTDSVersion();
 
 	TDSInstrumentation(INSTR_TDS_TM_REQUEST);
 
 	TdsErrorContext->err_text = "Fetching Transaction Management Request";
+
 	/*
-	 * In the ALL_HEADERS rule, the Query Notifications header and the Transaction
-	 * Descriptor header were introduced in TDS 7.2. We need to to Process them only
-	 * for TDS versions more than or equal to 7.2, otherwise we do not increment the offset.
+	 * In the ALL_HEADERS rule, the Query Notifications header and the
+	 * Transaction Descriptor header were introduced in TDS 7.2. We need to to
+	 * Process them only for TDS versions more than or equal to 7.2, otherwise
+	 * we do not increment the offset.
 	 */
 	if (tdsVersion > TDS_VERSION_7_1_1)
 		txnReqOffset = ProcessStreamHeaders(message);
@@ -303,30 +307,31 @@ GetTxnMgmtRequest(const StringInfo message)
 
 	/* Build the internal query corresponding to the txn request */
 	initStringInfo(&(request->query));
-	BuildTxnMgmtRequestQuery((TDSRequest)request, &(request->query));
+	BuildTxnMgmtRequestQuery((TDSRequest) request, &(request->query));
 
 	pfree(message->data);
 
-	return (TDSRequest)request;
+	return (TDSRequest) request;
 
 }
 
 void
 ProcessTxnMgmtRequest(TDSRequest request)
 {
-	uint64_t txnId = (uint64_t) MyProc->lxid;
-	TDSRequestTxnMgmt	req;
+	uint64_t	txnId = (uint64_t) MyProc->lxid;
+	TDSRequestTxnMgmt req;
 	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
-	int				cmd_type = TDS_CMD_UNKNOWN;
-	char 		*activity;
-	LOCAL_FCINFO(fcinfo,1);
+	int			cmd_type = TDS_CMD_UNKNOWN;
+	char	   *activity;
+
+	LOCAL_FCINFO(fcinfo, 1);
 
 	TdsErrorContext->err_text = "Processing Transaction Management Request";
-	req = (TDSRequestTxnMgmt)request;
+	req = (TDSRequestTxnMgmt) request;
 
 	/* Only source text matters to handler */
 	codeblock->source_text = req->query.data;
-	codeblock->langOid = 0; /* TODO does it matter */
+	codeblock->langOid = 0;		/* TODO does it matter */
 	codeblock->langIsTrusted = true;
 	codeblock->atomic = false;
 
@@ -335,7 +340,7 @@ ProcessTxnMgmtRequest(TDSRequest request)
 	fcinfo->args[0].value = PointerGetDatum(codeblock);
 	fcinfo->args[0].isnull = false;
 
-	pltsql_plugin_handler_ptr->sp_executesql_callback (fcinfo);
+	pltsql_plugin_handler_ptr->sp_executesql_callback(fcinfo);
 	MemoryContextSwitchTo(MessageContext);
 
 	/*
@@ -363,8 +368,8 @@ ProcessTxnMgmtRequest(TDSRequest request)
 				 * header). To support MARS, fix it.
 				 */
 				TdsSendEnvChangeBinary(TDS_ENVID_BEGINTXN,
-										  &txnId, sizeof(uint64_t),
-										  NULL, 0);
+									   &txnId, sizeof(uint64_t),
+									   NULL, 0);
 			}
 			break;
 		case TDS_TM_COMMIT_XACT:
@@ -376,17 +381,17 @@ ProcessTxnMgmtRequest(TDSRequest request)
 				cmd_type = TDS_CMD_COMMIT;
 
 				/*
-				 * As BEGIN commands sends 0 as new transaction id, COMMIT
-				 * has to do the same thing.
+				 * As BEGIN commands sends 0 as new transaction id, COMMIT has
+				 * to do the same thing.
 				 */
 				TdsSendEnvChangeBinary(TDS_ENVID_COMMITTXN, NULL, 0,
-										  &txnId, sizeof(uint64_t));
-				if(req->nextTxn != NULL)
+									   &txnId, sizeof(uint64_t));
+				if (req->nextTxn != NULL)
 				{
 					txnId = (uint64_t) MyProc->lxid;
 					TdsSendEnvChangeBinary(TDS_ENVID_BEGINTXN,
-											  &txnId, sizeof(uint64_t),
-											  NULL, 0);
+										   &txnId, sizeof(uint64_t),
+										   NULL, 0);
 				}
 			}
 			break;
@@ -406,13 +411,13 @@ ProcessTxnMgmtRequest(TDSRequest request)
 				 */
 				if (GetTopTransactionIdIfAny() == InvalidTransactionId)
 					TdsSendEnvChangeBinary(TDS_ENVID_ROLLBACKTXN, NULL, 0,
-											  &txnId, sizeof(uint64_t));
-				if(req->nextTxn != NULL)
+										   &txnId, sizeof(uint64_t));
+				if (req->nextTxn != NULL)
 				{
 					txnId = (uint64_t) MyProc->lxid;
 					TdsSendEnvChangeBinary(TDS_ENVID_BEGINTXN,
-											  &txnId, sizeof(uint64_t),
-											  NULL, 0);
+										   &txnId, sizeof(uint64_t),
+										   NULL, 0);
 				}
 			}
 			break;
@@ -427,7 +432,7 @@ ProcessTxnMgmtRequest(TDSRequest request)
 int
 TestTxnMgmtRequest(TDSRequest request, const char *expectedStr)
 {
-	int res = 0;
+	int			res = 0;
 	StringInfoData cmdStr;
 
 	Assert(request->reqType == TDS_REQUEST_TXN_MGMT);

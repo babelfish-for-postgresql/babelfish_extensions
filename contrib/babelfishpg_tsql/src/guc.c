@@ -1494,3 +1494,4 @@ metadata_inconsistency_check_enabled(void)
 {
 	return enable_metadata_inconsistency_check;
 }
+

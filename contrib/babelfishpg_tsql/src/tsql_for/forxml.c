@@ -25,8 +25,8 @@
 #include "tsql_for.h"
 
 static StringInfo for_xml_ffunc(PG_FUNCTION_ARGS);
-static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bool binary_base64);
-static void tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, bool binary_base64);
+static void tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64);
+static void tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64);
 static void update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_xml_sfunc);
@@ -37,12 +37,13 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	StringInfo	state;
 	Datum		record = PG_GETARG_DATUM(1);
 	int			mode = PG_GETARG_INT32(2);
-	char		*element_name = PG_ARGISNULL(3) ? "row" : text_to_cstring(PG_GETARG_TEXT_PP(3));
+	char	   *element_name = PG_ARGISNULL(3) ? "row" : text_to_cstring(PG_GETARG_TEXT_PP(3));
 	bool		binary_base64 = PG_GETARG_BOOL(4);
-	char		*root_name;
-	
+	char	   *root_name;
+
 	MemoryContext agg_context;
 	MemoryContext old_context;
+
 	if (!AggCheckCallContext(fcinfo, &agg_context))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 	old_context = MemoryContextSwitchTo(agg_context);
@@ -51,9 +52,13 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	{
 		/* first time setup */
 		state = makeStringInfo();
-		root_name = PG_ARGISNULL(5) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(5));
+		root_name = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(5));
 		if (root_name != NULL && strlen(root_name) > 0)
-			/* we need to add an extra token to the beginning so that the finalfunc knows there is a root element */
+
+			/*
+			 * we need to add an extra token to the beginning so that the
+			 * finalfunc knows there is a root element
+			 */
 			appendStringInfo(state, "{<%s>", root_name);
 	}
 	else
@@ -62,36 +67,40 @@ tsql_query_to_xml_sfunc(PG_FUNCTION_ARGS)
 	}
 	switch (mode)
 	{
-		case TSQL_FORXML_RAW: /* FOR XML RAW */
+		case TSQL_FORXML_RAW:	/* FOR XML RAW */
 			tsql_row_to_xml_raw(state, record, element_name, binary_base64);
 			break;
 		case TSQL_FORXML_AUTO:
+
 			/*
-			 * TODO FOR XML AUTO: element_name should be set to relation name of the attribute
-			 * value being processed, but relation id/name is not provided by aggregate functions. We need to make
-			 * relation id available in aggregate functions in order to support AUTO mode.
+			 * TODO FOR XML AUTO: element_name should be set to relation name
+			 * of the attribute value being processed, but relation id/name is
+			 * not provided by aggregate functions. We need to make relation
+			 * id available in aggregate functions in order to support AUTO
+			 * mode.
 			 */
 			ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("AUTO mode is not supported")));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("AUTO mode is not supported")));
 			break;
-		case TSQL_FORXML_PATH: /* FOR XML PATH */
+		case TSQL_FORXML_PATH:	/* FOR XML PATH */
 			tsql_row_to_xml_path(state, record, element_name, binary_base64);
 			break;
 		case TSQL_FORXML_EXPLICIT:
+
 			/*
-			 * TODO: EXPLICIT mode is quite different from the other mode and is
-			 * not supported yet.
+			 * TODO: EXPLICIT mode is quite different from the other mode and
+			 * is not supported yet.
 			 */
 			ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("EXPLICIT mode is not supported")));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("EXPLICIT mode is not supported")));
 			break;
 		default:
 			/* Invalid mode, should not happen, report internal error */
 			ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("invalid FOR XML mode")));
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("invalid FOR XML mode")));
 	}
 
 	MemoryContextSwitchTo(old_context);
@@ -104,7 +113,8 @@ PG_FUNCTION_INFO_V1(tsql_query_to_xml_ffunc);
 Datum
 tsql_query_to_xml_ffunc(PG_FUNCTION_ARGS)
 {
-	StringInfo res = for_xml_ffunc(fcinfo);
+	StringInfo	res = for_xml_ffunc(fcinfo);
+
 	PG_RETURN_XML_P((xmltype *) cstring_to_text_with_len(res->data, res->len));
 }
 
@@ -113,7 +123,8 @@ PG_FUNCTION_INFO_V1(tsql_query_to_xml_text_ffunc);
 Datum
 tsql_query_to_xml_text_ffunc(PG_FUNCTION_ARGS)
 {
-	StringInfo res = for_xml_ffunc(fcinfo);
+	StringInfo	res = for_xml_ffunc(fcinfo);
+
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(res->data, res->len));
 }
 
@@ -121,31 +132,34 @@ static StringInfo
 for_xml_ffunc(PG_FUNCTION_ARGS)
 {
 	StringInfo	res = makeStringInfo();
-	char		*state = ((StringInfo) PG_GETARG_POINTER(0))->data;
-	if (state[0] == '{') /* '{' indicates that root was specified, so add the corresponding end tag */
+	char	   *state = ((StringInfo) PG_GETARG_POINTER(0))->data;
+
+	if (state[0] == '{')		/* '{' indicates that root was specified, so
+								 * add the corresponding end tag */
 	{
 		/* set up regex to match first tag */
-		char			*pattern = "<([^\\/>]+)[\\/]*>";
-		regex_t			preg;
-		regmatch_t		match, pmatch[1];
-		StringInfoData	root;
-		
+		char	   *pattern = "<([^\\/>]+)[\\/]*>";
+		regex_t		preg;
+		regmatch_t	match,
+					pmatch[1];
+		StringInfoData root;
+
 		if (regcomp(&preg, pattern, REG_EXTENDED) != 0)
 			ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("unexpected error parsing xml root tag")));
-		
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("unexpected error parsing xml root tag")));
+
 		if (regexec(&preg, state, 1, pmatch, 0) != 0)
 			ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("unexpected error parsing xml root tag")));
-						
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("unexpected error parsing xml root tag")));
+
 		match = pmatch[0];
 		/* we will be bashing the string in state, so copy it into res first */
-		appendStringInfoString(res, state+1);
+		appendStringInfoString(res, state + 1);
 
 		/* copy the root tag */
-		state[match.rm_eo-1] = '\0';
+		state[match.rm_eo - 1] = '\0';
 		initStringInfo(&root);
 		appendStringInfoString(&root, state + match.rm_so + 1);
 		appendStringInfo(res, "</%s>", root.data);
@@ -161,14 +175,14 @@ for_xml_ffunc(PG_FUNCTION_ARGS)
  * Map an SQL row to an XML element in RAW mode.
  */
 static void
-tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bool binary_base64)
+tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bool binary_base64)
 {
 	HeapTupleHeader td;
-	Oid				tupType;
-	int32			tupTypmod;
-	TupleDesc		tupdesc;
-	HeapTupleData 	tmptup;
-	HeapTuple		tuple;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+	HeapTupleData tmptup;
+	HeapTuple	tuple;
 
 	td = DatumGetHeapTupleHeader(record);
 
@@ -188,10 +202,10 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bo
 	/* process the tuple into attributes */
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
-		char	*colname;
-		Datum	colval;
-		bool	isnull;
-		Oid 	datatype_oid;
+		char	   *colname;
+		Datum		colval;
+		bool		isnull;
+		Oid			datatype_oid;
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		if (att->attisdropped)
@@ -217,15 +231,15 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char* element_name, bo
  * Map an SQL row to an XML element in PATH mode.
  */
 static void
-tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, bool binary_base64)
+tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, bool binary_base64)
 {
 	HeapTupleHeader td;
-	Oid				tupType;
-	int32			tupTypmod;
-	TupleDesc		tupdesc;
-	HeapTupleData 	tmptup;
-	HeapTuple		tuple;
-	bool 			allnull = true;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+	HeapTupleData tmptup;
+	HeapTuple	tuple;
+	bool		allnull = true;
 
 	td = DatumGetHeapTupleHeader(record);
 
@@ -239,17 +253,21 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 	tmptup.t_data = td;
 	tuple = &tmptup;
 
-	/* each tuple is either contained in a "row" tag, or standalone if the element_name is an empty string */
-	if (element_name[0] != '\0') // if "''" is the input path, ignore it per SQL Server behavior
-		appendStringInfo(state, "<%s>", element_name);
+	/*
+	 * each tuple is either contained in a "row" tag, or standalone if the
+	 * element_name is an empty string
+	 */
+	if (element_name[0] != '\0')
+		/* if "''" is the input path, ignore it per SQL Server behavior */
+				appendStringInfo(state, "<%s>", element_name);
 
 	/* process the tuple into tags */
 	for (int i = 0; i < tupdesc->natts; i++)
 	{
-		char	*colname;
-		Datum	colval;
-		bool	isnull;
-		Oid 	datatype_oid;
+		char	   *colname;
+		Datum		colval;
+		bool		isnull;
+		Oid			datatype_oid;
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		if (att->attisdropped)
@@ -274,10 +292,11 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 	if (allnull)
 	{
 		/*
-		 * If all the column values are nulls, this element should be <element_name/>,
-		 * modify the already appended <element_name> to <element_name/>.
+		 * If all the column values are nulls, this element should be
+		 * <element_name/>, modify the already appended <element_name> to
+		 * <element_name/>.
 		 */
-		state->data[state->len-1] = '/';
+		state->data[state->len - 1] = '/';
 		appendStringInfoString(state, ">");
 	}
 	else if (element_name[0] != '\0')
@@ -287,60 +306,66 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char* element_name, b
 static void
 update_tsql_datatype_and_val(HeapTuple tuple, TupleDesc tupdesc, Oid *datatype_oid, Datum *colval, bool binary_base64, int i)
 {
-	char	*typename;
-	Oid		nspoid, tsql_datatype_oid;
+	char	   *typename;
+	Oid			nspoid,
+				tsql_datatype_oid;
 
-	/* 
-	 * Below is a workaround for is_tsql_x_datatype() which does not work as expected.
-	 * We compare the datatype oid of the columns with the tsql_datatype_oid and
-	 * then specially handle some TSQL-specific datatypes.
+	/*
+	 * Below is a workaround for is_tsql_x_datatype() which does not work as
+	 * expected. We compare the datatype oid of the columns with the
+	 * tsql_datatype_oid and then specially handle some TSQL-specific
+	 * datatypes.
 	 */
-	typename = SPI_gettype(tupdesc, i+1);
+	typename = SPI_gettype(tupdesc, i + 1);
 	nspoid = get_namespace_oid("sys", true);
 	Assert(nspoid != InvalidOid);
 
 	tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
 
 	/*
-	 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
-	 * but with the same name. Examples: bigint, int, etc.
+	 * tsql_datatype_oid can be different from datatype_oid when there are
+	 * datatypes in different namespaces but with the same name. Examples:
+	 * bigint, int, etc.
 	 */
 	if (tsql_datatype_oid == *datatype_oid)
 	{
 		/* binary datatypes are not supported */
 		if (binary_base64 &&
 			(strcmp(typename, "binary") == 0 ||
-			strcmp(typename, "varbinary") == 0 ||
-			strcmp(typename, "image") == 0 ||
-			strcmp(typename, "timestamp") == 0 ||
-			strcmp(typename, "rowversion") == 0))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("option binary base64 is not supported")));
+			 strcmp(typename, "varbinary") == 0 ||
+			 strcmp(typename, "image") == 0 ||
+			 strcmp(typename, "timestamp") == 0 ||
+			 strcmp(typename, "rowversion") == 0))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("option binary base64 is not supported")));
+
 		/*
-		 * convert datetime, smalldatetime, and datetime2 to appropriate text values, 
-		 * as T-SQL has a different text conversion than postgres.
+		 * convert datetime, smalldatetime, and datetime2 to appropriate text
+		 * values, as T-SQL has a different text conversion than postgres.
 		 */
-		else if (strcmp(typename, "datetime")  == 0 ||
-			strcmp(typename, "smalldatetime") == 0 ||
-			strcmp(typename, "datetime2") == 0)
+		else if (strcmp(typename, "datetime") == 0 ||
+				 strcmp(typename, "smalldatetime") == 0 ||
+				 strcmp(typename, "datetime2") == 0)
 		{
-			char *val = SPI_getvalue(tuple, tupdesc, i+1);
-			StringInfo format_output = makeStringInfo();
+			char	   *val = SPI_getvalue(tuple, tupdesc, i + 1);
+			StringInfo	format_output = makeStringInfo();
+
 			tsql_for_datetime_format(format_output, val);
 			*colval = CStringGetDatum(format_output->data);
 
 			*datatype_oid = CSTRINGOID;
 		}
+
 		/*
-		 * datetimeoffset has two behaviors:
-		 * if offset is 0, just return the datetime with 'Z' at the end
-		 * otherwise, append the offset
+		 * datetimeoffset has two behaviors: if offset is 0, just return the
+		 * datetime with 'Z' at the end otherwise, append the offset
 		 */
 		else if (strcmp(typename, "datetimeoffset") == 0)
 		{
-			char *val = SPI_getvalue(tuple, tupdesc, i+1);
-			StringInfo format_output = makeStringInfo();
+			char	   *val = SPI_getvalue(tuple, tupdesc, i + 1);
+			StringInfo	format_output = makeStringInfo();
+
 			tsql_for_datetimeoffset_format(format_output, val);
 			*colval = CStringGetDatum(format_output->data);
 

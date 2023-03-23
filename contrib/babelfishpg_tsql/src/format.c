@@ -31,7 +31,7 @@
 
 #include "catalog/pg_collation.h"
 
-size_t CULTURE_COUNT = sizeof(datetimeformats)/sizeof(datetimeformat);
+size_t		CULTURE_COUNT = sizeof(datetimeformats) / sizeof(datetimeformat);
 
 PG_FUNCTION_INFO_V1(format_datetime);
 PG_FUNCTION_INFO_V1(format_numeric);
@@ -42,15 +42,15 @@ PG_FUNCTION_INFO_V1(format_numeric);
 Datum
 format_datetime(PG_FUNCTION_ARGS)
 {
-	Datum 	arg_value;
-	Oid 	arg_type_oid;
-	const char 	*format_pattern;
-	const char	*culture;
-	const char 	*data_type;
-	int 	fmt_res = 0;
-	const char 	*data_str;
-	StringInfo 	buf;
-	VarChar *result;
+	Datum		arg_value;
+	Oid			arg_type_oid;
+	const char *format_pattern;
+	const char *culture;
+	const char *data_type;
+	int			fmt_res = 0;
+	const char *data_str;
+	StringInfo	buf;
+	VarChar    *result;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
@@ -128,22 +128,23 @@ format_datetime(PG_FUNCTION_ARGS)
 
 	switch (arg_type_oid)
 	{
-	case TIMEOID:
-		data_to_char(DirectFunctionCall1(time_interval, arg_value), TIMEOID, buf);
-		break;
-	case TIMESTAMPOID:
-		data_to_char(arg_value, TIMESTAMPOID, buf);
-		break;
-	default:
-		pfree(buf);
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("The data type of the first argument is invalid/currently not supported."),
-				 errhint("Convert it to other datatype and try again.")));
-		break;
+		case TIMEOID:
+			data_to_char(DirectFunctionCall1(time_interval, arg_value), TIMEOID, buf);
+			break;
+		case TIMESTAMPOID:
+			data_to_char(arg_value, TIMESTAMPOID, buf);
+			break;
+		default:
+			pfree(buf);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("The data type of the first argument is invalid/currently not supported."),
+					 errhint("Convert it to other datatype and try again.")));
+			break;
 	}
 
-	result = (*common_utility_plugin_ptr->tsql_varchar_input)(buf->data, buf->len, -1);
+	result = (*common_utility_plugin_ptr->tsql_varchar_input) (buf->data, buf->len, -1);
+
 	pfree(buf->data);
 	pfree(buf);
 
@@ -156,22 +157,22 @@ format_datetime(PG_FUNCTION_ARGS)
 Datum
 format_numeric(PG_FUNCTION_ARGS)
 {
-	Datum 	datum_val = PG_GETARG_DATUM(0);
-	char 	*format_pattern;
-	char 	*data_type;
-	StringInfo 	format_res = makeStringInfo();
-	Numeric numeric_val;
-	Oid 	arg_type_oid;
-	char 	*culture;
-	char 	*valid_culture;
-	char 	pattern;
-	char 	*precision_string;
-	int 	sig_len;
-	char 	*temp_pattern;
-	char	real_pattern[120];
-	char 	upper_pattern;
-	const 	char *format_re = "^[cdefgnprxCDEFGNPRX]{1}[0-9]*$";
-	VarChar *result;
+	Datum		datum_val = PG_GETARG_DATUM(0);
+	char	   *format_pattern;
+	char	   *data_type;
+	StringInfo	format_res = makeStringInfo();
+	Numeric		numeric_val;
+	Oid			arg_type_oid;
+	char	   *culture;
+	char	   *valid_culture;
+	char		pattern;
+	char	   *precision_string;
+	int			sig_len;
+	char	   *temp_pattern;
+	char		real_pattern[120];
+	char		upper_pattern;
+	const char *format_re = "^[cdefgnprxCDEFGNPRX]{1}[0-9]*$";
+	VarChar    *result;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
@@ -193,36 +194,70 @@ format_numeric(PG_FUNCTION_ARGS)
 
 	pattern = format_pattern[0];
 	upper_pattern = toupper(pattern);
-	precision_string = TextDatumGetCString(DirectFunctionCall2(text_substr_no_len, PG_GETARG_DATUM(1), Int32GetDatum((int32)2)));
+	precision_string = TextDatumGetCString(DirectFunctionCall2(text_substr_no_len, PG_GETARG_DATUM(1), Int32GetDatum((int32) 2)));
 
 	data_type = text_to_cstring(PG_GETARG_TEXT_P(3));
 	arg_type_oid = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
 	switch (arg_type_oid)
 	{
-	case INT2OID:
-	case INT4OID:
-	case INT8OID:
-		numeric_val = int64_to_numeric(PG_GETARG_INT64(0));
-		break;
-	case NUMERICOID:
-		numeric_val = PG_GETARG_NUMERIC(0);
-		break;
-	case FLOAT4OID:
-		set_config_option("extra_float_digits", "1", PGC_USERSET, PGC_S_SESSION, GUC_ACTION_LOCAL, true, 0, false);
+		case INT2OID:
+		case INT4OID:
+		case INT8OID:
+			numeric_val = int64_to_numeric(PG_GETARG_INT64(0));
+			break;
+		case NUMERICOID:
+			numeric_val = PG_GETARG_NUMERIC(0);
+			break;
+		case FLOAT4OID:
+			set_config_option("extra_float_digits", "1", PGC_USERSET, PGC_S_SESSION, GUC_ACTION_LOCAL, true, 0, false);
 
-		if (upper_pattern == 'R')
-		{
-			sig_len = PG_GETARG_INT32(4);
-
-			if (sig_len <= 0)
+			if (upper_pattern == 'R')
 			{
-				snprintf(real_pattern, sizeof(real_pattern), "%.*g", 8, DatumGetFloat4(datum_val));
-				numeric_val = cstring_to_numeric(real_pattern);
+				sig_len = PG_GETARG_INT32(4);
+
+				if (sig_len <= 0)
+				{
+					snprintf(real_pattern, sizeof(real_pattern), "%.*g", 8, DatumGetFloat4(datum_val));
+					numeric_val = cstring_to_numeric(real_pattern);
+				}
+				else
+				{
+					if (sig_len > 6)
+					{
+						temp_pattern = "9D99999999EEEE";
+					}
+					else
+					{
+						temp_pattern = "9D999999EEEE";
+					}
+
+					resetStringInfo(format_res);
+					appendStringInfoString(format_res, temp_pattern);
+
+					float4_data_to_char(format_res, datum_val);
+
+					if (format_res->len > 0)
+					{
+						if (isupper(pattern))
+						{
+							regexp_replace(format_res->data, "[.]{0,1}0*[eE]", "E", "i");
+						}
+
+						result = (*common_utility_plugin_ptr->tsql_varchar_input) (format_res->data, format_res->len, -1);
+
+						pfree(format_res->data);
+						pfree(format_res);
+						PG_RETURN_VARCHAR_P(result);
+					}
+					pfree(format_res->data);
+					pfree(format_res);
+					PG_RETURN_NULL();
+				}
 			}
 			else
 			{
-				if (sig_len > 6)
+				if (upper_pattern == 'E' || upper_pattern == 'G')
 				{
 					temp_pattern = "9D99999999EEEE";
 				}
@@ -231,85 +266,53 @@ format_numeric(PG_FUNCTION_ARGS)
 					temp_pattern = "9D999999EEEE";
 				}
 
-				resetStringInfo(format_res);
 				appendStringInfoString(format_res, temp_pattern);
 
 				float4_data_to_char(format_res, datum_val);
 
-				if (format_res->len > 0)
-				{
-					if (isupper(pattern))
-					{
-						regexp_replace(format_res->data, "[.]{0,1}0*[eE]", "E", "i");
-					}
+				numeric_val = cstring_to_numeric(format_res->data);
+			}
+			break;
+		case FLOAT8OID:
+			set_config_option("extra_float_digits", "1", PGC_USERSET, PGC_S_SESSION, GUC_ACTION_LOCAL, true, 0, false);
 
-					result = (*common_utility_plugin_ptr->tsql_varchar_input)(format_res->data, format_res->len, -1);
-					pfree(format_res->data);
-					pfree(format_res);
-					PG_RETURN_VARCHAR_P(result);
-				}
+			if (upper_pattern == 'R')
+			{
 				pfree(format_res->data);
 				pfree(format_res);
-				PG_RETURN_NULL();
+
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("Format \"R\" is currently not supported for FLOAT datatype")));
 			}
-		}
-		else
-		{
-			if (upper_pattern == 'E' || upper_pattern == 'G')
+			else if (upper_pattern == 'E' || upper_pattern == 'G')
 			{
-				temp_pattern = "9D99999999EEEE";
+				appendStringInfoString(format_res, "9D9999999999999999EEEE");
+				float8_data_to_char(format_res, datum_val);
+				numeric_val = cstring_to_numeric(format_res->data);
 			}
 			else
 			{
-				temp_pattern = "9D999999EEEE";
+				numeric_val = DatumGetNumeric(DirectFunctionCall1(float8_numeric, datum_val));
 			}
-
-			appendStringInfoString(format_res, temp_pattern);
-
-			float4_data_to_char(format_res, datum_val);
-
-			numeric_val = cstring_to_numeric(format_res->data);
-		}
-		break;
-	case FLOAT8OID:
-		set_config_option("extra_float_digits", "1", PGC_USERSET, PGC_S_SESSION, GUC_ACTION_LOCAL, true, 0, false);
-
-		if (upper_pattern == 'R')
-		{
+			break;
+		default:
 			pfree(format_res->data);
 			pfree(format_res);
-
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("Format \"R\" is currently not supported for FLOAT datatype")));
-		}
-		else if (upper_pattern == 'E' || upper_pattern == 'G')
-		{
-			appendStringInfoString(format_res, "9D9999999999999999EEEE");
-			float8_data_to_char(format_res, datum_val);
-			numeric_val = cstring_to_numeric(format_res->data);
-		}
-		else
-		{
-			numeric_val = DatumGetNumeric(DirectFunctionCall1(float8_numeric, datum_val));
-		}
-		break;
-	default:
-		pfree(format_res->data);
-		pfree(format_res);
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("The data type of the first argument is invalid."),
-				 errdetail("Use of invalid value parameter."),
-				 errhint("Convert it to valid datatype and try again.")));
-		break;
+					 errmsg("The data type of the first argument is invalid."),
+					 errdetail("Use of invalid value parameter."),
+					 errhint("Convert it to valid datatype and try again.")));
+			break;
 	}
 
 	format_numeric_handler(datum_val, numeric_val, format_res, pattern, precision_string, arg_type_oid, culture, valid_culture, data_type);
 
 	if (format_res->len > 0)
 	{
-		result = (*common_utility_plugin_ptr->tsql_varchar_input)(format_res->data, format_res->len, -1);
+		result = (*common_utility_plugin_ptr->tsql_varchar_input) (format_res->data, format_res->len, -1);
+
 		pfree(format_res->data);
 		pfree(format_res);
 		PG_RETURN_VARCHAR_P(result);
@@ -322,43 +325,44 @@ format_numeric(PG_FUNCTION_ARGS)
 
 static void
 format_numeric_handler(Datum value, Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string,
-					 Oid arg_type_oid, char *culture, char *valid_culture, char *data_type)
+					   Oid arg_type_oid, char *culture, char *valid_culture, char *data_type)
 {
-	char upper_pattern = toupper(pattern);
+	char		upper_pattern = toupper(pattern);
+
 	resetStringInfo(format_res);
 
 	switch (upper_pattern)
 	{
-	case 'C':
-		if (set_culture(valid_culture, "LC_MONETARY", culture) == 1)
-			format_currency(numeric_val, format_res, upper_pattern, precision_string, culture);
-		break;
-	case 'D':
-		format_decimal(numeric_val, format_res, upper_pattern, precision_string, arg_type_oid);
-		break;
-	case 'F':
-		format_fixed_point(numeric_val, format_res, upper_pattern, precision_string);
-		break;
-	case 'N':
-		format_number(numeric_val, format_res, upper_pattern, precision_string);
-		break;
-	case 'P':
-		format_percent(numeric_val, format_res, upper_pattern, precision_string);
-		break;
-	case 'X':
-		format_hexadecimal(value, format_res, pattern, precision_string, arg_type_oid);
-		break;
-	case 'E':
-		format_exponential(numeric_val, format_res, pattern, precision_string);
-		break;
-	case 'G':
-		format_compact(numeric_val, format_res, pattern, precision_string, data_type, arg_type_oid);
-		break;
-	case 'R':
-		format_roundtrip(value, numeric_val, format_res, pattern, data_type, arg_type_oid);
-		break;
-	default:
-		break;
+		case 'C':
+			if (set_culture(valid_culture, "LC_MONETARY", culture) == 1)
+				format_currency(numeric_val, format_res, upper_pattern, precision_string, culture);
+			break;
+		case 'D':
+			format_decimal(numeric_val, format_res, upper_pattern, precision_string, arg_type_oid);
+			break;
+		case 'F':
+			format_fixed_point(numeric_val, format_res, upper_pattern, precision_string);
+			break;
+		case 'N':
+			format_number(numeric_val, format_res, upper_pattern, precision_string);
+			break;
+		case 'P':
+			format_percent(numeric_val, format_res, upper_pattern, precision_string);
+			break;
+		case 'X':
+			format_hexadecimal(value, format_res, pattern, precision_string, arg_type_oid);
+			break;
+		case 'E':
+			format_exponential(numeric_val, format_res, pattern, precision_string);
+			break;
+		case 'G':
+			format_compact(numeric_val, format_res, pattern, precision_string, data_type, arg_type_oid);
+			break;
+		case 'R':
+			format_roundtrip(value, numeric_val, format_res, pattern, data_type, arg_type_oid);
+			break;
+		default:
+			break;
 	}
 }
 
@@ -393,11 +397,11 @@ set_culture(char *valid_culture, const char *config_name, const char *culture)
 static char *
 format_validate_and_culture(const char *culture, const char *config_name)
 {
-	int 	culture_len = 0;
-	char 	*token;
-	char 	*temp_res;
-	int 	locale_pos = -1;
-	char 	*culture_temp;
+	int			culture_len = 0;
+	char	   *token;
+	char	   *temp_res;
+	int			locale_pos = -1;
+	char	   *culture_temp;
 
 	if (culture != NULL)
 		culture_len = strlen(culture);
@@ -413,14 +417,16 @@ format_validate_and_culture(const char *culture, const char *config_name)
 		if (strchr(culture_temp, '-') != NULL)
 		{
 			token = strtok(culture_temp, "-");
-			for (char *c = token; *c; ++c) *c = tolower(*c);
+			for (char *c = token; *c; ++c)
+				*c = tolower(*c);
 			memcpy(temp_res, token, strlen(token));
 			strncat(temp_res, "_", 2);
 
 			if (token != NULL)
 			{
 				token = strtok(NULL, "-");
-				for (char *c = token; *c; ++c) *c = toupper(*c);
+				for (char *c = token; *c; ++c)
+					*c = toupper(*c);
 				strncat(temp_res, token, culture_len);
 				temp_res[culture_len] = '\0';
 			}
@@ -428,23 +434,23 @@ format_validate_and_culture(const char *culture, const char *config_name)
 			{
 				pfree(temp_res);
 				ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("The culture parameter \"%s\" provided in the function call is not supported.", culture),
-				 errhint("Invalid/Unsupported culture value.")));;
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("The culture parameter \"%s\" provided in the function call is not supported.", culture),
+						 errhint("Invalid/Unsupported culture value.")));;
 			}
 		}
 		else
 		{
 			pfree(temp_res);
 			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("The culture parameter \"%s\" provided in the function call is not supported.", culture),
-				 errhint("Invalid/Unsupported culture value.")));;
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("The culture parameter \"%s\" provided in the function call is not supported.", culture),
+					 errhint("Invalid/Unsupported culture value.")));;
 		}
 
 		pfree(culture_temp);
 
-		locale_pos = tsql_find_locale((const char *)temp_res);
+		locale_pos = tsql_find_locale((const char *) temp_res);
 
 		if (locale_pos >= 0 && set_culture(temp_res, config_name, culture) == 1)
 		{
@@ -471,11 +477,11 @@ format_validate_and_culture(const char *culture, const char *config_name)
 static int
 match(const char *string, const char *pattern)
 {
-	int status;
-	text *regex = cstring_to_text(pattern);
+	int			status;
+	text	   *regex = cstring_to_text(pattern);
 
 	status = RE_compile_and_execute(regex, (char *) string, strlen(string), REG_ADVANCED, DEFAULT_COLLATION_OID, 0, NULL);
-	
+
 	pfree(regex);
 	return status;
 }
@@ -489,13 +495,13 @@ match(const char *string, const char *pattern)
 static int
 format_datetimeformats(StringInfo buf, const char *format_pattern, const char *culture, const char *data_type, const char *data_val)
 {
-	int 		j = 0;
-	int 		flag = 0;
-	char 		*pattern;
-	int 		milli_time_res;
-	int 		time_res;
-	const char 	*milli_time_re = "^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}.[0-9]{1,7}$";
-	const char 	*time_re = "^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$";
+	int			j = 0;
+	int			flag = 0;
+	char	   *pattern;
+	int			milli_time_res;
+	int			time_res;
+	const char *milli_time_re = "^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}.[0-9]{1,7}$";
+	const char *time_re = "^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$";
 
 	if (pg_strcasecmp(format_pattern, "O") == 0)
 	{
@@ -509,42 +515,42 @@ format_datetimeformats(StringInfo buf, const char *format_pattern, const char *c
 
 		switch (format_pattern[0])
 		{
-		case 'c':
-		case 't':
-		case 'T':
-			if (milli_time_res == 1)
-			{
+			case 'c':
+			case 't':
+			case 'T':
+				if (milli_time_res == 1)
+				{
+					appendStringInfoString(buf, "HH24\":\"MI\":\"ss\".\"FF6");
+				}
+				else if (time_res == 1)
+				{
+					appendStringInfoString(buf, "HH24\":\"MI\":\"ss");
+				}
+				else
+				{
+					return 0;
+				}
+				break;
+			case 'g':
+				if (milli_time_res == 1)
+				{
+					return -1;
+				}
+				else if (time_res == 1)
+				{
+					appendStringInfoString(buf, "HH24\":\"MI\":\"ss");
+				}
+				else
+				{
+					return 0;
+				}
+				break;
+			case 'G':
 				appendStringInfoString(buf, "HH24\":\"MI\":\"ss\".\"FF6");
-			}
-			else if (time_res == 1)
-			{
-				appendStringInfoString(buf, "HH24\":\"MI\":\"ss");
-			}
-			else
-			{
+				break;
+			default:
 				return 0;
-			}
-			break;
-		case 'g':
-			if (milli_time_res == 1)
-			{
-				return -1;
-			}
-			else if (time_res == 1)
-			{
-				appendStringInfoString(buf, "HH24\":\"MI\":\"ss");
-			}
-			else
-			{
-				return 0;
-			}
-			break;
-		case 'G':
-			appendStringInfoString(buf, "HH24\":\"MI\":\"ss\".\"FF6");
-			break;
-		default:
-			return 0;
-			break;
+				break;
 		}
 		return 1;
 	}
@@ -557,75 +563,75 @@ format_datetimeformats(StringInfo buf, const char *format_pattern, const char *c
 				flag = 1;
 				switch (format_pattern[0])
 				{
-				case 'd':
-					pattern = datetimeformats[j].pg_shortdatepattern;
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'D':
-					pattern = datetimeformats[j].pg_longdatepattern;
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'f':
-					pattern = datetimeformats[j].pg_longdatepattern;
-					appendStringInfoString(buf, pattern);
-					appendStringInfoString(buf, " ");
-					appendStringInfoString(buf, datetimeformats[j].pg_shorttimepattern);
-					break;
-				case 'F':
-					pattern = datetimeformats[j].pg_fulldatetimepattern;
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'g':
-					pattern = datetimeformats[j].pg_shortdatepattern;
-					appendStringInfoString(buf, pattern);
-					appendStringInfoString(buf, " ");
-					appendStringInfoString(buf, datetimeformats[j].pg_shorttimepattern);
-					break;
-				case '\0':
-				case 'G':
-					pattern = datetimeformats[j].pg_shortdatepattern;
-					appendStringInfoString(buf, pattern);
-					appendStringInfoString(buf, " ");
-					appendStringInfoString(buf, datetimeformats[j].pg_longtimepattern);
-					break;
-				case 't':
-					pattern = datetimeformats[j].pg_shorttimepattern;
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'T':
-					pattern = datetimeformats[j].pg_longtimepattern;
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'm':
-				case 'M':
-					pattern = datetimeformats[j].pg_monthdaypattern;
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'y':
-				case 'Y':
-					pattern = datetimeformats[j].pg_yearmonthpattern;
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'r':
-				case 'R':
-					pattern = "Dy, dd Mon yyyy HH24\":\"MI\":\"ss \"GMT\"";
-					appendStringInfoString(buf, pattern);
-					break;
-				case 's':
-					pattern = "yyyy\"-\"MM\"-\"dd\"T\"HH24\":\"MI\":\"ss";
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'u':
-					pattern = "yyyy\"-\"MM\"-\"dd HH24\":\"MI\":\"ss\"Z\"";
-					appendStringInfoString(buf, pattern);
-					break;
-				case 'U':
-					pattern = datetimeformats[j].pg_fulldatetimepattern;
-					appendStringInfoString(buf, pattern);
-					break;
-				default:
-					return 0;
-					break;
+					case 'd':
+						pattern = datetimeformats[j].pg_shortdatepattern;
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'D':
+						pattern = datetimeformats[j].pg_longdatepattern;
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'f':
+						pattern = datetimeformats[j].pg_longdatepattern;
+						appendStringInfoString(buf, pattern);
+						appendStringInfoString(buf, " ");
+						appendStringInfoString(buf, datetimeformats[j].pg_shorttimepattern);
+						break;
+					case 'F':
+						pattern = datetimeformats[j].pg_fulldatetimepattern;
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'g':
+						pattern = datetimeformats[j].pg_shortdatepattern;
+						appendStringInfoString(buf, pattern);
+						appendStringInfoString(buf, " ");
+						appendStringInfoString(buf, datetimeformats[j].pg_shorttimepattern);
+						break;
+					case '\0':
+					case 'G':
+						pattern = datetimeformats[j].pg_shortdatepattern;
+						appendStringInfoString(buf, pattern);
+						appendStringInfoString(buf, " ");
+						appendStringInfoString(buf, datetimeformats[j].pg_longtimepattern);
+						break;
+					case 't':
+						pattern = datetimeformats[j].pg_shorttimepattern;
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'T':
+						pattern = datetimeformats[j].pg_longtimepattern;
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'm':
+					case 'M':
+						pattern = datetimeformats[j].pg_monthdaypattern;
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'y':
+					case 'Y':
+						pattern = datetimeformats[j].pg_yearmonthpattern;
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'r':
+					case 'R':
+						pattern = "Dy, dd Mon yyyy HH24\":\"MI\":\"ss \"GMT\"";
+						appendStringInfoString(buf, pattern);
+						break;
+					case 's':
+						pattern = "yyyy\"-\"MM\"-\"dd\"T\"HH24\":\"MI\":\"ss";
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'u':
+						pattern = "yyyy\"-\"MM\"-\"dd HH24\":\"MI\":\"ss\"Z\"";
+						appendStringInfoString(buf, pattern);
+						break;
+					case 'U':
+						pattern = datetimeformats[j].pg_fulldatetimepattern;
+						appendStringInfoString(buf, pattern);
+						break;
+					default:
+						return 0;
+						break;
 				}
 			}
 		}
@@ -655,15 +661,15 @@ format_datetimeformats(StringInfo buf, const char *format_pattern, const char *c
 static int
 process_format_pattern(StringInfo buf, const char *msg_string, const char *data_type)
 {
-	int i = 0;
-	int bc = 0;
-	int quotes_found = 0;
-	int percentile_found = 0;
-	int escape_found = 0;
-	int is_time = 0;
-	int count = 0;
+	int			i = 0;
+	int			bc = 0;
+	int			quotes_found = 0;
+	int			percentile_found = 0;
+	int			escape_found = 0;
+	int			is_time = 0;
+	int			count = 0;
 
-	StringInfo str = makeStringInfo();
+	StringInfo	str = makeStringInfo();
 
 	if (msg_string == NULL)
 	{
@@ -689,7 +695,7 @@ process_format_pattern(StringInfo buf, const char *msg_string, const char *data_
 				appendStringInfoChar(str, '\\');
 			}
 
-			appendStringInfoChar(str,  msg_string[bc]);
+			appendStringInfoChar(str, msg_string[bc]);
 		}
 		else
 		{
@@ -704,7 +710,7 @@ process_format_pattern(StringInfo buf, const char *msg_string, const char *data_
 					else
 					{
 						escape_found = 0;
-						appendStringInfoChar(str,  msg_string[bc]);
+						appendStringInfoChar(str, msg_string[bc]);
 					}
 				}
 				else if (msg_string[bc] == '%')
@@ -717,7 +723,7 @@ process_format_pattern(StringInfo buf, const char *msg_string, const char *data_
 					{
 						escape_found = 0;
 						percentile_found = 0;
-						appendStringInfoChar(str,  msg_string[bc]);
+						appendStringInfoChar(str, msg_string[bc]);
 					}
 				}
 				else if (msg_string[bc] == 'd')
@@ -1144,13 +1150,19 @@ process_format_pattern(StringInfo buf, const char *msg_string, const char *data_
 					}
 					else
 					{
-						// Case for one letter meridian - A, P instead of AM/PM
-						// is not supported by to_char in postgres, so we'll
-						// return the 2 letter case until an efficient workaround
+						/*
+						 * Case for one letter meridian - A, P instead of
+						 * AM/PM
+						 */
+						/* is not supported by to_char in postgres, so we'll */
+						/*
+						 * return the 2 letter case until an efficient
+						 * workaround
+						 */
 						appendStringInfo(str, "AM");
 						i = bc + 1;
 
-						// Anything longer than 'tt' is skipped.
+						/* Anything longer than 'tt' is skipped. */
 						while (msg_string[i] == 't')
 						{
 							i++;
@@ -1208,20 +1220,22 @@ process_format_pattern(StringInfo buf, const char *msg_string, const char *data_
 static void
 data_to_char(Datum data, Oid data_type, StringInfo buf)
 {
-	char	*result;
+	char	   *result;
 
 	switch (data_type)
 	{
-	case TIMEOID:
-		result = TextDatumGetCString(DirectFunctionCall2Coll(interval_to_char, C_COLLATION_OID, data,
-															 PointerGetDatum(cstring_to_text((const char *)buf->data))));
-		break;
-	case TIMESTAMPOID:
-		result = TextDatumGetCString(DirectFunctionCall2Coll(timestamp_to_char, C_COLLATION_OID, data,
-															 PointerGetDatum(cstring_to_text((const char *)buf->data))));
-		break;
-	default:
-		break;
+		case TIMEOID:
+			result = TextDatumGetCString(DirectFunctionCall2Coll(interval_to_char, C_COLLATION_OID, data,
+																 PointerGetDatum(cstring_to_text((const char *) buf->data))));
+
+			break;
+		case TIMESTAMPOID:
+			result = TextDatumGetCString(DirectFunctionCall2Coll(timestamp_to_char, C_COLLATION_OID, data,
+																 PointerGetDatum(cstring_to_text((const char *) buf->data))));
+
+			break;
+		default:
+			break;
 	}
 
 	resetStringInfo(buf);
@@ -1299,7 +1313,7 @@ get_compact_decimal_digits(const char *data_type)
 	{
 		return 15;
 	}
-	// default precision
+	/* default precision */
 	return 7;
 }
 
@@ -1312,8 +1326,8 @@ get_compact_decimal_digits(const char *data_type)
 static int
 get_numeric_sign(Numeric num)
 {
-	Numeric sign = DatumGetNumeric(DirectFunctionCall1(numeric_sign,
-													   NumericGetDatum(num)));
+	Numeric		sign = DatumGetNumeric(DirectFunctionCall1(numeric_sign,
+														   NumericGetDatum(num)));
 
 	return DatumGetInt32(DirectFunctionCall1(numeric_int4,
 											 NumericGetDatum(sign)));
@@ -1424,8 +1438,8 @@ static void
 replace_currency_format(char *currency_format_mask, StringInfo format_res)
 {
 
-	const char 	*fmt = (const char *)format_res->data;
-	char 		*result;
+	const char *fmt = (const char *) format_res->data;
+	char	   *result;
 
 	result = TextDatumGetCString(DirectFunctionCall3Coll(replace_text,
 														 C_COLLATION_OID,
@@ -1465,8 +1479,8 @@ static void
 float4_data_to_char(StringInfo format_res, Datum num)
 {
 
-	const char 	*fmt = (const char *)format_res->data;
-	char 		*result;
+	const char *fmt = (const char *) format_res->data;
+	char	   *result;
 
 	result = TextDatumGetCString(DirectFunctionCall2(float4_to_char, num,
 													 CStringGetTextDatum(fmt)));
@@ -1482,8 +1496,8 @@ static void
 float8_data_to_char(StringInfo format_res, Datum num)
 {
 
-	const char 	*fmt = (const char *)format_res->data;
-	char 		*result;
+	const char *fmt = (const char *) format_res->data;
+	char	   *result;
 
 	result = TextDatumGetCString(DirectFunctionCall2(float8_to_char,
 													 num,
@@ -1504,7 +1518,7 @@ regexp_replace(char *format_res, char *match_with, const char *replace_with, cha
 	text	   *p = cstring_to_text(match_with);
 	text	   *r = cstring_to_text(replace_with);
 	regex_t    *re;
-	char 	   *result;
+	char	   *result;
 
 	re = RE_compile_and_cache(p, REG_ADVANCED, C_COLLATION_OID);
 
@@ -1519,8 +1533,9 @@ regexp_replace(char *format_res, char *match_with, const char *replace_with, cha
 static void
 get_group_separator(StringInfo format_res, int integral_digits, int decimal_digits)
 {
-	int 	group;
-	char 	*temp;
+	int			group;
+	char	   *temp;
+
 	resetStringInfo(format_res);
 
 	if (integral_digits > 3)
@@ -1564,16 +1579,18 @@ get_group_separator(StringInfo format_res, int integral_digits, int decimal_digi
 static void
 numeric_to_string(StringInfo format_res, Numeric num)
 {
-	const char 	*fmt = (const char *)format_res->data;
-	char 		*result;
+	const char *fmt = (const char *) format_res->data;
+	char	   *result;
 
 	/*
-	 * This essentially is just a wrapper to allow us to call C implementations
-	 * of PG functions directly - in this case, numeric_to_char()
+	 * This essentially is just a wrapper to allow us to call C
+	 * implementations of PG functions directly - in this case,
+	 * numeric_to_char()
 	 */
 	result = TextDatumGetCString(DirectFunctionCall2(numeric_to_char,
 													 NumericGetDatum(num),
 													 CStringGetTextDatum(fmt)));
+
 	resetStringInfo(format_res);
 	appendStringInfoString(format_res, result);
 }
@@ -1584,9 +1601,10 @@ numeric_to_string(StringInfo format_res, Numeric num)
 static void
 get_exponential_format(StringInfo format_res, int precision)
 {
-	char *temp;
+	char	   *temp;
+
 	resetStringInfo(format_res);
-	
+
 	if (precision > 0)
 	{
 		appendStringInfoString(format_res, "9D");
@@ -1607,7 +1625,7 @@ get_exponential_format(StringInfo format_res, int precision)
 static int
 get_precision(char pattern, char *precision_string, char *data_type, int integral_digits, char *culture)
 {
-	int precision;
+	int			precision;
 
 	if (pattern == 'R')
 	{
@@ -1629,26 +1647,26 @@ get_precision(char pattern, char *precision_string, char *data_type, int integra
 
 		switch (pattern)
 		{
-		case 'C':
-			precision = get_currency_decimal_digits(culture);
-			break;
-		case 'F':
-		case 'N':
-		case 'P':
-			precision = 2;
-			break;
-		case 'E':
-			precision = 6;
-			break;
-		case 'D':
-			precision = integral_digits;
-			break;
-		case 'G':
-			precision = get_compact_decimal_digits(data_type);
-			break;
-		default:
-			precision = -1;
-			break;
+			case 'C':
+				precision = get_currency_decimal_digits(culture);
+				break;
+			case 'F':
+			case 'N':
+			case 'P':
+				precision = 2;
+				break;
+			case 'E':
+				precision = 6;
+				break;
+			case 'D':
+				precision = integral_digits;
+				break;
+			case 'G':
+				precision = get_compact_decimal_digits(data_type);
+				break;
+			default:
+				precision = -1;
+				break;
 		}
 		return precision;
 	}
@@ -1676,13 +1694,13 @@ static void
 format_currency(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string, char *culture)
 {
 
-	Numeric numeric_abs_val;
-	int 	scale;
-	int 	total_digits;
-	int 	integral_digits;
-	int 	positive = 0;
-	char 	*currency_format;
-	int 	precision = get_precision(pattern, precision_string, "", 0, culture);
+	Numeric		numeric_abs_val;
+	int			scale;
+	int			total_digits;
+	int			integral_digits;
+	int			positive = 0;
+	char	   *currency_format;
+	int			precision = get_precision(pattern, precision_string, "", 0, culture);
 
 	numeric_val = round_num(numeric_val, precision);
 	numeric_abs_val = get_numeric_abs(numeric_val);
@@ -1697,10 +1715,10 @@ format_currency(Numeric numeric_val, StringInfo format_res, char pattern, char *
 
 	get_group_separator(format_res, integral_digits, scale);
 
-	//Get the currency format for the culture and sign
+	/* Get the currency format for the culture and sign */
 	currency_format = get_currency_sign_format(culture, positive);
 
-	//Change the current format by replacing "n" with group separator format
+	/* Change the current format by replacing "n" with group separator format */
 	replace_currency_format(currency_format, format_res);
 
 	numeric_to_string(format_res, numeric_abs_val);
@@ -1713,38 +1731,38 @@ static void
 format_decimal(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string, Oid arg_type_oid)
 {
 
-	Numeric numeric_abs_val;
-	int 	scale;
-	int 	total_digits;
-	int 	integral_digits;
-	int 	num_sign;
-	char 	*padding_format;
-	int 	precision;
+	Numeric		numeric_abs_val;
+	int			scale;
+	int			total_digits;
+	int			integral_digits;
+	int			num_sign;
+	char	   *padding_format;
+	int			precision;
 
 	switch (arg_type_oid)
 	{
-	case INT2OID:
-	case INT4OID:
-	case INT8OID:
-		numeric_abs_val = get_numeric_abs(numeric_val);
-		scale = get_numeric_scale(numeric_abs_val);
-		total_digits = get_numeric_digit_count(numeric_abs_val);
-		integral_digits = get_integral_digits(total_digits, scale);
-		num_sign = get_numeric_sign(numeric_val);
+		case INT2OID:
+		case INT4OID:
+		case INT8OID:
+			numeric_abs_val = get_numeric_abs(numeric_val);
+			scale = get_numeric_scale(numeric_abs_val);
+			total_digits = get_numeric_digit_count(numeric_abs_val);
+			integral_digits = get_integral_digits(total_digits, scale);
+			num_sign = get_numeric_sign(numeric_val);
 
-		precision = get_precision(pattern, precision_string, "", integral_digits, "");
+			precision = get_precision(pattern, precision_string, "", integral_digits, "");
 
-		padding_format = zero_left_padding(numeric_text(numeric_abs_val), precision);
+			padding_format = zero_left_padding(numeric_text(numeric_abs_val), precision);
 
-		resetStringInfo(format_res);
-		if (num_sign < 0)
-		{
-			appendStringInfoChar(format_res, '-');
-		}
-		appendStringInfoString(format_res, padding_format);
-		break;
-	default:
-		break;
+			resetStringInfo(format_res);
+			if (num_sign < 0)
+			{
+				appendStringInfoChar(format_res, '-');
+			}
+			appendStringInfoString(format_res, padding_format);
+			break;
+		default:
+			break;
 	}
 }
 
@@ -1755,12 +1773,12 @@ static void
 format_fixed_point(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string)
 {
 
-	Numeric numeric_abs_val;
-	int 	scale;
-	int 	total_digits;
-	int 	integral_digits;
-	int 	precision = get_precision(pattern, precision_string, "", 0, "");
-	char 	*temp;
+	Numeric		numeric_abs_val;
+	int			scale;
+	int			total_digits;
+	int			integral_digits;
+	int			precision = get_precision(pattern, precision_string, "", 0, "");
+	char	   *temp;
 
 	numeric_val = round_num(numeric_val, precision);
 	numeric_abs_val = get_numeric_abs(numeric_val);
@@ -1789,11 +1807,11 @@ format_fixed_point(Numeric numeric_val, StringInfo format_res, char pattern, cha
 static void
 format_number(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string)
 {
-	Numeric numeric_abs_val;
-	int 	scale;
-	int 	total_digits;
-	int 	integral_digits;
-	int 	precision = get_precision(pattern, precision_string, "", 0, "");
+	Numeric		numeric_abs_val;
+	int			scale;
+	int			total_digits;
+	int			integral_digits;
+	int			precision = get_precision(pattern, precision_string, "", 0, "");
 
 	numeric_val = round_num(numeric_val, precision);
 
@@ -1812,11 +1830,11 @@ format_number(Numeric numeric_val, StringInfo format_res, char pattern, char *pr
 static void
 format_percent(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string)
 {
-	Numeric numeric_abs_val;
-	int 	scale;
-	int 	total_digits;
-	int 	integral_digits;
-	int 	precision = get_precision(pattern, precision_string, "", 0, "");
+	Numeric		numeric_abs_val;
+	int			scale;
+	int			total_digits;
+	int			integral_digits;
+	int			precision = get_precision(pattern, precision_string, "", 0, "");
 
 	numeric_val = round_num(multiply_numeric_by_100(numeric_val), precision);
 
@@ -1837,22 +1855,22 @@ static void
 format_hexadecimal(Datum value, StringInfo format_res, char pattern, char *precision_string, Oid arg_type_oid)
 {
 
-	char 	*hexadecimal_pattern;
-	int 	precision;
-	int 	len;
+	char	   *hexadecimal_pattern;
+	int			precision;
+	int			len;
 
 	switch (arg_type_oid)
 	{
-	case INT2OID:
-	case INT4OID:
-		hexadecimal_pattern = TextDatumGetCString(DirectFunctionCall1(to_hex32, value));
-		break;
-	case INT8OID:
-		hexadecimal_pattern = TextDatumGetCString(DirectFunctionCall1(to_hex64, value));
-		break;
-	default:
-		hexadecimal_pattern = "";
-		break;
+		case INT2OID:
+		case INT4OID:
+			hexadecimal_pattern = TextDatumGetCString(DirectFunctionCall1(to_hex32, value));
+			break;
+		case INT8OID:
+			hexadecimal_pattern = TextDatumGetCString(DirectFunctionCall1(to_hex64, value));
+			break;
+		default:
+			hexadecimal_pattern = "";
+			break;
 	}
 
 	len = strlen(hexadecimal_pattern);
@@ -1874,7 +1892,8 @@ format_hexadecimal(Datum value, StringInfo format_res, char pattern, char *preci
 
 		if (isupper(pattern))
 		{
-			for (char *c = format_res->data; *c; ++c) *c = toupper(*c);
+			for (char *c = format_res->data; *c; ++c)
+				*c = toupper(*c);
 		}
 	}
 }
@@ -1886,9 +1905,10 @@ static void
 format_exponential(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string)
 {
 
-	int len, temp;
-	char *buf;
-	int precision = get_precision(toupper(pattern), precision_string, "", 0, "");
+	int			len,
+				temp;
+	char	   *buf;
+	int			precision = get_precision(toupper(pattern), precision_string, "", 0, "");
 
 	get_exponential_format(format_res, precision);
 	numeric_to_string(format_res, numeric_val);
@@ -1899,15 +1919,16 @@ format_exponential(Numeric numeric_val, StringInfo format_res, char pattern, cha
 
 	if (isupper(pattern))
 	{
-		for (char *c = buf; *c; ++c) *c = toupper(*c);
+		for (char *c = buf; *c; ++c)
+			*c = toupper(*c);
 	}
 	len = format_res->len;
 
-	// The last 4 characters are EEEE, appended in numeric_to_string
+	/* The last 4 characters are EEEE, appended in numeric_to_string */
 	if (len >= 5 && buf[len - 5] != 'E' && buf[len - 5] != 'e')
 	{
 		temp = len - 2;
-		// Copy the last 3 characters over one.
+		/* Copy the last 3 characters over one. */
 		for (; len >= temp; len--)
 		{
 			buf[len + 1] = buf[len];
@@ -1927,12 +1948,12 @@ format_exponential(Numeric numeric_val, StringInfo format_res, char pattern, cha
 static void
 format_compact(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string, char *data_type, Oid arg_type_oid)
 {
-	Numeric 	numeric_abs_val;
-	int 		scale;
-	int 		total_digits;
-	int 		integral_digits;
-	int 		precision;
-	char 		*temp;
+	Numeric		numeric_abs_val;
+	int			scale;
+	int			total_digits;
+	int			integral_digits;
+	int			precision;
+	char	   *temp;
 
 	numeric_abs_val = get_numeric_abs(numeric_val);
 	scale = get_numeric_scale(numeric_abs_val);
@@ -1978,65 +1999,64 @@ format_compact(Numeric numeric_val, StringInfo format_res, char pattern, char *p
 static void
 format_roundtrip(Datum value, Numeric numeric_val, StringInfo format_res, char pattern, char *data_type, Oid arg_type_oid)
 {
-	char 	*temp;
-	int 	scale;
-	int 	total_digits;
-	int 	integral_digits;
-	int 	precision;
-	Numeric numeric_abs_val;
+	char	   *temp;
+	int			scale;
+	int			total_digits;
+	int			integral_digits;
+	int			precision;
+	Numeric		numeric_abs_val;
 
 	switch (arg_type_oid)
 	{
-	case FLOAT4OID:
-		numeric_abs_val = get_numeric_abs(numeric_val);
-		scale = get_numeric_scale(numeric_abs_val);
-		total_digits = get_numeric_digit_count(numeric_abs_val);
-		integral_digits = get_integral_digits(total_digits, scale);
-
-		precision = get_precision(toupper(pattern), "", data_type, integral_digits, "");
-
-		if ((arg_type_oid == FLOAT4OID) && (scale > 0 || integral_digits <= 6))
-		{
-			if ((integral_digits + scale) > 6)
-			{
-				appendStringInfoString(format_res, "9D99999999EEEE");
-			}
-			else
-			{
-				appendStringInfoString(format_res, "9D999999EEEE");
-			}
-
-			float4_data_to_char(format_res, value);
-			numeric_val = cstring_to_numeric(format_res->data);
-			numeric_val = trim_scale_numeric(round_num(numeric_val, precision));
-
+		case FLOAT4OID:
 			numeric_abs_val = get_numeric_abs(numeric_val);
 			scale = get_numeric_scale(numeric_abs_val);
 			total_digits = get_numeric_digit_count(numeric_abs_val);
 			integral_digits = get_integral_digits(total_digits, scale);
 
-			appendStringInfoString(format_res, "FM");
-			temp = repeat_string("0", integral_digits);
-			appendStringInfoString(format_res, temp);
-			appendStringInfoChar(format_res, 'D');
-			temp = repeat_string("0", scale);
-			appendStringInfoString(format_res, temp);
+			precision = get_precision(toupper(pattern), "", data_type, integral_digits, "");
 
-			numeric_to_string(format_res, numeric_val);
-		}
-		else
-		{
-			get_exponential_format(format_res, precision - 1);
-			float4_data_to_char(format_res, value);
-
-			if (isupper(pattern))
+			if ((arg_type_oid == FLOAT4OID) && (scale > 0 || integral_digits <= 6))
 			{
-				regexp_replace(format_res->data, "[.]{0,1}0*[eE]", "E", "i");
+				if ((integral_digits + scale) > 6)
+				{
+					appendStringInfoString(format_res, "9D99999999EEEE");
+				}
+				else
+				{
+					appendStringInfoString(format_res, "9D999999EEEE");
+				}
+
+				float4_data_to_char(format_res, value);
+				numeric_val = cstring_to_numeric(format_res->data);
+				numeric_val = trim_scale_numeric(round_num(numeric_val, precision));
+
+				numeric_abs_val = get_numeric_abs(numeric_val);
+				scale = get_numeric_scale(numeric_abs_val);
+				total_digits = get_numeric_digit_count(numeric_abs_val);
+				integral_digits = get_integral_digits(total_digits, scale);
+
+				appendStringInfoString(format_res, "FM");
+				temp = repeat_string("0", integral_digits);
+				appendStringInfoString(format_res, temp);
+				appendStringInfoChar(format_res, 'D');
+				temp = repeat_string("0", scale);
+				appendStringInfoString(format_res, temp);
+
+				numeric_to_string(format_res, numeric_val);
 			}
-		}
-		break;
-	default:
-		break;
+			else
+			{
+				get_exponential_format(format_res, precision - 1);
+				float4_data_to_char(format_res, value);
+
+				if (isupper(pattern))
+				{
+					regexp_replace(format_res->data, "[.]{0,1}0*[eE]", "E", "i");
+				}
+			}
+			break;
+		default:
+			break;
 	}
 }
-
