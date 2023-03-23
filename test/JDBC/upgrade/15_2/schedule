@@ -240,7 +240,6 @@ sys-sql_modules-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
-BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
@@ -396,7 +395,6 @@ BABEL-3748
 sys-systypes
 openjson
 BABEL-3702
-Test-sp_babelfish_volatility
 BABEL_OBJECT_DEFINITION
 Test-sp_rename
 Test-sp_rename-dep
