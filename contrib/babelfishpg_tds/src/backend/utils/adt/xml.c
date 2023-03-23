@@ -11,7 +11,7 @@
  *
  *-------------------------------------------------------------------------
  */
- 
+
 /*
  * Generally, XML type support is only available when libxml use was
  * configured during the build.  But even if that is not done, the
@@ -22,7 +22,7 @@
  * linked with libxml.  Thus, make sure xml_out() works even if nothing
  * else does.
  */
- 
+
 /*
  * Notes on memory management:
  *
@@ -42,9 +42,9 @@
  * external modules.
  */
 /* #define USE_LIBXMLCONTEXT */
- 
+
 #include "postgres.h"
- 
+
 #ifdef USE_LIBXML
 #include <libxml/chvalid.h>
 #include <libxml/parser.h>
@@ -58,7 +58,7 @@
 #include <libxml/xpathInternals.h>
 
 #include "src/include/tds_int.h"
- 
+
 /*
  * We used to check for xmlStructuredErrorContext via a configure test; but
  * that doesn't work on Windows, so instead use this grottier method of
@@ -68,7 +68,7 @@
 #define HAVE_XMLSTRUCTUREDERRORCONTEXT 1
 #endif
 #endif							/* USE_LIBXML */
- 
+
 #include "access/htup_details.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
@@ -92,16 +92,16 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/xml.h"
- 
+
 /* GUC variables */
 int			xmlbinary;
 int			xmloption;
- 
+
 #ifdef USE_LIBXML
- 
+
 /* random number to identify PgXmlErrorContext */
 #define ERRCXT_MAGIC	68275028
- 
+
 struct PgXmlErrorContext
 {
 	int			magic;
@@ -118,27 +118,27 @@ struct PgXmlErrorContext
 };
 
 static void xml_ereport_by_code(int level, int sqlcode,
-					const char *msg, int errcode);
- 
+								const char *msg, int errcode);
+
 #ifdef USE_LIBXMLCONTEXT
- 
+
 static MemoryContext LibxmlContext = NULL;
- 
+
 static void xml_memory_init(void);
 static void *xml_palloc(size_t size);
 static void *xml_repalloc(void *ptr, size_t size);
 static void xml_pfree(void *ptr);
 static char *xml_pstrdup(const char *string);
 #endif							/* USE_LIBXMLCONTEXT */
- 
+
 static xmlChar *xml_text2xmlChar(text *in);
-static int parse_xml_decl(const xmlChar *str, size_t *lenp,
-			   xmlChar **version, xmlChar **encoding, int *standalone);
+static int	parse_xml_decl(const xmlChar *str, size_t *lenp,
+						   xmlChar **version, xmlChar **encoding, int *standalone);
 static bool xml_doctype_in_content(const xmlChar *str);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
-		  bool preserve_whitespace, int encoding);
+						   bool preserve_whitespace, int encoding);
 #endif							/* USE_LIBXML */
- 
+
 /* XMLTABLE support */
 #ifdef USE_LIBXML
 /* random number to identify XmlTableContext */
@@ -155,24 +155,24 @@ typedef struct XmlTableBuilderData
 	xmlXPathCompExprPtr xpathcomp;
 	xmlXPathObjectPtr xpathobj;
 	xmlXPathCompExprPtr *xpathscomp;
-} XmlTableBuilderData;
+}			XmlTableBuilderData;
 #endif
- 
+
 #define NO_XML_SUPPORT() \
 	ereport(ERROR, \
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
 			 errmsg("unsupported XML feature"), \
 			 errdetail("This functionality requires the server to be built with libxml support."), \
 			 errhint("You need to rebuild PostgreSQL using --with-libxml.")))
- 
- 
+
+
 /* from SQL/XML:2008 section 4.9 */
 #define NAMESPACE_XSD "http://www.w3.org/2001/XMLSchema"
 #define NAMESPACE_XSI "http://www.w3.org/2001/XMLSchema-instance"
 #define NAMESPACE_SQLXML "http://standards.iso.org/iso/9075/2003/sqlxml"
- 
+
 #ifdef USE_LIBXML
- 
+
 /*
  * SQL/XML allows storing "XML documents" or "XML content".  "XML
  * documents" are specified by the XML specification and are parsed
@@ -181,16 +181,16 @@ typedef struct XmlTableBuilderData
  * "content" part, so we have to parse the XML declaration ourselves
  * to complete this.
  */
- 
+
 #define CHECK_XML_SPACE(p) \
 	do { \
 		if (!xmlIsBlank_ch(*(p))) \
 			return XML_ERR_SPACE_REQUIRED; \
 	} while (0)
- 
+
 #define SKIP_XML_SPACE(p) \
 	while (xmlIsBlank_ch(*(p))) (p)++
- 
+
 /* Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender */
 /* Beware of multiple evaluations of argument! */
 #define PG_XMLISNAMECHAR(c) \
@@ -199,19 +199,19 @@ typedef struct XmlTableBuilderData
 			|| c == '.' || c == '-' || c == '_' || c == ':' \
 			|| xmlIsCombiningQ(c) \
 			|| xmlIsExtender_ch(c))
- 
+
 /* pnstrdup, but deal with xmlChar not char; len is measured in xmlChars */
 static xmlChar *
 xml_pnstrdup(const xmlChar *str, size_t len)
 {
 	xmlChar    *result;
- 
+
 	result = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
 	memcpy(result, str, len * sizeof(xmlChar));
 	result[len] = 0;
 	return result;
 }
- 
+
 /*
  * str is the null-terminated input string.  Remaining arguments are
  * output arguments; each can be NULL if value is not wanted.
@@ -227,7 +227,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	size_t		len;
 	int			utf8char;
 	int			utf8len;
- 
+
 	/*
 	 * Only initialize libxml.  We don't need error handling here, but we do
 	 * need to make sure libxml is initialized before calling any of its
@@ -235,7 +235,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	 * done pg_xml_init().
 	 */
 	pg_xml_init_library();
- 
+
 	/* Initialize output arguments to "not present" */
 	if (version)
 		*version = NULL;
@@ -243,12 +243,12 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 		*encoding = NULL;
 	if (standalone)
 		*standalone = -1;
- 
+
 	p = str;
- 
+
 	if (xmlStrncmp(p, (xmlChar *) "<?xml", 5) != 0)
 		goto finished;
- 
+
 	/*
 	 * If next char is a name char, it's a PI like <?xml-stylesheet ...?>
 	 * rather than an XMLDecl, so we have done what we came to do and found no
@@ -261,9 +261,9 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	utf8char = xmlGetUTF8Char(p + 5, &utf8len);
 	if (PG_XMLISNAMECHAR(utf8char))
 		goto finished;
- 
+
 	p += 5;
- 
+
 	/* version */
 	CHECK_XML_SPACE(p);
 	SKIP_XML_SPACE(p);
@@ -275,22 +275,22 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 		return XML_ERR_VERSION_MISSING;
 	p += 1;
 	SKIP_XML_SPACE(p);
- 
+
 	if (*p == '\'' || *p == '"')
 	{
 		const xmlChar *q;
- 
+
 		q = xmlStrchr(p + 1, *p);
 		if (!q)
 			return XML_ERR_VERSION_MISSING;
- 
+
 		if (version)
 			*version = xml_pnstrdup(p + 1, q - p - 1);
 		p = q + 1;
 	}
 	else
 		return XML_ERR_VERSION_MISSING;
- 
+
 	/* encoding */
 	save_p = p;
 	SKIP_XML_SPACE(p);
@@ -303,15 +303,15 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 			return XML_ERR_MISSING_ENCODING;
 		p += 1;
 		SKIP_XML_SPACE(p);
- 
+
 		if (*p == '\'' || *p == '"')
 		{
 			const xmlChar *q;
- 
+
 			q = xmlStrchr(p + 1, *p);
 			if (!q)
 				return XML_ERR_MISSING_ENCODING;
- 
+
 			if (encoding)
 				*encoding = xml_pnstrdup(p + 1, q - p - 1);
 			p = q + 1;
@@ -323,7 +323,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	{
 		p = save_p;
 	}
- 
+
 	/* standalone */
 	save_p = p;
 	SKIP_XML_SPACE(p);
@@ -357,25 +357,25 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	{
 		p = save_p;
 	}
- 
+
 	SKIP_XML_SPACE(p);
 	if (xmlStrncmp(p, (xmlChar *) "?>", 2) != 0)
 		return XML_ERR_XMLDECL_NOT_FINISHED;
 	p += 2;
- 
+
 finished:
 	len = p - str;
- 
+
 	for (p = str; p < str + len; p++)
 		if (*p > 127)
 			return XML_ERR_INVALID_CHAR;
- 
+
 	if (lenp)
 		*lenp = len;
- 
+
 	return XML_ERR_OK;
 }
- 
+
 /*
  * Test whether an input that is to be parsed as CONTENT contains a DTD.
  *
@@ -409,24 +409,24 @@ static bool
 xml_doctype_in_content(const xmlChar *str)
 {
 	const xmlChar *p = str;
- 
+
 	for (;;)
 	{
 		const xmlChar *e;
- 
+
 		SKIP_XML_SPACE(p);
 		if (*p != '<')
 			return false;
 		p++;
- 
+
 		if (*p == '!')
 		{
 			p++;
- 
+
 			/* if we see <!DOCTYPE, we can return true */
 			if (xmlStrncmp(p, (xmlChar *) "DOCTYPE", 7) == 0)
 				return true;
- 
+
 			/* otherwise, if it's not a comment, fail */
 			if (xmlStrncmp(p, (xmlChar *) "--", 2) != 0)
 				return false;
@@ -438,23 +438,23 @@ xml_doctype_in_content(const xmlChar *str)
 			p += 3;
 			continue;
 		}
- 
+
 		/* otherwise, if it's not a PI <?target something?>, fail */
 		if (*p != '?')
 			return false;
 		p++;
- 
+
 		/* find end of PI (the string ?> is forbidden within a PI) */
 		e = xmlStrstr(p, (xmlChar *) "?>");
 		if (!e)
 			return false;
- 
+
 		/* advance over PI, keep scanning */
 		p = e + 2;
 	}
 }
- 
- 
+
+
 /*
  * Convert a C string to XML internal representation
  *
@@ -474,18 +474,18 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlParserCtxtPtr ctxt = NULL;
 	volatile xmlDocPtr doc = NULL;
- 
+
 	len = VARSIZE_ANY_EXHDR(data);	/* will be useful later */
 	string = xml_text2xmlChar(data);
- 
+
 	utf8string = pg_do_encoding_conversion(string,
 										   len,
 										   encoding,
 										   PG_UTF8);
- 
+
 	/* Start up libxml and its parser */
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_WELLFORMED);
- 
+
 	/* Use a TRY block to ensure we clean up correctly */
 	PG_TRY();
 	{
@@ -494,14 +494,14 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 		size_t		count = 0;
 		xmlChar    *version = NULL;
 		int			standalone = 0;
- 
+
 		xmlInitParser();
- 
+
 		ctxt = xmlNewParserCtxt();
 		if (ctxt == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate parser context");
- 
+
 		/* Decide whether to parse as document or content */
 		if (xmloption_arg == XMLOPTION_DOCUMENT)
 			parse_as_document = true;
@@ -514,12 +514,12 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
 									"invalid XML content: invalid XML declaration",
 									res_code);
- 
+
 			/* Is there a DOCTYPE element? */
 			if (xml_doctype_in_content(utf8string + count))
 				parse_as_document = true;
 		}
- 
+
 		if (parse_as_document)
 		{
 			/*
@@ -551,7 +551,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			Assert(doc->encoding == NULL);
 			doc->encoding = xmlStrdup((const xmlChar *) "UTF-8");
 			doc->standalone = standalone;
- 
+
 			/* allow empty content */
 			if (*(utf8string + count))
 			{
@@ -569,21 +569,21 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			xmlFreeDoc(doc);
 		if (ctxt != NULL)
 			xmlFreeParserCtxt(ctxt);
- 
+
 		pg_xml_done(xmlerrcxt, true);
- 
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
- 
+
 	xmlFreeParserCtxt(ctxt);
- 
+
 	pg_xml_done(xmlerrcxt, false);
- 
+
 	return doc;
 }
- 
- 
+
+
 /*
  * xmlChar<->text conversions
  */
@@ -592,10 +592,10 @@ xml_text2xmlChar(text *in)
 {
 	return (xmlChar *) text_to_cstring(in);
 }
- 
- 
+
+
 #ifdef USE_LIBXMLCONTEXT
- 
+
 /*
  * Manage the special context used for all libxml allocations (but only
  * in special debug builds; see notes at top of file)
@@ -608,11 +608,11 @@ xml_memory_init(void)
 		LibxmlContext = AllocSetContextCreate(TopMemoryContext,
 											  MC_Libxml_context,
 											  ALLOCSET_DEFAULT_SIZES);
- 
+
 	/* Re-establish the callbacks even if already set */
 	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
 }
- 
+
 /*
  * Wrappers for memory management functions
  */
@@ -621,15 +621,15 @@ xml_palloc(size_t size)
 {
 	return MemoryContextAlloc(LibxmlContext, size);
 }
- 
- 
+
+
 static void *
 xml_repalloc(void *ptr, size_t size)
 {
 	return repalloc(ptr, size);
 }
- 
- 
+
+
 static void
 xml_pfree(void *ptr)
 {
@@ -637,16 +637,16 @@ xml_pfree(void *ptr)
 	if (ptr)
 		pfree(ptr);
 }
- 
- 
+
+
 static char *
 xml_pstrdup(const char *string)
 {
 	return MemoryContextStrdup(LibxmlContext, string);
 }
 #endif							/* USE_LIBXMLCONTEXT */
- 
- 
+
+
 /*
  * Wrapper for "ereport" function for XML-related errors.  The "msg"
  * is the SQL-level message; some can be adopted from the SQL/XML
@@ -659,7 +659,7 @@ xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int code)
 {
 	const char *det;
- 
+
 	switch (code)
 	{
 		case XML_ERR_INVALID_CHAR:
@@ -684,42 +684,42 @@ xml_ereport_by_code(int level, int sqlcode,
 			det = gettext_noop("Unrecognized libxml error code: %d.");
 			break;
 	}
- 
+
 	ereport(level,
 			(errcode(sqlcode),
 			 errmsg_internal("%s", msg),
 			 errdetail(det, code)));
 }
 #endif							/* USE_LIBXML */
- 
+
 /*
  * support functions for XMLTABLE
  *
  */
 #ifdef USE_LIBXML
- 
+
 /*
  * Returns private data from executor state. Ensure validity by check with
  * MAGIC number.
  */
 static inline XmlTableBuilderData *
-GetXmlTableBuilderPrivateData(TableFuncScanState *state, const char *fname)
+GetXmlTableBuilderPrivateData(TableFuncScanState * state, const char *fname)
 {
 	XmlTableBuilderData *result;
- 
+
 	if (!IsA(state, TableFuncScanState))
 		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
 	result = (XmlTableBuilderData *) state->opaque;
 	if (result->magic != XMLTABLE_CONTEXT_MAGIC)
 		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
- 
+
 	return result;
 }
 #endif
 
 void *
 tds_xml_parse(text *data, int xmloption_arg, bool preserve_whitespace,
-				int encoding)
+			  int encoding)
 {
 	return xml_parse(data, xmloption_arg, preserve_whitespace, encoding);
 }
@@ -730,9 +730,9 @@ tds_xmlFreeDoc(void *doc)
 	return xmlFreeDoc(doc);
 }
 
-int 
+int
 tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
-						  xmlChar **version, xmlChar **encoding, int *standalone)
+				   xmlChar **version, xmlChar **encoding, int *standalone)
 {
 	return parse_xml_decl(str, lenp, version, encoding, standalone);
 }

@@ -24,14 +24,14 @@ PG_FUNCTION_INFO_V1(sp_releaseapplock_function);
 PG_FUNCTION_INFO_V1(APPLOCK_MODE);
 PG_FUNCTION_INFO_V1(APPLOCK_TEST);
 
-/* 
- * Applock local and global hashmaps. The local one keeps track of applock 
+/*
+ * Applock local and global hashmaps. The local one keeps track of applock
  * that the current session owns. The global one resolves hash conflict if
  * two different lock resource name are hashed to the same integer key.
  * Both uses the same cache entry structure for convenience.
  */
-static HTAB * appLockCacheLocal = NULL;
-static HTAB * appLockCacheGlobal = NULL;
+static HTAB *appLockCacheLocal = NULL;
+static HTAB *appLockCacheGlobal = NULL;
 
 /* Max length of applock resource name string (including the ending '\0') */
 #define APPLOCK_MAX_RESOURCE_LENGTH 256
@@ -42,26 +42,28 @@ static HTAB * appLockCacheGlobal = NULL;
 #define APPLOCK_MAX_LOCKTIMEOUT_LENGTH 33
 #define APPLOCK_MAX_DBPRINCIPAL_LENGTH 33
 
-/* 
+/*
  * Max number of retries to search for usable key when hash collision happens.
  * The chance of multiple strings being hashed to the same key is roughly
  * (1/2^63)*(#_of_strings-1). So a small APPLOCK_MAX_TRY_SEARCH_KEY should be
- * enough. Also, because we have to scan all the possible candidate keys when 
- * looking for a usable key (see ApplockGetUsableKey()), a small 
+ * enough. Also, because we have to scan all the possible candidate keys when
+ * looking for a usable key (see ApplockGetUsableKey()), a small
  * APPLOCK_MAX_TRY_SEARCH_KEY is preferred too.
  */
 #define APPLOCK_MAX_TRY_SEARCH_KEY 5
 
 typedef struct applockcacheent
 {
-    int64       key;			/* (hashed) key integer of the lock */
-    char        resource[APPLOCK_MAX_RESOURCE_LENGTH + 1];	/* Resource name string of the lock */
-    uint32_t    refcount;		/* Currently how many times this lock is being held. 
-	                               Note the count may be different locally/globally.*/
-    slist_head  mode_head;		/* lock mode list, keeping track of all lock modes 
-	                               currently being held with this lock resource .
-	                               Only used in local cache. */ 
-    bool        is_session;		/* If it's session lock or transaction lock */
+	int64		key;			/* (hashed) key integer of the lock */
+	char		resource[APPLOCK_MAX_RESOURCE_LENGTH + 1];	/* Resource name string
+															 * of the lock */
+	uint32_t	refcount;		/* Currently how many times this lock is being
+								 * held. Note the count may be different
+								 * locally/globally. */
+	slist_head	mode_head;		/* lock mode list, keeping track of all lock
+								 * modes currently being held with this lock
+								 * resource . Only used in local cache. */
+	bool		is_session;		/* If it's session lock or transaction lock */
 } AppLockCacheEnt;
 
 /* Linked-list struct for keeping track of the lockmodes one owns */
@@ -73,7 +75,7 @@ typedef struct
 
 /*
  * Applock modes
- * 
+ *
  * Table of compatibility ('Yes' indicates compatible):
  *
  * mode                  IS    S    U    IX    X
@@ -88,7 +90,8 @@ typedef struct
  * are NOT acquirable by sp_getapplock but can be returned by
  * APPLOCK_MODE(). See comments for APPLOCK_MODE().
  */
-typedef enum {
+typedef enum
+{
 	APPLOCKMODE_NOLOCK,
 	APPLOCKMODE_INTENTEXCLUSIVE,
 	APPLOCKMODE_INTENTSHARED,
@@ -97,7 +100,7 @@ typedef enum {
 	APPLOCKMODE_EXCLUSIVE,
 	APPLOCKMODE_SHAREDINTENTEXCLUSIVE,
 	APPLOCKMODE_UPDATEINTENTEXCLUSIVE
-} Applock_All_Lockmode;
+}			Applock_All_Lockmode;
 
 /*
  * Strings for Applock modes. The order MUST match the mode enum in
@@ -118,21 +121,24 @@ static const char *AppLockModeStrings[] =
 /*
  * Added pg_attribute_printf() to silence compiler warning tunrned error [-Werror=suggest-attribute=format]
  */
-static pg_attribute_printf(1, 2) void ApplockPrintMessage(const char *fmt, ...) {
+static pg_attribute_printf(1, 2)
+void
+ApplockPrintMessage(const char *fmt,...)
+{
 
-	int		save_errno = errno;
+	int			save_errno = errno;
 	size_t		len = 128;		/* initial assumption about buffer size */
-	char		*msg;
+	char	   *msg;
 
 	for (;;)
 	{
-		char		*buf;
+		char	   *buf;
 		va_list		args;
 		size_t		newlen;
 
 		/*
-		 * Allocate buffer.  Note that in frontend this maps to malloc
-		 * with exit-on-error.
+		 * Allocate buffer.  Note that in frontend this maps to malloc with
+		 * exit-on-error.
 		 */
 		buf = (char *) palloc(len);
 
@@ -143,8 +149,9 @@ static pg_attribute_printf(1, 2) void ApplockPrintMessage(const char *fmt, ...) 
 		va_end(args);
 
 		if (newlen < len)
-		{	msg = buf;
-			break;		/* success */
+		{
+			msg = buf;
+			break;				/* success */
 		}
 
 		/* Release buffer and loop around to try again with larger len. */
@@ -177,8 +184,8 @@ static pg_attribute_printf(1, 2) void ApplockPrintMessage(const char *fmt, ...) 
 	 (locktag).locktag_type = LOCKTAG_ADVISORY, \
 	 (locktag).locktag_lockmethodid = APPLOCK_LOCKMETHOD)
 
-/* 
- * PG advisory lock uses 0 and 1 for field4 (see comments for SET_LOCKTAG_INT64). 
+/*
+ * PG advisory lock uses 0 and 1 for field4 (see comments for SET_LOCKTAG_INT64).
  * We use 2 to avoid conflict with it.
  */
 #define ApplockSetLocktag(tag, key64) \
@@ -199,7 +206,7 @@ static pg_attribute_printf(1, 2) void ApplockPrintMessage(const char *fmt, ...) 
 		(ENTRY)->resource[0] = '\0';  \
 		slist_init(&(ENTRY)->mode_head);  \
 	}  \
-} while(0) 
+} while(0)
 
 #define AppLockCacheLookup(ID, ENTRY) \
     do { \
@@ -269,7 +276,7 @@ static pg_attribute_printf(1, 2) void ApplockPrintMessage(const char *fmt, ...) 
 	}      \
     } while (0)
 
-/* 
+/*
  * We accept any input of dbprincipal until we decide otherwise.
  * Also a placeholder to escape unused variable error for dbprincipal.
  */
@@ -281,7 +288,7 @@ static pg_attribute_printf(1, 2) void ApplockPrintMessage(const char *fmt, ...) 
 
 static void ApplockRemoveCache(bool release_session);
 
-/* 
+/*
  * Simple consistent hashing function to convert a string to an int.
  * We'll avoid return non-negative values because that will be used for errors.
  * The chance of 2 strings colliding with the same key is about 1/2^63.
@@ -290,29 +297,31 @@ static void ApplockRemoveCache(bool release_session);
 static int64
 applock_simple_hash(char *str)
 {
-	const int p = 31;
+	const int	p = 31;
 	const int64 m = INT64_MAX;
-	uint64 hash_value = 0;
-	int64 p_pow = 1;
-	char c;
+	uint64		hash_value = 0;
+	int64		p_pow = 1;
+	char		c;
 
 	c = *str;
-	while (c) {
+	while (c)
+	{
 		hash_value = (hash_value + (c - 'a' + 1) * p_pow) % m;
 		p_pow = (p_pow * p) % m;
 		c = *++str;
 	}
-    return hash_value;
+	return hash_value;
 }
 
-/* 
- * Get PG Lock mode for corresponding Applock mode. 
+/*
+ * Get PG Lock mode for corresponding Applock mode.
  * See AppLockConflicts[] defined in backend/storage/lmgr/lock.c.
  */
-static short getPGLockMode(short applockmode)
+static short
+getPGLockMode(short applockmode)
 {
-	short mode = 0;
-	
+	short		mode = 0;
+
 	if (applockmode == APPLOCKMODE_EXCLUSIVE)
 		mode = ExclusiveLock;
 	else if (applockmode == APPLOCKMODE_SHARED)
@@ -330,48 +339,51 @@ static short getPGLockMode(short applockmode)
 }
 
 /* Initialize both local and global hashmaps */
-static void initApplockCache()
+static void
+initApplockCache()
 {
-	HASHCTL         ctl;
+	HASHCTL		ctl;
 
 	/* Local cache */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(int64);
 	ctl.entrysize = sizeof(AppLockCacheEnt);
-	appLockCacheLocal = hash_create("Applock Cache", 16, 
-				&ctl, HASH_ELEM | HASH_BLOBS);
+	appLockCacheLocal = hash_create("Applock Cache", 16,
+									&ctl, HASH_ELEM | HASH_BLOBS);
 
 	/* Global cache */
 	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(int64);
 	ctl.entrysize = sizeof(AppLockCacheEnt);
-	appLockCacheGlobal = (HTAB*)ShmemInitHash("Applock",
-										/*table size*/ 32,
-										/*max table size*/ 32,
-										&ctl,
-										HASH_ELEM | HASH_BLOBS);
+	appLockCacheGlobal = (HTAB *) ShmemInitHash("Applock",
+												 /* table size */ 32,
+												 /* max table size */ 32,
+												&ctl,
+												HASH_ELEM | HASH_BLOBS);
 	LWLockRelease(AddinShmemInitLock);
 
-	/* 
-	 * Init this function handler to be called when PG implicitly
-	 * release locks at the end of transaction/session. 
+	/*
+	 * Init this function handler to be called when PG implicitly release
+	 * locks at the end of transaction/session.
 	 */
-	applock_release_func_handler = (void*) ApplockRemoveCache;
+	applock_release_func_handler = (void *) ApplockRemoveCache;
 }
 
 /* Search a key corresponding to a resource name in local hashmap. */
-static int64 AppLockSearchKeyLocal(char *resource)
+static int64
+AppLockSearchKeyLocal(char *resource)
 {
 	AppLockCacheEnt *entry;
-	int64 key;
-	int try_search = 0;
+	int64		key;
+	int			try_search = 0;
 
 	key = applock_simple_hash(resource);
-	while (try_search++ < APPLOCK_MAX_TRY_SEARCH_KEY) {
-		entry = (AppLockCacheEnt*) hash_search(appLockCacheLocal,
-                                                    (void *) &key,
-                                                    HASH_FIND, NULL);
+	while (try_search++ < APPLOCK_MAX_TRY_SEARCH_KEY)
+	{
+		entry = (AppLockCacheEnt *) hash_search(appLockCacheLocal,
+												(void *) &key,
+												HASH_FIND, NULL);
 		if (entry && strcmp(entry->resource, resource) == 0)
 			return key;
 		/* be mindful of overflow */
@@ -382,20 +394,23 @@ static int64 AppLockSearchKeyLocal(char *resource)
 }
 
 /* Search a key corresponding to a resource name in global hashmap. */
-static int64 AppLockSearchKeyGlobal(char *resource)
+static int64
+AppLockSearchKeyGlobal(char *resource)
 {
 	AppLockCacheEnt *entry;
-	int64 key;
-	int try_search = 0;
+	int64		key;
+	int			try_search = 0;
 
 	LWLockAcquire(TsqlApplockSyncLock, LW_SHARED);
 
 	key = applock_simple_hash(resource);
-	while (try_search++ < APPLOCK_MAX_TRY_SEARCH_KEY) {
-		entry = (AppLockCacheEnt*) hash_search(appLockCacheGlobal,
-                                                    (void *) &key,
-                                                    HASH_FIND, NULL);
-		if (entry && strcmp(entry->resource, resource) == 0) {
+	while (try_search++ < APPLOCK_MAX_TRY_SEARCH_KEY)
+	{
+		entry = (AppLockCacheEnt *) hash_search(appLockCacheGlobal,
+												(void *) &key,
+												HASH_FIND, NULL);
+		if (entry && strcmp(entry->resource, resource) == 0)
+		{
 			LWLockRelease(TsqlApplockSyncLock);
 			return key;
 		}
@@ -407,47 +422,56 @@ static int64 AppLockSearchKeyGlobal(char *resource)
 	return -1;
 }
 
-/* 
- * Un-reference an entry in the appLockCacheGlobal. 
+/*
+ * Un-reference an entry in the appLockCacheGlobal.
  * Delete it if its refcount is reduced to 0.
  */
-static void ApplockUnrefGlobalCache(int64 key)
+static void
+ApplockUnrefGlobalCache(int64 key)
 {
 	AppLockCacheEnt *entry;
 
 	LWLockAcquire(TsqlApplockSyncLock, LW_EXCLUSIVE);
-    entry = (AppLockCacheEnt *) hash_search(appLockCacheGlobal,
-                                                (void *) &key,
-                                                HASH_FIND, NULL);
-	if (entry && --entry->refcount == 0) {
-		hash_search(appLockCacheGlobal,
+	entry = (AppLockCacheEnt *) hash_search(appLockCacheGlobal,
 											(void *) &key,
-											HASH_REMOVE, NULL);
+											HASH_FIND, NULL);
+	if (entry && --entry->refcount == 0)
+	{
+		hash_search(appLockCacheGlobal,
+					(void *) &key,
+					HASH_REMOVE, NULL);
 		entry->resource[0] = '\0';
 	}
 	LWLockRelease(TsqlApplockSyncLock);
 }
 
-/* 
- * Get a usable key from the resource string that doesn't collide 
- * with existing ones. 
+/*
+ * Get a usable key from the resource string that doesn't collide
+ * with existing ones.
  * Return a usable key (non-negative integer) if found, or -1 if couldn't.
  */
-static int64 ApplockGetUsableKey(char *resource)
+static int64
+ApplockGetUsableKey(char *resource)
 {
-	int64			key, usable_key;
-    bool			found;
+	int64		key,
+				usable_key;
+	bool		found;
 	AppLockCacheEnt *entry;
-	int				try_search = 0;
+	int			try_search = 0;
 
-	/* Firstly, try search in the global cache to see if it's available already*/
-	if ((key = AppLockSearchKeyGlobal(resource)) != -1) {
+	/*
+	 * Firstly, try search in the global cache to see if it's available
+	 * already
+	 */
+	if ((key = AppLockSearchKeyGlobal(resource)) != -1)
+	{
 		LWLockAcquire(TsqlApplockSyncLock, LW_EXCLUSIVE);
-		entry = (AppLockCacheEnt*) hash_search(appLockCacheGlobal,
-													(void *) &key,
-													HASH_ENTER, &found);
-		/* Someone might've just deleted it. So check it before modify.*/
-		if (found) {
+		entry = (AppLockCacheEnt *) hash_search(appLockCacheGlobal,
+												(void *) &key,
+												HASH_ENTER, &found);
+		/* Someone might've just deleted it. So check it before modify. */
+		if (found)
+		{
 			++entry->refcount;
 			LWLockRelease(TsqlApplockSyncLock);
 			return key;
@@ -463,23 +487,25 @@ static int64 ApplockGetUsableKey(char *resource)
 
 	LWLockAcquire(TsqlApplockSyncLock, LW_EXCLUSIVE);
 
-	/* 
-	 * Some different resource name may have been hashed to the same key. 
-	 * In that case, we keep incrementing key until we find a usable one. 
+	/*
+	 * Some different resource name may have been hashed to the same key. In
+	 * that case, we keep incrementing key until we find a usable one.
 	 *
-	 * NB: it's not very meaningful to try too many times because if it
-	 * turns out that a couple of random keys have somehow all been used,
-	 * we probably have a bug somewhere so it's better to error out.
-	 * Also, we have to search all the possible candidate keys for the resource
-	 * to make sure someone else did not just insert the same resource with 
-	 * some key unknown to the caller.
+	 * NB: it's not very meaningful to try too many times because if it turns
+	 * out that a couple of random keys have somehow all been used, we
+	 * probably have a bug somewhere so it's better to error out. Also, we
+	 * have to search all the possible candidate keys for the resource to make
+	 * sure someone else did not just insert the same resource with some key
+	 * unknown to the caller.
 	 */
-	while (try_search++ < APPLOCK_MAX_TRY_SEARCH_KEY) {
-		entry = (AppLockCacheEnt*) hash_search(appLockCacheGlobal,
-                                                    (void *) &key,
-                                                    HASH_FIND, NULL);
+	while (try_search++ < APPLOCK_MAX_TRY_SEARCH_KEY)
+	{
+		entry = (AppLockCacheEnt *) hash_search(appLockCacheGlobal,
+												(void *) &key,
+												HASH_FIND, NULL);
 		/* Someone might've just inserted an entry for this resource. */
-		if (entry && strcmp(entry->resource, resource) == 0) {
+		if (entry && strcmp(entry->resource, resource) == 0)
+		{
 			entry->refcount++;
 			LWLockRelease(TsqlApplockSyncLock);
 			return key;
@@ -492,10 +518,11 @@ static int64 ApplockGetUsableKey(char *resource)
 		key = (key % INT64_MAX) + 1;
 	}
 
-	if (usable_key != -1) {
-		entry = (AppLockCacheEnt*) hash_search(appLockCacheGlobal,
-													(void *) &usable_key,
-													HASH_ENTER, &found);
+	if (usable_key != -1)
+	{
+		entry = (AppLockCacheEnt *) hash_search(appLockCacheGlobal,
+												(void *) &usable_key,
+												HASH_ENTER, &found);
 		/* It must be non-existing at this point. */
 		Assert(!found);
 
@@ -520,19 +547,20 @@ static int64 ApplockGetUsableKey(char *resource)
  * -2: lock request canceled.
  * -3: lock request was chosen as a deadlock victim.
  */
-static int _sp_getapplock_internal (char *resource, char *lockmode, 
-		                            char *lockowner, int32_t timeout, 
-								    char *dbprincipal, bool suppress_warning)
+static int
+_sp_getapplock_internal(char *resource, char *lockmode,
+						char *lockowner, int32_t timeout,
+						char *dbprincipal, bool suppress_warning)
 {
 	int32_t		cur_timeout;
-	int64       key;
-	LOCKTAG     tag;
+	int64		key;
+	LOCKTAG		tag;
 	short		mode;
 	bool		is_session;
 	bool		lock_timeout_occurred = false;
 	bool		no_wait = false;
-	AppLockCacheEnt	*entry;
-	volatile TimestampTz	start_time;
+	AppLockCacheEnt *entry;
+	volatile TimestampTz start_time;
 	AppLockModeNode *node;
 
 	/* a few sanity checks */
@@ -550,42 +578,45 @@ static int _sp_getapplock_internal (char *resource, char *lockmode,
 	if ((key = ApplockGetUsableKey(resource)) < 0)
 	{
 		if (!suppress_warning)
-			ApplockPrintMessage("could not find usable key for lock resource %s.",resource);
+			ApplockPrintMessage("could not find usable key for lock resource %s.", resource);
 		return -999;
 	}
 
 	ApplockSetLocktag(tag, key);
 
-	/* 
+	/*
 	 * Setting timeout if timeout is not the meaningless default value (-99).
-	 * Note some special cases in timeout: in TSQL -1 means wait forever
-	 * and 0 means do not wait at all. But in PG, 0 means wait forever and
-	 * -1 is meaningless. To make PG not wait at all, we need to pass
-	 * no_wait=true to LockAcquire().
+	 * Note some special cases in timeout: in TSQL -1 means wait forever and 0
+	 * means do not wait at all. But in PG, 0 means wait forever and -1 is
+	 * meaningless. To make PG not wait at all, we need to pass no_wait=true
+	 * to LockAcquire().
 	 */
 	if (timeout == 0)
 		no_wait = true;
 	timeout = (timeout == -1 ? 0 : timeout);
 	cur_timeout = atoi(GetConfigOption("lock_timeout", false, false));
 	ApplockSetLockTimeout(timeout);
-	
+
 	start_time = GetCurrentTimestamp();
-	/* finally, attempt to acquire the lock.*/
+	/* finally, attempt to acquire the lock. */
 	PG_TRY();
 	{
-		/* If lock is unavailable, throw an error to let the catch block deal with it */
+		/*
+		 * If lock is unavailable, throw an error to let the catch block deal
+		 * with it
+		 */
 		if (LockAcquire(&tag, getPGLockMode(mode), is_session, no_wait) == LOCKACQUIRE_NOT_AVAIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-					errmsg("Applock resource \'%s\' unavailable", resource)));
+					 errmsg("Applock resource \'%s\' unavailable", resource)));
 	}
 	PG_CATCH();
 	{
-		/* 
+		/*
 		 * Exceptions during lock acquiring. This could be timeout, deadlock
 		 * or other failures. Note that we have to return something here
-		 * instead of throwing the errors out because otherwise the caller 
-		 * won't be able to get the return code as defined in TSQL standard. 
+		 * instead of throwing the errors out because otherwise the caller
+		 * won't be able to get the return code as defined in TSQL standard.
 		 * Therefore, we unfortunately can't print PG's nice deadlock report.
 		 */
 
@@ -595,16 +626,16 @@ static int _sp_getapplock_internal (char *resource, char *lockmode,
 		/*
 		 * Did timeout occur?
 		 *
-		 * NB: ERRCODE_LOCK_NOT_AVAILABLE is not just for timeout, so we
-		 * have to check the elapse time to really make sure.
-		 * Also, although get_timeout_indicator(LOCK_TIMEOUT, if_reset) can
-		 * check the same but when timeout happens, ProcessInterrupts() always 
-		 * reset the indicator, thus we have to use another way.
+		 * NB: ERRCODE_LOCK_NOT_AVAILABLE is not just for timeout, so we have
+		 * to check the elapse time to really make sure. Also, although
+		 * get_timeout_indicator(LOCK_TIMEOUT, if_reset) can check the same
+		 * but when timeout happens, ProcessInterrupts() always reset the
+		 * indicator, thus we have to use another way.
 		 */
-		lock_timeout_occurred = timeout >= 0 && 
-									get_timeout_finish_time(LOCK_TIMEOUT) 
-										- start_time > (int64)timeout * 1e3 && 
-									geterrcode() == ERRCODE_LOCK_NOT_AVAILABLE;
+		lock_timeout_occurred = timeout >= 0 &&
+			get_timeout_finish_time(LOCK_TIMEOUT)
+			- start_time > (int64) timeout * 1e3 &&
+			geterrcode() == ERRCODE_LOCK_NOT_AVAILABLE;
 
 		/* reset timeout back */
 		ApplockSetLockTimeout(cur_timeout);
@@ -629,21 +660,22 @@ static int _sp_getapplock_internal (char *resource, char *lockmode,
 				ApplockPrintMessage("Deadlock detected in applock request for \'%s\' ", resource);
 			return -3;
 		}
-		/* 
+
+		/*
 		 * Regard all other exceptions as lock request being canceled (e.g.
 		 * the calling query was interrupted and terminated.)
 		 */
 		else
 		{
 			if (!suppress_warning)
-			    ApplockPrintMessage("Applock request for \'%s\' is canceled", resource);
+				ApplockPrintMessage("Applock request for \'%s\' is canceled", resource);
 			return -2;
 		}
 	}
 	PG_END_TRY();
 
 	ApplockSetLockTimeout(cur_timeout);
-	
+
 	/* lock aquired, we can insert or update the local cache entry now. */
 	AppLockCacheInsert(key, entry);
 	entry->resource[0] = '\0';
@@ -664,14 +696,15 @@ static int _sp_getapplock_internal (char *resource, char *lockmode,
  * 0: lock released successfully.
  * -999: lock release attempt failed.
  */
-static int _sp_releaseapplock_internal(char *resource, char *lockowner,
-                                      char *dbprincipal, bool suppress_warning)
+static int
+_sp_releaseapplock_internal(char *resource, char *lockowner,
+							char *dbprincipal, bool suppress_warning)
 {
-	int64           key;
-	LOCKTAG         tag;
+	int64		key;
+	LOCKTAG		tag;
 	short		mode;
 	bool		is_session;
-	AppLockCacheEnt	*entry;
+	AppLockCacheEnt *entry;
 	AppLockModeNode *node;
 
 	/* a few sanity checks */
@@ -680,7 +713,8 @@ static int _sp_releaseapplock_internal(char *resource, char *lockowner,
 	ApplockCheckDbPrincipal(dbprincipal);
 
 	/* Search in the global cache for the key. */
-	if ((key = AppLockSearchKeyGlobal(resource)) == -1) {
+	if ((key = AppLockSearchKeyGlobal(resource)) == -1)
+	{
 		if (!suppress_warning)
 			ApplockPrintMessage("No lock resource \'%s\' acquired before.", resource);
 		LWLockRelease(TsqlApplockSyncLock);
@@ -689,15 +723,17 @@ static int _sp_releaseapplock_internal(char *resource, char *lockowner,
 
 	/* verify the key in the local cache, and if the lock owner matches */
 	AppLockCacheLookup(key, entry);
-	if (entry == NULL) {
+	if (entry == NULL)
+	{
 		if (!suppress_warning)
 			ApplockPrintMessage("No lock resource \'%s\' acquired before.", resource);
 		return -999;
 	}
-	if (is_session != entry->is_session) {
+	if (is_session != entry->is_session)
+	{
 		if (!suppress_warning)
-			ApplockPrintMessage("Wrong LockOwner for lock resource \'%s\', it is a %s lock.", 
-							resource, entry->is_session ? "Session" : "Transaction");
+			ApplockPrintMessage("Wrong LockOwner for lock resource \'%s\', it is a %s lock.",
+								resource, entry->is_session ? "Session" : "Transaction");
 		return -999;
 	}
 
@@ -705,13 +741,13 @@ static int _sp_releaseapplock_internal(char *resource, char *lockowner,
 	ApplockSetLocktag(tag, key);
 
 	/* get the same lock mode as recorded */
-	mode = ((AppLockModeNode*)entry->mode_head.head.next)->mode;
+	mode = ((AppLockModeNode *) entry->mode_head.head.next)->mode;
 
 	if (!LockRelease(&tag, getPGLockMode(mode), is_session))
 		return -999;
 
 	/* Un-referencing the local cache entry and delete it if needed. */
-	node = (AppLockModeNode*)slist_pop_head_node((slist_head*)&entry->mode_head);
+	node = (AppLockModeNode *) slist_pop_head_node((slist_head *) &entry->mode_head);
 	free(node);
 	if (--entry->refcount == 0)
 		AppLockCacheDelete(key);
@@ -728,8 +764,10 @@ static int _sp_releaseapplock_internal(char *resource, char *lockowner,
 Datum
 sp_getapplock_function(PG_FUNCTION_ARGS)
 {
-	char		resource[APPLOCK_MAX_RESOURCE_LENGTH], lockmode[APPLOCK_MAX_LOCKMODE_LENGTH];
-	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH], dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
+	char		resource[APPLOCK_MAX_RESOURCE_LENGTH],
+				lockmode[APPLOCK_MAX_LOCKMODE_LENGTH];
+	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH],
+				dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
 	int32_t		timeout;
 	int			ret;
 
@@ -755,7 +793,8 @@ Datum
 sp_releaseapplock_function(PG_FUNCTION_ARGS)
 {
 	char		resource[APPLOCK_MAX_RESOURCE_LENGTH];
-	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH], dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
+	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH],
+				dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
 	int			ret;
 
 	/* Init applock hash table if we haven't done so. */
@@ -774,10 +813,10 @@ sp_releaseapplock_function(PG_FUNCTION_ARGS)
 /*
  * Get lockmode of the applock the caller holds and return the mode in string.
  *
- * NB: when there are more than one lock modes, the mode to return is the 'highest' 
- * lockmode among them. The main order is: from lowest (most relaxed) to 
- * highest (most strict): IntentShared < Shared < Update < Exclusive. 
- * A special case is IntentExclusive which if is held, there could be 3 
+ * NB: when there are more than one lock modes, the mode to return is the 'highest'
+ * lockmode among them. The main order is: from lowest (most relaxed) to
+ * highest (most strict): IntentShared < Shared < Update < Exclusive.
+ * A special case is IntentExclusive which if is held, there could be 3
  * different return modes depending on what's the other mode being held:
  *   1. IntentExclusive + IntentExclusive = IntentExclusive
  *   2. IntentExclusive + IntentShared = SharedIntentExclusive
@@ -786,12 +825,13 @@ sp_releaseapplock_function(PG_FUNCTION_ARGS)
 Datum
 APPLOCK_MODE(PG_FUNCTION_ARGS)
 {
-	char				resource[APPLOCK_MAX_RESOURCE_LENGTH];
-	short				high_mode, ret_mode;
-	AppLockCacheEnt		*entry;
-	int64				key;
-	slist_iter			iter;
-	bool				has_intent_exc;
+	char		resource[APPLOCK_MAX_RESOURCE_LENGTH];
+	short		high_mode,
+				ret_mode;
+	AppLockCacheEnt *entry;
+	int64		key;
+	slist_iter	iter;
+	bool		has_intent_exc;
 
 	/* Init applock hash table if not yet done. */
 	if (!appLockCacheLocal)
@@ -801,19 +841,21 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 
 	/* If we don't own the lock, just return NoLock */
 	if ((key = AppLockSearchKeyLocal(resource)) < 0)
-		PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)(AppLockModeStrings[APPLOCKMODE_NOLOCK], 
-												strlen(AppLockModeStrings[APPLOCKMODE_NOLOCK]), 
-												-1));
+		PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input) (AppLockModeStrings[APPLOCKMODE_NOLOCK],
+																			  strlen(AppLockModeStrings[APPLOCKMODE_NOLOCK]),
+																			  -1));
 
-	/* 
-	 * Loop all the lock modes I've owned this resource with, and find the 
+	/*
+	 * Loop all the lock modes I've owned this resource with, and find the
 	 * correct string to return.
 	 */
 	AppLockCacheLookup(key, entry);
 	high_mode = APPLOCKMODE_NOLOCK;
 	has_intent_exc = false;
-	slist_foreach(iter, &entry->mode_head) {
+	slist_foreach(iter, &entry->mode_head)
+	{
 		AppLockModeNode *node = slist_container(AppLockModeNode, sn, iter.cur);
+
 		if (node->mode == APPLOCKMODE_INTENTEXCLUSIVE)
 			has_intent_exc = true;
 		if (node->mode > high_mode)
@@ -826,16 +868,16 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 	else
 		ret_mode = high_mode;
 
-	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input)(AppLockModeStrings[ret_mode], 
-												strlen(AppLockModeStrings[ret_mode]), 
-												-1));
+	PG_RETURN_VARCHAR_P((*common_utility_plugin_ptr->tsql_varchar_input) (AppLockModeStrings[ret_mode],
+																		  strlen(AppLockModeStrings[ret_mode]),
+																		  -1));
 }
 
 /*
- * Test if an applock can be acquired. We took a simple approach where we 
+ * Test if an applock can be acquired. We took a simple approach where we
  * try aqcuiring the lock and releasing it immediately.
- * The alternative is to remember all lockmodes and who owns them in the global 
- * hashmap, which entails too much of invasiveness and additional shared 
+ * The alternative is to remember all lockmodes and who owns them in the global
+ * hashmap, which entails too much of invasiveness and additional shared
  * memory management.
  *
  * Returns:
@@ -845,8 +887,10 @@ APPLOCK_MODE(PG_FUNCTION_ARGS)
 Datum
 APPLOCK_TEST(PG_FUNCTION_ARGS)
 {
-	char		resource[APPLOCK_MAX_RESOURCE_LENGTH], lockmode[APPLOCK_MAX_LOCKMODE_LENGTH];
-	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH], dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
+	char		resource[APPLOCK_MAX_RESOURCE_LENGTH],
+				lockmode[APPLOCK_MAX_LOCKMODE_LENGTH];
+	char		lockowner[APPLOCK_MAX_LOCKOWNER_LENGTH],
+				dbprincipal[APPLOCK_MAX_DBPRINCIPAL_LENGTH];
 
 	/* Init applock hash table if not yet done. */
 	if (!appLockCacheLocal)
@@ -860,37 +904,37 @@ APPLOCK_TEST(PG_FUNCTION_ARGS)
 	if (pg_strcasecmp(lockowner, "Transaction") == 0 && !IsTransactionBlockActive())
 		ereport(ERROR,
 				(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				errmsg("The statement or function must be executed in the context of a user transaction.")));
+				 errmsg("The statement or function must be executed in the context of a user transaction.")));
 
-	/* 
-	 * Pass the arguments and a time out of 0 (no wait) to the internal 
+	/*
+	 * Pass the arguments and a time out of 0 (no wait) to the internal
 	 * getapplock function. Suppress the warning messages as they would be
-	 * normal during testing a lock. If anything happened besides having 
+	 * normal during testing a lock. If anything happened besides having
 	 * acquired the lock successfully, just return 0.
 	 */
 	if (_sp_getapplock_internal(resource, lockmode, lockowner, 0, dbprincipal, true) != 0)
 		PG_RETURN_INT32(0);
 
-	/* 
+	/*
 	 * PANIC: we've acquired the lock but can't release it for some reason.
-	 * Unlike previous case, we need to print messages clearly indicating 
+	 * Unlike previous case, we need to print messages clearly indicating
 	 * such, so user is aware of the dangling lock, and error out to prevent
 	 * any inconsistent state.
 	 */
 	if (_sp_releaseapplock_internal(resource, lockowner, dbprincipal, false) != 0)
 		ereport(PANIC,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Lock acuiqred during APPLOCK_TEST for resource \'%s\'"
-							"but couldn't release it.", 
+				 errmsg("Lock acuiqred during APPLOCK_TEST for resource \'%s\'"
+						"but couldn't release it.",
 						resource)));
 
 	/* Lock can be acquired now. */
 	PG_RETURN_INT32(1);
 }
 
-/* 
+/*
  * Function to be called by a hook in the backend.
- * Remove all hash entries for application locks of either transaction-only 
+ * Remove all hash entries for application locks of either transaction-only
  * or transaction+session too.
  *
  * @release_session: if we remove session locks as well as transaction locks.
@@ -901,7 +945,7 @@ ApplockRemoveCache(bool release_session)
 	HASH_SEQ_STATUS hash_seq;
 	AppLockCacheEnt *entry;
 
-	/* 
+	/*
 	 * If we are not using TSQL dialect or applock cache is not initialized,
 	 * don't bother.
 	 */
@@ -909,15 +953,16 @@ ApplockRemoveCache(bool release_session)
 		return;
 
 	hash_seq_init(&hash_seq, appLockCacheLocal);
-  
+
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
 	{
-		int i;
+		int			i;
+
 		if (!release_session && entry->is_session)
 			continue;
 
 		/* unreferencing my entries in global hashmap */
-		for (i = 0; i < entry->refcount; i++) 
+		for (i = 0; i < entry->refcount; i++)
 			ApplockUnrefGlobalCache(entry->key);
 
 		/* free allocated space, and the entry itself. */
