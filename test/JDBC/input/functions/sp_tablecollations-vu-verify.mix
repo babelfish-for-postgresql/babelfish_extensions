@@ -1,10 +1,5 @@
 exec sp_tablecollations_100 'foo'
 GO
-~~START~~
-int#!#varchar#!#binary#!#nvarchar
-1#!#test_collation#!#<NULL>#!#default
-~~END~~
-
 
 -- psql
 -- Verify if datatype of column 'name' of spt_tablecollations_view used
@@ -16,8 +11,3 @@ from pg_attribute
 where 
    attrelid = 'sys.spt_tablecollations_view'::regclass and attname = 'name';
 GO
-~~START~~
-text
-true
-~~END~~
-
