@@ -129,6 +129,7 @@ static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bo
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static void pltsql_CreateDbStmt(ParseState *pstate, PlannedStmt *pstmt);
+static void pltsql_DropDbStmt(PlannedStmt *pstmt);
 
 /*****************************************
  * 			Executor Hooks
@@ -191,6 +192,7 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static CreateDbStmt_hook_type prev_CreateDbStmt_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
+static DropDbStmt_hook_type prev_DropDbStmt_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -305,6 +307,9 @@ InstallExtendedHooks(void)
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
 
+	prev_DropDbStmt_hook = DropDbStmt_hook;
+	DropDbStmt_hook = pltsql_DropDbStmt;
+
 }
 
 void
@@ -350,6 +355,7 @@ UninstallExtendedHooks(void)
 	CreateDbStmt_hook = prev_CreateDbStmt_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
+	DropDbStmt_hook = prev_DropDbStmt_hook;
 }
 
 /*****************************************
@@ -362,6 +368,15 @@ pltsql_CreateDbStmt(ParseState *pstate, PlannedStmt *pstmt)
     Node                    *parsetree = pstmt->utilityStmt;
     create_bbf_db(pstate, (CreatedbStmt *) parsetree);
     return;
+}
+
+static void
+pltsql_DropDbStmt(PlannedStmt *pstmt)
+{
+	Node	   *parsetree = pstmt->utilityStmt;
+	DropdbStmt *stmt = (DropdbStmt *) parsetree;
+    drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
+	return;
 }
 
 static void

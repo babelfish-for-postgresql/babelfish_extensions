@@ -3330,14 +3330,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					return;
 				}
 			}
+
         case T_DropdbStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL)
-            {
-                DropdbStmt *stmt = (DropdbStmt *) parsetree;
-                drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
-				return;
-			}
-			break;
+            // if (sql_dialect == SQL_DIALECT_TSQL)
+            // {
+            //     DropdbStmt *stmt = (DropdbStmt *) parsetree;
+            //     drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
+			// 	return;
+			// }
+			// break;
 		case T_GrantRoleStmt:
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
