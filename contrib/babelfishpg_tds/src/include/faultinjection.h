@@ -17,33 +17,36 @@
 #define FAULT_NAME_MAX_LENGTH 100
 #define INVALID_TAMPER_BYTE -1
 
-typedef enum FaultInjectorType_e {
+typedef enum FaultInjectorType_e
+{
 	TestType = 0,
 	ParseHeaderType,
 	PreParsingType,
-    ParseRpcType,
+	ParseRpcType,
 	PostParsingType,
 	InvalidType
 } FaultInjectorType_e;
 
-typedef struct FaultInjectionType {
+typedef struct FaultInjectionType
+{
 	FaultInjectorType_e type;
-	char	faultTypeName[FAULT_NAME_MAX_LENGTH];
-	List	*injected_entries;
+	char		faultTypeName[FAULT_NAME_MAX_LENGTH];
+	List	   *injected_entries;
 } FaultInjectionType;
 
 extern FaultInjectionType FaultInjectionTypes[];
 
-typedef struct FaultInjectorEntry_s {
-	char					faultName[FAULT_NAME_MAX_LENGTH];	/* name of the fault */
-	FaultInjectorType_e		type;
-	int						num_occurrences;					/* 0 when diabled */
-	void					(*fault_callback) (void *arg, int *num_occurrences);
+typedef struct FaultInjectorEntry_s
+{
+	char		faultName[FAULT_NAME_MAX_LENGTH];	/* name of the fault */
+	FaultInjectorType_e type;
+	int			num_occurrences;	/* 0 when diabled */
+	void		(*fault_callback) (void *arg, int *num_occurrences);
 } FaultInjectorEntry_s;
 
 extern const FaultInjectorEntry_s Faults[];
 
-extern int tamperByte;
+extern int	tamperByte;
 
 #define TEST_LIST	const FaultInjectorEntry_s Faults[]
 #define TEST_TYPE_LIST FaultInjectionType FaultInjectionTypes[]
