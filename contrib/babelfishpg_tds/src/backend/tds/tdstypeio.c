@@ -28,9 +28,10 @@
 #include "parser/scansup.h"
 #include "utils/cash.h"
 #include "utils/hsearch.h"
-#include "utils/builtins.h"				/* for format_type_be() */
+#include "utils/builtins.h"		/* for format_type_be() */
 #include "utils/guc.h"
-#include "utils/lsyscache.h"				/* for getTypeInputInfo() and OidInputFunctionCall()*/
+#include "utils/lsyscache.h"	/* for getTypeInputInfo() and
+								 * OidInputFunctionCall() */
 #include "utils/numeric.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
@@ -44,7 +45,8 @@
 #include "src/include/err_handler.h"
 #include "src/include/tds_instr.h"
 
-#include "tds_data_map.c"  /* include tables that used to initialize hashmaps */
+#include "tds_data_map.c"		/* include tables that used to initialize
+								 * hashmaps */
 
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
@@ -59,7 +61,10 @@ do { \
 /*
  * macros to store length of metadata (including metadata for base type) for sqlvariant datatypes.
  */
-#define VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES 	2	/* for BIT, TINYINT, SMALLINT, INT, BIGINT, REAL, FLOAT, [SMALL]MONEY and UID */
+#define VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES 	2	/* for BIT, TINYINT,
+													 * SMALLINT, INT, BIGINT,
+													 * REAL, FLOAT,
+													 * [SMALL]MONEY and UID */
 #define VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES	9	/* for [N][VAR]CHAR */
 #define VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES 	4	/* for [VAR]BINARY */
 #define VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES	5	/* for NUMERIC */
@@ -73,7 +78,10 @@ do { \
 /*
  * macros to store length of metadata for base type of sqlvariant datatype.
  */
-#define VARIANT_TYPE_BASE_METALEN_FOR_NUM_DATATYPES	0	/* for BIT, TINYINT, SMALLINT, INT, BIGINT, REAL, FLOAT, [SMALL]MONEY and UID */
+#define VARIANT_TYPE_BASE_METALEN_FOR_NUM_DATATYPES	0	/* for BIT, TINYINT,
+														 * SMALLINT, INT,
+														 * BIGINT, REAL, FLOAT,
+														 * [SMALL]MONEY and UID */
 #define VARIANT_TYPE_BASE_METALEN_FOR_CHAR_DATATYPES	7	/* for [N][VAR]CHAR */
 #define VARIANT_TYPE_BASE_METALEN_FOR_BIN_DATATYPES	2	/* for [VAR]BINARY */
 #define VARIANT_TYPE_BASE_METALEN_FOR_NUMERIC_DATATYPES	2	/* for NUMERIC */
@@ -84,41 +92,43 @@ do { \
 #define VARIANT_TYPE_BASE_METALEN_FOR_DATETIME2	1	/* for DATETIME2 */
 #define VARIANT_TYPE_BASE_METALEN_FOR_DATETIMEOFFSET	1	/* for DATETIMEOFFSET */
 
-static HTAB	   *functionInfoCacheByOid = NULL;
-static HTAB	   *functionInfoCacheByTdsId = NULL;
+static HTAB *functionInfoCacheByOid = NULL;
+static HTAB *functionInfoCacheByTdsId = NULL;
 
-static HTAB    *TdsEncodingInfoCacheByLCID = NULL;
+static HTAB *TdsEncodingInfoCacheByLCID = NULL;
 
-void CopyMsgBytes(StringInfo msg, char *buf, int datalen);
-int GetMsgByte(StringInfo msg);
-const char * GetMsgBytes(StringInfo msg, int datalen);
+void		CopyMsgBytes(StringInfo msg, char *buf, int datalen);
+int			GetMsgByte(StringInfo msg);
+const char *GetMsgBytes(StringInfo msg, int datalen);
 unsigned int GetMsgInt(StringInfo msg, int b);
-int64 GetMsgInt64(StringInfo msg);
-uint128 GetMsgUInt128(StringInfo msg);
-float4 GetMsgFloat4(StringInfo msg);
-float8 GetMsgFloat8(StringInfo msg);
+int64		GetMsgInt64(StringInfo msg);
+uint128		GetMsgUInt128(StringInfo msg);
+float4		GetMsgFloat4(StringInfo msg);
+float8		GetMsgFloat8(StringInfo msg);
 static void SwapData(StringInfo buf, int st, int end);
 static Datum TdsAnyToServerEncodingConversion(pg_enc encoding, char *str, int len, uint8_t tdsColDataType);
-int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr);
+int			TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr);
 
-Datum TdsTypeBitToDatum(StringInfo buf);
-Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
-Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
-Datum TdsTypeVarcharToDatum(StringInfo buf, pg_enc encoding, uint8_t tdsColDataType);
-Datum TdsTypeNCharToDatum(StringInfo buf);
-Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
-Datum TdsTypeVarbinaryToDatum(StringInfo buf);
-Datum TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len);
-Datum TdsTypeDatetimeToDatum(StringInfo buf);
-Datum TdsTypeSmallDatetimeToDatum(StringInfo buf);
-Datum TdsTypeDateToDatum(StringInfo buf);
-Datum TdsTypeTimeToDatum(StringInfo buf, int scale, int len);
-Datum TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len);
-Datum TdsTypeMoneyToDatum(StringInfo buf);
-Datum TdsTypeSmallMoneyToDatum(StringInfo buf);
-Datum TdsTypeXMLToDatum(StringInfo buf);
-Datum TdsTypeUIDToDatum(StringInfo buf);
-Datum TdsTypeSqlVariantToDatum(StringInfo buf);
+Datum		TdsTypeBitToDatum(StringInfo buf);
+Datum		TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
+Datum		TdsTypeFloatToDatum(StringInfo buf, int maxLen);
+Datum		TdsTypeVarcharToDatum(StringInfo buf, pg_enc encoding, uint8_t tdsColDataType);
+Datum		TdsTypeNCharToDatum(StringInfo buf);
+Datum		TdsTypeNumericToDatum(StringInfo buf, int scale);
+Datum		TdsTypeVarbinaryToDatum(StringInfo buf);
+Datum		TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len);
+Datum		TdsTypeDatetimeToDatum(StringInfo buf);
+Datum		TdsTypeSmallDatetimeToDatum(StringInfo buf);
+Datum		TdsTypeDateToDatum(StringInfo buf);
+Datum		TdsTypeTimeToDatum(StringInfo buf, int scale, int len);
+Datum		TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len);
+Datum		TdsTypeMoneyToDatum(StringInfo buf);
+Datum		TdsTypeSmallMoneyToDatum(StringInfo buf);
+Datum		TdsTypeXMLToDatum(StringInfo buf);
+Datum		TdsTypeUIDToDatum(StringInfo buf);
+Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
+
+static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
 
 /* Local structures for the Function Cache by TDS Type ID */
 typedef struct FunctionCacheByTdsIdKey
@@ -129,8 +139,8 @@ typedef struct FunctionCacheByTdsIdKey
 
 typedef struct FunctionCacheByTdsIdEntry
 {
-	FunctionCacheByTdsIdKey		key;
-	TdsIoFunctionData		data;
+	FunctionCacheByTdsIdKey key;
+	TdsIoFunctionData data;
 } FunctionCacheByTdsIdEntry;
 
 /*
@@ -144,36 +154,65 @@ getSendFunc(int funcId)
 {
 	switch (funcId)
 	{
-		case TDS_SEND_BIT:		return TdsSendTypeBit;
-		case TDS_SEND_TINYINT:		return TdsSendTypeTinyint;
-		case TDS_SEND_SMALLINT:		return TdsSendTypeSmallint;
-		case TDS_SEND_INTEGER:		return TdsSendTypeInteger;
-		case TDS_SEND_BIGINT:		return TdsSendTypeBigint;
-		case TDS_SEND_FLOAT4:		return TdsSendTypeFloat4;
-		case TDS_SEND_FLOAT8:		return TdsSendTypeFloat8;
-		case TDS_SEND_VARCHAR:		return TdsSendTypeVarchar;
-		case TDS_SEND_NVARCHAR:		return TdsSendTypeNVarchar;
-		case TDS_SEND_MONEY:		return TdsSendTypeMoney;
-		case TDS_SEND_SMALLMONEY:	return TdsSendTypeSmallmoney;
-		case TDS_SEND_CHAR:		return TdsSendTypeChar;
-		case TDS_SEND_NCHAR:		return TdsSendTypeNChar;
-		case TDS_SEND_SMALLDATETIME:	return TdsSendTypeSmalldatetime;
-		case TDS_SEND_TEXT:		return TdsSendTypeText;
-		case TDS_SEND_NTEXT:		return TdsSendTypeNText;
-		case TDS_SEND_DATE:		return TdsSendTypeDate;
-		case TDS_SEND_DATETIME:		return TdsSendTypeDatetime;
-		case TDS_SEND_NUMERIC:		return TdsSendTypeNumeric;
-		case TDS_SEND_IMAGE:		return TdsSendTypeImage;
-		case TDS_SEND_BINARY:		return TdsSendTypeBinary;
-		case TDS_SEND_VARBINARY:	return TdsSendTypeVarbinary;
-		case TDS_SEND_UNIQUEIDENTIFIER:	return TdsSendTypeUniqueIdentifier;
-		case TDS_SEND_TIME:		return TdsSendTypeTime;
-		case TDS_SEND_DATETIME2:	return TdsSendTypeDatetime2;
-		case TDS_SEND_XML:		return TdsSendTypeXml;
-		case TDS_SEND_SQLVARIANT:	return TdsSendTypeSqlvariant;
-		case TDS_SEND_DATETIMEOFFSET:	return TdsSendTypeDatetimeoffset;
-		/* TODO: should Assert here once all types are implemented */
-		default:					return NULL;
+		case TDS_SEND_BIT:
+			return TdsSendTypeBit;
+		case TDS_SEND_TINYINT:
+			return TdsSendTypeTinyint;
+		case TDS_SEND_SMALLINT:
+			return TdsSendTypeSmallint;
+		case TDS_SEND_INTEGER:
+			return TdsSendTypeInteger;
+		case TDS_SEND_BIGINT:
+			return TdsSendTypeBigint;
+		case TDS_SEND_FLOAT4:
+			return TdsSendTypeFloat4;
+		case TDS_SEND_FLOAT8:
+			return TdsSendTypeFloat8;
+		case TDS_SEND_VARCHAR:
+			return TdsSendTypeVarchar;
+		case TDS_SEND_NVARCHAR:
+			return TdsSendTypeNVarchar;
+		case TDS_SEND_MONEY:
+			return TdsSendTypeMoney;
+		case TDS_SEND_SMALLMONEY:
+			return TdsSendTypeSmallmoney;
+		case TDS_SEND_CHAR:
+			return TdsSendTypeChar;
+		case TDS_SEND_NCHAR:
+			return TdsSendTypeNChar;
+		case TDS_SEND_SMALLDATETIME:
+			return TdsSendTypeSmalldatetime;
+		case TDS_SEND_TEXT:
+			return TdsSendTypeText;
+		case TDS_SEND_NTEXT:
+			return TdsSendTypeNText;
+		case TDS_SEND_DATE:
+			return TdsSendTypeDate;
+		case TDS_SEND_DATETIME:
+			return TdsSendTypeDatetime;
+		case TDS_SEND_NUMERIC:
+			return TdsSendTypeNumeric;
+		case TDS_SEND_IMAGE:
+			return TdsSendTypeImage;
+		case TDS_SEND_BINARY:
+			return TdsSendTypeBinary;
+		case TDS_SEND_VARBINARY:
+			return TdsSendTypeVarbinary;
+		case TDS_SEND_UNIQUEIDENTIFIER:
+			return TdsSendTypeUniqueIdentifier;
+		case TDS_SEND_TIME:
+			return TdsSendTypeTime;
+		case TDS_SEND_DATETIME2:
+			return TdsSendTypeDatetime2;
+		case TDS_SEND_XML:
+			return TdsSendTypeXml;
+		case TDS_SEND_SQLVARIANT:
+			return TdsSendTypeSqlvariant;
+		case TDS_SEND_DATETIMEOFFSET:
+			return TdsSendTypeDatetimeoffset;
+			/* TODO: should Assert here once all types are implemented */
+		default:
+			return NULL;
 	}
 }
 
@@ -188,37 +227,67 @@ getRecvFunc(int funcId)
 {
 	switch (funcId)
 	{
-		case TDS_RECV_BIT:		return TdsRecvTypeBit;
-		case TDS_RECV_TINYINT:		return TdsRecvTypeTinyInt;
-		case TDS_RECV_SMALLINT:		return TdsRecvTypeSmallInt;
-		case TDS_RECV_INTEGER:		return TdsRecvTypeInteger;
-		case TDS_RECV_BIGINT:		return TdsRecvTypeBigInt;
-		case TDS_RECV_FLOAT4:		return TdsRecvTypeFloat4;
-		case TDS_RECV_FLOAT8:		return TdsRecvTypeFloat8;
-		case TDS_RECV_VARCHAR:		return TdsRecvTypeVarchar;
-		case TDS_RECV_NVARCHAR:		return TdsRecvTypeNVarchar;
-		case TDS_RECV_MONEY:		return TdsRecvTypeMoney;
-		case TDS_RECV_SMALLMONEY:	return TdsRecvTypeSmallmoney;
-		case TDS_RECV_CHAR:		return TdsRecvTypeChar;
-		case TDS_RECV_NCHAR:		return TdsRecvTypeNChar;
-		case TDS_RECV_SMALLDATETIME:	return TdsRecvTypeSmalldatetime;
-		case TDS_RECV_TEXT:		return TdsRecvTypeText;
-		case TDS_RECV_NTEXT:		return TdsRecvTypeNText;
-		case TDS_RECV_DATE:		return TdsRecvTypeDate;
-		case TDS_RECV_DATETIME:		return TdsRecvTypeDatetime;
-		case TDS_RECV_NUMERIC:		return TdsRecvTypeNumeric;
-		case TDS_RECV_IMAGE:		return TdsRecvTypeBinary;
-		case TDS_RECV_BINARY:		return TdsRecvTypeBinary;
-		case TDS_RECV_VARBINARY:	return TdsRecvTypeVarbinary;
-		case TDS_RECV_UNIQUEIDENTIFIER:	return TdsRecvTypeUniqueIdentifier;
-		case TDS_RECV_TIME:		return TdsRecvTypeTime;
-		case TDS_RECV_DATETIME2:	return TdsRecvTypeDatetime2;
-		case TDS_RECV_XML:		return TdsRecvTypeXml;
-		case TDS_RECV_TABLE:		return TdsRecvTypeTable;
-		case TDS_RECV_SQLVARIANT:	return TdsRecvTypeSqlvariant;
-		case TDS_RECV_DATETIMEOFFSET:	return TdsRecvTypeDatetimeoffset;
-		/* TODO: should Assert here once all types are implemented */
-		default:					return NULL;
+		case TDS_RECV_BIT:
+			return TdsRecvTypeBit;
+		case TDS_RECV_TINYINT:
+			return TdsRecvTypeTinyInt;
+		case TDS_RECV_SMALLINT:
+			return TdsRecvTypeSmallInt;
+		case TDS_RECV_INTEGER:
+			return TdsRecvTypeInteger;
+		case TDS_RECV_BIGINT:
+			return TdsRecvTypeBigInt;
+		case TDS_RECV_FLOAT4:
+			return TdsRecvTypeFloat4;
+		case TDS_RECV_FLOAT8:
+			return TdsRecvTypeFloat8;
+		case TDS_RECV_VARCHAR:
+			return TdsRecvTypeVarchar;
+		case TDS_RECV_NVARCHAR:
+			return TdsRecvTypeNVarchar;
+		case TDS_RECV_MONEY:
+			return TdsRecvTypeMoney;
+		case TDS_RECV_SMALLMONEY:
+			return TdsRecvTypeSmallmoney;
+		case TDS_RECV_CHAR:
+			return TdsRecvTypeChar;
+		case TDS_RECV_NCHAR:
+			return TdsRecvTypeNChar;
+		case TDS_RECV_SMALLDATETIME:
+			return TdsRecvTypeSmalldatetime;
+		case TDS_RECV_TEXT:
+			return TdsRecvTypeText;
+		case TDS_RECV_NTEXT:
+			return TdsRecvTypeNText;
+		case TDS_RECV_DATE:
+			return TdsRecvTypeDate;
+		case TDS_RECV_DATETIME:
+			return TdsRecvTypeDatetime;
+		case TDS_RECV_NUMERIC:
+			return TdsRecvTypeNumeric;
+		case TDS_RECV_IMAGE:
+			return TdsRecvTypeBinary;
+		case TDS_RECV_BINARY:
+			return TdsRecvTypeBinary;
+		case TDS_RECV_VARBINARY:
+			return TdsRecvTypeVarbinary;
+		case TDS_RECV_UNIQUEIDENTIFIER:
+			return TdsRecvTypeUniqueIdentifier;
+		case TDS_RECV_TIME:
+			return TdsRecvTypeTime;
+		case TDS_RECV_DATETIME2:
+			return TdsRecvTypeDatetime2;
+		case TDS_RECV_XML:
+			return TdsRecvTypeXml;
+		case TDS_RECV_TABLE:
+			return TdsRecvTypeTable;
+		case TDS_RECV_SQLVARIANT:
+			return TdsRecvTypeSqlvariant;
+		case TDS_RECV_DATETIMEOFFSET:
+			return TdsRecvTypeDatetimeoffset;
+			/* TODO: should Assert here once all types are implemented */
+		default:
+			return NULL;
 	}
 }
 
@@ -228,34 +297,38 @@ static void
 init_collation_callbacks(void)
 {
 	collation_callbacks **callbacks_ptr;
-	callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
+
+	callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks");
 	collation_callbacks_ptr = *callbacks_ptr;
 }
 
-char * TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen)
+char *
+TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen)
 {
 	if (!collation_callbacks_ptr)
 		init_collation_callbacks();
 
 	if (collation_callbacks_ptr && collation_callbacks_ptr->EncodingConversion)
-		return (*collation_callbacks_ptr->EncodingConversion)(s, len, src_encoding, dest_encoding, encodedByteLen);
+		return (*collation_callbacks_ptr->EncodingConversion) (s, len, src_encoding, dest_encoding, encodedByteLen);
 	else
 		/* unlikely */
-		ereport(ERROR, 
+		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Could not encode the string to the client encoding")));
 }
 
-coll_info_t TdsLookupCollationTableCallback(Oid oid)
+coll_info_t
+TdsLookupCollationTableCallback(Oid oid)
 {
 	if (!collation_callbacks_ptr)
 		init_collation_callbacks();
 
 	if (collation_callbacks_ptr && collation_callbacks_ptr->lookup_collation_table_callback)
-		return (*collation_callbacks_ptr->lookup_collation_table_callback)(oid);
+		return (*collation_callbacks_ptr->lookup_collation_table_callback) (oid);
 	else
 	{
 		coll_info_t invalidCollInfo;
+
 		invalidCollInfo.oid = InvalidOid;
 		return invalidCollInfo;
 	}
@@ -266,23 +339,24 @@ coll_info_t TdsLookupCollationTableCallback(Oid oid)
 static int
 xmlChar_to_encoding(const xmlChar *encoding_name)
 {
-	int encoding = pg_char_to_encoding((const char *)encoding_name);
+	int			encoding = pg_char_to_encoding((const char *) encoding_name);
 
 	if (encoding < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid encoding name \"%s\"",
-						(const char *)encoding_name)));
+						(const char *) encoding_name)));
 	return encoding;
 }
 #endif
 
-int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
+int
+TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
 {
-	char *str;
-	int nbytes;
+	char	   *str;
+	int			nbytes;
 	StringInfoData tempBuf;
-	void *result;
+	void	   *result;
 
 	initStringInfo(&tempBuf);
 	enlargeStringInfo(&tempBuf, buf->len);
@@ -291,7 +365,7 @@ int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
 
 	nbytes = buf->len - buf->cursor;
 
-	str = (char *)GetMsgBytes(buf, nbytes);
+	str = (char *) GetMsgBytes(buf, nbytes);
 
 	result = palloc0(nbytes + 1 + VARHDRSZ);
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
@@ -311,8 +385,8 @@ int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
 static Datum
 TdsAnyToServerEncodingConversion(pg_enc encoding, char *str, int len, uint8_t tdsColDataType)
 {
-	char 		*pstring;
-	Datum 		pval;
+	char	   *pstring;
+	Datum		pval;
 	int			actualLen;
 
 	/* The dest_encoding will always be UTF8 for Babelfish */
@@ -332,7 +406,7 @@ TdsAnyToServerEncodingConversion(pg_enc encoding, char *str, int len, uint8_t td
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("TdsAnyToServerEncodingConversion is not supported for Tds Type: %d", tdsColDataType)));
+					 errmsg("TdsAnyToServerEncodingConversion is not supported for Tds Type: %d", tdsColDataType)));
 			break;
 	}
 
@@ -360,62 +434,67 @@ TdsResetCache(void)
 void
 TdsLoadEncodingLCIDCache(void)
 {
-	HASHCTL 				hashCtl;
+	HASHCTL		hashCtl;
 
 	if (TdsEncodingInfoCacheByLCID == NULL)
 	{
-		/* Create the LCID - Encoding (code page in tsql's term) hash table in our TDS memory context */
+		/*
+		 * Create the LCID - Encoding (code page in tsql's term) hash table in
+		 * our TDS memory context
+		 */
 		MemSet(&hashCtl, 0, sizeof(hashCtl));
 		hashCtl.keysize = sizeof(int);
 		hashCtl.entrysize = 2 * sizeof(int);
 		hashCtl.hcxt = TdsMemoryContext;
 		TdsEncodingInfoCacheByLCID = hash_create("LCID - Encoding map cache",
-											SPI_processed,
-											&hashCtl,
-											HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+												 SPI_processed,
+												 &hashCtl,
+												 HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+
 		/*
-		* Load LCID - Encoding pair into our hash table.
-		*/
+		 * Load LCID - Encoding pair into our hash table.
+		 */
 		for (int i = 0; i < TdsLCIDToEncodingMap_datasize; i++)
 		{
-			int 						lcid;
+			int			lcid;
 			TdsLCIDToEncodingMapInfo mInfo;
 
-			/* Create the hash entry for lookup by LCID*/
+			/* Create the hash entry for lookup by LCID */
 			lcid = TdsLCIDToEncodingMap_data[i].lcid;
-			mInfo = (TdsLCIDToEncodingMapInfo)hash_search(TdsEncodingInfoCacheByLCID,
-													&lcid,
-													HASH_ENTER,
-													NULL);
+			mInfo = (TdsLCIDToEncodingMapInfo) hash_search(TdsEncodingInfoCacheByLCID,
+														   &lcid,
+														   HASH_ENTER,
+														   NULL);
 			mInfo->enc = TdsLCIDToEncodingMap_data[i].enc;
 		}
 	}
 }
 
-/* 
- * TdsLookupEncodingByLCID - LCID - Encoding lookup 
+/*
+ * TdsLookupEncodingByLCID - LCID - Encoding lookup
  */
 int
 TdsLookupEncodingByLCID(int lcid)
 {
-	bool found;
+	bool		found;
 	TdsLCIDToEncodingMapInfo mInfo;
 
-	mInfo = (TdsLCIDToEncodingMapInfo)hash_search(TdsEncodingInfoCacheByLCID,
-													&lcid,
-													HASH_FIND,
-													&found);
+	mInfo = (TdsLCIDToEncodingMapInfo) hash_search(TdsEncodingInfoCacheByLCID,
+												   &lcid,
+												   HASH_FIND,
+												   &found);
 
 	/*
-	 * TODO: which encoding by default we should consider 
-	 * if appropriate Encoding is not found.
+	 * TODO: which encoding by default we should consider if appropriate
+	 * Encoding is not found.
 	 */
 	if (!found)
 	{
-		mInfo = (TdsLCIDToEncodingMapInfo)hash_search(TdsEncodingInfoCacheByLCID,
-													&TdsDefaultLcid,
-													HASH_FIND,
-													&found);
+		mInfo = (TdsLCIDToEncodingMapInfo) hash_search(TdsEncodingInfoCacheByLCID,
+													   &TdsDefaultLcid,
+													   HASH_FIND,
+													   &found);
+
 		/*
 		 * could not find encoding corresponding to default lcid still.
 		 */
@@ -428,8 +507,8 @@ TdsLookupEncodingByLCID(int lcid)
 void
 TdsLoadTypeFunctionCache(void)
 {
-	HASHCTL	hashCtl;
-	Oid sys_nspoid = get_namespace_oid("sys", false);
+	HASHCTL		hashCtl;
+	Oid			sys_nspoid = get_namespace_oid("sys", false);
 
 	/* Create the function info hash table in our TDS memory context */
 	if (functionInfoCacheByOid == NULL) /* create hash table */
@@ -439,46 +518,47 @@ TdsLoadTypeFunctionCache(void)
 		hashCtl.entrysize = sizeof(TdsIoFunctionData);
 		hashCtl.hcxt = TdsMemoryContext;
 		functionInfoCacheByOid = hash_create("IO function info cache",
-											SPI_processed,
-											&hashCtl,
-											HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+											 SPI_processed,
+											 &hashCtl,
+											 HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
 	}
 
-	if (functionInfoCacheByTdsId == NULL) /* create hash table */
+	if (functionInfoCacheByTdsId == NULL)	/* create hash table */
 	{
 		MemSet(&hashCtl, 0, sizeof(hashCtl));
 		hashCtl.keysize = sizeof(FunctionCacheByTdsIdKey);
 		hashCtl.entrysize = sizeof(FunctionCacheByTdsIdEntry);
 		hashCtl.hcxt = TdsMemoryContext;
 		functionInfoCacheByTdsId = hash_create("IO function info cache by TDS id",
-											SPI_processed,
-											&hashCtl,
-											HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+											   SPI_processed,
+											   &hashCtl,
+											   HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
 	}
+
 	/*
 	 * Load the contents of the table into our hash table.
 	 */
 
 	for (int i = 0; i < TdsIoFunctionRawData_datasize; i++)
 	{
-		Oid							typeoid;
-		Oid							basetypeoid;
-    	Oid                         nspoid;
-		TdsIoFunctionInfo		finfo;
-		FunctionCacheByTdsIdKey		fc2key;
-		FunctionCacheByTdsIdEntry  *fc2ent;
+		Oid			typeoid;
+		Oid			basetypeoid;
+		Oid			nspoid;
+		TdsIoFunctionInfo finfo;
+		FunctionCacheByTdsIdKey fc2key;
+		FunctionCacheByTdsIdEntry *fc2ent;
 
 		nspoid = strcmp(TdsIoFunctionRawData_data[i].typnsp, "sys") == 0 ? sys_nspoid : PG_CATALOG_NAMESPACE;
-        typeoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-                                            CStringGetDatum(TdsIoFunctionRawData_data[i].typname), ObjectIdGetDatum(nspoid));
+		typeoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+								  CStringGetDatum(TdsIoFunctionRawData_data[i].typname), ObjectIdGetDatum(nspoid));
 
 		if (OidIsValid(typeoid))
 		{
 			basetypeoid = getBaseType(typeoid);
-			finfo = (TdsIoFunctionInfo)hash_search(functionInfoCacheByOid,
-											&typeoid,
-											HASH_ENTER,
-											NULL);
+			finfo = (TdsIoFunctionInfo) hash_search(functionInfoCacheByOid,
+													&typeoid,
+													HASH_ENTER,
+													NULL);
 			finfo->ttmbasetypeid = typeoid == basetypeoid ? 0 : basetypeoid;
 			finfo->ttmtdstypeid = TdsIoFunctionRawData_data[i].ttmtdstypeid;
 			finfo->ttmtdstypelen = TdsIoFunctionRawData_data[i].ttmtdstypelen;
@@ -492,12 +572,14 @@ TdsLoadTypeFunctionCache(void)
 			fc2key.tdstypeid = TdsIoFunctionRawData_data[i].ttmtdstypeid;
 			fc2key.tdstypelen = TdsIoFunctionRawData_data[i].ttmtdstypelen;
 
-			if(TdsIoFunctionRawData_data[i].ttmrecvfunc != TDS_RECV_INVALID) /* Do not load the Receiver function if its Invalid. */
+			if (TdsIoFunctionRawData_data[i].ttmrecvfunc != TDS_RECV_INVALID)	/* Do not load the
+																				 * Receiver function if
+																				 * its Invalid. */
 			{
-				fc2ent = (FunctionCacheByTdsIdEntry *)hash_search(functionInfoCacheByTdsId,
-														&fc2key,
-														HASH_ENTER,
-														NULL);
+				fc2ent = (FunctionCacheByTdsIdEntry *) hash_search(functionInfoCacheByTdsId,
+																   &fc2key,
+																   HASH_ENTER,
+																   NULL);
 				finfo = &(fc2ent->data);
 				finfo->ttmtypeid = typeoid;
 				finfo->ttmbasetypeid = basetypeoid;
@@ -513,17 +595,20 @@ TdsLoadTypeFunctionCache(void)
 	}
 
 	{
-		/* Load Table Valued Paramerter since we can't have a static oid mapping for it.*/
+		/*
+		 * Load Table Valued Paramerter since we can't have a static oid
+		 * mapping for it.
+		 */
 		TdsIoFunctionInfo finfo_table;
 		FunctionCacheByTdsIdKey fc2key_table;
 		FunctionCacheByTdsIdEntry *fc2ent_table;
 
 		fc2key_table.tdstypeid = TDS_TYPE_TABLE;
 		fc2key_table.tdstypelen = -1;
-		fc2ent_table = (FunctionCacheByTdsIdEntry *)hash_search(functionInfoCacheByTdsId,
-															&fc2key_table,
-															HASH_ENTER,
-															NULL);
+		fc2ent_table = (FunctionCacheByTdsIdEntry *) hash_search(functionInfoCacheByTdsId,
+																 &fc2key_table,
+																 HASH_ENTER,
+																 NULL);
 		finfo_table = &(fc2ent_table->data);
 		finfo_table->ttmtypeid = InvalidOid;
 		finfo_table->ttmbasetypeid = InvalidOid;
@@ -541,18 +626,18 @@ TdsLoadTypeFunctionCache(void)
  * TdsLookupTypeFunctionsByOid - IO function cache lookup
  */
 TdsIoFunctionInfo
-TdsLookupTypeFunctionsByOid(Oid typeId, int32* typmod)
+TdsLookupTypeFunctionsByOid(Oid typeId, int32 *typmod)
 {
-	TdsIoFunctionInfo	finfo;
-	bool					found;
-	Oid						tmpTypeId;
+	TdsIoFunctionInfo finfo;
+	bool		found;
+	Oid			tmpTypeId;
 
 	Assert(functionInfoCacheByOid != NULL);
 
-	finfo = (TdsIoFunctionInfo)hash_search(functionInfoCacheByOid,
-											  &typeId,
-											  HASH_FIND,
-											  &found);
+	finfo = (TdsIoFunctionInfo) hash_search(functionInfoCacheByOid,
+											&typeId,
+											HASH_FIND,
+											&found);
 
 	/*
 	 * If an entry is not found on tds mapping table, we try to find whether
@@ -580,17 +665,17 @@ TdsLookupTypeFunctionsByOid(Oid typeId, int32* typmod)
 		tmpTypeId = typTup->typbasetype;
 
 		/*
-		 * Typmod is allowed for domain only when enable_domain_typmod
-		 * is enabled when executing the CREATE DOMAIN Statement,
-		 * see DefineDomain for details.
+		 * Typmod is allowed for domain only when enable_domain_typmod is
+		 * enabled when executing the CREATE DOMAIN Statement, see
+		 * DefineDomain for details.
 		 */
 		if (*typmod == -1)
 			*typmod = typTup->typtypmod;
 
-		finfo = (TdsIoFunctionInfo)hash_search(functionInfoCacheByOid,
-												  &tmpTypeId,
-												  HASH_FIND,
-												  &found);
+		finfo = (TdsIoFunctionInfo) hash_search(functionInfoCacheByOid,
+												&tmpTypeId,
+												HASH_FIND,
+												&found);
 		ReleaseSysCache(tup);
 	}
 
@@ -608,44 +693,44 @@ TdsLookupTypeFunctionsByOid(Oid typeId, int32* typmod)
 TdsIoFunctionInfo
 TdsLookupTypeFunctionsByTdsId(int32_t typeId, int32_t typeLen)
 {
-	FunctionCacheByTdsIdKey		fc2key;
-	FunctionCacheByTdsIdEntry  *fc2ent;
-	bool						found;
+	FunctionCacheByTdsIdKey fc2key;
+	FunctionCacheByTdsIdEntry *fc2ent;
+	bool		found;
 
 	Assert(functionInfoCacheByTdsId != NULL);
 
 	/* Try a lookup with the indicated length */
 	fc2key.tdstypeid = typeId;
 	fc2key.tdstypelen = typeLen;
-	fc2ent = (FunctionCacheByTdsIdEntry *)hash_search(functionInfoCacheByTdsId,
-													  &fc2key,
-													  HASH_FIND,
-													  &found);
+	fc2ent = (FunctionCacheByTdsIdEntry *) hash_search(functionInfoCacheByTdsId,
+													   &fc2key,
+													   HASH_FIND,
+													   &found);
 	if (found)
 		return &(fc2ent->data);
 
 	/* Variable length types are configured with len=-1, so try that */
 	fc2key.tdstypeid = typeId;
 	fc2key.tdstypelen = -1;
-	fc2ent = (FunctionCacheByTdsIdEntry *)hash_search(functionInfoCacheByTdsId,
-													  &fc2key,
-													  HASH_FIND,
-													  &found);
+	fc2ent = (FunctionCacheByTdsIdEntry *) hash_search(functionInfoCacheByTdsId,
+													   &fc2key,
+													   HASH_FIND,
+													   &found);
 	if (found)
 		return &(fc2ent->data);
 
 	/*
 	 * In spite of being fixed length datatypes, Numeric and Decimal at times
-	 * come on wire with a different length as part of the column-metadata.
-	 * We shall update the tdstypelen and search again.
+	 * come on wire with a different length as part of the column-metadata. We
+	 * shall update the tdstypelen and search again.
 	 */
 	if (typeId == TDS_TYPE_NUMERICN || typeId == TDS_TYPE_DECIMALN)
 	{
 		fc2key.tdstypelen = TDS_MAXLEN_NUMERIC;
-		fc2ent = (FunctionCacheByTdsIdEntry *)hash_search(functionInfoCacheByTdsId,
-														  &fc2key,
-														  HASH_FIND,
-														  &found);
+		fc2ent = (FunctionCacheByTdsIdEntry *) hash_search(functionInfoCacheByTdsId,
+														   &fc2key,
+														   HASH_FIND,
+														   &found);
 		if (found)
 			return &(fc2ent->data);
 	}
@@ -831,7 +916,8 @@ GetMsgFloat8(StringInfo msg)
 Datum
 TdsTypeBitToDatum(StringInfo buf)
 {
-	int ext = GetMsgByte(buf);
+	int			ext = GetMsgByte(buf);
+
 	PG_RETURN_BOOL((ext != 0) ? true : false);
 }
 
@@ -839,36 +925,40 @@ TdsTypeBitToDatum(StringInfo buf)
 Datum
 TdsTypeIntegerToDatum(StringInfo buf, int maxLen)
 {
-	switch(maxLen)
+	switch (maxLen)
 	{
-		case TDS_MAXLEN_TINYINT: /* TINY INT. */
-		{
-			uint8 res = GetMsgInt(buf, sizeof(int8));
-			PG_RETURN_INT16((int16) res);
-		}
-		break;
-		case TDS_MAXLEN_SMALLINT: /* SMALL INT. */
-		{
-			uint16 res = GetMsgInt(buf, sizeof(uint16));
-			PG_RETURN_INT16((uint16) res);
-		}
-		break;
-		case TDS_MAXLEN_INT: /* INT. */
-		{
-			unsigned int res = GetMsgInt(buf, sizeof(int32));
-			PG_RETURN_INT32((int32) res);
-		}
-		break;
+		case TDS_MAXLEN_TINYINT:	/* TINY INT. */
+			{
+				uint8		res = GetMsgInt(buf, sizeof(int8));
+
+				PG_RETURN_INT16((int16) res);
+			}
+			break;
+		case TDS_MAXLEN_SMALLINT:	/* SMALL INT. */
+			{
+				uint16		res = GetMsgInt(buf, sizeof(uint16));
+
+				PG_RETURN_INT16((uint16) res);
+			}
+			break;
+		case TDS_MAXLEN_INT:	/* INT. */
+			{
+				unsigned int res = GetMsgInt(buf, sizeof(int32));
+
+				PG_RETURN_INT32((int32) res);
+			}
+			break;
 		case TDS_MAXLEN_BIGINT: /* BIG INT. */
-		{
-			uint64 res = GetMsgInt64(buf);
-			PG_RETURN_INT64((int64) res);
-		}
-		break;
+			{
+				uint64		res = GetMsgInt64(buf);
+
+				PG_RETURN_INT64((int64) res);
+			}
+			break;
 		default:
 			elog(ERROR, "unsupported integer size %d", maxLen);
-			PG_RETURN_INT32(0);		/* keep compiler quiet */
-		break;
+			PG_RETURN_INT32(0); /* keep compiler quiet */
+			break;
 	}
 }
 
@@ -876,25 +966,27 @@ TdsTypeIntegerToDatum(StringInfo buf, int maxLen)
 Datum
 TdsTypeFloatToDatum(StringInfo buf, int maxLen)
 {
-	switch(maxLen)
+	switch (maxLen)
 	{
 		case TDS_MAXLEN_FLOAT4:
-		{
-			float4 res;
-			res = GetMsgFloat4(buf);
-			PG_RETURN_FLOAT4(res);
-		}
-		break;
+			{
+				float4		res;
+
+				res = GetMsgFloat4(buf);
+				PG_RETURN_FLOAT4(res);
+			}
+			break;
 		case TDS_MAXLEN_FLOAT8:
-		{
-			float8 res;
-			res = GetMsgFloat8(buf);
-			PG_RETURN_FLOAT8(res);
-		}
+			{
+				float8		res;
+
+				res = GetMsgFloat8(buf);
+				PG_RETURN_FLOAT8(res);
+			}
 		default:
 			elog(ERROR, "unsupported float size %d", maxLen);
-			PG_RETURN_FLOAT4(0);		/* keep compiler quiet */
-		break;
+			PG_RETURN_FLOAT4(0);	/* keep compiler quiet */
+			break;
 	}
 }
 
@@ -902,15 +994,15 @@ TdsTypeFloatToDatum(StringInfo buf, int maxLen)
 Datum
 TdsTypeVarcharToDatum(StringInfo buf, pg_enc encoding, uint8_t tdsColDataType)
 {
-	char 		csave;
-	Datum 		pval;
+	char		csave;
+	Datum		pval;
 
 	csave = buf->data[buf->len];
 	buf->data[buf->len] = '\0';
 
 	pval = TdsAnyToServerEncodingConversion(encoding,
-									buf->data, buf->len,
-									tdsColDataType);
+											buf->data, buf->len,
+											tdsColDataType);
 	buf->data[buf->len] = csave;
 	return pval;
 }
@@ -919,7 +1011,7 @@ TdsTypeVarcharToDatum(StringInfo buf, pg_enc encoding, uint8_t tdsColDataType)
 Datum
 TdsTypeNCharToDatum(StringInfo buf)
 {
-	void    *result;
+	void	   *result;
 	StringInfoData temp;
 
 	initStringInfo(&temp);
@@ -934,32 +1026,37 @@ TdsTypeNCharToDatum(StringInfo buf)
 static inline char *
 ReverseString(char *res)
 {
-	int lo, hi;
+	int			lo,
+				hi;
+
 	if (!res)
 		return NULL;
 
 	lo = 0;
-	hi = strlen(res)-1;
+	hi = strlen(res) - 1;
 
 	while (lo < hi)
 	{
 		res[lo] ^= res[hi];
 		res[hi] ^= res[lo];
 		res[lo] ^= res[hi];
-		lo++; hi--;
+		lo++;
+		hi--;
 	}
 	return res;
 }
 
 static inline void
-Integer2String(uint128 num, char* str)
+Integer2String(uint128 num, char *str)
 {
-	int i = 0, rem = 0;
+	int			i = 0,
+				rem = 0;
+
 	while (num)
 	{
 		rem = num % 10;
 		str[i++] = rem + '0';
-		num = num/10;
+		num = num / 10;
 	}
 	str[i++] = '-';
 	ReverseString(str);
@@ -970,13 +1067,15 @@ Datum
 TdsTypeNumericToDatum(StringInfo buf, int scale)
 {
 	Numeric		res;
-	int		 	len, sign;
-	char		*decString;
-	int		temp1, temp2;
+	int			len,
+				sign;
+	char	   *decString;
+	int			temp1,
+				temp2;
 	uint128		num = 0;
 
 	/* fetch the sign from the actual data which is the first byte */
-	sign = (uint8_t)GetMsgInt(buf, 1);
+	sign = (uint8_t) GetMsgInt(buf, 1);
 
 	/* fetch the data but ignore the sign byte now */
 	{
@@ -988,7 +1087,7 @@ TdsTypeNumericToDatum(StringInfo buf, int scale)
 		num = LEtoh128(n128);
 	}
 
-	decString = (char *)palloc0(sizeof(char) * 40);
+	decString = (char *) palloc0(sizeof(char) * 40);
 
 	if (num != 0)
 		Integer2String(num, decString);
@@ -1000,21 +1099,23 @@ TdsTypeNumericToDatum(StringInfo buf, int scale)
 
 	/*
 	 * If scale is more than length then we need to append zeros at the start;
-	 * Since there is a '-' at the start of decString, we should ignore it before
-	 * appending and then add it later.
+	 * Since there is a '-' at the start of decString, we should ignore it
+	 * before appending and then add it later.
 	 */
 	if (num != 0 && scale >= len)
 	{
-		int diff = scale - len + 1;
-		char *zeros = palloc0(sizeof(char) * diff + 1);
-		char *tempString = decString;
-		while(diff)
+		int			diff = scale - len + 1;
+		char	   *zeros = palloc0(sizeof(char) * diff + 1);
+		char	   *tempString = decString;
+
+		while (diff)
 		{
 			zeros[--diff] = '0';
 		}
+
 		/*
-		 * Add extra '.' character in psprintf; Later we make use of
-		 * this index during shifting the scale part of the string.
+		 * Add extra '.' character in psprintf; Later we make use of this
+		 * index during shifting the scale part of the string.
 		 */
 		decString = psprintf("-%s%s.", zeros, tempString + 1);
 		len = strlen(decString) - 1;
@@ -1052,8 +1153,8 @@ TdsTypeNumericToDatum(StringInfo buf, int scale)
 Datum
 TdsTypeVarbinaryToDatum(StringInfo buf)
 {
-	bytea           *result;
-	int             nbytes;
+	bytea	   *result;
+	int			nbytes;
 
 	nbytes = buf->len - buf->cursor;
 	result = (bytea *) palloc0(nbytes + VARHDRSZ);
@@ -1067,7 +1168,7 @@ TdsTypeVarbinaryToDatum(StringInfo buf)
 Datum
 TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len)
 {
-	uint64_t    numMicro = 0;
+	uint64_t	numMicro = 0;
 	uint32_t	numDays = 0;
 	Timestamp	timestamp;
 
@@ -1082,41 +1183,43 @@ TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len)
 
 	TdsGetTimestampFromDayTime(numDays, numMicro, 0, &timestamp, scale);
 
-	PG_RETURN_TIMESTAMP((Timestamp)timestamp);
+	PG_RETURN_TIMESTAMP((Timestamp) timestamp);
 }
 
 /* Helper Function to convert Datetime value into Datum. */
 Datum
 TdsTypeDatetimeToDatum(StringInfo buf)
 {
-	uint32	numDays, numTicks;
-	uint64	val;
+	uint32		numDays,
+				numTicks;
+	uint64		val;
 	Timestamp	timestamp;
 
-	val = (uint64)GetMsgInt64(buf);
+	val = (uint64) GetMsgInt64(buf);
 	numTicks = val >> 32;
 	numDays = val & 0x00000000ffffffff;
 
 	TdsTimeGetDatumFromDatetime(numDays, numTicks, &timestamp);
 
-	PG_RETURN_TIMESTAMP((uint64)timestamp);
+	PG_RETURN_TIMESTAMP((uint64) timestamp);
 }
 
 /* Helper Function to convert Small Datetime value into Datum. */
 Datum
 TdsTypeSmallDatetimeToDatum(StringInfo buf)
 {
-	uint16	numDays, numMins;
-	uint32	val;
+	uint16		numDays,
+				numMins;
+	uint32		val;
 	Timestamp	timestamp;
 
-	val = (uint32)GetMsgInt(buf, 4);
+	val = (uint32) GetMsgInt(buf, 4);
 	numMins = val >> 16;
 	numDays = val & 0x0000ffff;
 
 	TdsTimeGetDatumFromSmalldatetime(numDays, numMins, &timestamp);
 
-	PG_RETURN_TIMESTAMP((uint64)timestamp);
+	PG_RETURN_TIMESTAMP((uint64) timestamp);
 }
 
 /* Helper Function to convert Date value into Datum. */
@@ -1124,8 +1227,9 @@ Datum
 TdsTypeDateToDatum(StringInfo buf)
 {
 	DateADT		result;
-	uint64	val;
-	result = (DateADT)GetMsgInt(buf, 3);
+	uint64		val;
+
+	result = (DateADT) GetMsgInt(buf, 3);
 	TdsCheckDateValidity(result);
 
 	TdsTimeGetDatumFromDays(result, &val);
@@ -1141,8 +1245,8 @@ TdsTypeTimeToDatum(StringInfo buf, int scale, int len)
 	uint64_t	numMicro = 0;
 
 	/*
-	 * if time data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always.
+	 * if time data has no specific scale specified in the query, default
+	 * scale to be considered is 7 always.
 	 */
 	if (scale == 255)
 		scale = DATETIMEOFFSETMAXSCALE;
@@ -1150,32 +1254,33 @@ TdsTypeTimeToDatum(StringInfo buf, int scale, int len)
 	memcpy(&numMicro, &buf->data[buf->cursor], len);
 	buf->cursor += len;
 
-	result = (double)numMicro;
+	result = (double) numMicro;
 	while (scale--)
 		result /= 10;
 
 	result *= 1000000;
 	if (result < INT64CONST(0) || result > USECS_PER_DAY)
 		ereport(ERROR,
-		(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-		errmsg("time out of range")));
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("time out of range")));
 
 
-	PG_RETURN_TIMEADT((TimeADT)result);
+	PG_RETURN_TIMEADT((TimeADT) result);
 }
 
 /* Helper Function to convert Datetimeoffset value into Datum. */
 Datum
 TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len)
 {
-	uint64_t 	numMicro = 0;
+	uint64_t	numMicro = 0;
 	uint32_t	numDays = 0;
 	int16_t		timezone = 0;
 	tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
-	TimestampTz	timestamp;
+	TimestampTz timestamp;
+
 	/*
-	 * if Datetimeoffset data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always.
+	 * if Datetimeoffset data has no specific scale specified in the query,
+	 * default scale to be considered is 7 always.
 	 */
 	if (scale == 0xFF)
 		scale = DATETIMEOFFSETMAXSCALE;
@@ -1190,7 +1295,7 @@ TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len)
 	buf->cursor += 2;
 
 	timezone *= -1;
-	TdsGetTimestampFromDayTime(numDays, numMicro, (int)timezone, &timestamp, scale);
+	TdsGetTimestampFromDayTime(numDays, numMicro, (int) timezone, &timestamp, scale);
 
 	timestamp -= (timezone * SECS_PER_MINUTE * USECS_PER_SEC);
 	/* since reverse is done in tm2timestamp() */
@@ -1206,7 +1311,8 @@ TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len)
 Datum
 TdsTypeMoneyToDatum(StringInfo buf)
 {
-	uint64		high, low;
+	uint64		high,
+				low;
 	uint64		val = GetMsgInt64(buf);
 
 	high = val & 0xffffffff00000000;
@@ -1214,7 +1320,7 @@ TdsTypeMoneyToDatum(StringInfo buf)
 	val = high >> 32 | low << 32;
 
 
-	PG_RETURN_CASH((Cash)val);
+	PG_RETURN_CASH((Cash) val);
 }
 
 /* Helper Function to convert Small Money value into Datum. */
@@ -1224,21 +1330,21 @@ TdsTypeSmallMoneyToDatum(StringInfo buf)
 	uint64		val = 0;
 	uint32		low = GetMsgInt(buf, 4);
 
-	val = (uint64)low;
+	val = (uint64) low;
 
-	PG_RETURN_CASH((Cash)val);
+	PG_RETURN_CASH((Cash) val);
 }
 
 /* Helper Function to convert XML value into Datum. */
 Datum
 TdsTypeXMLToDatum(StringInfo buf)
 {
-	void    *result;
+	void	   *result;
 	char	   *str;
 	int			nbytes;
-	void	*doc;
+	void	   *doc;
 	int			encoding = PG_UTF8;
-	xmlChar *encodingStr = NULL;
+	xmlChar    *encodingStr = NULL;
 
 	/*
 	 * Read the data in raw format. We don't know yet what the encoding is, as
@@ -1247,7 +1353,7 @@ TdsTypeXMLToDatum(StringInfo buf)
 	 */
 	nbytes = buf->len - buf->cursor;
 
-	str = (char *)GetMsgBytes(buf, nbytes);
+	str = (char *) GetMsgBytes(buf, nbytes);
 
 	/*
 	 * We need a null-terminated string to pass to parse_xml_decl().  Rather
@@ -1261,11 +1367,11 @@ TdsTypeXMLToDatum(StringInfo buf)
 	str[nbytes] = '\0';
 
 	/*
-	 * TODO: handle the encoding list
-	 * tds_parse_xml_decl((const char *) str, NULL, NULL, NULL, NULL);
-	 * encoding = encodingStr ? xmlChar_to_encoding(encodingStr) : PG_UTF8;
+	 * TODO: handle the encoding list tds_parse_xml_decl((const char *) str,
+	 * NULL, NULL, NULL, NULL); encoding = encodingStr ?
+	 * xmlChar_to_encoding(encodingStr) : PG_UTF8;
 	 */
-	tds_parse_xml_decl((const xmlChar *)str, NULL, NULL, &encodingStr, NULL);
+	tds_parse_xml_decl((const xmlChar *) str, NULL, NULL, &encodingStr, NULL);
 	encoding = encodingStr ? xmlChar_to_encoding(encodingStr) : TdsUTF16toUTF8XmlResult(buf, &result);
 
 	/*
@@ -1285,9 +1391,9 @@ TdsTypeUIDToDatum(StringInfo buf)
 	pg_uuid_t  *uuid;
 
 	/*
-	 * Valid values for UUID are NULL or 16 byte value.
-	 * NULL values are handled in the caller, so in the recv
-	 * function we will only get 16 byte value
+	 * Valid values for UUID are NULL or 16 byte value. NULL values are
+	 * handled in the caller, so in the recv function we will only get 16 byte
+	 * value
 	 */
 	Assert(buf->len == TDS_MAXLEN_UNIQUEIDENTIFIER);
 
@@ -1306,9 +1412,10 @@ TdsTypeUIDToDatum(StringInfo buf)
 StringInfo
 TdsGetPlpStringInfoBufferFromToken(const char *message, const ParameterToken token)
 {
-	StringInfo pbuf;
-	Plp plpHead = token->plp, temp;
-	uint64_t len = 0;
+	StringInfo	pbuf;
+	Plp			plpHead = token->plp,
+				temp;
+	uint64_t	len = 0;
 
 	temp = plpHead;
 	pbuf = makeStringInfo();
@@ -1317,7 +1424,7 @@ TdsGetPlpStringInfoBufferFromToken(const char *message, const ParameterToken tok
 	if (temp == NULL)
 		return pbuf;
 
-	while(temp != NULL)
+	while (temp != NULL)
 	{
 		len += temp->len;
 		temp = temp->next;
@@ -1325,9 +1432,8 @@ TdsGetPlpStringInfoBufferFromToken(const char *message, const ParameterToken tok
 
 
 	/*
-	 * Explicitly calling enlargeStringInfo. This will save
-	 * some overhead incase the data is very large and needs
-	 * repalloc again and again
+	 * Explicitly calling enlargeStringInfo. This will save some overhead
+	 * incase the data is very large and needs repalloc again and again
 	 */
 	enlargeStringInfo(pbuf, len);
 
@@ -1345,15 +1451,15 @@ TdsGetPlpStringInfoBufferFromToken(const char *message, const ParameterToken tok
 StringInfo
 TdsGetStringInfoBufferFromToken(const char *message, const ParameterToken token)
 {
-	StringInfo pbuf;
+	StringInfo	pbuf;
 
 	const char *pvalue = &message[token->dataOffset];
 
 	pbuf = palloc(sizeof(StringInfoData));
+
 	/*
-	 * Rather than copying data around, we just set up a phony
-	 * StringInfo pointing to the correct portion of the TDS message
-	 * buffer. 
+	 * Rather than copying data around, we just set up a phony StringInfo
+	 * pointing to the correct portion of the TDS message buffer.
 	 */
 	pbuf->data = (char *) pvalue;
 	pbuf->maxlen = token->len;
@@ -1374,7 +1480,7 @@ TdsGetStringInfoBufferFromToken(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeBit(const char *message, const ParameterToken token)
 {
-	Datum res;
+	Datum		res;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	res = TdsTypeBitToDatum(buf);
@@ -1391,7 +1497,7 @@ Datum
 TdsRecvTypeTinyInt(const char *message, const ParameterToken token)
 {
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
-	Datum res;
+	Datum		res;
 
 	res = TdsTypeIntegerToDatum(buf, sizeof(int8));
 
@@ -1408,7 +1514,7 @@ Datum
 TdsRecvTypeSmallInt(const char *message, const ParameterToken token)
 {
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
-	Datum res;
+	Datum		res;
 
 	res = TdsTypeIntegerToDatum(buf, sizeof(int16));
 
@@ -1424,7 +1530,7 @@ TdsRecvTypeSmallInt(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeInteger(const char *message, const ParameterToken token)
 {
-	Datum res;
+	Datum		res;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	res = TdsTypeIntegerToDatum(buf, sizeof(int32));
@@ -1441,7 +1547,7 @@ TdsRecvTypeInteger(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeBigInt(const char *message, const ParameterToken token)
 {
-	Datum res;
+	Datum		res;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	res = TdsTypeIntegerToDatum(buf, sizeof(int64));
@@ -1458,7 +1564,7 @@ TdsRecvTypeBigInt(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeFloat4(const char *message, const ParameterToken token)
 {
-	Datum res;
+	Datum		res;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	res = TdsTypeFloatToDatum(buf, sizeof(float4));
@@ -1475,7 +1581,7 @@ TdsRecvTypeFloat4(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeFloat8(const char *message, const ParameterToken token)
 {
-	Datum res;
+	Datum		res;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	res = TdsTypeFloatToDatum(buf, sizeof(float8));
@@ -1491,7 +1597,7 @@ TdsRecvTypeFloat8(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeBinary(const char *message, const ParameterToken token)
 {
-	Datum result;
+	Datum		result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeVarbinaryToDatum(buf);
@@ -1507,8 +1613,8 @@ TdsRecvTypeBinary(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeVarbinary(const char *message, const ParameterToken token)
 {
-	Datum result;
-	StringInfo      buf;
+	Datum		result;
+	StringInfo	buf;
 
 	if (token->maxLen == 0xffff)
 		buf = TdsGetPlpStringInfoBufferFromToken(message, token);
@@ -1538,8 +1644,8 @@ Datum
 TdsRecvTypeVarchar(const char *message, const ParameterToken token)
 {
 	StringInfo	buf;
-	char 		csave;
-	Datum 		pval;
+	char		csave;
+	Datum		pval;
 
 	if (token->maxLen == 0xFFFF)
 	{
@@ -1553,7 +1659,7 @@ TdsRecvTypeVarchar(const char *message, const ParameterToken token)
 	csave = buf->data[buf->len];
 	buf->data[buf->len] = '\0';
 	pval = TdsAnyToServerEncodingConversion(token->paramMeta.encoding,
-									buf->data, buf->len, TDS_TYPE_VARCHAR);
+											buf->data, buf->len, TDS_TYPE_VARCHAR);
 	buf->data[buf->len] = csave;
 
 	if (token->maxLen == 0xFFFF)
@@ -1569,9 +1675,9 @@ TdsReadUnicodeDataFromTokenCommon(const char *message, const ParameterToken toke
 	StringInfo	buf;
 
 	/*
-	 * XXX: We reuse this code for extracting the query from the TDS request.  In
-	 * some cases, the query is sent as non-unicode datatypes.  In those cases, the
-	 * data can come as PLP.
+	 * XXX: We reuse this code for extracting the query from the TDS request.
+	 * In some cases, the query is sent as non-unicode datatypes.  In those
+	 * cases, the data can come as PLP.
 	 */
 	if ((token->type == TDS_TYPE_NVARCHAR || token->type == TDS_TYPE_VARCHAR) &&
 		(token->maxLen == 0xFFFF))
@@ -1599,7 +1705,7 @@ TdsReadUnicodeDataFromTokenCommon(const char *message, const ParameterToken toke
 Datum
 TdsRecvTypeNVarchar(const char *message, const ParameterToken token)
 {
-	void    *result;
+	void	   *result;
 	StringInfoData temp;
 
 	if (token->maxLen == 0xFFFF)
@@ -1618,14 +1724,14 @@ TdsRecvTypeNVarchar(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeText(const char *message, const ParameterToken token)
 {
-	char        csave;
-	Datum       pval;
+	char		csave;
+	Datum		pval;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	csave = buf->data[buf->len];
 	buf->data[buf->len] = '\0';
 	pval = TdsAnyToServerEncodingConversion(token->paramMeta.encoding, buf->data, buf->len,
-									TDS_TYPE_TEXT);
+											TDS_TYPE_TEXT);
 	buf->data[buf->len] = csave;
 
 	pfree(buf);
@@ -1635,7 +1741,7 @@ TdsRecvTypeText(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeNText(const char *message, const ParameterToken token)
 {
-	Datum result;
+	Datum		result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeNCharToDatum(buf);
@@ -1653,8 +1759,8 @@ TdsRecvTypeNText(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeChar(const char *message, const ParameterToken token)
 {
-	char        csave;
-	Datum       pval;
+	char		csave;
+	Datum		pval;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	csave = buf->data[buf->len];
@@ -1675,7 +1781,7 @@ TdsRecvTypeChar(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeNChar(const char *message, const ParameterToken token)
 {
-	Datum result;
+	Datum		result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeNCharToDatum(buf);
@@ -1692,8 +1798,8 @@ TdsRecvTypeNChar(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeXml(const char *message, const ParameterToken token)
 {
-	Datum result;
-	StringInfo buf = TdsGetPlpStringInfoBufferFromToken(message, token);
+	Datum		result;
+	StringInfo	buf = TdsGetPlpStringInfoBufferFromToken(message, token);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_XML);
 
@@ -1713,7 +1819,7 @@ TdsRecvTypeXml(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeUniqueIdentifier(const char *message, const ParameterToken token)
 {
-	Datum result;
+	Datum		result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeUIDToDatum(buf);
@@ -1733,7 +1839,8 @@ TdsRecvTypeMoney(const char *message, const ParameterToken token)
 {
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
-	uint64		high, low;
+	uint64		high,
+				low;
 	uint64		val = GetMsgInt64(buf);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_MONEY);
@@ -1743,7 +1850,7 @@ TdsRecvTypeMoney(const char *message, const ParameterToken token)
 	val = high >> 32 | low << 32;
 
 	pfree(buf);
-	PG_RETURN_CASH((Cash)val);
+	PG_RETURN_CASH((Cash) val);
 }
 
 /* --------------------------------
@@ -1762,9 +1869,9 @@ TdsRecvTypeSmallmoney(const char *message, const ParameterToken token)
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_SMALLMONEY);
 
-	val = (uint64)low;
+	val = (uint64) low;
 	pfree(buf);
-	PG_RETURN_CASH((Cash)val);
+	PG_RETURN_CASH((Cash) val);
 }
 
 /* --------------------------------
@@ -1775,7 +1882,7 @@ TdsRecvTypeSmallmoney(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeSmalldatetime(const char *message, const ParameterToken token)
 {
-	Datum result;
+	Datum		result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeSmallDatetimeToDatum(buf);
@@ -1792,7 +1899,7 @@ TdsRecvTypeSmalldatetime(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeDate(const char *message, const ParameterToken token)
 {
-	Datum result;
+	Datum		result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeDateToDatum(buf);
@@ -1809,7 +1916,7 @@ TdsRecvTypeDate(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeDatetime(const char *message, const ParameterToken token)
 {
-	Datum result;
+	Datum		result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeDatetimeToDatum(buf);
@@ -1826,10 +1933,11 @@ TdsRecvTypeDatetime(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeTime(const char *message, const ParameterToken token)
 {
-	Datum 	result;
-	int		scale = 0;
+	Datum		result;
+	int			scale = 0;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
-	TdsColumnMetaData       col = token->paramMeta;
+	TdsColumnMetaData col = token->paramMeta;
+
 	scale = col.metaEntry.type6.scale;
 
 	result = TdsTypeTimeToDatum(buf, scale, token->len);
@@ -1841,10 +1949,10 @@ TdsRecvTypeTime(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeDatetime2(const char *message, const ParameterToken token)
 {
-	Datum 	result;
-	int		scale = 0;
-	StringInfo      buf = TdsGetStringInfoBufferFromToken(message, token);
-	TdsColumnMetaData       col = token->paramMeta;
+	Datum		result;
+	int			scale = 0;
+	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
+	TdsColumnMetaData col = token->paramMeta;
 
 	scale = col.metaEntry.type6.scale;
 
@@ -1858,15 +1966,16 @@ TdsRecvTypeDatetime2(const char *message, const ParameterToken token)
 static inline uint128
 StringToInteger(char *str)
 {
-	int i = 0, len = 0;
-	uint128 num = 0;
+	int			i = 0,
+				len = 0;
+	uint128		num = 0;
 
 	if (!str)
 		return 0;
 
 	len = strlen(str);
 
-	for (	; i < len; i++)
+	for (; i < len; i++)
 		num = num * 10 + (str[i] - '0');
 
 	return num;
@@ -1882,19 +1991,23 @@ Datum
 TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 {
 	Numeric		res;
-	int		scale, len, sign;
-	char		*decString, *wholeString;
-	int		temp1, temp2;
+	int			scale,
+				len,
+				sign;
+	char	   *decString,
+			   *wholeString;
+	int			temp1,
+				temp2;
 	uint128		num = 0;
-	TdsColumnMetaData	col = token->paramMeta;
+	TdsColumnMetaData col = token->paramMeta;
 
-	StringInfo buf = TdsGetStringInfoBufferFromToken(message, token);
+	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	/* scale and precision are part of the type info */
 	scale = col.metaEntry.type5.scale;
 
 	/* fetch the sign from the actual data which is the first byte */
-	sign = (uint8_t)GetMsgInt(buf, 1);
+	sign = (uint8_t) GetMsgInt(buf, 1);
 
 	/* fetch the data but ignore the sign byte now */
 	{
@@ -1903,8 +2016,8 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 		if ((token->len - 1) > sizeof(n128))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						errmsg("Data length %d is invalid for NUMERIC/DECIMAL data types.",
-								token->len)));
+					 errmsg("Data length %d is invalid for NUMERIC/DECIMAL data types.",
+							token->len)));
 
 		memcpy(&n128, &buf->data[buf->cursor], token->len - 1);
 		buf->cursor += token->len - 1;
@@ -1912,7 +2025,7 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 		num = LEtoh128(n128);
 	}
 
-	decString = (char *)palloc0(sizeof(char) * 40);
+	decString = (char *) palloc0(sizeof(char) * 40);
 
 	if (num != 0)
 		Integer2String(num, decString);
@@ -1925,21 +2038,23 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 
 	/*
 	 * If scale is more than length then we need to append zeros at the start;
-	 * Since there is a '-' at the start of decString, we should ignore it before
-	 * appending and then add it later.
+	 * Since there is a '-' at the start of decString, we should ignore it
+	 * before appending and then add it later.
 	 */
 	if (num != 0 && scale >= len)
 	{
-		int diff = scale - len + 1;
-		char *zeros = palloc0(sizeof(char) * diff + 1);
-		char *tempString = decString;
-		while(diff)
+		int			diff = scale - len + 1;
+		char	   *zeros = palloc0(sizeof(char) * diff + 1);
+		char	   *tempString = decString;
+
+		while (diff)
 		{
 			zeros[--diff] = '0';
 		}
+
 		/*
-		 * Add extra '.' character in psprintf; Later we make use of
-		 * this index during shifting the scale part of the string.
+		 * Add extra '.' character in psprintf; Later we make use of this
+		 * index during shifting the scale part of the string.
 		 */
 		decString = psprintf("-%s%s.", zeros, tempString + 1);
 		len = strlen(decString) - 1;
@@ -1965,9 +2080,10 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 			scale--;
 		}
 	}
+
 	/*
-	 * We use wholeString just to free the address at decString later,
-	 * since it gets updated later.
+	 * We use wholeString just to free the address at decString later, since
+	 * it gets updated later.
 	 */
 	wholeString = decString;
 
@@ -1983,6 +2099,53 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	PG_RETURN_NUMERIC(res);
 }
 
+/*
+ * FetchTvpTypeOid - Fetches the table type to store in
+ * ParameterToken->TdsColumnMetaData which is later used to declare
+ * the bind varaibles.
+ * The caller should be in a Transaction and in PSQL dialect.
+ */
+static void
+FetchTvpTypeOid(const ParameterToken token, char *tvpName)
+{
+	int			rc;
+	HeapTuple	row;
+	bool		isnull;
+	TupleDesc	tupdesc;
+	char	   *query;
+
+	if ((rc = SPI_connect()) < 0)
+	{
+		/* Reset dialect. */
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		elog(ERROR, "SPI_connect() failed in TDS Listener "
+			 "with return code %d", rc);
+	}
+
+	query = psprintf("SELECT '%s'::regtype::oid", tvpName);
+
+	rc = SPI_execute(query, false, 1);
+	if (rc != SPI_OK_SELECT)
+	{
+		/* Reset dialect. */
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
+	}
+	tupdesc = SPI_tuptable->tupdesc;
+	row = SPI_tuptable->vals[0];
+
+	token->paramMeta.pgTypeOid = DatumGetObjectId(SPI_getbinval(row, tupdesc,
+																1, &isnull));
+
+	pfree(query);
+	SPI_finish();
+}
+
+
 /* --------------------------------
  * TdsRecvTypeTable - creates a temp-table from the data being recevied on the wire
  * and sends this temp-table's name to the engine.
@@ -1991,54 +2154,91 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeTable(const char *message, const ParameterToken token)
 {
-	char * tableName;
-	char * query;
-	StringInfo temp;
-	int rc;
+	char	   *tableName;
+	char	   *query;
+	StringInfo	temp;
+	int			rc;
 	TvpRowData *row = token->tvpInfo->rowData;
 	TvpColMetaData *colMetaData = token->tvpInfo->colMetaData;
-	bool xactStarted = IsTransactionOrTransactionBlock();
-	char *finalTableName;
-	TvpLookupItem *item; 
+	bool		xactStarted = IsTransactionOrTransactionBlock();
+	char	   *finalTableName;
+	char	   *tvpTypeName;
+	TvpLookupItem *item;
+
 	temp = palloc(sizeof(StringInfoData));
 	initStringInfo(temp);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_TABLE_VALUED_PARAMETER);
 
-	 /* Setting a unique name for TVP temp table. */
-	tableName = psprintf("%s_TDS_TVP_TEMP_TABLE_%d", token->tvpInfo->tableName, rand());
+	tvpTypeName = downcase_truncate_identifier(token->tvpInfo->tvpTypeName,
+											   strlen(token->tvpInfo->tvpTypeName), true);
 
 	/*
-	 * We change the dialect to postgres to create temp tables
-	 * and execute a prep/exec insert query via SPI.
+	 * If schema is provided we convert it to physical schema and then update
+	 * the tvpTypeName to have 2 part names.
 	 */
-	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	if (token->tvpInfo->tvpTypeSchemaName)
+	{
+		char	   *db_name = pltsql_plugin_handler_ptr->get_cur_db_name();
+		char	   *logical_schema = downcase_truncate_identifier(token->tvpInfo->tvpTypeSchemaName,
+																  strlen(token->tvpInfo->tvpTypeSchemaName), true);
+		char	   *physical_schema = pltsql_plugin_handler_ptr->get_physical_schema_name(db_name, logical_schema);
+		char	   *tempStr = psprintf("%s.%s", physical_schema, tvpTypeName);
+
+		pfree(tvpTypeName);
+		tvpTypeName = tempStr;
+
+		pfree(logical_schema);
+		pfree(physical_schema);
+		pfree(db_name);
+	}
+
+	/* Setting a unique name for TVP temp table. */
+	tableName = psprintf("%s_TDS_TVP_TEMP_TABLE_%d", token->tvpInfo->tableName, rand());
+	finalTableName = downcase_truncate_identifier(tableName, strlen(tableName), true);
+	pfree(tableName);
 
 	/* Connect to the SPI manager. */
 	if ((rc = SPI_connect()) < 0)
 		elog(ERROR, "SPI_connect() failed in TDS Listener "
-					"with return code %d", rc);
-
-	if (!xactStarted)
-		StartTransactionCommand();
-	PushActiveSnapshot(GetTransactionSnapshot()); 
-
-
-
-	query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-		tableName, token->tvpInfo->tvpTypeName);
+			 "with return code %d", rc);
 
 
 	/*
-	 * If table with the same name already exists, we should just use that table
-	 * and ignore the NOTICE of "relation already exists, skipping".
+	 * We change the dialect to postgres to create temp tables and execute a
+	 * prep/exec insert query via SPI.
+	 */
+	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	if (!xactStarted)
+		StartTransactionCommand();
+	PushActiveSnapshot(GetTransactionSnapshot());
+
+	/* Explicity retrieve the oid for TVP type and map it. */
+	if (token->paramMeta.pgTypeOid == InvalidOid)
+		FetchTvpTypeOid(token, tvpTypeName);
+
+	query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
+					 finalTableName, tvpTypeName);
+	pfree(tvpTypeName);
+
+
+	/*
+	 * If table with the same name already exists, we should just use that
+	 * table and ignore the NOTICE of "relation already exists, skipping".
 	 */
 	rc = SPI_execute(query, false, 1);
 
 	if (rc != SPI_OK_UTILITY)
+	{
+		/* Reset dialect. */
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "Failed to create the underlying table for table-valued parameter: %d", rc);
+	}
 
 	SPI_finish();
 	PopActiveSnapshot();
@@ -2046,25 +2246,27 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		CommitTransactionCommand();
 
 	{
-		char *src;
-		int nargs = token->tvpInfo->colCount * token->tvpInfo->rowCount;
-		Datum *values = palloc(nargs * sizeof(Datum));
-		char *nulls = palloc(nargs * sizeof(char));
-		Oid *argtypes= palloc(nargs * sizeof(Datum));
-		int i = 0;
+		char	   *src;
+		int			nargs = token->tvpInfo->colCount * token->tvpInfo->rowCount;
+		Datum	   *values = palloc(nargs * sizeof(Datum));
+		char	   *nulls = palloc(nargs * sizeof(char));
+		Oid		   *argtypes = palloc(nargs * sizeof(Datum));
+		int			i = 0;
+
 		query = " ";
 
 		if (!xactStarted)
 			StartTransactionCommand();
 		PushActiveSnapshot(GetTransactionSnapshot());
 
-		while (row) /* Create the prep/exec query to insert the rows. */
+		while (row)				/* Create the prep/exec query to insert the
+								 * rows. */
 		{
 			TdsIoFunctionInfo tempFuncInfo;
-			int currentColumn = 0;
-			char *currentQuery = " ";
+			int			currentColumn = 0;
+			char	   *currentQuery = " ";
 
-			while(currentColumn != token->tvpInfo->colCount)
+			while (currentColumn != token->tvpInfo->colCount)
 			{
 				temp = &(row->columnValues[currentColumn]);
 				tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
@@ -2072,65 +2274,65 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 				if (row->isNull[currentColumn] == 'n')
 					nulls[i] = row->isNull[currentColumn];
 				else
-					switch(colMetaData[currentColumn].columnTdsType)
+					switch (colMetaData[currentColumn].columnTdsType)
 					{
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
 							values[i] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].encoding, colMetaData[currentColumn].columnTdsType);
-						break;
+							break;
 						case TDS_TYPE_NCHAR:
 							values[i] = TdsTypeNCharToDatum(temp);
-						break;
+							break;
 						case TDS_TYPE_NVARCHAR:
-							if (!row->isNull[currentColumn]) /* NULL. */
+							if (!row->isNull[currentColumn])	/* NULL. */
 								currentQuery = psprintf("%s,\'NULL\'", currentQuery);
 							else
 								currentQuery = psprintf("%s,\'%s\'", currentQuery, temp->data);
 							nargs--;
-						break;
+							break;
 						case TDS_TYPE_INTEGER:
 						case TDS_TYPE_BIT:
 							values[i] = TdsTypeIntegerToDatum(temp, colMetaData[currentColumn].maxLen);
-						break;
+							break;
 						case TDS_TYPE_FLOAT:
 							values[i] = TdsTypeFloatToDatum(temp, colMetaData[currentColumn].maxLen);
-						break;
+							break;
 						case TDS_TYPE_NUMERICN:
 						case TDS_TYPE_DECIMALN:
 							values[i] = TdsTypeNumericToDatum(temp, colMetaData[currentColumn].scale);
-						break;
+							break;
 						case TDS_TYPE_VARBINARY:
 						case TDS_TYPE_BINARY:
 							values[i] = TdsTypeVarbinaryToDatum(temp);
 							argtypes[i] = tempFuncInfo->ttmtypeid;
-						break;
+							break;
 						case TDS_TYPE_DATE:
 							values[i] = TdsTypeDateToDatum(temp);
-						break;
+							break;
 						case TDS_TYPE_TIME:
 							values[i] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
-						break;
+							break;
 						case TDS_TYPE_DATETIMEOFFSET:
 							values[i] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
-						break;
+							break;
 						case TDS_TYPE_DATETIME2:
 							values[i] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
-						break;
+							break;
 						case TDS_TYPE_DATETIMEN:
 							values[i] = TdsTypeDatetimeToDatum(temp);
-						break;
+							break;
 						case TDS_TYPE_MONEYN:
 							values[i] = TdsTypeMoneyToDatum(temp);
-						break;
+							break;
 						case TDS_TYPE_XML:
 							values[i] = TdsTypeXMLToDatum(temp);
-						break;
+							break;
 						case TDS_TYPE_UNIQUEIDENTIFIER:
 							values[i] = TdsTypeUIDToDatum(temp);
-						break;
+							break;
 						case TDS_TYPE_SQLVARIANT:
 							values[i] = TdsTypeSqlVariantToDatum(temp);
-						break;
+							break;
 					}
 				/* Build a string for bind parameters. */
 				if (colMetaData[currentColumn].columnTdsType != TDS_TYPE_NVARCHAR || row->isNull[currentColumn] == 'n')
@@ -2141,28 +2343,44 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 				currentColumn++;
 			}
 			row = row->nextRow;
-			currentQuery[1] = ' '; /* Convert the first ',' into a blank space. */
+			currentQuery[1] = ' ';	/* Convert the first ',' into a blank
+									 * space. */
 
-			/* Add each row values in a single insert query so that we call SPI only once. */
+			/*
+			 * Add each row values in a single insert query so that we call
+			 * SPI only once.
+			 */
 			query = psprintf("%s,(%s)", query, currentQuery);
 		}
 
-		if (token->tvpInfo->rowData) /* If any row in TVP */
+		if (token->tvpInfo->rowData)	/* If any row in TVP */
 		{
-			query[1] = ' '; /* Convert the first ',' into a blank space. */
+			query[1] = ' ';		/* Convert the first ',' into a blank space. */
 
-			src = psprintf("Insert into %s values %s", tableName, query);
+			src = psprintf("Insert into %s values %s", finalTableName, query);
 			if ((rc = SPI_connect()) < 0)
+			{
+				/* Reset dialect. */
+				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "SPI_connect() failed in TDS Listener "
-							"with return code %d", rc);
+					 "with return code %d", rc);
+			}
 
 			rc = SPI_execute_with_args(src,
-				  nargs, argtypes,
-				  values, nulls,
-				  false, 1);
+									   nargs, argtypes,
+									   values, nulls,
+									   false, 1);
 
 			if (rc != SPI_OK_INSERT)
+			{
+				/* Reset dialect. */
+				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
+			}
 
 			SPI_finish();
 			PopActiveSnapshot();
@@ -2171,25 +2389,24 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		}
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								(superuser() ? PGC_SUSET : PGC_USERSET),
-									PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 
 	/* Free all the pointers. */
 	while (token->tvpInfo->rowData)
 	{
 		TvpRowData *tempRow = token->tvpInfo->rowData;
+
 		token->tvpInfo->rowData = token->tvpInfo->rowData->nextRow;
 		pfree(tempRow);
 	}
 	pfree(token->tvpInfo->colMetaData);
 
-	finalTableName = downcase_truncate_identifier(tableName, strlen(tableName), true);
-
 	item = (TvpLookupItem *) palloc(sizeof(TvpLookupItem));
 	item->name = downcase_truncate_identifier(token->paramMeta.colName.data,
-			strlen(token->paramMeta.colName.data),
-			true);
+											  strlen(token->paramMeta.colName.data),
+											  true);
 	item->tableRelid = InvalidOid;
 	item->tableName = finalTableName;
 	tvp_lookup_list = lappend(tvp_lookup_list, item);
@@ -2204,8 +2421,8 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeSqlvariant(const char *message, const ParameterToken token)
 {
-	Datum result;
-	StringInfo      buf = TdsGetStringInfoBufferFromToken(message, token);
+	Datum		result;
+	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_SQLVARIANT);
 
@@ -2222,7 +2439,7 @@ TdsSendTypeBit(FmgrInfo *finfo, Datum value, void *vMetaData)
 	int8_t		out = DatumGetBool(value);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(sizeof(out));
 
 	if (rc == 0)
@@ -2237,7 +2454,7 @@ TdsSendTypeTinyint(FmgrInfo *finfo, Datum value, void *vMetaData)
 	int8_t		out = DatumGetUInt8(value);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(sizeof(out));
 
 	if (rc == 0)
@@ -2251,7 +2468,7 @@ TdsSendTypeSmallint(FmgrInfo *finfo, Datum value, void *vMetaData)
 	int16_t		out = DatumGetInt16(value);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(sizeof(out));
 
 	if (rc == 0)
@@ -2266,7 +2483,7 @@ TdsSendTypeInteger(FmgrInfo *finfo, Datum value, void *vMetaData)
 	int32_t		out = DatumGetInt32(value);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(sizeof(out));
 
 	if (rc == 0)
@@ -2281,7 +2498,7 @@ TdsSendTypeBigint(FmgrInfo *finfo, Datum value, void *vMetaData)
 	int64_t		out = DatumGetInt64(value);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(sizeof(out));
 
 	if (rc == 0)
@@ -2296,7 +2513,7 @@ TdsSendTypeFloat4(FmgrInfo *finfo, Datum value, void *vMetaData)
 	float4		out = DatumGetFloat4(value);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(sizeof(out));
 
 	if (rc == 0)
@@ -2311,7 +2528,7 @@ TdsSendTypeFloat8(FmgrInfo *finfo, Datum value, void *vMetaData)
 	float8		out = DatumGetFloat8(value);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(sizeof(out));
 
 	if (rc == 0)
@@ -2322,10 +2539,10 @@ TdsSendTypeFloat8(FmgrInfo *finfo, Datum value, void *vMetaData)
 static int
 TdsSendPlpDataHelper(char *data, int len)
 {
-	int 			rc;
-	uint32_t		plpTerminator = PLP_TERMINATOR;
-	uint64_t		tempOffset = 0;
-	uint32_t		plpChunckLen = PLP_CHUNCK_LEN;
+	int			rc;
+	uint32_t	plpTerminator = PLP_TERMINATOR;
+	uint64_t	tempOffset = 0;
+	uint32_t	plpChunckLen = PLP_CHUNCK_LEN;
 
 	if ((rc = TdsPutInt64LE(len)) == 0)
 	{
@@ -2334,11 +2551,11 @@ TdsSendPlpDataHelper(char *data, int len)
 			if (plpChunckLen > (len - tempOffset))
 				plpChunckLen = (len - tempOffset);
 
-			// Either data is "0" or no more data to send
+			/* Either data is "0" or no more data to send */
 			if (plpChunckLen == 0)
 				break;
 
-			// need testing for "0" len
+			/* need testing for "0" len */
 			if ((rc = TdsPutUInt32LE(plpChunckLen)) == 0)
 			{
 				TdsPutbytes(&(data[tempOffset]), plpChunckLen);
@@ -2359,12 +2576,12 @@ int
 TdsSendTypeXml(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 	int			rc;
-	char			*out = OutputFunctionCall(finfo, value);
-	StringInfoData      	buf;
+	char	   *out = OutputFunctionCall(finfo, value);
+	StringInfoData buf;
 
 	/*
-	 * If client being connected is using TDS version lower than or equal to 7.1
-	 * then TSQL treats XML as NText.
+	 * If client being connected is using TDS version lower than or equal to
+	 * 7.1 then TSQL treats XML as NText.
 	 */
 	if (GetClientTDSVersion() <= TDS_VERSION_7_1_1)
 		return TdsSendTypeNText(finfo, value, vMetaData);
@@ -2375,7 +2592,7 @@ TdsSendTypeXml(FmgrInfo *finfo, Datum value, void *vMetaData)
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
 
 	rc = TdsSendPlpDataHelper(buf.data, buf.len);
-	
+
 	pfree(buf.data);
 
 	return rc;
@@ -2384,18 +2601,19 @@ TdsSendTypeXml(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeBinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc = EOF,maxLen = 0;
-	bytea			*vlena = DatumGetByteaPCopy(value);
-	bytea			*buf;
-	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
+	int			rc = EOF,
+				maxLen = 0;
+	bytea	   *vlena = DatumGetByteaPCopy(value);
+	bytea	   *buf;
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
 	maxLen = col->metaEntry.type7.maxSize;
-	buf = (bytea *)palloc0(sizeof(bytea) * maxLen);
+	buf = (bytea *) palloc0(sizeof(bytea) * maxLen);
 	memcpy(buf, VARDATA_ANY(vlena), VARSIZE_ANY_EXHDR(vlena));
 
 	if ((rc = TdsPutUInt16LE(maxLen)) == 0)
 		TdsPutbytes(buf, maxLen);
-	
+
 	pfree(buf);
 	return rc;
 }
@@ -2403,12 +2621,14 @@ TdsSendTypeBinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int 			rc = EOF,
-				len,		/* number of bytes used to store the string. */
-				actualLen,	/* Number of bytes that would be needed to store given string in given encoding. */
-				maxLen;		/* max size of given column in bytes */
-	char 			*destBuf, *buf = OutputFunctionCall(finfo, value);
-	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
+	int			rc = EOF,
+				len,			/* number of bytes used to store the string. */
+				actualLen,		/* Number of bytes that would be needed to
+								 * store given string in given encoding. */
+				maxLen;			/* max size of given column in bytes */
+	char	   *destBuf,
+			   *buf = OutputFunctionCall(finfo, value);
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
 	len = strlen(buf);
 
@@ -2425,7 +2645,7 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	}
 	else
 	{
-		/* We can store upto 2GB (2^31 - 1 bytes) for the varchar(max). */ 
+		/* We can store upto 2GB (2^31 - 1 bytes) for the varchar(max). */
 		if (unlikely(actualLen > VARCHAR_MAX))
 			elog(ERROR, "Number of bytes required for the field of varchar(max) exeeds 2GB");
 		TDSInstrumentation(INSTR_TDS_DATATYPE_VARCHAR_MAX);
@@ -2439,13 +2659,15 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 int
 TdsSendTypeChar(FmgrInfo *finfo, Datum value, void *vMetaData)
-{	
+{
 	int			rc = EOF,
-				maxLen,		/* max size of given column in bytes */
-				actualLen,	/* Number of bytes that would be needed to store given string in given encoding. */
-				len;		/* number of bytes used to store the string. */
-	char			*destBuf, *buf = OutputFunctionCall(finfo, value);
-	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
+				maxLen,			/* max size of given column in bytes */
+				actualLen,		/* Number of bytes that would be needed to
+								 * store given string in given encoding. */
+				len;			/* number of bytes used to store the string. */
+	char	   *destBuf,
+			   *buf = OutputFunctionCall(finfo, value);
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
 	len = strlen(buf);
 
@@ -2465,10 +2687,12 @@ TdsSendTypeChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeVarbinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc = EOF, len = 0, maxlen = 0;
-	bytea			*vlena = DatumGetByteaPCopy(value);
-	char			*buf = VARDATA_ANY(vlena);
-	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
+	int			rc = EOF,
+				len = 0,
+				maxlen = 0;
+	bytea	   *vlena = DatumGetByteaPCopy(value);
+	char	   *buf = VARDATA_ANY(vlena);
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
 	maxlen = col->metaEntry.type7.maxSize;
 	len = VARSIZE_ANY_EXHDR(vlena);
@@ -2484,21 +2708,21 @@ TdsSendTypeVarbinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 		rc = TdsSendPlpDataHelper(buf, len);
 	}
-        return rc;
+	return rc;
 }
 
 static inline void
 SendTextPtrInfo(void)
 {
 	/*
-	 * For now, we are sending dummy data for textptr and texttimestamp
-	 * TODO: Once the engine supports TEXTPTR, TIMESTAMP - BABEL-260,
-	 * query & send the actual values
+	 * For now, we are sending dummy data for textptr and texttimestamp TODO:
+	 * Once the engine supports TEXTPTR, TIMESTAMP - BABEL-260, query & send
+	 * the actual values
 	 */
-	uint8_t                         temp = 16;
-	char textptr[] = {0x64, 0x75, 0x6d, 0x6d, 0x79, 0x20, 0x74, 0x65, 0x78, 0x74,
-				0x70, 0x74, 0x72, 0x00, 0x00, 0x00};
-	char texttimestamp[] = { 0x64, 0x75, 0x6d, 0x6d, 0x79, 0x54, 0x53, 0x00};
+	uint8_t		temp = 16;
+	char		textptr[] = {0x64, 0x75, 0x6d, 0x6d, 0x79, 0x20, 0x74, 0x65, 0x78, 0x74,
+	0x70, 0x74, 0x72, 0x00, 0x00, 0x00};
+	char		texttimestamp[] = {0x64, 0x75, 0x6d, 0x6d, 0x79, 0x54, 0x53, 0x00};
 
 	TdsPutUInt8(temp);
 
@@ -2509,11 +2733,12 @@ SendTextPtrInfo(void)
 int
 TdsSendTypeText(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int					rc;
-	uint32_t			len;
-	char			   	*destBuf, *buf = OutputFunctionCall(finfo, value);
-	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
-	int					encodedByteLen;
+	int			rc;
+	uint32_t	len;
+	char	   *destBuf,
+			   *buf = OutputFunctionCall(finfo, value);
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	int			encodedByteLen;
 
 	SendTextPtrInfo();
 
@@ -2530,9 +2755,10 @@ TdsSendTypeText(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeImage(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc = EOF, len;
-	bytea			*vlena = DatumGetByteaPCopy(value);
-	char			*buf = VARDATA(vlena);
+	int			rc = EOF,
+				len;
+	bytea	   *vlena = DatumGetByteaPCopy(value);
+	char	   *buf = VARDATA(vlena);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_IMAGE);
 
@@ -2548,9 +2774,9 @@ TdsSendTypeImage(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeNText(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int					rc;
-	char			   *out = OutputFunctionCall(finfo, value);
-	StringInfoData      buf;
+	int			rc;
+	char	   *out = OutputFunctionCall(finfo, value);
+	StringInfoData buf;
 
 	SendTextPtrInfo();
 
@@ -2558,21 +2784,21 @@ TdsSendTypeNText(FmgrInfo *finfo, Datum value, void *vMetaData)
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
 
 	/*
-	 * TODO: Enable below check: BABEL-298
-	 * This is a special case we are making for TDS clients. TSQL treats
-	 * on-the-wire data really as UCS2, not UTF16. While we try our best
-	 * to detect possible problems on input, the special rules about
-	 * truncating trailing spaces allow to enter data that exceeds the
-	 * number of 16-bit units to be sent here. In a best effort approach
-	 * we strip extra spaces here. The FATAL error will never happen
-	 * if the input rules are correct.
+	 * TODO: Enable below check: BABEL-298 This is a special case we are
+	 * making for TDS clients. TSQL treats on-the-wire data really as UCS2,
+	 * not UTF16. While we try our best to detect possible problems on input,
+	 * the special rules about truncating trailing spaces allow to enter data
+	 * that exceeds the number of 16-bit units to be sent here. In a best
+	 * effort approach we strip extra spaces here. The FATAL error will never
+	 * happen if the input rules are correct.
 	 */
-	/*while (buf.len > 0 && buf.len > col->metaEntry.type2.maxSize)
-	{
-		if (buf.data[buf.len - 2] != ' ' || buf.data[buf.len - 1] != '\0')
-			elog(FATAL, "UTF16 output of varchar/bpchar exceeds max length");
-		buf.len -= 2;
-	}*/
+
+	/*
+	 * while (buf.len > 0 && buf.len > col->metaEntry.type2.maxSize) { if
+	 * (buf.data[buf.len - 2] != ' ' || buf.data[buf.len - 1] != '\0')
+	 * elog(FATAL, "UTF16 output of varchar/bpchar exceeds max length");
+	 * buf.len -= 2; }
+	 */
 	if ((rc = TdsPutUInt32LE(buf.len)) == 0)
 		TdsPutbytes(buf.data, buf.len);
 
@@ -2584,10 +2810,11 @@ int
 TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 
-	int			rc, maxlen;
-	char			*out = OutputFunctionCall(finfo, value);
-	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
-	StringInfoData		buf;
+	int			rc,
+				maxlen;
+	char	   *out = OutputFunctionCall(finfo, value);
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	StringInfoData buf;
 
 	initStringInfo(&buf);
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
@@ -2595,16 +2822,16 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	if (maxlen != 0xffff)
 	{
-		
+
 		/*
 		 * This is a special case we are making for TDS clients. TSQL treats
 		 * on-the-wire data really as UCS2, not UTF16. While we try our best
-	 	 * to detect possible problems on input, the special rules about
-	 	 * truncating trailing spaces allow to enter data that exceeds the
-	 	 * number of 16-bit units to be sent here. In a best effort approach
-	 	 * we strip extra spaces here. The FATAL error will never happen
-	 	 * if the input rules are correct.
-	 	 */
+		 * to detect possible problems on input, the special rules about
+		 * truncating trailing spaces allow to enter data that exceeds the
+		 * number of 16-bit units to be sent here. In a best effort approach
+		 * we strip extra spaces here. The FATAL error will never happen if
+		 * the input rules are correct.
+		 */
 		while (buf.len > 0 && buf.len > col->metaEntry.type2.maxSize)
 		{
 			if (buf.data[buf.len - 2] != ' ' || buf.data[buf.len - 1] != '\0')
@@ -2621,7 +2848,7 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 		rc = TdsSendPlpDataHelper(buf.data, buf.len);
 	}
 
-        pfree(buf.data);
+	pfree(buf.data);
 	return rc;
 }
 
@@ -2629,22 +2856,22 @@ int
 TdsSendTypeNChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 
-	int			rc, len;
-	char			*out = OutputFunctionCall(finfo, value);
-	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
-	StringInfoData		buf;
+	int			rc,
+				len;
+	char	   *out = OutputFunctionCall(finfo, value);
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	StringInfoData buf;
 
 	initStringInfo(&buf);
 	TdsUTF8toUTF16StringInfo(&buf, out, strlen(out));
 
 	/*
 	 * This is a special case we are making for TDS clients. TSQL treats
-	 * on-the-wire data really as UCS2, not UTF16. While we try our best
-	 * to detect possible problems on input, the special rules about
-	 * truncating trailing spaces allow to enter data that exceeds the
-	 * number of 16-bit units to be sent here. In a best effort approach
-	 * we strip extra spaces here. The FATAL error will never happen
-	 * if the input rules are correct.
+	 * on-the-wire data really as UCS2, not UTF16. While we try our best to
+	 * detect possible problems on input, the special rules about truncating
+	 * trailing spaces allow to enter data that exceeds the number of 16-bit
+	 * units to be sent here. In a best effort approach we strip extra spaces
+	 * here. The FATAL error will never happen if the input rules are correct.
 	 */
 	while (buf.len > 0 && buf.len > col->metaEntry.type2.maxSize)
 	{
@@ -2654,9 +2881,9 @@ TdsSendTypeNChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	}
 
 	/*
-	 * Add explicit padding, Otherwise can give garbage in some cases.
-	 * This code needs to be removed and padding should be handled
-	 * internally - BABEL-273
+	 * Add explicit padding, Otherwise can give garbage in some cases. This
+	 * code needs to be removed and padding should be handled internally -
+	 * BABEL-273
 	 */
 	len = buf.len;
 	while (len < col->metaEntry.type2.maxSize)
@@ -2666,7 +2893,7 @@ TdsSendTypeNChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 		len += 2;
 	}
 
-	len = col->metaEntry.type2.maxSize;	
+	len = col->metaEntry.type2.maxSize;
 
 	if ((rc = TdsPutInt16LE(len)) == 0)
 		TdsPutbytes(buf.data, len);
@@ -2678,9 +2905,11 @@ TdsSendTypeNChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeMoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int rc = 0, length = 8;
-	uint32 low = 0, high = 0;
-	uint64 out = DatumGetUInt64(value);
+	int			rc = 0,
+				length = 8;
+	uint32		low = 0,
+				high = 0;
+	uint64		out = DatumGetUInt64(value);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_MONEY);
 
@@ -2688,7 +2917,7 @@ TdsSendTypeMoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 	high = (out >> 32) & 0xffffffff;
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(length);
 
 	if (rc == 0)
@@ -2702,9 +2931,11 @@ TdsSendTypeMoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeSmallmoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int rc = 0, length = 4;
-	uint32 low = 0, high = 0;
-	uint64 out = DatumGetUInt64(value);
+	int			rc = 0,
+				length = 4;
+	uint32		low = 0,
+				high = 0;
+	uint64		out = DatumGetUInt64(value);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_SMALLMONEY);
 
@@ -2712,13 +2943,13 @@ TdsSendTypeSmallmoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 	high = (out >> 32) & 0xffffffff;
 	if (high != 0xffffffff && high != 0)
 	{
-		ereport(ERROR,(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-		errmsg("SMALLMONEY exceeds permissible range of 4 bytes!")));
+		ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("SMALLMONEY exceeds permissible range of 4 bytes!")));
 		return EOF;
 	}
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(length);
 
 	if (rc == 0)
@@ -2729,13 +2960,15 @@ TdsSendTypeSmallmoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeSmalldatetime(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int rc = 0, length = 4;
-	uint16 numDays = 0, numMins = 0;
+	int			rc = 0,
+				length = 4;
+	uint16		numDays = 0,
+				numMins = 0;
 
 	TdsTimeDifferenceSmalldatetime(value, &numDays, &numMins);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(length);
 
 	if (rc == 0)
@@ -2749,13 +2982,15 @@ TdsSendTypeSmalldatetime(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeDate(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int rc = 0, length = 3;
-	uint32 numDays = 0;
+	int			rc = 0,
+				length = 3;
+	uint32		numDays = 0;
 
 	if (GetClientTDSVersion() < TDS_VERSION_7_3_A)
+
 		/*
-		 * If client being connected is using TDS version lower than 7.3A
-		 * then TSQL treats DATE as NVARCHAR.
+		 * If client being connected is using TDS version lower than 7.3A then
+		 * TSQL treats DATE as NVARCHAR.
 		 */
 		return TdsSendTypeNVarchar(finfo, value, vMetaData);
 
@@ -2769,13 +3004,15 @@ TdsSendTypeDate(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeDatetime(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int rc = 0, length = 8;
-	uint32 numDays = 0, numTicks = 0;
+	int			rc = 0,
+				length = 8;
+	uint32		numDays = 0,
+				numTicks = 0;
 
 	TdsTimeDifferenceDatetime(value, &numDays, &numTicks);
 
 	/* Don't send the length if the column type is not null. */
-	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+	if (!((TdsColumnMetaData *) vMetaData)->attNotNull)
 		rc = TdsPutInt8(length);
 
 	if (rc == 0)
@@ -2795,13 +3032,17 @@ TdsSendTypeDatetime(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int	rc = EOF, precision = 0, scale = -1;
-	uint8	sign = 1, length = 0;
-	char	*out, *decString;
-	uint128	num = 0;
-	TdsColumnMetaData  *col = (TdsColumnMetaData *)vMetaData;
-	uint8_t max_scale = col->metaEntry.type5.scale;
-	uint8_t max_precision = col->metaEntry.type5.precision;
+	int			rc = EOF,
+				precision = 0,
+				scale = -1;
+	uint8		sign = 1,
+				length = 0;
+	char	   *out,
+			   *decString;
+	uint128		num = 0;
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	uint8_t		max_scale = col->metaEntry.type5.scale;
+	uint8_t		max_precision = col->metaEntry.type5.precision;
 
 	out = OutputFunctionCall(finfo, value);
 	if (out[0] == '-')
@@ -2811,11 +3052,12 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 	}
 	if (out[0] == '0')
 		out++;
+
 	/*
-	 *  response string is formatted to obtain string representation
-	 * of TDS unsigned integer along with its precision and scale
+	 * response string is formatted to obtain string representation of TDS
+	 * unsigned integer along with its precision and scale
 	 */
-	decString = (char *)palloc(sizeof(char) * (strlen(out) + 1));
+	decString = (char *) palloc(sizeof(char) * (strlen(out) + 1));
 	/* While there is still digit in out and we haven't reached max_scale */
 	while (*out && scale < max_scale)
 	{
@@ -2837,10 +3079,11 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 		scale = 0;
 
 	/*
-	 * Fill in the remaining 0's if the processed scale from out is less than max_scale
-	 * This is needed because the output generated by engine may not always
-	 * produce the same precision/scale as calculated by resolve_numeric_typmod_from_exp,
-	 * which is the precision/scale we have sent to the client with column metadata.
+	 * Fill in the remaining 0's if the processed scale from out is less than
+	 * max_scale This is needed because the output generated by engine may not
+	 * always produce the same precision/scale as calculated by
+	 * resolve_numeric_typmod_from_exp, which is the precision/scale we have
+	 * sent to the client with column metadata.
 	 */
 	while (scale++ < max_scale)
 	{
@@ -2851,7 +3094,7 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 	if (precision > TDS_MAX_NUM_PRECISION ||
 		precision > max_precision)
 		ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("Arithmetic overflow error for data type numeric.")));
+						errmsg("Arithmetic overflow error for data type numeric.")));
 
 	if (precision >= 1 && precision < 10)
 		length = 4;
@@ -2910,23 +3153,26 @@ TdsSendTypeUniqueIdentifier(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int		rc = EOF, length = 0, scale = 0;
+	int			rc = EOF,
+				length = 0,
+				scale = 0;
 	uint64_t	res = 0;
 	double		numSec = 0;
-	TdsColumnMetaData  *col = (TdsColumnMetaData *)vMetaData;
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
 	if (GetClientTDSVersion() < TDS_VERSION_7_3_A)
+
 		/*
-		 * If client being connected is using TDS version lower than 7.3A
-		 * then TSQL treats TIME as NVARCHAR.
+		 * If client being connected is using TDS version lower than 7.3A then
+		 * TSQL treats TIME as NVARCHAR.
 		 */
 		return TdsSendTypeNVarchar(finfo, value, vMetaData);
 
 	scale = col->metaEntry.type6.scale;
 
 	/*
-	 * if time data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always.
+	 * if time data has no specific scale specified in the query, default
+	 * scale to be considered is 7 always.
 	 */
 	if (scale == 255)
 		scale = DATETIMEOFFSETMAXSCALE;
@@ -2938,13 +3184,13 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 	else if (scale >= 5 && scale <= 7)
 		length = 5;
 
-	numSec = (double)value / 1000000;
+	numSec = (double) value / 1000000;
 	while (scale--)
 		numSec *= 10;
 	/* Round res to the nearest integer */
 	numSec += 0.5;
 
-	res = (uint64_t)numSec;
+	res = (uint64_t) numSec;
 	if ((rc = TdsPutInt8(length)) == 0)
 		rc = TdsPutbytes(&res, length);
 	return rc;
@@ -2953,22 +3199,26 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int		rc = EOF, length = 0, scale = 0;
+	int			rc = EOF,
+				length = 0,
+				scale = 0;
 	uint64		numSec = 0;
 	uint32		numDays = 0;
-	TdsColumnMetaData  *col = (TdsColumnMetaData *)vMetaData;
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
 	if (GetClientTDSVersion() < TDS_VERSION_7_3_A)
+
 		/*
-		 * If client being connected is using TDS version lower than 7.3A
-		 * then TSQL treats DATETIME2 as NVARCHAR.
+		 * If client being connected is using TDS version lower than 7.3A then
+		 * TSQL treats DATETIME2 as NVARCHAR.
 		 */
 		return TdsSendTypeNVarchar(finfo, value, vMetaData);
 
 	scale = col->metaEntry.type6.scale;
+
 	/*
-	 * if Datetime2 data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always.
+	 * if Datetime2 data has no specific scale specified in the query, default
+	 * scale to be considered is 7 always.
 	 */
 	if (scale == 255)
 		scale = DATETIMEOFFSETMAXSCALE;
@@ -2980,11 +3230,11 @@ TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData)
 	else if (scale >= 5 && scale <= 7)
 		length = 8;
 
-	TdsGetDayTimeFromTimestamp((Timestamp)value, &numDays,
-					&numSec, scale);
+	TdsGetDayTimeFromTimestamp((Timestamp) value, &numDays,
+							   &numSec, scale);
 
 	if (TdsPutInt8(length) == 0 &&
-	    TdsPutbytes(&numSec, length - 3) == 0)
+		TdsPutbytes(&numSec, length - 3) == 0)
 		rc = TdsPutDate(numDays);
 
 	return rc;
@@ -2993,7 +3243,8 @@ TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData)
 static void
 SwapByte(char *buf, int st, int end)
 {
-	char temp = buf[st];
+	char		temp = buf[st];
+
 	buf[st] = buf[end];
 	buf[end] = temp;
 }
@@ -3002,70 +3253,78 @@ SwapByte(char *buf, int st, int end)
 Datum
 TdsTypeSqlVariantToDatum(StringInfo buf)
 {
-	bytea           *result = 0;
+	bytea	   *result = 0;
 	uint8		variantBaseType = 0;
-	int		pgBaseType = 0;
-	int             dataLen = 0, i = 0, len = 0;
-	int		tempScale = 0, tempLen = 0;
-	int		variantHeaderLen = 0, maxLen = 0, resLen = 0;
-	uint8_t		scale = 0, precision = 0, sign = 1, temp = 0;		  
+	int			pgBaseType = 0;
+	int			dataLen = 0,
+				i = 0,
+				len = 0;
+	int			tempScale = 0,
+				tempLen = 0;
+	int			variantHeaderLen = 0,
+				maxLen = 0,
+				resLen = 0;
+	uint8_t		scale = 0,
+				precision = 0,
+				sign = 1,
+				temp = 0;
 	DateADT		date = 0;
-	uint64		numMicro = 0, dateval = 0;
-	uint16		numDays = 0, numMins = 0;
+	uint64		numMicro = 0,
+				dateval = 0;
+	uint16		numDays = 0,
+				numMins = 0;
 	int16		timezone = 0;
-        uint32		numDays32 = 0, numTicks = 0; 
+	uint32		numDays32 = 0,
+				numTicks = 0;
 	Timestamp	timestamp = 0;
-	TimestampTz	timestamptz = 0;
+	TimestampTz timestamptz = 0;
 	Numeric		res = 0;
-	char		*decString, temp1, temp2;
-	uint128         n128 = 0, num = 0;
-	StringInfoData	strbuf;
-        tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
+	char	   *decString,
+				temp1,
+				temp2;
+	uint128		n128 = 0,
+				num = 0;
+	StringInfoData strbuf;
+	tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
 
 	variantBaseType = buf->data[0];
 	tempLen = buf->len - buf->cursor;
 
 	pltsql_plugin_handler_ptr->sqlvariant_get_pg_base_type(variantBaseType, &pgBaseType,
-							tempLen, &dataLen, &variantHeaderLen);
+														   tempLen, &dataLen, &variantHeaderLen);
 
 	/*
 	 * Header formats:
 	 *
-	 *	3-byte Header (for datetime series types with typmod):
-	 *		1. One byte varlena Header
-	 *		2. One byte type code (5bit) + MD ver (3bit)
-	 *		3. One byte scale
+	 * 3-byte Header (for datetime series types with typmod): 1. One byte
+	 * varlena Header 2. One byte type code (5bit) + MD ver (3bit) 3. One byte
+	 * scale
 	 *
-	 *	2-byte Header (for fixed length types without typmod):
-	 *		1. One byte varlena Header
-	 * 		2. One byte type code (5bit) + MD ver (3bit)
+	 * 2-byte Header (for fixed length types without typmod): 1. One byte
+	 * varlena Header 2. One byte type code (5bit) + MD ver (3bit)
 	 *
-	 *	4-byte Header (for decimal type):
-	 *		1. One byte varlena Header
-	 *		2. One byte type code (5bit) + MD ver (3bit)
-	 *		3. Two bytes typmod (encoded precision and scale)
+	 * 4-byte Header (for decimal type): 1. One byte varlena Header 2. One
+	 * byte type code (5bit) + MD ver (3bit) 3. Two bytes typmod (encoded
+	 * precision and scale)
 	 *
-	 *	Header for binary types:
-	 *		1. 1 or 4 bytes varlena header
-	 *		2. One byte type code ( 5bit ) + MD ver (3bit)
-	 *		3. 2 Bytes max length
+	 * Header for binary types: 1. 1 or 4 bytes varlena header 2. One byte
+	 * type code ( 5bit ) + MD ver (3bit) 3. 2 Bytes max length
 	 *
-	 *	Header for string types:
-	 *		1. 1 or 4 bytes varlena Header
-	 *		2. One byte type code (5bit) + MD ver (3bit)
-	 *		3. Two bytes for max length
-	 * 		4. Two bytes for collation code
+	 * Header for string types: 1. 1 or 4 bytes varlena Header 2. One byte
+	 * type code (5bit) + MD ver (3bit) 3. Two bytes for max length 4. Two
+	 * bytes for collation code
 	 */
-  
+
 	/*
-	 * If base type is N[VAR]CHAR then we have to use length of data in UTF8 format as datalen.
+	 * If base type is N[VAR]CHAR then we have to use length of data in UTF8
+	 * format as datalen.
 	 */
 	if (variantBaseType == VARIANT_TYPE_NCHAR ||
 		variantBaseType == VARIANT_TYPE_NVARCHAR)
 	{
 		/*
-		 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
-		 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+		 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) +
+		 * metadatalen(1B) + encodingLen(5B) + dataLen(2B) ) + data(dataLen)
 		 * Data is in UTF16 format.
 		 */
 		initStringInfo(&strbuf);
@@ -3076,11 +3335,11 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	resLen = dataLen + variantHeaderLen;
 
 	/* We need an extra varlena header for varlena datatypes */
-	if (variantBaseType == VARIANT_TYPE_CHAR || 
+	if (variantBaseType == VARIANT_TYPE_CHAR ||
 		variantBaseType == VARIANT_TYPE_NCHAR ||
-		variantBaseType == VARIANT_TYPE_VARCHAR || 
+		variantBaseType == VARIANT_TYPE_VARCHAR ||
 		variantBaseType == VARIANT_TYPE_NVARCHAR ||
-		variantBaseType == VARIANT_TYPE_BINARY || 
+		variantBaseType == VARIANT_TYPE_BINARY ||
 		variantBaseType == VARIANT_TYPE_VARBINARY ||
 		variantBaseType == VARIANT_TYPE_NUMERIC ||
 		variantBaseType == VARIANT_TYPE_DECIMAL ||
@@ -3105,19 +3364,19 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		SET_VARSIZE(result, resLen);
 	}
 
-	if (variantBaseType == VARIANT_TYPE_CHAR || 
+	if (variantBaseType == VARIANT_TYPE_CHAR ||
 		variantBaseType == VARIANT_TYPE_NCHAR ||
-	    variantBaseType == VARIANT_TYPE_VARCHAR || 
-	    variantBaseType == VARIANT_TYPE_NVARCHAR)
+		variantBaseType == VARIANT_TYPE_VARCHAR ||
+		variantBaseType == VARIANT_TYPE_NVARCHAR)
 	{
 		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		memcpy(&maxLen, &buf->data[7], 2);
 		if (variantBaseType == VARIANT_TYPE_NCHAR || variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
 			/*
-			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
-			 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
-			 * Data is in UTF16 format.
+			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) +
+			 * metadatalen(1B) + encodingLen(5B) + dataLen(2B) ) +
+			 * data(dataLen) Data is in UTF16 format.
 			 */
 			memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), strbuf.data, dataLen);
 			pfree(strbuf.data);
@@ -3125,18 +3384,19 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		else
 		{
 			/*
-			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
-			 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) +
+			 * metadatalen(1B) + encodingLen(5B) + dataLen(2B) ) +
+			 * data(dataLen)
 			 */
 			memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &buf->data[VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES], dataLen);
 		}
 	}
-	else if (variantBaseType == VARIANT_TYPE_BINARY || 
-			variantBaseType == VARIANT_TYPE_VARBINARY)
+	else if (variantBaseType == VARIANT_TYPE_BINARY ||
+			 variantBaseType == VARIANT_TYPE_VARBINARY)
 	{
 		/*
-		 * dataformat : totalLen(4B) + metadata(4B)( baseType(1B) + metadatalen(1B) +
-		 *      dataLen(2B) ) + data(dataLen)
+		 * dataformat : totalLen(4B) + metadata(4B)( baseType(1B) +
+		 * metadatalen(1B) + dataLen(2B) ) + data(dataLen)
 		 */
 		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		memcpy(&maxLen, &buf->data[2], 2);
@@ -3145,8 +3405,8 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	else if (variantBaseType == VARIANT_TYPE_DATE)
 	{
 		/*
-		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
-		 *              data(3B)
+		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) +
+		 * metadatalen(1B) ) + data(3B)
 		 */
 		memset(&date, 0, sizeof(date));
 		memcpy(&date, &buf->data[VARIANT_TYPE_METALEN_FOR_DATE], 3);
@@ -3157,8 +3417,8 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	else if (variantBaseType == VARIANT_TYPE_SMALLDATETIME)
 	{
 		/*
-		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
-		 *              data(4B)
+		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) +
+		 * metadatalen(1B) ) + data(4B)
 		 */
 		memcpy(&numDays, &buf->data[VARIANT_TYPE_METALEN_FOR_SMALLDATETIME], 2);
 		memcpy(&numMins, &buf->data[4], 2);
@@ -3168,8 +3428,8 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	else if (variantBaseType == VARIANT_TYPE_DATETIME)
 	{
 		/*
-		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
-		 *              data(8B)
+		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) +
+		 * metadatalen(1B) ) + data(8B)
 		 */
 		memcpy(&numDays32, &buf->data[VARIANT_TYPE_METALEN_FOR_DATETIME], 4);
 		memcpy(&numTicks, &buf->data[6], 4);
@@ -3179,11 +3439,11 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	else if (variantBaseType == VARIANT_TYPE_TIME)
 	{
 		/*
-		 * dataformat : totalLen(4B) + metadata(3B)( baseType(1B) + metadatalen(1B) +
-		 *              scale(1B) ) + data(3B-5B)
+		 * dataformat : totalLen(4B) + metadata(3B)( baseType(1B) +
+		 * metadatalen(1B) + scale(1B) ) + data(3B-5B)
 		 */
 		scale = buf->data[2];
-		temp = scale;	
+		temp = scale;
 		/* postgres limitation */
 		if (scale > 7 || scale < 0)
 			scale = DATETIMEOFFSETMAXSCALE;
@@ -3200,25 +3460,25 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 
 		if (temp == 7 || temp == 0xff)
 			numMicro /= 10;
-		
+
 		while (scale < 6)
 		{
 			numMicro *= 10;
 			scale++;
 		}
 		scale = temp;
-		memcpy(READ_DATA(result, variantHeaderLen), &numMicro, sizeof(numMicro));	
+		memcpy(READ_DATA(result, variantHeaderLen), &numMicro, sizeof(numMicro));
 	}
 	else if (variantBaseType == VARIANT_TYPE_DATETIME2)
 	{
 		/*
-		 * dataformat : totalLen(4B) + metadata(3B)( baseType(1B) + metadatalen(1B) +
-		 *              scale(1B) ) + data(6B-8B)
+		 * dataformat : totalLen(4B) + metadata(3B)( baseType(1B) +
+		 * metadatalen(1B) + scale(1B) ) + data(6B-8B)
 		 */
 		scale = buf->data[2];
-	
+
 		/* postgres limitation */
-                if (scale > 7 || scale == 0xff || scale < 0)
+		if (scale > 7 || scale == 0xff || scale < 0)
 			scale = DATETIMEOFFSETMAXSCALE;
 
 		if (scale <= 2)
@@ -3227,7 +3487,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 			dataLen = 7;
 		else if (scale <= 7)
 			dataLen = 8;
-		
+
 		memset(&numDays32, 0, sizeof(numDays32));
 		memset(&numMicro, 0, sizeof(numMicro));
 		memcpy(&numDays32, &buf->data[VARIANT_TYPE_METALEN_FOR_DATETIME2], 3);
@@ -3238,11 +3498,11 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	else if (variantBaseType == VARIANT_TYPE_DATETIMEOFFSET)
 	{
 		/*
-		 * dataformat : totalLen(4B) + metadata(3B)(baseType(1B) + metadatalen(1B) +
-		 *              scale(1B)) + data(8B-10B)
+		 * dataformat : totalLen(4B) + metadata(3B)(baseType(1B) +
+		 * metadatalen(1B) + scale(1B)) + data(8B-10B)
 		 */
 		scale = buf->data[2];
-	
+
 		/* postgres limitation */
 		if (scale > 7 || scale == 0xff || scale < 0)
 			scale = DATETIMEOFFSETMAXSCALE;
@@ -3253,7 +3513,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 			dataLen = 9;
 		else if (scale <= 7)
 			dataLen = 10;
-	
+
 		memset(&numDays32, 0, sizeof(numDays32));
 		memset(&numMicro, 0, sizeof(numMicro));
 		memcpy(&numDays32, &buf->data[dataLen - 2], 3);
@@ -3261,7 +3521,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		memcpy(&timezone, &buf->data[dataLen + 1], 2);
 
 		timezone *= -1;
-		TdsGetTimestampFromDayTime(numDays32, numMicro, (int)timezone, &timestamptz, scale);
+		TdsGetTimestampFromDayTime(numDays32, numMicro, (int) timezone, &timestamptz, scale);
 		timestamptz -= (timezone * SECS_PER_MINUTE * USECS_PER_SEC);
 		timestamptz -= (timezone * USECS_PER_SEC);
 
@@ -3272,8 +3532,9 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	else if (variantBaseType == VARIANT_TYPE_NUMERIC || variantBaseType == VARIANT_TYPE_DECIMAL)
 	{
 		/*
-		 * dataformat : totalLen(4B) + metdata(5B)( baseType(1B) + metadatalen(1B) +
-		 * 		precision(1B) + scale(1B) + sign(1B) ) + data(dataLen)
+		 * dataformat : totalLen(4B) + metdata(5B)( baseType(1B) +
+		 * metadatalen(1B) + precision(1B) + scale(1B) + sign(1B) ) +
+		 * data(dataLen)
 		 */
 		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		precision = buf->data[2];
@@ -3284,7 +3545,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		dataLen = 16;
 		memcpy(&n128, &buf->data[VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES], dataLen);
 		num = LEtoh128(n128);
-		decString = (char *)palloc0(sizeof(char) * 40);
+		decString = (char *) palloc0(sizeof(char) * 40);
 		if (num != 0)
 			Integer2String(num, decString);
 		else
@@ -3315,7 +3576,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		if (sign == 1 && num != 0)
 			decString++;
 		res = TdsSetVarFromStrWrapper(decString);
-		memcpy(READ_DATA(result, variantHeaderLen), (bytea *)DatumGetPointer(res), dataLen);
+		memcpy(READ_DATA(result, variantHeaderLen), (bytea *) DatumGetPointer(res), dataLen);
 	}
 	else
 	{
@@ -3327,8 +3588,8 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		if (variantBaseType == VARIANT_TYPE_MONEY)
 		{
 			/*
-			 * swap positions of 2 nibbles for money type
-			 * to match SQL behaviour
+			 * swap positions of 2 nibbles for money type to match SQL
+			 * behaviour
 			 */
 			for (i = 0; i < 4; i++)
 				SwapByte(READ_DATA(result, variantHeaderLen), i, i + 4);
@@ -3344,7 +3605,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	}
 
 	pltsql_plugin_handler_ptr->sqlvariant_set_metadata(result,
-					pgBaseType, scale, precision, maxLen);
+													   pgBaseType, scale, precision, maxLen);
 
 	buf->cursor += tempLen;
 
@@ -3355,36 +3616,52 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 int
 TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int		rc = EOF, variantBaseType = 0;
+	int			rc = EOF,
+				variantBaseType = 0;
 	uint8_t		pgBaseType = 0;
-	int		dataLen = 0, totalLen = 0, maxLen = 0, variantHeaderLen = 0;
-	bytea		*vlena = DatumGetByteaPCopy(value);
-	char		*buf = VARDATA(vlena), *decString = NULL, *out = NULL;
-	bool		isBaseNum = false, isBaseChar = false;
-	bool		isBaseBin = false, isBaseDec = false, isBaseDate = false;
-	uint32		numDays = 0, numTicks = 0, dateval = 0; 
-	uint16		numMins = 0, numDays16 = 0;
+	int			dataLen = 0,
+				totalLen = 0,
+				maxLen = 0,
+				variantHeaderLen = 0;
+	bytea	   *vlena = DatumGetByteaPCopy(value);
+	char	   *buf = VARDATA(vlena),
+			   *decString = NULL,
+			   *out = NULL;
+	bool		isBaseNum = false,
+				isBaseChar = false;
+	bool		isBaseBin = false,
+				isBaseDec = false,
+				isBaseDate = false;
+	uint32		numDays = 0,
+				numTicks = 0,
+				dateval = 0;
+	uint16		numMins = 0,
+				numDays16 = 0;
 	uint64		numMicro = 0;
 	int16		timezone = 0;
-	int		precision = 0, scale = -1, sign = 1, i = 0, temp = 0;
+	int			precision = 0,
+				scale = -1,
+				sign = 1,
+				i = 0,
+				temp = 0;
 	uint128		num = 0;
 	Timestamp	timestamp = 0;
-	TimestampTz	timestamptz = 0;
+	TimestampTz timestamptz = 0;
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_SQLVARIANT);
 
 	/*
-	 * First sql variant header byte contains:
-	 * 		 type code ( 5bit ) + MD ver (3bit)
+	 * First sql variant header byte contains: type code ( 5bit ) + MD ver
+	 * (3bit)
 	 */
 	pgBaseType = pltsql_plugin_handler_ptr->sqlvariant_inline_pg_base_type(vlena);
 
 	pltsql_plugin_handler_ptr->sqlvariant_get_metadata(vlena, pgBaseType,
-							&scale, &precision, &maxLen);		
+													   &scale, &precision, &maxLen);
 
 	pltsql_plugin_handler_ptr->sqlvariant_get_variant_base_type(pgBaseType,
-				 &variantBaseType, &isBaseNum, &isBaseChar,
-				 &isBaseDec, &isBaseBin, &isBaseDate, &variantHeaderLen);
+																&variantBaseType, &isBaseNum, &isBaseChar,
+																&isBaseDec, &isBaseBin, &isBaseDate, &variantHeaderLen);
 
 	dataLen = VARSIZE_ANY_EXHDR(vlena) - variantHeaderLen;
 	buf += variantHeaderLen;
@@ -3393,7 +3670,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	{
 		/*
 		 * dataformat: totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 * 		data(dataLen)
+		 * data(dataLen)
 		 */
 		if (variantBaseType == VARIANT_TYPE_TINYINT)
 			dataLen = 1;
@@ -3404,8 +3681,8 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		if (variantBaseType == VARIANT_TYPE_MONEY)
 		{
 			/*
-			 * swap positions of 2 nibbles for money type
-			 * to match SQL behaviour
+			 * swap positions of 2 nibbles for money type to match SQL
+			 * behaviour
 			 */
 			for (i = 0; i < 4; i++)
 				SwapByte(buf, i, i + 4);
@@ -3430,14 +3707,17 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	{
 		/*
 		 * dataformat: totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 *		encodingLen(5B) + dataLen(2B) + data(dataLen)
+		 * encodingLen(5B) + dataLen(2B) + data(dataLen)
 		 */
-		StringInfoData	strbuf;
-		int actualDataLen = 0;	 /* Number of bytes that would be needed to store given string in given encoding. */
-		char *destBuf = NULL;
+		StringInfoData strbuf;
+		int			actualDataLen = 0;	/* Number of bytes that would be
+										 * needed to store given string in
+										 * given encoding. */
+		char	   *destBuf = NULL;
+
 		dataLen -= VARHDRSZ;
 		if (variantBaseType == VARIANT_TYPE_NCHAR ||
-		    variantBaseType == VARIANT_TYPE_NVARCHAR)
+			variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
 			initStringInfo(&strbuf);
 			TdsUTF8toUTF16StringInfo(&strbuf, buf + VARHDRSZ, dataLen);
@@ -3445,12 +3725,12 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		}
 		else
 		{
-			/* 
-			 * TODO: [BABEL-1069] Remove collation related hardcoding 
-			 * from sql_variant sender for char class basetypes
+			/*
+			 * TODO: [BABEL-1069] Remove collation related hardcoding from
+			 * sql_variant sender for char class basetypes
 			 */
 			if (dataLen > 0)
-				destBuf = TdsEncodingConversion(buf + VARHDRSZ, dataLen, PG_UTF8 ,PG_WIN1252, &actualDataLen);
+				destBuf = TdsEncodingConversion(buf + VARHDRSZ, dataLen, PG_UTF8, PG_WIN1252, &actualDataLen);
 			else
 				/* We can not assume that buf would be NULL terminated. */
 				actualDataLen = 0;
@@ -3461,10 +3741,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		rc = TdsPutUInt32LE(totalLen);
 		rc |= TdsPutInt8(variantBaseType);
 		rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_CHAR_DATATYPES);
+
 		/*
-		 * 5B of fixed collation
-		 * TODO: [BABEL-1069] Remove collation related hardcoding 
-		 * from sql_variant sender for char class basetypes
+		 * 5B of fixed collation TODO: [BABEL-1069] Remove collation related
+		 * hardcoding from sql_variant sender for char class basetypes
 		 */
 		rc |= TdsPutInt8(9);
 		rc |= TdsPutInt8(4);
@@ -3475,12 +3755,12 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		rc |= TdsPutUInt16LE(actualDataLen);
 
 		if (variantBaseType == VARIANT_TYPE_NCHAR ||
-		    variantBaseType == VARIANT_TYPE_NVARCHAR)
+			variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
 			rc |= TdsPutbytes(strbuf.data, actualDataLen);
 			pfree(strbuf.data);
 		}
-		else	
+		else
 			rc |= TdsPutbytes(destBuf, actualDataLen);
 
 		if (destBuf)
@@ -3490,7 +3770,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	{
 		/*
 		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 * 		dataLen(2B) + data(dataLen)
+		 * dataLen(2B) + data(dataLen)
 		 */
 		dataLen = dataLen - VARHDRSZ;
 		totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES;
@@ -3505,7 +3785,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	{
 		/*
 		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 * 		precision(1B) + scale(1B) + sign(1B) + data(dataLen)
+		 * precision(1B) + scale(1B) + sign(1B) + data(dataLen)
 		 */
 		dataLen = 16;
 		totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES;
@@ -3516,7 +3796,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			sign = 0;
 			out++;
 		}
-		decString = (char *)palloc(sizeof(char) * (strlen(out) + 1));
+		decString = (char *) palloc(sizeof(char) * (strlen(out) + 1));
 		precision = 0, scale = -1;
 		while (out && *out)
 		{
@@ -3548,7 +3828,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	{
 		/*
 		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 *              data(3B)
+		 * data(3B)
 		 */
 
 		if (variantBaseType == VARIANT_TYPE_DATE)
@@ -3563,15 +3843,16 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATE);
 			rc |= TdsPutDate(numDays);
 		}
+
 		/*
 		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 *              data(4B)
+		 * data(4B)
 		 */
 		else if (variantBaseType == VARIANT_TYPE_SMALLDATETIME)
 		{
 			memcpy(&timestamp, buf, sizeof(timestamp));
 			dataLen = 4;
-			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_SMALLDATETIME;		
+			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_SMALLDATETIME;
 			TdsTimeDifferenceSmalldatetime(timestamp, &numDays16, &numMins);
 			rc = TdsPutUInt32LE(totalLen);
 			rc |= TdsPutInt8(variantBaseType);
@@ -3579,9 +3860,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			rc |= TdsPutUInt16LE(numDays16);
 			rc |= TdsPutUInt16LE(numMins);
 		}
+
 		/*
 		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 *              data(8B)
+		 * data(8B)
 		 */
 		else if (variantBaseType == VARIANT_TYPE_DATETIME)
 		{
@@ -3597,10 +3879,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		}
 		else if (variantBaseType == VARIANT_TYPE_TIME)
 		{
-		/*
-		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 *              scale(1B) + data(3B-5B)
-		 */
+			/*
+			 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+			 * scale(1B) + data(3B-5B)
+			 */
 			if (scale == 0xff || scale < 0 || scale > 7)
 				scale = DATETIMEOFFSETMAXSCALE;
 
@@ -3628,12 +3910,12 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			rc |= TdsPutInt8(scale);
 			rc = TdsPutbytes(&numMicro, dataLen);
 		}
-		else if(variantBaseType == VARIANT_TYPE_DATETIME2)
+		else if (variantBaseType == VARIANT_TYPE_DATETIME2)
 		{
-		/*
-		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 *              scale(1B) + data(6B-8B)
-		 */
+			/*
+			 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+			 * scale(1B) + data(6B-8B)
+			 */
 			if (scale == 0xff || scale < 0 || scale > 7)
 				scale = DATETIMEOFFSETMAXSCALE;
 
@@ -3645,8 +3927,8 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 				dataLen = 8;
 
 			memcpy(&timestamp, buf, sizeof(timestamp));
-			TdsGetDayTimeFromTimestamp((Timestamp)timestamp, &numDays,
-							&numMicro, scale);
+			TdsGetDayTimeFromTimestamp((Timestamp) timestamp, &numDays,
+									   &numMicro, scale);
 
 			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIME2;
 			rc = TdsPutUInt32LE(totalLen);
@@ -3658,15 +3940,16 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		}
 		else if (variantBaseType == VARIANT_TYPE_DATETIMEOFFSET)
 		{
-		/*
-		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
-		 *              scale(1B) + data(8B-10B)
-		 */
-			tsql_datetimeoffset *tdt = (tsql_datetimeoffset *)buf;
+			/*
+			 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
+			 * scale(1B) + data(8B-10B)
+			 */
+			tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) buf;
+
 			timestamptz = tdt->tsql_ts;
 			timezone = tdt->tsql_tz;
 			timestamptz += (timezone * SECS_PER_MINUTE * USECS_PER_SEC);
-			
+
 			if (scale == 0xff || scale < 0 || scale > 7)
 				scale = DATETIMEOFFSETMAXSCALE;
 
@@ -3677,8 +3960,8 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			else if (scale >= 5 && scale <= 7)
 				dataLen = 10;
 
-			TdsGetDayTimeFromTimestamp((Timestamp)timestamptz, &numDays,
-							&numMicro, scale);
+			TdsGetDayTimeFromTimestamp((Timestamp) timestamptz, &numDays,
+									   &numMicro, scale);
 			timezone *= -1;
 
 			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIMEOFFSET;
@@ -3700,10 +3983,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 Datum
 TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken token)
 {
-	StringInfo      buf = TdsGetStringInfoBufferFromToken(message, token);
-	Datum 	result;
-	TdsColumnMetaData       col = token->paramMeta;
-	int scale = col.metaEntry.type6.scale;
+	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
+	Datum		result;
+	TdsColumnMetaData col = token->paramMeta;
+	int			scale = col.metaEntry.type6.scale;
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_DATETIME_OFFSET);
 
@@ -3716,19 +3999,22 @@ TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken token)
 int
 TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int		rc = EOF, length = 0, scale = 0;
+	int			rc = EOF,
+				length = 0,
+				scale = 0;
 	uint64		numSec = 0;
 	uint32		numDays = 0;
 	int16_t		timezone = 0;
-	TimestampTz	timestamp = 0;
-	TdsColumnMetaData  *col = (TdsColumnMetaData *)vMetaData;
-	
-	tsql_datetimeoffset *tdt = (tsql_datetimeoffset *)value;
+	TimestampTz timestamp = 0;
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+
+	tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) value;
 
 	if (GetClientTDSVersion() < TDS_VERSION_7_3_A)
+
 		/*
-		 * If client being connected is using TDS version lower than 7.3A
-		 * then TSQL treats DATETIMEOFFSET as NVARCHAR.
+		 * If client being connected is using TDS version lower than 7.3A then
+		 * TSQL treats DATETIMEOFFSET as NVARCHAR.
 		 */
 		return TdsSendTypeNVarchar(finfo, value, vMetaData);
 
@@ -3739,9 +4025,10 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 	timestamp += (timezone * SECS_PER_MINUTE * USECS_PER_SEC);
 
 	scale = col->metaEntry.type6.scale;
+
 	/*
-	 * if Datetimeoffset data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always.
+	 * if Datetimeoffset data has no specific scale specified in the query,
+	 * default scale to be considered is 7 always.
 	 */
 	if (scale == 0xFF)
 		scale = DATETIMEOFFSETMAXSCALE;
@@ -3753,20 +4040,21 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 	else if (scale >= 5 && scale <= 7)
 		length = 10;
 
-	
-	TdsGetDayTimeFromTimestamp((Timestamp)timestamp, &numDays,
-					&numSec, scale);
+
+	TdsGetDayTimeFromTimestamp((Timestamp) timestamp, &numDays,
+							   &numSec, scale);
 	timezone *= -1;
 	if (TdsPutInt8(length) == 0 &&
-	    TdsPutbytes(&numSec, length - 5) == 0 &&
-	    TdsPutDate(numDays) == 0)
+		TdsPutbytes(&numSec, length - 5) == 0 &&
+		TdsPutDate(numDays) == 0)
 		rc = TdsPutUInt16LE(timezone);
 
 	return rc;
 }
 
-Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale)
-{	
+Datum
+TdsBytePtrToDatum(StringInfo buf, int datatype, int scale)
+{
 	switch (datatype)
 	{
 		case TDS_TYPE_DATETIMEN:
@@ -3786,21 +4074,22 @@ Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale)
 	}
 }
 
-Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int optional_attr)
+Datum
+TdsDateTimeTypeToDatum(uint64 time, int32 date, int datatype, int optional_attr)
 {
 	switch (datatype)
 	{
 		case TDS_TYPE_DATE:
 			{
-				DateADT result;
-				uint64	val;
+				DateADT		result;
+				uint64		val;
 
-				/* 
-				 * By default we calculate date from 01-01-0001
-				 * but buf has number of days from 01-01-1900. So adding
-				 * number of days between 01-01-1900 and 01-01-0001
+				/*
+				 * By default we calculate date from 01-01-0001 but buf has
+				 * number of days from 01-01-1900. So adding number of days
+				 * between 01-01-1900 and 01-01-0001
 				 */
-				result = (DateADT)date + (DateADT)TdsGetDayDifferenceHelper(1, 1, 1900, true);
+				result = (DateADT) date + (DateADT) TdsGetDayDifferenceHelper(1, 1, 1900, true);
 				TdsCheckDateValidity(result);
 
 				TdsTimeGetDatumFromDays(result, &val);
@@ -3816,42 +4105,42 @@ Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int optiona
 				time *= 1000000;
 				if (time < INT64CONST(0) || time > USECS_PER_DAY)
 					ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					errmsg("time out of range")));
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("time out of range")));
 
-				PG_RETURN_TIMEADT((TimeADT)time);
+				PG_RETURN_TIMEADT((TimeADT) time);
 			}
 		case TDS_TYPE_DATETIME2:
-			{	
+			{
 				Timestamp	timestamp;
 
-				/* 
-				 * By default we calculate date from 01-01-0001
-				 * but buf has number of days from 01-01-1900. So adding
-				 * number of days between 01-01-1900 and 01-01-0001
+				/*
+				 * By default we calculate date from 01-01-0001 but buf has
+				 * number of days from 01-01-1900. So adding number of days
+				 * between 01-01-1900 and 01-01-0001
 				 */
 				date += TdsGetDayDifferenceHelper(1, 1, 1900, true);
 
 				/* optional attribute here is scale */
 				TdsGetTimestampFromDayTime(date, time, 0, &timestamp, optional_attr);
 
-				PG_RETURN_TIMESTAMP((Timestamp)timestamp);
+				PG_RETURN_TIMESTAMP((Timestamp) timestamp);
 			}
 		case TDS_TYPE_DATETIMEOFFSET:
-			{	
+			{
 				tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
-				TimestampTz	timestamp;
+				TimestampTz timestamp;
 
-				/* 
-				 * By default we calculate date from 01-01-0001
-				 * but buf has number of days from 01-01-1900. So adding
-				 * number of days between 01-01-1900 and 01-01-0001
+				/*
+				 * By default we calculate date from 01-01-0001 but buf has
+				 * number of days from 01-01-1900. So adding number of days
+				 * between 01-01-1900 and 01-01-0001
 				 */
 				date += TdsGetDayDifferenceHelper(1, 1, 1900, true);
 
 				/* optional attribute here is time offset */
 				optional_attr *= -1;
-				TdsGetTimestampFromDayTime(date, time, (int)optional_attr, &timestamp, 7);
+				TdsGetTimestampFromDayTime(date, time, (int) optional_attr, &timestamp, 7);
 
 				timestamp -= (optional_attr * SECS_PER_MINUTE * USECS_PER_SEC);
 				/* since reverse is done in tm2timestamp() */

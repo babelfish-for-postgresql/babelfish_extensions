@@ -1,42 +1,75 @@
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb() WHERE name IN ('master', 'babel_sp_helpdb_db');
+SELECT name, compatibility_level FROM sys.babelfish_helpdb() WHERE name IN ('master', 'babel_sp_helpdb_db');
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint
-master#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
-babel_sp_helpdb_db#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+varchar#!#smallint
+master#!#120
+babel_sp_helpdb_db#!#120
 ~~END~~
 
 
 -- Executing sp_helpdb with already existing dbname as an input
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('master');
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('master');
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint
-master#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+varchar#!#smallint
+master#!#120
 ~~END~~
 
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('babel_sp_helpdb_db');
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('babel_sp_helpdb_db');
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint
-babel_sp_helpdb_db#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+varchar#!#smallint
+babel_sp_helpdb_db#!#120
 ~~END~~
 
 
 -- Executing sp_helpdb with wrong input
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('abc');
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('abc');
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint
+varchar#!#smallint
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The database 'abc' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
 
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('  wrongInput');
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('  wrongInput');
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint
+varchar#!#smallint
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The database '  wrongInput' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
+
+-- Executing sp_helpdb with a existing dbname but in mixed upper, lower cases as an input
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('MaSteR');
+GO
+~~START~~
+varchar#!#smallint
+master#!#120
+~~END~~
+
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('bAbeL_sP_helPdb_Db');
+GO
+~~START~~
+varchar#!#smallint
+babel_sp_helpdb_db#!#120
+~~END~~
+
+
+-- Executing sp_helpdb with a existing dbname but end with trailing spaces as an input
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('MaSteR        ');
+GO
+~~START~~
+varchar#!#smallint
+master#!#120
+~~END~~
+
+SELECT name, compatibility_level FROM sys.babelfish_helpdb('bAbeL_sP_helPdb_Db ');
+GO
+~~START~~
+varchar#!#smallint
+babel_sp_helpdb_db#!#120
+~~END~~
+
 

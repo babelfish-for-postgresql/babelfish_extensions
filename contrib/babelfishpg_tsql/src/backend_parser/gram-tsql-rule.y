@@ -1889,7 +1889,11 @@ func_expr_common_subexpr:
 			| TSQL_ATAT LANGUAGE
 	 			{
 	 				$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("language"),NIL, COERCE_EXPLICIT_CALL, @1);
-	 			}	
+				}
+			| JSON_MODIFY '(' a_expr ',' a_expr ',' a_expr ')'
+				{
+					$$ = (Node *) TsqlJsonModifyMakeFuncCall($3, $5, $7);
+				}
 		;
 
 target_el:
@@ -3616,12 +3620,18 @@ tsql_CreateFunctionStmt:
 						DefElem *lang = makeDefElem("language", (Node *) makeString("pltsql"), @1);
 						DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($10)), @10);
 						DefElem *location = makeDefElem("location", (Node *) makeInteger(@4), @4);
+						/* 
+						 *	Adding a option for volatility with value STABLE. 
+						 *	Function created from tsql dialect will be created as STABLE
+						 *	by default
+						 */
+						DefElem *vol = makeDefElem("volatility", (Node *) makeString("stable"), @1);
 						n->is_procedure = false;
 						n->replace = $2;
 						n->funcname = $4;
 						n->parameters = $5;
 						n->returnType = $7;
-						n->options = list_concat(list_make3(lang, body, location), $8);
+						n->options = list_concat(list_make4(lang, body, location, vol), $8);
 						$$ = (Node *)n;
 					}
 			| CREATE opt_or_replace proc_keyword tsql_func_name tsql_createproc_args
@@ -4261,6 +4271,7 @@ createdb_opt_item:
 col_name_keyword:
 			  TSQL_NVARCHAR
 			| OPENJSON
+			| JSON_MODIFY
 			;
 
 unreserved_keyword:

@@ -13,7 +13,7 @@ const uint16 pgtsql_ScanKeywordTokens[] = {
 
 #undef PG_KEYWORD
 
-int dialect_selector = 0;
+int			dialect_selector = 0;
 
 /*
  *  If dialect_selector is set to a value other than

@@ -31,6 +31,20 @@ end
 $$
 LANGUAGE plpgsql;
 
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_scope_identity()
+RETURNS INT8
+AS 'babelfishpg_tsql', 'get_scope_identity'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.scope_identity()
+RETURNS numeric(38,0) AS
+$BODY$
+ SELECT sys.babelfish_get_scope_identity()::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
+
 /*
  * SCHEMATA view
  */
@@ -66,6 +80,16 @@ CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 GRANT SELECT ON information_schema_tsql.schemata TO PUBLIC;
 
 -- please add your SQL here
+
+-- 2.4 changes table types to explicitly be stored as pass-by-value in pg_type. While MVU forces the catalog
+-- to be regenerated, mVU (minor version upgrade) does not, so we need to manually fix it here.
+UPDATE pg_catalog.pg_type AS t SET typbyval = 't' 
+FROM sys.babelfish_namespace_ext AS b,
+    pg_catalog.pg_namespace AS n
+WHERE b.nspname = n.nspname AND t.typnamespace = n.oid -- only update types in babelfish namespaces
+    AND typtype = 'c' -- only update composite types
+    AND typacl IS NOT NULL; -- table types have non-NULL typacl, while normal tables have it as NULL
+
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
@@ -1472,7 +1496,10 @@ SELECT
   , CAST('VIEW'as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
-  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(case when (c.relnamespace::regnamespace::text = 'sys') then 1
+	when c.relname in (select name from sys.shipped_objects_not_in_sys nis
+		where nis.name = c.relname and nis.schemaid = c.relnamespace and nis.type = 'V') then 1
+	else 0 end as sys.bit) AS is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(0 as sys.BIT) AS is_replicated
@@ -1625,9 +1652,21 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
+ALTER FUNCTION sys.schema_id() RENAME TO sys_schema_id_deprecated_in_2_4_0;
+ALTER FUNCTION schema_id(schema_name VARCHAR) RENAME TO schema_id_deprecated_in_2_4_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sys_schema_id_deprecated_in_2_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'schema_id_deprecated_in_2_4_0');
+
+CREATE OR REPLACE FUNCTION schema_id()
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION schema_id(IN schema_name sys.SYSNAME)
+RETURNS INT AS 'babelfishpg_tsql', 'schema_id' LANGUAGE C STABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_id(schema_name sys.SYSNAME) TO PUBLIC;
 
 /* set sys functions as STABLE */
-ALTER FUNCTION sys.schema_id() STABLE;
 ALTER FUNCTION sys.schema_name() STABLE;
 ALTER FUNCTION sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),
@@ -2447,6 +2486,24 @@ END;
 $BODY$
 LANGUAGE plpgsql
 STABLE;
+
+create or replace view sys.index_columns
+as
+select i.indrelid::integer as object_id
+  , CAST(CASE WHEN i.indisclustered THEN 1 ELSE 1+row_number() OVER(PARTITION BY c.oid) END AS INTEGER) AS index_id
+  , a.attrelid::integer as index_column_id
+  , a.attnum::integer as column_id
+  , a.attnum::sys.tinyint as key_ordinal
+  , 0::sys.tinyint as partition_ordinal
+  , 0::sys.bit as is_descending_key
+  , 1::sys.bit as is_included_column
+from pg_index as i
+inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid
+inner join pg_class c on i.indrelid = c.oid
+inner join sys.schemas sch on sch.schema_id = c.relnamespace
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.index_columns TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

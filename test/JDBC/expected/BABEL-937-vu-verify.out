@@ -128,15 +128,6 @@ nvarchar
 ~~END~~
 
 
--- To check multi function call query
-select * from babel_937_multi_function
-go
-~~START~~
-nvarchar#!#nvarchar
-{"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}#!#{"Price": "49.99"}
-~~END~~
-
-
 -- To check when expression is array type
 select * from babel_937_test_array
 go

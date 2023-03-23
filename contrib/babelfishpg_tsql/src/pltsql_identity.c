@@ -33,21 +33,33 @@
 typedef struct SeqTableIdentityData
 {
 	Oid			relid;			/* pg_class OID of this sequence (hash key) */
-	bool		last_identity_valid; /* check value validity */
+	bool		last_identity_valid;	/* check value validity */
 	int64		last_identity;	/* sequence identity value */
 } SeqTableIdentityData;
+
+typedef struct ScopeIdentityStack
+{
+	struct ScopeIdentityStack *prev;	/* previous stack item if any */
+	int			nest_level;		/* nesting depth at which we made entry */
+	SeqTableIdentityData last_used_seq_identity_in_scope;	/* current scope
+															 * identity value */
+} ScopeIdentityStack;
 
 /*
  * By default, it is set to false.  This is set to true only when we want setval
  * to set the max/min(current identity value, new identity value to be inserted.
  */
-bool pltsql_setval_identity_mode = false;
+bool		pltsql_setval_identity_mode = false;
 
 static HTAB *seqhashtabidentity = NULL;
 
 static SeqTableIdentityData *last_used_seq_identity = NULL;
 
-static Oid get_table_identity(Oid tableOid);
+static Oid	get_table_identity(Oid tableOid);
+
+static ScopeIdentityStack *last_used_scope_seq_identity = NULL;
+static int	PltsqlScopeIdentityNestLevel = 0;
+static void update_scope_identity_stack(SeqTableIdentityData *elm);
 
 PG_FUNCTION_INFO_V1(get_identity_param);
 
@@ -58,22 +70,22 @@ PG_FUNCTION_INFO_V1(get_identity_param);
 Datum
 get_identity_param(PG_FUNCTION_ARGS)
 {
-	text		*tablename = PG_GETARG_TEXT_PP(0);
-	text		*optionname = PG_GETARG_TEXT_PP(1);
-	int			 prev_sql_dialect = sql_dialect;
+	text	   *tablename = PG_GETARG_TEXT_PP(0);
+	text	   *optionname = PG_GETARG_TEXT_PP(1);
+	int			prev_sql_dialect = sql_dialect;
 
 	sql_dialect = SQL_DIALECT_TSQL;
- 
+
 	PG_TRY();
 	{
-		RangeVar 	*tablerv;
-		Oid 		tableOid;
+		RangeVar   *tablerv;
+		Oid			tableOid;
 		Oid			seqid;
-		List		*seq_options;
-		ListCell	*seq_lc;
-		char		*cur_db_name;
-		const char	*table = text_to_cstring(tablename);
-		const char	*option = text_to_cstring(optionname);
+		List	   *seq_options;
+		ListCell   *seq_lc;
+		char	   *cur_db_name;
+		const char *table = text_to_cstring(tablename);
+		const char *option = text_to_cstring(optionname);
 
 		tablerv = pltsqlMakeRangeVarFromName(table);
 		cur_db_name = get_cur_db_name();
@@ -95,9 +107,9 @@ get_identity_param(PG_FUNCTION_ARGS)
 		seqid = get_table_identity(tableOid);
 		seq_options = sequence_options(seqid);
 
-		foreach (seq_lc, seq_options)
+		foreach(seq_lc, seq_options)
 		{
-			DefElem *defel = (DefElem *) lfirst(seq_lc);
+			DefElem    *defel = (DefElem *) lfirst(seq_lc);
 
 			if (strcmp(defel->defname, option) == 0)
 			{
@@ -127,15 +139,15 @@ PG_FUNCTION_INFO_V1(get_identity_current);
 Datum
 get_identity_current(PG_FUNCTION_ARGS)
 {
-	text 		*tablename = PG_GETARG_TEXT_PP(0);
-	const char	*table = text_to_cstring(tablename);
-	RangeVar 	*tablerv;
-	Oid 		tableOid;
+	text	   *tablename = PG_GETARG_TEXT_PP(0);
+	const char *table = text_to_cstring(tablename);
+	RangeVar   *tablerv;
+	Oid			tableOid;
 	Oid			seqid = InvalidOid;
-	List		*seq_options;
-	ListCell	*seq_lc;
+	List	   *seq_options;
+	ListCell   *seq_lc;
 	int			prev_sql_dialect = sql_dialect;
-	char		*cur_db_name;
+	char	   *cur_db_name;
 
 	sql_dialect = SQL_DIALECT_TSQL;
 
@@ -179,9 +191,9 @@ get_identity_current(PG_FUNCTION_ARGS)
 		{
 			seq_options = sequence_options(seqid);
 
-			foreach (seq_lc, seq_options)
+			foreach(seq_lc, seq_options)
 			{
-				DefElem *defel = (DefElem *) lfirst(seq_lc);
+				DefElem    *defel = (DefElem *) lfirst(seq_lc);
 
 				if (strcmp(defel->defname, "start") == 0)
 				{
@@ -208,8 +220,8 @@ get_identity_current(PG_FUNCTION_ARGS)
 static Oid
 get_table_identity(Oid tableOid)
 {
-	Relation 	rel;
-	TupleDesc 	tupdesc;
+	Relation	rel;
+	TupleDesc	tupdesc;
 	AttrNumber	attnum;
 	Oid			seqid = InvalidOid;
 
@@ -219,9 +231,10 @@ get_table_identity(Oid tableOid)
 	for (attnum = 0; attnum < tupdesc->natts; attnum++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
+
 		if (attr->attidentity)
 		{
-			seqid = getIdentitySequence(tableOid, attnum+1, false);
+			seqid = getIdentitySequence(tableOid, attnum + 1, false);
 			break;
 		}
 	}
@@ -237,8 +250,8 @@ get_table_identity(Oid tableOid)
 void
 pltsql_update_last_identity(Oid seqid, int64 val)
 {
-	SeqTableIdentityData	*elm;
-	bool					found;
+	SeqTableIdentityData *elm;
+	bool		found;
 
 	if (seqhashtabidentity == NULL)
 	{
@@ -264,6 +277,9 @@ pltsql_update_last_identity(Oid seqid, int64 val)
 	elm->last_identity = val;
 
 	last_used_seq_identity = elm;
+
+	/* Also update the scope identity */
+	update_scope_identity_stack(elm);
 }
 
 int64
@@ -285,6 +301,44 @@ last_identity_value(void)
 	return last_used_seq_identity->last_identity;
 }
 
+int64
+last_scope_identity_value(void)
+{
+	SeqTableIdentityData *curr_seq_identity = NULL;
+
+	/*
+	 * scope_identity is not defined or defined but it is not on the same
+	 * level as the current scope
+	 */
+	if (last_used_scope_seq_identity == NULL ||
+		last_used_scope_seq_identity->nest_level != PltsqlScopeIdentityNestLevel)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("last scope identity not yet defined in this session")));
+	}
+
+	/* Check the current identity in the scope */
+	curr_seq_identity = &last_used_scope_seq_identity->last_used_seq_identity_in_scope;
+	if (!curr_seq_identity->relid ||
+		!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(curr_seq_identity->relid)))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("last scope identity not yet defined in this session")));
+	}
+
+	if (!curr_seq_identity->last_identity_valid)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("last identity not valid")));
+
+	/* There better be a Global last_used_seq_identity */
+	Assert(last_used_seq_identity && last_used_seq_identity->last_identity);
+
+	return curr_seq_identity->last_identity;
+}
+
 void
 pltsql_nextval_identity(Oid seqid, int64 val)
 {
@@ -295,7 +349,8 @@ pltsql_nextval_identity(Oid seqid, int64 val)
 		pltsql_update_last_identity(seqid, val);
 }
 
-void pltsql_resetcache_identity()
+void
+pltsql_resetcache_identity()
 {
 	if (prev_pltsql_resetcache_hook)
 		prev_pltsql_resetcache_hook();
@@ -307,6 +362,17 @@ void pltsql_resetcache_identity()
 	}
 
 	last_used_seq_identity = NULL;
+
+	while (last_used_scope_seq_identity)
+	{
+		ScopeIdentityStack *prev = last_used_scope_seq_identity->prev;
+
+		pfree(last_used_scope_seq_identity);
+
+		last_used_scope_seq_identity = prev;
+	}
+	Assert(last_used_scope_seq_identity == NULL);
+
 }
 
 /*
@@ -321,15 +387,15 @@ pltsql_setval_identity(Oid seqid, int64 val, int64 last_val)
 {
 	if (sql_dialect == SQL_DIALECT_TSQL && pltsql_setval_identity_mode)
 	{
-		ListCell *seq_lc;
-		List *seq_options;
-		int64 seq_incr = 0;
+		ListCell   *seq_lc;
+		List	   *seq_options;
+		int64		seq_incr = 0;
 
 		seq_options = sequence_options(seqid);
 
-		foreach (seq_lc, seq_options)
+		foreach(seq_lc, seq_options)
 		{
-			DefElem *defel = (DefElem *) lfirst(seq_lc);
+			DefElem    *defel = (DefElem *) lfirst(seq_lc);
 
 			if (strcmp(defel->defname, "increment") == 0)
 				seq_incr = defGetInt64(defel);
@@ -343,4 +409,64 @@ pltsql_setval_identity(Oid seqid, int64 val, int64 last_val)
 	}
 
 	return val;
+}
+
+
+static void
+update_scope_identity_stack(SeqTableIdentityData *elm)
+{
+	ScopeIdentityStack *scope_identity = NULL;
+
+	/*
+	 * If current elm is in the same scope (same nest_level) as the current
+	 * top element in the stack, then update the top element to point to elm.
+	 * Otherwise, push elm to the stack and make it the new scope identity
+	 * value in the new scope.
+	 */
+	if (last_used_scope_seq_identity && last_used_scope_seq_identity->nest_level == PltsqlScopeIdentityNestLevel)
+	{
+		/* Make a deep copy of elm. We do not know where elm came from */
+		memcpy((void *) &last_used_scope_seq_identity->last_used_seq_identity_in_scope,
+			   (void *) elm, sizeof(SeqTableIdentityData));
+		return;
+	}
+
+	/* The previous nest_level should be less than the one we are adding */
+	Assert(!last_used_scope_seq_identity || last_used_scope_seq_identity->nest_level < PltsqlScopeIdentityNestLevel);
+
+	scope_identity = (ScopeIdentityStack *) MemoryContextAllocZero(TopMemoryContext,
+																   sizeof(ScopeIdentityStack));
+
+	scope_identity->prev = last_used_scope_seq_identity;
+	scope_identity->nest_level = PltsqlScopeIdentityNestLevel;
+
+	/* Make a deep copy of elm. We do not know where elm came from */
+	memcpy((void *) &scope_identity->last_used_seq_identity_in_scope,
+		   (void *) elm, sizeof(SeqTableIdentityData));
+
+	last_used_scope_seq_identity = scope_identity;
+}
+
+int
+pltsql_new_scope_identity_nest_level(void)
+{
+	return ++PltsqlScopeIdentityNestLevel;
+}
+
+void
+pltsql_revert_last_scope_identity(int nest_level)
+{
+	ScopeIdentityStack *old_top = NULL;
+
+	if (last_used_scope_seq_identity == NULL ||
+		last_used_scope_seq_identity->nest_level != PltsqlScopeIdentityNestLevel)
+	{
+		PltsqlScopeIdentityNestLevel = nest_level - 1;
+		return;
+	}
+
+	PltsqlScopeIdentityNestLevel = nest_level - 1;
+	old_top = last_used_scope_seq_identity;
+	last_used_scope_seq_identity = old_top->prev;
+	pfree(old_top);
 }

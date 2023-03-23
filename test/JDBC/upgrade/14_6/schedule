@@ -105,7 +105,7 @@ BABEL-3358
 temp-tables
 table-variable
 TestNotNull
-Test-Identity
+Test-Identity-before-14_7-or-15_2
 Test-Computed-Columns
 BABEL-1189
 BABEL-1062
@@ -129,7 +129,6 @@ BABEL-3117
 BABEL-3118
 BABEL-3249
 BABEL-3486
-BABEL-3474
 BABEL-3614
 BABEL-3646
 BABEL-3748-before-14_7
@@ -232,7 +231,6 @@ sys-all_sql_modules-dep
 sys-sql_modules-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
-BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
@@ -256,7 +254,6 @@ BABEL-SP_SPROC_COLUMNS-dep
 BABEL-3000-dep
 format
 msdb-dbo-syspolicy_system_health_state
-dateadd_internal_df
 sys-all_columns
 sys-assembly_modules
 sys-change_tracking_databases
@@ -358,7 +355,11 @@ BABEL_OBJECT_ID
 test_windows_login_before_15_2
 datediff_internal_date-before-14_7-or-15_2
 BABEL_OBJECT_NAME
-Test-sp_babelfish_volatility
 BABEL_SCHEMATA
 BABEL-3657
 BABEL-3938
+binary-index
+rowcount
+BABEL-1625
+BABEL-3474
+dateadd_internal_df

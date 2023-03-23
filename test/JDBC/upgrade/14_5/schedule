@@ -105,7 +105,7 @@ BABEL-2955
 temp-tables
 table-variable
 TestNotNull
-Test-Identity
+Test-Identity-before-14_7-or-15_2
 Test-Computed-Columns
 BABEL-1189
 BABEL-1243
@@ -122,7 +122,6 @@ BABEL-2944
 BABEL-3116
 BABEL-3118
 BABEL-3249
-BABEL-3474
 BABEL-3588
 BABEL-3369
 BABEL-3370
@@ -332,6 +331,9 @@ BABEL_SCHEMATA
 BABEL-SP_FKEYS
 BABEL-SP_FKEYS-dep
 BABEL_OBJECT_NAME
-Test-sp_babelfish_volatility
 BABEL-3657
 BABEL-3938
+binary-index
+rowcount
+BABEL-1625
+BABEL-3474

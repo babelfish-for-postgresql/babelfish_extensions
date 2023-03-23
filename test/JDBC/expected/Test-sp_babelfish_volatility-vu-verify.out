@@ -6,15 +6,6 @@ exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_f1#!#volatile
-~~END~~
-
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'stable'
-go
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
-go
-~~START~~
-nvarchar#!#varchar#!#text
 dbo#!#test_sp_babelfish_volatility_f1#!#stable
 ~~END~~
 
@@ -25,6 +16,15 @@ go
 ~~START~~
 nvarchar#!#varchar#!#text
 dbo#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'stable'
+go
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#stable
 ~~END~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'volatile'
@@ -49,17 +49,55 @@ nvarchar#!#varchar#!#text
 dbo#!#test_sp_babelfish_volatility_f1#!#volatile
 ~~END~~
 
-
-/* test with schema name */
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#volatile
+dbo#!#test_sp_babelfish_volatility_f1#!#volatile
 ~~END~~
 
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1', 'stable'
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'immutable'
 go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'stable'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'volatile'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'random'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "random" is not a valid volatility)~~
+
+sp_babelfish_volatility '.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+
+/* test with schema name */
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
 go
 ~~START~~
@@ -67,13 +105,22 @@ nvarchar#!#varchar#!#text
 test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#stable
 ~~END~~
 
-exec sys.sp_babelfish_volatility '"test_sp_babelfish_volatility_schema1".test_sp_babelfish_volatility_f1', 'immutable'
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1', 'immutable'
 go
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
 test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+exec sys.sp_babelfish_volatility '"test_sp_babelfish_volatility_schema1".test_sp_babelfish_volatility_f1', 'stable'
+go
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#stable
 ~~END~~
 
 exec sys.sp_babelfish_volatility '[test_sp_babelfish_volatility_schema1].test_sp_babelfish_volatility_f1', 'volatile'
@@ -92,6 +139,53 @@ go
 ~~ERROR (Message: "random" is not a valid volatility)~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1', 'immutable'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+sp_babelfish_volatility '"test_sp_babelfish_volatility_schema1".test_sp_babelfish_volatility_f1', 'stable'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
+sp_babelfish_volatility '[test_sp_babelfish_volatility_schema1].test_sp_babelfish_volatility_f1', 'volatile'
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema1#!#test_sp_babelfish_volatility_f1#!#volatile
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1', 'random'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: "random" is not a valid volatility)~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
@@ -218,18 +312,9 @@ exec sys.sp_babelfish_volatility 'test_bbf_vol_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_bbf_vol_f1#!#volatile
+dbo#!#test_bbf_vol_f1#!#stable
 ~~END~~
 
-exec sys.sp_babelfish_volatility '[test_bbf_vol_f1;drop table test_bbf_vol_t1;]'
-go
-~~START~~
-nvarchar#!#varchar#!#text
-dbo#!#test_bbf_vol_f1;drop table test_bbf_vol_t1;#!#volatile
-~~END~~
-
-exec sys.sp_babelfish_volatility '[test_bbf_vol_f1;drop table test_bbf_vol_t1;]', 'stable'
-go
 exec sys.sp_babelfish_volatility '[test_bbf_vol_f1;drop table test_bbf_vol_t1;]'
 go
 ~~START~~
@@ -237,11 +322,20 @@ nvarchar#!#varchar#!#text
 dbo#!#test_bbf_vol_f1;drop table test_bbf_vol_t1;#!#stable
 ~~END~~
 
+exec sys.sp_babelfish_volatility '[test_bbf_vol_f1;drop table test_bbf_vol_t1;]', 'immutable'
+go
+exec sys.sp_babelfish_volatility '[test_bbf_vol_f1;drop table test_bbf_vol_t1;]'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_bbf_vol_f1;drop table test_bbf_vol_t1;#!#immutable
+~~END~~
+
 exec sys.sp_babelfish_volatility 'test_bbf_vol_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_bbf_vol_f1#!#volatile
+dbo#!#test_bbf_vol_f1#!#stable
 ~~END~~
 
 select * from test_bbf_vol_t1
@@ -263,13 +357,13 @@ dbo#!#test_sp_babelfish_volatility_f1#!#volatile
 
 
 /* testing with dot and spaces in schema name */
-exec sys.sp_babelfish_volatility '[test_sp_babelfish_volatility_schema1 with .dot and spaces].test_sp_babelfish_volatility_f1', 'stable'
+exec sys.sp_babelfish_volatility '[test_sp_babelfish_volatility_schema1 with .dot and spaces].test_sp_babelfish_volatility_f1', 'immutable'
 go
 exec sys.sp_babelfish_volatility '[test_sp_babelfish_volatility_schema1 with .dot and spaces]."test_sp_babelfish_volatility_f1"'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema1 with .dot and spaces#!#test_sp_babelfish_volatility_f1#!#stable
+test_sp_babelfish_volatility_schema1 with .dot and spaces#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
 
@@ -286,16 +380,16 @@ exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_b
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#volatile
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
 ~~END~~
 
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1', 'stable'
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1', 'immutable'
 go
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
 /* test with duplicate function name */
@@ -310,32 +404,32 @@ exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_function_very_lon
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
+dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#stable
 ~~END~~
 
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa', 'stable'
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa', 'immutable'
 go
 exec sys.sp_babelfish_volatility '[test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa]'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#stable
+dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#immutable
 ~~END~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa.test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
+test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#stable
 ~~END~~
 
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa.test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa', 'stable'
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa.test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa', 'immutable'
 go
 exec sys.sp_babelfish_volatility '[test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa].[test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa]'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#stable
+test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#immutable
 ~~END~~
 
 /* test with trucated names */
@@ -343,55 +437,46 @@ exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_fu563bc8b23212e98
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#stable
+dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#immutable
 ~~END~~
 
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7', 'immutable'
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7', 'volatile'
 go
 exec sys.sp_babelfish_volatility '"test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7"'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#immutable
+dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
 ~~END~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_scc62ee1eb13f7c4857c426f2affcc9a16.test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#stable
+test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#immutable
 ~~END~~
 
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_scc62ee1eb13f7c4857c426f2affcc9a16.test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7', 'immutable'
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_scc62ee1eb13f7c4857c426f2affcc9a16.test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7', 'volatile'
 go
 exec sys.sp_babelfish_volatility '"test_sp_babelfish_volatility_scc62ee1eb13f7c4857c426f2affcc9a16".[test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7]'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#immutable
+test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
 ~~END~~
 
 exec sys.sp_babelfish_volatility
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_duplicate#!#volatile
-dbo#!#test_sp_babelfish_volatility_duplicate#!#volatile
-dbo#!#test_sp_babelfish_volatility_f2#!#volatile
-dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#immutable
-test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#immutable
-test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+dbo#!#test_sp_babelfish_volatility_duplicate#!#stable
+dbo#!#test_sp_babelfish_volatility_duplicate#!#stable
+dbo#!#test_sp_babelfish_volatility_f2#!#stable
+dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
+test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f2'
-go
-~~START~~
-nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_f2#!#volatile
-~~END~~
-
-exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f2', 'stable'
-go
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f2'
 go
 ~~START~~
@@ -399,8 +484,17 @@ nvarchar#!#varchar#!#text
 dbo#!#test_sp_babelfish_volatility_f2#!#stable
 ~~END~~
 
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f2', 'immutable'
+go
+exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f2'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f2#!#immutable
+~~END~~
 
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 /* function on which user has privilege is only visible */
 use test_sp_babelfish_volatility_db1
 go
@@ -429,6 +523,24 @@ go
 nvarchar#!#varchar#!#text
 ~~END~~
 
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function does not exist)~~
+
+sp_babelfish_volatility 'dbo.test_sp_babelfish_volatility_f2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: current user does not have priviledges on the function)~~
+
+sp_babelfish_volatility
+go
+~~START~~
+nvarchar#!#varchar#!#text
+~~END~~
+
 
 -- tsql
 /* grant access to current user */
@@ -439,29 +551,51 @@ go
 grant execute on test_sp_babelfish_volatility_f2 to test_sp_babelfish_volatility_user
 go
 
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 use test_sp_babelfish_volatility_db1
 go
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f2'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_f2#!#stable
+dbo#!#test_sp_babelfish_volatility_f2#!#immutable
 ~~END~~
 
 exec sys.sp_babelfish_volatility
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_f2#!#stable
-test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+dbo#!#test_sp_babelfish_volatility_f2#!#immutable
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f2'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f2#!#immutable
+~~END~~
+
+sp_babelfish_volatility
+go
+~~START~~
+nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_f2#!#immutable
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
 
@@ -472,7 +606,7 @@ go
 ALTER USER test_sp_babelfish_volatility_user WITH DEFAULT_SCHEMA=test_sp_babelfish_volatility_schema2
 GO
 
--- tsql      user=test_sp_babelfish_volatility_login password='abc'
+-- tsql      user=test_sp_babelfish_volatility_login password=12345678
 use test_sp_babelfish_volatility_db1
 go
 select current_user
@@ -486,14 +620,14 @@ exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f1    '
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_f2'
@@ -506,15 +640,15 @@ exec sys.sp_babelfish_volatility 'dbo.test_sp_babelfish_volatility_f2'
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_f2#!#stable
+dbo#!#test_sp_babelfish_volatility_f2#!#immutable
 ~~END~~
 
 exec sys.sp_babelfish_volatility
 go
 ~~START~~
 nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_f2#!#stable
-test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#stable
+dbo#!#test_sp_babelfish_volatility_f2#!#immutable
+test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutable
 ~~END~~
 
 
@@ -525,6 +659,63 @@ go
 revoke execute on test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1 from test_sp_babelfish_volatility_user
 go
 revoke execute on test_sp_babelfish_volatility_f2 from test_sp_babelfish_volatility_user
+go
+
+-- tsql
+/* test default schema in guest user */
+use test_sp_babelfish_volatility_db1
+go
+grant connect to guest
+go
+
+-- tsql     user=test_sp_babelfish_volatility_login_2 password=12345678
+use test_sp_babelfish_volatility_db1
+go
+SELECT current_user
+go
+~~START~~
+varchar
+guest
+~~END~~
+
+create function test_sp_babelfish_volatility_f1() returns int begin declare @a int; set @a = 1; return @a; end
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+guest#!#test_sp_babelfish_volatility_f1#!#stable
+~~END~~
+
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1', 'immutable';
+go
+sp_babelfish_volatility 'test_sp_babelfish_volatility_f1'
+go
+~~START~~
+nvarchar#!#varchar#!#text
+guest#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+sp_babelfish_volatility 'dbo.test_sp_babelfish_volatility_f2'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: current user does not have priviledges on the function)~~
+
+sp_babelfish_volatility
+go
+~~START~~
+nvarchar#!#varchar#!#text
+guest#!#test_sp_babelfish_volatility_f1#!#immutable
+~~END~~
+
+drop function test_sp_babelfish_volatility_f1
+go
+
+-- tsql
+use test_sp_babelfish_volatility_db1
+go
+revoke connect from guest
 go
 
 -- psql

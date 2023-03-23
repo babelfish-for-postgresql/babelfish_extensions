@@ -29,8 +29,12 @@ GO
 EXEC sp_addlinkedserver  @server = N'hello.world.com', @srvproduct=N'SQL Server'
 GO
 
--- Create linked server with a non-null provider string (Will throw warning internally)
-EXEC sp_addlinkedserver  @server = N'mssql_server2', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @provstr='blahblahblah', @catalog=N'master'
+-- Create linked server with a non-null provider string and NULL @srvproduct (Will throw warning internally)
+EXEC sp_addlinkedserver  @server = N'mssql_server2', @provider=N'tds_fdw', @datasrc=N'localhost', @provstr='blahblahblah', @catalog=N'master'
+GO
+
+-- Try to create linked server with NULL @provider (Should throw error)
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=NULL, @datasrc=N'localhost', @catalog=N'master'
 GO
 
 -- Try to create linked server with same server name (Should throw error)
@@ -55,6 +59,10 @@ GO
 
 -- Create a linked server login with @useself = NULL (Should throw error)
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = NULL, @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+-- Create a linked server login with @locallogin != NULL (Should throw error as locallogin is not yet supported)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'mssql_server', @useself = 'FALSE', @locallogin = 'login1', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
 GO
 
 -- Create a linked server login with @useself = FALSE. Also call sp_addlinkedsrvlogin from master.dbo schema

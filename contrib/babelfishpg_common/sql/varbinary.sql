@@ -218,7 +218,8 @@ CREATE OPERATOR sys.= (
     LEFTARG = sys.bbf_varbinary,
     RIGHTARG = sys.bbf_varbinary,
     FUNCTION = sys.varbinary_eq,
-    COMMUTATOR = =
+    COMMUTATOR = =,
+    RESTRICT = eqsel
 );
 
 -- Support not equals

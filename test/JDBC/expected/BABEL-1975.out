@@ -59,9 +59,19 @@ int
 SET ROWCOUNT 1;
 SELECT @@rowcount;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+0
+~~END~~
 
-~~ERROR (Message: Settings other than 0 are not allowed for option ROWCOUNT. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+
+set ROWCOUNT 0;
+SELECT @@rowcount;
+GO
+~~START~~
+int
+0
+~~END~~
 
 
 -- clean up

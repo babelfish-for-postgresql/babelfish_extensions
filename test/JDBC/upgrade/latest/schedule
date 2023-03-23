@@ -25,6 +25,7 @@ TestInt
 TestMoney
 TestNumeric
 TestReal
+TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
@@ -133,7 +134,6 @@ BABEL-3117
 BABEL-3118
 BABEL-3249
 BABEL-3486
-BABEL-3474
 BABEL-3614
 BABEL-3646
 BABEL-383
@@ -270,7 +270,6 @@ Test-sp_helprole-dep
 Test-sp_helprolemember-dep
 format
 msdb-dbo-syspolicy_system_health_state
-dateadd_internal_df
 sys-all_columns
 sys-all_columns-dep
 sys-all_sql_modules
@@ -398,6 +397,8 @@ test_windows_alter_login
 sys-systypes
 openjson
 BABEL-3702
+BABEL-3696
+BABEL-3697
 Test-sp_babelfish_volatility
 BABEL_OBJECT_DEFINITION
 Test-sp_rename
@@ -406,5 +407,15 @@ openquery_upgrd
 BABEL-3657
 test_windows_alter_user
 BABEL-733
+BABEL-745
 BABEL-3938
+BABEL-1199
 BABEL-NEXT-VALUE-FOR
+babel_context_info
+binary-index
+test_windows_sp_helpuser
+BABEL-3478
+rowcount
+BABEL-1625
+BABEL-3474
+dateadd_internal_df

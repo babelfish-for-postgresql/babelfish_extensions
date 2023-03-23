@@ -116,36 +116,36 @@ typedef struct
 #undef HAVE_GETADDRINFO
 #endif
 
-static int SecureOpenServer(Port *port);
+static int	SecureOpenServer(Port *port);
 static void SendGSSAuthError(int severity, const char *errmsg, OM_uint32 maj_stat,
 							 OM_uint32 min_stat);
 static void SendGSSAuthResponse(Port *port, char *extradata, uint16_t extralen);
-static int CheckGSSAuth(Port *port);
+static int	CheckGSSAuth(Port *port);
 #endif							/* ENABLE_GSS */
 
 /* Global to store default collation info */
-int TdsDefaultLcid;
-int TdsDefaultCollationFlags;
-uint8_t TdsDefaultSortid;
-pg_enc TdsDefaultClientEncoding;
+int			TdsDefaultLcid;
+int			TdsDefaultCollationFlags;
+uint8_t		TdsDefaultSortid;
+pg_enc		TdsDefaultClientEncoding;
 
 static void TdsDefineDefaultCollationInfo(void);
 
 typedef struct LoginRequestData
 {
 	/* Fixed length attributes */
-	uint32_t length;
-	uint32_t tdsVersion;
-	uint32_t packetSize;
-	uint32_t clientProVersion;
-	uint32_t clientPid;
-	uint32_t connectionId;
-	uint8_t  optionFlags1;		/* see above */
-	uint8_t  optionFlags2;		/* see above */
-	uint8_t  typeFlags;			/* see above */
-	uint8_t  optionFlags3;		/* Reserved flags, see above */
-	uint32_t clientTimezone;
-	uint32_t clientLcid;		/* Language code identifier */
+	uint32_t	length;
+	uint32_t	tdsVersion;
+	uint32_t	packetSize;
+	uint32_t	clientProVersion;
+	uint32_t	clientPid;
+	uint32_t	connectionId;
+	uint8_t		optionFlags1;	/* see above */
+	uint8_t		optionFlags2;	/* see above */
+	uint8_t		typeFlags;		/* see above */
+	uint8_t		optionFlags3;	/* Reserved flags, see above */
+	uint32_t	clientTimezone;
+	uint32_t	clientLcid;		/* Language code identifier */
 
 	/*
 	 * The variable length attributes are stored in the following order in the
@@ -154,32 +154,32 @@ typedef struct LoginRequestData
 	 * store null terminated strings.  Hence, we don't store the lengths.
 	 */
 #define TDS_LOGIN_ATTR_HOSTNAME 0
-	char *hostname;
+	char	   *hostname;
 #define TDS_LOGIN_ATTR_USERNAME 1
-	char *username;
+	char	   *username;
 #define TDS_LOGIN_ATTR_PASSWORD 2
-	char *password;
+	char	   *password;
 #define TDS_LOGIN_ATTR_APPNAME 3
-	char *appname;
+	char	   *appname;
 #define TDS_LOGIN_ATTR_SERVERNAME 4
-	char *servername;
+	char	   *servername;
 #define TDS_LOGIN_ATTR_UNUSED 5
 #define TDS_LOGIN_ATTR_LIBRARY 6
-	char *library;
+	char	   *library;
 #define TDS_LOGIN_ATTR_LANGUAGE 7
-	char *language;
+	char	   *language;
 #define TDS_LOGIN_ATTR_DATABASE 8
-	char *database;
-#define TDS_LOGIN_ATTR_MAX 9		/* should be last */
+	char	   *database;
+#define TDS_LOGIN_ATTR_MAX 9	/* should be last */
 
 	/* the 6-byte client mac address */
-	char clientId[6];
+	char		clientId[6];
 
 	uint16_t	sspiLen;
-	char		*sspi;
+	char	   *sspi;
 
 	/* the Active Directory (AD) domain name */
-	char		*domainname;
+	char	   *domainname;
 
 	/* TODO: Feature data */
 
@@ -191,9 +191,9 @@ typedef LoginRequestData *LoginRequest;
 
 typedef struct PreLoginOption
 {
-	int8_t token;
-	uint16_t offset;
-	uint16_t length;
+	int8_t		token;
+	uint16_t	offset;
+	uint16_t	length;
 	StringInfoData val;
 	struct PreLoginOption *next;
 } PreLoginOption;
@@ -203,17 +203,17 @@ LoginRequest loginInfo = NULL;
 
 static const char *PreLoginTokenType(uint8_t token);
 static void DebugPrintPreLoginStructure(PreLoginOption *request);
-static int ParsePreLoginRequest();
-static int *ProcessVersionNumber(const char* inputString);
+static int	ParsePreLoginRequest();
+static int *ProcessVersionNumber(const char *inputString);
 static void SetPreLoginResponseVal(Port *port, uint8_t token,
-								StringInfo val, StringInfo reqVal,
-								bool loadSsl, int *loadEncryption);
-static int MakePreLoginResponse(Port *, bool);
+								   StringInfo val, StringInfo reqVal,
+								   bool loadSsl, int *loadEncryption);
+static int	MakePreLoginResponse(Port *, bool);
 
 static void ValidateLoginRequest(LoginRequest request);
-static int FetchLoginRequest(LoginRequest request);
-static int ProcessLoginInternal(Port *port);
-static int CheckAuthPassword(Port *port, const char **logdetail);
+static int	FetchLoginRequest(LoginRequest request);
+static int	ProcessLoginInternal(Port *port);
+static int	CheckAuthPassword(Port *port, const char **logdetail);
 static void SendLoginError(Port *port, const char *logdetail);
 static void GetLoginFlagsInstrumentation(LoginRequest loginInfo);
 static void GetTDSVersionInstrumentation(uint32_t version);
@@ -258,7 +258,7 @@ PreLoginTokenType(uint8_t token)
 {
 	const char *id = NULL;
 
-	switch(token)
+	switch (token)
 	{
 		case TDS_PRELOGIN_VERSION:
 			id = "TDS_PRELOGIN_VERSION (0x00)";
@@ -299,19 +299,19 @@ DebugPrintPreLoginStructure(PreLoginOption *request)
 {
 	PreLoginOption *prev;
 	StringInfoData s;
-	int i = 0;
+	int			i = 0;
 
 	initStringInfo(&s);
 	appendStringInfo(&s, "\nOption token: %s \n\t Option offset: %d \n\t Option Length: %d \n\t Version: %02x.%02x.%04x Subbuild: %04x ",
-		PreLoginTokenType(request->token), request->offset, request->length,
-		request->val.data[0], request->val.data[1], request->val.data[2], request->val.data[4]);
+					 PreLoginTokenType(request->token), request->offset, request->length,
+					 request->val.data[0], request->val.data[1], request->val.data[2], request->val.data[4]);
 	prev = request->next;
-	while(prev != NULL)
+	while (prev != NULL)
 	{
 		appendStringInfo(&s, "\nOption token: %s \n\t Option offset: %d \n\t Option Length: %d \n\t Data : ",
-			PreLoginTokenType(prev->token), prev->offset, prev->length);
+						 PreLoginTokenType(prev->token), prev->offset, prev->length);
 
-		for(i = 0; i < prev->length; i++)
+		for (i = 0; i < prev->length; i++)
 		{
 			appendStringInfo(&s, "%02x", (unsigned char) prev->val.data[i]);
 		}
@@ -331,7 +331,7 @@ DebugPrintPreLoginStructure(PreLoginOption *request)
 static int
 ParsePreLoginRequest()
 {
-	uint16_t data16;
+	uint16_t	data16;
 	PreLoginOption *temp;
 	PreLoginOption *prev = NULL;
 
@@ -339,10 +339,10 @@ ParsePreLoginRequest()
 	while (1)
 	{
 		temp = palloc0(sizeof(PreLoginOption));
-		if (TdsGetbytes((char *)(&temp->token), sizeof(temp->token)))
+		if (TdsGetbytes((char *) (&temp->token), sizeof(temp->token)))
 			return STATUS_ERROR;
 
-		// Terminator token
+		/* Terminator token */
 		if (temp->token == -1)
 		{
 			temp->offset = 0;
@@ -353,10 +353,10 @@ ParsePreLoginRequest()
 			prev = prev->next;
 			break;
 		}
-		if (TdsGetbytes((char *)&data16, sizeof(data16)))
+		if (TdsGetbytes((char *) &data16, sizeof(data16)))
 			return STATUS_ERROR;
 		temp->offset = pg_ntoh16(data16);
-		if (TdsGetbytes((char *)&data16, sizeof(data16)))
+		if (TdsGetbytes((char *) &data16, sizeof(data16)))
 			return STATUS_ERROR;
 		temp->length = pg_ntoh16(data16);
 		initStringInfo(&temp->val);
@@ -390,20 +390,20 @@ ParsePreLoginRequest()
 	return 0;
 }
 static int *
-ProcessVersionNumber(const char* inputString)
+ProcessVersionNumber(const char *inputString)
 {
-	static int 	version_arr[4];
-	int 		part = 0,
-	    		len = 0;
-	char		*copy_version_number;
-	char 		*token;
+	static int	version_arr[4];
+	int			part = 0,
+				len = 0;
+	char	   *copy_version_number;
+	char	   *token;
 
 	Assert(inputString != NULL);
 	len = strlen(inputString);
 	copy_version_number = palloc0(len + 1);
 	memcpy(copy_version_number, inputString, len);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
-	{ 
+	{
 		version_arr[part] = atoi(token);
 		part++;
 		Assert(part <= 4);
@@ -411,26 +411,29 @@ ProcessVersionNumber(const char* inputString)
 	return version_arr;
 }
 
-static int makeVersionByte(int byteNum){
-	int *version_pnt;
-	int MajorVersion;
-	int MinorVersion;
-	int MicroVersion;
+static int
+makeVersionByte(int byteNum)
+{
+	int		   *version_pnt;
+	int			MajorVersion;
+	int			MinorVersion;
+	int			MicroVersion;
 
 	Assert(product_version != NULL);
 	Assert(byteNum <= 3);
-	if(pg_strcasecmp(product_version,"default") == 0)
+	if (pg_strcasecmp(product_version, "default") == 0)
 		version_pnt = ProcessVersionNumber(BABEL_COMPATIBILITY_VERSION);
 	else
 		version_pnt = ProcessVersionNumber(product_version);
-		
+
 	MajorVersion = *(version_pnt + 0);
 	MinorVersion = *(version_pnt + 1);
 	MicroVersion = *(version_pnt + 2);
 
-	if(byteNum == 0){
+	if (byteNum == 0)
+	{
 		return MajorVersion & 0xFF;
-	} 
+	}
 	else if (byteNum == 1)
 	{
 		return MinorVersion & 0xFF;
@@ -456,9 +459,9 @@ static int makeVersionByte(int byteNum){
 
 static void
 SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
-						StringInfo reqVal, bool loadSsl, int *loadEncryption)
+					   StringInfo reqVal, bool loadSsl, int *loadEncryption)
 {
-	switch(token)
+	switch (token)
 	{
 		case TDS_PRELOGIN_VERSION:
 			appendStringInfoChar(val, makeVersionByte(0));
@@ -469,16 +472,16 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 			appendStringInfoChar(val, 0x00);
 			break;
 		case TDS_PRELOGIN_ENCRYPTION:
+
 			/*
-			 * Support full encryption if server supports &
-			 * client has requested ENCRYPT_ON or ENCRYPT_REQ,
-			 * or Login7 request encryption if req = TDS_ENCRYPT_OFF
-			 * or else TDS_ENCRYPT_OFF
-			 * No SSL support - when disabled or on Unix sockets
+			 * Support full encryption if server supports & client has
+			 * requested ENCRYPT_ON or ENCRYPT_REQ, or Login7 request
+			 * encryption if req = TDS_ENCRYPT_OFF or else TDS_ENCRYPT_OFF No
+			 * SSL support - when disabled or on Unix sockets
 			 */
 			if (loadSsl && port->laddr.addr.ss_family != AF_UNIX)
 			{
-				if ((reqVal->data[0] == TDS_ENCRYPT_ON)	||
+				if ((reqVal->data[0] == TDS_ENCRYPT_ON) ||
 					(reqVal->data[0] == TDS_ENCRYPT_REQ))
 				{
 					appendStringInfoChar(val, TDS_ENCRYPT_ON);
@@ -522,6 +525,7 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 			MyTdsEncryptOption = *loadEncryption;
 			break;
 		case TDS_PRELOGIN_INSTOPT:
+
 			/*
 			 * Val 00 - To indicate client's val matches server expectation
 			 * Val 01 -	 Otherwise 01 to indicate client should terminate
@@ -540,10 +544,10 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 			TDSInstrumentation(INSTR_UNSUPPORTED_TDS_PRELOGIN_TRACEID);
 			break;
 		case TDS_PRELOGIN_FEDAUTHREQUIRED:
+
 			/*
-			 * Should only be set when SSPI or FedAuth is supported
-			 * Val 00 - SSPI supported
-			 * Val 01 - FedAuth Supported
+			 * Should only be set when SSPI or FedAuth is supported Val 00 -
+			 * SSPI supported Val 01 - FedAuth Supported
 			 */
 			TDSInstrumentation(INSTR_UNSUPPORTED_TDS_PRELOGIN_FEDAUTHREQUIRED);
 			break;
@@ -570,18 +574,20 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 static int
 MakePreLoginResponse(Port *port, bool loadSsl)
 {
-	uint16_t temp16;
+	uint16_t	temp16;
 	PreLoginOption *preLoginResponse;
-	PreLoginOption *tempRequest, *temp, *prev = NULL;
-	int offset = 0;
-	int loadEncryption = 0;
+	PreLoginOption *tempRequest,
+			   *temp,
+			   *prev = NULL;
+	int			offset = 0;
+	int			loadEncryption = 0;
 
 	preLoginResponse = palloc0(sizeof(PreLoginOption));
 
 	/* Prepare the structure */
 	tempRequest = TdsPreLoginRequest;
 
-	while(tempRequest != NULL)
+	while (tempRequest != NULL)
 	{
 		if (tempRequest->token != TDS_PRELOGIN_FEDAUTHREQUIRED)
 		{
@@ -589,7 +595,7 @@ MakePreLoginResponse(Port *port, bool loadSsl)
 			temp->token = tempRequest->token;
 			initStringInfo(&temp->val);
 			SetPreLoginResponseVal(port, temp->token, &temp->val, &tempRequest->val,
-									loadSsl, &loadEncryption);
+								   loadSsl, &loadEncryption);
 			temp->length = temp->val.len;
 			/* 1 - type, 2 - offsetlen, 2 - len */
 			offset += 5;
@@ -612,7 +618,7 @@ MakePreLoginResponse(Port *port, bool loadSsl)
 
 	/* Add all the offset val */
 	prev = preLoginResponse;
-	while(prev != NULL)
+	while (prev != NULL)
 	{
 		prev->offset = offset;
 		offset += prev->length;
@@ -633,7 +639,7 @@ MakePreLoginResponse(Port *port, bool loadSsl)
 		TdsPutbytes(&temp16, sizeof(temp16));
 		prev = prev->next;
 	}
-	// Terminator token
+	/* Terminator token */
 	TdsPutbytes(&(prev->token), sizeof(prev->token));
 
 	prev = preLoginResponse;
@@ -643,7 +649,7 @@ MakePreLoginResponse(Port *port, bool loadSsl)
 		prev = prev->next;
 	}
 
-	// Free the PreLogin Structures
+	/* Free the PreLogin Structures */
 	prev = TdsPreLoginRequest;
 	while (prev != NULL)
 	{
@@ -671,28 +677,28 @@ static void
 ValidateLoginRequest(LoginRequest request)
 {
 	/* TODO: do the sanity checks */
-	
-	uint32_t version;
+
+	uint32_t	version;
 
 	/* Use the GUC's values, if set. */
 	if (tds_default_protocol_version > 0)
 		request->tdsVersion = tds_default_protocol_version;
 	version = request->tdsVersion;
-	
+
 	/* TDS Version must be valid */
-	if (!(	version == TDS_VERSION_7_0 ||
-		version == TDS_VERSION_7_1 ||
-		version == TDS_VERSION_7_1_1 ||
-		version == TDS_VERSION_7_2 ||
-		version == TDS_VERSION_7_3_A ||
-		version == TDS_VERSION_7_3_B ||
-		version == TDS_VERSION_7_4))
+	if (!(version == TDS_VERSION_7_0 ||
+		  version == TDS_VERSION_7_1 ||
+		  version == TDS_VERSION_7_1_1 ||
+		  version == TDS_VERSION_7_2 ||
+		  version == TDS_VERSION_7_3_A ||
+		  version == TDS_VERSION_7_3_B ||
+		  version == TDS_VERSION_7_4))
 		elog(FATAL, "invalid TDS Version: %X", version);
 
 	GetTDSVersionInstrumentation(version);
 
 	/* TDS Version 7.0 is unsupported */
-	if(version == TDS_VERSION_7_0)
+	if (version == TDS_VERSION_7_0)
 		elog(FATAL, "unsupported TDS Version: %X", version);
 
 	/*
@@ -714,16 +720,18 @@ ValidateLoginRequest(LoginRequest request)
 static int
 FetchLoginRequest(LoginRequest request)
 {
-	uint32_t 		attrs[TDS_LOGIN_ATTR_MAX];
-	uint32_t		sspiOffsetLen;
-	StringInfoData	buf;
-	StringInfoData	temp_utf8;
-	int 			i, read = 0;
+	uint32_t	attrs[TDS_LOGIN_ATTR_MAX];
+	uint32_t	sspiOffsetLen;
+	StringInfoData buf;
+	StringInfoData temp_utf8;
+	int			i,
+				read = 0;
 
 	Assert(request != NULL);
 
 	TdsErrorContext->reqType = TDS_LOGIN7;
 #ifdef WORDS_BIGENDIAN
+
 	/*
 	 * Are we going to support this?
 	 */
@@ -738,7 +746,10 @@ FetchLoginRequest(LoginRequest request)
 	if (TdsGetbytes((char *) request, SizeOfLoginRequestFixed))
 		return STATUS_ERROR;
 
-	/* The length of a LOGIN7 stream MUST NOT be longer than 128K-1(byte) bytes */
+	/*
+	 * The length of a LOGIN7 stream MUST NOT be longer than 128K-1(byte)
+	 * bytes
+	 */
 	if (request->length > 128 * 1024)
 		return STATUS_ERROR;
 
@@ -782,10 +793,10 @@ FetchLoginRequest(LoginRequest request)
 		return STATUS_ERROR;
 
 	/*
-	 * It follows the following data that we're going to discard for now:
-	 * 1. Database to attach during connection process
-	 * 2. New password for the specified login. Introduced in TDS 7.2
-	 * 3. Used for large SSPI data when cbSSPI==USHORT_MAX. Introduced in TDS 7.2
+	 * It follows the following data that we're going to discard for now: 1.
+	 * Database to attach during connection process 2. New password for the
+	 * specified login. Introduced in TDS 7.2 3. Used for large SSPI data when
+	 * cbSSPI==USHORT_MAX. Introduced in TDS 7.2
 	 */
 
 	initStringInfo(&buf);
@@ -794,8 +805,8 @@ FetchLoginRequest(LoginRequest request)
 	/* Now, read from the offsets */
 	for (i = 0; i < TDS_LOGIN_ATTR_MAX; i++)
 	{
-		uint16_t offset = (uint16_t) attrs[i];
-		uint16_t length = (uint16_t) (attrs[i] >> 16);
+		uint16_t	offset = (uint16_t) attrs[i];
+		uint16_t	length = (uint16_t) (attrs[i] >> 16);
 
 		if (length > 0)
 		{
@@ -810,11 +821,11 @@ FetchLoginRequest(LoginRequest request)
 			read = offset;
 
 			/*
-			 * The hostname, username, password, appname, servername,
-			 * library name, language and database name MUST specify
-			 * at most 128 characters
+			 * The hostname, username, password, appname, servername, library
+			 * name, language and database name MUST specify at most 128
+			 * characters
 			 */
-			if(length > 128)
+			if (length > 128)
 				return STATUS_ERROR;
 
 			if (i == TDS_LOGIN_ATTR_UNUSED)
@@ -855,15 +866,16 @@ FetchLoginRequest(LoginRequest request)
 			buf.len += length;
 
 			/*
-			 * The password field is an obfusticated unicode string.  So, we've
-			 * to handle it differently.
+			 * The password field is an obfusticated unicode string.  So,
+			 * we've to handle it differently.
 			 */
 			if (i == TDS_LOGIN_ATTR_PASSWORD)
 			{
-				int j;
+				int			j;
+
 				for (j = 0; j < length; j++)
 				{
-					uint8_t p = buf.data[j];
+					uint8_t		p = buf.data[j];
 
 					p = (((p & 0xff) ^ 0xA5) << 4) | (((p & 0xff) ^ 0xA5) >> 4);
 					buf.data[j] = p & 0xff;
@@ -873,7 +885,7 @@ FetchLoginRequest(LoginRequest request)
 
 			TdsUTF16toUTF8StringInfo(&temp_utf8, buf.data, length);
 
-			switch(i)
+			switch (i)
 			{
 				case TDS_LOGIN_ATTR_HOSTNAME:
 					request->hostname = pstrdup(temp_utf8.data);
@@ -915,12 +927,23 @@ FetchLoginRequest(LoginRequest request)
 
 	if (sspiOffsetLen > 0)
 	{
-		uint16_t offset = (uint16_t) sspiOffsetLen;
+		uint16_t	offset = (uint16_t) sspiOffsetLen;
+
 		request->sspiLen = (uint16_t) (sspiOffsetLen >> 16);
 
 		if (request->sspiLen > 0)
 		{
-			/* XXX: large SSPI data when length==USHORT_MAX - not supported yet */
+			const char *is_windows_allowed = GetConfigOption("babelfishpg_tsql.allow_windows_login", true, false);
+
+			if (is_windows_allowed && strncasecmp(is_windows_allowed, "false", 5) == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Windows login is not supported in babelfish")));
+
+			/*
+			 * XXX: large SSPI data when length==USHORT_MAX - not supported
+			 * yet
+			 */
 			if (request->sspiLen == -1)
 			{
 				TDSInstrumentation(INSTR_UNSUPPORTED_TDS_LOGIN_CB_SSPI_LONG);
@@ -1052,7 +1075,8 @@ FetchLoginRequest(LoginRequest request)
  * 						1 = ibExtension/cbExtension fields are used.
  * 						Specifies whether ibExtension/cbExtension fields are used.
  */
-static void ProcessLoginFlags(LoginRequest loginInfo)
+static void
+ProcessLoginFlags(LoginRequest loginInfo)
 {
 	GetLoginFlagsInstrumentation(loginInfo);
 
@@ -1060,59 +1084,59 @@ static void ProcessLoginFlags(LoginRequest loginInfo)
 	if ((loginInfo->optionFlags2 & LOGIN_OPTION_FLAGS2_ODBC) ||
 		(loginInfo->typeFlags & LOGIN_TYPE_FLAGS_OLEDB))
 	{
-		char *textSize = psprintf("%d" , (loginInfo->tdsVersion <= TDS_VERSION_7_2) ?
+		char	   *textSize = psprintf("%d", (loginInfo->tdsVersion <= TDS_VERSION_7_2) ?
 										TEXT_SIZE_2GB : TEXT_SIZE_INFINITE);
-		char *rowCount = psprintf("%d" ,INT_MAX);
+		char	   *rowCount = psprintf("%d", INT_MAX);
 
 		set_config_option("babelfishpg_tsql.ansi_defaults",
-								"ON",
-								PGC_USERSET,
-								PGC_S_OVERRIDE,
-								GUC_ACTION_SET,
-								true,
-								0,
-								false);
+						  "ON",
+						  PGC_USERSET,
+						  PGC_S_OVERRIDE,
+						  GUC_ACTION_SET,
+						  true,
+						  0,
+						  false);
 
 		set_config_option("babelfishpg_tsql.implicit_transactions",
-								"OFF",
-								PGC_USERSET,
-								PGC_S_OVERRIDE,
-								GUC_ACTION_SET,
-								true,
-								0,
-								false);
+						  "OFF",
+						  PGC_USERSET,
+						  PGC_S_OVERRIDE,
+						  GUC_ACTION_SET,
+						  true,
+						  0,
+						  false);
 		set_config_option("babelfishpg_tsql.cursor_close_on_commit",
-								"OFF",
-								PGC_USERSET,
-								PGC_S_OVERRIDE,
-								GUC_ACTION_SET,
-								true,
-								0,
-								false);
+						  "OFF",
+						  PGC_USERSET,
+						  PGC_S_OVERRIDE,
+						  GUC_ACTION_SET,
+						  true,
+						  0,
+						  false);
 		set_config_option("babelfishpg_tsql.textsize",
-								textSize,
-								PGC_USERSET,
-								PGC_S_OVERRIDE,
-								GUC_ACTION_SET,
-								true,
-								0,
-								false);
+						  textSize,
+						  PGC_USERSET,
+						  PGC_S_OVERRIDE,
+						  GUC_ACTION_SET,
+						  true,
+						  0,
+						  false);
 		set_config_option("babelfishpg_tsql.rowcount",
-								rowCount,
-								PGC_USERSET,
-								PGC_S_OVERRIDE,
-								GUC_ACTION_SET,
-								true,
-								0,
-								false);
+						  rowCount,
+						  PGC_USERSET,
+						  PGC_S_OVERRIDE,
+						  GUC_ACTION_SET,
+						  true,
+						  0,
+						  false);
 	}
 
 	if (loginInfo->optionFlags3 & LOGIN_OPTION_FLAGS3_CHANGE_PASSWORD)
 	{
 		TDSInstrumentation(INSTR_UNSUPPORTED_TDS_LOGIN_OPTION_FLAGS3_CHANGE_PASSWORD);
 		ereport(FATAL,
-			errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-			errmsg("Password change request is not supported"));
+				errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+				errmsg("Password change request is not supported"));
 	}
 }
 
@@ -1128,14 +1152,14 @@ static void ProcessLoginFlags(LoginRequest loginInfo)
 static int
 ProcessLoginInternal(Port *port)
 {
-	MemoryContext	oldContext;
+	MemoryContext oldContext;
 	LoginRequest request;
-	const char* gucDatabaseName = GetConfigOption("babelfishpg_tsql.database_name", true, false);
+	const char *gucDatabaseName = GetConfigOption("babelfishpg_tsql.database_name", true, false);
 
 	if (gucDatabaseName == NULL)
 		ereport(FATAL, (errcode(ERRCODE_UNDEFINED_OBJECT),
-			errmsg("Configuration parameter \"babelfishpg_tsql.database_name\" is not defined"),
-			errhint("Set GUC value by specifying it in postgresql.conf or by ALTER SYSTEM")));
+						errmsg("Configuration parameter \"babelfishpg_tsql.database_name\" is not defined"),
+						errhint("Set GUC value by specifying it in postgresql.conf or by ALTER SYSTEM")));
 
 	/*
 	 * We want to keep all login related information around even after
@@ -1156,8 +1180,8 @@ ProcessLoginInternal(Port *port)
 	ValidateLoginRequest(request);
 
 	/*
-	 * Downcase and copy the username and database name in port structure so that no one
-	 * messes up with the local copy.
+	 * Downcase and copy the username and database name in port structure so
+	 * that no one messes up with the local copy.
 	 */
 	if (request->username != NULL)
 	{
@@ -1169,7 +1193,7 @@ ProcessLoginInternal(Port *port)
 	}
 	if (request->database != NULL)
 	{
-		request->database = downcase_identifier(request->database, 
+		request->database = downcase_identifier(request->database,
 												strlen(request->database),
 												false,
 												false);
@@ -1190,8 +1214,8 @@ ProcessLoginInternal(Port *port)
 	}
 
 	/*
-	 * If GUC "babelfishpg_tsql.database_name" is not "none" then
-	 * database name specified in login request is overridden by
+	 * If GUC "babelfishpg_tsql.database_name" is not "none" then database
+	 * name specified in login request is overridden by
 	 * "babelfish_pgtsql.database_name"
 	 */
 	if (gucDatabaseName != NULL && strcmp(gucDatabaseName, "none") != 0)
@@ -1199,15 +1223,16 @@ ProcessLoginInternal(Port *port)
 
 	if (request->sspiLen > 0)
 	{
-		char tempusername[10] = "<unknown>";
+		char		tempusername[10] = "<unknown>";
+
 		port->user_name = pstrdup(tempusername);
 	}
 
 	/* Check a user name was given. */
 	if (port->user_name == NULL || port->user_name[0] == '\0')
 		ereport(FATAL,
-				 errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-				 errmsg("no PostgreSQL user name specified in startup packet"));
+				errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+				errmsg("no PostgreSQL user name specified in startup packet"));
 
 	/* The database defaults to the user name. */
 	if (port->database_name == NULL || port->database_name[0] == '\0')
@@ -1239,8 +1264,8 @@ ProcessLoginInternal(Port *port)
 	{
 		case CAC_STARTUP:
 			ereport(FATAL,
-					 errcode(ERRCODE_CANNOT_CONNECT_NOW),
-					 errmsg("the database system is starting up"));
+					errcode(ERRCODE_CANNOT_CONNECT_NOW),
+					errmsg("the database system is starting up"));
 			break;
 		case CAC_NOTCONSISTENT:
 			if (EnableHotStandby)
@@ -1256,18 +1281,18 @@ ProcessLoginInternal(Port *port)
 			break;
 		case CAC_SHUTDOWN:
 			ereport(FATAL,
-					 errcode(ERRCODE_CANNOT_CONNECT_NOW),
-					 errmsg("the database system is shutting down"));
+					errcode(ERRCODE_CANNOT_CONNECT_NOW),
+					errmsg("the database system is shutting down"));
 			break;
 		case CAC_RECOVERY:
 			ereport(FATAL,
-					 errcode(ERRCODE_CANNOT_CONNECT_NOW),
-					 errmsg("the database system is in recovery mode"));
+					errcode(ERRCODE_CANNOT_CONNECT_NOW),
+					errmsg("the database system is in recovery mode"));
 			break;
 		case CAC_TOOMANY:
 			ereport(FATAL,
-					 errcode(ERRCODE_TOO_MANY_CONNECTIONS),
-					 errmsg("sorry, too many clients already"));
+					errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+					errmsg("sorry, too many clients already"));
 			break;
 		case CAC_OK:
 			break;
@@ -1408,8 +1433,9 @@ SendGSSAuthResponse(Port *port, char *extradata, uint16_t extralen)
 static char *
 convertUsernameToCanonicalform(char *user_name)
 {
-	char *canonicalUsername = "";
-	char *chr;
+	char	   *canonicalUsername = "";
+	char	   *chr;
+
 	if ((chr = strchr(user_name, '@')) != NULL)
 	{
 		canonicalUsername = psprintf("%s%s",
@@ -1419,6 +1445,7 @@ convertUsernameToCanonicalform(char *user_name)
 	}
 	return user_name;
 }
+
 /*
  * This function is similar to pg_GSS_recvauth() but to authenticate a TDS
  * client.
@@ -1433,8 +1460,8 @@ CheckGSSAuth(Port *port)
 				gflags;
 	int			ret;
 	gss_buffer_desc gbuf;
-	MemoryContext	oldContext;
-	char 		*at_pos = NULL;
+	MemoryContext oldContext;
+	char	   *at_pos = NULL;
 
 	if (pg_krb_server_keyfile && strlen(pg_krb_server_keyfile) > 0)
 	{
@@ -1557,14 +1584,14 @@ CheckGSSAuth(Port *port)
 						 maj_stat, min_stat);
 
 	/*
-	 * XXX: In PG there are options to match realm names or perform ident mappings.
-	 * We're not going to do those checks now.  If required, we can implement the
-	 * same in future.
-	 * For now, we just get the realm(domain) name and store it in loginInfo.
+	 * XXX: In PG there are options to match realm names or perform ident
+	 * mappings. We're not going to do those checks now.  If required, we can
+	 * implement the same in future. For now, we just get the realm(domain)
+	 * name and store it in loginInfo.
 	 *
-	 * We also include the realm name along with username.  And, we don't support
-	 * stripping off the realm name from username.  So, an username will always
-	 * have the following format: username@realname.
+	 * We also include the realm name along with username.  And, we don't
+	 * support stripping off the realm name from username.  So, an username
+	 * will always have the following format: username@realname.
 	 */
 
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
@@ -1592,13 +1619,13 @@ SendLoginError(Port *port, const char *logdetail)
 
 	if (request->sspiLen > 0)
 		ereport(FATAL,
-				 errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-				 errmsg("GSSAPI authentication failed"));
+				errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+				errmsg("GSSAPI authentication failed"));
 	else
 		ereport(FATAL,
-				 errcode(ERRCODE_SQLSERVER_REJECTED_ESTABLISHMENT_OF_SQLCONNECTION),
-				 errmsg("Login failed for user \"%s\"",
-						request->username));
+				errcode(ERRCODE_SQLSERVER_REJECTED_ESTABLISHMENT_OF_SQLCONNECTION),
+				errmsg("Login failed for user \"%s\"",
+					   request->username));
 }
 
 /*
@@ -1615,7 +1642,7 @@ void
 TdsClientAuthentication(Port *port)
 {
 	int			status = STATUS_ERROR;
-	const char	*logdetail = NULL;
+	const char *logdetail = NULL;
 #ifdef ENABLE_GSS
 	StringInfoData ps_data;
 #endif
@@ -1625,20 +1652,20 @@ TdsClientAuthentication(Port *port)
 #ifdef ENABLE_GSS
 
 		/* NTLMSSP Authentication Isn't Supported yet. */
-		if (strcmp(loginInfo->sspi ,"NTLMSSP") == 0)
+		if (strcmp(loginInfo->sspi, "NTLMSSP") == 0)
 		{
 			TDSInstrumentation(INSTR_UNSUPPORTED_TDS_LOGIN_NTLMSSP);
 
 			ereport(FATAL,
-				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-				 errmsg("Authentication method \"NTLMSSP\" not supported")));
+					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+					 errmsg("Authentication method \"NTLMSSP\" not supported")));
 		}
 
 		/* We might or might not have the gss workspace already */
 		if (port->gss == NULL)
 			port->gss = (pg_gssinfo *)
 				MemoryContextAllocZero(TopMemoryContext,
-										sizeof(pg_gssinfo));
+									   sizeof(pg_gssinfo));
 		port->gss->auth = true;
 
 		status = CheckGSSAuth(port);
@@ -1702,20 +1729,20 @@ TdsClientAuthentication(Port *port)
 								   NI_NUMERICHOST);
 
 #ifdef USE_SSL
-					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\", %s",
-									hostinfo, port->user_name,
-									port->database_name,
-									port->ssl_in_use ? _("SSL on") : _("SSL off"))));
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\", %s",
+								hostinfo, port->user_name,
+								port->database_name,
+								port->ssl_in_use ? _("SSL on") : _("SSL off"))));
 #else
-					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\"",
-									hostinfo, port->user_name,
-									port->database_name)));
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("pg_hba.conf rejects connection for host \"%s\", user \"%s\", database \"%s\"",
+								hostinfo, port->user_name,
+								port->database_name)));
 #endif
-					break;
+				break;
 			}
 		case uaImplicitReject:
 
@@ -1757,27 +1784,27 @@ TdsClientAuthentication(Port *port)
 					0))
 
 #ifdef USE_SSL
-					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
-									hostinfo, port->user_name,
-									port->database_name,
-									port->ssl_in_use ? _("SSL on") : _("SSL off")),
-							 HOSTNAME_LOOKUP_DETAIL(port)));
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+								hostinfo, port->user_name,
+								port->database_name,
+								port->ssl_in_use ? _("SSL on") : _("SSL off")),
+						 HOSTNAME_LOOKUP_DETAIL(port)));
 #else
-					ereport(FATAL,
-							(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-							 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
-									hostinfo, port->user_name,
-									port->database_name),
-							 HOSTNAME_LOOKUP_DETAIL(port)));
+				ereport(FATAL,
+						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
+								hostinfo, port->user_name,
+								port->database_name),
+						 HOSTNAME_LOOKUP_DETAIL(port)));
 #endif
 
-					pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
-									   hostinfo, sizeof(hostinfo),
-									   NULL, 0,
-									   NI_NUMERICHOST);
-					break;
+				pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+								   hostinfo, sizeof(hostinfo),
+								   NULL, 0,
+								   NI_NUMERICHOST);
+				break;
 			}
 		case uaSSPI:
 		case uaPeer:
@@ -1805,10 +1832,11 @@ TdsClientAuthentication(Port *port)
 			}
 			break;
 		case uaGSS:
+
 			/*
-			 * If pg_hba.conf specifies that the entry should be authenticated using
-			 * GSSAPI.  If we reach here, we should've already authenticated using
-			 * GSSAPI.  So, we can just check the status..
+			 * If pg_hba.conf specifies that the entry should be authenticated
+			 * using GSSAPI.  If we reach here, we should've already
+			 * authenticated using GSSAPI.  So, we can just check the status..
 			 */
 			if (status != STATUS_OK)
 			{
@@ -1840,9 +1868,9 @@ TdsClientAuthentication(Port *port)
 			}
 
 			/*
-			 * If pg_hba.conf specifies that the entry should be authenticated using
-			 * password and the request doesn't contain a password, we should
-			 * throw an error.
+			 * If pg_hba.conf specifies that the entry should be authenticated
+			 * using password and the request doesn't contain a password, we
+			 * should throw an error.
 			 */
 			if (!loginInfo->password)
 			{
@@ -1873,43 +1901,43 @@ TdsClientAuthentication(Port *port)
 		SendLoginError(port, logdetail);
 
 	/*
-	 * Authentication succeeded.  But, we cannot send the login acknowledgement
-	 * response until we successfully initialize POSTGRES.  If we encounter an
-	 * error during initialization we've to send the error along with a login
-	 * failed response to the TDS client.  Check InitPostgres for different
-	 * initialization failure scenarios.
+	 * Authentication succeeded.  But, we cannot send the login
+	 * acknowledgement response until we successfully initialize POSTGRES.  If
+	 * we encounter an error during initialization we've to send the error
+	 * along with a login failed response to the TDS client.  Check
+	 * InitPostgres for different initialization failure scenarios.
 	 */
 }
 
 void
 TdsClientInit(void)
 {
-	 /* set up process-exit hook to close the socket */
-	 /* on_proc_exit(socket_close, 0); TODO Enable it later */
+	/* set up process-exit hook to close the socket */
+	/* on_proc_exit(socket_close, 0); TODO Enable it later */
 
-	 /*
-	  * In backends (as soon as forked) we operate the underlying socket in
-	  * nonblocking mode and use latches to implement blocking semantics if
-	  * needed. That allows us to provide safely interruptible reads and
-	  * writes.
-	  *
-	  * Use COMMERROR on failure, because ERROR would try to send the error to
-	  * the client, which might require changing the mode again, leading to
-	  * infinite recursion.
-	  */
+	/*
+	 * In backends (as soon as forked) we operate the underlying socket in
+	 * nonblocking mode and use latches to implement blocking semantics if
+	 * needed. That allows us to provide safely interruptible reads and
+	 * writes.
+	 *
+	 * Use COMMERROR on failure, because ERROR would try to send the error to
+	 * the client, which might require changing the mode again, leading to
+	 * infinite recursion.
+	 */
 #ifndef WIN32
-	 if (!pg_set_noblock(MyProcPort->sock))
-		 ereport(COMMERROR,
-				 (errmsg("could not set socket to nonblocking mode: %m")));
+	if (!pg_set_noblock(MyProcPort->sock))
+		ereport(COMMERROR,
+				(errmsg("could not set socket to nonblocking mode: %m")));
 #endif
 
-	 FeBeWaitSet = CreateWaitEventSet(TopMemoryContext, 3);
-	 AddWaitEventToSet(FeBeWaitSet, WL_SOCKET_WRITEABLE, MyProcPort->sock,
-					   NULL, NULL);
-	 AddWaitEventToSet(FeBeWaitSet, WL_LATCH_SET, -1, MyLatch, NULL);
-	 AddWaitEventToSet(FeBeWaitSet, WL_POSTMASTER_DEATH, -1, NULL, NULL);
-	 TdsCommInit(TDS_DEFAULT_INIT_PACKET_SIZE,
-					tds_secure_read, tds_secure_write);
+	FeBeWaitSet = CreateWaitEventSet(TopMemoryContext, 3);
+	AddWaitEventToSet(FeBeWaitSet, WL_SOCKET_WRITEABLE, MyProcPort->sock,
+					  NULL, NULL);
+	AddWaitEventToSet(FeBeWaitSet, WL_LATCH_SET, -1, MyLatch, NULL);
+	AddWaitEventToSet(FeBeWaitSet, WL_POSTMASTER_DEATH, -1, NULL, NULL);
+	TdsCommInit(TDS_DEFAULT_INIT_PACKET_SIZE,
+				tds_secure_read, tds_secure_write);
 }
 
 /*
@@ -1939,8 +1967,8 @@ SecureOpenServer(Port *port)
 int
 TdsProcessLogin(Port *port, bool loadedSsl)
 {
-	int rc = 0;
-	int loadEncryption = 0;
+	int			rc = 0;
+	int			loadEncryption = 0;
 
 	/* Set the LOGIN7 request type for error context */
 	TdsErrorContext->phase = 0;
@@ -1973,8 +2001,8 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 	PG_END_TRY();
 
 	/*
-	 * If SSL handshake failure has occurred then no need to go ahead with login,
-	 * Just return from here.
+	 * If SSL handshake failure has occurred then no need to go ahead with
+	 * login, Just return from here.
 	 */
 	if (rc < 0)
 		return rc;
@@ -1996,7 +2024,7 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 	TdsErrorContext->err_text = "";
 
 	if (rc < 0)
-	   return rc;
+		return rc;
 
 	/* Free up the SSL strcture if TDS_ENCRYPT_OFF is set */
 	if (loadEncryption == TDS_ENCRYPT_OFF)
@@ -2017,16 +2045,16 @@ TdsSendLoginAck(Port *port)
 	char	   *dbname = NULL;
 	int			prognameLen = pg_mbstrlen(default_server_name);
 	LoginRequest request;
-	StringInfoData	buf;
+	StringInfoData buf;
 	uint8		temp8;
 	uint32_t	collationInfo;
-	char collationBytesNew[5];
-	char *useDbCommand = NULL;
-	char	*user = NULL;
-	Oid roleid = InvalidOid;
-	MemoryContext  oldContext;
-	uint32_t tdsVersion = pg_hton32(loginInfo->tdsVersion);
-	char	srvVersionBytes[4];
+	char		collationBytesNew[5];
+	char	   *useDbCommand = NULL;
+	char	   *user = NULL;
+	Oid			roleid = InvalidOid;
+	MemoryContext oldContext;
+	uint32_t	tdsVersion = pg_hton32(loginInfo->tdsVersion);
+	char		srvVersionBytes[4];
 
 	PG_TRY();
 	{
@@ -2036,7 +2064,10 @@ TdsSendLoginAck(Port *port)
 
 		TdsErrorContext->err_text = "Initialising Collation Info";
 
-		/* Checking if babelfishpg_tsql extension is loaded before reading babelfishpg_tsql.server_collation_oid GUC*/
+		/*
+		 * Checking if babelfishpg_tsql extension is loaded before reading
+		 * babelfishpg_tsql.server_collation_oid GUC
+		 */
 		StartTransactionCommand();
 		PushActiveSnapshot(GetTransactionSnapshot());
 		if (get_extension_oid("babelfishpg_tsql", true) == InvalidOid)
@@ -2045,11 +2076,13 @@ TdsSendLoginAck(Port *port)
 		CommitTransactionCommand();
 
 		TdsDefineDefaultCollationInfo();
+
 		/*
-		 * Collation(total 5bytes) is made of below fields. And we have to send 5 bytes as part of
+		 * Collation(total 5bytes) is made of below fields. And we have to
+		 * send 5 bytes as part of enviornment change token. LCID(20 bits) +
+		 * collationFlags(8 bits) + version(4 bits) + sortId (8 bits) Here, we
+		 * are storing 5 bytes individually and then send it as part of
 		 * enviornment change token.
-		 * LCID(20 bits) + collationFlags(8 bits) + version(4 bits) + sortId (8 bits)
-		 * Here, we are storing 5 bytes individually and then send it as part of enviornment change token.
 		 */
 		collationInfo = TdsDefaultLcid | (TdsDefaultCollationFlags << 20);
 		collationBytesNew[0] = (char) collationInfo & 0x000000ff;
@@ -2065,20 +2098,24 @@ TdsSendLoginAck(Port *port)
 		TdsErrorContext->err_text = "Verifying and Sending Login Acknowledgement";
 
 		/* Start a server->client message */
-		/* TODO: Why do we do this? All messages the backend sends have this type */
+
+		/*
+		 * TODO: Why do we do this? All messages the backend sends have this
+		 * type
+		 */
 		TdsSetMessageType(TDS_RESPONSE);
 
 		/* Append the ENVCHANGE and INFO messages */
 		/* TODO: find all the real values for EnvChange and Info messages */
 
 		/*
-		 * In TDS the packet Size is rounded down to the nearest
-		 * multiple of 4.
+		 * In TDS the packet Size is rounded down to the nearest multiple of
+		 * 4.
 		 */
 		if (request->packetSize == TDS_USE_SERVER_DEFAULT_PACKET_SIZE)
 		{
-			char old[10];
-			char new[10];
+			char		old[10];
+			char		new[10];
 
 			/* set the packet size as server default */
 			request->packetSize = tds_default_packet_size;
@@ -2089,12 +2126,12 @@ TdsSendLoginAck(Port *port)
 		}
 		else if (request->packetSize != tds_default_packet_size)
 		{
-			char old[10];	/* the values are between 512 and 32767 */
-			char new[10];
+			char		old[10];	/* the values are between 512 and 32767 */
+			char		new[10];
 
 			/*
-			 * SQL Server rounds down the packet Size to the nearest
-			 * multiple of 4.
+			 * SQL Server rounds down the packet Size to the nearest multiple
+			 * of 4.
 			 */
 			request->packetSize = (((int) request->packetSize / 4) * 4);
 
@@ -2103,14 +2140,16 @@ TdsSendLoginAck(Port *port)
 			TdsSendEnvChange(TDS_ENVID_BLOCKSIZE, new, old);
 		}
 
-		/* Check if the user is a valid babelfish login.
-		 * We will only allow following users to login:
-		 * 1. An existing PG user that we have initialised with sys.babelfish_initialize()
-		 * 2. A Postgres SUPERUSER. 
-		 * 3. New users created using CREATE LOGIN command through TDS endpoint. */
+		/*
+		 * Check if the user is a valid babelfish login. We will only allow
+		 * following users to login: 1. An existing PG user that we have
+		 * initialised with sys.babelfish_initialize() 2. A Postgres
+		 * SUPERUSER. 3. New users created using CREATE LOGIN command through
+		 * TDS endpoint.
+		 */
 		if (port->user_name != NULL && port->user_name[0] != '\0')
 		{
-			bool login_exist;
+			bool		login_exist;
 
 			StartTransactionCommand();
 			roleid = get_role_oid(port->user_name, false);
@@ -2118,7 +2157,7 @@ TdsSendLoginAck(Port *port)
 			CommitTransactionCommand();
 
 			/* Throw error if this user is not one of the type mentioned above */
-			if(!login_exist && !superuser_arg(roleid))
+			if (!login_exist && !superuser_arg(roleid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("\"%s\" is not a Babelfish user", port->user_name)));
@@ -2128,12 +2167,12 @@ TdsSendLoginAck(Port *port)
 
 		if (request->database != NULL && request->database[0] != '\0')
 		{
-			Oid db_id;
+			Oid			db_id;
 
 			/*
-			 * Before preparing the query, first check whether we got a
-			 * valid database name and it exists.  Otherwise, there'll be
-			 * risk of SQL injection.
+			 * Before preparing the query, first check whether we got a valid
+			 * database name and it exists.  Otherwise, there'll be risk of
+			 * SQL injection.
 			 */
 			StartTransactionCommand();
 			db_id = pltsql_plugin_handler_ptr->pltsql_get_database_oid(request->database);
@@ -2141,17 +2180,20 @@ TdsSendLoginAck(Port *port)
 			MemoryContextSwitchTo(oldContext);
 
 			if (!OidIsValid(db_id))
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_DATABASE),
-							 errmsg("database \"%s\" does not exist", request->database)));
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_DATABASE),
+						 errmsg("database \"%s\" does not exist", request->database)));
 
-			/* Any delimitated/quoted db name identifier requested in login must be already handled before this point. */
+			/*
+			 * Any delimitated/quoted db name identifier requested in login
+			 * must be already handled before this point.
+			 */
 			useDbCommand = psprintf("USE [%s]", request->database);
 			dbname = pstrdup(request->database);
 		}
 		else
 		{
-			char	*temp = NULL;
+			char	   *temp = NULL;
 
 			StartTransactionCommand();
 			temp = pltsql_plugin_handler_ptr->pltsql_get_login_default_db(port->user_name);
@@ -2182,8 +2224,8 @@ TdsSendLoginAck(Port *port)
 			pfree(dbname);
 
 		/*
-		 * Request has a database name provided, so we execute
-		 * a "USE [<db_name>]" through pgtsql inline handler
+		 * Request has a database name provided, so we execute a "USE
+		 * [<db_name>]" through pgtsql inline handler
 		 */
 		StartTransactionCommand();
 		ExecuteSQLBatch(useDbCommand);
@@ -2192,27 +2234,29 @@ TdsSendLoginAck(Port *port)
 			pfree(useDbCommand);
 
 		/*
-		 * Set the GUC for language, it will take care of
-		 * changing the GUC, doing language validity checks
-		 * and sending INFO and ENV change tokens
+		 * Set the GUC for language, it will take care of changing the GUC,
+		 * doing language validity checks and sending INFO and ENV change
+		 * tokens
 		 */
 		if (request->language != NULL)
 		{
-			int ret;
+			int			ret;
+
 			/*
-			 * For varchar GUCs we call pltsql_truncate_identifier which calls get_namespace_oid
-			 * which does catalog access, hence we require to be inside a transaction command.
+			 * For varchar GUCs we call pltsql_truncate_identifier which calls
+			 * get_namespace_oid which does catalog access, hence we require
+			 * to be inside a transaction command.
 			 */
 			StartTransactionCommand();
 			ret = set_config_option_ext("babelfishpg_tsql.language",
-									request->language,
-									PGC_USERSET,
-									PGC_S_CLIENT,
-									roleid,
-									GUC_ACTION_SET,
-									true /* changeVal */,
-									0 /* elevel */,
-									false /* is_reload */);
+										request->language,
+										PGC_USERSET,
+										PGC_S_CLIENT,
+										roleid,
+										GUC_ACTION_SET,
+										true /* changeVal */ ,
+										0 /* elevel */ ,
+										false /* is_reload */ );
 			CommitTransactionCommand();
 			if (ret != 1)
 			{
@@ -2224,25 +2268,26 @@ TdsSendLoginAck(Port *port)
 		/* Set the GUC for application_name. */
 		if (request->appname != NULL)
 		{
-			int ret;
+			int			ret;
 			char	   *tmpAppName = pstrdup(request->appname);
 
 			pg_clean_ascii(tmpAppName);
 
 			/*
-			 * For varchar GUCs we call pltsql_truncate_identifier which calls get_namespace_oid
-			 * which does catalog access, hence we require to be inside a transaction command.
+			 * For varchar GUCs we call pltsql_truncate_identifier which calls
+			 * get_namespace_oid which does catalog access, hence we require
+			 * to be inside a transaction command.
 			 */
 			StartTransactionCommand();
 			ret = set_config_option_ext("application_name",
-									tmpAppName,
-									PGC_USERSET,
-									PGC_S_CLIENT,
-									roleid,
-									GUC_ACTION_SET,
-									true /* changeVal */,
-									0 /* elevel */,
-									false /* is_reload */);
+										tmpAppName,
+										PGC_USERSET,
+										PGC_S_CLIENT,
+										roleid,
+										GUC_ACTION_SET,
+										true /* changeVal */ ,
+										0 /* elevel */ ,
+										false /* is_reload */ );
 			CommitTransactionCommand();
 
 			if (ret != 1)
@@ -2253,23 +2298,23 @@ TdsSendLoginAck(Port *port)
 		}
 
 		TdsSendEnvChangeBinary(TDS_ENVID_COLLATION,
-								  collationBytesNew, sizeof(collationBytesNew),
-								  NULL, 0);
+							   collationBytesNew, sizeof(collationBytesNew),
+							   NULL, 0);
 
 		/* Append the LOGINACK message */
-              TDS_DEBUG(TDS_DEBUG2, "TdsSendLoginAck: token=0x%02x", TDS_TOKEN_LOGINACK);
+		TDS_DEBUG(TDS_DEBUG2, "TdsSendLoginAck: token=0x%02x", TDS_TOKEN_LOGINACK);
 		temp8 = TDS_TOKEN_LOGINACK;
 		TdsPutbytes(&temp8, sizeof(temp8));
 
-		temp16 = 1			/* interface */
-				 + sizeof(tdsVersion)
-				 + 1		/* prognameLen */
-				 + prognameLen * 2
-				 + sizeof(srvVersionBytes);
+		temp16 = 1				/* interface */
+			+ sizeof(tdsVersion)
+			+ 1					/* prognameLen */
+			+ prognameLen * 2
+			+ sizeof(srvVersionBytes);
 		TdsPutbytes(&temp16, sizeof(temp16));
 
 		temp8 = 0x01;
-		TdsPutbytes(&temp8, sizeof(temp8));		/* interface ??? */
+		TdsPutbytes(&temp8, sizeof(temp8)); /* interface ??? */
 
 		TdsPutbytes(&tdsVersion, sizeof(tdsVersion));
 		TdsPutbytes(&prognameLen, sizeof(temp8));
@@ -2281,7 +2326,7 @@ TdsSendLoginAck(Port *port)
 		srvVersionBytes[1] = makeVersionByte(1);
 		srvVersionBytes[2] = makeVersionByte(2);
 		srvVersionBytes[3] = makeVersionByte(3);
-		
+
 		TdsPutbytes(&srvVersionBytes, sizeof(srvVersionBytes));
 
 		pfree(buf.data);
@@ -2291,11 +2336,13 @@ TdsSendLoginAck(Port *port)
 
 		TdsFlush();
 
-		/* Now, set the network packet size that'll be used further TDS
+		/*
+		 * Now, set the network packet size that'll be used further TDS
 		 * communication.
 		 *
-		 * CAUTION: If required, this internally repallocs memory for TDS send and
-		 * receive buffers.  So, we should do this after sending the login response.
+		 * CAUTION: If required, this internally repallocs memory for TDS send
+		 * and receive buffers.  So, we should do this after sending the login
+		 * response.
 		 */
 		TdsErrorContext->err_text = "Resetting the TDS Buffer size";
 		TdsSetBufferSize(request->packetSize);
@@ -2320,7 +2367,7 @@ TdsSendLoginAck(Port *port)
 	PG_END_TRY();
 }
 
-/* 
+/*
  * GetClientTDSVersion - exposes TDS version of client being connected.
  */
 uint32_t
@@ -2329,14 +2376,14 @@ GetClientTDSVersion(void)
 	/* This should not happen. */
 	if (loginInfo == NULL)
 		ereport(FATAL,
-			(errcode(ERRCODE_INTERNAL_ERROR), errmsg("Login Info should not be NULL")));
+				(errcode(ERRCODE_INTERNAL_ERROR), errmsg("Login Info should not be NULL")));
 	return loginInfo->tdsVersion;
 }
 
 /*
  * This function will return the AD domain name.
  */
-char*
+char *
 get_tds_login_domainname(void)
 {
 	if (loginInfo)
@@ -2348,7 +2395,7 @@ get_tds_login_domainname(void)
 /*
  * To initialise information of default collation based on "babelfishpg_tsql.server_collation_oid" GUC.
  */
-static void 
+static void
 TdsDefineDefaultCollationInfo(void)
 {
 	coll_info_t cinfo;

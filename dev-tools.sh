@@ -32,11 +32,25 @@ if [ ! $1 ]; then
     echo "  pg_upgrade SOURCE_WS [TARGET_WS]"
     echo "      run pg_upgrade from SOURCE_WS to TARGET_WS"
     echo ""
-    echo "  test INPUT_DIR [MIGRATION_MODE]"
-    echo "      run JDBC test, default migration_mode is single-db"
+    echo "  test normal [MIGRATION_MODE] [TEST_BASE_DIR]"
+    echo "      run a normal JDBC test, default migration mode and test dir are single-db and input, respectively"
+    echo ""
+    echo "  test TEST_MODE MIGRATION_MODE TEST_BASE_DIR"
+    echo "      run a prepare/verify JDBC test using a schedule file in TEST_BASE_DIR"
     echo ""
     echo "  minor_version_upgrade SOURCE_WS [TARGET_WS]"
     echo "      upgrade minor version using ALTER EXTENSION ... UPDATE"
+    echo ""
+    echo "  pg_dump [TARGET_WS] LOGICAL_DATBABSE_NAME"
+    echo "      dump [TARGET_WS using pg_dump"
+    echo "      LOGICAL_DATBABSE_NAME is optional if provided then only that bbf database will be dumped."
+    echo ""
+    echo "  restore SOURCE_WS [TARGET_WS] LOGICAL_DATBABSE_NAME"
+    echo "      restore dump files from SOURCE_WS on [TARGET_WS]"
+    echo "      LOGICAL_DATBABSE_NAME is optional if provided then only that bbf database will be restored."
+    echo ""
+    echo "  dumprestore SOURCE_WS [TARGET_WS]"
+    echo "      dump SOURCE_WS using pg_dump and restore it on TARGET_WS"
     exit 0
 fi
 
@@ -47,13 +61,36 @@ CUR_WS=$PWD
 echo "Current Workspace: $CUR_WS"
 
 TARGET_WS=$2
-if [ "$1" == "pg_upgrade" ] || [ "$1" == "minor_version_upgrade" ]; then
+if [ "$1" == "pg_upgrade" ] || [ "$1" == "minor_version_upgrade" ] || [ "$1" == "restore" ] || [ "$1" == "dumprestore" ]; then
     TARGET_WS=$3
 elif [ "$1" == "test" ]; then
     TARGET_WS=$CUR_WS
+    TEST_MODE=$2
+    if [ ! $TEST_MODE ]; then
+        echo "Error: TEST_MODE should be specified, normal, prepare or verify" 1>&2
+        exit 1
+    elif [ "${TEST_MODE}" != "normal" ] && [ "${TEST_MODE}" != "prepare" ] && [ "${TEST_MODE}" != "verify" ]; then
+        echo "Error: TEST_MODE should be one of: normal, prepare or verify" 1>&2
+        exit 1
+    fi
+
     MIGRATION_MODE=$3
-    if [ ! $MIGRATION_MODE ]; then
-        MIGRATION_MODE="single-db"
+    if [ ! ${MIGRATION_MODE} ]; then
+        if [ "${TEST_MODE?}" == "normal" ]; then
+            MIGRATION_MODE="single-db"
+        else
+            echo "Error: MIGRATION_MODE should be specified, single-db or multi-db" 1>&2
+            exit 1
+        fi
+    fi
+
+    TEST_BASE_DIR=$4
+    if [ ! $TEST_BASE_DIR ]; then
+        if [ "${TEST_MODE?}" == "normal" ]; then
+            TEST_BASE_DIR="input"
+        else
+            echo "Error: TEST_BASE_DIR should be specified" 1>&2
+        fi
     fi
 fi
 if [ ! $TARGET_WS ]; then
@@ -142,6 +179,40 @@ init_pg() {
     init_pghint $1 $2
 }
 
+pg_dump() {
+    echo "Runinng pg_dumpall and pg_dump on ($1)"
+    cd $1/postgres
+    rm -f pg_dump_globals.sql pg_dump.sql error.log
+
+    if [[ ! $2 ]];then
+        $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>error.log
+        $1/postgres/bin/pg_dump --create --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+    else
+        $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose --bbf-database-name=$2 -f pg_dump_globals.sql 2>error.log
+        $1/postgres/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --bbf-database-name=$2 --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+    fi
+    stop $1
+}
+
+restore() {
+    stop $1 || true
+    restart $2 || true
+    cd $2
+    rm -f error.log
+    echo "Restoring from pg_dumpall"
+    $2/postgres/bin/psql -d postgres -U $USER -f $1/postgres/pg_dump_globals.sql 2>error.log
+    $2/postgres/bin/psql -d postgres -U $USER -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
+
+    echo "Restoring from pg_dump"
+    if [[ ! $3 ]];then
+        $2/postgres/bin/psql -d postgres -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT pg_reload_conf();"
+    else
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
+    fi
+}
+
 if [ "$1" == "initdb" ]; then
     init_db $TARGET_WS
     exit 0
@@ -175,8 +246,6 @@ elif [ "$1" == "pg_upgrade" ]; then
     cd $TARGET_WS
     if [ ! -d "./upgrade" ]; then
         mkdir upgrade
-    else
-        rm upgrade/*
     fi
     cd upgrade
     ../postgres/bin/pg_upgrade -U $USER \
@@ -199,18 +268,44 @@ elif [ "$1" == "pg_upgrade" ]; then
         "SELECT pg_reload_conf();"
     exit 0
 elif [ "$1" == "test" ]; then
-    INPUT_DIR=$2
-    cd $TARGET_WS/postgres
 
+    # Set migration_mode
+    cd $TARGET_WS/postgres
     bin/psql -d $TEST_DB -U $USER -c \
         "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '$MIGRATION_MODE';"
     bin/psql -d $TEST_DB -U $USER -c \
         "SELECT pg_reload_conf();"
 
+    # Remove output directory
     cd $CUR_WS/babelfish_extensions/test/JDBC
-    rm -rf output
-    export inputFilesPath=$INPUT_DIR
+    rm -rf output temp_schedule
+
+    export inputFilesPath=input
+    if [ "$TEST_MODE" == "normal" ]; then
+        export inputFilesPath=${TEST_BASE_DIR?}
+    elif [ "$TEST_MODE" == "prepare" ]; then
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" $TEST_BASE_DIR/schedule); do
+          if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 
+            printf '%s\n' "ERROR: Cannot find Test file "$filename"-vu-prepare or "$filename"-vu-verify in input directory !!" >&2
+            exit 1
+          fi
+        done
+        cat $TEST_BASE_DIR/schedule > temp_schedule
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" temp_schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" temp_schedule
+        done
+        export scheduleFile=temp_schedule
+    elif [ "$TEST_MODE" == "verify" ]; then
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" $TEST_BASE_DIR/schedule); do
+          trimmed=$(awk '{$1=$1;print}' <<< "$filename")
+          echo $trimmed-vu-verify >> temp_schedule;
+          echo $trimmed-vu-cleanup >> temp_schedule;
+        done
+        export scheduleFile=temp_schedule
+    fi
+
     mvn test
+    rm -rf temp_schedule
     exit 0
 elif [ "$1" == "minor_version_upgrade" ]; then
     echo "Building from $SOURCE_WS..."
@@ -231,5 +326,30 @@ elif [ "$1" == "minor_version_upgrade" ]; then
     cd $TARGET_WS/postgres
     bin/psql -d $TEST_DB -U $USER -c \
         "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
+    exit 0
+elif [ "$1" == "pg_dump" ]; then
+    restart $TARGET_WS || true
+    pg_dump $TARGET_WS $3
+    exit 0
+elif [ "$1" == "restore" ]; then
+    SOURCE_WS=$2
+    init_db $TARGET_WS
+    echo "Init target workspace ($TARGET_WS) done!"
+
+    restore $SOURCE_WS $TARGET_WS $4
+    echo "Restored on target workspace ($TARGET_WS)!"
+    exit 0
+elif [ "$1" == "dumprestore" ]; then
+    SOURCE_WS=$2
+    restart $SOURCE_WS || true
+    pg_dump $SOURCE_WS
+    stop $SOURCE_WS || true
+    echo "Dumped source workspace ($SOURCE_WS)!"
+
+    init_db $TARGET_WS
+    echo "Init target workspace ($TARGET_WS) done!"
+
+    restore $SOURCE_WS $TARGET_WS
+    echo "Restored on target workspace ($TARGET_WS)!"
     exit 0
 fi
