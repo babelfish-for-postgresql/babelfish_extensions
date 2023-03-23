@@ -2,7 +2,7 @@
  *
  * forjson.c
  *   For JSON clause support for Babel
- * 
+ *
  * This implementation of FOR JSON has been deprecated as of v2.4.0. However,
  * we cannot remove this implementation, as there may be older views that reference
  * these functions from prior versions, and we do not want to prevent those
@@ -27,7 +27,7 @@
 #include "tsql_for.h"
 
 static StringInfo tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
-								bool without_array_wrapper, const char *root_name);
+											  bool without_array_wrapper, const char *root_name);
 static void SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_value);
 static void tsql_unsupported_datatype_check(void);
 static void for_json_datetime_format(StringInfo format_output, char *outputstr);
@@ -36,33 +36,35 @@ static void for_json_datetimeoffset_format(StringInfo format_output, char *outpu
 PG_FUNCTION_INFO_V1(tsql_query_to_json_text);
 
 
-Datum 
+Datum
 tsql_query_to_json_text(PG_FUNCTION_ARGS)
 {
-	char		*query;
-	int 		mode;
-	bool		include_null_value ;
+	char	   *query;
+	int			mode;
+	bool		include_null_value;
 	bool		without_array_wrapper;
-	char		*root_name;
-	StringInfo	result;
+	char	   *root_name;
+	StringInfo result;
 
 	ereport(WARNING,
 			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
 			 errmsg("This version of FOR JSON has been deprecated. We recommend recreating the view for this query.")));
 
-	for (int i=0; i< PG_NARGS()-1; i++)
+	for (int i = 0; i < PG_NARGS() - 1; i++)
 	{
-		if PG_ARGISNULL(i) 
-			PG_RETURN_NULL();
+		if PG_ARGISNULL
+			(i)
+				PG_RETURN_NULL();
 	}
 	query = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	mode = PG_GETARG_INT32(1);
 	include_null_value = PG_GETARG_BOOL(2);
 	without_array_wrapper = PG_GETARG_BOOL(3);
-	root_name = PG_ARGISNULL(4) ? NULL :  text_to_cstring(PG_GETARG_TEXT_PP(4));
+	root_name = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(4));
 
 	result = tsql_query_to_json_internal(query, mode, include_null_value,
-											without_array_wrapper, root_name);
+										 without_array_wrapper, root_name);
+
 	if (result)
 		PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
 	else
@@ -78,32 +80,33 @@ static void
 SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_value)
 {
 	int			i;
-	const char  *sep="";
-	bool 		isnull;
+	const char *sep = "";
+	bool		isnull;
 
-	appendStringInfoChar(result,'{');
+	appendStringInfoChar(result, '{');
 	for (i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
-		char	*colname;
-		Datum	colval;
-		Oid 	nspoid;
-		Oid 	tsql_datatype_oid;
-		Oid 	datatype_oid;
-		char	*typename;
+		char	   *colname;
+		Datum		colval;
+		Oid			nspoid;
+		Oid			tsql_datatype_oid;
+		Oid			datatype_oid;
+		char	   *typename;
 
 		colname = SPI_fname(SPI_tuptable->tupdesc, i);
 
-		if (!strcmp(colname,"\?column\?")) /* When column name or alias is not provided */
+		if (!strcmp(colname, "\?column\?")) /* When column name or alias is
+											 * not provided */
 		{
 			ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
 		}
 
 		colval = SPI_getbinval(SPI_tuptable->vals[rownum],
 							   SPI_tuptable->tupdesc,
 							   i,
-							   &isnull);	
+							   &isnull);
 
 		if (isnull && !include_null_value)
 			continue;
@@ -118,32 +121,38 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		if (tsql_datatype_oid == datatype_oid)
 		{
 			/* check for bit datatype, and if so, change type to BOOL */
-			if (strcmp(typename, "bit")  == 0)
+			if (strcmp(typename, "bit") == 0)
 			{
 				datatype_oid = BOOLOID;
 			}
-			/* convert datetime, smalldatetime, and datetime2 to appropriate text values, 
-			 * as T-SQL has a different text conversion than postgres.
+
+			/*
+			 * convert datetime, smalldatetime, and datetime2 to appropriate
+			 * text values, as T-SQL has a different text conversion than
+			 * postgres.
 			 */
-			else if (strcmp(typename, "datetime")  == 0 ||
-				strcmp(typename, "smalldatetime") == 0 ||
-				strcmp(typename, "datetime2") == 0)
+			else if (strcmp(typename, "datetime") == 0 ||
+					 strcmp(typename, "smalldatetime") == 0 ||
+					 strcmp(typename, "datetime2") == 0)
 			{
-				char *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
-				StringInfo format_output = makeStringInfo();
+				char	   *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
+				StringInfo	format_output = makeStringInfo();
+
 				for_json_datetime_format(format_output, val);
 				colval = CStringGetDatum(format_output->data);
 
 				datatype_oid = CSTRINGOID;
 			}
-			/* datetimeoffset has two behaviors:
-			 * if offset is 0, just return the datetime with 'Z' at the end
-			 * otherwise, append the offset
+
+			/*
+			 * datetimeoffset has two behaviors: if offset is 0, just return
+			 * the datetime with 'Z' at the end otherwise, append the offset
 			 */
 			else if (strcmp(typename, "datetimeoffset") == 0)
 			{
-				char *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
-				StringInfo format_output = makeStringInfo();
+				char	   *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
+				StringInfo	format_output = makeStringInfo();
+
 				for_json_datetimeoffset_format(format_output, val);
 				colval = CStringGetDatum(format_output->data);
 
@@ -151,9 +160,10 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 			}
 			/* convert money and smallmoney to numeric */
 			else if (strcmp(typename, "money") == 0 ||
-				strcmp(typename, "smallmoney") == 0)
+					 strcmp(typename, "smallmoney") == 0)
 			{
-				char *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
+				char	   *val = SPI_getvalue(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i);
+
 				colval = DirectFunctionCall3(numeric_in, CStringGetDatum(val), ObjectIdGetDatum(InvalidOid), Int32GetDatum(-1));
 				datatype_oid = NUMERICOID;
 			}
@@ -165,10 +175,10 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
 		tsql_json_build_object(result, CStringGetDatum(colname), colval, datatype_oid, isnull);
 
 	}
-	appendStringInfoChar(result,'}');
-	if (rownum != SPI_processed-1)
+	appendStringInfoChar(result, '}');
+	if (rownum != SPI_processed - 1)
 	{
-		appendStringInfoString(result,",");
+		appendStringInfoString(result, ",");
 	}
 }
 
@@ -177,10 +187,11 @@ SPI_sql_row_to_json_path(uint64 rownum, StringInfo result, bool include_null_val
  */
 static StringInfo
 tsql_query_to_json_internal(const char *query, int mode, bool include_null_value,
-				bool without_array_wrapper, const char *root_name)
+							bool without_array_wrapper, const char *root_name)
 {
-	StringInfo	result;
+	StringInfo result;
 	uint64		i;
+
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 					  (superuser() ? PGC_SUSET : PGC_USERSET),
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -192,28 +203,31 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("invalid query")));
 
-	if (SPI_processed==0)
+	if (SPI_processed == 0)
 	{
 		SPI_finish();
 		return NULL;
 	}
 
-	// To check if query output table has columns with datatypes that are currently not supported in FOR JSON
+	/*
+	 * To check if query output table has columns with datatypes that are
+	 * currently not supported in FOR JSON
+	 */
 	tsql_unsupported_datatype_check();
 
 	/* If root_name is present then WITHOUT_ARRAY_WRAPPER will be FALSE */
-	if(root_name)
-		appendStringInfo(result, "{\"%s\":[",root_name);
+	if (root_name)
+		appendStringInfo(result, "{\"%s\":[", root_name);
 	else if (!without_array_wrapper)
-		appendStringInfoChar(result,'[');
+		appendStringInfoChar(result, '[');
 
 	/* Format the query result according to the mode specified by the query */
 	switch (mode)
 	{
 		case TSQL_FORJSON_AUTO: /* FOR JSON AUTO */
 			ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("AUTO mode is not supported")));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("AUTO mode is not supported")));
 			break;
 		case TSQL_FORJSON_PATH: /* FOR JSON PATH */
 			for (i = 0; i < SPI_processed; i++)
@@ -222,17 +236,17 @@ tsql_query_to_json_internal(const char *query, int mode, bool include_null_value
 		default:
 			/* Invalid mode, should not happen, report internal error */
 			ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("invalid FOR JSON mode")));
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("invalid FOR JSON mode")));
 	}
 
 	SPI_finish();
 
 
-	if(root_name)
+	if (root_name)
 		appendStringInfoString(result, "]}");
 	else if (!without_array_wrapper)
-		appendStringInfoChar(result,']');
+		appendStringInfoChar(result, ']');
 	return result;
 }
 
@@ -244,22 +258,25 @@ tsql_unsupported_datatype_check(void)
 {
 	for (int i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
 	{
-		/* 
-		 * This part of code is a workaround for is_tsql_x_datatype() which does not work as expected.
-		 * It compares the datatype oid of the columns with the tsql_datatype_oid and
-		 * then throw feature not supported error based on the typename.
+		/*
+		 * This part of code is a workaround for is_tsql_x_datatype() which
+		 * does not work as expected. It compares the datatype oid of the
+		 * columns with the tsql_datatype_oid and then throw feature not
+		 * supported error based on the typename.
 		 */
-		Oid tsql_datatype_oid;
-		Oid datatype_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
-		char* typename = SPI_gettype(SPI_tuptable->tupdesc, i);
-		Oid nspoid = get_namespace_oid("sys", true);
+		Oid			tsql_datatype_oid;
+		Oid			datatype_oid = SPI_gettypeid(SPI_tuptable->tupdesc, i);
+		char	   *typename = SPI_gettype(SPI_tuptable->tupdesc, i);
+		Oid			nspoid = get_namespace_oid("sys", true);
+
 		Assert(nspoid != InvalidOid);
 
 		tsql_datatype_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
 
 		/*
-		 * tsql_datatype_oid can be different from datatype_oid when there are datatypes in different namespaces
-		 * but with the same name. Examples: bigint, int, etc.
+		 * tsql_datatype_oid can be different from datatype_oid when there are
+		 * datatypes in different namespaces but with the same name. Examples:
+		 * bigint, int, etc.
 		 */
 		if (tsql_datatype_oid == datatype_oid)
 		{
@@ -270,7 +287,7 @@ tsql_unsupported_datatype_check(void)
 				strcmp(typename, "rowversion") == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("binary types are not supported with FOR JSON")));
+						 errmsg("binary types are not supported with FOR JSON")));
 		}
 	}
 }
@@ -283,9 +300,9 @@ tsql_unsupported_datatype_check(void)
 static void
 for_json_datetime_format(StringInfo format_output, char *outputstr)
 {
-	char *date;
-	char *spaceptr = strstr(outputstr, " ");
-	int len;
+	char	   *date;
+	char	   *spaceptr = strstr(outputstr, " ");
+	int			len;
 
 	len = spaceptr - outputstr;
 	date = palloc(len + 1);
@@ -305,9 +322,12 @@ for_json_datetime_format(StringInfo format_output, char *outputstr)
 static void
 for_json_datetimeoffset_format(StringInfo format_output, char *str)
 {
-	char *date, *endptr, *time, *offset;
-	char *spaceptr = strstr(str, " ");
-	int len;
+	char	   *date,
+			   *endptr,
+			   *time,
+			   *offset;
+	char	   *spaceptr = strstr(str, " ");
+	int			len;
 
 	/* append date part of string */
 	len = spaceptr - str;

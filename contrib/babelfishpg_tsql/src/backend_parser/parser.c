@@ -29,9 +29,9 @@
 #include "src/pltsql.h"
 #include "tcop/tcopprot.h"
 
-int pgtsql_base_yydebug;
+int			pgtsql_base_yydebug;
 
-List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
+List	   *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 
 /*
  * raw_parser
@@ -46,10 +46,11 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	core_yyscan_t yyscanner;
 	pgtsql_base_yy_extra_type yyextra;
 	int			yyresult;
-	List	*raw_parsetree_list;
+	List	   *raw_parsetree_list;
 	instr_time	parseStart;
 	instr_time	parseEnd;
-	/* 
+
+	/*
 	 * parse identifiers case-insensitively if the database collation is CI_AS
 	 */
 	pltsql_case_insensitive_identifiers = tsql_is_server_collation_CI_AS();
@@ -57,7 +58,7 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 
 	/* initialize the flex scanner */
 	yyscanner = pgtsql_scanner_init(str, &yyextra.core_yy_extra,
-							 &pgtsql_ScanKeywords, pgtsql_ScanKeywordTokens);
+									&pgtsql_ScanKeywords, pgtsql_ScanKeywordTokens);
 
 	/* base_yylex() only needs us to initialize the lookahead token, if any */
 	if (mode == RAW_PARSE_DEFAULT)
@@ -95,7 +96,7 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	raw_parsetree_list = yyextra.parsetree;
 	/* check if query string needs to be logged */
 	if (raw_parsetree_list && check_log_statement(raw_parsetree_list) &&
-	    pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr))
+		pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr))
 		(*pltsql_protocol_plugin_ptr)->stmt_needs_logging = true;
 
 	INSTR_TIME_SET_CURRENT(parseEnd);
@@ -123,7 +124,7 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
  * same thing anyway, but notationally they're different).
  */
 int
-pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
+pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp, core_yyscan_t yyscanner)
 {
 	pgtsql_base_yy_extra_type *yyextra = pg_yyget_extra(yyscanner);
 	int			cur_token;
@@ -246,10 +247,11 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 			{
 				case '(':
 					cur_token = UPDATE_paren;
-				break;
+					break;
 			}
 			break;
 		case WITH:
+
 			/*
 			 * Replace WITH by WITH_LA if it's followed by TIME or ORDINALITY
 			 * Replace WITH by WITH_paren if it's followed by '('
@@ -290,11 +292,11 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 			break;
 		case FOR:
 			switch (next_token)
-				{
+			{
 				case XML_P:
 					cur_token = TSQL_FOR;
 					break;
-				
+
 				case TSQL_JSON:
 					cur_token = TSQL_FOR;
 					break;
