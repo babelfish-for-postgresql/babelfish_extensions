@@ -10,7 +10,8 @@
 #include "src/pltsql_instr.h"
 #include "tds.h"
 
-typedef enum BabelFishTdsInstrMetricType {
+typedef enum BabelFishTdsInstrMetricType
+{
 	INSTR_TDS_LOGIN_SSL = INSTR_TSQL_COUNT,
 	INSTR_TDS_LOGIN_END_TO_END_ENCRYPT,
 	INSTR_TDS_LOGIN_ACTIVE_DIRECTORY,
@@ -93,4 +94,4 @@ typedef enum BabelFishTdsInstrMetricType {
 	INSTR_TDS_UNMAPPED_ERROR,
 
 	INSTR_TDS_COUNT
-} BabelFishTdsInstrMetricType;
+}			BabelFishTdsInstrMetricType;

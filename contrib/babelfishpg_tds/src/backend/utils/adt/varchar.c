@@ -19,7 +19,7 @@
 #include "catalog/pg_collation.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parser.h"      /* only needed for GUC variables */
+#include "parser/parser.h"		/* only needed for GUC variables */
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/varlena.h"
@@ -29,9 +29,9 @@
 
 static inline void
 CheckUTF16Length(const char *utf8_str, size_t len, size_t maxlen,
-					   char *varstr)
+				 char *varstr)
 {
-	int		i;
+	int			i;
 
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
@@ -43,7 +43,7 @@ CheckUTF16Length(const char *utf8_str, size_t len, size_t maxlen,
 					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 					 errmsg("value too long for type character%s(%d) "
 							"as UTF16 output",
-							varstr, (int)maxlen)));
+							varstr, (int) maxlen)));
 	}
 }
 

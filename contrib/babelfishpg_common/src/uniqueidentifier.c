@@ -21,12 +21,12 @@ PG_FUNCTION_INFO_V1(uniqueidentifier_in);
 Datum
 uniqueidentifier_in(PG_FUNCTION_ARGS)
 {
-    char       *uuid_str = PG_GETARG_CSTRING(0);
-    pg_uuid_t  *uuid;
+	char	   *uuid_str = PG_GETARG_CSTRING(0);
+	pg_uuid_t  *uuid;
 
-    uuid = (pg_uuid_t *) palloc(sizeof(*uuid));
-    string_to_uuid(uuid_str, uuid);
-    PG_RETURN_UUID_P(uuid);
+	uuid = (pg_uuid_t *) palloc(sizeof(*uuid));
+	string_to_uuid(uuid_str, uuid);
+	PG_RETURN_UUID_P(uuid);
 }
 
 PG_FUNCTION_INFO_V1(uniqueidentifier_out);
@@ -34,33 +34,33 @@ PG_FUNCTION_INFO_V1(uniqueidentifier_out);
 Datum
 uniqueidentifier_out(PG_FUNCTION_ARGS)
 {
-    pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
-    static const char hex_chars[] = "0123456789ABCDEF";
-    StringInfoData buf;
-    int         i;
+	pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
+	static const char hex_chars[] = "0123456789ABCDEF";
+	StringInfoData buf;
+	int			i;
 
-    initStringInfo(&buf);
-    for (i = 0; i < UUID_LEN; i++)
-    {
-        int         hi;
-        int         lo;
+	initStringInfo(&buf);
+	for (i = 0; i < UUID_LEN; i++)
+	{
+		int			hi;
+		int			lo;
 
-        /*
-         * We print uuid values as a string of 8, 4, 4, 4, and then 12
-         * hexadecimal characters, with each group is separated by a hyphen
-         * ("-"). Therefore, add the hyphens at the appropriate places here.
-         */
-        if (i == 4 || i == 6 || i == 8 || i == 10)
-            appendStringInfoChar(&buf, '-');
+		/*
+		 * We print uuid values as a string of 8, 4, 4, 4, and then 12
+		 * hexadecimal characters, with each group is separated by a hyphen
+		 * ("-"). Therefore, add the hyphens at the appropriate places here.
+		 */
+		if (i == 4 || i == 6 || i == 8 || i == 10)
+			appendStringInfoChar(&buf, '-');
 
-        hi = uuid->data[i] >> 4;
-        lo = uuid->data[i] & 0x0F;
+		hi = uuid->data[i] >> 4;
+		lo = uuid->data[i] & 0x0F;
 
-        appendStringInfoChar(&buf, hex_chars[hi]);
-        appendStringInfoChar(&buf, hex_chars[lo]);
-    }
+		appendStringInfoChar(&buf, hex_chars[hi]);
+		appendStringInfoChar(&buf, hex_chars[lo]);
+	}
 
-    PG_RETURN_CSTRING(buf.data);
+	PG_RETURN_CSTRING(buf.data);
 }
 
 /*
@@ -121,11 +121,12 @@ PG_FUNCTION_INFO_V1(varchar2uniqueidentifier);
 Datum
 varchar2uniqueidentifier(PG_FUNCTION_ARGS)
 {
-    pg_uuid_t  *uuid;
-    char *uuid_str = TextDatumGetCString(PG_GETARG_DATUM(0));
-    uuid = (pg_uuid_t *) palloc(sizeof(*uuid));
-    string_to_uuid(uuid_str, uuid);
-    PG_RETURN_UUID_P(uuid);
+	pg_uuid_t  *uuid;
+	char	   *uuid_str = TextDatumGetCString(PG_GETARG_DATUM(0));
+
+	uuid = (pg_uuid_t *) palloc(sizeof(*uuid));
+	string_to_uuid(uuid_str, uuid);
+	PG_RETURN_UUID_P(uuid);
 
 }
 
@@ -134,11 +135,11 @@ PG_FUNCTION_INFO_V1(varbinary2uniqueidentifier);
 Datum
 varbinary2uniqueidentifier(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t *uuid;
+	pg_uuid_t  *uuid;
 	unsigned char buffer[UUID_LEN];
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int len = VARSIZE_ANY_EXHDR(source);
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int			len = VARSIZE_ANY_EXHDR(source);
 
 	memset(buffer, 0, UUID_LEN);
 	memcpy(buffer, data, (len > UUID_LEN) ? UUID_LEN : len);
@@ -146,9 +147,9 @@ varbinary2uniqueidentifier(PG_FUNCTION_ARGS)
 	uuid = (pg_uuid_t *) palloc0(sizeof(*uuid));
 	/* T-SQL uses UUID variant 2 which is mixed-endian encoding */
 	reverse_memcpy(uuid->data, buffer, 4);
-	reverse_memcpy(uuid->data+4, buffer+4, 2);
-	reverse_memcpy(uuid->data+6, buffer+6, 2);
-	memcpy(uuid->data+8, buffer+8, 8);
+	reverse_memcpy(uuid->data + 4, buffer + 4, 2);
+	reverse_memcpy(uuid->data + 6, buffer + 6, 2);
+	memcpy(uuid->data + 8, buffer + 8, 8);
 	PG_RETURN_UUID_P(uuid);
 }
 
@@ -158,19 +159,19 @@ PG_FUNCTION_INFO_V1(uniqueidentifier2varbinary);
 Datum
 uniqueidentifier2varbinary(PG_FUNCTION_ARGS)
 {
-	char *rp;
-	bytea *result;
-	int32 maxlen;
+	char	   *rp;
+	bytea	   *result;
+	int32		maxlen;
 	unsigned char buffer[UUID_LEN];
-	size_t len = UUID_LEN;
-	pg_uuid_t *uuid = PG_GETARG_UUID_P(0);
-	int32 typmod = PG_GETARG_INT32(1);
+	size_t		len = UUID_LEN;
+	pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
+	int32		typmod = PG_GETARG_INT32(1);
 
 	/* T-SQL uses UUID variant 2 which is mixed-endian encoding */
 	reverse_memcpy(buffer, uuid->data, 4);
-	reverse_memcpy(buffer+4, uuid->data+4, 2);
-	reverse_memcpy(buffer+6, uuid->data+6, 2);
-	memcpy(buffer+8, uuid->data+8, 8);
+	reverse_memcpy(buffer + 4, uuid->data + 4, 2);
+	reverse_memcpy(buffer + 6, uuid->data + 6, 2);
+	memcpy(buffer + 8, uuid->data + 8, 8);
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
@@ -194,19 +195,19 @@ PG_FUNCTION_INFO_V1(uniqueidentifier2binary);
 Datum
 uniqueidentifier2binary(PG_FUNCTION_ARGS)
 {
-	char *rp;
-	bytea *result;
-	int32 maxlen;
+	char	   *rp;
+	bytea	   *result;
+	int32		maxlen;
 	unsigned char buffer[UUID_LEN];
-	size_t len = UUID_LEN;
-	pg_uuid_t *uuid = PG_GETARG_UUID_P(0);
-	int32 typmod = PG_GETARG_INT32(1);
+	size_t		len = UUID_LEN;
+	pg_uuid_t  *uuid = PG_GETARG_UUID_P(0);
+	int32		typmod = PG_GETARG_INT32(1);
 
 	/* T-SQL uses UUID variant 2 which is mixed-endian encoding */
 	reverse_memcpy(buffer, uuid->data, 4);
-	reverse_memcpy(buffer+4, uuid->data+4, 2);
-	reverse_memcpy(buffer+6, uuid->data+6, 2);
-	memcpy(buffer+8, uuid->data+8, 8);
+	reverse_memcpy(buffer + 4, uuid->data + 4, 2);
+	reverse_memcpy(buffer + 6, uuid->data + 6, 2);
+	memcpy(buffer + 8, uuid->data + 8, 8);
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
@@ -231,8 +232,8 @@ uniqueidentifier2binary(PG_FUNCTION_ARGS)
 static void
 reverse_memcpy(unsigned char *dst, unsigned char *src, size_t n)
 {
-	size_t i;
+	size_t		i;
 
 	for (i = 0; i < n; i++)
-		dst[n-1-i] = src[i];
+		dst[n - 1 - i] = src[i];
 }

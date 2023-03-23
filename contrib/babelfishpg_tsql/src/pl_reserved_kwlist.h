@@ -14,9 +14,9 @@
  *
  *-------------------------------------------------------------------------
  */
- 
+
 /* There is deliberately not an #ifndef PL_RESERVED_KWLIST_H here. */
- 
+
 /*
  * List of (keyword-name, keyword-token-value) pairs.
  *
@@ -25,7 +25,7 @@
  * !!WARNING!!: This list must be sorted by ASCII name, because binary
  *		 search is used to locate entries.
  */
- 
+
 /* name, value */
 PG_KEYWORD("all", K_ALL)
 PG_KEYWORD("as", K_AS)

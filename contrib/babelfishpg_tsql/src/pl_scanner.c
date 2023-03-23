@@ -64,7 +64,7 @@ IdentifierLookup pltsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
 
 /* Token codes for PL/pgSQL keywords */
 #define PG_KEYWORD(kwname, value) value,
- 
+
 static const uint16 ReservedPLKeywordTokens[] = {
 #include "pl_reserved_kwlist.h"
 };
@@ -130,7 +130,7 @@ static const char *cur_line_end;
 static int	cur_line_num;
 
 /* Initialise the global variable declared in err_handler.h */
-int CurrentLineNumber = 1;
+int			CurrentLineNumber = 1;
 
 /* Internal functions */
 static int	internal_yylex(TokenAuxData *auxdata);
@@ -186,10 +186,10 @@ pltsql_yylex(void)
 					if (tok5 == IDENT)
 					{
 						if (pltsql_parse_tripword(aux1.lval.str,
-												   aux3.lval.str,
-												   aux5.lval.str,
-												   &aux1.lval.wdatum,
-												   &aux1.lval.cword))
+												  aux3.lval.str,
+												  aux5.lval.str,
+												  &aux1.lval.wdatum,
+												  &aux1.lval.cword))
 							tok1 = T_DATUM;
 						else
 							tok1 = T_CWORD;
@@ -200,9 +200,9 @@ pltsql_yylex(void)
 						push_back_token(tok5, &aux5);
 						push_back_token(tok4, &aux4);
 						if (pltsql_parse_dblword(aux1.lval.str,
-												  aux3.lval.str,
-												  &aux1.lval.wdatum,
-												  &aux1.lval.cword))
+												 aux3.lval.str,
+												 &aux1.lval.wdatum,
+												 &aux1.lval.cword))
 							tok1 = T_DATUM;
 						else
 							tok1 = T_CWORD;
@@ -213,9 +213,9 @@ pltsql_yylex(void)
 					/* not A.B.C, so just process A.B */
 					push_back_token(tok4, &aux4);
 					if (pltsql_parse_dblword(aux1.lval.str,
-											  aux3.lval.str,
-											  &aux1.lval.wdatum,
-											  &aux1.lval.cword))
+											 aux3.lval.str,
+											 &aux1.lval.wdatum,
+											 &aux1.lval.cword))
 						tok1 = T_DATUM;
 					else
 						tok1 = T_CWORD;
@@ -227,12 +227,12 @@ pltsql_yylex(void)
 				push_back_token(tok3, &aux3);
 				push_back_token(tok2, &aux2);
 				if (pltsql_parse_word(aux1.lval.str,
-									   core_yy.scanbuf + aux1.lloc,
-									   &aux1.lval.wdatum,
-									   &aux1.lval.word))
+									  core_yy.scanbuf + aux1.lloc,
+									  &aux1.lval.wdatum,
+									  &aux1.lval.word))
 					tok1 = T_DATUM;
 				else if (!aux1.lval.word.quoted &&
-						(kwnum = ScanKeywordLookup(aux1.lval.word.ident,
+						 (kwnum = ScanKeywordLookup(aux1.lval.word.ident,
 													&UnreservedPLKeywords)) >= 0)
 				{
 					aux1.lval.keyword = GetScanKeyword(kwnum,
@@ -263,16 +263,16 @@ pltsql_yylex(void)
 				/* try for unreserved keyword, then for variable name */
 				if (core_yy.scanbuf[aux1.lloc] != '"' &&
 					(kwnum = ScanKeywordLookup(aux1.lval.str,
-											&UnreservedPLKeywords)) >= 0)
+											   &UnreservedPLKeywords)) >= 0)
 				{
 					aux1.lval.keyword = GetScanKeyword(kwnum,
 													   &UnreservedPLKeywords);
 					tok1 = UnreservedPLKeywordTokens[kwnum];
 				}
 				else if (pltsql_parse_word(aux1.lval.str,
-											core_yy.scanbuf + aux1.lloc,
-											&aux1.lval.wdatum,
-											&aux1.lval.word))
+										   core_yy.scanbuf + aux1.lloc,
+										   &aux1.lval.wdatum,
+										   &aux1.lval.word))
 					tok1 = T_DATUM;
 				else
 					tok1 = T_WORD;
@@ -281,16 +281,16 @@ pltsql_yylex(void)
 			{
 				/* try for variable name, then for unreserved keyword */
 				if (pltsql_parse_word(aux1.lval.str,
-									   core_yy.scanbuf + aux1.lloc,
-									   &aux1.lval.wdatum,
-									   &aux1.lval.word))
+									  core_yy.scanbuf + aux1.lloc,
+									  &aux1.lval.wdatum,
+									  &aux1.lval.word))
 					tok1 = T_DATUM;
 				else if (!aux1.lval.word.quoted &&
 						 (kwnum = ScanKeywordLookup(aux1.lval.word.ident,
-												 &UnreservedPLKeywords)) >= 0)
+													&UnreservedPLKeywords)) >= 0)
 				{
 					aux1.lval.keyword = GetScanKeyword(kwnum,
-												   &UnreservedPLKeywords);
+													   &UnreservedPLKeywords);
 					tok1 = UnreservedPLKeywordTokens[kwnum];
 				}
 				else
@@ -301,20 +301,21 @@ pltsql_yylex(void)
 	else if (tok1 == K_BEGIN)
 	{
 		TokenAuxData aux2;
-		int tok2 = internal_yylex(&aux2);
+		int			tok2 = internal_yylex(&aux2);
+
 		if (tok2 == IDENT && (strcasecmp(aux2.lval.str, "transaction") == 0 ||
-								strcasecmp(aux2.lval.str, "tran") == 0))
+							  strcasecmp(aux2.lval.str, "tran") == 0))
 			tok1 = T_WORD;
 		push_back_token(tok2, &aux2);
 	}
 	else if (tok1 == K_END)
 	{
 		/*
-		 * We've just scanned an END; if it's followed by 
-		 * CATCH or TRY, combine them into a single token
+		 * We've just scanned an END; if it's followed by CATCH or TRY,
+		 * combine them into a single token
 		 */
 		TokenAuxData aux2;
-		int tok2 = internal_yylex(&aux2);
+		int			tok2 = internal_yylex(&aux2);
 
 		if (tok2 == K_CATCH)
 			tok1 = K_END_CATCH;
@@ -331,19 +332,19 @@ pltsql_yylex(void)
 		 * The core scanner treats "@" as an operator, we do not intend to
 		 * modify the core scanner for one language especially when it will
 		 * increase our delta while potentially causing regressions.  We would
-		 * be dealing with a genuine conflict here as the operator "@" (Absolute
-		 * Value) is unary.
+		 * be dealing with a genuine conflict here as the operator "@"
+		 * (Absolute Value) is unary.
 		 *
-		 * TSQL does not support this unary operator, and instead, relies on the
-		 * ABS() function that we already support.
+		 * TSQL does not support this unary operator, and instead, relies on
+		 * the ABS() function that we already support.
 		 */
 		if (tok1 == Op)
 		{
 			/*
-			 * Make sure we are resilient to the core scanner returning multiple
-			 * operators as a single Op token.
+			 * Make sure we are resilient to the core scanner returning
+			 * multiple operators as a single Op token.
 			 */
-			if ((aux1.leng == 1 && aux1.lval.str[0] == '@') || 
+			if ((aux1.leng == 1 && aux1.lval.str[0] == '@') ||
 				(aux1.leng == 2 && aux1.lval.str[0] == '@' && aux1.lval.str[1] == '@'))
 			{
 				int			tok2;
@@ -354,23 +355,25 @@ pltsql_yylex(void)
 				/* @<IDENT>: Read ahead and return as a single token. */
 				if (tok2 == IDENT)
 				{
-					StringInfoData	var_word;
+					StringInfoData var_word;
 
 					initStringInfo(&var_word);
 					appendStringInfoString(&var_word, aux1.lval.str);
 					appendStringInfoString(&var_word, aux2.lval.str);
 
 					if (pltsql_parse_word(var_word.data,
-					                      var_word.data,
-					                      &aux1.lval.wdatum,
-					                      &aux1.lval.word))
+										  var_word.data,
+										  &aux1.lval.wdatum,
+										  &aux1.lval.word))
 						tok1 = T_DATUM;
 					else
 					{
 						tok1 = T_WORD;
 						aux1.lval.str = var_word.data;
 					}
-					aux1.leng += aux2.leng; /* update leng here since tok2 is already scanned and concatenated to tok1 */
+					aux1.leng += aux2.leng; /* update leng here since tok2 is
+											 * already scanned and
+											 * concatenated to tok1 */
 				}
 				else
 				{
@@ -378,10 +381,10 @@ pltsql_yylex(void)
 				}
 			}
 			else if (aux1.leng > 1 && (aux1.lval.str[aux1.leng - 1] == '@' ||
-								 (aux1.lval.str[aux1.leng - 1] == '#')))
+									   (aux1.lval.str[aux1.leng - 1] == '#')))
 			{
-				int			 tok2;
-				int			 tok3;
+				int			tok2;
+				int			tok3;
 				TokenAuxData aux2;
 				TokenAuxData aux3;
 
@@ -413,7 +416,7 @@ pltsql_yylex(void)
 		}
 		else if (tok1 == '#')
 		{
-			int			 tok2;
+			int			tok2;
 			TokenAuxData aux2;
 
 			tok2 = internal_yylex(&aux2);
@@ -422,16 +425,16 @@ pltsql_yylex(void)
 			if (tok2 == IDENT && ScanKeywordLookup(aux2.lval.word.ident,
 												   &UnreservedPLKeywords) < 0)
 			{
-				StringInfoData	var_word;
+				StringInfoData var_word;
 
 				initStringInfo(&var_word);
 				appendStringInfoString(&var_word, "#");
 				appendStringInfoString(&var_word, aux2.lval.str);
 
 				if (pltsql_parse_word(var_word.data,
-				                      var_word.data,
-				                      &aux1.lval.wdatum,
-				                      &aux1.lval.word))
+									  var_word.data,
+									  &aux1.lval.wdatum,
+									  &aux1.lval.word))
 					tok1 = T_DATUM; /* TSQL allows #-prefixed cursor variables */
 				else
 				{
@@ -485,8 +488,8 @@ internal_yylex(TokenAuxData *auxdata)
 	else
 	{
 		token = pgtsql_core_yylex(&auxdata->lval.core_yystype,
-						   &auxdata->lloc,
-						   yyscanner);
+								  &auxdata->lloc,
+								  yyscanner);
 
 		/* remember the length of yytext before it gets changed */
 		yytext = core_yy.scanbuf + auxdata->lloc;
@@ -556,7 +559,7 @@ pltsql_token_is_unreserved_keyword(int token)
 
 	for (i = 0; i < lengthof(UnreservedPLKeywordTokens); i++)
 	{
-		if (UnreservedPLKeywordTokens[i] == token)	
+		if (UnreservedPLKeywordTokens[i] == token)
 			return true;
 	}
 	return false;
@@ -568,7 +571,7 @@ pltsql_token_is_unreserved_keyword(int token)
  */
 void
 pltsql_append_source_text(StringInfo buf,
-						   int startlocation, int endlocation)
+						  int startlocation, int endlocation)
 {
 	Assert(startlocation <= endlocation);
 	appendBinaryStringInfo(buf, scanorig + startlocation,
@@ -648,14 +651,16 @@ pltsql_peek2(int *tok1_p, int *tok2_p, int *tok1_loc, int *tok2_loc)
  * Peek one token ahead in the input stream, and check if it matches the given
  * pattern.
  */
-bool pltsql_peek_word_matches(const char *pattern)
+bool
+pltsql_peek_word_matches(const char *pattern)
 {
 	int			tok1;
 	TokenAuxData aux1;
-	bool 		result;
+	bool result;
 
 	tok1 = internal_yylex(&aux1);
 	result = (tok1 == IDENT && pg_strcasecmp(aux1.lval.word.ident, pattern) == 0);
+
 	push_back_token(tok1, &aux1);
 	return result;
 }
@@ -755,7 +760,10 @@ pltsql_location_to_lineno(int location)
 		cur_line_start = cur_line_end + 1;
 		cur_line_num++;
 
-		/* Store the Current Line Number of the current query, incase we stumble upon a compiletime error. */
+		/*
+		 * Store the Current Line Number of the current query, incase we
+		 * stumble upon a compiletime error.
+		 */
 		CurrentLineNumber++;
 		cur_line_end = strchr(cur_line_start, '\n');
 	}

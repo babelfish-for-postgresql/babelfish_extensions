@@ -51,38 +51,40 @@ struct Node;
 
 typedef struct type_info
 {
-    Oid oid; /* oid is only retrievable during runtime, so we have to init to 0 */
-    bool nsp_is_sys;
-    const char *pg_typname;
-    const char *tsql_typname;
-    uint8_t family_prio;
-    uint8_t prio;
-    uint8_t svhdr_size;
+	Oid			oid;			/* oid is only retrievable during runtime, so
+								 * we have to init to 0 */
+	bool		nsp_is_sys;
+	const char *pg_typname;
+	const char *tsql_typname;
+	uint8_t		family_prio;
+	uint8_t		prio;
+	uint8_t		svhdr_size;
 } type_info_t;
 
-typedef struct ht_oid2typecode_entry {
-    Oid key;
-    uint8_t persist_id;
+typedef struct ht_oid2typecode_entry
+{
+	Oid			key;
+	uint8_t		persist_id;
 } ht_oid2typecode_entry_t;
 
-extern Oid get_type_oid(int type_code);
+extern Oid	get_type_oid(int type_code);
 
-extern Oid tsql_bpchar_oid;
-extern Oid tsql_nchar_oid;
-extern Oid tsql_varchar_oid;
-extern Oid tsql_nvarchar_oid;
-extern Oid tsql_ntext_oid;
-extern Oid tsql_image_oid;
-extern Oid tsql_binary_oid;
-extern Oid tsql_varbinary_oid;
-extern Oid tsql_rowversion_oid;
-extern Oid tsql_timestamp_oid;
-extern Oid tsql_datetime2_oid;
-extern Oid tsql_smalldatetime_oid;
-extern Oid tsql_datetimeoffset_oid;
-extern Oid tsql_decimal_oid;
+extern Oid	tsql_bpchar_oid;
+extern Oid	tsql_nchar_oid;
+extern Oid	tsql_varchar_oid;
+extern Oid	tsql_nvarchar_oid;
+extern Oid	tsql_ntext_oid;
+extern Oid	tsql_image_oid;
+extern Oid	tsql_binary_oid;
+extern Oid	tsql_varbinary_oid;
+extern Oid	tsql_rowversion_oid;
+extern Oid	tsql_timestamp_oid;
+extern Oid	tsql_datetime2_oid;
+extern Oid	tsql_smalldatetime_oid;
+extern Oid	tsql_datetimeoffset_oid;
+extern Oid	tsql_decimal_oid;
 
-extern Oid lookup_tsql_datatype_oid(const char *typename);
+extern Oid	lookup_tsql_datatype_oid(const char *typename);
 extern bool is_tsql_bpchar_datatype(Oid oid);
 extern bool is_tsql_nchar_datatype(Oid oid);
 extern bool is_tsql_varchar_datatype(Oid oid);
@@ -105,9 +107,9 @@ extern bool check_target_type_is_sys_varchar(Oid funcid);
 extern type_info_t get_tsql_type_info(uint8_t type_code);
 extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 
-/* 
- * TransMemoryContext Memory context is created to load hash table to 
- * store 1. "OID to Persist Type Code Mapping" and 2. "OID to Persist 
+/*
+ * TransMemoryContext Memory context is created to load hash table to
+ * store 1. "OID to Persist Type Code Mapping" and 2. "OID to Persist
  * like to ilike Mapping" and 3. "OID to Persist Collation ID Mapping".
  */
 extern MemoryContext TransMemoryContext;

@@ -16,13 +16,13 @@
  * the engine even before the extension is loaded.  If you call
  * find_rendezvous_variable("TdsInstrPlugin") and find  that *result
  * is NULL, then the extension has not been loaded.  If you find
- * that *result is non-NULL, it points to an instance of the 
+ * that *result is non-NULL, it points to an instance of the
  * TdsInstrPlugin struct shown here.
  */
 typedef struct TdsInstrPlugin
 {
 	/* Function pointers set up by the plugin */
-	void (*tds_instr_increment_metric) (int metric);
+	void		(*tds_instr_increment_metric) (int metric);
 } TdsInstrPlugin;
 
 extern TdsInstrPlugin **tds_instr_plugin_ptr;
@@ -31,4 +31,3 @@ extern TdsInstrPlugin **tds_instr_plugin_ptr;
 ({	if ((tds_instr_plugin_ptr && (*tds_instr_plugin_ptr) && (*tds_instr_plugin_ptr)->tds_instr_increment_metric))	\
 		(*tds_instr_plugin_ptr)->tds_instr_increment_metric(metric);		\
 })
-

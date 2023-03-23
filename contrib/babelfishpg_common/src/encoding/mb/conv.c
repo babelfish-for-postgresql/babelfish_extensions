@@ -196,23 +196,23 @@ pg_mb_radix_conv(const pg_mb_radix_tree *rt,
  * For each character, the cmap (if provided) is consulted first; if no match,
  * the map is consulted next; if still no match, the conv_func (if provided)
  * is applied.  An error is raised if no match is found.
- * 
+ *
  * Returns byte length of result string encoded in desired encoding
  *
  * See pg_wchar.h for more details about the data structures used here.
  */
 int
 TsqlUtfToLocal(const unsigned char *utf, int len,
-		   unsigned char *iso,
-		   const pg_mb_radix_tree *map,
-		   const pg_utf_to_local_combined *cmap, int cmapsize,
-		   utf_local_conversion_func conv_func,
-		   int encoding)
+			   unsigned char *iso,
+			   const pg_mb_radix_tree *map,
+			   const pg_utf_to_local_combined *cmap, int cmapsize,
+			   utf_local_conversion_func conv_func,
+			   int encoding)
 {
-	uint32	iutf;
-	int		l;
-	const	pg_utf_to_local_combined *cp;
-	int		encodedByteLen = 0;	
+	uint32		iutf;
+	int			l;
+	const pg_utf_to_local_combined *cp;
+	int			encodedByteLen = 0;
 
 	if (!PG_VALID_ENCODING(encoding))
 		ereport(ERROR,
@@ -362,8 +362,8 @@ TsqlUtfToLocal(const unsigned char *utf, int len,
 		}
 
 		/*
-		 * TSQL puts question mark '?'
-		 * if it can not recognize the UTF8 byte or byte sequence
+		 * TSQL puts question mark '?' if it can not recognize the UTF8 byte
+		 * or byte sequence
 		 */
 		iso = store_coded_char(iso, '?', &encodedByteLen);
 	}
@@ -378,16 +378,16 @@ TsqlUtfToLocal(const unsigned char *utf, int len,
 
 int
 TsqlLocalToUtf(const unsigned char *iso, int len,
-		   unsigned char *utf,
-		   const pg_mb_radix_tree *map,
-		   const pg_local_to_utf_combined *cmap, int cmapsize,
-		   utf_local_conversion_func conv_func,
-		   int encoding)
+			   unsigned char *utf,
+			   const pg_mb_radix_tree *map,
+			   const pg_local_to_utf_combined *cmap, int cmapsize,
+			   utf_local_conversion_func conv_func,
+			   int encoding)
 {
 	uint32		iiso;
 	int			l;
 	const pg_local_to_utf_combined *cp;
-	int		encodedByteLen = 0;
+	int			encodedByteLen = 0;
 
 	if (!PG_VALID_ENCODING(encoding))
 		ereport(ERROR,
@@ -483,8 +483,10 @@ TsqlLocalToUtf(const unsigned char *iso, int len,
 			}
 		}
 
-		/* If there doesnt exisiting any conversion scheme for any character in string
-		raise an error stating failed to translate this character */
+		/*
+		 * If there doesnt exisiting any conversion scheme for any character
+		 * in string raise an error stating failed to translate this character
+		 */
 		iso -= l;
 		report_untranslatable_char(encoding, PG_UTF8,
 								   (const char *) iso, len);

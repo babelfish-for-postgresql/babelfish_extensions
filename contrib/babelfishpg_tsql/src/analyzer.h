@@ -3,6 +3,6 @@
 #include "pltsql.h"
 #include "compile_context.h"
 
-void analyze(PLtsql_function *func, CompileContext *cmpl_ctx);
+void		analyze(PLtsql_function *func, CompileContext *cmpl_ctx);
 
-#endif  /* ANALYZE_H */
+#endif							/* ANALYZE_H */

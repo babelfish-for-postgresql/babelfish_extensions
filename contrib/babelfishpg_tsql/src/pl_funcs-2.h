@@ -4,4 +4,4 @@
 static void free_stmt2(PLtsql_stmt *stmt);
 static void dump_stmt2(PLtsql_stmt *stmt);
 
-#endif  /* PLFUNCS_2_H */
+#endif							/* PLFUNCS_2_H */

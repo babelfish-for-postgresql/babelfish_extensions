@@ -4,7 +4,7 @@
 #include "pltsql.h"
 #include "postgres.h"
 
-/* 
+/*
  * Below macros are useful in building flag to override the behaviour of certain tsql
  * error code for certain situation.
  */
@@ -13,17 +13,18 @@
 #define TXN_ABORTING_ERROR	0x04	//transaction aborting
 #define IGNORE_XACT_ERROR	0x08	//ignore xact_abort flag
 
-extern int CurrentLineNumber; /* Holds the Line No. of the current query being executed. */
-bool is_ignorable_error(int pg_error_code, uint8_t override_flag);
-bool  get_tsql_error_code(ErrorData *edata, int *last_error);
-bool is_current_batch_aborting_error(int pg_error_code, uint8_t override_flag);
-bool is_batch_txn_aborting_error(int pg_error_code, uint8_t override_flag);
-bool ignore_xact_abort_error(int pg_error_code, uint8_t override_flag);
-bool is_txn_aborting_compilation_error(int sql_error_code);
-bool is_xact_abort_txn_compilation_error(int sql_error_code);
+extern int	CurrentLineNumber;	/* Holds the Line No. of the current query
+								 * being executed. */
+bool		is_ignorable_error(int pg_error_code, uint8_t override_flag);
+bool		get_tsql_error_code(ErrorData *edata, int *last_error);
+bool		is_current_batch_aborting_error(int pg_error_code, uint8_t override_flag);
+bool		is_batch_txn_aborting_error(int pg_error_code, uint8_t override_flag);
+bool		ignore_xact_abort_error(int pg_error_code, uint8_t override_flag);
+bool		is_txn_aborting_compilation_error(int sql_error_code);
+bool		is_xact_abort_txn_compilation_error(int sql_error_code);
 
 /* Function to override behaviour of any error code for different situation.*/
-uint8_t override_txn_behaviour(PLtsql_stmt *stmt);
+uint8_t		override_txn_behaviour(PLtsql_stmt *stmt);
 
 #endif
 

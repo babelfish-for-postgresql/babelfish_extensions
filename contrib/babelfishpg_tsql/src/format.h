@@ -9,15 +9,15 @@ extern size_t CULTURE_COUNT;
 
 typedef struct _datetimeformat
 {
-	int culture_id;
-	char *sql_culture;
-	char *pg_shortdatepattern;
-	char *pg_longdatepattern;
-	char *pg_fulldatetimepattern;
-	char *pg_shorttimepattern;
-	char *pg_longtimepattern;
-	char *pg_monthdaypattern;
-	char *pg_yearmonthpattern;
+	int			culture_id;
+	char	   *sql_culture;
+	char	   *pg_shortdatepattern;
+	char	   *pg_longdatepattern;
+	char	   *pg_fulldatetimepattern;
+	char	   *pg_shorttimepattern;
+	char	   *pg_longtimepattern;
+	char	   *pg_monthdaypattern;
+	char	   *pg_yearmonthpattern;
 } datetimeformat;
 
 /*
@@ -423,8 +423,8 @@ static const datetimeformat datetimeformats[] = {
 	{396, "id-ID", "dd/MM/yyyy", "TMDay, dd TMMonth yyyy", "TMDay, dd TMMonth yyyy HH.MI.ss", "HH24.MI", "HH24.MI.ss", "FMdd TMMonth", "TMMonth yyyy"},
 	{397, "ig", "dd/MM/yyyy", "TMDay, FMdd TMMonth yyyy", "TMDay, FMdd TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "TMMonth FMdd", "TMMonth yyyy"},
 	{398, "ig-NG", "dd/MM/yyyy", "TMDay, FMdd TMMonth yyyy", "TMDay, FMdd TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "TMMonth FMdd", "TMMonth yyyy"},
-	{399, "ii", "yyyy/FMMM/FMdd", "yyyy\"ꈎ\" FMMM\"ꆪ\" FMdd\"ꑍ\"", "yyyy\"ꈎ\"  FMMM\"ꆪ\" FMdd\"ꑍ\" AM FMHH12:MI:ss", "AM FMHH12:MI", "AM FMHH12:MI:ss", "FMMM’ ꆪ’FMdd’ ꑍ’", "yyyy\"ꈎ\" FMMM\"ꆪ\""},
-	{400, "ii-CN", "yyyy/FMMM/FMdd", "yyyy\"ꈎ\" FMMM\"ꆪ\" FMdd\"ꑍ\"", "yyyy\"ꈎ\"  FMMM\"ꆪ\" FMdd\"ꑍ\" AM FMHH12:MI:ss", "AM FMHH12:MI", "AM FMHH12:MI:ss", "FMMM’ ꆪ’FMdd’ ꑍ’", "yyyy\"ꈎ\" FMMM\"ꆪ\""},
+	{399, "ii", "yyyy/FMMM/FMdd", "yyyy\"ꈎ\" FMMM\"ꆪ\" FMdd\"ꑍ\"", "yyyy\"ꈎ\"  FMMM\"ꆪ\" FMdd\"ꑍ\" AM FMHH12:MI:ss", "AM FMHH12:MI", "AM FMHH12:MI:ss", "FMMM�35� ꆪ�35�FMdd�35� ꑍ�35�", "yyyy\"ꈎ\" FMMM\"ꆪ\""},
+	{400, "ii-CN", "yyyy/FMMM/FMdd", "yyyy\"ꈎ\" FMMM\"ꆪ\" FMdd\"ꑍ\"", "yyyy\"ꈎ\"  FMMM\"ꆪ\" FMdd\"ꑍ\" AM FMHH12:MI:ss", "AM FMHH12:MI", "AM FMHH12:MI:ss", "FMMM�35� ꆪ�35�FMdd�35� ꑍ�35�", "yyyy\"ꈎ\" FMMM\"ꆪ\""},
 	{401, "is", "FMdd.FMMM.yyyy", "TMDay, FMdd. TMMonth yyyy", "TMDay, FMdd. TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "FMdd. TMMonth", "TMMonth yyyy"},
 	{402, "is-IS", "FMdd.FMMM.yyyy", "TMDay, FMdd. TMMonth yyyy", "TMDay, FMdd. TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "FMdd. TMMonth", "TMMonth yyyy"},
 	{403, "it", "dd/MM/yyyy", "TMDay FMdd TMMonth yyyy", "TMDay FMdd TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "FMdd TMMonth", "TMMonth yyyy"},
@@ -565,8 +565,8 @@ static const datetimeformat datetimeformats[] = {
 	{538, "ms-BN", "FMdd/MM/yyyy", "dd TMMonth yyyy", "dd TMMonth yyyy FMHH12:MI:ss AM", "FMHH12:MI AM", "FMHH12:MI:ss AM", "FMdd TMMonth", "TMMonth yyyy"},
 	{539, "ms-MY", "FMdd/MM/yyyy", "TMDay, FMdd TMMonth yyyy", "TMDay, FMdd TMMonth yyyy FMHH12:MI:ss AM", "FMHH12:MI AM", "FMHH12:MI:ss AM", "FMdd TMMonth", "TMMonth yyyy"},
 	{540, "ms-SG", "FMdd/MM/yyyy", "TMDay, FMdd TMMonth yyyy", "TMDay, FMdd TMMonth yyyy FMHH12:MI:ss AM", "FMHH12:MI AM", "FMHH12:MI:ss AM", "FMdd TMMonth", "TMMonth yyyy"},
-	{541, "mt", "dd/MM/yyyy", "TMDay, FMdd \"ta\"’ TMMonth yyyy", "TMDay, FMdd \"ta\"’ TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "FMdd \"ta\"’ TMMonth", "TMMonth yyyy"},
-	{542, "mt-MT", "dd/MM/yyyy", "TMDay, FMdd \"ta\"’ TMMonth yyyy", "TMDay, FMdd \"ta\"’ TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "FMdd \"ta\"’ TMMonth", "TMMonth yyyy"},
+	{541, "mt", "dd/MM/yyyy", "TMDay, FMdd \"ta\"�35� TMMonth yyyy", "TMDay, FMdd \"ta\"�35� TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "FMdd \"ta\"�35� TMMonth", "TMMonth yyyy"},
+	{542, "mt-MT", "dd/MM/yyyy", "TMDay, FMdd \"ta\"�35� TMMonth yyyy", "TMDay, FMdd \"ta\"�35� TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "FMdd \"ta\"�35� TMMonth", "TMMonth yyyy"},
 	{543, "mua", "FMdd/FMMM/yyyy", "TMDay FMdd TMMonth yyyy", "TMDay FMdd TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "TMMonth FMdd", "yyyy TMMonth"},
 	{544, "mua-CM", "FMdd/FMMM/yyyy", "TMDay FMdd TMMonth yyyy", "TMDay FMdd TMMonth yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "TMMonth FMdd", "yyyy TMMonth"},
 	{545, "my", "dd-MM-yyyy", "yyyy၊ TMMonth d၊ TMDay", "yyyy၊ TMMonth d၊ TMDay HH24:MI:ss", "FMHH24:MI", "HH24:MI:ss", "TMMonth FMdd", "yyyy TMMonth"},
@@ -808,8 +808,8 @@ static const datetimeformat datetimeformats[] = {
 	{781, "tzm-Tfng-MA", "dd-MM-yyyy", "TMDay, dd TMMonth, yyyy", "TMDay, dd TMMonth, yyyy FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "dd TMMonth", "TMMonth, yyyy"},
 	{782, "ug", "yyyy-FMMM-FMdd", "yyyy-\"يىل\" FMdd-TMMonth", "yyyy-\"يىل\" FMdd-TMMonth FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMdd-TMMonth", "yyyy-\"يىلى\" TMMonth"},
 	{783, "ug-CN", "yyyy-FMMM-FMdd", "yyyy-\"يىل\" FMdd-TMMonth", "yyyy-\"يىل\" FMdd-TMMonth FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMdd-TMMonth", "yyyy-\"يىلى\" TMMonth"},
-	{784, "uk", "dd.MM.yyyy", "FMdd TMMonth yyyy\" р.\"", "FMdd TMMonth yyyy\" р.\" FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMdd TMMonth", "TMMonth yyyy\" р.\""},
-	{785, "uk-UA", "dd.MM.yyyy", "FMdd TMMonth yyyy\" р.\"", "FMdd TMMonth yyyy\" р.\" FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMdd TMMonth", "TMMonth yyyy\" р.\""},
+	{784, "uk", "dd.MM.yyyy", "FMdd TMMonth yyyy\" �35.\"", "FMdd TMMonth yyyy\" �35.\" FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMdd TMMonth", "TMMonth yyyy\" �35.\""},
+	{785, "uk-UA", "dd.MM.yyyy", "FMdd TMMonth yyyy\" �35.\"", "FMdd TMMonth yyyy\" �35.\" FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMdd TMMonth", "TMMonth yyyy\" �35.\""},
 	{786, "ur", "dd/MM/yyyy", "dd TMMonth, yyyy", "dd TMMonth, yyyy FMHH12:MI:ss AM", "FMHH12:MI AM", "FMHH12:MI:ss AM", "dd TMMonth", "TMMonth, yyyy"},
 	{787, "ur-IN", "FMdd/FMMM/yy", "TMDay, FMdd TMMonth, yyyy", "TMDay, FMdd TMMonth, yyyy FMHH12:MI:ss AM", "FMHH12:MI AM", "FMHH12:MI:ss AM", "FMdd TMMonth", "TMMonth yyyy"},
 	{788, "ur-PK", "dd/MM/yyyy", "dd TMMonth, yyyy", "dd TMMonth, yyyy FMHH12:MI:ss AM", "FMHH12:MI AM", "FMHH12:MI:ss AM", "dd TMMonth", "TMMonth, yyyy"},
@@ -866,7 +866,7 @@ static const datetimeformat datetimeformats[] = {
 	{839, "zu", "FMMM/FMdd/yyyy", "TMDay, TMMonth FMdd, yyyy", "TMDay, TMMonth FMdd, yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "TMMonth FMdd", "TMMonth yyyy"},
 	{840, "zu-ZA", "FMMM/FMdd/yyyy", "TMDay, TMMonth FMdd, yyyy", "TMDay, TMMonth FMdd, yyyy HH24:MI:ss", "HH24:MI", "HH24:MI:ss", "TMMonth FMdd", "TMMonth yyyy"},
 	{841, "zh-CHS", "yyyy/FMMM/FMdd", "yyyy\"年\"FMMM\"月\"FMdd\"日\"", "yyyy\"年\"FMMM\"月\"FMdd\"日\" FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMMM月FMdd日", "yyyy\"年\"FMMM\"月\""},
-	{842, "zh-CHT", "FMdd/FMMM/yyyy", "yyyy\"年\"FMMM\"月\"FMdd\"日\"", "yyyy\"年\"FMMM\"月\"FMdd\"日\" FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMMM月FMdd日", "yyyy\"年\"FMMM\"月\""}};
+{842, "zh-CHT", "FMdd/FMMM/yyyy", "yyyy\"年\"FMMM\"月\"FMdd\"日\"", "yyyy\"年\"FMMM\"月\"FMdd\"日\" FMHH24:MI:ss", "FMHH24:MI", "FMHH24:MI:ss", "FMMM月FMdd日", "yyyy\"年\"FMMM\"月\""}};
 
 /*
  * Culture wise CurrencyPositivePattern, CurrencyNegativePattern, CurrencyDecimalDigits
@@ -874,13 +874,13 @@ static const datetimeformat datetimeformats[] = {
  */
 static const struct currencyformat
 {
-	int culture_id;
-	char *sql_culture;
-	char *positive_pattern;
-	char *negative_pattern;
-	int decimal_digits;
+	int			culture_id;
+	char	   *sql_culture;
+	char	   *positive_pattern;
+	char	   *negative_pattern;
+	int			decimal_digits;
 
-} currencyformats[] = {
+}			currencyformats[] = {
 
 	{0, "", "Ln", "(Ln)", 2},
 	{1, "aa", "Ln", "-Ln", 2},
@@ -1724,27 +1724,27 @@ static const struct currencyformat
 	{839, "zu", "Ln", "-Ln", 2},
 	{840, "zu-ZA", "Ln", "-Ln", 2},
 	{841, "zh-CHS", "Ln", "L-n", 2},
-	{842, "zh-CHT", "Ln", "(Ln)", 2}};
+{842, "zh-CHT", "Ln", "(Ln)", 2}};
 
 /*
  * Functions related to FORMAT() function in string.c
  */
-static int set_culture(char *valid_culture, const char *config_name, const char *culture);
+static int	set_culture(char *valid_culture, const char *config_name, const char *culture);
 static char *format_validate_and_culture(const char *culture, const char *config_name);
-static int format_datetimeformats(StringInfo buf, const char *format_pattern, const char *culture, const char *data_type, const char *data_val);
-static int process_format_pattern(StringInfo buf, const char *msg_string, const char *data_type);
+static int	format_datetimeformats(StringInfo buf, const char *format_pattern, const char *culture, const char *data_type, const char *data_val);
+static int	process_format_pattern(StringInfo buf, const char *msg_string, const char *data_type);
 static void data_to_char(Datum data, Oid data_type, StringInfo buf);
 
 static char *get_currency_sign_format(const char *culture, int positive);
-static int get_currency_decimal_digits(const char *culture);
-static int get_compact_decimal_digits(const char *data_type);
-static int get_numeric_sign(Numeric num);
+static int	get_currency_decimal_digits(const char *culture);
+static int	get_compact_decimal_digits(const char *data_type);
+static int	get_numeric_sign(Numeric num);
 static void get_group_separator(StringInfo format_res, int integral_digits, int decimal_digits);
 static void get_exponential_format(StringInfo format_res, int precision);
-static int get_precision(char pattern, char *precision_string, char *data_type, int integral_digits, char* culture);
+static int	get_precision(char pattern, char *precision_string, char *data_type, int integral_digits, char *culture);
 static Datum get_numeric_digit_count(Numeric num);
-static int get_numeric_scale(Numeric num);
-static int get_integral_digits(int total_digits, int scale);
+static int	get_numeric_scale(Numeric num);
+static int	get_integral_digits(int total_digits, int scale);
 
 static Numeric trim_scale_numeric(Numeric num);
 static Numeric get_numeric_abs(Numeric num);
@@ -1754,17 +1754,17 @@ static void numeric_to_string(StringInfo format_res, Numeric num);
 
 static char *numeric_text(Numeric num);
 static void replace_currency_format(char *currency_format_mask, StringInfo format_res);
-static char* zero_left_padding(char* num_string, int count);
+static char *zero_left_padding(char *num_string, int count);
 static Numeric cstring_to_numeric(char *val_string);
 
 static void float4_data_to_char(StringInfo format_res, Datum num);
 static void float8_data_to_char(StringInfo format_res, Datum num);
 
-static char* repeat_string(char *val, int count);
+static char *repeat_string(char *val, int count);
 static void regexp_replace(char *format_res, char *match_with, const char *replace_with, char *flag);
-static int match(const char *string, const char *pattern);
+static int	match(const char *string, const char *pattern);
 
-static void format_currency(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string, char* culture);
+static void format_currency(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string, char *culture);
 static void format_decimal(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string, Oid arg_type_oid);
 static void format_fixed_point(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string);
 static void format_number(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string);
@@ -1774,6 +1774,6 @@ static void format_exponential(Numeric numeric_val, StringInfo format_res, char 
 static void format_compact(Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string, char *data_type, Oid arg_type_oid);
 static void format_roundtrip(Datum value, Numeric numeric_val, StringInfo format_res, char pattern, char *data_type, Oid arg_type_oid);
 static void format_numeric_handler(Datum value, Numeric numeric_val, StringInfo format_res, char pattern, char *precision_string,
-												Oid arg_type_oid, char *culture, char *valid_culture, char *data_type);
+								   Oid arg_type_oid, char *culture, char *valid_culture, char *data_type);
 
 #endif

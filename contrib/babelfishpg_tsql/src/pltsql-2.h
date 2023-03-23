@@ -7,10 +7,10 @@
  */
 typedef struct
 {
-	PLtsql_stmt_type		  cmd_type;
-	int						  lineno;
-	char					 *label;
-	List                     *exprs;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	List	   *exprs;
 } PLtsql_stmt_print;
 
 /*
@@ -18,10 +18,10 @@ typedef struct
  */
 typedef struct
 {
-	PLtsql_stmt_type		  cmd_type;
-	int						  lineno;
-	char					 *label;
-	List                     *inits;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	List	   *inits;
 } PLtsql_stmt_init;
 
 /*
@@ -29,16 +29,16 @@ typedef struct
  */
 typedef struct PLtsql_stmt_try_catch
 {
-	PLtsql_stmt_type        cmd_type;
-	int			            lineno;
-	char	               *label;
-	PLtsql_stmt            *body;   /* List of statements */
-	PLtsql_stmt            *handler;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	PLtsql_stmt *body;			/* List of statements */
+	PLtsql_stmt *handler;
 } PLtsql_stmt_try_catch;
 
 /*
  * SELECT-SET statement (this represents a SELECT
- * statement that assignes variables to a set of 
+ * statement that assignes variables to a set of
  * target variables, such as:
  *    SELECT @balance = cust_balance FROM customer ...
  */
@@ -53,10 +53,10 @@ typedef struct PLtsql_stmt_query_set
 
 typedef struct PLtsql_stmt_push_result
 {
-	PLtsql_stmt_type		  cmd_type;
-	int						  lineno;
-	char					 *label;
-	PLtsql_expr              *query;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	PLtsql_expr *query;
 } PLtsql_stmt_push_result;
 
 /*
@@ -64,29 +64,29 @@ typedef struct PLtsql_stmt_push_result
  */
 typedef struct PLtsql_stmt_exec
 {
-	PLtsql_stmt_type	 cmd_type;
-	int					 lineno;
-	PLtsql_expr			*expr;
-	bool				 is_call;
-	PLtsql_variable		*target;
-	int                  return_code_dno;
-	int					 paramno;
-	List				*params;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	PLtsql_expr *expr;
+	bool		is_call;
+	PLtsql_variable *target;
+	int			return_code_dno;
+	int			paramno;
+	List	   *params;
 
 	/* indicates whether we're executing a scalar UDF using EXEC keyword */
 	bool		is_scalar_func;
-	bool        	is_cross_db;   /* cross database reference */
-	char			*db_name;
-	char            *proc_name;
-	char            *schema_name;
+	bool		is_cross_db;	/* cross database reference */
+	char	   *db_name;
+	char	   *proc_name;
+	char	   *schema_name;
 } PLtsql_stmt_exec;
 
 typedef struct
 {
-	const char		*name;
-	PLtsql_expr	    *expr;
-	char		    mode;
-	int		    varno; /* dno of the output variable */
+	const char *name;
+	PLtsql_expr *expr;
+	char		mode;
+	int			varno;			/* dno of the output variable */
 } tsql_exec_param;
 
 /*
@@ -114,24 +114,24 @@ typedef enum PLtsql_exec_sp_type_code
 typedef struct PLtsql_stmt_exec_sp
 {
 	PLtsql_stmt_type cmd_type;
-	int lineno;
+	int			lineno;
 
 	PLtsql_sp_type_code sp_type_code;
-	int prepared_handleno;
-	int cursor_handleno;
-	int return_code_dno;
+	int			prepared_handleno;
+	int			cursor_handleno;
+	int			return_code_dno;
 
 	PLtsql_expr *handle;
 
-	PLtsql_expr *query; /* stmt */
-	int paramno;
+	PLtsql_expr *query;			/* stmt */
+	int			paramno;
 	PLtsql_expr *param_def;
-	List *params;
+	List	   *params;
 
 	PLtsql_expr *opt1;
 	PLtsql_expr *opt2;
 	PLtsql_expr *opt3;
-	List *stropt;
+	List	   *stropt;
 } PLtsql_stmt_exec_sp;
 
 /*
@@ -139,37 +139,37 @@ typedef struct PLtsql_stmt_exec_sp
  */
 typedef struct PLtsql_stmt_decl_table
 {
-	PLtsql_stmt_type	 cmd_type;
-	int                  lineno;
-	int                  dno; /* dno of the table variable */
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	int			dno;			/* dno of the table variable */
 	/* One and only one of the remaining two fields should be used */
-	char				*tbltypname; /* name of the table type */
-	char				*coldef; /* column definition list */
+	char	   *tbltypname;		/* name of the table type */
+	char	   *coldef;			/* column definition list */
 } PLtsql_stmt_decl_table;
 
 typedef struct PLtsql_stmt_exec_batch
 {
-	PLtsql_stmt_type	cmd_type;
+	PLtsql_stmt_type cmd_type;
 	int			lineno;
-	PLtsql_expr		*expr;
+	PLtsql_expr *expr;
 } PLtsql_stmt_exec_batch;
 
 typedef struct PLtsql_stmt_raiserror
 {
-	PLtsql_stmt_type	cmd_type;
-	int					lineno;
-	List			   *params;
-	int					paramno;
-	bool				log;
-	bool				nowait;
-	bool				seterror;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	List	   *params;
+	int			paramno;
+	bool		log;
+	bool		nowait;
+	bool		seterror;
 } PLtsql_stmt_raiserror;
 
 typedef struct PLtsql_stmt_throw
 {
-	PLtsql_stmt_type	cmd_type;
-	int					lineno;
-	List			   *params;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	List	   *params;
 } PLtsql_stmt_throw;
 
 /*
@@ -192,7 +192,7 @@ typedef struct PLtsql_stmt_throw
 #define TSQL_CURSOR_OPT_SCROLL_LOCKS (1<<24)
 #define TSQL_CURSOR_OPT_OPTIMISTIC   (1<<25)
 #define TSQL_CURSOR_OPT_TYPE_WARNING (1<<26)
-#define TSQL_CURSOR_OPT_AUTO_CLOSE   (1<<27) /* only used in API cursor */
+#define TSQL_CURSOR_OPT_AUTO_CLOSE   (1<<27)	/* only used in API cursor */
 
 /*
  * Speical flag to indicate the cursor is made anonymously via 'SET @cur = CURSOR FOR ...'.
@@ -217,10 +217,10 @@ typedef struct PLtsql_stmt_deallocate
 typedef struct PLtsql_stmt_decl_cursor
 {
 	PLtsql_stmt_type cmd_type;
-	int lineno;
-	int curvar;
+	int			lineno;
+	int			curvar;
 	PLtsql_expr *cursor_explicit_expr;
-	int cursor_options;
+	int			cursor_options;
 } PLtsql_stmt_decl_cursor;
 
 extern bool is_cursor_datatype(Oid oid);
@@ -230,12 +230,12 @@ extern bool is_cursor_datatype(Oid oid);
  */
 typedef struct PLtsql_stmt_goto
 {
-	PLtsql_stmt_type	 cmd_type;
-	int					 lineno;
-	char				 *label;
-	PLtsql_expr			 *cond;  /* conditional GOTO */
-    int32_t              target_pc;
-    char                 *target_label;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
+	PLtsql_expr *cond;			/* conditional GOTO */
+	int32_t		target_pc;
+	char	   *target_label;
 } PLtsql_stmt_goto;
 
 /*
@@ -244,9 +244,9 @@ typedef struct PLtsql_stmt_goto
 #define INTERNAL_LABEL_FORMAT "LABEL-0x%lX"
 typedef struct PLtsql_stmt_label
 {
-    PLtsql_stmt_type     cmd_type;
-    int                  lineno;
-    char                 *label;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *label;
 } PLtsql_stmt_label;
 
 /*
@@ -254,9 +254,9 @@ typedef struct PLtsql_stmt_label
  */
 typedef struct PLtsql_stmt_usedb
 {
-	PLtsql_stmt_type    cmd_type;
-	int 				lineno;
-	char                *db_name;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *db_name;
 } PLtsql_stmt_usedb;
 
 /*
@@ -264,10 +264,10 @@ typedef struct PLtsql_stmt_usedb
  */
 typedef struct PLtsql_stmt_save_ctx
 {
-    PLtsql_stmt_type     cmd_type;
-    int                  lineno;
-    int32_t              target_pc;
-    char                 *target_label;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	int32_t		target_pc;
+	char	   *target_label;
 } PLtsql_stmt_save_ctx;
 
 /*
@@ -275,8 +275,8 @@ typedef struct PLtsql_stmt_save_ctx
  */
 typedef struct PLtsql_stmt_restore_ctx_full
 {
-    PLtsql_stmt_type     cmd_type;
-    int                  lineno;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
 } PLtsql_stmt_restore_ctx_full;
 
 /*
@@ -284,19 +284,19 @@ typedef struct PLtsql_stmt_restore_ctx_full
  */
 typedef struct PLtsql_stmt_restore_ctx_partial
 {
-    PLtsql_stmt_type     cmd_type;
-    int                  lineno;
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
 } PLtsql_stmt_restore_ctx_partial;
 
 extern char *yytext;
 
 /*
  * FIXME: implement pltsql_scanner_lineno() in a better way */
-#define pltsql_scanner_lineno pltsql_latest_lineno	
+#define pltsql_scanner_lineno pltsql_latest_lineno
 
-extern void			pltsql_convert_ident(const char *s, char **output, int numidents);
+extern void pltsql_convert_ident(const char *s, char **output, int numidents);
 extern PLtsql_expr *pltsql_read_expression(int until, const char *expected);
-extern RangeVar    *pltsqlMakeRangeVarFromName(const char *identifier_val);
+extern RangeVar *pltsqlMakeRangeVarFromName(const char *identifier_val);
 
 
 #endif

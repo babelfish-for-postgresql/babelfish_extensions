@@ -12,7 +12,7 @@
 #define DATE_T              5
 #define TIME_T              6
 #define FLOAT_T             7
-#define REAL_T              8          
+#define REAL_T              8
 #define NUMERIC_T           9
 #define MONEY_T            10
 #define SMALLMONEY_T       11

@@ -33,7 +33,10 @@
 /*
  * macros to store length of metadata (including metadata for base type) for sqlvariant datatypes.
  */
-#define VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES 	2	/* for BIT, TINYINT, SMALLINT, INT, BIGINT, REAL, FLOAT, [SMALL]MONEY and UID */
+#define VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES 	2	/* for BIT, TINYINT,
+													 * SMALLINT, INT, BIGINT,
+													 * REAL, FLOAT,
+													 * [SMALL]MONEY and UID */
 #define VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES	9	/* for [N][VAR]CHAR */
 #define VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES 	4	/* for [VAR]BINARY */
 #define VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES	5	/* for NUMERIC */
@@ -85,28 +88,28 @@
  * for decimal types, precision and scale are encoded
  * for datetime2, datetimeoffset it is scale
  */
-typedef struct __attribute__((packed)) svhdr_1B
+typedef struct __attribute__ ((packed)) svhdr_1B
 {
-    uint8_t metadata;
+	uint8_t		metadata;
 } svhdr_1B_t;
 
-typedef struct __attribute__((packed)) svhdr_2B
+typedef struct __attribute__ ((packed)) svhdr_2B
 {
-    uint8_t metadata;
-    int8_t typmod;
+	uint8_t		metadata;
+	int8_t		typmod;
 } svhdr_2B_t;
 
-typedef struct __attribute__((packed)) svhdr_3B
+typedef struct __attribute__ ((packed)) svhdr_3B
 {
-    uint8_t metadata;
-    int16_t typmod;
+	uint8_t		metadata;
+	int16_t		typmod;
 } svhdr_3B_t;
 
-typedef struct __attribute__((packed)) svhdr_5B
+typedef struct __attribute__ ((packed)) svhdr_5B
 {
-    uint8_t  metadata;
-    int16_t  typmod;
-    uint16_t collid;
+	uint8_t		metadata;
+	int16_t		typmod;
+	uint16_t	collid;
 } svhdr_5B_t;
 
 extern bytea *gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data);
@@ -115,15 +118,14 @@ extern bytea *convertIntToSQLVariantByteA(int ret);
 extern Datum datetime2sqlvariant(PG_FUNCTION_ARGS);
 extern Datum tinyint2sqlvariant(PG_FUNCTION_ARGS);
 extern void TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen,
-					int *dataLen, int *variantHeaderLen);
+							 int *dataLen, int *variantHeaderLen);
 extern void TdsSetMetaData(bytea *result, int pgBaseType, int scale,
-						int precision, int maxLen);
-extern int TdsPGbaseType(bytea *vlena);
+						   int precision, int maxLen);
+extern int	TdsPGbaseType(bytea *vlena);
 extern void TdsGetMetaData(bytea *result, int pgBaseType, int *scale,
-                                        int *precision, int *maxLen);
+						   int *precision, int *maxLen);
 extern void TdsGetVariantBaseType(int pgBaseType, int *variantBaseType,
-                                     bool *isBaseNum, bool *isBaseChar,
-                                     bool *isBaseDec, bool *isBaseBin,
-                                     bool *isBaseDate, int *variantHeaderLen);
-
+								  bool *isBaseNum, bool *isBaseChar,
+								  bool *isBaseDec, bool *isBaseBin,
+								  bool *isBaseDate, int *variantHeaderLen);
 #endif

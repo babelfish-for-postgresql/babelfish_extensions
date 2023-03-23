@@ -58,22 +58,21 @@ typedef struct CopyMultiInsertBuffer
 	ResultRelInfo *resultRelInfo;	/* ResultRelInfo for 'relid' */
 	BulkInsertState bistate;	/* BulkInsertState for this rel */
 	int			nused;			/* number of 'slots' containing tuples */
-	uint64		linenos[MAX_BUFFERED_TUPLES];	/* Line # of tuple in bulk copy
-												 * stream */
+	uint64		linenos[MAX_BUFFERED_TUPLES];	/* Line # of tuple in bulk
+												 * copy stream */
 } CopyMultiInsertBuffer;
 
 static BulkCopyState
-BeginBulkCopy(Relation rel,
-			  List *attnamelist);
+			BeginBulkCopy(Relation rel,
+						  List *attnamelist);
 
 static uint64
-ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
-				Datum *Values, bool *Nulls);
+			ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
+							Datum *Values, bool *Nulls);
 
-static List *
-BulkCopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist);
+static List *BulkCopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist);
 
-void BulkCopyErrorCallback(void *arg);
+void		BulkCopyErrorCallback(void *arg);
 
 /*
  *	 BulkCopy - executes the Insert Bulk into a table
@@ -88,7 +87,7 @@ BulkCopy(BulkCopyStmt *stmt, uint64 *processed)
 	TupleDesc	tupDesc;
 	List	   *attnums;
 
-	Assert (stmt && stmt->relation);
+	Assert(stmt && stmt->relation);
 
 	/* Open and lock the relation, using the appropriate lock type. */
 	rel = table_openrv(stmt->relation, RowExclusiveLock);
@@ -103,7 +102,7 @@ BulkCopy(BulkCopyStmt *stmt, uint64 *processed)
 	{
 		if (!stmt->cstate)
 			stmt->cstate = BeginBulkCopy(rel, attnums);
-		
+
 		*processed = ExecuteBulkCopy(stmt->cstate, stmt->nrow, stmt->ncol, stmt->Values, stmt->Nulls);
 		stmt->rows_processed += *processed;
 	}
@@ -111,7 +110,7 @@ BulkCopy(BulkCopyStmt *stmt, uint64 *processed)
 	{
 		/* For exact row which caused error, we have BulkCopyErrorCallback. */
 		elog(WARNING, "Error while executing Bulk Copy. Error occured while processing at "
-			"implicit Batch number: %d, Rows inserted in total: %ld", stmt->cur_batch_num, stmt->rows_processed);
+			 "implicit Batch number: %d, Rows inserted in total: %ld", stmt->cur_batch_num, stmt->rows_processed);
 		if (rel != NULL)
 			table_close(rel, NoLock);
 		PG_RE_THROW();
@@ -119,9 +118,9 @@ BulkCopy(BulkCopyStmt *stmt, uint64 *processed)
 	PG_END_TRY();
 
 	elog(DEBUG2, "Bulk Copy Progress: Successfully inserted implicit number of batches: %d, "
-		"number of rows inserted in total: %ld, "
-		"number of rows inserted in current batch: %ld",
-		stmt->cur_batch_num, stmt->rows_processed, *processed);
+		 "number of rows inserted in total: %ld, "
+		 "number of rows inserted in current batch: %ld",
+		 stmt->cur_batch_num, stmt->rows_processed, *processed);
 
 	if (rel != NULL)
 		table_close(rel, NoLock);
@@ -167,7 +166,7 @@ BulkCopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 
 		foreach(l, attnamelist)
 		{
-			char	   *name = (char *)lfirst(l);
+			char	   *name = (char *) lfirst(l);
 			int			attnum;
 			int			i;
 
@@ -190,10 +189,10 @@ BulkCopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
 					else if (is_tsql_rowversion_or_timestamp_datatype_hook && is_tsql_rowversion_or_timestamp_datatype_hook(att->atttypid))
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-									errmsg("column \"%s\" is a ROWVERSION/TIMESTAMP column",
+								 errmsg("column \"%s\" is a ROWVERSION/TIMESTAMP column",
 										name),
-									errdetail("ROWVERSION/TIMESTAMP columns cannot be used in BULK COPY.")));
-					
+								 errdetail("ROWVERSION/TIMESTAMP columns cannot be used in BULK COPY.")));
+
 					attnum = att->attnum;
 					break;
 				}
@@ -233,8 +232,9 @@ void
 BulkCopyErrorCallback(void *arg)
 {
 	BulkCopyState cstate = (BulkCopyState) arg;
+
 	errcontext("Bulk Copy for %s, row: %ld  (doesn't take implicit batching into consideration)",
-				cstate->cur_relname,  cstate->cur_rowno);
+			   cstate->cur_relname, cstate->cur_rowno);
 }
 
 /*
@@ -538,9 +538,9 @@ static uint64
 ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 				Datum *Values, bool *Nulls)
 {
-	int cur_index = 0;
-	int cur_row_in_batch = 0;
-	
+	int			cur_index = 0;
+	int			cur_row_in_batch = 0;
+
 	ExprContext *econtext;
 	MemoryContext oldcontext = CurrentMemoryContext;
 
@@ -611,16 +611,17 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		myslot = CopyMultiInsertInfoNextFreeSlot(&cstate->multiInsertInfo, cstate->resultRelInfo);
 
 		/*
-		 * Switch to per-tuple context before building the TupleTableSlot, which does
-		 * evaluate default expressions etc. and requires per-tuple context.
+		 * Switch to per-tuple context before building the TupleTableSlot,
+		 * which does evaluate default expressions etc. and requires per-tuple
+		 * context.
 		 */
 		MemoryContextSwitchTo(GetPerTupleMemoryContext(cstate->estate));
 
 		ExecClearTuple(myslot);
 
 		/*
-		 * Directly store the Values/Nulls array in the slot.
-		 * Since Values/Nulls are flattened arrays, we extract only the next row's
+		 * Directly store the Values/Nulls array in the slot. Since
+		 * Values/Nulls are flattened arrays, we extract only the next row's
 		 * values and store it in the slot.
 		 */
 		if (cur_index < rowCount * colCount)
@@ -629,15 +630,19 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 			MemSet(myslot->tts_values, 0, myslot->tts_tupleDescriptor->natts * sizeof(Datum));
 			MemSet(myslot->tts_isnull, false, myslot->tts_tupleDescriptor->natts * sizeof(bool));
 
-			/* colCount could be less than natts if user wants to insert only in a subset of columns. */
+			/*
+			 * colCount could be less than natts if user wants to insert only
+			 * in a subset of columns.
+			 */
 			for (int i = 0, j = 0; i < myslot->tts_tupleDescriptor->natts && j <= colCount; i++)
 			{
 				if (!list_member_int(cstate->attnumlist, i + 1))
 				{
 					/*
-					 * If there is an identity column then we should insert the value for seuqence.
-					 * This is to be done only when we do not receive any data for this column,
-					 * otherwise we insert the data we receive.
+					 * If there is an identity column then we should insert
+					 * the value for seuqence. This is to be done only when we
+					 * do not receive any data for this column, otherwise we
+					 * insert the data we receive.
 					 */
 					if (cstate->seq_index == i)
 					{
@@ -648,7 +653,10 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 				}
 				else
 				{
-					/* j will never be >= colCount since that is handled by protocol. */
+					/*
+					 * j will never be >= colCount since that is handled by
+					 * protocol.
+					 */
 					if (Nulls[cur_row_in_batch * colCount + j])
 						myslot->tts_isnull[i] = Nulls[cur_row_in_batch * colCount + j];
 					else
@@ -656,10 +664,12 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 						myslot->tts_values[i] = Values[cur_row_in_batch * colCount + j];
 					}
 					j++;
+
 					/*
-					 * We increment cur_index only for the columns we received data for.
-					 * We need not check for overflow (cur_index < rowCount * colCount)
-					 * for each loop since that is handled by the protocol.
+					 * We increment cur_index only for the columns we received
+					 * data for. We need not check for overflow (cur_index <
+					 * rowCount * colCount) for each loop since that is
+					 * handled by the protocol.
 					 */
 					cur_index++;
 				}
@@ -668,9 +678,9 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 			cstate->cur_rowno++;
 
 			/*
-			 * Now compute and insert any defaults available for the columns not
-			 * provided by the input data.  Anything not processed here or above will
-			 * remain NULL.
+			 * Now compute and insert any defaults available for the columns
+			 * not provided by the input data.  Anything not processed here or
+			 * above will remain NULL.
 			 */
 			for (int i = 0; i < cstate->num_defaults; i++)
 			{
@@ -683,7 +693,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 
 				if (myslot->tts_isnull[defmap[i]] && (!insert_bulk_keep_nulls || cstate->rv_index == defmap[i]))
 					myslot->tts_values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
-													&myslot->tts_isnull[defmap[i]]);
+																 &myslot->tts_isnull[defmap[i]]);
 			}
 		}
 		else
@@ -703,35 +713,34 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 		if (cstate->resultRelInfo->ri_RelationDesc->rd_att->constr &&
 			cstate->resultRelInfo->ri_RelationDesc->rd_att->constr->has_generated_stored)
 			ExecComputeStoredGenerated(cstate->resultRelInfo, cstate->estate, myslot,
-										CMD_INSERT);
+									   CMD_INSERT);
 
 		/*
-		 * If the target is a plain table, check the constraints of
-		 * the tuple.
+		 * If the target is a plain table, check the constraints of the tuple.
 		 */
 		if (cstate->resultRelInfo->ri_RelationDesc->rd_att->constr)
 			ExecConstraints(cstate->resultRelInfo, myslot, cstate->estate);
 
 		/*
-		 * The slot previously might point into the per-tuple
-		 * context. For batching it needs to be longer lived.
+		 * The slot previously might point into the per-tuple context. For
+		 * batching it needs to be longer lived.
 		 */
-		ExecMaterializeSlot(myslot);	
+		ExecMaterializeSlot(myslot);
 
 		/*
-		 * Store the slot in the multi-insert buffer.
-		 * Add this tuple to the tuple buffer.
+		 * Store the slot in the multi-insert buffer. Add this tuple to the
+		 * tuple buffer.
 		 */
 		CopyMultiInsertInfoStore(&cstate->multiInsertInfo,
-									cstate->resultRelInfo, myslot,
-									cstate->cur_rowno);
+								 cstate->resultRelInfo, myslot,
+								 cstate->cur_rowno);
 
 		/* Update the number of rows processed. */
 		processed++;
 
 		/*
-		 * If enough inserts have queued up, then flush all
-		 * buffers out to the table.
+		 * If enough inserts have queued up, then flush all buffers out to the
+		 * table.
 		 */
 		if (CopyMultiInsertInfoIsFull(&cstate->multiInsertInfo))
 			CopyMultiInsertInfoFlush(&cstate->multiInsertInfo, cstate->resultRelInfo);
@@ -772,13 +781,14 @@ BeginBulkCopy(Relation rel,
 	ListCell   *cur;
 
 	nsitem = addRangeTableEntryForRelation(pstate, rel, RowExclusiveLock,
-											NULL, false, false);
+										   NULL, false, false);
 	rte = nsitem->p_rte;
 	rte->requiredPerms = ACL_INSERT;
 
 	foreach(cur, attnums)
 	{
 		int			attno = lfirst_int(cur) - FirstLowInvalidHeapAttributeNumber;
+
 		rte->insertedCols = bms_add_member(rte->insertedCols, attno);
 	}
 
@@ -789,8 +799,8 @@ BeginBulkCopy(Relation rel,
 	if (check_enable_rls(rte->relid, InvalidOid, false) == RLS_ENABLED)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Bulk Copy not supported with row-level security"),
-				errhint("Use INSERT statements instead.")));
+				 errmsg("Bulk Copy not supported with row-level security"),
+				 errhint("Use INSERT statements instead.")));
 
 	/* Check read-only transaction and parallel mode. */
 	if (XactReadOnly && !rel->rd_islocaltemp)
@@ -850,7 +860,7 @@ BeginBulkCopy(Relation rel,
 		{
 			Expr	   *defexpr = (Expr *) build_column_default(cstate->rel,
 																attnum);
-			
+
 			/* Save the index for the rowversion datatype */
 			if (is_tsql_rowversion_or_timestamp_datatype_hook && is_tsql_rowversion_or_timestamp_datatype_hook(att->atttypid))
 				cstate->rv_index = attnum - 1;
@@ -900,10 +910,10 @@ BeginBulkCopy(Relation rel,
 		ti_options |= TABLE_INSERT_SKIP_FSM;
 
 	/*
-	* We need a ResultRelInfo so we can use the regular executor's
-	* index-entry-making machinery.  (There used to be a huge amount of code
-	* here that basically duplicated execUtils.c ...).
-	*/
+	 * We need a ResultRelInfo so we can use the regular executor's
+	 * index-entry-making machinery.  (There used to be a huge amount of code
+	 * here that basically duplicated execUtils.c ...).
+	 */
 	ExecInitRangeTable(cstate->estate, cstate->range_table);
 	cstate->resultRelInfo = cstate->target_resultRelInfo = makeNode(ResultRelInfo);
 	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
@@ -930,7 +940,7 @@ EndBulkCopy(BulkCopyState cstate)
 		/* Flush any remaining bufferes out to the table. */
 		if (!CopyMultiInsertInfoIsEmpty(&cstate->multiInsertInfo))
 			CopyMultiInsertInfoFlush(&cstate->multiInsertInfo, NULL);
-			
+
 		if (cstate->bistate != NULL)
 			FreeBulkInsertState(cstate->bistate);
 

@@ -16,7 +16,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"	/* for GETSTRUCT() to extract tuple data */
-#include "access/printtup.h"		/* for SetRemoteDestReceiverParams() */
+#include "access/printtup.h"	/* for SetRemoteDestReceiverParams() */
 #include "access/xact.h"		/* for IsTransactionOrTransactionBlock() */
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -96,19 +96,19 @@ typedef struct
 
 typedef struct TdsExecutionStateData
 {
-	int current_stack;
-	int error_stack_offset;
-	int cur_error_number;
-	int cur_error_severity;
-	int cur_error_state;
+	int			current_stack;
+	int			error_stack_offset;
+	int			cur_error_number;
+	int			cur_error_severity;
+	int			cur_error_state;
 } TdsExecutionStateData;
 
 typedef TdsExecutionStateData *TdsExecutionState;
 
 /* Local variables */
-static bool		TdsHavePendingDone = false;
-static bool		TdsPendingDoneNocount;
-static uint8_t	TdsPendingDoneToken;
+static bool TdsHavePendingDone = false;
+static bool TdsPendingDoneNocount;
+static uint8_t TdsPendingDoneToken;
 static uint16_t TdsPendingDoneStatus;
 static uint16_t TdsPendingDoneCurCmd;
 static uint64_t TdsPendingDoneRowCnt;
@@ -118,10 +118,10 @@ static TdsExecutionState tds_estate = NULL;
  * This denotes whether we've sent an error token and the next done token
  * should have the error flag marked.
  */
-static bool		markErrorFlag = false;
+static bool markErrorFlag = false;
 
 static TdsColumnMetaData *colMetaData = NULL;
-static List	*relMetaDataInfoList = NULL;
+static List *relMetaDataInfoList = NULL;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
@@ -141,16 +141,17 @@ SendPendingDone(bool more)
 	Assert(!TdsRequestCtrl || more || TdsHavePendingDone);
 
 	/*
-	 * If this is the last token, then the done token should be either DONE
-	 * or DONEPROC.
+	 * If this is the last token, then the done token should be either DONE or
+	 * DONEPROC.
 	 */
 	Assert(!TdsRequestCtrl || more ||
 		   (TdsPendingDoneToken == TDS_TOKEN_DONEPROC ||
-					TdsPendingDoneToken == TDS_TOKEN_DONE));
+			TdsPendingDoneToken == TDS_TOKEN_DONE));
 
 	if (TdsHavePendingDone)
 	{
-		uint32_t tdsVersion = GetClientTDSVersion();
+		uint32_t	tdsVersion = GetClientTDSVersion();
+
 		TdsHavePendingDone = false;
 
 		/* In NOCOUNT=ON mode we need to suppress the DONE_COUNT */
@@ -181,14 +182,14 @@ SendPendingDone(bool more)
 
 			/*
 			 * If we're sending a done token that follows an error token, then
-			 * we must clear the error stack offset.  Because, after that we'll
-			 * be back to normal execution.
+			 * we must clear the error stack offset.  Because, after that
+			 * we'll be back to normal execution.
 			 */
 			tds_estate->error_stack_offset = 0;
 
 			/*
-			 * If a statement throws an error, the row count should be
-			 * always 0.
+			 * If a statement throws an error, the row count should be always
+			 * 0.
 			 */
 			Assert(TdsPendingDoneRowCnt == 0);
 		}
@@ -199,12 +200,13 @@ SendPendingDone(bool more)
 		TdsPutbytes(&TdsPendingDoneCurCmd, sizeof(TdsPendingDoneCurCmd));
 
 		/*
-		 * For Client TDS Version less than or equal to 7.1 Done Row Count is of 4 bytes
-		 * and for TDS versions higher than 7.1 it is of 8 bytes.
+		 * For Client TDS Version less than or equal to 7.1 Done Row Count is
+		 * of 4 bytes and for TDS versions higher than 7.1 it is of 8 bytes.
 		 */
 		if (tdsVersion <= TDS_VERSION_7_1_1)
 		{
-			uint32_t TdsPendingDoneRowCnt_32;
+			uint32_t	TdsPendingDoneRowCnt_32;
+
 			if (TdsPendingDoneRowCnt > PG_UINT32_MAX)
 				ereport(FATAL, (errmsg("Row Count execeeds UINT32_MAX")));
 			else
@@ -223,12 +225,12 @@ SendPendingDone(bool more)
 static AttrNumber *
 getPkeyAttnames(Relation rel, int16 *indnkeyatts)
 {
-	Relation		indexRelation;
-	ScanKeyData 	skey;
-	SysScanDesc 	scan;
-	HeapTuple		indexTuple;
-	int				i;
-	AttrNumber		*result = NULL;
+	Relation	indexRelation;
+	ScanKeyData skey;
+	SysScanDesc scan;
+	HeapTuple	indexTuple;
+	int			i;
+	AttrNumber *result = NULL;
 
 	/* initialize indnkeyatts to 0 in case no primary key exists */
 	*indnkeyatts = 0;
@@ -275,23 +277,21 @@ getPkeyAttnames(Relation rel, int16 *indnkeyatts)
 static void
 FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo)
 {
-	StringInfoData	tempBuf;
+	StringInfoData tempBuf;
 
 	initStringInfo(&tempBuf);
 
 	/*
-	 * XXX: In case a multi-part table name is used in the query, we should send
-	 * the same fully qualified name here in multiple parts.  For example, if the
-	 * following format is used in query:
-	 * select * from t1;
-	 * we should send only part with partname 't1'.  However, if the following
-	 * format is used:
-	 * select * from [dbo].[t1];
-	 * we should send two parts with partname 'dbo' and 't1';
+	 * XXX: In case a multi-part table name is used in the query, we should
+	 * send the same fully qualified name here in multiple parts.  For
+	 * example, if the following format is used in query: select * from t1; we
+	 * should send only part with partname 't1'.  However, if the following
+	 * format is used: select * from [dbo].[t1]; we should send two parts with
+	 * partname 'dbo' and 't1';
 	 *
-	 * In order to get this information, we definitely need some parser support.
-	 * Probably, we can save this information in portal while parsing the table
-	 * names.
+	 * In order to get this information, we definitely need some parser
+	 * support. Probably, we can save this information in portal while parsing
+	 * the table names.
 	 *
 	 * For now, always send it in two parts namespace.table name and hope that
 	 * client won't complain about the same.
@@ -300,8 +300,8 @@ FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo 
 	appendBinaryStringInfo(buf, (char *) &numParts, sizeof(numParts));
 	while (numParts-- > 0)
 	{
-		uint16_t		partNameLen;
-		char			*partName = relMetaDataInfo->partName[numParts];
+		uint16_t	partNameLen;
+		char	   *partName = relMetaDataInfo->partName[numParts];
 
 		resetStringInfo(&tempBuf);
 		TdsUTF8toUTF16StringInfo(&tempBuf, partName, strlen(partName));
@@ -321,24 +321,26 @@ FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo 
 static void
 FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo)
 {
-	uint16_t		TableNameLen = 0;
-	StringInfoData	tempBuf;
-	char *tableName = "";
+	uint16_t	TableNameLen = 0;
+	StringInfoData tempBuf;
+	char	   *tableName = "";
+
 	initStringInfo(&tempBuf);
 
 	/*
-	 * NumParts and PartName are not included in the response for TDS protocol versions
-	 * lower than 7.1 revision (including TDS 7.1 revision 1 in case of ColumnMetadata Token).
-	 * If the Table Name is in parts then we create a single string and convert it to
-	 * UTF16 before putting it on the wire. For example for a table dbo.t1
-	 * we should send one single tableName as dbo.t1
+	 * NumParts and PartName are not included in the response for TDS protocol
+	 * versions lower than 7.1 revision (including TDS 7.1 revision 1 in case
+	 * of ColumnMetadata Token). If the Table Name is in parts then we create
+	 * a single string and convert it to UTF16 before putting it on the wire.
+	 * For example for a table dbo.t1 we should send one single tableName as
+	 * dbo.t1
 	 */
 
 	while (numParts-- > 0)
 		tableName = psprintf("%s.%s", tableName, relMetaDataInfo->partName[numParts]);
 
 	if (strlen(tableName))
-		tableName++; 	/* skip the first '.' */
+		tableName++;			/* skip the first '.' */
 	TableNameLen += htoLE16((uint16_t) pg_mbstrlen(tableName));
 
 	TdsUTF8toUTF16StringInfo(&tempBuf, tableName, strlen(tableName));
@@ -408,352 +410,406 @@ resolve_numeric_typmod_from_exp(Node *expr)
 	switch (nodeTag(expr))
 	{
 		case T_Const:
-		{
-			Const *con = (Const *) expr;
-			Numeric num;
-
-			/* TODO:
-			 * We used a workaround here, that we will assume typmod is 0
-			 * if the value we have is not numeric. See walkaround in T_FuncExpr part
-			 * of this function. JIRA: BABEL-1007
-			 */
-			if (con->consttype != NUMERICOID || con->constisnull)
-				return 0; // Typmod doesn't really matter since it's a const NULL.
-			else
 			{
-				num = (Numeric) con->constvalue;
-				return numeric_get_typmod(num);
+				Const	   *con = (Const *) expr;
+				Numeric		num;
+
+				/*
+				 * TODO: We used a workaround here, that we will assume typmod
+				 * is 0 if the value we have is not numeric. See walkaround in
+				 * T_FuncExpr part of this function. JIRA: BABEL-1007
+				 */
+				if (con->consttype != NUMERICOID || con->constisnull)
+				{
+					return 0;
+					/* Typmod doesn 't really matter since it' s a const NULL. */
+				}
+				else
+				{
+					num = (Numeric) con->constvalue;
+					return numeric_get_typmod(num);
+				}
 			}
-		}
 		case T_Var:
-		{
-			Var *var = (Var*) expr;
-			return var->vartypmod;
-		}
+			{
+				Var		   *var = (Var *) expr;
+
+				return var->vartypmod;
+			}
 		case T_OpExpr:
-		{
-			OpExpr *op = (OpExpr *) expr;
-			Node *arg1, *arg2 = NULL;
-			int32 typmod1 = -1, typmod2 = -1;
-			uint8_t scale1, scale2, precision1, precision2;
-			uint8_t scale, precision;
-			uint8_t integralDigitCount = 0;
-			/*
-			 * If one of the operands is part of aggregate function SUM() or AVG(),
-			 * set has_aggregate_operand to true; in those cases
-			 * resultant precision and scale calculation would be a bit different
-			 */
-			bool has_aggregate_operand = false;
+			{
+				OpExpr	   *op = (OpExpr *) expr;
+				Node	   *arg1,
+						   *arg2 = NULL;
+				int32		typmod1 = -1,
+							typmod2 = -1;
+				uint8_t		scale1,
+							scale2,
+							precision1,
+							precision2;
+				uint8_t		scale,
+							precision;
+				uint8_t		integralDigitCount = 0;
 
-			Assert(list_length(op->args) == 2 ||  list_length(op->args) == 1);
-			if (list_length(op->args) == 2)
-			{
-				arg1 = linitial(op->args);
-				arg2 = lsecond(op->args);
-				typmod1 = resolve_numeric_typmod_from_exp(arg1);
-				typmod2 = resolve_numeric_typmod_from_exp(arg2);
-				scale1 = (typmod1 - VARHDRSZ) & 0xffff;
-				precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
-				scale2 = (typmod2 - VARHDRSZ) & 0xffff;
-				precision2 = ((typmod2 - VARHDRSZ) >> 16) & 0xffff;
-			}
-			else if (list_length(op->args) == 1)
-			{
-				arg1 = linitial(op->args);
-				typmod1 = resolve_numeric_typmod_from_exp(arg1);
-				scale1 = (typmod1 - VARHDRSZ) & 0xffff;
-				precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
-				scale2 = 0;
-				precision2 = 0;
-			}
-			else
-			{
-				/* Shoudn't get here, just need this code to suppress the compiler warnings */
-				precision1 = tds_default_numeric_precision;
-				precision2 = tds_default_numeric_precision;
-				scale1 = tds_default_numeric_scale;
-				scale2 = tds_default_numeric_scale;
-			}
+				/*
+				 * If one of the operands is part of aggregate function SUM()
+				 * or AVG(), set has_aggregate_operand to true; in those cases
+				 * resultant precision and scale calculation would be a bit
+				 * different
+				 */
+				bool		has_aggregate_operand = false;
 
-			/*
-			 * BABEL-2048 Handling arithmetic overflow exception
-			 * when one of the operands is of NON-numeric datatype.
-			 * Use tds_default_numeric_precision/scale if both operands
-			 * are without typmod which probabaly won't happen.
-			 * If one of the operand doesn't have typmod, apply
-			 * the same typmod as the other operand. This makes sense
-			 * because it's equivalent to casting the operand without
-			 * typmod to the other operand's type and typmod then
-			 * do the operation.
-			 */
-			if (typmod1 == -1 && typmod2 == -1)
-			{
-				precision = tds_default_numeric_precision;
-				scale = tds_default_numeric_scale;
+				Assert(list_length(op->args) == 2 || list_length(op->args) == 1);
+				if (list_length(op->args) == 2)
+				{
+					arg1 = linitial(op->args);
+					arg2 = lsecond(op->args);
+					typmod1 = resolve_numeric_typmod_from_exp(arg1);
+					typmod2 = resolve_numeric_typmod_from_exp(arg2);
+					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
+					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
+					scale2 = (typmod2 - VARHDRSZ) & 0xffff;
+					precision2 = ((typmod2 - VARHDRSZ) >> 16) & 0xffff;
+				}
+				else if (list_length(op->args) == 1)
+				{
+					arg1 = linitial(op->args);
+					typmod1 = resolve_numeric_typmod_from_exp(arg1);
+					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
+					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
+					scale2 = 0;
+					precision2 = 0;
+				}
+				else
+				{
+					/*
+					 * Shoudn't get here, just need this code to suppress the
+					 * compiler warnings
+					 */
+					precision1 = tds_default_numeric_precision;
+					precision2 = tds_default_numeric_precision;
+					scale1 = tds_default_numeric_scale;
+					scale2 = tds_default_numeric_scale;
+				}
+
+				/*
+				 * BABEL-2048 Handling arithmetic overflow exception when one
+				 * of the operands is of NON-numeric datatype. Use
+				 * tds_default_numeric_precision/scale if both operands are
+				 * without typmod which probabaly won't happen. If one of the
+				 * operand doesn't have typmod, apply the same typmod as the
+				 * other operand. This makes sense because it's equivalent to
+				 * casting the operand without typmod to the other operand's
+				 * type and typmod then do the operation.
+				 */
+				if (typmod1 == -1 && typmod2 == -1)
+				{
+					precision = tds_default_numeric_precision;
+					scale = tds_default_numeric_scale;
+					return ((precision << 16) | scale) + VARHDRSZ;
+				}
+				else if (typmod1 == -1)
+				{
+					precision1 = precision2;
+					scale1 = scale2;
+				}
+				else if (typmod2 == -1)
+				{
+					precision2 = precision1;
+					scale2 = scale1;
+				}
+
+				/*
+				 * Refer to details of precision and scale calculation in the
+				 * following link:
+				 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
+				 */
+				has_aggregate_operand = arg1->type == T_Aggref ||
+					(list_length(op->args) == 2 && arg2->type == T_Aggref);
+
+				switch (op->opfuncid)
+				{
+					case NUMERIC_ADD_OID:
+					case NUMERIC_SUB_OID:
+						integralDigitCount = Max(precision1 - scale1, precision2 - scale2);
+						scale = Max(scale1, scale2);
+						precision = integralDigitCount + 1 + scale;
+
+						/*
+						 * For addition and subtraction, skip scale adjustment
+						 * when none of the operands is part of any aggregate
+						 * function
+						 */
+						if (has_aggregate_operand &&
+							integralDigitCount < (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
+							scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
+
+						/*
+						 * precisionn adjustment to TDS_MAX_NUM_PRECISION
+						 */
+						if (precision > TDS_MAX_NUM_PRECISION)
+							precision = TDS_MAX_NUM_PRECISION;
+						break;
+					case NUMERIC_MUL_OID:
+						scale = scale1 + scale2;
+						precision = precision1 + precision2 + 1;
+
+						/*
+						 * For multiplication, skip scale adjustment when
+						 * atleast one of the operands is part of aggregate
+						 * function
+						 */
+						if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
+							precision = TDS_MAX_NUM_PRECISION;
+						break;
+					case NUMERIC_DIV_OID:
+						scale = Max(6, scale1 + precision2 + 1);
+						precision = precision1 - scale1 + scale2 + scale;
+						break;
+					case NUMERIC_MOD_OID:
+					case NUMERIC_MOD_OID2:
+						scale = Max(scale1, scale2);
+						precision = Min(precision1 - scale1, precision2 - scale2) + scale;
+						break;
+					case NUMERIC_UPLUS_OID:
+					case NUMERIC_UMINUS_OID:
+						scale = scale1;
+						precision = precision1;
+						break;
+					default:
+						return -1;
+				}
+
+				/*
+				 * Mitigate precision overflow if integral precision <= 38
+				 * Otherwise it simply won't fit in 38 precision and let an
+				 * overflow error be thrown in PrepareRowDescription.
+				 */
+				if (precision > TDS_MAX_NUM_PRECISION)
+				{
+					if (precision - scale > 32 && scale > 6)
+					{
+						/*
+						 * Result might be rounded to 6 decimal places or the
+						 * overflow error will be thrown if the integral part
+						 * can't fit into 32 digits.
+						 */
+						precision = TDS_MAX_NUM_PRECISION;
+						scale = 6;
+					}
+					else if (precision - scale <= TDS_MAX_NUM_PRECISION)
+					{
+						/*
+						 * scale adjustment by delta is only applicable for
+						 * division and (multiplcation having no aggregate
+						 * operand)
+						 */
+						int			delta = precision - TDS_MAX_NUM_PRECISION;
+
+						precision = TDS_MAX_NUM_PRECISION;
+						scale = Max(scale - delta, 0);
+					}
+
+					/*
+					 * Control reaching here for only arithmetic overflow
+					 * cases
+					 */
+				}
 				return ((precision << 16) | scale) + VARHDRSZ;
 			}
-			else if (typmod1 == -1)
-			{
-				 precision1 = precision2;
-				 scale1 = scale2;
-			}
-			else if (typmod2 == -1)
-			{
-				 precision2 = precision1;
-				 scale2 = scale1;
-			}
-
-			/*
-			 * Refer to details of precision and scale calculation in the following link:
-			 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
-			 */
-			has_aggregate_operand = arg1->type == T_Aggref ||
-						(list_length(op->args) == 2 && arg2->type == T_Aggref);
-
-			switch (op->opfuncid)
-			{
-				case NUMERIC_ADD_OID:
-				case NUMERIC_SUB_OID:
-					integralDigitCount = Max(precision1 - scale1, precision2 - scale2);
-					scale = Max(scale1, scale2);
-					precision = integralDigitCount + 1 + scale;
-					/*
-					 * For addition and subtraction, skip scale adjustment when none of the
-					 * operands is part of any aggregate function
-					 */
-					if (has_aggregate_operand &&
-					    integralDigitCount < (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
-						scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
-
-					/*
-					 * precisionn adjustment to TDS_MAX_NUM_PRECISION
-					 */
-					if (precision > TDS_MAX_NUM_PRECISION)
-						precision = TDS_MAX_NUM_PRECISION;
-					break;
-				case NUMERIC_MUL_OID:
-					scale = scale1 + scale2;
-					precision = precision1 + precision2 + 1;
-					/*
-					 * For multiplication, skip scale adjustment when atleast one of the
-					 * operands is part of aggregate function
-					 */
-					if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
-						precision = TDS_MAX_NUM_PRECISION;
-					break;
-				case NUMERIC_DIV_OID:
-					scale = Max(6, scale1 + precision2 + 1);
-					precision = precision1 - scale1 + scale2 + scale;
-					break;
-				case NUMERIC_MOD_OID:
-				case NUMERIC_MOD_OID2:
-					scale = Max(scale1, scale2);
-					precision = Min(precision1-scale1, precision2 -scale2) + scale;
-					break;
-				case NUMERIC_UPLUS_OID:
-				case NUMERIC_UMINUS_OID:
-					scale = scale1;
-					precision = precision1;
-					break;
-				default:
-					return -1;
-			}
-
-			/*
-			 * Mitigate precision overflow if integral precision <= 38
-			 * Otherwise it simply won't fit in 38 precision and let an
-			 * overflow error be thrown in PrepareRowDescription.
-			 */
-			if (precision > TDS_MAX_NUM_PRECISION)
-			{
-				if (precision - scale > 32 && scale > 6)
-				{
-					/*
-					 * Result might be rounded to 6 decimal places or the overflow error
-					 * will be thrown if the integral part can't fit into 32 digits.
-					 */
-					precision = TDS_MAX_NUM_PRECISION;
-					scale = 6;
-				}
-				else if (precision - scale <= TDS_MAX_NUM_PRECISION)
-				{
-					/*
-					 * scale adjustment by delta is only applicable for division
-			     		 * and (multiplcation having no aggregate operand)
-			     		 */
-			    		int delta = precision - TDS_MAX_NUM_PRECISION;
-			    		precision = TDS_MAX_NUM_PRECISION;
-			    		scale = Max(scale - delta, 0);
-				}
-				/*
-				 * Control reaching here for only arithmetic overflow cases
-				 */
-			}
-			return ((precision << 16) | scale) + VARHDRSZ;
-		}
 		case T_FuncExpr:
-		{
-			FuncExpr *func = (FuncExpr *) expr;
-			Oid     func_oid = InvalidOid;
-			int rettypmod = -1;
-
-			/* Be smart about length-coercion functions... */
-			if (exprIsLengthCoercion(expr, &rettypmod))
-			        return rettypmod;
-
-			/*
-			 * Look up the return type typmod from a persistent
-			 * store using the function oid.
-			 */
-			func_oid = func->funcid;
-			Assert(func_oid != InvalidOid);
-
-			if(func->funcresulttype != VOIDOID)
-				rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
-								func->args == NIL ? 0 : func->args->length,
-								func->funcresulttype);
-			return rettypmod;
-		}
-		case T_NullIfExpr:
-		{
-			/*
-			 * Nullif returns a null value if the two specified expressions are equal,
-			 * Otherwise it returns the first argument.
-			 */
-			NullIfExpr *nullif = (NullIfExpr *) expr;
-			Node *arg1;
-
-			Assert(nullif->args != NIL);
-
-			arg1 = linitial(nullif->args);
-			return resolve_numeric_typmod_from_exp(arg1);
-		}
-		case T_CoalesceExpr:
-		{
-			/* Find max possible integral_precision and scale (fractional precision) in a CoalesceExpr */
-			CoalesceExpr *coale = (CoalesceExpr *) expr;
-			ListCell *lc;
-			Node *arg;
-			int32 arg_typmod;
-			uint8_t precision, max_integral_precision = 0, scale, max_scale = 0;
-
-			Assert(coale->args != NIL);
-
-			/* Loop through the list of Coalesce arguments */
-			foreach(lc, coale->args)
 			{
-				arg = lfirst(lc);
-				arg_typmod = resolve_numeric_typmod_from_exp(arg);
-				/* return -1 if we fail to resolve one of the arg's typmod */
-				if (arg_typmod == -1)
-					return -1;
-				/* skip the const NULL, which should have 0 returned as typmod */
-				if (arg_typmod == 0)
-					continue;
-				scale = (arg_typmod - VARHDRSZ) & 0xffff;
-				precision = ((arg_typmod - VARHDRSZ) >> 16) & 0xffff;
-				max_scale = Max(scale, max_scale);
-				max_integral_precision = Max(precision - scale, max_integral_precision);
+				FuncExpr   *func = (FuncExpr *) expr;
+				Oid			func_oid = InvalidOid;
+				int			rettypmod = -1;
+
+				/* Be smart about length-coercion functions... */
+				if (exprIsLengthCoercion(expr, &rettypmod))
+					return rettypmod;
+
+				/*
+				 * Look up the return type typmod from a persistent store
+				 * using the function oid.
+				 */
+				func_oid = func->funcid;
+				Assert(func_oid != InvalidOid);
+
+				if (func->funcresulttype != VOIDOID)
+					rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
+																					  func->args == NIL ? 0 : func->args->length,
+																					  func->funcresulttype);
+				return rettypmod;
 			}
-			return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
-		}
-		case T_CaseExpr:
-		{
-			/* Find max possible integral_precision and scale (fractional precision) in a CoalesceExpr */
-			CaseExpr *case_expr = (CaseExpr *) expr;
-			ListCell *lc;
-			CaseWhen *casewhen;
-			Node *casewhen_result;
-			int32 typmod;
-			uint8_t precision, max_integral_precision = 0, scale, max_scale = 0;
-
-			Assert(case_expr->args != NIL);
-
-			/* Loop through the list of WHEN clauses */
-			foreach(lc, case_expr->args)
+		case T_NullIfExpr:
 			{
-				casewhen = lfirst(lc);
-				casewhen_result = (Node *) casewhen->result;
-				typmod = resolve_numeric_typmod_from_exp(casewhen_result);
-				/* return -1 if we fail to resolve one of the result's typmod */
-				if (typmod == -1)
-					return -1;
-				/* skip the const NULL, which should have 0 returned as typmod */
-				if (typmod == 0)
-					continue;
+				/*
+				 * Nullif returns a null value if the two specified
+				 * expressions are equal, Otherwise it returns the first
+				 * argument.
+				 */
+				NullIfExpr *nullif = (NullIfExpr *) expr;
+				Node	   *arg1;
+
+				Assert(nullif->args != NIL);
+
+				arg1 = linitial(nullif->args);
+				return resolve_numeric_typmod_from_exp(arg1);
+			}
+		case T_CoalesceExpr:
+			{
+				/*
+				 * Find max possible integral_precision and scale (fractional
+				 * precision) in a CoalesceExpr
+				 */
+				CoalesceExpr *coale = (CoalesceExpr *) expr;
+				ListCell   *lc;
+				Node	   *arg;
+				int32		arg_typmod;
+				uint8_t		precision,
+							max_integral_precision = 0,
+							scale,
+							max_scale = 0;
+
+				Assert(coale->args != NIL);
+
+				/* Loop through the list of Coalesce arguments */
+				foreach(lc, coale->args)
+				{
+					arg = lfirst(lc);
+					arg_typmod = resolve_numeric_typmod_from_exp(arg);
+					/* return -1 if we fail to resolve one of the arg's typmod */
+					if (arg_typmod == -1)
+						return -1;
+
+					/*
+					 * skip the const NULL, which should have 0 returned as
+					 * typmod
+					 */
+					if (arg_typmod == 0)
+						continue;
+					scale = (arg_typmod - VARHDRSZ) & 0xffff;
+					precision = ((arg_typmod - VARHDRSZ) >> 16) & 0xffff;
+					max_scale = Max(scale, max_scale);
+					max_integral_precision = Max(precision - scale, max_integral_precision);
+				}
+				return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
+			}
+		case T_CaseExpr:
+			{
+				/*
+				 * Find max possible integral_precision and scale (fractional
+				 * precision) in a CoalesceExpr
+				 */
+				CaseExpr   *case_expr = (CaseExpr *) expr;
+				ListCell   *lc;
+				CaseWhen   *casewhen;
+				Node	   *casewhen_result;
+				int32		typmod;
+				uint8_t		precision,
+							max_integral_precision = 0,
+							scale,
+							max_scale = 0;
+
+				Assert(case_expr->args != NIL);
+
+				/* Loop through the list of WHEN clauses */
+				foreach(lc, case_expr->args)
+				{
+					casewhen = lfirst(lc);
+					casewhen_result = (Node *) casewhen->result;
+					typmod = resolve_numeric_typmod_from_exp(casewhen_result);
+
+					/*
+					 * return -1 if we fail to resolve one of the result's
+					 * typmod
+					 */
+					if (typmod == -1)
+						return -1;
+
+					/*
+					 * skip the const NULL, which should have 0 returned as
+					 * typmod
+					 */
+					if (typmod == 0)
+						continue;
+					scale = (typmod - VARHDRSZ) & 0xffff;
+					precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+					max_scale = Max(scale, max_scale);
+					max_integral_precision = Max(precision - scale, max_integral_precision);
+				}
+				return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
+			}
+		case T_Aggref:
+			{
+				/* select max(a) from t; max(a) is an Aggref */
+				Aggref	   *aggref = (Aggref *) expr;
+				TargetEntry *te;
+				char	   *aggFuncName;
+				int32		typmod;
+				uint8_t		precision,
+							scale;
+
+				Assert(aggref->args != NIL);
+
+				te = (TargetEntry *) linitial(aggref->args);
+				typmod = resolve_numeric_typmod_from_exp((Node *) te->expr);
+				aggFuncName = get_func_name(aggref->aggfnoid);
+
 				scale = (typmod - VARHDRSZ) & 0xffff;
 				precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
-				max_scale = Max(scale, max_scale);
-				max_integral_precision = Max(precision - scale, max_integral_precision);
-			}
-			return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
-		}
-		case T_Aggref:
-		{
-			/* select max(a) from t; max(a) is an Aggref */
-			Aggref *aggref = (Aggref *) expr;
-			TargetEntry *te;
-			char *aggFuncName;
-			int32 typmod;
-			uint8_t precision, scale;
 
-			Assert(aggref->args != NIL);
+				/*
+				 * If we recieve typmod as -1 we should fallback to default
+				 * scale and precision Rather than using -1 typmod to
+				 * calculate scale and precision which leads to TDS protocol
+				 * error.
+				 */
+				if (typmod == -1)
+				{
+					scale = tds_default_numeric_scale;
+					precision = tds_default_numeric_precision;
+				}
 
-			te = (TargetEntry *) linitial(aggref->args);
-			typmod = resolve_numeric_typmod_from_exp((Node *) te->expr);
-			aggFuncName = get_func_name(aggref->aggfnoid);
-
-			scale = (typmod - VARHDRSZ) & 0xffff;
-			precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
-
-			/*
-			 * If we recieve typmod as -1 we should fallback to default scale and precision
-			 * Rather than using -1 typmod to calculate scale and precision which leads to 
-			 * TDS protocol error.
-			 */
-			if (typmod == -1)
-			{
-				scale = tds_default_numeric_scale;
-				precision = tds_default_numeric_precision;
-			}
-			/*
-			 * [BABEL-3074] NUMERIC overflow causes TDS error for aggregate
-			 * function sum(); resultant precision should be tds_default_numeric_precision 
-			 */
-			if (aggFuncName && strlen(aggFuncName) == 3 &&
+				/*
+				 * [BABEL-3074] NUMERIC overflow causes TDS error for
+				 * aggregate function sum(); resultant precision should be
+				 * tds_default_numeric_precision
+				 */
+				if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "sum", 3) == 0))
-				precision = tds_default_numeric_precision;
+					precision = tds_default_numeric_precision;
 
-			/*
-			 * For aggregate function avg(); resultant precision should be
-			 * tds_default_numeric_precision and resultant scale = max(input scale, 6)
-			 */
-			if (aggFuncName && strlen(aggFuncName) == 3 &&
+				/*
+				 * For aggregate function avg(); resultant precision should be
+				 * tds_default_numeric_precision and resultant scale =
+				 * max(input scale, 6)
+				 */
+				if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "avg", 3) == 0))
-			{
-				precision = tds_default_numeric_precision;
-				scale = Max(scale, 6);
+				{
+					precision = tds_default_numeric_precision;
+					scale = Max(scale, 6);
+				}
+
+				pfree(aggFuncName);
+				return ((precision << 16) | scale) + VARHDRSZ;
 			}
-
-			pfree(aggFuncName);
-			return ((precision << 16) | scale) + VARHDRSZ;
-		}
 		case T_PlaceHolderVar:
-		{
-			PlaceHolderVar *phv = (PlaceHolderVar *) expr;
+			{
+				PlaceHolderVar *phv = (PlaceHolderVar *) expr;
 
-			return resolve_numeric_typmod_from_exp((Node *) phv->phexpr);
-		}
+				return resolve_numeric_typmod_from_exp((Node *) phv->phexpr);
+			}
 		case T_RelabelType:
-		{
-			 RelabelType *rlt = (RelabelType *) expr;
+			{
+				RelabelType *rlt = (RelabelType *) expr;
 
-			 if (rlt->resulttypmod != -1)
-			   return rlt->resulttypmod;
-			 else
-			   return resolve_numeric_typmod_from_exp((Node *) rlt->arg);
-		}
-		/* TODO handle more Expr types if needed */
+				if (rlt->resulttypmod != -1)
+					return rlt->resulttypmod;
+				else
+					return resolve_numeric_typmod_from_exp((Node *) rlt->arg);
+			}
+			/* TODO handle more Expr types if needed */
 		default:
 			return -1;
 	}
@@ -786,13 +842,14 @@ TdsResponseReset(void)
 ParameterToken
 MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollation)
 {
-	ParameterToken temp  = palloc0(sizeof(ParameterTokenData));
-	TdsIoFunctionInfo	finfo;
-	TdsColumnMetaData	*col;
-	Oid 			serverCollationOid;
-	uint32_t tdsVersion = GetClientTDSVersion();
+	ParameterToken temp = palloc0(sizeof(ParameterTokenData));
+	TdsIoFunctionInfo finfo;
+	TdsColumnMetaData *col;
+	Oid			serverCollationOid;
+	uint32_t	tdsVersion = GetClientTDSVersion();
 
 	coll_info_t cinfo = TdsLookupCollationTableCallback(InvalidOid);
+
 	serverCollationOid = cinfo.oid;
 	if (unlikely(serverCollationOid == InvalidOid))
 		elog(FATAL, "Oid of default collation is not valid, This might mean that value of server_collation_name GUC is invalid");
@@ -811,7 +868,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 
 	switch (finfo->sendFuncId)
 	{
-		/* TODO  boolean is equivalent to TSQL BIT type */
+			/* TODO  boolean is equivalent to TSQL BIT type */
 		case TDS_SEND_BIT:
 			SetColMetadataForFixedType(col, TDS_TYPE_BIT, TDS_MAXLEN_BIT);
 			temp->maxLen = 1;
@@ -849,7 +906,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			break;
 		case TDS_SEND_NCHAR:
 			SetColMetadataForCharTypeHelper(col, TDS_TYPE_NCHAR,
-											attcollation, (atttypmod-4) * 2);
+											attcollation, (atttypmod - 4) * 2);
 			/* if attypmod is -1, consider the datatype as NCHAR(MAX) */
 			if (atttypmod == -1)
 				temp->maxLen = 0xFFFF;
@@ -857,7 +914,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 		case TDS_SEND_VARCHAR:
 			SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 											attcollation, (atttypmod == -1) ?
-														atttypmod : (atttypmod - 4));
+											atttypmod : (atttypmod - 4));
 			/* if attypmod is -1, consider the datatype as VARCHAR(MAX) */
 			if (atttypmod == -1)
 				temp->maxLen = 0xFFFF;
@@ -865,7 +922,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 		case TDS_SEND_NVARCHAR:
 			SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR,
 											attcollation, (atttypmod == -1) ?
-														atttypmod : (atttypmod - 4) * 2);
+											atttypmod : (atttypmod - 4) * 2);
 			/* if attypmod is -1, consider the datatype as NVARCHAR(MAX) */
 			if (atttypmod == -1)
 				temp->maxLen = 0xFFFF;
@@ -888,15 +945,16 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			break;
 		case TDS_SEND_DATE:
 			if (tdsVersion < TDS_VERSION_7_3_A)
+
 				/*
-				 * If client being connected is using TDS version lower than 7.3A
-				 * then TSQL treats DATE as NVARCHAR.
-				 * Max len here would be 20 ('YYYY-MM-DD').
-				 * and Making use of default collation Oid.
+				 * If client being connected is using TDS version lower than
+				 * 7.3A then TSQL treats DATE as NVARCHAR. Max len here would
+				 * be 20 ('YYYY-MM-DD'). and Making use of default collation
+				 * Oid.
 				 */
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 20);
 			else
-			{ 
+			{
 				SetColMetadataForDateType(col, TDS_TYPE_DATE);
 				temp->maxLen = 3;
 			}
@@ -907,11 +965,13 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			break;
 		case TDS_SEND_NUMERIC:
 			{
-				uint8_t				precision = 18, scale = 0;
+				uint8_t		precision = 18,
+							scale = 0;
 
 				/*
-				 * Get the precision and scale out of the typmod value if typmod is valid
-				 * Otherwise tds_default_numeric_precision/scale will be used.
+				 * Get the precision and scale out of the typmod value if
+				 * typmod is valid Otherwise
+				 * tds_default_numeric_precision/scale will be used.
 				 */
 				if (atttypmod > VARHDRSZ)
 				{
@@ -941,7 +1001,11 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				temp->maxLen = 0xFFFF;
 			break;
 		case TDS_SEND_VARBINARY:
-			/* Generate the typmod from hex const input because typmod won't be specified */
+
+			/*
+			 * Generate the typmod from hex const input because typmod won't
+			 * be specified
+			 */
 			SetColMetadataForBinaryType(col, TDS_TYPE_VARBINARY, (atttypmod == -1) ?
 										atttypmod : atttypmod - VARHDRSZ);
 			/* if attypmod is -1, consider the datatype as VARBINARY(MAX) */
@@ -954,19 +1018,21 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			break;
 		case TDS_SEND_TIME:
 			if (tdsVersion < TDS_VERSION_7_3_A)
+
 				/*
-				 * If client being connected is using TDS version lower than 7.3A
-				 * then TSQL treats TIME as NVARCHAR.
-				 * Max len here would be 32 ('hh:mm:ss[.nnnnnnn]').
-				 * and Making use of default collation Oid.
+				 * If client being connected is using TDS version lower than
+				 * 7.3A then TSQL treats TIME as NVARCHAR. Max len here would
+				 * be 32 ('hh:mm:ss[.nnnnnnn]'). and Making use of default
+				 * collation Oid.
 				 */
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 32);
 			else
 			{
 				/*
-				 * if time data has no specific scale specified in the query, default scale
-				 * to be considered is 7 always. However, setting default scale to 6 since
-				 * postgres supports upto 6 digits after decimal point
+				 * if time data has no specific scale specified in the query,
+				 * default scale to be considered is 7 always. However,
+				 * setting default scale to 6 since postgres supports upto 6
+				 * digits after decimal point
 				 */
 				if (atttypmod == -1)
 					atttypmod = DATETIMEOFFSETMAXSCALE;
@@ -976,19 +1042,21 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			break;
 		case TDS_SEND_DATETIME2:
 			if (tdsVersion < TDS_VERSION_7_3_A)
+
 				/*
-				 * If client being connected is using TDS version lower than 7.3A
-				 * then TSQL treats DATETIME2 as NVARCHAR.
-				 * Max len here would be 54('YYYY-MM-DD hh:mm:ss[.nnnnnnn]').
-				 * and Making use of default collation Oid.
+				 * If client being connected is using TDS version lower than
+				 * 7.3A then TSQL treats DATETIME2 as NVARCHAR. Max len here
+				 * would be 54('YYYY-MM-DD hh:mm:ss[.nnnnnnn]'). and Making
+				 * use of default collation Oid.
 				 */
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 54);
 			else
 			{
 				/*
-				 * if Datetime2 data has no specific scale specified in the query, default scale
-				 * to be considered is 7 always. However, setting default scale to 6 since
-				 * postgres supports upto 6 digits after decimal point
+				 * if Datetime2 data has no specific scale specified in the
+				 * query, default scale to be considered is 7 always. However,
+				 * setting default scale to 6 since postgres supports upto 6
+				 * digits after decimal point
 				 */
 				if (atttypmod == -1)
 					atttypmod = DATETIMEOFFSETMAXSCALE;
@@ -1000,9 +1068,10 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			if (tdsVersion > TDS_VERSION_7_1_1)
 				SetColMetadataForFixedType(col, TDS_TYPE_XML, 0);
 			else
+
 				/*
-				 * If client being connected is using TDS version lower than or equal to 7.1
-				 * then TSQL treats XML as NText.
+				 * If client being connected is using TDS version lower than
+				 * or equal to 7.1 then TSQL treats XML as NText.
 				 */
 				SetColMetadataForTextTypeHelper(col, TDS_TYPE_NTEXT,
 												attcollation, (atttypmod - 4) * 2);
@@ -1012,11 +1081,12 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			break;
 		case TDS_SEND_DATETIMEOFFSET:
 			if (tdsVersion < TDS_VERSION_7_3_A)
+
 				/*
-				 * If client being connected is using TDS version lower than 7.3A
-				 * then TSQL treats DATETIMEOFFSET as NVARCHAR.
-				 * Max len here would be 64('YYYY-MM-DD hh:mm:ss[.nnnnnnn] [+|-]hh:mm').
-				 * and Making use of default collation Oid.
+				 * If client being connected is using TDS version lower than
+				 * 7.3A then TSQL treats DATETIMEOFFSET as NVARCHAR. Max len
+				 * here would be 64('YYYY-MM-DD hh:mm:ss[.nnnnnnn]
+				 * [+|-]hh:mm'). and Making use of default collation Oid.
 				 */
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 64);
 			else
@@ -1028,9 +1098,10 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			}
 			break;
 		default:
+
 			/*
-			 * TODO: Need to create a mapping table for user defined
-			 * data types and handle it here.
+			 * TODO: Need to create a mapping table for user defined data
+			 * types and handle it here.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1059,12 +1130,12 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 void
 SendColumnMetadataToken(int natts, bool sendRowStat)
 {
-	StringInfoData	tempBuf;
-	int				attno;
-	uint32_t 	tdsVersion = GetClientTDSVersion();
+	StringInfoData tempBuf;
+	int			attno;
+	uint32_t	tdsVersion = GetClientTDSVersion();
 
-      /* Now send out the COLMETADATA token */
-      TDS_DEBUG(TDS_DEBUG2, "SendColumnMetadataToken: token=0x%02x", TDS_TOKEN_COLMETADATA);
+	/* Now send out the COLMETADATA token */
+	TDS_DEBUG(TDS_DEBUG2, "SendColumnMetadataToken: token=0x%02x", TDS_TOKEN_COLMETADATA);
 	TdsPutInt8(TDS_TOKEN_COLMETADATA);
 	TdsPutInt16LE(sendRowStat ? natts + 1 : natts);
 
@@ -1072,16 +1143,18 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 
 	for (attno = 0; attno < natts; attno++)
 	{
-		uint8				temp8;
-		TdsColumnMetaData  *col = &colMetaData[attno];
+		uint8		temp8;
+		TdsColumnMetaData *col = &colMetaData[attno];
 
 		/*
-		 * Instead of hardcoding the userType to 0 at various strucutures inside col->metaEntry
-		 * we can write 0x0000 (for versions lower than TDS 7.2) or 0x00000000 (for TDS 7.2 and higher)
-		 * directly on the wire depending version;
+		 * Instead of hardcoding the userType to 0 at various strucutures
+		 * inside col->metaEntry we can write 0x0000 (for versions lower than
+		 * TDS 7.2) or 0x00000000 (for TDS 7.2 and higher) directly on the
+		 * wire depending version;
 		 *
-		 * TODO: TDS doc mentions some non-zero values for timestamp and aliases
-		 * NOTE: We have always sent UserType as 0 and clients have never complained about it.
+		 * TODO: TDS doc mentions some non-zero values for timestamp and
+		 * aliases NOTE: We have always sent UserType as 0 and clients have
+		 * never complained about it.
 		 */
 		if (tdsVersion <= TDS_VERSION_7_1_1)
 			TdsPutInt16LE(0);
@@ -1092,15 +1165,16 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 
 		if (col->sendTableName)
 		{
-			uint8			numParts;
+			uint8		numParts;
 
 			if (col->relinfo != NULL)
 			{
 				numParts = 2;
 				resetStringInfo(&tempBuf);
+
 				/*
-				 * In column Metatdata Token -- NumParts, a multi-part table name,
-				 * was intoduced in TDS 7.2
+				 * In column Metatdata Token -- NumParts, a multi-part table
+				 * name, was intoduced in TDS 7.2
 				 */
 				if (tdsVersion > TDS_VERSION_7_1_1)
 					FillTabNameWithNumParts(&tempBuf, numParts, col->relinfo);
@@ -1112,9 +1186,10 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			{
 				/* Expression columns doesn't have table name */
 				numParts = 1;
+
 				/*
-				 * In column Metatdata Token -- NumParts, a multi-part table name,
-				 * was introduced in TDS 7.2
+				 * In column Metatdata Token -- NumParts, a multi-part table
+				 * name, was introduced in TDS 7.2
 				 */
 				if (tdsVersion > TDS_VERSION_7_1_1)
 					TdsPutbytes(&numParts, sizeof(numParts));
@@ -1123,14 +1198,14 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 		}
 
 		/*
-		 *  If it is an expression column, send "0" as the column len
+		 * If it is an expression column, send "0" as the column len
 		 *
-		 * NOTE: Relaxing this condition to send "0" as the column len
-		 * when column name is "?column?" (default column alias for
-		 * columns with no name in engine)
+		 * NOTE: Relaxing this condition to send "0" as the column len when
+		 * column name is "?column?" (default column alias for columns with no
+		 * name in engine)
 		 *
-		 * This is needed to send a column name for a column which is
-		 * not part of a table but has an alias [BABEL-544]
+		 * This is needed to send a column name for a column which is not part
+		 * of a table but has an alias [BABEL-544]
 		 *
 		 */
 		if (strcmp(col->colName.data, "?column?") == 0)
@@ -1149,7 +1224,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 
 			resetStringInfo(&tempBuf);
 			TdsUTF8toUTF16StringInfo(&tempBuf, col->colName.data,
-										col->colName.len);
+									 col->colName.len);
 			TdsPutbytes(&temp8, sizeof(temp8));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
 		}
@@ -1158,19 +1233,19 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 	if (sendRowStat)
 	{
 		/*
-		 * XXX: Since the column information for a ROWSTAT column is fixed, the
-		 * value (except the userType) is hard-coded for now.  Should this come from the engine?
-		 * This is also sent for FOR BROWSE queries.
+		 * XXX: Since the column information for a ROWSTAT column is fixed,
+		 * the value (except the userType) is hard-coded for now.  Should this
+		 * come from the engine? This is also sent for FOR BROWSE queries.
 		 */
-		char arr[] = {
+		char		arr[] = {
 			0x00, 0x00, 0x38, 0x07, 0x52, 0x00, 0x4f, 0x00, 0x57,
 			0x00, 0x53, 0x00, 0x54, 0x00, 0x41, 0x00, 0x54, 0x00
 		};
 
 		/*
-		 * Instead of hardcoding the userType to 0 in the above array we can write
-		 * 0x0000 (for versions lower than TDS 7.2) or 0x00000000 (for TDS 7.2 and higher)
-		 * directly on the wire depending version;
+		 * Instead of hardcoding the userType to 0 in the above array we can
+		 * write 0x0000 (for versions lower than TDS 7.2) or 0x00000000 (for
+		 * TDS 7.2 and higher) directly on the wire depending version;
 		 */
 		if (tdsVersion <= TDS_VERSION_7_1_1)
 			TdsPutInt16LE(0);
@@ -1192,9 +1267,9 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 void
 SendTabNameToken(void)
 {
-	StringInfoData	buf;
-	ListCell   		*lc;
-	uint32_t tdsVersion = GetClientTDSVersion();
+	StringInfoData buf;
+	ListCell   *lc;
+	uint32_t	tdsVersion = GetClientTDSVersion();
 
 	if (relMetaDataInfoList == NIL)
 		return;
@@ -1203,12 +1278,12 @@ SendTabNameToken(void)
 
 	foreach(lc, relMetaDataInfoList)
 	{
-		TdsRelationMetaDataInfo	relMetaDataInfo = (TdsRelationMetaDataInfo) lfirst(lc);
-		uint8					numParts = 2;
+		TdsRelationMetaDataInfo relMetaDataInfo = (TdsRelationMetaDataInfo) lfirst(lc);
+		uint8		numParts = 2;
 
 		/*
-		 * In Table Name token -- NumParts, a multi-part table name,
-		 * was intoduced in tds 7.1 revision 1.
+		 * In Table Name token -- NumParts, a multi-part table name, was
+		 * intoduced in tds 7.1 revision 1.
 		 */
 		if (tdsVersion > TDS_VERSION_7_1)
 			FillTabNameWithNumParts(&buf, numParts, relMetaDataInfo);
@@ -1216,7 +1291,7 @@ SendTabNameToken(void)
 			FillTabNameWithoutNumParts(&buf, numParts, relMetaDataInfo);
 	}
 
-      TDS_DEBUG(TDS_DEBUG2, "SendTabNameToken: token=0x%02x", TDS_TOKEN_TABNAME);
+	TDS_DEBUG(TDS_DEBUG2, "SendTabNameToken: token=0x%02x", TDS_TOKEN_TABNAME);
 	TdsPutInt8(TDS_TOKEN_TABNAME);
 	TdsPutInt16LE((uint16_t) buf.len);
 	TdsPutbytes(buf.data, buf.len);
@@ -1243,22 +1318,22 @@ SendTabNameToken(void)
 void
 SendColInfoToken(int natts, bool sendRowStat)
 {
-	StringInfoData	buf;
-	StringInfoData	tempBuf;
-	int				attno;
+	StringInfoData buf;
+	StringInfoData tempBuf;
+	int			attno;
 
-      TDS_DEBUG(TDS_DEBUG2, "SendColInfoToken: token=0x%02x", TDS_TOKEN_COLINFO);
+	TDS_DEBUG(TDS_DEBUG2, "SendColInfoToken: token=0x%02x", TDS_TOKEN_COLINFO);
 	TdsPutInt8(TDS_TOKEN_COLINFO);
 	initStringInfo(&buf);
 	initStringInfo(&tempBuf);
 
 	for (attno = 0; attno < natts; attno++)
 	{
-		TdsColumnMetaData  *col = &colMetaData[attno];
-		uint8				colNum,
-							tableNum,
-							status = 0;
-		uint8				temp8;
+		TdsColumnMetaData *col = &colMetaData[attno];
+		uint8		colNum,
+					tableNum,
+					status = 0;
+		uint8		temp8;
 
 		colNum = attno + 1;
 
@@ -1278,7 +1353,7 @@ SendColInfoToken(int natts, bool sendRowStat)
 				status |= COLUMN_STATUS_DIFFERENT_NAME;
 
 			{
-				int tempatt;
+				int			tempatt;
 
 				for (tempatt = 0; tempatt < col->relinfo->numkeyattrs; tempatt++)
 					if (col->attrNum == col->relinfo->keyattrs[tempatt])
@@ -1287,33 +1362,33 @@ SendColInfoToken(int natts, bool sendRowStat)
 		}
 
 		/* column num, table num, status */
-		appendBinaryStringInfo(&buf, (const char *)&colNum, sizeof(colNum));
-		appendBinaryStringInfo(&buf, (const char *)&tableNum, sizeof(tableNum));
-		appendBinaryStringInfo(&buf, (const char *)&status, sizeof(status));
+		appendBinaryStringInfo(&buf, (const char *) &colNum, sizeof(colNum));
+		appendBinaryStringInfo(&buf, (const char *) &tableNum, sizeof(tableNum));
+		appendBinaryStringInfo(&buf, (const char *) &status, sizeof(status));
 
 		if (status & COLUMN_STATUS_DIFFERENT_NAME)
 		{
 			Assert(col->baseColName != NULL);
 			temp8 = (uint8_t) pg_mbstrlen(col->baseColName);
-			appendBinaryStringInfo(&buf, (const char *)&temp8, sizeof(uint8));
+			appendBinaryStringInfo(&buf, (const char *) &temp8, sizeof(uint8));
 			TdsUTF8toUTF16StringInfo(&buf, col->baseColName, strlen(col->baseColName));
 		}
 	}
 
 	if (sendRowStat)
 	{
-		uint8	colNum,
-				tableNum,
-				status = 0;
+		uint8		colNum,
+					tableNum,
+					status = 0;
 
 		colNum = natts + 1;
 		tableNum = 0;
 		status |= COLUMN_STATUS_EXPRESSION | COLUMN_STATUS_HIDDEN;
 
 		/* column num, table num, status */
-		appendBinaryStringInfo(&buf, (const char *)&colNum, sizeof(colNum));
-		appendBinaryStringInfo(&buf, (const char *)&tableNum, sizeof(tableNum));
-		appendBinaryStringInfo(&buf, (const char *)&status, sizeof(status));
+		appendBinaryStringInfo(&buf, (const char *) &colNum, sizeof(colNum));
+		appendBinaryStringInfo(&buf, (const char *) &tableNum, sizeof(tableNum));
+		appendBinaryStringInfo(&buf, (const char *) &status, sizeof(status));
 	}
 
 	TdsPutInt16LE((uint16_t) buf.len);
@@ -1323,44 +1398,47 @@ SendColInfoToken(int natts, bool sendRowStat)
 }
 
 static
-int TdsGetGenericTypmod(Node *expr)
+int
+TdsGetGenericTypmod(Node *expr)
 {
-	int rettypmod = -1;
+	int			rettypmod = -1;
 
 	if (!expr)
 		return rettypmod;
 
-	switch(nodeTag(expr))
+	switch (nodeTag(expr))
 	{
 		case T_FuncExpr:
 			{
-				FuncExpr *func;
-				Oid     func_oid = InvalidOid;
+				FuncExpr   *func;
+				Oid			func_oid = InvalidOid;
 
 				func = (FuncExpr *) expr;
 
 				/*
-				 * Look up the return type typmod from a persistent
-				 * store using function oid.
+				 * Look up the return type typmod from a persistent store
+				 * using function oid.
 				 */
 				func_oid = func->funcid;
 				Assert(func_oid != InvalidOid);
 
 				if (func->funcresulttype != VOIDOID)
 					rettypmod = pltsql_plugin_handler_ptr->pltsql_get_generic_typmod(func_oid,
-							func->args == NIL ? 0 : func->args->length, func->funcresulttype);
+																					 func->args == NIL ? 0 : func->args->length, func->funcresulttype);
 			}
 			break;
 		default:
+
 			/*
-			 * TODO: expectation is that apart from Func type expressions, we never get
-			 * typmod = -1 when we reach TDS extension for CHAR/NCHAR datatypes. We
-			 * should figure out a determinstic typmod for all other expression types
-			 * inside the engine or babelfishpg_tsql extension.
+			 * TODO: expectation is that apart from Func type expressions, we
+			 * never get typmod = -1 when we reach TDS extension for
+			 * CHAR/NCHAR datatypes. We should figure out a determinstic
+			 * typmod for all other expression types inside the engine or
+			 * babelfishpg_tsql extension.
 			 */
 			ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
-					errmsg("The string size for the given CHAR/NCHAR data is not defined. "
-							"Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n)")));
+							errmsg("The string size for the given CHAR/NCHAR data is not defined. "
+								   "Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n)")));
 			break;
 	}
 
@@ -1380,12 +1458,13 @@ void
 PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					  bool extendedInfo, bool fetchPkeys)
 {
-	int				natts = typeinfo->natts;
-	int				attno;
-	MemoryContext	oldContext;
-	ListCell   		*tlist_item = list_head(targetlist);
-	bool 			sendTableName = false;
-	uint8_t				precision = 18, scale = 0;
+	int			natts = typeinfo->natts;
+	int			attno;
+	MemoryContext oldContext;
+	ListCell   *tlist_item = list_head(targetlist);
+	bool		sendTableName = false;
+	uint8_t		precision = 18,
+				scale = 0;
 
 	relMetaDataInfoList = NIL;
 
@@ -1394,27 +1473,27 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 	SendPendingDone(true);
 
 	/*
-	 * The colMetaData is also used in the TdsPrintTup() callback
-	 * below so we place it into the memory context that will be
-	 * reset once per TCOP main loop iteration.
+	 * The colMetaData is also used in the TdsPrintTup() callback below so we
+	 * place it into the memory context that will be reset once per TCOP main
+	 * loop iteration.
 	 */
 	oldContext = MemoryContextSwitchTo(MessageContext);
 	colMetaData = palloc0(sizeof(TdsColumnMetaData) * natts);
 
 	/*
-	 * We collect all the information first so that we don't have
-	 * to abort half way through the COLMETADATA tag in case of
-	 * an error (like unsupported data type).
+	 * We collect all the information first so that we don't have to abort
+	 * half way through the COLMETADATA tag in case of an error (like
+	 * unsupported data type).
 	 */
 	for (attno = 0; attno < natts; attno++)
 	{
-		Oid serverCollationOid;
-		TdsIoFunctionInfo	finfo;
-		Form_pg_attribute	att = TupleDescAttr(typeinfo, attno);
-		Oid					atttypid = att->atttypid;
-		int32				atttypmod = att->atttypmod;
-		TdsColumnMetaData  *col = &colMetaData[attno];
-		uint32_t 			tdsVersion = GetClientTDSVersion();
+		Oid			serverCollationOid;
+		TdsIoFunctionInfo finfo;
+		Form_pg_attribute att = TupleDescAttr(typeinfo, attno);
+		Oid			atttypid = att->atttypid;
+		int32		atttypmod = att->atttypmod;
+		TdsColumnMetaData *col = &colMetaData[attno];
+		uint32_t	tdsVersion = GetClientTDSVersion();
 		TargetEntry *tle = NULL;
 		coll_info_t cinfo = TdsLookupCollationTableCallback(InvalidOid);
 
@@ -1426,13 +1505,13 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 		 * Get the IO function info from our type cache
 		 */
 		finfo = TdsLookupTypeFunctionsByOid(atttypid, &atttypmod);
-		// atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod);
+		/* atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod); */
 #if 0
 		{
 			/* Test a reverse lookup */
-			TdsIoFunctionInfo	finfo2;
-			int32_t					typeid = finfo->ttmtdstypeid;
-			int32_t					typelen = finfo->ttmtdstypelen;
+			TdsIoFunctionInfo finfo2;
+			int32_t		typeid = finfo->ttmtdstypeid;
+			int32_t		typelen = finfo->ttmtdstypelen;
 
 			elog(LOG, "found finfo for Oid %d: tdstype=%d tdstyplen=%d",
 				 atttypid, typeid, typelen);
@@ -1475,12 +1554,13 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 
 		switch (finfo->sendFuncId)
 		{
-			/*
-			 * In case of Not NULL constraint on the column, send the variant type.
-			 * This is only done for the Fixed length datat types except uniqueidentifier.
-			 *
-			 * TODO PG boolean is equivalent to TSQL BIT type
-			 */
+				/*
+				 * In case of Not NULL constraint on the column, send the
+				 * variant type. This is only done for the Fixed length datat
+				 * types except uniqueidentifier.
+				 *
+				 * TODO PG boolean is equivalent to TSQL BIT type
+				 */
 			case TDS_SEND_BIT:
 				if (col->attNotNull)
 					SetColMetadataForFixedType(col, VARIANT_TYPE_BIT, TDS_MAXLEN_BIT);
@@ -1525,14 +1605,14 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				break;
 			case TDS_SEND_CHAR:
 				if (atttypmod == -1 && tle != NULL)
-					atttypmod = TdsGetGenericTypmod((Node *)tle->expr);
-				
+					atttypmod = TdsGetGenericTypmod((Node *) tle->expr);
+
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_CHAR,
 												att->attcollation, (atttypmod - 4));
 				break;
 			case TDS_SEND_NCHAR:
 				if (atttypmod == -1 && tle != NULL)
-					atttypmod = TdsGetGenericTypmod((Node *)tle->expr);
+					atttypmod = TdsGetGenericTypmod((Node *) tle->expr);
 
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NCHAR,
 												att->attcollation, (atttypmod - 4) * 2);
@@ -1540,12 +1620,12 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			case TDS_SEND_VARCHAR:
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 												att->attcollation, (atttypmod == -1) ?
-														    atttypmod : (atttypmod - 4));
+												atttypmod : (atttypmod - 4));
 				break;
 			case TDS_SEND_NVARCHAR:
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR,
 												att->attcollation, (atttypmod == -1) ?
-														    atttypmod : (atttypmod - 4) * 2);
+												atttypmod : (atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_MONEY:
 				if (col->attNotNull)
@@ -1571,13 +1651,14 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				break;
 			case TDS_SEND_DATE:
 				if (tdsVersion < TDS_VERSION_7_3_A)
+
 					/*
-					 * If client being connected is using TDS version lower than 7.3A
-					 * then TSQL treats DATE as NVARCHAR.
-					 * Max len here would be 20 ('YYYY-MM-DD').
+					 * If client being connected is using TDS version lower
+					 * than 7.3A then TSQL treats DATE as NVARCHAR. Max len
+					 * here would be 20 ('YYYY-MM-DD').
 					 */
 					SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 20);
-				else 
+				else
 					SetColMetadataForDateType(col, TDS_TYPE_DATE);
 				break;
 			case TDS_SEND_DATETIME:
@@ -1589,15 +1670,17 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			case TDS_SEND_NUMERIC:
 				{
 					/*
-					 * Try to resolve the typmod from tle->expr when typmod is not specified
-					 * TDS client requires a valid typmod other than -1.
+					 * Try to resolve the typmod from tle->expr when typmod is
+					 * not specified TDS client requires a valid typmod other
+					 * than -1.
 					 */
 					if (atttypmod == -1 && tle != NULL)
 						atttypmod = resolve_numeric_typmod_from_exp((Node *) tle->expr);
 
 					/*
-					 * Get the precision and scale out of the typmod value if typmod is valid
-					 * Otherwise tds_default_numeric_precision/scale will be used.
+					 * Get the precision and scale out of the typmod value if
+					 * typmod is valid Otherwise
+					 * tds_default_numeric_precision/scale will be used.
 					 */
 					if (atttypmod > VARHDRSZ)
 					{
@@ -1605,8 +1688,8 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 						precision = ((atttypmod - VARHDRSZ) >> 16) & 0xffff;
 						if (precision > TDS_MAX_NUM_PRECISION)
 						{
-						    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-								    errmsg("Arithmetic overflow error for data type numeric.")));
+							ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+											errmsg("Arithmetic overflow error for data type numeric.")));
 						}
 					}
 					else
@@ -1628,21 +1711,35 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				sendTableName |= col->sendTableName;
 				break;
 			case TDS_SEND_BINARY:
-				/* Explicitly set typemod for rowversion because typmod won't be specified */
+
+				/*
+				 * Explicitly set typemod for rowversion because typmod won't
+				 * be specified
+				 */
 				if (finfo->ttmtdstypelen == ROWVERSION_SIZE)
 					atttypmod = ROWVERSION_SIZE + VARHDRSZ;
-				/* The default binary data length is 1 when maxLen isn't specified */
+
+				/*
+				 * The default binary data length is 1 when maxLen isn't
+				 * specified
+				 */
 				SetColMetadataForBinaryType(col, TDS_TYPE_BINARY, (atttypmod == -1) ?
 											1 : atttypmod - VARHDRSZ);
 				break;
 			case TDS_SEND_VARBINARY:
-				/* Generate the typmod from hex const input because typmod won't be specified */
+
+				/*
+				 * Generate the typmod from hex const input because typmod
+				 * won't be specified
+				 */
 				if (atttypmod == -1 && tle != NULL && IsA(tle->expr, Const))
 				{
-					Const *con= (Const *) tle->expr;
+					Const	   *con = (Const *) tle->expr;
+
 					if (!con->constisnull)
 					{
-						bytea *source = (bytea *) con->constvalue;
+						bytea	   *source = (bytea *) con->constvalue;
+
 						atttypmod = VARSIZE_ANY(source);
 					}
 				}
@@ -1654,20 +1751,22 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				break;
 			case TDS_SEND_TIME:
 				if (tdsVersion < TDS_VERSION_7_3_A)
+
 					/*
-					 * If client being connected is using TDS version lower than 7.3A
-					 * then TSQL treats TIME as NVARCHAR.
-					 * Max len here would be 32 ('hh:mm:ss[.nnnnnnn]').
-					 * and Making use of default collation Oid.
+					 * If client being connected is using TDS version lower
+					 * than 7.3A then TSQL treats TIME as NVARCHAR. Max len
+					 * here would be 32 ('hh:mm:ss[.nnnnnnn]'). and Making use
+					 * of default collation Oid.
 					 */
 					SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 32);
 				else
 				{
 					/*
-					* if time data has no specific scale specified in the query, default scale
-					* to be considered is 7 always. However, setting default scale to 6 since
-					* postgres supports upto 6 digits after decimal point
-					*/
+					 * if time data has no specific scale specified in the
+					 * query, default scale to be considered is 7 always.
+					 * However, setting default scale to 6 since postgres
+					 * supports upto 6 digits after decimal point
+					 */
 					if (atttypmod == -1)
 						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_TIME, atttypmod);
@@ -1675,20 +1774,22 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				break;
 			case TDS_SEND_DATETIME2:
 				if (tdsVersion < TDS_VERSION_7_3_A)
+
 					/*
-					 * If client being connected is using TDS version lower than 7.3A
-					 * then TSQL treats DATETIME2 as NVARCHAR.
-					 * Max len here would be 54('YYYY-MM-DD hh:mm:ss[.nnnnnnn]').
+					 * If client being connected is using TDS version lower
+					 * than 7.3A then TSQL treats DATETIME2 as NVARCHAR. Max
+					 * len here would be 54('YYYY-MM-DD hh:mm:ss[.nnnnnnn]').
 					 * and Making use of default collation Oid.
 					 */
 					SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 54);
 				else
 				{
 					/*
-					* if Datetime2 data has no specific scale specified in the query, default scale
-					* to be considered is 7 always. However, setting default scale to 6 since
-					* postgres supports upto 6 digits after decimal point
-					*/
+					 * if Datetime2 data has no specific scale specified in
+					 * the query, default scale to be considered is 7 always.
+					 * However, setting default scale to 6 since postgres
+					 * supports upto 6 digits after decimal point
+					 */
 					if (atttypmod == -1)
 						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_DATETIME2, atttypmod);
@@ -1700,8 +1801,8 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				else
 				{
 					/*
-					 * If client being connected is using TDS version lower than or equal to 7.1
-					 * then TSQL treats XML as NText.
+					 * If client being connected is using TDS version lower
+					 * than or equal to 7.1 then TSQL treats XML as NText.
 					 */
 					SetColMetadataForTextTypeHelper(col, TDS_TYPE_NTEXT,
 													att->attcollation, (atttypmod - 4) * 2);
@@ -1713,11 +1814,12 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				break;
 			case TDS_SEND_DATETIMEOFFSET:
 				if (tdsVersion < TDS_VERSION_7_3_A)
+
 					/*
-					 * If client being connected is using TDS version lower than 7.3A
-					 * then TSQL treats DATETIMEOFFSET as NVARCHAR.
-					 * Max len here would be 64('YYYY-MM-DD hh:mm:ss[.nnnnnnn] [+|-]hh:mm').
-					 * and Making use of default collation Oid.
+					 * If client being connected is using TDS version lower
+					 * than 7.3A then TSQL treats DATETIMEOFFSET as NVARCHAR.
+					 * Max len here would be 64('YYYY-MM-DD hh:mm:ss[.nnnnnnn]
+					 * [+|-]hh:mm'). and Making use of default collation Oid.
 					 */
 					SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR, serverCollationOid, 64);
 				else
@@ -1728,9 +1830,10 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				}
 				break;
 			default:
+
 				/*
-				 * TODO: Need to create a mapping table for user defined
-				 * data types and handle it here.
+				 * TODO: Need to create a mapping table for user defined data
+				 * types and handle it here.
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1742,16 +1845,16 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 
 	if (extendedInfo || sendTableName)
 	{
-		uint8				tableNum = 0;
+		uint8		tableNum = 0;
 
 		oldContext = MemoryContextSwitchTo(MessageContext);
 		relMetaDataInfoList = NULL;
 
 		for (attno = 0; attno < natts; attno++)
 		{
-			TdsColumnMetaData	*col = &colMetaData[attno];
-			ListCell   			*lc;
-			bool				found = false;
+			TdsColumnMetaData *col = &colMetaData[attno];
+			ListCell   *lc;
+			bool		found = false;
 
 			if (col->relOid == 0)
 			{
@@ -1766,8 +1869,8 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			/* look for a relation entry match */
 			foreach(lc, relMetaDataInfoList)
 			{
-				TdsRelationMetaDataInfo				relMetaDataInfo = (TdsRelationMetaDataInfo) lfirst(lc);
-				Oid relOid = relMetaDataInfo->relOid;
+				TdsRelationMetaDataInfo relMetaDataInfo = (TdsRelationMetaDataInfo) lfirst(lc);
+				Oid			relOid = relMetaDataInfo->relOid;
 
 				if (relOid == col->relOid)
 				{
@@ -1780,9 +1883,9 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			/* if not found, add one */
 			if (!found)
 			{
-				Relation		rel;
-				TdsRelationMetaDataInfo	relMetaDataInfo;
-				char		*physical_schema_name;
+				Relation	rel;
+				TdsRelationMetaDataInfo relMetaDataInfo;
+				char	   *physical_schema_name;
 
 				relMetaDataInfo = (TdsRelationMetaDataInfo) palloc(sizeof(TdsRelationMetaDataInfoData));
 				tableNum++;
@@ -1806,16 +1909,21 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				physical_schema_name = get_namespace_name(RelationGetNamespace(rel));
 
 				/*
-				 * Here, we are assuming that we must have received a valid schema name from the engine.
-				 * So first try to find the logical schema name corresponding to received physical schema name.
-				 * If we could not find the logical schema name then we can say that received schema name is
-				 * shared schema and we do not have to translate it to logical schema name.
+				 * Here, we are assuming that we must have received a valid
+				 * schema name from the engine. So first try to find the
+				 * logical schema name corresponding to received physical
+				 * schema name. If we could not find the logical schema name
+				 * then we can say that received schema name is shared schema
+				 * and we do not have to translate it to logical schema name.
 				 */
-				if (pltsql_plugin_handler_ptr && 
+				if (pltsql_plugin_handler_ptr &&
 					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
 					relMetaDataInfo->partName[1] = (char *) pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
 
-				/* If we could not find logical schema name then send physical schema name only assuming its shared schema. */
+				/*
+				 * If we could not find logical schema name then send physical
+				 * schema name only assuming its shared schema.
+				 */
 				if (relMetaDataInfo->partName[1] == NULL)
 					relMetaDataInfo->partName[1] = strdup(physical_schema_name);
 
@@ -1842,31 +1950,34 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 void
 SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 							 FmgrInfo *finfo, Datum datum, bool isNull,
-							 bool	forceCoercion)
+							 bool forceCoercion)
 {
-	uint8				temp8;
-	uint16				temp16;
-	StringInfo			name;
-	FmgrInfo temp;
-	uint32_t tdsVersion = GetClientTDSVersion();
+	uint8		temp8;
+	uint16		temp16;
+	StringInfo	name;
+	FmgrInfo	temp;
+	uint32_t	tdsVersion = GetClientTDSVersion();
 
 	SendPendingDone(true);
 
 	/* token type */
-      TDS_DEBUG(TDS_DEBUG2, "SendReturnValueTokenInternal: token=0x%02x", TDS_TOKEN_RETURNVALUE);
+	TDS_DEBUG(TDS_DEBUG2, "SendReturnValueTokenInternal: token=0x%02x", TDS_TOKEN_RETURNVALUE);
 	temp8 = TDS_TOKEN_RETURNVALUE;
 	TdsPutbytes(&temp8, sizeof(temp8));
 
 	/* param ordinal */
 	if (tdsVersion <= TDS_VERSION_7_1_1)
+
 		/*
-		 * "BY OBSERVATION" The param ordinal is set to 13 instead of starting from 0
-		 * for clients with TDS verstion lower than or equal to TDS 7.1 revision 1;
+		 * "BY OBSERVATION" The param ordinal is set to 13 instead of starting
+		 * from 0 for clients with TDS verstion lower than or equal to TDS 7.1
+		 * revision 1;
 		 *
-		 * This isn't mentioned in any of the documentations and making this change is necessary
-		 * Since without this change we get TDS Protocol error from the Driver for RPCs.
+		 * This isn't mentioned in any of the documentations and making this
+		 * change is necessary Since without this change we get TDS Protocol
+		 * error from the Driver for RPCs.
 		 */
-		temp16 = 13;	/* TODO: why 13? */
+		temp16 = 13;			/* TODO: why 13? */
 	else
 		temp16 = token->paramOrdinal;
 	TdsPutbytes(&temp16, sizeof(temp16));
@@ -1896,12 +2007,14 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 	TdsPutbytes(&status, sizeof(status));
 
 	/*
-	 * Instead of hardcoding the userType to 0 at various strucutures inside col->metaEntry
-	 * we can write 0x0000 (for versions lower than TDS 7.2) or 0x00000000 (for TDS 7.2 and higher)
-	 * directly on the wire depending version;
+	 * Instead of hardcoding the userType to 0 at various strucutures inside
+	 * col->metaEntry we can write 0x0000 (for versions lower than TDS 7.2) or
+	 * 0x00000000 (for TDS 7.2 and higher) directly on the wire depending
+	 * version;
 	 *
 	 * TODO: TDS doc mentions some non-zero values for timestamp and aliases
-	 * NOTE: We have always sent UserType as 0 and clients have never complained about it.
+	 * NOTE: We have always sent UserType as 0 and clients have never
+	 * complained about it.
 	 */
 	if (tdsVersion <= TDS_VERSION_7_1_1)
 		TdsPutInt16LE(0);
@@ -1918,6 +2031,7 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 			case TDS_TYPE_TEXT:
 			case TDS_TYPE_NTEXT:
 			case TDS_TYPE_IMAGE:
+
 				/*
 				 * MS-TDS doc, section 2.2.4.2.1.3 - Null is represented by a
 				 * length of -1 (0xFFFFFFFF).
@@ -1931,6 +2045,7 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 			case TDS_TYPE_BINARY:
 			case TDS_TYPE_VARBINARY:
 			case TDS_TYPE_XML:
+
 				/*
 				 * MS-TDS doc, section 2.2.4.2.1.3 - Null is represented by a
 				 * length of -1 (0xFFFF).
@@ -1941,6 +2056,7 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 					TdsPutUInt16LE(0xFFFF);
 				break;
 			default:
+
 				/*
 				 * MS-TDS doc, section 2.2.4.2.1.2 - Null is represented by a
 				 * length of 0. (Fixed length datatypes)
@@ -1955,26 +2071,29 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 	}
 	else if (forceCoercion)
 	{
-		int32				result = -1;
-		Oid					castFuncOid = InvalidOid;
-		CoercionPathType	pathtype;
+		int32		result = -1;
+		Oid			castFuncOid = InvalidOid;
+		CoercionPathType pathtype;
 
 		/*
-		 * In TDS, we should send the OUT parameters with the length/scale/precision
-		 * specified by the caller.  In that case, we may need to do a self-casting.
-		 * Here are the steps:
-		 * 1. Find the self-cast function if it's available.
-		 * 2. Call the typmodin function that returns the attypmod corresponding
-		 * to the caller provided length/scale/precision.
-		 * 3. Call the self-cast function to cast the datum with the above attypmod.
+		 * In TDS, we should send the OUT parameters with the
+		 * length/scale/precision specified by the caller.  In that case, we
+		 * may need to do a self-casting. Here are the steps: 1. Find the
+		 * self-cast function if it's available. 2. Call the typmodin function
+		 * that returns the attypmod corresponding to the caller provided
+		 * length/scale/precision. 3. Call the self-cast function to cast the
+		 * datum with the above attypmod.
 		 */
 
-		/* Check if the type has a function for length/scale/precision coercion */
+		/*
+		 * Check if the type has a function for length/scale/precision
+		 * coercion
+		 */
 		pathtype = find_typmod_coercion_function(token->paramMeta.pgTypeOid, &castFuncOid);
 
 		/*
-		 * If we found a function to perform the coercion, do it.  We don't support
-		 * other types of coearcion, so just ignore it.
+		 * If we found a function to perform the coercion, do it.  We don't
+		 * support other types of coearcion, so just ignore it.
 		 */
 		if (pathtype == COERCION_PATH_FUNC)
 			result = GetTypModForToken(token);
@@ -1991,8 +2110,9 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 	/* should in a transaction, because we'll do a catalog lookup */
 	if (!finfo && IsTransactionState())
 	{
-		Oid typoutputfunc;
-		bool typIsVarlena;
+		Oid			typoutputfunc;
+		bool		typIsVarlena;
+
 		Assert(token->paramMeta.pgTypeOid != InvalidOid);
 		getTypeOutputInfo(token->paramMeta.pgTypeOid, &typoutputfunc, &typIsVarlena);
 		fmgr_info(typoutputfunc, &temp);
@@ -2000,18 +2120,18 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 	}
 
 	/* send the data */
-	(token->paramMeta.sendFunc)(finfo, datum, (void *) &token->paramMeta);
+	(token->paramMeta.sendFunc) (finfo, datum, (void *) &token->paramMeta);
 }
 
 int
 GetTypModForToken(ParameterToken token)
 {
-	int32				typmod = -1;
-	Datum	   			*datums = NULL;
-	ArrayType  			*arrtypmod = NULL;
-	char	   			*cstr = NULL;
-	int					n;
-	Oid					pgtypemodin;
+	int32		typmod = -1;
+	Datum	   *datums = NULL;
+	ArrayType  *arrtypmod = NULL;
+	char	   *cstr = NULL;
+	int			n;
+	Oid			pgtypemodin;
 
 	/*
 	 * Forcing coercion needs catalog access.  Hence, we should be in a
@@ -2020,9 +2140,9 @@ GetTypModForToken(ParameterToken token)
 	Assert(IsTransactionState());
 
 	/*
-	 * Prepare the argument for calling the typmodin function.  We need
-	 * to pass the argument as an array.  Each type will have different
-	 * number of elements in the array.
+	 * Prepare the argument for calling the typmodin function.  We need to
+	 * pass the argument as an array.  Each type will have different number of
+	 * elements in the array.
 	 */
 	n = 0;
 	switch (token->paramMeta.metaEntry.type1.tdsTypeId)
@@ -2082,7 +2202,7 @@ GetTypModForToken(ParameterToken token)
 			break;
 		case TDS_TYPE_IMAGE:
 			ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
-					errmsg("Data type 0x22(Image) is a deprecated LOB.\
+							errmsg("Data type 0x22(Image) is a deprecated LOB.\
 					Deprecated types are not supported as output parameters.")));
 			break;
 		default:
@@ -2111,10 +2231,10 @@ GetTypModForToken(ParameterToken token)
 void
 TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 {
-	StringInfoData	newUtf16;
-	StringInfoData	oldUtf16;
-	int16_t			totalLen;
-	uint8			temp8;
+	StringInfoData newUtf16;
+	StringInfoData oldUtf16;
+	int16_t		totalLen;
+	uint8		temp8;
 
 	initStringInfo(&newUtf16);
 	initStringInfo(&oldUtf16);
@@ -2125,13 +2245,13 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 		TdsUTF8toUTF16StringInfo(&newUtf16, new_val, strlen(new_val));
 	if (old_val)
 		TdsUTF8toUTF16StringInfo(&oldUtf16, old_val, strlen(old_val));
-	totalLen = 1		/* envid */
-			   + 1		/* new len */
-			   + newUtf16.len
-			   + 1		/* old len */
-			   + oldUtf16.len;
+	totalLen = 1				/* envid */
+		+ 1						/* new len */
+		+ newUtf16.len
+		+ 1						/* old len */
+		+ oldUtf16.len;
 
-      TDS_DEBUG(TDS_DEBUG2, "TdsSendEnvChange: token=0x%02x", TDS_TOKEN_ENVCHANGE);
+	TDS_DEBUG(TDS_DEBUG2, "TdsSendEnvChange: token=0x%02x", TDS_TOKEN_ENVCHANGE);
 	temp8 = TDS_TOKEN_ENVCHANGE;
 	TdsPutbytes(&temp8, sizeof(temp8));
 
@@ -2168,20 +2288,20 @@ TdsSendEnvChange(int envid, const char *new_val, const char *old_val)
 
 void
 TdsSendEnvChangeBinary(int envid, void *new, int newNbytes,
-						  void *old, int oldNbytes)
+					   void *old, int oldNbytes)
 {
 	int16_t		totalLen;
 	uint8		temp8;
 
 	SendPendingDone(true);
 
-	totalLen = 1 /* envid */
-			   + 1 /* new len */
-			   + newNbytes
-			   + 1 /* old len */
-			   + oldNbytes;
+	totalLen = 1				/* envid */
+		+ 1						/* new len */
+		+ newNbytes
+		+ 1						/* old len */
+		+ oldNbytes;
 
-      TDS_DEBUG(TDS_DEBUG2, "TdsSendEnvChangeBinary: token=0x%02x", TDS_TOKEN_ENVCHANGE);
+	TDS_DEBUG(TDS_DEBUG2, "TdsSendEnvChangeBinary: token=0x%02x", TDS_TOKEN_ENVCHANGE);
 	temp8 = TDS_TOKEN_ENVCHANGE;
 	TdsPutbytes(&temp8, sizeof(temp8));
 
@@ -2200,18 +2320,18 @@ TdsSendEnvChangeBinary(int envid, void *new, int newNbytes,
 
 void
 TdsSendInfo(int number, int state, int class,
-			   char *message, int lineNo)
+			char *message, int lineNo)
 {
 	TdsSendInfoOrError(TDS_TOKEN_INFO, number, state, class,
-						  message,
-						  "BABELFISH",	/* TODO: where to get this? */
-						  "",		/* TODO: where to get this? */
-						  lineNo);
+					   message,
+					   "BABELFISH", /* TODO: where to get this? */
+					   "",		/* TODO: where to get this? */
+					   lineNo);
 }
 
 void
 TdsSendError(int number, int state, int class,
-			   char *message, int lineNo)
+			 char *message, int lineNo)
 {
 	/*
 	 * If not already in RESPONSE mode, switch the TDS protocol to RESPONSE
@@ -2227,19 +2347,19 @@ TdsSendError(int number, int state, int class,
 	PG_TRY();
 	{
 		TdsSendInfoOrError(TDS_TOKEN_ERROR, number, state, class,
-						  message,
-						  "BABELFISH",
-						  "",
-						  lineNo);
+						   message,
+						   "BABELFISH",
+						   "",
+						   lineNo);
 	}
 	PG_CATCH();
 	{
 		/* Send message to client that internal error occurred */
 		TdsSendInfoOrError(TDS_TOKEN_ERROR, ERRCODE_PLTSQL_ERROR_NOT_MAPPED, 1, 16,
-						  "internal error occurred",
-						  "BABELFISH",
-						  "",
-						  lineNo);
+						   "internal error occurred",
+						   "BABELFISH",
+						   "",
+						   lineNo);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -2249,26 +2369,26 @@ TdsSendError(int number, int state, int class,
 
 void
 TdsSendInfoOrError(int token, int number, int state, int class,
-			   char *message, char *serverName, char *procName,
-			   int lineNo)
+				   char *message, char *serverName, char *procName,
+				   int lineNo)
 {
-	StringInfoData	messageUtf16;
-	StringInfoData	serverNameUtf16;
-	StringInfoData	procNameUtf16;
-	int 			lineNoLen;
-	int				messageLen = strlen(message);
-	int				serverNameLen = strlen(serverName);
-	int				procNameLen = strlen(procName);
+	StringInfoData messageUtf16;
+	StringInfoData serverNameUtf16;
+	StringInfoData procNameUtf16;
+	int			lineNoLen;
+	int			messageLen = strlen(message);
+	int			serverNameLen = strlen(serverName);
+	int			procNameLen = strlen(procName);
 	int16_t		messageLen_16 = pg_mbstrlen(message);
-	int32_t		number_32 = (int32_t)number;
-	int32_t		lineNo_32 = (int32_t)lineNo;
+	int32_t		number_32 = (int32_t) number;
+	int32_t		lineNo_32 = (int32_t) lineNo;
 	int16_t		totalLen;
 	uint8		temp8;
-	uint32_t 	tdsVersion = GetClientTDSVersion();
+	uint32_t	tdsVersion = GetClientTDSVersion();
 
 	/*
-	 * For Client TDS Version less than or equal to 7.1 Line Number is of 2 bytes
-	 * and for TDS versions higher than 7.1 it is of 4 bytes.
+	 * For Client TDS Version less than or equal to 7.1 Line Number is of 2
+	 * bytes and for TDS versions higher than 7.1 it is of 4 bytes.
 	 */
 	if (tdsVersion <= TDS_VERSION_7_1_1)
 		lineNoLen = sizeof(int16_t);
@@ -2285,19 +2405,19 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 
 	SendPendingDone(true);
 
-	totalLen = sizeof(number_32)    	/* error number */
-			   + 1            				/* state */
-				   + 1            				/* class */
-				   + sizeof(messageLen_16)  	/* message len */
-				   + messageUtf16.len   	/* message */
-				   + 1            				/* server_name_len */
-				   + serverNameUtf16.len  	/* server_name */
-				   + 1            				/* proc_name_len */
-				   + procNameUtf16.len    	/* proc_name */
-				   + lineNoLen;   	/* line_no */
+	totalLen = sizeof(number_32)	/* error number */
+		+ 1						/* state */
+		+ 1						/* class */
+		+ sizeof(messageLen_16) /* message len */
+		+ messageUtf16.len		/* message */
+		+ 1						/* server_name_len */
+		+ serverNameUtf16.len	/* server_name */
+		+ 1						/* proc_name_len */
+		+ procNameUtf16.len		/* proc_name */
+		+ lineNoLen;			/* line_no */
 
-      /* Send Info or Error Token. */
-      TDS_DEBUG(TDS_DEBUG2, "TdsSendInfoOrError: token=0x%02x", token);
+	/* Send Info or Error Token. */
+	TDS_DEBUG(TDS_DEBUG2, "TdsSendInfoOrError: token=0x%02x", token);
 	temp8 = token;
 	TdsPutbytes(&temp8, sizeof(temp8));
 	TdsPutbytes(&totalLen, sizeof(totalLen));
@@ -2323,6 +2443,7 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 	if (tdsVersion <= TDS_VERSION_7_1_1)
 	{
 		int16_t		lineNo_16;
+
 		if (lineNo > PG_INT16_MAX)
 			ereport(FATAL, (errmsg("Line Number execeeds INT16_MAX")));
 		else
@@ -2339,9 +2460,9 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 
 void
 TdsSendRowDescription(TupleDesc typeinfo,
-						   List *targetlist, int16 *formats)
+					  List *targetlist, int16 *formats)
 {
-	TDSRequest		request = TdsRequestCtrl->request;
+	TDSRequest	request = TdsRequestCtrl->request;
 
 	/* If we reach here, typeinfo should not be null. */
 	Assert(typeinfo != NULL);
@@ -2351,19 +2472,22 @@ TdsSendRowDescription(TupleDesc typeinfo,
 
 	/*
 	 * If fNoMetadata flags is set in RPC header flag, the server doesn't need
-	 * to send the metadata again for COLMETADATA token.  In that case the, the
-	 * server sends only NoMetaData (0xFFFF) field in COLMETADATA token.
+	 * to send the metadata again for COLMETADATA token.  In that case the,
+	 * the server sends only NoMetaData (0xFFFF) field in COLMETADATA token.
 	 */
 	if (request->reqType == TDS_REQUEST_SP_NUMBER)
 	{
-		TDSRequestSP    req = (TDSRequestSP) request;
+		TDSRequestSP req = (TDSRequestSP) request;
 
-		/* Send Column Metadata for SP_PREPARE, SP_PREPEXEC, SP_EXECUTE and SP_EXECUTESQL even if
-		 * the FLAG is set to true, since TSQL does the same. */
+		/*
+		 * Send Column Metadata for SP_PREPARE, SP_PREPEXEC, SP_EXECUTE and
+		 * SP_EXECUTESQL even if the FLAG is set to true, since TSQL does the
+		 * same.
+		 */
 		if ((req->spFlags & SP_FLAGS_NOMETADATA) && (req->spType != SP_PREPARE)
 			&& (req->spType != SP_PREPEXEC) && (req->spType != SP_EXECUTE) && (req->spType != SP_EXECUTESQL))
 		{
-                      TDS_DEBUG(TDS_DEBUG2, "SendColumnMetadataToken: token=0x%02x", TDS_TOKEN_COLMETADATA);
+			TDS_DEBUG(TDS_DEBUG2, "SendColumnMetadataToken: token=0x%02x", TDS_TOKEN_COLMETADATA);
 			TdsPutInt8(TDS_TOKEN_COLMETADATA);
 			TdsPutInt8(0xFF);
 			TdsPutInt8(0xFF);
@@ -2377,23 +2501,23 @@ TdsSendRowDescription(TupleDesc typeinfo,
 bool
 TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 {
-	TupleDesc		typeinfo = slot->tts_tupleDescriptor;
-	DR_printtup	   *myState = (DR_printtup *) self;
-	MemoryContext	oldContext;
-	int				natts = typeinfo->natts;
-	int				attno;
-	uint8_t			rowToken;
-	TDSRequest              request = TdsRequestCtrl->request;
-	bool			sendRowStat = false;
-	int 			nullMapSize = 0;
-	int 			simpleRowSize = 0;
-	uint32_t		tdsVersion = GetClientTDSVersion();
-	uint8_t		   *nullMap = NULL;
+	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
+	DR_printtup *myState = (DR_printtup *) self;
+	MemoryContext oldContext;
+	int			natts = typeinfo->natts;
+	int			attno;
+	uint8_t		rowToken;
+	TDSRequest	request = TdsRequestCtrl->request;
+	bool		sendRowStat = false;
+	int			nullMapSize = 0;
+	int			simpleRowSize = 0;
+	uint32_t	tdsVersion = GetClientTDSVersion();
+	uint8_t    *nullMap = NULL;
 
 	TdsErrorContext->err_text = "Writing the Tds response to the socket";
 	if (request->reqType == TDS_REQUEST_SP_NUMBER)
 	{
-		TDSRequestSP    req = (TDSRequestSP) request;
+		TDSRequestSP req = (TDSRequestSP) request;
 
 		/* ROWSTAT token is sent for sp_cursorfetch */
 		if (req->spType == SP_CURSORFETCH)
@@ -2413,10 +2537,10 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 	if (tdsVersion >= TDS_VERSION_7_3_B)
 	{
 		/*
-		 * NBCROW token was introduced in TDS version 7.3B.
-		 * Determine the row type we send. For rows that don't contain any
-		 * NULL values in variable size columns (like NVARCHAR) we can send
-		 * the simple ROW (0xD1) format. Rows that do (specifically
+		 * NBCROW token was introduced in TDS version 7.3B. Determine the row
+		 * type we send. For rows that don't contain any NULL values in
+		 * variable size columns (like NVARCHAR) we can send the simple ROW
+		 * (0xD1) format. Rows that do (specifically
 		 * NVARCHAR/VARCHAR/CHAR/NCHAR/BINARY datatypes) need to be sent as
 		 * NBCROW (0xD2). Count the number of nullable columns and build the
 		 * null bitmap just in case while we are at it.
@@ -2426,7 +2550,7 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 		MemSet(nullMap, 0, nullMapSize * sizeof(int8_t));
 		for (attno = 0; attno < natts; attno++)
 		{
-			TdsColumnMetaData  *col = &colMetaData[attno];
+			TdsColumnMetaData *col = &colMetaData[attno];
 
 			if (col->metaEntry.type1.flags & TDS_COLMETA_NULLABLE)
 			{
@@ -2438,39 +2562,64 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 						case TDS_TYPE_VARCHAR:
 						case TDS_TYPE_NVARCHAR:
 							if (col->metaEntry.type2.maxSize == 0xffff)
-								/* 
-								 * To send NULL for VARCHAR(max) or NVARCHAR(max),
-								 * we have to indicate it using 0xffffffffffffffff (PLP_NULL)
+
+								/*
+								 * To send NULL for VARCHAR(max) or
+								 * NVARCHAR(max), we have to indicate it using
+								 * 0xffffffffffffffff (PLP_NULL)
 								 */
 								simpleRowSize += 8;
 							else
-								/* 
-								 * For regular case of VARCHAR/NVARCHAR, 
-								 * we have to send 0xffff (CHARBIN_NULL) to indicate NULL
+
+								/*
+								 * For regular case of VARCHAR/NVARCHAR, we
+								 * have to send 0xffff (CHARBIN_NULL) to
+								 * indicate NULL
 								 */
 								simpleRowSize += 2;
 							break;
 						case TDS_TYPE_VARBINARY:
 							if (col->metaEntry.type7.maxSize == 0xffff)
-								/* To send NULL for VARBINARY(max),we have to indicate it using 0xffffffffffffffff (PLP_NULL) */
+
+								/*
+								 * To send NULL for VARBINARY(max),we have to
+								 * indicate it using 0xffffffffffffffff
+								 * (PLP_NULL)
+								 */
 								simpleRowSize += 8;
 							else
-								/* For regular case of VARBINARY,we have to send 0xffff (CHARBIN_NULL) to indicate NULL */
+
+								/*
+								 * For regular case of VARBINARY,we have to
+								 * send 0xffff (CHARBIN_NULL) to indicate NULL
+								 */
 								simpleRowSize += 2;
 							break;
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_XML:
 						case TDS_TYPE_BINARY:
-							/* For these datatypes, we need to send 0xffff (CHARBIN_NULL) to indicate NULL */
+
+							/*
+							 * For these datatypes, we need to send 0xffff
+							 * (CHARBIN_NULL) to indicate NULL
+							 */
 							simpleRowSize += 2;
 							break;
 						case TDS_TYPE_SQLVARIANT:
-							/* For sql_variant, we need to send 0x00000000 to indicate NULL */
+
+							/*
+							 * For sql_variant, we need to send 0x00000000 to
+							 * indicate NULL
+							 */
 							simpleRowSize += 4;
 							break;
 						default:
-							/* for other datatypes, we need to send 0x00 (1 byte) only */
+
+							/*
+							 * for other datatypes, we need to send 0x00 (1
+							 * byte) only
+							 */
 							simpleRowSize += 1;
 							break;
 					}
@@ -2488,7 +2637,11 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 		}
 	}
 	else
-		/* ROW is only token to send data for TDS version lower or equal to 7.3A. */
+
+		/*
+		 * ROW is only token to send data for TDS version lower or equal to
+		 * 7.3A.
+		 */
 		rowToken = TDS_TOKEN_ROW;
 	/* Send the row token and the NULL bitmap if it is NBCROW */
 	TDS_DEBUG(TDS_DEBUG2, "rowToken = 0x%02x", rowToken);
@@ -2506,15 +2659,16 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 	/* And finally send the actual column values */
 	for (attno = 0; attno < natts; attno++)
 	{
-		PrinttupAttrInfo   *thisState;
-		Datum				attr;
-		TdsColumnMetaData  *col = &colMetaData[attno];
+		PrinttupAttrInfo *thisState;
+		Datum		attr;
+		TdsColumnMetaData *col = &colMetaData[attno];
 
 		if (slot->tts_isnull[attno])
 		{
 			/* Handle NULL values */
-			/* when NBCROW token is used, all NULL values are
-			 * sent using NULL bitmap only
+			/*
+			 * when NBCROW token is used, all NULL values are sent using NULL
+			 * bitmap only
 			 */
 			if (rowToken == TDS_TOKEN_ROW)
 			{
@@ -2523,39 +2677,62 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 					case TDS_TYPE_VARCHAR:
 					case TDS_TYPE_NVARCHAR:
 						if (col->metaEntry.type2.maxSize == 0xffff)
-							/* 
+
+							/*
 							 * To send NULL for VARCHAR(max) or NVARCHAR(max),
-							 * we have to indicate it using 0xffffffffffffffff (PLP_NULL)
+							 * we have to indicate it using 0xffffffffffffffff
+							 * (PLP_NULL)
 							 */
 							TdsPutUInt64LE(0xffffffffffffffff);
 						else
-							/* 
-							 * For regular case of VARCHAR/NVARCHAR, 
-							 * we have to send 0xffff (CHARBIN_NULL) to indicate NULL
+
+							/*
+							 * For regular case of VARCHAR/NVARCHAR, we have
+							 * to send 0xffff (CHARBIN_NULL) to indicate NULL
 							 */
 							TdsPutInt16LE(0xffff);
 						break;
 					case TDS_TYPE_VARBINARY:
 						if (col->metaEntry.type7.maxSize == 0xffff)
-							/* To send NULL for VARBINARY(max),we have to indicate it using 0xffffffffffffffff (PLP_NULL) */
+
+							/*
+							 * To send NULL for VARBINARY(max),we have to
+							 * indicate it using 0xffffffffffffffff (PLP_NULL)
+							 */
 							TdsPutUInt64LE(0xffffffffffffffff);
 						else
-							/* For regular case of VARBINARY,we have to send 0xffff (CHARBIN_NULL) to indicate NULL */
+
+							/*
+							 * For regular case of VARBINARY,we have to send
+							 * 0xffff (CHARBIN_NULL) to indicate NULL
+							 */
 							TdsPutInt16LE(0xffff);
 						break;
 					case TDS_TYPE_CHAR:
 					case TDS_TYPE_NCHAR:
 					case TDS_TYPE_XML:
 					case TDS_TYPE_BINARY:
-						/* In case of TDS version lower than or equal to 7.3A, we need to send 0xffff (CHARBIN_NULL)*/
+
+						/*
+						 * In case of TDS version lower than or equal to 7.3A,
+						 * we need to send 0xffff (CHARBIN_NULL)
+						 */
 						TdsPutInt16LE(0xffff);
 						break;
 					case TDS_TYPE_SQLVARIANT:
-						/* For sql_variant, we need to send 0x00000000 to indicate NULL */
+
+						/*
+						 * For sql_variant, we need to send 0x00000000 to
+						 * indicate NULL
+						 */
 						TdsPutInt32LE(0);
 						break;
 					default:
-						/* for these datatypes, we need to send 0x00 (1 byte) only */
+
+						/*
+						 * for these datatypes, we need to send 0x00 (1 byte)
+						 * only
+						 */
 						TdsPutUInt8(0);
 						break;
 				}
@@ -2578,7 +2755,7 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 										  VARSIZE_ANY(attr));
 
 		/* Call the type specific output function */
-		(col->sendFunc)(&thisState->finfo, attr, (void *)col);
+		(col->sendFunc) (&thisState->finfo, attr, (void *) col);
 	}
 
 	/*
@@ -2587,13 +2764,13 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 	 * Since, we've reached here, we are definitely returning a tuple.  So, we
 	 * should set the flag as succeeded.
 	 *
-	 * XXX: We need to figure out a way to set the flag SP_CURSOR_FETCH_MISSING
-	 * when we can't fetch the underlying tuple.  It's only possible in case of
-	 * sensitive cursors when the underlying tuple may have been deleted.  In that
-	 * case, the tds protocol prepares a dummy row with the missing data (nullable
-	 * fields set to null, fixed length fields set to 0, blank, or the default for
-	 * that column, as appropriate) followed by SP_CURSOR_FETCH_MISSING as the
-	 * value of ROWSTAT column.
+	 * XXX: We need to figure out a way to set the flag
+	 * SP_CURSOR_FETCH_MISSING when we can't fetch the underlying tuple.  It's
+	 * only possible in case of sensitive cursors when the underlying tuple
+	 * may have been deleted.  In that case, the tds protocol prepares a dummy
+	 * row with the missing data (nullable fields set to null, fixed length
+	 * fields set to 0, blank, or the default for that column, as appropriate)
+	 * followed by SP_CURSOR_FETCH_MISSING as the value of ROWSTAT column.
 	 */
 	if (sendRowStat)
 		(void) TdsPutInt32LE(SP_CURSOR_FETCH_SUCCEEDED);
@@ -2619,13 +2796,13 @@ TdsPrintTupShutdown(void)
 void
 TdsSendReturnStatus(int status)
 {
-	uint8				temp8;
-	int32_t				tmp;
+	uint8		temp8;
+	int32_t		tmp;
 
 	TdsErrorContext->err_text = "Writing Return Status Token";
 	SendPendingDone(true);
 
-      TDS_DEBUG(TDS_DEBUG2, "TdsSendReturnStatus: token=0x%02x", TDS_TOKEN_RETURNSTATUS);
+	TDS_DEBUG(TDS_DEBUG2, "TdsSendReturnStatus: token=0x%02x", TDS_TOKEN_RETURNSTATUS);
 	temp8 = TDS_TOKEN_RETURNSTATUS;
 	TdsPutbytes(&temp8, sizeof(temp8));
 
@@ -2645,7 +2822,7 @@ TdsSendReturnStatus(int status)
 void
 TdsSendDone(int token, int status, int curcmd, uint64_t nprocessed)
 {
-	bool gucNocount = false;
+	bool		gucNocount = false;
 
 
 	TdsErrorContext->err_text = "Writing Done Token";
@@ -2661,10 +2838,11 @@ TdsSendDone(int token, int status, int curcmd, uint64_t nprocessed)
 	TDS_DEBUG(TDS_DEBUG2, "TdsSendDone: token=0x%02x, status=%d, curcmd=%d, "
 			  "nprocessed=%lu nocount=%d",
 			  token, status, curcmd, nprocessed, gucNocount);
+
 	/*
-	 * If we have a pending DONE token and encounter another one then
-	 * the pending DONE is not the final one. Add the DONE_MORE flag
-	 * and add it to the output buffer.
+	 * If we have a pending DONE token and encounter another one then the
+	 * pending DONE is not the final one. Add the DONE_MORE flag and add it to
+	 * the output buffer.
 	 */
 	SendPendingDone(true);
 
@@ -2691,8 +2869,8 @@ TdsFlush(void)
 	markErrorFlag = false;
 
 	/*
-	 * The current execution stack must be zero.  Otherwise,
-	 * some of our execution assumtion may have gone wrong.
+	 * The current execution stack must be zero.  Otherwise, some of our
+	 * execution assumtion may have gone wrong.
 	 */
 	Assert(!tds_estate || tds_estate->current_stack == 0);
 
@@ -2706,7 +2884,7 @@ TdsFlush(void)
 void
 TDSStatementBeginCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 {
-	if(tds_estate == NULL)
+	if (tds_estate == NULL)
 		return;
 
 	TDS_DEBUG(TDS_DEBUG3, "begin %d", tds_estate->current_stack);
@@ -2720,23 +2898,23 @@ TDSStatementBeginCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 
 	/*
 	 * TODO: It's possible that for some statements, we've to send a done toke
-	 * when we start the command and another done token when we end the command.
-	 * TRY..CATCH is one such example.  We can use this function to send
-	 * the done token at the beginning of the command.
+	 * when we start the command and another done token when we end the
+	 * command. TRY..CATCH is one such example.  We can use this function to
+	 * send the done token at the beginning of the command.
 	 */
 }
 
 static void
 StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 {
-	int token_type = TDS_TOKEN_DONEPROC;
-	int command_type = TDS_CMD_UNKNOWN;
-	int flags = 0;
-	uint64_t nprocessed = 0;
-	bool	toplevel = false;
-	bool	is_proc = false;
-	bool	skip_done = false;
-	bool	row_count_valid = false;
+	int			token_type = TDS_TOKEN_DONEPROC;
+	int			command_type = TDS_CMD_UNKNOWN;
+	int			flags = 0;
+	uint64_t	nprocessed = 0;
+	bool		toplevel = false;
+	bool		is_proc = false;
+	bool		skip_done = false;
+	bool		row_count_valid = false;
 
 	tds_estate->current_stack--;
 	TDS_DEBUG(TDS_DEBUG3, "end %d", tds_estate->current_stack);
@@ -2744,8 +2922,8 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 
 
 	/*
-	 * If we're ending a statement, that means we've already handled the error.
-	 * In that case, just clear the error offset.
+	 * If we're ending a statement, that means we've already handled the
+	 * error. In that case, just clear the error offset.
 	 */
 	tds_estate->error_stack_offset = 0;
 
@@ -2760,13 +2938,13 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 		return;
 
 	/* TODO: handle all the cases */
-	switch(stmt->cmd_type)
+	switch (stmt->cmd_type)
 	{
 		case PLTSQL_STMT_GOTO:
 		case PLTSQL_STMT_RETURN:
-		/* Used in inline table valued functions */
+			/* Used in inline table valued functions */
 		case PLTSQL_STMT_RETURN_QUERY:
-		/* Used in multi-statement table valued functions */
+			/* Used in multi-statement table valued functions */
 		case PLTSQL_STMT_DECL_TABLE:
 		case PLTSQL_STMT_RETURN_TABLE:
 			{
@@ -2802,15 +2980,16 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 							if (plansource->commandTag == CMDTAG_INSERT)
 							{
 								command_type = TDS_CMD_INSERT;
+
 								/*
-								 * row_count should be invalid if the INSERT is
-								 * inside the procedure of an INSERT-EXEC, or if
-								 * the INSERT itself is an INSERT-EXEC and it
-								 * just returned error.
+								 * row_count should be invalid if the INSERT
+								 * is inside the procedure of an INSERT-EXEC,
+								 * or if the INSERT itself is an INSERT-EXEC
+								 * and it just returned error.
 								 */
 								row_count_valid = !estate->insert_exec &&
 									!(markErrorFlag &&
-									  ((PLtsql_stmt_execsql *)stmt)->insert_exec);
+									  ((PLtsql_stmt_execsql *) stmt)->insert_exec);
 							}
 							else if (plansource->commandTag == CMDTAG_UPDATE)
 							{
@@ -2822,9 +3001,10 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 								command_type = TDS_CMD_DELETE;
 								row_count_valid = !estate->insert_exec;
 							}
+
 							/*
-							 * [BABEL-2090] SELECT statement should show
-							 * 'rows affected' count
+							 * [BABEL-2090] SELECT statement should show 'rows
+							 * affected' count
 							 */
 							else if (plansource->commandTag == CMDTAG_SELECT)
 							{
@@ -2860,12 +3040,13 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 
 	/*
 	 * XXX: For SP_CUSTOMTYPE, if we're done executing the top level stored
-	 * procedure,  we need to send the return status and OUT parameters
-	 * before the DONEPROC token.
+	 * procedure,  we need to send the return status and OUT parameters before
+	 * the DONEPROC token.
 	 */
 	if (toplevel && is_proc)
 	{
-		TDSRequest request = TdsRequestCtrl->request;
+		TDSRequest	request = TdsRequestCtrl->request;
+
 		if (request->reqType == TDS_REQUEST_SP_NUMBER)
 		{
 			TDSRequestSP req = (TDSRequestSP) request;
@@ -2876,10 +3057,10 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 	}
 
 	/*
-	 * Send return status token if executed a procedure at top-level
-	 * N.B. It's possible that the EXEC statement itself throws an error.  In
-	 * that case, this token will follow an error token.  We should not send
-	 * a return status in that case.
+	 * Send return status token if executed a procedure at top-level N.B. It's
+	 * possible that the EXEC statement itself throws an error.  In that case,
+	 * this token will follow an error token.  We should not send a return
+	 * status in that case.
 	 */
 	if (!markErrorFlag && toplevel && is_proc)
 	{
@@ -2913,8 +3094,8 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 	}
 
 	/*
-	 * If we shouldn't send a done token for the current command, we can return
-	 * from here.
+	 * If we shouldn't send a done token for the current command, we can
+	 * return from here.
 	 */
 	if (skip_done)
 		return;
@@ -2947,7 +3128,7 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 void
 TDSStatementEndCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 {
-	if(tds_estate == NULL)
+	if (tds_estate == NULL)
 		return;
 
 	StatementEnd_Internal(estate, stmt, false);
@@ -2956,7 +3137,7 @@ TDSStatementEndCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 void
 TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool terminate_batch)
 {
-	if(tds_estate == NULL)
+	if (tds_estate == NULL)
 		return;
 
 	TDS_DEBUG(TDS_DEBUG3, "exception %d", tds_estate->current_stack);
@@ -2965,8 +3146,8 @@ TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool 
 
 	/*
 	 * If we're terminating the batch, then we should not send any done token
-	 * from this level.  The done token will be sent from a higher level
-	 * where the error got handled.
+	 * from this level.  The done token will be sent from a higher level where
+	 * the error got handled.
 	 */
 	if (terminate_batch)
 	{
@@ -2986,9 +3167,9 @@ TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool 
 	/*
 	 * TODO: We should add the current command in a queue.  In the current
 	 * state, we don't know whether there is a TRY..CATCH in the upper level
-	 * that catches this error.  In that case, we don't have to mark the
-	 * error flag in the done token.  Once we have that information, we'll
-	 * send done tokens for each entry in this queue and empty the queue.
+	 * that catches this error.  In that case, we don't have to mark the error
+	 * flag in the done token.  Once we have that information, we'll send done
+	 * tokens for each entry in this queue and empty the queue.
 	 */
 }
 
@@ -3009,8 +3190,10 @@ SendColumnMetadata(TupleDesc typeinfo, List *targetlist, int16 *formats)
 static void
 SetTdsEstateErrorData(void)
 {
-	int number, severity, state;
-	
+	int			number,
+				severity,
+				state;
+
 	if (GetTdsEstateErrorData(&number, &severity, &state))
 	{
 		tds_estate->cur_error_number = number;
@@ -3049,7 +3232,8 @@ GetTdsEstateErrorData(int *number, int *severity, int *state)
 			*state = tds_estate->cur_error_state;
 		return true;
 	}
-	/* 
+
+	/*
 	 * If tds_estate doesn't have valid error data, try to find it in
 	 * exec_state_call_stack
 	 */
@@ -3062,7 +3246,7 @@ GetTdsEstateErrorData(int *number, int *severity, int *state)
 static void
 SetAttributesForColmetada(TdsColumnMetaData *col)
 {
-	HeapTuple	  tp;
+	HeapTuple	tp;
 	Form_pg_attribute att_tup;
 
 	/* Initialise to false if no valid heap tuple is found. */
@@ -3071,17 +3255,17 @@ SetAttributesForColmetada(TdsColumnMetaData *col)
 	col->attgenerated = false;
 
 	/*
-	 * Send the right column-metadata only for FMTONLY Statements.
-	 * FIXME: We need to find a generic solution where we do not rely
-	 * on the catalog for constraint information.
+	 * Send the right column-metadata only for FMTONLY Statements. FIXME: We
+	 * need to find a generic solution where we do not rely on the catalog for
+	 * constraint information.
 	 */
 	if (pltsql_plugin_handler_ptr &&
-			!(*pltsql_plugin_handler_ptr->pltsql_is_fmtonly_stmt))
+		!(*pltsql_plugin_handler_ptr->pltsql_is_fmtonly_stmt))
 		return;
 
-	tp = SearchSysCache2(ATTNUM, 
-		ObjectIdGetDatum(col->relOid),
-		Int16GetDatum(col->attrNum));
+	tp = SearchSysCache2(ATTNUM,
+						 ObjectIdGetDatum(col->relOid),
+						 Int16GetDatum(col->attrNum));
 
 	if (HeapTupleIsValid(tp))
 	{

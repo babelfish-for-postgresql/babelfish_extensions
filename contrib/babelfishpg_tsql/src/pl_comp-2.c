@@ -21,18 +21,22 @@
  * Both pltsql_curr_compile_body_lineno and pltsql_curr_compile_body_posistion will be set
  * when batch level statment is compiled and it will be reset when new SQL batch comes in.
  */
-int pltsql_curr_compile_body_position; /* cursor position of function/procedure body in CREATE */
-int pltsql_curr_compile_body_lineno; /* lineno of function/procedure body in CREATE */
+int			pltsql_curr_compile_body_position;	/* cursor position of
+												 * function/procedure body in
+												 * CREATE */
+int			pltsql_curr_compile_body_lineno;	/* lineno of
+												 * function/procedure body in
+												 * CREATE */
 
 /*
  * Used in pltsql_compile_error_callback. Copied from pg_proc.c
  * Almost same as original one but not trying to find exact cursor position from original input query. (see the comment above)
  */
-bool pltsql_function_parse_error_transpose(const char *prosrc);
+bool		pltsql_function_parse_error_transpose(const char *prosrc);
 
-void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args);
+void		apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args);
 
-extern int cache_compiled_batch(PLtsql_function *func);
+extern int	cache_compiled_batch(PLtsql_function *func);
 extern void cache_inline_args(PLtsql_function *func, InlineCodeBlockArgs *args);
 extern SPIPlanPtr prepare_exec_codes(PLtsql_function *func, ExecCodes *exec_codes);
 extern void cleanup_temporal_plan(ExecCodes *exec_codes);
@@ -48,7 +52,8 @@ extern void cleanup_temporal_plan(ExecCodes *exec_codes);
  *
  * Returns true if a syntax error was processed, false if not.
  */
-bool pltsql_function_parse_error_transpose(const char *prosrc)
+bool
+pltsql_function_parse_error_transpose(const char *prosrc)
 {
 	int			origerrposition;
 
@@ -68,15 +73,16 @@ bool pltsql_function_parse_error_transpose(const char *prosrc)
 	}
 
 	/*
-	 * NOTE: In batch mode, we can't access ActivePortal to queryText.
-	 * Skip finding exact cursor position from original query block.
-	 * This behavior just affects the cursor position of error message and even sqlcmd doesn't care of it.
+	 * NOTE: In batch mode, we can't access ActivePortal to queryText. Skip
+	 * finding exact cursor position from original query block. This behavior
+	 * just affects the cursor position of error message and even sqlcmd
+	 * doesn't care of it.
 	 */
 
 
 	/*
-	 * If unsuccessful, convert the position to an internal position
-	 * marker and give the function text as the internal query.
+	 * If unsuccessful, convert the position to an internal position marker
+	 * and give the function text as the internal query.
 	 */
 	errposition(0);
 	internalerrposition(origerrposition);
@@ -85,29 +91,35 @@ bool pltsql_function_parse_error_transpose(const char *prosrc)
 	return true;
 }
 
-void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args)
+void
+apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args)
 {
 	if (OPTION_ENABLED(args, PREPARE_PLAN))
 	{
-		SPIPlanPtr plan;
+		SPIPlanPtr	plan;
+
 		Assert(func->exec_codes);
 		plan = prepare_exec_codes(func, func->exec_codes);
-		if(plan)
+		if (plan)
 		{
 			if (OPTION_ENABLED(args, SEND_METADATA))
 			{
 				if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_column_metadata)
 				{
 					List	   *plansources;
+
 					plansources = SPI_plan_get_plan_sources(plan);
 					if (list_length(plansources) == 1)
 					{
 						CachedPlanSource *plansource = (CachedPlanSource *) linitial(plansources);
-						List *targetlist = CachedPlanGetTargetList(plansource, NULL);
+						List	   *targetlist = CachedPlanGetTargetList(plansource, NULL);
 
-						/* Only SELECT command type should send column metadata */
+						/*
+						 * Only SELECT command type should send column
+						 * metadata
+						 */
 						if (plansource->commandTag == CMDTAG_SELECT)
-							(*(*pltsql_protocol_plugin_ptr)->send_column_metadata)(plansource->resultDesc, targetlist, NULL);
+							(*(*pltsql_protocol_plugin_ptr)->send_column_metadata) (plansource->resultDesc, targetlist, NULL);
 					}
 				}
 

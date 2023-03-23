@@ -14,7 +14,7 @@
 #define DT_PREC_INV 1000
 #define DTROUND(j) ((((int) (j / DT_PREC_INV)) * DT_PREC_INV))
 
-/* TODO: round datetime fsec to fixed bins (e.g. .000, .003, .007) 
+/* TODO: round datetime fsec to fixed bins (e.g. .000, .003, .007)
  * see: BABEL-1081
  */
 

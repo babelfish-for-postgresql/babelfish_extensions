@@ -32,16 +32,18 @@
 TDSRequest
 GetSQLBatchRequest(StringInfo message)
 {
-	TDSRequestSQLBatch	request;
-	int						query_offset = 0;
-	int						query_len;
-	uint32_t 			tdsVersion = GetClientTDSVersion();
+	TDSRequestSQLBatch request;
+	int			query_offset = 0;
+	int			query_len;
+	uint32_t	tdsVersion = GetClientTDSVersion();
 
 	TdsErrorContext->err_text = "Fetching SQL Batch Request";
+
 	/*
-	 * In the ALL_HEADERS rule, the Query Notifications header and the Transaction
-	 * Descriptor header were introduced in TDS 7.2. We need to to Process them only
-	 * for TDS versions more than or equal to 7.2, otherwise we do not increment the offset.
+	 * In the ALL_HEADERS rule, the Query Notifications header and the
+	 * Transaction Descriptor header were introduced in TDS 7.2. We need to to
+	 * Process them only for TDS versions more than or equal to 7.2, otherwise
+	 * we do not increment the offset.
 	 */
 	if (tdsVersion > TDS_VERSION_7_1_1)
 		query_offset = ProcessStreamHeaders(message);
@@ -54,10 +56,10 @@ GetSQLBatchRequest(StringInfo message)
 	initStringInfo(&(request->query));
 
 	TdsUTF16toUTF8StringInfo(&(request->query),
-								&(message->data[query_offset]),
-								query_len);
+							 &(message->data[query_offset]),
+							 query_len);
 
-	return (TDSRequest)request;
+	return (TDSRequest) request;
 }
 
 /*
@@ -67,9 +69,9 @@ GetSQLBatchRequest(StringInfo message)
 void
 ExecuteSQLBatch(char *query)
 {
-	LOCAL_FCINFO(fcinfo,1);
+	LOCAL_FCINFO(fcinfo, 1);
 	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
-	char *activity =  psprintf("SQL_BATCH: %s", query);
+	char	   *activity = psprintf("SQL_BATCH: %s", query);
 
 	TdsErrorContext->err_text = "Processing SQL Batch Request";
 	pgstat_report_activity(STATE_RUNNING, activity);
@@ -77,7 +79,7 @@ ExecuteSQLBatch(char *query)
 
 	/* Only source text matters to handler */
 	codeblock->source_text = query;
-	codeblock->langOid = 0; /* TODO does it matter */
+	codeblock->langOid = 0;		/* TODO does it matter */
 	codeblock->langIsTrusted = true;
 	codeblock->atomic = false;
 
@@ -87,7 +89,7 @@ ExecuteSQLBatch(char *query)
 	fcinfo->args[0].isnull = false;
 	PG_TRY();
 	{
-		pltsql_plugin_handler_ptr->sql_batch_callback (fcinfo);
+		pltsql_plugin_handler_ptr->sql_batch_callback(fcinfo);
 	}
 	PG_CATCH();
 	{
@@ -106,6 +108,7 @@ ExecuteSQLBatch(char *query)
 	if (pltsql_plugin_handler_ptr->stmt_needs_logging || TDS_DEBUG_ENABLED(TDS_DEBUG2))
 	{
 		ErrorContextCallback *plerrcontext = error_context_stack;
+
 		error_context_stack = plerrcontext->previous;
 		ereport(LOG,
 				(errmsg("sql_batch statement: %s", query),
@@ -128,7 +131,7 @@ ExecuteSQLBatch(char *query)
 void
 ProcessSQLBatchRequest(TDSRequest request)
 {
-	TDSRequestSQLBatch req = (TDSRequestSQLBatch)request;
+	TDSRequestSQLBatch req = (TDSRequestSQLBatch) request;
 
 	ExecuteSQLBatch(req->query.data);
 	MemoryContextSwitchTo(MessageContext);

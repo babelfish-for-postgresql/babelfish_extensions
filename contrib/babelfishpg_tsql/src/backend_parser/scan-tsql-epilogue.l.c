@@ -3,17 +3,16 @@
  */
 core_yyscan_t
 pgtsql_scanner_init(const char *str,
-			 core_yy_extra_type *yyext,
-			 const ScanKeywordList *keywordlist,
-			 const uint16 *keyword_tokens)
+					core_yy_extra_type *yyext,
+					const ScanKeywordList *keywordlist,
+					const uint16 *keyword_tokens)
 {
 	Size		slen = strlen(str);
 	yyscan_t	scanner;
 
 	/*
-	 * If sql_dialect is set to SQL_DIALECT_TSQL
-	 * arrange to inject a dialect selector token
-	 * (DIALECT_TSQL)
+	 * If sql_dialect is set to SQL_DIALECT_TSQL arrange to inject a dialect
+	 * selector token (DIALECT_TSQL)
 	 */
 	if (sql_dialect == SQL_DIALECT_TSQL)
 		dialect_selector = DIALECT_TSQL;
@@ -58,8 +57,7 @@ pgtsql_scanner_finish(core_yyscan_t yyscanner)
 	scanner_finish(yyscanner);
 }
 
-void *
-core_yyalloc(yy_size_t bytes, core_yyscan_t yyscanner);
+void	   *core_yyalloc(yy_size_t bytes, core_yyscan_t yyscanner);
 
 void *
 pgtsql_core_yyalloc(yy_size_t bytes, core_yyscan_t yyscanner)
@@ -67,8 +65,7 @@ pgtsql_core_yyalloc(yy_size_t bytes, core_yyscan_t yyscanner)
 	return core_yyalloc(bytes, yyscanner);
 }
 
-void *
-core_yyrealloc(void *ptr, yy_size_t bytes, core_yyscan_t yyscanner);
+void	   *core_yyrealloc(void *ptr, yy_size_t bytes, core_yyscan_t yyscanner);
 
 void *
 pgtsql_core_yyrealloc(void *ptr, yy_size_t bytes, core_yyscan_t yyscanner)
@@ -77,7 +74,7 @@ pgtsql_core_yyrealloc(void *ptr, yy_size_t bytes, core_yyscan_t yyscanner)
 }
 
 void
-core_yyfree(void *ptr, core_yyscan_t yyscanner);
+			core_yyfree(void *ptr, core_yyscan_t yyscanner);
 
 void
 pgtsql_core_yyfree(void *ptr, core_yyscan_t yyscanner)

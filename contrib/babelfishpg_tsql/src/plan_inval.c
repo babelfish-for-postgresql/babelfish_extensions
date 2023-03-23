@@ -20,12 +20,13 @@ const char *pltsql_identity_insert_name = "tsql_identity_insert";
 /*
  * Defining enum to avoid string comparision in pltsql_check_guc_plan.
  */
-typedef enum {
-IDENTITY_INSERT
+typedef enum
+{
+	IDENTITY_INSERT
 } plan_info_enum_list;
 
-void pltsql_add_guc_plan(CachedPlanSource *plansource);
-bool pltsql_check_guc_plan(CachedPlanSource *plansource);
+void		pltsql_add_guc_plan(CachedPlanSource *plansource);
+bool		pltsql_check_guc_plan(CachedPlanSource *plansource);
 
 static void pltsql_initialize_identity_insert_plan(CachedPlanSource *plansource);
 static bool pltsql_revalidate_identity_insert_plan(CachedPlanSource *plansource,
@@ -54,23 +55,24 @@ pltsql_add_guc_plan(CachedPlanSource *plansource)
 bool
 pltsql_check_guc_plan(CachedPlanSource *plansource)
 {
-	bool valid = plansource->is_valid;
-	ListCell *lc;
+	bool		valid = plansource->is_valid;
+	ListCell   *lc;
 
 	if (prev_plansource_revalidate_hook)
-		valid = (* prev_plansource_revalidate_hook) (plansource);
+		valid = (*prev_plansource_revalidate_hook) (plansource);
 
 	if (sql_dialect != SQL_DIALECT_TSQL || !valid)
 		return valid;
 
 	/* Identify each GUC by plan_info_enum_list and revalidate accordingly */
-	foreach (lc, plansource->pltsql_plan_info)
+	foreach(lc, plansource->pltsql_plan_info)
 	{
-		List *info_sublist = (List *) lfirst(lc);
+		List	   *info_sublist = (List *) lfirst(lc);
 		plan_info_enum_list enum_list = (plan_info_enum_list) linitial(info_sublist);
 
 		/* Execute revalidate function only if it is an insert query. */
-		if (plansource->commandTag == CMDTAG_INSERT){
+		if (plansource->commandTag == CMDTAG_INSERT)
+		{
 			if (valid && enum_list == IDENTITY_INSERT)
 				valid = pltsql_revalidate_identity_insert_plan(plansource, info_sublist);
 		}
@@ -89,17 +91,17 @@ pltsql_check_guc_plan(CachedPlanSource *plansource)
 static void
 pltsql_initialize_identity_insert_plan(CachedPlanSource *plansource)
 {
-	List *id_insert_info_sublist = NIL;
-	plan_info_enum_list* id_insert_enum;
+	List	   *id_insert_info_sublist = NIL;
+	plan_info_enum_list *id_insert_enum;
 
 	tsql_identity_insert_fields *id_insert_state;
-	
+
 	/* Initialize enum */
 	id_insert_enum = IDENTITY_INSERT;
-	
+
 	/* Copy state */
 	id_insert_state = (tsql_identity_insert_fields *)
-												palloc(sizeof *id_insert_state);
+		palloc(sizeof *id_insert_state);
 	id_insert_state->valid = tsql_identity_insert.valid;
 	id_insert_state->rel_oid = tsql_identity_insert.rel_oid;
 	id_insert_state->schema_oid = tsql_identity_insert.schema_oid;
@@ -131,11 +133,11 @@ pltsql_revalidate_identity_insert_plan(CachedPlanSource *plansource,
 
 	if (plansource->commandTag == CMDTAG_INSERT)
 	{
-		ListCell *lc_rel;
+		ListCell   *lc_rel;
 
 		foreach(lc_rel, plansource->relationOids)
 		{
-			Oid cur_rel = lfirst_oid(lc_rel);
+			Oid			cur_rel = lfirst_oid(lc_rel);
 
 			/* Check if plan affects previous or current relation */
 			if (cur_rel == id_insert_info->rel_oid ||

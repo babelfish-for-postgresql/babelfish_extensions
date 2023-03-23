@@ -64,34 +64,34 @@ extern ParameterToken MakeEmptyParameterToken(char *name, int atttypid,
 											  int32 atttypmod, int attcollation);
 extern int32 GetTypModForToken(ParameterToken token);
 extern void TdsSendInfo(int number, int state, int class,
-						   char *message, int line_no);
+						char *message, int line_no);
 extern void TdsSendDone(int tag, int status,
-						   int curcmd, uint64_t nprocessed);
+						int curcmd, uint64_t nprocessed);
 extern void SendColumnMetadataToken(int natts, bool sendRowStat);
 extern void SendTabNameToken(void);
 extern void SendColInfoToken(int natts, bool sendRowStat);
 extern void PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
-					  bool extendedInfo, bool fetchPkeys);
+								  bool extendedInfo, bool fetchPkeys);
 extern void SendReturnValueTokenInternal(ParameterToken token, uint8 status,
-							 FmgrInfo *finfo, Datum datum, bool isNull,
-							 bool	forceCoercion);
+										 FmgrInfo *finfo, Datum datum, bool isNull,
+										 bool forceCoercion);
 extern void TdsSendEnvChange(int envid, const char *new_val, const char *old_val);
 extern void TdsSendInfoOrError(int token, int number, int state, int class,
-								  char *message, char *server_name,
-								  char *proc_name, int line_no);
+							   char *message, char *server_name,
+							   char *proc_name, int line_no);
 extern void TdsPrepareReturnValueMetaData(TupleDesc typeinfo);
 extern void TdsSendEnvChangeBinary(int envid,
-								void *new, int new_nbytes,
-								void *old, int old_nbytes);
+								   void *new, int new_nbytes,
+								   void *old, int old_nbytes);
 extern void TdsSendReturnStatus(int status);
 extern void TdsSendHandle(void);
 extern void TdsSendRowDescription(TupleDesc typeinfo,
-									 List *targetlist, int16 *formats);
+								  List *targetlist, int16 *formats);
 extern bool TdsPrintTup(TupleTableSlot *slot, DestReceiver *self);
 extern void TdsPrintTupShutdown(void);
 extern void TdsSendError(int number, int state, int class,
-						   char *message, int lineNo);
-extern int TdsFlush(void);
+						 char *message, int lineNo);
+extern int	TdsFlush(void);
 extern void TDSStatementBeginCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt);
 extern void TDSStatementEndCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt);
 extern void TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt,
@@ -99,4 +99,4 @@ extern void TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt 
 extern void SendColumnMetadata(TupleDesc typeinfo, List *targetlist, int16 *formats);
 extern bool GetTdsEstateErrorData(int *number, int *severity, int *state);
 
-#endif	/* TDS_H */
+#endif							/* TDS_H */

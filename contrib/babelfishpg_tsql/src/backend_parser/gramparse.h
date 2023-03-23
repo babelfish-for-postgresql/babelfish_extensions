@@ -38,12 +38,12 @@ typedef struct base_yy_extra_type pgtsql_base_yy_extra_type;
 #define pg_yyget_extra(yyscanner) (*((base_yy_extra_type **) (yyscanner)))
 
 /* from parser.c */
-extern int	pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp,
-					   core_yyscan_t yyscanner);
+extern int	pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE * llocp,
+							  core_yyscan_t yyscanner);
 
 /* from pgtsql_gram.y */
 extern void pgtsql_parser_init(pgtsql_base_yy_extra_type *yyext);
-extern int pgtsql_base_yyparse(core_yyscan_t yyscanner);
-extern int pgtsql_base_yydebug;
+extern int	pgtsql_base_yyparse(core_yyscan_t yyscanner);
+extern int	pgtsql_base_yydebug;
 
 #endif							/* PGTSQL_GRAMPARSE_H */

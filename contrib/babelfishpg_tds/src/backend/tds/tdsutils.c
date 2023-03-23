@@ -35,18 +35,18 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 
-static int FindMatchingParam(List *params, const char *name);
-static Node * TransformParamRef(ParseState *pstate, ParamRef *pref);
-Node * TdsFindParam(ParseState *pstate, ColumnRef *cref);
-void TdsErrorContextCallback(void *arg);
+static int	FindMatchingParam(List *params, const char *name);
+static Node *TransformParamRef(ParseState *pstate, ParamRef *pref);
+Node	   *TdsFindParam(ParseState *pstate, ColumnRef *cref);
+void		TdsErrorContextCallback(void *arg);
 
 /* Create an object_access_hook */
 object_access_hook_type next_object_access_hook = NULL;
-void babelfish_object_access(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
+void		babelfish_object_access(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
 
-void tdsutils_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
+void		tdsutils_ProcessUtility(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
 ProcessUtility_hook_type next_ProcessUtility = NULL;
-static void call_next_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
+static void call_next_ProcessUtility(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
 static void check_babelfish_droprole_restrictions(char *role);
 static void check_babelfish_renamerole_restrictions(char *role);
 static void check_babelfish_renamedb_restrictions(Oid target_db_id);
@@ -55,15 +55,15 @@ static bool is_babelfish_ownership_enabled(ArrayType *array);
 static bool is_babelfish_role(const char *role);
 
 /* Role specific handlers */
-static bool handle_drop_role (DropRoleStmt* drop_role_stmt);
-static bool handle_rename(RenameStmt* rename_stmt);
+static bool handle_drop_role(DropRoleStmt *drop_role_stmt);
+static bool handle_rename(RenameStmt *rename_stmt);
 
 /* Drop database handler */
 static bool handle_dropdb(DropdbStmt *dropdb_stmt);
 
 static char *get_role_name(RoleSpec *role);
 static bool have_createdb_privilege(void);
-char * get_rolespec_name_internal(const RoleSpec *role, bool missing_ok);
+char	   *get_rolespec_name_internal(const RoleSpec *role, bool missing_ok);
 
 /*
  * GetUTF8CodePoint - extract the next Unicode code point from 1..4
@@ -131,7 +131,7 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
 							in[0])));
 		code = ((in[0] & 0x07) << 18) | ((in[1] & 0x3F) << 12) |
-			   ((in[2] & 0x3F) << 6) | (in[3] & 0x3F);
+			((in[2] & 0x3F) << 6) | (in[3] & 0x3F);
 		consumed = 4;
 	}
 	else
@@ -184,9 +184,9 @@ GetUTF16CodePoint(const unsigned char *in, int len, int *consumed)
 	{
 		/*
 		 * This is a single 16 bit code point, which is equal to code1.
-		 * PostgreSQL does not support NUL bytes in character data as
-		 * it internally needs the ability to convert any datum to a
-		 * NUL terminated C-string without explicit length information.
+		 * PostgreSQL does not support NUL bytes in character data as it
+		 * internally needs the ability to convert any datum to a NUL
+		 * terminated C-string without explicit length information.
 		 */
 		if (code1 == 0)
 			ereport(ERROR,
@@ -195,7 +195,7 @@ GetUTF16CodePoint(const unsigned char *in, int len, int *consumed)
 							"code point 0 not supported")));
 		if (consumed)
 			*consumed = 2;
-		return (int32_t)code1;
+		return (int32_t) code1;
 	}
 
 	/* This is a surrogate pair - check that it is the high part */
@@ -241,7 +241,7 @@ AddUTF8ToStringInfo(int32_t code, StringInfo buf)
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("invalid Unicode code point 0x%x", code)));
 
-	/* Range U+0000 .. U+007F (7 bit)*/
+	/* Range U+0000 .. U+007F (7 bit) */
 	if (code <= 0x7F)
 	{
 		appendStringInfoChar(buf, code);
@@ -278,10 +278,11 @@ AddUTF8ToStringInfo(int32_t code, StringInfo buf)
 static inline void
 AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 {
-	union {
+	union
+	{
 		uint16_t	value;
 		uint8_t		half[2];
-	} temp16;
+	}			temp16;
 
 	/* Check that this is a valid code point */
 	if ((code > 0xD800 && code < 0xE000) || code < 0x0001 || code > 0x10FFFF)
@@ -312,10 +313,10 @@ AddUTF16ToStringInfo(int32_t code, StringInfo buf)
 void
 TdsUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
 {
-	unsigned char  *in = vin;
-	int				i;
-	int				consumed;
-	int32_t			code;
+	unsigned char *in = vin;
+	int			i;
+	int			consumed;
+	int32_t		code;
 
 	/* UTF16 data allways comes in 16-bit units */
 	if ((len & 0x0001) != 0)
@@ -339,10 +340,10 @@ TdsUTF16toUTF8StringInfo(StringInfo out, void *vin, int len)
 void
 TdsUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
 {
-	const unsigned char  *in = vin;
-	size_t				i;
-	int				consumed;
-	int32_t			code;
+	const unsigned char *in = vin;
+	size_t		i;
+	int			consumed;
+	int32_t		code;
 
 	for (i = 0; i < len;)
 	{
@@ -360,7 +361,7 @@ TdsUTF8toUTF16StringInfo(StringInfo out, const void *vin, size_t len)
 int
 TdsUTF8LengthInUTF16(const void *vin, int len)
 {
-	const unsigned char  *in = vin;
+	const unsigned char *in = vin;
 	int			result = 0;
 	int			i;
 	int			consumed;
@@ -393,7 +394,8 @@ TdsUTF8LengthInUTF16(const void *vin, int len)
 int32_t
 ProcessStreamHeaders(const StringInfo message)
 {
-	int32_t	header_len;
+	int32_t		header_len;
+
 	/* We expect at least the packet type and header length */
 	if (message->len < 4)
 		elog(FATAL, "corrupted TDS_QUERY packet - len=%d",
@@ -422,9 +424,9 @@ FindMatchingParam(List *params, const char *name)
 
 	foreach(cell, params)
 	{
-		TdsParamName	item = lfirst(cell);
+		TdsParamName item = lfirst(cell);
 
-		if (pg_strcasecmp(name,	item->name) == 0)
+		if (pg_strcasecmp(name, item->name) == 0)
 			return i + 1;
 		i++;
 	}
@@ -444,8 +446,8 @@ FindMatchingParam(List *params, const char *name)
 Node *
 TdsFindParam(ParseState *pstate, ColumnRef *cref)
 {
-	extern int sql_dialect;
-	List *params = NULL;
+	extern int	sql_dialect;
+	List	   *params = NULL;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return NULL;
@@ -460,9 +462,9 @@ TdsFindParam(ParseState *pstate, ColumnRef *cref)
 		return NULL;
 	else
 	{
-		char *colname = strVal(linitial(cref->fields));
-		int paramNo = 0;
-		ParamRef *pref;
+		char	   *colname = strVal(linitial(cref->fields));
+		int			paramNo = 0;
+		ParamRef   *pref;
 
 		if (params != NULL)
 		{
@@ -478,7 +480,7 @@ TdsFindParam(ParseState *pstate, ColumnRef *cref)
 
 		pref = makeNode(ParamRef);
 
-		pref->number   = paramNo;
+		pref->number = paramNo;
 		pref->location = cref->location;
 
 		return TransformParamRef(pstate, pref);
@@ -517,77 +519,77 @@ TdsErrorContextCallback(void *arg)
 	TdsErrorContextData *tdsErrorContext = (TdsErrorContextData *) arg;
 
 	/*
-	 * err_text should not be NULL. Initialise to Empty String
-	 * if it need's to be ignored.
+	 * err_text should not be NULL. Initialise to Empty String if it need's to
+	 * be ignored.
 	 */
 	Assert(tdsErrorContext != NULL && tdsErrorContext->err_text != NULL);
 
 	switch (tdsErrorContext->reqType)
 	{
-		case TDS_LOGIN7: 	/* Login7 request */
+		case TDS_LOGIN7:		/* Login7 request */
 			{
 				errcontext("TDS Protocol: Message Type: TDS Login7, Phase: Login. %s",
-					tdsErrorContext->err_text);
+						   tdsErrorContext->err_text);
 			}
 			break;
-		case TDS_PRELOGIN: /* Pre-login Request*/
+		case TDS_PRELOGIN:		/* Pre-login Request */
 			{
 				errcontext("TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. %s",
-					tdsErrorContext->err_text);
+						   tdsErrorContext->err_text);
 			}
 			break;
-		case TDS_QUERY:		/* Simple SQL BATCH */
+		case TDS_QUERY:			/* Simple SQL BATCH */
 			{
 				errcontext("TDS Protocol: Message Type: SQL BATCH, Phase: %s. %s",
-					tdsErrorContext->phase,
-					tdsErrorContext->err_text);
+						   tdsErrorContext->phase,
+						   tdsErrorContext->err_text);
 			}
 			break;
-		case TDS_RPC:		/* Remote procedure call */
+		case TDS_RPC:			/* Remote procedure call */
 			{
 				errcontext("TDS Protocol: Message Type: RPC, SP Type: %s, Phase: %s. %s",
-					tdsErrorContext->spType,
-					tdsErrorContext->phase,
-					tdsErrorContext->err_text);
+						   tdsErrorContext->spType,
+						   tdsErrorContext->phase,
+						   tdsErrorContext->err_text);
 			}
 			break;
-		case TDS_TXN:	/* Transaction management request */
+		case TDS_TXN:			/* Transaction management request */
 			{
-					errcontext("TDS Protocol: Message Type: Txn Manager, Txn Type: %s, Phase: %s. %s",
-					tdsErrorContext->txnType,
-					tdsErrorContext->phase,
-					tdsErrorContext->err_text);
+				errcontext("TDS Protocol: Message Type: Txn Manager, Txn Type: %s, Phase: %s. %s",
+						   tdsErrorContext->txnType,
+						   tdsErrorContext->phase,
+						   tdsErrorContext->err_text);
 			}
 			break;
-		case TDS_ATTENTION: 	/* Attention request */
+		case TDS_ATTENTION:		/* Attention request */
 			{
 				errcontext("TDS Protocol: Message Type: Attention, Phase: %s. %s",
-					tdsErrorContext->phase,
-					tdsErrorContext->err_text);
+						   tdsErrorContext->phase,
+						   tdsErrorContext->err_text);
 			}
 			break;
-		case TDS_BULK_LOAD: 	/* Bulk Load request */
+		case TDS_BULK_LOAD:		/* Bulk Load request */
 			{
 				errcontext("TDS Protocol: Message Type: Bulk Load, Phase: %s. %s",
-					tdsErrorContext->phase,
-					tdsErrorContext->err_text);
+						   tdsErrorContext->phase,
+						   tdsErrorContext->err_text);
 			}
 			break;
 		default:
 			errcontext("TDS Protocol: %s",
-					tdsErrorContext->err_text);
+					   tdsErrorContext->err_text);
 	}
 }
 
 void
 babelfish_object_access(ObjectAccessType access,
-		Oid classId,
-		Oid objectId,
-		int subId,
-		void *arg)
+						Oid classId,
+						Oid objectId,
+						int subId,
+						void *arg)
 {
 	if (next_object_access_hook)
-		(* next_object_access_hook) (access, classId, objectId, subId, arg);
+		(*next_object_access_hook) (access, classId, objectId, subId, arg);
 
 	switch (access)
 	{
@@ -600,14 +602,15 @@ babelfish_object_access(ObjectAccessType access,
 							/*
 							 * Prevent the user from dropping a babelfish role
 							 * when not in babelfish mode by checking for
-							 * dependency on the master_guest, tempdb_guest, and
-							 * msdb_guest roles. User can override if needed.
+							 * dependency on the master_guest, tempdb_guest,
+							 * and msdb_guest roles. User can override if
+							 * needed.
 							 */
 							if (sql_dialect != SQL_DIALECT_TSQL)
 							{
-								Oid bbf_master_guest_oid;
-								Oid bbf_tempdb_guest_oid;
-								Oid bbf_msdb_guest_oid;
+								Oid			bbf_master_guest_oid;
+								Oid			bbf_tempdb_guest_oid;
+								Oid			bbf_msdb_guest_oid;
 
 								bbf_master_guest_oid = get_role_oid("master_guest", true);
 								bbf_tempdb_guest_oid = get_role_oid("tempdb_guest", true);
@@ -644,17 +647,19 @@ babelfish_object_access(ObjectAccessType access,
  *
  * Returns: Nothing
  */
-void tdsutils_ProcessUtility(PlannedStmt *pstmt,
-		const char *queryString,
-		bool readOnlyTree,
-		ProcessUtilityContext context,
-		ParamListInfo params,
-		QueryEnvironment *queryEnv,
-		DestReceiver *dest,
-		QueryCompletion *completionTag)
+void
+tdsutils_ProcessUtility(PlannedStmt *pstmt,
+						const char *queryString,
+						bool readOnlyTree,
+						ProcessUtilityContext context,
+						ParamListInfo params,
+						QueryEnvironment *queryEnv,
+						DestReceiver *dest,
+						QueryCompletion *completionTag)
 {
-	Node *parsetree;
-	bool handle_result = true;
+	Node	   *parsetree;
+	bool		handle_result = true;
+
 	/*
 	 * If the given node tree is read-only, make a copy to ensure that parse
 	 * transformations don't damage the original tree.  This might cause us to
@@ -666,14 +671,14 @@ void tdsutils_ProcessUtility(PlannedStmt *pstmt,
 	parsetree = pstmt->utilityStmt;
 
 	/*
-	 * Explicitly skip TransactionStmt commands prior to calling the superuser()
-	 * function.
+	 * Explicitly skip TransactionStmt commands prior to calling the
+	 * superuser() function.
 	 *
 	 * If we are in an aborted transaction, some TransactionStmts (e.g.
 	 * ROLLBACK) will be allowed to pass through to the process utility hooks.
 	 * In this aborted state, the syscache lookup that superuser() does is not
-	 * safe.  However, we do not do any kind of handling for TransactionStmts in
-	 * this hook anyway, so we can easily avoid this issue by skipping it.
+	 * safe.  However, we do not do any kind of handling for TransactionStmts
+	 * in this hook anyway, so we can easily avoid this issue by skipping it.
 	 */
 	if (parsetree && IsA(parsetree, TransactionStmt))
 	{
@@ -689,29 +694,28 @@ void tdsutils_ProcessUtility(PlannedStmt *pstmt,
 	}
 	switch (nodeTag(parsetree))
 	{
-		/* Role lock down. */
+			/* Role lock down. */
 		case T_DropRoleStmt:
-			handle_result = handle_drop_role((DropRoleStmt *)parsetree);
+			handle_result = handle_drop_role((DropRoleStmt *) parsetree);
 			break;
 		case T_RenameStmt:
-			handle_result = handle_rename((RenameStmt *)parsetree);
+			handle_result = handle_rename((RenameStmt *) parsetree);
 			break;
-		/* Case that deal with Drop Database */
+			/* Case that deal with Drop Database */
 		case T_DropdbStmt:
-			handle_result = handle_dropdb((DropdbStmt *)parsetree);
+			handle_result = handle_dropdb((DropdbStmt *) parsetree);
 			break;
 		default:
 			break;
 	}
 
 	/*
-	 * handle_result:
-	 * 	true - If this is a command that we're not going to handle, allow it to
-	 * 		processed in the normal way.
-	 * 	false - Do nothing else.  We've most likely reported an error, and most likely
-	 * 		won't end up hitting this.
+	 * handle_result: true - If this is a command that we're not going to
+	 * handle, allow it to processed in the normal way. false - Do nothing
+	 * else.  We've most likely reported an error, and most likely won't end
+	 * up hitting this.
 	 */
-	if(handle_result)
+	if (handle_result)
 		call_next_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
 }
 
@@ -725,19 +729,19 @@ void tdsutils_ProcessUtility(PlannedStmt *pstmt,
  * Returns: nothing
  */
 static void
-call_next_ProcessUtility (PlannedStmt *pstmt,
-        const char *queryString,
-        bool readOnlyTree,
-        ProcessUtilityContext context,
-        ParamListInfo params,
-        QueryEnvironment *queryEnv,
-        DestReceiver *dest,
-        QueryCompletion *completionTag)
+call_next_ProcessUtility(PlannedStmt *pstmt,
+						 const char *queryString,
+						 bool readOnlyTree,
+						 ProcessUtilityContext context,
+						 ParamListInfo params,
+						 QueryEnvironment *queryEnv,
+						 DestReceiver *dest,
+						 QueryCompletion *completionTag)
 {
-    if (next_ProcessUtility)
-        next_ProcessUtility (pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
-    else
-        standard_ProcessUtility (pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
+	if (next_ProcessUtility)
+		next_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
+	else
+		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
 }
 
 /*
@@ -749,37 +753,37 @@ call_next_ProcessUtility (PlannedStmt *pstmt,
  * 	false - otherwise
  */
 static bool
-handle_drop_role (DropRoleStmt* drop_role_stmt)
+handle_drop_role(DropRoleStmt *drop_role_stmt)
 {
-    ListCell* item = NULL;
+	ListCell   *item = NULL;
 
-    /* We should not be handling superusers */
-    Assert(!superuser());
-    Assert(NULL != drop_role_stmt);
+	/* We should not be handling superusers */
+	Assert(!superuser());
+	Assert(NULL != drop_role_stmt);
 
-    /*
-     * Postgres allows you to drop multiple roles at the same time, which means
-     * we get to parse out the roles by hand.  We could theoretically allow for skipping
-     * this role if it's specified in a list; however, blocking the statement seems less error
-     * prone at this point.
-     */
-    foreach(item, drop_role_stmt->roles)
-    {
-        char *role = NULL;
+	/*
+	 * Postgres allows you to drop multiple roles at the same time, which
+	 * means we get to parse out the roles by hand.  We could theoretically
+	 * allow for skipping this role if it's specified in a list; however,
+	 * blocking the statement seems less error prone at this point.
+	 */
+	foreach(item, drop_role_stmt->roles)
+	{
+		char	   *role = NULL;
 
-        /* Roles is a list of RoleSpecs now */
-        RoleSpec *node = lfirst(item);
+		/* Roles is a list of RoleSpecs now */
+		RoleSpec   *node = lfirst(item);
 
-        /* If the role does not exist, the role name will be NULL */
-        role = get_role_name(node);
-        if (NULL == role)
-            continue;
+		/* If the role does not exist, the role name will be NULL */
+		role = get_role_name(node);
+		if (NULL == role)
+			continue;
 
-        check_babelfish_droprole_restrictions(role);
-        pfree(role);
-        role = NULL;
-    }
-    return true;
+		check_babelfish_droprole_restrictions(role);
+		pfree(role);
+		role = NULL;
+	}
+	return true;
 }
 
 /*
@@ -792,21 +796,22 @@ handle_drop_role (DropRoleStmt* drop_role_stmt)
 static char *
 get_role_name(RoleSpec *role)
 {
-    Assert(NULL != role);
+	Assert(NULL != role);
 
-    /*
-     * get_rolespec_name_internal will return NULL if called for ROLESPEC_PUBLIC.
-     * Postgres will return a different error if the user tries to modify the public role.
-     * It will be a better user experience to return that instead of tdsutils returning an error
-     * here by calling get_rolespec_name_internal. So return the public role name from here
-     * instead of calling get_rolespec_name_internal.
-     */
-    if(ROLESPEC_PUBLIC == role->roletype)
-    {
-        /* Callers are expecting the return value to be palloc'd */
-        return pstrdup(PUBLIC_ROLE_NAME);
-    }
-    return (char *) get_rolespec_name_internal(role, true);
+	/*
+	 * get_rolespec_name_internal will return NULL if called for
+	 * ROLESPEC_PUBLIC. Postgres will return a different error if the user
+	 * tries to modify the public role. It will be a better user experience to
+	 * return that instead of tdsutils returning an error here by calling
+	 * get_rolespec_name_internal. So return the public role name from here
+	 * instead of calling get_rolespec_name_internal.
+	 */
+	if (ROLESPEC_PUBLIC == role->roletype)
+	{
+		/* Callers are expecting the return value to be palloc'd */
+		return pstrdup(PUBLIC_ROLE_NAME);
+	}
+	return (char *) get_rolespec_name_internal(role, true);
 }
 
 /*
@@ -880,10 +885,10 @@ check_babelfish_droprole_restrictions(char *role)
 		return;
 	if (is_babelfish_role(role))
 	{
-		pfree(role);	/* avoid mem leak */
+		pfree(role);			/* avoid mem leak */
 		ereport(ERROR,
-			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session")));
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session")));
 	}
 }
 
@@ -904,11 +909,11 @@ check_babelfish_droprole_restrictions(char *role)
 static bool
 is_babelfish_role(const char *role)
 {
-	Oid         sysadmin_oid;
-	Oid         role_oid;
+	Oid			sysadmin_oid;
+	Oid			role_oid;
 
-	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);  /* missing OK */
-	role_oid = get_role_oid(role, true); /* missing OK */
+	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
+	role_oid = get_role_oid(role, true);	/* missing OK */
 
 	if (sysadmin_oid == InvalidOid || role_oid == InvalidOid)
 		return false;
@@ -928,42 +933,42 @@ is_babelfish_role(const char *role)
  * Returns: true - If it passes through all the basic checks.
  */
 static bool
-handle_rename(RenameStmt* rename_stmt)
+handle_rename(RenameStmt *rename_stmt)
 {
-    Assert(NULL != rename_stmt);
+	Assert(NULL != rename_stmt);
 
-    /*
-     * The majority of potential renames should not be coming through
-     * here as they're handled by the event trigger infrastructure. We
-     * will; however, intercept calls for databases, table spaces, and
-     * (obviously) event triggers, so we need to ignore those.
-     */
-    if (OBJECT_ROLE == rename_stmt->renameType)
-        check_babelfish_renamerole_restrictions(rename_stmt->subname);
+	/*
+	 * The majority of potential renames should not be coming through here as
+	 * they're handled by the event trigger infrastructure. We will; however,
+	 * intercept calls for databases, table spaces, and (obviously) event
+	 * triggers, so we need to ignore those.
+	 */
+	if (OBJECT_ROLE == rename_stmt->renameType)
+		check_babelfish_renamerole_restrictions(rename_stmt->subname);
 
-    else if (OBJECT_DATABASE == rename_stmt->renameType)
-    {
-	    Oid target_db_id = InvalidOid;
-	    
-	    /*
-	     * Basic checks to avoid non-privileged user to access metadata.
-	     * Always let backend to handle error.
-	     */
-	    target_db_id = get_database_oid(rename_stmt->subname, true);
-	    if (target_db_id == InvalidOid)
-		    return true;
+	else if (OBJECT_DATABASE == rename_stmt->renameType)
+	{
+		Oid			target_db_id = InvalidOid;
 
-	    /* must be owner */
-	    if (!pg_database_ownercheck(target_db_id, GetUserId()))
-		    return true;
+		/*
+		 * Basic checks to avoid non-privileged user to access metadata.
+		 * Always let backend to handle error.
+		 */
+		target_db_id = get_database_oid(rename_stmt->subname, true);
+		if (target_db_id == InvalidOid)
+			return true;
 
-	    /* must have createdb rights */
-	    if (!have_createdb_privilege())
-		    return true;
+		/* must be owner */
+		if (!pg_database_ownercheck(target_db_id, GetUserId()))
+			return true;
 
-	    check_babelfish_renamedb_restrictions(target_db_id);
-    }
-    return true;
+		/* must have createdb rights */
+		if (!have_createdb_privilege())
+			return true;
+
+		check_babelfish_renamedb_restrictions(target_db_id);
+	}
+	return true;
 }
 
 /*
@@ -979,7 +984,7 @@ check_babelfish_renamerole_restrictions(char *role)
 		return;
 	if (is_babelfish_role(role))
 	{
-		pfree(role);	/* avoid mem leak */
+		pfree(role);			/* avoid mem leak */
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session")));
@@ -1017,15 +1022,17 @@ have_createdb_privilege(void)
 static void
 check_babelfish_renamedb_restrictions(Oid target_db_id)
 {
-	const char  *babelfish_db_name = NULL;
+	const char *babelfish_db_name = NULL;
 	Oid			babelfish_db_id = InvalidOid;
+
 	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
 
-	if (!babelfish_db_name) /* not defined */
+	if (!babelfish_db_name)		/* not defined */
 		return;
 
 	babelfish_db_id = get_database_oid(babelfish_db_name, true);
-	if (babelfish_db_id == target_db_id) /* rename active babelfish database */
+	if (babelfish_db_id == target_db_id)	/* rename active babelfish
+											 * database */
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("cannot rename active babelfish database")));
@@ -1041,10 +1048,11 @@ check_babelfish_renamedb_restrictions(Oid target_db_id)
 static bool
 handle_dropdb(DropdbStmt *dropdb_stmt)
 {
-	Oid	        target_db_id = InvalidOid;
+	Oid			target_db_id = InvalidOid;
+
 	/*
-	 * Basic checkings to avoid non-privileged user to access metadata
-	 * allways let backend to handle error
+	 * Basic checkings to avoid non-privileged user to access metadata allways
+	 * let backend to handle error
 	 */
 	target_db_id = get_database_oid(dropdb_stmt->dbname, true);
 	if (target_db_id == InvalidOid)
@@ -1061,26 +1069,25 @@ handle_dropdb(DropdbStmt *dropdb_stmt)
 static void
 check_babelfish_dropdb_restrictions(Oid target_db_id)
 {
-	Relation    relsetting;
-	HeapTuple   tuple;
+	Relation	relsetting;
+	HeapTuple	tuple;
 	ScanKeyData scankey[2];
 	SysScanDesc scan;
-	const char  *babelfish_db_name = NULL;
+	const char *babelfish_db_name = NULL;
 	Oid			babelfish_db_id = InvalidOid;
-	bool        has_bbf_md = false;
+	bool		has_bbf_md = false;
 
 	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
-	if (!babelfish_db_name) /* not define */
+	if (!babelfish_db_name)		/* not define */
 		return;
 	babelfish_db_id = get_database_oid(babelfish_db_name, true);
-	if (babelfish_db_id == target_db_id) /* drop active babelfish database */
+	if (babelfish_db_id == target_db_id)	/* drop active babelfish database */
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("cannot drop active babelfish database")));
 
 	/*
-	 * check if it's an inactive babelfish database.
-	 * get db configs
+	 * check if it's an inactive babelfish database. get db configs
 	 */
 	relsetting = table_open(DbRoleSettingRelationId, AccessShareLock);
 	ScanKeyInit(&scankey[0],
@@ -1092,16 +1099,16 @@ check_babelfish_dropdb_restrictions(Oid target_db_id)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(InvalidOid));
 	scan = systable_beginscan(relsetting, DbRoleSettingDatidRolidIndexId, true,
-							NULL, 2, scankey);
+							  NULL, 2, scankey);
 	tuple = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple))
 	{
-		bool        isnull;
-		Datum       datum;
-		ArrayType  	*configs = NULL;
+		bool		isnull;
+		Datum		datum;
+		ArrayType  *configs = NULL;
 
 		datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
-							RelationGetDescr(relsetting), &isnull);
+							 RelationGetDescr(relsetting), &isnull);
 		if (!isnull)
 			configs = DatumGetArrayTypeP(datum);
 
@@ -1124,7 +1131,8 @@ check_babelfish_dropdb_restrictions(Oid target_db_id)
 static bool
 is_babelfish_ownership_enabled(ArrayType *array)
 {
-	int i;
+	int			i;
+
 	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
 	{
 		Datum		d;
@@ -1132,6 +1140,7 @@ is_babelfish_ownership_enabled(ArrayType *array)
 		char	   *s;
 		char	   *name;
 		char	   *value;
+
 		d = array_ref(array, 1, &i,
 					  -1 /* varlenarray */ ,
 					  -1 /* TEXT's typlen */ ,

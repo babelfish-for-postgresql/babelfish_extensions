@@ -11,8 +11,7 @@ init_instr(void)
 	instr_plugin **rendezvous;
 
 	rendezvous = (instr_plugin **) find_rendezvous_variable("PLtsql_instr_plugin");
-	
+
 	if (rendezvous && *rendezvous)
 		instr_plugin_ptr = *rendezvous;
-}	
-
+}

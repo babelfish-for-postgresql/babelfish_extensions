@@ -26,25 +26,25 @@
 #include "src/include/guc.h"
 
 /* Global variables */
-int	pe_port;
-char	*pe_listen_addrs = NULL;
-char	*pe_unix_socket_directories = NULL;
-int	pe_unix_socket_permissions = 0;
-char	*pe_unix_socket_group = NULL;
+int			pe_port;
+char	   *pe_listen_addrs = NULL;
+char	   *pe_unix_socket_directories = NULL;
+int			pe_unix_socket_permissions = 0;
+char	   *pe_unix_socket_group = NULL;
 
-char   *default_server_name = NULL;
-int 	tds_default_numeric_precision = 38;
-int 	tds_default_numeric_scale = 8;
-bool	tds_ssl_encrypt = false;
-int 	tds_default_protocol_version = 0;
-int32_t tds_default_packet_size = 4096;
-int	tds_debug_log_level = 1;
-char*	product_version = "default";
+char	   *default_server_name = NULL;
+int			tds_default_numeric_precision = 38;
+int			tds_default_numeric_scale = 8;
+bool		tds_ssl_encrypt = false;
+int			tds_default_protocol_version = 0;
+int32_t		tds_default_packet_size = 4096;
+int			tds_debug_log_level = 1;
+char	   *product_version = "default";
 
 #ifdef FAULT_INJECTOR
 static bool TdsFaultInjectionEnabled = false;
 #endif
-bool enable_drop_babelfish_role = false;
+bool		enable_drop_babelfish_role = false;
 
 const struct config_enum_entry ssl_protocol_versions_info[] = {
 	{"", PG_TLS_ANY, false},
@@ -78,7 +78,7 @@ TdsSslProtocolMinVersionCheck(int *newvalue, void **extra, GucSource source)
 	else
 	{
 		GUC_check_errmsg("TDS SSL Min Protocol Version 0x%X  more than TDS SSL Max Protocol Version 0x%x",
-				*newvalue, tds_ssl_max_protocol_version);
+						 *newvalue, tds_ssl_max_protocol_version);
 		return false;
 	}
 }
@@ -95,7 +95,7 @@ TdsSslProtocolMaxVersionCheck(int *newvalue, void **extra, GucSource source)
 	else
 	{
 		GUC_check_errmsg("TDS SSL Max Protocol Version 0x%X  less than TDS SSL Min Protocol Version 0x%x",
-				*newvalue, tds_ssl_min_protocol_version);
+						 *newvalue, tds_ssl_min_protocol_version);
 		return false;
 	}
 }
@@ -113,73 +113,75 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 	return true;
 }
 
-static bool 
+static bool
 check_version_number(char **newval, void **extra, GucSource source)
 {
-	char 		*copy_version_number;
-	char		*token;
-	int 		part = 0,
-	    		len = 0;
+	char	   *copy_version_number;
+	char	   *token;
+	int			part = 0,
+				len = 0;
 
 	Assert(*newval != NULL);
-	if(pg_strcasecmp(*newval,"default") == 0)
+	if (pg_strcasecmp(*newval, "default") == 0)
 		return true;
 	len = strlen(*newval);
 	copy_version_number = palloc0(len + 1);
 	memcpy(copy_version_number, *newval, len);
 	for (token = strtok(copy_version_number, "."); token; token = strtok(NULL, "."))
-	{	
+	{
 		/* check each token contains only digits */
-		if(strspn(token, "0123456789") != strlen(token))
+		if (strspn(token, "0123456789") != strlen(token))
 		{
 			ereport(WARNING,
-				(errmsg("babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by \'.\' ")));
+					(errmsg("babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by \'.\' ")));
 			*newval = product_version;
 			return true;
 		}
-		
+
 		/* check Major Version is between 11 and 16 */
-		if(part == 0 && (11 > atoi(token) || atoi(token) > 16))
+		if (part == 0 && (11 > atoi(token) || atoi(token) > 16))
 		{
 			ereport(WARNING,
-				(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16")));
+					(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16")));
 			*newval = product_version;
 			return true;
 		}
+
 		/*
-		 * Minor Version takes 1 byte in PreLogin message when doing handshake, 
-		 * here to check it is between 0 and 0xFF
+		 * Minor Version takes 1 byte in PreLogin message when doing
+		 * handshake, here to check it is between 0 and 0xFF
 		 */
-		if(part == 1 && atoi(token) > 0xFF)
+		if (part == 1 && atoi(token) > 0xFF)
 		{
 			ereport(WARNING,
-				(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255")));
+					(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255")));
 			*newval = product_version;
 			return true;
 		}
+
 		/*
-		 * Micro Version takes 2 bytes in PreLogin message when doing handshake,
-		 * here to check it is between 0 and 0xFFFF
+		 * Micro Version takes 2 bytes in PreLogin message when doing
+		 * handshake, here to check it is between 0 and 0xFFFF
 		 */
-		if(part == 2 && atoi(token) > 0xFFFF)
+		if (part == 2 && atoi(token) > 0xFFFF)
 		{
 			ereport(WARNING,
-				(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535")));
+					(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535")));
 			*newval = product_version;
 			return true;
 		}
 		part++;
 	}
 
-	if(part != 4)
+	if (part != 4)
 	{
 		ereport(WARNING,
-			(errmsg("babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by \'.\' ")));
+				(errmsg("babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by \'.\' ")));
 		*newval = product_version;
 		return true;
 	}
 
-    return true;
+	return true;
 }
 
 /*
@@ -190,198 +192,198 @@ TdsDefineGucs(void)
 {
 	/* Define TDS specific GUCs */
 	DefineCustomIntVariable(
-                "babelfishpg_tds.port",
-                gettext_noop("Sets the TDS TCP port the server listens on."),
-                NULL,
-                &pe_port,
-                1433, 1024, 65536,
-                PGC_POSTMASTER,
-                GUC_NOT_IN_SAMPLE,
-                NULL, NULL, NULL);
+							"babelfishpg_tds.port",
+							gettext_noop("Sets the TDS TCP port the server listens on."),
+							NULL,
+							&pe_port,
+							1433, 1024, 65536,
+							PGC_POSTMASTER,
+							GUC_NOT_IN_SAMPLE,
+							NULL, NULL, NULL);
 
 	DefineCustomStringVariable(
-                "babelfishpg_tds.listen_addresses",
-                gettext_noop("Sets the host name or IP address(es) to listen TDS to."),
-                NULL,
-                &pe_listen_addrs,
-                "*",
-                PGC_POSTMASTER,
-                GUC_NOT_IN_SAMPLE,
-                NULL, NULL, NULL);
+							   "babelfishpg_tds.listen_addresses",
+							   gettext_noop("Sets the host name or IP address(es) to listen TDS to."),
+							   NULL,
+							   &pe_listen_addrs,
+							   "*",
+							   PGC_POSTMASTER,
+							   GUC_NOT_IN_SAMPLE,
+							   NULL, NULL, NULL);
 
 	DefineCustomStringVariable(
-                "babelfishpg_tds.unix_socket_directories",
-                gettext_noop("TDS server unix socket directories."),
-                NULL,
-                &pe_unix_socket_directories,
-                NULL,
-                PGC_POSTMASTER,
-                GUC_NOT_IN_SAMPLE,
-                NULL, NULL, NULL);
+							   "babelfishpg_tds.unix_socket_directories",
+							   gettext_noop("TDS server unix socket directories."),
+							   NULL,
+							   &pe_unix_socket_directories,
+							   NULL,
+							   PGC_POSTMASTER,
+							   GUC_NOT_IN_SAMPLE,
+							   NULL, NULL, NULL);
 
 	DefineCustomIntVariable(
-                "babelfishpg_tds.unix_socket_permissions",
-                gettext_noop("TDS server unix socket permissions."),
-                NULL,
-                &pe_unix_socket_permissions,
-                0777, 0, 0777,
-                PGC_POSTMASTER,
-                GUC_NOT_IN_SAMPLE,
-                NULL, NULL, NULL);
+							"babelfishpg_tds.unix_socket_permissions",
+							gettext_noop("TDS server unix socket permissions."),
+							NULL,
+							&pe_unix_socket_permissions,
+							0777, 0, 0777,
+							PGC_POSTMASTER,
+							GUC_NOT_IN_SAMPLE,
+							NULL, NULL, NULL);
 
 	DefineCustomStringVariable(
-                "babelfishpg_tds.unix_socket_group",
-                gettext_noop("TDS server unix socket group."),
-                NULL,
-                &pe_unix_socket_group,
-                NULL,
-                PGC_POSTMASTER,
-                GUC_NOT_IN_SAMPLE,
-                NULL, NULL, NULL);
+							   "babelfishpg_tds.unix_socket_group",
+							   gettext_noop("TDS server unix socket group."),
+							   NULL,
+							   &pe_unix_socket_group,
+							   NULL,
+							   PGC_POSTMASTER,
+							   GUC_NOT_IN_SAMPLE,
+							   NULL, NULL, NULL);
 
 	DefineCustomStringVariable(
-                "babelfishpg_tds.default_server_name",
-                gettext_noop("Predefined Babelfish default server name"),
-                NULL,
-                &default_server_name,
-                TDS_DEFAULT_SERVER_NAME,
-                PGC_SIGHUP,
-                GUC_NOT_IN_SAMPLE,
-                NULL, NULL, NULL);
+							   "babelfishpg_tds.default_server_name",
+							   gettext_noop("Predefined Babelfish default server name"),
+							   NULL,
+							   &default_server_name,
+							   TDS_DEFAULT_SERVER_NAME,
+							   PGC_SIGHUP,
+							   GUC_NOT_IN_SAMPLE,
+							   NULL, NULL, NULL);
 
 	DefineCustomStringVariable("babelfishpg_tds.product_version",
-				 gettext_noop("Sets the Product Version returned by Babelfish"),
-				 NULL,
-				 &product_version,
-				 "default",
-				 PGC_USERSET,
-				 GUC_NOT_IN_SAMPLE,
-				 check_version_number, NULL, NULL);
+							   gettext_noop("Sets the Product Version returned by Babelfish"),
+							   NULL,
+							   &product_version,
+							   "default",
+							   PGC_USERSET,
+							   GUC_NOT_IN_SAMPLE,
+							   check_version_number, NULL, NULL);
 
 	DefineCustomIntVariable(
-		"babelfishpg_tds.tds_default_numeric_precision",
-		gettext_noop("Sets the default precision of numeric type to be sent in"
-			"the TDS column metadata if the engine does not specify one."),
-		NULL,
-		&tds_default_numeric_precision,
-		38, 1, 38,
-		PGC_SIGHUP,
-		GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+							"babelfishpg_tds.tds_default_numeric_precision",
+							gettext_noop("Sets the default precision of numeric type to be sent in"
+										 "the TDS column metadata if the engine does not specify one."),
+							NULL,
+							&tds_default_numeric_precision,
+							38, 1, 38,
+							PGC_SIGHUP,
+							GUC_NOT_IN_SAMPLE,
+							NULL, NULL, NULL);
 
 	DefineCustomIntVariable(
-		"babelfishpg_tds.tds_default_numeric_scale",
-		gettext_noop("Sets the default scale of numeric type to be sent in"
-			"the TDS column metadata if the engine does not specify one."),
-		NULL,
-		&tds_default_numeric_scale,
-		8, 0, 38,
-		PGC_SIGHUP,
-		GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+							"babelfishpg_tds.tds_default_numeric_scale",
+							gettext_noop("Sets the default scale of numeric type to be sent in"
+										 "the TDS column metadata if the engine does not specify one."),
+							NULL,
+							&tds_default_numeric_scale,
+							8, 0, 38,
+							PGC_SIGHUP,
+							GUC_NOT_IN_SAMPLE,
+							NULL, NULL, NULL);
 
 	DefineCustomBoolVariable(
-		"babelfishpg_tds.tds_ssl_encrypt",
-		gettext_noop("Sets the SSL Encryption option"),
-		NULL,
-		&tds_ssl_encrypt,
-		false,
-		PGC_SIGHUP,
-		GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+							 "babelfishpg_tds.tds_ssl_encrypt",
+							 gettext_noop("Sets the SSL Encryption option"),
+							 NULL,
+							 &tds_ssl_encrypt,
+							 false,
+							 PGC_SIGHUP,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL, NULL, NULL);
 
 	DefineCustomEnumVariable(
-		"babelfishpg_tds.tds_default_protocol_version",
-		gettext_noop("Sets a default TDS protocol version for"
-			"all the clients being connected"),
-		NULL,
-		&tds_default_protocol_version,
-		TDS_DEFAULT_VERSION, tds_protocol_versions_info,
-		PGC_SIGHUP,
-		GUC_NOT_IN_SAMPLE,
-		NULL,
-		NULL,
-		NULL);
+							 "babelfishpg_tds.tds_default_protocol_version",
+							 gettext_noop("Sets a default TDS protocol version for"
+										  "all the clients being connected"),
+							 NULL,
+							 &tds_default_protocol_version,
+							 TDS_DEFAULT_VERSION, tds_protocol_versions_info,
+							 PGC_SIGHUP,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL,
+							 NULL,
+							 NULL);
 
 	DefineCustomEnumVariable(
-		"babelfishpg_tds.tds_ssl_max_protocol_version",
-		gettext_noop("Sets the minimum SSL/TLS protocol version to use"
-				"for tds session."),
-		NULL,
-		&tds_ssl_max_protocol_version,
-		PG_TLS1_2_VERSION, ssl_protocol_versions_info + 1,
-		PGC_SIGHUP,
-		GUC_NOT_IN_SAMPLE,
-		TdsSslProtocolMaxVersionCheck,
-		NULL,
-		NULL);
+							 "babelfishpg_tds.tds_ssl_max_protocol_version",
+							 gettext_noop("Sets the minimum SSL/TLS protocol version to use"
+										  "for tds session."),
+							 NULL,
+							 &tds_ssl_max_protocol_version,
+							 PG_TLS1_2_VERSION, ssl_protocol_versions_info + 1,
+							 PGC_SIGHUP,
+							 GUC_NOT_IN_SAMPLE,
+							 TdsSslProtocolMaxVersionCheck,
+							 NULL,
+							 NULL);
 
 	DefineCustomEnumVariable(
-		"babelfishpg_tds.tds_ssl_min_protocol_version",
-		gettext_noop("Sets the minimum SSL/TLS protocol version to use"
-				"for tds session."),
-		NULL,
-		&tds_ssl_min_protocol_version,
-		PG_TLS1_VERSION, ssl_protocol_versions_info,
-		PGC_SIGHUP,
-		GUC_NOT_IN_SAMPLE,
-		TdsSslProtocolMinVersionCheck,
-		NULL,
-		NULL);
+							 "babelfishpg_tds.tds_ssl_min_protocol_version",
+							 gettext_noop("Sets the minimum SSL/TLS protocol version to use"
+										  "for tds session."),
+							 NULL,
+							 &tds_ssl_min_protocol_version,
+							 PG_TLS1_VERSION, ssl_protocol_versions_info,
+							 PGC_SIGHUP,
+							 GUC_NOT_IN_SAMPLE,
+							 TdsSslProtocolMinVersionCheck,
+							 NULL,
+							 NULL);
 
 	DefineCustomIntVariable(
-		"babelfishpg_tds.tds_default_packet_size",
-		gettext_noop("Sets the default packet size for"
-			"all the clients being connected"),
-		NULL,
-		&tds_default_packet_size,
-		4096, 512, 32767,
-		PGC_SIGHUP,
-		GUC_NOT_IN_SAMPLE,
-		TdsGucDefaultPacketSizeCheck,
-		NULL,
-		NULL);
+							"babelfishpg_tds.tds_default_packet_size",
+							gettext_noop("Sets the default packet size for"
+										 "all the clients being connected"),
+							NULL,
+							&tds_default_packet_size,
+							4096, 512, 32767,
+							PGC_SIGHUP,
+							GUC_NOT_IN_SAMPLE,
+							TdsGucDefaultPacketSizeCheck,
+							NULL,
+							NULL);
 
 	DefineCustomIntVariable(
-		"babelfishpg_tds.tds_debug_log_level",
-		gettext_noop("Sets the tds debug log level"),
-		NULL,
-		&tds_debug_log_level,
-		1, 0, 3,
-		PGC_SIGHUP,
-		GUC_NOT_IN_SAMPLE,
-		NULL,
-		NULL,
-		NULL);
+							"babelfishpg_tds.tds_debug_log_level",
+							gettext_noop("Sets the tds debug log level"),
+							NULL,
+							&tds_debug_log_level,
+							1, 0, 3,
+							PGC_SIGHUP,
+							GUC_NOT_IN_SAMPLE,
+							NULL,
+							NULL,
+							NULL);
 
 	/*
 	 * Enable user to drop a babelfish role while not in a babelfish setting.
 	 */
 	DefineCustomBoolVariable(
-		"enable_drop_babelfish_role",
-		gettext_noop("Enables dropping a babelfish role"),
-		NULL,
-		&enable_drop_babelfish_role,
-		false,
-		PGC_USERSET,
-		GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-		NULL,
-		NULL,
-		NULL);
+							 "enable_drop_babelfish_role",
+							 gettext_noop("Enables dropping a babelfish role"),
+							 NULL,
+							 &enable_drop_babelfish_role,
+							 false,
+							 PGC_USERSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL,
+							 NULL,
+							 NULL);
 
 /* the guc is accessible only if it's compiled with fault injection flag */
 #ifdef FAULT_INJECTOR
 	if (!TdsFaultInjectionEnabled)
 	{
 		DefineCustomBoolVariable(
-			"babelfishpg_tds.trigger_fault_enabled",
-			gettext_noop("Enable fault injection triggers"),
-			NULL,
-			&trigger_fault_injection,
-			true,
-			PGC_SUSET,
-			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE,
-			NULL, NULL, NULL);
+								 "babelfishpg_tds.trigger_fault_enabled",
+								 gettext_noop("Enable fault injection triggers"),
+								 NULL,
+								 &trigger_fault_injection,
+								 true,
+								 PGC_SUSET,
+								 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE,
+								 NULL, NULL, NULL);
 		TdsFaultInjectionEnabled = true;
 	}
 #endif

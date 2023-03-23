@@ -17,9 +17,9 @@
 void
 tsql_for_datetime_format(StringInfo format_output, const char *outputstr)
 {
-	char *date;
-	char *spaceptr = strstr(outputstr, " ");
-	int len;
+	char	   *date;
+	char	   *spaceptr = strstr(outputstr, " ");
+	int			len;
 
 	len = spaceptr - outputstr;
 	date = palloc(len + 1);
@@ -39,9 +39,12 @@ tsql_for_datetime_format(StringInfo format_output, const char *outputstr)
 void
 tsql_for_datetimeoffset_format(StringInfo format_output, const char *str)
 {
-	char *date, *endptr, *time, *offset;
-	char *spaceptr = strstr(str, " ");
-	int len;
+	char	   *date,
+			   *endptr,
+			   *time,
+			   *offset;
+	char	   *spaceptr = strstr(str, " ");
+	int			len;
 
 	/* append date part of string */
 	len = spaceptr - str;
@@ -59,7 +62,7 @@ tsql_for_datetimeoffset_format(StringInfo format_output, const char *str)
 	strncpy(time, endptr, len);
 	time[len] = '\0';
 	appendStringInfoString(format_output, time);
-	
+
 	/* append either timezone offset or Z if offset is 0 */
 	offset = ++spaceptr;
 	if (strcmp(offset, "+00:00") == 0)

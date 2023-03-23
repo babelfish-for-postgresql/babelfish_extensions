@@ -13,7 +13,7 @@ static unsigned char *do_encoding_conversion(unsigned char *src, int len, int sr
 
 /*
  * Convert server encoding to any encoding or vice-versa.
- * 
+ *
  * s: input string encoded in server's encoding
  * len: byte length of input string s
  * src_encoding: encoding from which input string should be encoded to dest_encoding
@@ -29,12 +29,12 @@ encoding_conv_util(const char *s, int len, int src_encoding, int dest_encoding, 
 		*encodedByteLen = len;
 		return (char *) s;		/* empty string is always valid */
 	}
-	
+
 	return (char *) do_encoding_conversion((unsigned char *) s,
-											  len,
-											  src_encoding,
-											  dest_encoding,
-											  encodedByteLen);
+										   len,
+										   src_encoding,
+										   dest_encoding,
+										   encodedByteLen);
 }
 
 /*
@@ -43,7 +43,7 @@ encoding_conv_util(const char *s, int len, int src_encoding, int dest_encoding, 
  */
 static unsigned char *
 do_encoding_conversion(unsigned char *src, int len,
-						  int src_encoding, int dest_encoding, int *encodedByteLen)
+					   int src_encoding, int dest_encoding, int *encodedByteLen)
 {
 	unsigned char *result;
 
@@ -75,6 +75,7 @@ do_encoding_conversion(unsigned char *src, int len,
 
 	if (!IsTransactionState())	/* shouldn't happen */
 		elog(ERROR, "cannot perform encoding conversion outside a transaction");
+
 	/*
 	 * Allocate space for conversion result, being wary of integer overflow.
 	 *
@@ -99,19 +100,19 @@ do_encoding_conversion(unsigned char *src, int len,
 	{
 		switch (dest_encoding)
 		{
-		case PG_BIG5:
+			case PG_BIG5:
 				*encodedByteLen = utf8_to_big5(src_encoding, dest_encoding, src, result, len);
 				break;
-		case PG_GBK:
+			case PG_GBK:
 				*encodedByteLen = utf8_to_gbk(src_encoding, dest_encoding, src, result, len);
 				break;
-		case PG_UHC:
+			case PG_UHC:
 				*encodedByteLen = utf8_to_uhc(src_encoding, dest_encoding, src, result, len);
 				break;
-		case PG_SJIS:
+			case PG_SJIS:
 				*encodedByteLen = utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
 				break;
-		default:
+			default:
 				*encodedByteLen = utf8_to_win(src_encoding, dest_encoding, src, result, len);
 				break;
 		}
@@ -137,6 +138,7 @@ do_encoding_conversion(unsigned char *src, int len,
 				break;
 		}
 	}
+
 	/*
 	 * If the result is large, it's worth repalloc'ing to release any extra
 	 * space we asked for.  The cutoff here is somewhat arbitrary, but we

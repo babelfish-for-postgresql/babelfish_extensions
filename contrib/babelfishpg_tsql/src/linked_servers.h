@@ -5,14 +5,14 @@
 
 #define MAX_COLS_SELECT 4096
 
-#define	XSYBCHAR 175            /* 0xAF */
-#define	XSYBVARCHAR 167	        /* 0xA7 */
-#define	XSYBNVARCHAR 231	/* 0xE7 */
-#define	XSYBNCHAR 239	        /* 0xEF */
-#define	XSYBVARBINARY 165	/* 0xA5 */
-#define	XSYBBINARY 173	        /* 0xAD */
-#define	SYBMSXML 241		/* 0xF1 */
-#define	SYBUNIQUE 36		/* 0x24 */
+#define	XSYBCHAR 175			/* 0xAF */
+#define	XSYBVARCHAR 167			/* 0xA7 */
+#define	XSYBNVARCHAR 231		/* 0xE7 */
+#define	XSYBNCHAR 239			/* 0xEF */
+#define	XSYBVARBINARY 165		/* 0xA5 */
+#define	XSYBBINARY 173			/* 0xAD */
+#define	SYBMSXML 241			/* 0xF1 */
+#define	SYBUNIQUE 36			/* 0x24 */
 
 #define TSQL_IMAGE		SYBIMAGE
 #define TSQL_VARBINARY		SYBVARBINARY
@@ -56,23 +56,23 @@
 
 typedef struct
 {
-	uint64_t   time;	/**< time, 7 digit precision */
-	int32_t      date;	/**< date, 0 = 1900-01-01 */
-	int16_t offset;	/**< time offset */
-	uint16_t time_prec3;
-	uint16_t _tds_reserved10;
-	uint16_t has_time1;
-	uint16_t has_date1;
-	uint16_t has_offset1;
-} LS_TDS_DATETIMEALL;
+	uint64_t	time;			/**< time, 7 digit precision */
+	int32_t		date;			/**< date, 0 = 1900-01-01 */
+	int16_t		offset;			/**< time offset */
+	uint16_t	time_prec3;
+	uint16_t	_tds_reserved10;
+	uint16_t	has_time1;
+	uint16_t	has_date1;
+	uint16_t	has_offset1;
+}			LS_TDS_DATETIMEALL;
 
 #define LS_TDS_NUMERIC	DBNUMERIC
 #define LS_INT_CANCEL	INT_CANCEL
 
 typedef int LINKED_SERVER_RETCODE;
 
-typedef LOGINREC *LinkedServerLogin;
-typedef DBPROCESS *LinkedServerProcess;
+typedef LOGINREC * LinkedServerLogin;
+typedef DBPROCESS * LinkedServerProcess;
 
 #define LINKED_SERVER_INIT(void)			dbinit(void)
 #define LINKED_SERVER_ERR_HANDLE(h)			dberrhandle(h)

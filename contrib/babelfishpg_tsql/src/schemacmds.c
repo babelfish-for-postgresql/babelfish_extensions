@@ -22,16 +22,19 @@
 
 static bool has_ext_info(const char *schemaname);
 
-void 
+void
 add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *orig_name)
 {
-	Relation 	rel;
-	Datum		*new_record;
-	bool        *new_record_nulls;
+	Relation	rel;
+	Datum	   *new_record;
+	bool	   *new_record_nulls;
 	HeapTuple	tuple;
-	int16        db_id = get_cur_db_id();
+	int16		db_id = get_cur_db_id();
 
-	/* orig_name will be provided only when queryString is not valid. e.g CREATE LOGICLA DATABASE */
+	/*
+	 * orig_name will be provided only when queryString is not valid. e.g
+	 * CREATE LOGICLA DATABASE
+	 */
 	if (!orig_name)
 	{
 		if (stmt->location != -1 && queryString)
@@ -51,7 +54,7 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 	new_record[0] = CStringGetDatum(stmt->schemaname);
 	new_record[1] = Int16GetDatum(db_id);
 	new_record[2] = CStringGetTextDatum(orig_name);
-	new_record[3] = CStringGetTextDatum("{}"); /* place holder */
+	new_record[3] = CStringGetTextDatum("{}");	/* place holder */
 
 	tuple = heap_form_tuple(RelationGetDescr(rel),
 							new_record, new_record_nulls);
@@ -62,10 +65,10 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 	CommandCounterIncrement();
 }
 
-void 
+void
 del_ns_ext_info(const char *schemaname, bool missing_ok)
 {
-	Relation 	rel;
+	Relation	rel;
 	HeapTuple	tuple;
 	ScanKeyData scanKey;
 	SysScanDesc scan;
@@ -105,34 +108,38 @@ check_extra_schema_restrictions(Node *stmt)
 {
 	if (sql_dialect == SQL_DIALECT_PG)
 	{
-		switch(nodeTag(stmt))
+		switch (nodeTag(stmt))
 		{
 			case T_DropStmt:
-			{
-				DropStmt *drop_stmt = (DropStmt *) stmt;
-				if (drop_stmt->removeType == OBJECT_SCHEMA)
 				{
-					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
-					if (has_ext_info(schemaname))
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								 errmsg("Could not drop schema created under T-SQL dialect: \"%s\"", schemaname)));
+					DropStmt   *drop_stmt = (DropStmt *) stmt;
+
+					if (drop_stmt->removeType == OBJECT_SCHEMA)
+					{
+						const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
+
+						if (has_ext_info(schemaname))
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									 errmsg("Could not drop schema created under T-SQL dialect: \"%s\"", schemaname)));
+					}
+					break;
 				}
-				break;
-			}
 			case T_RenameStmt:
-			{
-				RenameStmt *rename_stmt = (RenameStmt *) stmt;
-				if (rename_stmt->renameType == OBJECT_SCHEMA)
 				{
-					const char *schemaname = rename_stmt->subname;
-					if (has_ext_info(schemaname))
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								 errmsg("Could not rename schema created under T-SQL dialect: \"%s\"", schemaname)));
+					RenameStmt *rename_stmt = (RenameStmt *) stmt;
+
+					if (rename_stmt->renameType == OBJECT_SCHEMA)
+					{
+						const char *schemaname = rename_stmt->subname;
+
+						if (has_ext_info(schemaname))
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									 errmsg("Could not rename schema created under T-SQL dialect: \"%s\"", schemaname)));
+					}
+					break;
 				}
-				break;
-			}
 			default:
 				break;
 		}
@@ -142,11 +149,11 @@ check_extra_schema_restrictions(Node *stmt)
 static bool
 has_ext_info(const char *schemaname)
 {
-	Relation 	rel;
+	Relation	rel;
 	HeapTuple	tuple;
 	ScanKeyData scanKey;
 	SysScanDesc scan;
-	bool        found = true;
+	bool		found = true;
 
 	rel = table_open(namespace_ext_oid, AccessShareLock);
 	ScanKeyInit(&scanKey,

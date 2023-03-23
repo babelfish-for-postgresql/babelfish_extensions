@@ -64,11 +64,11 @@
 #include "guc.h"
 #include "catalog.h"
 
-uint64 rowcount_var = 0;
-List *columns_updated_list = NIL;
+uint64		rowcount_var = 0;
+List	   *columns_updated_list = NIL;
 static char *original_query_string = NULL;
 
-int fetch_status_var = 0;
+int			fetch_status_var = 0;
 
 typedef struct
 {
@@ -169,7 +169,7 @@ typedef struct					/* lookup key for cast info */
 
 typedef struct					/* cast_hash table entry */
 {
-	pltsql_CastHashKey key;	/* hash key --- MUST BE FIRST */
+	pltsql_CastHashKey key;		/* hash key --- MUST BE FIRST */
 	Expr	   *cast_expr;		/* cast expression, or NULL if no-op cast */
 	CachedExpression *cast_cexpr;	/* cached expression backing the above */
 	/* ExprState is valid only when cast_lxid matches current LXID */
@@ -259,178 +259,178 @@ static HTAB *shared_cast_hash = NULL;
  * Local function forward declarations
  ************************************************************/
 static void coerce_function_result_tuple(PLtsql_execstate *estate,
-							 TupleDesc tupdesc);
+										 TupleDesc tupdesc);
 static void pltsql_exec_error_callback(void *arg);
-void copy_pltsql_datums(PLtsql_execstate *estate,
-					PLtsql_function *func);
+void		copy_pltsql_datums(PLtsql_execstate *estate,
+							   PLtsql_function *func);
 static void pltsql_fulfill_promise(PLtsql_execstate *estate,
-						PLtsql_var *var);
+								   PLtsql_var *var);
 static MemoryContext get_stmt_mcontext(PLtsql_execstate *estate);
 static void push_stmt_mcontext(PLtsql_execstate *estate);
 static void pop_stmt_mcontext(PLtsql_execstate *estate);
 
-static int exec_stmt_block(PLtsql_execstate *estate,
-				PLtsql_stmt_block *block);
-static int exec_stmts(PLtsql_execstate *estate,
-		   List *stmts);
-static int exec_stmt(PLtsql_execstate *estate,
-		  PLtsql_stmt *stmt);
-static int exec_stmt_assign(PLtsql_execstate *estate,
-				 PLtsql_stmt_assign *stmt);
-static int exec_stmt_perform(PLtsql_execstate *estate,
-				  PLtsql_stmt_perform *stmt);
-static int exec_stmt_call(PLtsql_execstate *estate,
-			   PLtsql_stmt_call *stmt);
-static int exec_stmt_getdiag(PLtsql_execstate *estate,
-				  PLtsql_stmt_getdiag *stmt);
-static int exec_stmt_if(PLtsql_execstate *estate,
-			 PLtsql_stmt_if *stmt);
-static int exec_stmt_case(PLtsql_execstate *estate,
-			   PLtsql_stmt_case *stmt);
-static int exec_stmt_loop(PLtsql_execstate *estate,
-			   PLtsql_stmt_loop *stmt);
-static int exec_stmt_while(PLtsql_execstate *estate,
-				PLtsql_stmt_while *stmt);
-static int exec_stmt_fori(PLtsql_execstate *estate,
-			   PLtsql_stmt_fori *stmt);
-static int exec_stmt_fors(PLtsql_execstate *estate,
-			   PLtsql_stmt_fors *stmt);
-static int exec_stmt_forc(PLtsql_execstate *estate,
-			   PLtsql_stmt_forc *stmt);
-static int exec_stmt_foreach_a(PLtsql_execstate *estate,
-					PLtsql_stmt_foreach_a *stmt);
-static int exec_stmt_open(PLtsql_execstate *estate,
-			   PLtsql_stmt_open *stmt);
-static int exec_stmt_fetch(PLtsql_execstate *estate,
-				PLtsql_stmt_fetch *stmt);
-static int exec_stmt_close(PLtsql_execstate *estate,
-				PLtsql_stmt_close *stmt);
-static int exec_stmt_exit(PLtsql_execstate *estate,
-			   PLtsql_stmt_exit *stmt);
-static int exec_stmt_return(PLtsql_execstate *estate,
-				 PLtsql_stmt_return *stmt);
-static int exec_stmt_return_next(PLtsql_execstate *estate,
-					  PLtsql_stmt_return_next *stmt);
-static int exec_stmt_return_query(PLtsql_execstate *estate,
-					   PLtsql_stmt_return_query *stmt);
-static int exec_stmt_raise(PLtsql_execstate *estate,
-				PLtsql_stmt_raise *stmt);
-static int exec_stmt_assert(PLtsql_execstate *estate,
-				 PLtsql_stmt_assert *stmt);
-static int exec_stmt_execsql(PLtsql_execstate *estate,
-				  PLtsql_stmt_execsql *stmt);
-static void updateColumnUpdatedList(PLtsql_expr* expr, int i);
-static int exec_stmt_dynexecute(PLtsql_execstate *estate,
-					 PLtsql_stmt_dynexecute *stmt);
-static int exec_stmt_dynfors(PLtsql_execstate *estate,
-				  PLtsql_stmt_dynfors *stmt);
-static int exec_stmt_commit(PLtsql_execstate *estate,
-				 PLtsql_stmt_commit *stmt);
-static int exec_stmt_rollback(PLtsql_execstate *estate,
-				   PLtsql_stmt_rollback *stmt);
-static int exec_stmt_set(PLtsql_execstate *estate,
-			  PLtsql_stmt_set *stmt);
+static int	exec_stmt_block(PLtsql_execstate *estate,
+							PLtsql_stmt_block *block);
+static int	exec_stmts(PLtsql_execstate *estate,
+					   List *stmts);
+static int	exec_stmt(PLtsql_execstate *estate,
+					  PLtsql_stmt *stmt);
+static int	exec_stmt_assign(PLtsql_execstate *estate,
+							 PLtsql_stmt_assign *stmt);
+static int	exec_stmt_perform(PLtsql_execstate *estate,
+							  PLtsql_stmt_perform *stmt);
+static int	exec_stmt_call(PLtsql_execstate *estate,
+						   PLtsql_stmt_call *stmt);
+static int	exec_stmt_getdiag(PLtsql_execstate *estate,
+							  PLtsql_stmt_getdiag *stmt);
+static int	exec_stmt_if(PLtsql_execstate *estate,
+						 PLtsql_stmt_if *stmt);
+static int	exec_stmt_case(PLtsql_execstate *estate,
+						   PLtsql_stmt_case *stmt);
+static int	exec_stmt_loop(PLtsql_execstate *estate,
+						   PLtsql_stmt_loop *stmt);
+static int	exec_stmt_while(PLtsql_execstate *estate,
+							PLtsql_stmt_while *stmt);
+static int	exec_stmt_fori(PLtsql_execstate *estate,
+						   PLtsql_stmt_fori *stmt);
+static int	exec_stmt_fors(PLtsql_execstate *estate,
+						   PLtsql_stmt_fors *stmt);
+static int	exec_stmt_forc(PLtsql_execstate *estate,
+						   PLtsql_stmt_forc *stmt);
+static int	exec_stmt_foreach_a(PLtsql_execstate *estate,
+								PLtsql_stmt_foreach_a *stmt);
+static int	exec_stmt_open(PLtsql_execstate *estate,
+						   PLtsql_stmt_open *stmt);
+static int	exec_stmt_fetch(PLtsql_execstate *estate,
+							PLtsql_stmt_fetch *stmt);
+static int	exec_stmt_close(PLtsql_execstate *estate,
+							PLtsql_stmt_close *stmt);
+static int	exec_stmt_exit(PLtsql_execstate *estate,
+						   PLtsql_stmt_exit *stmt);
+static int	exec_stmt_return(PLtsql_execstate *estate,
+							 PLtsql_stmt_return *stmt);
+static int	exec_stmt_return_next(PLtsql_execstate *estate,
+								  PLtsql_stmt_return_next *stmt);
+static int	exec_stmt_return_query(PLtsql_execstate *estate,
+								   PLtsql_stmt_return_query *stmt);
+static int	exec_stmt_raise(PLtsql_execstate *estate,
+							PLtsql_stmt_raise *stmt);
+static int	exec_stmt_assert(PLtsql_execstate *estate,
+							 PLtsql_stmt_assert *stmt);
+static int	exec_stmt_execsql(PLtsql_execstate *estate,
+							  PLtsql_stmt_execsql *stmt);
+static void updateColumnUpdatedList(PLtsql_expr *expr, int i);
+static int	exec_stmt_dynexecute(PLtsql_execstate *estate,
+								 PLtsql_stmt_dynexecute *stmt);
+static int	exec_stmt_dynfors(PLtsql_execstate *estate,
+							  PLtsql_stmt_dynfors *stmt);
+static int	exec_stmt_commit(PLtsql_execstate *estate,
+							 PLtsql_stmt_commit *stmt);
+static int	exec_stmt_rollback(PLtsql_execstate *estate,
+							   PLtsql_stmt_rollback *stmt);
+static int	exec_stmt_set(PLtsql_execstate *estate,
+						  PLtsql_stmt_set *stmt);
 
-void pltsql_estate_setup(PLtsql_execstate *estate,
-					 PLtsql_function *func,
-					 ReturnSetInfo *rsi,
-					 EState *simple_eval_estate);
-void exec_eval_cleanup(PLtsql_execstate *estate);
+void		pltsql_estate_setup(PLtsql_execstate *estate,
+								PLtsql_function *func,
+								ReturnSetInfo *rsi,
+								EState *simple_eval_estate);
+void		exec_eval_cleanup(PLtsql_execstate *estate);
 
-int exec_fmtonly(PLtsql_execstate *estate,
-                        PLtsql_stmt_execsql *stmt);
+int			exec_fmtonly(PLtsql_execstate *estate,
+						 PLtsql_stmt_execsql *stmt);
 
 static void exec_check_rw_parameter(PLtsql_expr *expr, int target_dno);
 static bool contains_target_param(Node *node, int *target_dno);
 static bool exec_eval_simple_expr(PLtsql_execstate *estate,
-					  PLtsql_expr *expr,
-					  Datum *result,
-					  bool *isNull,
-					  Oid *rettype,
-					  int32 *rettypmod);
+								  PLtsql_expr *expr,
+								  Datum *result,
+								  bool *isNull,
+								  Oid *rettype,
+								  int32 *rettypmod);
 
 static void exec_assign_expr(PLtsql_execstate *estate,
-				 PLtsql_datum *target,
-				 PLtsql_expr *expr);
+							 PLtsql_datum *target,
+							 PLtsql_expr *expr);
 static void exec_assign_c_string(PLtsql_execstate *estate,
-					 PLtsql_datum *target,
-					 const char *str);
+								 PLtsql_datum *target,
+								 const char *str);
 static void exec_assign_value(PLtsql_execstate *estate,
-				  PLtsql_datum *target,
-				  Datum value, bool isNull,
-				  Oid valtype, int32 valtypmod);
+							  PLtsql_datum *target,
+							  Datum value, bool isNull,
+							  Oid valtype, int32 valtypmod);
 static void exec_eval_datum(PLtsql_execstate *estate,
-				PLtsql_datum *datum,
-				Oid *typeid,
-				int32 *typetypmod,
-				Datum *value,
-				bool *isnull);
-static int exec_eval_integer(PLtsql_execstate *estate,
-				  PLtsql_expr *expr,
-				  bool *isNull);
+							PLtsql_datum *datum,
+							Oid *typeid,
+							int32 *typetypmod,
+							Datum *value,
+							bool *isnull);
+static int	exec_eval_integer(PLtsql_execstate *estate,
+							  PLtsql_expr *expr,
+							  bool *isNull);
 static bool exec_eval_boolean(PLtsql_execstate *estate,
-				  PLtsql_expr *expr,
-				  bool *isNull);
+							  PLtsql_expr *expr,
+							  bool *isNull);
 static Datum exec_eval_expr(PLtsql_execstate *estate,
-			   PLtsql_expr *expr,
-			   bool *isNull,
-			   Oid *rettype,
-			   int32 *rettypmod);
-static int exec_run_select(PLtsql_execstate *estate,
-				PLtsql_expr *expr, long maxtuples, Portal *portalP);
-static int exec_for_query(PLtsql_execstate *estate, PLtsql_stmt_forq *stmt,
-			   Portal portal, bool prefetch_ok);
+							PLtsql_expr *expr,
+							bool *isNull,
+							Oid *rettype,
+							int32 *rettypmod);
+static int	exec_run_select(PLtsql_execstate *estate,
+							PLtsql_expr *expr, long maxtuples, Portal *portalP);
+static int	exec_for_query(PLtsql_execstate *estate, PLtsql_stmt_forq *stmt,
+						   Portal portal, bool prefetch_ok);
 static ParamListInfo setup_param_list(PLtsql_execstate *estate,
-				 PLtsql_expr *expr);
+									  PLtsql_expr *expr);
 static ParamExternData *pltsql_param_fetch(ParamListInfo params,
-					int paramid, bool speculative,
-					ParamExternData *workspace);
+										   int paramid, bool speculative,
+										   ParamExternData *workspace);
 static void pltsql_param_compile(ParamListInfo params, Param *param,
-					  ExprState *state,
-					  Datum *resv, bool *resnull);
+								 ExprState *state,
+								 Datum *resv, bool *resnull);
 static void pltsql_param_eval_var(ExprState *state, ExprEvalStep *op,
-					   ExprContext *econtext);
+								  ExprContext *econtext);
 static void pltsql_param_eval_var_ro(ExprState *state, ExprEvalStep *op,
-						  ExprContext *econtext);
+									 ExprContext *econtext);
 static void pltsql_param_eval_recfield(ExprState *state, ExprEvalStep *op,
-							ExprContext *econtext);
+									   ExprContext *econtext);
 static void pltsql_param_eval_generic(ExprState *state, ExprEvalStep *op,
-						   ExprContext *econtext);
+									  ExprContext *econtext);
 static void pltsql_param_eval_generic_ro(ExprState *state, ExprEvalStep *op,
-							  ExprContext *econtext);
+										 ExprContext *econtext);
 static void exec_move_row(PLtsql_execstate *estate,
-			  PLtsql_variable *target,
-			  HeapTuple tup, TupleDesc tupdesc);
+						  PLtsql_variable *target,
+						  HeapTuple tup, TupleDesc tupdesc);
 static void revalidate_rectypeid(PLtsql_rec *rec);
 static ExpandedRecordHeader *make_expanded_record_for_rec(PLtsql_execstate *estate,
-							 PLtsql_rec *rec,
-							 TupleDesc srctupdesc,
-							 ExpandedRecordHeader *srcerh);
+														  PLtsql_rec *rec,
+														  TupleDesc srctupdesc,
+														  ExpandedRecordHeader *srcerh);
 static void exec_move_row_from_fields(PLtsql_execstate *estate,
-						  PLtsql_variable *target,
-						  ExpandedRecordHeader *newerh,
-						  Datum *values, bool *nulls,
-						  TupleDesc tupdesc);
+									  PLtsql_variable *target,
+									  ExpandedRecordHeader *newerh,
+									  Datum *values, bool *nulls,
+									  TupleDesc tupdesc);
 static bool compatible_tupdescs(TupleDesc src_tupdesc, TupleDesc dst_tupdesc);
 static HeapTuple make_tuple_from_row(PLtsql_execstate *estate,
-					PLtsql_row *row,
-					TupleDesc tupdesc);
+									 PLtsql_row *row,
+									 TupleDesc tupdesc);
 static TupleDesc deconstruct_composite_datum(Datum value,
-							HeapTupleData *tmptup);
+											 HeapTupleData *tmptup);
 static void exec_move_row_from_datum(PLtsql_execstate *estate,
-						 PLtsql_variable *target,
-						 Datum value);
+									 PLtsql_variable *target,
+									 Datum value);
 static void instantiate_empty_record_variable(PLtsql_execstate *estate,
-								  PLtsql_rec *rec);
+											  PLtsql_rec *rec);
 static char *convert_value_to_string(PLtsql_execstate *estate,
-						Datum value, Oid valtype);
+									 Datum value, Oid valtype);
 static Datum exec_cast_value(PLtsql_execstate *estate,
-				Datum value, bool *isnull,
-				Oid valtype, int32 valtypmod,
-				Oid reqtype, int32 reqtypmod);
+							 Datum value, bool *isnull,
+							 Oid valtype, int32 valtypmod,
+							 Oid reqtype, int32 reqtypmod);
 static pltsql_CastHashEntry *get_cast_hashentry(PLtsql_execstate *estate,
-				   Oid srctype, int32 srctypmod,
-				   Oid dsttype, int32 dsttypmod);
+												Oid srctype, int32 srctypmod,
+												Oid dsttype, int32 dsttypmod);
 static void exec_init_tuple_store(PLtsql_execstate *estate);
 static void exec_set_found(PLtsql_execstate *estate, bool state);
 static void exec_set_fetch_status(PLtsql_execstate *estate, int status);
@@ -438,23 +438,23 @@ static void exec_set_rowcount(uint64 rowno);
 static void exec_set_error(PLtsql_execstate *estate, int error, int pg_error, bool error_mapping_failed);
 static void pltsql_create_econtext(PLtsql_execstate *estate);
 static void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
-void pltsql_destroy_econtext(PLtsql_execstate *estate);
-void pltsql_estate_cleanup(void);
+void		pltsql_destroy_econtext(PLtsql_execstate *estate);
+void		pltsql_estate_cleanup(void);
 static void assign_simple_var(PLtsql_execstate *estate, PLtsql_var *var,
-				  Datum newvalue, bool isnull, bool freeable);
-/*static*/ void assign_text_var(PLtsql_execstate *estate, PLtsql_var *var,
-				const char *str);
+							  Datum newvalue, bool isnull, bool freeable);
+ /* static */ void assign_text_var(PLtsql_execstate *estate, PLtsql_var *var,
+								   const char *str);
 static void assign_record_var(PLtsql_execstate *estate, PLtsql_rec *rec,
-				  ExpandedRecordHeader *erh);
+							  ExpandedRecordHeader *erh);
 static PreparedParamsData *exec_eval_using_params(PLtsql_execstate *estate,
-					   List *params);
+												  List *params);
 static Portal exec_dynquery_with_params(PLtsql_execstate *estate,
-						  PLtsql_expr *dynquery, List *params,
-						  const char *portalname, int cursorOptions);
+										PLtsql_expr *dynquery, List *params,
+										const char *portalname, int cursorOptions);
 static char *format_expr_params(PLtsql_execstate *estate,
-				   const PLtsql_expr *expr);
+								const PLtsql_expr *expr);
 static char *format_preparedparamsdata(PLtsql_execstate *estate,
-						  const PreparedParamsData *ppd);
+									   const PreparedParamsData *ppd);
 static void pltsql_update_identity_insert_sequence(PLtsql_expr *expr);
 
 static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func);
@@ -462,11 +462,11 @@ static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_functi
 static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
 static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
-static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool* reset_session_properties, bool inside_trigger);
+static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset_session_properties, bool inside_trigger);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
-extern void pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int* cursor_options);
+extern void pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int *cursor_options);
 extern void pltsql_update_cursor_fetch_status(char *curname, int fetch_status);
 extern void pltsql_update_cursor_row_count(char *curname, int64 row_count);
 extern void pltsql_update_cursor_last_operation(char *curname, int last_operation);
@@ -475,14 +475,14 @@ extern char *pltsql_demangle_curname(char *curname);
 extern bool suppress_string_truncation_error;
 
 
-extern void exec_prepare_plan(PLtsql_execstate *estate, 
-				  PLtsql_expr *expr, int cursorOptions,
-				  bool keepplan);
+extern void exec_prepare_plan(PLtsql_execstate *estate,
+							  PLtsql_expr *expr, int cursorOptions,
+							  bool keepplan);
 extern SPIPlanPtr prepare_stmt_execsql(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stmt_execsql *stmt, bool keepplan);
 extern void exec_save_simple_expr(PLtsql_expr *expr, CachedPlan *cplan);
 
 extern int
-execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamListInfo paramLI);
+			execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamListInfo paramLI);
 
 /* ----------
  * pltsql_exec_function	Called by the call handler for
@@ -499,7 +499,7 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
  */
 Datum
 pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
-					  EState *simple_eval_estate, bool atomic)
+					 EState *simple_eval_estate, bool atomic)
 {
 	PLtsql_execstate estate;
 	ErrorContextCallback plerrcontext;
@@ -510,7 +510,7 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	 * Setup the execution state
 	 */
 	pltsql_estate_setup(&estate, func, (ReturnSetInfo *) fcinfo->resultinfo,
-						 simple_eval_estate);
+						simple_eval_estate);
 	estate.atomic = atomic;
 
 	/*
@@ -634,7 +634,7 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	 * Set the magic variable FOUND to false
 	 */
 	exec_set_found(&estate, false);
-	exec_set_fetch_status(&estate, -9);  /* not fetching */
+	exec_set_fetch_status(&estate, -9); /* not fetching */
 
 	/*
 	 * Let the instrumentation plugin peek at this function
@@ -644,219 +644,226 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 
 	PG_TRY();
 	{
-	
-	ExecConfig_t config;
 
-	/*
-	 * Now call the toplevel block of statements
-	 */
-	estate.err_text = NULL;
-	estate.err_stmt = (PLtsql_stmt *) (func->action);
+		ExecConfig_t config;
 
-	config.trace_mode = 0;
-	if (pltsql_trace_exec_codes)
-		config.trace_mode |= TRACE_EXEC_CODES;
-	if (pltsql_trace_exec_counts)
-		config.trace_mode |= TRACE_EXEC_COUNTS;
-	if (pltsql_trace_exec_time)
-		config.trace_mode |= TRACE_EXEC_TIME;
-
-	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
-
-	if (rc != PLTSQL_RC_RETURN)
-	{
-		estate.err_stmt = NULL;
-		estate.err_text = NULL;
-		ereport(ERROR,
-				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-				 errmsg("control reached end of function without RETURN")));
-	}
-
-	/*
-	 * We got a return value - process it
-	 */
-	estate.err_stmt = NULL;
-	estate.err_text = gettext_noop("while casting return value to function's return type");
-
-	fcinfo->isnull = estate.retisnull;
-
-	if (estate.retisset || estate.insert_exec)
-	{
-		ReturnSetInfo *rsi = estate.rsi;
-
-		/* Check caller can handle a set result */
-		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-			(rsi->allowedModes & SFRM_Materialize) == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("set-valued function called in context that cannot accept a set")));
-		rsi->returnMode = SFRM_Materialize;
-
-		/* If we produced any tuples, send back the result */
-		if (estate.tuple_store)
-		{
-			MemoryContext oldcxt;
-
-			rsi->setResult = estate.tuple_store;
-			oldcxt = MemoryContextSwitchTo(estate.tuple_store_cxt);
-			rsi->setDesc = CreateTupleDescCopy(estate.tuple_store_desc);
-			MemoryContextSwitchTo(oldcxt);
-		}
-		estate.retval = (Datum) 0;
-		fcinfo->isnull = true;
-	}
-	else if (!estate.retisnull)
-	{
 		/*
-		 * Cast result value to function's declared result type, and copy it
-		 * out to the upper executor memory context.  We must treat tuple
-		 * results specially in order to deal with cases like rowtypes
-		 * involving dropped columns.
+		 * Now call the toplevel block of statements
 		 */
-		if (estate.retistuple)
+		estate.err_text = NULL;
+		estate.err_stmt = (PLtsql_stmt *) (func->action);
+
+		config.trace_mode = 0;
+		if (pltsql_trace_exec_codes)
+			config.trace_mode |= TRACE_EXEC_CODES;
+		if (pltsql_trace_exec_counts)
+			config.trace_mode |= TRACE_EXEC_COUNTS;
+		if (pltsql_trace_exec_time)
+			config.trace_mode |= TRACE_EXEC_TIME;
+
+		rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
+
+		if (rc != PLTSQL_RC_RETURN)
 		{
-			/* Don't need coercion if rowtype is known to match */
-			if (func->fn_rettype == estate.rettype &&
-				func->fn_rettype != RECORDOID)
+			estate.err_stmt = NULL;
+			estate.err_text = NULL;
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+					 errmsg("control reached end of function without RETURN")));
+		}
+
+		/*
+		 * We got a return value - process it
+		 */
+		estate.err_stmt = NULL;
+		estate.err_text = gettext_noop("while casting return value to function's return type");
+
+		fcinfo->isnull = estate.retisnull;
+
+		if (estate.retisset || estate.insert_exec)
+		{
+			ReturnSetInfo *rsi = estate.rsi;
+
+			/* Check caller can handle a set result */
+			if (!rsi || !IsA(rsi, ReturnSetInfo) ||
+				(rsi->allowedModes & SFRM_Materialize) == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("set-valued function called in context that cannot accept a set")));
+			rsi->returnMode = SFRM_Materialize;
+
+			/* If we produced any tuples, send back the result */
+			if (estate.tuple_store)
 			{
-				/*
-				 * Copy the tuple result into upper executor memory context.
-				 * However, if we have a R/W expanded datum, we can just
-				 * transfer its ownership out to the upper context.
-				 */
-				estate.retval = SPI_datumTransfer(estate.retval,
-												  false,
-												  -1);
+				MemoryContext oldcxt;
+
+				rsi->setResult = estate.tuple_store;
+				oldcxt = MemoryContextSwitchTo(estate.tuple_store_cxt);
+				rsi->setDesc = CreateTupleDescCopy(estate.tuple_store_desc);
+				MemoryContextSwitchTo(oldcxt);
+			}
+			estate.retval = (Datum) 0;
+			fcinfo->isnull = true;
+		}
+		else if (!estate.retisnull)
+		{
+			/*
+			 * Cast result value to function's declared result type, and copy
+			 * it out to the upper executor memory context.  We must treat
+			 * tuple results specially in order to deal with cases like
+			 * rowtypes involving dropped columns.
+			 */
+			if (estate.retistuple)
+			{
+				/* Don't need coercion if rowtype is known to match */
+				if (func->fn_rettype == estate.rettype &&
+					func->fn_rettype != RECORDOID)
+				{
+					/*
+					 * Copy the tuple result into upper executor memory
+					 * context. However, if we have a R/W expanded datum, we
+					 * can just transfer its ownership out to the upper
+					 * context.
+					 */
+					estate.retval = SPI_datumTransfer(estate.retval,
+													  false,
+													  -1);
+				}
+				else
+				{
+					/*
+					 * Need to look up the expected result type.  XXX would be
+					 * better to cache the tupdesc instead of repeating
+					 * get_call_result_type(), but the only easy place to save
+					 * it is in the PLtsql_function struct, and that's too
+					 * long-lived: composite types could change during the
+					 * existence of a PLtsql_function.
+					 */
+					TypeFuncClass resultType;
+					Oid			resultTypeId;
+					TupleDesc	tupdesc;
+
+					/*
+					 * If the function call oid is invalid, then this is a
+					 * sp_executesql procedure created by inline handler. We
+					 * look at its cached tupdesc instead of fetching result
+					 * type info from pg_proc.
+					 */
+					if (fcinfo->flinfo->fn_oid == InvalidOid)
+					{
+						resultTypeId = func->fn_rettype;
+						tupdesc = func->fn_tupdesc;
+						if (tupdesc)
+							resultType = TYPEFUNC_COMPOSITE;
+						else
+							elog(ERROR, "expecting the inline code to have a tuple descriptor");
+					}
+					else
+						resultType = get_call_result_type(fcinfo, &resultTypeId, &tupdesc);
+
+					switch (resultType)
+					{
+						case TYPEFUNC_COMPOSITE:
+							/* got the expected result rowtype, now coerce it */
+							coerce_function_result_tuple(&estate, tupdesc);
+							break;
+						case TYPEFUNC_COMPOSITE_DOMAIN:
+							/* got the expected result rowtype, now coerce it */
+							coerce_function_result_tuple(&estate, tupdesc);
+							/* and check domain constraints */
+							/* XXX allowing caching here would be good, too */
+							domain_check(estate.retval, false, resultTypeId,
+										 NULL, NULL);
+							break;
+						case TYPEFUNC_RECORD:
+
+							/*
+							 * Failed to determine actual type of RECORD.  We
+							 * could raise an error here, but what this means
+							 * in practice is that the caller is expecting any
+							 * old generic rowtype, so we don't really need to
+							 * be restrictive.  Pass back the generated result
+							 * as-is.
+							 */
+							estate.retval = SPI_datumTransfer(estate.retval,
+															  false,
+															  -1);
+							break;
+						default:
+							/* shouldn't get here if retistuple is true ... */
+							elog(ERROR, "return type must be a row type");
+							break;
+					}
+				}
 			}
 			else
 			{
-				/*
-				 * Need to look up the expected result type.  XXX would be
-				 * better to cache the tupdesc instead of repeating
-				 * get_call_result_type(), but the only easy place to save it
-				 * is in the PLtsql_function struct, and that's too
-				 * long-lived: composite types could change during the
-				 * existence of a PLtsql_function.
-				 */
-				TypeFuncClass	resultType;
-				Oid		resultTypeId;
-				TupleDesc	tupdesc;
+				int			rettypmod = -1;
 
-				/*
-				 * If the function call oid is invalid, then this is a 
-				 * sp_executesql procedure created by inline handler. We 
-				 * look at its cached tupdesc instead of fetching result 
-				 * type info from pg_proc.
-				 */
-				if (fcinfo->flinfo->fn_oid == InvalidOid)
+				/* check if return type typmod is specifieddf in probin */
+				if (!func->fn_retset && func->fn_rettype != VOIDOID)
 				{
-					resultTypeId = func->fn_rettype;
-					tupdesc = func->fn_tupdesc;
-					if (tupdesc)
-						resultType = TYPEFUNC_COMPOSITE;
-					else
-						elog(ERROR, "expecting the inline code to have a tuple descriptor");
+					rettypmod = probin_read_ret_typmod(func->fn_oid, func->fn_nargs, func->fn_rettype);
+					suppress_string_truncation_error = true;
+					estate.retval = exec_cast_value(&estate,
+													estate.retval,
+													&fcinfo->isnull,
+													estate.rettype,
+													-1,
+													func->fn_rettype,
+													rettypmod);
+					suppress_string_truncation_error = false;
 				}
 				else
-					resultType = get_call_result_type(fcinfo, &resultTypeId, &tupdesc);
-
-				switch (resultType)
 				{
-					case TYPEFUNC_COMPOSITE:
-						/* got the expected result rowtype, now coerce it */
-						coerce_function_result_tuple(&estate, tupdesc);
-						break;
-					case TYPEFUNC_COMPOSITE_DOMAIN:
-						/* got the expected result rowtype, now coerce it */
-						coerce_function_result_tuple(&estate, tupdesc);
-						/* and check domain constraints */
-						/* XXX allowing caching here would be good, too */
-						domain_check(estate.retval, false, resultTypeId,
-									 NULL, NULL);
-						break;
-					case TYPEFUNC_RECORD:
-
-						/*
-						 * Failed to determine actual type of RECORD.  We
-						 * could raise an error here, but what this means in
-						 * practice is that the caller is expecting any old
-						 * generic rowtype, so we don't really need to be
-						 * restrictive.  Pass back the generated result as-is.
-						 */
-						estate.retval = SPI_datumTransfer(estate.retval,
-														  false,
-														  -1);
-						break;
-					default:
-						/* shouldn't get here if retistuple is true ... */
-						elog(ERROR, "return type must be a row type");
-						break;
+					/* Scalar case: use exec_cast_value */
+					estate.retval = exec_cast_value(&estate,
+													estate.retval,
+													&fcinfo->isnull,
+													estate.rettype,
+													-1,
+													func->fn_rettype,
+													rettypmod);
 				}
+
+
+				/*
+				 * If the function's return type isn't by value, copy the
+				 * value into upper executor memory context.  However, if we
+				 * have a R/W expanded datum, we can just transfer its
+				 * ownership out to the upper executor context.
+				 */
+				if (!fcinfo->isnull && !func->fn_retbyval)
+					estate.retval = SPI_datumTransfer(estate.retval,
+													  false,
+													  func->fn_rettyplen);
 			}
 		}
 		else
 		{
-			int rettypmod = -1;
-			/* check if return type typmod is specifieddf in probin */
-			if(!func->fn_retset && func->fn_rettype != VOIDOID)
-			{
-				rettypmod = probin_read_ret_typmod(func->fn_oid, func->fn_nargs, func->fn_rettype);
-				suppress_string_truncation_error = true;
-				estate.retval = exec_cast_value(&estate,
-											estate.retval,
-											&fcinfo->isnull,
-											estate.rettype,
-											-1,
-											func->fn_rettype,
-											rettypmod);
-				suppress_string_truncation_error = false;
-			}
-			else
-			{
-				/* Scalar case: use exec_cast_value */
-				estate.retval = exec_cast_value(&estate,
-											estate.retval,
-											&fcinfo->isnull,
-											estate.rettype,
-											-1,
-											func->fn_rettype,
-											rettypmod);
-			}
-
-
 			/*
-			 * If the function's return type isn't by value, copy the value
-			 * into upper executor memory context.  However, if we have a R/W
-			 * expanded datum, we can just transfer its ownership out to the
-			 * upper executor context.
+			 * We're returning a NULL, which normally requires no conversion
+			 * work regardless of datatypes.  But, if we are casting it to a
+			 * domain return type, we'd better check that the domain's
+			 * constraints pass.
 			 */
-			if (!fcinfo->isnull && !func->fn_retbyval)
-				estate.retval = SPI_datumTransfer(estate.retval,
-												  false,
-												  func->fn_rettyplen);
+			if (func->fn_retisdomain)
+				estate.retval = exec_cast_value(&estate,
+												estate.retval,
+												&fcinfo->isnull,
+												estate.rettype,
+												-1,
+												func->fn_rettype,
+												-1);
 		}
-	}
-	else
-	{
-		/*
-		 * We're returning a NULL, which normally requires no conversion work
-		 * regardless of datatypes.  But, if we are casting it to a domain
-		 * return type, we'd better check that the domain's constraints pass.
-		 */
-		if (func->fn_retisdomain)
-			estate.retval = exec_cast_value(&estate,
-											estate.retval,
-											&fcinfo->isnull,
-											estate.rettype,
-											-1,
-											func->fn_rettype,
-											-1);
-	}
 
 	}
 	PG_CATCH();
 	{
-		/* The purpose of this try-catch to call clean-up routines for estate. Errors will be re-thrwon. */
+		/*
+		 * The purpose of this try-catch to call clean-up routines for estate.
+		 * Errors will be re-thrwon.
+		 */
 
 		/* Close/Deallocate LOCAL cursors */
 		pltsql_cleanup_local_cursors(&estate);
@@ -1023,7 +1030,7 @@ coerce_function_result_tuple(PLtsql_execstate *estate, TupleDesc tupdesc)
  */
 HeapTuple
 pltsql_exec_trigger(PLtsql_function *func,
-					 TriggerData *trigdata)
+					TriggerData *trigdata)
 {
 	PLtsql_execstate estate;
 	ErrorContextCallback plerrcontext;
@@ -1115,7 +1122,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 	 * Set the magic variable FOUND to false
 	 */
 	exec_set_found(&estate, false);
-	exec_set_fetch_status(&estate, -9);  /* not fetching */
+	exec_set_fetch_status(&estate, -9); /* not fetching */
 
 	/*
 	 * Let the instrumentation plugin peek at this function
@@ -1126,96 +1133,125 @@ pltsql_exec_trigger(PLtsql_function *func,
 	PG_TRY();
 	{
 
-	ExecConfig_t config;
+		ExecConfig_t config;
 
-	/*
-	 * Now call the toplevel block of statements
-	 */
-	estate.err_text = NULL;
-	estate.err_stmt = (PLtsql_stmt *) (func->action);
-
-	config.trace_mode = 0;
-	if (pltsql_trace_exec_codes)
-		config.trace_mode |= TRACE_EXEC_CODES;
-	if (pltsql_trace_exec_counts)
-		config.trace_mode |= TRACE_EXEC_COUNTS;
-	if (pltsql_trace_exec_time)
-		config.trace_mode |= TRACE_EXEC_TIME;
-
-	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
-
-	/*
-	 * Only complain about missing RETURN in trigger procedure if not
-	 * in SQL_DIALECT_TSQL
-	 */
-	if (rc != PLTSQL_RC_RETURN && sql_dialect != SQL_DIALECT_TSQL)
-	{
-		estate.err_stmt = NULL;
+		/*
+		 * Now call the toplevel block of statements
+		 */
 		estate.err_text = NULL;
-		ereport(ERROR,
-				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-				 errmsg("control reached end of trigger procedure without RETURN")));
-	}
+		estate.err_stmt = (PLtsql_stmt *) (func->action);
 
-	/*
-	 * TSQL triggers terminate if there is no transaction
-	 * active at the end
-	 */
-	if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && NestedTranCount == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-				 errmsg("The transaction ended in the trigger. The batch has been aborted.")));
+		config.trace_mode = 0;
+		if (pltsql_trace_exec_codes)
+			config.trace_mode |= TRACE_EXEC_CODES;
+		if (pltsql_trace_exec_counts)
+			config.trace_mode |= TRACE_EXEC_COUNTS;
+		if (pltsql_trace_exec_time)
+			config.trace_mode |= TRACE_EXEC_TIME;
 
-	/*
-	 * If an error was encountered when executing trigger.
-	 */
-	if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
-		ereport(ERROR,
-				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
-				errmsg("An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.")));
+		rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
 
-	estate.err_stmt = NULL;
-	estate.err_text = gettext_noop("during function exit");
-
-	if (estate.retisset)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("trigger procedure cannot return a set")));
-
-	/*
-	 * Check that the returned tuple structure has the same attributes, the
-	 * relation that fired the trigger has. A per-statement trigger always
-	 * needs to return NULL, so we ignore any return value the function itself
-	 * produces (XXX: is this a good idea?)
-	 *
-	 * XXX This way it is possible, that the trigger returns a tuple where
-	 * attributes don't have the correct atttypmod's length. It's up to the
-	 * trigger's programmer to ensure that this doesn't happen. Jan
-	 */
-	if (estate.retisnull || !TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		rettup = NULL;
-	else
-	{
-		TupleDesc	retdesc;
-		TupleConversionMap *tupmap;
-
-		/* We assume exec_stmt_return verified that result is composite */
-		Assert(type_is_rowtype(estate.rettype));
-
-		/* We can special-case expanded records for speed */
-		if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(estate.retval)))
+		/*
+		 * Only complain about missing RETURN in trigger procedure if not in
+		 * SQL_DIALECT_TSQL
+		 */
+		if (rc != PLTSQL_RC_RETURN && sql_dialect != SQL_DIALECT_TSQL)
 		{
-			ExpandedRecordHeader *erh = (ExpandedRecordHeader *) DatumGetEOHP(estate.retval);
+			estate.err_stmt = NULL;
+			estate.err_text = NULL;
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+					 errmsg("control reached end of trigger procedure without RETURN")));
+		}
 
-			Assert(erh->er_magic == ER_MAGIC);
+		/*
+		 * TSQL triggers terminate if there is no transaction active at the
+		 * end
+		 */
+		if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && NestedTranCount == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+					 errmsg("The transaction ended in the trigger. The batch has been aborted.")));
 
-			/* Extract HeapTuple and TupleDesc */
-			rettup = expanded_record_get_tuple(erh);
-			Assert(rettup);
-			retdesc = expanded_record_get_tupdesc(erh);
+		/*
+		 * If an error was encountered when executing trigger.
+		 */
+		if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers && exec_state_call_stack->error_data.trigger_error)
+			ereport(ERROR,
+					(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
+					 errmsg("An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.")));
 
-			if (retdesc != RelationGetDescr(trigdata->tg_relation))
+		estate.err_stmt = NULL;
+		estate.err_text = gettext_noop("during function exit");
+
+		if (estate.retisset)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("trigger procedure cannot return a set")));
+
+		/*
+		 * Check that the returned tuple structure has the same attributes,
+		 * the relation that fired the trigger has. A per-statement trigger
+		 * always needs to return NULL, so we ignore any return value the
+		 * function itself produces (XXX: is this a good idea?)
+		 *
+		 * XXX This way it is possible, that the trigger returns a tuple where
+		 * attributes don't have the correct atttypmod's length. It's up to
+		 * the trigger's programmer to ensure that this doesn't happen. Jan
+		 */
+		if (estate.retisnull || !TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+			rettup = NULL;
+		else
+		{
+			TupleDesc	retdesc;
+			TupleConversionMap *tupmap;
+
+			/* We assume exec_stmt_return verified that result is composite */
+			Assert(type_is_rowtype(estate.rettype));
+
+			/* We can special-case expanded records for speed */
+			if (VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(estate.retval)))
 			{
+				ExpandedRecordHeader *erh = (ExpandedRecordHeader *) DatumGetEOHP(estate.retval);
+
+				Assert(erh->er_magic == ER_MAGIC);
+
+				/* Extract HeapTuple and TupleDesc */
+				rettup = expanded_record_get_tuple(erh);
+				Assert(rettup);
+				retdesc = expanded_record_get_tupdesc(erh);
+
+				if (retdesc != RelationGetDescr(trigdata->tg_relation))
+				{
+					/* check rowtype compatibility */
+					tupmap = convert_tuples_by_position(retdesc,
+														RelationGetDescr(trigdata->tg_relation),
+														gettext_noop("returned row structure does not match the structure of the triggering table"));
+					/* it might need conversion */
+					if (tupmap)
+						rettup = execute_attr_map_tuple(rettup, tupmap);
+					/* no need to free map, we're about to return anyway */
+				}
+
+				/*
+				 * Copy tuple to upper executor memory.  But if user just did
+				 * "return new" or "return old" without changing anything,
+				 * there's no need to copy; we can return the original tuple
+				 * (which will save a few cycles in trigger.c as well as
+				 * here).
+				 */
+				if (rettup != trigdata->tg_newtuple &&
+					rettup != trigdata->tg_trigtuple)
+					rettup = SPI_copytuple(rettup);
+			}
+			else
+			{
+				/* Convert composite datum to a HeapTuple and TupleDesc */
+				HeapTupleData tmptup;
+
+				retdesc = deconstruct_composite_datum(estate.retval, &tmptup);
+				rettup = &tmptup;
+
 				/* check rowtype compatibility */
 				tupmap = convert_tuples_by_position(retdesc,
 													RelationGetDescr(trigdata->tg_relation),
@@ -1223,47 +1259,22 @@ pltsql_exec_trigger(PLtsql_function *func,
 				/* it might need conversion */
 				if (tupmap)
 					rettup = execute_attr_map_tuple(rettup, tupmap);
+
+				ReleaseTupleDesc(retdesc);
 				/* no need to free map, we're about to return anyway */
-			}
 
-			/*
-			 * Copy tuple to upper executor memory.  But if user just did
-			 * "return new" or "return old" without changing anything, there's
-			 * no need to copy; we can return the original tuple (which will
-			 * save a few cycles in trigger.c as well as here).
-			 */
-			if (rettup != trigdata->tg_newtuple &&
-				rettup != trigdata->tg_trigtuple)
+				/* Copy tuple to upper executor memory */
 				rettup = SPI_copytuple(rettup);
+			}
 		}
-		else
-		{
-			/* Convert composite datum to a HeapTuple and TupleDesc */
-			HeapTupleData tmptup;
-
-			retdesc = deconstruct_composite_datum(estate.retval, &tmptup);
-			rettup = &tmptup;
-
-			/* check rowtype compatibility */
-			tupmap = convert_tuples_by_position(retdesc,
-												RelationGetDescr(trigdata->tg_relation),
-												gettext_noop("returned row structure does not match the structure of the triggering table"));
-			/* it might need conversion */
-			if (tupmap)
-				rettup = execute_attr_map_tuple(rettup, tupmap);
-
-			ReleaseTupleDesc(retdesc);
-			/* no need to free map, we're about to return anyway */
-
-			/* Copy tuple to upper executor memory */
-			rettup = SPI_copytuple(rettup);
-		}
-	}
 
 	}
 	PG_CATCH();
 	{
-		/* The purpose of this try-catch to call clean-up routines for estate. Errors will be re-thrwon. */
+		/*
+		 * The purpose of this try-catch to call clean-up routines for estate.
+		 * Errors will be re-thrwon.
+		 */
 
 		/* Close/Deallocate LOCAL cursors */
 		pltsql_cleanup_local_cursors(&estate);
@@ -1342,40 +1353,43 @@ pltsql_exec_event_trigger(PLtsql_function *func, EventTriggerData *trigdata)
 	PG_TRY();
 	{
 
-	ExecConfig_t config;
+		ExecConfig_t config;
 
-	/*
-	 * Now call the toplevel block of statements
-	 */
-	estate.err_text = NULL;
-	estate.err_stmt = (PLtsql_stmt *) (func->action);
-	
-	config.trace_mode = 0;
-	if (pltsql_trace_exec_codes)
-		config.trace_mode |= TRACE_EXEC_CODES;
-	if (pltsql_trace_exec_counts)
-		config.trace_mode |= TRACE_EXEC_COUNTS;
-	if (pltsql_trace_exec_time)
-		config.trace_mode |= TRACE_EXEC_TIME;
-
-	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
-
-	if (rc != PLTSQL_RC_RETURN)
-	{
-		estate.err_stmt = NULL;
+		/*
+		 * Now call the toplevel block of statements
+		 */
 		estate.err_text = NULL;
-		ereport(ERROR,
-				(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-				 errmsg("control reached end of trigger procedure without RETURN")));
-	}
+		estate.err_stmt = (PLtsql_stmt *) (func->action);
 
-	estate.err_stmt = NULL;
-	estate.err_text = gettext_noop("during function exit");
+		config.trace_mode = 0;
+		if (pltsql_trace_exec_codes)
+			config.trace_mode |= TRACE_EXEC_CODES;
+		if (pltsql_trace_exec_counts)
+			config.trace_mode |= TRACE_EXEC_COUNTS;
+		if (pltsql_trace_exec_time)
+			config.trace_mode |= TRACE_EXEC_TIME;
+
+		rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
+
+		if (rc != PLTSQL_RC_RETURN)
+		{
+			estate.err_stmt = NULL;
+			estate.err_text = NULL;
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+					 errmsg("control reached end of trigger procedure without RETURN")));
+		}
+
+		estate.err_stmt = NULL;
+		estate.err_text = gettext_noop("during function exit");
 
 	}
 	PG_CATCH();
 	{
-		/* The purpose of this try-catch to call clean-up routines for estate. Errors will be re-thrwon. */
+		/*
+		 * The purpose of this try-catch to call clean-up routines for estate.
+		 * Errors will be re-thrwon.
+		 */
 
 		/* Close/Deallocate LOCAL cursors */
 		pltsql_cleanup_local_cursors(&estate);
@@ -1471,7 +1485,7 @@ pltsql_exec_error_callback(void *arg)
  */
 void
 copy_pltsql_datums(PLtsql_execstate *estate,
-					PLtsql_function *func)
+				   PLtsql_function *func)
 {
 	int			ndatums = estate->ndatums;
 	PLtsql_datum **indatums;
@@ -1552,7 +1566,7 @@ copy_pltsql_datums(PLtsql_execstate *estate,
  */
 static void
 pltsql_fulfill_promise(PLtsql_execstate *estate,
-						PLtsql_var *var)
+					   PLtsql_var *var)
 {
 	MemoryContext oldcontext;
 
@@ -1899,7 +1913,7 @@ exec_stmt_block(PLtsql_execstate *estate, PLtsql_stmt_block *block)
 		MemoryContext oldcontext = CurrentMemoryContext;
 		ResourceOwner oldowner = CurrentResourceOwner;
 		ExprContext *old_eval_econtext = estate->eval_econtext;
-		ErrorData *save_cur_error = estate->cur_error->error;
+		ErrorData  *save_cur_error = estate->cur_error->error;
 
 		MemoryContext stmt_mcontext;
 
@@ -2164,7 +2178,10 @@ exec_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 	PLtsql_stmt *save_estmt;
 	int			rc = -1;
 
-	/* Store the Current Line Number of the current query, incase we stumble upon a runtime error. */
+	/*
+	 * Store the Current Line Number of the current query, incase we stumble
+	 * upon a runtime error.
+	 */
 	CurrentLineNumber = stmt->lineno;
 	save_estmt = estate->err_stmt;
 	estate->err_stmt = stmt;
@@ -2233,9 +2250,9 @@ exec_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			rc = exec_stmt_exit(estate, (PLtsql_stmt_exit *) stmt);
 			break;
 
-        case PLTSQL_STMT_INSERT_BULK:
-            rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
-            break;
+		case PLTSQL_STMT_INSERT_BULK:
+			rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
+			break;
 
 		case PLTSQL_STMT_RETURN:
 			rc = exec_stmt_return(estate, (PLtsql_stmt_return *) stmt);
@@ -2713,10 +2730,10 @@ exec_stmt_if(PLtsql_execstate *estate, PLtsql_stmt_if *stmt)
 			return exec_stmts(estate, elif->stmts);
 	}
 
-    if (stmt->else_body)
-	    return exec_stmt(estate, stmt->else_body);
-    else
-	    return PLTSQL_RC_OK;
+	if (stmt->else_body)
+		return exec_stmt(estate, stmt->else_body);
+	else
+		return PLTSQL_RC_OK;
 }
 
 
@@ -2754,9 +2771,9 @@ exec_stmt_case(PLtsql_execstate *estate, PLtsql_stmt_case *stmt)
 		if (t_var->datatype->typoid != t_typoid ||
 			t_var->datatype->atttypmod != t_typmod)
 			t_var->datatype = pltsql_build_datatype(t_typoid,
-													 t_typmod,
-													 estate->func->fn_input_collation,
-													 NULL);
+													t_typmod,
+													estate->func->fn_input_collation,
+													NULL);
 
 		/* now we can assign to the variable */
 		exec_assign_value(estate,
@@ -3122,10 +3139,10 @@ exec_stmt_forc(PLtsql_execstate *estate, PLtsql_stmt_forc *stmt)
 	else
 	{
 		/*
-		 * T-SQL cursor variable can refer to another constant cursor.
-		 * look up cursor hash to get cursor definition.
+		 * T-SQL cursor variable can refer to another constant cursor. look up
+		 * cursor hash to get cursor definition.
 		 */
-		int cursor_options;
+		int			cursor_options;
 
 		pltsql_get_cursor_definition(TextDatumGetCString(curvar->value), &query, &cursor_options);
 		if (query == NULL)
@@ -3265,7 +3282,7 @@ exec_stmt_foreach_a(PLtsql_execstate *estate, PLtsql_stmt_foreach_a *stmt)
 	}
 	else
 		loop_var_elem_type = get_element_type(pltsql_exec_get_datum_type(estate,
-																		  loop_var));
+																		 loop_var));
 
 	/*
 	 * Sanity-check the loop variable type.  We don't try very hard here, and
@@ -3395,6 +3412,7 @@ exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 	if (estate->func->is_mstvf)
 	{
 		PLtsql_stmt_return_query *return_table;
+
 		return_table = (PLtsql_stmt_return_query *) palloc0(sizeof(PLtsql_stmt_return_query));
 		return_table->cmd_type = PLTSQL_STMT_RETURN_TABLE;
 		return_table->query = NULL;
@@ -3419,28 +3437,26 @@ exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 	estate->rettype = InvalidOid;
 
 	/*
-	 * In TSQL, every procedure returns an int32 value, and may also
-	 * return a tuple full of OUT values.
-	 * 
-	 * Since we have to return both, we store the return code in a 
-	 * global variable - the caller (of this procedure) may capture
-	 * that return code in exec_stmt_exec()
+	 * In TSQL, every procedure returns an int32 value, and may also return a
+	 * tuple full of OUT values.
+	 *
+	 * Since we have to return both, we store the return code in a global
+	 * variable - the caller (of this procedure) may capture that return code
+	 * in exec_stmt_exec()
 	 *
 	 * We store the return code first, then handle any OUT parameters
 	 */
 	if (estate->func->fn_prokind == PROKIND_PROCEDURE)
 	{
 		/*
-		 * TSQL rules:  
-		 *    Every procedure returns an int32 value
-		 *    The default return code is 0
-		 *    A NULL return code is translated to 0
+		 * TSQL rules:  Every procedure returns an int32 value The default
+		 * return code is 0 A NULL return code is translated to 0
 		 */
 		if (stmt->expr)
 		{
-			int32	rettypmod;
-			bool	isnull;
-			Oid		rettype;
+			int32		rettypmod;
+			bool		isnull;
+			Oid			rettype;
 
 			pltsql_proc_return_code = exec_eval_expr(estate, stmt->expr,
 													 &isnull,
@@ -3458,7 +3474,7 @@ exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 			pltsql_proc_return_code = 0;
 		}
 	}
-	
+
 	/*
 	 * Special case path when the RETURN expression is a simple variable
 	 * reference; in particular, this path is always taken in functions with
@@ -3538,11 +3554,11 @@ exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 			default:
 				elog(ERROR, "unrecognized dtype: %d", retvar->dtype);
 		}
-                
-                exec_set_rowcount(1);
+
+		exec_set_rowcount(1);
 		return PLTSQL_RC_RETURN;
 	}
-	
+
 	if (stmt->expr != NULL)
 	{
 		int32		rettypmod;
@@ -3562,7 +3578,7 @@ exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("cannot return non-composite value from function returning composite type")));
 
-                exec_set_rowcount(1);
+		exec_set_rowcount(1);
 		return PLTSQL_RC_RETURN;
 	}
 
@@ -3879,7 +3895,7 @@ exec_stmt_return_query(PLtsql_execstate *estate,
 
 	estate->eval_processed = processed;
 	exec_set_rowcount(processed);
-        exec_set_found(estate, processed != 0);
+	exec_set_found(estate, processed != 0);
 
 	return PLTSQL_RC_OK;
 }
@@ -4188,9 +4204,9 @@ exec_stmt_assert(PLtsql_execstate *estate, PLtsql_stmt_assert *stmt)
  */
 void
 pltsql_estate_setup(PLtsql_execstate *estate,
-					 PLtsql_function *func,
-					 ReturnSetInfo *rsi,
-					 EState *simple_eval_estate)
+					PLtsql_function *func,
+					ReturnSetInfo *rsi,
+					EState *simple_eval_estate)
 {
 	HASHCTL		ctl;
 	PLExecStateCallStack *es_cs_entry;
@@ -4214,7 +4230,7 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	estate->atomic = true;
 
 	estate->exitlabel = NULL;
-	
+
 	estate->cur_error = (PLtsql_estate_err *) palloc(sizeof(PLtsql_estate_err));
 	estate->cur_error->error = NULL;
 	estate->cur_error->procedure = NULL;
@@ -4318,7 +4334,7 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	 */
 	estate->insert_exec = (func->fn_prokind == PROKIND_PROCEDURE ||
 						   strcmp(func->fn_signature, "inline_code_block") == 0)
-						  && rsi;
+		&& rsi;
 
 	estate->explain_infos = NIL;
 
@@ -4328,10 +4344,10 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	pltsql_create_econtext(estate);
 
 	/*
-	 * Let the plugin see this function before we initialize any local
-	 * PL/tsql variables - note that we also give the plugin a few function
-	 * pointers so it can call back into PL/tsql for doing things like
-	 * variable assignments and stack traces
+	 * Let the plugin see this function before we initialize any local PL/tsql
+	 * variables - note that we also give the plugin a few function pointers
+	 * so it can call back into PL/tsql for doing things like variable
+	 * assignments and stack traces
 	 */
 	if (*pltsql_plugin_ptr)
 	{
@@ -4423,21 +4439,19 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * A null econtext stack indicates commit/rollback/rollback to
-	 * savepoint.
-	 * Make simple_eval_estate to null so that a new value
-	 * is assigned in pltsql_create_econtext.
-	 * Only required when using shared simple eval state, otherwise
-	 * eval state is create in procedure context itself and transactions
-	 * do not affect it
+	 * A null econtext stack indicates commit/rollback/rollback to savepoint.
+	 * Make simple_eval_estate to null so that a new value is assigned in
+	 * pltsql_create_econtext. Only required when using shared simple eval
+	 * state, otherwise eval state is create in procedure context itself and
+	 * transactions do not affect it
 	 */
 	if (estate->use_shared_simple_eval_state && simple_econtext_stack == NULL)
 		estate->simple_eval_estate = NULL;
+
 	/*
 	 * simple_econtext_stack being NULL only reliably identifies
-	 * commit/rollback but not rollback to savepoint. Check top
-	 * econtext stack entry to find if it was deleted due to rollback
-	 * to savepoint command.
+	 * commit/rollback but not rollback to savepoint. Check top econtext stack
+	 * entry to find if it was deleted due to rollback to savepoint command.
 	 * We recreate econtext if a transaction event is detected
 	 */
 	if (simple_econtext_stack == NULL || topEntry != simple_econtext_stack)
@@ -4445,13 +4459,14 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 }
 
 static
-bool is_start_implicit_txn_utility_command(Node* parsetree)
+bool
+is_start_implicit_txn_utility_command(Node *parsetree)
 {
 	if (parsetree != NULL)
 	{
 		switch (nodeTag(parsetree))
 		{
-			/* BEGIN TRAN */
+				/* BEGIN TRAN */
 			case T_TransactionStmt:
 				{
 					TransactionStmt *stmt = (TransactionStmt *) parsetree;
@@ -4462,13 +4477,12 @@ bool is_start_implicit_txn_utility_command(Node* parsetree)
 						return false;
 				}
 
-			/*
-			 * DROP TABLE
-			 * DROP PROCEDURE
-			 */
+				/*
+				 * DROP TABLE DROP PROCEDURE
+				 */
 			case T_DropStmt:
 				{
-					ObjectType type = ((DropStmt *) parsetree)->removeType;
+					ObjectType	type = ((DropStmt *) parsetree)->removeType;
 
 					if (type == OBJECT_TABLE || type == OBJECT_PROCEDURE)
 						return true;
@@ -4476,7 +4490,7 @@ bool is_start_implicit_txn_utility_command(Node* parsetree)
 						return false;
 				}
 
-			/* ALTER PROCEDURE */
+				/* ALTER PROCEDURE */
 			case T_AlterFunctionStmt:
 				{
 					if (((AlterFunctionStmt *) parsetree)->objtype == OBJECT_PROCEDURE)
@@ -4485,7 +4499,7 @@ bool is_start_implicit_txn_utility_command(Node* parsetree)
 						return false;
 				}
 
-			/* CREATE PROCEDURE */
+				/* CREATE PROCEDURE */
 			case T_CreateFunctionStmt:
 				{
 					if (((CreateFunctionStmt *) parsetree)->is_procedure)
@@ -4494,7 +4508,7 @@ bool is_start_implicit_txn_utility_command(Node* parsetree)
 						return false;
 				}
 
-			/* SELECT ... INTO */
+				/* SELECT ... INTO */
 			case T_CreateTableAsStmt:
 				{
 					if (((CreateTableAsStmt *) parsetree)->objtype == OBJECT_TABLE)
@@ -4502,12 +4516,10 @@ bool is_start_implicit_txn_utility_command(Node* parsetree)
 					else
 						return false;
 				}
-			/*
-			 * CREATE TABLE
-			 * TRUNCATE TABLE
-			 * ALTER TABLE
-			 * GRANT / REVOKE
-			 */
+
+				/*
+				 * CREATE TABLE TRUNCATE TABLE ALTER TABLE GRANT / REVOKE
+				 */
 			case T_CreateStmt:
 			case T_TruncateStmt:
 			case T_AlterTableStmt:
@@ -4528,40 +4540,43 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
 	CachedPlanSource *cachedPlanSource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
 
 	/*
-	 * If node is NULL, that means query is of one of INSERT/UPDATE/DELETE
-	 * so we start implicit transaction for it. Else query is a utility
-	 * command and we need to identify whether it qualifies to start an
-	 * implicit transaction
+	 * If node is NULL, that means query is of one of INSERT/UPDATE/DELETE so
+	 * we start implicit transaction for it. Else query is a utility command
+	 * and we need to identify whether it qualifies to start an implicit
+	 * transaction
 	 */
-	Node *node = linitial_node(Query, cachedPlanSource->query_list)->utilityStmt;
+	Node	   *node = linitial_node(Query, cachedPlanSource->query_list)->utilityStmt;
 
 	if (node != NULL && !is_start_implicit_txn_utility_command(node))
 		return false;
 
-	/* For SELECT statements we only need implicit transaction if SELECT is from a table */
+	/*
+	 * For SELECT statements we only need implicit transaction if SELECT is
+	 * from a table
+	 */
 	if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt)
 	{
-		ListCell	*lc;
+		ListCell   *lc;
 
 		if (cachedPlanSource->gplan)
 		{
 			foreach(lc, cachedPlanSource->gplan->stmt_list)
 			{
-				PlannedStmt *ps = (PlannedStmt*) lfirst(lc);
+				PlannedStmt *ps = (PlannedStmt *) lfirst(lc);
 
 				if (ps->commandType == CMD_SELECT)
 				{
-					ListCell	*rt;
+					ListCell   *rt;
 
 					foreach(rt, ps->rtable)
 					{
 						RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
 						/*
-						* If range table entry is of kind ordinary relation and
-						* relation kind is a simple table, we require an
-						* implicit transaction.
-						*/
+						 * If range table entry is of kind ordinary relation
+						 * and relation kind is a simple table, we require an
+						 * implicit transaction.
+						 */
 						if (rte->rtekind == RTE_RELATION && rte->relkind == 'r')
 							return true;
 					}
@@ -4589,48 +4604,53 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	int			rc;
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
-	ListCell 	*lc;
-	CachedPlan 	*cp;
-	bool 		is_returning = false;
-    bool        is_select = true;
-    /* Temporarily disable FMTONLY as it is causing issues with Import-Export.
-     * Reenable if a use-case is found.
-     */
-    bool        fmtonly_enabled = true;
-	CmdType 	cmd = CMD_UNKNOWN;
+	ListCell   *lc;
+	CachedPlan *cp;
+	bool		is_returning = false;
+	bool		is_select = true;
+
+	/*
+	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
+	 * Reenable if a use-case is found.
+	 */
+	bool		fmtonly_enabled = true;
+	CmdType		cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
-    StringInfoData query;
+	StringInfoData query;
 	Oid			current_user_id = GetUserId();
 	bool		need_path_reset = false;
-	char		*cur_dbname = get_cur_db_name();
-	bool            reset_session_properties = false;
-	bool            inside_trigger = false;
+	char	   *cur_dbname = get_cur_db_name();
+	bool		reset_session_properties = false;
+	bool		inside_trigger = false;
+
 	/* fetch current search_path */
-	char 		*old_search_path = NULL;
+	char	   *old_search_path = NULL;
+
 	if (stmt->original_query)
 		original_query_string = stmt->original_query;
 
 	if (stmt->is_cross_db)
 	{
-		char *login = GetUserNameFromId(GetSessionUserId(), false);
-		char *user = get_user_for_database(stmt->db_name);
+		char	   *login = GetUserNameFromId(GetSessionUserId(), false);
+		char	   *user = get_user_for_database(stmt->db_name);
 
 		if (user)
 			SetCurrentRoleId(GetSessionUserId(), false);
 		else
 			ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_DATABASE),
-							errmsg("The server principal \"%s\" is not able to access "
-								"the database \"%s\" under the current security context",
-								login, stmt->db_name)));
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("The server principal \"%s\" is not able to access "
+							"the database \"%s\" under the current security context",
+							login, stmt->db_name)));
+
 		/*
-		 * When there is cross db reference to sys or information_schema schemas,
-		 * Change the session property.
+		 * When there is cross db reference to sys or information_schema
+		 * schemas, Change the session property.
 		 */
 		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 			set_session_properties(stmt->db_name);
 	}
-	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
+	if (stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
 		if (stmt->is_schema_specified)
 			estate->schema_name = stmt->schema_name;
@@ -4643,381 +4663,411 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	PG_TRY();
 	{
-	/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
-	if (stmt->need_to_push_result && estate->insert_exec)
-	{
-		int ret = exec_stmt_insert_execute_select(estate, expr);
-
-		if (stmt->is_cross_db)
-			SetCurrentRoleId(current_user_id, false);
-
-		return ret;
-	}
-
-	if (expr->plan == NULL)
-    {
-        /*
-         * If the set_fmtonly guc is set, we need to rewrite any statements as exec
-         * statements that invoke sp_describe_first_result_set. For now, only
-         * transform SELECT statements.
-         */
-        if (pltsql_fmtonly && is_select && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
-        {
-            initStringInfo(&query);
-            appendStringInfo(&query, "SELECT TOP 0");
-            appendStringInfoString(&query, stmt->sqlstmt->query + 6);
-            stmt->sqlstmt->query = pstrdup(query.data);
-        }
-		prepare_stmt_execsql(estate, estate->func, stmt, true);
-    }
-
-	/*
-	 * Set up ParamListInfo to pass to executor
-	 */
-	paramLI = setup_param_list(estate, expr);
-
-
-	/*
-	 * Check whether the statement is an INSERT/DELETE with RETURNING
-	 */
-	cp = SPI_plan_get_cached_plan(expr->plan);
-	if (cp)
-	{
-		int i;
-		i = 0;
-		foreach(lc, cp->stmt_list)
+		/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
+		if (stmt->need_to_push_result && estate->insert_exec)
 		{
-			PlannedStmt *ps = (PlannedStmt*) lfirst(lc);
-			if (ps->hasReturning)
-			{
-				is_returning = true;
-				if(ps->commandType == CMD_INSERT)
-					cmd = CMD_INSERT;
-				else if (ps->commandType == CMD_DELETE)
-					cmd = CMD_DELETE;
-				else if (ps->commandType == CMD_UPDATE)
-					cmd = CMD_UPDATE;
-				break;
-			}
-            if (ps->commandType != CMD_SELECT)
-            {
-                is_select = false;
-            }
-			if (ps->commandType == CMD_UPDATE || ps->commandType == CMD_INSERT){
-				updateColumnUpdatedList(expr, i);
-			}
-			++i;
+			int			ret = exec_stmt_insert_execute_select(estate, expr);
+
+			if (stmt->is_cross_db)
+				SetCurrentRoleId(current_user_id, false);
+
+			return ret;
 		}
-		ReleaseCachedPlan(cp, CurrentResourceOwner);
-	}
 
-
-	/*
-	 * If we have INTO, then we only need one row back ... but if we have INTO
-	 * STRICT, ask for two rows, so that we can verify the statement returns
-	 * only one.  INSERT/UPDATE/DELETE are always treated strictly. Without
-	 * INTO, just run the statement to completion (tcount = 0).
-	 *
-	 * We could just ask for two rows always when using INTO, but there are
-	 * some cases where demanding the extra row costs significant time, eg by
-	 * forcing completion of a sequential scan.  So don't do it unless we need
-	 * to enforce strictness.
-	 */
-	if (stmt->into)
-	{
-		if (stmt->strict || stmt->mod_stmt)
-			tcount = 2;
-		else
-			tcount = 1;
-	}
-	else
-		tcount = 0;
-
-
-	/*
-	 * If we started an implicit_transaction for this statement,
-	 * check the query plan to see if we actually require it or
-	 * not
-	 */
-	if (estate->impl_txn_type == PLTSQL_IMPL_TRAN_START)
-	{
-		if (!is_impl_txn_required_for_execsql(stmt))
-			pltsql_commit_not_required_impl_txn(estate);
-		else
-			estate->impl_txn_type = PLTSQL_IMPL_TRAN_ON;
-	}
-
-	/*
-	 * if ANTLR is enabled, PLtsql_stmt_push_result will be replaced with PLtsql_stmt_execsql
-	 * with flag need_to_push_result ON. To txn behavior makes consistent regardless of ANTLR,
-	 * adjust enable_txn_in_triggers as same as exec_stmt_push_result.
-	 * same for tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is handled in PLtsql_stmt_query_set.
-	 */
-	if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || stmt->mod_stmt_tablevar)
-		enable_txn_in_triggers = false;
-
-	if (enable_txn_in_triggers)
-	{
-		/* Open nesting level in engine */
-		BeginCompositeTriggers(CurrentMemoryContext);
-		/* TSQL commands must run inside an explicit transaction */
-		if (!pltsql_disable_batch_auto_commit && pltsql_support_tsql_transactions() &&
-			stmt->txn_data == NULL && !IsTransactionBlockActive())
+		if (expr->plan == NULL)
 		{
-			MemoryContext oldCxt = CurrentMemoryContext;
-			elog(DEBUG4, "TQL TXN Start internal transaction for SQL");
-			pltsql_start_txn();
-			MemoryContextSwitchTo(oldCxt);
-			estate->tsql_trigger_flags |= TSQL_TRAN_STARTED;
-		}
-		estate->tsql_trigger_flags |= TSQL_TRIGGER_STARTED;
-	}
-	/*
-	 * Execute the plan. If tsql_identity_insert is valid, do not push the output
-	 * to the receiver so as to not break BABEL-792 implementation.
-	 *
-	 * TODO: in ANTLR, stmt_push_result is already incorporated into stmt_execsql.
-	 * We don't need additional function exec_run_dml_with_output(). We can clean up it later.
-	 */
-	if (is_returning && !tsql_identity_insert.valid && !stmt->is_tsql_select_assign_stmt)
-		rc = exec_run_dml_with_output(estate, (PLtsql_stmt_push_result *) stmt,
-										 portal, expr, cmd, paramLI);	
-	else if (stmt->need_to_push_result)
-		rc = execute_plan_and_push_result(estate, expr, paramLI);
-	else if (stmt->txn_data != NULL && !pltsql_support_tsql_transactions())
-	{
-		elog(DEBUG2, "TSQL TXN Execute transaction command with PG semantics");
-		rc = execute_txn_command(estate, stmt);
-
-		if (stmt->txn_data != NULL &&
-			(stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK ||
-			 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
-			restore_session_properties();
-	}
-	else
-		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-												estate->readonly_func, tcount);
-
-	/*
-	 * Check for error, and set FOUND if appropriate (for historical reasons
-	 * we set FOUND only for certain query types).  Also Assert that we
-	 * identified the statement type the same as SPI did.
-	 */
-	switch (rc)
-	{
-		case PLTSQL_RC_OK:
-			Assert(stmt->txn_data != NULL);
-			break;
-		case SPI_OK_SELECT:
-			Assert(!stmt->mod_stmt);
-			exec_set_found(estate, (SPI_processed != 0));
-			break;
-
-		case SPI_OK_INSERT:
-		case SPI_OK_UPDATE:
-		case SPI_OK_DELETE:
-		case SPI_OK_INSERT_RETURNING:
-		case SPI_OK_UPDATE_RETURNING:
-		case SPI_OK_DELETE_RETURNING:
-			Assert(stmt->mod_stmt);
-			exec_set_found(estate, (SPI_processed != 0));
-			break;
-
-		case SPI_OK_SELINTO:
-			Assert(!stmt->mod_stmt);
-			break;
-		case SPI_OK_UTILITY:
-			/* INSERT ... EXECUTE can invoke a procedure while mod_stmt is true */
-			break;
-
-		case SPI_OK_REWRITTEN:
-
 			/*
-			 * The command was rewritten into another kind of command. It's
-			 * not clear what FOUND would mean in that case (and SPI doesn't
-			 * return the row count either), so just set it to false.  Note
-			 * that we can't assert anything about mod_stmt here.
+			 * If the set_fmtonly guc is set, we need to rewrite any
+			 * statements as exec statements that invoke
+			 * sp_describe_first_result_set. For now, only transform SELECT
+			 * statements.
 			 */
-			exec_set_found(estate, false);
-			break;
-
-			/* Some SPI errors deserve specific error messages */
-		case SPI_ERROR_COPY:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot COPY to/from client in PL/tsql")));
-			break;
-
-		case SPI_ERROR_TRANSACTION:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("unsupported transaction command in PL/tsql")));
-			break;
-
-		default:
-			elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
-				 expr->query, SPI_result_code_string(rc));
-			break;
-	}
-
-	if (enable_txn_in_triggers)
-	{
-		if (!stmt->need_to_push_result) // before trigger execution , set the rowcount
-		{
-			exec_set_rowcount(SPI_processed);
+			if (pltsql_fmtonly && is_select && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
+			{
+				initStringInfo(&query);
+				appendStringInfo(&query, "SELECT TOP 0");
+				appendStringInfoString(&query, stmt->sqlstmt->query + 6);
+				stmt->sqlstmt->query = pstrdup(query.data);
+			}
+			prepare_stmt_execsql(estate, estate->func, stmt, true);
 		}
-		/* Close nesting level on engine side */
-		EndCompositeTriggers(false);
-		estate->tsql_trigger_flags &= ~TSQL_TRIGGER_STARTED;
-	}
-
-	if (columns_updated_list != NIL && 0 == pltsql_trigger_depth){
-		ListCell* lc;
-		foreach(lc, columns_updated_list){
-			List* list = (List*)lfirst(lc);
-			if (list != NIL)
-				list_free_deep(list);
-		}
-		list_free(columns_updated_list);
-		columns_updated_list = NIL;
-	}
-
-	if (!stmt->need_to_push_result) // already set in execute_plan_and_push_result
-	{
-		/* All variants should save result info for GET DIAGNOSTICS */
-		estate->eval_processed = SPI_processed;
-		exec_set_rowcount(SPI_processed);
-	}
-
-	/* Process INTO if present */
-	if (stmt->into || stmt->is_tsql_select_assign_stmt)
-	{
-		SPITupleTable *tuptab = SPI_tuptable;
-		uint64		n = SPI_processed;
-		PLtsql_variable *target;
-
-		/* If the statement did not return a tuple table, complain */
-		if (tuptab == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("INTO used with a command that cannot return data")));
-
-		/* Fetch target's datum entry */
-		target = (PLtsql_variable *) estate->datums[stmt->target->dno];
 
 		/*
-		 * If SELECT ... INTO specified STRICT, and the query didn't find
-		 * exactly one row, throw an error.  If STRICT was not specified, then
-		 * allow the query to find any number of rows.
+		 * Set up ParamListInfo to pass to executor
 		 */
-		if (n == 0)
+		paramLI = setup_param_list(estate, expr);
+
+
+		/*
+		 * Check whether the statement is an INSERT/DELETE with RETURNING
+		 */
+		cp = SPI_plan_get_cached_plan(expr->plan);
+		if (cp)
 		{
-			if (stmt->strict)
+			int			i;
+
+			i = 0;
+			foreach(lc, cp->stmt_list)
 			{
-				char	   *errdetail;
+				PlannedStmt *ps = (PlannedStmt *) lfirst(lc);
 
-				if (estate->func->print_strict_params)
-					errdetail = format_expr_params(estate, expr);
-				else
-					errdetail = NULL;
-
-				ereport(ERROR,
-						(errcode(ERRCODE_NO_DATA_FOUND),
-						 errmsg("query returned no rows"),
-						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
+				if (ps->hasReturning)
+				{
+					is_returning = true;
+					if (ps->commandType == CMD_INSERT)
+						cmd = CMD_INSERT;
+					else if (ps->commandType == CMD_DELETE)
+						cmd = CMD_DELETE;
+					else if (ps->commandType == CMD_UPDATE)
+						cmd = CMD_UPDATE;
+					break;
+				}
+				if (ps->commandType != CMD_SELECT)
+				{
+					is_select = false;
+				}
+				if (ps->commandType == CMD_UPDATE || ps->commandType == CMD_INSERT)
+				{
+					updateColumnUpdatedList(expr, i);
+				}
+				++i;
 			}
+			ReleaseCachedPlan(cp, CurrentResourceOwner);
+		}
 
-			if (!stmt->is_tsql_select_assign_stmt)
-			{
-				/* set the target to NULL(s) */
-				exec_move_row(estate, target, NULL, tuptab->tupdesc);
-			}
+
+		/*
+		 * If we have INTO, then we only need one row back ... but if we have
+		 * INTO STRICT, ask for two rows, so that we can verify the statement
+		 * returns only one.  INSERT/UPDATE/DELETE are always treated
+		 * strictly. Without INTO, just run the statement to completion
+		 * (tcount = 0).
+		 *
+		 * We could just ask for two rows always when using INTO, but there
+		 * are some cases where demanding the extra row costs significant
+		 * time, eg by forcing completion of a sequential scan.  So don't do
+		 * it unless we need to enforce strictness.
+		 */
+		if (stmt->into)
+		{
+			if (stmt->strict || stmt->mod_stmt)
+				tcount = 2;
 			else
-			{
-				/* A SELECT statement that returns zero rows will leave the target(s) unchanged */
-			}
+				tcount = 1;
 		}
 		else
+			tcount = 0;
+
+
+		/*
+		 * If we started an implicit_transaction for this statement, check the
+		 * query plan to see if we actually require it or not
+		 */
+		if (estate->impl_txn_type == PLTSQL_IMPL_TRAN_START)
 		{
-			/* if is_tsql_select_assign_stmt is set on mod_stmt, INTO is injected by the extension. do not check the # of result strictly */
-			if (n > 1 && (stmt->strict || (stmt->mod_stmt && !stmt->is_tsql_select_assign_stmt)))
+			if (!is_impl_txn_required_for_execsql(stmt))
+				pltsql_commit_not_required_impl_txn(estate);
+			else
+				estate->impl_txn_type = PLTSQL_IMPL_TRAN_ON;
+		}
+
+		/*
+		 * if ANTLR is enabled, PLtsql_stmt_push_result will be replaced with
+		 * PLtsql_stmt_execsql with flag need_to_push_result ON. To txn
+		 * behavior makes consistent regardless of ANTLR, adjust
+		 * enable_txn_in_triggers as same as exec_stmt_push_result. same for
+		 * tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is
+		 * handled in PLtsql_stmt_query_set.
+		 */
+		if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || stmt->mod_stmt_tablevar)
+			enable_txn_in_triggers = false;
+
+		if (enable_txn_in_triggers)
+		{
+			/* Open nesting level in engine */
+			BeginCompositeTriggers(CurrentMemoryContext);
+			/* TSQL commands must run inside an explicit transaction */
+			if (!pltsql_disable_batch_auto_commit && pltsql_support_tsql_transactions() &&
+				stmt->txn_data == NULL && !IsTransactionBlockActive())
 			{
-				char	   *errdetail;
+				MemoryContext oldCxt = CurrentMemoryContext;
 
-				if (estate->func->print_strict_params)
-					errdetail = format_expr_params(estate, expr);
-				else
-					errdetail = NULL;
-
-				ereport(ERROR,
-						(errcode(ERRCODE_TOO_MANY_ROWS),
-						 errmsg("query returned more than one row"),
-						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
+				elog(DEBUG4, "TQL TXN Start internal transaction for SQL");
+				pltsql_start_txn();
+				MemoryContextSwitchTo(oldCxt);
+				estate->tsql_trigger_flags |= TSQL_TRAN_STARTED;
 			}
+			estate->tsql_trigger_flags |= TSQL_TRIGGER_STARTED;
+		}
 
-			if (!stmt->is_tsql_select_assign_stmt)
+		/*
+		 * Execute the plan. If tsql_identity_insert is valid, do not push the
+		 * output to the receiver so as to not break BABEL-792 implementation.
+		 *
+		 * TODO: in ANTLR, stmt_push_result is already incorporated into
+		 * stmt_execsql. We don't need additional function
+		 * exec_run_dml_with_output(). We can clean up it later.
+		 */
+		if (is_returning && !tsql_identity_insert.valid && !stmt->is_tsql_select_assign_stmt)
+			rc = exec_run_dml_with_output(estate, (PLtsql_stmt_push_result *) stmt,
+										  portal, expr, cmd, paramLI);
+		else if (stmt->need_to_push_result)
+			rc = execute_plan_and_push_result(estate, expr, paramLI);
+		else if (stmt->txn_data != NULL && !pltsql_support_tsql_transactions())
+		{
+			elog(DEBUG2, "TSQL TXN Execute transaction command with PG semantics");
+			rc = execute_txn_command(estate, stmt);
+
+			if (stmt->txn_data != NULL &&
+				(stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK ||
+				 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
+				restore_session_properties();
+		}
+		else
+			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
+												 estate->readonly_func, tcount);
+
+		/*
+		 * Check for error, and set FOUND if appropriate (for historical
+		 * reasons we set FOUND only for certain query types).  Also Assert
+		 * that we identified the statement type the same as SPI did.
+		 */
+		switch (rc)
+		{
+			case PLTSQL_RC_OK:
+				Assert(stmt->txn_data != NULL);
+				break;
+			case SPI_OK_SELECT:
+				Assert(!stmt->mod_stmt);
+				exec_set_found(estate, (SPI_processed != 0));
+				break;
+
+			case SPI_OK_INSERT:
+			case SPI_OK_UPDATE:
+			case SPI_OK_DELETE:
+			case SPI_OK_INSERT_RETURNING:
+			case SPI_OK_UPDATE_RETURNING:
+			case SPI_OK_DELETE_RETURNING:
+				Assert(stmt->mod_stmt);
+				exec_set_found(estate, (SPI_processed != 0));
+				break;
+
+			case SPI_OK_SELINTO:
+				Assert(!stmt->mod_stmt);
+				break;
+			case SPI_OK_UTILITY:
+
+				/*
+				 * INSERT ... EXECUTE can invoke a procedure while mod_stmt is
+				 * true
+				 */
+				break;
+
+			case SPI_OK_REWRITTEN:
+
+				/*
+				 * The command was rewritten into another kind of command.
+				 * It's not clear what FOUND would mean in that case (and SPI
+				 * doesn't return the row count either), so just set it to
+				 * false.  Note that we can't assert anything about mod_stmt
+				 * here.
+				 */
+				exec_set_found(estate, false);
+				break;
+
+				/* Some SPI errors deserve specific error messages */
+			case SPI_ERROR_COPY:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot COPY to/from client in PL/tsql")));
+				break;
+
+			case SPI_ERROR_TRANSACTION:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unsupported transaction command in PL/tsql")));
+				break;
+
+			default:
+				elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
+					 expr->query, SPI_result_code_string(rc));
+				break;
+		}
+
+		if (enable_txn_in_triggers)
+		{
+			if (!stmt->need_to_push_result)
+				/* before trigger execution, set the rowcount */
 			{
-				/* Put the first result row into the target */
-				exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
+				exec_set_rowcount(SPI_processed);
+			}
+			/* Close nesting level on engine side */
+			EndCompositeTriggers(false);
+			estate->tsql_trigger_flags &= ~TSQL_TRIGGER_STARTED;
+		}
+
+		if (columns_updated_list != NIL && 0 == pltsql_trigger_depth)
+		{
+			ListCell   *lc;
+
+			foreach(lc, columns_updated_list)
+			{
+				List	   *list = (List *) lfirst(lc);
+
+				if (list != NIL)
+					list_free_deep(list);
+			}
+			list_free(columns_updated_list);
+			columns_updated_list = NIL;
+		}
+
+		if (!stmt->need_to_push_result)
+			/* already set in execute_plan_and_push_result */
+		{
+			/* All variants should save result info for GET DIAGNOSTICS */
+			estate->eval_processed = SPI_processed;
+			exec_set_rowcount(SPI_processed);
+		}
+
+		/* Process INTO if present */
+		if (stmt->into || stmt->is_tsql_select_assign_stmt)
+		{
+			SPITupleTable *tuptab = SPI_tuptable;
+			uint64		n = SPI_processed;
+			PLtsql_variable *target;
+
+			/* If the statement did not return a tuple table, complain */
+			if (tuptab == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("INTO used with a command that cannot return data")));
+
+			/* Fetch target's datum entry */
+			target = (PLtsql_variable *) estate->datums[stmt->target->dno];
+
+			/*
+			 * If SELECT ... INTO specified STRICT, and the query didn't find
+			 * exactly one row, throw an error.  If STRICT was not specified,
+			 * then allow the query to find any number of rows.
+			 */
+			if (n == 0)
+			{
+				if (stmt->strict)
+				{
+					char	   *errdetail;
+
+					if (estate->func->print_strict_params)
+						errdetail = format_expr_params(estate, expr);
+					else
+						errdetail = NULL;
+
+					ereport(ERROR,
+							(errcode(ERRCODE_NO_DATA_FOUND),
+							 errmsg("query returned no rows"),
+							 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
+				}
+
+				if (!stmt->is_tsql_select_assign_stmt)
+				{
+					/* set the target to NULL(s) */
+					exec_move_row(estate, target, NULL, tuptab->tupdesc);
+				}
+				else
+				{
+					/*
+					 * A SELECT statement that returns zero rows will leave
+					 * the target(s) unchanged
+					 */
+				}
 			}
 			else
 			{
 				/*
-				 * A SELECT statement that returns more than one row will assign the values in the *last* row.
-				 *
-				 * Like SET command, string truncation error needs to be ignored silently.
-				 * Please note that value is already evaluated so this flag will not affect the evaluating expression itself.
+				 * if is_tsql_select_assign_stmt is set on mod_stmt, INTO is
+				 * injected by the extension. do not check the # of result
+				 * strictly
 				 */
-				suppress_string_truncation_error = true;
-				exec_move_row(estate, target, tuptab->vals[n-1], tuptab->tupdesc);
-				suppress_string_truncation_error = false;
+				if (n > 1 && (stmt->strict || (stmt->mod_stmt && !stmt->is_tsql_select_assign_stmt)))
+				{
+					char	   *errdetail;
+
+					if (estate->func->print_strict_params)
+						errdetail = format_expr_params(estate, expr);
+					else
+						errdetail = NULL;
+
+					ereport(ERROR,
+							(errcode(ERRCODE_TOO_MANY_ROWS),
+							 errmsg("query returned more than one row"),
+							 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
+				}
+
+				if (!stmt->is_tsql_select_assign_stmt)
+				{
+					/* Put the first result row into the target */
+					exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
+				}
+				else
+				{
+					/*
+					 * A SELECT statement that returns more than one row will
+					 * assign the values in the *last* row.
+					 *
+					 * Like SET command, string truncation error needs to be
+					 * ignored silently. Please note that value is already
+					 * evaluated so this flag will not affect the evaluating
+					 * expression itself.
+					 */
+					suppress_string_truncation_error = true;
+					exec_move_row(estate, target, tuptab->vals[n - 1], tuptab->tupdesc);
+					suppress_string_truncation_error = false;
+				}
 			}
+
+			/* Clean up */
+			exec_eval_cleanup(estate);
+			SPI_freetuptable(SPI_tuptable);
 		}
 
-		/* Clean up */
-		exec_eval_cleanup(estate);
-		SPI_freetuptable(SPI_tuptable);
-	}
+		/* If query affects IDENTITY_INSERT relation then update sequence */
+		pltsql_update_identity_insert_sequence(expr);
 
-	/* If query affects IDENTITY_INSERT relation then update sequence */
-	pltsql_update_identity_insert_sequence(expr);
+		/* Expect SPI_tuptable to be NULL else complain */
+		if (SPI_tuptable != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("query has no destination for result data"),
+					 (rc == SPI_OK_SELECT) ? errhint("If you want to discard the results of a SELECT, use PERFORM instead.") : 0));
 
-	/* Expect SPI_tuptable to be NULL else complain */
-	if (SPI_tuptable != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("query has no destination for result data"),
-				 (rc == SPI_OK_SELECT) ? errhint("If you want to discard the results of a SELECT, use PERFORM instead.") : 0));
+		/*
+		 * Always commit to match auto commit behavior for each statement
+		 * inside batch or procedure, but not user-defined function or
+		 * procedure invoked by INSERT ... EXECUTE.
+		 */
+		/* TODO To let procedure call from PSQL work with old semantics */
+		if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
+			pltsql_support_tsql_transactions() &&
+			(enable_txn_in_triggers || estate->trigdata == NULL) &&
+			!(estate->func->fn_prokind == PROKIND_FUNCTION &&
+			  estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER &&
+			  strcmp(estate->func->fn_signature, "inline_code_block") != 0) &&
+			!estate->insert_exec)
+		{
+			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
 
-	/*
-	 * Always commit to match auto commit behavior for each
-	 * statement inside batch or procedure, but not user-defined function
-	 * or procedure invoked by INSERT ... EXECUTE.
-	 */
-	/* TODO To let procedure call from PSQL work with old semantics */
-	if ((!pltsql_disable_batch_auto_commit || (stmt->txn_data != NULL)) &&
-		pltsql_support_tsql_transactions() &&
-		(enable_txn_in_triggers || estate->trigdata == NULL) &&
-		!(estate->func->fn_prokind == PROKIND_FUNCTION &&
-		  estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER &&
-		  strcmp(estate->func->fn_signature, "inline_code_block") != 0) &&
-		!estate->insert_exec)
-	{
-		commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
-
-		if (stmt->txn_data != NULL &&
-			(stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK ||
-			 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
-			restore_session_properties();
-	}
+			if (stmt->txn_data != NULL &&
+				(stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK ||
+				 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
+				restore_session_properties();
+		}
 	}
 	PG_CATCH();
 	{
 		if (need_path_reset)
-	 		(void) set_config_option("search_path", old_search_path,
-	 					PGC_USERSET, PGC_S_SESSION,
-	 					GUC_ACTION_SAVE, true, 0, false);
-		if(reset_session_properties)
+			(void) set_config_option("search_path", old_search_path,
+									 PGC_USERSET, PGC_S_SESSION,
+									 GUC_ACTION_SAVE, true, 0, false);
+		if (reset_session_properties)
 		{
 			set_session_properties(cur_dbname);
 			SetCurrentRoleId(current_user_id, false);
@@ -5033,10 +5083,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PG_END_TRY();
 
 	if (need_path_reset)
-	 	(void) set_config_option("search_path", old_search_path,
-	 				PGC_USERSET, PGC_S_SESSION,
-	 				GUC_ACTION_SAVE, true, 0, false);
-	if(reset_session_properties)
+		(void) set_config_option("search_path", old_search_path,
+								 PGC_USERSET, PGC_S_SESSION,
+								 GUC_ACTION_SAVE, true, 0, false);
+	if (reset_session_properties)
 	{
 		set_session_properties(cur_dbname);
 		SetCurrentRoleId(current_user_id, false);
@@ -5051,51 +5101,61 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	return PLTSQL_RC_OK;
 }
 
-static void updateColumnUpdatedList(PLtsql_expr* expr, int i){
-	ListCell* lcj;
-	List* curr_columns_list;
+static void
+updateColumnUpdatedList(PLtsql_expr *expr, int i)
+{
+	ListCell   *lcj;
+	List	   *curr_columns_list;
 	TargetEntry *target_entry;
-	Relation rel;
-	TupleDesc tupdesc;
+	Relation	rel;
+	TupleDesc	tupdesc;
 	MemoryContext oldContext;
 	UpdatedColumn *updateColumn;
-	int length;
-	Query *query;
-	List* targetList;
-	query = (Query *)list_nth(
-		((CachedPlanSource *)list_nth(expr->plan->plancache_list, 0))->query_list
-		,i);
-	targetList = 
+	int			length;
+	Query	   *query;
+	List	   *targetList;
+
+	query = (Query *) list_nth(
+							   ((CachedPlanSource *) list_nth(expr->plan->plancache_list, 0))->query_list
+							   ,i);
+	targetList =
 		query->targetList;
 	if (query->rtable == NULL || targetList == NULL)
 		return;
-	rel = RelationIdGetRelation(((RangeTblEntry *)list_nth(query->rtable,query->resultRelation-1))->relid);
-	if (!rel || rel->rd_islocaltemp || !rel->rd_isvalid){
+	rel = RelationIdGetRelation(((RangeTblEntry *) list_nth(query->rtable, query->resultRelation - 1))->relid);
+	if (!rel || rel->rd_islocaltemp || !rel->rd_isvalid)
+	{
 		RelationClose(rel);
 		return;
 	}
-	if (rel->trigdesc && rel->trigdesc->numtriggers > 0){
-		// we only need call this structure inside triggers
-		foreach(lcj, targetList){
-			target_entry = (TargetEntry*)lfirst(lcj);
+	if (rel->trigdesc && rel->trigdesc->numtriggers > 0)
+	{
+		/* we only need call this structure inside triggers */
+		foreach(lcj, targetList)
+		{
+			target_entry = (TargetEntry *) lfirst(lcj);
 			tupdesc = RelationGetDescr(rel);
 			oldContext = MemoryContextSwitchTo(TopMemoryContext);
 			length = list_length(columns_updated_list);
-			updateColumn = (UpdatedColumn *)palloc(sizeof(UpdatedColumn));
+			updateColumn = (UpdatedColumn *) palloc(sizeof(UpdatedColumn));
 			updateColumn->x_attnum = target_entry->resno;
 			updateColumn->trigger_depth = pltsql_trigger_depth;
 			updateColumn->total_columns = tupdesc->natts;
 			updateColumn->column_name = target_entry->resname;
-			if (length < pltsql_trigger_depth + 1){
+			if (length < pltsql_trigger_depth + 1)
+			{
 				curr_columns_list = NIL;
-				while (length < pltsql_trigger_depth){
+				while (length < pltsql_trigger_depth)
+				{
 					columns_updated_list = lappend(columns_updated_list, NIL);
 					length++;
 				}
 				curr_columns_list = list_make1(updateColumn);
 				columns_updated_list = lappend(columns_updated_list, curr_columns_list);
-			}else{
-				curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth);
+			}
+			else
+			{
+				curr_columns_list = (List *) list_nth(columns_updated_list, pltsql_trigger_depth);
 				curr_columns_list = lappend(curr_columns_list, updateColumn);
 			}
 			MemoryContextSwitchTo(oldContext);
@@ -5112,18 +5172,18 @@ static void updateColumnUpdatedList(PLtsql_expr* expr, int i){
 
 int
 exec_fmtonly(PLtsql_execstate *estate,
-             PLtsql_stmt_execsql *stmt)
+			 PLtsql_stmt_execsql *stmt)
 {
-    volatile LocalTransactionId before_lxid;
-    LocalTransactionId after_lxid;
-    SimpleEcontextStackEntry *topEntry;
+	volatile LocalTransactionId before_lxid;
+	LocalTransactionId after_lxid;
+	SimpleEcontextStackEntry *topEntry;
 
-    PLtsql_stmt_exec *estmt;
-    StringInfoData ss;
-    SPIPlanPtr plan;
+	PLtsql_stmt_exec *estmt;
+	StringInfoData ss;
+	SPIPlanPtr	plan;
 
-    Node	   *node;
-    FuncExpr   *funcexpr;
+	Node	   *node;
+	FuncExpr   *funcexpr;
 	HeapTuple	func_tuple;
 	List	   *funcargs;
 	Oid		   *argtypes;
@@ -5132,62 +5192,64 @@ exec_fmtonly(PLtsql_execstate *estate,
 	char	   *parammodes;
 	MemoryContext oldcontext;
 	PLtsql_row *row;
-    int rc;
+	int			rc;
 	SPIExecuteOptions options;
-    PLtsql_expr *expr = stmt->sqlstmt;
+	PLtsql_expr *expr = stmt->sqlstmt;
 	int			nfields;
-    int i;
-    ListCell *lc;
-    ParamListInfo paramLI;
-    PLtsql_var *return_code;
-    Query* query;
+	int			i;
+	ListCell   *lc;
+	ParamListInfo paramLI;
+	PLtsql_var *return_code;
+	Query	   *query;
 
-    estmt = (PLtsql_stmt_exec *) palloc0(sizeof(*estmt));
-    estmt->cmd_type = PLTSQL_STMT_EXEC;
-    estmt->lineno = stmt->lineno;
-    estmt->is_call = true;
-    estmt->return_code_dno = -1; // Value?
+	estmt = (PLtsql_stmt_exec *) palloc0(sizeof(*estmt));
+	estmt->cmd_type = PLTSQL_STMT_EXEC;
+	estmt->lineno = stmt->lineno;
+	estmt->is_call = true;
+	estmt->return_code_dno = -1;
+	/* Value ? */
 
-    initStringInfo(&ss);
-    appendStringInfo(&ss, "EXEC sp_describe_first_result_set N'");
-    appendStringInfoString(&ss, expr->query);
-    appendStringInfo(&ss, "', null, 0;");
-    estmt->expr = (PLtsql_expr *) palloc0(sizeof(estmt->expr));
-    estmt->expr->query = strdup(ss.data);
-    estmt->expr->plan = NULL;
-    estmt->expr->paramnos = NULL;
-    estmt->expr->rwparam = -1;
-    estmt->expr->ns = pltsql_ns_top();
+	initStringInfo(&ss);
+	appendStringInfo(&ss, "EXEC sp_describe_first_result_set N'");
+	appendStringInfoString(&ss, expr->query);
+	appendStringInfo(&ss, "', null, 0;");
+	estmt->expr = (PLtsql_expr *) palloc0(sizeof(estmt->expr));
+	estmt->expr->query = strdup(ss.data);
+	estmt->expr->plan = NULL;
+	estmt->expr->paramnos = NULL;
+	estmt->expr->rwparam = -1;
+	estmt->expr->ns = pltsql_ns_top();
 
-    estate->ndatums = 2;
+	estate->ndatums = 2;
 
-    /*
-     * Begin exec_stmt_exec section
-     */
-    plan = estmt->expr->plan;
-    plan = prepare_stmt_exec(estate, estate->func, estmt, estate->atomic);
+	/*
+	 * Begin exec_stmt_exec section
+	 */
+	plan = estmt->expr->plan;
+	plan = prepare_stmt_exec(estate, estate->func, estmt, estate->atomic);
 
-    query = linitial_node(Query, ((CachedPlanSource *) linitial(plan->plancache_list))->query_list);
+	query = linitial_node(Query, ((CachedPlanSource *) linitial(plan->plancache_list))->query_list);
 
 
-    node = query->utilityStmt;
+	node = query->utilityStmt;
 	funcexpr = ((CallStmt *) node)->funcexpr;
 
-    func_tuple = SearchSysCache1(PROCOID,
-									 ObjectIdGetDatum(funcexpr->funcid));
+	func_tuple = SearchSysCache1(PROCOID,
+								 ObjectIdGetDatum(funcexpr->funcid));
 
-    if (!HeapTupleIsValid(func_tuple))
-			elog(ERROR, "cache lookup failed for function %u",
-				 funcexpr->funcid);
+	if (!HeapTupleIsValid(func_tuple))
+		elog(ERROR, "cache lookup failed for function %u",
+			 funcexpr->funcid);
 
-    /*
+	/*
 	 * Extract function arguments, and expand any named-arg notation
 	 */
 	funcargs = expand_function_arguments(funcexpr->args,
-											 false,
-											 funcexpr->funcresulttype,
-											 func_tuple);
-    /*
+										 false,
+										 funcexpr->funcresulttype,
+										 func_tuple);
+
+	/*
 	 * Get the argument names and modes, too
 	 */
 	get_func_arg_info(func_tuple, &argtypes, &argnames, &argmodes);
@@ -5209,102 +5271,108 @@ exec_fmtonly(PLtsql_execstate *estate,
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * Examine procedure's argument list.  Each output arg position
-	 * should be an unadorned pltsql variable (Datum), which we can
-	 * insert into the row Datum.
+	 * Examine procedure's argument list.  Each output arg position should be
+	 * an unadorned pltsql variable (Datum), which we can insert into the row
+	 * Datum.
 	 */
 	nfields = 0;
 	i = 0;
 	foreach(lc, funcargs)
 	{
-        Node	   *n = lfirst(lc);
+		Node	   *n = lfirst(lc);
 
-			if (argmodes &&
-				(argmodes[i] == PROARGMODE_INOUT ||
-				 argmodes[i] == PROARGMODE_OUT))
+		if (argmodes &&
+			(argmodes[i] == PROARGMODE_INOUT ||
+			 argmodes[i] == PROARGMODE_OUT))
+		{
+			if (parammodes &&
+				parammodes[i] != PROARGMODE_INOUT &&
+				parammodes[i] != PROARGMODE_OUT)
 			{
-				if (parammodes &&
-					parammodes[i] != PROARGMODE_INOUT &&
-					parammodes[i] != PROARGMODE_OUT)
-				{
-					/*
-					 * If an INOUT arg is called without OUTPUT, it should be treated like an
-					 * IN param. Put -1 to param id. We can skip assigning actual value.
-					 */
-					row->varnos[nfields++] = -1;
-				}
-				else if (IsA(n, Param))
-				{
-					Param	   *param = (Param *) n;
-
-					/* paramid is offset by 1 (see make_datum_param()) */
-					row->varnos[nfields++] = param->paramid - 1;
-				}
-				else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
-				{
-					/*
-					 * Other than PL/pgsql, T-SQL allows implicit casting in INOUT and OUT params.
-					 *
-					 * In PG, if implcit casting is added (i.e. int->bigint), it throws an error
-					 * "corresponding argument is not writable" (see the else-clause)
-					 *
-					 * In T-SQL, if arg node is an implicit casting, we will strip the casting.
-					 * Actual casting will be done at value assignement with validity check.
-					 */
-
-					Param *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
-
-					/* paramid is offset by 1 (see make_datum_param()) */
-					row->varnos[nfields++] = param->paramid - 1;
-				}
-				else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
-				{
-					/*
-					 * T-SQL allows to pass constant value as an output parameter.
-					 * Put -1 to param id. We can skip assigning actual value.
-					 */
-					row->varnos[nfields++] = -1;
-				}
-				else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
-				{
-					/* mixture case of implicit casting + CONST. We can skip assigning actual value. */
-					row->varnos[nfields++] = -1;
-				}
-				else
-				{
-					/* report error using parameter name, if available */
-					if (argnames && argnames[i] && argnames[i][0])
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
-										argnames[i])));
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
-										i + 1)));
-				}
+				/*
+				 * If an INOUT arg is called without OUTPUT, it should be
+				 * treated like an IN param. Put -1 to param id. We can skip
+				 * assigning actual value.
+				 */
+				row->varnos[nfields++] = -1;
 			}
-			i++;
-    }
-    row->nfields = nfields;
+			else if (IsA(n, Param))
+			{
+				Param	   *param = (Param *) n;
+
+				/* paramid is offset by 1 (see make_datum_param()) */
+				row->varnos[nfields++] = param->paramid - 1;
+			}
+			else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
+			{
+				/*
+				 * Other than PL/pgsql, T-SQL allows implicit casting in INOUT
+				 * and OUT params.
+				 *
+				 * In PG, if implcit casting is added (i.e. int->bigint), it
+				 * throws an error "corresponding argument is not writable"
+				 * (see the else-clause)
+				 *
+				 * In T-SQL, if arg node is an implicit casting, we will strip
+				 * the casting. Actual casting will be done at value
+				 * assignement with validity check.
+				 */
+
+				Param	   *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
+
+				/* paramid is offset by 1 (see make_datum_param()) */
+				row->varnos[nfields++] = param->paramid - 1;
+			}
+			else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
+			{
+				/*
+				 * T-SQL allows to pass constant value as an output parameter.
+				 * Put -1 to param id. We can skip assigning actual value.
+				 */
+				row->varnos[nfields++] = -1;
+			}
+			else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
+			{
+				/*
+				 * mixture case of implicit casting + CONST. We can skip
+				 * assigning actual value.
+				 */
+				row->varnos[nfields++] = -1;
+			}
+			else
+			{
+				/* report error using parameter name, if available */
+				if (argnames && argnames[i] && argnames[i][0])
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
+									argnames[i])));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
+									i + 1)));
+			}
+		}
+		i++;
+	}
+	row->nfields = nfields;
 
 	estmt->target = (PLtsql_variable *) row;
 
-    paramLI = setup_param_list(estate, estmt->expr);
+	paramLI = setup_param_list(estate, estmt->expr);
 
 	before_lxid = MyProc->lxid;
 	topEntry = simple_econtext_stack;
 
-    /*
-	 * If we started an implicit_transaction for this statement,
-	 * check the query plan to see if we actually require it or
-	 * not
+	/*
+	 * If we started an implicit_transaction for this statement, check the
+	 * query plan to see if we actually require it or not
 	 */
 	if (estate->impl_txn_type == PLTSQL_IMPL_TRAN_START)
 	{
-    	if (!is_impl_txn_required_for_execsql(stmt))
-	    	pltsql_commit_not_required_impl_txn(estate);
+		if (!is_impl_txn_required_for_execsql(stmt))
+			pltsql_commit_not_required_impl_txn(estate);
 		else
 			estate->impl_txn_type = PLTSQL_IMPL_TRAN_ON;
 	}
@@ -5316,11 +5384,11 @@ exec_fmtonly(PLtsql_execstate *estate,
 
 	rc = SPI_execute_plan_extended(expr->plan, &options);
 
-    /*
+	/*
 	 * Copy the procedure's return code into the specified variable
 	 *
-	 * Note that the procedure stores its return code in the global
-	 * variable named pltsql_proc_return_code.
+	 * Note that the procedure stores its return code in the global variable
+	 * named pltsql_proc_return_code.
 	 */
 	if (estmt->return_code_dno >= 0)
 	{
@@ -5329,48 +5397,48 @@ exec_fmtonly(PLtsql_execstate *estate,
 		exec_assign_value(estate, (PLtsql_datum *) return_code, Int32GetDatum(pltsql_proc_return_code), false, INT4OID, 0);
 	}
 
-    if (estmt->expr->plan && !estmt->expr->plan->saved)
+	if (estmt->expr->plan && !estmt->expr->plan->saved)
 		estmt->expr->plan = NULL;
 
-    if (rc < 0)
-    	elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
-    		 estmt->expr->query, SPI_result_code_string(rc));
-    
-    after_lxid = MyProc->lxid;
-    
-    if (before_lxid != after_lxid ||
-    	simple_econtext_stack == NULL ||
-    	topEntry != simple_econtext_stack)
-    {
-    	/*
-    	 * If we are in a new transaction after the call, we need to build new
-    	 * simple-expression infrastructure.
-    	 */
-    	if (estate->use_shared_simple_eval_state)
-    		estate->simple_eval_estate = NULL;
-    	pltsql_create_econtext(estate);
-    }
-    
-    /*
-     * Check result rowcount; if there's one row, assign procedure's output
-     * values back to the appropriate variables.
-     */
-    if (SPI_processed == 1)
-    {
-    	SPITupleTable *tuptab = SPI_tuptable;
-    
-    	if (!stmt->target)
-    		elog(ERROR, "DO statement returned a row");
-    
-    	exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
-    }
-    else if (SPI_processed > 1)
-    	elog(ERROR, "procedure call returned more than one row");
-    
-    exec_eval_cleanup(estate);
-    SPI_freetuptable(SPI_tuptable);
-    
-    return PLTSQL_RC_OK;
+	if (rc < 0)
+		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
+			 estmt->expr->query, SPI_result_code_string(rc));
+
+	after_lxid = MyProc->lxid;
+
+	if (before_lxid != after_lxid ||
+		simple_econtext_stack == NULL ||
+		topEntry != simple_econtext_stack)
+	{
+		/*
+		 * If we are in a new transaction after the call, we need to build new
+		 * simple-expression infrastructure.
+		 */
+		if (estate->use_shared_simple_eval_state)
+			estate->simple_eval_estate = NULL;
+		pltsql_create_econtext(estate);
+	}
+
+	/*
+	 * Check result rowcount; if there's one row, assign procedure's output
+	 * values back to the appropriate variables.
+	 */
+	if (SPI_processed == 1)
+	{
+		SPITupleTable *tuptab = SPI_tuptable;
+
+		if (!stmt->target)
+			elog(ERROR, "DO statement returned a row");
+
+		exec_move_row(estate, stmt->target, tuptab->vals[0], tuptab->tupdesc);
+	}
+	else if (SPI_processed > 1)
+		elog(ERROR, "procedure call returned more than one row");
+
+	exec_eval_cleanup(estate);
+	SPI_freetuptable(SPI_tuptable);
+
+	return PLTSQL_RC_OK;
 }
 
 
@@ -5380,22 +5448,23 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 {
 	if (tsql_identity_insert.valid)
 	{
-		ListCell *lc;
-		bool is_called = false;
+		ListCell   *lc;
+		bool		is_called = false;
 
-		/* If present, get the current relation Oid that corresponds to
+		/*
+		 * If present, get the current relation Oid that corresponds to
 		 * IDENTITY_INSERT.
-		*/
+		 */
 		foreach(lc, SPI_plan_get_plan_sources(expr->plan))
 		{
 			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
-			ListCell *lc_rel;
+			ListCell   *lc_rel;
 
 			if (plansource->commandTag && plansource->commandTag == CMDTAG_INSERT)
 			{
 				foreach(lc_rel, plansource->relationOids)
 				{
-					Oid cur_rel = lfirst_oid(lc_rel);
+					Oid			cur_rel = lfirst_oid(lc_rel);
 
 					if (cur_rel == tsql_identity_insert.rel_oid)
 					{
@@ -5411,13 +5480,13 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 
 		if (is_called)
 		{
-			Relation rel;
-			TupleDesc tupdesc;
-			AttrNumber attnum;
-			char *id_attname = NULL;
-			Oid seqid = InvalidOid;
+			Relation	rel;
+			TupleDesc	tupdesc;
+			AttrNumber	attnum;
+			char	   *id_attname = NULL;
+			Oid			seqid = InvalidOid;
 			SPITupleTable *tuptable = SPI_tuptable;
-			uint64 n_processed = SPI_processed;
+			uint64		n_processed = SPI_processed;
 
 			/* Get the identity column name */
 			rel = RelationIdGetRelation(tsql_identity_insert.rel_oid);
@@ -5426,10 +5495,11 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 			for (attnum = 0; attnum < tupdesc->natts; attnum++)
 			{
 				Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
+
 				if (attr->attidentity)
 				{
 					id_attname = NameStr(attr->attname);
-					seqid = getIdentitySequence(tsql_identity_insert.rel_oid, attnum+1, false);
+					seqid = getIdentitySequence(tsql_identity_insert.rel_oid, attnum + 1, false);
 					break;
 				}
 			}
@@ -5440,12 +5510,12 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 			if (!id_attname)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						errmsg("IDENTITY column not found")));
+						 errmsg("IDENTITY column not found")));
 
 			/* Check that the tuple table is not empty */
 			if (tuptable != NULL && n_processed > 0)
 			{
-				TupleDesc tupdesc_ret = tuptable->tupdesc;
+				TupleDesc	tupdesc_ret = tuptable->tupdesc;
 
 				/* Obtain the user identity column */
 				for (attnum = 0; attnum < tupdesc_ret->natts; attnum++)
@@ -5455,22 +5525,22 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 					/* Find by name since other attributes not defined */
 					if (strcmp(NameStr(attr->attname), id_attname) == 0)
 					{
-						int tup_idx;
-						int64 seq_incr = 0;
-						int64 last_identity;
-						int64 min_identity = LONG_MAX;
-						int64 max_identity = LONG_MIN;
-						ListCell *seq_lc;
-						List *seq_options;
+						int			tup_idx;
+						int64		seq_incr = 0;
+						int64		last_identity;
+						int64		min_identity = LONG_MAX;
+						int64		max_identity = LONG_MIN;
+						ListCell   *seq_lc;
+						List	   *seq_options;
 
 						for (tup_idx = 0; tup_idx < n_processed; tup_idx++)
 						{
-							bool isnull;
-							HeapTuple tuple = tuptable->vals[tup_idx];
+							bool		isnull;
+							HeapTuple	tuple = tuptable->vals[tup_idx];
 
 							last_identity = DatumGetInt64(SPI_getbinval(tuple,
 																		tupdesc_ret,
-																		attnum+1,
+																		attnum + 1,
 																		&isnull));
 
 							Assert(!isnull);
@@ -5484,14 +5554,14 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 						/*
 						 * We also need to reset the seed.  If the increment
 						 * is positive, we need to find the max identity that
-						 * we've inserted.  Other wise, we need to set the
-						 * min identity.
+						 * we've inserted.  Other wise, we need to set the min
+						 * identity.
 						 */
 						seq_options = sequence_options(seqid);
 
-						foreach (seq_lc, seq_options)
+						foreach(seq_lc, seq_options)
 						{
-							DefElem *defel = (DefElem *) lfirst(seq_lc);
+							DefElem    *defel = (DefElem *) lfirst(seq_lc);
 
 							if (strcmp(defel->defname, "increment") == 0)
 								seq_incr = defGetInt64(defel);
@@ -5502,7 +5572,8 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 						{
 							/*
 							 * We want the T-SQL behavior of setval function.
-							 * Please check the variable definition for details.
+							 * Please check the variable definition for
+							 * details.
 							 */
 							pltsql_setval_identity_mode = true;
 							if (seq_incr > 0)
@@ -5513,7 +5584,8 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 								DirectFunctionCall2(setval_oid,
 													ObjectIdGetDatum(seqid),
 													Int64GetDatum(min_identity));
-							else {
+							else
+							{
 								/* increment can't be zero */
 								Assert(0);
 							}
@@ -5571,7 +5643,10 @@ exec_stmt_dynexecute(PLtsql_execstate *estate,
 	/* Get the C-String representation */
 	querystr = convert_value_to_string(estate, query, restype);
 
-	/* carry out any local temporary table transformations that may be required */
+	/*
+	 * carry out any local temporary table transformations that may be
+	 * required
+	 */
 	querystr = transform_tsql_temp_tables(querystr);
 
 	/* copy it into the stmt_mcontext before we clean up */
@@ -5619,9 +5694,9 @@ exec_stmt_dynexecute(PLtsql_execstate *estate,
 			/*
 			 * We want to disallow SELECT INTO for now, because its behavior
 			 * is not consistent with SELECT INTO in a normal pltsql context.
-			 * (We need to reimplement EXECUTE to parse the string as a
-			 * pltsql command, not just feed it to SPI_execute.)  This is not
-			 * a functional limitation because CREATE TABLE AS is allowed.
+			 * (We need to reimplement EXECUTE to parse the string as a pltsql
+			 * command, not just feed it to SPI_execute.)  This is not a
+			 * functional limitation because CREATE TABLE AS is allowed.
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -5894,7 +5969,7 @@ exec_stmt_open(PLtsql_execstate *estate, PLtsql_stmt_open *stmt)
 			 * T-SQL cursor variable can refer to another constant cursor.
 			 * lookup cursor hash to get cursor definition.
 			 */
-			int cursor_options;
+			int			cursor_options;
 
 			pltsql_get_cursor_definition(TextDatumGetCString(curvar->value), &query, &cursor_options);
 			if (query == NULL)
@@ -5935,7 +6010,7 @@ exec_stmt_open(PLtsql_execstate *estate, PLtsql_stmt_open *stmt)
 	if (stmt_mcontext)
 		MemoryContextReset(stmt_mcontext);
 
-        exec_set_rowcount(0);
+	exec_set_rowcount(0);
 
 	/*
 	 * Different from specification document, tsql sets @@fetch_status to 0
@@ -6012,7 +6087,7 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 		PLtsql_variable *target;
 
 
-		if (stmt->target) /* target is given */
+		if (stmt->target)		/* target is given */
 		{
 			/* ----------
 			 * Fetch 1 tuple from the cursor
@@ -6032,7 +6107,7 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 			else
 				exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
 		}
-		else /* no target. push the result to client */
+		else					/* no target. push the result to client */
 		{
 			DestReceiver *receiver;
 
@@ -6111,7 +6186,7 @@ exec_stmt_close(PLtsql_execstate *estate, PLtsql_stmt_close *stmt)
 	 */
 	SPI_cursor_close(portal);
 
-        exec_set_rowcount(0);
+	exec_set_rowcount(0);
 
 	pltsql_update_cursor_row_count(curname, 0);
 	pltsql_update_cursor_last_operation(curname, 6);
@@ -6181,7 +6256,7 @@ exec_stmt_set(PLtsql_execstate *estate, PLtsql_stmt_set *stmt)
 		elog(ERROR, "SPI_execute_plan_extended failed executing query \"%s\": %s",
 			 expr->query, SPI_result_code_string(rc));
 
-        exec_set_rowcount(0);
+	exec_set_rowcount(0);
 
 	return PLTSQL_RC_OK;
 }
@@ -6214,9 +6289,9 @@ exec_assign_expr(PLtsql_execstate *estate, PLtsql_datum *target,
 
 	if (pltsql_explain_only && expr->ns)
 	{
-		int rc;
+		int			rc;
 		PLtsql_nsitem *ns = expr->ns;
-		StringInfo strinfo = makeStringInfo();
+		StringInfo	strinfo = makeStringInfo();
 
 		while (ns)
 		{
@@ -6236,7 +6311,7 @@ exec_assign_expr(PLtsql_execstate *estate, PLtsql_datum *target,
 		if (rc != SPI_OK_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					errmsg("query \"%s\" did not return data", expr->query)));
+					 errmsg("query \"%s\" did not return data", expr->query)));
 
 		exec_eval_cleanup(estate);
 		return;
@@ -6245,11 +6320,12 @@ exec_assign_expr(PLtsql_execstate *estate, PLtsql_datum *target,
 	value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
 
 	/*
-	 * Unlike other scenario using implicit castings to (var)char, (i.e. insert into table)
-	 * SET statement should suppress data truncation error.
-	 * This context cannot be represented in PG casting framework, use a global variable to control this behavior.
-	 * This variable is turned on in exec_assign_value only.
-	 * Please note that "value" is already evaluated so this flag will not affect the evaluating expression itself.
+	 * Unlike other scenario using implicit castings to (var)char, (i.e.
+	 * insert into table) SET statement should suppress data truncation error.
+	 * This context cannot be represented in PG casting framework, use a
+	 * global variable to control this behavior. This variable is turned on in
+	 * exec_assign_value only. Please note that "value" is already evaluated
+	 * so this flag will not affect the evaluating expression itself.
 	 */
 	suppress_string_truncation_error = true;
 	exec_assign_value(estate, target, value, isnull, valtype, valtypmod);
@@ -6856,6 +6932,7 @@ exec_eval_datum(PLtsql_execstate *estate,
 		case PLTSQL_DTYPE_TBL:
 			{
 				PLtsql_tbl *tbl = (PLtsql_tbl *) datum;
+
 				*typeid = tbl->tbltypeid;
 				*typetypmod = -1;
 				*value = CStringGetDatum(tbl->tblname);
@@ -6877,7 +6954,7 @@ exec_eval_datum(PLtsql_execstate *estate,
  */
 Oid
 pltsql_exec_get_datum_type(PLtsql_execstate *estate,
-							PLtsql_datum *datum)
+						   PLtsql_datum *datum)
 {
 	Oid			typeid;
 
@@ -6962,8 +7039,8 @@ pltsql_exec_get_datum_type(PLtsql_execstate *estate,
  */
 void
 pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
-								 PLtsql_datum *datum,
-								 Oid *typeId, int32 *typMod, Oid *collation)
+								PLtsql_datum *datum,
+								Oid *typeId, int32 *typMod, Oid *collation)
 {
 	switch (datum->dtype)
 	{
@@ -7120,7 +7197,7 @@ exec_eval_expr(PLtsql_execstate *estate,
 			   Oid *rettype,
 			   int32 *rettypmod)
 {
-	Datum		result = 0;
+	Datum result = 0;
 	int			rc;
 	Form_pg_attribute attr;
 
@@ -7214,10 +7291,11 @@ exec_run_select(PLtsql_execstate *estate,
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr, portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
+
 	/*
-	 * If we started an implicit_transaction for this statement but
-	 * the statement has a simple expression associated with them,
-	 * we no longer require an implicit transaction
+	 * If we started an implicit_transaction for this statement but the
+	 * statement has a simple expression associated with them, we no longer
+	 * require an implicit transaction
 	 */
 	if (estate->impl_txn_type == PLTSQL_IMPL_TRAN_START)
 	{
@@ -7457,7 +7535,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	LocalTransactionId curlxid = MyProc->lxid;
 	CachedPlan *cplan;
 	void	   *save_setup_arg;
-      bool        need_snapshot;
+	bool		need_snapshot;
 	MemoryContext oldcontext;
 
 	/*
@@ -7471,8 +7549,9 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 */
 	if (expr->expr_simple_in_use && expr->expr_simple_lxid == curlxid)
 		return false;
-	
-	/* Ensure that there's a portal-level snapshot, in case this simple
+
+	/*
+	 * Ensure that there's a portal-level snapshot, in case this simple
 	 * expression is the first thing evaluated after a COMMIT or ROLLBACK.
 	 * We'd have to do this anyway before executing the expression, so we
 	 * might as well do it now to ensure that any possible replanning doesn't
@@ -7522,10 +7601,10 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	/*
 	 * Prepare the expression for execution, if it's not been done already in
 	 * the current transaction.  (This will be forced to happen if we called
-	 * exec_save_simple_expr above.)
-	 * We skip preparation for top level batch when it is not replanned. Top
-	 * level batch memory is not reset due to commit/rollback. There is still
-	 * leak when it is Top level batch + replan and needs fix.
+	 * exec_save_simple_expr above.) We skip preparation for top level batch
+	 * when it is not replanned. Top level batch memory is not reset due to
+	 * commit/rollback. There is still leak when it is Top level batch +
+	 * replan and needs fix.
 	 */
 	if (expr->expr_simple_lxid != curlxid && (expr->expr_simple_state == NULL || estate->use_shared_simple_eval_state))
 	{
@@ -7543,15 +7622,15 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 * particular push a new snapshot so that stable functions within the
 	 * expression can see updates made so far by our own function.  However,
 	 * we can skip doing that (and just invoke the expression with the same
-       * snapshot passed to our function) in some cases, which is useful because
-       * it's quite expensive relative to the cost of a simple expression.  We
-       * can skip it if the expression contains no stable or volatile functions;
-       * immutable functions shouldn't need to see our updates.  Also, if this
-       * is a read-only function, we haven't made any updates so again it's okay
-       * to skip.
+	 * snapshot passed to our function) in some cases, which is useful because
+	 * it's quite expensive relative to the cost of a simple expression.  We
+	 * can skip it if the expression contains no stable or volatile functions;
+	 * immutable functions shouldn't need to see our updates.  Also, if this
+	 * is a read-only function, we haven't made any updates so again it's okay
+	 * to skip.
 	 */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-      need_snapshot = (expr->expr_simple_mutable && !estate->readonly_func);
+	need_snapshot = (expr->expr_simple_mutable && !estate->readonly_func);
 	if (need_snapshot)
 	{
 		CommandCounterIncrement();
@@ -7669,8 +7748,8 @@ setup_param_list(PLtsql_execstate *estate, PLtsql_expr *expr)
  */
 static ParamExternData *
 pltsql_param_fetch(ParamListInfo params,
-					int paramid, bool speculative,
-					ParamExternData *prm)
+				   int paramid, bool speculative,
+				   ParamExternData *prm)
 {
 	int			dno;
 	PLtsql_execstate *estate;
@@ -7802,8 +7881,8 @@ pltsql_param_fetch(ParamListInfo params,
  */
 static void
 pltsql_param_compile(ParamListInfo params, Param *param,
-					  ExprState *state,
-					  Datum *resv, bool *resnull)
+					 ExprState *state,
+					 Datum *resv, bool *resnull)
 {
 	PLtsql_execstate *estate;
 	PLtsql_expr *expr;
@@ -7877,7 +7956,7 @@ pltsql_param_compile(ParamListInfo params, Param *param,
  */
 static void
 pltsql_param_eval_var(ExprState *state, ExprEvalStep *op,
-					   ExprContext *econtext)
+					  ExprContext *econtext)
 {
 	ParamListInfo params;
 	PLtsql_execstate *estate;
@@ -7909,7 +7988,7 @@ pltsql_param_eval_var(ExprState *state, ExprEvalStep *op,
  */
 static void
 pltsql_param_eval_var_ro(ExprState *state, ExprEvalStep *op,
-						  ExprContext *econtext)
+						 ExprContext *econtext)
 {
 	ParamListInfo params;
 	PLtsql_execstate *estate;
@@ -7946,7 +8025,7 @@ pltsql_param_eval_var_ro(ExprState *state, ExprEvalStep *op,
  */
 static void
 pltsql_param_eval_recfield(ExprState *state, ExprEvalStep *op,
-							ExprContext *econtext)
+						   ExprContext *econtext)
 {
 	ParamListInfo params;
 	PLtsql_execstate *estate;
@@ -8018,7 +8097,7 @@ pltsql_param_eval_recfield(ExprState *state, ExprEvalStep *op,
  */
 static void
 pltsql_param_eval_generic(ExprState *state, ExprEvalStep *op,
-						   ExprContext *econtext)
+						  ExprContext *econtext)
 {
 	ParamListInfo params;
 	PLtsql_execstate *estate;
@@ -8058,7 +8137,7 @@ pltsql_param_eval_generic(ExprState *state, ExprEvalStep *op,
  */
 static void
 pltsql_param_eval_generic_ro(ExprState *state, ExprEvalStep *op,
-							  ExprContext *econtext)
+							 ExprContext *econtext)
 {
 	ParamListInfo params;
 	PLtsql_execstate *estate;
@@ -8549,7 +8628,10 @@ exec_move_row_from_fields(PLtsql_execstate *estate,
 				valtypmod = -1;
 			}
 
-			/* T-SQL output can take non-writable expression. skip assigning a value if it is not a parameter */
+			/*
+			 * T-SQL output can take non-writable expression. skip assigning a
+			 * value if it is not a parameter
+			 */
 			if (row->varnos[fnum] < 0)
 				continue;
 
@@ -8980,6 +9062,7 @@ convert_value_to_string(PLtsql_execstate *estate, Datum value, Oid valtype)
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 	getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
 	result = OidOutputFunctionCall(typoutput, value);
+
 	MemoryContextSwitchTo(oldcontext);
 
 	return result;
@@ -9066,8 +9149,8 @@ get_cast_hashentry(PLtsql_execstate *estate,
 	cast_key.srctypmod = srctypmod;
 	cast_key.dsttypmod = dsttypmod;
 	cast_entry = (pltsql_CastHashEntry *) hash_search(estate->cast_hash,
-													   (void *) &cast_key,
-													   HASH_ENTER, &found);
+													  (void *) &cast_key,
+													  HASH_ENTER, &found);
 	if (!found)					/* initialize if new entry */
 		cast_entry->cast_cexpr = NULL;
 
@@ -9081,7 +9164,7 @@ get_cast_hashentry(PLtsql_execstate *estate,
 		Node	   *cast_expr;
 		CachedExpression *cast_cexpr;
 		CaseTestExpr *placeholder;
- 
+
 		/*
 		 * Drop old cached expression if there is one.
 		 */
@@ -9188,9 +9271,9 @@ get_cast_hashentry(PLtsql_execstate *estate,
 	 * hash table with the new tree because all pltsql functions within a
 	 * given transaction share the same simple_eval_estate.  (Well, regular
 	 * functions do; DO blocks have private simple_eval_estates, and private
-	 * cast hash tables to go with them.)
-	 * We skip it for top level batch to avoid memory leak. There are still
-	 * cases where memory can leak but we are fixing conservatively.
+	 * cast hash tables to go with them.) We skip it for top level batch to
+	 * avoid memory leak. There are still cases where memory can leak but we
+	 * are fixing conservatively.
 	 */
 	curlxid = MyProc->lxid;
 	if ((cast_entry->cast_lxid != curlxid && (cast_entry->cast_exprstate == NULL || estate->use_shared_simple_eval_state)) || cast_entry->cast_in_use)
@@ -9334,10 +9417,12 @@ exec_set_fetch_status(PLtsql_execstate *estate, int status)
 	assign_simple_var(estate, var, Int32GetDatum(status), false, false);
 
 	/*
-	 * Now, @@ is parsed as a system function (please see TSQL_ATAT in backend gram.y),
-	 * we cannot access estate->fetch_status_varno.
-	 * We will save the fetch status to a global variable and system function _sys.fetch_count() will access it.
-	 * T-SQL document says @@FETCH_STATUS is global to all cursors on a connection, so this is also valid implementation.
+	 * Now, @@ is parsed as a system function (please see TSQL_ATAT in backend
+	 * gram.y), we cannot access estate->fetch_status_varno. We will save the
+	 * fetch status to a global variable and system function
+	 * _sys.fetch_count() will access it. T-SQL document says @@FETCH_STATUS
+	 * is global to all cursors on a connection, so this is also valid
+	 * implementation.
 	 */
 	fetch_status_var = status;
 }
@@ -9345,25 +9430,25 @@ exec_set_fetch_status(PLtsql_execstate *estate, int status)
 static void
 exec_set_rowcount(uint64 rowno)
 {
-        rowcount_var = rowno;
+	rowcount_var = rowno;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("rowcount", 0, rowcount_var);
+		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("rowcount", 0, rowcount_var);
 }
 
-int latest_error_code;
-int latest_pg_error_code;
-bool last_error_mapping_failed;
+int			latest_error_code;
+int			latest_pg_error_code;
+bool		last_error_mapping_failed;
 
 static void
 exec_set_error(PLtsql_execstate *estate, int error, int pg_error, bool error_mapping_failed)
 {
-    latest_error_code = error;
+	latest_error_code = error;
 	latest_pg_error_code = pg_error;
 	last_error_mapping_failed = error_mapping_failed;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("error", latest_error_code, 0);
+		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("error", latest_error_code, 0);
 }
 
 /*
@@ -9419,9 +9504,8 @@ pltsql_create_econtext(PLtsql_execstate *estate)
 	simple_econtext_stack = entry;
 
 	/*
-	 * Create a place holder portal to hold snapshot
-	 * to handle transactional commands in PLTSQL batches
-	 * procedures
+	 * Create a place holder portal to hold snapshot to handle transactional
+	 * commands in PLTSQL batches procedures
 	 */
 	if (ActivePortal == NULL && pltsql_snapshot_portal == NULL)
 	{
@@ -9440,6 +9524,7 @@ void
 pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate)
 {
 	MemoryContext cur_ctxt = CurrentMemoryContext;
+
 	elog(DEBUG2, "TSQL TXN Commit implicit transactions for command");
 	estate->impl_txn_type = PLTSQL_IMPL_TRAN_OFF;
 	pltsql_commit_txn();
@@ -9458,8 +9543,8 @@ pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate)
 void
 pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, CachedPlanSource *cachedPlanSource)
 {
-	char *txn_name = NULL;
-	Node *node = linitial_node(Query, cachedPlanSource->query_list)->utilityStmt;
+	char	   *txn_name = NULL;
+	Node	   *node = linitial_node(Query, cachedPlanSource->query_list)->utilityStmt;
 	TransactionStmt *txnStmt = (TransactionStmt *) node;
 
 	stmt->txn_data->stmt_kind = txnStmt->kind;
@@ -9468,10 +9553,10 @@ pltsql_eval_txn_data(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt, Cached
 	{
 		if (stmt->txn_data->txn_name_expr != NULL)
 		{
-			Datum val;
-			bool isnull = true;
-			Oid restype;
-			int32 restypmod;
+			Datum		val;
+			bool		isnull = true;
+			Oid			restype;
+			int32		restypmod;
 
 			val = exec_eval_expr(estate, stmt->txn_data->txn_name_expr,
 								 &isnull, &restype, &restypmod);
@@ -9524,6 +9609,7 @@ void
 pltsql_estate_cleanup(void)
 {
 	PLExecStateCallStack *top_es_entry;
+
 	top_es_entry = exec_state_call_stack->next;
 	if (top_es_entry != NULL)
 		pltsql_copy_exec_error_data(&(exec_state_call_stack->error_data),
@@ -9544,6 +9630,7 @@ txn_clean_estate(bool commit)
 	while (simple_econtext_stack != NULL)
 	{
 		SimpleEcontextStackEntry *next;
+
 		FreeExprContext(simple_econtext_stack->stack_econtext, commit);
 
 		next = simple_econtext_stack->next;
@@ -9596,7 +9683,7 @@ pltsql_xact_cb(XactEvent event, void *arg)
  */
 void
 pltsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
-				   SubTransactionId parentSubid, void *arg)
+				  SubTransactionId parentSubid, void *arg)
 {
 	if (event == SUBXACT_EVENT_COMMIT_SUB || event == SUBXACT_EVENT_ABORT_SUB)
 	{
@@ -9613,8 +9700,7 @@ pltsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 		}
 
 		/*
-		 * In case owner sub transaction is rolled back,
-		 * reset snapshot portal
+		 * In case owner sub transaction is rolled back, reset snapshot portal
 		 */
 		if (event == SUBXACT_EVENT_ABORT_SUB &&
 			pltsql_snapshot_portal != NULL &&
@@ -9701,7 +9787,7 @@ assign_simple_var(PLtsql_execstate *estate, PLtsql_var *var,
 /*
  * free old value of a text variable and assign new value from C string
  */
-/*static*/ void
+ /* static */ void
 assign_text_var(PLtsql_execstate *estate, PLtsql_var *var, const char *str)
 {
 	assign_simple_var(estate, var, CStringGetTextDatum(str), false, true);
@@ -10001,17 +10087,17 @@ format_preparedparamsdata(PLtsql_execstate *estate,
 static void
 pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 {
-	ListCell *lc;
-	int n;
-	int rc;
+	ListCell   *lc;
+	int			n;
+	int			rc;
 	PLtsql_tbl *tbl;
-	bool old_pltsql_explain_only = pltsql_explain_only;
+	bool		old_pltsql_explain_only = pltsql_explain_only;
 	const char *query_fmt = "DROP TABLE %s";
 	const char *query;
 
 	PG_TRY();
 	{
-		foreach (lc, func->table_varnos)
+		foreach(lc, func->table_varnos)
 		{
 			n = lfirst_int(lc);
 			if (estate->datums[n]->dtype != PLTSQL_DTYPE_TBL)
@@ -10021,12 +10107,13 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 				continue;
 			query = psprintf(query_fmt, tbl->tblname);
 
-			pltsql_explain_only = false; /* Drop temporary table even in EXPLAIN ONLY mode */
+			pltsql_explain_only = false;	/* Drop temporary table even in
+											 * EXPLAIN ONLY mode */
 
 			rc = SPI_execute(query, false, 0);
 			if (rc != SPI_OK_UTILITY)
 				elog(ERROR, "Failed to drop the underlying table %s of table variable %s",
-					tbl->tblname, tbl->refname);
+					 tbl->tblname, tbl->refname);
 
 			if (old_pltsql_explain_only)
 			{
@@ -10038,13 +10125,14 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	}
 	PG_CATCH();
 	{
-		pltsql_explain_only = old_pltsql_explain_only; /* Recover EXPLAIN ONLY mode */
+		pltsql_explain_only = old_pltsql_explain_only;	/* Recover EXPLAIN ONLY
+														 * mode */
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 }
 
-static void 
+static void
 pltsql_init_exec_error_data(PLtsqlErrorData *error_data)
 {
 	error_data->xact_abort_on = false;
@@ -10067,6 +10155,7 @@ pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryCo
 	if (src->error_procedure != NULL)
 	{
 		MemoryContext oldContext = MemoryContextSwitchTo(dstCtx);
+
 		dst->error_procedure = pstrdup(src->error_procedure);
 		MemoryContextSwitchTo(oldContext);
 	}
@@ -10080,29 +10169,32 @@ PLtsql_estate_err *
 pltsql_clone_estate_err(PLtsql_estate_err *err)
 {
 	PLtsql_estate_err *clone = palloc(sizeof(PLtsql_estate_err));
+
 	memcpy(clone, err, sizeof(PLtsql_estate_err));
 	return clone;
 }
 
-static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool* reset_session_properties, bool inside_trigger)
+static bool
+reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset_session_properties, bool inside_trigger)
 {
 	PLExecStateCallStack *top_es_entry;
-	char		*cur_dbname = get_cur_db_name();
-	char 		*new_search_path;
-	char 		*physical_schema;
-	const char		*dbo_schema;
+	char	   *cur_dbname = get_cur_db_name();
+	char	   *new_search_path;
+	char	   *physical_schema;
+	const char *dbo_schema;
+
 	top_es_entry = exec_state_call_stack->next;
 
-	while(top_es_entry != NULL)
+	while (top_es_entry != NULL)
 	{
 		/*
-		 * Traverse through the estate stack. If the occurrence of
-		 * exec in the call stack, update the search path accordingly.
+		 * Traverse through the estate stack. If the occurrence of exec in the
+		 * call stack, update the search path accordingly.
 		 */
-		if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
+		if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
 			top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC)
 		{
-			if(top_es_entry->estate->schema_name != NULL && stmt->is_dml)
+			if (top_es_entry->estate->schema_name != NULL && stmt->is_dml)
 			{
 				if (top_es_entry->estate->db_name == NULL)
 				{
@@ -10110,7 +10202,7 @@ static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path,
 					 * Don't change the search path, if the statement inside
 					 * the procedure is a function or schema qualified.
 					 */
-					if(stmt->func_call || stmt->is_schema_specified)
+					if (stmt->func_call || stmt->is_schema_specified)
 						break;
 					else
 					{
@@ -10134,18 +10226,23 @@ static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path,
 				}
 				if (!*old_search_path)
 				{
-					List 		*path_oids = fetch_search_path(false);
+					List	   *path_oids = fetch_search_path(false);
+
 					*old_search_path = flatten_search_path(path_oids);
 					list_free(path_oids);
 				}
 				new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
-				/* Add the schema where the object is referenced and dbo schema to the new search path */
+
+				/*
+				 * Add the schema where the object is referenced and dbo
+				 * schema to the new search path
+				 */
 				(void) set_config_option("search_path", new_search_path,
-								PGC_USERSET, PGC_S_SESSION,
-								GUC_ACTION_SAVE, true, 0, false);
+										 PGC_USERSET, PGC_S_SESSION,
+										 GUC_ACTION_SAVE, true, 0, false);
 				return true;
 			}
-			else if(top_es_entry->estate->db_name != NULL && stmt->is_ddl)
+			else if (top_es_entry->estate->db_name != NULL && stmt->is_ddl)
 			{
 				set_session_properties(top_es_entry->estate->db_name);
 				*reset_session_properties = true;
@@ -10153,18 +10250,18 @@ static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path,
 			}
 		}
 		/* if the stmt is inside an exec_batch, return false */
-		else if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
-				top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+		else if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
+				 top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
 			return false;
 
 		/*
-		 * Traverse through the estate stack, if the stmt is inside trigger
-		 * we set the search path accordingly.
+		 * Traverse through the estate stack, if the stmt is inside trigger we
+		 * set the search path accordingly.
 		 */
-		else if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
-				top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+		else if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
+				 top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL)
 		{
-			if(inside_trigger && top_es_entry->estate->schema_name)
+			if (inside_trigger && top_es_entry->estate->schema_name)
 			{
 				/*
 				 * If the object in the stmt is schema qualified or it's a ddl
@@ -10178,43 +10275,54 @@ static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path,
 					dbo_schema = get_dbo_schema_name(cur_dbname);
 					if (!*old_search_path)
 					{
-						List 		*path_oids = fetch_search_path(false);
+						List	   *path_oids = fetch_search_path(false);
+
 						*old_search_path = flatten_search_path(path_oids);
 						list_free(path_oids);
 					}
 					new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
-					/* Add the schema where the object is referenced and dbo schema to the new search path */
+
+					/*
+					 * Add the schema where the object is referenced and dbo
+					 * schema to the new search path
+					 */
 					(void) set_config_option("search_path", new_search_path,
-							PGC_USERSET, PGC_S_SESSION,
-							GUC_ACTION_SAVE, true, 0, false);
+											 PGC_USERSET, PGC_S_SESSION,
+											 GUC_ACTION_SAVE, true, 0, false);
 					return true;
 				}
 			}
 		}
 		top_es_entry = top_es_entry->next;
 	}
+
 	/*
-	 * When there is a function call:
-	 * search the specified schema for the object. If not found,
-	 * then search the dbo schema. Don't update the path for "sys" schema.
+	 * When there is a function call: search the specified schema for the
+	 * object. If not found, then search the dbo schema. Don't update the path
+	 * for "sys" schema.
 	 */
 	if ((stmt->func_call || stmt->is_create_view) && stmt->schema_name != NULL &&
-			(strcmp(stmt->schema_name, "sys") != 0 && strcmp(stmt->schema_name, "pg_catalog") != 0))
+		(strcmp(stmt->schema_name, "sys") != 0 && strcmp(stmt->schema_name, "pg_catalog") != 0))
 	{
 		cur_dbname = get_cur_db_name();
 		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
 		dbo_schema = get_dbo_schema_name(cur_dbname);
 		if (!*old_search_path)
 		{
-			List 		*path_oids = fetch_search_path(false);
+			List	   *path_oids = fetch_search_path(false);
+
 			*old_search_path = flatten_search_path(path_oids);
 			list_free(path_oids);
 		}
 		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, *old_search_path);
-		/* Add the schema where the object is referenced and dbo schema to the new search path */
+
+		/*
+		 * Add the schema where the object is referenced and dbo schema to the
+		 * new search path
+		 */
 		(void) set_config_option("search_path", new_search_path,
-						PGC_USERSET, PGC_S_SESSION,
-						GUC_ACTION_SAVE, true, 0, false);
+								 PGC_USERSET, PGC_S_SESSION,
+								 GUC_ACTION_SAVE, true, 0, false);
 		return true;
 	}
 	return false;

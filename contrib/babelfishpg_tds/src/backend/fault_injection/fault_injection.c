@@ -35,10 +35,10 @@ PG_FUNCTION_INFO_V1(inject_fault_status);
 PG_FUNCTION_INFO_V1(trigger_test_fault);
 PG_FUNCTION_INFO_V1(inject_fault_status_all);
 
-bool trigger_fault_injection = true;
-static HTAB	*faultInjectorHash = NULL;
+bool		trigger_fault_injection = true;
+static HTAB *faultInjectorHash = NULL;
 
-int tamperByte = INVALID_TAMPER_BYTE;
+int			tamperByte = INVALID_TAMPER_BYTE;
 
 /*
  * FaultInjectionHashInit - initialize the hash
@@ -46,8 +46,8 @@ int tamperByte = INVALID_TAMPER_BYTE;
 static void
 FaultInjectionHashInit()
 {
-	HASHCTL         hash_ctl;
-	MemoryContext	oldContext;
+	HASHCTL		hash_ctl;
+	MemoryContext oldContext;
 
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 	/* Local cache */
@@ -55,9 +55,9 @@ FaultInjectionHashInit()
 	hash_ctl.keysize = FAULT_NAME_MAX_LENGTH;
 	hash_ctl.entrysize = sizeof(FaultInjectorEntry_s);
 	faultInjectorHash = hash_create("Fault Injection Cache",
-							16,
-							&hash_ctl,
-							HASH_ELEM | HASH_STRINGS);
+									16,
+									&hash_ctl,
+									HASH_ELEM | HASH_STRINGS);
 	MemoryContextSwitchTo(oldContext);
 }
 
@@ -81,10 +81,10 @@ FaultInjectionInitialize()
 		if (entry->type == InvalidType)
 			break;
 		new_entry = (FaultInjectorEntry_s *) hash_search(
-													 faultInjectorHash,
-													 (void *) entry->faultName, //key
-													 HASH_ENTER,
-													 &foundPtr);
+														 faultInjectorHash,
+														 (void *) entry->faultName, //key
+														 HASH_ENTER,
+														 &foundPtr);
 		/* should not try to insert same entry multiple times */
 		Assert(foundPtr == false);
 
@@ -100,7 +100,7 @@ FaultInjectionInitialize()
 		new_entry->fault_callback = entry->fault_callback;
 
 		i++;
-	} while(true);
+	} while (true);
 }
 
 /*
@@ -133,9 +133,9 @@ FaultInjectionLookupHashEntry(const char *faultName)
 static void
 FaultInjectionEnableTest(FaultInjectorEntry_s *entry)
 {
-	List *list = FaultInjectionTypes[entry->type].injected_entries;
-	ListCell	*lc;
-	MemoryContext	oldContext;
+	List	   *list = FaultInjectionTypes[entry->type].injected_entries;
+	ListCell   *lc;
+	MemoryContext oldContext;
 
 
 	foreach(lc, list)
@@ -154,8 +154,8 @@ FaultInjectionEnableTest(FaultInjectorEntry_s *entry)
 static inline void
 FaultInjectionDisableTest(FaultInjectorEntry_s *entry)
 {
-	ListCell *lc;
-	List *list = FaultInjectionTypes[entry->type].injected_entries;
+	ListCell   *lc;
+	List	   *list = FaultInjectionTypes[entry->type].injected_entries;
 
 	if (list_length(list) == 1)
 	{
@@ -175,7 +175,7 @@ FaultInjectionDisableTest(FaultInjectorEntry_s *entry)
 	FaultInjectionTypes[entry->type].injected_entries = list;
 }
 
-static char*
+static char *
 FetchFaultStatus(char *faultName)
 {
 	StringInfo	buf = makeStringInfo();
@@ -213,7 +213,7 @@ InjectFault(const char *faultName, int num_occurrences, int tamper_byte)
 		appendStringInfo(buf, "disabled");
 	else if (tamperByte != INVALID_TAMPER_BYTE)
 		appendStringInfo(buf, "enabled, pending occurrences: %d, tamper byte value: %d",
-							entry->num_occurrences, tamperByte);
+						 entry->num_occurrences, tamperByte);
 	else
 		appendStringInfo(buf, "enabled, pending occurrences: %d", entry->num_occurrences);
 
@@ -223,9 +223,9 @@ InjectFault(const char *faultName, int num_occurrences, int tamper_byte)
 void
 TriggerFault(FaultInjectorType_e type, void *arg)
 {
-	List *list = FaultInjectionTypes[type].injected_entries;
-	List	*tmp_list = NIL;
-	ListCell	*lc;
+	List	   *list = FaultInjectionTypes[type].injected_entries;
+	List	   *tmp_list = NIL;
+	ListCell   *lc;
 
 	/* if triggering is disabled, return */
 	if (!trigger_fault_injection || list_length(list) == 0)
@@ -317,7 +317,7 @@ TriggerFault(FaultInjectorType_e type, void *arg)
  *
  * It enables the faults with occurences as 1
  */
-static char*
+static char *
 InjectFaultAll(bool enable)
 {
 	int			i = 0;
@@ -338,7 +338,7 @@ InjectFaultAll(bool enable)
 		pfree(ret);
 
 		i++;
-	} while(true);
+	} while (true);
 
 	appendStringInfo(response, "success");
 
@@ -352,7 +352,7 @@ inject_fault(PG_FUNCTION_ARGS)
 	int			num_occurrences = PG_GETARG_INT32(1);
 	char	   *response;
 	int			nargs = PG_NARGS();
-	int 		tamper_byte = INVALID_TAMPER_BYTE;
+	int			tamper_byte = INVALID_TAMPER_BYTE;
 
 	if (nargs > 2)
 		tamper_byte = PG_GETARG_INT32(2);

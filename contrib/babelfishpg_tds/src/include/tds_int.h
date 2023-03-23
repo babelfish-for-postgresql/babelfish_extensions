@@ -78,7 +78,8 @@
 #define TDS_PACKET_HEADER_STATUS_IGNORE				0x02	/* ignore event */
 #define TDS_PACKET_HEADER_STATUS_RESETCON			0x08	/* reset connection */
 #define TDS_PACKET_HEADER_STATUS_RESETCONSKIPTRAN	0x10	/* reset connection but
-															   keep transaction context */
+															 * keep transaction
+															 * context */
 
 /* TDS prelogin option types */
 #define TDS_PRELOGIN_VERSION 0x00
@@ -114,7 +115,7 @@
 
 /*
  * Macros for TDS Versions
- * 
+ *
  * If tds_default_protocol_version is set to TDS_DEFAULT_VERSION value
  * then we shall use the TDS Version that the client specifies during login.
  */
@@ -166,11 +167,11 @@ extern PLtsql_protocol_plugin *pltsql_plugin_handler_ptr;
 extern collation_callbacks *collation_callbacks_ptr;
 
 /* Globals in backend/tds/tdscomm.c */
-extern MemoryContext	TdsMemoryContext;
+extern MemoryContext TdsMemoryContext;
 
 /* Global to store default collation info */
-extern int TdsDefaultLcid;
-extern int TdsDefaultCollationFlags;
+extern int	TdsDefaultLcid;
+extern int	TdsDefaultCollationFlags;
 extern uint8_t TdsDefaultSortid;
 extern pg_enc TdsDefaultClientEncoding;
 
@@ -194,17 +195,18 @@ if (TDS_DEBUG_ENABLED(level)) \
 /* Structures in backend/tds/tdsprotocol.c */
 typedef struct TdsParamNameData
 {
-	char	*name;	/* name of the parameter (If there is an upperlimit,
-					   we can use fixed size array) */
-	uint8	type;	/* 0: IN parameter 1: OUT parameter (TODO: INOUT parameters?) */
-}	TdsParamNameData;
+	char	   *name;			/* name of the parameter (If there is an
+								 * upperlimit, we can use fixed size array) */
+	uint8		type;			/* 0: IN parameter 1: OUT parameter (TODO:
+								 * INOUT parameters?) */
+} TdsParamNameData;
 
 typedef TdsParamNameData *TdsParamName;
 
 extern PGDLLIMPORT uint32_t MyTdsClientVersion;
-extern PGDLLIMPORT char* MyTdsLibraryName;
-extern PGDLLIMPORT char* MyTdsHostName;
-extern PGDLLIMPORT char* MyTdsContextInfo;
+extern PGDLLIMPORT char *MyTdsLibraryName;
+extern PGDLLIMPORT char *MyTdsHostName;
+extern PGDLLIMPORT char *MyTdsContextInfo;
 extern PGDLLIMPORT uint32_t MyTdsClientPid;
 extern PGDLLIMPORT uint32_t MyTdsProtocolVersion;
 extern PGDLLIMPORT uint32_t MyTdsPacketSize;
@@ -227,11 +229,11 @@ typedef struct TdsMessageWrapper
  */
 typedef struct
 {
-	uint8_t				reqType; 		/* current Tds Request Type*/
-	char				*phase;			/* current TDS_REQUEST_PHASE_* (see above) */
-	char				*spType;
-	char				*txnType;
-	char 				*err_text;     /* additional errorstate info */
+	uint8_t		reqType;		/* current Tds Request Type */
+	char	   *phase;			/* current TDS_REQUEST_PHASE_* (see above) */
+	char	   *spType;
+	char	   *txnType;
+	char	   *err_text;		/* additional errorstate info */
 
 } TdsErrorContextData;
 
@@ -239,7 +241,7 @@ extern TdsErrorContextData *TdsErrorContext;
 
 
 /* Socket functions */
-typedef ssize_t (*TdsSecureSocketApi)(Port *port, void *ptr, size_t len);
+typedef ssize_t (*TdsSecureSocketApi) (Port *port, void *ptr, size_t len);
 
 /* Globals in backend/tds/tdsutils.c */
 extern object_access_hook_type next_object_access_hook;
@@ -252,37 +254,37 @@ extern ProcessUtility_hook_type next_ProcessUtility;
 /* Functions in backend/tds/tdscomm.c */
 extern void TdsSetMessageType(uint8_t msgType);
 extern void TdsCommInit(uint32_t bufferSize,
-						   TdsSecureSocketApi secure_read,
-						   TdsSecureSocketApi secure_write);
+						TdsSecureSocketApi secure_read,
+						TdsSecureSocketApi secure_write);
 extern void TdsSetMessageType(uint8_t msgType);
 extern void TdsCommReset(void);
 extern void TdsCommShutdown(void);
-extern int TdsPeekbyte(void);
-extern int TdsReadNextBuffer(void);
-extern int TdsSocketFlush(void);
-extern int TdsGetbytes(char *s, size_t len);
-extern int TdsDiscardbytes(size_t len);
-extern int TdsPutbytes(void *s, size_t len);
-extern int TdsPutInt8(int8_t value);
-extern int TdsPutUInt8(uint8_t value);
-extern int TdsPutInt16LE(int16_t value);
-extern int TdsPutUInt16LE(uint16_t value);
-extern int TdsPutInt32LE(int32_t value);
-extern int TdsPutUInt32LE(uint32_t value);
-extern int TdsPutInt64LE(int64_t value);
-extern int TdsPutFloat4LE(float4 value);
-extern int TdsPutFloat8LE(float8 value);
+extern int	TdsPeekbyte(void);
+extern int	TdsReadNextBuffer(void);
+extern int	TdsSocketFlush(void);
+extern int	TdsGetbytes(char *s, size_t len);
+extern int	TdsDiscardbytes(size_t len);
+extern int	TdsPutbytes(void *s, size_t len);
+extern int	TdsPutInt8(int8_t value);
+extern int	TdsPutUInt8(uint8_t value);
+extern int	TdsPutInt16LE(int16_t value);
+extern int	TdsPutUInt16LE(uint16_t value);
+extern int	TdsPutInt32LE(int32_t value);
+extern int	TdsPutUInt32LE(uint32_t value);
+extern int	TdsPutInt64LE(int64_t value);
+extern int	TdsPutFloat4LE(float4 value);
+extern int	TdsPutFloat8LE(float8 value);
 extern bool TdsCheckMessageType(uint8_t messageType);
-extern int TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType);
-extern int TdsReadMessage(StringInfo message, uint8_t messageType);
-extern int TdsReadNextPendingBcpRequest(StringInfo message);
-extern int TdsDiscardAllPendingBcpRequest(void);
-extern int TdsWriteMessage(StringInfo message, uint8_t messageType);
-extern int TdsHandleTestQuery(StringInfo message);
-extern int TdsTestProtocol(void);
-extern int TdsPutUInt16LE(uint16_t value);
-extern int TdsPutUInt64LE(uint64_t value);
-extern int TdsPutDate(uint32_t value);
+extern int	TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType);
+extern int	TdsReadMessage(StringInfo message, uint8_t messageType);
+extern int	TdsReadNextPendingBcpRequest(StringInfo message);
+extern int	TdsDiscardAllPendingBcpRequest(void);
+extern int	TdsWriteMessage(StringInfo message, uint8_t messageType);
+extern int	TdsHandleTestQuery(StringInfo message);
+extern int	TdsTestProtocol(void);
+extern int	TdsPutUInt16LE(uint16_t value);
+extern int	TdsPutUInt64LE(uint64_t value);
+extern int	TdsPutDate(uint32_t value);
 extern bool TdsGetRecvPacketEomStatus(void);
 
 /* Functions in backend/tds/tdslogin.c */
@@ -290,35 +292,35 @@ extern void TdsSetBufferSize(uint32_t newSize);
 extern void TdsClientAuthentication(Port *port);
 extern void TdsClientInit(void);
 extern void TdsSetBufferSize(uint32_t newSize);
-extern int TdsProcessLogin(Port *port, bool LoadSsl);
+extern int	TdsProcessLogin(Port *port, bool LoadSsl);
 extern void TdsSendLoginAck(Port *port);
 extern uint32_t GetClientTDSVersion(void);
-extern char* get_tds_login_domainname(void);
+extern char *get_tds_login_domainname(void);
 
 /* Functions in backend/tds/tdsprotocol.c */
-extern int TdsSocketBackend(void);
+extern int	TdsSocketBackend(void);
 extern void TdsProtocolInit(void);
 extern void TdsProtocolFinish(void);
-extern int TestGetTdsRequest(uint8_t reqType, const char* expectedStr);
+extern int	TestGetTdsRequest(uint8_t reqType, const char *expectedStr);
 
 /* Functions in backend/tds/tdsrpc.c */
 extern bool TdsIsSPPrepare(void);
 extern void TdsFetchInParamValues(ParamListInfo params);
 extern bool TdsGetParamNames(List **);
-extern int TdsGetAndSetParamIndex(const char *pname);
+extern int	TdsGetAndSetParamIndex(const char *pname);
 extern void TDSLogDuration(char *query);
 
 /* Functions in backend/tds/tdsutils.c */
-extern int TdsUTF8LengthInUTF16(const void *in, int len);
+extern int	TdsUTF8LengthInUTF16(const void *in, int len);
 extern void TdsUTF16toUTF8StringInfo(StringInfo out, void *in, int len);
 extern void TdsUTF8toUTF16StringInfo(StringInfo out,
-										const void *in,
-										size_t len);
+									 const void *in,
+									 size_t len);
 extern int32_t ProcessStreamHeaders(const StringInfo message);
-extern Node * TdsFindParam(ParseState *pstate, ColumnRef *cref);
+extern Node *TdsFindParam(ParseState *pstate, ColumnRef *cref);
 extern void TdsErrorContextCallback(void *arg);
 extern void babelfish_object_access(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
-extern void tdsutils_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
+extern void tdsutils_ProcessUtility(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
 
 /* Functions in backend/tds/guc.c */
 extern void TdsDefineGucs(void);
@@ -330,9 +332,9 @@ extern void TdsSetAtAtStatVariable(const char *at_at_var, int intVal, uint64 big
 extern void TdsSetDatabaseStatVariable(int16 db_id);
 extern bool tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend);
 extern void invalidate_stat_table(void);
-extern char* get_tds_host_name(void);
+extern char *get_tds_host_name(void);
 extern Datum get_tds_context_info(void);
-extern void set_tds_context_info(bytea* context_info);
+extern void set_tds_context_info(bytea *context_info);
 
 /* Functions in backend/tds/tdspostgres.c */
 extern void TDSPostgresMain(int argc, char *argv[],
@@ -360,14 +362,14 @@ extern void *tds_varchar_input(const char *s, size_t len, int32 atttypmod);
 /* Functions in backend/utils/adt/xml.c */
 extern void tds_xmlFreeDoc(void *doc);
 extern void *tds_xml_parse(text *data, int xmloption_arg, bool preserve_whitespace,
-				int encoding);
-extern int tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
-								 xmlChar **version, xmlChar **encoding, int *standalone);
+						   int encoding);
+extern int	tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
+							   xmlChar **version, xmlChar **encoding, int *standalone);
 
 /* Functions in tdstypeio.c */
-extern char * TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen);
+extern char *TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen);
 extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 extern Datum TdsBytePtrToDatum(StringInfo buf, int datatype, int scale);
-extern Datum TdsDateTimeTypeToDatum (uint64 time, int32 date, int datatype, int scale);
+extern Datum TdsDateTimeTypeToDatum(uint64 time, int32 date, int datatype, int scale);
 
-#endif	/* TDS_INT_H */
+#endif							/* TDS_INT_H */

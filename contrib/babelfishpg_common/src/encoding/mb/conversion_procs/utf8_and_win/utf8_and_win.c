@@ -48,7 +48,7 @@ static const pg_conv_map maps[] = {
 };
 
 /* ----------
- * utf8_to_win: 
+ * utf8_to_win:
  *		src_encoding,	-- source encoding id
  *		dest_encoding,	-- destination encoding id
  *		src,			-- source string (null terminated C string)
@@ -58,7 +58,7 @@ static const pg_conv_map maps[] = {
  * ----------
  */
 int
-utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src,unsigned char *dest, int len)
+utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	int			i;
 
@@ -67,10 +67,10 @@ utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src,unsign
 		if (dest_encoding == maps[i].encoding)
 		{
 			return TsqlUtfToLocal(src, len, dest,
-					   maps[i].map2,
-					   NULL, 0,
-					   NULL,
-					   dest_encoding);
+								  maps[i].map2,
+								  NULL, 0,
+								  NULL,
+								  dest_encoding);
 		}
 	}
 
@@ -83,7 +83,7 @@ utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src,unsign
 }
 
 int
-win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src,unsigned char *dest, int len)
+win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	int			i;
 
@@ -92,10 +92,10 @@ win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src,unsign
 		if (src_encoding == maps[i].encoding)
 		{
 			return TsqlLocalToUtf(src, len, dest,
-					   maps[i].map1,
-					   NULL, 0,
-					   NULL,
-					   src_encoding);
+								  maps[i].map1,
+								  NULL, 0,
+								  NULL,
+								  src_encoding);
 		}
 	}
 

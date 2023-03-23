@@ -43,8 +43,8 @@ PG_FUNCTION_INFO_V1(float8_mi_datetime);
 PG_FUNCTION_INFO_V1(datetime_pl_datetime);
 PG_FUNCTION_INFO_V1(datetime_mi_datetime);
 
-void CheckDatetimeRange(const Timestamp time);
-void CheckDatetimePrecision(fsec_t fsec);
+void		CheckDatetimeRange(const Timestamp time);
+void		CheckDatetimePrecision(fsec_t fsec);
 
 Datum
 datetime_in_str(char *str)
@@ -65,7 +65,8 @@ datetime_in_str(char *str)
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 
 	/*
-	 * Set input to default '1900-01-01 00:00:00.000' if empty string encountered
+	 * Set input to default '1900-01-01 00:00:00.000' if empty string
+	 * encountered
 	 */
 	if (*str == '\0')
 	{
@@ -77,8 +78,8 @@ datetime_in_str(char *str)
 						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
-	// dterr == 1 means that input is TIME format(e.g 12:34:59.123)
-	// initialize other necessary date parts and accept input format
+	/* dterr == 1 means that input is TIME format(e.g 12:34:59.123) */
+	/* initialize other necessary date parts and accept input format */
 	if (dterr == 1)
 	{
 		tm->tm_year = 1900;
@@ -114,8 +115,10 @@ datetime_in_str(char *str)
 				 dtype, str);
 			TIMESTAMP_NOEND(result);
 	}
-	/* TODO: round datetime fsec to fixed bins (e.g. .000, .003, .007) 
-	 * see: BABEL-1081
+
+	/*
+	 * TODO: round datetime fsec to fixed bins (e.g. .000, .003, .007) see:
+	 * BABEL-1081
 	 */
 	CheckDatetimeRange(result);
 	CheckDatetimePrecision(fsec);
@@ -132,7 +135,8 @@ datetime_in_str(char *str)
 Datum
 datetime_in(PG_FUNCTION_ARGS)
 {
-	char	     *str 			   = PG_GETARG_CSTRING(0);
+	char	   *str = PG_GETARG_CSTRING(0);
+
 	return datetime_in_str(str);
 }
 
@@ -153,7 +157,7 @@ datetime_out(PG_FUNCTION_ARGS)
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
 	{
-		// round fractional seconds to datetime precision
+		/* round fractional seconds to datetime precision */
 		fsec = DTROUND(fsec);
 		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
 	}
@@ -174,8 +178,8 @@ CheckDatetimeRange(const Timestamp time)
 	if (!IS_VALID_DATETIME(time))
 	{
 		ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("data out of range for datetime")));
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("data out of range for datetime")));
 	}
 }
 
@@ -188,8 +192,8 @@ CheckDatetimePrecision(fsec_t fsec)
 	if (!IS_VALID_DT_PRECISION(fsec))
 	{
 		ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("data precision out of range for datetime")));
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("data precision out of range for datetime")));
 	}
 }
 
@@ -222,22 +226,22 @@ time_datetime(PG_FUNCTION_ARGS)
 	TimeADT		timeVal = PG_GETARG_TIMEADT(0);
 	Timestamp	result;
 
-	struct 		pg_tm tt,
+	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 
-	// Initialize default year, month, day
+	/* Initialize default year, month, day */
 	tm->tm_year = 1900;
 	tm->tm_mon = 1;
 	tm->tm_mday = 1;
-	
-	// Convert TimeADT type to tm 
+
+	/* Convert TimeADT type to tm  */
 	time2tm(timeVal, tm, &fsec);
 
 	if (tm2timestamp(tm, fsec, NULL, &result) != 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("data out of range for datetime")));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("data out of range for datetime")));
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -248,7 +252,7 @@ time_datetime(PG_FUNCTION_ARGS)
 Datum
 timestamp_datetime(PG_FUNCTION_ARGS)
 {
-	Timestamp result = PG_GETARG_TIMESTAMP(0);
+	Timestamp	result = PG_GETARG_TIMESTAMP(0);
 
 	CheckDatetimeRange(result);
 	PG_RETURN_TIMESTAMP(result);
@@ -303,7 +307,7 @@ datetime_varchar(PG_FUNCTION_ARGS)
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
 	{
-		// round fractional seconds to datetime precision
+		/* round fractional seconds to datetime precision */
 		fsec = DTROUND(fsec);
 		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
 	}
@@ -323,8 +327,8 @@ datetime_varchar(PG_FUNCTION_ARGS)
 Datum
 varchar_datetime(PG_FUNCTION_ARGS)
 {
-	Datum txt = PG_GETARG_DATUM(0);
-	char *str = TextDatumGetCString(txt);
+	Datum		txt = PG_GETARG_DATUM(0);
+	char	   *str = TextDatumGetCString(txt);
 
 	return datetime_in_str(str);
 }
@@ -347,7 +351,7 @@ datetime_char(PG_FUNCTION_ARGS)
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
 	{
-		// round fractional seconds to datetime precision
+		/* round fractional seconds to datetime precision */
 		fsec = DTROUND(fsec);
 		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
 	}
@@ -367,8 +371,8 @@ datetime_char(PG_FUNCTION_ARGS)
 Datum
 char_datetime(PG_FUNCTION_ARGS)
 {
-	Datum txt = PG_GETARG_DATUM(0);
-	char *str = TextDatumGetCString(txt);
+	Datum		txt = PG_GETARG_DATUM(0);
+	char	   *str = TextDatumGetCString(txt);
 
 	return datetime_in_str(str);
 }
@@ -376,17 +380,17 @@ char_datetime(PG_FUNCTION_ARGS)
 /*
  * datetime_pl_int4()
  * operator function for adding datetime plus int
- * 
+ *
  * simply add number of days to date value, while preserving the time
  * component
  */
 Datum
 datetime_pl_int4(PG_FUNCTION_ARGS)
-{	
+{
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	int32		days = PG_GETARG_INT32(1);
 	Timestamp	result;
-	Interval *input_interval;
+	Interval   *input_interval;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
@@ -404,12 +408,12 @@ datetime_pl_int4(PG_FUNCTION_ARGS)
 /*
  * int4_mi_datetime()
  * Operator function for subtracting int minus datetime
- * 
+ *
  * Convert the input int32 value d to datetime(1/1/1900) + d days.
- * Then add the difference between the input datetime value and the one 
+ * Then add the difference between the input datetime value and the one
  * above to the default datetime value (1/1/1900).
- * 
- * ex: 
+ *
+ * ex:
  * d = 9, dt = '1/11/1900'
  * dt_left = datetime(1/1/1900) + 9 days = datetime(1/10/1900)
  * diff = dt_left - dt = -1 day
@@ -417,27 +421,30 @@ datetime_pl_int4(PG_FUNCTION_ARGS)
  */
 Datum
 int4_mi_datetime(PG_FUNCTION_ARGS)
-{	
+{
 	int32		days = PG_GETARG_INT32(0);
 	Timestamp	timestamp_right = PG_GETARG_TIMESTAMP(1);
 	Timestamp	result;
 	Timestamp	default_timestamp;
 	Timestamp	timestamp_left;
-	Interval *input_interval;
-	Interval *result_interval;
+	Interval   *input_interval;
+	Interval   *result_interval;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp_right))
 		PG_RETURN_TIMESTAMP(timestamp_right);
 
 	/* inialize input int(days) as timestamp */
-	default_timestamp = DirectFunctionCall6(make_timestamp, 1900, 1, 1, 0, 0,0);
+	default_timestamp = DirectFunctionCall6(make_timestamp, 1900, 1, 1, 0, 0, 0);
 	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, days, 0, 0, 0);
 	timestamp_left = DirectFunctionCall2(timestamp_pl_interval, default_timestamp, PointerGetDatum(input_interval));
 
 	/* calculate timestamp diff */
 	result_interval = (Interval *) DirectFunctionCall2(timestamp_mi, timestamp_left, timestamp_right);
 
-	/* if the diff between left and right timestamps is positive, then we add the interval. else, subtract */
+	/*
+	 * if the diff between left and right timestamps is positive, then we add
+	 * the interval. else, subtract
+	 */
 	result = DirectFunctionCall2(timestamp_pl_interval, default_timestamp, PointerGetDatum(result_interval));
 
 	CheckDatetimeRange(result);
@@ -450,9 +457,10 @@ int4_mi_datetime(PG_FUNCTION_ARGS)
  */
 Datum
 int4_pl_datetime(PG_FUNCTION_ARGS)
-{	
+{
 	int32		days = PG_GETARG_INT32(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
+
 	PG_RETURN_TIMESTAMP(DirectFunctionCall2(datetime_pl_int4, timestamp, days));
 }
 
@@ -462,9 +470,10 @@ int4_pl_datetime(PG_FUNCTION_ARGS)
  */
 Datum
 datetime_mi_int4(PG_FUNCTION_ARGS)
-{	
+{
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	int32		days = PG_GETARG_INT32(1);
+
 	PG_RETURN_TIMESTAMP(DirectFunctionCall2(datetime_pl_int4, timestamp, -days));
 }
 
@@ -472,19 +481,20 @@ datetime_mi_int4(PG_FUNCTION_ARGS)
 /*
  * datetime_pl_float8()
  * operator function for adding datetime plus float
- * 
+ *
  * simply add number of days/secs to date value, while preserving the time
  * component
  */
 Datum
 datetime_pl_float8(PG_FUNCTION_ARGS)
-{	
+{
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	double		days = PG_GETARG_FLOAT8(1);
-	double 		day_whole, day_fract;
-	Interval *input_interval;
+	double		day_whole,
+				day_fract;
+	Interval   *input_interval;
 	Timestamp	result;
-	
+
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
 
@@ -492,7 +502,7 @@ datetime_pl_float8(PG_FUNCTION_ARGS)
 	day_fract = modf(days, &day_whole);
 
 	/* make interval */
-	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY*day_fract));
+	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY * day_fract));
 
 	/* add interval */
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(input_interval));
@@ -505,22 +515,23 @@ datetime_pl_float8(PG_FUNCTION_ARGS)
 /*
  * float8_mi_datetime()
  * Operator function for subtracting float8 minus datetime
- * 
+ *
  * Convert the input float8 value d to datetime(1/1/1900) + d days.
- * Then add the difference between the input datetime value and the one 
+ * Then add the difference between the input datetime value and the one
  * above to the default datetime value (1/1/1900).
  */
 Datum
 float8_mi_datetime(PG_FUNCTION_ARGS)
-{	
+{
 	double		days = PG_GETARG_FLOAT8(0);
 	Timestamp	timestamp_right = PG_GETARG_TIMESTAMP(1);
-	double 		day_whole, day_fract;
+	double		day_whole,
+				day_fract;
 	Timestamp	result;
 	Timestamp	default_timestamp;
 	Timestamp	timestamp_left;
-	Interval *input_interval;
-	Interval *result_interval;
+	Interval   *input_interval;
+	Interval   *result_interval;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp_right))
 		PG_RETURN_TIMESTAMP(timestamp_right);
@@ -529,17 +540,20 @@ float8_mi_datetime(PG_FUNCTION_ARGS)
 	day_fract = modf(days, &day_whole);
 
 	/* make interval */
-	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY*day_fract));
+	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY * day_fract));
 
 
 	/* inialize input int(days) as timestamp */
-	default_timestamp = DirectFunctionCall6(make_timestamp, 1900, 1, 1, 0, 0,0);
+	default_timestamp = DirectFunctionCall6(make_timestamp, 1900, 1, 1, 0, 0, 0);
 	timestamp_left = DirectFunctionCall2(timestamp_pl_interval, default_timestamp, PointerGetDatum(input_interval));
 
 	/* calculate timestamp diff */
 	result_interval = (Interval *) DirectFunctionCall2(timestamp_mi, timestamp_left, timestamp_right);
 
-	/* if the diff between left and right timestamps is positive, then we add the interval. else, subtract */
+	/*
+	 * if the diff between left and right timestamps is positive, then we add
+	 * the interval. else, subtract
+	 */
 	result = DirectFunctionCall2(timestamp_pl_interval, default_timestamp, PointerGetDatum(result_interval));
 
 
@@ -553,13 +567,14 @@ float8_mi_datetime(PG_FUNCTION_ARGS)
  */
 Datum
 float8_pl_datetime(PG_FUNCTION_ARGS)
-{	
+{
 	double		days = PG_GETARG_FLOAT8(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
-	double 		day_whole, day_fract;
-	Interval *input_interval;
+	double		day_whole,
+				day_fract;
+	Interval   *input_interval;
 	Timestamp	result;
-	
+
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
 
@@ -567,7 +582,7 @@ float8_pl_datetime(PG_FUNCTION_ARGS)
 	day_fract = modf(days, &day_whole);
 
 	/* make interval */
-	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY*day_fract));
+	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY * day_fract));
 
 	/* add interval */
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(input_interval));
@@ -582,13 +597,14 @@ float8_pl_datetime(PG_FUNCTION_ARGS)
  */
 Datum
 datetime_mi_float8(PG_FUNCTION_ARGS)
-{	
+{
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	double		days = PG_GETARG_FLOAT8(1);
-	double 		day_whole, day_fract;
-	Interval *input_interval;
+	double		day_whole,
+				day_fract;
+	Interval   *input_interval;
 	Timestamp	result;
-	
+
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
 
@@ -596,7 +612,7 @@ datetime_mi_float8(PG_FUNCTION_ARGS)
 	day_fract = modf(days, &day_whole);
 
 	/* make interval */
-	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY*day_fract));
+	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY * day_fract));
 
 
 	/* subtract interval */
@@ -612,8 +628,9 @@ datetime_mi_float8(PG_FUNCTION_ARGS)
 Timestamp
 initializeToDefaultDatetime(void)
 {
-	Timestamp result;
-	struct pg_tm tt, *tm = &tt;
+	Timestamp	result;
+	struct pg_tm tt,
+			   *tm = &tt;
 
 	tm->tm_year = 1900;
 	tm->tm_mon = 1;
@@ -623,19 +640,22 @@ initializeToDefaultDatetime(void)
 	tm2timestamp(tm, 0, NULL, &result);
 
 	return result;
-} 
+}
 
 Datum
 datetime_pl_datetime(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp1 = PG_GETARG_TIMESTAMP(0);
-	Timestamp timestamp2 = PG_GETARG_TIMESTAMP(1);
-	Timestamp diff;
-	Timestamp result;
+	Timestamp	timestamp1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	diff;
+	Timestamp	result;
 
-	/* calculate interval from timestamp2. It should be calculated as the difference from 1900-01-01 00:00:00 (default datetime) */
+	/*
+	 * calculate interval from timestamp2. It should be calculated as the
+	 * difference from 1900-01-01 00:00:00 (default datetime)
+	 */
 	diff = timestamp2 - initializeToDefaultDatetime();
-	
+
 	/* add interval */
 	result = timestamp1 + diff;
 
@@ -646,14 +666,17 @@ datetime_pl_datetime(PG_FUNCTION_ARGS)
 Datum
 datetime_mi_datetime(PG_FUNCTION_ARGS)
 {
-	Timestamp timestamp1 = PG_GETARG_TIMESTAMP(0);
-	Timestamp timestamp2 = PG_GETARG_TIMESTAMP(1);
-	Timestamp diff;
-	Timestamp result;
+	Timestamp	timestamp1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	diff;
+	Timestamp	result;
 
-	/* calculate interval from timestamp2. It should be calculated as the difference from 1900-01-01 00:00:00 (default datetime) */
+	/*
+	 * calculate interval from timestamp2. It should be calculated as the
+	 * difference from 1900-01-01 00:00:00 (default datetime)
+	 */
 	diff = timestamp2 - initializeToDefaultDatetime();
-	
+
 	/* subtract interval */
 	result = timestamp1 - diff;
 

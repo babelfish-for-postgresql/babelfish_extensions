@@ -13,7 +13,7 @@
 
 /*---- Function declarations ----*/
 
-static void	pe_create_server_ports(void);
+static void pe_create_server_ports(void);
 static int	pe_create_server_port(int family, const char *hostName,
 								  unsigned short portNumber,
 								  const char *unixSocketDir,
@@ -32,8 +32,8 @@ static int	Setup_AF_UNIX(const char *sock_path);
 static void
 pe_create_server_ports(void)
 {
-	int		status;
-	bool	listen_addr_saved = false;
+	int			status;
+	bool		listen_addr_saved = false;
 
 	if (ListenAddresses)
 	{
@@ -43,7 +43,7 @@ pe_create_server_ports(void)
 		int			success = 0;
 
 		/* Need a modifiable copy of ListenAddresses */
-		//rawstring = pstrdup(pe_listen_addrs);
+		/* rawstring = pstrdup(pe_listen_addrs); */
 		rawstring = pstrdup(ListenAddresses);
 
 		/* Parse string into list of hostnames */

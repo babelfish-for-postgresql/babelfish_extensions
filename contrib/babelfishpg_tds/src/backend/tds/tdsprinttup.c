@@ -15,7 +15,7 @@
  */
 
 static void TdsPrinttupStartup(DestReceiver *self, int operation,
-				 TupleDesc typeinfo);
+							   TupleDesc typeinfo);
 static void TdsShutdown(DestReceiver *self);
 static void TdsDestroy(DestReceiver *self);
 
@@ -78,8 +78,8 @@ TdsPrinttupStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
 												ALLOCSET_DEFAULT_SIZES);
 
 	TdsSendRowDescription(typeinfo,
-							FetchPortalTargetList(portal),
-							portal->formats);
+						  FetchPortalTargetList(portal),
+						  portal->formats);
 	return;
 }
 
