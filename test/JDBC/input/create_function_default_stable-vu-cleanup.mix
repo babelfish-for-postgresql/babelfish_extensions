@@ -1,0 +1,130 @@
+-- tsql
+
+use test_create_function_default_stable_db
+go
+
+drop function test_create_function_default_stable_f1
+go
+
+drop function test_create_function_default_stable_f2
+go
+
+drop function test_create_function_default_stable_tvp_f1
+go
+
+drop function test_create_function_default_stable_tvp_f2
+go
+
+drop function test_create_function_default_stable_tvp_f3
+go
+
+drop function test_create_function_default_stable_tvp_f4
+go
+
+drop function test_create_function_default_stable_tvp_f5
+go
+
+drop function test_create_function_default_stable_tvf_f1
+go
+
+drop function test_create_function_default_stable_tvf_f2
+go
+
+drop function test_create_function_default_stable_tvptvf_f1
+go
+
+drop function test_create_function_default_stable_tvptvf_f2
+go
+
+drop function test_create_function_default_stable_nested_f1
+go
+
+drop function test_create_function_default_stable_nested_f2
+go
+
+drop function test_create_function_default_stable_nested_f3
+go
+
+drop function test_create_function_default_stable_nested_f4
+go
+
+drop function test_create_function_default_stable_nested_f5
+go
+
+drop function test_create_function_default_stable_nested_f6
+go
+
+drop function test_create_function_default_stable_nested_f7
+go
+
+-- psql
+drop function test_create_function_default_stable_tsql_f1
+go
+
+drop function test_create_function_default_stable_tsql_f2
+go
+
+drop function test_create_function_default_stable_tsql_f3
+go
+
+drop function test_create_function_default_stable_tsql_f4
+go
+
+drop function test_create_function_default_stable_tsql_f5
+go
+
+drop table test_create_function_default_stable_tsql_t1
+go
+
+drop type test_create_function_default_stable_tsql_type
+go
+
+-- tsql
+drop table test_create_function_default_stable_t1
+go
+
+drop type test_create_function_default_stable_type
+go
+
+use master 
+go
+
+drop database test_create_function_default_stable_db
+go
+
+-- psql
+drop function test_create_function_default_stable_psql_f1;
+go
+
+drop function test_create_function_default_stable_psql_f2;
+go
+
+drop function test_create_function_default_stable_psql_f3;
+go
+
+drop function test_create_function_default_stable_psql_f4;
+go
+
+drop function test_create_function_default_stable_psql_f5;
+go
+
+drop function test_create_function_default_stable_psql_f6;
+go
+
+drop function test_create_function_default_stable_psql_f7;
+go
+
+drop function test_create_function_default_stable_psql_f8;
+go
+
+drop function test_create_function_default_stable_psql_f9;
+go
+
+drop function test_create_function_default_stable_psql_f10;
+go
+
+drop function test_create_function_default_stable_psql_f11;
+go
+
+drop function test_create_function_default_stable_psql_f12;
+go

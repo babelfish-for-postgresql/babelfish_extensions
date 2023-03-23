@@ -1,0 +1,168 @@
+-- tsql
+use test_create_function_default_stable_db
+go
+
+-- not having tvp or tvf
+sp_babelfish_volatility 'test_create_function_default_stable_f1'
+go
+exec test_create_function_default_stable_f1
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_f2'
+go
+exec test_create_function_default_stable_f2 1, 'a', '10/10/10', 1, 1.1, 'abcd', 'aaa'
+go
+
+-- functions with tvp
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f1'
+go
+exec test_create_function_default_stable_tvp_f1
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f2'
+go
+exec test_create_function_default_stable_tvp_f2
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f3'
+go
+exec test_create_function_default_stable_tvp_f3
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f4'
+go
+declare @tvp test_create_function_default_stable_type
+exec test_create_function_default_stable_tvp_f4 @tvp
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvp_f5'
+go
+declare @tvp test_create_function_default_stable_type
+exec test_create_function_default_stable_tvp_f5 @tvp
+go
+
+-- functions with tvf
+sp_babelfish_volatility 'test_create_function_default_stable_tvf_f1'
+go
+exec test_create_function_default_stable_tvf_f1
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvf_f2'
+go
+select * from test_create_function_default_stable_tvf_f2(1)
+go
+
+-- function with both tvp and tvf
+sp_babelfish_volatility 'test_create_function_default_stable_tvptvf_f1'
+go
+declare @tvp test_create_function_default_stable_type
+exec test_create_function_default_stable_tvptvf_f1 @tvp
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_tvptvf_f2'
+go
+declare @tvp test_create_function_default_stable_type
+select * from test_create_function_default_stable_tvptvf_f2(1, @tvp)
+go
+
+-- nested functions
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f1'
+go
+exec test_create_function_default_stable_nested_f1
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f2'
+go
+exec test_create_function_default_stable_nested_f2
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f3'
+go
+select * from test_create_function_default_stable_nested_f3()
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f4'
+go
+select * from test_create_function_default_stable_nested_f4()
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f5'
+go
+select * from test_create_function_default_stable_nested_f5()
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f6'
+go
+select * from test_create_function_default_stable_nested_f6(1)
+go
+
+sp_babelfish_volatility 'test_create_function_default_stable_nested_f7'
+go
+select test_create_function_default_stable_nested_f7()
+go
+
+-- check with procedure
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_p1'
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_p2'
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_p3'
+go
+
+-- psql
+-- check for tsql dialect
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f1'
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f2'
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f3'
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f4'
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_tsql_f5'
+go
+
+
+-- psql
+-- check volatility for psql functions
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f1';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f2';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f3';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f4';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f5';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f6';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f7';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f8';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f9';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f10';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f11';
+go
+
+select provolatile from pg_proc where proname = 'test_create_function_default_stable_psql_f12';
+go
