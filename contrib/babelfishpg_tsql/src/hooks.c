@@ -89,7 +89,6 @@ static Node* transform_like_in_add_constraint (Node* node);
  * 			Analyzer Hooks
  *****************************************/
 static int pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType command);
-static void pltsql_pre_transform_sort_from_set_hook(ParseState *pstate, Query *qry, Query *leftmostQuery, List* fromClause);
 static void set_output_clause_transformation_info(bool enabled);
 static bool get_output_clause_transformation_info(void);
 static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query);
@@ -202,7 +201,6 @@ InstallExtendedHooks(void)
 	set_target_table_alternative_hook = pltsql_set_target_table_alternative;
 	get_output_clause_status_hook = get_output_clause_transformation_info;
 	pre_output_clause_transformation_hook = output_update_self_join_transformation;
-	pre_transform_sort_from_set_hook = pltsql_pre_transform_sort_from_set_hook;
 
 	prev_pre_transform_returning_hook = pre_transform_returning_hook;
 	pre_transform_returning_hook = handle_returning_qualifiers;
@@ -301,7 +299,6 @@ UninstallExtendedHooks(void)
 	set_target_table_alternative_hook = NULL;
 	get_output_clause_status_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
-	pre_transform_sort_from_set_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
 	pre_transform_insert_hook = prev_pre_transform_insert_hook ;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
@@ -3405,14 +3402,4 @@ pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType comm
 	}
 
 	return setTargetTable(pstate, relation, inh, true, requiredPerms);
-}
-
-static void
-pltsql_pre_transform_sort_from_set_hook(ParseState *pstate, Query *qry, Query *leftmostQuery, List* saved_ns)
-{
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
-	pstate->p_namespace = saved_ns;
-	qry->targetList = leftmostQuery->targetList;
 }

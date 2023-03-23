@@ -13,6 +13,5 @@ extern RangeVar *pltsql_get_target_table(RangeVar *orig_target, List *fromClause
 extern void pltsql_update_query_result_relation(Query *qry, Relation target_rel, List *rtable);
 extern void handle_rowversion_target_in_update_stmt(RangeVar *target_table, UpdateStmt *stmt);
 extern void rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target);
-extern void rewrite_union_orderby_target(SelectStmt *select, SortBy *sortby);
 
 #endif /* TSQL_ANALYZE_H */

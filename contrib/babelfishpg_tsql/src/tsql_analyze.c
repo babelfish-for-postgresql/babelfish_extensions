@@ -13,7 +13,6 @@
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
-#include "nodes/value.h"
 #include "parser/parse_clause.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -289,76 +288,5 @@ rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
 		}
 		default:
 			return;
-	}
-}
-
-/* 
- * Rewrite the ORDER BY clause of union
- */
-void
-rewrite_union_orderby_target(SelectStmt *select, SortBy *sortby)
-{
-	ColumnRef *col;
-	List      *fields;
-	RangeVar  target;
-	Node      *colname = NULL, *relname = NULL, *schemaname = NULL, *catalogname = NULL;
-	SelectStmt *larg;
-	ListCell *lc;
-
-	if (!sortby || !sortby->node || !IsA(sortby->node, ColumnRef))
-		return;
-
-	col = (ColumnRef*) sortby->node;
-	fields = col->fields;
-
-	if (!fields)
-		return;
-
-	if (!select->larg || !IsA(select->larg, SelectStmt))
-		return;
-	larg = select->larg;
-
-	switch(list_length(fields))
-	{
-		case 2:
-		{
-			relname = (Node *) linitial(fields);
-			colname = (Node *) lsecond(fields);
-			Assert(IsA(relname, String));
-			break;
-		}
-		case 3:
-		{
-			schemaname = (Node *) linitial(fields);
-			relname    = (Node *) lsecond(fields);
-			colname    = (Node *) lthird(fields);
-			Assert(IsA(schemaname, String) && IsA(relname, String));
-			break;
-		}
-		case 4:
-		{
-			catalogname = (Node *) linitial(fields);
-			schemaname  = (Node *) lsecond(fields);
-			relname     = (Node *) lthird(fields);
-			colname     = (Node *) lfourth(fields);
-			Assert(IsA(catalogname, String) && IsA(schemaname, String) && IsA(relname, String));
-			break;
-		}
-		default:
-			return;
-	}
-	target.catalogname = catalogname ? strVal(catalogname) : NULL;
-	target.schemaname  = schemaname ? strVal(schemaname): NULL;
-	target.relname     = relname ? strVal(relname) : NULL;
-
-	foreach (lc, larg->fromClause)
-	{
-		Node *node = lfirst(lc);
-		if (find_matching_table(&target, node))
-		{
-			col->fields = list_make1(colname);
-			pfree(fields);
-			return;
-		}
 	}
 }
