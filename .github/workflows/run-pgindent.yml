@@ -65,7 +65,7 @@ jobs:
           make PG_CONFIG=$HOME/psql/bin/pg_config
           sudo cp pg_bsd_indent /usr/local/bin
 
-          cd ~/work/babelfish_extensions/babelfish_extensions/
+          cd ~/work/babelfish_extensions/
           echo ""
           echo "Running pgindent on babelfishpg_money..."
           cd contrib/babelfishpg_money
