@@ -182,4 +182,5 @@ go
 drop table dbo.t1
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
+drop table dbo.unionorder1b;
 go
