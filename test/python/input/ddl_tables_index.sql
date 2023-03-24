@@ -18,11 +18,12 @@ DROP TABLE IF EXISTS test_datetime
 GO
 DROP TABLE IF EXISTS test_functioncall
 GO
+DROP TABLE IF EXISTS test_tsql_collate
+GO
 DROP TABLE IF EXISTS test_null
 GO
 DROP TABLE IF EXISTS test_upper
 GO
-
 Create table table_unique (a int NOT NULL UNIQUE , b int NOT NULL,c int )
 GO
 Create table table_primary (a int NOT NULL , b int NOT NULL,c int, PRIMARY KEY(a) )
@@ -51,6 +52,12 @@ Create table test_datetime(
     c_smalldatetime smalldatetime check(c_smalldatetime < cast('2007-05-08 12:35:29.123' AS smalldatetime)),
 )
 GO
+create table test_tsql_collate(
+	c_varchar varchar check(c_varchar <> cast('sflkjasdlkfjf' as varchar(12)) COLLATE latin1_general_ci_as),
+	c_char char check(c_char <> cast('sflkjasdlkfjf' as char(7)) COLLATE japanese_ci_as),
+	c_nchar nchar check(cast(c_nchar as nchar(7)) <> cast('sflkjasdlkfjf' as nchar(7)) COLLATE bbf_unicode_cp1_ci_as),
+)
+GO
 Create table test_null(a int, b int, check(a IS NOT NULL), CONSTRAINT constraint1 check (a>10));
 GO
 Create table test_upper(a char, check (upper(a) in ('A','B')));
@@ -74,6 +81,8 @@ GO
 DROP TABLE IF EXISTS test_tsql_const
 GO
 DROP TABLE IF EXISTS test_tsql_cast
+GO
+DROP TABLE IF EXISTS test_tsql_collate
 GO
 DROP TABLE IF EXISTS test_datetime
 GO

@@ -104,6 +104,22 @@ GO
 
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[test_tsql_collate](
+	[c_varchar] [varchar](1) NULL,
+	[c_char] [char](1) NULL,
+	[c_nchar] [nchar](1) NULL
+) ON [PRIMARY]
+
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_char_check] CHECK  (((c_char <> (CAST('sflkjasdlkfjf' AS char(7)) COLLATE japanese_ci_as))))
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_char_check]
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_nchar_check] CHECK  (((CAST((c_nchar) AS nchar(7)) <> (CAST(('sflkjasdlkfjf') AS nchar(7)) COLLATE latin1_general_ci_as))))
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_nchar_check]
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_varchar_check] CHECK  (((c_varchar <> (CAST('sflkjasdlkfjf' AS varchar(12)) COLLATE latin1_general_ci_as))))
+ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_varchar_check]
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[test_tsql_const](
 	[c_int] [int] NOT NULL,
 	[c_bit] [bit] NULL,
