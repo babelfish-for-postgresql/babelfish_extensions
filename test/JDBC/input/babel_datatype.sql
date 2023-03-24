@@ -21,29 +21,29 @@ select CAST('$100,123.4567' AS money);
 GO
 
 -- Test numeric types with brackets
-create table testing1 (a [tinyint]);
+create table testing_1 (a [tinyint]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [smallint]);
+create table testing_1 (a [smallint]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [int]);
+create table testing_1 (a [int]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [bigint]);
+create table testing_1 (a [bigint]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [real]);
+create table testing_1 (a [real]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [float]);
+create table testing_1 (a [float]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
 
 -- Comma separated format without quote is not allowed in sql server
@@ -59,17 +59,17 @@ GO
 select CAST($100,123.4567 AS smallmoney);
 GO
 
-create table testing1(mon money, smon smallmoney);
+create table testing_1(mon money, smon smallmoney);
 GO
-insert into testing1 (mon, smon) values ('$100,123.4567', '$123.9999');
-insert into testing1 (mon, smon) values ($100123.4567, $123.9999);
+insert into testing_1 (mon, smon) values ('$100,123.4567', '$123.9999');
+insert into testing_1 (mon, smon) values ($100123.4567, $123.9999);
 GO
-select * from testing1;
+select * from testing_1;
 GO
-select avg(CAST(mon AS numeric(38,4))), avg(CAST(smon AS numeric(38,4))) from testing1;
+select avg(CAST(mon AS numeric(38,4))), avg(CAST(smon AS numeric(38,4))) from testing_1;
 GO
-select mon+smon as total from testing1;
+select mon+smon as total from testing_1;
 GO
 -- Comma separated format without quote is not allowed in sql server
-insert into testing1 (mon, smon) values ($100,123.4567, $123.9999);
+insert into testing_1 (mon, smon) values ($100,123.4567, $123.9999);
 GO
