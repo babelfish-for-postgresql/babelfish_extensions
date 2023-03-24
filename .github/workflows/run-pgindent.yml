@@ -65,26 +65,26 @@ jobs:
           make PG_CONFIG=$HOME/psql/bin/pg_config
           sudo cp pg_bsd_indent /usr/local/bin
 
-          cd ~/work/babelfish_extensions/
+          cd ~/work/babelfish_extensions/babelfish_extensions/
           echo ""
           echo "Running pgindent on babelfishpg_money..."
           cd contrib/babelfishpg_money
-          ~/work/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_money.typedefs
+          ~/work/babelfish_extensions/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_money.typedefs
 
           echo ""
           echo "Running pgindent on babelfishpg_common..."
           cd ../babelfishpg_common
-          ~/work/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_common.typedefs
+          ~/work/babelfish_extensions/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_common.typedefs
 
           echo ""
           echo "Running pgindent on babelfishpg_tds..."
           cd ../babelfishpg_tds
-          ~/work/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tds.typedefs
+          ~/work/babelfish_extensions/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tds.typedefs
 
           echo ""
           echo "Running pgindent on babelfishpg_tsql..."
           cd ../babelfishpg_tsql
-          ~/work/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="./antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
+          ~/work/babelfish_extensions/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="./antlr/antlr4cpp_generated_src/TSqlLexer/TSqlLexer.h"
 
           echo ""
           echo "pgindent is ran successfully against $1."
