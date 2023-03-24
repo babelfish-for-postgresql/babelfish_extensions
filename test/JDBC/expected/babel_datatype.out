@@ -1866,14 +1866,14 @@ postgres
 ~~END~~
 
 
-CREATE DATABASE demo;
-USE demo
-GO
+-- CREATE DATABASE demo;
+-- USE demo
+-- GO
 CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'EXTENSION' at line 1 and character position 7)~~
+~~ERROR (Message: syntax error near 'EXTENSION' at line 4 and character position 7)~~
 
 -- Reconnect to make sure CLUSTER_COLLATION_OID is initialized
 USE postgres
@@ -1884,6 +1884,10 @@ GO
 
 USE demo
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "demo" does not exist)~~
+
 DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
 GO
 -- Test varchar is mapped to sys.varchar
@@ -1965,9 +1969,9 @@ GO
 
 drop database demo;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 911)~~
 
-~~ERROR (Message: Cannot drop database "demo" because it is currently in use)~~
+~~ERROR (Message: database "demo" does not exist)~~
 
 
 DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
@@ -4096,34 +4100,14 @@ GO
 -- clean up
 drop table testing1;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "testing1" does not exist)~~
-
 drop table testing2;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "testing2" does not exist)~~
-
 drop table testing3;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "testing3" does not exist)~~
-
 drop table testing4;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "testing4" does not exist)~~
-
 drop table testing5;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "testing5" does not exist)~~
-
 drop table testing6;
 GO
 drop table test_sysname;

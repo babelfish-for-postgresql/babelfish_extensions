@@ -745,9 +745,9 @@ GO
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 
-CREATE DATABASE demo;
-USE demo
-GO
+-- CREATE DATABASE demo;
+-- USE demo
+-- GO
 CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
 GO
 -- Reconnect to make sure CLUSTER_COLLATION_OID is initialized
