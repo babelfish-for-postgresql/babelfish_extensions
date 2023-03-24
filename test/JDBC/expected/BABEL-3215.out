@@ -307,6 +307,31 @@ int
 ~~END~~
 
 
+-- Test babel_613 UNION ALL with numeric issue
+create table dbo.t1 (a numeric(6,4), b numeric(6,3));
+insert into t1 values (4, 16);
+insert into t1 values (NULL, 101.123);
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT t.a, t.b FROM t1 t
+UNION ALL
+SELECT t.a, t.b FROM t1 t
+ORDER BY t.b;
+go
+~~START~~
+numeric#!#numeric
+4.0000#!#16.000
+4.0000#!#16.000
+<NULL>#!#101.123
+<NULL>#!#101.123
+~~END~~
+
+
+drop table dbo.t1
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 go

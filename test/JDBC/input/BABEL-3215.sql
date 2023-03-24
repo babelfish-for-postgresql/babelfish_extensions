@@ -167,6 +167,19 @@ SELECT c1 FROM unionorder1
 ORDER BY u.c2;
 go
 
+-- Test babel_613 UNION ALL with numeric issue
+create table dbo.t1 (a numeric(6,4), b numeric(6,3));
+insert into t1 values (4, 16);
+insert into t1 values (NULL, 101.123);
+go
+
+SELECT t.a, t.b FROM t1 t
+UNION ALL
+SELECT t.a, t.b FROM t1 t
+ORDER BY t.b;
+go
+
+drop table dbo.t1
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 go
