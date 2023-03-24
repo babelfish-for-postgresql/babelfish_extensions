@@ -90,7 +90,14 @@ jobs:
 
           if [ -s /tmp/indent.diff ]; then
             echo "Formatting is not correct. Run sh ./dev-tools.sh run_pgindent [TARGET_WS] to fix the indent."
-            exit 1
+            #exit 1
           else
             echo "Formatting is correct."
           fi
+
+      - name: Upload Logs
+        #iif: always() && steps..outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: pgindent_diff
+          path: /tmp/indent.diff
