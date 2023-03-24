@@ -270,7 +270,7 @@ run_pgindent() {
     echo ""
     echo "Running pgindent on babelfishpg_tsql..."
     cd ../babelfishpg_tsql
-    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="./antlr/ ./src/tsqlUnsupportedFeatureHandler.cpp ./src/tsqlIface.*"
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="exclude_file_from_pgindent"
 
     echo ""
     echo "pgindent is ran successfully against $1."

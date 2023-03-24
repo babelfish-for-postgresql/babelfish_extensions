@@ -74,8 +74,8 @@ typedef struct
 	/* denotes whether we've sent at least one done token */
 	bool		isEmptyResponse;
 
-} TdsRequestCtrlData;
+}			TdsRequestCtrlData;
 
-extern TdsRequestCtrlData *TdsRequestCtrl;
+extern TdsRequestCtrlData * TdsRequestCtrl;
 
 #endif							/* TDS_PROTOCOL_H */

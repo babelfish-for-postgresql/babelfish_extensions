@@ -25,14 +25,14 @@ typedef enum FaultInjectorType_e
 	ParseRpcType,
 	PostParsingType,
 	InvalidType
-} FaultInjectorType_e;
+}			FaultInjectorType_e;
 
 typedef struct FaultInjectionType
 {
 	FaultInjectorType_e type;
 	char		faultTypeName[FAULT_NAME_MAX_LENGTH];
 	List	   *injected_entries;
-} FaultInjectionType;
+}			FaultInjectionType;
 
 extern FaultInjectionType FaultInjectionTypes[];
 
@@ -42,7 +42,7 @@ typedef struct FaultInjectorEntry_s
 	FaultInjectorType_e type;
 	int			num_occurrences;	/* 0 when diabled */
 	void		(*fault_callback) (void *arg, int *num_occurrences);
-} FaultInjectorEntry_s;
+}			FaultInjectorEntry_s;
 
 extern const FaultInjectorEntry_s Faults[];
 

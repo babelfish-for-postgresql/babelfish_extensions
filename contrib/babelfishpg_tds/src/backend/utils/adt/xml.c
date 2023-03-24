@@ -131,10 +131,10 @@ static void xml_pfree(void *ptr);
 static char *xml_pstrdup(const char *string);
 #endif							/* USE_LIBXMLCONTEXT */
 
-static xmlChar *xml_text2xmlChar(text *in);
-static int	parse_xml_decl(const xmlChar *str, size_t *lenp,
-						   xmlChar **version, xmlChar **encoding, int *standalone);
-static bool xml_doctype_in_content(const xmlChar *str);
+static xmlChar * xml_text2xmlChar(text *in);
+static int	parse_xml_decl(const xmlChar * str, size_t *lenp,
+						   xmlChar * *version, xmlChar * *encoding, int *standalone);
+static bool xml_doctype_in_content(const xmlChar * str);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
 						   bool preserve_whitespace, int encoding);
 #endif							/* USE_LIBXML */
@@ -202,13 +202,14 @@ typedef struct XmlTableBuilderData
 
 /* pnstrdup, but deal with xmlChar not char; len is measured in xmlChars */
 static xmlChar *
-xml_pnstrdup(const xmlChar *str, size_t len)
+xml_pnstrdup(const xmlChar * str, size_t len)
 {
 	xmlChar    *result;
 
 	result = (xmlChar *) palloc((len + 1) * sizeof(xmlChar));
+
 	memcpy(result, str, len * sizeof(xmlChar));
-	result[len] = 0;
+	result[		len] = 0;
 	return result;
 }
 
@@ -219,11 +220,11 @@ xml_pnstrdup(const xmlChar *str, size_t len)
  * Result is 0 if OK, an error code if not.
  */
 static int
-parse_xml_decl(const xmlChar *str, size_t *lenp,
-			   xmlChar **version, xmlChar **encoding, int *standalone)
+parse_xml_decl(const xmlChar * str, size_t *lenp,
+			   xmlChar * *version, xmlChar * *encoding, int *standalone)
 {
-	const xmlChar *p;
-	const xmlChar *save_p;
+	const		xmlChar *p;
+	const		xmlChar *save_p;
 	size_t		len;
 	int			utf8char;
 	int			utf8len;
@@ -278,7 +279,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 
 	if (*p == '\'' || *p == '"')
 	{
-		const xmlChar *q;
+		const		xmlChar *q;
 
 		q = xmlStrchr(p + 1, *p);
 		if (!q)
@@ -306,7 +307,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 
 		if (*p == '\'' || *p == '"')
 		{
-			const xmlChar *q;
+			const		xmlChar *q;
 
 			q = xmlStrchr(p + 1, *p);
 			if (!q)
@@ -406,13 +407,13 @@ finished:
  * been called.  The input is already in UTF8 encoding.
  */
 static bool
-xml_doctype_in_content(const xmlChar *str)
+xml_doctype_in_content(const xmlChar * str)
 {
-	const xmlChar *p = str;
+	const		xmlChar *p = str;
 
 	for (;;)
 	{
-		const xmlChar *e;
+		const		xmlChar *e;
 
 		SKIP_XML_SPACE(p);
 		if (*p != '<')
@@ -472,8 +473,8 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 	xmlChar    *string;
 	xmlChar    *utf8string;
 	PgXmlErrorContext *xmlerrcxt;
-	volatile xmlParserCtxtPtr ctxt = NULL;
-	volatile xmlDocPtr doc = NULL;
+	volatile	xmlParserCtxtPtr ctxt = NULL;
+	volatile	xmlDocPtr doc = NULL;
 
 	len = VARSIZE_ANY_EXHDR(data);	/* will be useful later */
 	string = xml_text2xmlChar(data);
@@ -710,6 +711,7 @@ GetXmlTableBuilderPrivateData(TableFuncScanState * state, const char *fname)
 	if (!IsA(state, TableFuncScanState))
 		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
 	result = (XmlTableBuilderData *) state->opaque;
+
 	if (result->magic != XMLTABLE_CONTEXT_MAGIC)
 		elog(ERROR, "%s called with invalid TableFuncScanState", fname);
 
@@ -731,8 +733,8 @@ tds_xmlFreeDoc(void *doc)
 }
 
 int
-tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
-				   xmlChar **version, xmlChar **encoding, int *standalone)
+tds_parse_xml_decl(const xmlChar * str, size_t *lenp,
+				   xmlChar * *version, xmlChar * *encoding, int *standalone)
 {
 	return parse_xml_decl(str, lenp, version, encoding, standalone);
 }

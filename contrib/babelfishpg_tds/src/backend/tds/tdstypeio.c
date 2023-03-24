@@ -135,13 +135,13 @@ typedef struct FunctionCacheByTdsIdKey
 {
 	int32_t		tdstypeid;
 	int32_t		tdstypelen;
-} FunctionCacheByTdsIdKey;
+}			FunctionCacheByTdsIdKey;
 
 typedef struct FunctionCacheByTdsIdEntry
 {
 	FunctionCacheByTdsIdKey key;
 	TdsIoFunctionData data;
-} FunctionCacheByTdsIdEntry;
+}			FunctionCacheByTdsIdEntry;
 
 /*
  * getSendFunc - get the function pointer for type output
@@ -337,7 +337,7 @@ TdsLookupCollationTableCallback(Oid oid)
 #ifdef USE_LIBXML
 
 static int
-xmlChar_to_encoding(const xmlChar *encoding_name)
+xmlChar_to_encoding(const xmlChar * encoding_name)
 {
 	int			encoding = pg_char_to_encoding((const char *) encoding_name);
 
@@ -368,6 +368,7 @@ TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
 	str = (char *) GetMsgBytes(buf, nbytes);
 
 	result = palloc0(nbytes + 1 + VARHDRSZ);
+
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	memcpy(VARDATA(result), str, nbytes);
 	str = VARDATA(result);
@@ -793,6 +794,7 @@ GetMsgBytes(StringInfo msg, int datalen)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("insufficient data left in message")));
 	result = &msg->data[msg->cursor];
+
 	msg->cursor += datalen;
 	return result;
 }
@@ -817,23 +819,28 @@ GetMsgInt(StringInfo msg, int b)
 		case 1:
 			CopyMsgBytes(msg, (char *) &n8, 1);
 			result = n8;
+
 			break;
 		case 2:
 			CopyMsgBytes(msg, (char *) &n16, 2);
 			result = LEtoh16(n16);
+
 			break;
 		case 3:
 			memset(&n32, 0, sizeof(n32));
 			CopyMsgBytes(msg, (char *) &n32, 3);
 			result = LEtoh32(n32);
+
 			break;
 		case 4:
 			CopyMsgBytes(msg, (char *) &n32, 4);
 			result = LEtoh32(n32);
+
 			break;
 		default:
 			elog(ERROR, "unsupported integer size %d", b);
 			result = 0;			/* keep compiler quiet */
+
 			break;
 	}
 	return result;
@@ -1018,6 +1025,7 @@ TdsTypeNCharToDatum(StringInfo buf)
 	TdsUTF16toUTF8StringInfo(&temp, buf->data, buf->len);
 
 	result = tds_varchar_input(temp.data, temp.len, -1);
+
 	pfree(temp.data);
 
 	PG_RETURN_VARCHAR_P(result);
@@ -1158,6 +1166,7 @@ TdsTypeVarbinaryToDatum(StringInfo buf)
 
 	nbytes = buf->len - buf->cursor;
 	result = (bytea *) palloc0(nbytes + VARHDRSZ);
+
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	CopyMsgBytes(buf, VARDATA(result), nbytes);
 
@@ -1226,10 +1235,11 @@ TdsTypeSmallDatetimeToDatum(StringInfo buf)
 Datum
 TdsTypeDateToDatum(StringInfo buf)
 {
-	DateADT		result;
+	DateADT result;
 	uint64		val;
 
 	result = (DateADT) GetMsgInt(buf, 3);
+
 	TdsCheckDateValidity(result);
 
 	TdsTimeGetDatumFromDays(result, &val);
@@ -1241,7 +1251,7 @@ TdsTypeDateToDatum(StringInfo buf)
 Datum
 TdsTypeTimeToDatum(StringInfo buf, int scale, int len)
 {
-	double		result = 0;
+	double result = 0;
 	uint64_t	numMicro = 0;
 
 	/*
@@ -1255,11 +1265,13 @@ TdsTypeTimeToDatum(StringInfo buf, int scale, int len)
 	buf->cursor += len;
 
 	result = (double) numMicro;
-	while (scale--)
-		result /= 10;
 
-	result *= 1000000;
-	if (result < INT64CONST(0) || result > USECS_PER_DAY)
+	while (scale--)
+		result	  /=10;
+
+	result	   *= 1000000;
+
+	if (result <INT64CONST(0) || result >USECS_PER_DAY)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("time out of range")));
@@ -1361,6 +1373,7 @@ TdsTypeXMLToDatum(StringInfo buf)
 	 * than it needs to be.
 	 */
 	result = palloc0(nbytes + 1 + VARHDRSZ);
+
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	memcpy(VARDATA(result), str, nbytes);
 	str = VARDATA(result);
@@ -1597,7 +1610,7 @@ TdsRecvTypeFloat8(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeBinary(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeVarbinaryToDatum(buf);
@@ -1613,7 +1626,7 @@ TdsRecvTypeBinary(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeVarbinary(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf;
 
 	if (token->maxLen == 0xffff)
@@ -1741,7 +1754,7 @@ TdsRecvTypeText(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeNText(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeNCharToDatum(buf);
@@ -1781,7 +1794,7 @@ TdsRecvTypeChar(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeNChar(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeNCharToDatum(buf);
@@ -1798,7 +1811,7 @@ TdsRecvTypeNChar(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeXml(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetPlpStringInfoBufferFromToken(message, token);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_XML);
@@ -1819,7 +1832,7 @@ TdsRecvTypeXml(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeUniqueIdentifier(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeUIDToDatum(buf);
@@ -1882,7 +1895,7 @@ TdsRecvTypeSmallmoney(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeSmalldatetime(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeSmallDatetimeToDatum(buf);
@@ -1899,7 +1912,7 @@ TdsRecvTypeSmalldatetime(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeDate(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeDateToDatum(buf);
@@ -1916,7 +1929,7 @@ TdsRecvTypeDate(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeDatetime(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	result = TdsTypeDatetimeToDatum(buf);
@@ -1933,7 +1946,7 @@ TdsRecvTypeDatetime(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeTime(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	int			scale = 0;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 	TdsColumnMetaData col = token->paramMeta;
@@ -1949,7 +1962,7 @@ TdsRecvTypeTime(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeDatetime2(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	int			scale = 0;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 	TdsColumnMetaData col = token->paramMeta;
@@ -2421,7 +2434,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeSqlvariant(const char *message, const ParameterToken token)
 {
-	Datum		result;
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_SQLVARIANT);
@@ -3355,12 +3368,14 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	{
 		resLen += VARHDRSZ_SHORT;
 		result = (bytea *) palloc0(resLen);
+
 		SET_VARSIZE_SHORT(result, resLen);
 	}
 	else
 	{
 		resLen += VARHDRSZ;
 		result = (bytea *) palloc0(resLen);
+
 		SET_VARSIZE(result, resLen);
 	}
 
@@ -3984,7 +3999,7 @@ Datum
 TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken token)
 {
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
-	Datum		result;
+	Datum result;
 	TdsColumnMetaData col = token->paramMeta;
 	int			scale = col.metaEntry.type6.scale;
 
@@ -4081,7 +4096,7 @@ TdsDateTimeTypeToDatum(uint64 time, int32 date, int datatype, int optional_attr)
 	{
 		case TDS_TYPE_DATE:
 			{
-				DateADT		result;
+				DateADT result;
 				uint64		val;
 
 				/*
@@ -4090,6 +4105,7 @@ TdsDateTimeTypeToDatum(uint64 time, int32 date, int datatype, int optional_attr)
 				 * between 01-01-1900 and 01-01-0001
 				 */
 				result = (DateADT) date + (DateADT) TdsGetDayDifferenceHelper(1, 1, 1900, true);
+
 				TdsCheckDateValidity(result);
 
 				TdsTimeGetDatumFromDays(result, &val);

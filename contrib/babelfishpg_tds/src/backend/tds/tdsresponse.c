@@ -80,7 +80,7 @@ typedef struct
 	bool		typisvarlena;	/* is it varlena (ie possibly toastable)? */
 	int16		format;			/* format code for this column */
 	FmgrInfo	finfo;			/* Precomputed call info for output fn */
-} PrinttupAttrInfo;
+}			PrinttupAttrInfo;
 
 typedef struct
 {
@@ -92,7 +92,7 @@ typedef struct
 	PrinttupAttrInfo *myinfo;	/* Cached info about each attr */
 	StringInfoData buf;			/* output buffer (*not* in tmpcontext) */
 	MemoryContext tmpcontext;	/* Memory context for per-row workspace */
-} DR_printtup;
+}			DR_printtup;
 
 typedef struct TdsExecutionStateData
 {
@@ -101,9 +101,9 @@ typedef struct TdsExecutionStateData
 	int			cur_error_number;
 	int			cur_error_severity;
 	int			cur_error_state;
-} TdsExecutionStateData;
+}			TdsExecutionStateData;
 
-typedef TdsExecutionStateData *TdsExecutionState;
+typedef TdsExecutionStateData * TdsExecutionState;
 
 /* Local variables */
 static bool TdsHavePendingDone = false;
@@ -120,14 +120,14 @@ static TdsExecutionState tds_estate = NULL;
  */
 static bool markErrorFlag = false;
 
-static TdsColumnMetaData *colMetaData = NULL;
+static TdsColumnMetaData * colMetaData = NULL;
 static List *relMetaDataInfoList = NULL;
 
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
-static void SetAttributesForColmetada(TdsColumnMetaData *col);
+static void SetAttributesForColmetada(TdsColumnMetaData * col);
 
 static inline void
 SendPendingDone(bool more)
@@ -258,7 +258,7 @@ getPkeyAttnames(Relation rel, int16 *indnkeyatts)
 				result = (AttrNumber *) palloc(*indnkeyatts * sizeof(AttrNumber));
 
 				for (i = 0; i < *indnkeyatts; i++)
-					result[i] = (AttrNumber) DatumGetInt16(index->indkey.values[i]);
+					result[		i] = (AttrNumber) DatumGetInt16(index->indkey.values[i]);
 			}
 			break;
 		}
@@ -355,7 +355,7 @@ FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataIn
  * Code is copied from backend/access/common/printtup.c
  */
 static void
-PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
+PrintTupPrepareInfo(DR_printtup * myState, TupleDesc typeinfo, int numAttrs)
 {
 	int16	   *formats = myState->portal->formats;
 	int			i;
@@ -2071,7 +2071,7 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 	}
 	else if (forceCoercion)
 	{
-		int32		result = -1;
+		int32 result = -1;
 		Oid			castFuncOid = InvalidOid;
 		CoercionPathType pathtype;
 
@@ -2099,7 +2099,7 @@ SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 			result = GetTypModForToken(token);
 
 		/* If we found a valid attypmod, perform the casting. */
-		if (result != -1)
+		if (result !=-1)
 		{
 			datum = OidFunctionCall3(castFuncOid, datum,
 									 Int32GetDatum(result),
@@ -3244,7 +3244,7 @@ GetTdsEstateErrorData(int *number, int *severity, int *state)
 /*
  */
 static void
-SetAttributesForColmetada(TdsColumnMetaData *col)
+SetAttributesForColmetada(TdsColumnMetaData * col)
 {
 	HeapTuple	tp;
 	Form_pg_attribute att_tup;

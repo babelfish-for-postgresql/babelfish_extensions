@@ -93,7 +93,7 @@ typedef struct
 {
 	void	   *value;
 	int			length;
-} gss_buffer_desc;
+}			gss_buffer_desc;
 #endif
 #endif							/* ENABLE_SSPI */
 
@@ -183,9 +183,9 @@ typedef struct LoginRequestData
 
 	/* TODO: Feature data */
 
-} LoginRequestData;
+}			LoginRequestData;
 
-typedef LoginRequestData *LoginRequest;
+typedef LoginRequestData * LoginRequest;
 
 #define SizeOfLoginRequestFixed (offsetof(LoginRequestData, clientLcid) + sizeof(uint32_t))
 
@@ -196,13 +196,13 @@ typedef struct PreLoginOption
 	uint16_t	length;
 	StringInfoData val;
 	struct PreLoginOption *next;
-} PreLoginOption;
+}			PreLoginOption;
 
 PreLoginOption *TdsPreLoginRequest;
 LoginRequest loginInfo = NULL;
 
 static const char *PreLoginTokenType(uint8_t token);
-static void DebugPrintPreLoginStructure(PreLoginOption *request);
+static void DebugPrintPreLoginStructure(PreLoginOption * request);
 static int	ParsePreLoginRequest();
 static int *ProcessVersionNumber(const char *inputString);
 static void SetPreLoginResponseVal(Port *port, uint8_t token,
@@ -295,7 +295,7 @@ PreLoginTokenType(uint8_t token)
 }
 
 static void
-DebugPrintPreLoginStructure(PreLoginOption *request)
+DebugPrintPreLoginStructure(PreLoginOption * request)
 {
 	PreLoginOption *prev;
 	StringInfoData s;
@@ -1316,7 +1316,7 @@ static int
 CheckAuthPassword(Port *port, const char **logdetail)
 {
 	char	   *passwd;
-	int			result;
+	int result;
 	const char *shadowPass;
 
 	passwd = loginInfo->password;

@@ -32,15 +32,15 @@ typedef enum TDSRequestType
 	TDS_REQUEST_TXN_MGMT = 3,	/* transaction management request */
 	TDS_REQUEST_BULK_LOAD = 4,	/* bulk load request */
 	TDS_REQUEST_ATTN			/* attention request */
-} TDSRequestType;
+}			TDSRequestType;
 
 /* Simple SQL batch */
 typedef struct TDSRequestSQLBatchData
 {
 	TDSRequestType reqType;
 	StringInfoData query;
-} TDSRequestSQLBatchData;
-typedef TDSRequestSQLBatchData *TDSRequestSQLBatch;
+}			TDSRequestSQLBatchData;
+typedef TDSRequestSQLBatchData * TDSRequestSQLBatch;
 
 /*
  * TODO: Use below values as an ENUM, rather than MACRO
@@ -173,8 +173,8 @@ typedef struct TDSRequestSPData
 	 * use paramIndex for maintaining the paramIndex which is used by Engine
 	 */
 	int			paramIndex;
-} TDSRequestSPData;
-typedef TDSRequestSPData *TDSRequestSP;
+}			TDSRequestSPData;
+typedef TDSRequestSPData * TDSRequestSP;
 
 typedef struct TDSRequestBulkLoadData
 {
@@ -192,8 +192,8 @@ typedef struct TDSRequestBulkLoadData
 
 	BulkLoadColMetaData *colMetaData;	/* Array of each column's metadata. */
 	List	   *rowData;		/* List holding each row. */
-} TDSRequestBulkLoadData;
-typedef TDSRequestBulkLoadData *TDSRequestBulkLoad;
+}			TDSRequestBulkLoadData;
+typedef TDSRequestBulkLoadData * TDSRequestBulkLoad;
 
 /* Default handle value for a RPC request which doesn't use any handle */
 /*
@@ -234,8 +234,8 @@ typedef struct TDSRequestTxnMgmtData
 	/* Commit/rollback requests can have optional begin transaction */
 	struct TDSRequestTxnMgmtData *nextTxn;
 
-} TDSRequestTxnMgmtData;
-typedef TDSRequestTxnMgmtData *TDSRequestTxnMgmt;
+}			TDSRequestTxnMgmtData;
+typedef TDSRequestTxnMgmtData * TDSRequestTxnMgmt;
 
 typedef union TDSRequestData
 {
@@ -243,8 +243,8 @@ typedef union TDSRequestData
 	TDSRequestSQLBatchData sqlBatch;
 	TDSRequestSPData sp;
 	TDSRequestTxnMgmtData txnMgmt;
-} TDSRequestData;
-typedef TDSRequestData *TDSRequest;
+}			TDSRequestData;
+typedef TDSRequestData * TDSRequest;
 
 /* COLMETADATA flags */
 #define TDS_COLMETA_NULLABLE	0x01
@@ -695,7 +695,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 }
 
 static inline void
-SetColMetadataForFixedType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t maxSize)
+SetColMetadataForFixedType(TdsColumnMetaData * col, uint8_t tdsType, uint8_t maxSize)
 {
 	col->sizeLen = 1;
 
@@ -725,7 +725,7 @@ SetColMetadataForFixedType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t maxS
 }
 
 static inline void
-SetColMetadataForCharType(TdsColumnMetaData *col, uint8_t tdsType, uint32_t codePage,
+SetColMetadataForCharType(TdsColumnMetaData * col, uint8_t tdsType, uint32_t codePage,
 						  pg_enc encoding, uint16_t codeFlags, uint8_t sortId,
 						  uint16_t maxSize)
 {
@@ -741,7 +741,7 @@ SetColMetadataForCharType(TdsColumnMetaData *col, uint8_t tdsType, uint32_t code
 }
 
 static inline void
-SetColMetadataForTextType(TdsColumnMetaData *col, uint8_t tdsType, uint32_t codePage,
+SetColMetadataForTextType(TdsColumnMetaData * col, uint8_t tdsType, uint32_t codePage,
 						  pg_enc encoding, uint16_t codeFlags, uint8_t sortId,
 						  uint32_t maxSize)
 {
@@ -759,7 +759,7 @@ SetColMetadataForTextType(TdsColumnMetaData *col, uint8_t tdsType, uint32_t code
 }
 
 static inline void
-SetColMetadataForImageType(TdsColumnMetaData *col, uint8_t tdsType)
+SetColMetadataForImageType(TdsColumnMetaData * col, uint8_t tdsType)
 {
 	col->sizeLen = 1;
 	if (tdsType == TDS_TYPE_IMAGE)
@@ -784,7 +784,7 @@ SetColMetadataForImageType(TdsColumnMetaData *col, uint8_t tdsType)
 }
 
 static inline void
-SetColMetadataForDateType(TdsColumnMetaData *col, uint8_t tdsType)
+SetColMetadataForDateType(TdsColumnMetaData * col, uint8_t tdsType)
 {
 	col->sizeLen = 1;
 	col->metaLen = sizeof(col->metaEntry.type4);
@@ -793,7 +793,7 @@ SetColMetadataForDateType(TdsColumnMetaData *col, uint8_t tdsType)
 }
 
 static inline void
-SetColMetadataForNumericType(TdsColumnMetaData *col, uint8_t tdsType,
+SetColMetadataForNumericType(TdsColumnMetaData * col, uint8_t tdsType,
 							 uint8_t maxSize, uint8_t precision, uint8_t scale)
 {
 	col->sizeLen = 1;
@@ -806,7 +806,7 @@ SetColMetadataForNumericType(TdsColumnMetaData *col, uint8_t tdsType,
 }
 
 static inline void
-SetColMetadataForBinaryType(TdsColumnMetaData *col, uint8_t tdsType, uint16_t maxSize)
+SetColMetadataForBinaryType(TdsColumnMetaData * col, uint8_t tdsType, uint16_t maxSize)
 {
 	col->sizeLen = 1;
 	col->metaLen = sizeof(col->metaEntry.type7);
@@ -816,7 +816,7 @@ SetColMetadataForBinaryType(TdsColumnMetaData *col, uint8_t tdsType, uint16_t ma
 }
 
 static inline void
-SetColMetadataForTimeType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t scale)
+SetColMetadataForTimeType(TdsColumnMetaData * col, uint8_t tdsType, uint8_t scale)
 {
 	col->sizeLen = 1;
 	col->metaLen = sizeof(col->metaEntry.type6);
@@ -832,7 +832,7 @@ SetColMetadataForTimeType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t scale
  * TSQL collation values.
  */
 static inline void
-SetColMetadataForCharTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
+SetColMetadataForCharTypeHelper(TdsColumnMetaData * col, uint8_t tdsType,
 								Oid collation, int32 atttypmod)
 {
 	coll_info_t cinfo;
@@ -870,7 +870,7 @@ SetColMetadataForCharTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
  * TSQL collation values.
  */
 static inline void
-SetColMetadataForTextTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
+SetColMetadataForTextTypeHelper(TdsColumnMetaData * col, uint8_t tdsType,
 								Oid collation, int32 atttypmod)
 {
 	coll_info_t cinfo;

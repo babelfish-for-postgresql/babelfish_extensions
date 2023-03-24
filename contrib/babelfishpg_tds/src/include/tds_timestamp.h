@@ -41,7 +41,7 @@ typedef struct tsql_datetimeoffset
 {
 	int64		tsql_ts;
 	int16		tsql_tz;
-} tsql_datetimeoffset;
+}			tsql_datetimeoffset;
 
 /* datetimeoffset macros */
 #define DATETIMEOFFSET_LEN MAXALIGN(sizeof(tsql_datetimeoffset))
