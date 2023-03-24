@@ -135,7 +135,7 @@ static void pltsql_CreateFunctionStmt(ParseState *pstate,
 									  const char *queryString,
 									  bool readOnlyTree,
 									  ProcessUtilityContext context,
-									  ParamListInfo params);
+									  ParamListInfo params, int flag);
 
 /*****************************************
  * 			Executor Hooks
@@ -369,7 +369,7 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 							   const char *queryString,
 							   bool readOnlyTree,
 							   ProcessUtilityContext context,
-							   ParamListInfo params)
+							   ParamListInfo params, int flag)
 {
 
 	Node *parsetree = pstmt->utilityStmt;
@@ -382,6 +382,8 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 	ObjectAddress tbltyp;
 	ObjectAddress address;
 	int origname_location = -1;
+	DefElem    *language_item = NULL;
+	char *language = NULL;
 
 	/* All event trigger calls are done only when isCompleteQuery is true */
 	needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
@@ -427,8 +429,20 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 				location_cell = option;
 				pfree(defel);
 			}
+			else if (strcmp(defel->defname, "language") == 0)
+			{
+				if (language_item)
+				ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("conflicting or redundant options"),
+				parser_errposition(pstate, defel->location)));
+				language_item = defel;
+			}
 		}
 
+		if (language_item)
+			language = strVal(language_item->arg);
+					
 		/* delete location cell if it exists as it is for internal use only */
 		if (location_cell)
 			stmt->options = list_delete_cell(stmt->options, location_cell);
@@ -464,6 +478,12 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 			CommandCounterIncrement();
 		}
 
+		if (flag && ((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL))
+			{
+				flag = false;
+				if (CreateFunctionStmt_hook)
+					(*CreateFunctionStmt_hook)(pstate, pstmt, queryString, false, context, params, flag); 
+			}
 		address = CreateFunction(pstate, stmt);
 
 		/* Store function/procedure related metadata in babelfish catalog */
