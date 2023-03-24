@@ -1,4 +1,4 @@
-name: Dotnet Framework Tests
+name: Run pgindent
 on: [push, pull_request]
 
 jobs:
