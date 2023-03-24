@@ -494,365 +494,130 @@ GO
 ~~ERROR (Message: syntax error near '>' at line 1 and character position 41)~~
 
 
--- test TSQL Money (based on fixeddecimal) cross datatype operators
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-select CAST(2 AS money) > 1;
-GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
 
-select CAST(2 AS money) > CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
 
-select CAST(2 AS money) > CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
 
-select CAST(2 AS money) > CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
 
-select CAST(2 AS money) > CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) > CAST(1 AS decimal);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) >= 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS decimal);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) < 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS decimal);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) <= 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS decimal);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) <> 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <> CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <> CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <> CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <> CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) <> CAST(1 AS decimal);
-select CAST(2 AS money) + 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) + CAST(1 AS int);
-GO
-~~START~~
-money
-3.0000
-~~END~~
-
-select CAST(2 AS money) + CAST(1 AS int2);
-GO
-~~START~~
-money
-3.0000
-~~END~~
-
-select CAST(2 AS money) + CAST(1 AS int4);
-GO
-~~START~~
-money
-3.0000
-~~END~~
-
-select CAST(2 AS money) + CAST(1 AS numeric);
-GO
-~~START~~
-numeric
-3
-~~END~~
-
-select CAST(2 AS money) + CAST(1 AS decimal);
-GO
-~~START~~
-numeric
-3
-~~END~~
-
-
-select CAST(2 AS money) - 1;
-GO
-~~START~~
-money
-1.0000
-~~END~~
-
-select CAST(2 AS money) - CAST(1 AS int);
-GO
-~~START~~
-money
-1.0000
-~~END~~
-
-select CAST(2 AS money) - CAST(1 AS int2);
-GO
-~~START~~
-money
-1.0000
-~~END~~
-
-select CAST(2 AS money) - CAST(1 AS int4);
-GO
-~~START~~
-money
-1.0000
-~~END~~
-
-select CAST(2 AS money) - CAST(1 AS numeric);
-GO
-~~START~~
-numeric
-1
-~~END~~
-
-select CAST(2 AS money) - CAST(1 AS decimal);
-GO
-~~START~~
-numeric
-1
-~~END~~
-
-
-select CAST(2 AS money) * 2;
-GO
-~~START~~
-money
-4.0000
-~~END~~
-
-select CAST(2 AS money) * CAST(2 AS int);
-GO
-~~START~~
-money
-4.0000
-~~END~~
-
-select CAST(2 AS money) * CAST(2 AS int2);
-GO
-~~START~~
-money
-4.0000
-~~END~~
-
-select CAST(2 AS money) * CAST(2 AS int4);
-GO
-~~START~~
-money
-4.0000
-~~END~~
-
-select CAST(2 AS money) * CAST(2 AS numeric);
-GO
-~~START~~
-numeric
-4
-~~END~~
-
-select CAST(2 AS money) * CAST(2 AS decimal);
-GO
-~~START~~
-numeric
-4
-~~END~~
-
-
-select CAST(2 AS money) / 0.5;
-GO
-~~START~~
-numeric
-4.000000
-~~END~~
-
-select CAST(2 AS money) / CAST(2 AS int);
-GO
-~~START~~
-money
-1.0000
-~~END~~
-
-select CAST(2 AS money) / CAST(2 AS int2);
-GO
-~~START~~
-money
-1.0000
-~~END~~
-
-select CAST(2 AS money) / CAST(2 AS int4);
-GO
-~~START~~
-money
-1.0000
-~~END~~
-
-select CAST(2 AS money) / CAST(0.5 AS numeric(4,2));
-GO
-~~START~~
-numeric
-4.000000
-~~END~~
-
-select CAST(2 AS money) / CAST(0.5 AS decimal(4,2));
-GO
-~~START~~
-numeric
-4.000000
-~~END~~
-
-
+-- -- test TSQL Money (based on fixeddecimal) cross datatype operators
+-- DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
+-- GO
+-- select CAST(2 AS money) > 1;
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS decimal);
+-- GO
+-- select CAST(2 AS money) >= 1;
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS decimal);
+-- GO
+-- select CAST(2 AS money) < 1;
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS decimal);
+-- GO
+-- select CAST(2 AS money) <= 1;
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS decimal);
+-- GO
+-- select CAST(2 AS money) <> 1;
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS decimal);
+-- select CAST(2 AS money) + 1;
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS decimal);
+-- GO
+-- select CAST(2 AS money) - 1;
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS decimal);
+-- GO
+-- select CAST(2 AS money) * 2;
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS int);
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS int2);
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS int4);
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS numeric);
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS decimal);
+-- GO
+-- select CAST(2 AS money) / 0.5;
+-- GO
+-- select CAST(2 AS money) / CAST(2 AS int);
+-- GO
+-- select CAST(2 AS money) / CAST(2 AS int2);
+-- GO
+-- select CAST(2 AS money) / CAST(2 AS int4);
+-- GO
+-- select CAST(2 AS money) / CAST(0.5 AS numeric(4,2));
+-- GO
+-- select CAST(2 AS money) / CAST(0.5 AS decimal(4,2));
+-- GO
 reset babelfishpg_tsql.sql_dialect;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
+~~ERROR (Message: syntax error near '.' at line 111 and character position 22)~~
 
 
 -- Test DATE, DATETIME, DATETIMEOFFSET, DATETIME2

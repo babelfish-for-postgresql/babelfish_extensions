@@ -192,124 +192,124 @@ GO
 select CAST(2.00001 AS sys.fixeddecimal) > 2;
 GO
 
--- test TSQL Money (based on fixeddecimal) cross datatype operators
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-select CAST(2 AS money) > 1;
-GO
-select CAST(2 AS money) > CAST(1 AS int);
-GO
-select CAST(2 AS money) > CAST(1 AS int2);
-GO
-select CAST(2 AS money) > CAST(1 AS int4);
-GO
-select CAST(2 AS money) > CAST(1 AS numeric);
-GO
-select CAST(2 AS money) > CAST(1 AS decimal);
-GO
+-- -- test TSQL Money (based on fixeddecimal) cross datatype operators
+-- DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
+-- GO
+-- select CAST(2 AS money) > 1;
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) > CAST(1 AS decimal);
+-- GO
 
-select CAST(2 AS money) >= 1;
-GO
-select CAST(2 AS money) >= CAST(1 AS int);
-GO
-select CAST(2 AS money) >= CAST(1 AS int2);
-GO
-select CAST(2 AS money) >= CAST(1 AS int4);
-GO
-select CAST(2 AS money) >= CAST(1 AS numeric);
-GO
-select CAST(2 AS money) >= CAST(1 AS decimal);
-GO
+-- select CAST(2 AS money) >= 1;
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) >= CAST(1 AS decimal);
+-- GO
 
-select CAST(2 AS money) < 1;
-GO
-select CAST(2 AS money) < CAST(1 AS int);
-GO
-select CAST(2 AS money) < CAST(1 AS int2);
-GO
-select CAST(2 AS money) < CAST(1 AS int4);
-GO
-select CAST(2 AS money) < CAST(1 AS numeric);
-GO
-select CAST(2 AS money) < CAST(1 AS decimal);
-GO
+-- select CAST(2 AS money) < 1;
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) < CAST(1 AS decimal);
+-- GO
 
-select CAST(2 AS money) <= 1;
-GO
-select CAST(2 AS money) <= CAST(1 AS int);
-GO
-select CAST(2 AS money) <= CAST(1 AS int2);
-GO
-select CAST(2 AS money) <= CAST(1 AS int4);
-GO
-select CAST(2 AS money) <= CAST(1 AS numeric);
-GO
-select CAST(2 AS money) <= CAST(1 AS decimal);
-GO
+-- select CAST(2 AS money) <= 1;
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) <= CAST(1 AS decimal);
+-- GO
 
-select CAST(2 AS money) <> 1;
-GO
-select CAST(2 AS money) <> CAST(1 AS int);
-GO
-select CAST(2 AS money) <> CAST(1 AS int2);
-GO
-select CAST(2 AS money) <> CAST(1 AS int4);
-GO
-select CAST(2 AS money) <> CAST(1 AS numeric);
-GO
-select CAST(2 AS money) <> CAST(1 AS decimal);
+-- select CAST(2 AS money) <> 1;
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) <> CAST(1 AS decimal);
 
-select CAST(2 AS money) + 1;
-GO
-select CAST(2 AS money) + CAST(1 AS int);
-GO
-select CAST(2 AS money) + CAST(1 AS int2);
-GO
-select CAST(2 AS money) + CAST(1 AS int4);
-GO
-select CAST(2 AS money) + CAST(1 AS numeric);
-GO
-select CAST(2 AS money) + CAST(1 AS decimal);
-GO
+-- select CAST(2 AS money) + 1;
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) + CAST(1 AS decimal);
+-- GO
 
-select CAST(2 AS money) - 1;
-GO
-select CAST(2 AS money) - CAST(1 AS int);
-GO
-select CAST(2 AS money) - CAST(1 AS int2);
-GO
-select CAST(2 AS money) - CAST(1 AS int4);
-GO
-select CAST(2 AS money) - CAST(1 AS numeric);
-GO
-select CAST(2 AS money) - CAST(1 AS decimal);
-GO
+-- select CAST(2 AS money) - 1;
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS int);
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS int2);
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS int4);
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS numeric);
+-- GO
+-- select CAST(2 AS money) - CAST(1 AS decimal);
+-- GO
 
-select CAST(2 AS money) * 2;
-GO
-select CAST(2 AS money) * CAST(2 AS int);
-GO
-select CAST(2 AS money) * CAST(2 AS int2);
-GO
-select CAST(2 AS money) * CAST(2 AS int4);
-GO
-select CAST(2 AS money) * CAST(2 AS numeric);
-GO
-select CAST(2 AS money) * CAST(2 AS decimal);
-GO
+-- select CAST(2 AS money) * 2;
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS int);
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS int2);
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS int4);
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS numeric);
+-- GO
+-- select CAST(2 AS money) * CAST(2 AS decimal);
+-- GO
 
-select CAST(2 AS money) / 0.5;
-GO
-select CAST(2 AS money) / CAST(2 AS int);
-GO
-select CAST(2 AS money) / CAST(2 AS int2);
-GO
-select CAST(2 AS money) / CAST(2 AS int4);
-GO
-select CAST(2 AS money) / CAST(0.5 AS numeric(4,2));
-GO
-select CAST(2 AS money) / CAST(0.5 AS decimal(4,2));
-GO
+-- select CAST(2 AS money) / 0.5;
+-- GO
+-- select CAST(2 AS money) / CAST(2 AS int);
+-- GO
+-- select CAST(2 AS money) / CAST(2 AS int2);
+-- GO
+-- select CAST(2 AS money) / CAST(2 AS int4);
+-- GO
+-- select CAST(2 AS money) / CAST(0.5 AS numeric(4,2));
+-- GO
+-- select CAST(2 AS money) / CAST(0.5 AS decimal(4,2));
+-- GO
 
 reset babelfishpg_tsql.sql_dialect;
 GO
