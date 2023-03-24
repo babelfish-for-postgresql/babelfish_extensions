@@ -29,16 +29,16 @@ typedef enum TDSRequestType
 {
 	TDS_REQUEST_SQL_BATCH = 1,	/* a simple SQL batch */
 	TDS_REQUEST_SP_NUMBER = 2,	/* numbered SP like sp_execute */
-	TDS_REQUEST_TXN_MGMT  = 3,		/* transaction management request */
-	TDS_REQUEST_BULK_LOAD = 4,  /* bulk load request */
+	TDS_REQUEST_TXN_MGMT = 3,	/* transaction management request */
+	TDS_REQUEST_BULK_LOAD = 4,	/* bulk load request */
 	TDS_REQUEST_ATTN			/* attention request */
 } TDSRequestType;
 
 /* Simple SQL batch */
 typedef struct TDSRequestSQLBatchData
 {
-	TDSRequestType	reqType;
-	StringInfoData	query;
+	TDSRequestType reqType;
+	StringInfoData query;
 } TDSRequestSQLBatchData;
 typedef TDSRequestSQLBatchData *TDSRequestSQLBatch;
 
@@ -79,58 +79,63 @@ do \
 	} \
 } while(0)
 
-int ReadPlp(ParameterToken temp, StringInfo message, uint64_t *mainOffset);
+int			ReadPlp(ParameterToken temp, StringInfo message, uint64_t *mainOffset);
+
 /* Numbered Stored Procedure like sp_prepexec, sp_execute */
 typedef struct TDSRequestSPData
 {
-	TDSRequestType	reqType;
+	TDSRequestType reqType;
 	uint16_t	spType;
 	uint16_t	spFlags;
 
 	StringInfoData name;
 
 	uint32		handle;			/* handle corresponding to this SP request */
-	uint32		cursorHandle;	/* cursor handle corresponding to this SP_CURSOR* request */
-
-	/* cursor prepared handle corresponding to SP_CURSOR[prepare/prepexec/exec] request */
-	uint32_t cursorPreparedHandle;
+	uint32		cursorHandle;	/* cursor handle corresponding to this
+								 * SP_CURSOR* request */
 
 	/*
-	 * parameter points to the head of the ParameterToken linked List.
-	 * Each ParameterToken contains all the data pertaining to the parameter.
+	 * cursor prepared handle corresponding to
+	 * SP_CURSOR[prepare/prepexec/exec] request
 	 */
-	ParameterToken		parameter;
+	uint32_t	cursorPreparedHandle;
+
+	/*
+	 * parameter points to the head of the ParameterToken linked List. Each
+	 * ParameterToken contains all the data pertaining to the parameter.
+	 */
+	ParameterToken parameter;
 
 	/*
 	 * Pointer to request data, while parsing we don't copy the actual data
 	 * but just store the dataOffset and len fields in the Parametertoken
 	 * structure
 	 */
-	char			*messageData;
-	uint64_t 		batchSeparatorOffset;
-	int 			messageLen;
+	char	   *messageData;
+	uint64_t	batchSeparatorOffset;
+	int			messageLen;
 
 	/*
-	 * Below three fields are just a place holder for keeping the addresses
-	 * of Parameter query & data token separate, so that during processing
-	 * this can be used directly
+	 * Below three fields are just a place holder for keeping the addresses of
+	 * Parameter query & data token separate, so that during processing this
+	 * can be used directly
 	 */
-	ParameterToken		queryParameter;
-	ParameterToken		dataParameter;
-	ParameterToken		handleParameter;
+	ParameterToken queryParameter;
+	ParameterToken dataParameter;
+	ParameterToken handleParameter;
 
-	StringInfo			metaDataParameterValue;
+	StringInfo	metaDataParameterValue;
 
 	/*
-	 * cursor parameters - all parameters except cursorHandleParameter have different
-	 * meanings w.r.t the type of the cursor request (check GetTDSRequest() for their
-	 * respective meaning).
+	 * cursor parameters - all parameters except cursorHandleParameter have
+	 * different meanings w.r.t the type of the cursor request (check
+	 * GetTDSRequest() for their respective meaning).
 	 */
-	ParameterToken		cursorPreparedHandleParameter;
-	ParameterToken		cursorHandleParameter;
-	ParameterToken		cursorExtraArg1;
-	ParameterToken		cursorExtraArg2;
-	ParameterToken		cursorExtraArg3;
+	ParameterToken cursorPreparedHandleParameter;
+	ParameterToken cursorHandleParameter;
+	ParameterToken cursorExtraArg1;
+	ParameterToken cursorExtraArg2;
+	ParameterToken cursorExtraArg3;
 
 	/* number of total dataParameters */
 	uint16		nTotalParams;
@@ -148,43 +153,45 @@ typedef struct TDSRequestSPData
 	/*
 	 * TODO: Use as local variable rather than part of the structure
 	 */
-	Datum *boundParamsData;
-	char  *boundParamsNullList;
-	Oid *boundParamsOidList;
+	Datum	   *boundParamsData;
+	char	   *boundParamsNullList;
+	Oid		   *boundParamsOidList;
 
-	uint16	nTotalBindParams;
+	uint16		nTotalBindParams;
 
 	/* True, if this is a stored procedure */
-	bool	isStoredProcedure;
+	bool		isStoredProcedure;
 
 	/*
 	 * we store the OUT dataParameter pointers in the following array so that
 	 * they can be accessed directly given their index.
 	 */
-	ParameterToken	*idxOutParams;
+	ParameterToken *idxOutParams;
 
 	/*
-	 * In case when parameter names aren't specified by the application,
-	 * then use paramIndex for maintaining the paramIndex which is used
-	 * by Engine
+	 * In case when parameter names aren't specified by the application, then
+	 * use paramIndex for maintaining the paramIndex which is used by Engine
 	 */
-	int		paramIndex;
+	int			paramIndex;
 } TDSRequestSPData;
 typedef TDSRequestSPData *TDSRequestSP;
 
 typedef struct TDSRequestBulkLoadData
 {
-	TDSRequestType			reqType;
-	int 					colCount;
-	int 					rowCount;
+	TDSRequestType reqType;
+	int			colCount;
+	int			rowCount;
 
-	/* Holds the First Message data to be transfered from TDS Fetch to TDS Process phase. */
-	StringInfo 				firstMessage;
+	/*
+	 * Holds the First Message data to be transfered from TDS Fetch to TDS
+	 * Process phase.
+	 */
+	StringInfo	firstMessage;
 
-	int 					currentBatchSize; /* Current Batch Size in byes */
+	int			currentBatchSize;	/* Current Batch Size in byes */
 
-	BulkLoadColMetaData 	*colMetaData; /* Array of each column's metadata. */
-	List 					*rowData;     /* List holding each row. */
+	BulkLoadColMetaData *colMetaData;	/* Array of each column's metadata. */
+	List	   *rowData;		/* List holding each row. */
 } TDSRequestBulkLoadData;
 typedef TDSRequestBulkLoadData *TDSRequestBulkLoad;
 
@@ -218,24 +225,24 @@ do { \
 /* Transaction management request */
 typedef struct TDSRequestTxnMgmtData
 {
-	TDSRequestType					reqType;
-	uint16_t						txnReqType;
-	StringInfoData					txnName;
-	uint8_t							isolationLevel;
-	StringInfoData					query;
+	TDSRequestType reqType;
+	uint16_t	txnReqType;
+	StringInfoData txnName;
+	uint8_t		isolationLevel;
+	StringInfoData query;
 
 	/* Commit/rollback requests can have optional begin transaction */
-	struct TDSRequestTxnMgmtData	*nextTxn;
+	struct TDSRequestTxnMgmtData *nextTxn;
 
 } TDSRequestTxnMgmtData;
 typedef TDSRequestTxnMgmtData *TDSRequestTxnMgmt;
 
 typedef union TDSRequestData
 {
-	TDSRequestType			reqType;
-	TDSRequestSQLBatchData		sqlBatch;
-	TDSRequestSPData		sp;
-	TDSRequestTxnMgmtData	txnMgmt;
+	TDSRequestType reqType;
+	TDSRequestSQLBatchData sqlBatch;
+	TDSRequestSPData sp;
+	TDSRequestTxnMgmtData txnMgmt;
 } TDSRequestData;
 typedef TDSRequestData *TDSRequest;
 
@@ -267,14 +274,15 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 {
 	TvpColMetaData *colmetadata = temp->tvpInfo->colMetaData;
 	TvpRowData *rowData = NULL;
-	char *messageData = message->data;
-	int retStatus = 0;
-	temp->tvpInfo->rowCount = 0;
-	while(messageData[*offset] == TVP_ROW_TOKEN) /* Loop over each row. */
-	{
-		int i = 0; /* Current Column Number. */
+	char	   *messageData = message->data;
+	int			retStatus = 0;
 
-		if (rowData == NULL) /* First Row. */
+	temp->tvpInfo->rowCount = 0;
+	while (messageData[*offset] == TVP_ROW_TOKEN)	/* Loop over each row. */
+	{
+		int			i = 0;		/* Current Column Number. */
+
+		if (rowData == NULL)	/* First Row. */
 		{
 			rowData = palloc0(sizeof(TvpRowData));
 			temp->tvpInfo->rowData = rowData;
@@ -282,20 +290,21 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 		else
 		{
 			TvpRowData *temp = palloc0(sizeof(TvpRowData));
+
 			rowData->nextRow = temp;
 			rowData = temp;
 		}
 
 		rowData->columnValues = palloc0(temp->tvpInfo->colCount * sizeof(StringInfoData));
-		rowData->isNull 	  = palloc0(temp->tvpInfo->colCount);
+		rowData->isNull = palloc0(temp->tvpInfo->colCount);
 		(*offset)++;
 
-		while(i != temp->tvpInfo->colCount) /* Loop over each column. */
+		while (i != temp->tvpInfo->colCount)	/* Loop over each column. */
 		{
 			initStringInfo(&rowData->columnValues[i]);
 			rowData->isNull[i] = 'f';
 			temp->tvpInfo->rowCount += 1;
-			switch(colmetadata[i].columnTdsType)
+			switch (colmetadata[i].columnTdsType)
 			{
 				case TDS_TYPE_INTEGER:
 				case TDS_TYPE_BIT:
@@ -306,52 +315,52 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 				case TDS_TYPE_DATETIMEN:
 				case TDS_TYPE_MONEYN:
 				case TDS_TYPE_UNIQUEIDENTIFIER:
-				{
-					rowData->columnValues[i].len = messageData[(*offset)++];
-					if (rowData->columnValues[i].len == 0) /* null */
 					{
-						rowData->isNull[i] = 'n';
-						i++;
-						continue;
+						rowData->columnValues[i].len = messageData[(*offset)++];
+						if (rowData->columnValues[i].len == 0)	/* null */
+						{
+							rowData->isNull[i] = 'n';
+							i++;
+							continue;
+						}
+						if (rowData->columnValues[i].len > colmetadata[i].maxLen)
+							ereport(ERROR,
+									(errcode(ERRCODE_PROTOCOL_VIOLATION),
+									 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+											"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
+											temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
+						memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
+						*offset += rowData->columnValues[i].len;
 					}
-					if (rowData->columnValues[i].len > colmetadata[i].maxLen)
-						ereport(ERROR,
-								(errcode(ERRCODE_PROTOCOL_VIOLATION),
-								 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-									 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
-									 temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
-					memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
-					*offset += rowData->columnValues[i].len;
-				}
-				break;
+					break;
 				case TDS_TYPE_NUMERICN:
 				case TDS_TYPE_DECIMALN:
-				{
-					if (colmetadata[i].scale > colmetadata[i].precision)
-						ereport(ERROR,
-								(errcode(ERRCODE_PROTOCOL_VIOLATION),
-								 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-									 "Table-valued parameter %d (\"%s\"): row %d, column %d: The supplied value is not a valid instance of data type Numeric/Decimal. "
-									 "Check the source data for invalid values. An example of an invalid value is data of numeric type with scale greater than precision.",
-									 temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1)));
-					rowData->columnValues[i].len = messageData[(*offset)++];
-					if (rowData->columnValues[i].len == 0) /* null */
 					{
-						rowData->isNull[i] = 'n';
-						i++;
-						continue;
-					}
-					if (rowData->columnValues[i].len > colmetadata[i].maxLen)
-						ereport(ERROR,
-								(errcode(ERRCODE_PROTOCOL_VIOLATION),
-								 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-									 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
-									 temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
+						if (colmetadata[i].scale > colmetadata[i].precision)
+							ereport(ERROR,
+									(errcode(ERRCODE_PROTOCOL_VIOLATION),
+									 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+											"Table-valued parameter %d (\"%s\"): row %d, column %d: The supplied value is not a valid instance of data type Numeric/Decimal. "
+											"Check the source data for invalid values. An example of an invalid value is data of numeric type with scale greater than precision.",
+											temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1)));
+						rowData->columnValues[i].len = messageData[(*offset)++];
+						if (rowData->columnValues[i].len == 0)	/* null */
+						{
+							rowData->isNull[i] = 'n';
+							i++;
+							continue;
+						}
+						if (rowData->columnValues[i].len > colmetadata[i].maxLen)
+							ereport(ERROR,
+									(errcode(ERRCODE_PROTOCOL_VIOLATION),
+									 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+											"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
+											temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
 
-					memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
-					*offset += rowData->columnValues[i].len;
-				}
-				break;
+						memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
+						*offset += rowData->columnValues[i].len;
+					}
+					break;
 
 				case TDS_TYPE_CHAR:
 				case TDS_TYPE_VARCHAR:
@@ -359,101 +368,106 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 				case TDS_TYPE_NVARCHAR:
 				case TDS_TYPE_BINARY:
 				case TDS_TYPE_VARBINARY:
-				{
-					if (colmetadata[i].maxLen != 0xffff)
 					{
-						memcpy(&rowData->columnValues[i].len, &messageData[*offset], sizeof(short));
-						*offset +=  sizeof(short);
-						rowData->columnValues[i].maxlen = colmetadata[i].maxLen;
-						if (rowData->columnValues[i].len != 0xffff)
+						if (colmetadata[i].maxLen != 0xffff)
 						{
-							char * value;
-
-							if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
-								ereport(ERROR,
-										(errcode(ERRCODE_PROTOCOL_VIOLATION),
-										 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-											 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
-											 temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
-							value = palloc(rowData->columnValues[i].len);
-							memcpy(value, &messageData[*offset], rowData->columnValues[i].len);
-							rowData->columnValues[i].data = value;
-							*offset += rowData->columnValues[i].len;
-							if (colmetadata[i].columnTdsType == TDS_TYPE_NVARCHAR)
+							memcpy(&rowData->columnValues[i].len, &messageData[*offset], sizeof(short));
+							*offset += sizeof(short);
+							rowData->columnValues[i].maxlen = colmetadata[i].maxLen;
+							if (rowData->columnValues[i].len != 0xffff)
 							{
-								StringInfo tempStringInfo = palloc( sizeof(StringInfoData));
-								initStringInfo(tempStringInfo);
-								TdsUTF16toUTF8StringInfo(tempStringInfo, value,rowData->columnValues[i].len);
-								rowData->columnValues[i] = *tempStringInfo;
+								char	   *value;
+
+								if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
+									ereport(ERROR,
+											(errcode(ERRCODE_PROTOCOL_VIOLATION),
+											 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+													"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
+													temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
+								value = palloc(rowData->columnValues[i].len);
+								memcpy(value, &messageData[*offset], rowData->columnValues[i].len);
+								rowData->columnValues[i].data = value;
+								*offset += rowData->columnValues[i].len;
+								if (colmetadata[i].columnTdsType == TDS_TYPE_NVARCHAR)
+								{
+									StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
+
+									initStringInfo(tempStringInfo);
+									TdsUTF16toUTF8StringInfo(tempStringInfo, value, rowData->columnValues[i].len);
+									rowData->columnValues[i] = *tempStringInfo;
+								}
+							}
+							else
+							{
+								rowData->isNull[i] = 'n';
+								i++;
+								continue;
 							}
 						}
 						else
 						{
-							rowData->isNull[i] = 'n';
-							i++;
-							continue;
+							retStatus = ReadPlp(temp, message, offset);
+							CheckPLPStatusNotOKForTVP(temp, retStatus);
+							if (temp->isNull)
+							{
+								rowData->isNull[i] = 'n';
+							}
+							rowData->columnValues[i] = *(TdsGetPlpStringInfoBufferFromToken(messageData, temp));
+							if (colmetadata[i].columnTdsType == TDS_TYPE_NVARCHAR)
+							{
+								StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
+
+								initStringInfo(tempStringInfo);
+								TdsUTF16toUTF8StringInfo(tempStringInfo, rowData->columnValues[i].data, rowData->columnValues[i].len);
+								rowData->columnValues[i] = *tempStringInfo;
+							}
+							temp->isNull = false;
 						}
 					}
-					else
+					break;
+				case TDS_TYPE_XML:
 					{
 						retStatus = ReadPlp(temp, message, offset);
 						CheckPLPStatusNotOKForTVP(temp, retStatus);
 						if (temp->isNull)
 						{
 							rowData->isNull[i] = 'n';
+							i++;
+							temp->isNull = false;
+							continue;
 						}
 						rowData->columnValues[i] = *(TdsGetPlpStringInfoBufferFromToken(messageData, temp));
-						if (colmetadata[i].columnTdsType == TDS_TYPE_NVARCHAR)
-						{
-							StringInfo tempStringInfo = palloc(sizeof(StringInfoData));
-							initStringInfo(tempStringInfo);
-							TdsUTF16toUTF8StringInfo(tempStringInfo, rowData->columnValues[i].data,rowData->columnValues[i].len);
-							rowData->columnValues[i] = *tempStringInfo;
-						}
-						temp->isNull = false;
 					}
-				}
-				break;
-				case TDS_TYPE_XML:
-				{
-					retStatus = ReadPlp(temp, message, offset);
-					CheckPLPStatusNotOKForTVP(temp, retStatus);
-					if (temp->isNull)
-					{
-						rowData->isNull[i] = 'n';
-						i++;
-						temp->isNull = false;
-						continue;
-					}
-					rowData->columnValues[i] = *(TdsGetPlpStringInfoBufferFromToken(messageData, temp));
-				}
-				break;
+					break;
 				case TDS_TYPE_SQLVARIANT:
-				{
-					memcpy(&rowData->columnValues[i].len, &messageData[*offset], sizeof(uint32_t));
-					*offset += sizeof(uint32_t);
-
-					if (rowData->columnValues[i].len == 0)
 					{
-						rowData->isNull[i] = 'n';
-						i++;
-						continue;
+						memcpy(&rowData->columnValues[i].len, &messageData[*offset], sizeof(uint32_t));
+						*offset += sizeof(uint32_t);
+
+						if (rowData->columnValues[i].len == 0)
+						{
+							rowData->isNull[i] = 'n';
+							i++;
+							continue;
+						}
+						if (rowData->columnValues[i].len > colmetadata[i].maxLen)
+							ereport(ERROR,
+									(errcode(ERRCODE_PROTOCOL_VIOLATION),
+									 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+											"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
+											temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
+
+						/*
+						 * Check if rowData->columnValues[i].data has enough
+						 * length allocated.
+						 */
+						if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
+							enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
+
+						memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
+						*offset += rowData->columnValues[i].len;
 					}
-					if (rowData->columnValues[i].len > colmetadata[i].maxLen)
-						ereport(ERROR,
-								(errcode(ERRCODE_PROTOCOL_VIOLATION),
-								 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-									 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.",
-									 temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, i + 1, colmetadata[i].columnTdsType)));
-
-					/* Check if rowData->columnValues[i].data has enough length allocated. */
-					if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
-						enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
-
-					memcpy(rowData->columnValues[i].data, &messageData[*offset], rowData->columnValues[i].len);
-					*offset += rowData->columnValues[i].len;
-				}
-				break;
+					break;
 			}
 			i++;
 		}
@@ -462,49 +476,49 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-					 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
-					 "unexpected token encountered processing a table-valued parameter.",
-					 temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, temp->tvpInfo->colCount, temp->type)));
+						"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
+						"unexpected token encountered processing a table-valued parameter.",
+						temp->paramOrdinal + 1, temp->paramMeta.colName.data, temp->tvpInfo->rowCount, temp->tvpInfo->colCount, temp->type)));
 	(*offset)++;
 }
 
 static inline void
-SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *offset)
+SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *offset)
 {
-	uint8_t len;
-	uint16 colCount;
-	uint16 isTvpNull;
-	char *tempString;
-	int i = 0;
-	char *messageData = message->data;
-	StringInfo tempStringInfo = palloc( sizeof(StringInfoData));
-	uint32_t collation;
+	uint8_t		len;
+	uint16		colCount;
+	uint16		isTvpNull;
+	char	   *tempString;
+	int			i = 0;
+	char	   *messageData = message->data;
+	StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
+	uint32_t	collation;
 
 	/* Database-Name.Schema-Name.TableType-Name */
-	for(; i < 3; i++)
+	for (; i < 3; i++)
 	{
 		len = messageData[(*offset)++];
 		if (len != 0)
 		{
 			/* Database name not allowed in a TVP */
-			if (i ==0)
+			if (i == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-							 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
-							 "has a non-zero length database name specified. Database name is not allowed with a table-valued parameter, "
-							 "only schema name and type name are valid.",
-							 temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, 1, temp->type)));
+								"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
+								"has a non-zero length database name specified. Database name is not allowed with a table-valued parameter, "
+								"only schema name and type name are valid.",
+								temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, 1, temp->type)));
 			initStringInfo(tempStringInfo);
 
 			tempString = palloc0(len * 2);
 			memcpy(tempString, &messageData[*offset], len * 2);
-			TdsUTF16toUTF8StringInfo(tempStringInfo, tempString,len * 2);
+			TdsUTF16toUTF8StringInfo(tempStringInfo, tempString, len * 2);
 
-			*offset +=  len * 2;
+			*offset += len * 2;
 			temp->len += len;
 
-			if(i == 1)
+			if (i == 1)
 				temp->tvpInfo->tvpTypeSchemaName = tempStringInfo->data;
 			else
 				temp->tvpInfo->tvpTypeName = tempStringInfo->data;
@@ -516,8 +530,8 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-						 "Table-valued parameter %d, to a parameterized string has no table type defined.",
-						 temp->paramOrdinal + 1)));
+							"Table-valued parameter %d, to a parameterized string has no table type defined.",
+							temp->paramOrdinal + 1)));
 		}
 	}
 
@@ -531,6 +545,7 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 		 * TypeColumnMetaData = UserType Flags TYPE_INFO ColName ;
 		 */
 		TvpColMetaData *colmetadata;
+
 		memcpy(&colCount, &messageData[*offset], sizeof(uint16));
 		colmetadata = palloc0(colCount * sizeof(TvpColMetaData));
 		temp->tvpInfo->colCount = colCount;
@@ -538,16 +553,16 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 
 		temp->isNull = false;
 
-		while(i != colCount)
+		while (i != colCount)
 		{
 			if (((*offset) + sizeof(uint32_t) > message->len))
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-							 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X "
-							 "(user-defined table type) has an invalid column count specified.",
-							 temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, temp->type)));
-			
+								"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X "
+								"(user-defined table type) has an invalid column count specified.",
+								temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, temp->type)));
+
 			/* UserType */
 			memcpy(&colmetadata[i].userType, &messageData[*offset], sizeof(uint32_t));
 			*offset += sizeof(uint32_t);
@@ -557,7 +572,7 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 
 			/* TYPE_INFO */
 			colmetadata[i].columnTdsType = messageData[(*offset)++];
-			switch(colmetadata[i].columnTdsType)
+			switch (colmetadata[i].columnTdsType)
 			{
 				case TDS_TYPE_INTEGER:
 				case TDS_TYPE_BIT:
@@ -566,87 +581,89 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 				case TDS_TYPE_DATETIMEN:
 				case TDS_TYPE_UNIQUEIDENTIFIER:
 					colmetadata[i].maxLen = messageData[(*offset)++];
-				break;
+					break;
 				case TDS_TYPE_DECIMALN:
 				case TDS_TYPE_NUMERICN:
-					colmetadata[i].maxLen    = messageData[(*offset)++];
+					colmetadata[i].maxLen = messageData[(*offset)++];
 					colmetadata[i].precision = messageData[(*offset)++];
-					colmetadata[i].scale 	 = messageData[(*offset)++];
-				break;
+					colmetadata[i].scale = messageData[(*offset)++];
+					break;
 				case TDS_TYPE_CHAR:
 				case TDS_TYPE_VARCHAR:
 				case TDS_TYPE_NCHAR:
 				case TDS_TYPE_NVARCHAR:
-				{
-					memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint16));
-					*offset += sizeof(uint16);
+					{
+						memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint16));
+						*offset += sizeof(uint16);
 
-					memcpy(&collation, &messageData[*offset], sizeof(uint32_t));
-					*offset += sizeof(uint32_t);
-					colmetadata[i].sortId = messageData[(*offset)++];
-					colmetadata[i].encoding = TdsGetEncoding(collation);
-				}
-				break;
+						memcpy(&collation, &messageData[*offset], sizeof(uint32_t));
+						*offset += sizeof(uint32_t);
+						colmetadata[i].sortId = messageData[(*offset)++];
+						colmetadata[i].encoding = TdsGetEncoding(collation);
+					}
+					break;
 				case TDS_TYPE_XML:
-				{
-					colmetadata[i].maxLen = messageData[(*offset)++];
-				}
-				break;
+					{
+						colmetadata[i].maxLen = messageData[(*offset)++];
+					}
+					break;
 				case TDS_TYPE_DATETIME2:
-				{
-					colmetadata[i].scale = messageData[(*offset)++];
-					colmetadata[i].maxLen = 8;
-				}
-				break;
+					{
+						colmetadata[i].scale = messageData[(*offset)++];
+						colmetadata[i].maxLen = 8;
+					}
+					break;
 				case TDS_TYPE_TIME:
-				{
-					colmetadata[i].scale = messageData[(*offset)++];
-					colmetadata[i].maxLen = 5;
-				}
-				break;
+					{
+						colmetadata[i].scale = messageData[(*offset)++];
+						colmetadata[i].maxLen = 5;
+					}
+					break;
 				case TDS_TYPE_BINARY:
 				case TDS_TYPE_VARBINARY:
-				{
-					uint16 plp;
-					memcpy(&plp, &messageData[*offset], sizeof(uint16));
-					*offset += sizeof(uint16);
-					colmetadata[i].maxLen = plp;
-				}
-				break;
+					{
+						uint16		plp;
+
+						memcpy(&plp, &messageData[*offset], sizeof(uint16));
+						*offset += sizeof(uint16);
+						colmetadata[i].maxLen = plp;
+					}
+					break;
 				case TDS_TYPE_DATE:
 					colmetadata[i].maxLen = 3;
-				break;
+					break;
 				case TDS_TYPE_SQLVARIANT:
 					memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint32_t));
 					*offset += sizeof(uint32_t);
-				break;
+					break;
 				default:
-				    ereport(ERROR,
+					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
 							 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-								 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X is unknown.",
-								 temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
+									"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X is unknown.",
+									temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
 			}
 
 			if ((colmetadata[i].flags & TDS_COLMETA_COMPUTED) && ((messageData[*offset] == TVP_ORDER_UNIQUE_TOKEN) ||
-						(messageData[*offset] == TVP_COLUMN_ORDERING_TOKEN)))
+																  (messageData[*offset] == TVP_COLUMN_ORDERING_TOKEN)))
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type). "
-							 "The specified column is computed or default and has ordering or uniqueness set. Ordering and uniqueness "
-							 "can only be set on columns that have client supplied data.",
-							 temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
+								"The specified column is computed or default and has ordering or uniqueness set. Ordering and uniqueness "
+								"can only be set on columns that have client supplied data.",
+								temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
 			if (messageData[*offset] != TVP_END_TOKEN)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-							 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
-							 "unexpected token encountered processing a table-valued parameter.",
-							 temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
+								"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
+								"unexpected token encountered processing a table-valued parameter.",
+								temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
 			i++;
 			(*offset)++;
 		}
-		temp->tvpInfo->colMetaData = colmetadata; /* Setting the column metadata in paramtoken. */
+		temp->tvpInfo->colMetaData = colmetadata;	/* Setting the column
+													 * metadata in paramtoken. */
 
 		/* TODO Optional Metadata token:- [TVP_ORDER_UNIQUE] */
 		if (messageData[*offset] == TVP_ORDER_UNIQUE_TOKEN)
@@ -664,14 +681,14 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
-						 "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
-						 "unexpected token encountered processing a table-valued parameter.",
-						 temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
+							"Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) "
+							"unexpected token encountered processing a table-valued parameter.",
+							temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, i + 1, colmetadata[i].columnTdsType)));
 		(*offset)++;
 	}
 	else
 	{
-		temp->isNull = true; /* If TVP is NULL. */
+		temp->isNull = true;	/* If TVP is NULL. */
 		(*offset) += 2;
 	}
 	SetTvpRowData(temp, message, offset);
@@ -683,9 +700,9 @@ SetColMetadataForFixedType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t maxS
 	col->sizeLen = 1;
 
 	/*
-	 * If column is Not NULL constrained then we don't want to send
-	 * maxSize except for uniqueidentifier and xml.
-	 * This needs to be done for identity contraints as well.
+	 * If column is Not NULL constrained then we don't want to send maxSize
+	 * except for uniqueidentifier and xml. This needs to be done for identity
+	 * contraints as well.
 	 */
 	if (col->attNotNull && tdsType != TDS_TYPE_UNIQUEIDENTIFIER && tdsType != TDS_TYPE_XML)
 	{
@@ -753,13 +770,14 @@ SetColMetadataForImageType(TdsColumnMetaData *col, uint8_t tdsType)
 	else if (tdsType == TDS_TYPE_SQLVARIANT)
 	{
 		col->sendTableName = false;
+
 		/*
-		 * varchar(max), nvarchar(max), varbinary(max) can not be supported
-		 * by sql_variant, this is a datatype restriction, hence, maxLen supported
-		 * for varchar, nvarchar, varbinary would be <= 8K
+		 * varchar(max), nvarchar(max), varbinary(max) can not be supported by
+		 * sql_variant, this is a datatype restriction, hence, maxLen
+		 * supported for varchar, nvarchar, varbinary would be <= 8K
 		 */
 		col->metaEntry.type8.maxSize = 0x00001f49;
-	}	
+	}
 	col->metaLen = sizeof(col->metaEntry.type8);
 	col->metaEntry.type8.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
 	col->metaEntry.type8.tdsTypeId = tdsType;
@@ -776,7 +794,7 @@ SetColMetadataForDateType(TdsColumnMetaData *col, uint8_t tdsType)
 
 static inline void
 SetColMetadataForNumericType(TdsColumnMetaData *col, uint8_t tdsType,
-				uint8_t maxSize, uint8_t precision, uint8_t scale)
+							 uint8_t maxSize, uint8_t precision, uint8_t scale)
 {
 	col->sizeLen = 1;
 	col->metaLen = sizeof(col->metaEntry.type5);
@@ -817,21 +835,21 @@ static inline void
 SetColMetadataForCharTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
 								Oid collation, int32 atttypmod)
 {
-	coll_info_t	cinfo;
+	coll_info_t cinfo;
 
 	cinfo = TdsLookupCollationTableCallback(collation);
 
 	/*
-	 * TODO: Remove the NULL condition once all the Postgres collations are mapped
-	 * to TSQL
+	 * TODO: Remove the NULL condition once all the Postgres collations are
+	 * mapped to TSQL
 	 */
 	if (cinfo.oid == InvalidOid)
 	{
 		SetColMetadataForCharType(col, tdsType,
-								  TdsDefaultLcid,			/* collation lcid */
+								  TdsDefaultLcid,	/* collation lcid */
 								  TdsDefaultClientEncoding,
-								  TdsDefaultCollationFlags,		/* collation flags */
-								  TdsDefaultSortid,			/* sort id */
+								  TdsDefaultCollationFlags, /* collation flags */
+								  TdsDefaultSortid, /* sort id */
 								  atttypmod);
 	}
 	else
@@ -860,16 +878,16 @@ SetColMetadataForTextTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
 	cinfo = TdsLookupCollationTableCallback(collation);
 
 	/*
-	 * TODO: Remove the NULL condition once all the Postgres collations are mapped
-	 * to TSQL
+	 * TODO: Remove the NULL condition once all the Postgres collations are
+	 * mapped to TSQL
 	 */
 	if (cinfo.oid == InvalidOid)
 	{
 		SetColMetadataForTextType(col, tdsType,
-								  TdsDefaultLcid,			/* collation lcid */
+								  TdsDefaultLcid,	/* collation lcid */
 								  TdsDefaultClientEncoding,
-								  TdsDefaultCollationFlags,		/* collation flags */
-								  TdsDefaultSortid,			/* sort id */
+								  TdsDefaultCollationFlags, /* collation flags */
+								  TdsDefaultSortid, /* sort id */
 								  atttypmod);
 	}
 	else
@@ -896,10 +914,10 @@ extern void ProcessRPCRequest(TDSRequest request);
 /* Functions in tdsxact.c */
 extern TDSRequest GetTxnMgmtRequest(const StringInfo message);
 extern void ProcessTxnMgmtRequest(TDSRequest request);
-extern int TestTxnMgmtRequest(TDSRequest request, const char *expectedStr);
+extern int	TestTxnMgmtRequest(TDSRequest request, const char *expectedStr);
 
 /* Functions in tdsbulkload.c */
 extern TDSRequest GetBulkLoadRequest(StringInfo message);
 extern void ProcessBCPRequest(TDSRequest request);
 
-#endif	/* TDS_REQUEST_H */
+#endif							/* TDS_REQUEST_H */

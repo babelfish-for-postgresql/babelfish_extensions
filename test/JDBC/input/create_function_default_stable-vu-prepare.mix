@@ -1,0 +1,284 @@
+-- tsql
+create database test_create_function_default_stable_db
+go
+
+use test_create_function_default_stable_db
+go
+
+create table test_create_function_default_stable_t1(a int)
+go
+
+create type test_create_function_default_stable_type AS TABLE(a int)
+go
+
+-- create functions not having tvp or tvf
+create function test_create_function_default_stable_f1() returns int as begin return 0; end
+go
+
+create function test_create_function_default_stable_f2(@a int, @b char, @c date, @d money, @e float, @f text, @g xml) 
+returns int as begin return 0; end
+go
+
+-- create functions with tvp
+-- 1. tvp is declared inside the function
+create function test_create_function_default_stable_tvp_f1() 
+returns int as begin declare @tvp table(a int);
+insert into @tvp values(1); return 0; end
+go
+
+create function test_create_function_default_stable_tvp_f2() 
+returns int as begin declare @tvp test_create_function_default_stable_type;
+insert into @tvp values(1); return 0; end
+go
+
+create function test_create_function_default_stable_tvp_f3() 
+returns int as begin declare @tvp test_create_function_default_stable_type;
+return 0; end
+go
+
+-- 2. tvp passed as argument
+create function test_create_function_default_stable_tvp_f4(@tvp test_create_function_default_stable_type readonly) 
+returns int as begin return 0; end
+go
+
+create function test_create_function_default_stable_tvp_f5(@tvp test_create_function_default_stable_type readonly) 
+returns int as begin insert into @tvp values(1)  return 0;end
+go
+
+-- create functions with tvf
+create function test_create_function_default_stable_tvf_f1() returns table as return (SELECT * from test_create_function_default_stable_t1)
+go
+
+create function test_create_function_default_stable_tvf_f2(@a int)
+returns @tv table(b int)
+AS BEGIN
+update @tv set b = 1 where b = 2
+return end
+go
+
+-- create function having both tvp and tvf
+create function test_create_function_default_stable_tvptvf_f1(@tvp test_create_function_default_stable_type readonly)
+returns table as return (SELECT * from test_create_function_default_stable_t1)
+go
+
+create function test_create_function_default_stable_tvptvf_f2(@a int, @tvp1 test_create_function_default_stable_type readonly)
+returns @tvp2 table(b int)
+AS BEGIN
+update @tvp2 set b = 1 where b = 2
+return end
+go
+
+-- nested functions
+create function test_create_function_default_stable_nested_f1()
+returns int as begin 
+exec test_create_function_default_stable_tvp_f1;
+return 0; end
+go
+
+create function test_create_function_default_stable_nested_f2()
+returns int as begin 
+declare @tvp test_create_function_default_stable_type
+exec test_create_function_default_stable_tvp_f4 @tvp;
+return 0; end
+go
+
+create function test_create_function_default_stable_nested_f3() 
+returns table as 
+return (SELECT * from test_create_function_default_stable_tvf_f2(1))
+go
+
+create function test_create_function_default_stable_nested_f4() 
+returns table as 
+return (SELECT * from test_create_function_default_stable_tvp_f1())
+go
+
+create function test_create_function_default_stable_nested_f5() 
+returns table as 
+return (SELECT * from test_create_function_default_stable_f1())
+go
+
+create function test_create_function_default_stable_nested_f6(@a int)
+returns @tv table(b int)
+AS BEGIN
+Declare @b int;
+exec test_create_function_default_stable_f1;
+update @tv set b = 1 where b = 2
+return end
+go
+
+create function test_create_function_default_stable_nested_f7()
+returns int as begin 
+exec test_create_function_default_stable_f1;
+return 0; end
+go
+
+-- create procedure and check
+create procedure test_create_function_default_stable_p1
+as
+declare @a int;
+go
+
+create procedure test_create_function_default_stable_p2
+as
+select * from test_create_function_default_stable_t1;
+go
+
+create procedure test_create_function_default_stable_p3
+as
+declare @tvp test_create_function_default_stable_type;
+select * from @tvp;
+go
+
+-- psql
+-- create function in tsql dialect
+set babelfishpg_tsql.sql_dialect = "tsql";
+go
+
+create table test_create_function_default_stable_tsql_t1(a int)
+go
+
+create type test_create_function_default_stable_tsql_type AS TABLE(a int)
+go
+
+create function test_create_function_default_stable_tsql_f1() 
+returns int
+as begin
+return 0 
+end
+go
+
+create function test_create_function_default_stable_tsql_f2() 
+returns int 
+as begin 
+declare @tvp table(a int)
+insert into @tvp values(1)
+return 0
+end
+go
+
+create function test_create_function_default_stable_tsql_f3(@tvp test_create_function_default_stable_tsql_type readonly) 
+returns int 
+as begin
+return 0 
+end
+go
+
+create function test_create_function_default_stable_tsql_f4() returns table as return (SELECT * from test_create_function_default_stable_tsql_t1);
+go
+
+create function test_create_function_default_stable_tsql_f5(@a int)
+returns @tv table(b int)
+AS BEGIN
+update @tv set b = 1 where b = 2
+return end
+go
+
+reset babelfishpg_tsql.sql_dialect;
+go
+
+-- psql
+-- create function in psql endpoint
+
+-- with language plpgsql
+create function test_create_function_default_stable_psql_f1()
+returns int
+language plpgsql
+as
+$$
+declare a int;
+begin
+    a := 1;
+return a;
+end;
+$$;
+go
+
+-- with language sql
+create function test_create_function_default_stable_psql_f2() RETURNS char(20) language SQL return 'abc';
+go
+
+-- with language pltsql
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f3() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	RETURN @a
+END;
+$$ LANGUAGE pltsql;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f4() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	RETURN @a
+END;
+$$ LANGUAGE pltsql VOLATILE;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f5() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	RETURN @a
+END;
+$$ LANGUAGE pltsql STABLE;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f6() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	RETURN @a
+END;
+$$ LANGUAGE pltsql IMMUTABLE;
+go
+
+-- with table variable
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f7() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	declare @tvp table(a int);
+	RETURN @a
+END;
+$$ LANGUAGE pltsql;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f8() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	declare @tvp table(a int);
+	RETURN @a
+END;
+$$ LANGUAGE pltsql VOLATILE;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f9() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	declare @tvp table(a int);
+	RETURN @a
+END;
+$$ LANGUAGE pltsql STABLE;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f10() RETURNS int AS $$
+BEGIN
+	DECLARE @a int = 1;
+	declare @tvp table(a int);
+	RETURN @a
+END;
+$$ LANGUAGE pltsql IMMUTABLE;
+go
+
+-- with record datatypes
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f11() RETURNS int AS $$
+declare rec record;
+begin
+return 1;
+end;
+$$ LANGUAGE plpgsql;
+go
+
+CREATE OR REPLACE FUNCTION test_create_function_default_stable_psql_f12(rec record) RETURNS int AS $$
+begin
+return 1;
+end;
+$$ LANGUAGE pltsql;
+go
