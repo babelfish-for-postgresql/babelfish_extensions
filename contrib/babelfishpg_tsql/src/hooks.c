@@ -53,6 +53,7 @@
 #include "utils/numeric.h"
 #include <math.h>
 #include "executor/nodeFunctionscan.h"
+#include "nodes/parsenodes.h"
 
 #include "backend_parser/scanner.h"
 #include "hooks.h"
@@ -374,7 +375,7 @@ static void
 pltsql_DropDbStmt(PlannedStmt *pstmt)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
-	DropdbStmt *stmt = (DropdbStmt *) parsetree;
+ 	DropdbStmt *stmt = (DropdbStmt *) parsetree;
     drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
 	return;
 }
