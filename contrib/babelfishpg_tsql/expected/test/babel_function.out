@@ -1590,7 +1590,7 @@ select dateadd(quarter, 3, '2037-03-01'::date);
 select dateadd(minute, 70, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
                 dateadd                 
 ----------------------------------------
- Mon Dec 26 16:40:05.523456 2016 +08:00
+ Tue Dec 27 00:40:05.523456 2016 +08:00
 (1 row)
 
 select dateadd(month, 2, '2016-12-26 23:30:05.523456'::datetime2);
@@ -1627,7 +1627,7 @@ select dateadd(hour, -2, '01:12:34.876543'::time);
 select dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset);
                 dateadd                 
 ----------------------------------------
- Sun Dec 25 15:20:05.523456 2016 +08:00
+ Sun Dec 25 23:20:05.523456 2016 +08:00
 (1 row)
 
 select dateadd(second, -56, '2016-12-26 00:00:55'::smalldatetime);
