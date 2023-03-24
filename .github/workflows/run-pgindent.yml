@@ -32,9 +32,9 @@ jobs:
         id: run-pgindent
         if: always() && steps.build-extensions.outcome == 'success'
         run: |
-          export PG_CONFIG=~/${{env.INSTALL_DIR}}/bin/pg_config
+          export PG_CONFIG=$HOME/psql/bin/pg_config
 
-          cd ~/${{env.INSTALL_DIR}}/lib/
+          cd $HOME/psql/lib/
 
           echo "dumping typedefs for babelfishpg_mpney to /tmp/babelfishpg_money.typedefs.."
           objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
