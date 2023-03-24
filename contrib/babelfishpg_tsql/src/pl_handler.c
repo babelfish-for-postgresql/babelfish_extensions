@@ -4594,10 +4594,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	int			i;
 
 	/* Special handling is neede for Inline Table-Valued Functions */
-	bool 		is_itvf;
-	char		*prosrc = NULL;
+	bool		is_itvf;
+	char	   *prosrc = NULL;
 	bool		is_mstvf = false;
-	
+
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
 	int			saved_dialect = sql_dialect;
 
@@ -4744,12 +4744,13 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			else
 				func = pltsql_compile(fake_fcinfo, true);
 
-			if(func && func->table_varnos)
-			{	
+			if (func && func->table_varnos)
+			{
 				is_mstvf = func->is_mstvf;
-				/* 
-				 * if a function has tvp declared or as argument in the function
-				 * or it is a TVF has_table_var will be true
+
+				/*
+				 * if a function has tvp declared or as argument in the
+				 * function or it is a TVF has_table_var will be true
 				 */
 				has_table_var = true;
 			}
@@ -4762,22 +4763,22 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		}
 
 		ReleaseSysCache(tuple);
-		
-		/* 
-		 * If the function has TVP in its arguments or function body 
-		 * it should be declared as VOLATILE by default 
-		 * TVF are VOLATILE by default so we donot need to update tuple for it
+
+		/*
+		 * If the function has TVP in its arguments or function body it should
+		 * be declared as VOLATILE by default TVF are VOLATILE by default so
+		 * we donot need to update tuple for it
 		 */
-		if(prokind == PROKIND_FUNCTION && (has_table_var && !is_itvf && !is_mstvf))
+		if (prokind == PROKIND_FUNCTION && (has_table_var && !is_itvf && !is_mstvf))
 		{
-			Relation rel;
-			HeapTuple tup;
-			HeapTuple oldtup;
-			bool nulls[Natts_pg_proc];
-			Datum values[Natts_pg_proc];
-			bool replaces[Natts_pg_proc];
-			TupleDesc tupDesc;
-			char volatility = PROVOLATILE_VOLATILE;
+			Relation	rel;
+			HeapTuple	tup;
+			HeapTuple	oldtup;
+			bool		nulls[Natts_pg_proc];
+			Datum		values[Natts_pg_proc];
+			bool		replaces[Natts_pg_proc];
+			TupleDesc	tupDesc;
+			char		volatility = PROVOLATILE_VOLATILE;
 
 			/* Existing atts in pg_proc entry - no need to replace */
 			for (i = 0; i < Natts_pg_proc; ++i)
