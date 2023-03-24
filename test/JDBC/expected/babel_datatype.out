@@ -1,0 +1,148 @@
+-- The default scale is 2 in PG.
+select CAST('$100,123.4567' AS money);
+GO
+~~START~~
+money
+100123.4567
+~~END~~
+
+-- Currency symbol followed by number without being quoted is not recognized
+-- as Money in postgres dialect.
+select CAST($100123.4567 AS money);
+GO
+~~START~~
+money
+100123.4567
+~~END~~
+
+
+-- Scale changes to the sql server default 4 in tsql dialect
+-- Currency symbol followed by number without being quoted is recognized
+-- as Money type in tsql dialect.
+DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
+GO
+select CAST($100123.4567 AS money);
+GO
+~~START~~
+money
+100123.4567
+~~END~~
+
+select CAST($100123. AS money);
+GO
+~~START~~
+money
+100123.0000
+~~END~~
+
+select CAST($.4567 AS money);
+GO
+~~START~~
+money
+0.4567
+~~END~~
+
+select CAST('$100,123.4567' AS money);
+GO
+~~START~~
+money
+100123.4567
+~~END~~
+
+
+-- Test numeric types with brackets
+create table testing1 (a [tinyint]);
+GO
+drop table testing1;
+GO
+create table testing1 (a [smallint]);
+GO
+drop table testing1;
+GO
+create table testing1 (a [int]);
+GO
+drop table testing1;
+GO
+create table testing1 (a [bigint]);
+GO
+drop table testing1;
+GO
+create table testing1 (a [real]);
+GO
+drop table testing1;
+GO
+create table testing1 (a [float]);
+GO
+drop table testing1;
+GO
+
+-- Comma separated format without quote is not allowed in sql server
+select CAST($100,123.4567 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'AS' at line 2 and character position 26)~~
+
+
+-- Smallmoney in tsql dialect
+select CAST($100123.4567 AS smallmoney);
+GO
+~~START~~
+smallmoney
+100123.4567
+~~END~~
+
+select CAST('$100,123.4567' AS smallmoney);
+GO
+~~START~~
+smallmoney
+100123.4567
+~~END~~
+
+-- Comma separated format without quote is not allowed in sql server
+select CAST($100,123.4567 AS smallmoney);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'AS' at line 2 and character position 26)~~
+
+
+create table testing1(mon money, smon smallmoney);
+GO
+insert into testing1 (mon, smon) values ('$100,123.4567', '$123.9999');
+insert into testing1 (mon, smon) values ($100123.4567, $123.9999);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select * from testing1;
+GO
+~~START~~
+money#!#smallmoney
+100123.4567#!#123.9999
+100123.4567#!#123.9999
+~~END~~
+
+select avg(CAST(mon AS numeric(38,4))), avg(CAST(smon AS numeric(38,4))) from testing1;
+GO
+~~START~~
+numeric#!#numeric
+100123.456700#!#123.999900
+~~END~~
+
+select mon+smon as total from testing1;
+GO
+~~START~~
+money
+100247.4566
+100247.4566
+~~END~~
+
+-- Comma separated format without quote is not allowed in sql server
+insert into testing1 (mon, smon) values ($100,123.4567, $123.9999);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT has more expressions than target columns)~~
+
