@@ -51,29 +51,29 @@ money
 
 
 -- Test numeric types with brackets
-create table testing1 (a [tinyint]);
+create table testing_1 (a [tinyint]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [smallint]);
+create table testing_1 (a [smallint]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [int]);
+create table testing_1 (a [int]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [bigint]);
+create table testing_1 (a [bigint]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [real]);
+create table testing_1 (a [real]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
-create table testing1 (a [float]);
+create table testing_1 (a [float]);
 GO
-drop table testing1;
+drop table testing_1;
 GO
 
 -- Comma separated format without quote is not allowed in sql server
@@ -107,16 +107,16 @@ GO
 ~~ERROR (Message: syntax error near 'AS' at line 2 and character position 26)~~
 
 
-create table testing1(mon money, smon smallmoney);
+create table testing_1(mon money, smon smallmoney);
 GO
-insert into testing1 (mon, smon) values ('$100,123.4567', '$123.9999');
-insert into testing1 (mon, smon) values ($100123.4567, $123.9999);
+insert into testing_1 (mon, smon) values ('$100,123.4567', '$123.9999');
+insert into testing_1 (mon, smon) values ($100123.4567, $123.9999);
 GO
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
 
-select * from testing1;
+select * from testing_1;
 GO
 ~~START~~
 money#!#smallmoney
@@ -124,14 +124,14 @@ money#!#smallmoney
 100123.4567#!#123.9999
 ~~END~~
 
-select avg(CAST(mon AS numeric(38,4))), avg(CAST(smon AS numeric(38,4))) from testing1;
+select avg(CAST(mon AS numeric(38,4))), avg(CAST(smon AS numeric(38,4))) from testing_1;
 GO
 ~~START~~
 numeric#!#numeric
 100123.456700#!#123.999900
 ~~END~~
 
-select mon+smon as total from testing1;
+select mon+smon as total from testing_1;
 GO
 ~~START~~
 money
@@ -140,7 +140,7 @@ money
 ~~END~~
 
 -- Comma separated format without quote is not allowed in sql server
-insert into testing1 (mon, smon) values ($100,123.4567, $123.9999);
+insert into testing_1 (mon, smon) values ($100,123.4567, $123.9999);
 GO
 ~~ERROR (Code: 33557097)~~
 
