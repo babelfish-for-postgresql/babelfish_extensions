@@ -1,0 +1,1018 @@
+-- nvarchar is not supported in PG
+create table testing1(col nvarchar(60)); -- expect this to fail in the Postgres dialect
+GO
+
+CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'EXTENSION' at line 1 and character position 7)~~
+
+set babelfishpg_tsql.sql_dialect = "tsql";
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'sql_dialect' at line 1 and character position 21)~~
+
+
+-- check the babelfish version
+select cast(
+    case
+        when cast(sys.SERVERPROPERTY('BabelfishVersion') as varchar(20)) LIKE '_._._'
+             THEN 'valid'
+    else 'invalid'
+    end as sys.varchar(20));
+GO
+~~START~~
+varchar
+valid
+~~END~~
+
+-- nvarchar is supported in tsql dialect
+create table testing1(col nvarchar(60));
+insert into testing1 (col) select N'Muffler';
+insert into testing1 (col) select N'Mülle';
+insert into testing1 (col) select N'MX Systems';
+insert into testing1 (col) select N'Magic';
+select * from testing1 order by col;
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "testing1" already exists)~~
+
+
+-- test case insensitive collation
+create table testing2 (col varchar(20) collate SQL_Latin1_General_CP1_CI_AS);
+GO
+
+insert into testing2 values ('JONES');
+insert into testing2 values ('jones');
+insert into testing2 values ('Jones');
+insert into testing2 values ('JoNes');
+insert into testing2 values ('JoNés');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from testing2 where col collate BBF_Unicode_General_CS_AS = 'JoNes';
+GO
+~~START~~
+varchar
+JoNes
+~~END~~
+
+select * from testing2 where col collate BBF_Unicode_General_CI_AS = 'JoNes';
+GO
+~~START~~
+varchar
+JONES
+jones
+Jones
+JoNes
+~~END~~
+
+select * from testing2 where col collate BBF_Unicode_General_CI_AI = 'JoNes';
+GO
+~~START~~
+varchar
+JONES
+jones
+Jones
+JoNes
+JoNés
+~~END~~
+
+select * from testing2 where col collate BBF_Unicode_General_CS_AI = 'JoNes';
+GO
+~~START~~
+varchar
+JoNes
+JoNés
+~~END~~
+
+
+-- test case insensitivity for default collation
+create table testing3 (c1 varchar(20), c2 char(20), c3 nvarchar(20));
+GO
+
+DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
+GO
+insert into testing3 values ('JONES','JONES','JONES');
+insert into testing3 values ('JoneS','JoneS','JoneS');
+insert into testing3 values ('jOnes','jOnes','jOnes');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select c1 from testing3 where c1='jones';
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c2 from testing3 where c2='jones';
+GO
+~~START~~
+char
+JONES               
+JoneS               
+jOnes               
+~~END~~
+
+select c3 from testing3 where c3='jones';
+GO
+~~START~~
+nvarchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+
+-- test LIKE to ILIKE transformation
+create table testing4 (c1 varchar(20), c2 char(20), c3 nvarchar(20));
+create index c1_idx on testing4 (c1);
+GO
+
+insert into testing4 values ('JONES','JONES','JONES');
+insert into testing4 values ('JoneS','JoneS','JoneS');
+insert into testing4 values ('jOnes','jOnes','jOnes');
+insert into testing4 values ('abcD','AbcD','ABCd');
+insert into testing4 values ('äbĆD','äḃcD','äƀCd');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- set enable_seqscan doesn't work from the TSQL dialect, so switch
+-- dialects, disable sequential scan so we see some index-based plans,
+-- then switch back to the TSQL dialect
+--
+select set_config('enable_seqscan','off','false');
+DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+-- test that like is case-insenstive
+select c1 from testing4 where c1 LIKE 'jones'; -- this gets converted to '='
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+explain (costs false) select c1 from testing4 where c1 LIKE 'jones';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+select c1 from testing4 where c1 LIKE 'Jon%';
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+explain (costs false) select c1 from testing4 where c1 LIKE 'Jon%';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+select c1 from testing4 where c1 LIKE 'jone_';
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+explain (costs false) select c1 from testing4 where c1 LIKE 'jone_';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+select c1 from testing4 where c1 LIKE '_one_';
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+explain (costs false) select c1 from testing4 where c1 LIKE '_one_';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+select c1 from testing4 where c1 LIKE '%on%s';
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+explain (costs false) select c1 from testing4 where c1 LIKE '%on%s';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+-- test that like is accent-senstive for CI_AS collation
+select c1 from testing4 where c1 LIKE 'ab%';
+GO
+~~START~~
+varchar
+abcD
+~~END~~
+
+select c1 from testing4 where c1 LIKE 'äb%';
+GO
+~~START~~
+varchar
+äb?D
+~~END~~
+
+select c1 from testing4 where c1 LIKE 'äḃĆ_';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+-- test not like
+select c1 from testing4 where c1 NOT LIKE 'jones';
+GO
+~~START~~
+varchar
+abcD
+äb?D
+~~END~~
+
+explain (costs false) select c1 from testing4 where c1 NOT LIKE 'jones';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+select c1 from testing4 where c1 NOT LIKE 'jone%';
+GO
+~~START~~
+varchar
+abcD
+äb?D
+~~END~~
+
+explain (costs false) select c1 from testing4 where c1 NOT LIKE 'jone%';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+select c1 from testing4 where c1 NOT LIKE 'ä%';
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+abcD
+~~END~~
+
+explain (costs false) select c1 from testing4 where c1 NOT LIKE 'ä%';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+-- test escape function and wildcard literal
+select c1 from testing4 where c1 LIKE E'\_ones';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ''\_ones'' at line 2 and character position 39)~~
+
+explain (costs false) select c1 from testing4 where c1 LIKE E'\_ones';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+select c1 from testing4 where c1 LIKE E'\%ones';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ''\%ones'' at line 1 and character position 39)~~
+
+explain (costs false) select c1 from testing4 where c1 LIKE E'\%ones';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+-- wild card literals are transformed to equal
+select c1 from testing4 where c1 LIKE '\%ones';
+GO
+~~START~~
+varchar
+~~END~~
+
+explain(costs false) select c1 from testing4 where c1 LIKE '\%ones';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 8)~~
+
+select c1 from testing4 where c1 LIKE '\_ones';
+GO
+~~START~~
+varchar
+~~END~~
+
+explain(costs false) select c1 from testing4 where c1 LIKE '\_ones';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 8)~~
+
+-- test combining with other string functions
+select c1 from testing4 where c1 LIKE lower('_ones');
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from testing4 where c1 LIKE upper('_ones');
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from testing4 where c1 LIKE concat('_on','_s');
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from testing4 where c1 LIKE concat('a','%d');
+GO
+~~START~~
+varchar
+abcD
+~~END~~
+
+select c1 from testing4 where c1 NOT LIKE lower('%s');
+GO
+~~START~~
+varchar
+abcD
+äb?D
+~~END~~
+
+-- test sub-queries
+Select * from testing4 where c1 LIKE (select c1 from testing4 where c1 LIKE 'AbcD');
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+abcD#!#AbcD                #!#ABCd
+~~END~~
+
+Select * from testing4 where c2 NOT LIKE (select c2 from testing4 where c2 NOT LIKE 'jo%' AND c2 NOT LIKE 'ä%');
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+JONES#!#JONES               #!#JONES
+JoneS#!#JoneS               #!#JoneS
+jOnes#!#jOnes               #!#jOnes
+äb?D#!#ä?cD                #!#äƀCd
+~~END~~
+
+Select * from testing4 where c3 LIKE (select c3 from testing4 where c3 NOT LIKE'jo%' AND c3 NOT LIKE 'ä%');
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+abcD#!#AbcD                #!#ABCd
+~~END~~
+
+with p1 as (select c1 from testing4 where c1 LIKE '__Ć_'),
+p2 as (select c3 from testing4 where c3 LIKE 'äƀ__')
+select * from p1 union all select * from p2;
+GO
+~~START~~
+varchar
+äb?D
+ä?Cd
+~~END~~
+
+-- test case expression
+select c1,(case c1 LIKE 'j%' when true then 1 when false then 2 end) from testing4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'LIKE' at line 2 and character position 19)~~
+
+select c2,(case when c2 LIKE '_bc%' then 1 when c2 LIKE 'jon%' then 2 when c3 LIKE 'ä%' then 3 end) from testing4;
+GO
+~~START~~
+char#!#int
+JONES               #!#2
+JoneS               #!#2
+jOnes               #!#2
+AbcD                #!#1
+ä?cD                #!#3
+~~END~~
+
+-- test that LIKE transformation is applied only for CI_AS column
+create table testing5(c1 varchar(20) COLLATE SQL_Latin1_General_CP1_CS_AS);
+GO
+insert into testing5 values ('JONES');
+insert into testing5 values ('JoneS');
+insert into testing5 values ('abcD');
+insert into testing5 values ('äbĆD');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from testing5 where c1 LIKE 'jo%'; -- does not use the transformation
+GO
+~~START~~
+varchar
+~~END~~
+
+explain(costs false) select * from testing5 where c1 LIKE 'jo%';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 8)~~
+
+select * from testing5 where c1 NOT LIKE 'j%';
+GO
+~~START~~
+varchar
+JONES
+JoneS
+abcD
+äb?D
+~~END~~
+
+select * from testing5 where c1 LIKE 'AB%';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+-- test explicitly specify collation as CI_AS, like transformation is also applied.
+SELECT 'JONES' like 'jo%';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'like' at line 2 and character position 15)~~
+
+SELECT 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS like 'jo%' ;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'like' at line 1 and character position 52)~~
+
+
+-- test when pattern is empty string or NULL
+SELECT 'JONES' like '';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'like' at line 2 and character position 15)~~
+
+SELECT 'JONES' like NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'like' at line 1 and character position 15)~~
+
+
+SELECT * from testing5 where c1 like '';
+GO
+~~START~~
+varchar
+~~END~~
+
+explain (costs false) SELECT * from testing5 where c1 like '';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+SELECT * from testing5 where c1 like NULL;
+GO
+~~START~~
+varchar
+~~END~~
+
+explain (costs false) SELECT * from testing5 where c1 like NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+
+SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
+GO
+~~START~~
+varchar
+JONES
+JoneS
+~~END~~
+
+explain (costs false) SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
+GO
+~~START~~
+varchar
+JONES
+JoneS
+~~END~~
+
+explain (costs false) SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
+
+
+-- tsql collations
+alter table testing1 alter column col nvarchar(60) collate Arabic_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Chinese_PRC_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Cyrillic_General_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate French_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Korean_Wansung_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Traditional_Spanish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Modern_Spanish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate SQL_Latin1_General_CP1_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate SQL_Latin1_General_CP1_CI_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Traditional_Spanish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Thai_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Turkish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Ukrainian_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Vietnamese_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col nvarchar(60) collate Finnish_Swedish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+-- expect different result order from previous select
+select * from testing1 order by col;
+GO
+~~START~~
+nvarchar
+~~END~~
+
+-- test expression level collate, expect the same result order
+select * from testing1 order by col collate Finnish_Swedish_CS_AS;
+GO
+~~START~~
+nvarchar
+~~END~~
+
+-- test catalog
+select * from sys.fn_helpcollations() order by name;
+GO
+~~START~~
+varchar#!#varchar
+arabic_ci_ai#!#Arabic, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+arabic_ci_as#!#Arabic, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+arabic_cs_as#!#Arabic, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_bin2#!#Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1250_ci_ai#!#Default locale, code page 1250, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1250_ci_as#!#Default locale, code page 1250, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1250_cs_ai#!#Default locale, code page 1250, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1250_cs_as#!#Default locale, code page 1250, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1251_ci_ai#!#Default locale, code page 1251, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1251_ci_as#!#Default locale, code page 1251, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1251_cs_ai#!#Default locale, code page 1251, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1251_cs_as#!#Default locale, code page 1251, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1253_ci_ai#!#Default locale, code page 1253, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1253_ci_as#!#Default locale, code page 1253, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1253_cs_ai#!#Default locale, code page 1253, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1253_cs_as#!#Default locale, code page 1253, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1254_ci_ai#!#Default locale, code page 1254, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1254_ci_as#!#Default locale, code page 1254, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1254_cs_ai#!#Default locale, code page 1254, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1254_cs_as#!#Default locale, code page 1254, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1255_ci_ai#!#Default locale, code page 1255, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1255_ci_as#!#Default locale, code page 1255, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1255_cs_ai#!#Default locale, code page 1255, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1255_cs_as#!#Default locale, code page 1255, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1256_ci_ai#!#Default locale, code page 1256, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1256_ci_as#!#Default locale, code page 1256, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1256_cs_ai#!#Default locale, code page 1256, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1256_cs_as#!#Default locale, code page 1256, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1257_ci_ai#!#Default locale, code page 1257, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1257_ci_as#!#Default locale, code page 1257, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1257_cs_ai#!#Default locale, code page 1257, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1257_cs_as#!#Default locale, code page 1257, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1258_ci_ai#!#Default locale, code page 1258, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1258_ci_as#!#Default locale, code page 1258, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1258_cs_ai#!#Default locale, code page 1258, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1258_cs_as#!#Default locale, code page 1258, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1_ci_ai#!#Default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1_ci_as#!#Default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1_cs_ai#!#Default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1_cs_as#!#Default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp847_ci_ai#!#Default locale, code page 847, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp847_ci_as#!#Default locale, code page 847, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp847_cs_ai#!#Default locale, code page 847, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp847_cs_as#!#Default locale, code page 847, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_ci_ai#!#Default locale, default code page, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_ci_as#!#Default locale, default code page, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_cs_ai#!#Default locale, default code page, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_cs_as#!#Default locale, default code page, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_pref_cs_as#!#Default locale, default code page, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1250_cs_as#!#Default locale, code page 1250, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1251_cs_as#!#Default locale, code page 1251, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1253_cs_as#!#Default locale, code page 1253, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1254_cs_as#!#Default locale, code page 1254, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1255_cs_as#!#Default locale, code page 1255, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1256_cs_as#!#Default locale, code page 1256, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1257_cs_as#!#Default locale, code page 1257, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1258_cs_as#!#Default locale, code page 1258, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1_cs_as#!#Default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp847_cs_as#!#Default locale, code page 847, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+chinese_prc_ci_ai#!#Chinese-PRC, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+chinese_prc_ci_as#!#Chinese-PRC, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+chinese_prc_cs_as#!#Chinese-PRC, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+cyrillic_general_ci_ai#!#Cyrillic-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+cyrillic_general_ci_as#!#Cyrillic-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+cyrillic_general_cs_as#!#Cyrillic-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+estonian_ci_ai#!#Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+estonian_ci_as#!#Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+estonian_cs_as#!#Estonian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+finnish_swedish_ci_ai#!#Finnish-Swedish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+finnish_swedish_ci_as#!#Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+finnish_swedish_cs_as#!#Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+french_ci_ai#!#French, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+french_ci_as#!#French, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+french_cs_as#!#French, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+greek_ci_ai#!#Greek, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+greek_ci_as#!#Greek, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+greek_cs_as#!#Greek, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+hebrew_ci_ai#!#Hebrew, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+hebrew_ci_as#!#Hebrew, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitives
+hebrew_cs_as#!#Hebrew, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+japanese_ci_ai#!#Japanese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+japanese_ci_as#!#Japanese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+japanese_cs_as#!#Japanese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+korean_wansung_ci_ai#!#Korean-Wansung, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+korean_wansung_ci_as#!#Korean-Wansung, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+korean_wansung_cs_as#!#Korean-Wansung, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_100_bin2#!#Virtual, Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_140_bin2#!#Virtual, Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_90_bin2#!#Virtual, Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_bin2#!#Virtual, Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_ci_ai#!#Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+latin1_general_ci_as#!#Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_cs_ai#!#Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+latin1_general_cs_as#!#Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+modern_spanish_ci_ai#!#Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+modern_spanish_ci_as#!#Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+modern_spanish_cs_as#!#Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+mongolian_ci_ai#!#Mongolian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+mongolian_ci_as#!#Mongolian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+mongolian_cs_as#!#Mongolian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+polish_ci_ai#!#Polish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+polish_ci_as#!#Polish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+polish_cs_as#!#Polish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1250_ci_as#!#Virtual, default locale, code page 1250, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1250_cs_as#!#Virtual, default locale, code page 1250, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1251_ci_as#!#Virtual, default locale, code page 1251, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1251_cs_as#!#Virtual, default locale, code page 1251, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1253_ci_as#!#Virtual, default locale, code page 1253, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1253_cs_as#!#Virtual, default locale, code page 1253, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1254_ci_as#!#Virtual, default locale, code page 1254, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1254_cs_as#!#Virtual, default locale, code page 1255, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1255_ci_as#!#Virtual, default locale, code page 1255, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1255_cs_as#!#Virtual, default locale, code page 1255, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1256_ci_as#!#Virtual, default locale, code page 1256, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1256_cs_as#!#Virtual, default locale, code page 1256, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1257_ci_as#!#Virtual, default locale, code page 1257, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1257_cs_as#!#Virtual, default locale, code page 1257, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1258_ci_as#!#Virtual, default locale, code page 1258, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1258_cs_as#!#Virtual, default locale, code page 1258, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1_ci_ai#!#Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1_ci_ai#!#Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1_ci_as#!#Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1_cs_as#!#Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp874_ci_as#!#Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp874_cs_as#!#Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_pref_cp1_cs_as#!#Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+thai_ci_ai#!#Thai, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+thai_ci_as#!#Thai, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+thai_cs_as#!#Thai, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+traditional_spanish_ci_ai#!#Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+traditional_spanish_ci_as#!#Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+traditional_spanish_cs_as#!#Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+turkish_ci_ai#!#Turkish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+turkish_ci_as#!#Turkish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+turkish_cs_as#!#Turkish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+ukrainian_ci_ai#!#Ukrainian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+ukrainian_ci_as#!#Ukrainian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+ukrainian_cs_as#!#Ukrainian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+vietnamese_ci_ai#!#Vietnamese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+vietnamese_ci_as#!#Vietnamese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+vietnamese_cs_as#!#Vietnamese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+~~END~~
+
+-- test the TYPE keyword is only required in postgres dialect, but not in tsql dialect
+alter table testing1 alter column col varchar(60) collate Finnish_Swedish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
+
+alter table testing1 alter column col TYPE varchar(60) collate Finnish_Swedish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 50)~~
+
+SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
+GO
+~~START~~
+text
+postgres
+~~END~~
+
+alter table testing1 alter column col varchar(60) collate sys.Finnish_Swedish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 61)~~
+
+alter table testing1 alter column col TYPE varchar(60) collate sys.Finnish_Swedish_CS_AS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 50)~~
+
+SELECT set_config('babelfishpg_tsql.sql_dialect', 'tsql', false);
+GO
+~~START~~
+text
+tsql
+~~END~~
+
+-- test collation list sys table
+SELECT collation_name, l1_priority, l2_priority, l3_priority, l4_priority, l5_priority FROM sys.babelfish_collation_list() order by collation_name;
+GO
+~~START~~
+text#!#int#!#int#!#int#!#int#!#int
+arabic_ci_ai#!#1025#!#0#!#196608#!#0#!#15
+arabic_ci_as#!#1025#!#0#!#196608#!#0#!#13
+arabic_cs_as#!#1025#!#0#!#196608#!#0#!#12
+bbf_unicode_bin2#!#1033#!#0#!#196608#!#54#!#544
+bbf_unicode_cp1250_ci_ai#!#1045#!#0#!#196608#!#0#!#15
+bbf_unicode_cp1250_ci_as#!#1045#!#0#!#196608#!#0#!#13
+bbf_unicode_cp1250_cs_ai#!#1045#!#0#!#196608#!#0#!#14
+bbf_unicode_cp1250_cs_as#!#1045#!#0#!#196608#!#0#!#12
+bbf_unicode_cp1251_ci_ai#!#1049#!#0#!#196608#!#0#!#15
+bbf_unicode_cp1251_ci_as#!#1049#!#0#!#196608#!#0#!#13
+bbf_unicode_cp1251_cs_ai#!#1049#!#0#!#196608#!#0#!#14
+bbf_unicode_cp1251_cs_as#!#1049#!#0#!#196608#!#0#!#12
+bbf_unicode_cp1253_ci_ai#!#1032#!#0#!#196608#!#0#!#15
+bbf_unicode_cp1253_ci_as#!#1032#!#0#!#196608#!#0#!#13
+bbf_unicode_cp1253_cs_ai#!#1032#!#0#!#196608#!#0#!#14
+bbf_unicode_cp1253_cs_as#!#1032#!#0#!#196608#!#0#!#12
+bbf_unicode_cp1254_ci_ai#!#1055#!#0#!#196608#!#0#!#15
+bbf_unicode_cp1254_ci_as#!#1055#!#0#!#196608#!#0#!#13
+bbf_unicode_cp1254_cs_ai#!#1055#!#0#!#196608#!#0#!#14
+bbf_unicode_cp1254_cs_as#!#1055#!#0#!#196608#!#0#!#12
+bbf_unicode_cp1255_ci_ai#!#1037#!#0#!#196608#!#0#!#15
+bbf_unicode_cp1255_ci_as#!#1037#!#0#!#196608#!#0#!#13
+bbf_unicode_cp1255_cs_ai#!#1037#!#0#!#196608#!#0#!#14
+bbf_unicode_cp1255_cs_as#!#1037#!#0#!#196608#!#0#!#12
+bbf_unicode_cp1256_ci_ai#!#1025#!#0#!#196608#!#0#!#15
+bbf_unicode_cp1256_ci_as#!#1025#!#0#!#196608#!#0#!#13
+bbf_unicode_cp1256_cs_ai#!#1025#!#0#!#196608#!#0#!#14
+bbf_unicode_cp1256_cs_as#!#1025#!#0#!#196608#!#0#!#12
+bbf_unicode_cp1257_ci_ai#!#1061#!#0#!#196608#!#0#!#15
+bbf_unicode_cp1257_ci_as#!#1061#!#0#!#196608#!#0#!#13
+bbf_unicode_cp1257_cs_ai#!#1061#!#0#!#196608#!#0#!#14
+bbf_unicode_cp1257_cs_as#!#1061#!#0#!#196608#!#0#!#12
+bbf_unicode_cp1258_ci_ai#!#1066#!#0#!#196608#!#0#!#15
+bbf_unicode_cp1258_ci_as#!#1066#!#0#!#196608#!#0#!#13
+bbf_unicode_cp1258_cs_ai#!#1066#!#0#!#196608#!#0#!#14
+bbf_unicode_cp1258_cs_as#!#1066#!#0#!#196608#!#0#!#12
+bbf_unicode_cp1_ci_ai#!#1033#!#0#!#196608#!#54#!#15
+bbf_unicode_cp1_ci_as#!#1033#!#0#!#196608#!#52#!#13
+bbf_unicode_cp1_cs_ai#!#1033#!#0#!#196608#!#51#!#14
+bbf_unicode_cp1_cs_as#!#1033#!#0#!#196608#!#51#!#12
+bbf_unicode_cp874_ci_ai#!#1054#!#0#!#196608#!#0#!#15
+bbf_unicode_cp874_ci_as#!#1054#!#0#!#196608#!#0#!#13
+bbf_unicode_cp874_cs_ai#!#1054#!#0#!#196608#!#0#!#14
+bbf_unicode_cp874_cs_as#!#1054#!#0#!#196608#!#0#!#12
+bbf_unicode_general_ci_ai#!#1033#!#0#!#196608#!#0#!#15
+bbf_unicode_general_ci_as#!#1033#!#0#!#196608#!#0#!#13
+bbf_unicode_general_cs_ai#!#1033#!#0#!#196608#!#0#!#14
+bbf_unicode_general_cs_as#!#1033#!#0#!#196608#!#0#!#12
+bbf_unicode_general_pref_cs_as#!#1033#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1250_cs_as#!#1045#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1251_cs_as#!#1049#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1253_cs_as#!#1032#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1254_cs_as#!#1055#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1255_cs_as#!#1037#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1256_cs_as#!#1025#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1257_cs_as#!#1061#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1258_cs_as#!#1066#!#0#!#196608#!#0#!#12
+bbf_unicode_pref_cp1_cs_as#!#1033#!#0#!#196608#!#51#!#12
+bbf_unicode_pref_cp874_cs_as#!#1054#!#0#!#196608#!#0#!#12
+chinese_prc_ci_ai#!#2052#!#0#!#196608#!#0#!#15
+chinese_prc_ci_as#!#2052#!#0#!#196608#!#0#!#13
+chinese_prc_cs_as#!#2052#!#0#!#196608#!#0#!#12
+cyrillic_general_ci_ai#!#1049#!#0#!#196608#!#0#!#15
+cyrillic_general_ci_as#!#1049#!#0#!#196608#!#0#!#13
+cyrillic_general_cs_as#!#1049#!#0#!#196608#!#0#!#12
+estonian_ci_ai#!#1061#!#0#!#196608#!#0#!#15
+estonian_ci_as#!#1061#!#0#!#196608#!#0#!#13
+estonian_cs_as#!#1061#!#0#!#196608#!#0#!#12
+finnish_swedish_ci_ai#!#1035#!#0#!#196608#!#0#!#15
+finnish_swedish_ci_as#!#1035#!#0#!#196608#!#0#!#13
+finnish_swedish_cs_as#!#1035#!#0#!#196608#!#0#!#12
+french_ci_ai#!#1036#!#0#!#196608#!#0#!#15
+french_ci_as#!#1036#!#0#!#196608#!#0#!#13
+french_cs_as#!#1036#!#0#!#196608#!#0#!#12
+greek_ci_ai#!#1032#!#0#!#196608#!#0#!#15
+greek_ci_as#!#1032#!#0#!#196608#!#0#!#13
+greek_cs_as#!#1032#!#0#!#196608#!#0#!#12
+hebrew_ci_ai#!#1037#!#0#!#196608#!#0#!#15
+hebrew_ci_as#!#1037#!#0#!#196608#!#0#!#13
+hebrew_cs_as#!#1037#!#0#!#196608#!#0#!#12
+japanese_ci_ai#!#1041#!#0#!#196608#!#0#!#15
+japanese_ci_as#!#1041#!#0#!#196608#!#0#!#13
+japanese_cs_as#!#1041#!#0#!#196608#!#0#!#12
+korean_wansung_ci_ai#!#1042#!#0#!#196608#!#0#!#15
+korean_wansung_ci_as#!#1042#!#0#!#196608#!#0#!#13
+korean_wansung_cs_as#!#1042#!#0#!#196608#!#0#!#12
+modern_spanish_ci_ai#!#3082#!#0#!#196608#!#0#!#15
+modern_spanish_ci_as#!#3082#!#0#!#196608#!#0#!#13
+modern_spanish_cs_as#!#3082#!#0#!#196608#!#0#!#12
+mongolian_ci_ai#!#1104#!#0#!#196608#!#0#!#15
+mongolian_ci_as#!#1104#!#0#!#196608#!#0#!#13
+mongolian_cs_as#!#1104#!#0#!#196608#!#0#!#12
+polish_ci_ai#!#1045#!#0#!#196608#!#0#!#15
+polish_ci_as#!#1045#!#0#!#196608#!#0#!#13
+polish_cs_as#!#1045#!#0#!#196608#!#0#!#12
+thai_ci_ai#!#1054#!#0#!#196608#!#0#!#15
+thai_ci_as#!#1054#!#0#!#196608#!#0#!#13
+thai_cs_as#!#1054#!#0#!#196608#!#0#!#12
+traditional_spanish_ci_ai#!#1034#!#0#!#196608#!#0#!#15
+traditional_spanish_ci_as#!#1034#!#0#!#196608#!#0#!#13
+traditional_spanish_cs_as#!#1034#!#0#!#196608#!#0#!#12
+turkish_ci_ai#!#1055#!#0#!#196608#!#0#!#15
+turkish_ci_as#!#1055#!#0#!#196608#!#0#!#13
+turkish_cs_as#!#1055#!#0#!#196608#!#0#!#12
+ukrainian_ci_ai#!#1058#!#0#!#196608#!#0#!#15
+ukrainian_ci_as#!#1058#!#0#!#196608#!#0#!#13
+ukrainian_cs_as#!#1058#!#0#!#196608#!#0#!#12
+vietnamese_ci_ai#!#1066#!#0#!#196608#!#0#!#15
+vietnamese_ci_as#!#1066#!#0#!#196608#!#0#!#13
+vietnamese_cs_as#!#1066#!#0#!#196608#!#0#!#12
+~~END~~
+
+-- clean up
+drop table testing1;
+GO
+drop table testing2;
+GO
+drop table testing3;
+GO
+drop table testing4;
+GO
+drop table testing5;
+GO

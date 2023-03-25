@@ -1,131 +1,386 @@
-SET babelfishpg_tsql.sql_dialect = 'tsql';
-
+DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
+GO
 -- setup
 drop table TxnTable;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "txntable" does not exist)~~
+
 create table TxnTable(c1 int);
+GO
 
 
 -- Begin transaction -> commit transaction
 begin transaction;
 select @@trancount;
+GO
+~~START~~
+int
+1
+~~END~~
+
 begin transaction;
 select @@trancount;
+GO
+~~START~~
+int
+2
+~~END~~
+
 set transaction isolation level read committed;
-show transaction_isolation;
-show default_transaction_isolation;
+SELECT @@transaction_isolation;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function sys.transaction_isolation() does not exist)~~
+
 insert into TxnTable values(1);
 commit transaction;
 select @@trancount;
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
+~~START~~
+int
+0
+~~END~~
+
 commit transaction;
 select @@trancount;
+GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
+~~START~~
+int
+0
+~~END~~
+
 select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+~~END~~
+
 
 -- Begin transaction -> rollback transaction
 begin transaction;
 insert into TxnTable values(2);
 rollback transaction;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
 
 -- Begin tran -> commit tran
 begin tran;
 insert into TxnTable values(2);
 commit tran;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
 
 -- Begin tran -> rollback tran
 begin tran;
 select @@trancount;
 begin tran;
 set transaction isolation level read uncommitted;
-show transaction_isolation;
-show default_transaction_isolation;
+SELECT @transaction_isolation;
 insert into TxnTable values(3);
 select @@trancount;
 rollback tran;
 select @@trancount;
 select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@transaction_isolation" does not exist)~~
+
 
 set transaction isolation level repeatable read;
-show transaction_isolation;
-show default_transaction_isolation;
+SELECT @transaction_isolation;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: REPEATABLE READ isolation level is not supported)~~
+
 
 -- Begin transaction -> commit
 begin transaction;
 insert into TxnTable values(4);
 commit;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+~~END~~
+
 
 -- Begin transaction -> commit work
 begin transaction;
 insert into TxnTable values(5);
 commit work;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
 
 -- Begin transaction -> rollback
 begin transaction;
 insert into TxnTable values(6);
 rollback;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
 
 -- Begin transaction -> rollback work
 begin transaction;
 insert into TxnTable values(7);
 rollback work;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
 
 -- Begin transaction name -> commit transaction name
 begin transaction txn1;
 insert into TxnTable values(8);
 commit transaction txn1;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+8
+~~END~~
+
 
 -- Begin transaction name -> rollback transaction name
 begin transaction txn1;
 insert into TxnTable values(9);
 rollback transaction txn1;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+8
+~~END~~
+
 
 -- Begin tran name -> commit tran name
 begin tran txn1;
 insert into TxnTable values(10);
 commit tran txn1;
 select c1 from TxnTable;
+Go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+8
+10
+~~END~~
+
 
 -- Begin tran name -> rollback tran name
 begin tran txn1;
 insert into TxnTable values(10);
 rollback tran txn1;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+8
+10
+~~END~~
 
 truncate table TxnTable;
+GO
 
 -- save tran name -> rollback tran name
 set transaction isolation level snapshot;
-show transaction_isolation;
-show default_transaction_isolation;
+SELECT @transaction_isolation;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@transaction_isolation" does not exist)~~
+
 begin transaction txn1;
 insert into TxnTable values(1);
 save transaction sp1;
 select @@trancount;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
 insert into TxnTable values(2);
 save tran sp2;
 insert into TxnTable values(3);
 save tran sp2;
 select @@trancount;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
 insert into TxnTable values(4);
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+3
+4
+~~END~~
+
 rollback tran sp2;
 select @@trancount;
+GO
+~~START~~
+int
+1
+~~END~~
+
 select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
 rollback tran sp2;
 select @@trancount;
+GO
+~~START~~
+int
+1
+~~END~~
+
 select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
 rollback tran sp1;
 select @@trancount;
+GO
+~~START~~
+int
+1
+~~END~~
+
 select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+~~END~~
+
 rollback tran txn1;
 select @@trancount;
+GO
+~~START~~
+int
+0
+~~END~~
+
 select c1 from TxnTable;
+GO
+~~START~~
+int
+~~END~~
 
 -- begin transaction name -> save transaction name -> rollback to first
 -- savepoint
@@ -141,12 +396,33 @@ rollback tran sp1;
 rollback tran sp1;
 rollback tran;
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6401)~~
+
+~~ERROR (Message: savepoint "sp1" does not exist)~~
+
+~~START~~
+int
+~~END~~
+
 
 -- begin transaction name -> save transaction name -> rollback tran name
 -- Rollback whole transaction
 set transaction isolation level serializable;
-show transaction_isolation;
-show default_transaction_isolation;
+SELECT @transaction_isolation;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SERIALIZABLE isolation level is not supported)~~
+
 begin transaction txn1;
 insert into TxnTable values(1);
 save transaction sp1;
@@ -155,9 +431,32 @@ insert into TxnTable values(2);
 save transaction sp1;
 insert into TxnTable values(3);
 select @@trancount;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
 rollback tran txn1;
 select @@trancount;
+GO
+~~START~~
+int
+0
+~~END~~
+
 select c1 from TxnTable;
+GO
+~~START~~
+int
+~~END~~
+
 
 -- begin transaction -> save transaction name -> rollback to savepoint
 -- commit transaction
@@ -166,59 +465,29 @@ insert into TxnTable values(1);
 save transaction sp1;
 insert into TxnTable values(2);
 select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
 rollback tran sp1;
 commit transaction;
 select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+~~END~~
 
--- begin transaction -> save transaction name -> rollback to savepoint
--- save transaction name -> commit transaction
-begin transaction txn1;
-insert into TxnTable values(3);
-save transaction sp1;
-insert into TxnTable values(4);
-select c1 from TxnTable;
-rollback tran sp1;
-save transaction sp2;
-insert into TxnTable values(5);
-commit transaction;
-select c1 from TxnTable;
 
--- begin transaction -> save transaction name -> error -> rollback to savepoint
--- commit transaction
-begin transaction txn1;
-insert into TxnTable values(6);
-save transaction sp1;
-insert into TxnTable values(7);
-select c1 frm TxnTable;
-rollback tran sp1;
-commit transaction;
-select c1 from TxnTable;
 
--- create and execute procedure with transaction commands
--- \tsql on
--- create procedure txnproc as
--- begin tran;
--- insert into TxnTable values(8);
--- select c1 from TxnTable;
--- save tran sp1;
--- commit;
--- rollback tran;
--- go
--- execute txnproc;
--- go
--- \tsql off
--- drop procedure txnproc;
 
--- transaction syntax error
-begin;
-begin txn1;
-commit txn1;
-rollback txx1;
 
--- invalid transaction name
-begin transaction txn1;
-rollback transaction txn2;
-rollback;
 
-drop table TxnTable;
-reset babelfish_pg_tsql.sql_dialect;
+
