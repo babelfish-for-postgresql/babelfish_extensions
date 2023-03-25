@@ -6,3 +6,18 @@ int#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
+-- psql
+-- Verify if datatype of column 'name' of spt_tablecollations_view used
+-- internally is varchar
+select
+    case when atttypid::regtype::text = 'sys."varchar"' then 'true'
+    else 'false' end
+from pg_attribute 
+where 
+   attrelid = 'sys.spt_tablecollations_view'::regclass and attname = 'name';
+GO
+~~START~~
+text
+true
+~~END~~
+

@@ -6,8 +6,8 @@
 typedef struct instr_plugin
 {
 	/* Function pointers set up by the plugin */
-	void (*instr_increment_metric) (int metric);
-	bool (*instr_increment_func_metric) (const char *funcName);
+	void		(*instr_increment_metric) (int metric);
+	bool		(*instr_increment_func_metric) (const char *funcName);
 } instr_plugin;
 
 extern instr_plugin *instr_plugin_ptr;
@@ -23,7 +23,8 @@ extern void init_instr(void);
 })
 
 /* copy from pltsql_instr.h */
-typedef enum PgTsqlInstrMetricType {
+typedef enum PgTsqlInstrMetricType
+{
 
 	INSTR_START = -1,
 	INSTR_TSQL_ALTER_COLUMN,
@@ -328,7 +329,7 @@ typedef enum PgTsqlInstrMetricType {
 	INSTR_TSQL_BINARYFLOAT4,
 	INSTR_TSQL_BINARYFLOAT8,
 	INSTR_TSQL_VARBINARY_COMPARE,
-	
+
 	INSTR_TSQL_SMALLDATETIMEIN,
 	INSTR_TSQL_TIME2SMALLDATETIME,
 	INSTR_TSQL_DATE2SMALLDATETIME,
@@ -437,7 +438,7 @@ typedef enum PgTsqlInstrMetricType {
 	INSTR_UNSUPPORTED_TSQL_PROCID,
 	INSTR_TSQL_VERSION,
 	INSTR_TSQL_SERVERNAME,
-	
+
 	INSTR_UNSUPPORTED_TSQL_OPTION_ROWCOUNT,
 	INSTR_TSQL_FETCH_STATUS,
 
@@ -469,6 +470,6 @@ typedef enum PgTsqlInstrMetricType {
 	INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_SERIALIZABLE,
 
 	INSTR_TSQL_COUNT
-} PgTsqlInstrMetricType;
+}			PgTsqlInstrMetricType;
 
 #endif

@@ -960,6 +960,9 @@ varchar#!#varchar
 dbo#!#dbo
 db_owner#!#
 guest#!#
+INFORMATION_SCHEMA#!#<NULL>
+public#!#<NULL>
+sys#!#<NULL>
 ~~END~~
 
 
@@ -989,6 +992,9 @@ varchar#!#varchar
 dbo#!#dbo
 db_owner#!#
 guest#!#
+INFORMATION_SCHEMA#!#<NULL>
+public#!#<NULL>
+sys#!#<NULL>
 ~~END~~
 
 

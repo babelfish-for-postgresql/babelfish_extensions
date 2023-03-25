@@ -1222,7 +1222,11 @@ LANGUAGE plpgsql IMMUTABLE;
     but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
 */
 CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
+DECLARE
+	timezone INTEGER;
 BEGIN
+	timezone = sys.babelfish_get_datetimeoffset_tzoffset(startdate)::INTEGER * 2;
+	startdate = startdate OPERATOR(sys.+) make_interval(mins => timezone);
 	CASE datepart
 	WHEN 'year' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
@@ -1707,6 +1711,9 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.rowcount()
 RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.rowcount_big()
+RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.error()
 	   RETURNS INT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
@@ -1730,6 +1737,11 @@ CREATE OR REPLACE FUNCTION sys.servername()
 
 CREATE OR REPLACE FUNCTION sys.servicename()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- In tsql @@max_precision represents max precision that server supports
 -- As of now, we do not support change in max_precision. So, returning default value
@@ -2812,7 +2824,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
   OUT database_id int2,
-  OUT host_name varchar(128))
+  OUT host_name varchar(128),
+  OUT context_info bytea)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
@@ -3315,6 +3328,9 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.context_info()
+RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;

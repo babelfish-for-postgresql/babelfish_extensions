@@ -50,33 +50,33 @@
 #include "src/include/tds_secure.h"
 
 #ifdef USE_SSL
-static int	my_sock_read(BIO *h, char *buf, int size);
-static int	my_sock_write(BIO *h, const char *buf, int size);
+static int	my_sock_read(BIO * h, char *buf, int size);
+static int	my_sock_write(BIO * h, const char *buf, int size);
 #if 0 // Register tds specific function
-static BIO_METHOD *my_BIO_s_socket(void);
+static BIO_METHOD * my_BIO_s_socket(void);
 #endif
 static int	my_SSL_set_fd(Port *port, int fd);
 
-static DH  *load_dh_file(char *filename, bool isServerStart);
-static DH  *load_dh_buffer(const char *, size_t);
+static DH * load_dh_file(char *filename, bool isServerStart);
+static DH * load_dh_buffer(const char *, size_t);
 static int	ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 #if 0
 static int	verify_cb(int, X509_STORE_CTX *);
 #endif
-static void info_cb(const SSL *ssl, int type, int args);
-static bool initialize_dh(SSL_CTX *context, bool isServerStart);
-static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
+static void info_cb(const SSL * ssl, int type, int args);
+static bool initialize_dh(SSL_CTX * context, bool isServerStart);
+static bool initialize_ecdh(SSL_CTX * context, bool isServerStart);
 static const char *SSLerrmessage(unsigned long ecode);
 
 
-static SSL_CTX *SSL_context = NULL;
+static SSL_CTX * SSL_context = NULL;
 static bool SSL_initialized = false;
 static bool dummy_ssl_passwd_cb_called = false;
 static bool ssl_is_server_start;
-static BIO_METHOD *my_bio_methods = NULL;
+static BIO_METHOD * my_bio_methods = NULL;
 
-static int ssl_protocol_version_to_openssl(int v);
+static int	ssl_protocol_version_to_openssl(int v);
 static const char *ssl_protocol_version_to_string(int v);
 
 /* ------------------------------------------------------------ */
@@ -85,7 +85,7 @@ static const char *ssl_protocol_version_to_string(int v);
 int
 Tds_be_tls_init(bool isServerStart)
 {
-	STACK_OF(X509_NAME) *root_cert_list = NULL;
+	STACK_OF(X509_NAME) * root_cert_list = NULL;
 	SSL_CTX    *context;
 	int			ssl_ver_min = -1;
 	int			ssl_ver_max = -1;
@@ -201,16 +201,16 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_min_protocol_version)
 	{
-		int ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version);
+		int			ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version);
 
 		if (ssl_ver_min == -1)
 		{
 			/*- translator: first %s is a GUC option name, second %s is its value */
 			ereport(isServerStart ? FATAL : LOG,
-				(errmsg("\"%s\" setting \"%s\" not supported by this build",
-						"babelfishpg_tds.tds_ssl_min_protocol_version",
-						GetConfigOption("babelfishpg_tds.tds_ssl_min_protocol_version",
-										false, false))));
+					(errmsg("\"%s\" setting \"%s\" not supported by this build",
+							"babelfishpg_tds.tds_ssl_min_protocol_version",
+							GetConfigOption("babelfishpg_tds.tds_ssl_min_protocol_version",
+											false, false))));
 			goto error;
 		}
 
@@ -224,16 +224,16 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_max_protocol_version)
 	{
-		int ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version);
+		int			ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version);
 
 		if (ssl_ver_max == -1)
 		{
 			/*- translator: first %s is a GUC option name, second %s is its value */
 			ereport(isServerStart ? FATAL : LOG,
-				(errmsg("\"%s\" setting \"%s\" not supported by this build",
-						"babelfishpg_tds.tds_ssl_max_protocol_version",
-						GetConfigOption("babelfishpg_tds.tds_ssl_max_protocol_version",
-										false, false))));
+					(errmsg("\"%s\" setting \"%s\" not supported by this build",
+							"babelfishpg_tds.tds_ssl_max_protocol_version",
+							GetConfigOption("babelfishpg_tds.tds_ssl_max_protocol_version",
+											false, false))));
 			goto error;
 		}
 		if (!SSL_CTX_set_max_proto_version(context, ssl_ver_max))
@@ -365,7 +365,7 @@ Tds_be_tls_init(bool isServerStart)
 		}
 	}
 #if 0 // TDS specific
- 	/* TDS specific - TSQL doesn't support multual certificate authentication */
+	/* TDS specific - TSQL doesn't support multual certificate authentication */
 	if (ssl_ca_file[0])
 	{
 		/*
@@ -386,6 +386,7 @@ Tds_be_tls_init(bool isServerStart)
 		SSL_CTX_set_client_CA_list(context, root_cert_list);
 	}
 #endif
+
 	/*
 	 * Success!  Replace any existing SSL_context.
 	 */
@@ -396,6 +397,7 @@ Tds_be_tls_init(bool isServerStart)
 
 	ssl_loaded_verify_locations = false;
 #if 0 // TDS specific
+
 	/*
 	 * Set flag to remember whether CA store has been loaded into SSL_context.
 	 */
@@ -521,19 +523,19 @@ aloop:
 			case SSL_ERROR_SSL:
 				switch (ERR_GET_REASON(ecode))
 				{
-					/*
-					 * UNSUPPORTED_PROTOCOL, WRONG_VERSION_NUMBER, and
-					 * TLSV1_ALERT_PROTOCOL_VERSION have been observed
-					 * when trying to communicate with an old OpenSSL
-					 * library, or when the client and server specify
-					 * disjoint protocol ranges.  NO_PROTOCOLS_AVAILABLE
-					 * occurs if there's a local misconfiguration (which
-					 * can happen despite our checks, if openssl.cnf
-					 * injects a limit we didn't account for).  It's not
-					 * very clear what would make OpenSSL return the other
-					 * codes listed here, but a hint about protocol
-					 * versions seems like it's appropriate for all.
-					 */
+						/*
+						 * UNSUPPORTED_PROTOCOL, WRONG_VERSION_NUMBER, and
+						 * TLSV1_ALERT_PROTOCOL_VERSION have been observed
+						 * when trying to communicate with an old OpenSSL
+						 * library, or when the client and server specify
+						 * disjoint protocol ranges.  NO_PROTOCOLS_AVAILABLE
+						 * occurs if there's a local misconfiguration (which
+						 * can happen despite our checks, if openssl.cnf
+						 * injects a limit we didn't account for).  It's not
+						 * very clear what would make OpenSSL return the other
+						 * codes listed here, but a hint about protocol
+						 * versions seems like it's appropriate for all.
+						 */
 					case SSL_R_NO_PROTOCOLS_AVAILABLE:
 					case SSL_R_UNSUPPORTED_PROTOCOL:
 					case SSL_R_BAD_PROTOCOL_VERSION_NUMBER:
@@ -859,7 +861,7 @@ Tds_be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 #endif
 
 static int
-my_sock_read(BIO *h, char *buf, int size)
+my_sock_read(BIO * h, char *buf, int size)
 {
 	int			res = 0;
 
@@ -881,7 +883,7 @@ my_sock_read(BIO *h, char *buf, int size)
 }
 
 static int
-my_sock_write(BIO *h, const char *buf, int size)
+my_sock_write(BIO * h, const char *buf, int size)
 {
 	int			res = 0;
 
@@ -981,7 +983,7 @@ err:
  *	to verify that the DBA-generated DH parameters file contains
  *	what we expect it to contain.
  */
-static DH  *
+static DH *
 load_dh_file(char *filename, bool isServerStart)
 {
 	FILE	   *fp;
@@ -1048,7 +1050,7 @@ load_dh_file(char *filename, bool isServerStart)
  *	the	hardcoded DH parameters supplied with the backend to prevent
  *	problems.
  */
-static DH  *
+static DH *
 load_dh_buffer(const char *buffer, size_t len)
 {
 	BIO		   *bio;
@@ -1114,7 +1116,7 @@ dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
  *	for now we accept the default checks.
  */
 static int
-verify_cb(int ok, X509_STORE_CTX *ctx)
+verify_cb(int ok, X509_STORE_CTX * ctx)
 {
 	return ok;
 }
@@ -1125,7 +1127,7 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
  *	into the PostgreSQL log.
  */
 static void
-info_cb(const SSL *ssl, int type, int args)
+info_cb(const SSL * ssl, int type, int args)
 {
 
 	const char *desc;
@@ -1183,7 +1185,7 @@ info_cb(const SSL *ssl, int type, int args)
  * information provided.
  */
 static bool
-initialize_dh(SSL_CTX *context, bool isServerStart)
+initialize_dh(SSL_CTX * context, bool isServerStart)
 {
 	DH		   *dh = NULL;
 
@@ -1206,7 +1208,7 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("DH: could not set DH parameters: %s",
-						 SSLerrmessage(ERR_get_error()))));
+						SSLerrmessage(ERR_get_error()))));
 		DH_free(dh);
 		return false;
 	}
@@ -1221,7 +1223,7 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
  * need to provide the name of the curve to OpenSSL.
  */
 static bool
-initialize_ecdh(SSL_CTX *context, bool isServerStart)
+initialize_ecdh(SSL_CTX * context, bool isServerStart)
 {
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY	   *ecdh;

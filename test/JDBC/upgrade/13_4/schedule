@@ -87,7 +87,6 @@ BABEL-2787-2
 BABEL-2845
 BABEL-2884
 BABEL-3249
-BABEL-3474
 BABEL-3588
 BABEL-PROCID
 babel_trigger
@@ -198,3 +197,6 @@ case_insensitive_collation-before-13-5
 test_windows_login_before_15_2
 BABEL-3657
 BABEL-3938
+rowcount
+BABEL-1625
+BABEL-3474
