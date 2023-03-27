@@ -1,7 +1,7 @@
 name: Code Coverage
 on:
   schedule:
-    - cron: '* * * * *'  # runs every midnight
+    - cron: '0 0 * * *'  # runs every midnight
   workflow_dispatch:
     inputs:
       branch_name:
