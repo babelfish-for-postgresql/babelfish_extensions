@@ -1185,10 +1185,10 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 
 		tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
 		if (stmt->tbltypname)
-			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
+			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all) ",
 							 tblname, stmt->tbltypname);
 		else
-			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
+			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s ",
 							 tblname, stmt->coldef);
 
 		/*

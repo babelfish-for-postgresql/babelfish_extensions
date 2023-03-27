@@ -409,4 +409,5 @@ rowcount
 # test_windows_sp_helpuser
 BABEL-1625
 BABEL-3474
+# Force merge conflict
 dateadd_internal_df

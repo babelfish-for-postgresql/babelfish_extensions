@@ -193,8 +193,10 @@ get_tsql_error_details(ErrorData *edata,
 
 		TDSInstrumentation(INSTR_TDS_UNMAPPED_ERROR);
 
-		elog(LOG, "Unmapped error found. Code: %d, Message: %s, File: %s, Line: %d, Context: %s",
-			 edata->sqlerrcode, edata->message, edata->filename, edata->lineno, error_context);
+		// Not allowed to elog if stack depth is reached
+		if (likely(errordata_stack_depth + 1 < ERRORDATA_STACK_SIZE)
+			elog(LOG, "Unmapped error found. Code: %d, Message: %s, File: %s, Line: %d, Context: %s",
+					edata->sqlerrcode, edata->message, edata->filename, edata->lineno, error_context);
 
 		return false;
 	}
