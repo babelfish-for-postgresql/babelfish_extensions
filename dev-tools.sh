@@ -56,7 +56,7 @@ if [ ! $1 ]; then
     echo "      same as initpg but with --enable-coverage flag to generate code coverage"
     echo ""
     echo "  build_coverage [TARGET_WS]"
-    echo "      generate cove coverage HTML report for all extensions"
+    echo "      generate code coverage HTML report for all extensions"
     echo ""
     echo "  sum_coverage [TARGET_WS]"
     echo "      summarize code coverage"
@@ -245,39 +245,29 @@ init_pg_coverage(){
     init_pghint $1 $2
 }
 
+build_extension_coverage(){
+    cd $1/babelfish_extensions/contrib/$2
+    lcov --gcov-tool gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
+    lcov --gcov-tool gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+    rm -rf coverage
+    genhtml -q --legend -o coverage --title=${2} --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
+    touch coverage-html-stamp
+
+}
+
 build_coverage(){
-    cd $1/babelfish_extensions/contrib/babelfishpg_money
-    lcov --gcov-tool gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
-    lcov --gcov-tool gcov -q --no-external -c -d . -d ./ -o lcov_test.info
-    rm -rf coverage
-    genhtml -q --legend -o coverage --title='PostgreSQL 15.2' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
-    touch coverage-html-stamp
-
-    cd ../babelfishpg_common
-    lcov --gcov-tool gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
-    lcov --gcov-tool gcov -q --no-external -c -d . -d ./ -o lcov_test.info
-    rm -rf coverage
-    genhtml -q --legend -o coverage --title='PostgreSQL 15.2' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
-    touch coverage-html-stamp
-
-    cd ../babelfishpg_tds
-    lcov --gcov-tool gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
-    lcov --gcov-tool gcov -q --no-external -c -d . -d ./ -o lcov_test.info
-    rm -rf coverage
-    genhtml -q --legend -o coverage --title='PostgreSQL 15.2' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
-    touch coverage-html-stamp
-
-    cd ../babelfishpg_tsql
-    lcov --gcov-tool gcov --no-external -q -c -i -d . -d ./ -o lcov_base.info
-    lcov --gcov-tool gcov --no-external -q -c -d . -d . -d ./ -o lcov_test.info
-    rm -rf coverage
-    genhtml -q --legend -o coverage --title='PostgreSQL 15.2' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
-    touch coverage-html-stamp
-
+    build_extension_coverage $1 'babelfishpg_money'
+    build_extension_coverage $1 'babelfishpg_common'
+    build_extension_coverage $1 'babelfishpg_tds'
+    build_extension_coverage $1 'babelfishpg_tsql'
     echo ""
     echo "  code coverage report generation completed"
     echo "  run './dev-tools.sh sum_coverage' to generate summarized code coverage for all extensions"
-    echo "  you can look at HTML code coverage report for each extension at TARGET_WS/babelfish_extensions/contrib/<extension>/coverage"
+    echo "  HTML code coverage report for each extension is located as follows -"
+    echo "      babelfishpg_money:  TARGET_WS/babelfish_extensions/contrib/babelfishpg_money/coverage/index.html"
+    echo "      babelfishpg_common: TARGET_WS/babelfish_extensions/contrib/babelfishpg_common/coverage/index.html"
+    echo "      babelfishpg_tds:    TARGET_WS/babelfish_extensions/contrib/babelfishpg_tds/coverage/index.html"
+    echo "      babelfishpg_tsql:   TARGET_WS/babelfish_extensions/contrib/babelfishpg_tsql/coverage/index.html"
 }
 
 sum_coverage(){
