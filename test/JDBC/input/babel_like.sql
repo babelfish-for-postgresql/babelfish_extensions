@@ -1,98 +1,55 @@
-set babelfishpg_tsql.sql_dialect = 'tsql';
+DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
+GO
 select relname from pg_class where relname like '[';
-ERROR:  pattern matching operators '[' and ']' are not supported for LIKE
+GO
 select relname from pg_class where relname like ']';
-ERROR:  pattern matching operators '[' and ']' are not supported for LIKE
+GO
 select relname from pg_class where relname like '[]';
-ERROR:  pattern matching operators '[' and ']' are not supported for LIKE
+GO
 select relname from pg_class where relname like NULL;
- relname 
----------
-(0 rows)
-
+GO
 select relname from pg_class where relname like '';
- relname 
----------
-(0 rows)
-
+GO
 select relname from pg_class where relname like 'pg[1:9]class';
-ERROR:  pattern matching operators '[' and ']' are not supported for LIKE
+GO
 select relname from pg_class where relname like 'pg\[1:9\]class';
- relname 
----------
-(0 rows)
-
+GO
 select relname from pg_class where relname like 'pg\[1:9 ]class';
-ERROR:  pattern matching operators '[' and ']' are not supported for LIKE
+GO
 select relname from pg_class where relname like 'pg [1:9\]class';
-ERROR:  pattern matching operators '[' and ']' are not supported for LIKE
-select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like 'pg [1:9*]class' escape '*';
-ERROR:  pattern matching operators '[' and ']' are not supported for LIKE
-select relname from pg_class where relname like 'pg*[1:9 ]class' escape '*';
-ERROR:  pattern matching operators '[' and ']' are not supported for LIKE
-set babelfishpg_tsql.sql_dialect = 'postgres';
-select relname from pg_class where relname like '[';
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like ']';
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like '[]';
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like NULL;
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like '';
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like 'pg[1:9]class';
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like 'pg\[1:9\]class';
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like 'pg\[1:9 ]class';
- relname 
----------
-(0 rows)
-
-select relname from pg_class where relname like 'pg [1:9\]class';
- relname 
----------
-(0 rows)
+GO
 
 select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
- relname 
----------
-(0 rows)
-
+GO
 select relname from pg_class where relname like 'pg [1:9*]class' escape '*';
- relname 
----------
-(0 rows)
-
+GO
 select relname from pg_class where relname like 'pg*[1:9 ]class' escape '*';
- relname 
----------
-(0 rows)
+GO
 
+DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'postgres';
+GO
+select relname from pg_class where relname like '[';
+GO
+select relname from pg_class where relname like ']';
+GO
+select relname from pg_class where relname like '[]';
+GO
+select relname from pg_class where relname like NULL;
+GO
+select relname from pg_class where relname like '';
+GO
+select relname from pg_class where relname like 'pg[1:9]class';
+GO
+select relname from pg_class where relname like 'pg\[1:9\]class';
+GO
+select relname from pg_class where relname like 'pg\[1:9 ]class';
+GO
+select relname from pg_class where relname like 'pg [1:9\]class';
+GO
+
+select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
+GO
+select relname from pg_class where relname like 'pg [1:9*]class' escape '*';
+GO
+select relname from pg_class where relname like 'pg*[1:9 ]class' escape '*';
+GO

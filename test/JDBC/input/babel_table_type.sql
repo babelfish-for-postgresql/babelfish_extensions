@@ -1,7 +1,8 @@
-CREATE USER my_test_user;
-GRANT CREATE ON DATABASE contrib_regression TO my_test_user;
-GRANT CREATE ON SCHEMA public TO PUBLIC;
-SET SESSION AUTHORIZATION my_test_user;
+-- CREATE USER my_test_user;
+-- GRANT CREATE ON DATABASE contrib_regression TO my_test_user;
+-- GRANT CREATE ON SCHEMA public TO PUBLIC;
+-- SET SESSION AUTHORIZATION my_test_user;
+-- GO
 
 -- table type is only supported in tsql dialect
 CREATE TYPE tableType AS table(
@@ -9,8 +10,9 @@ CREATE TYPE tableType AS table(
 	b int primary key,
 	c int);
 
-set babelfishpg_tsql.sql_dialect = 'tsql';
-\tsql ON
+DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
+GO
+-- \tsql ON
 
 -- table type supports all CREATE TABLE element lists
 CREATE TYPE tableType AS table(
@@ -83,7 +85,7 @@ begin
 	select count(*) from @b;
 end;
 GO
-CALL table_var_procedure();
+EXEC table_var_procedure;
 GO
 DROP PROCEDURE table_var_procedure;
 GO
@@ -99,7 +101,7 @@ begin
 	select * from @tableVar;
 end;
 GO
-CALL table_var_procedure();
+EXEC table_var_procedure;
 GO
 DROP PROCEDURE table_var_procedure;
 GO
@@ -115,36 +117,36 @@ begin
 	select * from @tableVar1 t1 join @tableVar2 t2 on t1.a = t2.c;
 end;
 GO
-CALL table_var_procedure();
+EXEC table_var_procedure;
 GO
 DROP PROCEDURE table_var_procedure;
 GO
 
 -- test MERGE on table variables
 -- TODO: BABEL-877 Support MERGE
-/*
-create procedure merge_proc as
-begin
-	declare @tv1 table(a int);
-	insert into @tv1 values (200);
+-- /*
+-- create procedure merge_proc as
+-- begin
+-- 	declare @tv1 table(a int);
+-- 	insert into @tv1 values (200);
 
-	declare @tv2 table(b int);
-	insert into @tv2 values (100);
-	insert into @tv2 values (200);
+-- 	declare @tv2 table(b int);
+-- 	insert into @tv2 values (100);
+-- 	insert into @tv2 values (200);
 
-	merge into @tv1 using @tv2 on a=b
-	when not matched then insert (a) values(b)
-	when matched then update set a = a + b;
+-- 	merge into @tv1 using @tv2 on a=b
+-- 	when not matched then insert (a) values(b)
+-- 	when matched then update set a = a + b;
 
-	select * from @tv1;
-end;
-GO
-CALL merge_proc();
-GO
--- result should have two rows, 400 and 100.
-DROP PROCEDURE merge_proc;
-GO
-*/
+-- 	select * from @tv1;
+-- end;
+-- GO
+-- CALL merge_proc();
+-- GO
+-- -- result should have two rows, 400 and 100.
+-- DROP PROCEDURE merge_proc;
+-- GO
+-- */
 
 -- test declaring a variable whose name is already used - should throw error
 create procedure dup_var_name_procedure as
@@ -155,7 +157,7 @@ end;
 GO
 
 -- test declaring a variable whose name is already used as table name - should work
-create table @test_table (d int);
+create table test_table (d int);
 GO
 create procedure dup_var_name_procedure as
 begin
@@ -164,11 +166,11 @@ begin
 	select * from @test_table;
 end;
 GO
-call dup_var_name_procedure();
+EXEC dup_var_name_procedure;
 GO
 drop procedure dup_var_name_procedure;
 GO
-drop table @test_table;
+drop table test_table;
 GO
 
 -- test assigning to table variables, should not be allowed
@@ -209,9 +211,10 @@ begin
 	select * from test_table t inner join @tableVar tv on t.a = tv.a;
 end;
 GO
-CALL join_proc1();
+EXEC join_proc1;
 GO
 DROP PROCEDURE join_proc1;
+GO
 
 create procedure join_proc2 as
 begin
@@ -220,7 +223,7 @@ begin
 	select * from @tableVar tv inner join test_table t on tv.a = t.a;
 end;
 GO
-CALL join_proc2();
+EXEC join_proc2;
 GO
 DROP PROCEDURE join_proc2;
 GO
@@ -245,26 +248,26 @@ begin
 	select * from @tv;
 end;
 GO
-CALL source_target_proc();
+EXEC source_target_proc;
 GO
 DROP PROCEDURE source_target_proc;
 GO
 
--- test multiple '@' characters in table variable name
--- TODO: BABEL-476 Support variable name with multiple '@' characters
-/*
-create procedure nameing_proc as
-begin
-	declare @@@tv@1@@@ as table(a int);
-	insert  @@@tv@1@@@ values(1);
-	select * from  @@@tv@1@@@;
-end;
-GO
-CALL naming_proc();
-GO
-DROP PROCEDURE naming_proc;
-GO
-*/
+-- -- test multiple '@' characters in table variable name
+-- -- TODO: BABEL-476 Support variable name with multiple '@' characters
+-- /*
+-- create procedure nameing_proc as
+-- begin
+-- 	declare @@@tv@1@@@ as table(a int);
+-- 	insert  @@@tv@1@@@ values(1);
+-- 	select * from  @@@tv@1@@@;
+-- end;
+-- GO
+-- CALL naming_proc();
+-- GO
+-- DROP PROCEDURE naming_proc;
+-- GO
+-- */
 
 -- test nested functions using table variables with the same name, each should
 -- have its own variable
@@ -310,7 +313,7 @@ begin
 	select @result;
 end;
 GO
-call loop_func_proc();
+EXEC loop_func_proc;
 GO
 DROP PROCEDURE loop_func_proc;
 GO
@@ -338,7 +341,7 @@ begin
 	select @result;
 end;
 GO
-call loop_proc()
+EXEC loop_proc
 GO
 DROP PROCEDURE loop_proc;
 GO
@@ -354,7 +357,7 @@ begin
 	WITH t1 (a) AS (SELECT a FROM @tablevar1) SELECT * FROM @tablevar2 t2 JOIN t1 ON t2.a = t1.a;
 end;
 GO
-call cte_proc()
+EXEC cte_proc
 GO
 DROP PROCEDURE cte_proc;
 GO
@@ -367,7 +370,7 @@ begin
 	set datefirst 7;
 end;
 GO
-call pl_set_proc()
+EXEC pl_set_proc
 GO
 DROP PROCEDURE pl_set_proc;
 GO
@@ -383,7 +386,7 @@ begin
 	select * from @tablevar1, @tablevar2;
 end;
 GO
-call select_multi_tablevars()
+EXEC select_multi_tablevars
 GO
 DROP PROCEDURE select_multi_tablevars;
 GO
@@ -396,7 +399,7 @@ begin
 	select * from test_table, @tablevar;
 end;
 GO
-call select_table_tablevar()
+EXEC select_table_tablevar
 GO
 DROP PROCEDURE select_table_tablevar;
 GO
@@ -431,7 +434,7 @@ begin
 	select tvp_func(@tableVar);
 end;
 GO
-call error_proc()
+EXEC error_proc
 GO
 DROP PROCEDURE error_proc;
 GO
@@ -442,7 +445,7 @@ begin
 	select tvp_func(@tableVar);
 end;
 GO
-call tvp_proc()
+EXEC tvp_proc
 GO
 DROP PROCEDURE tvp_proc;
 GO
@@ -469,7 +472,7 @@ begin
 	select multi_tvp_func(@v1, @v2);
 end;
 GO
-call multi_tvp_proc()
+EXEC multi_tvp_proc
 GO
 DROP PROCEDURE multi_tvp_proc;
 GO
@@ -581,10 +584,3 @@ DROP TYPE tableType;
 GO
 DROP TABLE test_table;
 GO
-\tsql OFF
-reset babelfishpg_tsql.sql_dialect;
-RESET SESSION AUTHORIZATION;
--- if we are able to drop the user, then it means that all the underlying tables
--- of table variables have been dropped because they depend on the user.
-REVOKE CREATE ON DATABASE contrib_regression FROM my_test_user;
-DROP USER my_test_user;
