@@ -308,6 +308,21 @@ def process_statement_in_file_mode(bbl_cnxn, file_writer, query, is_sql_batch):
 
     return True
 
+def process_statement_in_file_mode_ddl(bbl_cnxn, file_writer, query):
+    try:
+        bbl_cursor = bbl_cnxn.get_cursor()
+        bbl_cursor.execute(query)
+        result_set_exist = bbl_cursor.description
+    except Exception as e:
+        handle_exception_in_file(e, file_writer)
+
+    try:
+        bbl_cursor.close()
+    except Exception as e:
+        print(str(e))
+
+    return True
+
 #function to generate output files for prepared statements
 def process_prepared_statement_in_file_mode(bbl_cnxn, file_writer, query, prep_statement, result, logger):
     try:

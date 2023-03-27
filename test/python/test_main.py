@@ -37,6 +37,8 @@ def test_main(fx1, my_setup):
         pytest.skip("Isolation Tests are not allowed - runIsolationTests config param is false")
     if fx1.name in ignored_files:
         pytest.skip("Ignored test file - Modify ignoredTestName to run this step")
+    if fx1.name.split(".")[0][:4] == 'ddl_' and cfg['ddlExport'] == 'false':
+        pytest.skip("DDL Export test not allowed")
 
     logfname = my_setup
     

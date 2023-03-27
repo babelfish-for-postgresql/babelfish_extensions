@@ -1,0 +1,75 @@
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[babel_1654_vu_prepare_employeedata](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[emp_first_name] [varchar](50) NULL,
+	[emp_last_name] [varchar](50) NULL,
+	[emp_salary] [int] NULL,
+	[a] [varchar](50) NULL,
+	[b] [varchar](50) NULL,
+	[c] [varchar](50) NULL,
+	[d] [varchar](50) NULL,
+	[e] [varchar](50) NULL,
+	[f] [varchar](50) NULL,
+ CONSTRAINT [babel_1654_vu_prepare_employeedata_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[babel_1654_vu_prepare_t](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[a] [varchar](50) NULL,
+	[b] [varchar](50) NULL,
+ CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[sys_computed_columns_vu_prepare_t1](
+	[scc_first_number] [smallint] NULL,
+	[scc_second_number] [money] NULL,
+	[scc_multiplied]  AS (scc_first_number * scc_second_number)
+) ON [PRIMARY]
+
+GO
+
+ALTER TABLE [dbo].[babel_1654_vu_prepare_employeedata] ADD  CONSTRAINT [babel_1654_vu_prepare_employeedata_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+GO
+
+ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ADD  CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
+(
+	[id]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TRIGGER [dbo].[babel_1654_vu_prepare_updemployeedatas] ON [dbo].[babel_1654_vu_prepare_employeedata]  AFTER UPDATE,INSERT AS   
+	select COLUMNS_UPDATED();
+	update babel_1654_vu_prepare_t set a = 'sss' , b = 'sss' where id = 1;
+	select COLUMNS_UPDATED();
+ALTER TABLE [dbo].[babel_1654_vu_prepare_employeedata] ENABLE TRIGGER [babel_1654_vu_prepare_updemployeedatas]
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after update as
+	select COLUMNS_UPDATED();
+ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ENABLE TRIGGER [babel_1654_vu_prepare_trig_t]
+GO
+
