@@ -229,9 +229,9 @@ init_lcov(){
     fi
     cd lcov
     sudo make PREFIX=/usr install
-    # export PATH=/usr/bin/lcov
-    # export PATH=/usr/bin/gcov
-    # export PATH=/usr/bin/genhtml
+    export PATH=$PATH:/usr/bin/lcov
+    export PATH=$PATH:/usr/bin/gcov
+    export PATH=$PATH:/usr/bin/genhtml
 }
 
 init_pg_coverage(){
@@ -284,7 +284,6 @@ sum_coverage(){
     cd $1/babelfish_extensions/contrib
     lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o lcov.info
     lcov --list lcov.info
-    echo "get html report in -- <dir> --"
 }
 
 if [ "$1" == "initdb" ]; then
