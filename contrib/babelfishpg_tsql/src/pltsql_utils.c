@@ -897,7 +897,7 @@ get_pltsql_function_signature_internal(const char *funcname,
 		 * string
 		 */
 		set_config_option("quote_all_identifiers", "true",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		appendStringInfo(&argbuf, "%s(", funcname);
@@ -912,7 +912,7 @@ get_pltsql_function_signature_internal(const char *funcname,
 	PG_FINALLY();
 	{
 		set_config_option("quote_all_identifiers", prev_quote_ident,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
