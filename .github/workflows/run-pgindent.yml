@@ -32,9 +32,9 @@ jobs:
         id: run-pgindent
         if: always() && steps.build-extensions.outcome == 'success'
         run: |
-          cd $HOME/psql/lib/
+          cd ~/${{inputs.install_dir}}/lib/
 
-          echo "dumping typedefs for babelfishpg_mpney to /tmp/babelfishpg_money.typedefs.."
+          echo "dumping typedefs for babelfishpg_money to /tmp/babelfishpg_money.typedefs.."
           objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
             next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
             next if $flds[-1] =~ /^DW_FORM_str/;\
