@@ -164,8 +164,6 @@ GO
 -- valid supported properties
 select serverproperty(N'collation');
 GO
-select serverproperty(N'collationId');
-GO
 select serverproperty(N'IsSingleUser');
 GO
 

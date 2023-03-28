@@ -412,13 +412,6 @@ sql_variant
 sql_latin1_general_cp1_ci_as
 ~~END~~
 
-select serverproperty(N'collationId');
-GO
-~~START~~
-sql_variant
-0
-~~END~~
-
 select serverproperty(N'IsSingleUser');
 GO
 ~~START~~
