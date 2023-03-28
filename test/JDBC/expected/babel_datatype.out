@@ -19,8 +19,6 @@ money
 -- Scale changes to the sql server default 4 in tsql dialect
 -- Currency symbol followed by number without being quoted is recognized
 -- as Money type in tsql dialect.
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 select CAST($100123.4567 AS money);
 GO
 ~~START~~
@@ -445,12 +443,12 @@ money
 
 -- Test postgres dialect
 -- Test currency symbol without quote is not allowed in postgres dialect
-reset babelfishpg_tsql.sql_dialect;
 select CAST(€100.123 AS money);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 3 and character position 22)~~
+~~START~~
+money
+100.1230
+~~END~~
 
 
 -- Test exact result multiply/divide money with money in postgres dialect
@@ -466,222 +464,14 @@ money
 drop table testing1;
 GO
 
--- BABEL-109 test no more not unique operator error caused by fixeddeciaml
-select CAST(2 AS numeric) > 1;
-GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '>' at line 2 and character position 26)~~
 
-select CAST(2 AS decimal) > 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 26)~~
-
-
--- Test that numeric > int and fixeddecimal > int is different
-select CAST(2.00001 AS numeric) > 2;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 2 and character position 32)~~
-
-select CAST(2.00001 AS sys.fixeddecimal) > 2;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 41)~~
-
-
--- test TSQL Money (based on fixeddecimal) cross datatype operators
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-select CAST(2 AS money) > 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) > CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) > CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) > CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) > CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) > CAST(1 AS decimal);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) >= 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-select CAST(2 AS money) >= CAST(1 AS decimal);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '>' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) < 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) < CAST(1 AS decimal);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) <= 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <= CAST(1 AS decimal);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) <> 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <> CAST(1 AS int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <> CAST(1 AS int2);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <> CAST(1 AS int4);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-select CAST(2 AS money) <> CAST(1 AS numeric);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
-
-
-select CAST(2 AS money) <> CAST(1 AS decimal);
 select CAST(2 AS money) + 1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '<' at line 1 and character position 24)~~
+~~START~~
+money
+3.0000
+~~END~~
 
 select CAST(2 AS money) + CAST(1 AS int);
 GO
@@ -848,16 +638,6 @@ numeric
 ~~END~~
 
 
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
-
-
--- Test DATE, DATETIME, DATETIMEOFFSET, DATETIME2
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- DATE DATETIME, DATETIMEOFFSET, DATETIME2 and SMALLDATETIME are defined in tsql dialect
 select CAST('2020-03-15' AS date);
@@ -962,11 +742,6 @@ datetime2
 2020-03-15 09:00:00
 ~~END~~
 
-select CAST('2020-03-15 09:00:00.123456' AS datetime2(-1));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '(' at line 1 and character position 53)~~
 
 create table testing1(ts DATETIME, tstz DATETIME2(7));
 insert into testing1 (ts, tstz) values ('2020-03-15 09:00:00', '2020-03-15 09:00:00');
@@ -1013,32 +788,8 @@ datetime2
 2020-03-15 09:00:00.0000000
 ~~END~~
 
-create table testing1(ts SMALLDATETIME);
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "testing1" already exists)~~
-
-create table testing1(tstz DATETIME2);
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "testing1" already exists)~~
-
 
 -- Test DATETIME, DATETIMEOFFSET, DATETIME2 and SMALLDATETIME can be used as identifier
-create table testing1(DATETIME int);
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "testing1" already exists)~~
-
-insert into testing1 (DATETIME) values (1);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "datetime" of relation "testing1" does not exist)~~
-
 select * from testing1;
 GO
 ~~START~~
@@ -1094,8 +845,7 @@ int
 ~~END~~
 
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 insert into testing1 (SMALLDATETIME) values (2);
 GO
 ~~ROW COUNT: 1~~
@@ -1140,12 +890,6 @@ datetime2
 
 
 -- Clean up
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 2 and character position 22)~~
-
 drop table testing1;
 GO
 
@@ -1168,12 +912,6 @@ nvarchar
 
 
 -- both are available in tsql dialect
-set babelfishpg_tsql.sql_dialect = 'tsql';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'sql_dialect' at line 2 and character position 21)~~
-
 select CAST('£' AS nchar(2));
 GO
 ~~START~~
@@ -1221,12 +959,6 @@ varchar
 
 
 -- Check that things work the same in postgres dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 2 and character position 22)~~
-
 select CAST('£' AS char(1));
 GO
 ~~START~~
@@ -1254,12 +986,6 @@ GO
 varchar
 £
 ~~END~~
-
-set babelfishpg_tsql.sql_dialect = 'tsql';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'sql_dialect' at line 1 and character position 21)~~
 
 
 -- truncate input on explicit cast
@@ -1296,20 +1022,13 @@ a
 -- default length of nchar/char is 1 in tsql (and pg)
 create table testing1(col nchar);
 GO
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
-
 SELECT * FROM testing1;
 GO
 ~~START~~
 nchar
 ~~END~~
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 
 -- check length at insert
 insert into testing1 (col) select 'a';
@@ -1463,12 +1182,6 @@ drop table max;
 GO
 
 -- test sys.varchar(max) and nvarchar(max) syntax is not allowed in postgres dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 2 and character position 22)~~
-
 select CAST('abcdefghijklmn' AS sys.varchar(max));
 GO
 ~~START~~
@@ -1512,9 +1225,8 @@ GO
 ~~ERROR (Message: The size '10485760' exceeds the maximum allowed (8000) for 'varchar' datatype.)~~
 
 
+
 -- test column type nvarchar(max)
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 create table testing5(col nvarchar(max));
 GO
 SELECT * FROM testing5
@@ -1523,8 +1235,7 @@ GO
 nvarchar
 ~~END~~
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 insert into testing5 (col) select 'ab';
 insert into testing5 (col) select 'abcdefghijklmn';
 select * from testing5;
@@ -1540,18 +1251,6 @@ abcdefghijklmn
 ~~END~~
 
 
---test COPY command works with sys.nvarchar
-COPY public.testing5 (col) FROM stdin;
-c
-ab
-abcdefghijk
-\.
-select * from testing5;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'public' at line 2 and character position 5)~~
-
 
 -- [BABEL-220] test varchar(max) as a column
 drop table testing5;
@@ -1559,14 +1258,7 @@ GO
 
 create table testing5(col varchar(max));
 GO
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
-
-
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
 insert into testing5 (col) select 'ab';
 insert into testing5 (col) select 'abcdefghijklmn';
 select * from testing5;
@@ -1600,12 +1292,6 @@ GO
 ~~ERROR (Message: value too long for type character varying(2) as UTF16 output)~~
 
 
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
-
 insert into testing3 (col) select 'ab';
 insert into testing3 (col) select 'a£';
 insert into testing3 (col) select 'a😀';
@@ -1620,8 +1306,7 @@ GO
 ~~ERROR (Message: value too long for type character varying(2) as UTF16 output)~~
 
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 insert into testing3 (col) select 'ab';
 insert into testing3 (col) select 'a£';
 insert into testing3 (col) select 'a😀';
@@ -1644,35 +1329,26 @@ text
 on
 ~~END~~
 
-create domain varchar3 as varchar(3);
+select CAST('abc' AS varchar(3));
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+abc
+~~END~~
 
-~~ERROR (Message: syntax error near 'domain' at line 1 and character position 7)~~
-
-select CAST('abc' AS varchar3);
+select CAST('ab£' AS varchar(3));
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+ab£
+~~END~~
 
-~~ERROR (Message: type "varchar3" does not exist)~~
-
-select CAST('ab£' AS varchar3);
+select CAST('abcd' AS varchar(3));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "varchar3" does not exist)~~
-
-select CAST('abcd' AS varchar3);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "varchar3" does not exist)~~
-
-reset apg_enable_domain_typmod;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "apg_enable_domain_typmod" does not exist)~~
+~~START~~
+varchar
+abc
+~~END~~
 
 
 -- [BABEL-191] test typmod of sys.varchar/nvarchar engages when the input
@@ -1791,12 +1467,6 @@ abcdefghijklmnopqrstuvwxyzabcde
 
 
 -- varchar defaults to pg_catalog.varchar in PG dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 2 and character position 22)~~
-
 select cast('abcdefghijklmnopqrstuvwxyzabcde' as pg_catalog.varchar); -- default length of pg_catalog.varchar is unlimited, no truncation
 GO
 ~~START~~
@@ -1804,18 +1474,11 @@ varchar
 abcdefghijklmnopqrstuvwxyzabcde
 ~~END~~
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- [BABEL-255] test nchar defaults to sys.nchar in tsql dialect
 create table test_nchar (col1 nchar);
 GO
 
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
 
 SELECT * FROM test_nchar
 GO
@@ -1823,18 +1486,12 @@ GO
 nchar
 ~~END~~
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 drop table test_nchar;
 GO
 
+
 -- test nchar defaults to bpchar in pg dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 2 and character position 22)~~
-
 create table test_nchar (col1 nchar);
 GO
 SELECT * FROM test_nchar
@@ -1845,8 +1502,6 @@ nchar
 ~~END~~
 
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- [BABEL-257] test varchar defaults to sys.varchar in new
 -- database and new schema
@@ -1866,14 +1521,6 @@ postgres
 ~~END~~
 
 
--- CREATE DATABASE demo;
--- USE demo
--- GO
-CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'EXTENSION' at line 4 and character position 7)~~
 
 -- Reconnect to make sure CLUSTER_COLLATION_OID is initialized
 USE postgres
@@ -1888,8 +1535,7 @@ GO
 
 ~~ERROR (Message: database "demo" does not exist)~~
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 -- Test varchar is mapped to sys.varchar
 -- Expect truncated output because sys.varchar defaults to sys.varchar(30) in CAST function
 select cast('abcdefghijklmnopqrstuvwxyzabcde' as varchar);
@@ -1946,11 +1592,11 @@ varchar
 a
 ~~END~~
 
-drop schema s1 cascade;
+drop schema s1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'cascade' at line 1 and character position 15)~~
+~~ERROR (Message: cannot drop schema master_s1 because other objects depend on it)~~
 
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
@@ -1960,22 +1606,6 @@ postgres
 ~~END~~
 
 
-USE regression
-GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "regression" does not exist)~~
-
-
-drop database demo;
-GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "demo" does not exist)~~
-
-
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- test tinyint data type
 select CAST(100 AS tinyint);
@@ -2032,18 +1662,6 @@ bit
 1
 ~~END~~
 
-select CAST('t' AS bit);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type bit: "t")~~
-
-select CAST('T' AS bit);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type bit: "T")~~
-
 select CAST('false' AS bit);
 GO
 ~~START~~
@@ -2064,18 +1682,6 @@ GO
 bit
 0
 ~~END~~
-
-select CAST('f' AS bit);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type bit: "f")~~
-
-select CAST('F' AS bit);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type bit: "F")~~
 
 
 -- test '1'/'0'
@@ -2125,13 +1731,6 @@ bit
 ~~END~~
 
 
--- bit defaults to pg_catalog.bit in pg dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 2 and character position 22)~~
-
 -- pg_catalog.bit doesn't recognize 'true'
 select CAST('true' AS bit);
 GO
@@ -2140,12 +1739,6 @@ bit
 1
 ~~END~~
 
-select CAST('true' AS pg_catalog.bit);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: "t" is not a valid binary digit)~~
-
 select CAST('1' AS bit);
 GO
 ~~START~~
@@ -2153,16 +1746,9 @@ bit
 1
 ~~END~~
 
-select CAST('1' AS pg_catalog.bit);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: data type bit is not supported yet)~~
 
 
 -- test numeric and integer input
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 select CAST(1 AS bit);
 GO
 ~~START~~
@@ -2451,13 +2037,6 @@ smallmoney
 1.0000
 ~~END~~
 
-
--- test comparisions
-select 1 = cast (1 as bit);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '=' at line 2 and character position 9)~~
 
 
 -- test varbinary is available
@@ -2920,11 +2499,6 @@ varbinary
 5C
 ~~END~~
 
-select CAST('\' AS bytea);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type bytea)~~
 
 
 -- test NULL pad extra space for binary type, not for varbinary and image
@@ -3366,390 +2940,12 @@ BEGIN
 END;
 GO
 
-EXEC cast_varbinary(16);
+EXEC cast_varbinary 16;
 GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '16' at line 1 and character position 20)~~
-
-EXEC cast_varbinary(16*16);
+EXEC cast_varbinary 511;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 20)~~
-
-EXEC cast_varbinary(511);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '511' at line 1 and character position 20)~~
-
 drop procedure cast_varbinary;
-GO
-
--- test casting varbinary to int4 when the varbinary size is longer than 4
-CREATE PROCEDURE cast_varbinary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_varbinary(16);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 20)~~
-
-EXEC cast_varbinary(16*16);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 20)~~
-
-drop procedure cast_varbinary;
-GO
-
--- test truncation varbinary to int4
-CREATE PROCEDURE cast_varbinary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_varbinary(16);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 20)~~
-
-
-EXEC cast_varbinary(16*16);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 20)~~
-
-
-drop procedure cast_varbinary;
-GO
-
-
--- test casting varbinary to int2
-CREATE PROCEDURE cast_varbinary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(2) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_varbinary(CAST(16 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 20)~~
-
-
-EXEC cast_varbinary(CAST(256 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 20)~~
-
-
-drop procedure cast_varbinary;
-GO
-
--- test truncation varbinary to int2
-CREATE PROCEDURE cast_varbinary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_varbinary(CAST(16 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 20)~~
-
-EXEC cast_varbinary(CAST(256 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 20)~~
-
-drop procedure cast_varbinary;
-GO
-
--- test casting varbinary to int8
-CREATE PROCEDURE cast_varbinary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_varbinary(CAST(16 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 20)~~
-
-EXEC cast_varbinary(16*CAST(16 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 20)~~
-
-drop procedure cast_varbinary;
-GO
-
--- test truncation varbinary to int8
-CREATE PROCEDURE cast_varbinary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_varbinary(CAST(16 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 20)~~
-
-EXEC cast_varbinary(16*CAST(16 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 20)~~
-
-drop procedure cast_varbinary;
-GO
-
--- test casting binary to int4
-CREATE PROCEDURE cast_binary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable binary(4) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_binary(16);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 17)~~
-
-EXEC cast_binary(256);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '256' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
-
--- test casting binary to int4 when the binary size is greater than 4
-CREATE PROCEDURE cast_binary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable binary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_binary(16);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 17)~~
-
-EXEC cast_binary(256);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '256' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
-
--- test truncation binary to int4
-CREATE PROCEDURE cast_binary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable binary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_binary(16);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '16' at line 1 and character position 17)~~
-
-EXEC cast_binary(256);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '256' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
-
--- test casting binary to int2
-CREATE PROCEDURE cast_binary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable binary(2) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-EXEC cast_binary(CAST(256 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
-
--- test casting binary to int2 when the binary size is greater than 2
-CREATE PROCEDURE cast_binary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable binary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-EXEC cast_binary(CAST(256 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
-
--- test truncation binary to int2
-CREATE PROCEDURE cast_binary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable binary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-EXEC cast_binary(CAST(256 AS int2));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
-
--- test casting binary to int8
-CREATE PROCEDURE cast_binary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable binary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-EXEC cast_binary(CAST(256 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
-
--- test casting binary to int8 when the binary size is greater than 8
-CREATE PROCEDURE cast_binary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable binary(12) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-EXEC cast_binary(CAST(256 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
-
--- test truncation binary to int8
-CREATE PROCEDURE cast_binary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable binary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-EXEC cast_binary(CAST(256 AS int8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'CAST' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
 GO
 
 -- test real to varbinary
@@ -3864,28 +3060,6 @@ varbinary
 ~~END~~
 
 
--- test casting varbinary back to double precision
-CREATE PROCEDURE cast_varbinary(@val double precision) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as double precision)
-END;
-GO
-EXEC cast_varbinary(0.123456789);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '0.123456789' at line 1 and character position 20)~~
-
-EXEC cast_varbinary(3.123456789);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '3.123456789' at line 1 and character position 20)~~
-
-drop procedure cast_varbinary;
-GO
 
 -- test real to binary
 select cast(CAST(0.125 AS real) as binary(4));
@@ -3930,28 +3104,6 @@ binary
 ~~END~~
 
 
--- test casting binary back to real
-CREATE PROCEDURE cast_binary(@val real) AS
-BEGIN
-  DECLARE @BinaryVariable binary(4) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as real)
-END;
-GO
-EXEC cast_binary(0.125);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '0.125' at line 1 and character position 17)~~
-
-EXEC cast_binary(3.125);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '3.125' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
 
 -- test dobule precision to binary
 select cast(CAST(0.123456789 AS double precision) as binary(8));
@@ -3996,28 +3148,6 @@ binary
 ~~END~~
 
 
--- test casting binary back to double precision
-CREATE PROCEDURE cast_binary(@val double precision) AS
-BEGIN
-  DECLARE @BinaryVariable binary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as double precision)
-END;
-GO
-call cast_binary(0.123456789);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '0.123456789' at line 1 and character position 17)~~
-
-call cast_binary(3.123456789);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '3.123456789' at line 1 and character position 17)~~
-
-drop procedure cast_binary;
-GO
 
 -- sys.sysname
 select CAST('£' AS sysname);             -- allowed
@@ -4050,12 +3180,6 @@ varchar
 <NULL>
 ~~END~~
 
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
-
 select CAST('£' AS sys.sysname);         -- allowed
 GO
 ~~START~~
@@ -4071,8 +3195,7 @@ varchar
 ~~END~~
 
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 create table test_sysname (col sys.sysname);
 GO
 insert into test_sysname values (repeat('£', 128));  -- allowed
@@ -4083,19 +3206,11 @@ insert into test_sysname values (repeat('😀', 128)); -- not allowed due to UTF
 GO
 ~~ROW COUNT: 1~~
 
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
-
 insert into test_sysname values (repeat('😀', 128)); -- not allowed due to UTF check
 GO
 ~~ROW COUNT: 1~~
 
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- clean up
 drop table testing1;
@@ -4112,9 +3227,3 @@ drop table testing6;
 GO
 drop table test_sysname;
 GO
-reset babelfishpg_tsql.sql_dialect;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
-

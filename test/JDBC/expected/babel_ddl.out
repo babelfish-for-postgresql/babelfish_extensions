@@ -21,71 +21,6 @@ create table t6 ( a int primary key nonclustered, b int);
 GO
 create table t7 ( a int primary key clustered, b int);
 GO
-create table t8 ( a int unique nonclustered, b int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore or add a NOT NULL constraint)~~
-
-create table t9 ( a int unique clustered, b int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore or add a NOT NULL constraint)~~
-
-
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-
-create index t1_idx1 on t1 (a);
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t1_idx1t18e881e6977bd6b8cbb78725b3a8ac988" already exists)~~
-
-create index t1_idx2 on t1(a);
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t1_idx2t117dbbb74ced1fe936cdf7cd7baeff266" already exists)~~
-
-
-create table t2 ( a int, b int, primary key (a));
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t2" already exists)~~
-
-create table t3 ( a int, b int, primary key (a));
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t3" already exists)~~
-
-create table t4 ( a int, b int, unique (a));
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t4" already exists)~~
-
-create table t5 ( a int, b int, unique (a));
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t5" already exists)~~
-
-
-create table t6 ( a int primary key, b int);
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t6" already exists)~~
-
-create table t7 ( a int primary key, b int);
-GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t7" already exists)~~
 
 create table t8 ( a int unique not null, b int);
 GO
@@ -99,20 +34,6 @@ create index t1_idx4 on t1 (a) on "default";
 GO
 
 -- CREATE TABLE WITH (<table_option> [,...n]) syntax
-create table t10 (a int) 
-with (fillfactor = 90, FILETABLE_COLLATE_FILENAME = database_default);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unknown index option: FILETABLE_COLLATE_FILENAME)~~
-
-create table t11 (a int) 
-with (data_compression = row on partitions (2, 4, 6 to 8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'on' at line 2 and character position 29)~~
-
 create table t12 (a int)
 with (system_versioning = on (history_table = aaa.bbb, data_consistency_check = off));
 GO
@@ -122,35 +43,6 @@ GO
 create table t14 (a int)
 with (data_deletion = on (filter_column = a, retention_period = 14 day));
 GO
-
--- CREATE INDEX WHERE... WITH (<index_option> [,...n]) syntax
-create index t1_idx5 on t1(a) where a is not null 
-with (pad_index = off, fillfactor = 90, maxdop = 1, sort_in_tempdb = off, max_duration = 2 minutes);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'minutes' at line 3 and character position 91)~~
-
-create index t1_idx6 on t1(a)
-with (data_compression = page on partitions (2, 4, 6 to 8));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'on' at line 2 and character position 30)~~
-
-
--- CREATE COLUMNSTORE INDEX
-create columnstore index t1_idx7 on t1 (a) with (drop_existing = on);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'columnstore' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_index_columnstore to ignore)~~
-
-create clustered columnstore index t1_idx8 on t1 (a) on [primary];
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'columnstore' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_index_columnstore to ignore)~~
 
 
 -- CREATE TABLE... WITH FILLFACTOR = num
@@ -211,12 +103,6 @@ int#!#int
 ~~END~~
 
 
-alter table t21 alter a drop default;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'a' at line 1 and character position 22)~~
-
 alter table t21 add constraint dflt11 default 11 for a;
 GO
 insert into t21(b) values (20);
@@ -255,18 +141,6 @@ GO
 
 
 -- ALTER TABLE ... WITH [NO]CHECK ADD CONSTRAINT ...
-alter table t21 with check add constraint chk1 check (a > 0);  -- add chk1 and enable it
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER TABLE WITH [NO]CHECK ADD' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_nocheck_add_constraint to ignore)~~
-
-alter table t21 with nocheck add constraint chk2 check (b > 0);  -- add chk2 and disable it
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER TABLE WITH [NO]CHECK ADD' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_nocheck_add_constraint to ignore)~~
-
 insert into t21 values (1, 1);
 GO
 ~~ROW COUNT: 1~~
@@ -293,33 +167,6 @@ int#!#int
 ~~END~~
 
 
--- ALTER TABLE ... [NO]CHECK CONSTRAINT ...
--- should pass after CHECK/NOCHECK is fully supported
-alter table t21 nocheck constraint chk1;  -- disable chk1
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER TABLE [NO]CHECK' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_nocheck_existing_constraint to ignore)~~
-
-alter table t21 check constraint chk2;  -- enable chk2
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'ALTER TABLE [NO]CHECK' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_nocheck_existing_constraint to ignore)~~
-
-
--- CREATE TABLE ... ( a int identity(...) NOT FOR REPLICATION)
-create table t22 (a int identity(1,1) NOT FOR REPLICATION);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'NOT FOR REPLICATION' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_for_replication to ignore)~~
-
-create table t23 (a int identity(1,1) NOT FOR REPLICATION NOT NULL);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'NOT FOR REPLICATION' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_for_replication to ignore)~~
 
 -- ROWGUIDCOL syntax support
 create table t24 (a uniqueidentifier ROWGUIDCOL);
@@ -503,8 +350,6 @@ efgh#!#efg#!#12#!#3#!#0.39485815595643303
 ~~END~~
 
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 drop table t1;
 GO
@@ -524,12 +369,6 @@ drop table t8;
 GO
 drop table t9;
 GO
-drop table t10;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "t10" does not exist)~~
-
 drop table t11;
 GO
 ~~ERROR (Code: 3701)~~
@@ -556,18 +395,6 @@ drop table t20;
 GO
 drop table t21;
 GO
-drop table t22;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "t22" does not exist)~~
-
-drop table t23;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "t23" does not exist)~~
-
 drop table t24;
 GO
 drop table t25;

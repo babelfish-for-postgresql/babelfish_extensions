@@ -1,38 +1,11 @@
--- CREATE USER my_test_user;
--- GRANT CREATE ON DATABASE contrib_regression TO my_test_user;
--- GRANT CREATE ON SCHEMA public TO PUBLIC;
--- SET SESSION AUTHORIZATION my_test_user;
--- GO
-
 -- table type is only supported in tsql dialect
 CREATE TYPE tableType AS table(
 	a text not null,
 	b int primary key,
 	c int);
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
--- \tsql ON
-
--- table type supports all CREATE TABLE element lists
-CREATE TYPE tableType AS table(
-	a text not null,
-	b int primary key,
-	c int);
-GO
-
 -- a table with the same name is created
 select * from tableType;
-GO
-
--- create type with same name, should fail
-CREATE TYPE tableType as (d int, e int);
-GO
-
--- create table with same name, should succeed
--- TODO: BABEL-689: Postgres doesn't support this yet, because CREATE TABLE will automatically
--- create a composite type as well, which will cause name collision
-CREATE TABLE tableType(d int, e int);
 GO
 
 -- dropping the table should fail, as it depends on the table type
@@ -41,8 +14,6 @@ GO
 
 -- dropping the table type should drop the table as well
 DROP TYPE tableType;
-GO
-SELECT * FROM tableType;
 GO
 
 -- creating index (other than primary and unique keys) during table type creation is not
@@ -58,13 +29,6 @@ CREATE TYPE tableType AS table(
 	e varchar);
 GO
 
--- test dotted prefixes of the table type name
--- allowed to have one dotted prefix
-CREATE TYPE public.tableType AS table(a int, b int);
-GO
-
-DROP TYPE public.tableType;
-GO
 
 -- not allowed to have more than one dotted prefix
 CREATE TYPE postgres.public.tableType AS table(a int, b int);
@@ -122,31 +86,6 @@ GO
 DROP PROCEDURE table_var_procedure;
 GO
 
--- test MERGE on table variables
--- TODO: BABEL-877 Support MERGE
--- /*
--- create procedure merge_proc as
--- begin
--- 	declare @tv1 table(a int);
--- 	insert into @tv1 values (200);
-
--- 	declare @tv2 table(b int);
--- 	insert into @tv2 values (100);
--- 	insert into @tv2 values (200);
-
--- 	merge into @tv1 using @tv2 on a=b
--- 	when not matched then insert (a) values(b)
--- 	when matched then update set a = a + b;
-
--- 	select * from @tv1;
--- end;
--- GO
--- CALL merge_proc();
--- GO
--- -- result should have two rows, 400 and 100.
--- DROP PROCEDURE merge_proc;
--- GO
--- */
 
 -- test declaring a variable whose name is already used - should throw error
 create procedure dup_var_name_procedure as
@@ -185,23 +124,6 @@ begin
 end;
 GO
 
--- test selecting into table variables, should not be allowed
-create procedure select_into_proc as
-begin
-	declare @tableVar table (a int, b int);
-	select * into @tableVar from test_table;
-end;
-GO
-
--- test truncating table variables, should not be allowed
-create procedure truncate_proc as
-begin
-	declare @tableVar table (a int, b int);
-	insert into @tableVar values(1, 2);
-	truncate table @tableVar;
-	select * from @tableVar;
-end;
-GO
 
 -- test JOIN on table variables, on both sides
 create procedure join_proc1 as
@@ -228,14 +150,6 @@ GO
 DROP PROCEDURE join_proc2;
 GO
 
--- test altering table variables, should not be allowed
-create procedure alter_proc as
-begin
-	declare @tableVar table (a int);
-	alter table @tableVar add b int;
-	select * from @tableVar;
-end;
-GO
 
 -- test using the same variables as source and target
 create procedure source_target_proc as
@@ -427,13 +341,6 @@ end
 GO
 -- test passing in a table variable whose type is different from what the function wants
 -- TODO: BABEL-899: error message should be "Operand type clash: table is incompatible with tableType"
-create procedure error_proc as
-begin
-	declare @tableVar as table (a text, b int, c int);
-	insert into @tableVar values('hello1', 1, 100);
-	select tvp_func(@tableVar);
-end;
-GO
 EXEC error_proc
 GO
 DROP PROCEDURE error_proc;

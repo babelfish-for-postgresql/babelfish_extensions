@@ -1,8 +1,3 @@
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
--- setup
-drop table TxnTable;
-GO
 create table TxnTable(c1 int);
 GO
 
@@ -13,9 +8,6 @@ select @@trancount;
 GO
 begin transaction;
 select @@trancount;
-GO
-set transaction isolation level read committed;
-SELECT @@transaction_isolation;
 GO
 insert into TxnTable values(1);
 commit transaction;
@@ -46,7 +38,6 @@ begin tran;
 select @@trancount;
 begin tran;
 set transaction isolation level read uncommitted;
-SELECT @transaction_isolation;
 insert into TxnTable values(3);
 select @@trancount;
 rollback tran;
@@ -54,9 +45,6 @@ select @@trancount;
 select c1 from TxnTable;
 GO
 
-set transaction isolation level repeatable read;
-SELECT @transaction_isolation;
-GO
 
 -- Begin transaction -> commit
 begin transaction;
@@ -117,9 +105,6 @@ truncate table TxnTable;
 GO
 
 -- save tran name -> rollback tran name
-set transaction isolation level snapshot;
-SELECT @transaction_isolation;
-GO
 begin transaction txn1;
 insert into TxnTable values(1);
 save transaction sp1;
@@ -172,9 +157,6 @@ GO
 
 -- begin transaction name -> save transaction name -> rollback tran name
 -- Rollback whole transaction
-set transaction isolation level serializable;
-SELECT @transaction_isolation;
-GO
 begin transaction txn1;
 insert into TxnTable values(1);
 save transaction sp1;

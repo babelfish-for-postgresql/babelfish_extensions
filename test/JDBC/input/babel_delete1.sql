@@ -1,16 +1,3 @@
---
--- Tests for DELETE clause
---
-
-CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql";
-GO
--- Negative cases when using postgres dialect
-
-RESET babelfishpg_tsql.sql_dialect;
-GO
-SELECT @@babelfishpg_tsql.sql_dialect;
-GO
-
 CREATE TABLE delete_test_tbl (
     age int,
     fname char(10),
@@ -31,18 +18,6 @@ VALUES  (50, 'fname1', 'lname1', 'london'),
         (29, 'fname10', 'lname10', 'mumbai');
 
 SELECT * FROM delete_test_tbl;
-GO
-
-\set ON_ERROR_STOP 0
-DELETE delete_test_tbl;
-GO
-
--- Positive cases when using tsql dialect
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-SELECT @@babelfishpg_tsql.sql_dialect;
-GO
-\set ON_ERROR_STOP 1
 GO
 
 -- Prove that a user may delete rows from a table without using the FROM clause

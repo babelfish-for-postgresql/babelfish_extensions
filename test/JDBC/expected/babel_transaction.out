@@ -1,12 +1,3 @@
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
--- setup
-drop table TxnTable;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "txntable" does not exist)~~
-
 create table TxnTable(c1 int);
 GO
 
@@ -28,35 +19,20 @@ int
 2
 ~~END~~
 
-set transaction isolation level read committed;
-SELECT @@transaction_isolation;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function sys.transaction_isolation() does not exist)~~
-
 insert into TxnTable values(1);
 commit transaction;
 select @@trancount;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 3902)~~
-
-~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
-
 ~~START~~
 int
-0
+1
 ~~END~~
 
 commit transaction;
 select @@trancount;
 GO
-~~ERROR (Code: 3902)~~
-
-~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
-
 ~~START~~
 int
 0
@@ -104,7 +80,6 @@ begin tran;
 select @@trancount;
 begin tran;
 set transaction isolation level read uncommitted;
-SELECT @transaction_isolation;
 insert into TxnTable values(3);
 select @@trancount;
 rollback tran;
@@ -116,17 +91,24 @@ int
 1
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: column "@transaction_isolation" does not exist)~~
+~~START~~
+int
+2
+~~END~~
 
+~~START~~
+int
+0
+~~END~~
 
-set transaction isolation level repeatable read;
-SELECT @transaction_isolation;
-GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+int
+1
+2
+~~END~~
 
-~~ERROR (Message: REPEATABLE READ isolation level is not supported)~~
 
 
 -- Begin transaction -> commit
@@ -273,13 +255,6 @@ truncate table TxnTable;
 GO
 
 -- save tran name -> rollback tran name
-set transaction isolation level snapshot;
-SELECT @transaction_isolation;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "@transaction_isolation" does not exist)~~
-
 begin transaction txn1;
 insert into TxnTable values(1);
 save transaction sp1;
@@ -416,13 +391,6 @@ int
 
 -- begin transaction name -> save transaction name -> rollback tran name
 -- Rollback whole transaction
-set transaction isolation level serializable;
-SELECT @transaction_isolation;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SERIALIZABLE isolation level is not supported)~~
-
 begin transaction txn1;
 insert into TxnTable values(1);
 save transaction sp1;

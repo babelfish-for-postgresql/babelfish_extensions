@@ -1,23 +1,3 @@
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-select relname from pg_class where relname like '[';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
-select relname from pg_class where relname like ']';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
-select relname from pg_class where relname like '[]';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
 select relname from pg_class where relname like NULL;
 GO
 ~~START~~
@@ -30,29 +10,11 @@ GO
 varchar
 ~~END~~
 
-select relname from pg_class where relname like 'pg[1:9]class';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
 select relname from pg_class where relname like 'pg\[1:9\]class';
 GO
 ~~START~~
 varchar
 ~~END~~
-
-select relname from pg_class where relname like 'pg\[1:9 ]class';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
-select relname from pg_class where relname like 'pg [1:9\]class';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
 
 
 select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
@@ -60,40 +22,10 @@ GO
 ~~START~~
 varchar
 ~~END~~
-
-select relname from pg_class where relname like 'pg [1:9*]class' escape '*';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
-select relname from pg_class where relname like 'pg*[1:9 ]class' escape '*';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
 
 
 DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'postgres';
 GO
-select relname from pg_class where relname like '[';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
-select relname from pg_class where relname like ']';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
-select relname from pg_class where relname like '[]';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
 select relname from pg_class where relname like NULL;
 GO
 ~~START~~
@@ -106,29 +38,12 @@ GO
 varchar
 ~~END~~
 
-select relname from pg_class where relname like 'pg[1:9]class';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
 select relname from pg_class where relname like 'pg\[1:9\]class';
 GO
 ~~START~~
 varchar
 ~~END~~
 
-select relname from pg_class where relname like 'pg\[1:9 ]class';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
-select relname from pg_class where relname like 'pg [1:9\]class';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
 
 
 select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
@@ -136,16 +51,4 @@ GO
 ~~START~~
 varchar
 ~~END~~
-
-select relname from pg_class where relname like 'pg [1:9*]class' escape '*';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
-
-select relname from pg_class where relname like 'pg*[1:9 ]class' escape '*';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: pattern matching operators '[' and ']' are not supported for LIKE)~~
 

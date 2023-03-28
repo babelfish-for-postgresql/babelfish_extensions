@@ -17,8 +17,6 @@ nvarchar
 
 
 -- both are available in tsql dialect
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 select CAST('£' AS nchar(2));
 GO
 ~~START~~
@@ -147,8 +145,7 @@ varchar
 ?
 ~~END~~
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 
 -- test normal create domain works when apg_enable_domain_typmod is enabled
 -- set apg_enable_domain_typmod true;

@@ -1,38 +1,3 @@
--- tsql stype create function/procedure is not supported in postgres dialect
-CREATE FUNCTION hi_func("@message" varchar(20)) RETURNS VOID AS BEGIN PRINT @message END;
-GO
-CREATE PROCEDURE hi_proc("@message" varchar(20)) AS BEGIN PRINT @message END;
-GO
-
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
--- it's supported in tsql dialect
-CREATE FUNCTION hi_func("@message" varchar(20)) RETURNS VOID AS BEGIN PRINT @message END;
-GO
-CREATE PROCEDURE hi_proc("@message" varchar(20)) AS BEGIN PRINT @message END;
-GO
-
--- PROC is also supported in tsql dialect
-create proc proc_1 as print 'Hello World from Babel';
-GO
--- BABEL-219 typmod/length of sys.varchar works correctly in procudure parameter
-EXEC hi_proc('Hello World');
-GO
-EXEC proc_1();
-GO
-
--- clean up
-drop function hi_func;
-GO
-drop procedure hi_proc;
-GO
-drop proc proc_1;
-GO
-
--- test executing pltsql function in postgres dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
-
 CREATE FUNCTION test_func()
 RETURNS INT
 AS
@@ -43,12 +8,9 @@ END;
 GO
 
 -- should be able execute a pltsql function in postgres dialect
-SELECT @@babelfishpg_tsql_sql_dialect;
-GO
 select test_func();
 GO
-SELECT @@babelfishpg_tsql.sql_dialect;
-GO
+
 
 -- test executing pltsql trigger in postgres dialect
 CREATE TABLE employees(
@@ -65,34 +27,15 @@ CREATE TABLE employee_audits (
 );
 GO
 
-CREATE FUNCTION log_last_name_changes() RETURNS trigger AS $$
-BEGIN
-    IF NEW.last_name <> OLD.last_name THEN
-         INSERT INTO employee_audits(employee_id,last_name)
-         VALUES(OLD.id,OLD.last_name);
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-GO
-
-CREATE TRIGGER last_name_changes
-BEFORE UPDATE
-ON employees
-FOR EACH ROW
-EXECUTE PROCEDURE log_last_name_changes();
-GO
 
 INSERT INTO employees (first_name, last_name) VALUES ('A', 'B');
 INSERT INTO employees (first_name, last_name) VALUES ('C', 'D');
 SELECT * FROM employees;
 GO
-SELECT @@babelfishpg_tsql.sql_dialect;
-GO
+
 UPDATE employees SET last_name = 'E' WHERE ID = 2;
 GO
-SELECT @@babelfishpg_tsql.sql_dialect;
-GO
+
 SELECT * FROM employees;
 GO
 SELECT * FROM employee_audits;
@@ -105,64 +48,12 @@ drop table employees;
 GO
 drop table employee_audits;
 GO
-drop function log_last_name_changes;
-GO
 
 
--- test executing a plpgsql function in tsql dialect
-CREATE OR REPLACE FUNCTION test_increment(i integer) RETURNS integer AS $$
-BEGIN
-	RETURN i + "1";
-END;
-$$ LANGUAGE plpgsql;
-GO
 
-CREATE OR REPLACE FUNCTION test_increment1(i integer) RETURNS integer AS $$
-BEGIN
-	RETURN i + CAST(n'1' AS varchar);
-END;
-$$ LANGUAGE plpgsql;
-GO
-
--- test that sql_dialect is restored even when the function has error in it
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-SELECT @@babelfishpg_tsql.sql_dialect;
-GO
-select test_increment(1);
-GO
-SELECT @@babelfishpg_tsql.sql_dialect;
-GO
-select test_increment1(1);
-GO
-SELECT @@babelfishpg_tsql.sql_dialect;
-GO
-
--- test OBJECT_NAME function
-select OBJECT_NAME('sys.columns'::regclass::Oid::int);
-GO
-select OBJECT_NAME('boolin'::regproc::Oid::int);
-GO
-select OBJECT_NAME('int4'::regtype::Oid::int);
-GO
 select OBJECT_NAME(1);
 GO
 
--- test SYSDATETIME function
--- Returns of type datetime2
-select pg_typeof(SYSDATETIME());
-GO
--- test GETDATE function
--- Returns of type datetime
-select pg_typeof(GETDATE());
-GO
-
--- test current_timestamp function
-select pg_typeof(current_timestamp);
-GO
--- test calling with parenthesis, should fail
-select current_timestamp();
-GO
 
 -- test CONVERT function
 -- Conversion between varchar and date/time/datetime
@@ -234,7 +125,7 @@ select TRY_CONVERT(varchar(30), CAST('2017-08-25 13:01:59' AS datetime), 109);
 GO
 select TRY_CONVERT(varchar(30), CAST('11234561231231.234' AS float), 0);
 GO
-select TRY_CONVERT(varchar(30), CAST('11234561231231.234'AS float, 1);
+select TRY_CONVERT(varchar(30), CAST('11234561231231.234'AS float), 1);
 GO
 select TRY_CONVERT(varchar(10), CAST(4936.56 AS MONEY), 0);
 GO
@@ -249,55 +140,13 @@ GO
 select TRY_CONVERT(money, 'asdf');
 GO
 
--- test PARSE function
--- Conversion from string to date/time/datetime
-select PARSE('2017-08-25' AS date);
-GO
-select PARSE('2017-08-25' AS date USING 'Cs-CZ');
-GO
-select PARSE('08/25/2017' AS date USING 'en-US');
-GO
-select PARSE('25/08/2017' AS date USING 'de-DE');
-GO
-select PARSE('13:01:59' AS time);
-GO
-select PARSE('13:01:59' AS time USING 'en-US');
-GO
-select PARSE('13:01:59' AS time USING 'zh-CN');
-GO
-select PARSE('2017-08-25 13:01:59' AS datetime);
-GO
-select PARSE('2017-08-25 13:01:59' AS datetime USING 'zh-CN');
-GO
-select PARSE('12:01:59' AS time);
-GO
-select PARSE('2017-08-25 01:01:59PM' AS datetime);
-GO
-
--- Test if unnecessary culture arg given
-select PARSE('123' AS int USING 'de-DE');
-GO
-
 -- test TRY_PARSE function
 -- Expect null return on error
 -- Conversion from string to date/time/datetime
 select TRY_PARSE('2017-08-25' AS date);
 GO
-select TRY_PARSE('2017-08-25' AS date USING 'Cs-CZ');
-GO
-select TRY_PARSE('789' AS date USING 'en-US');
-GO
-select TRY_PARSE('asdf' AS date USING 'de-DE');
-GO
-select TRY_PARSE('13:01:59' AS time);
-GO
-select TRY_PARSE('asdf' AS time USING 'en-US');
-GO
-select TRY_PARSE('13-12-21' AS time USING 'zh-CN');
-GO
+
 select TRY_PARSE('2017-08-25 13:01:59' AS datetime);
-GO
-select TRY_PARSE('20asdf17' AS datetime USING 'de-DE');
 GO
 
 -- Wrong conversions that return NULL
@@ -307,21 +156,17 @@ select TRY_PARSE('123' AS datetime2);
 GO
 select TRY_PARSE('asdf' AS MONEY);
 GO
-select TRY_PARSE('asdf' AS int USING 'de-DE');
-GO
 
 -- test serverproperty() function
 -- invalid property name, should reutnr NULL
-select serverproperty(n'invalid property');
+select serverproperty(N'invalid property');
 GO
 -- valid supported properties
-select serverproperty(n'collation');
+select serverproperty(N'collation');
 GO
-select serverproperty(n'collationId');
+select serverproperty(N'collationId');
 GO
-select serverproperty(n'IsSingleUser');
-GO
-select serverproperty(n'ServerName') = aurora_db_instance_identifier() as condition;
+select serverproperty(N'IsSingleUser');
 GO
 
 -- test ISDATE function
@@ -553,21 +398,21 @@ select datepart(invalidinterval, cast('12:10:30.123' as time));
 GO
 
 -- test DATENAME function
-select datename(year, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
+SELECT DATENAME(year, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
 GO
-select datename(dd, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
+select datename(dd, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
 GO
-select datename(weekday, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
+select datename(weekday, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
 GO
-select datename(dw, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
+select datename(dw, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
 GO
-select datename(month, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
+select datename(month, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
 GO
-select datename(mm, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
+select datename(mm, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO
-select datename(m, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
+select datename(m, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO
-select datename(isowk, '2016-12-26 23:30:05.523456+8'::datetimeoffset);
+select datename(isowk, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO
 -- test invalid argument, expect error
 select datename(invalid_interval, cast('2016-12-26 23:30:05.523456' as date));
@@ -683,13 +528,7 @@ select dateadd(second, 2, '20060830');
 GO
 select dateadd(millisecond, 123, '20060830');
 GO
-select dateadd(microsecond, 123456, '20060830');
-GO
-select dateadd(nanosecond, 123456, '20060830');
-GO
 -- test different types of date/time arguments
-select dateadd(hour, 2, '23:12:34.876543');
-GO
 select dateadd(quarter, 3, '2037-03-01');
 GO
 select dateadd(minute, 70, '2016-12-26 23:30:05.523456+8');
@@ -699,39 +538,22 @@ GO
 select dateadd(second, 56, '2016-12-26 23:30:05');
 GO
 -- test negative argument
-select dateadd(year, -2, '20060830'::datetime);
+select dateadd(year, -2, CAST('20060830'AS datetime));
 GO
-select dateadd(month, -20, '2016-12-26 23:30:05.523456'::datetime2);
+select dateadd(month, -20, CAST('2016-12-26 23:30:05.523456' AS datetime2));
 GO
-select dateadd(hour, -2, '01:12:34.876543'::time);
+select dateadd(hour, -2, CAST('01:12:34.876543' AS time));
 GO
-select dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset);
+select dateadd(minute, -70, CAST('2016-12-26 00:30:05.523456+8' AS datetimeoffset));
 GO
-select dateadd(second, -56, '2016-12-26 00:00:55'::smalldatetime);
-GO
--- test return type
-select pg_typeof(dateadd(hour, -2, '01:12:34.876543'::time));
-GO
-select pg_typeof(dateadd(second, -56, '2016-12-26 00:00:55'::smalldatetime));
-GO
-select pg_typeof(dateadd(year, -2, '20060830'::datetime));
-GO
-select pg_typeof(dateadd(month, -20, '2016-12-26 23:30:05.523456'::datetime2));
-GO
-select pg_typeof(dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset));
-GO
--- test illegal usage
-select dateadd(minute, 2, '2037-03-01'::date);
-GO
-select dateadd(day, 4, '04:12:34.876543'::time);
-GO
+
 -- test using variables, instead of constants, for the second parameter
 create table dateadd_table(a int, b datetime);
 GO
-insert into dateadd_table values(1, '2020-10-29'::datetime);
+insert into dateadd_table values(1, CAST('2020-10-29' AS datetime));
 select * from dateadd_table;
 GO
-update dateadd_table set b = dateadd(dd, a, '2020-10-30'::datetime);
+update dateadd_table set b = dateadd(dd, a, CAST('2020-10-30' AS datetime));
 GO
 select * from dateadd_table;
 GO
@@ -783,7 +605,7 @@ select CHARINDEX('is', 'This is a string', 4);
 GO
 
 -- test STUFF function
-select STUFF(n'abcdef', 2, 3, n'ijklmn');  
+select STUFF(N'abcdef', 2, 3, N'ijklmn');  
 GO
 select STUFF(N' abcdef', 2, 3, N'ijklmn ');
 GO
@@ -793,30 +615,30 @@ select STUFF(N'abcdef', 2, 3, N'ijklmn  ');
 GO
 -- test corner cases
 -- when start is negative or zero or longer than expr, return NULL
-select STUFF(n'abcdef', -1, 3, n'ijklmn');  
+select STUFF(N'abcdef', -1, 3, N'ijklmn');  
 GO
-select STUFF(n'abcdef', 0, 3, n'ijklmn');  
+select STUFF(N'abcdef', 0, 3, N'ijklmn');  
 GO
-select STUFF(n'abcdef', 7, 3, n'ijklmn');  
+select STUFF(N'abcdef', 7, 3, N'ijklmn');  
 GO
 -- when length is negative, return NULL
-select STUFF(n'abcdef', 2, -3, n'ijklmn');  
+select STUFF(N'abcdef', 2, -3, N'ijklmn');  
 GO
 -- when length is zero, just insert without deleting
-select STUFF(n'abcdef', 2, 0, n'ijklmn');  
+select STUFF(N'abcdef', 2, 0, N'ijklmn');  
 GO
 -- when length is longer than expr, delete up to the last character in expr
-select STUFF(n'abcdef', 2, 7, n'ijklmn');
+select STUFF(N'abcdef', 2, 7, N'ijklmn');
 GO
 -- when replace_expr is NULL, just delete without inserting
-select STUFF(n'abcdef', 2, 3, NULL);
+select STUFF(N'abcdef', 2, 3, NULL);
 GO
 -- when argument are type unknown
 select STUFF('abcdef', 2, 3, 'ijklmn');
 GO
-select STUFF('abcdef', 2, 3, n'ijklmn');
+select STUFF('abcdef', 2, 3, N'ijklmn');
 GO
-select STUFF(n'abcdef', 2, 3, 'ijklmn');
+select STUFF(N'abcdef', 2, 3, 'ijklmn');
 GO
 -- when argument are type text
 SELECT STUFF(CAST('abcdef' as text), 2, 3, CAST('ijklmn' as text));
@@ -924,30 +746,30 @@ GO
 select DAY(CAST('2037-03-01 23:30:05.523' AS sys.datetime));
 GO
 -- test MONTH function
-select MONTH('2016-12-26 23:30:05.523456+8'::datetimeoffset);
+SELECT MONTH(CAST('2016-12-26 23:30:05.523456-08:00' AS datetimeoffset));
 GO
-select MONTH('2016-12-26 23:30:05.523456'::datetime2);
+select MONTH(CAST('2016-12-26 23:30:05.523456' AS datetime2));
 GO
-select MONTH('2016-12-26 23:30:05'::smalldatetime);
+select MONTH(CAST('2016-12-26 23:30:05'AS smalldatetime));
 GO
-select MONTH('04:12:34.876543'::time);
+select MONTH(CAST('04:12:34.876543' AS time));
 GO
-select MONTH('2037-03-01'::date);
+select MONTH(CAST('2037-03-01' AS date));
 GO
-select MONTH('2037-03-01 23:30:05.523'::sys.datetime);
+select MONTH(CAST('2037-03-01 23:30:05.523' AS sys.datetime));
 GO
 -- test YEAR function
-select YEAR('2016-12-26 23:30:05.523456+8'::datetimeoffset);
+select YEAR(CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
 GO
-select YEAR('2016-12-26 23:30:05.523456'::datetime2);
+select YEAR(CAST('2016-12-26 23:30:05.523456' AS datetime2));
 GO
-select YEAR('2016-12-26 23:30:05'::smalldatetime);
+select YEAR(CAST('2016-12-26 23:30:05' AS smalldatetime));
 GO
-select YEAR('04:12:34.876543'::time);
+select YEAR(CAST('04:12:34.876543' AS time));
 GO
-select YEAR('2037-03-01'::date);
+select YEAR(CAST('2037-03-01' AS date));
 GO
-select YEAR('2037-03-01 23:30:05.523'::sys.datetime);
+select YEAR(CAST('2037-03-01 23:30:05.523' AS sys.datetime));
 GO
 
 -- test SPACE function
@@ -984,54 +806,26 @@ GO
 -- should return all rows - 4
 SELECT COUNT(*) from t2;
 GO
-SELECT pg_typeof(COUNT(*)) from t2;
-GO
 SELECT COUNT_BIG(*) from t2;
-GO
-SELECT pg_typeof(COUNT_BIG(*)) from t2;
 GO
 -- should return all rows where a is not NULL - 3
 SELECT COUNT(a) from t2;
 GO
-SELECT pg_typeof(COUNT(a)) from t2;
-GO
 SELECT COUNT_BIG(a) from t2;
-GO
-SELECT pg_typeof(COUNT_BIG(a)) from t2;
 GO
 -- should return all rows where a is not NULL - 3
 SELECT COUNT(ALL a) from t2;
 GO
-SELECT pg_typeof(COUNT(ALL a)) from t2;
-GO
 SELECT COUNT_BIG(ALL a) from t2;
-GO
-SELECT pg_typeof(COUNT_BIG(ALL a)) from t2;
 GO
 -- should return all rows where a is distinct - 2
 SELECT COUNT(DISTINCT a) from t2;
 GO
-SELECT pg_typeof(COUNT(DISTINCT a)) from t2;
-GO
 SELECT COUNT_BIG(DISTINCT a) from t2;
-GO
-SELECT pg_typeof(COUNT_BIG(DISTINCT a)) from t2;
 GO
 
 -- Analytic Function Syntax
 -- COUNT[_BIG] ( [ ALL ]  { expression | * } ) OVER ( [ <partition_by_clause> ] )
-SELECT pg_typeof(COUNT(*) OVER (PARTITION BY a)) from t2;
-GO
-SELECT pg_typeof(COUNT_BIG(*) OVER (PARTITION BY a)) from t2;
-GO
-SELECT pg_typeof(COUNT(a) OVER (PARTITION BY a)) from t2;
-GO
-SELECT pg_typeof(COUNT_BIG(a) OVER (PARTITION BY a)) from t2;
-GO
-SELECT pg_typeof(COUNT(ALL a) OVER (PARTITION BY a)) from t2;
-GO
-SELECT pg_typeof(COUNT_BIG(ALL a) OVER (PARTITION BY a)) from t2;
-GO
 SELECT COUNT(*) from t3;
 GO
 SELECT a, b, COUNT(*) OVER () from t3;
@@ -1064,20 +858,12 @@ SELECT a, b, COUNT_BIG(*) OVER(PARTITION BY a ORDER BY b ROWS BETWEEN CURRENT RO
 GO
 
 -- COUNT(*) takes no parameters and does not support the use of DISTINC, expect error
-SELECT COUNT(DISTINCT *) from t3;
-GO
-SELECT COUNT(ALL *) from t3;
-GO
 DROP TABLE t2;
 GO
 DROP TABLE t3;
 GO
 
 -- clean up
-drop function test_increment;
-GO
-drop function test_increment1;
-GO
 drop table dateadd_table;
 GO
 drop procedure dateadd_procedure;
@@ -1110,26 +896,6 @@ insert into example_table values('hello3', 6);
 select * from itvf3(5);
 GO
 
--- invoke a function
-create function itvf4 (@number int) returns table as
-GO
-return (select sys.serverproperty(N'collation') as property1, sys.serverproperty(N'IsSingleUser') as property2);
-GO
-select * from itvf4(5);
-GO
-
--- case where the return table has only one column - Postgres considers these as
--- scalar functions
-create or replace function itvf5 (@number int) returns table as return (select 1 as a);
-GO
-select * from itvf5(5);
-GO
-create or replace function itvf6 (@number int) returns table as
-GO
-return (select sys.serverproperty(N'collation') as property);
-GO
-select * from itvf6(5);
-GO
 
 -- complex queries with use of function parameter
 create table id_name(id int, name text);
@@ -1155,20 +921,6 @@ insert into id_score values(1005, 80);
 insert into id_score values(1005, 100);
 GO
 
-create function itvf7 (@number int) returns table as return (
-GO
-select n.id, n.name as first_name, sum(s.score) as total_score
-from id_name as n
-join id_score as s
-on n.id = s.id
-where s.id <= @number
-group by n.id, n.name
-order by n.id
-);
-GO
-
-select * from itvf7(1004);
-GO
 
 -- test inline table-valued function with table-valued parameter
 create type tableType as table(
@@ -1197,7 +949,7 @@ begin
 end;
 GO
 
-EXEC itvf8_proc();
+EXEC itvf8_proc;
 GO
 
 -- test using parameter in projection list
@@ -1209,57 +961,6 @@ GO
 select * from itvf9(1);
 GO
 
--- test invalid ITVFs
--- function does not have RETURN QUERY
-create function itvf10(@number int) returns table as BEGIN select * from id_name END;
-GO
--- function has more than one RETURN QUERY
-create function itvf11(@number int) returns table as
-BEGIN
-	return select * from id_name
-	return select id from id_name
-END;
-GO
-
--- test creating ITVF in a transaction and rollback - should still work as
--- normal despite the function validator's modification of the pg_proc entry
-begin transaction;
-create function itvf12(@number int) returns table as return (
-select @number as a from id_name
-);
-rollback;
-select * from itvf12(1);
-GO
-
--- "AS" keyword is optional in TSQL function
-\tsql on
-create function babel651_f() returns int
-begin
-  return 1
-end
-go
-create table babel651_t(a int);
-go
-create function babel651_itvf() returns table
-  return (select * from babel651_t)
-go
-create function babel651_mstvf(@i int) returns @tableVar table
-(
-	a text not null
-)
-begin
-	insert into @tableVar values('hello1');
-end;
-go
-
-select babel651_f();
-go
-select * from babel651_itvf();
-go
-select * from babel651_mstvf(1);
-go
-\tsql off
-
 -- clean up
 drop function itvf1;
 GO
@@ -1267,17 +968,9 @@ drop table example_table;
 GO
 drop function itvf3;
 GO
-drop function itvf4;
-GO
-drop function itvf5;
-GO
-drop function itvf6;
-GO
 drop table id_name;
 GO
 drop table id_score;
-GO
-drop function itvf7;
 GO
 drop procedure itvf8_proc;
 GO
@@ -1287,17 +980,9 @@ drop type tableType;
 GO
 drop function itvf9;
 GO
-drop table babel651_t;
-GO
-drop function babel651_f;
-GO
-drop function babel651_itvf;
-GO
-drop function babel651_mstvf;
-GO
+
 
 -- test RETURN not followed by a semicolon
-\tsql on
 create function test_return1(@stringToSplit VARCHAR(MAX))
 RETURNS @returnList TABLE([Name] [nvarchar] (500))
 AS

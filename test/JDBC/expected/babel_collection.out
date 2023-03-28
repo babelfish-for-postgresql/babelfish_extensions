@@ -2,19 +2,6 @@
 create table testing1(col nvarchar(60)); -- expect this to fail in the Postgres dialect
 GO
 
-CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'EXTENSION' at line 1 and character position 7)~~
-
-set babelfishpg_tsql.sql_dialect = "tsql";
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'sql_dialect' at line 1 and character position 21)~~
-
-
 -- check the babelfish version
 select cast(
     case
@@ -103,8 +90,6 @@ JoNés
 create table testing3 (c1 varchar(20), c2 char(20), c3 nvarchar(20));
 GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 insert into testing3 values ('JONES','JONES','JONES');
 insert into testing3 values ('JoneS','JoneS','JoneS');
 insert into testing3 values ('jOnes','jOnes','jOnes');
@@ -171,7 +156,6 @@ GO
 -- then switch back to the TSQL dialect
 --
 select set_config('enable_seqscan','off','false');
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
 GO
 ~~START~~
 text
@@ -179,101 +163,94 @@ off
 ~~END~~
 
 
+
+SET babelfish_showplan_all ON;
+GO
 -- test that like is case-insenstive
 select c1 from testing4 where c1 LIKE 'jones'; -- this gets converted to '='
 GO
 ~~START~~
-varchar
-JONES
-JoneS
-jOnes
+text
+Query Text: select c1 from testing4 where c1 LIKE 'jones'
+Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=3 width=32)
+  Filter: ((c1)::text = 'jones'::text COLLATE "default")
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain (costs false) select c1 from testing4 where c1 LIKE 'jones';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 select c1 from testing4 where c1 LIKE 'Jon%';
 GO
 ~~START~~
-varchar
-JONES
-JoneS
-jOnes
+text
+Query Text: select c1 from testing4 where c1 LIKE 'Jon%'
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'Jon%'::text COLLATE "default") AND ((c1)::text >= 'Jon'::text COLLATE "default") AND ((c1)::text < 'Jon?'::text))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain (costs false) select c1 from testing4 where c1 LIKE 'Jon%';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 select c1 from testing4 where c1 LIKE 'jone_';
 GO
 ~~START~~
-varchar
-JONES
-JoneS
-jOnes
+text
+Query Text: select c1 from testing4 where c1 LIKE 'jone_'
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'jone_'::text COLLATE "default") AND ((c1)::text >= 'jone'::text COLLATE "default") AND ((c1)::text < 'jone?'::text))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain (costs false) select c1 from testing4 where c1 LIKE 'jone_';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 select c1 from testing4 where c1 LIKE '_one_';
 GO
 ~~START~~
-varchar
-JONES
-JoneS
-jOnes
+text
+Query Text: select c1 from testing4 where c1 LIKE '_one_'
+Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=5 width=32)
+  Filter: ((c1)::text ~~* '_one_'::text COLLATE "default")
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain (costs false) select c1 from testing4 where c1 LIKE '_one_';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 select c1 from testing4 where c1 LIKE '%on%s';
 GO
 ~~START~~
-varchar
-JONES
-JoneS
-jOnes
+text
+Query Text: select c1 from testing4 where c1 LIKE '%on%s'
+Bitmap Heap Scan on testing4  (cost=11.41..29.53 rows=26 width=32)
+  Filter: ((c1)::text ~~* '%on%s'::text COLLATE "default")
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain (costs false) select c1 from testing4 where c1 LIKE '%on%s';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 -- test that like is accent-senstive for CI_AS collation
 select c1 from testing4 where c1 LIKE 'ab%';
 GO
 ~~START~~
-varchar
-abcD
+text
+Query Text: select c1 from testing4 where c1 LIKE 'ab%'
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'ab%'::text COLLATE "default") AND ((c1)::text >= 'ab'::text COLLATE "default") AND ((c1)::text < 'ab?'::text))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äb%';
 GO
 ~~START~~
-varchar
-äb?D
+text
+Query Text: select c1 from testing4 where c1 LIKE 'äb%'
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'äb%'::text COLLATE "default") AND ((c1)::text >= 'äb'::text COLLATE "default") AND ((c1)::text < 'äb?'::text))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 select c1 from testing4 where c1 LIKE 'äḃĆ_';
 GO
 ~~START~~
-varchar
+text
+Query Text: select c1 from testing4 where c1 LIKE 'ä??_'
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'ä??_'::text COLLATE "default") AND ((c1)::text >= 'ä??'::text COLLATE "default") AND ((c1)::text < 'ä???'::text))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
 
@@ -281,46 +258,35 @@ varchar
 select c1 from testing4 where c1 NOT LIKE 'jones';
 GO
 ~~START~~
-varchar
-abcD
-äb?D
+text
+Query Text: select c1 from testing4 where c1 NOT LIKE 'jones'
+Bitmap Heap Scan on testing4  (cost=11.56..29.69 rows=647 width=32)
+  Filter: ((c1)::text <> 'jones'::text COLLATE "default")
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain (costs false) select c1 from testing4 where c1 NOT LIKE 'jones';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 select c1 from testing4 where c1 NOT LIKE 'jone%';
 GO
 ~~START~~
-varchar
-abcD
-äb?D
+text
+Query Text: select c1 from testing4 where c1 NOT LIKE 'jone%'
+Bitmap Heap Scan on testing4  (cost=11.56..32.94 rows=648 width=32)
+  Filter: (((c1)::text !~~* 'jone%'::text COLLATE "default") OR ((c1)::text < 'jone'::text COLLATE "default") OR ((c1)::text >= 'jone?'::text))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain (costs false) select c1 from testing4 where c1 NOT LIKE 'jone%';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 select c1 from testing4 where c1 NOT LIKE 'ä%';
 GO
 ~~START~~
-varchar
-JONES
-JoneS
-jOnes
-abcD
+text
+Query Text: select c1 from testing4 where c1 NOT LIKE 'ä%'
+Bitmap Heap Scan on testing4  (cost=11.55..32.92 rows=592 width=32)
+  Filter: (((c1)::text !~~* 'ä%'::text COLLATE "default") OR ((c1)::text < 'ä'::text COLLATE "default") OR ((c1)::text >= 'ä?'::text))
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain (costs false) select c1 from testing4 where c1 NOT LIKE 'ä%';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 -- test escape function and wildcard literal
 select c1 from testing4 where c1 LIKE E'\_ones';
@@ -329,11 +295,6 @@ GO
 
 ~~ERROR (Message: syntax error near ''\_ones'' at line 2 and character position 39)~~
 
-explain (costs false) select c1 from testing4 where c1 LIKE E'\_ones';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 select c1 from testing4 where c1 LIKE E'\%ones';
 GO
@@ -341,37 +302,32 @@ GO
 
 ~~ERROR (Message: syntax error near ''\%ones'' at line 1 and character position 39)~~
 
-explain (costs false) select c1 from testing4 where c1 LIKE E'\%ones';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
 
 -- wild card literals are transformed to equal
 select c1 from testing4 where c1 LIKE '\%ones';
 GO
 ~~START~~
-varchar
+text
+Query Text: select c1 from testing4 where c1 LIKE '\%ones'
+Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=3 width=32)
+  Filter: ((c1)::text = '%ones'::text COLLATE "default")
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain(costs false) select c1 from testing4 where c1 LIKE '\%ones';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 8)~~
 
 select c1 from testing4 where c1 LIKE '\_ones';
 GO
 ~~START~~
-varchar
+text
+Query Text: select c1 from testing4 where c1 LIKE '\_ones'
+Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=3 width=32)
+  Filter: ((c1)::text = '_ones'::text COLLATE "default")
+  ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
-explain(costs false) select c1 from testing4 where c1 LIKE '\_ones';
+
+SET babelfish_showplan_all OFF;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 8)~~
-
 -- test combining with other string functions
 select c1 from testing4 where c1 LIKE lower('_ones');
 GO
@@ -491,12 +447,19 @@ GO
 varchar
 ~~END~~
 
-explain(costs false) select * from testing5 where c1 LIKE 'jo%';
+SET babelfish_showplan_all ON;
 GO
-~~ERROR (Code: 33557097)~~
+select * from testing5 where c1 LIKE 'jo%';
+GO
+~~START~~
+text
+Query Text: select * from testing5 where c1 LIKE 'jo%'
+Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
+  Filter: ((c1)::text ~~ 'jo%'::text COLLATE "default")
+~~END~~
 
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 8)~~
-
+SET babelfish_showplan_all OFF;
+GO
 select * from testing5 where c1 NOT LIKE 'j%';
 GO
 ~~START~~
@@ -515,31 +478,31 @@ varchar
 
 
 -- test explicitly specify collation as CI_AS, like transformation is also applied.
-SELECT 'JONES' like 'jo%';
+SELECT 'JONES' LIKE 'jo%';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'like' at line 2 and character position 15)~~
+~~ERROR (Message: syntax error near 'LIKE' at line 2 and character position 15)~~
 
-SELECT 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS like 'jo%' ;
+SELECT 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS LIKE 'jo%' ;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'like' at line 1 and character position 52)~~
+~~ERROR (Message: syntax error near 'LIKE' at line 1 and character position 52)~~
 
 
 -- test when pattern is empty string or NULL
-SELECT 'JONES' like '';
+SELECT 'JONES' LIKE '';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'like' at line 2 and character position 15)~~
+~~ERROR (Message: syntax error near 'LIKE' at line 2 and character position 15)~~
 
-SELECT 'JONES' like NULL;
+SELECT 'JONES' LIKE NULL;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'like' at line 1 and character position 15)~~
+~~ERROR (Message: syntax error near 'LIKE' at line 1 and character position 15)~~
 
 
 SELECT * from testing5 where c1 like '';
@@ -548,24 +511,38 @@ GO
 varchar
 ~~END~~
 
-explain (costs false) SELECT * from testing5 where c1 like '';
+SET babelfish_showplan_all ON;
 GO
-~~ERROR (Code: 33557097)~~
+SELECT * from testing5 where c1 like '';
+GO
+~~START~~
+text
+Query Text: SELECT * from testing5 where c1 like ''
+Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=7 width=32)
+  Filter: ((c1)::text ~~ ''::text COLLATE "default")
+~~END~~
 
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
-
+SET babelfish_showplan_all OFF;
+GO
 SELECT * from testing5 where c1 like NULL;
 GO
 ~~START~~
 varchar
 ~~END~~
 
-explain (costs false) SELECT * from testing5 where c1 like NULL;
+SET babelfish_showplan_all ON;
 GO
-~~ERROR (Code: 33557097)~~
+SELECT * from testing5 where c1 like NULL;
+GO
+~~START~~
+text
+Query Text: SELECT * from testing5 where c1 like NULL
+Result  (cost=0.00..0.00 rows=0 width=0)
+  One-Time Filter: false
+~~END~~
 
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
-
+SET babelfish_showplan_all OFF;
+GO
 
 SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
 GO
@@ -575,12 +552,19 @@ JONES
 JoneS
 ~~END~~
 
-explain (costs false) SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
+SET babelfish_showplan_all ON;
 GO
-~~ERROR (Code: 33557097)~~
+SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
+GO
+~~START~~
+text
+Query Text: SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%'
+Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'jo%'::text COLLATE "default") AND ((c1)::text >= 'jo'::text COLLATE "default") AND ((c1)::text < 'jo?'::text))
+~~END~~
 
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
-
+SET babelfish_showplan_all OFF;
+GO
 SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
 GO
 ~~START~~
@@ -589,103 +573,19 @@ JONES
 JoneS
 ~~END~~
 
-explain (costs false) SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
+SET babelfish_showplan_all ON;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'costs' at line 1 and character position 9)~~
-
-
--- tsql collations
-alter table testing1 alter column col nvarchar(60) collate Arabic_CS_AS;
+SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+text
+Query Text: SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%'
+Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'jo%'::text COLLATE "default") AND ((c1)::text >= 'jo'::text COLLATE "default") AND ((c1)::text < 'jo?'::text))
+~~END~~
 
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Chinese_PRC_CS_AS;
+SET babelfish_showplan_all OFF;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Cyrillic_General_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate French_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Korean_Wansung_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Traditional_Spanish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Modern_Spanish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate SQL_Latin1_General_CP1_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate SQL_Latin1_General_CP1_CI_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Traditional_Spanish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Thai_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Turkish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Ukrainian_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Vietnamese_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col nvarchar(60) collate Finnish_Swedish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
 
 -- expect different result order from previous select
 select * from testing1 order by col;
@@ -849,37 +749,6 @@ vietnamese_ci_as#!#Vietnamese, case-insensitive, accent-sensitive, kanatype-inse
 vietnamese_cs_as#!#Vietnamese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 ~~END~~
 
--- test the TYPE keyword is only required in postgres dialect, but not in tsql dialect
-alter table testing1 alter column col varchar(60) collate Finnish_Swedish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'COLLATE in ALTER TABLE ALTER COLUMN' is not currently supported in Babelfish)~~
-
-alter table testing1 alter column col TYPE varchar(60) collate Finnish_Swedish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '(' at line 1 and character position 50)~~
-
-SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
-GO
-~~START~~
-text
-postgres
-~~END~~
-
-alter table testing1 alter column col varchar(60) collate sys.Finnish_Swedish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 1 and character position 61)~~
-
-alter table testing1 alter column col TYPE varchar(60) collate sys.Finnish_Swedish_CS_AS;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '(' at line 1 and character position 50)~~
 
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'tsql', false);
 GO

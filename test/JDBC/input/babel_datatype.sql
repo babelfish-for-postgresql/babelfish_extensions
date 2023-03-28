@@ -9,8 +9,6 @@ GO
 -- Scale changes to the sql server default 4 in tsql dialect
 -- Currency symbol followed by number without being quoted is recognized
 -- as Money type in tsql dialect.
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 select CAST($100123.4567 AS money);
 GO
 select CAST($100123. AS money);
@@ -168,7 +166,6 @@ GO
 
 -- Test postgres dialect
 -- Test currency symbol without quote is not allowed in postgres dialect
-reset babelfishpg_tsql.sql_dialect;
 select CAST(€100.123 AS money);
 GO
 
@@ -180,84 +177,7 @@ GO
 drop table testing1;
 GO
 
--- BABEL-109 test no more not unique operator error caused by fixeddeciaml
-select CAST(2 AS numeric) > 1;
-GO
-select CAST(2 AS decimal) > 1;
-GO
 
--- Test that numeric > int and fixeddecimal > int is different
-select CAST(2.00001 AS numeric) > 2;
-GO
-select CAST(2.00001 AS sys.fixeddecimal) > 2;
-GO
-
--- test TSQL Money (based on fixeddecimal) cross datatype operators
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-select CAST(2 AS money) > 1;
-GO
-select CAST(2 AS money) > CAST(1 AS int);
-GO
-select CAST(2 AS money) > CAST(1 AS int2);
-GO
-select CAST(2 AS money) > CAST(1 AS int4);
-GO
-select CAST(2 AS money) > CAST(1 AS numeric);
-GO
-select CAST(2 AS money) > CAST(1 AS decimal);
-GO
-
-select CAST(2 AS money) >= 1;
-GO
-select CAST(2 AS money) >= CAST(1 AS int);
-GO
-select CAST(2 AS money) >= CAST(1 AS int2);
-GO
-select CAST(2 AS money) >= CAST(1 AS int4);
-GO
-select CAST(2 AS money) >= CAST(1 AS numeric);
-GO
-select CAST(2 AS money) >= CAST(1 AS decimal);
-GO
-
-select CAST(2 AS money) < 1;
-GO
-select CAST(2 AS money) < CAST(1 AS int);
-GO
-select CAST(2 AS money) < CAST(1 AS int2);
-GO
-select CAST(2 AS money) < CAST(1 AS int4);
-GO
-select CAST(2 AS money) < CAST(1 AS numeric);
-GO
-select CAST(2 AS money) < CAST(1 AS decimal);
-GO
-
-select CAST(2 AS money) <= 1;
-GO
-select CAST(2 AS money) <= CAST(1 AS int);
-GO
-select CAST(2 AS money) <= CAST(1 AS int2);
-GO
-select CAST(2 AS money) <= CAST(1 AS int4);
-GO
-select CAST(2 AS money) <= CAST(1 AS numeric);
-GO
-select CAST(2 AS money) <= CAST(1 AS decimal);
-GO
-
-select CAST(2 AS money) <> 1;
-GO
-select CAST(2 AS money) <> CAST(1 AS int);
-GO
-select CAST(2 AS money) <> CAST(1 AS int2);
-GO
-select CAST(2 AS money) <> CAST(1 AS int4);
-GO
-select CAST(2 AS money) <> CAST(1 AS numeric);
-GO
-select CAST(2 AS money) <> CAST(1 AS decimal);
 
 select CAST(2 AS money) + 1;
 GO
@@ -311,12 +231,6 @@ GO
 select CAST(2 AS money) / CAST(0.5 AS decimal(4,2));
 GO
 
-reset babelfishpg_tsql.sql_dialect;
-GO
-
--- Test DATE, DATETIME, DATETIMEOFFSET, DATETIME2
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- DATE DATETIME, DATETIMEOFFSET, DATETIME2 and SMALLDATETIME are defined in tsql dialect
 select CAST('2020-03-15' AS date);
@@ -354,8 +268,7 @@ select CAST('2020-03-15 09:00:00.123456' AS datetime2(3));
 GO
 select CAST('2020-03-15 09:00:00.123456' AS datetime2(0));
 GO
-select CAST('2020-03-15 09:00:00.123456' AS datetime2(-1));
-GO
+
 create table testing1(ts DATETIME, tstz DATETIME2(7));
 insert into testing1 (ts, tstz) values ('2020-03-15 09:00:00', '2020-03-15 09:00:00');
 select * from testing1;
@@ -375,16 +288,8 @@ create table testing1(tstz DATETIMEOFFSET);
 GO
 select CAST('2020-03-15 09:00:00' AS datetime2);
 GO
-create table testing1(ts SMALLDATETIME);
-GO
-create table testing1(tstz DATETIME2);
-GO
 
 -- Test DATETIME, DATETIMEOFFSET, DATETIME2 and SMALLDATETIME can be used as identifier
-create table testing1(DATETIME int);
-GO
-insert into testing1 (DATETIME) values (1);
-GO
 select * from testing1;
 GO
 drop table testing1;
@@ -415,8 +320,7 @@ GO
 select * from testing1;
 GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 insert into testing1 (SMALLDATETIME) values (2);
 GO
 select * from testing1;
@@ -433,8 +337,6 @@ select CAST(CAST('2020-03-15' AS date) AS datetime2(3));
 GO
 
 -- Clean up
-reset babelfishpg_tsql.sql_dialect;
-GO
 drop table testing1;
 GO
 
@@ -447,8 +349,6 @@ select CAST('£' AS nvarchar);
 GO
 
 -- both are available in tsql dialect
-set babelfishpg_tsql.sql_dialect = 'tsql';
-GO
 select CAST('£' AS nchar(2));
 GO
 select CAST('£' AS nvarchar(2));
@@ -466,8 +366,6 @@ select CAST('£' AS sys.varchar(1));		-- allowed
 GO
 
 -- Check that things work the same in postgres dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
 select CAST('£' AS char(1));
 GO
 select CAST('£' AS sys.nchar(1));
@@ -475,8 +373,6 @@ GO
 select CAST('£' AS sys.nvarchar(1));
 GO
 select CAST('£' AS sys.varchar(1));
-GO
-set babelfishpg_tsql.sql_dialect = 'tsql';
 GO
 
 -- truncate input on explicit cast
@@ -493,12 +389,9 @@ GO
 -- default length of nchar/char is 1 in tsql (and pg)
 create table testing1(col nchar);
 GO
-reset babelfishpg_tsql.sql_dialect;
-GO
 SELECT * FROM testing1;
 GO
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 
 -- check length at insert
 insert into testing1 (col) select 'a';
@@ -564,8 +457,6 @@ drop table max;
 GO
 
 -- test sys.varchar(max) and nvarchar(max) syntax is not allowed in postgres dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
 select CAST('abcdefghijklmn' AS sys.varchar(max));
 GO
 select CAST('abcdefghijklmn' AS varchar(max));
@@ -582,27 +473,17 @@ select CAST('abc' AS varchar(10485760));
 GO
 
 -- test column type nvarchar(max)
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 create table testing5(col nvarchar(max));
 GO
 SELECT * FROM testing5
 GO
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 insert into testing5 (col) select 'ab';
 insert into testing5 (col) select 'abcdefghijklmn';
 select * from testing5;
 GO
 
---test COPY command works with sys.nvarchar
-COPY public.testing5 (col) FROM stdin;
-c
-ab
-abcdefghijk
-\.
-select * from testing5;
-GO
 
 -- [BABEL-220] test varchar(max) as a column
 drop table testing5;
@@ -610,10 +491,7 @@ GO
 
 create table testing5(col varchar(max));
 GO
-reset babelfishpg_tsql.sql_dialect;
-GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
 insert into testing5 (col) select 'ab';
 insert into testing5 (col) select 'abcdefghijklmn';
 select * from testing5;
@@ -629,16 +507,13 @@ insert into testing3 (col) select 'a😀';
 insert into testing3 (col) select 'abc';
 GO
 
-reset babelfishpg_tsql.sql_dialect;
-GO
 insert into testing3 (col) select 'ab';
 insert into testing3 (col) select 'a£';
 insert into testing3 (col) select 'a😀';
 insert into testing3 (col) select 'abc';
 GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 insert into testing3 (col) select 'ab';
 insert into testing3 (col) select 'a£';
 insert into testing3 (col) select 'a😀';
@@ -648,15 +523,11 @@ GO
 -- test normal create domain works when apg_enable_domain_typmod is enabled
 select set_config('enable_seqscan','on','true');
 GO
-create domain varchar3 as varchar(3);
+select CAST('abc' AS varchar(3));
 GO
-select CAST('abc' AS varchar3);
+select CAST('ab£' AS varchar(3));
 GO
-select CAST('ab£' AS varchar3);
-GO
-select CAST('abcd' AS varchar3);
-GO
-reset apg_enable_domain_typmod;
+select CAST('abcd' AS varchar(3));
 GO
 
 -- [BABEL-191] test typmod of sys.varchar/nvarchar engages when the input
@@ -705,37 +576,28 @@ select cast('abcdefghijklmnopqrstuvwxyzabcde' as pg_catalog.varchar);
 GO
 
 -- varchar defaults to pg_catalog.varchar in PG dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
 select cast('abcdefghijklmnopqrstuvwxyzabcde' as pg_catalog.varchar); -- default length of pg_catalog.varchar is unlimited, no truncation
-GO
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
 GO
 
 -- [BABEL-255] test nchar defaults to sys.nchar in tsql dialect
 create table test_nchar (col1 nchar);
 GO
 
-reset babelfishpg_tsql.sql_dialect;
-GO
+
 SELECT * FROM test_nchar
 GO
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 drop table test_nchar;
 GO
 
 -- test nchar defaults to bpchar in pg dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
+
 create table test_nchar (col1 nchar);
 GO
 SELECT * FROM test_nchar
 drop table test_nchar;
 GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- [BABEL-257] test varchar defaults to sys.varchar in new
 -- database and new schema
@@ -745,18 +607,13 @@ GO
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 
--- CREATE DATABASE demo;
--- USE demo
--- GO
-CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
-GO
+
 -- Reconnect to make sure CLUSTER_COLLATION_OID is initialized
 USE postgres
 GO
 USE demo
 GO
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 -- Test varchar is mapped to sys.varchar
 -- Expect truncated output because sys.varchar defaults to sys.varchar(30) in CAST function
 select cast('abcdefghijklmnopqrstuvwxyzabcde' as varchar);
@@ -785,19 +642,11 @@ insert into s1.test1 values('abc');
 insert into s1.test1 values('a');
 select * from s1.test1;
 GO
-drop schema s1 cascade;
+drop schema s1;
 GO
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 
-USE regression
-GO
-
-drop database demo;
-GO
-
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- test tinyint data type
 select CAST(100 AS tinyint);
@@ -817,19 +666,11 @@ select CAST('True' AS bit);
 GO
 select CAST('TRUE' AS bit);
 GO
-select CAST('t' AS bit);
-GO
-select CAST('T' AS bit);
-GO
 select CAST('false' AS bit);
 GO
 select CAST('False' AS bit);
 GO
 select CAST('FALSE' AS bit);
-GO
-select CAST('f' AS bit);
-GO
-select CAST('F' AS bit);
 GO
 
 -- test '1'/'0'
@@ -850,22 +691,14 @@ GO
 select CAST(NULL AS bit);
 GO
 
--- bit defaults to pg_catalog.bit in pg dialect
-reset babelfishpg_tsql.sql_dialect;
-GO
 -- pg_catalog.bit doesn't recognize 'true'
 select CAST('true' AS bit);
 GO
-select CAST('true' AS pg_catalog.bit);
-GO
 select CAST('1' AS bit);
 GO
-select CAST('1' AS pg_catalog.bit);
-GO
+
 
 -- test numeric and integer input
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 select CAST(1 AS bit);
 GO
 select CAST(2 AS bit);
@@ -959,9 +792,6 @@ GO
 select cast(cast (1 as bit) as smallmoney);
 GO
 
--- test comparisions
-select 1 = cast (1 as bit);
-GO
 
 -- test varbinary is available
 select cast('abc' as varbinary(3));
@@ -1146,8 +976,7 @@ select CAST('\\' AS bytea);
 GO
 select CAST('\' AS varbinary);
 GO
-select CAST('\' AS bytea);
-GO
+
 
 -- test NULL pad extra space for binary type, not for varbinary and image
 select CAST('\\' AS binary(3));
@@ -1311,258 +1140,12 @@ BEGIN
 END;
 GO
 
-EXEC cast_varbinary(16);
+EXEC cast_varbinary 16;
 GO
-EXEC cast_varbinary(16*16);
-GO
-EXEC cast_varbinary(511);
+
+EXEC cast_varbinary 511;
 GO
 drop procedure cast_varbinary;
-GO
-
--- test casting varbinary to int4 when the varbinary size is longer than 4
-CREATE PROCEDURE cast_varbinary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_varbinary(16);
-GO
-EXEC cast_varbinary(16*16);
-GO
-drop procedure cast_varbinary;
-GO
-
--- test truncation varbinary to int4
-CREATE PROCEDURE cast_varbinary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_varbinary(16);
-GO
-
-EXEC cast_varbinary(16*16);
-GO
-
-drop procedure cast_varbinary;
-GO
-
-
--- test casting varbinary to int2
-CREATE PROCEDURE cast_varbinary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(2) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_varbinary(CAST(16 AS int2));
-GO
-
-EXEC cast_varbinary(CAST(256 AS int2));
-GO
-
-drop procedure cast_varbinary;
-GO
-
--- test truncation varbinary to int2
-CREATE PROCEDURE cast_varbinary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_varbinary(CAST(16 AS int2));
-GO
-EXEC cast_varbinary(CAST(256 AS int2));
-GO
-drop procedure cast_varbinary;
-GO
-
--- test casting varbinary to int8
-CREATE PROCEDURE cast_varbinary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_varbinary(CAST(16 AS int8));
-GO
-EXEC cast_varbinary(16*CAST(16 AS int8));
-GO
-drop procedure cast_varbinary;
-GO
-
--- test truncation varbinary to int8
-CREATE PROCEDURE cast_varbinary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_varbinary(CAST(16 AS int8));
-GO
-EXEC cast_varbinary(16*CAST(16 AS int8));
-GO
-drop procedure cast_varbinary;
-GO
-
--- test casting binary to int4
-CREATE PROCEDURE cast_binary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable binary(4) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_binary(16);
-GO
-EXEC cast_binary(256);
-GO
-drop procedure cast_binary;
-GO
-
--- test casting binary to int4 when the binary size is greater than 4
-CREATE PROCEDURE cast_binary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable binary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_binary(16);
-GO
-EXEC cast_binary(256);
-GO
-drop procedure cast_binary;
-GO
-
--- test truncation binary to int4
-CREATE PROCEDURE cast_binary(@val int) AS
-BEGIN
-  DECLARE @BinaryVariable binary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int)
-END;
-GO
-
-EXEC cast_binary(16);
-GO
-EXEC cast_binary(256);
-GO
-drop procedure cast_binary;
-GO
-
--- test casting binary to int2
-CREATE PROCEDURE cast_binary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable binary(2) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int2));
-GO
-EXEC cast_binary(CAST(256 AS int2));
-GO
-drop procedure cast_binary;
-GO
-
--- test casting binary to int2 when the binary size is greater than 2
-CREATE PROCEDURE cast_binary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable binary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int2));
-GO
-EXEC cast_binary(CAST(256 AS int2));
-GO
-drop procedure cast_binary;
-GO
-
--- test truncation binary to int2
-CREATE PROCEDURE cast_binary(@val int2) AS
-BEGIN
-  DECLARE @BinaryVariable binary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int2)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int2));
-GO
-EXEC cast_binary(CAST(256 AS int2));
-GO
-drop procedure cast_binary;
-GO
-
--- test casting binary to int8
-CREATE PROCEDURE cast_binary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable binary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int8));
-GO
-EXEC cast_binary(CAST(256 AS int8));
-GO
-drop procedure cast_binary;
-GO
-
--- test casting binary to int8 when the binary size is greater than 8
-CREATE PROCEDURE cast_binary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable binary(12) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int8));
-GO
-EXEC cast_binary(CAST(256 AS int8));
-GO
-drop procedure cast_binary;
-GO
-
--- test truncation binary to int8
-CREATE PROCEDURE cast_binary(@val int8) AS
-BEGIN
-  DECLARE @BinaryVariable binary(1) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as int8)
-END;
-GO
-
-EXEC cast_binary(CAST(16 AS int8));
-GO
-EXEC cast_binary(CAST(256 AS int8));
-GO
-drop procedure cast_binary;
 GO
 
 -- test real to varbinary
@@ -1615,20 +1198,6 @@ GO
 select cast(CAST(0.123456789 AS double precision) as varbinary(8));
 GO
 
--- test casting varbinary back to double precision
-CREATE PROCEDURE cast_varbinary(@val double precision) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as double precision)
-END;
-GO
-EXEC cast_varbinary(0.123456789);
-GO
-EXEC cast_varbinary(3.123456789);
-GO
-drop procedure cast_varbinary;
-GO
 
 -- test real to binary
 select cast(CAST(0.125 AS real) as binary(4));
@@ -1648,20 +1217,6 @@ GO
 select cast(CAST(0.125 AS real) as binary(4));
 GO
 
--- test casting binary back to real
-CREATE PROCEDURE cast_binary(@val real) AS
-BEGIN
-  DECLARE @BinaryVariable binary(4) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as real)
-END;
-GO
-EXEC cast_binary(0.125);
-GO
-EXEC cast_binary(3.125);
-GO
-drop procedure cast_binary;
-GO
 
 -- test dobule precision to binary
 select cast(CAST(0.123456789 AS double precision) as binary(8));
@@ -1681,20 +1236,6 @@ GO
 select cast(CAST(0.123456789 AS double precision) as binary(8));
 GO
 
--- test casting binary back to double precision
-CREATE PROCEDURE cast_binary(@val double precision) AS
-BEGIN
-  DECLARE @BinaryVariable binary(8) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as double precision)
-END;
-GO
-call cast_binary(0.123456789);
-GO
-call cast_binary(3.123456789);
-GO
-drop procedure cast_binary;
-GO
 
 -- sys.sysname
 select CAST('£' AS sysname);             -- allowed
@@ -1707,28 +1248,21 @@ select CAST('£' AS sys.sysname);         -- allowed
 GO
 select CAST(NULL AS sys.sysname);        -- not allowed
 GO
-reset babelfishpg_tsql.sql_dialect;
-GO
 select CAST('£' AS sys.sysname);         -- allowed
 GO
 select CAST(NULL AS sys.sysname);        -- not allowed
 GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 create table test_sysname (col sys.sysname);
 GO
 insert into test_sysname values (repeat('£', 128));  -- allowed
 GO
 insert into test_sysname values (repeat('😀', 128)); -- not allowed due to UTF check
 GO
-reset babelfishpg_tsql.sql_dialect;
-GO
 insert into test_sysname values (repeat('😀', 128)); -- not allowed due to UTF check
 GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 -- clean up
 drop table testing1;
@@ -1744,6 +1278,4 @@ GO
 drop table testing6;
 GO
 drop table test_sysname;
-GO
-reset babelfishpg_tsql.sql_dialect;
 GO

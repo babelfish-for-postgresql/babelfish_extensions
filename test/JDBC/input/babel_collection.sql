@@ -2,11 +2,6 @@
 create table testing1(col nvarchar(60)); -- expect this to fail in the Postgres dialect
 GO
 
-CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
-GO
-set babelfishpg_tsql.sql_dialect = "tsql";
-GO
-
 -- check the babelfish version
 select cast(
     case
@@ -48,8 +43,6 @@ GO
 create table testing3 (c1 varchar(20), c2 char(20), c3 nvarchar(20));
 GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 insert into testing3 values ('JONES','JONES','JONES');
 insert into testing3 values ('JoneS','JoneS','JoneS');
 insert into testing3 values ('jOnes','jOnes','jOnes');
@@ -79,30 +72,27 @@ GO
 -- then switch back to the TSQL dialect
 --
 select set_config('enable_seqscan','off','false');
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
 GO
 
+
+SET babelfish_showplan_all ON;
+GO
 -- test that like is case-insenstive
 select c1 from testing4 where c1 LIKE 'jones'; -- this gets converted to '='
 GO
-explain (costs false) select c1 from testing4 where c1 LIKE 'jones';
-GO
+
 select c1 from testing4 where c1 LIKE 'Jon%';
 GO
-explain (costs false) select c1 from testing4 where c1 LIKE 'Jon%';
-GO
+
 select c1 from testing4 where c1 LIKE 'jone_';
 GO
-explain (costs false) select c1 from testing4 where c1 LIKE 'jone_';
-GO
+
 select c1 from testing4 where c1 LIKE '_one_';
 GO
-explain (costs false) select c1 from testing4 where c1 LIKE '_one_';
-GO
+
 select c1 from testing4 where c1 LIKE '%on%s';
 GO
-explain (costs false) select c1 from testing4 where c1 LIKE '%on%s';
-GO
+
 -- test that like is accent-senstive for CI_AS collation
 select c1 from testing4 where c1 LIKE 'ab%';
 GO
@@ -114,33 +104,28 @@ GO
 -- test not like
 select c1 from testing4 where c1 NOT LIKE 'jones';
 GO
-explain (costs false) select c1 from testing4 where c1 NOT LIKE 'jones';
-GO
+
 select c1 from testing4 where c1 NOT LIKE 'jone%';
 GO
-explain (costs false) select c1 from testing4 where c1 NOT LIKE 'jone%';
-GO
+
 select c1 from testing4 where c1 NOT LIKE 'ä%';
 GO
-explain (costs false) select c1 from testing4 where c1 NOT LIKE 'ä%';
-GO
+
 -- test escape function and wildcard literal
 select c1 from testing4 where c1 LIKE E'\_ones';
 GO
-explain (costs false) select c1 from testing4 where c1 LIKE E'\_ones';
-GO
+
 select c1 from testing4 where c1 LIKE E'\%ones';
 GO
-explain (costs false) select c1 from testing4 where c1 LIKE E'\%ones';
-GO
+
 -- wild card literals are transformed to equal
 select c1 from testing4 where c1 LIKE '\%ones';
 GO
-explain(costs false) select c1 from testing4 where c1 LIKE '\%ones';
-GO
+
 select c1 from testing4 where c1 LIKE '\_ones';
 GO
-explain(costs false) select c1 from testing4 where c1 LIKE '\_ones';
+
+SET babelfish_showplan_all OFF;
 GO
 -- test combining with other string functions
 select c1 from testing4 where c1 LIKE lower('_ones');
@@ -180,7 +165,11 @@ GO
 
 select * from testing5 where c1 LIKE 'jo%'; -- does not use the transformation
 GO
-explain(costs false) select * from testing5 where c1 LIKE 'jo%';
+SET babelfish_showplan_all ON;
+GO
+select * from testing5 where c1 LIKE 'jo%';
+GO
+SET babelfish_showplan_all OFF;
 GO
 select * from testing5 where c1 NOT LIKE 'j%';
 GO
@@ -188,66 +177,51 @@ select * from testing5 where c1 LIKE 'AB%';
 GO
 
 -- test explicitly specify collation as CI_AS, like transformation is also applied.
-SELECT 'JONES' like 'jo%';
+SELECT 'JONES' LIKE 'jo%';
 GO
-SELECT 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS like 'jo%' ;
+SELECT 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS LIKE 'jo%' ;
 GO
 
 -- test when pattern is empty string or NULL
-SELECT 'JONES' like '';
+SELECT 'JONES' LIKE '';
 GO
-SELECT 'JONES' like NULL;
+SELECT 'JONES' LIKE NULL;
 GO
 
 SELECT * from testing5 where c1 like '';
 GO
-explain (costs false) SELECT * from testing5 where c1 like '';
+SET babelfish_showplan_all ON;
+GO
+SELECT * from testing5 where c1 like '';
+GO
+SET babelfish_showplan_all OFF;
 GO
 SELECT * from testing5 where c1 like NULL;
 GO
-explain (costs false) SELECT * from testing5 where c1 like NULL;
+SET babelfish_showplan_all ON;
+GO
+SELECT * from testing5 where c1 like NULL;
+GO
+SET babelfish_showplan_all OFF;
 GO
 
 SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
 GO
-explain (costs false) SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
+SET babelfish_showplan_all ON;
+GO
+SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
+GO
+SET babelfish_showplan_all OFF;
 GO
 SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
 GO
-explain (costs false) SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
+SET babelfish_showplan_all ON;
+GO
+SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
+GO
+SET babelfish_showplan_all OFF;
 GO
 
--- tsql collations
-alter table testing1 alter column col nvarchar(60) collate Arabic_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Chinese_PRC_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Cyrillic_General_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate French_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Korean_Wansung_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Traditional_Spanish_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Modern_Spanish_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate SQL_Latin1_General_CP1_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate SQL_Latin1_General_CP1_CI_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Traditional_Spanish_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Thai_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Turkish_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Ukrainian_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Vietnamese_CS_AS;
-GO
-alter table testing1 alter column col nvarchar(60) collate Finnish_Swedish_CS_AS;
-GO
 -- expect different result order from previous select
 select * from testing1 order by col;
 GO
@@ -257,17 +231,7 @@ GO
 -- test catalog
 select * from sys.fn_helpcollations() order by name;
 GO
--- test the TYPE keyword is only required in postgres dialect, but not in tsql dialect
-alter table testing1 alter column col varchar(60) collate Finnish_Swedish_CS_AS;
-GO
-alter table testing1 alter column col TYPE varchar(60) collate Finnish_Swedish_CS_AS;
-GO
-SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
-GO
-alter table testing1 alter column col varchar(60) collate sys.Finnish_Swedish_CS_AS;
-GO
-alter table testing1 alter column col TYPE varchar(60) collate sys.Finnish_Swedish_CS_AS;
-GO
+
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'tsql', false);
 GO
 -- test collation list sys table

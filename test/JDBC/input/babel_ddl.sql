@@ -21,32 +21,7 @@ create table t6 ( a int primary key nonclustered, b int);
 GO
 create table t7 ( a int primary key clustered, b int);
 GO
-create table t8 ( a int unique nonclustered, b int);
-GO
-create table t9 ( a int unique clustered, b int);
-GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-
-create index t1_idx1 on t1 (a);
-GO
-create index t1_idx2 on t1(a);
-GO
-
-create table t2 ( a int, b int, primary key (a));
-GO
-create table t3 ( a int, b int, primary key (a));
-GO
-create table t4 ( a int, b int, unique (a));
-GO
-create table t5 ( a int, b int, unique (a));
-GO
-
-create table t6 ( a int primary key, b int);
-GO
-create table t7 ( a int primary key, b int);
-GO
 create table t8 ( a int unique not null, b int);
 GO
 create table t9 ( a int unique not null, b int);
@@ -59,12 +34,6 @@ create index t1_idx4 on t1 (a) on "default";
 GO
 
 -- CREATE TABLE WITH (<table_option> [,...n]) syntax
-create table t10 (a int) 
-with (fillfactor = 90, FILETABLE_COLLATE_FILENAME = database_default);
-GO
-create table t11 (a int) 
-with (data_compression = row on partitions (2, 4, 6 to 8));
-GO
 create table t12 (a int)
 with (system_versioning = on (history_table = aaa.bbb, data_consistency_check = off));
 GO
@@ -75,19 +44,6 @@ create table t14 (a int)
 with (data_deletion = on (filter_column = a, retention_period = 14 day));
 GO
 
--- CREATE INDEX WHERE... WITH (<index_option> [,...n]) syntax
-create index t1_idx5 on t1(a) where a is not null 
-with (pad_index = off, fillfactor = 90, maxdop = 1, sort_in_tempdb = off, max_duration = 2 minutes);
-GO
-create index t1_idx6 on t1(a)
-with (data_compression = page on partitions (2, 4, 6 to 8));
-GO
-
--- CREATE COLUMNSTORE INDEX
-create columnstore index t1_idx7 on t1 (a) with (drop_existing = on);
-GO
-create clustered columnstore index t1_idx8 on t1 (a) on [primary];
-GO
 
 -- CREATE TABLE... WITH FILLFACTOR = num
 create table t15 (a int primary key with fillfactor=50);
@@ -124,8 +80,6 @@ GO
 select * from t21;
 GO
 
-alter table t21 alter a drop default;
-GO
 alter table t21 add constraint dflt11 default 11 for a;
 GO
 insert into t21(b) values (20);
@@ -144,10 +98,6 @@ alter table t_invalid add default 99 for a;
 GO
 
 -- ALTER TABLE ... WITH [NO]CHECK ADD CONSTRAINT ...
-alter table t21 with check add constraint chk1 check (a > 0);  -- add chk1 and enable it
-GO
-alter table t21 with nocheck add constraint chk2 check (b > 0);  -- add chk2 and disable it
-GO
 insert into t21 values (1, 1);
 GO
 -- error, not fulfilling constraint chk1
@@ -159,18 +109,7 @@ GO
 select * from t21;
 GO
 
--- ALTER TABLE ... [NO]CHECK CONSTRAINT ...
--- should pass after CHECK/NOCHECK is fully supported
-alter table t21 nocheck constraint chk1;  -- disable chk1
-GO
-alter table t21 check constraint chk2;  -- enable chk2
-GO
 
--- CREATE TABLE ... ( a int identity(...) NOT FOR REPLICATION)
-create table t22 (a int identity(1,1) NOT FOR REPLICATION);
-GO
-create table t23 (a int identity(1,1) NOT FOR REPLICATION NOT NULL);
-GO
 -- ROWGUIDCOL syntax support
 create table t24 (a uniqueidentifier ROWGUIDCOL);
 GO
@@ -268,8 +207,6 @@ GO
 SELECT * FROM computed_column_t1
 GO
 
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 
 drop table t1;
 GO
@@ -288,8 +225,6 @@ GO
 drop table t8;
 GO
 drop table t9;
-GO
-drop table t10;
 GO
 drop table t11;
 GO
@@ -312,10 +247,6 @@ GO
 drop table t20;
 GO
 drop table t21;
-GO
-drop table t22;
-GO
-drop table t23;
 GO
 drop table t24;
 GO

@@ -7,8 +7,6 @@ select CAST('£' AS nvarchar);
 GO
 
 -- both are available in tsql dialect
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 select CAST('£' AS nchar(2));
 GO
 select CAST('£' AS nvarchar(2));
@@ -51,8 +49,7 @@ select CAST('😀' AS sys.nvarchar(1)); -- this should not be allowed as nvarcha
 GO
 select CAST('😀' AS sys.varchar(1)); -- this should not be allowed as sys.varchar is T-SQL type  TODO: fix BABEL-3543 
 GO
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
+
 
 -- test normal create domain works when apg_enable_domain_typmod is enabled
 -- set apg_enable_domain_typmod true;

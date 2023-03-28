@@ -1,6 +1,3 @@
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
-
 create table t1 (a uniqueidentifier, b uniqueidentifier, c uniqueidentifier, primary key(a));
 GO
 
@@ -99,8 +96,6 @@ select * from t3 where b = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; -- test hash 
 GO
 
 -- assignment cast, should have same behavior as normal insert
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'tsql';
-GO
 create table t5 ( a uniqueidentifier);
 insert into t5 values (cast('6F9619FF-8B86-D011-B42D-00C04FC964FF' as varchar(50)));
 GO
