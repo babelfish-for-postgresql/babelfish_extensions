@@ -32,7 +32,12 @@ jobs:
         id: run-pgindent
         if: always() && steps.build-extensions.outcome == 'success'
         run: |
+          cd ~
+          sudo find . -name babelfishpg_tds.so
+          
           cd ~/psql/lib/
+
+          ls
 
           echo "dumping typedefs for babelfishpg_money to /tmp/babelfishpg_money.typedefs.."
           objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
@@ -47,7 +52,7 @@ jobs:
             print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_common.typedefs
 
           echo "dumping typedefs for babelfishpg_tds to /tmp/babelfishpg_tds.typedefs.."
-          objdump -W babelfishpg_tsql.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+          objdump -W babelfishpg_tds.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
             next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
             next if $flds[-1] =~ /^DW_FORM_str/;\
             print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tds.typedefs
