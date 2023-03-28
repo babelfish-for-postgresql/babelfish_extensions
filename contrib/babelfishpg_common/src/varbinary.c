@@ -702,12 +702,10 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = PG_GETARG_INT32(1);
 	int32		maxlen = typmod - VARHDRSZ;
-	VarChar    *result;
+	char 		*result;
+	coll_info	collInfo;
+	int		encodedByteLen;
 
-	/*
-	 * Cast the entire input binary data if maxlen is invalid or supplied data
-	 * fits it
-	 */
 	/* 
 	 * Try to find the lcid corresponding to the collation of the target column.
 	 */
@@ -722,7 +720,13 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 
 	/* Encode the input string encoding to UTF8(server) encoding */
 	if (maxlen < 0 || len <= maxlen)
+	{
+		/*
+		 * Cast the entire input binary data if maxlen is invalid or supplied data
+		 * fits it
+		 */
 		result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
+	}
 	else
 		result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
 
