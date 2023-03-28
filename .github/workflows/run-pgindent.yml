@@ -95,9 +95,30 @@ jobs:
             echo "Formatting is correct."
           fi
 
-      - name: Upload Logs
+      - name: Upload indent diff
         #iif: always() && steps..outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: pgindent_diff
           path: /tmp/indent.diff
+
+      - name: Upload /tmp/babelfishpg_tds.typedefs
+        #iif: always() && steps..outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: babelfishpg_tds.typedefs
+          path: /tmp/babelfishpg_tds.typedefs
+
+      - name: Upload /tmp/babelfishpg_tsql.typedefs
+        #iif: always() && steps..outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: babelfishpg_tsql.typedefs
+          path: /tmp/babelfishpg_tsql.typedefs
+
+      - name: Upload /tmp/babelfishpg_common.typedefs
+        #iif: always() && steps..outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: babelfishpg_common.typedefs
+          path: /tmp/babelfishpg_common.typedefs
