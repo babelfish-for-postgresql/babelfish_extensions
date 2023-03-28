@@ -47,7 +47,7 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/scansup.h"
-#include "pgstat.h"			/* for pgstat related activities */
+#include "pgstat.h"				/* for pgstat related activities */
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
@@ -102,43 +102,43 @@ extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
-static void  get_language_procs(const char *langname, Oid *compiler, Oid *validator);
+static void get_language_procs(const char *langname, Oid *compiler, Oid *validator);
 static void get_func_language_oids(Oid *lang_handler, Oid *lang_validator);
 extern bool pltsql_suppress_string_truncation_error();
-static Oid bbf_table_var_lookup(const char *relname, Oid relnamespace);
+static Oid	bbf_table_var_lookup(const char *relname, Oid relnamespace);
 extern void assign_object_access_hook_drop_relation(void);
 extern void uninstall_object_access_hook_drop_relation(void);
-static Oid pltsql_seq_type_map(Oid typid);
-bool canCommitTransaction(void);
+static Oid	pltsql_seq_type_map(Oid typid);
+bool		canCommitTransaction(void);
 extern void assign_tablecmds_hook(void);
 static void bbf_ProcessUtility(PlannedStmt *pstmt,
-		const char *queryString,
-		bool readOnlyTree,
-		ProcessUtilityContext context,
-		ParamListInfo params,
-		QueryEnvironment *queryEnv,
-		DestReceiver *dest,
-		QueryCompletion *qc);
+							   const char *queryString,
+							   bool readOnlyTree,
+							   ProcessUtilityContext context,
+							   ParamListInfo params,
+							   QueryEnvironment *queryEnv,
+							   DestReceiver *dest,
+							   QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
 extern void pltsql_add_guc_plan(CachedPlanSource *plansource);
 extern bool pltsql_check_guc_plan(CachedPlanSource *plansource);
-bool pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p);
-extern void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char** probin_str_p);
+bool		pltsql_function_as_checker(const char *lang, List *as, char **prosrc_str_p, char **probin_str_p);
+extern void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, char **probin_str_p);
 extern void pltsql_function_probin_reader(ParseState *pstate, List *fargs, Oid *actual_arg_types, Oid *declared_arg_types, Oid funcid);
 static void check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column);
 static bool is_identity_constraint(ColumnDef *column);
 static bool has_unique_nullable_constraint(ColumnDef *column);
 static bool is_nullable_constraint(Constraint *cst, Oid rel_oid);
 static bool is_nullable_index(IndexStmt *stmt);
-extern PLtsql_function * find_cached_batch(int handle);
+extern PLtsql_function *find_cached_batch(int handle);
 extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArgs *args);
-Datum sp_prepare(PG_FUNCTION_ARGS);
-Datum sp_unprepare(PG_FUNCTION_ARGS);
+Datum		sp_prepare(PG_FUNCTION_ARGS);
+Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
-extern char * construct_unique_index_name(char *index_name, char *relation_name);
-extern int CurrentLineNumber;
+extern char *construct_unique_index_name(char *index_name, char *relation_name);
+extern int	CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
 static void pltsql_non_tsql_proc_entry(int proc_count, int sys_func_count);
 static bool get_attnotnull(Oid relid, AttrNumber attnum);
@@ -148,26 +148,28 @@ static void validate_rowversion_column_constraints(ColumnDef *column);
 static void validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name);
 static Constraint *get_rowversion_default_constraint(TypeName *typname);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
-		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
+											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
-static void validateUserAndRole(char* name);
+static void validateUserAndRole(char *name);
 
-extern bool  pltsql_ansi_defaults;
-extern bool  pltsql_quoted_identifier;
-extern bool  pltsql_concat_null_yields_null;
-extern bool  pltsql_ansi_nulls;
-extern bool  pltsql_ansi_null_dflt_on;
-extern bool  pltsql_ansi_padding;
-extern bool  pltsql_ansi_warnings;
-extern bool  pltsql_arithabort;
-extern int   pltsql_datefirst;
-extern char* pltsql_language;
-extern int pltsql_lock_timeout;
+extern bool pltsql_ansi_defaults;
+extern bool pltsql_quoted_identifier;
+extern bool pltsql_concat_null_yields_null;
+extern bool pltsql_ansi_nulls;
+extern bool pltsql_ansi_null_dflt_on;
+extern bool pltsql_ansi_padding;
+extern bool pltsql_ansi_warnings;
+extern bool pltsql_arithabort;
+extern int	pltsql_datefirst;
+extern char *pltsql_language;
+extern int	pltsql_lock_timeout;
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
-static Oid lang_handler_oid = InvalidOid;     /* Oid of language handler function */
-static Oid lang_validator_oid = InvalidOid;   /* Oid of language validator function */
+static Oid	lang_handler_oid = InvalidOid;	/* Oid of language handler
+											 * function */
+static Oid	lang_validator_oid = InvalidOid;	/* Oid of language validator
+												 * function */
 
 PG_MODULE_MAGIC;
 
@@ -190,37 +192,37 @@ static const struct config_enum_entry schema_mapping_options[] = {
 	{NULL, 0, false}
 };
 
-Oid procid_var = InvalidOid;
+Oid			procid_var = InvalidOid;
 
 int			pltsql_variable_conflict = PLTSQL_RESOLVE_ERROR;
 
-int 		pltsql_schema_mapping;
+int			pltsql_schema_mapping;
 
 int			pltsql_extra_errors;
 bool		pltsql_debug_parser = false;
-char       *identity_insert_string;
+char	   *identity_insert_string;
 bool		output_update_transformation = false;
 bool		output_into_insert_transformation = false;
-char       *update_delete_target_alias = NULL;
+char	   *update_delete_target_alias = NULL;
 int			pltsql_trigger_depth = 0;
 
-PLExecStateCallStack	*exec_state_call_stack = NULL;
-int 					text_size;
-Portal					pltsql_snapshot_portal = NULL;
-int								pltsql_non_tsql_proc_entry_count = 0;
-int								pltsql_sys_func_entry_count = 0;
-static int                             PltsqlGUCNestLevel = 0;
-static bool                            pltsql_guc_dirty;
+PLExecStateCallStack *exec_state_call_stack = NULL;
+int			text_size;
+Portal		pltsql_snapshot_portal = NULL;
+int			pltsql_non_tsql_proc_entry_count = 0;
+int			pltsql_sys_func_entry_count = 0;
+static int	PltsqlGUCNestLevel = 0;
+static bool pltsql_guc_dirty;
 static guc_push_old_value_hook_type prev_guc_push_old_value_hook = NULL;
 static validate_set_config_function_hook_type prev_validate_set_config_function_hook = NULL;
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
-bool current_query_is_create_tbl_check_constraint = false;
+bool		current_query_is_create_tbl_check_constraint = false;
 
 /* Configurations */
-bool        pltsql_trace_tree = false;
-bool        pltsql_trace_exec_codes = false;
-bool        pltsql_trace_exec_counts = false;
-bool        pltsql_trace_exec_time = false;
+bool		pltsql_trace_tree = false;
+bool		pltsql_trace_exec_codes = false;
+bool		pltsql_trace_exec_counts = false;
+bool		pltsql_trace_exec_time = false;
 
 tsql_identity_insert_fields tsql_identity_insert = {false, InvalidOid, InvalidOid};
 
@@ -258,245 +260,255 @@ set_procid(Oid oid)
 static void
 assign_identity_insert(const char *newval, void *extra)
 {
-        if (strcmp(newval, "") != 0)
-        {
-                List *elemlist;
-                Oid rel_oid;
-                Oid schema_oid;
-                char *option_flag;
-                char *rel_name;
-                char *schema_name = NULL;
-                char *input_string = pstrdup(newval);
-                char *id_insert_rel_name = NULL;
-                char *id_insert_schema_name = NULL;
-				char *cur_db_name;
+	if (strcmp(newval, "") != 0)
+	{
+		List	   *elemlist;
+		Oid			rel_oid;
+		Oid			schema_oid;
+		char	   *option_flag;
+		char	   *rel_name;
+		char	   *schema_name = NULL;
+		char	   *input_string = pstrdup(newval);
+		char	   *id_insert_rel_name = NULL;
+		char	   *id_insert_schema_name = NULL;
+		char	   *cur_db_name;
 
-				cur_db_name = get_cur_db_name();
+		cur_db_name = get_cur_db_name();
 
-                /* Check if IDENTITY_INSERT is valid and get names. If not, reset it. */
-                if (tsql_identity_insert.valid)
-                {
-                        id_insert_rel_name = get_rel_name(tsql_identity_insert.rel_oid);
+		/* Check if IDENTITY_INSERT is valid and get names. If not, reset it. */
+		if (tsql_identity_insert.valid)
+		{
+			id_insert_rel_name = get_rel_name(tsql_identity_insert.rel_oid);
 
-                        if (!id_insert_rel_name)
-                                tsql_identity_insert.valid = false;
-                        else
-                                id_insert_schema_name = get_namespace_name(tsql_identity_insert.schema_oid);
-                }
+			if (!id_insert_rel_name)
+				tsql_identity_insert.valid = false;
+			else
+				id_insert_schema_name = get_namespace_name(tsql_identity_insert.schema_oid);
+		}
 
-                /* Parse user input string into list of identifiers */
-                if (!SplitGUCList(input_string, '.', &elemlist))
-                {
-                        /* syntax error in list */
-                        GUC_check_errdetail("List syntax is invalid.");
-                        pfree(input_string);
-                        list_free(elemlist);
-                        return;
-                }
+		/* Parse user input string into list of identifiers */
+		if (!SplitGUCList(input_string, '.', &elemlist))
+		{
+			/* syntax error in list */
+			GUC_check_errdetail("List syntax is invalid.");
+			pfree(input_string);
+			list_free(elemlist);
+			return;
+		}
 
-                option_flag = (char *) linitial(elemlist);
-                rel_name = (char *) lsecond(elemlist);
+		option_flag = (char *) linitial(elemlist);
+		rel_name = (char *) lsecond(elemlist);
 
-                /* Check the user provided schema value */
-                if (list_length(elemlist) >= 3)
-                {
-                        schema_name = (char *) lthird(elemlist);
+		/* Check the user provided schema value */
+		if (list_length(elemlist) >= 3)
+		{
+			schema_name = (char *) lthird(elemlist);
 
-						if (cur_db_name)
-							schema_name = get_physical_schema_name(cur_db_name,
-																   schema_name);
+			if (cur_db_name)
+				schema_name = get_physical_schema_name(cur_db_name,
+													   schema_name);
 
-                        schema_oid = LookupExplicitNamespace(schema_name, true);
-                        if (!OidIsValid(schema_oid))
-                                ereport(ERROR,
-                                        (errcode(ERRCODE_UNDEFINED_SCHEMA),
-                                         errmsg("schema \"%s\" does not exist",
-                                                        schema_name)));
-                        
-                        rel_oid = get_relname_relid(rel_name, schema_oid);
-                        if (!OidIsValid(rel_oid))
-                                ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("relation \"%s\" does not exist",
-							rel_name)));
-                }
+			schema_oid = LookupExplicitNamespace(schema_name, true);
+			if (!OidIsValid(schema_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_SCHEMA),
+						 errmsg("schema \"%s\" does not exist",
+								schema_name)));
 
-                /* Check the catalog name then ignore it */
-                if (list_length(elemlist) == 4)
-                {
-                        char *catalog_name = (char *) lfourth(elemlist);
-                        if (strcmp(catalog_name, get_database_name(MyDatabaseId)) != 0)
-                                ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
-							catalog_name, schema_name, rel_name)));
-                }
+			rel_oid = get_relname_relid(rel_name, schema_oid);
+			if (!OidIsValid(rel_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_TABLE),
+						 errmsg("relation \"%s\" does not exist",
+								rel_name)));
+		}
 
-                /* If schema is not provided, find it from the search path. */
-                if (!schema_name)
-                {
-                        /* If the relation exists, retrieve the relation Oid from the
-                         * first schema that contains it.
-                         */
-                        rel_oid = RelnameGetRelid(rel_name);
-                        if (!OidIsValid(rel_oid))
-                                ereport(ERROR,
-                                        (errcode(ERRCODE_UNDEFINED_TABLE),
-                                         errmsg("relation \"%s\" does not exist",
-                                                        rel_name)));
+		/* Check the catalog name then ignore it */
+		if (list_length(elemlist) == 4)
+		{
+			char	   *catalog_name = (char *) lfourth(elemlist);
 
-                        schema_oid = get_rel_namespace(rel_oid);
-                        schema_name = get_namespace_name(schema_oid);
-                }
+			if (strcmp(catalog_name, get_database_name(MyDatabaseId)) != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cross-database references are not implemented: \"%s.%s.%s\"",
+								catalog_name, schema_name, rel_name)));
+		}
 
-                /* Process assignment logic */
-                if (strcmp(option_flag, "on") == 0)
-                {
-                        if (!tsql_identity_insert.valid)
-                        {
-                                /* Check if relation has identity property */
-                                Relation rel;
-                                TupleDesc tupdesc;
-                                int attnum;
-                                bool has_ident = false;
+		/* If schema is not provided, find it from the search path. */
+		if (!schema_name)
+		{
+			/*
+			 * If the relation exists, retrieve the relation Oid from the
+			 * first schema that contains it.
+			 */
+			rel_oid = RelnameGetRelid(rel_name);
+			if (!OidIsValid(rel_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_TABLE),
+						 errmsg("relation \"%s\" does not exist",
+								rel_name)));
 
-                                rel = RelationIdGetRelation(rel_oid);
-                                tupdesc = RelationGetDescr(rel);
+			schema_oid = get_rel_namespace(rel_oid);
+			schema_name = get_namespace_name(schema_oid);
+		}
 
-                                for (attnum = 0; attnum < tupdesc->natts; attnum++)
-                                {
-                                        Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
-                                        if (attr->attidentity)
-                                        {
-                                                has_ident = true;
-                                                break;
-                                        }
-                                }
+		/* Process assignment logic */
+		if (strcmp(option_flag, "on") == 0)
+		{
+			if (!tsql_identity_insert.valid)
+			{
+				/* Check if relation has identity property */
+				Relation	rel;
+				TupleDesc	tupdesc;
+				int			attnum;
+				bool		has_ident = false;
 
-                                RelationClose(rel);
+				rel = RelationIdGetRelation(rel_oid);
+				tupdesc = RelationGetDescr(rel);
 
-                                if (!has_ident)
-                                        ereport(ERROR,
-                                                        (errcode(ERRCODE_UNDEFINED_COLUMN),
-                                                         errmsg("Table '%s.%s' does not have the identity property. Cannot perform SET operation.",
-                                                                        schema_name, rel_name)));
+				for (attnum = 0; attnum < tupdesc->natts; attnum++)
+				{
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
 
-                                /* Set IDENTITY_INSERT to the user value */
-                                tsql_identity_insert.rel_oid = rel_oid;
-                                tsql_identity_insert.schema_oid = schema_oid;
-                                tsql_identity_insert.valid = true;
-                        }
-                        else if (rel_oid != tsql_identity_insert.rel_oid)
-                        {
-                                /* IDENTITY_INSERT is already on and tables do not match */
-                                ereport(ERROR,
-					(errcode(ERRCODE_RESTRICT_VIOLATION),
-					 errmsg("IDENTITY_INSERT is already ON for table \'%s.%s.%s\'",
-                                                    get_database_name(MyDatabaseId), 
-                                                    id_insert_schema_name, 
-                                                    id_insert_rel_name)));
-                        }
-                        /* IDENTITY_INSERT is already set to the table. Keep the value */
-                }
-                else if (strcmp(option_flag, "off") == 0)
-                {
-                        if (rel_oid == tsql_identity_insert.rel_oid)
-                        {
-                                /* IDENTITY_INSERT is currently set and tables match. Set to off */
-                                tsql_identity_insert.valid = false;
-                        }
-                        /* User sets to off and already off or different table. Keep the value */
-                }
-                else
-                {
-                        ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unknown option value")));
-                }
+					if (attr->attidentity)
+					{
+						has_ident = true;
+						break;
+					}
+				}
 
-                /* Clean up */
-                pfree(input_string);
-                list_free(elemlist);
-        }
+				RelationClose(rel);
+
+				if (!has_ident)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("Table '%s.%s' does not have the identity property. Cannot perform SET operation.",
+									schema_name, rel_name)));
+
+				/* Set IDENTITY_INSERT to the user value */
+				tsql_identity_insert.rel_oid = rel_oid;
+				tsql_identity_insert.schema_oid = schema_oid;
+				tsql_identity_insert.valid = true;
+			}
+			else if (rel_oid != tsql_identity_insert.rel_oid)
+			{
+				/* IDENTITY_INSERT is already on and tables do not match */
+				ereport(ERROR,
+						(errcode(ERRCODE_RESTRICT_VIOLATION),
+						 errmsg("IDENTITY_INSERT is already ON for table \'%s.%s.%s\'",
+								get_database_name(MyDatabaseId),
+								id_insert_schema_name,
+								id_insert_rel_name)));
+			}
+			/* IDENTITY_INSERT is already set to the table. Keep the value */
+		}
+		else if (strcmp(option_flag, "off") == 0)
+		{
+			if (rel_oid == tsql_identity_insert.rel_oid)
+			{
+				/*
+				 * IDENTITY_INSERT is currently set and tables match. Set to
+				 * off
+				 */
+				tsql_identity_insert.valid = false;
+			}
+
+			/*
+			 * User sets to off and already off or different table. Keep the
+			 * value
+			 */
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unknown option value")));
+		}
+
+		/* Clean up */
+		pfree(input_string);
+		list_free(elemlist);
+	}
 }
 
 static void
 assign_textsize(int newval, void *extra)
 {
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
-			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.textsize", false, NULL, newval);
+		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.textsize", false, NULL, newval);
 }
 
 static void
 pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 {
 	if (prev_pre_parse_analyze_hook)
-	  prev_pre_parse_analyze_hook(pstate, parseTree);
+		prev_pre_parse_analyze_hook(pstate, parseTree);
 
 	switch (parseTree->stmt->type)
 	{
 		case T_InsertStmt:
-		{
-			InsertStmt	*stmt = (InsertStmt *) parseTree->stmt;
-			SelectStmt	*selectStmt = (SelectStmt *) stmt->selectStmt;
-			A_Const   	*value;
-			Oid     	 relid;
-			ListCell	*lc;
-
-			if (!babelfish_dump_restore || IsBinaryUpgrade)
-				break;
-
-			relid = RangeVarGetRelid(stmt->relation, NoLock, false);
-
-			/*
-			 * Insert new dbid column value in babelfish catalog if dump did
-			 * not provide it.
-			 */
-			if (relid == sysdatabases_oid ||
-				relid == namespace_ext_oid ||
-				relid == bbf_view_def_oid)
 			{
-				int16    	 dbid = 0;
-				ResTarget	*dbidCol;
-				bool		 found = false;
+				InsertStmt *stmt = (InsertStmt *) parseTree->stmt;
+				SelectStmt *selectStmt = (SelectStmt *) stmt->selectStmt;
+				A_Const    *value;
+				Oid			relid;
+				ListCell   *lc;
 
-				/* Skip if dbid column already exists */
-				foreach(lc, stmt->cols)
-				{
-					ResTarget *col = (ResTarget *) lfirst(lc);
-
-					if (strcasecmp(col->name, "dbid") == 0)
-						found = true;
-				}
-				if (found)
+				if (!babelfish_dump_restore || IsBinaryUpgrade)
 					break;
 
-				dbid = getDbidForLogicalDbRestore(relid);
+				relid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
-				/* const value node to store into values clause */
-				value = makeNode(A_Const);
-				value->val.ival.type = T_Integer;
-				value->val.ival.ival = dbid;
-				value->location = -1;
-
-				/* dbid column to store into InsertStmt's target list */
-				dbidCol = makeNode(ResTarget);
-				dbidCol->name = "dbid";
-				dbidCol->name_location = -1;
-				dbidCol->indirection = NIL;
-				dbidCol->val = NULL;
-				dbidCol->location = -1;
-				stmt->cols = lappend(stmt->cols, dbidCol);
-
-				foreach(lc, selectStmt->valuesLists)
+				/*
+				 * Insert new dbid column value in babelfish catalog if dump
+				 * did not provide it.
+				 */
+				if (relid == sysdatabases_oid ||
+					relid == namespace_ext_oid ||
+					relid == bbf_view_def_oid)
 				{
-					List	*sublist = (List *) lfirst(lc);
+					int16		dbid = 0;
+					ResTarget  *dbidCol;
+					bool		found = false;
 
-					sublist = lappend(sublist, value);
+					/* Skip if dbid column already exists */
+					foreach(lc, stmt->cols)
+					{
+						ResTarget  *col = (ResTarget *) lfirst(lc);
+
+						if (strcasecmp(col->name, "dbid") == 0)
+							found = true;
+					}
+					if (found)
+						break;
+
+					dbid = getDbidForLogicalDbRestore(relid);
+
+					/* const value node to store into values clause */
+					value = makeNode(A_Const);
+					value->val.ival.type = T_Integer;
+					value->val.ival.ival = dbid;
+					value->location = -1;
+
+					/* dbid column to store into InsertStmt's target list */
+					dbidCol = makeNode(ResTarget);
+					dbidCol->name = "dbid";
+					dbidCol->name_location = -1;
+					dbidCol->indirection = NIL;
+					dbidCol->val = NULL;
+					dbidCol->location = -1;
+					stmt->cols = lappend(stmt->cols, dbidCol);
+
+					foreach(lc, selectStmt->valuesLists)
+					{
+						List	   *sublist = (List *) lfirst(lc);
+
+						sublist = lappend(sublist, value);
+					}
 				}
+				break;
 			}
-			break;
-		}
 		default:
 			break;
 	}
@@ -504,30 +516,37 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	if (parseTree->stmt->type == T_CreateFunctionStmt ){
-		ListCell 		*option;
+	if (parseTree->stmt->type == T_CreateFunctionStmt)
+	{
+		ListCell   *option;
 		CreateTrigStmt *trigStmt;
 		CreateFunctionStmt *funcStmt = (CreateFunctionStmt *) parseTree->stmt;
-		char* trig_schema;
-		foreach (option, ((CreateFunctionStmt *) parseTree->stmt)->options){
-			DefElem *defel = (DefElem *) lfirst(option);
+		char	   *trig_schema;
+
+		foreach(option, ((CreateFunctionStmt *) parseTree->stmt)->options)
+		{
+			DefElem    *defel = (DefElem *) lfirst(option);
+
 			if (strcmp(defel->defname, "trigStmt") == 0)
 			{
 				trigStmt = (CreateTrigStmt *) defel->arg;
-				if (trigStmt->args != NIL){
-					trig_schema = ((String *)list_nth(((CreateTrigStmt *) trigStmt)->args,0))->sval;
-					if ((trigStmt->relation->schemaname != NULL && strcasecmp(trig_schema, trigStmt->relation->schemaname)!=0)
-					|| trigStmt->relation->schemaname == NULL){
-					ereport(ERROR,
-						(errcode(ERRCODE_INTERNAL_ERROR),
-						 errmsg("Cannot create trigger '%s.%s' because its schema is different from the schema of the target table or view.",
-						   trig_schema , trigStmt->trigname)));
+				if (trigStmt->args != NIL)
+				{
+					trig_schema = ((String *) list_nth(((CreateTrigStmt *) trigStmt)->args, 0))->sval;
+					if ((trigStmt->relation->schemaname != NULL && strcasecmp(trig_schema, trigStmt->relation->schemaname) != 0)
+						|| trigStmt->relation->schemaname == NULL)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								 errmsg("Cannot create trigger '%s.%s' because its schema is different from the schema of the target table or view.",
+										trig_schema, trigStmt->trigname)));
 					}
 					trigStmt->args = NIL;
 				}
 				else
 				{
 					Assert(list_length(funcStmt->funcname) == 1);
+
 					/*
 					 * Add schemaname to trigger's function name.
 					 */
@@ -540,15 +559,20 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		}
 	}
 
-	if(parseTree->stmt->type == T_DropStmt){
-		DropStmt *dropStmt;
+	if (parseTree->stmt->type == T_DropStmt)
+	{
+		DropStmt   *dropStmt;
+
 		dropStmt = (DropStmt *) parseTree->stmt;
-		if (dropStmt->removeType == OBJECT_TRIGGER){
+		if (dropStmt->removeType == OBJECT_TRIGGER)
+		{
 			ListCell   *cell1;
-			// in case we have multi triggers in one stmt
+
+			/* in case we have multi triggers in one stmt */
 			foreach(cell1, dropStmt->objects)
 			{
-				Node *object = lfirst(cell1);
+				Node	   *object = lfirst(cell1);
+
 				pre_check_trigger_schema(castNode(List, object), dropStmt->missing_ok);
 			}
 		}
@@ -560,155 +584,160 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	switch (parseTree->stmt->type)
 	{
 		case T_CreateStmt:
-		{
-			CreateStmt *create_stmt = (CreateStmt *)parseTree->stmt;
-			ListCell *elements;
-
-			/* We should not allow "create if not exists" in TSQL semantics.
-			 * The only reason for allowing temp tables for now is that they are
-			 * used internally to declare table type. Please see
-			 * exec_stmt_decl_table().
-			 */
-			if (create_stmt->if_not_exists &&
-				create_stmt->relation->relpersistence !=  RELPERSISTENCE_TEMP) {
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("Incorrect syntax near '%s'", create_stmt->relation->relname)));
-
-			}
-
-			/* SYSNAME datatype is default not null */
-			foreach(elements, create_stmt->tableElts)
 			{
-				Node *element = lfirst(elements);
-				ColumnDef *coldef;
+				CreateStmt *create_stmt = (CreateStmt *) parseTree->stmt;
+				ListCell   *elements;
 
-				if (nodeTag(element) != T_ColumnDef)
-					continue;
-
-				coldef = castNode(ColumnDef, element);
-
-				if (!is_sysname_column(coldef))
-					continue;
-
-				/* 
-				 * If the SYSNAME column is not explicitly defined as NULL,
-				 * take it as not NULL
+				/*
+				 * We should not allow "create if not exists" in TSQL
+				 * semantics. The only reason for allowing temp tables for now
+				 * is that they are used internally to declare table type.
+				 * Please see exec_stmt_decl_table().
 				 */
-				if (!have_null_constr(coldef->constraints))
+				if (create_stmt->if_not_exists &&
+					create_stmt->relation->relpersistence != RELPERSISTENCE_TEMP)
 				{
-					Constraint *c = makeNode(Constraint);
-					c->contype = CONSTR_NOTNULL;
-					c->location = -1;
-					coldef->constraints = lappend(coldef->constraints, c);
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("Incorrect syntax near '%s'", create_stmt->relation->relname)));
+
 				}
-			}
-			break;
-		}
-		case T_AlterTableStmt:
-		{
-			AlterTableStmt	*atstmt = (AlterTableStmt *) parseTree->stmt;
-			ListCell		*lc;
 
-			foreach (lc, atstmt->cmds)
-			{
-				AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
-
-				switch (cmd->subtype)
+				/* SYSNAME datatype is default not null */
+				foreach(elements, create_stmt->tableElts)
 				{
-					case AT_AddColumn:
+					Node	   *element = lfirst(elements);
+					ColumnDef  *coldef;
+
+					if (nodeTag(element) != T_ColumnDef)
+						continue;
+
+					coldef = castNode(ColumnDef, element);
+
+					if (!is_sysname_column(coldef))
+						continue;
+
+					/*
+					 * If the SYSNAME column is not explicitly defined as
+					 * NULL, take it as not NULL
+					 */
+					if (!have_null_constr(coldef->constraints))
 					{
-						/* SYSNAME datatype is default not null */
-						ColumnDef *coldef = castNode(ColumnDef, cmd->def);
+						Constraint *c = makeNode(Constraint);
 
-						if (!is_sysname_column(coldef))
-							continue;
+						c->contype = CONSTR_NOTNULL;
+						c->location = -1;
+						coldef->constraints = lappend(coldef->constraints, c);
+					}
+				}
+				break;
+			}
+		case T_AlterTableStmt:
+			{
+				AlterTableStmt *atstmt = (AlterTableStmt *) parseTree->stmt;
+				ListCell   *lc;
 
-						/* 
-						 * If the SYSNAME column is not explicitly defined as NULL,
-						 * take it as not NULL
-						 */
-						if (!have_null_constr(coldef->constraints))
-						{
-							Constraint *c = makeNode(Constraint);
-							c->contype = CONSTR_NOTNULL;
-							c->location = -1;
-							coldef->constraints = lappend(coldef->constraints, c);
-						}
+				foreach(lc, atstmt->cmds)
+				{
+					AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
+
+					switch (cmd->subtype)
+					{
+						case AT_AddColumn:
+							{
+								/* SYSNAME datatype is default not null */
+								ColumnDef  *coldef = castNode(ColumnDef, cmd->def);
+
+								if (!is_sysname_column(coldef))
+									continue;
+
+								/*
+								 * If the SYSNAME column is not explicitly
+								 * defined as NULL, take it as not NULL
+								 */
+								if (!have_null_constr(coldef->constraints))
+								{
+									Constraint *c = makeNode(Constraint);
+
+									c->contype = CONSTR_NOTNULL;
+									c->location = -1;
+									coldef->constraints = lappend(coldef->constraints, c);
+								}
+								break;
+							}
+
+							/*
+							 * TODO: After ALTER TABLE ALTER COLUMN [NOT] NULL
+							 * is supported, we should add same SYSNAME check
+							 * code for ALTER TABLE ALTER COLUMN
+							 */
+						default:
+							break;
+					}
+				}
+				break;
+			}
+		case T_GrantStmt:
+			{
+				/* detect object type */
+				GrantStmt  *grant = (GrantStmt *) parseTree->stmt;
+				ListCell   *cell;
+				List	   *plan_name = NIL;
+				ObjectWithArgs *func = NULL;
+
+				Assert(list_length(grant->objects) == 1);
+				foreach(cell, grant->objects)
+				{
+					RangeVar   *rv = (RangeVar *) lfirst(cell);
+					char	   *schema = rv->schemaname;	/* this is physical name */
+					char	   *obj = rv->relname;
+					Oid			func_oid;
+
+					/* table, sequence, view, materialized view */
+					/* don't distinguish table sequence here */
+					if (RangeVarGetRelid(rv, NoLock, true) != InvalidOid)
+						break;	/* do nothing */
+
+
+					if (schema)
+						plan_name = list_make2(makeString(schema), makeString(obj));
+					else
+						plan_name = list_make1(makeString(obj));
+
+					func = makeNode(ObjectWithArgs);
+					func->objname = plan_name;
+					func->args_unspecified = true;
+
+					/* function, procedure */
+					func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
+					if (func_oid != InvalidOid)
+					{
+						char		kind = get_func_prokind(func_oid);
+
+						if (kind == PROKIND_PROCEDURE)
+							grant->objtype = OBJECT_PROCEDURE;
+						else
+							grant->objtype = OBJECT_FUNCTION;
+
 						break;
 					}
-					/* 
-					 * TODO: After ALTER TABLE ALTER COLUMN [NOT] NULL is
-					 * supported, we should add same SYSNAME check code for 
-					 * ALTER TABLE ALTER COLUMN
-					 */
-					default:
+
+					/* type */
+					if (LookupTypeNameOid(NULL, makeTypeNameFromNameList(plan_name), true) != InvalidOid)
+					{
+						grant->objtype = OBJECT_TYPE;
 						break;
+					}
 				}
+
+				/* Adjust datatype structre if needed */
+				if (grant->objtype == OBJECT_PROCEDURE || grant->objtype == OBJECT_FUNCTION)
+					grant->objects = list_make1(func);
+				else if (grant->objtype == OBJECT_TYPE)
+					grant->objects = list_make1(plan_name);
+
+				break;
 			}
-			break;
-		}
-		case T_GrantStmt:
-		{
-			/* detect object type */
-			GrantStmt	*grant = (GrantStmt *) parseTree->stmt;
-			ListCell	*cell;
-			List	*plan_name = NIL;
-			ObjectWithArgs *func = NULL;
-
-			Assert(list_length(grant->objects) == 1);
-			foreach(cell, grant->objects)
-			{
-				RangeVar	*rv = (RangeVar *) lfirst(cell);
-				char	*schema = rv->schemaname;	/* this is physical name */	
-				char	*obj = rv->relname;
-				Oid		func_oid;
-
-				/* table, sequence, view, materialized view */
-				/* don't distinguish table sequence here */
-				if (RangeVarGetRelid(rv, NoLock, true) != InvalidOid)
-					break;		/* do nothing */
-
-
-				if (schema)
-					plan_name = list_make2(makeString(schema), makeString(obj));
-				else
-					plan_name = list_make1(makeString(obj));
-
-				func = makeNode(ObjectWithArgs);
-				func->objname = plan_name;
-				func->args_unspecified = true;
-
-				/* function, procedure */
-				func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
-				if (func_oid != InvalidOid)
-				{
-					char kind = get_func_prokind(func_oid);
-
-					if (kind == PROKIND_PROCEDURE)
-						grant->objtype = OBJECT_PROCEDURE;
-					else
-						grant->objtype = OBJECT_FUNCTION;
-
-					break;
-				}
-
-				/* type */
-				if (LookupTypeNameOid(NULL, makeTypeNameFromNameList(plan_name), true) != InvalidOid)
-				{
-					grant->objtype = OBJECT_TYPE;
-					break;
-				}
-			}
-
-			/* Adjust datatype structre if needed */
-			if (grant->objtype == OBJECT_PROCEDURE || grant->objtype == OBJECT_FUNCTION)
-				grant->objects = list_make1(func);
-			else if (grant->objtype == OBJECT_TYPE)
-				grant->objects = list_make1(plan_name);
-
-			break;
-		}
 		default:
 			break;
 	}
@@ -720,13 +749,13 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 static inline void
 pltsql_set_nulls_first(Query *query)
 {
-	ListCell *lc = NULL;
-	Node *node = NULL;
+	ListCell   *lc = NULL;
+	Node	   *node = NULL;
 	SortGroupClause *sgc = NULL;
-	char *opname = NULL;
+	char	   *opname = NULL;
 	RangeTblEntry *rte = NULL;
 
-	// check subqueries
+	/* check subqueries */
 	foreach(lc, query->rtable)
 	{
 		node = lfirst(lc);
@@ -763,24 +792,24 @@ static void
 pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 {
 	if (prev_post_parse_analyze_hook)
-	  prev_post_parse_analyze_hook(pstate, query, jstate);
+		prev_post_parse_analyze_hook(pstate, query, jstate);
 
-	if (query->commandType == CMD_UTILITY && nodeTag((Node*)(query->utilityStmt)) == T_CreateStmt)
+	if (query->commandType == CMD_UTILITY && nodeTag((Node *) (query->utilityStmt)) == T_CreateStmt)
 		set_current_query_is_create_tbl_check_constraint(query->utilityStmt);
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 	if (query->commandType == CMD_INSERT)
 	{
-		ListCell *lc;
-		bool has_ident = false;
+		ListCell   *lc;
+		bool		has_ident = false;
 
 		/* Loop through column attribute list */
-		foreach (lc, query->targetList)
+		foreach(lc, query->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-			TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
-			int attr_num = tle->resno - 1;
+			TupleDesc	tupdesc = RelationGetDescr(pstate->p_target_relation);
+			int			attr_num = tle->resno - 1;
 			Form_pg_attribute attr;
 
 			attr = TupleDescAttr(tupdesc, attr_num);
@@ -791,8 +820,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				has_ident = true;
 			}
 
-			/*Disallow insert into a ROWVERSION column */
-			if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
+			/* Disallow insert into a ROWVERSION column */
+			if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (attr->atttypid))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -803,15 +832,15 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 		/* Set to override value if IDENTITY_INSERT */
 		if (tsql_identity_insert.valid)
 		{
-			Oid schema_oid = RelationGetNamespace(pstate->p_target_relation);
-			char *rel_name = RelationGetRelationName(pstate->p_target_relation);
-			Oid rel_oid = get_relname_relid(rel_name, schema_oid);
+			Oid			schema_oid = RelationGetNamespace(pstate->p_target_relation);
+			char	   *rel_name = RelationGetRelationName(pstate->p_target_relation);
+			Oid			rel_oid = get_relname_relid(rel_name, schema_oid);
 
 			if (rel_oid == tsql_identity_insert.rel_oid)
 			{
-				ColumnRef *n;
-				ResTarget *rt;
-				List *returningList;
+				ColumnRef  *n;
+				ResTarget  *rt;
+				List	   *returningList;
 
 				if (!has_ident)
 					ereport(ERROR,
@@ -835,7 +864,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				pstate->p_namespace = NIL;
 				addNSItemToQuery(pstate, pstate->p_target_nsitem, false, true, true);
 				query->returningList = transformReturningList(pstate,
-															returningList);
+															  returningList);
 			}
 			else
 			{
@@ -847,7 +876,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	}
 	else if (query->commandType == CMD_UTILITY)
 	{
-		Node *parsetree = query->utilityStmt;
+		Node	   *parsetree = query->utilityStmt;
 
 		switch (nodeTag(parsetree))
 		{
@@ -857,7 +886,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 					ListCell   *elements;
 					bool		seen_identity = false;
 					bool		seen_rowversion = false;
-					char		*rowversion_column_name = NULL;
+					char	   *rowversion_column_name = NULL;
 
 					foreach(elements, stmt->tableElts)
 					{
@@ -881,12 +910,12 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 								{
 									ereport(ERROR,
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-												"or add a NOT NULL constraint")));
+											 errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+													"or add a NOT NULL constraint")));
 								}
 								if (is_rowversion_column(pstate, (ColumnDef *) element))
 								{
-									ColumnDef *def = (ColumnDef *) element;
+									ColumnDef  *def = (ColumnDef *) element;
 
 									if (seen_rowversion)
 										ereport(ERROR,
@@ -898,14 +927,15 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 									def->constraints = lappend(def->constraints, get_rowversion_default_constraint(def->typeName));
 								}
 								break;
-							case T_Constraint: 
-							{
-								Constraint *c = (Constraint *) element;
-								c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
+							case T_Constraint:
+								{
+									Constraint *c = (Constraint *) element;
 
-								if (rowversion_column_name)
-									validate_rowversion_table_constraint(c, rowversion_column_name);
-							}
+									c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
+
+									if (rowversion_column_name)
+										validate_rowversion_table_constraint(c, rowversion_column_name);
+								}
 								break;
 							default:
 								break;
@@ -916,15 +946,15 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 
 			case T_AlterTableStmt:
 				{
-					AlterTableStmt	*atstmt = (AlterTableStmt *) parsetree;
-					ListCell		*lcmd;
-					bool			seen_identity = false;
-					bool			seen_rowversion = false;
-					Oid				relid;
-					Relation		rel;
-					TupleDesc		tupdesc;
-					AttrNumber		attr_num;
-					char			*rowversion_column_name = NULL;
+					AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+					ListCell   *lcmd;
+					bool		seen_identity = false;
+					bool		seen_rowversion = false;
+					Oid			relid;
+					Relation	rel;
+					TupleDesc	tupdesc;
+					AttrNumber	attr_num;
+					char	   *rowversion_column_name = NULL;
 
 					/* Search through existing relation attributes */
 					relid = RangeVarGetRelid(atstmt->relation, NoLock, false);
@@ -944,9 +974,9 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						/* Check for identity attribute */
 						if (attr->attidentity)
 							seen_identity = true;
-						
+
 						/* Check for rowversion attribute */
-						if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
+						if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (attr->atttypid))
 						{
 							seen_rowversion = true;
 							rowversion_column_name = NameStr(attr->attname);
@@ -974,7 +1004,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 								}
 								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 								{
-									ColumnDef *def = castNode(ColumnDef, cmd->def);
+									ColumnDef  *def = castNode(ColumnDef, cmd->def);
+
 									if (seen_rowversion)
 										ereport(ERROR,
 												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -985,88 +1016,100 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 									def->constraints = lappend(def->constraints, get_rowversion_default_constraint(def->typeName));
 								}
 								break;
-							case AT_AddConstraint: 
-							{
-								Constraint * c = castNode(Constraint, cmd->def);
-								c->conname = construct_unique_index_name(c->conname, atstmt->relation->relname);
-
-								if (escape_hatch_unique_constraint != EH_IGNORE &&
-									c->contype == CONSTR_UNIQUE &&
-									is_nullable_constraint(c, relid))
+							case AT_AddConstraint:
 								{
-									ereport(ERROR,
-											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-												"or add a NOT NULL constraint")));
-								}
+									Constraint *c = castNode(Constraint, cmd->def);
 
-								if (rowversion_column_name)
-									validate_rowversion_table_constraint(c, rowversion_column_name);
-							}
+									c->conname = construct_unique_index_name(c->conname, atstmt->relation->relname);
+
+									if (escape_hatch_unique_constraint != EH_IGNORE &&
+										c->contype == CONSTR_UNIQUE &&
+										is_nullable_constraint(c, relid))
+									{
+										ereport(ERROR,
+												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												 errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+														"or add a NOT NULL constraint")));
+									}
+
+									if (rowversion_column_name)
+										validate_rowversion_table_constraint(c, rowversion_column_name);
+								}
 								break;
 							case AT_AlterColumnType:
-							{
-								int colnamelen = strlen(cmd->name);
-
-								/* Check if rowversion column type is being changed. */
-								if (rowversion_column_name != NULL &&
-									strlen(rowversion_column_name) == colnamelen)
 								{
-									bool found = false;
-									if (pltsql_case_insensitive_identifiers)
-									{
-										char *colname = downcase_identifier(cmd->name, colnamelen, false, false);
-										char *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
+									int			colnamelen = strlen(cmd->name);
 
-										if (strncmp(dc_rv_name, colname, colnamelen) == 0)
-											found = true;
-									}
-									else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
+									/*
+									 * Check if rowversion column type is
+									 * being changed.
+									 */
+									if (rowversion_column_name != NULL &&
+										strlen(rowversion_column_name) == colnamelen)
 									{
+										bool		found = false;
+
+										if (pltsql_case_insensitive_identifiers)
+										{
+											char	   *colname = downcase_identifier(cmd->name, colnamelen, false, false);
+											char	   *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
+
+											if (strncmp(dc_rv_name, colname, colnamelen) == 0)
+												found = true;
+										}
+										else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
+										{
 											found = true;
+										}
+
+										if (found)
+											ereport(ERROR,
+													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+													 errmsg("Cannot alter column \"%s\" because it is timestamp.", cmd->name)));
 									}
 
-									if (found)
+									/*
+									 * Check if a column type is being changed
+									 * to rowversion.
+									 */
+									if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 										ereport(ERROR,
 												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												 errmsg("Cannot alter column \"%s\" because it is timestamp.", cmd->name)));
+												 errmsg("Cannot alter column \"%s\" to be data type timestamp.", cmd->name)));
 								}
-
-								/* Check if a column type is being changed to rowversion. */
-								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
-									ereport(ERROR,
-											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											 errmsg("Cannot alter column \"%s\" to be data type timestamp.", cmd->name)));
-							}
 								break;
 							case AT_ColumnDefault:
-							{
-								int colnamelen = strlen(cmd->name);
-
-								/* Disallow defaults on a rowversion column. */
-								if (rowversion_column_name != NULL &&
-									strlen(rowversion_column_name) == colnamelen)
 								{
-									bool found = false;
-									if (pltsql_case_insensitive_identifiers)
-									{
-										char *colname = downcase_identifier(cmd->name, colnamelen, false, false);
-										char *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
+									int			colnamelen = strlen(cmd->name);
 
-										if (strncmp(dc_rv_name, colname, colnamelen) == 0)
-											found = true;
-									}
-									else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
+									/*
+									 * Disallow defaults on a rowversion
+									 * column.
+									 */
+									if (rowversion_column_name != NULL &&
+										strlen(rowversion_column_name) == colnamelen)
 									{
-											found = true;
-									}
+										bool		found = false;
 
-									if (found)
-										ereport(ERROR,
-												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												 errmsg("Defaults cannot be created on columns of data type timestamp.")));
+										if (pltsql_case_insensitive_identifiers)
+										{
+											char	   *colname = downcase_identifier(cmd->name, colnamelen, false, false);
+											char	   *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
+
+											if (strncmp(dc_rv_name, colname, colnamelen) == 0)
+												found = true;
+										}
+										else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
+										{
+											found = true;
+										}
+
+										if (found)
+											ereport(ERROR,
+													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+													 errmsg("Defaults cannot be created on columns of data type timestamp.")));
+									}
 								}
-							}
 								break;
 							case AT_DropConstraint:
 								cmd->name = construct_unique_index_name(cmd->name, atstmt->relation->relname);
@@ -1078,57 +1121,62 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				}
 				break;
 			case T_IndexStmt:
-			{
-				IndexStmt * stmt = (IndexStmt *) parsetree;
-				stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
-
-				if (escape_hatch_unique_constraint != EH_IGNORE &&
-					stmt->unique &&
-					is_nullable_index(stmt))
 				{
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Nullable UNIQUE index is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-								"or add a NOT NULL constraint")));
-				}
-			}
-				break;
-			case T_CreateTableAsStmt:
-			{
-				CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
-				Node *n = stmt->query;
+					IndexStmt  *stmt = (IndexStmt *) parsetree;
 
-				if (n && n->type == T_Query)
-				{
-					Query *q = (Query *) n;
-					if (q->commandType == CMD_SELECT)
+					stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
+
+					if (escape_hatch_unique_constraint != EH_IGNORE &&
+						stmt->unique &&
+						is_nullable_index(stmt))
 					{
-						ListCell *t;
-						bool seen_rowversion = false;
-
-						/* Varify if SELECT INTO ... statement not inserting multiple rowversion columns. */
-						foreach(t, q->targetList)
-						{
-							TargetEntry *tle = (TargetEntry *) lfirst(t);
-							Oid typeid = InvalidOid;
-
-							if (!tle->resjunk)
-								typeid = exprType((Node *) tle->expr);
-
-							if (OidIsValid(typeid) && (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(typeid))
-							{
-								if (seen_rowversion)
-									ereport(ERROR,
-											(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-											errmsg("Only one timestamp column is allowed in a table.")));
-								seen_rowversion = true;
-							}
-						}
-
-						pltsql_set_nulls_first(q);
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Nullable UNIQUE index is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+										"or add a NOT NULL constraint")));
 					}
 				}
-			}
+				break;
+			case T_CreateTableAsStmt:
+				{
+					CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
+					Node	   *n = stmt->query;
+
+					if (n && n->type == T_Query)
+					{
+						Query	   *q = (Query *) n;
+
+						if (q->commandType == CMD_SELECT)
+						{
+							ListCell   *t;
+							bool		seen_rowversion = false;
+
+							/*
+							 * Varify if SELECT INTO ... statement not
+							 * inserting multiple rowversion columns.
+							 */
+							foreach(t, q->targetList)
+							{
+								TargetEntry *tle = (TargetEntry *) lfirst(t);
+								Oid			typeid = InvalidOid;
+
+								if (!tle->resjunk)
+									typeid = exprType((Node *) tle->expr);
+
+								if (OidIsValid(typeid) && (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (typeid))
+								{
+									if (seen_rowversion)
+										ereport(ERROR,
+												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+												 errmsg("Only one timestamp column is allowed in a table.")));
+									seen_rowversion = true;
+								}
+							}
+
+							pltsql_set_nulls_first(q);
+						}
+					}
+				}
 				break;
 			default:
 				break;
@@ -1136,23 +1184,23 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	}
 	else if (query->commandType == CMD_UPDATE)
 	{
-		ListCell *lc;
+		ListCell   *lc;
 
 		/* Disallow updating a ROWVERSION column */
-		foreach (lc, query->targetList)
+		foreach(lc, query->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-			TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
-			int attr_num = tle->resno - 1;
+			TupleDesc	tupdesc = RelationGetDescr(pstate->p_target_relation);
+			int			attr_num = tle->resno - 1;
 			Form_pg_attribute attr;
 
 			attr = TupleDescAttr(tupdesc, attr_num);
 
-			if((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid) && !IsA(tle->expr, SetToDefault))
+			if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (attr->atttypid) && !IsA(tle->expr, SetToDefault))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Cannot update a timestamp column.")));
+						 errmsg("Cannot update a timestamp column.")));
 			}
 		}
 	}
@@ -1241,8 +1289,8 @@ is_identity_constraint(ColumnDef *column)
 static bool
 is_rowversion_column(ParseState *pstate, ColumnDef *column)
 {
-	Type ctype;
-	Oid typeOid;
+	Type		ctype;
+	Oid			typeOid;
 
 	ctype = LookupTypeName(pstate, column->typeName, NULL, true);
 
@@ -1252,7 +1300,7 @@ is_rowversion_column(ParseState *pstate, ColumnDef *column)
 	typeOid = ((Form_pg_type) GETSTRUCT(ctype))->oid;
 	ReleaseSysCache(ctype);
 
-	if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(typeOid))
+	if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (typeOid))
 		return true;
 
 	return false;
@@ -1269,43 +1317,44 @@ is_rowversion_column(ParseState *pstate, ColumnDef *column)
 static void
 validate_rowversion_column_constraints(ColumnDef *column)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	foreach(lc, column->constraints)
 	{
 		Constraint *c = lfirst_node(Constraint, lc);
+
 		switch (c->contype)
 		{
- 			case CONSTR_UNIQUE:
- 			{
- 				ereport(ERROR,
- 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Unique constraint is not supported on a timestamp column.")));
- 				break;
- 			}
- 			case CONSTR_PRIMARY:
- 			{
- 				ereport(ERROR,
- 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Primary key constraint is not supported on a timestamp column.")));
- 				break;
- 			}
- 			case CONSTR_FOREIGN:
- 			{
- 				ereport(ERROR,
- 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Foreign key constraint is not supported on a timestamp column.")));
- 				break;
- 			}
+			case CONSTR_UNIQUE:
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Unique constraint is not supported on a timestamp column.")));
+					break;
+				}
+			case CONSTR_PRIMARY:
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Primary key constraint is not supported on a timestamp column.")));
+					break;
+				}
+			case CONSTR_FOREIGN:
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Foreign key constraint is not supported on a timestamp column.")));
+					break;
+				}
 			case CONSTR_DEFAULT:
- 			{
- 				ereport(ERROR,
- 						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-						 errmsg("Defaults cannot be created on columns of data type timestamp.")));
- 				break;
- 			}
- 			default:
- 				break;
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+							 errmsg("Defaults cannot be created on columns of data type timestamp.")));
+					break;
+				}
+			default:
+				break;
 		}
 	}
 }
@@ -1313,49 +1362,49 @@ validate_rowversion_column_constraints(ColumnDef *column)
 static void
 validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name)
 {
-	List *colnames = NIL;
-	ListCell *lc;
-	char *conname = NULL;
-	int rv_colname_len = strlen(rowversion_column_name);
-	char *dc_rv_name = downcase_identifier(rowversion_column_name, rv_colname_len, false, false);
+	List	   *colnames = NIL;
+	ListCell   *lc;
+	char	   *conname = NULL;
+	int			rv_colname_len = strlen(rowversion_column_name);
+	char	   *dc_rv_name = downcase_identifier(rowversion_column_name, rv_colname_len, false, false);
 
-	switch(c->contype)
+	switch (c->contype)
 	{
 		case CONSTR_UNIQUE:
-		{
-			conname = "Unique";
-			colnames = c->keys;
-			break;
-		}
+			{
+				conname = "Unique";
+				colnames = c->keys;
+				break;
+			}
 		case CONSTR_PRIMARY:
-		{
-			conname = "Primary key";
-			colnames = c->keys;
-			break;
-		}
+			{
+				conname = "Primary key";
+				colnames = c->keys;
+				break;
+			}
 		case CONSTR_FOREIGN:
-		{
-			conname = "Foreign key";
-			colnames = c->fk_attrs;
-			break;
-		}
+			{
+				conname = "Foreign key";
+				colnames = c->fk_attrs;
+				break;
+			}
 		default:
 			break;
 	}
 
 	if (colnames == NIL)
 		return;
-	
+
 	foreach(lc, colnames)
 	{
-		char *colname = strVal(lfirst(lc));
-		bool found = false;
+		char	   *colname = strVal(lfirst(lc));
+		bool		found = false;
 
 		if (strlen(colname) == rv_colname_len)
 		{
 			if (pltsql_case_insensitive_identifiers)
 			{
-				char *dc_colname = downcase_identifier(colname, strlen(colname), false, false);
+				char	   *dc_colname = downcase_identifier(colname, strlen(colname), false, false);
 
 				if (strncmp(dc_rv_name, dc_colname, rv_colname_len) == 0)
 					found = true;
@@ -1381,8 +1430,8 @@ validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name
 static Constraint *
 get_rowversion_default_constraint(TypeName *typname)
 {
-	TypeCast *castnode;
-	FuncCall *funccallnode;
+	TypeCast   *castnode;
+	FuncCall   *funccallnode;
 	Constraint *constraint;
 
 	funccallnode = makeFuncCall(list_make2(makeString("sys"), makeString("get_current_full_xact_id")), NIL, COERCE_EXPLICIT_CALL, -1);
@@ -1401,11 +1450,11 @@ get_rowversion_default_constraint(TypeName *typname)
 
 static void
 revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
-		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name)
+								   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name)
 {
-	const char 	*template = "REVOKE ALL ON TYPE dummy FROM PUBLIC";
-	List		*res;
-	GrantStmt   *revoke;
+	const char *template = "REVOKE ALL ON TYPE dummy FROM PUBLIC";
+	List	   *res;
+	GrantStmt  *revoke;
 	PlannedStmt *wrapper;
 
 	/* TSQL specific behavior */
@@ -1452,8 +1501,8 @@ static void
 check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column)
 {
 	ListCell   *clist;
-	bool is_null = false;
-	bool is_identity = false;
+	bool		is_null = false;
+	bool		is_identity = false;
 
 	foreach(clist, column->constraints)
 	{
@@ -1499,7 +1548,7 @@ has_unique_nullable_constraint(ColumnDef *column)
 				is_unique = true;
 				break;
 			case CONSTR_NOTNULL:
-				is_notnull =true;
+				is_notnull = true;
 				break;
 			default:
 				break;
@@ -1509,16 +1558,17 @@ has_unique_nullable_constraint(ColumnDef *column)
 	return is_unique & !is_notnull;
 }
 
-static bool is_nullable_constraint(Constraint *cst, Oid rel_oid)
+static bool
+is_nullable_constraint(Constraint *cst, Oid rel_oid)
 {
-	ListCell	*lc;
+	ListCell   *lc;
 	bool		is_notnull = false;
 
 	/* Loop through the constraint keys */
 	foreach(lc, cst->keys)
 	{
-		String		*strval = (String *) lfirst(lc);
-		const char	*col_name = NULL;
+		String	   *strval = (String *) lfirst(lc);
+		const char *col_name = NULL;
 		AttrNumber	attnum = InvalidAttrNumber;
 
 		col_name = strVal(strval);
@@ -1543,12 +1593,12 @@ static bool is_nullable_constraint(Constraint *cst, Oid rel_oid)
 static bool
 get_attnotnull(Oid relid, AttrNumber attnum)
 {
-	HeapTuple	  tp;
+	HeapTuple	tp;
 	Form_pg_attribute att_tup;
 
 	tp = SearchSysCache2(ATTNUM,
-			ObjectIdGetDatum(relid),
-			Int16GetDatum(attnum));
+						 ObjectIdGetDatum(relid),
+						 Int16GetDatum(attnum));
 
 	if (HeapTupleIsValid(tp))
 	{
@@ -1556,6 +1606,7 @@ get_attnotnull(Oid relid, AttrNumber attnum)
 
 		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
 		result = att_tup->attnotnull;
+
 		ReleaseSysCache(tp);
 
 		return result;
@@ -1567,15 +1618,15 @@ get_attnotnull(Oid relid, AttrNumber attnum)
 static bool
 is_nullable_index(IndexStmt *stmt)
 {
-	ListCell	*lc;
+	ListCell   *lc;
 	bool		is_notnull = false;
 	Oid			rel_oid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
 	/* Loop through the index columns */
 	foreach(lc, stmt->indexParams)
 	{
-		IndexElem	*elem = lfirst_node(IndexElem, lc);
-		const char	*col_name = elem->name;
+		IndexElem  *elem = lfirst_node(IndexElem, lc);
+		const char *col_name = elem->name;
 		AttrNumber	attnum = get_attnum(rel_oid, col_name);
 
 		if (get_attnotnull(rel_oid, attnum))
@@ -1590,28 +1641,28 @@ is_nullable_index(IndexStmt *stmt)
 
 static void
 pltsql_sequence_validate_increment(int64 increment_by,
-									int64 max_value,
-									int64 min_value)
+								   int64 max_value,
+								   int64 min_value)
 {
 	unsigned long inc;
 	unsigned long min_max_diff;
 
-	inc = increment_by >= 0 ? (unsigned long)increment_by : (unsigned long) (-1L * increment_by);
+	inc = increment_by >= 0 ? (unsigned long) increment_by : (unsigned long) (-1L * increment_by);
 	min_max_diff = (unsigned long) (max_value - min_value);
 
-	if(inc > min_max_diff)
+	if (inc > min_max_diff)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("The absolute value of the increment must be less than or equal to the "
-					 "difference between the minimum and maximum value of the sequence object.")));
+						"difference between the minimum and maximum value of the sequence object.")));
 }
 
 static void
-pltsql_identity_datatype_map(ParseState *pstate, ColumnDef* column)
+pltsql_identity_datatype_map(ParseState *pstate, ColumnDef *column)
 {
-	Type ctype;
-	Oid typeOid;
-	Oid tsqlSeqTypOid;
+	Type		ctype;
+	Oid			typeOid;
+	Oid			tsqlSeqTypOid;
 
 	if (prev_pltsql_identity_datatype_hook)
 		prev_pltsql_identity_datatype_hook(pstate, column);
@@ -1633,11 +1684,11 @@ pltsql_identity_datatype_map(ParseState *pstate, ColumnDef* column)
 	}
 	else if (typeOid == NUMERICOID || getBaseType(typeOid) == NUMERICOID)
 	{
-		int32 typmod_p;
-		uint8_t scale;
-		uint8_t precision;
+		int32		typmod_p;
+		uint8_t		scale;
+		uint8_t		precision;
 
-		Type typ = typenameType(pstate, column->typeName, &typmod_p);
+		Type		typ = typenameType(pstate, column->typeName, &typmod_p);
 
 		if (typeOid != NUMERICOID)
 		{
@@ -1645,7 +1696,7 @@ pltsql_identity_datatype_map(ParseState *pstate, ColumnDef* column)
 				typmod_p = column->typeName->typemod;
 
 			if (typmod_p == -1)
-				typmod_p = 1179652;  /* decimal(18,0) */
+				typmod_p = 1179652; /* decimal(18,0) */
 		}
 
 		scale = (typmod_p - VARHDRSZ) & 0xffff;
@@ -1677,16 +1728,17 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 							 DefElem **max_value,
 							 DefElem **min_value)
 {
-	int32 typmod_p;
-	Type typ;
-	char *typname;
-	Oid tsqlSeqTypOid;
-	TypeName *type_def;
-	List* type_names;
-	List* new_type_names;
-	AclResult aclresult;
-	Oid base_type;
-	int list_len;
+	int32		typmod_p;
+	Type		typ;
+	char	   *typname;
+	Oid			tsqlSeqTypOid;
+	TypeName   *type_def;
+	List	   *type_names;
+	List	   *new_type_names;
+	AclResult	aclresult;
+	Oid			base_type;
+	int			list_len;
+
 	if (prev_pltsql_sequence_datatype_hook)
 		prev_pltsql_sequence_datatype_hook(pstate,
 										   newtypid,
@@ -1715,7 +1767,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 			break;
 	}
 
-	if(list_len > 1)
+	if (list_len > 1)
 		type_def->names = new_type_names;
 
 	*newtypid = typenameTypeId(pstate, type_def);
@@ -1723,7 +1775,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	typname = typeTypeName(typ);
 	type_def->names = type_names;
 
-	if(list_len > 1)
+	if (list_len > 1)
 		list_free(new_type_names);
 
 	aclresult = pg_type_aclcheck(*newtypid, GetUserId(), ACL_USAGE);
@@ -1745,8 +1797,8 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		/* Verified sys type. Set tinyint constraint 0 to 255 */
 		if (strcmp(typname, "tinyint") == 0)
 		{
-			int64 tinyint_max;
-			int64 tinyint_min;
+			int64		tinyint_max;
+			int64		tinyint_min;
 
 			/* NULL arg means no value so check max_value then the arg */
 			if (*max_value == NULL)
@@ -1786,21 +1838,23 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	else if ((*newtypid == NUMERICOID) || (base_type == NUMERICOID))
 	{
 		/*
-		 * Identity column drops the typmod upon sequence creation
-		 * so it gets its own check
+		 * Identity column drops the typmod upon sequence creation so it gets
+		 * its own check
 		 */
 
-		/* When sequence is created using user-defined data type, !for_identity == true and
-		 * typmod_p == -1, which results in calculating incorrect scale and precision
-		 * therefore we update typmod_p to that of numeric(18,0)
+		/*
+		 * When sequence is created using user-defined data type,
+		 * !for_identity == true and typmod_p == -1, which results in
+		 * calculating incorrect scale and precision therefore we update
+		 * typmod_p to that of numeric(18,0)
 		 */
 		if (typmod_p == -1)
 			typmod_p = 1179652;
 
 		if (!for_identity || typmod_p != -1)
 		{
-			uint8_t scale = (typmod_p - VARHDRSZ) & 0xffff;
-			uint8_t precision = ((typmod_p - VARHDRSZ) >> 16) & 0xffff;
+			uint8_t		scale = (typmod_p - VARHDRSZ) & 0xffff;
+			uint8_t		precision = ((typmod_p - VARHDRSZ) >> 16) & 0xffff;
 
 			if (scale > 0)
 				ereport(ERROR,
@@ -1819,18 +1873,18 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	}
 
 	/*
-	 * To add support for User-Defined Data types for sequences, data type
-	 * of sequence is changed to its basetype
-	*/
+	 * To add support for User-Defined Data types for sequences, data type of
+	 * sequence is changed to its basetype
+	 */
 	*newtypid = base_type;
 }
 
 static Oid
 bbf_table_var_lookup(const char *relname, Oid relnamespace)
 {
-	Oid relid;
-	ListCell *lc;
-	int n;
+	Oid			relid;
+	ListCell   *lc;
+	int			n;
 	PLtsql_tbl *tbl;
 	PLtsql_execstate *estate = get_current_tsql_estate();
 
@@ -1847,7 +1901,7 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 	 * If we find a table variable whose name matches relname, return its
 	 * underlying table's relid. Otherwise, just return relname's relid.
 	 */
-	foreach (lc, estate->func->table_varnos)
+	foreach(lc, estate->func->table_varnos)
 	{
 		n = lfirst_int(lc);
 		if (estate->datums[n]->dtype != PLTSQL_DTYPE_TBL)
@@ -1856,9 +1910,11 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 		tbl = (PLtsql_tbl *) estate->datums[n];
 		if (strcmp(relname, tbl->refname) == 0)
 		{
-			if (!tbl->tblname) /* FIXME: throwing an error instead of a crash until table-type is supported in ANTLR parser */
-					ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("table variable underlying typename is NULL. refname: %s", tbl->refname)));
+			if (!tbl->tblname)	/* FIXME: throwing an error instead of a crash
+								 * until table-type is supported in ANTLR
+								 * parser */
+				ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("table variable underlying typename is NULL. refname: %s", tbl->refname)));
 			return get_relname_relid(tbl->tblname, relnamespace);
 		}
 	}
@@ -1871,11 +1927,12 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
  */
 static void
 PLTsqlProcessTransaction(Node *parsetree,
-						  ParamListInfo params,
-						  QueryCompletion *qc)
+						 ParamListInfo params,
+						 QueryCompletion *qc)
 {
-	char *txnName = NULL;
+	char	   *txnName = NULL;
 	TransactionStmt *stmt = (TransactionStmt *) parsetree;
+
 	if (params != NULL && params->numParams > 0 && !params->params[0].isnull)
 	{
 		Oid			typOutput;
@@ -1901,7 +1958,7 @@ PLTsqlProcessTransaction(Node *parsetree,
 		if (stmt->kind == TRANS_STMT_BEGIN ||
 			stmt->kind == TRANS_STMT_COMMIT ||
 			stmt->kind == TRANS_STMT_SAVEPOINT)
-				ereport(ERROR,
+			ereport(ERROR,
 					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 					 errmsg("The current transaction cannot be committed and cannot support operations that write to the log file. Roll back the transaction.")));
 	}
@@ -1936,10 +1993,11 @@ PLTsqlProcessTransaction(Node *parsetree,
 					ereport(ERROR,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+
 				/*
-				 * Table variables should be immune to ROLLBACK, but we haven't
-				 * implemented this yet so we throw an error if ROLLBACK is used
-				 * with table variables.
+				 * Table variables should be immune to ROLLBACK, but we
+				 * haven't implemented this yet so we throw an error if
+				 * ROLLBACK is used with table variables.
 				 */
 				if (exec_state_call_stack &&
 					exec_state_call_stack->estate &&
@@ -1973,13 +2031,14 @@ PLTsqlProcessTransaction(Node *parsetree,
  * even in EXPLAIN ONLY MODE. In that case, EXPLAIN ONLY MODE should be considered
  * for individual statements inside the procedure.
  */
-static inline bool process_utility_stmt_explain_only_mode(const char *queryString, Node *parsetree)
+static inline bool
+process_utility_stmt_explain_only_mode(const char *queryString, Node *parsetree)
 {
-	CallStmt *callstmt;
-	HeapTuple proctuple;
-	Oid procid;
-	Oid langoid;
-	char *langname;
+	CallStmt   *callstmt;
+	HeapTuple	proctuple;
+	Oid			procid;
+	Oid			langoid;
+	char	   *langname;
 
 	if (!pltsql_explain_only)
 		return false;
@@ -2002,8 +2061,10 @@ static inline bool process_utility_stmt_explain_only_mode(const char *queryStrin
 	if (!langname)
 		return true;
 
-	/* If a procedure language is pltsql, it is safe to execute the procedure.
-	 * EXPLAIN ONLY MODE will be considered for each statements inside the procedure.
+	/*
+	 * If a procedure language is pltsql, it is safe to execute the procedure.
+	 * EXPLAIN ONLY MODE will be considered for each statements inside the
+	 * procedure.
 	 */
 	if (pg_strcasecmp("pltsql", langname) == 0)
 		return false;
@@ -2015,11 +2076,12 @@ static inline bool process_utility_stmt_explain_only_mode(const char *queryStrin
  * check whether role contains '\' or not and SQL_USER contains '\' or not
  * If yes, throw error.
  */
-static void validateUserAndRole(char* name)
+static void
+validateUserAndRole(char *name)
 {
 	if (strchr(name, '\\') != NULL)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a valid name because it contains invalid characters.", name)));
+						errmsg("'%s' is not a valid name because it contains invalid characters.", name)));
 }
 
 
@@ -2029,27 +2091,29 @@ static void validateUserAndRole(char* name)
  * CreateFunctionStmt could have elements in the options list that are specific
  * to tsql, like trigStmt and tbltypStmt.
  */
-static void bbf_ProcessUtility(PlannedStmt *pstmt,
-		const char *queryString,
-		bool readOnlyTree,
-		ProcessUtilityContext context,
-		ParamListInfo params,
-		QueryEnvironment *queryEnv,
-		DestReceiver *dest,
-		QueryCompletion *qc)
+static void
+bbf_ProcessUtility(PlannedStmt *pstmt,
+				   const char *queryString,
+				   bool readOnlyTree,
+				   ProcessUtilityContext context,
+				   ParamListInfo params,
+				   QueryEnvironment *queryEnv,
+				   DestReceiver *dest,
+				   QueryCompletion *qc)
 {
-	Node	   				*parsetree = pstmt->utilityStmt;
-	ParseState 				*pstate = make_parsestate(NULL);
-	pstate->p_sourcetext = 	queryString;
+	Node	   *parsetree = pstmt->utilityStmt;
+	ParseState *pstate = make_parsestate(NULL);
+
+	pstate->p_sourcetext = queryString;
 
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
-		return; /* Don't execute anything */
+		return;					/* Don't execute anything */
 
 	/*
 	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
-	 * executed on TSQL views which has entries in view_def catalog
-	 * Note: Changes made by ALTER VIEW or CREATE [OR REPLACE] VIEW statements
-	 * in TSQL dialect from PG client won't be reflected in babelfish_view_def
+	 * executed on TSQL views which has entries in view_def catalog Note:
+	 * Changes made by ALTER VIEW or CREATE [OR REPLACE] VIEW statements in
+	 * TSQL dialect from PG client won't be reflected in babelfish_view_def
 	 * catalog.
 	 */
 	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_create_alter_view_from_pg)
@@ -2057,64 +2121,71 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		switch (nodeTag(parsetree))
 		{
 			case T_ViewStmt:
-			{
-				ViewStmt *vstmt = (ViewStmt *) parsetree;
-				Oid relid = RangeVarGetRelid(vstmt->view, NoLock, true);
-				if (vstmt->replace && check_is_tsql_view(relid))
 				{
-					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("REPLACE VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+					ViewStmt   *vstmt = (ViewStmt *) parsetree;
+					Oid			relid = RangeVarGetRelid(vstmt->view, NoLock, true);
+
+					if (vstmt->replace && check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								 errmsg("REPLACE VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+					}
+					break;
 				}
-				break;
-			}
 			case T_AlterTableStmt:
-			{
-				AlterTableStmt	*atstmt = (AlterTableStmt *) parsetree;
-				if (atstmt->objtype == OBJECT_VIEW)
 				{
-					Oid relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
-					if(check_is_tsql_view(relid))
+					AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+
+					if (atstmt->objtype == OBJECT_VIEW)
 					{
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+						Oid			relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
+
+						if (check_is_tsql_view(relid))
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+						}
 					}
+					break;
 				}
-				break;
-			}
 			case T_RenameStmt:
-			{
-				RenameStmt *rnstmt = (RenameStmt *) parsetree;
-				if (rnstmt->renameType == OBJECT_VIEW ||
-					(rnstmt->renameType == OBJECT_COLUMN &&
-					 rnstmt->relationType == OBJECT_VIEW))
 				{
-					Oid relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
-					if(check_is_tsql_view(relid))
+					RenameStmt *rnstmt = (RenameStmt *) parsetree;
+
+					if (rnstmt->renameType == OBJECT_VIEW ||
+						(rnstmt->renameType == OBJECT_COLUMN &&
+						 rnstmt->relationType == OBJECT_VIEW))
 					{
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+						Oid			relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
+
+						if (check_is_tsql_view(relid))
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+						}
 					}
+					break;
 				}
-				break;
-			}
 			case T_AlterObjectSchemaStmt:
-			{
-				AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parsetree;
-				if (altschstmt->objectType == OBJECT_VIEW)
 				{
-					Oid relid = RangeVarGetRelid(altschstmt->relation, NoLock, true);
-					if(check_is_tsql_view(relid))
+					AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parsetree;
+
+					if (altschstmt->objectType == OBJECT_VIEW)
 					{
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+						Oid			relid = RangeVarGetRelid(altschstmt->relation, NoLock, true);
+
+						if (check_is_tsql_view(relid))
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+						}
 					}
+					break;
 				}
-				break;
-			}
 			default:
 				break;
 		}
@@ -2125,34 +2196,42 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		case T_CreateFunctionStmt:
 			{
 				CreateFunctionStmt *stmt = (CreateFunctionStmt *) parsetree;
-				bool 			isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
-				bool 			needCleanup;
-				ListCell 		*option, *location_cell = NULL;
-				Node 			*tbltypStmt = NULL;
-				Node 			*trigStmt = NULL;
-				ObjectAddress 	tbltyp;
-				ObjectAddress 	address;
-				int 			origname_location = -1;
+				bool		isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+				bool		needCleanup;
+				ListCell   *option,
+						   *location_cell = NULL;
+				Node	   *tbltypStmt = NULL;
+				Node	   *trigStmt = NULL;
+				ObjectAddress tbltyp;
+				ObjectAddress address;
+				int			origname_location = -1;
 
-				/* All event trigger calls are done only when isCompleteQuery is true */
+				/*
+				 * All event trigger calls are done only when isCompleteQuery
+				 * is true
+				 */
 				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
-				/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
+				/*
+				 * PG_TRY block is to ensure we call
+				 * EventTriggerEndCompleteQuery
+				 */
 				PG_TRY();
 				{
 					if (isCompleteQuery)
 						EventTriggerDDLCommandStart(parsetree);
 
-					foreach (option, stmt->options)
+					foreach(option, stmt->options)
 					{
-						DefElem *defel = (DefElem *) lfirst(option);
+						DefElem    *defel = (DefElem *) lfirst(option);
+
 						if (strcmp(defel->defname, "tbltypStmt") == 0)
 						{
 							/*
-							 * tbltypStmt is an implicit option in tsql dialect,
-							 * we use this mechanism to create tsql style
-							 * multi-statement table-valued function and its
-							 * return (table) type in one statement.
+							 * tbltypStmt is an implicit option in tsql
+							 * dialect, we use this mechanism to create tsql
+							 * style multi-statement table-valued function and
+							 * its return (table) type in one statement.
 							 */
 							tbltypStmt = defel->arg;
 						}
@@ -2160,8 +2239,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							/*
 							 * trigStmt is an implicit option in tsql dialect,
-							 * we use this mechanism to create tsql style function
-							 * and trigger in one statement.
+							 * we use this mechanism to create tsql style
+							 * function and trigger in one statement.
 							 */
 							trigStmt = defel->arg;
 						}
@@ -2169,9 +2248,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							/*
 							 * location is an implicit option in tsql dialect,
-							 * we use this mechanism to store location of function
-							 * name so that we can extract original input function
-							 * name from queryString.
+							 * we use this mechanism to store location of
+							 * function name so that we can extract original
+							 * input function name from queryString.
 							 */
 							origname_location = intVal((Node *) defel->arg);
 							location_cell = option;
@@ -2179,7 +2258,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 
-					/* delete location cell if it exists as it is for internal use only */
+					/*
+					 * delete location cell if it exists as it is for internal
+					 * use only
+					 */
 					if (location_cell)
 						stmt->options = list_delete_cell(stmt->options, location_cell);
 
@@ -2216,7 +2298,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					address = CreateFunction(pstate, stmt);
 
-					/* Store function/procedure related metadata in babelfish catalog */
+					/*
+					 * Store function/procedure related metadata in babelfish
+					 * catalog
+					 */
 					pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
 
 					if (tbltypStmt || restore_tsql_tabletype)
@@ -2227,29 +2312,29 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						 */
 						tbltyp.classId = TypeRelationId;
 						tbltyp.objectId = typenameTypeId(pstate,
-								stmt->returnType);
+														 stmt->returnType);
 						tbltyp.objectSubId = 0;
 						recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
 					}
 
 					/*
-					 * For trigStmt, we need to process the CreateTrigStmt after
-					 * the function is created, and record bidirectional
+					 * For trigStmt, we need to process the CreateTrigStmt
+					 * after the function is created, and record bidirectional
 					 * dependency so that Drop Trigger CASCADE will drop the
-					 * implicit trigger function.
-					 * Create trigger takes care of dependency addition.
+					 * implicit trigger function. Create trigger takes care of
+					 * dependency addition.
 					 */
-					if(trigStmt)
+					if (trigStmt)
 					{
 						(void) CreateTrigger((CreateTrigStmt *) trigStmt,
-									  pstate->p_sourcetext, InvalidOid, InvalidOid,
-									  InvalidOid, InvalidOid, address.objectId,
-									  InvalidOid, NULL, false, false);
+											 pstate->p_sourcetext, InvalidOid, InvalidOid,
+											 InvalidOid, InvalidOid, address.objectId,
+											 InvalidOid, NULL, false, false);
 					}
 
 					/*
-					 * Remember the object so that ddl_command_end event triggers have
-					 * access to it.
+					 * Remember the object so that ddl_command_end event
+					 * triggers have access to it.
 					 */
 					EventTriggerCollectSimpleCommand(address, InvalidObjectAddress,
 													 parsetree);
@@ -2273,950 +2358,1003 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					EventTriggerEndCompleteQuery();
 				return;
 			}
-        case T_TransactionStmt:
-        {
-            if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
-            {
-                PLTsqlProcessTransaction(parsetree, params, qc);
-                return;
-            }
-			break;
-        }
-		case T_TruncateStmt:
-		{
-			if (sql_dialect == SQL_DIALECT_TSQL)
+		case T_TransactionStmt:
 			{
-				TruncateStmt *stmt = (TruncateStmt *) parsetree;
-
-				stmt->restart_seqs = true; /* Always restart owned sequences */
-			}
-			break;
-		}
-		case T_CreateRoleStmt:
-		{
-			if (sql_dialect == SQL_DIALECT_TSQL)
-			{
-				const char      *prev_current_user;
-				CreateRoleStmt	*stmt = (CreateRoleStmt *) parsetree;
-				List			*login_options = NIL;
-				List			*user_options = NIL;
-				ListCell		*option;
-				bool			islogin = false;
-				bool			isuser = false;
-				bool			isrole = false;
-				bool			from_windows = false;
-
-				/* Check if creating login or role. Expect islogin first */
-				if (stmt->options != NIL)
+				if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
 				{
-					DefElem *headel = (DefElem *) linitial(stmt->options);
+					PLTsqlProcessTransaction(parsetree, params, qc);
+					return;
+				}
+				break;
+			}
+		case T_TruncateStmt:
+			{
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					TruncateStmt *stmt = (TruncateStmt *) parsetree;
 
-					/*
-					 * If islogin set the options list to after the head.
-					 * Save the list of login specific options.
-					 */
-					if (strcmp(headel->defname, "islogin") == 0)
+					stmt->restart_seqs = true;	/* Always restart owned
+												 * sequences */
+				}
+				break;
+			}
+		case T_CreateRoleStmt:
+			{
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					const char *prev_current_user;
+					CreateRoleStmt *stmt = (CreateRoleStmt *) parsetree;
+					List	   *login_options = NIL;
+					List	   *user_options = NIL;
+					ListCell   *option;
+					bool		islogin = false;
+					bool		isuser = false;
+					bool		isrole = false;
+					bool		from_windows = false;
+
+					/* Check if creating login or role. Expect islogin first */
+					if (stmt->options != NIL)
 					{
-						char *orig_loginname = NULL;
-
-						islogin = true;
-						stmt->options = list_delete_cell(stmt->options,
-														 list_head(stmt->options));
-						pfree(headel);
-
-						/* Filter login options from default role options */
-						foreach(option, stmt->options)
-						{
-							DefElem *defel = (DefElem *) lfirst(option);
-
-							if (strcmp(defel->defname, "default_database") == 0)
-								login_options = lappend(login_options, defel);
-							else if (strcmp(defel->defname, "name_location") == 0)
-							{
-								int location = defel->location;
-								orig_loginname = extract_identifier(queryString + location);
-								login_options = lappend(login_options, defel);
-							}
-							else if (strcmp(defel->defname, "from_windows") == 0)
-							{
-								if (!pltsql_allow_windows_login)
-									ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											errmsg("Windows login is not supported in babelfish")));
-								from_windows = true;
-								login_options = lappend(login_options, defel);
-							}
-						}
-
-						foreach(option, login_options)
-						{
-							stmt->options = list_delete_ptr(stmt->options,
-															lfirst(option));
-						}
-
-						if (orig_loginname)
-						{
-							login_options = lappend(login_options, 
-													makeDefElem("original_login_name",
-																(Node *) makeString(orig_loginname),
-																-1));
-						}
-
-						if (from_windows && orig_loginname)
-						{
-							/*
-							 * The login name must contain '\' if it is windows login or else throw error.
-							 */
-							if ((strchr(orig_loginname, '\\')) == NULL)
-								ereport(ERROR,
-										(errcode(ERRCODE_INVALID_NAME),
-										 errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
-										 orig_loginname)));
-
-							/*
-							 * Check whether domain name is empty. If the first character is '\', that ensures domain is empty.
-							 */
-							if (orig_loginname[0] == '\\')
-								ereport(ERROR,
-									(errcode(ERRCODE_INVALID_NAME),
-									 errmsg("The login name '%s' is invalid. The domain can not be empty.",
-											orig_loginname)));
-
-							/*
-							 * Check whether login_name has valid length or not.
-							 */
-							if (!check_windows_logon_length(orig_loginname))
-								ereport(ERROR,
-										(errcode(ERRCODE_INVALID_NAME),
-										 errmsg("The login name '%s' has invalid length. Login name length should be between %d and %d for windows login.",
-											orig_loginname, (LOGON_NAME_MIN_LEN + 1), (LOGON_NAME_MAX_LEN - 1))));
-
-							/*
-							 * Check whether the login_name contains invalid characters or not.
-							 */
-							if (windows_login_contains_invalid_chars(orig_loginname))
-								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
-
-							pfree(stmt->role);
-							stmt->role = convertToUPN(orig_loginname);
-
-							/*
-							 * Check for duplicate login
-							 */
-							if (get_role_oid(stmt->role, true) != InvalidOid)
-								ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
-									errmsg("The Server principal '%s' already exists", stmt->role)));
-						}
+						DefElem    *headel = (DefElem *) linitial(stmt->options);
 
 						/*
-						 * Length of login name should be less than 128. Throw an error
-						 * here if it is not.
-						 * XXX: Below check is to work around BABEL-3868.
+						 * If islogin set the options list to after the head.
+						 * Save the list of login specific options.
 						 */
-						if (strlen(stmt->role) >= NAMEDATALEN)
+						if (strcmp(headel->defname, "islogin") == 0)
 						{
-							ereport(ERROR,
-									(errcode(ERRCODE_INVALID_NAME),
-									 errmsg("The login name '%s' is too long. Maximum length is %d.",
-											stmt->role, (NAMEDATALEN - 1))));
-						}
+							char	   *orig_loginname = NULL;
 
-						/*
-						 * If the login name contains '\' and it is not a windows login then throw error.
-						 * For windows login, all cases are handled beforehand, so if the below condition
-						 * is hit that means it is password based authentication and login name contains
-						 * '\', which is not allowed
-						 */
-						if (!from_windows && strchr(stmt->role, '\\') != NULL)
-							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								errmsg("'%s' is not a valid name because it contains invalid characters.", stmt->role)));
+							islogin = true;
+							stmt->options = list_delete_cell(stmt->options,
+															 list_head(stmt->options));
+							pfree(headel);
 
-						from_windows = false;
-					}
-					else if (strcmp(headel->defname, "isuser") == 0)
-					{
-						int location = -1;
-
-						isuser = true;
-						stmt->options = list_delete_cell(stmt->options,
-														 list_head(stmt->options));
-						pfree(headel);
-
-						/* Filter user options from default role options */
-						foreach(option, stmt->options)
-						{
-							DefElem *defel = (DefElem *) lfirst(option);
-
-							if (strcmp(defel->defname, "default_schema") == 0)
-								user_options = lappend(user_options, defel);
-							else if (strcmp(defel->defname, "name_location") == 0)
+							/* Filter login options from default role options */
+							foreach(option, stmt->options)
 							{
-								location = defel->location;
-								user_options = lappend(user_options, defel);
-							}
-							else if (strcmp(defel->defname, "rolemembers") == 0)
-							{
-								RoleSpec *login = (RoleSpec *) linitial((List *) defel->arg);
-								if (strchr(login->rolename, '\\') != NULL)
+								DefElem    *defel = (DefElem *) lfirst(option);
+
+								if (strcmp(defel->defname, "default_database") == 0)
+									login_options = lappend(login_options, defel);
+								else if (strcmp(defel->defname, "name_location") == 0)
 								{
-									/*
-									 * If login->rolename contains '\' then treat it as windows login.
-									 */
-									char *upn_login = convertToUPN(login->rolename);
-									if (upn_login != login->rolename)
-									{
-										pfree(login->rolename);
-										login->rolename = upn_login;
-									}
-									from_windows = true;
+									int			location = defel->location;
+
+									orig_loginname = extract_identifier(queryString + location);
+									login_options = lappend(login_options, defel);
+								}
+								else if (strcmp(defel->defname, "from_windows") == 0)
+								{
 									if (!pltsql_allow_windows_login)
 										ereport(ERROR,
-											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											 errmsg("Windows login is not supported in babelfish")));
+												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												 errmsg("Windows login is not supported in babelfish")));
+									from_windows = true;
+									login_options = lappend(login_options, defel);
 								}
 							}
-						}
 
-						foreach(option, user_options)
-						{
-							stmt->options = list_delete_ptr(stmt->options,
-															lfirst(option));
-						}
-
-						if (location >= 0)
-						{
-							char		*orig_user_name;
-
-							orig_user_name = extract_identifier(queryString + location);
-							user_options = lappend(user_options,
-												   makeDefElem("original_user_name",
-															   (Node *) makeString(orig_user_name),
-															   -1));
-						}
-					}
-					else if (strcmp(headel->defname, "isrole") == 0)
-					{
-						int location = -1;
-						bool orig_username_exists = false;
-
-						isrole = true;
-						stmt->options = list_delete_cell(stmt->options,
-														 list_head(stmt->options));
-														 pfree(headel);
-
-						/* Filter TSQL role options from default role options */
-						foreach(option, stmt->options)
-						{
-							DefElem *defel = (DefElem *) lfirst(option);
-
-							if (strcmp(defel->defname, "name_location") == 0)
+							foreach(option, login_options)
 							{
-								location = defel->location;
-								user_options = lappend(user_options, defel);
-							}
-							/*
-							 * This condition is to handle create role when using sp_addrole procedure
-							 * because there we add original_user_name before hand
-							 */
-							if(strcmp(defel->defname, "original_user_name") == 0)
-							{
-								user_options = lappend(user_options, defel);
-								orig_username_exists = true;
+								stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
 							}
 
-						}
-
-
-						foreach(option, user_options)
-						{
-							stmt->options = list_delete_ptr(stmt->options,
-															lfirst(option));
-						}
-
-						if (location >= 0 && !orig_username_exists)
-						{
-							char        *orig_user_name;
-
-							orig_user_name = extract_identifier(queryString + location);
-							user_options = lappend(user_options,
-												   makeDefElem("original_user_name",
-															   (Node *) makeString(orig_user_name),
-															   -1));
-						}
-					}
-
-				}
-
-				if (islogin)
-				{
-					if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
-						ereport(ERROR,
-								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								errmsg("Current login %s does not have permission to create new login",
-									GetUserNameFromId(GetSessionUserId(), true))));
-
-					if (get_role_oid(stmt->role, true) != InvalidOid)
-						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
-									  errmsg("The Server principal '%s' already exists", stmt->role)));
-
-					/* Set current user to sysadmin for create permissions */
-					prev_current_user = GetUserNameFromId(GetUserId(), false);
-
-					bbf_set_current_user("sysadmin");
-
-					PG_TRY();
-					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString,readOnlyTree, context,
-												params, queryEnv, dest,
-												qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-													params, queryEnv, dest,
-													qc);
-
-						stmt->options = list_concat(stmt->options,
-													login_options);
-						create_bbf_authid_login_ext(stmt);
-					}
-					PG_CATCH();
-					{
-						bbf_set_current_user(prev_current_user);
-						PG_RE_THROW();
-					}
-					PG_END_TRY();
-
-					bbf_set_current_user(prev_current_user);
-
-					return;
-				}
-				else if (isuser || isrole)
-				{
-					/* check whether sql user name and role name contains '\' or not */
-					if (isrole || !from_windows)
-						validateUserAndRole(stmt->role);
-
-					/* Set current user to dbo user for create permissions */
-					prev_current_user = GetUserNameFromId(GetUserId(), false);
-
-					bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
-
-					PG_TRY();
-					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-												params, queryEnv, dest,
-												qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-													params, queryEnv, dest,
-													qc);
-
-						stmt->options = list_concat(stmt->options,
-													user_options);
-						/*
-						 * If the stmt is CREATE USER, it must have a
-						 * corresponding login and a schema name
-						 */
-						create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
-					}
-					PG_CATCH();
-					{
-						bbf_set_current_user(prev_current_user);
-						PG_RE_THROW();
-					}
-					PG_END_TRY();
-
-					bbf_set_current_user(prev_current_user);
-
-					return;
-				}
-			}
-			break;
-		}
-		case T_AlterRoleStmt:
-		{
-			if (sql_dialect == SQL_DIALECT_TSQL)
-			{
-				AlterRoleStmt	*stmt = (AlterRoleStmt *) parsetree;
-				List			*login_options = NIL;
-				List			*user_options = NIL;
-				ListCell		*option;
-				bool			islogin = false;
-				bool			isuser = false;
-				bool			isrole = false;
-				Oid				prev_current_user;
-
-				prev_current_user = GetUserId();
-
-				/* Check if creating login or role. Expect islogin first */
-				if (stmt->options != NIL)
-				{
-					DefElem *headel = (DefElem *) linitial(stmt->options);
-
-					/*
-					 * Set the options list to after the head.
-					 * Save the list of babelfish specific options.
-					 */
-					if (strcmp(headel->defname, "islogin") == 0)
-					{
-						islogin = true;
-						stmt->options = list_delete_cell(stmt->options,
-														 list_head(stmt->options));
-						pfree(headel);
-
-						/* Filter login options from default role options */
-						foreach(option, stmt->options)
-						{
-							DefElem *defel = (DefElem *) lfirst(option);
-
-							if (strcmp(defel->defname, "default_database") == 0)
-								login_options = lappend(login_options, defel);
-						}
-
-						foreach(option, login_options)
-						{
-							stmt->options = list_delete_ptr(stmt->options,
-															lfirst(option));
-						}
-					}
-					else if (strcmp(headel->defname, "isuser") == 0)
-					{
-						isuser = true;
-						stmt->options = list_delete_cell(stmt->options,
-														 list_head(stmt->options));
-						pfree(headel);
-
-						/* Filter user options from default role options */
-						foreach(option, stmt->options)
-						{
-							DefElem *defel = (DefElem *) lfirst(option);
-
-							if (strcmp(defel->defname, "default_schema") == 0)
-								user_options = lappend(user_options, defel);
-							if (strcmp(defel->defname, "rename") == 0)
-								user_options = lappend(user_options, defel);
-						}
-
-						foreach(option, user_options)
-						{
-							stmt->options = list_delete_ptr(stmt->options,
-															lfirst(option));
-						}
-					}
-					else if (strcmp(headel->defname, "isrole") == 0)
-					{
-						isrole = true;
-						stmt->options = list_delete_cell(stmt->options,
-														 list_head(stmt->options));
-														 pfree(headel);
-
-						/* Filter user options from default role options */
-						foreach(option, stmt->options)
-						{
-							DefElem *defel = (DefElem *) lfirst(option);
-
-							if (strcmp(defel->defname, "rename") == 0)
-								user_options = lappend(user_options, defel);
-						}
-
-						foreach(option, user_options)
-						{
-							stmt->options = list_delete_ptr(stmt->options,
-															lfirst(option));
-						}
-					}
-				}
-
-				if (islogin)
-				{
-					Oid		datdba;
-					bool	has_password = false;
-					char* 	temp_login_name = NULL;
-
-					datdba = get_role_oid("sysadmin", false);
-
-					/*
-					 * Check if the current login has privileges to
-					 * alter password.
-					 */
-					foreach(option, stmt->options)
-					{
-						DefElem    *defel = (DefElem *) lfirst(option);
-
-						if (strcmp(defel->defname, "password") == 0)
-						{
-							if (!is_member_of_role(GetSessionUserId(), datdba))
-								ereport(ERROR,
-										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-										 errmsg("Current login does not have privileges to alter password")));
-
-							has_password = true;	
-						}
-					}
-
-					/*
-					 * Leveraging the fact that convertToUPN API returns the login name in UPN format
-					 * if login name contains '\' i,e,. windows login.
-					 * For windows login '\' must be present and for password based login '\' is not 
-					 * acceptable. So, combining these, if the login is of windows then it will be converted
-					 * to UPN format or else it will be as it was
-					 */
-					temp_login_name = convertToUPN(stmt->role->rolename);
-
-					/* If the previous rolname is same as current, then it is password based login
-					 * else, it is windows based login. If, user is trying to alter password for
-					 * windows login, throw error
-					 */
-					if (temp_login_name != stmt->role->rolename)
-					{
-						if (has_password)
-							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), 
-									errmsg("Cannot use parameter PASSWORD for a windows login")));
-						
-						pfree(stmt->role->rolename);
-						stmt->role->rolename = temp_login_name;
-					}
-
-					if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
-						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
-									  errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
-
-
-					/* Set current user to sysadmin for alter permissions */
-					SetCurrentRoleId(datdba, false);
-
-					PG_TRY();
-					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-												params, queryEnv, dest,
-												qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-													params, queryEnv, dest,
-													qc);
-
-						stmt->options = list_concat(stmt->options,
-													login_options);
-						alter_bbf_authid_login_ext(stmt);
-					}
-					PG_CATCH();
-					{
-						SetCurrentRoleId(prev_current_user, false);
-						PG_RE_THROW();
-					}
-					PG_END_TRY();
-
-					SetCurrentRoleId(prev_current_user, false);
-
-					return;
-				}
-				else if (isuser || isrole)
-				{
-					const char	*db_name;
-					const char	*dbo_name;
-					Oid			dbo_id;
-
-					db_name = get_cur_db_name();
-					dbo_name = get_dbo_role_name(db_name);
-					dbo_id = get_role_oid(dbo_name, false);
-
-					/*
-					 * Check if the current user has privileges.
-					 */
-					foreach(option, user_options)
-					{
-						DefElem		*defel = (DefElem *) lfirst(option);
-						char		*user_name;
-						char		*cur_user;
-
-						user_name = stmt->role->rolename;
-						cur_user = GetUserNameFromId(GetUserId(), false);
-						if (strcmp(defel->defname, "default_schema") == 0)
-						{
-							if (strcmp(cur_user, dbo_name) != 0 &&
-								strcmp(cur_user, user_name) != 0)
-								ereport(ERROR,
-										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-										 errmsg("Current user does not have privileges to change schema")));
-						}
-						if (strcmp(defel->defname, "rename") == 0)
-						{
-							if (strcmp(cur_user, dbo_name) != 0 &&
-								strcmp(cur_user, user_name) != 0)
-								ereport(ERROR,
-										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-										 errmsg("Current user does not have privileges to change user name")));
-						}
-					}
-
-					/* Set current user to dbo for alter permissions */
-					SetCurrentRoleId(dbo_id, false);
-
-					PG_TRY();
-					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-												params, queryEnv, dest,
-												qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-													params, queryEnv, dest,
-													qc);
-
-						stmt->options = list_concat(stmt->options,
-													user_options);
-						alter_bbf_authid_user_ext(stmt);
-					}
-					PG_CATCH();
-					{
-						SetCurrentRoleId(prev_current_user, false);
-						PG_RE_THROW();
-					}
-					PG_END_TRY();
-
-					SetCurrentRoleId(prev_current_user, false);
-					set_session_properties(db_name);
-
-					return;
-				}
-			}
-			break;
-		}
-		case T_DropRoleStmt:
-		{
-			if (sql_dialect == SQL_DIALECT_TSQL)
-			{
-				const char      *prev_current_user;
-				DropRoleStmt	*stmt = (DropRoleStmt *) parsetree;
-				bool			drop_user = false;
-				bool			drop_role = false;
-				bool			all_logins = false;
-				bool			all_users = false;
-				bool			all_roles = false;
-				char 			*role_name = NULL;
-				bool			other = false;
-				ListCell		*item;
-
-				/* Check if roles are users that need role name mapping */
-				if (stmt->roles != NIL)
-				{
-					RoleSpec		*headrol = linitial(stmt->roles);
-
-					if (strcmp(headrol->rolename, "is_user") == 0)
-						drop_user = true;
-					else if (strcmp(headrol->rolename, "is_role") == 0)
-						drop_role = true;
-
-					if (drop_user || drop_role)
-					{
-						char *db_name = NULL;
-
-						stmt->roles = list_delete_cell(stmt->roles,
-													   list_head(stmt->roles));
-						pfree(headrol);
-						headrol = NULL;
-						db_name = get_cur_db_name();
-
-						if (db_name != NULL && strcmp(db_name, "") != 0)
-						{
-							foreach (item, stmt->roles)
+							if (orig_loginname)
 							{
-								RoleSpec	*rolspec = lfirst(item);
-								char		*user_name;
+								login_options = lappend(login_options,
+														makeDefElem("original_login_name",
+																	(Node *) makeString(orig_loginname),
+																	-1));
+							}
 
-								user_name = get_physical_user_name(db_name, rolspec->rolename);
-
+							if (from_windows && orig_loginname)
+							{
 								/*
-								 * If a role has members, do not drop it.
-								 * Note that here we don't handle invalid roles.
+								 * The login name must contain '\' if it is
+								 * windows login or else throw error.
 								 */
-								if (drop_role && !is_empty_role(get_role_oid(user_name, true)))
+								if ((strchr(orig_loginname, '\\')) == NULL)
 									ereport(ERROR,
-											(errcode(ERRCODE_CHECK_VIOLATION),
-											 errmsg("The role has members. It must be empty before it can be dropped.")));
+											(errcode(ERRCODE_INVALID_NAME),
+											 errmsg("'%s' is not a valid Windows NT name. Give the complete name: <domain\\username>.",
+													orig_loginname)));
 
 								/*
-								 * If the statement is drop_user and the user is guest:
-								 * 1. If the db is "master" or "tempdb", don't disable the guest user.
-								 * 2. Else, disable the guest user if enabled.
-								 * 3. Otherwise throw an error.
+								 * Check whether domain name is empty. If the
+								 * first character is '\', that ensures domain
+								 * is empty.
 								 */
-								if (drop_user && strcmp(rolspec->rolename, "guest") == 0)
+								if (orig_loginname[0] == '\\')
+									ereport(ERROR,
+											(errcode(ERRCODE_INVALID_NAME),
+											 errmsg("The login name '%s' is invalid. The domain can not be empty.",
+													orig_loginname)));
+
+								/*
+								 * Check whether login_name has valid length
+								 * or not.
+								 */
+								if (!check_windows_logon_length(orig_loginname))
+									ereport(ERROR,
+											(errcode(ERRCODE_INVALID_NAME),
+											 errmsg("The login name '%s' has invalid length. Login name length should be between %d and %d for windows login.",
+													orig_loginname, (LOGON_NAME_MIN_LEN + 1), (LOGON_NAME_MAX_LEN - 1))));
+
+								/*
+								 * Check whether the login_name contains
+								 * invalid characters or not.
+								 */
+								if (windows_login_contains_invalid_chars(orig_loginname))
+									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+
+								pfree(stmt->role);
+								stmt->role = convertToUPN(orig_loginname);
+
+								/*
+								 * Check for duplicate login
+								 */
+								if (get_role_oid(stmt->role, true) != InvalidOid)
+									ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
+													errmsg("The Server principal '%s' already exists", stmt->role)));
+							}
+
+							/*
+							 * Length of login name should be less than 128.
+							 * Throw an error here if it is not. XXX: Below
+							 * check is to work around BABEL-3868.
+							 */
+							if (strlen(stmt->role) >= NAMEDATALEN)
+							{
+								ereport(ERROR,
+										(errcode(ERRCODE_INVALID_NAME),
+										 errmsg("The login name '%s' is too long. Maximum length is %d.",
+												stmt->role, (NAMEDATALEN - 1))));
+							}
+
+							/*
+							 * If the login name contains '\' and it is not a
+							 * windows login then throw error. For windows
+							 * login, all cases are handled beforehand, so if
+							 * the below condition is hit that means it is
+							 * password based authentication and login name
+							 * contains '\', which is not allowed
+							 */
+							if (!from_windows && strchr(stmt->role, '\\') != NULL)
+								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+												errmsg("'%s' is not a valid name because it contains invalid characters.", stmt->role)));
+
+							from_windows = false;
+						}
+						else if (strcmp(headel->defname, "isuser") == 0)
+						{
+							int			location = -1;
+
+							isuser = true;
+							stmt->options = list_delete_cell(stmt->options,
+															 list_head(stmt->options));
+							pfree(headel);
+
+							/* Filter user options from default role options */
+							foreach(option, stmt->options)
+							{
+								DefElem    *defel = (DefElem *) lfirst(option);
+
+								if (strcmp(defel->defname, "default_schema") == 0)
+									user_options = lappend(user_options, defel);
+								else if (strcmp(defel->defname, "name_location") == 0)
 								{
-									if (guest_has_dbaccess(db_name))
-									{
-										if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0)
-											ereport(ERROR,
-												(errcode(ERRCODE_CHECK_VIOLATION),
-												errmsg("Cannot disable access to the guest user in master or tempdb.")));
-
-										alter_user_can_connect(false, rolspec->rolename, db_name);
-										return;
-									}
-									else
-										ereport(ERROR,
-											(errcode(ERRCODE_CHECK_VIOLATION),
-											 errmsg("User 'guest' cannot be dropped, it can only be disabled. "
-											"The user is already disabled in the current database.")));
+									location = defel->location;
+									user_options = lappend(user_options, defel);
 								}
+								else if (strcmp(defel->defname, "rolemembers") == 0)
+								{
+									RoleSpec   *login = (RoleSpec *) linitial((List *) defel->arg);
 
-								pfree(rolspec->rolename);
-								rolspec->rolename = user_name;
+									if (strchr(login->rolename, '\\') != NULL)
+									{
+										/*
+										 * If login->rolename contains '\'
+										 * then treat it as windows login.
+										 */
+										char	   *upn_login = convertToUPN(login->rolename);
+
+										if (upn_login != login->rolename)
+										{
+											pfree(login->rolename);
+											login->rolename = upn_login;
+										}
+										from_windows = true;
+										if (!pltsql_allow_windows_login)
+											ereport(ERROR,
+													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+													 errmsg("Windows login is not supported in babelfish")));
+									}
+								}
+							}
+
+							foreach(option, user_options)
+							{
+								stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
+							}
+
+							if (location >= 0)
+							{
+								char	   *orig_user_name;
+
+								orig_user_name = extract_identifier(queryString + location);
+								user_options = lappend(user_options,
+													   makeDefElem("original_user_name",
+																   (Node *) makeString(orig_user_name),
+																   -1));
 							}
 						}
-						else
+						else if (strcmp(headel->defname, "isrole") == 0)
+						{
+							int			location = -1;
+							bool		orig_username_exists = false;
+
+							isrole = true;
+							stmt->options = list_delete_cell(stmt->options,
+															 list_head(stmt->options));
+							pfree(headel);
+
+							/*
+							 * Filter TSQL role options from default role
+							 * options
+							 */
+							foreach(option, stmt->options)
+							{
+								DefElem    *defel = (DefElem *) lfirst(option);
+
+								if (strcmp(defel->defname, "name_location") == 0)
+								{
+									location = defel->location;
+									user_options = lappend(user_options, defel);
+								}
+
+								/*
+								 * This condition is to handle create role
+								 * when using sp_addrole procedure because
+								 * there we add original_user_name before hand
+								 */
+								if (strcmp(defel->defname, "original_user_name") == 0)
+								{
+									user_options = lappend(user_options, defel);
+									orig_username_exists = true;
+								}
+
+							}
+
+
+							foreach(option, user_options)
+							{
+								stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
+							}
+
+							if (location >= 0 && !orig_username_exists)
+							{
+								char	   *orig_user_name;
+
+								orig_user_name = extract_identifier(queryString + location);
+								user_options = lappend(user_options,
+													   makeDefElem("original_user_name",
+																   (Node *) makeString(orig_user_name),
+																   -1));
+							}
+						}
+
+					}
+
+					if (islogin)
+					{
+						if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
 							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_DATABASE),
-									 errmsg("Current database missing. "
-										    "Can only drop users in current database. ")));
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("Current login %s does not have permission to create new login",
+											GetUserNameFromId(GetSessionUserId(), true))));
+
+						if (get_role_oid(stmt->role, true) != InvalidOid)
+							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
+											errmsg("The Server principal '%s' already exists", stmt->role)));
+
+						/* Set current user to sysadmin for create permissions */
+						prev_current_user = GetUserNameFromId(GetUserId(), false);
+
+						bbf_set_current_user("sysadmin");
+
+						PG_TRY();
+						{
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+													params, queryEnv, dest,
+													qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+														params, queryEnv, dest,
+														qc);
+
+							stmt->options = list_concat(stmt->options,
+														login_options);
+							create_bbf_authid_login_ext(stmt);
+						}
+						PG_CATCH();
+						{
+							bbf_set_current_user(prev_current_user);
+							PG_RE_THROW();
+						}
+						PG_END_TRY();
+
+						bbf_set_current_user(prev_current_user);
+
+						return;
+					}
+					else if (isuser || isrole)
+					{
+						/*
+						 * check whether sql user name and role name contains
+						 * '\' or not
+						 */
+						if (isrole || !from_windows)
+							validateUserAndRole(stmt->role);
+
+						/* Set current user to dbo user for create permissions */
+						prev_current_user = GetUserNameFromId(GetUserId(), false);
+
+						bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
+
+						PG_TRY();
+						{
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+													params, queryEnv, dest,
+													qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+														params, queryEnv, dest,
+														qc);
+
+							stmt->options = list_concat(stmt->options,
+														user_options);
+
+							/*
+							 * If the stmt is CREATE USER, it must have a
+							 * corresponding login and a schema name
+							 */
+							create_bbf_authid_user_ext(stmt, isuser, isuser, from_windows);
+						}
+						PG_CATCH();
+						{
+							bbf_set_current_user(prev_current_user);
+							PG_RE_THROW();
+						}
+						PG_END_TRY();
+
+						bbf_set_current_user(prev_current_user);
+
+						return;
 					}
 				}
-
-				/* List must be all one type of babelfish role. Cannot mix. */
-				foreach (item, stmt->roles)
+				break;
+			}
+		case T_AlterRoleStmt:
+			{
+				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
-					RoleSpec		*rolspec = lfirst(item);
-					Form_pg_authid	roleform;
-					HeapTuple		tuple;
+					AlterRoleStmt *stmt = (AlterRoleStmt *) parsetree;
+					List	   *login_options = NIL;
+					List	   *user_options = NIL;
+					ListCell   *option;
+					bool		islogin = false;
+					bool		isuser = false;
+					bool		isrole = false;
+					Oid			prev_current_user;
 
-					role_name = rolspec->rolename;
-					tuple = SearchSysCache1(AUTHNAME,
-											PointerGetDatum(role_name));
-					/* Let DropRole handle missing roles */
-					if (HeapTupleIsValid(tuple))
-						roleform = (Form_pg_authid) GETSTRUCT(tuple);
-					else
+					prev_current_user = GetUserId();
+
+					/* Check if creating login or role. Expect islogin first */
+					if (stmt->options != NIL)
 					{
-						/* Supplied login name might be in windows format i.e, domain\login form */
-						if (strchr(role_name, '\\') != NULL)
+						DefElem    *headel = (DefElem *) linitial(stmt->options);
+
+						/*
+						 * Set the options list to after the head. Save the
+						 * list of babelfish specific options.
+						 */
+						if (strcmp(headel->defname, "islogin") == 0)
+						{
+							islogin = true;
+							stmt->options = list_delete_cell(stmt->options,
+															 list_head(stmt->options));
+							pfree(headel);
+
+							/* Filter login options from default role options */
+							foreach(option, stmt->options)
+							{
+								DefElem    *defel = (DefElem *) lfirst(option);
+
+								if (strcmp(defel->defname, "default_database") == 0)
+									login_options = lappend(login_options, defel);
+							}
+
+							foreach(option, login_options)
+							{
+								stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
+							}
+						}
+						else if (strcmp(headel->defname, "isuser") == 0)
+						{
+							isuser = true;
+							stmt->options = list_delete_cell(stmt->options,
+															 list_head(stmt->options));
+							pfree(headel);
+
+							/* Filter user options from default role options */
+							foreach(option, stmt->options)
+							{
+								DefElem    *defel = (DefElem *) lfirst(option);
+
+								if (strcmp(defel->defname, "default_schema") == 0)
+									user_options = lappend(user_options, defel);
+								if (strcmp(defel->defname, "rename") == 0)
+									user_options = lappend(user_options, defel);
+							}
+
+							foreach(option, user_options)
+							{
+								stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
+							}
+						}
+						else if (strcmp(headel->defname, "isrole") == 0)
+						{
+							isrole = true;
+							stmt->options = list_delete_cell(stmt->options,
+															 list_head(stmt->options));
+							pfree(headel);
+
+							/* Filter user options from default role options */
+							foreach(option, stmt->options)
+							{
+								DefElem    *defel = (DefElem *) lfirst(option);
+
+								if (strcmp(defel->defname, "rename") == 0)
+									user_options = lappend(user_options, defel);
+							}
+
+							foreach(option, user_options)
+							{
+								stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
+							}
+						}
+					}
+
+					if (islogin)
+					{
+						Oid			datdba;
+						bool		has_password = false;
+						char	   *temp_login_name = NULL;
+
+						datdba = get_role_oid("sysadmin", false);
+
+						/*
+						 * Check if the current login has privileges to alter
+						 * password.
+						 */
+						foreach(option, stmt->options)
+						{
+							DefElem    *defel = (DefElem *) lfirst(option);
+
+							if (strcmp(defel->defname, "password") == 0)
+							{
+								if (!is_member_of_role(GetSessionUserId(), datdba))
+									ereport(ERROR,
+											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+											 errmsg("Current login does not have privileges to alter password")));
+
+								has_password = true;
+							}
+						}
+
+						/*
+						 * Leveraging the fact that convertToUPN API returns
+						 * the login name in UPN format if login name contains
+						 * '\' i,e,. windows login. For windows login '\' must
+						 * be present and for password based login '\' is not
+						 * acceptable. So, combining these, if the login is of
+						 * windows then it will be converted to UPN format or
+						 * else it will be as it was
+						 */
+						temp_login_name = convertToUPN(stmt->role->rolename);
+
+						/*
+						 * If the previous rolname is same as current, then it
+						 * is password based login else, it is windows based
+						 * login. If, user is trying to alter password for
+						 * windows login, throw error
+						 */
+						if (temp_login_name != stmt->role->rolename)
+						{
+							if (has_password)
+								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+												errmsg("Cannot use parameter PASSWORD for a windows login")));
+
+							pfree(stmt->role->rolename);
+							stmt->role->rolename = temp_login_name;
+						}
+
+						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
+							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
+											errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
+
+
+						/* Set current user to sysadmin for alter permissions */
+						SetCurrentRoleId(datdba, false);
+
+						PG_TRY();
+						{
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+													params, queryEnv, dest,
+													qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+														params, queryEnv, dest,
+														qc);
+
+							stmt->options = list_concat(stmt->options,
+														login_options);
+							alter_bbf_authid_login_ext(stmt);
+						}
+						PG_CATCH();
+						{
+							SetCurrentRoleId(prev_current_user, false);
+							PG_RE_THROW();
+						}
+						PG_END_TRY();
+
+						SetCurrentRoleId(prev_current_user, false);
+
+						return;
+					}
+					else if (isuser || isrole)
+					{
+						const char *db_name;
+						const char *dbo_name;
+						Oid			dbo_id;
+
+						db_name = get_cur_db_name();
+						dbo_name = get_dbo_role_name(db_name);
+						dbo_id = get_role_oid(dbo_name, false);
+
+						/*
+						 * Check if the current user has privileges.
+						 */
+						foreach(option, user_options)
+						{
+							DefElem    *defel = (DefElem *) lfirst(option);
+							char	   *user_name;
+							char	   *cur_user;
+
+							user_name = stmt->role->rolename;
+							cur_user = GetUserNameFromId(GetUserId(), false);
+							if (strcmp(defel->defname, "default_schema") == 0)
+							{
+								if (strcmp(cur_user, dbo_name) != 0 &&
+									strcmp(cur_user, user_name) != 0)
+									ereport(ERROR,
+											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+											 errmsg("Current user does not have privileges to change schema")));
+							}
+							if (strcmp(defel->defname, "rename") == 0)
+							{
+								if (strcmp(cur_user, dbo_name) != 0 &&
+									strcmp(cur_user, user_name) != 0)
+									ereport(ERROR,
+											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+											 errmsg("Current user does not have privileges to change user name")));
+							}
+						}
+
+						/* Set current user to dbo for alter permissions */
+						SetCurrentRoleId(dbo_id, false);
+
+						PG_TRY();
+						{
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+													params, queryEnv, dest,
+													qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+														params, queryEnv, dest,
+														qc);
+
+							stmt->options = list_concat(stmt->options,
+														user_options);
+							alter_bbf_authid_user_ext(stmt);
+						}
+						PG_CATCH();
+						{
+							SetCurrentRoleId(prev_current_user, false);
+							PG_RE_THROW();
+						}
+						PG_END_TRY();
+
+						SetCurrentRoleId(prev_current_user, false);
+						set_session_properties(db_name);
+
+						return;
+					}
+				}
+				break;
+			}
+		case T_DropRoleStmt:
+			{
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					const char *prev_current_user;
+					DropRoleStmt *stmt = (DropRoleStmt *) parsetree;
+					bool		drop_user = false;
+					bool		drop_role = false;
+					bool		all_logins = false;
+					bool		all_users = false;
+					bool		all_roles = false;
+					char	   *role_name = NULL;
+					bool		other = false;
+					ListCell   *item;
+
+					/* Check if roles are users that need role name mapping */
+					if (stmt->roles != NIL)
+					{
+						RoleSpec   *headrol = linitial(stmt->roles);
+
+						if (strcmp(headrol->rolename, "is_user") == 0)
+							drop_user = true;
+						else if (strcmp(headrol->rolename, "is_role") == 0)
+							drop_role = true;
+
+						if (drop_user || drop_role)
+						{
+							char	   *db_name = NULL;
+
+							stmt->roles = list_delete_cell(stmt->roles,
+														   list_head(stmt->roles));
+							pfree(headrol);
+							headrol = NULL;
+							db_name = get_cur_db_name();
+
+							if (db_name != NULL && strcmp(db_name, "") != 0)
+							{
+								foreach(item, stmt->roles)
+								{
+									RoleSpec   *rolspec = lfirst(item);
+									char	   *user_name;
+
+									user_name = get_physical_user_name(db_name, rolspec->rolename);
+
+									/*
+									 * If a role has members, do not drop it.
+									 * Note that here we don't handle invalid
+									 * roles.
+									 */
+									if (drop_role && !is_empty_role(get_role_oid(user_name, true)))
+										ereport(ERROR,
+												(errcode(ERRCODE_CHECK_VIOLATION),
+												 errmsg("The role has members. It must be empty before it can be dropped.")));
+
+									/*
+									 * If the statement is drop_user and the
+									 * user is guest: 1. If the db is "master"
+									 * or "tempdb", don't disable the guest
+									 * user. 2. Else, disable the guest user
+									 * if enabled. 3. Otherwise throw an
+									 * error.
+									 */
+									if (drop_user && strcmp(rolspec->rolename, "guest") == 0)
+									{
+										if (guest_has_dbaccess(db_name))
+										{
+											if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0)
+												ereport(ERROR,
+														(errcode(ERRCODE_CHECK_VIOLATION),
+														 errmsg("Cannot disable access to the guest user in master or tempdb.")));
+
+											alter_user_can_connect(false, rolspec->rolename, db_name);
+											return;
+										}
+										else
+											ereport(ERROR,
+													(errcode(ERRCODE_CHECK_VIOLATION),
+													 errmsg("User 'guest' cannot be dropped, it can only be disabled. "
+															"The user is already disabled in the current database.")));
+									}
+
+									pfree(rolspec->rolename);
+									rolspec->rolename = user_name;
+								}
+							}
+							else
+								ereport(ERROR,
+										(errcode(ERRCODE_UNDEFINED_DATABASE),
+										 errmsg("Current database missing. "
+												"Can only drop users in current database. ")));
+						}
+					}
+
+					/*
+					 * List must be all one type of babelfish role. Cannot
+					 * mix.
+					 */
+					foreach(item, stmt->roles)
+					{
+						RoleSpec   *rolspec = lfirst(item);
+						Form_pg_authid roleform;
+						HeapTuple	tuple;
+
+						role_name = rolspec->rolename;
+						tuple = SearchSysCache1(AUTHNAME,
+												PointerGetDatum(role_name));
+						/* Let DropRole handle missing roles */
+						if (HeapTupleIsValid(tuple))
+							roleform = (Form_pg_authid) GETSTRUCT(tuple);
+						else
 						{
 							/*
-							 * This means that provided login name is in windows format 
-							 * so let's update role_name with UPN format.
+							 * Supplied login name might be in windows format
+							 * i.e, domain\login form
 							 */
-							role_name = convertToUPN(role_name);
-							tuple = SearchSysCache1(AUTHNAME,
-											PointerGetDatum(role_name));
-							if (HeapTupleIsValid(tuple))
+							if (strchr(role_name, '\\') != NULL)
 							{
-								roleform = (Form_pg_authid) GETSTRUCT(tuple);
-								pfree(rolspec->rolename);
-								rolspec->rolename = role_name;
+								/*
+								 * This means that provided login name is in
+								 * windows format so let's update role_name
+								 * with UPN format.
+								 */
+								role_name = convertToUPN(role_name);
+								tuple = SearchSysCache1(AUTHNAME,
+														PointerGetDatum(role_name));
+								if (HeapTupleIsValid(tuple))
+								{
+									roleform = (Form_pg_authid) GETSTRUCT(tuple);
+									pfree(rolspec->rolename);
+									rolspec->rolename = role_name;
+								}
+								else
+								{
+									continue;
+								}
 							}
 							else
 							{
 								continue;
 							}
 						}
+
+						if (is_login(roleform->oid))
+							all_logins = true;
+						else if (is_user(roleform->oid))
+							all_users = true;
+						else if (is_role(roleform->oid))
+							all_roles = true;
 						else
-						{
-							continue;
-						}
+							other = true;
+
+						ReleaseSysCache(tuple);
+
+						/* Only one should be true */
+						if (all_logins + all_users + all_roles + other != 1)
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									 errmsg("cannot mix dropping babelfish role types")));
 					}
 
-					if (is_login(roleform->oid))
-						all_logins = true;
-					else if (is_user(roleform->oid))
-						all_users = true;
-					else if (is_role(roleform->oid))
-						all_roles = true;
-					else
-						other = true;
-
-					ReleaseSysCache(tuple);
-
-					/* Only one should be true */
-					if (all_logins + all_users + all_roles + other != 1)
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								 errmsg("cannot mix dropping babelfish role types")));
-				}
-
-				/* If not user or role, then login */
-				if (!drop_user && !drop_role)
-				{
-					int	role_oid = get_role_oid(role_name, true);
-					if (role_oid == InvalidOid)
-						ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
-										errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
-
-					/* Prevent if it is active login (begin used by other sessions) */
-					if (is_active_login(role_oid))
-						ereport(ERROR,
-								(errcode(ERRCODE_OBJECT_IN_USE),
-								 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
-				}
-
-				if (all_logins || all_users || all_roles)
-				{
-					/* Set current user as appropriate for drop permissions */
-					prev_current_user = GetUserNameFromId(GetUserId(), false);
-
-					/* Only use dbo if dropping a user/role in a Babelfish session. */
-					if (drop_user || drop_role)
-						bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
-					else
-						bbf_set_current_user("sysadmin");
-
-					PG_TRY();
+					/* If not user or role, then login */
+					if (!drop_user && !drop_role)
 					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-												params, queryEnv, dest,
-												qc);
+						int			role_oid = get_role_oid(role_name, true);
+
+						if (role_oid == InvalidOid)
+							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
+											errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
+
+						/*
+						 * Prevent if it is active login (begin used by other
+						 * sessions)
+						 */
+						if (is_active_login(role_oid))
+							ereport(ERROR,
+									(errcode(ERRCODE_OBJECT_IN_USE),
+									 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
+					}
+
+					if (all_logins || all_users || all_roles)
+					{
+						/*
+						 * Set current user as appropriate for drop
+						 * permissions
+						 */
+						prev_current_user = GetUserNameFromId(GetUserId(), false);
+
+						/*
+						 * Only use dbo if dropping a user/role in a Babelfish
+						 * session.
+						 */
+						if (drop_user || drop_role)
+							bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
 						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+							bbf_set_current_user("sysadmin");
+
+						PG_TRY();
+						{
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 													params, queryEnv, dest,
 													qc);
-					}
-					PG_CATCH();
-					{
-						bbf_set_current_user(prev_current_user);
-						PG_RE_THROW();
-					}
-					PG_END_TRY();
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+														params, queryEnv, dest,
+														qc);
+						}
+						PG_CATCH();
+						{
+							bbf_set_current_user(prev_current_user);
+							PG_RE_THROW();
+						}
+						PG_END_TRY();
 
-					bbf_set_current_user(prev_current_user);
+						bbf_set_current_user(prev_current_user);
+
+						return;
+					}
+				}
+				break;
+			}
+		case T_CreateSchemaStmt:
+			{
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					CreateSchemaStmt *create_schema = (CreateSchemaStmt *) parsetree;
+					const char *orig_schema = NULL;
+					const char *grant_query = "GRANT USAGE ON SCHEMA dummy TO public";
+					List	   *res;
+					GrantStmt  *stmt;
+					PlannedStmt *wrapper;
+
+					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
+						&& context == PROCESS_UTILITY_SUBCOMMAND)
+					{
+						if (pstmt->stmt_len == 19)
+							orig_schema = "guest";
+						else
+							orig_schema = "dbo";
+					}
+
+					if (prev_ProcessUtility)
+						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+											queryEnv, dest, qc);
+					else
+						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+												queryEnv, dest, qc);
+
+					add_ns_ext_info(create_schema, queryString, orig_schema);
+
+					res = raw_parser(grant_query, RAW_PARSE_DEFAULT);
+
+					if (list_length(res) != 1)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Expected 1 statement, but got %d statements after parsing",
+										list_length(res))));
+
+					stmt = (GrantStmt *) parsetree_nth_stmt(res, 0);
+					stmt->objects = list_truncate(stmt->objects, 0);
+					stmt->objects = lappend(stmt->objects, makeString(pstrdup(create_schema->schemaname)));
+
+					wrapper = makeNode(PlannedStmt);
+					wrapper->commandType = CMD_UTILITY;
+					wrapper->canSetTag = false;
+					wrapper->utilityStmt = (Node *) stmt;
+					wrapper->stmt_location = pstmt->stmt_location;
+					wrapper->stmt_len = pstmt->stmt_len;
+
+					ProcessUtility(wrapper,
+								   queryString,
+								   readOnlyTree,
+								   PROCESS_UTILITY_SUBCOMMAND,
+								   params,
+								   NULL,
+								   None_Receiver,
+								   NULL);
+
+					CommandCounterIncrement();
 
 					return;
 				}
-			}
-			break;
-		}
-		case T_CreateSchemaStmt:
-		{
-            if (sql_dialect == SQL_DIALECT_TSQL)
-            {
-				CreateSchemaStmt	*create_schema = (CreateSchemaStmt *) parsetree;
-				const char			*orig_schema = NULL;
-				const char			*grant_query = "GRANT USAGE ON SCHEMA dummy TO public";
-				List				*res;
-				GrantStmt			*stmt;
-				PlannedStmt			*wrapper;
-
-				if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
-							&& context == PROCESS_UTILITY_SUBCOMMAND )
-				{
-					if (pstmt->stmt_len == 19)
-						orig_schema = "guest";
-					else
-						orig_schema = "dbo";
-				}
-
-				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-
-				add_ns_ext_info(create_schema, queryString, orig_schema);
-
-				res = raw_parser(grant_query, RAW_PARSE_DEFAULT);
-
-				if (list_length(res) != 1)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("Expected 1 statement, but got %d statements after parsing",
-									list_length(res))));
-
-				stmt = (GrantStmt *) parsetree_nth_stmt(res, 0);
-				stmt->objects = list_truncate(stmt->objects, 0);
-				stmt->objects = lappend(stmt->objects, makeString(pstrdup(create_schema->schemaname)));
-
-				wrapper = makeNode(PlannedStmt);
-				wrapper->commandType = CMD_UTILITY;
-				wrapper->canSetTag = false;
-				wrapper->utilityStmt = (Node *) stmt;
-				wrapper->stmt_location = pstmt->stmt_location;
-				wrapper->stmt_len = pstmt->stmt_len;
-
-				ProcessUtility(wrapper,
-							   queryString,
-							   readOnlyTree,
-							   PROCESS_UTILITY_SUBCOMMAND,
-							   params,
-							   NULL,
-							   None_Receiver,
-							   NULL);
-
-				CommandCounterIncrement();
-
-				return;
+					break;
 			}
-			else
-				break;
-		}
 		case T_DropStmt:
-		{
-			DropStmt *drop_stmt = (DropStmt *) parsetree;
-			if (drop_stmt->removeType != OBJECT_SCHEMA)
-				break;
+			{
+				DropStmt   *drop_stmt = (DropStmt *) parsetree;
 
+				if (drop_stmt->removeType != OBJECT_SCHEMA)
+					break;
+
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					/*
+					 * Prevent dropping guest schema unless it is part of drop
+					 * database command.
+					 */
+					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
+
+					if (strcmp(queryString, "(DROP DATABASE )") != 0)
+					{
+						char	   *cur_db = get_cur_db_name();
+						char	   *guest_schema_name = get_physical_schema_name(cur_db, "guest");
+
+						if (strcmp(schemaname, guest_schema_name) == 0)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									 errmsg("Cannot drop the schema \'%s\'", schemaname)));
+						}
+					}
+
+					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
+
+					if (prev_ProcessUtility)
+						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+											queryEnv, dest, qc);
+					else
+						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+												queryEnv, dest, qc);
+					return;
+				}
+				else
+				{
+					if (prev_ProcessUtility)
+						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+											queryEnv, dest, qc);
+					else
+						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+												queryEnv, dest, qc);
+					check_extra_schema_restrictions(parsetree);
+					return;
+				}
+			}
+		case T_CreatedbStmt:
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				// Prevent dropping guest schema unless it is part of drop database command.
-				const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
-				if (strcmp(queryString, "(DROP DATABASE )") != 0)
-				{
-					char *cur_db = get_cur_db_name();
-					char *guest_schema_name = get_physical_schema_name(cur_db, "guest");
-
-					if (strcmp(schemaname, guest_schema_name) == 0) {
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								errmsg("Cannot drop the schema \'%s\'", schemaname)));
-					}
-				}
-
-				del_ns_ext_info(schemaname, drop_stmt->missing_ok);
-
-				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-				else
-					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-				return;
-			}
-			else
-			{
-				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-				else
-					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-				check_extra_schema_restrictions(parsetree);
-				return;
-			}
-		}
-		case T_CreatedbStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL)
-            {
 				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
 				return;
 			}
 			break;
-        case T_DropdbStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL)
-            {
-                DropdbStmt *stmt = (DropdbStmt *) parsetree;
-                drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
+		case T_DropdbStmt:
+			if (sql_dialect == SQL_DIALECT_TSQL)
+			{
+				DropdbStmt *stmt = (DropdbStmt *) parsetree;
+
+				drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
 				return;
-            }
-            break;
+			}
+			break;
 		case T_GrantRoleStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL)
-            {
+			if (sql_dialect == SQL_DIALECT_TSQL)
+			{
 				GrantRoleStmt *grant_role = (GrantRoleStmt *) parsetree;
+
 				if (is_alter_server_stmt(grant_role))
 				{
-					const char      *prev_current_user;
-					const char      *session_user_name;
+					const char *prev_current_user;
+					const char *session_user_name;
 
 					check_alter_server_stmt(grant_role);
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -3228,10 +3366,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if (prev_ProcessUtility)
 							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-									queryEnv, dest, qc);
+												queryEnv, dest, qc);
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-									queryEnv, dest, qc);
+													queryEnv, dest, qc);
 
 					}
 					PG_CATCH();
@@ -3247,8 +3385,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				else if (is_alter_role_stmt(grant_role))
 				{
-					const char      *prev_current_user;
-					const char      *session_user_name;
+					const char *prev_current_user;
+					const char *session_user_name;
 
 					check_alter_role_stmt(grant_role);
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -3259,10 +3397,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						if (prev_ProcessUtility)
 							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-									queryEnv, dest, qc);
+												queryEnv, dest, qc);
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-									queryEnv, dest, qc);
+													queryEnv, dest, qc);
 
 					}
 					PG_CATCH();
@@ -3279,105 +3417,107 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 		case T_RenameStmt:
-		{
-			RenameStmt *stmt = (RenameStmt *) parsetree;
-			if (prev_ProcessUtility)
-				prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-									params, queryEnv, dest, qc);
-			else
-				standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-										params, queryEnv, dest, qc);
-			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				rename_update_bbf_catalog(stmt);
-				/* Clean up. Restore previous state. */
-				return;
-			}
-			check_extra_schema_restrictions(parsetree);
-
-			return;
-		}
-		case T_CreateTableAsStmt:
-		{
-			if (sql_dialect == SQL_DIALECT_TSQL)
-			{
-				CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
-				Oid relid;
-				Relation rel;
-				TupleDesc tupdesc;
-				AttrNumber attr_num;
+				RenameStmt *stmt = (RenameStmt *) parsetree;
 
 				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+										params, queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-
-				relid = RangeVarGetRelid(stmt->into->rel, NoLock, false);
-				rel = RelationIdGetRelation(relid);
-				tupdesc = RelationGetDescr(rel);
-
-				/*
-				 * If table contains a rowversion column add a default node to that
-				 * column. It is needed as table created with SELECT-INTO will not
-				 * get the column defaults from parent table.
-				 */
-				for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+											params, queryEnv, dest, qc);
+				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
-					Form_pg_attribute attr;
-
-					attr = TupleDescAttr(tupdesc, attr_num);
-
-					/* Skip dropped columns */
-					if (attr->attisdropped)
-						continue;
-
-					if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype)(attr->atttypid))
-					{
-						RawColumnDefault *rawEnt;
-						Constraint *con;
-
-						con = get_rowversion_default_constraint(makeTypeNameFromOid(attr->atttypid, attr->atttypmod));
-						rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
-						rawEnt->attnum = attr_num + 1;
-						rawEnt->raw_default = (Node *) con->raw_expr;
-						AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
-										false, true, true, NULL);
-						break;
-					}
+					rename_update_bbf_catalog(stmt);
+					/* Clean up. Restore previous state. */
+					return;
 				}
+				check_extra_schema_restrictions(parsetree);
 
-				RelationClose(rel);
 				return;
 			}
-			break;
-		}
+		case T_CreateTableAsStmt:
+			{
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
+					Oid			relid;
+					Relation	rel;
+					TupleDesc	tupdesc;
+					AttrNumber	attr_num;
+
+					if (prev_ProcessUtility)
+						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+											queryEnv, dest, qc);
+					else
+						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+												queryEnv, dest, qc);
+
+					relid = RangeVarGetRelid(stmt->into->rel, NoLock, false);
+					rel = RelationIdGetRelation(relid);
+					tupdesc = RelationGetDescr(rel);
+
+					/*
+					 * If table contains a rowversion column add a default
+					 * node to that column. It is needed as table created with
+					 * SELECT-INTO will not get the column defaults from
+					 * parent table.
+					 */
+					for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
+					{
+						Form_pg_attribute attr;
+
+						attr = TupleDescAttr(tupdesc, attr_num);
+
+						/* Skip dropped columns */
+						if (attr->attisdropped)
+							continue;
+
+						if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (attr->atttypid))
+						{
+							RawColumnDefault *rawEnt;
+							Constraint *con;
+
+							con = get_rowversion_default_constraint(makeTypeNameFromOid(attr->atttypid, attr->atttypmod));
+							rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+							rawEnt->attnum = attr_num + 1;
+							rawEnt->raw_default = (Node *) con->raw_expr;
+							AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
+													  false, true, true, NULL);
+							break;
+						}
+					}
+
+					RelationClose(rel);
+					return;
+				}
+				break;
+			}
 		case T_CreateStmt:
 			{
 				CreateStmt *create_stmt = (CreateStmt *) parsetree;
-				RangeVar *rel = create_stmt->relation;
-				bool isTableVariable = (rel->relname[0] == '@');
+				RangeVar   *rel = create_stmt->relation;
+				bool		isTableVariable = (rel->relname[0] == '@');
 
-				if(restore_tsql_tabletype)
+				if (restore_tsql_tabletype)
 					create_stmt->tsql_tabletype = true;
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
+										queryEnv, dest, qc);
 				else
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
+											queryEnv, dest, qc);
 
 				if (create_stmt->tsql_tabletype || isTableVariable)
 				{
-					List *name;
+					List	   *name;
 
 					if (rel->schemaname)
 						name = list_make2(makeString(rel->schemaname), makeString(rel->relname));
 					else
 						name = list_make1(makeString(rel->relname));
-					
+
 					set_pgtype_byval(name, true);
 
 					if (create_stmt->tsql_tabletype)
@@ -3392,10 +3532,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
+										queryEnv, dest, qc);
 				else
 					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
+											queryEnv, dest, qc);
 
 				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
@@ -3406,30 +3546,31 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 	if (prev_ProcessUtility)
 		prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-				queryEnv, dest, qc);
+							queryEnv, dest, qc);
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-				queryEnv, dest, qc);
+								queryEnv, dest, qc);
 }
 
 /*
  * Update the pg_type catalog entry for the given name to have
  * typbyval set to the given value.
  */
-static void set_pgtype_byval(List *name, bool byval)
+static void
+set_pgtype_byval(List *name, bool byval)
 {
 	Relation	catalog;
 	TypeName   *typename;
 	HeapTuple	tup;
-	
+
 	Datum		values[Natts_pg_type];
 	bool		nulls[Natts_pg_type];
 	bool		replaces[Natts_pg_type];
 	HeapTuple	newtup;
 
 	/*
-	* Table types need to set the typbyval column in pg_type to 't'
-	*/
+	 * Table types need to set the typbyval column in pg_type to 't'
+	 */
 	catalog = table_open(TypeRelationId, RowExclusiveLock);
 	typename = makeTypeNameFromNameList(name);
 	tup = typenameType(NULL, typename, NULL);
@@ -3458,28 +3599,30 @@ static void set_pgtype_byval(List *name, bool byval)
  */
 #define MD5_HASH_LEN 32
 
-static bool pltsql_truncate_identifier(char *ident, int len, bool warn)
+static bool
+pltsql_truncate_identifier(char *ident, int len, bool warn)
 {
-	char md5[MD5_HASH_LEN + 1];
-	char buf[NAMEDATALEN];
-	bool success;
+	char		md5[MD5_HASH_LEN + 1];
+	char		buf[NAMEDATALEN];
+	bool		success;
 	const char *errstr = NULL;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
-		return false; /* will rely on existing PG behavior */
+		return false;			/* will rely on existing PG behavior */
 
 	Assert(len >= NAMEDATALEN); /* should be already checked */
 
 	if (tsql_is_server_collation_CI_AS())
 	{
 		/* md5 should be generated by case-insensitive way */
-		char *downcased_ident = downcase_identifier(ident, len, false, false);
+		char	   *downcased_ident = downcase_identifier(ident, len, false, false);
+
 		success = pg_md5_hash(downcased_ident, strlen(downcased_ident), md5, &errstr);
 	}
 	else
 		success = pg_md5_hash(ident, len, md5, &errstr);
 
-	if (unlikely(!success)) /* OOM */
+	if (unlikely(!success))		/* OOM */
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("could not compute %s hash: %s", "MD5", errstr)));
@@ -3500,22 +3643,26 @@ static bool pltsql_truncate_identifier(char *ident, int len, bool warn)
 	return true;
 }
 
-Name pltsql_cstr_to_name(char *s, int len)
+Name
+pltsql_cstr_to_name(char *s, int len)
 {
 	Name result;
-	char buf[NAMEDATALEN];
+	char		buf[NAMEDATALEN];
 
 	/* Truncate oversize input */
-	if (len >= NAMEDATALEN) {
-		if (sql_dialect == SQL_DIALECT_TSQL) {
-			char md5[MD5_HASH_LEN + 1];
-			bool success;
+	if (len >= NAMEDATALEN)
+	{
+		if (sql_dialect == SQL_DIALECT_TSQL)
+		{
+			char		md5[MD5_HASH_LEN + 1];
+			bool		success;
 			const char *errstr = NULL;
 
 			if (tsql_is_server_collation_CI_AS())
 			{
 				/* md5 should be generated in a case-insensitive way */
-				char *downcased_s = downcase_identifier(s, len, false, false);
+				char	   *downcased_s = downcase_identifier(s, len, false, false);
+
 				success = pg_md5_hash(downcased_s, strlen(downcased_s), md5, &errstr);
 			}
 			else
@@ -3523,8 +3670,8 @@ Name pltsql_cstr_to_name(char *s, int len)
 
 			if (unlikely(!success)) /* OOM */
 				ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("could not compute %s hash: %s", "MD5", errstr)));
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("could not compute %s hash: %s", "MD5", errstr)));
 
 			len = pg_mbcliplen(s, len, NAMEDATALEN - MD5_HASH_LEN - 1);
 			Assert(len + MD5_HASH_LEN < NAMEDATALEN);
@@ -3535,7 +3682,9 @@ Name pltsql_cstr_to_name(char *s, int len)
 			s = buf;
 			len += MD5_HASH_LEN;
 
-		} else {
+		}
+		else
+		{
 			/* PG default implementation */
 			len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 		}
@@ -3543,6 +3692,7 @@ Name pltsql_cstr_to_name(char *s, int len)
 
 	/* We use palloc0 here to ensure result is zero-padded */
 	result = (Name) palloc0(NAMEDATALEN);
+
 	memcpy(NameStr(*result), s, len);
 
 	return result;
@@ -3553,29 +3703,29 @@ PG_FUNCTION_INFO_V1(pltsql_truncate_identifier_func);
 Datum
 pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 {
-	char *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int len = strlen(name);
+	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int			len = strlen(name);
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	PG_TRY();
 	{
 		/* this is BBF help function. use BBF truncation logic */
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					(superuser() ? PGC_SUSET : PGC_USERSET),
-					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		truncate_identifier(name, len, false);
 	}
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					(superuser() ? PGC_SUSET : PGC_USERSET),
-					PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-				(superuser() ? PGC_SUSET : PGC_USERSET),
-				PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }
@@ -3590,8 +3740,8 @@ _PG_init(void)
 {
 	/* Be sure we do initialization only once (should be redundant now) */
 	static bool inited = false;
-	FunctionCallInfo fcinfo  = NULL;  /* empty interface */
-	
+	FunctionCallInfo fcinfo = NULL; /* empty interface */
+
 	if (inited)
 		return;
 
@@ -3602,13 +3752,13 @@ _PG_init(void)
 	pg_bindtextdomain(TEXTDOMAIN);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.debug_parser",
-				 gettext_noop("Write PL/tsql parser messages to server log (for debugging)."),
-				 NULL,
-				 &pltsql_debug_parser,
-				 false,
-				 PGC_SUSET,
-				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 NULL, NULL, NULL);
+							 gettext_noop("Write PL/tsql parser messages to server log (for debugging)."),
+							 NULL,
+							 &pltsql_debug_parser,
+							 false,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
 
 
 	DefineCustomEnumVariable("babelfishpg_tsql.variable_conflict",
@@ -3621,21 +3771,21 @@ _PG_init(void)
 							 NULL, NULL, NULL);
 
 	DefineCustomEnumVariable("babelfishpg_tsql.schema_mapping",
-							gettext_noop("Sets the db schema in babelfishpg_tsql"),
-							NULL,
-							&pltsql_schema_mapping,
-							PLTSQL_RESOLVE_ERROR,
-							schema_mapping_options,
-							PGC_SUSET,
-							GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							NULL, NULL, NULL);
+							 gettext_noop("Sets the db schema in babelfishpg_tsql"),
+							 NULL,
+							 &pltsql_schema_mapping,
+							 PLTSQL_RESOLVE_ERROR,
+							 schema_mapping_options,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
 
 	DefineCustomStringVariable("babelfishpg_tsql.identity_insert",
 							   gettext_noop("Enable inserts into identity columns."),
 							   NULL,
 							   &identity_insert_string,
 							   "",
-							   PGC_USERSET, 
+							   PGC_USERSET,
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   NULL,
 							   assign_identity_insert,
@@ -3678,14 +3828,14 @@ _PG_init(void)
 							 NULL, NULL, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.textsize",
-							 gettext_noop("set TEXTSIZE"),
-							 NULL,
-							 &text_size,
-							 0, -1, INT_MAX,
-							 PGC_USERSET, 
-				 			 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 NULL, assign_textsize, NULL);
-	
+							gettext_noop("set TEXTSIZE"),
+							NULL,
+							&text_size,
+							0, -1, INT_MAX,
+							PGC_USERSET,
+							GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							NULL, assign_textsize, NULL);
+
 	define_custom_variables();
 
 	EmitWarningsOnPlaceholders("pltsql");
@@ -3701,14 +3851,14 @@ _PG_init(void)
 	assign_tablecmds_hook();
 	install_backend_gram_hooks();
 	init_catalog(fcinfo);
-	
+
 	/* Set up a rendezvous point with optional instrumentation plugin */
 	pltsql_plugin_ptr = (PLtsql_plugin **) find_rendezvous_variable("PLtsql_plugin");
 	pltsql_instr_plugin_ptr = (PLtsql_instr_plugin **) find_rendezvous_variable("PLtsql_instr_plugin");
 
 	/* Set up a rendezvous point with optional protocol plugin */
 	pltsql_protocol_plugin_ptr = (PLtsql_protocol_plugin **)
-			find_rendezvous_variable("PLtsql_protocol_plugin");
+		find_rendezvous_variable("PLtsql_protocol_plugin");
 
 	/* If a protocol extension is loaded, initialize the inline handler. */
 	if (*pltsql_protocol_plugin_ptr)
@@ -3716,12 +3866,12 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_nocount_addr = &pltsql_nocount;
 		(*pltsql_protocol_plugin_ptr)->sql_batch_callback = &pltsql_inline_handler;
 		(*pltsql_protocol_plugin_ptr)->sp_executesql_callback = &pltsql_inline_handler;
-        (*pltsql_protocol_plugin_ptr)->sp_prepare_callback = &sp_prepare;
-        (*pltsql_protocol_plugin_ptr)->sp_execute_callback = &pltsql_inline_handler;
-        (*pltsql_protocol_plugin_ptr)->sp_prepexec_callback = &pltsql_inline_handler;
-        (*pltsql_protocol_plugin_ptr)->sp_unprepare_callback = &sp_unprepare;
-        (*pltsql_protocol_plugin_ptr)->reset_session_properties = &reset_session_properties;
-        (*pltsql_protocol_plugin_ptr)->bulk_load_callback = &execute_bulk_load_insert;
+		(*pltsql_protocol_plugin_ptr)->sp_prepare_callback = &sp_prepare;
+		(*pltsql_protocol_plugin_ptr)->sp_execute_callback = &pltsql_inline_handler;
+		(*pltsql_protocol_plugin_ptr)->sp_prepexec_callback = &pltsql_inline_handler;
+		(*pltsql_protocol_plugin_ptr)->sp_unprepare_callback = &sp_unprepare;
+		(*pltsql_protocol_plugin_ptr)->reset_session_properties = &reset_session_properties;
+		(*pltsql_protocol_plugin_ptr)->bulk_load_callback = &execute_bulk_load_insert;
 		(*pltsql_protocol_plugin_ptr)->pltsql_declare_var_callback = &pltsql_declare_variable;
 		(*pltsql_protocol_plugin_ptr)->pltsql_read_out_param_callback = &pltsql_read_composite_out_param;
 		(*pltsql_protocol_plugin_ptr)->sqlvariant_set_metadata = common_utility_plugin_ptr->TdsSetMetaData;
@@ -3825,7 +3975,8 @@ _PG_init(void)
 	cstr_to_name_hook = pltsql_cstr_to_name;
 	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
-	if(pltsql_enable_linked_servers){
+	if (pltsql_enable_linked_servers)
+	{
 		prev_tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions_hook;
 		tsql_has_linked_srv_permissions_hook = tsql_has_linked_srv_permissions;
 	}
@@ -3882,10 +4033,11 @@ _PG_fini(void)
  * Also, cleanup aborted transaction here.
  */
 
-static void terminate_batch(bool send_error, bool compile_error)
+static void
+terminate_batch(bool send_error, bool compile_error)
 {
-	bool error_mapping_failed = false;
-	int rc;
+	bool		error_mapping_failed = false;
+	int			rc;
 
 	elog(DEBUG2, "TSQL TXN finish current batch, error : %d compilation error : %d", send_error, compile_error);
 
@@ -3897,8 +4049,9 @@ static void terminate_batch(bool send_error, bool compile_error)
 
 	if (send_error)
 	{
-		ErrorData *edata;
+		ErrorData  *edata;
 		MemoryContext oldCtx = CurrentMemoryContext;
+
 		MemoryContextSwitchTo(MessageContext);
 		edata = CopyErrorData();
 		MemoryContextSwitchTo(oldCtx);
@@ -3922,8 +4075,9 @@ static void terminate_batch(bool send_error, bool compile_error)
 			/* Clean pending snapshot from portal */
 			if (pltsql_snapshot_portal->portalSnapshot != NULL && ActiveSnapshotSet())
 			{
-				/* Cleanup all snapshots, some might have been leaked during SPI
-				 * execution
+				/*
+				 * Cleanup all snapshots, some might have been leaked during
+				 * SPI execution
 				 */
 				while (ActiveSnapshotSet())
 					PopActiveSnapshot();
@@ -3937,15 +4091,16 @@ static void terminate_batch(bool send_error, bool compile_error)
 
 		if (compile_error && IsTransactionBlockActive())
 		{
-				if (error_mapping_failed ||
-					is_txn_aborting_compilation_error(latest_error_code) ||
-					(pltsql_xact_abort && is_xact_abort_txn_compilation_error(latest_error_code)))
-					AbortCurTransaction = true;
+			if (error_mapping_failed ||
+				is_txn_aborting_compilation_error(latest_error_code) ||
+				(pltsql_xact_abort && is_xact_abort_txn_compilation_error(latest_error_code)))
+				AbortCurTransaction = true;
 		}
 
 		if (AbortCurTransaction)
 		{
 			MemoryContext oldcontext = CurrentMemoryContext;
+
 			pltsql_xact_cb(XACT_EVENT_ABORT, NULL);
 			PLTsqlRollbackTransaction(NULL, NULL, false);
 			CommitTransactionCommand();
@@ -3959,13 +4114,14 @@ static void terminate_batch(bool send_error, bool compile_error)
 						(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 						 errmsg("Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.")));
 		}
-		else if(send_error && !IsTransactionBlockActive())
+		else if (send_error && !IsTransactionBlockActive())
 		{
 			/*
-			 * In case of error without active transaction, cleanup
-			 * active transaction state
+			 * In case of error without active transaction, cleanup active
+			 * transaction state
 			 */
 			MemoryContext oldcontext = CurrentMemoryContext;
+
 			AbortCurrentTransaction();
 			StartTransactionCommand();
 			MemoryContextSwitchTo(oldcontext);
@@ -3978,12 +4134,13 @@ static void terminate_batch(bool send_error, bool compile_error)
 }
 
 void
-static pltsql_non_tsql_proc_entry(int proc_count, int sys_func_count)
+static
+pltsql_non_tsql_proc_entry(int proc_count, int sys_func_count)
 {
 	elog(DEBUG4, "TSQL TXN PG procedure entry PG count : %d SYS count : %d", proc_count, sys_func_count);
 
 	pltsql_non_tsql_proc_entry_count += proc_count;
-	pltsql_sys_func_entry_count +=  sys_func_count;
+	pltsql_sys_func_entry_count += sys_func_count;
 }
 
 bool
@@ -4020,18 +4177,18 @@ PG_FUNCTION_INFO_V1(pltsql_call_handler);
 Datum
 pltsql_call_handler(PG_FUNCTION_ARGS)
 {
-	bool nonatomic;
+	bool		nonatomic;
 	PLtsql_function *func;
 	PLtsql_execstate *save_cur_estate;
 	Datum		retval;
 	int			rc;
-	int                     save_nestlevel;
+	int			save_nestlevel;
 	int			scope_level;
-	MemoryContext	savedPortalCxt;
-	bool support_tsql_trans = pltsql_support_tsql_transactions();
-	Oid prev_procid = InvalidOid;
-	int save_pltsql_trigger_depth = pltsql_trigger_depth;
-	int saved_dialect = sql_dialect;
+	MemoryContext savedPortalCxt;
+	bool		support_tsql_trans = pltsql_support_tsql_transactions();
+	Oid			prev_procid = InvalidOid;
+	int			save_pltsql_trigger_depth = pltsql_trigger_depth;
+	int			saved_dialect = sql_dialect;
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -4043,12 +4200,12 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	/*
 	 * Connect to SPI manager
 	 */
+
 	/*
-	 * Override portal context with message context when portal
-	 * context is NULL otherwise SPI connect will create procedure
-	 * context as top context without any parent.
-	 * Ideally should be done inside SPI connect but is it OK
-	 * to modify SPI connect?
+	 * Override portal context with message context when portal context is
+	 * NULL otherwise SPI connect will create procedure context as top context
+	 * without any parent. Ideally should be done inside SPI connect but is it
+	 * OK to modify SPI connect?
 	 */
 	savedPortalCxt = PortalContext;
 	if (PortalContext == NULL)
@@ -4065,9 +4222,9 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * Set the dialect to tsql - we have to do that here because the fmgr
-		 * has set the dialect to postgres. That happens when we are validating
-		 * a PL/tsql program because the validator function is not written in
-		 * PL/tsql, it's written in C.
+		 * has set the dialect to postgres. That happens when we are
+		 * validating a PL/tsql program because the validator function is not
+		 * written in PL/tsql, it's written in C.
 		 */
 		sql_dialect = SQL_DIALECT_TSQL;
 
@@ -4087,25 +4244,30 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		PG_TRY();
 		{
 			set_procid(func->fn_oid);
+
 			/*
 			 * Determine if called as function or trigger and call appropriate
 			 * subhandler
 			 */
-			if (CALLED_AS_TRIGGER(fcinfo)){
-				if (!pltsql_recursive_triggers && save_cur_estate!=NULL
-				&& is_recursive_trigger(save_cur_estate)){
+			if (CALLED_AS_TRIGGER(fcinfo))
+			{
+				if (!pltsql_recursive_triggers && save_cur_estate != NULL
+					&& is_recursive_trigger(save_cur_estate))
+				{
 					retval = (Datum) 0;
-				}else{
+				}
+				else
+				{
 					pltsql_trigger_depth++;
 					retval = PointerGetDatum(pltsql_exec_trigger(func,
-															(TriggerData *) fcinfo->context));
+																 (TriggerData *) fcinfo->context));
 					pltsql_trigger_depth = save_pltsql_trigger_depth;
 				}
 			}
 			else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 			{
 				pltsql_exec_event_trigger(func,
-										(EventTriggerData *) fcinfo->context);
+										  (EventTriggerData *) fcinfo->context);
 				retval = (Datum) 0;
 			}
 			else
@@ -4124,7 +4286,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			remove_queryEnv();
 			pltsql_revert_guc(save_nestlevel);
 			pltsql_revert_last_scope_identity(scope_level);
-			terminate_batch(true /* send_error */, false /* compile_error */);
+			terminate_batch(true /* send_error */ , false /* compile_error */ );
 			sql_dialect = saved_dialect;
 			return retval;
 		}
@@ -4145,7 +4307,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	pltsql_revert_guc(save_nestlevel);
 	pltsql_revert_last_scope_identity(scope_level);
 
-	terminate_batch(false /* send_error */, false /* compile_error */);
+	terminate_batch(false /* send_error */ , false /* compile_error */ );
 
 	return retval;
 }
@@ -4160,26 +4322,27 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 Datum
 pltsql_inline_handler(PG_FUNCTION_ARGS)
 {
-	InlineCodeBlock		*codeblock = castNode(InlineCodeBlock, DatumGetPointer(PG_GETARG_DATUM(0)));
-	InlineCodeBlockArgs	*codeblock_args = NULL;
-	PLtsql_function		*func;
-	FmgrInfo		flinfo;
-	EState			*simple_eval_estate;
-	Datum			retval;
+	InlineCodeBlock *codeblock = castNode(InlineCodeBlock, DatumGetPointer(PG_GETARG_DATUM(0)));
+	InlineCodeBlockArgs *codeblock_args = NULL;
+	PLtsql_function *func;
+	FmgrInfo	flinfo;
+	EState	   *simple_eval_estate;
+	Datum		retval;
 	int			rc;
 	int			saved_dialect = sql_dialect;
 	int			nargs = PG_NARGS();
-	int 			i;
-	MemoryContext 		savedPortalCxt;
+	int			i;
+	MemoryContext savedPortalCxt;
 	FunctionCallInfo fake_fcinfo = palloc0(SizeForFunctionCallInfo(nargs));
-	bool nonatomic;
-	bool support_tsql_trans = pltsql_support_tsql_transactions();
-	ReturnSetInfo rsinfo; /* for INSERT ... EXECUTE */
+	bool		nonatomic;
+	bool		support_tsql_trans = pltsql_support_tsql_transactions();
+	ReturnSetInfo rsinfo;		/* for INSERT ... EXECUTE */
 
-	/* 
-	 * FIXME: We leak sp_describe_first_result_set_inprogress if CREATE VIEW fails
-	 * internally when executing sp_describe_first_result_set procedure. So we
-	 * reset sp_describe_first_result_set_inprogress here to work around this.
+	/*
+	 * FIXME: We leak sp_describe_first_result_set_inprogress if CREATE VIEW
+	 * fails internally when executing sp_describe_first_result_set procedure.
+	 * So we reset sp_describe_first_result_set_inprogress here to work around
+	 * this.
 	 */
 	sp_describe_first_result_set_inprogress = false;
 
@@ -4198,7 +4361,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		codeblock_args = (InlineCodeBlockArgs *) DatumGetPointer(PG_GETARG_DATUM(1));
 
 	sql_dialect = SQL_DIALECT_TSQL;
-	
+
 	/*
 	 * Connect to SPI manager
 	 */
@@ -4221,7 +4384,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 			func = find_cached_batch(codeblock_args->handle);
 			if (!func)
 				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						errmsg("Prepared statement not found: %d", codeblock_args->handle)));
+								errmsg("Prepared statement not found: %d", codeblock_args->handle)));
 			/* Mark the function as busy, just pro forma */
 			func->use_count++;
 		}
@@ -4238,9 +4401,10 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 			if (OPTION_ENABLED(codeblock_args, NO_EXEC))
 			{
 				func->use_count--;
+
 				/*
-				* Disconnect from SPI manager
-				*/
+				 * Disconnect from SPI manager
+				 */
 				if ((rc = SPI_finish()) != SPI_OK_FINISH)
 					elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
@@ -4252,10 +4416,11 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		terminate_batch(true /* send_error */, true /* compile_error */);
+		terminate_batch(true /* send_error */ , true /* compile_error */ );
 		return retval;
 	}
 	PG_END_TRY();
+
 	/*
 	 * Set up a fake fcinfo with just enough info to satisfy
 	 * pltsql_exec_function().  In particular note that this sets things up
@@ -4286,12 +4451,12 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	 */
 	if (codeblock->relation && codeblock->attrnos)
 	{
-		Oid reltypeid;
-		TupleDesc reldesc;
-		TupleDesc retdesc;
-		int natts = 0;
-		ListCell *lc;
-		ListCell *next;
+		Oid			reltypeid;
+		TupleDesc	reldesc;
+		TupleDesc	retdesc;
+		int			natts = 0;
+		ListCell   *lc;
+		ListCell   *next;
 
 		/* look up the INSERT target relation rowtype's tupdesc */
 		reltypeid = get_rel_type_id(codeblock->relation);
@@ -4321,10 +4486,13 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	/* And run the function */
 	PG_TRY();
 	{
-		/* If the number of arguments supplied are not equal to what is expected then throw error. */
+		/*
+		 * If the number of arguments supplied are not equal to what is
+		 * expected then throw error.
+		 */
 		if (fake_fcinfo->nargs != func->fn_nargs)
 			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The parameterized query expects %d number of parameters, but %d were supplied", func->fn_nargs, fake_fcinfo->nargs)));
+							errmsg("The parameterized query expects %d number of parameters, but %d were supplied", func->fn_nargs, fake_fcinfo->nargs)));
 
 		retval = pltsql_exec_function(func, fake_fcinfo, simple_eval_estate, codeblock->atomic);
 		fcinfo->isnull = false;
@@ -4339,8 +4507,8 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		 * private EState.
 		 *
 		 * Before releasing the private EState, we must clean up any
-		 * simple_econtext_stack entries pointing into it. It is done
-		 * inside pltsql_exec_function
+		 * simple_econtext_stack entries pointing into it. It is done inside
+		 * pltsql_exec_function
 		 */
 
 		/* Function should now have no remaining use-counts ... */
@@ -4356,7 +4524,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		}
 		sql_dialect = saved_dialect;
 
-		terminate_batch(true /* send_error */, false /* compile_error */);
+		terminate_batch(true /* send_error */ , false /* compile_error */ );
 		return retval;
 	}
 	PG_END_TRY();
@@ -4364,13 +4532,14 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	if (codeblock->dest && rsinfo.setDesc && rsinfo.setResult)
 	{
 		/*
-		 * If we are here for INSERT ... EXECUTE, send all tuples accumulated in
-		 * resultinfo to the DestReceiver, which will later be consumed by the
-		 * INSERT execution.
+		 * If we are here for INSERT ... EXECUTE, send all tuples accumulated
+		 * in resultinfo to the DestReceiver, which will later be consumed by
+		 * the INSERT execution.
 		 */
 		TupleTableSlot *slot = MakeSingleTupleTableSlot(rsinfo.expectedDesc,
 														&TTSOpsMinimalTuple);
-		DestReceiver *dest = (DestReceiver *)codeblock->dest;
+		DestReceiver *dest = (DestReceiver *) codeblock->dest;
+
 		for (;;)
 		{
 			if (!tuplestore_gettupleslot(rsinfo.setResult, true, false, slot))
@@ -4392,8 +4561,8 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		pltsql_free_function_memory(func);
 	}
 	sql_dialect = saved_dialect;
-	
-	terminate_batch(false /* send_error */, false /* compile_error */);
+
+	terminate_batch(false /* send_error */ , false /* compile_error */ );
 
 	return retval;
 }
@@ -4420,12 +4589,17 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	char	   *argmodes;
 	bool		is_dml_trigger = false;
 	bool		is_event_trigger = false;
+	bool		has_table_var = false;
+	char		prokind;
 	int			i;
+
 	/* Special handling is neede for Inline Table-Valued Functions */
 	bool 		is_itvf;
 	char		*prosrc = NULL;
+	bool		is_mstvf = false;
+	
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
-	int 		saved_dialect = sql_dialect;
+	int			saved_dialect = sql_dialect;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
@@ -4436,16 +4610,18 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
+	prokind = proc->prokind;
+
 	/* Disallow text, ntext, and image type result */
 	if (!babelfish_dump_restore &&
-		((*common_utility_plugin_ptr->is_tsql_text_datatype)(proc->prorettype) ||
-		 (*common_utility_plugin_ptr->is_tsql_ntext_datatype)(proc->prorettype) ||
-		 (*common_utility_plugin_ptr->is_tsql_image_datatype)(proc->prorettype)))
+		((*common_utility_plugin_ptr->is_tsql_text_datatype) (proc->prorettype) ||
+		 (*common_utility_plugin_ptr->is_tsql_ntext_datatype) (proc->prorettype) ||
+		 (*common_utility_plugin_ptr->is_tsql_image_datatype) (proc->prorettype)))
 	{
 		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				errmsg("PL/tsql functions cannot return type %s",
-					format_type_be(proc->prorettype))));
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("PL/tsql functions cannot return type %s",
+						format_type_be(proc->prorettype))));
 	}
 
 	functyptype = get_typtype(proc->prorettype);
@@ -4488,21 +4664,21 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	}
 
 	is_itvf = proc->prokind == PROKIND_FUNCTION && proc->proretset &&
-			  get_typtype(proc->prorettype) != TYPTYPE_COMPOSITE;
+		get_typtype(proc->prorettype) != TYPTYPE_COMPOSITE;
 
 	PG_TRY();
 	{
 		/*
 		 * Set the dialect to tsql - we have to do that here because the fmgr
-		 * has set the dialect to postgres. That happens when we are validating
-		 * a PL/tsql program because the validator function is not written in
-		 * PL/tsql, it's written in C.
+		 * has set the dialect to postgres. That happens when we are
+		 * validating a PL/tsql program because the validator function is not
+		 * written in PL/tsql, it's written in C.
 		 */
 		sql_dialect = SQL_DIALECT_TSQL;
 
 		/*
-		 * Postpone body checks if !check_function_bodies, except for
-		 * itvf which we always needs to test-compile to record the query.
+		 * Postpone body checks if !check_function_bodies, except for itvf
+		 * which we always needs to test-compile to record the query.
 		 */
 		if (check_function_bodies || is_itvf)
 		{
@@ -4545,23 +4721,38 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			if (is_itvf && !babelfish_dump_restore)
 			{
 				PLtsql_stmt_return_query *returnQueryStmt;
+
 				/*
-				 * For inline table-valued function, we need to record its query so
-				 * that we can construct the column definition list.
+				 * For inline table-valued function, we need to record its
+				 * query so that we can construct the column definition list.
 				 */
 				func = pltsql_compile(fake_fcinfo, true);
 				returnQueryStmt = (PLtsql_stmt_return_query *) linitial(func->action->body);
 
-				/* ITVF should contain 2 statements - RETURN QUERY and PUSH RESULT */
+				/*
+				 * ITVF should contain 2 statements - RETURN QUERY and PUSH
+				 * RESULT
+				 */
 				if (list_length(func->action->body) != 2 ||
 					(returnQueryStmt && returnQueryStmt->cmd_type != PLTSQL_STMT_RETURN_QUERY))
 					ereport(ERROR,
 							(errcode(ERRCODE_RESTRICT_VIOLATION),
-							errmsg("Inline table-valued function must have a single RETURN SELECT statement")));
+							 errmsg("Inline table-valued function must have a single RETURN SELECT statement")));
 
 				prosrc = MemoryContextStrdup(oldMemoryContext, returnQueryStmt->query->itvf_query);
-			} else
+			}
+			else
 				func = pltsql_compile(fake_fcinfo, true);
+
+			if(func && func->table_varnos)
+			{	
+				is_mstvf = func->is_mstvf;
+				/* 
+				 * if a function has tvp declared or as argument in the function
+				 * or it is a TVF has_table_var will be true
+				 */
+				has_table_var = true;
+			}
 
 			/*
 			 * Disconnect from SPI manager
@@ -4571,16 +4762,14 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		}
 
 		ReleaseSysCache(tuple);
-
-		/*
-		 * For inline table-valued function, we need to construct the column
-		 * definition list by planning the query in the function, and modifying the
-		 * pg_proc entry for this function.
+		
+		/* 
+		 * If the function has TVP in its arguments or function body 
+		 * it should be declared as VOLATILE by default 
+		 * TVF are VOLATILE by default so we donot need to update tuple for it
 		 */
-		if (is_itvf && !babelfish_dump_restore)
+		if(prokind == PROKIND_FUNCTION && (has_table_var && !is_itvf && !is_mstvf))
 		{
-			SPIPlanPtr spi_plan;
-			int spi_rc;
 			Relation rel;
 			HeapTuple tup;
 			HeapTuple oldtup;
@@ -4588,22 +4777,64 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			Datum values[Natts_pg_proc];
 			bool replaces[Natts_pg_proc];
 			TupleDesc tupDesc;
-			ArrayType *allParameterTypesPointer;
-			ArrayType *parameterModesPointer;
-			ArrayType *parameterNamesPointer;
-			Datum *allTypesNew;
-			Datum *paramModesNew;
-			Datum *paramNamesNew;
-			int parameterCountNew;
-			List *plansources;
+			char volatility = PROVOLATILE_VOLATILE;
+
+			/* Existing atts in pg_proc entry - no need to replace */
+			for (i = 0; i < Natts_pg_proc; ++i)
+			{
+				nulls[i] = false;
+				values[i] = PointerGetDatum(NULL);
+				replaces[i] = false;
+			}
+
+			rel = table_open(ProcedureRelationId, RowExclusiveLock);
+			tupDesc = RelationGetDescr(rel);
+			oldtup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+
+			values[Anum_pg_proc_provolatile - 1] = CharGetDatum(volatility);
+			replaces[Anum_pg_proc_provolatile - 1] = true;
+
+			tup = heap_modify_tuple(oldtup, tupDesc, values, nulls, replaces);
+			CatalogTupleUpdate(rel, &tup->t_self, tup);
+
+			ReleaseSysCache(oldtup);
+
+			heap_freetuple(tup);
+			table_close(rel, RowExclusiveLock);
+		}
+
+		/*
+		 * For inline table-valued function, we need to construct the column
+		 * definition list by planning the query in the function, and
+		 * modifying the pg_proc entry for this function.
+		 */
+		if (is_itvf && !babelfish_dump_restore)
+		{
+			SPIPlanPtr	spi_plan;
+			int			spi_rc;
+			Relation	rel;
+			HeapTuple	tup;
+			HeapTuple	oldtup;
+			bool		nulls[Natts_pg_proc];
+			Datum		values[Natts_pg_proc];
+			bool		replaces[Natts_pg_proc];
+			TupleDesc	tupDesc;
+			ArrayType  *allParameterTypesPointer;
+			ArrayType  *parameterModesPointer;
+			ArrayType  *parameterNamesPointer;
+			Datum	   *allTypesNew;
+			Datum	   *paramModesNew;
+			Datum	   *paramNamesNew;
+			int			parameterCountNew;
+			List	   *plansources;
 			CachedPlanSource *plansource;
-			Query *query;
-			TupleDesc tupdesc;
-			int targetListLength;
-			ListCell *lc;
+			Query	   *query;
+			TupleDesc	tupdesc;
+			int			targetListLength;
+			ListCell   *lc;
 			MemoryContext SPIMemoryContext;
-			Oid rettypeNew = InvalidOid;
-			int numresjunks = 0;
+			Oid			rettypeNew = InvalidOid;
+			int			numresjunks = 0;
 
 			if ((spi_rc = SPI_connect()) != SPI_OK_CONNECT)
 				elog(ERROR, "SPI_connect() failed in pltsql_validator with return code %d", spi_rc);
@@ -4611,7 +4842,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			spi_plan = SPI_prepare(prosrc, numargs, argtypes);
 			if (spi_plan == NULL)
 				elog(WARNING, "SPI_prepare_params failed for \"%s\": %s",
-					prosrc, SPI_result_code_string(SPI_result));
+					 prosrc, SPI_result_code_string(SPI_result));
 
 			plansources = SPI_plan_get_plan_sources(spi_plan);
 			Assert(list_length(plansources) == 1);
@@ -4652,14 +4883,14 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			foreach(lc, query->targetList)
 			{
 				TargetEntry *te = (TargetEntry *) lfirst(lc);
-				int new_i;
-				Oid new_type;
-				ListCell *prev_lc;
+				int			new_i;
+				Oid			new_type;
+				ListCell   *prev_lc;
 
 				/*
-				 * If resjunk is true then the column is a working column and should
-				 * be removed from the final output of the query, according to the
-				 * definition of TargetEntry.
+				 * If resjunk is true then the column is a working column and
+				 * should be removed from the final output of the query,
+				 * according to the definition of TargetEntry.
 				 */
 				if (te->resjunk)
 				{
@@ -4674,8 +4905,8 @@ pltsql_validator(PG_FUNCTION_ARGS)
 					pfree(paramModesNew);
 					pfree(paramNamesNew);
 					elog(ERROR,
-						"CREATE FUNCTION failed because a column name is not specified for column %d",
-						i+1);
+						 "CREATE FUNCTION failed because a column name is not specified for column %d",
+						 i + 1);
 				}
 
 				foreach(prev_lc, query->targetList)
@@ -4689,15 +4920,15 @@ pltsql_validator(PG_FUNCTION_ARGS)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 								 errmsg("parameter name \"%s\" used more than once",
-								 	te->resname)));
+										te->resname)));
 				}
 
 				new_i = i + numargs;
 				new_type = SPI_gettypeid(tupdesc, te->resno);
 
 				/*
-				 * Record the type in case we need to change the function return
-				 * type to it later
+				 * Record the type in case we need to change the function
+				 * return type to it later
 				 */
 				rettypeNew = new_type;
 
@@ -4712,10 +4943,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_finish() failed in pltsql_validator with return code %d", spi_rc);
 
 			/*
-			 * For table functions whose return table only has one column, Postgres
-			 * considers them as scalar functions. So, we need to update the
-			 * function's return type to be the type of that column, instead of
-			 * RECORD.
+			 * For table functions whose return table only has one column,
+			 * Postgres considers them as scalar functions. So, we need to
+			 * update the function's return type to be the type of that
+			 * column, instead of RECORD.
 			 */
 			if (i == 1)
 			{
@@ -4725,7 +4956,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 
 			parameterCountNew -= numresjunks;
 			allParameterTypesPointer = construct_array(allTypesNew, parameterCountNew, OIDOID,
-													sizeof(Oid), true, 'i');
+													   sizeof(Oid), true, 'i');
 			parameterModesPointer = construct_array(paramModesNew, parameterCountNew, CHAROID,
 													1, true, 'c');
 			parameterNamesPointer = construct_array(paramNamesNew, parameterCountNew, TEXTOID,
@@ -4769,7 +5000,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 static void
 get_language_procs(const char *langname, Oid *compiler, Oid *validator)
 {
-	HeapTuple langTup = SearchSysCache1(LANGNAME, PointerGetDatum(langname));
+	HeapTuple	langTup = SearchSysCache1(LANGNAME, PointerGetDatum(langname));
 
 	if (HeapTupleIsValid(langTup))
 	{
@@ -4859,75 +5090,75 @@ canCommitTransaction(void)
 static void
 pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
 {
-       GucStack   *stack;
+	GucStack   *stack;
 
-       /* If we're not inside a nest level, do nothing */
-       if (PltsqlGUCNestLevel == 0)
-               return;
+	/* If we're not inside a nest level, do nothing */
+	if (PltsqlGUCNestLevel == 0)
+		return;
 
-       /* Do we already have a stack entry of the current nest level? */
-       stack = gconf->session_stack;
-       if (stack && stack->nest_level >= PltsqlGUCNestLevel)
-       {
-               /* Yes, so adjust its state if necessary */
-               Assert(stack->nest_level == PltsqlGUCNestLevel);
-               switch (action)
-               {
-                       case GUC_ACTION_SET:
-                               stack->state = GUC_SET;
-                               break;
-                       case GUC_ACTION_SAVE:
-                               stack->state = GUC_SAVE;
-                               break;
-                       default :
-                ereport(ERROR,
-                                               (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                                                errmsg("Set action not supported")));
-               }
-               Assert(pltsql_guc_dirty);
-               return;
-       }
+	/* Do we already have a stack entry of the current nest level? */
+	stack = gconf->session_stack;
+	if (stack && stack->nest_level >= PltsqlGUCNestLevel)
+	{
+		/* Yes, so adjust its state if necessary */
+		Assert(stack->nest_level == PltsqlGUCNestLevel);
+		switch (action)
+		{
+			case GUC_ACTION_SET:
+				stack->state = GUC_SET;
+				break;
+			case GUC_ACTION_SAVE:
+				stack->state = GUC_SAVE;
+				break;
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Set action not supported")));
+		}
+		Assert(pltsql_guc_dirty);
+		return;
+	}
 
-       /*
-        * Push a new stack entry
-        *
-        */
-       stack = (GucStack *) MemoryContextAllocZero(TopMemoryContext,
-                                                                                               sizeof(GucStack));
+	/*
+	 * Push a new stack entry
+	 *
+	 */
+	stack = (GucStack *) MemoryContextAllocZero(TopMemoryContext,
+												sizeof(GucStack));
 
-       stack->prev = gconf->session_stack;
-       stack->nest_level = PltsqlGUCNestLevel;
-       switch (action)
-       {
-               case GUC_ACTION_SET:
-                       stack->state = GUC_SET;
-                       break;
-               case GUC_ACTION_SAVE:
-                       stack->state = GUC_SAVE;
-                       break;
-               default :
-                       Assert(false);
-       }
-       stack->source = gconf->source;
-       stack->scontext = gconf->scontext;
-       guc_set_stack_value(gconf, &stack->prior);
+	stack->prev = gconf->session_stack;
+	stack->nest_level = PltsqlGUCNestLevel;
+	switch (action)
+	{
+		case GUC_ACTION_SET:
+			stack->state = GUC_SET;
+			break;
+		case GUC_ACTION_SAVE:
+			stack->state = GUC_SAVE;
+			break;
+		default:
+			Assert(false);
+	}
+	stack->source = gconf->source;
+	stack->scontext = gconf->scontext;
+	guc_set_stack_value(gconf, &stack->prior);
 
-       gconf->session_stack = stack;
-       pltsql_guc_dirty = true;
+	gconf->session_stack = stack;
+	pltsql_guc_dirty = true;
 }
 
 int
 pltsql_new_guc_nest_level(void)
 {
-       return ++PltsqlGUCNestLevel;
+	return ++PltsqlGUCNestLevel;
 }
 
 void
 pltsql_revert_guc(int nest_level)
 {
-	bool            still_dirty;
-	int                     i;
-	int                     num_guc_variables;
+	bool		still_dirty;
+	int			i;
+	int			num_guc_variables;
 	struct config_generic **guc_variables;
 
 	Assert(nest_level > 0 && nest_level == PltsqlGUCNestLevel);
@@ -4945,7 +5176,7 @@ pltsql_revert_guc(int nest_level)
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
-		GucStack   *stack =  gconf->session_stack;
+		GucStack   *stack = gconf->session_stack;
 
 		if (stack != NULL && stack->nest_level == nest_level)
 		{
@@ -4953,107 +5184,109 @@ pltsql_revert_guc(int nest_level)
 
 			/* Perform appropriate restoration of the stacked value */
 			config_var_value newvalue = stack->prior;
-			GucSource       newsource = stack->source;
-			GucContext      newscontext = stack->scontext;
+			GucSource	newsource = stack->source;
+			GucContext	newscontext = stack->scontext;
 
 			switch (gconf->vartype)
 			{
 				case PGC_BOOL:
-				{
-					struct config_bool 	*conf = (struct config_bool *) gconf;
-					bool           		newval = newvalue.val.boolval;
-					void       			*newextra = newvalue.extra;
-
-					if (*conf->variable != newval || conf->gen.extra != newextra)
 					{
-						if (conf->assign_hook)
-							conf->assign_hook(newval, newextra);
-						*conf->variable = newval;
-						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						struct config_bool *conf = (struct config_bool *) gconf;
+						bool		newval = newvalue.val.boolval;
+						void	   *newextra = newvalue.extra;
+
+						if (*conf->variable != newval || conf->gen.extra != newextra)
+						{
+							if (conf->assign_hook)
+								conf->assign_hook(newval, newextra);
+							*conf->variable = newval;
+							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						}
+						break;
 					}
-					break;
-				}
 				case PGC_INT:
-				{
-					struct config_int *conf = (struct config_int *) gconf;
-					int                     newval = newvalue.val.intval;
-					void       *newextra = newvalue.extra;
-
-					if (*conf->variable != newval || conf->gen.extra != newextra)
 					{
-						if (conf->assign_hook)
-							conf->assign_hook(newval, newextra);
-						*conf->variable = newval;
-						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						struct config_int *conf = (struct config_int *) gconf;
+						int			newval = newvalue.val.intval;
+						void	   *newextra = newvalue.extra;
+
+						if (*conf->variable != newval || conf->gen.extra != newextra)
+						{
+							if (conf->assign_hook)
+								conf->assign_hook(newval, newextra);
+							*conf->variable = newval;
+							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						}
+						break;
 					}
-					break;
-				}
 				case PGC_REAL:
-				{
-					struct config_real *conf = (struct config_real *) gconf;
-					double          newval = newvalue.val.realval;
-					void       *newextra = newvalue.extra;
-
-					if (*conf->variable != newval || conf->gen.extra != newextra)
 					{
-						if (conf->assign_hook)
-							conf->assign_hook(newval, newextra);
-						*conf->variable = newval;
-						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						struct config_real *conf = (struct config_real *) gconf;
+						double		newval = newvalue.val.realval;
+						void	   *newextra = newvalue.extra;
+
+						if (*conf->variable != newval || conf->gen.extra != newextra)
+						{
+							if (conf->assign_hook)
+								conf->assign_hook(newval, newextra);
+							*conf->variable = newval;
+							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						}
+						break;
 					}
-					break;
-				}
 				case PGC_STRING:
-				{
-					struct config_string *conf = (struct config_string *) gconf;
-					char       *newval = newvalue.val.stringval;
-					void       *newextra = newvalue.extra;
-
-					/* Special case for identity_insert */
-					if (strcmp(gconf->name, "babelfishpg_tsql.identity_insert") == 0)
 					{
-						tsql_identity_insert = (tsql_identity_insert_fields) 
-							{false, InvalidOid, InvalidOid};
-					}
+						struct config_string *conf = (struct config_string *) gconf;
+						char	   *newval = newvalue.val.stringval;
+						void	   *newextra = newvalue.extra;
 
-					if (*conf->variable != newval || conf->gen.extra != newextra)
-					{
-						if (conf->assign_hook)
-							conf->assign_hook(newval, newextra);
-						guc_set_string_field(conf, conf->variable, newval);
-						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
-					}
+						/* Special case for identity_insert */
+						if (strcmp(gconf->name, "babelfishpg_tsql.identity_insert") == 0)
+						{
+							tsql_identity_insert = (tsql_identity_insert_fields)
+							{
+								false, InvalidOid, InvalidOid
+							};
+						}
 
-					/*
-					* Release stacked values if not used anymore. We
-					* could use discard_stack_value() here, but since
-					* we have type-specific code anyway, might as
-					* well inline it.
-					*/
-					guc_set_string_field(conf, &stack->prior.val.stringval, NULL);
-					guc_set_string_field(conf, &stack->masked.val.stringval, NULL);
-					break;
-				}
+						if (*conf->variable != newval || conf->gen.extra != newextra)
+						{
+							if (conf->assign_hook)
+								conf->assign_hook(newval, newextra);
+							guc_set_string_field(conf, conf->variable, newval);
+							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						}
+
+						/*
+						 * Release stacked values if not used anymore. We
+						 * could use discard_stack_value() here, but since we
+						 * have type-specific code anyway, might as well
+						 * inline it.
+						 */
+						guc_set_string_field(conf, &stack->prior.val.stringval, NULL);
+						guc_set_string_field(conf, &stack->masked.val.stringval, NULL);
+						break;
+					}
 				case PGC_ENUM:
-				{
-					struct config_enum *conf = (struct config_enum *) gconf;
-					int                     newval = newvalue.val.enumval;
-					void       *newextra = newvalue.extra;
-
-					if (*conf->variable != newval || conf->gen.extra != newextra)
 					{
-						if (conf->assign_hook)
-							conf->assign_hook(newval, newextra);
-						*conf->variable = newval;
-						guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						struct config_enum *conf = (struct config_enum *) gconf;
+						int			newval = newvalue.val.enumval;
+						void	   *newextra = newvalue.extra;
+
+						if (*conf->variable != newval || conf->gen.extra != newextra)
+						{
+							if (conf->assign_hook)
+								conf->assign_hook(newval, newextra);
+							*conf->variable = newval;
+							guc_set_extra_field(&conf->gen, &conf->gen.extra, newextra);
+						}
+						break;
 					}
-					break;
-				}
 			}
 
 			/*
-			* Release stacked extra values if not used anymore.
-			*/
+			 * Release stacked extra values if not used anymore.
+			 */
 			guc_set_extra_field(gconf, &(stack->prior.extra), NULL);
 			guc_set_extra_field(gconf, &(stack->masked.extra), NULL);
 
@@ -5064,7 +5297,7 @@ pltsql_revert_guc(int nest_level)
 			/* Finish popping the state stack */
 			gconf->session_stack = prev;
 			pfree(stack);
-		} /* end of stack-popping loop */
+		}						/* end of stack-popping loop */
 
 		if (stack != NULL)
 			still_dirty = true;
@@ -5086,12 +5319,13 @@ set_current_query_is_create_tbl_check_constraint(Node *expr)
 
 	foreach(elements, stmt->tableElts)
 	{
-		Node *element = lfirst(elements);
+		Node	   *element = lfirst(elements);
 
 		if (nodeTag(element) == T_Constraint)
 		{
 			Constraint *c = (Constraint *) element;
-			if(c->contype == CONSTR_CHECK)
+
+			if (c->contype == CONSTR_CHECK)
 			{
 				current_query_is_create_tbl_check_constraint = true;
 				break;

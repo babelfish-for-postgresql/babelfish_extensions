@@ -23,7 +23,7 @@
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parser.h"      /* only needed for GUC variables */
+#include "parser/parser.h"		/* only needed for GUC variables */
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
@@ -42,26 +42,26 @@
 #include "typecode.h"
 #include "varchar.h"
 
-int  TsqlUTF8LengthInUTF16(const void *vin, int len);
-void TsqlCheckUTF16Length_varchar(const char *s_data, int32 len, int32 maxlen, bool isExplicit);
-void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
-void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen);
-void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
+int			TsqlUTF8LengthInUTF16(const void *vin, int len);
+void		TsqlCheckUTF16Length_varchar(const char *s_data, int32 len, int32 maxlen, bool isExplicit);
+void		TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
+void		TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen);
+void		TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
 static inline int varcharTruelen(VarChar *arg);
 
 #define DEFAULT_LCID 1033
 
 /*
- * is_basetype_nchar_nvarchar - given datatype is nvarchar or nchar 
+ * is_basetype_nchar_nvarchar - given datatype is nvarchar or nchar
  *     or created over nvarchar or nchar.
  */
-static bool 
+static bool
 is_basetype_nchar_nvarchar(Oid typid)
 {
 	if (tsql_nvarchar_oid == InvalidOid)
-	 	tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
+		tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
 	if (tsql_nchar_oid == InvalidOid)
-	 	tsql_nchar_oid = lookup_tsql_datatype_oid("nchar");
+		tsql_nchar_oid = lookup_tsql_datatype_oid("nchar");
 
 	for (;;)
 	{
@@ -154,7 +154,7 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
 							in[0])));
 		code = ((in[0] & 0x07) << 18) | ((in[1] & 0x3F) << 12) |
-			   ((in[2] & 0x3F) << 6) | (in[3] & 0x3F);
+			((in[2] & 0x3F) << 6) | (in[3] & 0x3F);
 		consumed = 4;
 	}
 	else
@@ -180,11 +180,11 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
  * TsqlUTF8LengthInUTF16 - compute the length of a UTF8 string in number of
  * 							 16-bit units if we were to convert it into
  * 							 UTF16 with TdsUTF8toUTF16StringInfo()
- */	
+ */
 int
 TsqlUTF8LengthInUTF16(const void *vin, int len)
 {
-	const unsigned char  *in = vin;
+	const unsigned char *in = vin;
 	int			result = 0;
 	int			i;
 	int			consumed;
@@ -215,18 +215,19 @@ TsqlUTF8LengthInUTF16(const void *vin, int len)
 
 static inline void
 TsqlCheckUTF16Length(const char *utf8_str, size_t len, size_t maxlen,
-						char *varstr)
+					 char *varstr)
 {
-	int i;
+	int			i;
+
 	for (i = len; i > 0; i--)
 		if (utf8_str[i - 1] != ' ')
 			break;
 	if (TsqlUTF8LengthInUTF16(utf8_str, i) > maxlen)
 		ereport(ERROR,
 				(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					errmsg("value too long for type character%s(%d) "
+				 errmsg("value too long for type character%s(%d) "
 						"as UTF16 output",
-						varstr, (int)maxlen)));
+						varstr, (int) maxlen)));
 }
 
 /*
@@ -235,22 +236,23 @@ TsqlCheckUTF16Length(const char *utf8_str, size_t len, size_t maxlen,
 void
 TsqlCheckUTF16Length_varchar(const char *s_data, int32 len, int32 maxlen, bool isExplicit)
 {
-	int 		i;
+	int			i;
 	size_t		maxmblen;
+
 	if (maxlen < 0)
-		return ;
-	
+		return;
+
 	if (len <= maxlen)
 	{
 		TsqlCheckUTF16Length(s_data, len, maxlen, " varying");
-		return ;
+		return;
 	}
 
 	/* truncate multibyte string preserving multibyte boundary */
 	maxmblen = pg_mbcharcliplen(s_data, len, maxlen);
 
-	if (!isExplicit && 
-		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+	if (!isExplicit &&
+		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
 	{
 		for (i = maxmblen; i < len; i++)
 			if (s_data[i] != ' ')
@@ -270,7 +272,8 @@ TsqlCheckUTF16Length_varchar(const char *s_data, int32 len, int32 maxlen, bool i
 void
 TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit)
 {
-	int i;
+	int			i;
+
 	if (charlen == maxlen)
 	{
 		TsqlCheckUTF16Length(s, len, maxlen, "");
@@ -282,8 +285,8 @@ TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen,
 
 		maxmblen = pg_mbcharcliplen(s, len, maxlen);
 
-		if (!isExplicit && 
-			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+		if (!isExplicit &&
+			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
 		{
 			for (i = maxmblen; i < len; i++)
 				if (s[i] != ' ')
@@ -302,10 +305,11 @@ TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen,
 	}
 }
 
-/* 
+/*
  * Check for T-SQL varchar common input function, varchar_input()
  */
-void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen)
+void
+TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen)
 {
 	TsqlCheckUTF16Length(s, len, maxlen, " varying");
 }
@@ -313,7 +317,8 @@ void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen)
 /*
  * Check for T-SQL bpchar function
  */
-void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen)
+void
+TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen)
 {
 	if (charlen > maxlen)
 	{
@@ -322,9 +327,9 @@ void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, i
 		size_t		j;
 
 		/*
-		 * at this point, len is the actual BYTE length of the input
-		 * string, maxlen is the max number of CHARACTERS allowed for this
-		 * bpchar type, mbmaxlen is the length in BYTES of those chars.
+		 * at this point, len is the actual BYTE length of the input string,
+		 * maxlen is the max number of CHARACTERS allowed for this bpchar
+		 * type, mbmaxlen is the length in BYTES of those chars.
 		 */
 		for (j = mbmaxlen; j < len; j++)
 		{
@@ -495,19 +500,21 @@ varcharrecv(PG_FUNCTION_ARGS)
 Datum
 varchar(PG_FUNCTION_ARGS)
 {
-	VarChar    *source = PG_GETARG_VARCHAR_PP(0);	/* source string is in UTF8 */
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);	/* source string is in
+													 * UTF8 */
 	int32		typmod = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		byteLen;
 	int32		maxByteLen;
 	size_t		maxmblen;
-	int		i;
-	char		*s_data;
+	int			i;
+	char	   *s_data;
 	coll_info	collInfo;
-	int 		charLength;
-	char 		*tmp = NULL;	/* To hold the string encoded in target column's collation. */
-	char		*resStr = NULL; /* To hold the final string in UTF8 encoding. */
-	int		encodedByteLen;
+	int			charLength;
+	char	   *tmp = NULL;		/* To hold the string encoded in target
+								 * column's collation. */
+	char	   *resStr = NULL;	/* To hold the final string in UTF8 encoding. */
+	int			encodedByteLen;
 
 	/* If type of target is NVARCHAR then handle it differently. */
 	if (fcinfo->flinfo->fn_expr && is_basetype_nchar_nvarchar(((FuncExpr *) fcinfo->flinfo->fn_expr)->funcresulttype))
@@ -521,18 +528,20 @@ varchar(PG_FUNCTION_ARGS)
 	if (maxByteLen < 0)
 		PG_RETURN_VARCHAR_P(source);
 
-	/* 
-	 * Try to find the lcid corresponding to the collation of the target column.
+	/*
+	 * Try to find the lcid corresponding to the collation of the target
+	 * column.
 	 */
 	if (fcinfo->flinfo->fn_expr)
 	{
-		collInfo = lookup_collation_table(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
+		collInfo = lookup_collation_table(((FuncExpr *) fcinfo->flinfo->fn_expr)->funccollid);
 	}
 	else
 	{
-		/* 
-		 * Special handling required for OUTPUT params because this input function, varchar would be
-		 * called from TDS to send the OUTPUT params of stored proc.
+		/*
+		 * Special handling required for OUTPUT params because this input
+		 * function, varchar would be called from TDS to send the OUTPUT
+		 * params of stored proc.
 		 */
 		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 	}
@@ -540,20 +549,23 @@ varchar(PG_FUNCTION_ARGS)
 	/* count the number of chars present in input string. */
 	charLength = pg_mbstrlen_with_len(s_data, byteLen);
 
-	/* 
-	 * Optimisation: Check if we can accommodate charLength number of chars considering every char requires 
-	 * max number of bytes for given encoding.
+	/*
+	 * Optimisation: Check if we can accommodate charLength number of chars
+	 * considering every char requires max number of bytes for given encoding.
 	 */
 	if (charLength * pg_encoding_max_length(collInfo.enc) <= maxByteLen)
 		PG_RETURN_VARCHAR_P(source);
 
-	/*  And encode the input string (usually in UTF8 encoding) in desired encoding. */
+	/*
+	 * And encode the input string (usually in UTF8 encoding) in desired
+	 * encoding.
+	 */
 	tmp = encoding_conv_util(s_data, byteLen, PG_UTF8, collInfo.enc, &encodedByteLen);
 	byteLen = encodedByteLen;
 
-	/* 
-	 * We used byteLen here because we are interested in byte length of input string
-	 * encoded using the code page of the target column's collation.
+	/*
+	 * We used byteLen here because we are interested in byte length of input
+	 * string encoded using the code page of the target column's collation.
 	 */
 	if (tmp && byteLen <= maxByteLen)
 	{
@@ -564,14 +576,14 @@ varchar(PG_FUNCTION_ARGS)
 
 	/* only reach here if string is too long... */
 
-	/* 
-	 * Truncate multibyte string (already encoded to the collation of target column) 
-	 * preserving multibyte boundary.
+	/*
+	 * Truncate multibyte string (already encoded to the collation of target
+	 * column) preserving multibyte boundary.
 	 */
 	maxmblen = pg_encoding_mbcliplen(collInfo.enc, tmp, byteLen, maxByteLen);
 
 	if (!isExplicit &&
-		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
 	{
 		for (i = maxmblen; i < byteLen; i++)
 			if (tmp[i] != ' ')
@@ -587,7 +599,10 @@ varchar(PG_FUNCTION_ARGS)
 	if (tmp && s_data != tmp && tmp != resStr)
 		pfree(tmp);
 
-	/* Output of encoding_conv_util() would always be NULL terminated So we can use cstring_to_text directly. */
+	/*
+	 * Output of encoding_conv_util() would always be NULL terminated So we
+	 * can use cstring_to_text directly.
+	 */
 	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(resStr, encodedByteLen));
 }
 
@@ -631,7 +646,7 @@ nvarchar(PG_FUNCTION_ARGS)
 	maxmblen = pg_mbcharcliplen(s_data, len, maxlen);
 
 	if (!isExplicit &&
-		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
 	{
 		for (i = maxmblen; i < len; i++)
 			if (s_data[i] != ' ')
@@ -649,9 +664,10 @@ static char *
 varchar2cstring(const VarChar *source)
 {
 	const char *s_data = VARDATA_ANY(source);
-	int len = VARSIZE_ANY_EXHDR(source);
+	int			len = VARSIZE_ANY_EXHDR(source);
 
-	char *result = (char *) palloc(len + 1);
+	char	   *result = (char *) palloc(len + 1);
+
 	memcpy(result, s_data, len);
 	result[len] = '\0';
 
@@ -661,7 +677,8 @@ varchar2cstring(const VarChar *source)
 Datum
 varchar2int2(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_INT16(0);
 
@@ -671,7 +688,8 @@ varchar2int2(PG_FUNCTION_ARGS)
 Datum
 varchar2int4(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_INT32(0);
 
@@ -681,7 +699,8 @@ varchar2int4(PG_FUNCTION_ARGS)
 Datum
 varchar2int8(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_INT64(0);
 
@@ -692,9 +711,10 @@ static Datum
 cstring2float4(char *num)
 {
 	/* This came from float4in() in backend/utils/adt/float.c */
-	char *orig_num;
-	float val;
-	char *endptr;
+	char	   *orig_num;
+	float		val;
+	char	   *endptr;
+
 	/*
 	 * endptr points to the first character _after_ the sequence we recognized
 	 * as a valid floating point number. orig_num points to the original input
@@ -830,7 +850,7 @@ cstring2float4(char *num)
 Datum
 varchar2float4(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
 
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_FLOAT4(0);
@@ -841,8 +861,8 @@ varchar2float4(PG_FUNCTION_ARGS)
 Datum
 varchar2float8(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	char *num;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *num;
 
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_FLOAT8(0);
@@ -854,9 +874,9 @@ varchar2float8(PG_FUNCTION_ARGS)
 Datum
 varchar2date(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	char	*str;
-	DateADT date;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *str;
+	DateADT		date;
 
 	str = varchar2cstring(source);
 	date = DatumGetDateADT(DirectFunctionCall1(date_in, CStringGetDatum(str)));
@@ -867,9 +887,9 @@ varchar2date(PG_FUNCTION_ARGS)
 Datum
 varchar2time(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	char	*str;
-	TimeADT time;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *str;
+	TimeADT		time;
 
 	str = varchar2cstring(source);
 	time = DatumGetTimeADT(DirectFunctionCall1(time_in, CStringGetDatum(str)));
@@ -880,22 +900,22 @@ varchar2time(PG_FUNCTION_ARGS)
 Datum
 varchar2money(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	int64	val;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	int64		val;
 
 	if (varcharTruelen(source) == 0)
 		PG_RETURN_CASH(0);
 
 	val = pg_strtoint64(varchar2cstring(source));
-	PG_RETURN_CASH((Cash)val);
+	PG_RETURN_CASH((Cash) val);
 }
 
 Datum
 varchar2numeric(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	Numeric result;
-	char	*str;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	Numeric		result;
+	char	   *str;
 
 	str = varchar2cstring(source);
 	result = DatumGetNumeric(DirectFunctionCall1(numeric_in, CStringGetDatum(str)));
@@ -1051,16 +1071,17 @@ bpchar(PG_FUNCTION_ARGS)
 	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);	/* source string in UTF8 */
 	int32		maxByteLen = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
-	BpChar		*result;
+	BpChar	   *result;
 	int32		byteLen;
-	char		*r;
-	char		*s_data;
+	char	   *r;
+	char	   *s_data;
 	int			i;
-	char		*tmp = NULL;    /* To hold the string encoded in target column's collation. */
-	char		*resStr = NULL;	/* To hold the final string in UTF8 encoding. */
+	char	   *tmp = NULL;		/* To hold the string encoded in target
+								 * column's collation. */
+	char	   *resStr = NULL;	/* To hold the final string in UTF8 encoding. */
 	coll_info	collInfo;
-	int 		blankSpace = 0;		/* How many blank space we need to pad. */
-	int 		encodedByteLen;
+	int			blankSpace = 0; /* How many blank space we need to pad. */
+	int			encodedByteLen;
 
 	/* If type of target is NCHAR then handle it differently. */
 	if (fcinfo->flinfo->fn_expr && is_basetype_nchar_nvarchar(((FuncExpr *) fcinfo->flinfo->fn_expr)->funcresulttype))
@@ -1074,23 +1095,29 @@ bpchar(PG_FUNCTION_ARGS)
 
 	byteLen = VARSIZE_ANY_EXHDR(source);
 	s_data = VARDATA_ANY(source);
-	/* 
-	 * Try to find the lcid corresponding to the collation of the target column.
+
+	/*
+	 * Try to find the lcid corresponding to the collation of the target
+	 * column.
 	 */
 	if (fcinfo->flinfo->fn_expr)
 	{
-		collInfo = lookup_collation_table(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
+		collInfo = lookup_collation_table(((FuncExpr *) fcinfo->flinfo->fn_expr)->funccollid);
 	}
 	else
 	{
-		/* 
-			* Special handling required for OUTPUT params because this input function, bpchar would be
-			* called from TDS to send the OUTPUT params of stored proc.
-			*/
+		/*
+		 * Special handling required for OUTPUT params because this input
+		 * function, bpchar would be called from TDS to send the OUTPUT params
+		 * of stored proc.
+		 */
 		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 	}
 
-	/* And encode the input string (usually in UTF8 encoding) in desired encoding. */
+	/*
+	 * And encode the input string (usually in UTF8 encoding) in desired
+	 * encoding.
+	 */
 	tmp = encoding_conv_util(s_data, byteLen, PG_UTF8, collInfo.enc, &encodedByteLen);
 	byteLen = encodedByteLen;
 
@@ -1108,7 +1135,7 @@ bpchar(PG_FUNCTION_ARGS)
 		maxmblen = pg_encoding_mbcliplen(collInfo.enc, tmp, byteLen, maxByteLen);
 
 		if (!isExplicit &&
-			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
 		{
 			for (i = maxmblen; i < byteLen; i++)
 				if (tmp[i] != ' ')
@@ -1128,7 +1155,10 @@ bpchar(PG_FUNCTION_ARGS)
 		/* Encode the input string back to UTF8 */
 		resStr = encoding_conv_util(tmp, byteLen, collInfo.enc, PG_UTF8, &encodedByteLen);
 
-		/* And override the len with actual length of string (encoded in UTF-8) */
+		/*
+		 * And override the len with actual length of string (encoded in
+		 * UTF-8)
+		 */
 		if (resStr != tmp)
 			byteLen = encodedByteLen;
 	}
@@ -1142,7 +1172,7 @@ bpchar(PG_FUNCTION_ARGS)
 	/* blank pad the string if necessary */
 	if (blankSpace > 0)
 		memset(r + byteLen, ' ', blankSpace);
-	
+
 	if (tmp && s_data != tmp)
 		pfree(tmp);
 
@@ -1200,7 +1230,7 @@ nchar(PG_FUNCTION_ARGS)
 		maxmblen = pg_mbcharcliplen(s, len, maxlen);
 
 		if (!isExplicit &&
-			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
 		{
 			for (i = maxmblen; i < len; i++)
 				if (s[i] != ' ')
@@ -1247,9 +1277,10 @@ static char *
 bpchar2cstring(const BpChar *source)
 {
 	const char *s_data = VARDATA_ANY(source);
-	int len = VARSIZE_ANY_EXHDR(source);
+	int			len = VARSIZE_ANY_EXHDR(source);
 
-	char *result = (char *) palloc(len + 1);
+	char	   *result = (char *) palloc(len + 1);
+
 	memcpy(result, s_data, len);
 	result[len] = '\0';
 
@@ -1259,7 +1290,8 @@ bpchar2cstring(const BpChar *source)
 Datum
 bpchar2int2(PG_FUNCTION_ARGS)
 {
-	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
+
 	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
 		PG_RETURN_INT16(0);
 
@@ -1269,7 +1301,8 @@ bpchar2int2(PG_FUNCTION_ARGS)
 Datum
 bpchar2int4(PG_FUNCTION_ARGS)
 {
-	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
+
 	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
 		PG_RETURN_INT32(0);
 
@@ -1279,7 +1312,8 @@ bpchar2int4(PG_FUNCTION_ARGS)
 Datum
 bpchar2int8(PG_FUNCTION_ARGS)
 {
-	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
+
 	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
 		PG_RETURN_INT64(0);
 
@@ -1289,7 +1323,7 @@ bpchar2int8(PG_FUNCTION_ARGS)
 Datum
 bpchar2float4(PG_FUNCTION_ARGS)
 {
-	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
 
 	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
 		PG_RETURN_FLOAT4(0);
@@ -1300,8 +1334,8 @@ bpchar2float4(PG_FUNCTION_ARGS)
 Datum
 bpchar2float8(PG_FUNCTION_ARGS)
 {
-	BpChar *source = PG_GETARG_BPCHAR_PP(0);
-	char *num;
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
+	char	   *num;
 
 	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
 		PG_RETURN_FLOAT8(0);
@@ -1313,10 +1347,10 @@ bpchar2float8(PG_FUNCTION_ARGS)
 static inline int
 varcharTruelen(VarChar *arg)
 {
-	char *s = VARDATA_ANY(arg);
-	int len = VARSIZE_ANY_EXHDR(arg);
+	char	   *s = VARDATA_ANY(arg);
+	int			len = VARSIZE_ANY_EXHDR(arg);
 
-	int i;
+	int			i;
 
 	/*
 	 * Note that we rely on the assumption that ' ' is a singleton unit on
@@ -1349,8 +1383,8 @@ check_collation_set(Oid collid)
 Datum
 varchareq(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_PP(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_PP(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_PP(1);
 	int			len1,
 				len2;
 	bool		result;
@@ -1389,8 +1423,8 @@ varchareq(PG_FUNCTION_ARGS)
 Datum
 varcharne(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_PP(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_PP(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_PP(1);
 	int			len1,
 				len2;
 	bool		result;
@@ -1429,8 +1463,8 @@ varcharne(PG_FUNCTION_ARGS)
 Datum
 varcharlt(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_PP(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_PP(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1450,8 +1484,8 @@ varcharlt(PG_FUNCTION_ARGS)
 Datum
 varcharle(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_PP(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_PP(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1471,8 +1505,8 @@ varcharle(PG_FUNCTION_ARGS)
 Datum
 varchargt(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_PP(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_PP(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1492,8 +1526,8 @@ varchargt(PG_FUNCTION_ARGS)
 Datum
 varcharge(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_PP(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_PP(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1513,8 +1547,8 @@ varcharge(PG_FUNCTION_ARGS)
 Datum
 varcharcmp(PG_FUNCTION_ARGS)
 {
-	VarChar	   *arg1 = PG_GETARG_VARCHAR_PP(0);
-	VarChar	   *arg2 = PG_GETARG_VARCHAR_PP(1);
+	VarChar    *arg1 = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *arg2 = PG_GETARG_VARCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -1538,7 +1572,7 @@ varcharcmp(PG_FUNCTION_ARGS)
 Datum
 hashvarchar(PG_FUNCTION_ARGS)
 {
-	VarChar	   *key = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *key = PG_GETARG_VARCHAR_PP(0);
 	Oid			collid = PG_GET_COLLATION();
 	char	   *keydata;
 	int			keylen;

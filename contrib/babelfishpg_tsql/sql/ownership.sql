@@ -335,17 +335,18 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '')
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
 
 -- DATABASE_PRINCIPALS
-CREATE OR REPLACE VIEW sys.database_principals AS SELECT
+CREATE OR REPLACE VIEW sys.database_principals AS
+SELECT
 CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
 CAST(Base.oid AS INT) AS principal_id,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
-  CASE 
+  CASE
     WHEN Ext.type = 'S' THEN 'SQL_USER'
     WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
     WHEN Ext.type = 'U' THEN 'WINDOWS_USER'
-    ELSE NULL 
-  END 
+    ELSE NULL
+  END
   AS SYS.NVARCHAR(60)) AS type_desc,
 CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
@@ -362,7 +363,32 @@ FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
-WHERE Ext.database_name = DB_NAME();
+WHERE Ext.database_name = DB_NAME()
+UNION ALL
+SELECT
+CAST(name AS SYS.SYSNAME) AS name,
+CAST(-1 AS INT) AS principal_id,
+CAST(type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN type = 'S' THEN 'SQL_USER'
+    WHEN type = 'R' THEN 'DATABASE_ROLE'
+    WHEN type = 'U' THEN 'WINDOWS_USER'
+    ELSE NULL
+  END
+  AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_schema_name,
+CAST(NULL AS SYS.DATETIME) AS create_date,
+CAST(NULL AS SYS.DATETIME) AS modify_date,
+CAST(-1 AS INT) AS owning_principal_id,
+CAST(CAST(0 AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(0 AS SYS.BIT) AS is_fixed_role,
+CAST(-1 AS INT) AS authentication_type,
+CAST(NULL AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(NULL AS SYS.SYSNAME) AS default_language_name,
+CAST(-1 AS INT) AS default_language_lcid,
+CAST(0 AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dummy_principals(name, type);
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 

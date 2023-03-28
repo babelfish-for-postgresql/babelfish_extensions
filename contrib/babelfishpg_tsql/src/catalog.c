@@ -36,21 +36,21 @@
 /*****************************************
  *			SYS schema
  *****************************************/
-Oid sys_schema_oid = InvalidOid;
+Oid			sys_schema_oid = InvalidOid;
 
 /*****************************************
  *			SYSDATABASES
  *****************************************/
-Oid sysdatabases_oid = InvalidOid;
-Oid sysdatabaese_idx_oid_oid = InvalidOid;
-Oid sysdatabaese_idx_name_oid = InvalidOid;
+Oid			sysdatabases_oid = InvalidOid;
+Oid			sysdatabaese_idx_oid_oid = InvalidOid;
+Oid			sysdatabaese_idx_name_oid = InvalidOid;
 
 /*****************************************
  *			NAMESPACE_EXT
  *****************************************/
-Oid namespace_ext_oid = InvalidOid;
-Oid namespace_ext_idx_oid_oid = InvalidOid;
-int namespace_ext_num_cols = 4;
+Oid			namespace_ext_oid = InvalidOid;
+Oid			namespace_ext_idx_oid_oid = InvalidOid;
+int			namespace_ext_num_cols = 4;
 
 /*****************************************
  *			LOGIN EXT
@@ -91,49 +91,50 @@ extern bool babelfish_dump_restore;
 extern char *orig_proc_funcname;
 
 static struct cachedesc my_cacheinfo[] = {
-     {-1,       /* SYSDATABASEOID */ 
-          -1,
-          1,
-          {
-              Anum_sysdatabaese_oid,
-              0,
-              0,
-              0
-          },
-          16
-     },
-     {-1,       /* SYSDATABASENAME */ 
-          -1,
-          1,
-          {
-              Anum_sysdatabaese_name,
-              0,
-              0,
-              0
-          },
-          16
-      },
-	  {-1,       /* PROCNSPSIGNATURE */ 
-          -1,
-          2,
-          {
-              Anum_bbf_function_ext_nspname,
-              Anum_bbf_function_ext_funcsignature,
-              0,
-              0
-          },
-          16
-     }
+	{-1,						/* SYSDATABASEOID */
+		-1,
+		1,
+		{
+			Anum_sysdatabaese_oid,
+			0,
+			0,
+			0
+		},
+		16
+	},
+	{-1,						/* SYSDATABASENAME */
+		-1,
+		1,
+		{
+			Anum_sysdatabaese_name,
+			0,
+			0,
+			0
+		},
+		16
+	},
+	{-1,						/* PROCNSPSIGNATURE */
+		-1,
+		2,
+		{
+			Anum_bbf_function_ext_nspname,
+			Anum_bbf_function_ext_funcsignature,
+			0,
+			0
+		},
+		16
+	}
 };
 
 PG_FUNCTION_INFO_V1(init_catalog);
-Datum init_catalog(PG_FUNCTION_ARGS)
+Datum
+init_catalog(PG_FUNCTION_ARGS)
 {
 	/* sys schema */
 	sys_schema_oid = get_namespace_oid("sys", true);
 
 	if (!OidIsValid(sys_schema_oid))
-	       	PG_RETURN_INT32(0);
+		PG_RETURN_INT32(0);
 
 	/* sysdatabases */
 	sysdatabases_oid = get_relname_relid(SYSDATABASES_TABLE_NAME, sys_schema_oid);
@@ -177,10 +178,13 @@ Datum init_catalog(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-void initTsqlSyscache() {
+void
+initTsqlSyscache()
+{
 	Assert(my_cacheinfo[0].reloid != -1);
 	/* Initialize info for catcache */
-	if (!tsql_syscache_inited) {
+	if (!tsql_syscache_inited)
+	{
 		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
 		tsql_syscache_inited = true;
 	}
@@ -190,77 +194,81 @@ void initTsqlSyscache() {
  * 			Catalog Hooks
  *****************************************/
 
-bool 
+bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
 	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid)
 		return true;
 	if (PrevIsExtendedCatalogHook)
-		return (*PrevIsExtendedCatalogHook)(relationId);
+		return (*PrevIsExtendedCatalogHook) (relationId);
 	return false;
 }
 
 /*****************************************
  *			SYSDATABASES
  *****************************************/
-int16 get_db_id(const char *dbname)
+int16
+get_db_id(const char *dbname)
 {
-	int16				db_id = 0;
-	HeapTuple 			tuple;
-	Form_sysdatabases 	sysdb;
+	int16		db_id = 0;
+	HeapTuple	tuple;
+	Form_sysdatabases sysdb;
 
-      tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
 
-      if (!HeapTupleIsValid(tuple))
-              return InvalidDbid;
+	if (!HeapTupleIsValid(tuple))
+		return InvalidDbid;
 
-      sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
-      db_id = sysdb->dbid;
-      ReleaseSysCache(tuple);
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	db_id = sysdb->dbid;
+	ReleaseSysCache(tuple);
 
 	return db_id;
 }
 
-char *get_db_name(int16 dbid)
+char *
+get_db_name(int16 dbid)
 {
-	HeapTuple 			tuple;
-	Datum               name_datum;
-	char				*name = NULL;
-	bool 				isNull;
+	HeapTuple	tuple;
+	Datum		name_datum;
+	char	   *name = NULL;
+	bool		isNull;
 
-      tuple  = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(dbid));
+	tuple = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(dbid));
 
-      if (!HeapTupleIsValid(tuple))
-              return NULL;
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
 
-      name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_name, &isNull);
-      name = TextDatumGetCString(name_datum);
-      ReleaseSysCache(tuple);
+	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_name, &isNull);
+	name = TextDatumGetCString(name_datum);
+	ReleaseSysCache(tuple);
 
 	return name;
 }
 
-const char *get_one_user_db_name(void)
+const char *
+get_one_user_db_name(void)
 {
-	HeapTuple 		tuple;
-	TableScanDesc 	scan;
-	Relation		rel;
-	char 			*user_db_name = NULL;
-	bool			is_null;
+	HeapTuple	tuple;
+	TableScanDesc scan;
+	Relation	rel;
+	char	   *user_db_name = NULL;
+	bool		is_null;
 
 	rel = table_open(sysdatabases_oid, AccessShareLock);
 	scan = table_beginscan_catalog(rel, 0, NULL);
 	tuple = heap_getnext(scan, ForwardScanDirection);
 
-	while (HeapTupleIsValid(tuple)) 
+	while (HeapTupleIsValid(tuple))
 	{
-		char *db_name;
+		char	   *db_name;
 
-		Datum name = heap_getattr(tuple, Anum_sysdatabaese_name,
-								  rel->rd_att, &is_null);
+		Datum		name = heap_getattr(tuple, Anum_sysdatabaese_name,
+										rel->rd_att, &is_null);
+
 		db_name = TextDatumGetCString(name);
 
-		// check that db_name is not "master", "tempdb", or "msdb"
+		/* check that db_name is not "master", "tempdb", or "msdb" */
 		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
 			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
 			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
@@ -270,7 +278,7 @@ const char *get_one_user_db_name(void)
 		}
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
-	
+
 	table_endscan(scan);
 	table_close(rel, AccessShareLock);
 
@@ -283,63 +291,63 @@ PG_FUNCTION_INFO_V1(babelfish_helpdb);
 Datum
 babelfish_helpdb(PG_FUNCTION_ARGS)
 {
-    ReturnSetInfo 		*rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	char 				*dbname;
-	char				*dbname_lower;
-	ScanKeyData 		scanKey;
-    TupleDesc 			tupdesc;
-    Tuplestorestate 	*tupstore;
-	MemoryContext 		per_query_ctx;
-    MemoryContext 		oldcontext;
-	Relation			rel;
-	SysScanDesc 		scan;
-	HeapTuple 			tuple;
-	Form_sysdatabases 	sysdb;
-	Oid                 datetime_output_func;
-	bool				typIsVarlena;
-	Oid 				datetime_type;
-    Oid 				sys_nspoid = get_namespace_oid("sys", false);
-	int					index;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	char	   *dbname;
+	char	   *dbname_lower;
+	ScanKeyData scanKey;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	Relation	rel;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	Form_sysdatabases sysdb;
+	Oid			datetime_output_func;
+	bool		typIsVarlena;
+	Oid			datetime_type;
+	Oid			sys_nspoid = get_namespace_oid("sys", false);
+	int			index;
 
-    /* check to see if caller supports us returning a tuplestore */
-    if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("set-valued function called in context that cannot accept a set")));
-    if (!(rsinfo->allowedModes & SFRM_Materialize))
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("materialize mode required, but it is not " \
-                        "allowed in this context")));
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
 
-    /* need to build tuplestore in query context */
-    per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-    oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	/* need to build tuplestore in query context */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-    /*
-     * build tupdesc for result tuples.
-     */
-    tupdesc = CreateTemplateTupleDesc(7);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-                       VARCHAROID, 128, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "db_size",
-                       VARCHAROID, 13, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "owner",
-                       VARCHAROID, 128, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 4, "dbid",
-                       INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 5, "created",
-                       VARCHAROID, 11, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 6, "status",
-                       VARCHAROID, 600, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 7, "compatibility_level",
-                       INT2OID, -1, 0);
+	/*
+	 * build tupdesc for result tuples.
+	 */
+	tupdesc = CreateTemplateTupleDesc(7);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+					   VARCHAROID, 128, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "db_size",
+					   VARCHAROID, 13, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "owner",
+					   VARCHAROID, 128, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "dbid",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "created",
+					   VARCHAROID, 11, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "status",
+					   VARCHAROID, 600, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "compatibility_level",
+					   INT2OID, -1, 0);
 
-    tupstore =
-        tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-                              false, 1024);
-    /* generate junk in short-term context */
-    MemoryContextSwitchTo(oldcontext);
+	tupstore =
+		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+							  false, 1024);
+	/* generate junk in short-term context */
+	MemoryContextSwitchTo(oldcontext);
 
 	rel = table_open(sysdatabases_oid, AccessShareLock);
 
@@ -349,9 +357,9 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 		dbname_lower = str_tolower(dbname, strlen(dbname), DEFAULT_COLLATION_OID);
 		/* Remove trailing spaces at the end of user typed dbname */
 		index = -1;
-		for (int i = 0; dbname_lower[i]!='\0'; i++)
+		for (int i = 0; dbname_lower[i] != '\0'; i++)
 		{
-			if (dbname_lower[i]!=' ')
+			if (dbname_lower[i] != ' ')
 			{
 				index = i;
 			}
@@ -359,14 +367,14 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 		dbname_lower[index + 1] = '\0';
 		if (!DbidIsValid(get_db_id(dbname_lower)))
 			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("The database '%s' does not exist. Supply a valid database name. To see available databases, use sys.databases.", dbname)));
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("The database '%s' does not exist. Supply a valid database name. To see available databases, use sys.databases.", dbname)));
 		ScanKeyInit(&scanKey,
-			Anum_sysdatabaese_name,
-			BTEqualStrategyNumber, F_TEXTEQ,
-			CStringGetTextDatum(dbname_lower));
+					Anum_sysdatabaese_name,
+					BTEqualStrategyNumber, F_TEXTEQ,
+					CStringGetTextDatum(dbname_lower));
 		scan = systable_beginscan(rel, sysdatabaese_idx_name_oid, true,
-								NULL, 1, &scanKey);
+								  NULL, 1, &scanKey);
 	}
 	else
 	{
@@ -374,30 +382,30 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 	}
 
 	datetime_type = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-										CStringGetDatum("datetime"), ObjectIdGetDatum(sys_nspoid));
+									CStringGetDatum("datetime"), ObjectIdGetDatum(sys_nspoid));
 
 	getTypeOutputInfo(datetime_type, &datetime_output_func, &typIsVarlena);
 
-    /* scan all the variables in top estate */
+	/* scan all the variables in top estate */
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
-        Datum		values[7];
-        bool		nulls[7];
-		char 		*db_name_entry;
-		Timestamp 	tmstmp;
-		char 		*tmstmp_str;
+		Datum		values[7];
+		bool		nulls[7];
+		char	   *db_name_entry;
+		Timestamp	tmstmp;
+		char	   *tmstmp_str;
 		bool		isNull;
 
 		sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
 
-        MemSet(nulls, 0, sizeof(nulls));
+		MemSet(nulls, 0, sizeof(nulls));
 
 		db_name_entry = TextDatumGetCString(heap_getattr(tuple, Anum_sysdatabaese_name,
-                                RelationGetDescr(rel), &isNull));
+														 RelationGetDescr(rel), &isNull));
 
 		values[0] = CStringGetTextDatum(db_name_entry);
 
-        nulls[1] = 1;
+		nulls[1] = 1;
 
 		values[2] = CStringGetTextDatum(NameStr(sysdb->owner));
 
@@ -408,29 +416,29 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 		else if (strlen(db_name_entry) == 4 && (strncmp(db_name_entry, "msdb", 4) == 0))
 			values[3] = 4;
 		else
-        	values[3] = sysdb->dbid;
+			values[3] = sysdb->dbid;
 
 		tmstmp = DatumGetTimestamp(heap_getattr(tuple, Anum_sysdatabaese_crdate,
-                                RelationGetDescr(rel), &isNull));
+												RelationGetDescr(rel), &isNull));
 
 		tmstmp_str = OidOutputFunctionCall(datetime_output_func, tmstmp);
 		values[4] = CStringGetTextDatum(tmstmp_str);
 
-        nulls[5] = 1;
+		nulls[5] = 1;
 		values[6] = UInt8GetDatum(120);
 
-        tuplestore_putvalues(tupstore, tupdesc, values, nulls);
-    }
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	}
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
-    /* clean up and return the tuplestore */
-    tuplestore_donestoring(tupstore);
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
 
-    rsinfo->returnMode = SFRM_Materialize;
-    rsinfo->setResult = tupstore;
-    rsinfo->setDesc = tupdesc;
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
 
-    PG_RETURN_NULL();
+	PG_RETURN_NULL();
 }
 
 /*****************************************
@@ -440,14 +448,14 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 const char *
 get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 {
-	Relation 	rel;
+	Relation	rel;
 	HeapTuple	tuple;
 	ScanKeyData scanKey;
 	SysScanDesc scan;
 	Datum		datum;
-	const char  *logical_name;
+	const char *logical_name;
 	TupleDesc	dsc;
-	bool 		isnull;
+	bool		isnull;
 
 	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
 		return NULL;
@@ -470,8 +478,8 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 		table_close(rel, AccessShareLock);
 		if (!missingOk)
 			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
 		return NULL;
 	}
 	datum = heap_getattr(tuple, Anum_namespace_ext_orig_name, dsc, &isnull);
@@ -485,10 +493,10 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 int16
 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk)
 {
-	Relation 	rel;
+	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData	scanKey;
-	SysScanDesc	scan;
+	ScanKeyData scanKey;
+	SysScanDesc scan;
 	Datum		datum;
 	int16		dbid;
 	TupleDesc	dsc;
@@ -515,8 +523,8 @@ get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missin
 		table_close(rel, AccessShareLock);
 		if (!missingOk)
 			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Could not find db id for: \"%s\"", physical_schema_name)));
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Could not find db id for: \"%s\"", physical_schema_name)));
 		return InvalidDbid;
 	}
 	datum = heap_getattr(tuple, Anum_namespace_ext_dbid, dsc, &isnull);
@@ -536,8 +544,8 @@ is_login(Oid role_oid)
 {
 	Relation	relation;
 	bool		is_login = true;
-	ScanKeyData	scanKey;
-	SysScanDesc	scan;
+	ScanKeyData scanKey;
+	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
@@ -546,7 +554,7 @@ is_login(Oid role_oid)
 	if (!HeapTupleIsValid(authtuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("role with OID %u does not exist", role_oid)));
+				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
 
 	relation = table_open(get_authid_login_ext_oid(), AccessShareLock);
@@ -578,10 +586,10 @@ is_login_name(char *rolname)
 {
 	Relation	relation;
 	bool		is_login = true;
-	ScanKeyData	scanKey;
-	SysScanDesc	scan;
+	ScanKeyData scanKey;
+	SysScanDesc scan;
 	HeapTuple	tuple;
-	NameData	*login;
+	NameData   *login;
 
 	relation = table_open(get_authid_login_ext_oid(), AccessShareLock);
 
@@ -608,10 +616,11 @@ is_login_name(char *rolname)
 }
 
 PG_FUNCTION_INFO_V1(bbf_get_login_default_db);
-Datum bbf_get_login_default_db(PG_FUNCTION_ARGS)
+Datum
+bbf_get_login_default_db(PG_FUNCTION_ARGS)
 {
-	char *login_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	char *ret;
+	char	   *login_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *ret;
 
 	ret = get_login_default_db(login_name);
 
@@ -624,20 +633,20 @@ Datum bbf_get_login_default_db(PG_FUNCTION_ARGS)
 char *
 get_login_default_db(char *login_name)
 {
-	Relation				bbf_authid_login_ext_rel;
-	TupleDesc				dsc;
-	HeapTuple				tuple;
-	ScanKeyData				scanKey;
-	SysScanDesc				scan;
-	Datum					datum;
-	bool					isnull;
-	char					*default_db_name;
+	Relation	bbf_authid_login_ext_rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple;
+	ScanKeyData scanKey;
+	SysScanDesc scan;
+	Datum		datum;
+	bool		isnull;
+	char	   *default_db_name;
 
 	/* Fetch the relation */
 	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(), AccessShareLock);
 	dsc = RelationGetDescr(bbf_authid_login_ext_rel);
 
-	/* Search and obtain the tuple on the role name*/
+	/* Search and obtain the tuple on the role name */
 	ScanKeyInit(&scanKey,
 				Anum_bbf_authid_login_ext_rolname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -655,17 +664,17 @@ get_login_default_db(char *login_name)
 		return NULL;
 	}
 
-	datum = heap_getattr(tuple, LOGIN_EXT_DEFAULT_DATABASE_NAME+1, dsc, &isnull);
+	datum = heap_getattr(tuple, LOGIN_EXT_DEFAULT_DATABASE_NAME + 1, dsc, &isnull);
 	default_db_name = pstrdup(TextDatumGetCString(datum));
 
 	systable_endscan(scan);
 	table_close(bbf_authid_login_ext_rel, AccessShareLock);
 
-      tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(default_db_name));
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(default_db_name));
 
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
-      ReleaseSysCache(tuple);
+	ReleaseSysCache(tuple);
 
 	return default_db_name;
 }
@@ -699,18 +708,18 @@ is_user(Oid role_oid)
 {
 	Relation	relation;
 	bool		is_user = true;
-	ScanKeyData	scanKey;
-	SysScanDesc	scan;
+	ScanKeyData scanKey;
+	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
-	char		*type_str = "";
+	char	   *type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
 	if (!HeapTupleIsValid(authtuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("role with OID %u does not exist", role_oid)));
+				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
 
 	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
@@ -741,9 +750,8 @@ is_user(Oid role_oid)
 	}
 
 	/*
-	 * Only sysadmin can not be dropped. For the rest
-	 * of the cases i.e., type is "S" or "U" etc, we should 
-	 * drop the user
+	 * Only sysadmin can not be dropped. For the rest of the cases i.e., type
+	 * is "S" or "U" etc, we should drop the user
 	 */
 	if (strcmp(type_str, "R") == 0)
 		is_user = false;
@@ -761,19 +769,19 @@ is_role(Oid role_oid)
 {
 	Relation	relation;
 	bool		is_role = true;
-	ScanKeyData	scanKey;
-	SysScanDesc	scan;
+	ScanKeyData scanKey;
+	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
-	BpChar 		type;
-	char		*type_str = "";
+	BpChar		type;
+	char	   *type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
 	if (!HeapTupleIsValid(authtuple))
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			errmsg("role with OID %u does not exist", role_oid)));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
 
 	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
@@ -797,7 +805,7 @@ is_role(Oid role_oid)
 		type_str = bpchar_to_cstring(&type);
 
 		if (strcmp(type_str, "R") != 0)
-		is_role = false;
+			is_role = false;
 	}
 
 	systable_endscan(scan);
@@ -831,12 +839,12 @@ get_authid_user_ext_idx_oid(void)
 char *
 get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
-	Relation		bbf_authid_user_ext_rel;
-	HeapTuple		tuple_user_ext;
-	ScanKeyData		key[3];
-	TableScanDesc	scan;
-	char			*user_name = NULL;
-	NameData		*login_name;
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple_user_ext;
+	ScanKeyData key[3];
+	TableScanDesc scan;
+	char	   *user_name = NULL;
+	NameData   *login_name;
 
 	if (!db_name || !login)
 		return NULL;
@@ -879,12 +887,12 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 char *
 get_authid_user_ext_schema_name(const char *db_name, const char *user)
 {
-	Relation		bbf_authid_user_ext_rel;
-	HeapTuple		tuple_user_ext;
-	ScanKeyData		key[2];
-	TableScanDesc	scan;
-	char			*schema_name = NULL;
-	NameData		*user_name;
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple_user_ext;
+	ScanKeyData key[2];
+	TableScanDesc scan;
+	char	   *schema_name = NULL;
+	NameData   *user_name;
 
 	if (!db_name || !user)
 		return NULL;
@@ -908,8 +916,8 @@ get_authid_user_ext_schema_name(const char *db_name, const char *user)
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		Datum	datum;
-		bool	is_null;
+		Datum		datum;
+		bool		is_null;
 
 		datum = heap_getattr(tuple_user_ext,
 							 Anum_bbf_authid_user_ext_default_schema_name,
@@ -927,11 +935,11 @@ get_authid_user_ext_schema_name(const char *db_name, const char *user)
 List *
 get_authid_user_ext_db_users(const char *db_name)
 {
-	Relation		bbf_authid_user_ext_rel;
-	HeapTuple		tuple;
-	ScanKeyData		key;
-	TableScanDesc	scan;
-	List			*db_users_list = NIL;
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple;
+	ScanKeyData key;
+	TableScanDesc scan;
+	List	   *db_users_list = NIL;
 
 	if (!db_name)
 		return NULL;
@@ -949,7 +957,7 @@ get_authid_user_ext_db_users(const char *db_name)
 	tuple = heap_getnext(scan, ForwardScanDirection);
 	while (HeapTupleIsValid(tuple))
 	{
-		char *user_name;
+		char	   *user_name;
 		Form_authid_user_ext userform;
 
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple);
@@ -973,9 +981,9 @@ get_authid_user_ext_db_users(const char *db_name)
 char *
 get_user_for_database(const char *db_name)
 {
-	char		*user = NULL;
-	const char		*login;
-	bool			login_is_db_owner;
+	char	   *user = NULL;
+	const char *login;
+	bool		login_is_db_owner;
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(db_name, login);
@@ -983,14 +991,17 @@ get_user_for_database(const char *db_name)
 
 	if (!user)
 	{
-		Oid				datdba;
+		Oid			datdba;
 
 		datdba = get_role_oid("sysadmin", false);
 		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
 			user = (char *) get_dbo_role_name(db_name);
 		else
 		{
-			/* Get the guest role name only if the guest is enabled on the current db.*/
+			/*
+			 * Get the guest role name only if the guest is enabled on the
+			 * current db.
+			 */
 			if (guest_has_dbaccess((char *) db_name))
 				user = (char *) get_guest_role_name(db_name);
 			else
@@ -998,8 +1009,8 @@ get_user_for_database(const char *db_name)
 		}
 	}
 
-	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false)) 
-					|| login_is_db_owner))
+	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false))
+				  || login_is_db_owner))
 		user = NULL;
 
 	return user;
@@ -1033,11 +1044,12 @@ HeapTuple
 search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_schema_name, const char *view_name)
 {
 
-	ScanKeyData	scanKey[3];
-	SysScanDesc	scan;
-	HeapTuple	scantup, oldtup;
+	ScanKeyData scanKey[3];
+	SysScanDesc scan;
+	HeapTuple	scantup,
+				oldtup;
 
-	if(!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
+	if (!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
 		return NULL;
 
 
@@ -1071,12 +1083,13 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 bool
 check_is_tsql_view(Oid relid)
 {
-	Oid		schema_oid;
+	Oid			schema_oid;
 	Relation	bbf_view_def_rel;
 	HeapTuple	scantup;
-	char		*view_name, *schema_name;
+	char	   *view_name,
+			   *schema_name;
 	int16		logical_dbid;
-	const char	*logical_schema_name;
+	const char *logical_schema_name;
 	bool		is_tsql_view = false;
 
 	view_name = get_rel_name(relid);
@@ -1120,10 +1133,10 @@ check_is_tsql_view(Oid relid)
 void
 clean_up_bbf_view_def(int16 dbid)
 {
-	Relation		bbf_view_def_rel;
-	HeapTuple		scantup;
-	ScanKeyData		scanKey[1];
-	SysScanDesc		scan;
+	Relation	bbf_view_def_rel;
+	HeapTuple	scantup;
+	ScanKeyData scanKey[1];
+	SysScanDesc scan;
 
 	/* Fetch the relation */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
@@ -1142,7 +1155,7 @@ clean_up_bbf_view_def(int16 dbid)
 	{
 		if (HeapTupleIsValid(scantup))
 			CatalogTupleDelete(bbf_view_def_rel,
-							&scantup->t_self);
+							   &scantup->t_self);
 	}
 
 	systable_endscan(scan);
@@ -1158,7 +1171,7 @@ get_bbf_function_ext_oid()
 {
 	if (!OidIsValid(bbf_function_ext_oid))
 		bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME,
-											 get_namespace_oid("sys", false));
+												 get_namespace_oid("sys", false));
 
 	return bbf_function_ext_oid;
 }
@@ -1168,7 +1181,7 @@ get_bbf_function_ext_idx_oid()
 {
 	if (!OidIsValid(bbf_function_ext_idx_oid))
 		bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME,
-												 get_namespace_oid("sys", false));
+													 get_namespace_oid("sys", false));
 
 	return bbf_function_ext_idx_oid;
 }
@@ -1176,14 +1189,14 @@ get_bbf_function_ext_idx_oid()
 HeapTuple
 get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 {
-	HeapTuple	 bbffunctuple;
+	HeapTuple	bbffunctuple;
 	Form_pg_proc form;
-	char		 *physical_schemaname;
-	const char		 *func_signature;
+	char	   *physical_schemaname;
+	const char *func_signature;
 
 	/* Disallow extended catalog lookup during restore */
 	if (!HeapTupleIsValid(proctuple) || babelfish_dump_restore)
-		return NULL;					/* concurrently dropped */
+		return NULL;			/* concurrently dropped */
 	form = (Form_pg_proc) GETSTRUCT(proctuple);
 	if (!is_pltsql_language_oid(form->prolang))
 		return NULL;
@@ -1192,8 +1205,8 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 	if (physical_schemaname == NULL)
 	{
 		elog(ERROR,
-				"Could not find physical schemaname for %u",
-				 form->pronamespace);
+			 "Could not find physical schemaname for %u",
+			 form->pronamespace);
 	}
 
 	/* skip for shared schemas */
@@ -1226,11 +1239,12 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 void
 clean_up_bbf_function_ext(int16 dbid)
 {
-	Relation		bbf_function_ext_rel, namespace_rel;
-	AttrNumber		attnum;
-	HeapTuple		scantup;
-	ScanKeyData		scanKey[1];
-	TableScanDesc	scan;
+	Relation	bbf_function_ext_rel,
+				namespace_rel;
+	AttrNumber	attnum;
+	HeapTuple	scantup;
+	ScanKeyData scanKey[1];
+	TableScanDesc scan;
 
 	/* Fetch the relations */
 	namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
@@ -1238,12 +1252,12 @@ clean_up_bbf_function_ext(int16 dbid)
 
 	attnum = (AttrNumber) attnameAttNum(namespace_rel, "dbid", false);
 	if (attnum == InvalidAttrNumber)
-		ereport(ERROR, 
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("column \"dbid\" of relation \"%s\" does not exist",
 						RelationGetRelationName(namespace_rel))));
 
-	ScanKeyInit(&scanKey[0], 
+	ScanKeyInit(&scanKey[0],
 				attnum,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
@@ -1256,7 +1270,7 @@ clean_up_bbf_function_ext(int16 dbid)
 		bool		isNull;
 		Datum		nspname;
 		HeapTuple	functup;
-		SysScanDesc	funcscan;
+		SysScanDesc funcscan;
 
 		nspname = heap_getattr(scantup,
 							   Anum_namespace_ext_namespace,
@@ -1277,7 +1291,7 @@ clean_up_bbf_function_ext(int16 dbid)
 		{
 			if (HeapTupleIsValid(functup))
 				CatalogTupleDelete(bbf_function_ext_rel,
-								&functup->t_self);
+								   &functup->t_self);
 		}
 
 		systable_endscan(funcscan);
@@ -1298,7 +1312,7 @@ get_bbf_domain_mapping_oid()
 {
 	if (!OidIsValid(bbf_domain_mapping_oid))
 		bbf_domain_mapping_oid = get_relname_relid(BBF_DOMAIN_MAPPING_TABLE_NAME,
-											 get_namespace_oid("sys", false));
+												   get_namespace_oid("sys", false));
 
 	return bbf_domain_mapping_oid;
 }
@@ -1308,7 +1322,7 @@ get_bbf_domain_mapping_idx_oid()
 {
 	if (!OidIsValid(bbf_domain_mapping_idx_oid))
 		bbf_domain_mapping_idx_oid = get_relname_relid(BBF_DOMAIN_MAPPING_IDX_NAME,
-											 get_namespace_oid("sys", false));
+													   get_namespace_oid("sys", false));
 
 	return bbf_domain_mapping_idx_oid;
 }
@@ -1321,19 +1335,21 @@ get_bbf_domain_mapping_idx_oid()
  * rules to check the metadata integrity.
  *****************************************/
 
-/* 
+/*
  * This parameter controls whether the metadata check would stop at the first
- * detected error. 
+ * detected error.
  */
-bool stop_at_first_error = false;
+bool		stop_at_first_error = false;
+
 /*
  * This parameter controls whether the function will return consistent rule list
  * or detected inconsistency.
  */
-bool return_consistency = false;
+bool		return_consistency = false;
 
 /* Core function declaration */
 static void metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
+
 /* Value function declaration */
 static Datum get_master(HeapTuple tuple, TupleDesc dsc);
 static Datum get_tempdb(HeapTuple tuple, TupleDesc dsc);
@@ -1358,21 +1374,25 @@ static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
+
 /* Condition function declaration */
 static bool is_multidb(void);
 static bool is_singledb_exists_userdb(void);
+
 /* Rule validation function declaration */
 static bool check_exist(void *arg, HeapTuple tuple);
 static bool check_rules(Rule rules[], size_t num_rules, HeapTuple tuple, TupleDesc dsc,
 						Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
-static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_oid, 
+static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_oid,
 								   Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
+
 /* Helper function declaration */
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static void create_guest_role_for_db(const char *dbname);
 static char *get_db_owner_role_name(const char *dbname);
+
 /* Helper function Rename BBF catalog update*/
 static void rename_view_update_bbf_catalog(RenameStmt *stmt);
 static void rename_procfunc_update_bbf_catalog(RenameStmt *stmt);
@@ -1380,10 +1400,10 @@ static void rename_procfunc_update_bbf_catalog(RenameStmt *stmt);
 /*****************************************
  * 			Catalog Extra Info
  * ---------------------------------------
- * MUST also edit init_catalog_data() when 
+ * MUST also edit init_catalog_data() when
  * editing the listed catalogs here.
  *****************************************/
-RelData catalog_data[] = 
+RelData		catalog_data[] =
 {
 	{"babelfish_sysdatabases", InvalidOid, InvalidOid, true, InvalidOid, Anum_sysdatabaese_name, F_TEXTEQ},
 	{"babelfish_namespace_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_namespace_ext_namespace, F_NAMEEQ},
@@ -1393,106 +1413,106 @@ RelData catalog_data[] =
 	{"pg_authid", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ},
 	{"pg_proc", InvalidOid, InvalidOid, false, InvalidOid, Anum_pg_proc_proname, F_NAMEEQ}
 };
-	
+
 /*****************************************
  * 			Rule Definitions
  * ---------------------------------------
  * 1. Must have rule
  *		A.a must have some value V
  * 2. Must match rule
- *		B->A, if we have a value V2 in B.b, 
+ *		B->A, if we have a value V2 in B.b,
  *		then A.a should have value V1
  *****************************************/
 
 /* Must have rules */
-Rule must_have_rules[] =
+Rule		must_have_rules[] =
 {
 	{"master must exist in babelfish_sysdatabases",
-	 "babelfish_sysdatabases", "name", NULL, get_master, NULL, check_exist, NULL},
+	"babelfish_sysdatabases", "name", NULL, get_master, NULL, check_exist, NULL},
 	{"tempdb must exist in babelfish_sysdatabases",
-	 "babelfish_sysdatabases", "name", NULL, get_tempdb, NULL, check_exist, NULL},
+	"babelfish_sysdatabases", "name", NULL, get_tempdb, NULL, check_exist, NULL},
 	{"msdb must exist in babelfish_sysdatabases",
-	 "babelfish_sysdatabases", "name", NULL, get_msdb, NULL, check_exist, NULL},
+	"babelfish_sysdatabases", "name", NULL, get_msdb, NULL, check_exist, NULL},
 	{"Current role name must exist in babelfish_authid_login_ext",
-	 "babelfish_authid_login_ext", "rolname", NULL, get_cur_rolname, NULL, check_exist, NULL},
+	"babelfish_authid_login_ext", "rolname", NULL, get_cur_rolname, NULL, check_exist, NULL},
 	{"master_dbo must exist in babelfish_namespace_ext",
-	 "babelfish_namespace_ext", "nspname", NULL, get_master_dbo, NULL, check_exist, NULL},
+	"babelfish_namespace_ext", "nspname", NULL, get_master_dbo, NULL, check_exist, NULL},
 	{"tempdb_dbo must exist in babelfish_namespace_ext",
-	 "babelfish_namespace_ext", "nspname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
+	"babelfish_namespace_ext", "nspname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
 	{"msdb_dbo must exist in babelfish_namespace_ext",
-	 "babelfish_namespace_ext", "nspname", NULL, get_msdb_dbo, NULL, check_exist, NULL},
+	"babelfish_namespace_ext", "nspname", NULL, get_msdb_dbo, NULL, check_exist, NULL},
 	{"In single-db mode, if user db exists, dbo must exist in babelfish_namespace_ext",
-	 "babelfish_namespace_ext", "nspname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
+	"babelfish_namespace_ext", "nspname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
 	{"In single-db mode, if user db exists, db_owner must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_db_owner, is_singledb_exists_userdb, check_exist, NULL},
+	"babelfish_authid_user_ext", "rolname", NULL, get_db_owner, is_singledb_exists_userdb, check_exist, NULL},
 	{"In single-db mode, if user db exists, dbo must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
+	"babelfish_authid_user_ext", "rolname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
 	{"master_db_owner must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_master_db_owner, NULL, check_exist, NULL},
+	"babelfish_authid_user_ext", "rolname", NULL, get_master_db_owner, NULL, check_exist, NULL},
 	{"master_dbo must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_master_dbo, NULL, check_exist, NULL},
+	"babelfish_authid_user_ext", "rolname", NULL, get_master_dbo, NULL, check_exist, NULL},
 	{"tempdb_db_owner must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_db_owner, NULL, check_exist, NULL},
+	"babelfish_authid_user_ext", "rolname", NULL, get_tempdb_db_owner, NULL, check_exist, NULL},
 	{"tempdb_dbo must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
+	"babelfish_authid_user_ext", "rolname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
 	{"msdb_db_owner must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_db_owner, NULL, check_exist, NULL},
+	"babelfish_authid_user_ext", "rolname", NULL, get_msdb_db_owner, NULL, check_exist, NULL},
 	{"msdb_dbo must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_dbo, NULL, check_exist, NULL}
+	"babelfish_authid_user_ext", "rolname", NULL, get_msdb_dbo, NULL, check_exist, NULL}
 };
 
 /* Must match rules, MUST comply with metadata_inconsistency_check() */
 /* babelfish_sysdatabases */
-Rule must_match_rules_sysdb[] =
+Rule		must_match_rules_sysdb[] =
 {
-	{"<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext", 
-	 "babelfish_authid_login_ext", "rolname", NULL, get_owner, NULL, check_exist, NULL},
+	{"<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext",
+	"babelfish_authid_login_ext", "rolname", NULL, get_owner, NULL, check_exist, NULL},
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_db_owner must also exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_name_db_owner, is_multidb, check_exist, NULL},
+	"pg_authid", "rolname", NULL, get_name_db_owner, is_multidb, check_exist, NULL},
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_name_dbo, is_multidb, check_exist, NULL},
+	"pg_authid", "rolname", NULL, get_name_dbo, is_multidb, check_exist, NULL},
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext",
-	 "babelfish_namespace_ext", "nspname", NULL, get_name_dbo, is_multidb, check_exist, NULL},
+	"babelfish_namespace_ext", "nspname", NULL, get_name_dbo, is_multidb, check_exist, NULL},
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_multidb, check_exist, NULL},
+	"babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_multidb, check_exist, NULL},
 	{"In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
-         "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_singledb_exists_userdb, check_exist, NULL}
+	"babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_singledb_exists_userdb, check_exist, NULL}
 };
 
 /* babelfish_namespace_ext */
-Rule must_match_rules_nsp[] = 
+Rule		must_match_rules_nsp[] =
 {
 	{"<nspname> in babelfish_namespace_ext must also exist in pg_namespace",
-	 "pg_namespace", "nspname", NULL, get_nspname, NULL, check_exist, NULL}
+	"pg_namespace", "nspname", NULL, get_nspname, NULL, check_exist, NULL}
 };
 
 /* babelfish_authid_login_ext */
-Rule must_match_rules_login[] = 
+Rule		must_match_rules_login[] =
 {
 	{"<rolname> in babelfish_authid_login_ext must also exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_login_rolname, NULL, check_exist, NULL},
+	"pg_authid", "rolname", NULL, get_login_rolname, NULL, check_exist, NULL},
 	{"<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases",
-	 "babelfish_sysdatabases", "name", NULL, get_default_database_name, NULL, check_exist, NULL}
+	"babelfish_sysdatabases", "name", NULL, get_default_database_name, NULL, check_exist, NULL}
 };
 
 /* babelfish_authid_user_ext */
-Rule must_match_rules_user[] = 
+Rule		must_match_rules_user[] =
 {
 	{"<rolname> in babelfish_authid_user_ext must also exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_user_rolname, NULL, check_exist, NULL},
+	"pg_authid", "rolname", NULL, get_user_rolname, NULL, check_exist, NULL},
 	{"<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases",
-	 "babelfish_sysdatabases", "name", NULL, get_database_name, NULL, check_exist, NULL}
+	"babelfish_sysdatabases", "name", NULL, get_database_name, NULL, check_exist, NULL}
 };
 
 /* babelfish_function_ext */
-Rule must_match_rules_function[] = 
+Rule		must_match_rules_function[] =
 {
 	{"<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext",
-	 "babelfish_namespace_ext", "nspname", NULL, get_function_nspname, NULL, check_exist, NULL},
+	"babelfish_namespace_ext", "nspname", NULL, get_function_nspname, NULL, check_exist, NULL},
 	{"<funcname> in babelfish_function_ext must also exist in pg_proc",
-	 "pg_proc", "proname", NULL, get_function_name, NULL, check_exist, NULL}
+	"pg_proc", "proname", NULL, get_function_name, NULL, check_exist, NULL}
 };
-	
+
 /*****************************************
  * 			Core function
  *****************************************/
@@ -1507,51 +1527,51 @@ PG_FUNCTION_INFO_V1(babelfish_inconsistent_metadata);
 Datum
 babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 {
-    ReturnSetInfo 		*rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	MemoryContext 		per_query_ctx;
-	MemoryContext 		oldcontext;
-    TupleDesc 			tupdesc;
-    Tuplestorestate 	*tupstore;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
 
 	return_consistency = PG_GETARG_BOOL(0);
 
-    /* check to see if caller supports us returning a tuplestore */
-    if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("set-valued function called in context that cannot accept a set")));
-    if (!(rsinfo->allowedModes & SFRM_Materialize))
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("materialize mode required, but it is not " \
-                        "allowed in this context")));
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
 
-    /* need to build tuplestore in query context */
-    per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-    oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	/* need to build tuplestore in query context */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-    /*
-     * build tupdesc for result tuples.
-     */
-    tupdesc = CreateTemplateTupleDesc(4);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "object_type",
-                       VARCHAROID, 32, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "schema_name",
-                       VARCHAROID, 128, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "object_name",
-                       VARCHAROID, 128, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 4, "detail",
-                       JSONBOID, -1, 0);
-    tupstore =
-        tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-                              false, 1024);
+	/*
+	 * build tupdesc for result tuples.
+	 */
+	tupdesc = CreateTemplateTupleDesc(4);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "object_type",
+					   VARCHAROID, 32, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "schema_name",
+					   VARCHAROID, 128, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "object_name",
+					   VARCHAROID, 128, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "detail",
+					   JSONBOID, -1, 0);
+	tupstore =
+		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+							  false, 1024);
 
-    /* generate junk in short-term context */
-    MemoryContextSwitchTo(oldcontext);
+	/* generate junk in short-term context */
+	MemoryContextSwitchTo(oldcontext);
 
 	PG_TRY();
 	{
-		if(metadata_inconsistency_check_enabled())		
+		if (metadata_inconsistency_check_enabled())
 		{
 			/* Check metadata inconsistency */
 			metadata_inconsistency_check(tupstore, tupdesc);
@@ -1576,31 +1596,31 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 static void
 metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
 {
-	size_t num_must_have_rules = sizeof(must_have_rules) / sizeof(must_have_rules[0]);
-	size_t num_must_match_rules_sysdb =  sizeof(must_match_rules_sysdb) / sizeof(must_match_rules_sysdb[0]);
-	size_t num_must_match_rules_nsp = sizeof(must_match_rules_nsp) / sizeof(must_match_rules_nsp[0]);
-	size_t num_must_match_rules_login = sizeof(must_match_rules_login) / sizeof(must_match_rules_login[0]);
-	size_t num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
-	size_t num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
+	size_t		num_must_have_rules = sizeof(must_have_rules) / sizeof(must_have_rules[0]);
+	size_t		num_must_match_rules_sysdb = sizeof(must_match_rules_sysdb) / sizeof(must_match_rules_sysdb[0]);
+	size_t		num_must_match_rules_nsp = sizeof(must_match_rules_nsp) / sizeof(must_match_rules_nsp[0]);
+	size_t		num_must_match_rules_login = sizeof(must_match_rules_login) / sizeof(must_match_rules_login[0]);
+	size_t		num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
+	size_t		num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
 	init_catalog_data();
 
-	/* 
+	/*
 	 * If any of the following function call returns false, that means an
 	 * inconsistency is detected AND stop_at_first_error is set to true, thus
 	 * we should immediately stop checking and output the result
 	 */
 	if (
-		/* Must have rules */
+	/* Must have rules */
 		!(check_rules(must_have_rules, num_must_have_rules, NULL, NULL, res_tupstore, res_tupdesc))
-		/* Must match rules, MUST comply with the defined must match rules */
+	/* Must match rules, MUST comply with the defined must match rules */
 		||
-		!(check_must_match_rules(must_match_rules_sysdb, num_must_match_rules_sysdb, 
+		!(check_must_match_rules(must_match_rules_sysdb, num_must_match_rules_sysdb,
 								 sysdatabases_oid, res_tupstore, res_tupdesc))
 		||
-		!(check_must_match_rules(must_match_rules_nsp, num_must_match_rules_nsp, 
-								 namespace_ext_oid, res_tupstore, res_tupdesc)) 
+		!(check_must_match_rules(must_match_rules_nsp, num_must_match_rules_nsp,
+								 namespace_ext_oid, res_tupstore, res_tupdesc))
 		||
 		!(check_must_match_rules(must_match_rules_login, num_must_match_rules_login,
 								 bbf_authid_login_ext_oid, res_tupstore, res_tupdesc))
@@ -1610,11 +1630,11 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_function, num_must_match_rules_function,
 								 bbf_function_ext_oid, res_tupstore, res_tupdesc))
-	)
+		)
 		return;
 }
 
-/* 
+/*
  * Check all rules in a rule array.
  * It only returns false when an inconsistency is detected AND
  * stop_at_first_error is set to true.
@@ -1626,7 +1646,7 @@ check_rules(Rule rules[], size_t num_rules, HeapTuple tuple, TupleDesc dsc,
 {
 	for (size_t i = 0; i < num_rules; i++)
 	{
-		Rule *rule = &(rules[i]);
+		Rule	   *rule = &(rules[i]);
 
 		/* Check the rule's required condition */
 		if (rule->func_cond && !(rule->func_cond) ())
@@ -1664,25 +1684,25 @@ check_rules(Rule rules[], size_t num_rules, HeapTuple tuple, TupleDesc dsc,
 	return true;
 }
 
-/* 
+/*
  * Check a set of must match rules that depend on a certain catalog.
  * It only returns false when an inconsistency is detected AND
  * stop_at_first_error is set to true.
  */
 static bool
-check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_oid, 
+check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_oid,
 					   Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
 {
-	HeapTuple		tuple;
-	TupleDesc		dsc;
-	SysScanDesc 	scan;
-	Relation		rel;
+	HeapTuple	tuple;
+	TupleDesc	dsc;
+	SysScanDesc scan;
+	Relation	rel;
 
 	/* Rules depending on the catalog */
 	rel = table_open(catalog_oid, AccessShareLock);
 	dsc = RelationGetDescr(rel);
 	scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
-		
+
 	PG_TRY();
 	{
 		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
@@ -1699,9 +1719,9 @@ check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_oid,
 	PG_FINALLY();
 	{
 		if (scan)
-			  systable_endscan(scan);
+			systable_endscan(scan);
 		if (rel)
-			  table_close(rel, AccessShareLock);
+			table_close(rel, AccessShareLock);
 	}
 	PG_END_TRY();
 
@@ -1733,7 +1753,8 @@ get_msdb(HeapTuple tuple, TupleDesc dsc)
 static Datum
 get_cur_rolname(HeapTuple tuple, TupleDesc dsc)
 {
-	char *rolname = GetUserNameFromId(GetSessionUserId(), false);
+	char	   *rolname = GetUserNameFromId(GetSessionUserId(), false);
+
 	truncate_identifier(rolname, strlen(rolname), false);
 	return CStringGetDatum(rolname);
 }
@@ -1790,6 +1811,7 @@ static Datum
 get_owner(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+
 	return NameGetDatum(&(sysdb->owner));
 }
 
@@ -1798,8 +1820,8 @@ get_name_db_owner(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
 	const text *name = &(sysdb->name);
-	char *name_str = text_to_cstring(name);
-	char *name_db_owner = palloc0(MAX_BBF_NAMEDATALEND);
+	char	   *name_str = text_to_cstring(name);
+	char	   *name_db_owner = palloc0(MAX_BBF_NAMEDATALEND);
 
 	truncate_identifier(name_str, strlen(name_str), false);
 	snprintf(name_db_owner, MAX_BBF_NAMEDATALEND, "%s_db_owner", name_str);
@@ -1812,8 +1834,8 @@ get_name_dbo(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
 	const text *name = &(sysdb->name);
-	char *name_str = text_to_cstring(name);
-	char *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
+	char	   *name_str = text_to_cstring(name);
+	char	   *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
 
 	truncate_identifier(name_str, strlen(name_str), false);
 	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_dbo", name_str);
@@ -1826,8 +1848,8 @@ get_name_guest(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
 	const text *name = &(sysdb->name);
-	char *name_str = text_to_cstring(name);
-	char *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
+	char	   *name_str = text_to_cstring(name);
+	char	   *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
 
 	truncate_identifier(name_str, strlen(name_str), false);
 	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_guest", name_str);
@@ -1838,8 +1860,9 @@ get_name_guest(HeapTuple tuple, TupleDesc dsc)
 static Datum
 get_nspname(HeapTuple tuple, TupleDesc dsc)
 {
-	bool isNull;
-	Datum nspname = heap_getattr(tuple, Anum_namespace_ext_namespace, dsc, &isNull);
+	bool		isNull;
+	Datum		nspname = heap_getattr(tuple, Anum_namespace_ext_namespace, dsc, &isNull);
+
 	return nspname;
 }
 
@@ -1847,6 +1870,7 @@ static Datum
 get_login_rolname(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_authid_login_ext authid = ((Form_authid_login_ext) GETSTRUCT(tuple));
+
 	return NameGetDatum(&(authid->rolname));
 }
 
@@ -1854,6 +1878,7 @@ static Datum
 get_default_database_name(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_authid_login_ext authid = ((Form_authid_login_ext) GETSTRUCT(tuple));
+
 	return PointerGetDatum(&(authid->default_database_name));
 }
 
@@ -1861,14 +1886,16 @@ static Datum
 get_user_rolname(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_authid_user_ext authid = ((Form_authid_user_ext) GETSTRUCT(tuple));
+
 	return NameGetDatum(&(authid->rolname));
 }
 
 static Datum
 get_database_name(HeapTuple tuple, TupleDesc dsc)
 {
-	bool isNull;
-	Datum dbname = heap_getattr(tuple, Anum_bbf_authid_user_ext_database_name, dsc, &isNull);
+	bool		isNull;
+	Datum		dbname = heap_getattr(tuple, Anum_bbf_authid_user_ext_database_name, dsc, &isNull);
+
 	return dbname;
 }
 
@@ -1876,6 +1903,7 @@ static Datum
 get_function_nspname(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
+
 	return NameGetDatum(&(func->schema));
 }
 
@@ -1883,6 +1911,7 @@ static Datum
 get_function_name(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
+
 	return NameGetDatum(&(func->funcname));
 }
 
@@ -1909,12 +1938,12 @@ is_multidb(void)
 static bool
 check_exist(void *arg, HeapTuple tuple)
 {
-	bool			found;
-	Relation		rel;
-	SysScanDesc		scan;
-	ScanKeyData		scanKey;
-	Rule			*rule;
-	Datum			datum;
+	bool		found;
+	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData scanKey;
+	Rule	   *rule;
+	Datum		datum;
 
 	rule = (Rule *) arg;
 
@@ -1929,10 +1958,10 @@ check_exist(void *arg, HeapTuple tuple)
 	/* Get the wanted datum through value function */
 	datum = (rule->func_val) (tuple, rule->tupdesc);
 
-	ScanKeyInit(&scanKey, 
-				rule->tbldata->attnum, 
-				BTEqualStrategyNumber, 
-				rule->tbldata->regproc, 
+	ScanKeyInit(&scanKey,
+				rule->tbldata->attnum,
+				BTEqualStrategyNumber,
+				rule->tbldata->regproc,
 				datum);
 
 	scan = systable_beginscan(rel, rule->tbldata->idx_oid, rule->tbldata->index_ok, NULL, 1, &scanKey);
@@ -1950,17 +1979,17 @@ check_exist(void *arg, HeapTuple tuple)
  * 			Helper functions
  *****************************************/
 
-static void 
+static void
 update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
 {
 	Datum		values[4];
 	bool		nulls[4];
-	const char	*object_type;
-	const char	*schema_name;
-	const char	*object_name = rule->colname;
+	const char *object_type;
+	const char *schema_name;
+	const char *object_name = rule->colname;
 	int			str_len = strlen(rule->desc) + strlen("{\"Rule\":\"\"}") + 1;
-	char		*detail = palloc0(str_len);
-	Jsonb		*detail_jsonb;
+	char	   *detail = palloc0(str_len);
+	Jsonb	   *detail_jsonb;
 
 	snprintf(detail, str_len, "{\"Rule\":\"%s\"}", rule->desc);
 	detail_jsonb = DatumGetJsonbP(DirectFunctionCall1(jsonb_in, CStringGetDatum(detail)));
@@ -2046,8 +2075,8 @@ init_catalog_data(void)
 static void
 get_catalog_info(Rule *rule)
 {
-	size_t num_catalog = sizeof(catalog_data) / sizeof(catalog_data[0]);
-	size_t i = 0;
+	size_t		num_catalog = sizeof(catalog_data) / sizeof(catalog_data[0]);
+	size_t		i = 0;
 
 	for (; i < num_catalog; i++)
 	{
@@ -2060,7 +2089,7 @@ get_catalog_info(Rule *rule)
 	if (i == num_catalog)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Failed to find \"%s\" in the pre-defined catalog data array", 
+				 errmsg("Failed to find \"%s\" in the pre-defined catalog data array",
 						rule->tblname)));
 }
 
@@ -2071,21 +2100,21 @@ get_catalog_info(Rule *rule)
 void
 alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
 {
-	Relation		bbf_authid_user_ext_rel;
-	TupleDesc		bbf_authid_user_ext_dsc;
-	ScanKeyData		key[2];
-	HeapTuple		usertuple;
-	HeapTuple		new_tuple;
-	TableScanDesc		tblscan;
-	Datum			new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
-	bool			new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
-	bool			new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	Relation	bbf_authid_user_ext_rel;
+	TupleDesc	bbf_authid_user_ext_dsc;
+	ScanKeyData key[2];
+	HeapTuple	usertuple;
+	HeapTuple	new_tuple;
+	TableScanDesc tblscan;
+	Datum		new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
 	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);
 
-	/* Search and obtain the tuple based on the user name and db name */	
+	/* Search and obtain the tuple based on the user name and db name */
 	ScanKeyInit(&key[0],
 				Anum_bbf_authid_user_ext_orig_username,
 				BTEqualStrategyNumber, F_TEXTEQ,
@@ -2107,9 +2136,12 @@ alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
 	if (!HeapTupleIsValid(usertuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("Cannot find the user \"%s\", because it does not exist or you do not have permission.", user_name)));
+				 errmsg("Cannot find the user \"%s\", because it does not exist or you do not have permission.", user_name)));
 
-	/* Update the column user_can_connect to 1 in case of GRANT and to 0 in case of REVOKE */
+	/*
+	 * Update the column user_can_connect to 1 in case of GRANT and to 0 in
+	 * case of REVOKE
+	 */
 	if (is_grant)
 		new_record_user_ext[USER_EXT_USER_CAN_CONNECT] = Int32GetDatum(1);
 	else
@@ -2135,11 +2167,11 @@ alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
 bool
 guest_has_dbaccess(const char *db_name)
 {
-	Relation		bbf_authid_user_ext_rel;
-	HeapTuple		tuple_user_ext;
-	ScanKeyData		key[3];
-	TableScanDesc		scan;
-	bool			has_access = false;
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple_user_ext;
+	ScanKeyData key[3];
+	TableScanDesc scan;
+	bool		has_access = false;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
@@ -2168,12 +2200,13 @@ guest_has_dbaccess(const char *db_name)
 }
 
 PG_FUNCTION_INFO_V1(update_user_catalog_for_guest);
-Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
+Datum
+update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 {
-	Relation        db_rel;
-	TableScanDesc   scan;
-	HeapTuple       tuple;
-	bool            is_null;
+	Relation	db_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
 
 	db_rel = table_open(sysdatabases_oid, AccessShareLock);
 	scan = table_beginscan_catalog(db_rel, 0, NULL);
@@ -2181,14 +2214,13 @@ Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum	db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
-						 db_rel->rd_att, &is_null);
-		const char	*db_name = TextDatumGetCString(db_name_datum);
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+												 db_rel->rd_att, &is_null);
+		const char *db_name = TextDatumGetCString(db_name_datum);
 
 		/*
-		 * For each database, check if the guest user exists.
-		 * If exists, check the next database.
-		 * If not, create the guest user on that database.
+		 * For each database, check if the guest user exists. If exists, check
+		 * the next database. If not, create the guest user on that database.
 		 */
 		if (guest_role_exists_for_db(db_name))
 		{
@@ -2206,16 +2238,16 @@ Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 bool
 guest_role_exists_for_db(const char *dbname)
 {
-	const char 	*guest_role = get_guest_role_name(dbname);
+	const char *guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
-	ScanKeyData	scanKey;
-	SysScanDesc	scan;
+	ScanKeyData scanKey;
+	SysScanDesc scan;
 
 	/* Fetch the relation */
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-									RowExclusiveLock);
+										 RowExclusiveLock);
 
 	/* Search if the role exists */
 	ScanKeyInit(&scanKey,
@@ -2241,18 +2273,18 @@ guest_role_exists_for_db(const char *dbname)
 static void
 create_guest_role_for_db(const char *dbname)
 {
-	const char		*guest = get_guest_role_name(dbname);
-	const char		*db_owner_role = get_db_owner_role_name(dbname);
-	List			*logins = NIL;
-	List			*res;
-	StringInfoData	query;
-	Node			*stmt;
-	ListCell		*res_item;
-	int				i = 0;
-	const char		*prev_current_user;
-	int16			old_dbid;
-	char			*old_dbname;
-	int16			dbid = get_db_id(dbname);
+	const char *guest = get_guest_role_name(dbname);
+	const char *db_owner_role = get_db_owner_role_name(dbname);
+	List	   *logins = NIL;
+	List	   *res;
+	StringInfoData query;
+	Node	   *stmt;
+	ListCell   *res_item;
+	int			i = 0;
+	const char *prev_current_user;
+	int16		old_dbid;
+	char	   *old_dbname;
+	int16		dbid = get_db_id(dbname);
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
@@ -2267,6 +2299,7 @@ create_guest_role_for_db(const char *dbname)
 	if (list_length(logins) > 0)
 	{
 		AccessPriv *tmp = makeNode(AccessPriv);
+
 		tmp->priv_name = pstrdup(guest);
 		tmp->cols = NIL;
 
@@ -2281,7 +2314,7 @@ create_guest_role_for_db(const char *dbname)
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
+	set_cur_db(dbid, dbname);	/* temporarily set current dbid as the new id */
 
 	PG_TRY();
 	{
@@ -2303,11 +2336,11 @@ create_guest_role_for_db(const char *dbname)
 			ProcessUtility(wrapper,
 						   "(CREATE LOGICAL DATABASE )",
 						   false,
-							PROCESS_UTILITY_SUBCOMMAND,
-							NULL,
-							NULL,
-							None_Receiver,
-							NULL);
+						   PROCESS_UTILITY_SUBCOMMAND,
+						   NULL,
+						   NULL,
+						   None_Receiver,
+						   NULL);
 
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
@@ -2338,9 +2371,9 @@ get_db_owner_role_name(const char *dbname)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData		key[2];
-	TableScanDesc		scan;
-	char		*db_owner_role = NULL;
+	ScanKeyData key[2];
+	TableScanDesc scan;
+	char	   *db_owner_role = NULL;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
@@ -2357,10 +2390,11 @@ get_db_owner_role_name(const char *dbname)
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
-		{
-			Form_authid_user_ext userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-			db_owner_role = pstrdup(NameStr(userform->rolname));
-		}
+	{
+		Form_authid_user_ext userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
+
+		db_owner_role = pstrdup(NameStr(userform->rolname));
+	}
 
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
@@ -2371,7 +2405,7 @@ void
 rename_update_bbf_catalog(RenameStmt *stmt)
 {
 	switch (stmt->renameType)
-	{	
+	{
 		case OBJECT_TABLE:
 			break;
 		case OBJECT_VIEW:
@@ -2386,38 +2420,38 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 		case OBJECT_SEQUENCE:
 			break;
 		default:
-			break;	
+			break;
 	}
 }
 
 static void
 rename_view_update_bbf_catalog(RenameStmt *stmt)
 {
-	// update the 'object_name' in 'babelfish_view_def'
-	Relation		bbf_view_def_rel;
-	TupleDesc		bbf_view_def_dsc;
-	ScanKeyData		key[3];
-	HeapTuple		usertuple;
-	HeapTuple		new_tuple;
-	TableScanDesc		tblscan;
-	Datum			new_record_view_def[BBF_VIEW_DEF_NUM_COLS];
-	bool			new_record_nulls_view_def[BBF_VIEW_DEF_NUM_COLS];
-	bool			new_record_repl_view_def[BBF_VIEW_DEF_NUM_COLS];
-	int16			dbid;
-	const char		*logical_schema_name;
+	/* update the 'object_name' in 'babelfish_view_def' */
+	Relation	bbf_view_def_rel;
+	TupleDesc	bbf_view_def_dsc;
+	ScanKeyData key[3];
+	HeapTuple	usertuple;
+	HeapTuple	new_tuple;
+	TableScanDesc tblscan;
+	Datum		new_record_view_def[BBF_VIEW_DEF_NUM_COLS];
+	bool		new_record_nulls_view_def[BBF_VIEW_DEF_NUM_COLS];
+	bool		new_record_repl_view_def[BBF_VIEW_DEF_NUM_COLS];
+	int16		dbid;
+	const char *logical_schema_name;
 
-	// build the tuple to insert
+	/* build the tuple to insert */
 	MemSet(new_record_view_def, 0, sizeof(new_record_view_def));
 	MemSet(new_record_nulls_view_def, false, sizeof(new_record_nulls_view_def));
 	MemSet(new_record_repl_view_def, false, sizeof(new_record_repl_view_def));
 
-	// open the catalog table
+	/* open the catalog table */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
 
-	// get the description of the table
+	/* get the description of the table */
 	bbf_view_def_dsc = RelationGetDescr(bbf_view_def_rel);
 
-	// search for the row for update => build the key
+	/* search for the row for update => build the key */
 	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, true);
 	ScanKeyInit(&key[0],
 				Anum_bbf_view_def_dbid,
@@ -2433,21 +2467,22 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(stmt->relation->relname));
 
-	// scan
+	/* scan */
 	tblscan = table_beginscan_catalog(bbf_view_def_rel, 3, key);
-	
-	// get the scan result -> original tuple
+
+	/* get the scan result -> original tuple */
 	usertuple = heap_getnext(tblscan, ForwardScanDirection);
 
-	if (!HeapTupleIsValid(usertuple)) {
+	if (!HeapTupleIsValid(usertuple))
+	{
 		table_endscan(tblscan);
 		table_close(bbf_view_def_rel, RowExclusiveLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("Cannot find the view_name \"%s\", because it does not exist or you do not have permission.", stmt->subname)));
+				 errmsg("Cannot find the view_name \"%s\", because it does not exist or you do not have permission.", stmt->subname)));
 	}
-	
-	// create new tuple to substitute
+
+	/* create new tuple to substitute */
 	new_record_view_def[Anum_bbf_view_def_object_name - 1] = CStringGetTextDatum(stmt->newname);
 	new_record_repl_view_def[Anum_bbf_view_def_object_name - 1] = true;
 
@@ -2468,47 +2503,51 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 static void
 rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 {
-	// update the 'funcname', 'orig_name', 'funcsignature' in 'babelfish_function_ext'
-	Relation		bbf_func_ext_rel;
-	TupleDesc		bbf_func_ext_dsc;
-	ScanKeyData		key[2];
-	HeapTuple		usertuple;
-	HeapTuple		sec_tuple;
-	HeapTuple		new_tuple;
-	TableScanDesc		tblscan;
-	Datum			new_record_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
-	bool			new_record_nulls_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
-	bool			new_record_repl_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
-	NameData		*objname_data;
-	NameData		*schemaname_data;
-	bool			is_null;
-	char			*funcsign, *new_funcsign;
-	Datum			funcsign_datum;
-	Node			*schema;
-	char			*schemaname;
-	ObjectWithArgs	*objwargs = (ObjectWithArgs *)stmt->object;
+	/*
+	 * update the 'funcname', 'orig_name', 'funcsignature' in
+	 * 'babelfish_function_ext'
+	 */
+	Relation	bbf_func_ext_rel;
+	TupleDesc	bbf_func_ext_dsc;
+	ScanKeyData key[2];
+	HeapTuple	usertuple;
+	HeapTuple	sec_tuple;
+	HeapTuple	new_tuple;
+	TableScanDesc tblscan;
+	Datum		new_record_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_nulls_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_repl_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
+	NameData   *objname_data;
+	NameData   *schemaname_data;
+	bool		is_null;
+	char	   *funcsign,
+			   *new_funcsign;
+	Datum		funcsign_datum;
+	Node	   *schema;
+	char	   *schemaname;
+	ObjectWithArgs *objwargs = (ObjectWithArgs *) stmt->object;
 
-	// build the tuple to insert
+	/* build the tuple to insert */
 	MemSet(new_record_func_ext, 0, sizeof(new_record_func_ext));
 	MemSet(new_record_nulls_func_ext, false, sizeof(new_record_nulls_func_ext));
 	MemSet(new_record_repl_func_ext, false, sizeof(new_record_repl_func_ext));
 
-	// open the catalog table
+	/* open the catalog table */
 	bbf_func_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
 
-	// get the description of the table
+	/* get the description of the table */
 	bbf_func_ext_dsc = RelationGetDescr(bbf_func_ext_rel);
 
-	// search for the row for update => build the key
-	// Keys: schema_name, obj_name
+	/* search for the row for update => build the key */
+	/* Keys: schema_name, obj_name */
 	schema = (Node *) linitial(objwargs->objname);
 	schemaname = strVal(schema);
 	schemaname_data = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(schemaname_data->data, NAMEDATALEN, "%s", schemaname);
 	ScanKeyInit(&key[0],
-					Anum_bbf_function_ext_nspname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					NameGetDatum(schemaname_data));
+				Anum_bbf_function_ext_nspname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(schemaname_data));
 	objname_data = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(objname_data->data, NAMEDATALEN, "%s", stmt->subname);
 	ScanKeyInit(&key[1],
@@ -2516,21 +2555,22 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 				BTEqualStrategyNumber, F_NAMEEQ,
 				NameGetDatum(objname_data));
 
-	// scan
+	/* scan */
 	tblscan = table_beginscan_catalog(bbf_func_ext_rel, 2, key);
-	
-	// get the scan result -> original tuple
+
+	/* get the scan result -> original tuple */
 	usertuple = heap_getnext(tblscan, ForwardScanDirection);
 
-	if (!HeapTupleIsValid(usertuple)) {
+	if (!HeapTupleIsValid(usertuple))
+	{
 		table_endscan(tblscan);
 		table_close(bbf_func_ext_rel, RowExclusiveLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("Cannot find the object \"%s\", because it does not exist or you do not have permission.", stmt->subname)));
+				 errmsg("Cannot find the object \"%s\", because it does not exist or you do not have permission.", stmt->subname)));
 	}
 
-	// create new tuple to substitute
+	/* create new tuple to substitute */
 	funcsign_datum = heap_getattr(usertuple, Anum_bbf_function_ext_funcsignature,
 								  bbf_func_ext_rel->rd_att, &is_null);
 	funcsign = pstrdup(TextDatumGetCString(funcsign_datum));
@@ -2549,14 +2589,15 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 								  new_record_nulls_func_ext,
 								  new_record_repl_func_ext);
 
-	// if there is more than 1 match, throw error
+	/* if there is more than 1 match, throw error */
 	sec_tuple = heap_getnext(tblscan, ForwardScanDirection);
-	if (HeapTupleIsValid(sec_tuple)) {
+	if (HeapTupleIsValid(sec_tuple))
+	{
 		table_endscan(tblscan);
 		table_close(bbf_func_ext_rel, RowExclusiveLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("There are multiple objects with the given name \"%s\".", stmt->subname)));
+				 errmsg("There are multiple objects with the given name \"%s\".", stmt->subname)));
 	}
 
 	CatalogTupleUpdate(bbf_func_ext_rel, &new_tuple->t_self, new_tuple);

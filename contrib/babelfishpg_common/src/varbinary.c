@@ -133,12 +133,15 @@ babelfish_hex_decode_allow_odd_digits(const char *src, unsigned len, char *dst)
 
 	if (len % 2 == 1)
 	{
-		/* If input has odd number of hex digits, add a 0 to the front to make it even */
+		/*
+		 * If input has odd number of hex digits, add a 0 to the front to make
+		 * it even
+		 */
 		v1 = '\0';
 		v2 = get_hex(*s++);
 		*p++ = v1 | v2;
 	}
-	/* The rest of the input must have even number of digits*/
+	/* The rest of the input must have even number of digits */
 	while (s < srcend)
 	{
 		if (*s == ' ' || *s == '\n' || *s == '\t' || *s == '\r')
@@ -162,23 +165,25 @@ varbinaryin(PG_FUNCTION_ARGS)
 {
 	char	   *inputText = PG_GETARG_CSTRING(0);
 	char	   *rp;
-	char         *tp;
+	char	   *tp;
 	int			len;
 	bytea	   *result;
-	int32 typmod = PG_GETARG_INT32(2);
+	int32		typmod = PG_GETARG_INT32(2);
 	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
 	len = strlen(inputText);
 
 	if (typmod == TSQLHexConstTypmod ||
-		(dump_restore && strcmp(dump_restore, "on") == 0)) /* Treat input string as T-SQL hex constant during restore */
+		(dump_restore && strcmp(dump_restore, "on") == 0))	/* Treat input string as
+															 * T-SQL hex constant
+															 * during restore */
 	{
 		/*
-		 * calculate length of the binary code
-		 * e.g. 0xFF should be 1 byte (plus VARHDRSZ)
-		 * and 0xF should also be 1 byte (plus VARHDRSZ).
+		 * calculate length of the binary code e.g. 0xFF should be 1 byte
+		 * (plus VARHDRSZ) and 0xF should also be 1 byte (plus VARHDRSZ).
 		 */
-		int bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
+		int			bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
+
 		result = palloc(bc);
 		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
 		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
@@ -321,27 +326,27 @@ varbinarysend(PG_FUNCTION_ARGS)
 Datum
 varbinary(PG_FUNCTION_ARGS)
 {
-	bytea   *source = PG_GETARG_BYTEA_PP(0);
-	char    *data = VARDATA_ANY(source);
-	int32	typmod = PG_GETARG_INT32(1);
-	bool	isExplicit = PG_GETARG_BOOL(2);
-	int32	len,
-			maxlen;
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		len,
+				maxlen;
 
 	len = VARSIZE_ANY_EXHDR(source);
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
 	if (!isExplicit &&
-		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
 		if (len > maxlen)
 			ereport(ERROR,
 					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					errmsg("String or binary data would be truncated.\n"
+					 errmsg("String or binary data would be truncated.\n"
 							"The statement has been terminated.")));
 
 	/* No work if typmod is invalid or supplied data fits it already */
@@ -349,8 +354,8 @@ varbinary(PG_FUNCTION_ARGS)
 		PG_RETURN_BYTEA_P(source);
 
 	/*
-	 * Truncate the input data using cstring_to_text_with_len, notice text
-	 * and bytea actually have the same struct.
+	 * Truncate the input data using cstring_to_text_with_len, notice text and
+	 * bytea actually have the same struct.
 	 */
 	PG_RETURN_BYTEA_P((bytea *) cstring_to_text_with_len(data, maxlen));
 }
@@ -369,20 +374,20 @@ varbinary(PG_FUNCTION_ARGS)
 Datum
 binary(PG_FUNCTION_ARGS)
 {
-	bytea  *source = PG_GETARG_BYTEA_PP(0);
-	char    *data = VARDATA_ANY(source);
-	int32	typmod = PG_GETARG_INT32(1);
-	bool	isExplicit = PG_GETARG_BOOL(2);
-	int32	len,
-			maxlen;
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		len,
+				maxlen;
 
 	len = VARSIZE_ANY_EXHDR(source);
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
-			maxlen = typmod - VARHDRSZ;
+		maxlen = typmod - VARHDRSZ;
 
 	if (maxlen > MAX_BINARY_SIZE)
 		ereport(ERROR,
@@ -391,11 +396,11 @@ binary(PG_FUNCTION_ARGS)
 						maxlen, MAX_BINARY_SIZE)));
 
 	if (!isExplicit &&
-		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
-		if(len > maxlen)
+		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
+		if (len > maxlen)
 			ereport(ERROR,
 					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					errmsg("String or binary data would be truncated.\n"
+					 errmsg("String or binary data would be truncated.\n"
 							"The statement has been terminated.")));
 
 	/* No work if maxlen is invalid or supplied data fits it exactly */
@@ -404,10 +409,10 @@ binary(PG_FUNCTION_ARGS)
 
 	if (len < maxlen)
 	{
-		bytea	*result;
-		int      total_size = maxlen + VARHDRSZ;
-		char	*tp;
-		char	*rp;
+		bytea	   *result;
+		int			total_size = maxlen + VARHDRSZ;
+		char	   *tp;
+		char	   *rp;
 
 		result = (bytea *) palloc(total_size);
 		SET_VARSIZE(result, total_size);
@@ -422,8 +427,8 @@ binary(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Truncate the input data to maxlen using cstring_to_text_with_len, notice text
-	 * and bytea actually have the same struct.
+	 * Truncate the input data to maxlen using cstring_to_text_with_len,
+	 * notice text and bytea actually have the same struct.
 	 */
 	PG_RETURN_BYTEA_P((bytea *) cstring_to_text_with_len(data, maxlen));
 }
@@ -507,12 +512,12 @@ varbinarytypmodout(PG_FUNCTION_ARGS)
 }
 
 static void
-reverse_memcpy(char* dst, char* src, size_t n)
+reverse_memcpy(char *dst, char *src, size_t n)
 {
-	size_t i;
+	size_t		i;
 
 	for (i = 0; i < n; i++)
-		dst[n-1-i] = src[i];
+		dst[n - 1 - i] = src[i];
 }
 
 /*
@@ -521,7 +526,7 @@ reverse_memcpy(char* dst, char* src, size_t n)
 Datum
 byteavarbinary(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
 
 	PG_RETURN_BYTEA_P(source);
 }
@@ -529,7 +534,7 @@ byteavarbinary(PG_FUNCTION_ARGS)
 Datum
 varbinarybytea(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
 
 	PG_RETURN_BYTEA_P(source);
 }
@@ -537,18 +542,18 @@ varbinarybytea(PG_FUNCTION_ARGS)
 Datum
 varbinaryrowversion(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	bytea *result;
-	char *data = VARDATA_ANY(source);
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	char *rp;
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	bytea	   *result;
+	char	   *data = VARDATA_ANY(source);
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	char	   *rp;
 
 	if (len > ROWVERSION_SIZE)
 		len = ROWVERSION_SIZE;
-	
+
 	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
 	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
-	
+
 	rp = VARDATA(result);
 	memcpy(rp, data, len);
 
@@ -558,13 +563,13 @@ varbinaryrowversion(PG_FUNCTION_ARGS)
 Datum
 rowversionbinary(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	char *data = VARDATA_ANY(source);
-	char *rp;
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	int32 maxlen;
-	bytea *result;
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		maxlen;
+	bytea	   *result;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
@@ -587,13 +592,13 @@ rowversionbinary(PG_FUNCTION_ARGS)
 Datum
 rowversionvarbinary(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	char *data = VARDATA_ANY(source);
-	char *rp;
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	int32 maxlen;
-	bytea *result;
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		maxlen;
+	bytea	   *result;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
@@ -616,25 +621,25 @@ rowversionvarbinary(PG_FUNCTION_ARGS)
 Datum
 varcharvarbinary(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	char *data = VARDATA_ANY(source);
-	char *rp;
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	int32 typmod = PG_GETARG_INT32(1);
-	bool  isExplicit = PG_GETARG_BOOL(2);
-	int32 maxlen;
-	bytea *result;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	   *result;
 
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Implicit conversion from data type varchar to "
-						 "varbinary is not allowed. Use the CONVERT function "
-						 "to run this query.")));
+						"varbinary is not allowed. Use the CONVERT function "
+						"to run this query.")));
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -653,25 +658,25 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 Datum
 bpcharvarbinary(PG_FUNCTION_ARGS)
 {
-	BpChar *source = PG_GETARG_BPCHAR_PP(0);
-	char *data = VARDATA_ANY(source);
-	char *rp;
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	int32 typmod = PG_GETARG_INT32(1);
-	bool  isExplicit = PG_GETARG_BOOL(2);
-	int32 maxlen;
-	bytea *result;
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	   *result;
 
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Implicit conversion from data type bpchar to "
-						 "varbinary is not allowed. Use the CONVERT function "
-						 "to run this query.")));
+						"varbinary is not allowed. Use the CONVERT function "
+						"to run this query.")));
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -692,15 +697,17 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 Datum
 varbinaryvarchar(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen = typmod - VARHDRSZ;
-	coll_info	collInfo;
-	char 		*result;
-	int		encodedByteLen;
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen = typmod - VARHDRSZ;
+	VarChar    *result;
 
+	/*
+	 * Cast the entire input binary data if maxlen is invalid or supplied data
+	 * fits it
+	 */
 	/* 
 	 * Try to find the lcid corresponding to the collation of the target column.
 	 */
@@ -725,25 +732,25 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 Datum
 varcharbinary(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	char *data = VARDATA_ANY(source);
-	char *rp;
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	int32 typmod = PG_GETARG_INT32(1);
-	bool  isExplicit = PG_GETARG_BOOL(2);
-	int32 maxlen;
-	bytea *result;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	   *result;
 
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Implicit conversion from data type varchar to "
-						 "binary is not allowed. Use the CONVERT function "
-						 "to run this query.")));
+						"binary is not allowed. Use the CONVERT function "
+						"to run this query.")));
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -764,25 +771,25 @@ varcharbinary(PG_FUNCTION_ARGS)
 Datum
 bpcharbinary(PG_FUNCTION_ARGS)
 {
-	BpChar *source = PG_GETARG_BPCHAR_PP(0);
-	char *data = VARDATA_ANY(source);
-	char *rp;
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	int32 typmod = PG_GETARG_INT32(1);
-	bool  isExplicit = PG_GETARG_BOOL(2);
-	int32 maxlen;
-	bytea *result;
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		maxlen;
+	bytea	   *result;
 
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Implicit conversion from data type char to "
-						 "binary is not allowed. Use the CONVERT function "
-						 "to run this query.")));
+						"binary is not allowed. Use the CONVERT function "
+						"to run this query.")));
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -803,19 +810,19 @@ bpcharbinary(PG_FUNCTION_ARGS)
 Datum
 varcharrowversion(PG_FUNCTION_ARGS)
 {
-	VarChar *source = PG_GETARG_VARCHAR_PP(0);
-	char *data = VARDATA_ANY(source);
-	char *rp;
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	bool  isExplicit = PG_GETARG_BOOL(2);
-	bytea *result;
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	bytea	   *result;
 
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Implicit conversion from data type varchar to "
-						 "rowversion is not allowed. Use the CONVERT function "
-						 "to run this query.")));
+						"rowversion is not allowed. Use the CONVERT function "
+						"to run this query.")));
 
 	if (len > ROWVERSION_SIZE)
 		len = ROWVERSION_SIZE;
@@ -832,19 +839,19 @@ varcharrowversion(PG_FUNCTION_ARGS)
 Datum
 bpcharrowversion(PG_FUNCTION_ARGS)
 {
-	BpChar *source = PG_GETARG_BPCHAR_PP(0);
-	char *data = VARDATA_ANY(source);
-	char *rp;
-	size_t len = VARSIZE_ANY_EXHDR(source);
-	bool  isExplicit = PG_GETARG_BOOL(2);
-	bytea *result;
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	char	   *rp;
+	size_t		len = VARSIZE_ANY_EXHDR(source);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	bytea	   *result;
 
 	if (!isExplicit)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("Implicit conversion from data type bpchar to "
-						 "rowversion is not allowed. Use the CONVERT function "
-						 "to run this query.")));
+						"rowversion is not allowed. Use the CONVERT function "
+						"to run this query.")));
 
 	if (len > ROWVERSION_SIZE)
 		len = ROWVERSION_SIZE;
@@ -861,17 +868,17 @@ bpcharrowversion(PG_FUNCTION_ARGS)
 Datum
 int2varbinary(PG_FUNCTION_ARGS)
 {
-	int16 input = PG_GETARG_INT16(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(int16);
-	int actual_len;
-	bytea *result;
-	char *rp;
+	int16		input = PG_GETARG_INT16(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(int16);
+	int			actual_len;
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -882,7 +889,7 @@ int2varbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	/* Need reverse copy because endianness is different in MSSQL */
-	reverse_memcpy(rp, (char *) &input , actual_len);
+	reverse_memcpy(rp, (char *) &input, actual_len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -890,17 +897,17 @@ int2varbinary(PG_FUNCTION_ARGS)
 Datum
 int4varbinary(PG_FUNCTION_ARGS)
 {
-	int32 input = PG_GETARG_INT32(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(int32);
-	int actual_len;
-	bytea *result;
-	char *rp;
+	int32		input = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(int32);
+	int			actual_len;
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -911,7 +918,7 @@ int4varbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	/* Need reverse copy because endianness is different in MSSQL */
-	reverse_memcpy(rp, (char *) &input , actual_len);
+	reverse_memcpy(rp, (char *) &input, actual_len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -919,17 +926,17 @@ int4varbinary(PG_FUNCTION_ARGS)
 Datum
 int8varbinary(PG_FUNCTION_ARGS)
 {
-	int64 input = PG_GETARG_INT64(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(int64);
-	int actual_len;
-	bytea *result;
-	char *rp;
+	int64		input = PG_GETARG_INT64(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(int64);
+	int			actual_len;
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -940,7 +947,7 @@ int8varbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	/* Need reverse copy because endianness is different in MSSQL */
-	reverse_memcpy(rp, (char *) &input , actual_len);
+	reverse_memcpy(rp, (char *) &input, actual_len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -948,15 +955,15 @@ int8varbinary(PG_FUNCTION_ARGS)
 Datum
 varbinaryint2(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	int16 *result = palloc0(sizeof(int16));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	int16	   *result = palloc0(sizeof(int16));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(int16) ? sizeof(int16) : len;
-	reverse_memcpy((char *)result, data, result_len);
+	reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_INT16(*result);
 }
@@ -964,15 +971,15 @@ varbinaryint2(PG_FUNCTION_ARGS)
 Datum
 varbinaryint4(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	int32 *result = palloc0(sizeof(int32));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	int32	   *result = palloc0(sizeof(int32));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(int32) ? sizeof(int32) : len;
-	reverse_memcpy((char *)result, data, result_len);
+	reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_INT32(*result);
 }
@@ -980,15 +987,15 @@ varbinaryint4(PG_FUNCTION_ARGS)
 Datum
 varbinaryint8(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	int64 *result = palloc0(sizeof(int64));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	int64	   *result = palloc0(sizeof(int64));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(int64) ? sizeof(int64) : len;
-	reverse_memcpy((char *)result, data, result_len);
+	reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_INT64(*result);
 }
@@ -996,17 +1003,17 @@ varbinaryint8(PG_FUNCTION_ARGS)
 Datum
 float4varbinary(PG_FUNCTION_ARGS)
 {
-	float4 input = PG_GETARG_FLOAT4(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(float4);
-	int actual_len;
-	bytea *result;
-	char *rp;
+	float4		input = PG_GETARG_FLOAT4(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(float4);
+	int			actual_len;
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -1017,7 +1024,7 @@ float4varbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	/* Need reverse copy because endianness is different in MSSQL */
-	reverse_memcpy(rp, (char *) &input , actual_len);
+	reverse_memcpy(rp, (char *) &input, actual_len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1025,17 +1032,17 @@ float4varbinary(PG_FUNCTION_ARGS)
 Datum
 float8varbinary(PG_FUNCTION_ARGS)
 {
-	float8 input = PG_GETARG_FLOAT8(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(float8);
-	int actual_len;
-	bytea *result;
-	char *rp;
+	float8		input = PG_GETARG_FLOAT8(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(float8);
+	int			actual_len;
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -1046,7 +1053,7 @@ float8varbinary(PG_FUNCTION_ARGS)
 
 	rp = VARDATA(result);
 	/* Need reverse copy because endianness is different in MSSQL */
-	reverse_memcpy(rp, (char *) &input , actual_len);
+	reverse_memcpy(rp, (char *) &input, actual_len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1054,15 +1061,15 @@ float8varbinary(PG_FUNCTION_ARGS)
 Datum
 varbinaryfloat4(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	float4 *result = palloc0(sizeof(float4));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	float4	   *result = palloc0(sizeof(float4));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(float4) ? sizeof(float4) : len;
-	reverse_memcpy((char *)result, data, result_len);
+	reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_FLOAT4(*result);
 }
@@ -1070,15 +1077,15 @@ varbinaryfloat4(PG_FUNCTION_ARGS)
 Datum
 varbinaryfloat8(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	float8 *result = palloc0(sizeof(float8));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	float8	   *result = palloc0(sizeof(float8));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(float8) ? sizeof(float8) : len;
-	reverse_memcpy((char *)result, data, result_len);
+	reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_FLOAT8(*result);
 }
@@ -1086,16 +1093,16 @@ varbinaryfloat8(PG_FUNCTION_ARGS)
 Datum
 int2binary(PG_FUNCTION_ARGS)
 {
-	int16 input = PG_GETARG_INT16(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(int16);
-	bytea *result;
-	char *rp;
+	int16		input = PG_GETARG_INT16(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(int16);
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -1105,10 +1112,10 @@ int2binary(PG_FUNCTION_ARGS)
 	rp = VARDATA(result);
 	if (maxlen <= len)
 		/* Need reverse copy because endianness is different in MSSQL */
-		reverse_memcpy(rp, (char *) &input , maxlen);
+		reverse_memcpy(rp, (char *) &input, maxlen);
 	else
 		/* Pad 0 to the left if maxlen is longer than input length */
-		reverse_memcpy(rp+maxlen-len, (char *) &input , len);
+		reverse_memcpy(rp + maxlen - len, (char *) &input, len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1116,16 +1123,16 @@ int2binary(PG_FUNCTION_ARGS)
 Datum
 int4binary(PG_FUNCTION_ARGS)
 {
-	int32 input = PG_GETARG_INT32(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(int32);
-	bytea *result;
-	char *rp;
+	int32		input = PG_GETARG_INT32(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(int32);
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -1136,10 +1143,10 @@ int4binary(PG_FUNCTION_ARGS)
 	rp = VARDATA(result);
 	if (maxlen <= len)
 		/* Need reverse copy because endianness is different in MSSQL */
-		reverse_memcpy(rp, (char *) &input , maxlen);
+		reverse_memcpy(rp, (char *) &input, maxlen);
 	else
 		/* Pad 0 to the left if maxlen is longer than input length */
-		reverse_memcpy(rp+maxlen-len, (char *) &input , len);
+		reverse_memcpy(rp + maxlen - len, (char *) &input, len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1147,16 +1154,16 @@ int4binary(PG_FUNCTION_ARGS)
 Datum
 int8binary(PG_FUNCTION_ARGS)
 {
-	int64 input = PG_GETARG_INT64(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(int64);
-	bytea *result;
-	char *rp;
+	int64		input = PG_GETARG_INT64(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(int64);
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -1167,10 +1174,10 @@ int8binary(PG_FUNCTION_ARGS)
 	rp = VARDATA(result);
 	if (maxlen <= len)
 		/* Need reverse copy because endianness is different in MSSQL */
-		reverse_memcpy(rp, (char *) &input , maxlen);
+		reverse_memcpy(rp, (char *) &input, maxlen);
 	else
 		/* Pad 0 to the left if maxlen is longer than input length */
-		reverse_memcpy(rp+maxlen-len, (char *) &input , len);
+		reverse_memcpy(rp + maxlen - len, (char *) &input, len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1178,17 +1185,17 @@ int8binary(PG_FUNCTION_ARGS)
 Datum
 int2rowversion(PG_FUNCTION_ARGS)
 {
-	int16 input = PG_GETARG_INT16(0);
-	int len = sizeof(int16);
-	bytea *result;
-	char *rp;
+	int16		input = PG_GETARG_INT16(0);
+	int			len = sizeof(int16);
+	bytea	   *result;
+	char	   *rp;
 
 	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
 	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
 
 	rp = VARDATA(result);
 	/* Need reverse copy because endianness is different in T-SQL */
-	reverse_memcpy(rp+ROWVERSION_SIZE-len, (char *) &input , len);
+	reverse_memcpy(rp + ROWVERSION_SIZE - len, (char *) &input, len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1196,17 +1203,17 @@ int2rowversion(PG_FUNCTION_ARGS)
 Datum
 int4rowversion(PG_FUNCTION_ARGS)
 {
-	int32 input = PG_GETARG_INT32(0);
-	int len = sizeof(int32);
-	bytea *result;
-	char *rp;
+	int32		input = PG_GETARG_INT32(0);
+	int			len = sizeof(int32);
+	bytea	   *result;
+	char	   *rp;
 
 	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
 	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
 
 	rp = VARDATA(result);
 	/* Need reverse copy because endianness is different in T-SQL */
-	reverse_memcpy(rp+ROWVERSION_SIZE-len, (char *) &input , len);
+	reverse_memcpy(rp + ROWVERSION_SIZE - len, (char *) &input, len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1214,17 +1221,17 @@ int4rowversion(PG_FUNCTION_ARGS)
 Datum
 int8rowversion(PG_FUNCTION_ARGS)
 {
-	int64 input = PG_GETARG_INT64(0);
-	int len = sizeof(int64);
-	bytea *result;
-	char *rp;
+	int64		input = PG_GETARG_INT64(0);
+	int			len = sizeof(int64);
+	bytea	   *result;
+	char	   *rp;
 
 	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
 	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
 
 	rp = VARDATA(result);
 	/* Need reverse copy because endianness is different in T-SQL */
-	reverse_memcpy(rp, (char *) &input , len);
+	reverse_memcpy(rp, (char *) &input, len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1232,19 +1239,23 @@ int8rowversion(PG_FUNCTION_ARGS)
 Datum
 binaryint2(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	int16 *result = palloc0(sizeof(int16));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	int16	   *result = palloc0(sizeof(int16));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(int16) ? sizeof(int16) : len;
 	if (len > sizeof(int16))
-		/* Skip the potentially 0 padded part if the input binary is over length */
-		reverse_memcpy((char *)result, data+len-sizeof(int16), result_len);
+
+		/*
+		 * Skip the potentially 0 padded part if the input binary is over
+		 * length
+		 */
+		reverse_memcpy((char *) result, data + len - sizeof(int16), result_len);
 	else
-		reverse_memcpy((char *)result, data, result_len);
+		reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_INT16(*result);
 }
@@ -1252,19 +1263,23 @@ binaryint2(PG_FUNCTION_ARGS)
 Datum
 binaryint4(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	int32 *result = palloc0(sizeof(int32));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	int32	   *result = palloc0(sizeof(int32));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(int32) ? sizeof(int32) : len;
 	if (len > sizeof(int32))
-		/* Skip the potentially 0 padded part if the input binary is over length */
-		reverse_memcpy((char *)result, data+len-sizeof(int32), result_len);
+
+		/*
+		 * Skip the potentially 0 padded part if the input binary is over
+		 * length
+		 */
+		reverse_memcpy((char *) result, data + len - sizeof(int32), result_len);
 	else
-		reverse_memcpy((char *)result, data, result_len);
+		reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_INT32(*result);
 }
@@ -1272,19 +1287,23 @@ binaryint4(PG_FUNCTION_ARGS)
 Datum
 binaryint8(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	int64 *result = palloc0(sizeof(int64));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	int64	   *result = palloc0(sizeof(int64));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(int64) ? sizeof(int64) : len;
 	if (len > sizeof(int64))
-		/* Skip the potentially 0 padded part if the input binary is over length */
-		reverse_memcpy((char *)result, data+len-sizeof(int64), result_len);
+
+		/*
+		 * Skip the potentially 0 padded part if the input binary is over
+		 * length
+		 */
+		reverse_memcpy((char *) result, data + len - sizeof(int64), result_len);
 	else
-		reverse_memcpy((char *)result, data, result_len);
+		reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_INT64(*result);
 }
@@ -1292,16 +1311,16 @@ binaryint8(PG_FUNCTION_ARGS)
 Datum
 float4binary(PG_FUNCTION_ARGS)
 {
-	float4 input = PG_GETARG_FLOAT4(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(float4);
-	bytea *result;
-	char *rp;
+	float4		input = PG_GETARG_FLOAT4(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(float4);
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -1312,10 +1331,10 @@ float4binary(PG_FUNCTION_ARGS)
 	rp = VARDATA(result);
 	if (maxlen <= len)
 		/* Need reverse copy because endianness is different in MSSQL */
-		reverse_memcpy(rp, (char *) &input , maxlen);
+		reverse_memcpy(rp, (char *) &input, maxlen);
 	else
 		/* Pad 0 to the left if maxlen is longer than input length */
-		reverse_memcpy(rp+maxlen-len, (char *) &input , len);
+		reverse_memcpy(rp + maxlen - len, (char *) &input, len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1323,16 +1342,16 @@ float4binary(PG_FUNCTION_ARGS)
 Datum
 float8binary(PG_FUNCTION_ARGS)
 {
-	float8 input = PG_GETARG_FLOAT8(0);
-	int32 typmod = PG_GETARG_INT32(1);
-	int32 maxlen;
-	int len = sizeof(float8);
-	bytea *result;
-	char *rp;
+	float8		input = PG_GETARG_FLOAT8(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	int32		maxlen;
+	int			len = sizeof(float8);
+	bytea	   *result;
+	char	   *rp;
 
 	/* If typmod is -1 (or invalid), use the actual length */
 	if (typmod < (int32) VARHDRSZ)
-			maxlen = len;
+		maxlen = len;
 	else
 		maxlen = typmod - VARHDRSZ;
 
@@ -1343,10 +1362,10 @@ float8binary(PG_FUNCTION_ARGS)
 	rp = VARDATA(result);
 	if (maxlen <= len)
 		/* Need reverse copy because endianness is different in MSSQL */
-		reverse_memcpy(rp, (char *) &input , maxlen);
+		reverse_memcpy(rp, (char *) &input, maxlen);
 	else
 		/* Pad 0 to the left if maxlen is longer than input length */
-		reverse_memcpy(rp+maxlen-len, (char *) &input , len);
+		reverse_memcpy(rp + maxlen - len, (char *) &input, len);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -1354,19 +1373,23 @@ float8binary(PG_FUNCTION_ARGS)
 Datum
 binaryfloat4(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	float4 *result = palloc0(sizeof(float4));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	float4	   *result = palloc0(sizeof(float4));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(float4) ? sizeof(float4) : len;
 	if (len > sizeof(float4))
-		/* Skip the potentially 0 padded part if the input binary is over length */
-		reverse_memcpy((char *)result, data+len-sizeof(float4), result_len);
+
+		/*
+		 * Skip the potentially 0 padded part if the input binary is over
+		 * length
+		 */
+		reverse_memcpy((char *) result, data + len - sizeof(float4), result_len);
 	else
-		reverse_memcpy((char *)result, data, result_len);
+		reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_FLOAT4(*result);
 }
@@ -1374,42 +1397,48 @@ binaryfloat4(PG_FUNCTION_ARGS)
 Datum
 binaryfloat8(PG_FUNCTION_ARGS)
 {
-	bytea *source = PG_GETARG_BYTEA_PP(0);
-	char *data = VARDATA_ANY(source);
-	int32 len;
-	int32 result_len;
-	float8 *result = palloc0(sizeof(float8));
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	char	   *data = VARDATA_ANY(source);
+	int32		len;
+	int32		result_len;
+	float8	   *result = palloc0(sizeof(float8));
 
 	len = VARSIZE_ANY_EXHDR(source);
 	result_len = len > sizeof(float8) ? sizeof(float8) : len;
 	if (len > sizeof(float8))
-		/* Skip the potentially 0 padded part if the input binary is over length */
-		reverse_memcpy((char *)result, data+len-sizeof(float8), result_len);
+
+		/*
+		 * Skip the potentially 0 padded part if the input binary is over
+		 * length
+		 */
+		reverse_memcpy((char *) result, data + len - sizeof(float8), result_len);
 	else
-		reverse_memcpy((char *)result, data, result_len);
+		reverse_memcpy((char *) result, data, result_len);
 
 	PG_RETURN_FLOAT8(*result);
 }
 
 int8
-varbinarycompare(bytea *source1, bytea *source2);
+			varbinarycompare(bytea *source1, bytea *source2);
 
 int8
-inline varbinarycompare(bytea *source1, bytea *source2)
+			inline
+varbinarycompare(bytea *source1, bytea *source2)
 {
-	char *data1 = VARDATA_ANY(source1);
-	int32 len1 = VARSIZE_ANY_EXHDR(source1);
-	char *data2 = VARDATA_ANY(source2);
-	int32 len2 = VARSIZE_ANY_EXHDR(source2);
-	
+	char	   *data1 = VARDATA_ANY(source1);
+	int32		len1 = VARSIZE_ANY_EXHDR(source1);
+	char	   *data2 = VARDATA_ANY(source2);
+	int32		len2 = VARSIZE_ANY_EXHDR(source2);
+
 	unsigned char byte1;
 	unsigned char byte2;
-	int32 maxlen = len2 > len1 ? len2 : len1;
+	int32		maxlen = len2 > len1 ? len2 : len1;
 
 	INSTR_METRIC_INC(INSTR_TSQL_VARBINARY_COMPARE);
 
 	/* loop all the bytes */
-	for (int i=0; i<maxlen; i++){
+	for (int i = 0; i < maxlen; i++)
+	{
 		byte1 = i < len1 ? data1[i] : 0;
 		byte2 = i < len2 ? data2[i] : 0;
 		/* we've found a different byte */
@@ -1430,64 +1459,71 @@ PG_FUNCTION_INFO_V1(varbinary_leq);
 PG_FUNCTION_INFO_V1(varbinary_cmp);
 
 Datum
-varbinary_eq (PG_FUNCTION_ARGS)
+varbinary_eq(PG_FUNCTION_ARGS)
 {
-	bytea *source1 = PG_GETARG_BYTEA_PP(0);
-	bytea *source2 = PG_GETARG_BYTEA_PP(1);
-	bool result = varbinarycompare(source1, source2) == 0;
+	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source2 = PG_GETARG_BYTEA_PP(1);
+	bool		result = varbinarycompare(source1, source2) == 0;
+
 	PG_RETURN_BOOL(result);
 }
 
 Datum
-varbinary_neq (PG_FUNCTION_ARGS)
+varbinary_neq(PG_FUNCTION_ARGS)
 {
-	bytea *source1 = PG_GETARG_BYTEA_PP(0);
-	bytea *source2 = PG_GETARG_BYTEA_PP(1);
-	bool result = varbinarycompare(source1, source2) != 0;
+	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source2 = PG_GETARG_BYTEA_PP(1);
+	bool		result = varbinarycompare(source1, source2) != 0;
+
 	PG_RETURN_BOOL(result);
 }
 
 Datum
-varbinary_gt (PG_FUNCTION_ARGS)
+varbinary_gt(PG_FUNCTION_ARGS)
 {
-	bytea *source1 = PG_GETARG_BYTEA_PP(0);
-	bytea *source2 = PG_GETARG_BYTEA_PP(1);
-	bool result = varbinarycompare(source1, source2) > 0;
+	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source2 = PG_GETARG_BYTEA_PP(1);
+	bool		result = varbinarycompare(source1, source2) > 0;
+
 	PG_RETURN_BOOL(result);
 }
 
 Datum
-varbinary_geq (PG_FUNCTION_ARGS)
+varbinary_geq(PG_FUNCTION_ARGS)
 {
-	bytea *source1 = PG_GETARG_BYTEA_PP(0);
-	bytea *source2 = PG_GETARG_BYTEA_PP(1);
-	bool result = varbinarycompare(source1, source2) >= 0;
+	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source2 = PG_GETARG_BYTEA_PP(1);
+	bool		result = varbinarycompare(source1, source2) >= 0;
+
 	PG_RETURN_BOOL(result);
 }
 
 Datum
-varbinary_lt (PG_FUNCTION_ARGS)
+varbinary_lt(PG_FUNCTION_ARGS)
 {
-	bytea *source1 = PG_GETARG_BYTEA_PP(0);
-	bytea *source2 = PG_GETARG_BYTEA_PP(1);
-	bool result = varbinarycompare(source1, source2) < 0;
+	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source2 = PG_GETARG_BYTEA_PP(1);
+	bool		result = varbinarycompare(source1, source2) < 0;
+
 	PG_RETURN_BOOL(result);
 }
 
 Datum
-varbinary_leq (PG_FUNCTION_ARGS)
+varbinary_leq(PG_FUNCTION_ARGS)
 {
-	bytea *source1 = PG_GETARG_BYTEA_PP(0);
-	bytea *source2 = PG_GETARG_BYTEA_PP(1);
-	bool result = varbinarycompare(source1, source2) <= 0;
+	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source2 = PG_GETARG_BYTEA_PP(1);
+	bool		result = varbinarycompare(source1, source2) <= 0;
+
 	PG_RETURN_BOOL(result);
 }
 
 Datum
-varbinary_cmp (PG_FUNCTION_ARGS)
+varbinary_cmp(PG_FUNCTION_ARGS)
 {
-	bytea *source1 = PG_GETARG_BYTEA_PP(0);
-	bytea *source2 = PG_GETARG_BYTEA_PP(1);
+	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
+	bytea	   *source2 = PG_GETARG_BYTEA_PP(1);
+
 	PG_RETURN_INT32(varbinarycompare(source1, source2));
 }
 
@@ -1495,9 +1531,10 @@ varbinary_cmp (PG_FUNCTION_ARGS)
 PG_FUNCTION_INFO_V1(varbinary_length);
 
 Datum
-varbinary_length (PG_FUNCTION_ARGS)
+varbinary_length(PG_FUNCTION_ARGS)
 {
-	bytea 	*source = PG_GETARG_BYTEA_PP(0);
-	int32 	limit = VARSIZE_ANY_EXHDR(source);	
+	bytea	   *source = PG_GETARG_BYTEA_PP(0);
+	int32		limit = VARSIZE_ANY_EXHDR(source);
+
 	PG_RETURN_INT32(limit);
 }
