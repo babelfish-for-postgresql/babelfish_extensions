@@ -3,23 +3,30 @@ on:
   schedule:
     - cron: '0 0 * * *'  # runs every midnight
   workflow_dispatch:
-    inputs:
-      branch_name:
-        description: 'Branch Name'
-        required: false
-        default: 'BABEL_3_X_DEV'
 
 jobs:
 
+  generate-branch-names:
+    runs-on: ubuntu-20.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.branches }}
+    steps:
+      - id: matrix
+        run: |
+          if [[ ${{ github.event_name }} == 'workflow_dispatch' ]]; then
+            echo "::set-output name=branches::['BABEL_3_X_DEV']"
+          elif [[ true ]]; then
+            echo "::set-output name=branches::['BABEL_3_X_DEV', 'BABEL_2_X_DEV']"
+          fi
+
   run-all-tests:
+    needs: [ generate-branch-names ]
     runs-on: ubuntu-20.04
     
     strategy:
       fail-fast: false
       matrix:
-        include: 
-          - branch: ${{ ((github.event_name == 'workflow_dispatch' && github.event.inputs.branch_name) || 'BABEL_3_X_DEV') }}
-          - branch: ${{ ((github.event_name == 'workflow_dispatch' && github.event.inputs.branch_name) || 'BABEL_2_X_DEV') }}   
+        branch: ${{fromJson(needs.generate-branch-names.outputs.matrix)}} 
 
     steps:
       - uses: actions/checkout@v2
@@ -91,7 +98,7 @@ jobs:
 
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
-        if: ${{ startsWith(matrix.branch, 'BABEL_3_') && matrix.branch != 'BABEL_3_0_STABLE' && (steps.build-extensions.outcome == 'success') }}
+        if: ${{ startsWith(matrix.branch, 'BABEL_3_') && (steps.build-extensions.outcome == 'success') }}
         uses: ./.github/composite-actions/build-tds_fdw-extension
 
       - name: Run JDBC Tests
@@ -131,23 +138,13 @@ jobs:
         run: |
           cd test/dotnet
           dotnet build
-          if [[ ${{ matrix.branch }} == 'BABEL_3_X_DEV' || ${{matrix.branch}} == 'BABEL_3_1_STABLE' || ${{matrix.branch}} == 'BABEL_2_X_DEV' || ${{matrix.branch}} == 'BABEL_2_4_STABLE' ]]; then
-            babel_URL=localhost \
-              babel_port=1433 \
-              babel_databaseName=master \
-              babel_user=jdbc_user \
-              babel_password=12345678 \
-              testName="all---TestUDD.txt;TestChar.txt;TestSqlVariant.txt;TestVarChar.txt;TestAuthentication.txt;TestText.txt" \
-              dotnet test
-          elif [[ true ]]; then
-            babel_URL=localhost \
-              babel_port=1433 \
-              babel_databaseName=master \
-              babel_user=jdbc_user \
-              babel_password=12345678 \
-              testName="all---TestUDD.txt;TestChar.txt;TestSqlVariant.txt;TestVarChar.txt;TestTvp.txt;TestAuthentication.txt;TestText.txt" \
-              dotnet test
-          fi
+          babel_URL=localhost \
+            babel_port=1433 \
+            babel_databaseName=master \
+            babel_user=jdbc_user \
+            babel_password=12345678 \
+            testName="all---TestUDD.txt;TestChar.txt;TestSqlVariant.txt;TestVarChar.txt;TestAuthentication.txt;TestText.txt" \
+            dotnet test
       
       - name: Install SQL Server ODBC Driver
         id: install-sql-server-odbc-driver
@@ -286,26 +283,26 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_tsql
+          name: coverage_tsql_${{ matrix.branch }}
           path: contrib/babelfishpg_tsql/coverage/
 
       - name: Upload Coverage Report for babelfishpg_tds extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_tds
+          name: coverage_tds_${{ matrix.branch }}
           path: contrib/babelfishpg_tds/coverage/
 
       - name: Upload Coverage Report for babelfishpg_common extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_common
+          name: coverage_common_${{ matrix.branch }}
           path: contrib/babelfishpg_common/coverage/
 
       - name: Upload Coverage Report for babelfishpg_money extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_money
+          name: coverage_money_${{ matrix.branch }}
           path: contrib/babelfishpg_money/coverage/
