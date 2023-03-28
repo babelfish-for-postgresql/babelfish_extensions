@@ -135,7 +135,7 @@ static void pltsql_CreateFunctionStmt(ParseState *pstate,
 									  const char *queryString,
 									  bool readOnlyTree,
 									  ProcessUtilityContext context,
-									  ParamListInfo params, int flag);
+									  ParamListInfo params);
 
 /*****************************************
  * 			Executor Hooks
@@ -369,7 +369,7 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 							   const char *queryString,
 							   bool readOnlyTree,
 							   ProcessUtilityContext context,
-							   ParamListInfo params, int flag)
+							   ParamListInfo params)
 {
 	Node *parsetree = pstmt->utilityStmt;
 	CreateFunctionStmt *stmt = (CreateFunctionStmt *)parsetree;
@@ -377,12 +377,17 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 	DefElem    *language_item = NULL;
 	char *language = NULL;
 	ObjectAddress address;
+	bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+	bool needCleanup;
+	Node *tbltypStmt = NULL;
+	Node *trigStmt = NULL;
+	ObjectAddress tbltyp;
+	int origname_location = -1;
 
 	foreach(option, stmt->options)
 			{
 				DefElem *defel = (DefElem *)lfirst(option); 
-
-						
+		
 				if (strcmp(defel->defname, "language") == 0)
 				{
 					if (language_item)
@@ -400,13 +405,6 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 	if((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL)
 	{
 		
-		bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
-		bool needCleanup;
-		Node *tbltypStmt = NULL;
-		Node *trigStmt = NULL;
-		ObjectAddress tbltyp;
-		int origname_location = -1;
-
 		/* All event trigger calls are done only when isCompleteQuery is true */
 		needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
@@ -451,20 +449,8 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 					location_cell = option;
 					pfree(defel);
 				}
-				// else if (strcmp(defel->defname, "language") == 0)
-				// {
-				// 	if (language_item)
-				// 	ereport(ERROR,
-				// 	(errcode(ERRCODE_SYNTAX_ERROR),
-				// 	errmsg("conflicting or redundant options"),
-				// 	parser_errposition(pstate, defel->location)));
-				// 	language_item = defel;
-				// }
 			}
-
-			// if (language_item)
-			// 	language = strVal(language_item->arg);
-						
+	
 			/* delete location cell if it exists as it is for internal use only */
 			if (location_cell)
 				stmt->options = list_delete_cell(stmt->options, location_cell);
@@ -500,12 +486,6 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 				CommandCounterIncrement();
 			}
 
-			// if (flag && ((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL))
-			// 	{
-			// 		flag = false;
-			// 		if (CreateFunctionStmt_hook)
-			// 			(*CreateFunctionStmt_hook)(pstate, pstmt, queryString, false, context, params, flag); 
-			// 	}
 			address = CreateFunction(pstate, stmt);
 
 			/* Store function/procedure related metadata in babelfish catalog */
