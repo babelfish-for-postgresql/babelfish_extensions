@@ -219,3 +219,19 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
       mvn test
       ```
 For detailed instructions on how to write, add, and run tests in JDBC test framework, refer [to the online instructions](../test/JDBC/README.md).
+
+
+# How to build the babelfishpg_tsql extension with linked servers enabled
+
+1. To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md).
+2. Build the babelfishpg_tsql extension as follows:
+    ```
+    PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make
+    PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
+    ```
+3. Create rest of the Babelfish extensions as usual, and initialize Babelfish.
+4. Create the `tds_fdw` extension in the Babelfish database:
+    ```
+    babelfish_db=> CREATE EXTENSION tds_fdw;
+    CREATE EXTENSION
+    ```
