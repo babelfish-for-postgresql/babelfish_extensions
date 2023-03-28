@@ -32,10 +32,7 @@ jobs:
         id: run-pgindent
         if: always() && steps.build-extensions.outcome == 'success'
         run: |
-          cd ~
-          sudo find . -name babelfishpg_tds.so
-          
-          cd ~/psql/lib/
+          cd ~/psql/lib/postgresql
 
           ls
 
