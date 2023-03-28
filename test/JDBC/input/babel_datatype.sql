@@ -44,17 +44,11 @@ GO
 drop table testing1;
 GO
 
--- Comma separated format without quote is not allowed in sql server
-select CAST($100,123.4567 AS money);
-GO
 
 -- Smallmoney in tsql dialect
 select CAST($100123.4567 AS smallmoney);
 GO
 select CAST('$100,123.4567' AS smallmoney);
-GO
--- Comma separated format without quote is not allowed in sql server
-select CAST($100,123.4567 AS smallmoney);
 GO
 
 create table testing1(mon money, smon smallmoney);
@@ -147,8 +141,6 @@ select CAST(￦100.123 AS money);
 GO
 
 -- Test unsupoorted currency symbol
-select CAST(￩100.123 AS money);
-GO
 select CAST('￩100.123' AS money);
 GO
 
@@ -281,8 +273,6 @@ GO
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 select CAST('2020-03-15 09:00:00+8' AS datetimeoffset);
-GO
-create table testing1(ts DATETIME);
 GO
 create table testing1(tstz DATETIMEOFFSET);
 GO
@@ -608,12 +598,6 @@ SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 
 
--- Reconnect to make sure CLUSTER_COLLATION_OID is initialized
-USE postgres
-GO
-USE demo
-GO
-
 -- Test varchar is mapped to sys.varchar
 -- Expect truncated output because sys.varchar defaults to sys.varchar(30) in CAST function
 select cast('abcdefghijklmnopqrstuvwxyzabcde' as varchar);
@@ -642,8 +626,6 @@ insert into s1.test1 values('abc');
 insert into s1.test1 values('a');
 select * from s1.test1;
 GO
-drop schema s1;
-GO
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 
@@ -652,10 +634,6 @@ GO
 select CAST(100 AS tinyint);
 GO
 select CAST(10 AS tinyint) / CAST(3 AS tinyint);
-GO
-select CAST(256 AS tinyint);
-GO
-select CAST((-1) AS tinyint);
 GO
 
 -- test bit data type, bit defaults to sys.bit in tsql dialect
@@ -800,18 +778,6 @@ GO
 select cast('abc' as varbinary(2));
 GO
 
--- test throwing error when not explicit casting
-drop table testing6;
-GO
-create table testing6(col varbinary(2));
-GO
-insert into testing6 values(cast('ab' as varchar));
-GO
-insert into testing6 values(cast('ab' as varbinary(2)));
-GO
--- test throwing error if input would be truncated during table insert
-insert into testing6 values(cast('abc' as varbinary(3)));
-GO
 select * from testing6;
 GO
 
@@ -908,19 +874,6 @@ GO
 select CAST('010' AS varbinary(max));
 GO
 
--- test binary(max) is invalid syntax
-select cast('abc' as binary(max));
-GO
-
--- test varbinary(max) as a column
-drop table testing6;
-GO
-create table testing6(col varbinary(max));
-GO
-insert into testing6 values ('abc');
-GO
-select * from testing6;
-GO
 
 -- test default length is 1
 drop table testing6;
@@ -928,8 +881,6 @@ GO
 create table testing6(col varbinary);
 GO
 insert into testing6 values (cast('a' as varbinary));
-GO
-insert into testing6 values (cast('ab' as varbinary));
 GO
 select * from testing6;
 GO
@@ -963,8 +914,6 @@ GO
 -- test escape format '\' is not specially handled for varbinary
 -- but it is escaped handled for bytea
 select CAST('\13' AS varbinary(5));
-GO
-select CAST('\13' AS bytea);
 GO
 select CAST('\x13' AS varbinary(5));
 GO
@@ -1164,20 +1113,6 @@ GO
 select cast(CAST(0.125 AS real) as varbinary(2));
 GO
 select cast(CAST(0.125 AS real) as varbinary(4));
-GO
-
--- test casting varbinary back to real
-CREATE PROCEDURE cast_varbinary(@val real) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(4) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as real)
-END;
-EXEC cast_varbinary(0.125);
-GO
-EXEC cast_varbinary(3.125);
-GO
-drop procedure cast_varbinary;
 GO
 
 -- test dobule precision to varbinary

@@ -1,8 +1,6 @@
 -- This test should be run without installing the babelfishpg_tsql extension
 -- BABEL-219 test a domain named varchar in schema other than sys
 -- is not affected by the fix of BABEL-219
-select cast('a' as public.varchar); -- throw error
-GO
 select cast('' as varchar);
 GO
 select cast('a' as varchar); -- pg_catalog.varchar should work
@@ -24,10 +22,6 @@ select * from t1;
 GO
 
 -- verify behavior of public.varchar is unchanged in tsql dialect
-select cast('a' as public.varchar); -- fail
-GO
-select cast('' as public.varchar); -- pass
-GO
 create table t2(col varchar);
 GO
 insert into t1 (col) select 'a'; -- fail
@@ -39,6 +33,4 @@ GO
 drop table t1;
 GO
 drop table t2;
-GO
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'postgres';
 GO

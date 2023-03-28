@@ -226,8 +226,6 @@ drop table t8;
 GO
 drop table t9;
 GO
-drop table t11;
-GO
 drop table t12;
 GO
 drop table t13;

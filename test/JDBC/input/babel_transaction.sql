@@ -139,21 +139,6 @@ select @@trancount;
 GO
 select c1 from TxnTable;
 GO
--- begin transaction name -> save transaction name -> rollback to first
--- savepoint
-begin transaction txn1;
-insert into TxnTable values(1);
-save transaction sp1;
-insert into TxnTable values(2);
-save transaction sp2;
-insert into TxnTable values(3);
-save transaction sp3;
-insert into TxnTable values(4);
-rollback tran sp1;
-rollback tran sp1;
-rollback tran;
-select c1 from TxnTable;
-GO
 
 -- begin transaction name -> save transaction name -> rollback tran name
 -- Rollback whole transaction

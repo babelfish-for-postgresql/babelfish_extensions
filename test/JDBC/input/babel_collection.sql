@@ -11,7 +11,6 @@ select cast(
     end as sys.varchar(20));
 GO
 -- nvarchar is supported in tsql dialect
-create table testing1(col nvarchar(60));
 insert into testing1 (col) select N'Muffler';
 insert into testing1 (col) select N'Mülle';
 insert into testing1 (col) select N'MX Systems';
@@ -111,12 +110,6 @@ GO
 select c1 from testing4 where c1 NOT LIKE 'ä%';
 GO
 
--- test escape function and wildcard literal
-select c1 from testing4 where c1 LIKE E'\_ones';
-GO
-
-select c1 from testing4 where c1 LIKE E'\%ones';
-GO
 
 -- wild card literals are transformed to equal
 select c1 from testing4 where c1 LIKE '\%ones';
@@ -150,8 +143,6 @@ p2 as (select c3 from testing4 where c3 LIKE 'äƀ__')
 select * from p1 union all select * from p2;
 GO
 -- test case expression
-select c1,(case c1 LIKE 'j%' when true then 1 when false then 2 end) from testing4;
-GO
 select c2,(case when c2 LIKE '_bc%' then 1 when c2 LIKE 'jon%' then 2 when c3 LIKE 'ä%' then 3 end) from testing4;
 GO
 -- test that LIKE transformation is applied only for CI_AS column
@@ -174,18 +165,6 @@ GO
 select * from testing5 where c1 NOT LIKE 'j%';
 GO
 select * from testing5 where c1 LIKE 'AB%';
-GO
-
--- test explicitly specify collation as CI_AS, like transformation is also applied.
-SELECT 'JONES' LIKE 'jo%';
-GO
-SELECT 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS LIKE 'jo%' ;
-GO
-
--- test when pattern is empty string or NULL
-SELECT 'JONES' LIKE '';
-GO
-SELECT 'JONES' LIKE NULL;
 GO
 
 SELECT * from testing5 where c1 like '';

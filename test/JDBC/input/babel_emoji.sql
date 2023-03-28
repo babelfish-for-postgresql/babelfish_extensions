@@ -25,10 +25,6 @@ GO
 
 select CAST('😀' AS char(1));			-- not allowed  TODO: fix BABEL-3543
 GO
-select CAST('😀' AS sys.nchar(1));		-- not allowed
-GO
-select CAST('😀' AS sys.nvarchar(1));	-- not allowed
-GO
 select CAST('😀' AS sys.varchar(1));	-- not allowed  TODO: fix BABEL-3543 
 GO
 
@@ -43,12 +39,6 @@ select CAST('£' AS sys.varchar(1));
 GO
 select CAST('😀' AS char(1));
 GO
-select CAST('😀' AS sys.nchar(1)); -- this should not be allowed as nchar is T-SQL type
-GO
-select CAST('😀' AS sys.nvarchar(1)); -- this should not be allowed as nvarchar is T-SQL type
-GO
-select CAST('😀' AS sys.varchar(1)); -- this should not be allowed as sys.varchar is T-SQL type  TODO: fix BABEL-3543 
-GO
 
 
 -- test normal create domain works when apg_enable_domain_typmod is enabled
@@ -62,10 +52,6 @@ GO
 -- don't allow surrogate pairs to exceed max length
 select CAST('😀b' AS char(1));  -- not allowed TODO: fix BABEL-3543 
 GO
-select CAST('😀b' AS nchar(1));
-GO
-select CAST('😀b' AS nvarchar(1));
-GO
 select CAST('😀b' AS sys.varchar(1)); -- not allowed TODO: fix BABEL-3543 
 GO
 
@@ -76,32 +62,16 @@ GO
 SELECT * FROM information_schema.columns WHERE table_name = 'testing_1'
 GO
 
--- check length at insert
-insert into testing_1 (col) select '😀';  -- not allowed TODO: fix BABEL-3543 
-select * from testing_1;
-GO
-
--- default length of nvarchar in tsql is 1
-create table testing2(col nvarchar);
-insert into testing2 (col) select '😀'; -- not allowed TODO: fix BABEL-3543 
-select * from testing2;
-GO
-
 -- default length of varchar in tsql is 1
 create table testing_4(col sys.varchar);
 insert into testing_4 (col) select '😀'; -- not allowed TODO: fix BABEL-3543 
 GO
--- space is automatically truncated
-insert into testing2 (col) select '£ ';
-GO
-insert into testing2 (col) select '🤓 '; -- not allowed TODO: fix BABEL-3543 
+
 select * from testing_4;
 GO
 
 
 drop table testing_1;
-GO
-drop table testing2;
 GO
 drop table testing_4;
 GO

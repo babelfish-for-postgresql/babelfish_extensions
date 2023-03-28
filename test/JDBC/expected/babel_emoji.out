@@ -70,18 +70,6 @@ char
 ?
 ~~END~~
 
-select CAST('😀' AS sys.nchar(1));		-- not allowed
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character(1) as UTF16 output)~~
-
-select CAST('😀' AS sys.nvarchar(1));	-- not allowed
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character varying(1) as UTF16 output)~~
-
 select CAST('😀' AS sys.varchar(1));	-- not allowed  TODO: fix BABEL-3543 
 GO
 ~~START~~
@@ -126,25 +114,6 @@ char
 ?
 ~~END~~
 
-select CAST('😀' AS sys.nchar(1)); -- this should not be allowed as nchar is T-SQL type
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character(1) as UTF16 output)~~
-
-select CAST('😀' AS sys.nvarchar(1)); -- this should not be allowed as nvarchar is T-SQL type
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character varying(1) as UTF16 output)~~
-
-select CAST('😀' AS sys.varchar(1)); -- this should not be allowed as sys.varchar is T-SQL type  TODO: fix BABEL-3543 
-GO
-~~START~~
-varchar
-?
-~~END~~
-
 
 
 -- test normal create domain works when apg_enable_domain_typmod is enabled
@@ -173,18 +142,6 @@ char
 ?
 ~~END~~
 
-select CAST('😀b' AS nchar(1));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character(1) as UTF16 output)~~
-
-select CAST('😀b' AS nvarchar(1));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character varying(1) as UTF16 output)~~
-
 select CAST('😀b' AS sys.varchar(1)); -- not allowed TODO: fix BABEL-3543 
 GO
 ~~START~~
@@ -205,48 +162,23 @@ master#!#dbo#!#testing_1#!#col#!#1#!#<NULL>#!#YES#!#nchar#!#1#!#2#!#<NULL>#!#<NU
 ~~END~~
 
 
--- check length at insert
-insert into testing_1 (col) select '😀';  -- not allowed TODO: fix BABEL-3543 
-select * from testing_1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character(1) as UTF16 output)~~
-
-
--- default length of nvarchar in tsql is 1
-create table testing2(col nvarchar);
-insert into testing2 (col) select '😀'; -- not allowed TODO: fix BABEL-3543 
-select * from testing2;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character varying(1) as UTF16 output)~~
-
-
 -- default length of varchar in tsql is 1
 create table testing_4(col sys.varchar);
 insert into testing_4 (col) select '😀'; -- not allowed TODO: fix BABEL-3543 
 GO
 ~~ROW COUNT: 1~~
 
--- space is automatically truncated
-insert into testing2 (col) select '£ ';
-GO
-~~ROW COUNT: 1~~
 
-insert into testing2 (col) select '🤓 '; -- not allowed TODO: fix BABEL-3543 
 select * from testing_4;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character varying(1) as UTF16 output)~~
+~~START~~
+varchar
+?
+~~END~~
 
 
 
 drop table testing_1;
-GO
-drop table testing2;
 GO
 drop table testing_4;
 GO

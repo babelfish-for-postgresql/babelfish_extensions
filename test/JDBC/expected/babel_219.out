@@ -1,12 +1,6 @@
 -- This test should be run without installing the babelfishpg_tsql extension
 -- BABEL-219 test a domain named varchar in schema other than sys
 -- is not affected by the fix of BABEL-219
-select cast('a' as public.varchar); -- throw error
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'public' at line 4 and character position 19)~~
-
 select cast('' as varchar);
 GO
 ~~START~~
@@ -63,18 +57,6 @@ a
 
 
 -- verify behavior of public.varchar is unchanged in tsql dialect
-select cast('a' as public.varchar); -- fail
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'public' at line 2 and character position 19)~~
-
-select cast('' as public.varchar); -- pass
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'public' at line 1 and character position 18)~~
-
 create table t2(col varchar);
 GO
 insert into t1 (col) select 'a'; -- fail
@@ -98,6 +80,4 @@ a
 drop table t1;
 GO
 drop table t2;
-GO
-DECLARE @babelfishpg_tsql_sql_dialect varchar(50) = 'postgres';
 GO

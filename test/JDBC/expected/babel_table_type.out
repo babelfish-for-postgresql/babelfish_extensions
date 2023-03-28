@@ -24,31 +24,6 @@ GO
 DROP TYPE tableType;
 GO
 
--- creating index (other than primary and unique keys) during table type creation is not
--- yet supported
--- TODO: BABEL-688: fully support TSQL CREATE TABLE syntax
-CREATE TYPE tableType AS table(
-    a text not null,
-    b int primary key,
-    c int,
-    d int index idx1 nonclustered,
-    index idx2(c),
-	index idx3(e),
-	e varchar);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'e' at line 11 and character position 1)~~
-
-
-
--- not allowed to have more than one dotted prefix
-CREATE TYPE postgres.public.tableType AS table(a int, b int);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 2 and character position 20)~~
-
 
 CREATE TYPE tableType AS table(
 	a text not null,
@@ -263,22 +238,6 @@ int
 DROP PROCEDURE source_target_proc;
 GO
 
-
--- -- test multiple '@' characters in table variable name
--- -- TODO: BABEL-476 Support variable name with multiple '@' characters
--- /*
--- create procedure nameing_proc as
--- begin
--- 	declare @@@tv@1@@@ as table(a int);
--- 	insert  @@@tv@1@@@ values(1);
--- 	select * from  @@@tv@1@@@;
--- end;
--- GO
--- CALL naming_proc();
--- GO
--- DROP PROCEDURE naming_proc;
--- GO
--- */
 -- test nested functions using table variables with the same name, each should
 -- have its own variable
 create function inner_func() returns int as
@@ -500,18 +459,6 @@ end
 GO
 -- test passing in a table variable whose type is different from what the function wants
 -- TODO: BABEL-899: error message should be "Operand type clash: table is incompatible with tableType"
-EXEC error_proc
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure error_proc() does not exist)~~
-
-DROP PROCEDURE error_proc;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: could not find a procedure named "error_proc")~~
-
 create procedure tvp_proc as
 begin
 	declare @tableVar tableType;

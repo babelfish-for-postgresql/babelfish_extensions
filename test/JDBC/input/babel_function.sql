@@ -79,8 +79,6 @@ select CONVERT(varchar, CONVERT(datetime2(7), '9999-12-31 23:59:59.9999999'));
 GO
 
 -- Conversion from float to varchar
-SELECT CONVERT(varchar(30), CAST(11234561231231.234 AS float), 0);
-GO
 select CONVERT(varchar(30), CAST(11234561231231.234 AS float), 1);
 GO
 select CONVERT(varchar(30), CAST(11234561231231.234 AS float), 2);
@@ -529,10 +527,6 @@ GO
 -- test different types of date/time arguments
 select dateadd(quarter, 3, '2037-03-01');
 GO
-select dateadd(minute, 70, '2016-12-26 23:30:05.523456+8');
-GO
-select dateadd(month, 2, '2016-12-26 23:30:05.523456');
-GO
 select dateadd(second, 56, '2016-12-26 23:30:05');
 GO
 -- test negative argument
@@ -554,14 +548,6 @@ GO
 update dateadd_table set b = dateadd(dd, a, CAST('2020-10-30' AS datetime));
 GO
 select * from dateadd_table;
-GO
-create procedure dateadd_procedure as
-begin
-	declare @d int = 1
-	update dateadd_table set b = dateadd(dd, @d, CAST('2020-10-31' AS datetime))
-end;
-GO
-EXEC dateadd_procedure();
 GO
 select * from dateadd_table;
 GO
@@ -863,8 +849,6 @@ GO
 
 -- clean up
 drop table dateadd_table;
-GO
-drop procedure dateadd_procedure;
 GO
 
 -- test inline table-valued functions

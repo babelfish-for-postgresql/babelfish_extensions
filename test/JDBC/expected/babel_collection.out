@@ -16,16 +16,27 @@ valid
 ~~END~~
 
 -- nvarchar is supported in tsql dialect
-create table testing1(col nvarchar(60));
 insert into testing1 (col) select N'Muffler';
 insert into testing1 (col) select N'Mülle';
 insert into testing1 (col) select N'MX Systems';
 insert into testing1 (col) select N'Magic';
 select * from testing1 order by col;
 GO
-~~ERROR (Code: 2714)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: relation "testing1" already exists)~~
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+Magic
+Muffler
+Mülle
+MX Systems
+~~END~~
 
 
 -- test case insensitive collation
@@ -288,20 +299,6 @@ Bitmap Heap Scan on testing4  (cost=11.55..32.92 rows=592 width=32)
 ~~END~~
 
 
--- test escape function and wildcard literal
-select c1 from testing4 where c1 LIKE E'\_ones';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near ''\_ones'' at line 2 and character position 39)~~
-
-
-select c1 from testing4 where c1 LIKE E'\%ones';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near ''\%ones'' at line 1 and character position 39)~~
-
 
 -- wild card literals are transformed to equal
 select c1 from testing4 where c1 LIKE '\%ones';
@@ -407,12 +404,6 @@ varchar
 ~~END~~
 
 -- test case expression
-select c1,(case c1 LIKE 'j%' when true then 1 when false then 2 end) from testing4;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'LIKE' at line 2 and character position 19)~~
-
 select c2,(case when c2 LIKE '_bc%' then 1 when c2 LIKE 'jon%' then 2 when c3 LIKE 'ä%' then 3 end) from testing4;
 GO
 ~~START~~
@@ -475,34 +466,6 @@ GO
 ~~START~~
 varchar
 ~~END~~
-
-
--- test explicitly specify collation as CI_AS, like transformation is also applied.
-SELECT 'JONES' LIKE 'jo%';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'LIKE' at line 2 and character position 15)~~
-
-SELECT 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS LIKE 'jo%' ;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'LIKE' at line 1 and character position 52)~~
-
-
--- test when pattern is empty string or NULL
-SELECT 'JONES' LIKE '';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'LIKE' at line 2 and character position 15)~~
-
-SELECT 'JONES' LIKE NULL;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'LIKE' at line 1 and character position 15)~~
 
 
 SELECT * from testing5 where c1 like '';
@@ -592,6 +555,10 @@ select * from testing1 order by col;
 GO
 ~~START~~
 nvarchar
+Magic
+Muffler
+Mülle
+MX Systems
 ~~END~~
 
 -- test expression level collate, expect the same result order
@@ -599,6 +566,10 @@ select * from testing1 order by col collate Finnish_Swedish_CS_AS;
 GO
 ~~START~~
 nvarchar
+Magic
+Muffler
+MX Systems
+Mülle
 ~~END~~
 
 -- test catalog

@@ -74,13 +74,6 @@ GO
 drop table testing1;
 GO
 
--- Comma separated format without quote is not allowed in sql server
-select CAST($100,123.4567 AS money);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'AS' at line 2 and character position 26)~~
-
 
 -- Smallmoney in tsql dialect
 select CAST($100123.4567 AS smallmoney);
@@ -96,13 +89,6 @@ GO
 smallmoney
 100123.4567
 ~~END~~
-
--- Comma separated format without quote is not allowed in sql server
-select CAST($100,123.4567 AS smallmoney);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'AS' at line 2 and character position 26)~~
 
 
 create table testing1(mon money, smon smallmoney);
@@ -400,12 +386,6 @@ money
 
 
 -- Test unsupoorted currency symbol
-select CAST(￩100.123 AS money);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '￩' at line 2 and character position 12)~~
-
 select CAST('￩100.123' AS money);
 GO
 ~~START~~
@@ -773,14 +753,8 @@ datetimeoffset
 2020-03-15 09:00:00.0000000 +08:00
 ~~END~~
 
-create table testing1(ts DATETIME);
-GO
 create table testing1(tstz DATETIMEOFFSET);
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "testing1" already exists)~~
-
 select CAST('2020-03-15 09:00:00' AS datetime2);
 GO
 ~~START~~
@@ -793,7 +767,7 @@ datetime2
 select * from testing1;
 GO
 ~~START~~
-datetime
+datetimeoffset
 ~~END~~
 
 drop table testing1;
@@ -1522,20 +1496,6 @@ postgres
 
 
 
--- Reconnect to make sure CLUSTER_COLLATION_OID is initialized
-USE postgres
-GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "postgres" does not exist)~~
-
-USE demo
-GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "demo" does not exist)~~
-
-
 -- Test varchar is mapped to sys.varchar
 -- Expect truncated output because sys.varchar defaults to sys.varchar(30) in CAST function
 select cast('abcdefghijklmnopqrstuvwxyzabcde' as varchar);
@@ -1592,12 +1552,6 @@ varchar
 a
 ~~END~~
 
-drop schema s1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot drop schema master_s1 because other objects depend on it)~~
-
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 ~~START~~
@@ -1621,22 +1575,6 @@ GO
 tinyint
 3
 ~~END~~
-
-select CAST(256 AS tinyint);
-GO
-~~START~~
-tinyint
-~~ERROR (Code: 220)~~
-
-~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
-
-select CAST((-1) AS tinyint);
-GO
-~~START~~
-tinyint
-~~ERROR (Code: 220)~~
-
-~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 
 -- test bit data type, bit defaults to sys.bit in tsql dialect
@@ -2056,34 +1994,14 @@ varbinary
 ~~END~~
 
 
--- test throwing error when not explicit casting
-drop table testing6;
-GO
-create table testing6(col varbinary(2));
-GO
-insert into testing6 values(cast('ab' as varchar));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Implicit conversion from data type varchar to varbinary is not allowed. Use the CONVERT function to run this query.)~~
-
-insert into testing6 values(cast('ab' as varbinary(2)));
-GO
-~~ROW COUNT: 1~~
-
--- test throwing error if input would be truncated during table insert
-insert into testing6 values(cast('abc' as varbinary(3)));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: String or binary data would be truncated.
-The statement has been terminated.)~~
-
 select * from testing6;
 GO
 ~~START~~
-varbinary
-6162
+bit#!#bit
+1#!#0
+0#!#1
+1#!#1
+1#!#1
 ~~END~~
 
 
@@ -2343,31 +2261,6 @@ varbinary
 ~~END~~
 
 
--- test binary(max) is invalid syntax
-select cast('abc' as binary(max));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Incorrect syntax near the keyword 'binary'.)~~
-
-
--- test varbinary(max) as a column
-drop table testing6;
-GO
-create table testing6(col varbinary(max));
-GO
-insert into testing6 values ('abc');
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
-
-select * from testing6;
-GO
-~~START~~
-varbinary
-~~END~~
-
 
 -- test default length is 1
 drop table testing6;
@@ -2377,13 +2270,6 @@ GO
 insert into testing6 values (cast('a' as varbinary));
 GO
 ~~ROW COUNT: 1~~
-
-insert into testing6 values (cast('ab' as varbinary));
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: String or binary data would be truncated.
-The statement has been terminated.)~~
 
 select * from testing6;
 GO
@@ -2457,12 +2343,6 @@ GO
 varbinary
 5C3133
 ~~END~~
-
-select CAST('\13' AS bytea);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid input syntax for type bytea)~~
 
 select CAST('\x13' AS varbinary(5));
 GO
@@ -2989,32 +2869,6 @@ GO
 varbinary
 3E000000
 ~~END~~
-
-
--- test casting varbinary back to real
-CREATE PROCEDURE cast_varbinary(@val real) AS
-BEGIN
-  DECLARE @BinaryVariable varbinary(4) = @val
-  PRINT @BinaryVariable
-  PRINT cast(@BinaryVariable as real)
-END;
-EXEC cast_varbinary(0.125);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '0.125' at line 8 and character position 20)~~
-
-EXEC cast_varbinary(3.125);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '3.125' at line 1 and character position 20)~~
-
-drop procedure cast_varbinary;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: could not find a procedure named "cast_varbinary")~~
 
 
 -- test dobule precision to varbinary

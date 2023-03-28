@@ -369,12 +369,6 @@ drop table t8;
 GO
 drop table t9;
 GO
-drop table t11;
-GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "t11" does not exist)~~
-
 drop table t12;
 GO
 drop table t13;
