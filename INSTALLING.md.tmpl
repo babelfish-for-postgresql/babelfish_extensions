@@ -304,3 +304,18 @@ sqlcmd -S localhost -U babelfish_user -P 12345678
 ```
 
 > Note that `mssql-tools` does not support _arm64_ packages.
+
+## How to build the babelfishpg_tsql extension with linked servers enabled
+
+- To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md).
+- Build the babelfishpg_tsql extension as follows:
+```
+PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make
+PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
+```
+- Create rest of the Babelfish extensions as usual, and initialize Babelfish.
+- Create the `tds_fdw` extension in the Babelfish database:
+```
+babelfish_db=> CREATE EXTENSION tds_fdw;
+CREATE EXTENSION
+```
