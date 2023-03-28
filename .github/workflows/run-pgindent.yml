@@ -32,7 +32,7 @@ jobs:
         id: run-pgindent
         if: always() && steps.build-extensions.outcome == 'success'
         run: |
-          cd ~/${{inputs.install_dir}}/lib/
+          cd ~/psql/lib/
 
           echo "dumping typedefs for babelfishpg_money to /tmp/babelfishpg_money.typedefs.."
           objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
@@ -62,7 +62,7 @@ jobs:
           echo "Clone and build pg_bsd_indent which is required by pgindent..."
           git clone https://git.postgresql.org/git/pg_bsd_indent.git
           cd pg_bsd_indent/
-          make PG_CONFIG=$HOME/psql/bin/pg_config
+          make PG_CONFIG=~/psql/bin/pg_config
           sudo cp pg_bsd_indent /usr/local/bin
 
           cd ~/work/babelfish_extensions/babelfish_extensions/
