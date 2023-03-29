@@ -815,6 +815,60 @@ resolve_numeric_typmod_from_exp(Node *expr)
 	}
 }
 
+/* look for a typmod to return from a varbinary expression */
+static int32
+resolve_varbinary_typmod_from_exp(Node *expr)
+{
+	if (expr == NULL)
+		return -1;
+
+	switch (nodeTag(expr))
+	{
+		case T_Const:
+		{
+			/*
+			 * Generate the typmod from hex const input because typmod won't be
+			 * specified.
+			 */
+			Const	   *con = (Const *) expr;
+			if (!con->constisnull)
+			{
+				bytea	   *source = (bytea *) con->constvalue;
+
+				return VARSIZE_ANY(source);
+			}
+			else
+				return -1;
+		}
+		case T_FuncExpr:
+		{
+			FuncExpr   *func = (FuncExpr *) expr;
+			Oid			func_oid = InvalidOid;
+			int			rettypmod = -1;
+
+			/* Be smart about length-coercion functions... */
+			if (exprIsLengthCoercion(expr, &rettypmod))
+				return rettypmod;
+
+			/*
+			 * Look up the return type typmod from a persistent store
+			 * using the function oid.
+			 */
+			func_oid = func->funcid;
+			Assert(func_oid != InvalidOid);
+
+			if (func->funcresulttype != VOIDOID)
+				rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
+																				  func->args == NIL ? 0 : func->args->length,
+																				  func->funcresulttype);
+			return rettypmod;
+		}
+		/* TODO handle more Expr types if needed */
+		default:
+			return -1;
+	}
+}
+
 void
 InitTDSResponse(void)
 {
@@ -1727,22 +1781,8 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 											1 : atttypmod - VARHDRSZ);
 				break;
 			case TDS_SEND_VARBINARY:
-
-				/*
-				 * Generate the typmod from hex const input because typmod
-				 * won't be specified
-				 */
-				if (atttypmod == -1 && tle != NULL && IsA(tle->expr, Const))
-				{
-					Const	   *con = (Const *) tle->expr;
-
-					if (!con->constisnull)
-					{
-						bytea	   *source = (bytea *) con->constvalue;
-
-						atttypmod = VARSIZE_ANY(source);
-					}
-				}
+				if (atttypmod == -1 && tle != NULL)
+					atttypmod = resolve_varbinary_typmod_from_exp((Node *) tle->expr);
 				SetColMetadataForBinaryType(col, TDS_TYPE_VARBINARY, (atttypmod == -1) ?
 											atttypmod : atttypmod - VARHDRSZ);
 				break;
