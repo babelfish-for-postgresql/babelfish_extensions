@@ -287,3 +287,26 @@ jobs:
         with:
           name: coverage_money_${{ matrix.branch }}
           path: contrib/babelfishpg_money/coverage/
+
+      - name: Download CSV report from previous run
+        if: (github.event_name == 'schedule')
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: csv_${{ matrix.branch }}
+          path: contrib/
+          search_artifacts: true
+          if_no_artifact_found: warn
+
+      - name: Add latest coverage numbers to CSV file
+        if: (github.event_name == 'schedule')
+        run: |
+          cd contrib/
+          paste -s -d, <(date +"%m/%d/%Y %H:%M:%S";lcov --summary lcov.info | grep -Po "[0-9]+\.[0-9]*") >> ${{ matrix.branch }}.csv
+        shell: bash
+
+      - name: Upload CSV report with latest coverage numbers
+        if: (github.event_name == 'schedule')
+        uses: actions/upload-artifact@v3
+        with:
+          name: csv_${{ matrix.branch }}
+          path: contrib/${{ matrix.branch }}.csv
