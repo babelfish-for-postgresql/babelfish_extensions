@@ -15,7 +15,7 @@ jobs:
         run: |
           if [[ ${{ github.event_name }} == 'workflow_dispatch' ]]; then
             echo "::set-output name=branches::['BABEL_3_X_DEV']"
-          elif [[ true ]]; then
+          else
             echo "::set-output name=branches::['BABEL_3_X_DEV', 'BABEL_2_X_DEV']"
           fi
 
@@ -57,23 +57,17 @@ jobs:
           make -j 4 2>error.txt
           make install
           cd contrib && make && sudo make install
-          if [[ ${{matrix.branch}} == "BABEL_2_"* ]]; then
-            cd ../..
-            rm -rf pg_hint_plan
+          cd ../..
+          rm -rf pg_hint_plan
+          if [[ ${{matrix.branch}} == "BABEL_2_"* ]]; then 
             git clone --depth 1 --branch REL14_1_4_0 https://github.com/ossc-db/pg_hint_plan.git
-            cd pg_hint_plan
-            export PATH=$HOME/psql/bin:$PATH
-            make
-            make install
-          elif [[ true ]]; then
-            cd ../..
-            rm -rf pg_hint_plan
+          else
             git clone --depth 1 --branch PG15 https://github.com/ossc-db/pg_hint_plan.git
-            cd pg_hint_plan
-            export PATH=$HOME/psql/bin:$PATH
-            make
-            make install
           fi
+          cd pg_hint_plan
+          export PATH=$HOME/psql/bin:$PATH
+          make
+          make install
 
       - name: Compile ANTLR
         id: compile-antlr
@@ -247,13 +241,13 @@ jobs:
           export PG_SRC=~/work/postgresql_modified_for_babelfish
           export cmake=$(which cmake)
           cd contrib
-          extensions=( babelfishpg_tsql babelfishpg_tds babelfishpg_common babelfishpg_money )
-          for (( i=0; i<4; i++ )); do
-            cd ${extensions[$i]}
+          for ext in babelfishpg_common babelfishpg_money babelfishpg_tds babelfishpg_tsql  
+          do
+            cd $ext
             /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
             /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
             rm -rf coverage
-            /usr/bin/genhtml -q --legend -o coverage --title='${extensions[$i]}' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
+            /usr/bin/genhtml -q --legend -o coverage --title='$ext' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
             touch coverage-html-stamp
             cd ..
           done
