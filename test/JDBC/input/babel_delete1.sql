@@ -17,33 +17,33 @@ VALUES  (50, 'fname1', 'lname1', 'london'),
         (61, 'fname9', 'lname9', 'shanghai'),
         (29, 'fname10', 'lname10', 'mumbai');
 
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 
 -- Prove that a user may delete rows from a table without using the FROM clause
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 
 -- Test that that WHERE clause can be used without FROM
 DELETE delete_test_tbl WHERE city='hong kong';
 GO
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 
 DELETE delete_test_tbl WHERE age > 50;
 GO
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 
 DELETE delete_test_tbl WHERE fname IN ('fname1', 'fname2');
 GO
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 
 -- Test that DELETE works without any other clauses
 DELETE delete_test_tbl;
 GO
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 
 -- Test delete for joined table

@@ -18,15 +18,15 @@ GO
 create table t1(col varchar);
 insert into t1 (col) select 'a'; -- fail
 insert into t1 (col) select ''; -- pass
-select * from t1;
+select * from t1 ORDER BY col;
 GO
 
 -- verify behavior of public.varchar is unchanged in tsql dialect
 create table t2(col varchar);
 GO
-insert into t1 (col) select 'a'; -- fail
-insert into t1 (col) select ''; -- pass
-select * from t1;
+insert into t2 (col) select 'a'; -- fail
+insert into t2 (col) select ''; -- pass
+select * from t2 ORDER BY col;
 GO
 
 -- Clean up

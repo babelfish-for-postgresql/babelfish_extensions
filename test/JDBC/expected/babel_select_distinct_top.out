@@ -4,15 +4,15 @@ insert into babel_select_distinct_top values (3), (1), (2), (2), (1);
 GO
 ~~ROW COUNT: 5~~
 
-select * from babel_select_distinct_top;
+select * from babel_select_distinct_top ORDER BY a ASC;
 GO
 ~~START~~
 int
+1
+1
+2
+2
 3
-1
-2
-2
-1
 ~~END~~
 
 select distinct a from babel_select_distinct_top order by a;

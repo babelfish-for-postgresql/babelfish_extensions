@@ -17,40 +17,40 @@ VALUES  (50, 'fname1', 'lname1', 'london'),
         (19, 'fname8', 'lname8', 'hong kong'),
         (61, 'fname9', 'lname9', 'shanghai'),
         (29, 'fname10', 'lname10', 'mumbai');
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 ~~ROW COUNT: 10~~
 
 ~~START~~
 int#!#char#!#char#!#nchar
-50#!#fname1    #!#lname1    #!#london              
-34#!#fname2    #!#lname2    #!#paris               
-35#!#fname3    #!#lname3    #!#brussels            
 90#!#fname4    #!#lname4    #!#new york            
-26#!#fname5    #!#lname5    #!#los angeles         
 74#!#fname6    #!#lname6    #!#tokyo               
-44#!#fname7    #!#lname7    #!#oslo                
-19#!#fname8    #!#lname8    #!#hong kong           
 61#!#fname9    #!#lname9    #!#shanghai            
+50#!#fname1    #!#lname1    #!#london              
+44#!#fname7    #!#lname7    #!#oslo                
+35#!#fname3    #!#lname3    #!#brussels            
+34#!#fname2    #!#lname2    #!#paris               
 29#!#fname10   #!#lname10   #!#mumbai              
+26#!#fname5    #!#lname5    #!#los angeles         
+19#!#fname8    #!#lname8    #!#hong kong           
 ~~END~~
 
 
 -- Prove that a user may delete rows from a table without using the FROM clause
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 ~~START~~
 int#!#char#!#char#!#nchar
-50#!#fname1    #!#lname1    #!#london              
-34#!#fname2    #!#lname2    #!#paris               
-35#!#fname3    #!#lname3    #!#brussels            
 90#!#fname4    #!#lname4    #!#new york            
-26#!#fname5    #!#lname5    #!#los angeles         
 74#!#fname6    #!#lname6    #!#tokyo               
-44#!#fname7    #!#lname7    #!#oslo                
-19#!#fname8    #!#lname8    #!#hong kong           
 61#!#fname9    #!#lname9    #!#shanghai            
+50#!#fname1    #!#lname1    #!#london              
+44#!#fname7    #!#lname7    #!#oslo                
+35#!#fname3    #!#lname3    #!#brussels            
+34#!#fname2    #!#lname2    #!#paris               
 29#!#fname10   #!#lname10   #!#mumbai              
+26#!#fname5    #!#lname5    #!#los angeles         
+19#!#fname8    #!#lname8    #!#hong kong           
 ~~END~~
 
 
@@ -59,19 +59,19 @@ DELETE delete_test_tbl WHERE city='hong kong';
 GO
 ~~ROW COUNT: 1~~
 
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 ~~START~~
 int#!#char#!#char#!#nchar
-50#!#fname1    #!#lname1    #!#london              
-34#!#fname2    #!#lname2    #!#paris               
-35#!#fname3    #!#lname3    #!#brussels            
 90#!#fname4    #!#lname4    #!#new york            
-26#!#fname5    #!#lname5    #!#los angeles         
 74#!#fname6    #!#lname6    #!#tokyo               
-44#!#fname7    #!#lname7    #!#oslo                
 61#!#fname9    #!#lname9    #!#shanghai            
+50#!#fname1    #!#lname1    #!#london              
+44#!#fname7    #!#lname7    #!#oslo                
+35#!#fname3    #!#lname3    #!#brussels            
+34#!#fname2    #!#lname2    #!#paris               
 29#!#fname10   #!#lname10   #!#mumbai              
+26#!#fname5    #!#lname5    #!#los angeles         
 ~~END~~
 
 
@@ -79,16 +79,16 @@ DELETE delete_test_tbl WHERE age > 50;
 GO
 ~~ROW COUNT: 3~~
 
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 ~~START~~
 int#!#char#!#char#!#nchar
 50#!#fname1    #!#lname1    #!#london              
-34#!#fname2    #!#lname2    #!#paris               
-35#!#fname3    #!#lname3    #!#brussels            
-26#!#fname5    #!#lname5    #!#los angeles         
 44#!#fname7    #!#lname7    #!#oslo                
+35#!#fname3    #!#lname3    #!#brussels            
+34#!#fname2    #!#lname2    #!#paris               
 29#!#fname10   #!#lname10   #!#mumbai              
+26#!#fname5    #!#lname5    #!#los angeles         
 ~~END~~
 
 
@@ -96,14 +96,14 @@ DELETE delete_test_tbl WHERE fname IN ('fname1', 'fname2');
 GO
 ~~ROW COUNT: 2~~
 
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 ~~START~~
 int#!#char#!#char#!#nchar
-35#!#fname3    #!#lname3    #!#brussels            
-26#!#fname5    #!#lname5    #!#los angeles         
 44#!#fname7    #!#lname7    #!#oslo                
+35#!#fname3    #!#lname3    #!#brussels            
 29#!#fname10   #!#lname10   #!#mumbai              
+26#!#fname5    #!#lname5    #!#los angeles         
 ~~END~~
 
 
@@ -112,7 +112,7 @@ DELETE delete_test_tbl;
 GO
 ~~ROW COUNT: 4~~
 
-SELECT * FROM delete_test_tbl;
+SELECT * FROM delete_test_tbl ORDER BY age DESC, city ASC;
 GO
 ~~START~~
 int#!#char#!#char#!#nchar
