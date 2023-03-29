@@ -1093,8 +1093,18 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysprocesses_deprecate
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_sessions_deprecated_in_3_2_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_stat_get_activity_deprecated_in_3_2_0');
 
+CREATE OR REPLACE FUNCTION sys.bbf_get_context_info()
+RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql', 'bbf_get_context_info' LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.context_info()
-RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+RETURNS sys.VARBINARY(128)
+AS '{"version_num": "1", "typmod_array": ["128"], "original_probin": ""}',
+$$
+BEGIN
+    return sys.bbf_get_context_info()
+END;
+$$
+LANGUAGE pltsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.bbf_set_context_info(IN context_info sys.VARBINARY(128))
 AS 'babelfishpg_tsql' LANGUAGE C;

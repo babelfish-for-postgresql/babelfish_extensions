@@ -86,6 +86,7 @@ PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(context_info);
+PG_FUNCTION_INFO_V1(bbf_get_context_info);
 PG_FUNCTION_INFO_V1(bbf_set_context_info);
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
@@ -1848,6 +1849,12 @@ host_name(PG_FUNCTION_ARGS)
 
 Datum
 context_info(PG_FUNCTION_ARGS)
+{
+	return bbf_get_context_info(fcinfo);
+}
+
+Datum
+bbf_get_context_info(PG_FUNCTION_ARGS)
 {
 	Datum		context_info = (Datum) 0;
 
