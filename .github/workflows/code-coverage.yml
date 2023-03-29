@@ -310,4 +310,3 @@ jobs:
         with:
           name: csv_${{ matrix.branch }}
           path: contrib/${{ matrix.branch }}.csv
-          
