@@ -365,7 +365,7 @@ gen_type_datum_from_sqlvariant_bytea(bytea *sv, uint8_t target_typcode, int32_t 
 	}
 
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	if (typcode == target_typcode)
@@ -425,7 +425,7 @@ do_compare(char *oprname, bytea *arg1, bytea *arg2, Oid fncollation)
 		memcpy(&d2, SV_DATUM_PTR(arg2, svhdr_size2), data_len2);
 
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	/* Check Type Code */

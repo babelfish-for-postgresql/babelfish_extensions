@@ -747,19 +747,19 @@ create_builtin_dbs(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		do_create_bbf_db("master", NULL, sa_name);
 		do_create_bbf_db("tempdb", NULL, sa_name);
 		do_create_bbf_db("msdb", NULL, sa_name);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	}
@@ -785,17 +785,17 @@ create_msdb_if_not_exists(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		create_bbf_db_internal("msdb", NULL, sa_name, 4);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	}
@@ -822,7 +822,7 @@ drop_all_dbs(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		/* drop built-in DBs */
 		drop_bbf_db("master", false, true);
@@ -859,13 +859,13 @@ drop_all_dbs(PG_FUNCTION_ARGS)
 				all_db_dropped = true;
 		}
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		PG_RE_THROW();
@@ -1100,7 +1100,7 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		/*
@@ -1129,14 +1129,14 @@ create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 
 		creating_extension = creating_extension_backup;
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_FINALLY();
 	{
 		creating_extension = creating_extension_backup;
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();

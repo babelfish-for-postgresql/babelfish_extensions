@@ -2118,7 +2118,7 @@ FetchTvpTypeOid(const ParameterToken token, char *tvpName)
 	{
 		/* Reset dialect. */
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "SPI_connect() failed in TDS Listener "
 			 "with return code %d", rc);
@@ -2131,7 +2131,7 @@ FetchTvpTypeOid(const ParameterToken token, char *tvpName)
 	{
 		/* Reset dialect. */
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
 	}
@@ -2209,7 +2209,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 	 * prep/exec insert query via SPI.
 	 */
 	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	if (!xactStarted)
@@ -2235,7 +2235,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 	{
 		/* Reset dialect. */
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		elog(ERROR, "Failed to create the underlying table for table-valued parameter: %d", rc);
 	}
@@ -2362,7 +2362,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 			{
 				/* Reset dialect. */
 				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  GUC_CONTEXT_CONFIG,
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "SPI_connect() failed in TDS Listener "
 					 "with return code %d", rc);
@@ -2377,7 +2377,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 			{
 				/* Reset dialect. */
 				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  GUC_CONTEXT_CONFIG,
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
 			}
@@ -2389,7 +2389,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		}
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 

@@ -127,7 +127,7 @@ sp_prepare(PG_FUNCTION_ARGS)
 
 	old_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION,
 					  GUC_ACTION_SAVE,
 					  true,
@@ -152,7 +152,7 @@ sp_prepare(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", old_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION,
 						  GUC_ACTION_SAVE,
 						  true,
@@ -163,7 +163,7 @@ sp_prepare(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	set_config_option("babelfishpg_tsql.sql_dialect", old_dialect,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION,
 					  GUC_ACTION_SAVE,
 					  true,
@@ -444,13 +444,13 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 			 * TSQL Syntax.
 			 */
 			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  GUC_CONTEXT_CONFIG,
 							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 			if ((rc = SPI_execute(query, false, 1)) < 0)
 			{
 				sp_describe_first_result_set_inprogress = false;
 				set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-								  (superuser() ? PGC_SUSET : PGC_USERSET),
+								  GUC_CONTEXT_CONFIG,
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 			}
@@ -458,7 +458,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 			sp_describe_first_result_set_inprogress = false;
 
 			set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  GUC_CONTEXT_CONFIG,
 							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 			pfree(query);
 
@@ -1595,7 +1595,7 @@ sp_addrole(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
@@ -1686,13 +1686,13 @@ sp_addrole(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
 }
@@ -1752,7 +1752,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
@@ -1824,13 +1824,13 @@ sp_droprole(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
 }
@@ -1888,7 +1888,7 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
@@ -1993,13 +1993,13 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
 }
@@ -2059,7 +2059,7 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
@@ -2152,13 +2152,13 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
 }
@@ -2879,7 +2879,7 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 	{
 		/* 1. set dialect to TSQL */
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		/* 2. read the input arguments */
@@ -3018,13 +3018,13 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
 }

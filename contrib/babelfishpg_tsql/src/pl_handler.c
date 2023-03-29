@@ -3711,20 +3711,20 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 	{
 		/* this is BBF help function. use BBF truncation logic */
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		truncate_identifier(name, len, false);
 	}
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	PG_RETURN_TEXT_P(cstring_to_text(name));
