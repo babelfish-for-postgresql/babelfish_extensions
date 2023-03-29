@@ -65,7 +65,7 @@ jobs:
             export PATH=$HOME/psql/bin:$PATH
             make
             make install
-          elif [[ ${{matrix.branch}} != "BABEL_1_"* ]]; then
+          elif [[ true ]]; then
             cd ../..
             rm -rf pg_hint_plan
             git clone --depth 1 --branch PG15 https://github.com/ossc-db/pg_hint_plan.git
@@ -246,30 +246,17 @@ jobs:
           export PG_CONFIG=~/psql/bin/pg_config
           export PG_SRC=~/work/postgresql_modified_for_babelfish
           export cmake=$(which cmake)
-          cd contrib/babelfishpg_tsql
-          /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
-          /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
-          rm -rf coverage
-          /usr/bin/genhtml -q --legend -o coverage --title='PostgreSQL 15.2' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
-          touch coverage-html-stamp
-          cd ../babelfishpg_tds
-          /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
-          /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
-          rm -rf coverage
-          /usr/bin/genhtml -q --legend -o coverage --title='PostgreSQL 15.2' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
-          touch coverage-html-stamp
-          cd ../babelfishpg_common
-          /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
-          /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
-          rm -rf coverage
-          /usr/bin/genhtml -q --legend -o coverage --title='PostgreSQL 15.2' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
-          touch coverage-html-stamp
-          cd ../babelfishpg_money
-          /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
-          /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
-          rm -rf coverage
-          /usr/bin/genhtml -q --legend -o coverage --title='PostgreSQL 15.2' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
-          touch coverage-html-stamp
+          cd contrib
+          extensions=( babelfishpg_tsql babelfishpg_tds babelfishpg_common babelfishpg_money )
+          for (( i=0; i<4; i++ )); do
+            cd ${extensions[$i]}
+            /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
+            /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+            rm -rf coverage
+            /usr/bin/genhtml -q --legend -o coverage --title='${extensions[$i]}' --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
+            touch coverage-html-stamp
+            cd ..
+          done
         shell: bash
 
       - name: Summarize code coverage
