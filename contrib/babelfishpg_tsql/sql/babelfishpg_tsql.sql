@@ -708,7 +708,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         o.object_id         AS object_id,
         o.schema_id         AS schema_id,
         c.column_id         AS colid,
-        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN CAST(split_part(p.attoptions[1], '=', 2) AS sys.SYSNAME)
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN CAST(split_part(p.attoptions[1], '=', 2) AS sys.VARCHAR)
 			ELSE c.name COLLATE sys.database_default END AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
@@ -3029,7 +3029,7 @@ BEGIN
 	-- SELECT @count, @ = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 	-- SELECT @count = COUNT(*), @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 	-- WHERE s1.name = @schemaname AND o1.name = @subname GROUP BY o1.object_id;
-	-- TODO
+	-- TODO: github action failure checking
 	SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 	WHERE s1.name = @schemaname AND o1.name = @subname;
 	SELECT @count = COUNT(*) FROM #tempTable;
@@ -3094,3 +3094,12 @@ END;
 $$ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.context_info()
+RETURNS sys.VARBINARY(128)
+AS '{"version_num": "1", "typmod_array": ["128"], "original_probin": ""}',
+$$
+BEGIN
+    return sys.bbf_get_context_info()
+END;
+$$
+LANGUAGE pltsql STABLE;

@@ -1007,4 +1007,3 @@
 {
 	"pltsql_error_not_mapped", ERRCODE_PLTSQL_ERROR_NOT_MAPPED
 },
-

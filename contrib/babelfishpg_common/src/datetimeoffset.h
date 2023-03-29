@@ -25,8 +25,8 @@ extern void CheckDatetimeRange(const Timestamp time);
 extern void CheckDatetime2Range(const Timestamp time);
 typedef struct tsql_datetimeoffset
 {
-    int64 tsql_ts;
-    int16 tsql_tz;
+	int64		tsql_ts;
+	int16		tsql_tz;
 } tsql_datetimeoffset;
 
 /* fmgr interface macros */

@@ -233,7 +233,6 @@ sys-sql_modules-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
-BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
@@ -363,7 +362,6 @@ sys-sql_modules_before-14_7-or-15_2
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
 openjson
-Test-sp_babelfish_volatility
 BABEL_SCHEMATA
 datediff_internal_date-before-14_7-or-15_2
 BABEL_OBJECT_NAME

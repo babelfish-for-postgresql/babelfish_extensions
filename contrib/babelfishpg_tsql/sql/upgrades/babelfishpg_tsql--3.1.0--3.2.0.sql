@@ -421,8 +421,18 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysprocesses_deprecate
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_sessions_deprecated_in_3_2_0');
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'tsql_stat_get_activity_deprecated_in_3_2_0');
 
+CREATE OR REPLACE FUNCTION sys.bbf_get_context_info()
+RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql', 'bbf_get_context_info' LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.context_info()
-RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+RETURNS sys.VARBINARY(128)
+AS '{"version_num": "1", "typmod_array": ["128"], "original_probin": ""}',
+$$
+BEGIN
+    return sys.bbf_get_context_info()
+END;
+$$
+LANGUAGE pltsql STABLE;
 
 CREATE OR REPLACE PROCEDURE sys.bbf_set_context_info(IN context_info sys.VARBINARY(128))
 AS 'babelfishpg_tsql' LANGUAGE C;
@@ -844,6 +854,26 @@ FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dumm
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_principals_deprecated_3_2_0');
+
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        o.object_id         AS object_id,
+        o.schema_id         AS schema_id,
+        c.column_id         AS colid,
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN CAST(split_part(p.attoptions[1], '=', 2) AS sys.VARCHAR)
+			ELSE c.name COLLATE sys.database_default END AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c INNER JOIN
+        sys.all_objects o ON (c.object_id = o.object_id) JOIN
+        pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
+    WHERE
+        c.is_sparse = 0 AND p.attnum >= 0;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

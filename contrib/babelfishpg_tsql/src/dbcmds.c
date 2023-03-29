@@ -42,7 +42,7 @@
 #include "pltsql.h"
 
 static bool have_createdb_privilege(void);
-static List	*gen_createdb_subcmds(const char *schema,
+static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
 								  const char *db_owner,
 								  const char *guest,
@@ -52,14 +52,14 @@ static List *gen_dropdb_subcmds(const char *schema,
 								const char *dbo,
 								List *db_users,
 								const char *guest_schema);
-static Oid do_create_bbf_db(const char *dbname, List *options, const char *owner);
+static Oid	do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
 
 static bool
 have_createdb_privilege(void)
 {
-	bool		result = false;
+	bool result = false;
 	HeapTuple	utup;
 
 	/* Superusers can always do everything */
@@ -70,6 +70,7 @@ have_createdb_privilege(void)
 	if (HeapTupleIsValid(utup))
 	{
 		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
+
 		ReleaseSysCache(utup);
 	}
 	return result;
@@ -78,19 +79,19 @@ have_createdb_privilege(void)
 /*
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
-static List	*
+static List *
 gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest, const char *guest_schema)
 {
-	StringInfoData	query;
-	List			*res;
-	List			*logins = NIL;
-	Node			*stmt;
-	int				i = 0;
-	int				expected_stmt_num;
+	StringInfoData query;
+	List	   *res;
+	List	   *logins = NIL;
+	Node	   *stmt;
+	int			i = 0;
+	int			expected_stmt_num;
 
-	/* 
-	 * To avoid SQL injection, we generate statement parsetree with dummy values
-	 * and update them later
+	/*
+	 * To avoid SQL injection, we generate statement parsetree with dummy
+	 * values and update them later
 	 */
 	initStringInfo(&query);
 
@@ -131,7 +132,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, db_owner, NULL, NULL);
-	
+
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateRoleStmt(stmt, dbo, NULL, db_owner);
 
@@ -146,6 +147,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 		if (list_length(logins) > 0)
 		{
 			AccessPriv *tmp = makeNode(AccessPriv);
+
 			tmp->priv_name = pstrdup(guest);
 			tmp->cols = NIL;
 
@@ -185,20 +187,20 @@ gen_dropdb_subcmds(const char *schema,
 				   List *db_users,
 				   const char *guest_schema)
 {
-	StringInfoData		query;
-	List				*stmt_list;
-	ListCell			*elem;
-	Node				*stmt;
-	int					expected_stmts = 5;
-	int					i = 0;
+	StringInfoData query;
+	List	   *stmt_list;
+	ListCell   *elem;
+	Node	   *stmt;
+	int			expected_stmts = 5;
+	int			i = 0;
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
 	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
 	/* First drop guest user and custom users if they exist */
-	foreach (elem, db_users)
+	foreach(elem, db_users)
 	{
-		char *user_name = (char *) lfirst(elem);
+		char	   *user_name = (char *) lfirst(elem);
 
 		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
 		{
@@ -226,9 +228,9 @@ gen_dropdb_subcmds(const char *schema,
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropStmt(stmt, guest_schema);
 
-	foreach (elem, db_users)
+	foreach(elem, db_users)
 	{
-		char *user_name = (char *) lfirst(elem);
+		char	   *user_name = (char *) lfirst(elem);
 
 		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
 		{
@@ -254,16 +256,18 @@ gen_dropdb_subcmds(const char *schema,
 Oid
 create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 {
-	ListCell 	*option;
+	ListCell   *option;
 	const char *owner = GetUserNameFromId(GetSessionUserId(), false);
 
 	/* Check options */
 	foreach(option, stmt->options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
+
 		if (strcmp(defel->defname, "collate") == 0)
 		{
 			const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+
 			if (server_collation_name && strcmp(server_collation_name, defGetString(defel)))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -280,8 +284,8 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 	return do_create_bbf_db(stmt->dbname, stmt->options, owner);
 }
 
-/* 
- * To guard the rare case that we have used up all the possible sequence values 
+/*
+ * To guard the rare case that we have used up all the possible sequence values
  * and it wraps around, check if the next seq value is used by an existing DB.
  * Also, we reserved four IDs 1-4 for native databases, 1,2 and 4 are created when
  * initializing babelfishpg_tsql (master, tempdb, and msdb, respectively), 3 is just a placeholder that
@@ -290,11 +294,14 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
  * If we can't find one after looping the entire range of sequence values
  * (1 to 32767), we should bail out.
  */
-static int16 getAvailDbid(void) {
-	int16  dbid;
-	int16  start = 0;
+static int16
+getAvailDbid(void)
+{
+	int16		dbid;
+	int16		start = 0;
 
-	do {
+	do
+	{
 		dbid = DirectFunctionCall1(nextval, CStringGetTextDatum("sys.babelfish_db_seq"));
 		if (start == 0)
 			start = dbid;
@@ -317,13 +324,17 @@ static int16 getAvailDbid(void) {
 int16
 getDbidForLogicalDbRestore(Oid relid)
 {
-	const char	*prev_current_user;
+	const char *prev_current_user;
 	int16		dbid;
 
 	/* Get new DB ID. Need sysadmin to do that. */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
 	bbf_set_current_user("sysadmin");
-	/* For sysdatabases table we need to generate new dbid for the database we are currently restoring. */
+
+	/*
+	 * For sysdatabases table we need to generate new dbid for the database we
+	 * are currently restoring.
+	 */
 	if (relid == sysdatabases_oid)
 	{
 		if ((dbid = getAvailDbid()) == InvalidDbid)
@@ -331,15 +342,17 @@ getDbidForLogicalDbRestore(Oid relid)
 					(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
 					 errmsg("cannot find an available ID for new database.")));
 	}
+
 	/*
-	 * For all the other catalog tables which contain dbid column, get dbid using current value of the
-	 * babelfish_db_seq sequence. It is ok to fetch current value of the sequence here since we already
-	 * have generated new dbid while inserting into sysdatabases catalog.
+	 * For all the other catalog tables which contain dbid column, get dbid
+	 * using current value of the babelfish_db_seq sequence. It is ok to fetch
+	 * current value of the sequence here since we already have generated new
+	 * dbid while inserting into sysdatabases catalog.
 	 */
 	else
 	{
-		RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
-		Oid     	 seqid = RangeVarGetRelid(sequence, NoLock, false);
+		RangeVar   *sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
+		Oid			seqid = RangeVarGetRelid(sequence, NoLock, false);
 
 		dbid = DirectFunctionCall1(currval_oid, seqid);
 	}
@@ -351,14 +364,14 @@ getDbidForLogicalDbRestore(Oid relid)
 static Oid
 do_create_bbf_db(const char *dbname, List *options, const char *owner)
 {
-	int16       dbid;
-	const char	*prev_current_user;
+	int16		dbid;
+	const char *prev_current_user;
 
 	if (DbidIsValid(get_db_id(dbname)))
 		ereport(ERROR,
-			(errcode(ERRCODE_DUPLICATE_DATABASE),
-			errmsg("Database '%s' already exists. Choose a different database name.",
-					dbname)));
+				(errcode(ERRCODE_DUPLICATE_DATABASE),
+				 errmsg("Database '%s' already exists. Choose a different database name.",
+						dbname)));
 
 	/* Get new DB ID. Need sysadmin to do that. */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -377,23 +390,23 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 static void
 create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid)
 {
-	int16 		old_dbid;
-	char		*old_dbname;
-	Oid         datdba;
-	Datum		*new_record;
-	bool        *new_record_nulls;
+	int16		old_dbid;
+	char	   *old_dbname;
+	Oid			datdba;
+	Datum	   *new_record;
+	bool	   *new_record_nulls;
 	Relation	sysdatabase_rel;
 	HeapTuple	tuple;
-	List	  	*parsetree_list;
-	ListCell   	*parsetree_item;
-	const char  *dbo_scm;
-	const char 	*dbo_role;
-	const char  *db_owner_role;
-	const char	*guest_scm;
-	NameData 	default_collation;
-	const char  *guest;
-	const char	*prev_current_user;
-	int stmt_number = 0;
+	List	   *parsetree_list;
+	ListCell   *parsetree_item;
+	const char *dbo_scm;
+	const char *dbo_role;
+	const char *db_owner_role;
+	const char *guest_scm;
+	NameData	default_collation;
+	const char *guest;
+	const char *prev_current_user;
+	int			stmt_number = 0;
 
 	/* TODO: Extract options */
 
@@ -401,9 +414,10 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	if (!HeapTupleIsValid(tuple))
 	{
 		const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
+
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("OID corresponding to collation \"%s\" does not exist", server_collation_name)));
+				 errmsg("OID corresponding to collation \"%s\" does not exist", server_collation_name)));
 	}
 	default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
 	ReleaseSysCache(tuple);
@@ -412,10 +426,11 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	if (SINGLE_DB == get_migration_mode() && dbid > 4)
 	{
 		const char *user_dbname = get_one_user_db_name();
+
 		if (user_dbname)
-		 	ereport(ERROR,
- 				 (errcode(ERRCODE_DUPLICATE_DATABASE),
-                	errmsg("Only one user database allowed under single-db mode. User database \"%s\" already exists",
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_DATABASE),
+					 errmsg("Only one user database allowed under single-db mode. User database \"%s\" already exists",
 							user_dbname)));
 	}
 
@@ -447,13 +462,13 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	if (OidIsValid(get_role_oid(dbo_role, true)))
 		ereport(ERROR,
-			(errcode(ERRCODE_DUPLICATE_OBJECT),
-					errmsg("role \"%s\" already exists", dbo_role)));
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("role \"%s\" already exists", dbo_role)));
 
 	if (OidIsValid(get_role_oid(db_owner_role, true)))
 		ereport(ERROR,
-			(errcode(ERRCODE_DUPLICATE_OBJECT),
-					errmsg("role \"%s\" already exists", db_owner_role)));
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("role \"%s\" already exists", db_owner_role)));
 
 	/* For simplicity, do not allow bbf db name clides with pg dbnames */
 	/* TODO: add another check in orignal createdb */
@@ -496,7 +511,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
+	set_cur_db(dbid, dbname);	/* temporarily set current dbid as the new id */
 
 	PG_TRY();
 	{
@@ -514,7 +529,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			wrapper->stmt_location = 0;
 
 			stmt_number++;
-			if(guest && list_length(parsetree_list) == stmt_number)
+			if (guest && list_length(parsetree_list) == stmt_number)
 				wrapper->stmt_len = 19;
 			else
 				wrapper->stmt_len = 18;
@@ -539,7 +554,10 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true, true, false);
 		if (guest)
 		{
-			/* For master, tempdb and msdb databases, the guest user will be enabled by default */
+			/*
+			 * For master, tempdb and msdb databases, the guest user will be
+			 * enabled by default
+			 */
 			if (strcmp(dbname, "master") == 0 || strcmp(dbname, "tempdb") == 0 || strcmp(dbname, "msdb") == 0)
 				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, true, false);
 			else
@@ -562,22 +580,22 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 void
 drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 {
-	volatile Relation   sysdatabase_rel;
-	HeapTuple 			tuple;
-	Form_sysdatabases 	bbf_db;
-	int16				dbid;
-	const char        	*schema_name;
-	const char        	*db_owner_role;
-	const char        	*dbo_role;
-	const char        	*guest_schema_name;
-	List				*db_users_list;
-	List	   			*parsetree_list;
-	ListCell   			*parsetree_item;
-	const char			*prev_current_user;
+	volatile Relation sysdatabase_rel;
+	HeapTuple	tuple;
+	Form_sysdatabases bbf_db;
+	int16		dbid;
+	const char *schema_name;
+	const char *db_owner_role;
+	const char *dbo_role;
+	const char *guest_schema_name;
+	List	   *db_users_list;
+	List	   *parsetree_list;
+	ListCell   *parsetree_item;
+	const char *prev_current_user;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
-    ((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
-    (strlen(dbname) == 4 && (strncmp(dbname, "msdb", 4) == 0)))
+		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
+		(strlen(dbname) == 4 && (strncmp(dbname, "msdb", 4) == 0)))
 	{
 		if (!force_drop)
 			ereport(ERROR,
@@ -588,7 +606,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	/* Check if the DB exist */
 	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
 
-      tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
 
 	if (!HeapTupleIsValid(tuple))
 	{
@@ -625,15 +643,18 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 
 	PG_TRY();
 	{
-		Oid roleid = GetSessionUserId();
+		Oid			roleid = GetSessionUserId();
 		const char *login = GetUserNameFromId(roleid, false);
-		bool login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
-		
+		bool		login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+
 		if (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   dbname);
 
-		/* Get a session-level exclusive lock on the new logical db we are trying to drop */
+		/*
+		 * Get a session-level exclusive lock on the new logical db we are
+		 * trying to drop
+		 */
 		if (!TryLockLogicalDatabaseForSession(dbid, ExclusiveLock))
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
@@ -641,7 +662,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 							" in another session", dbname)));
 
 		CatalogTupleDelete(sysdatabase_rel, &tuple->t_self);
-        ReleaseSysCache(tuple);
+		ReleaseSysCache(tuple);
 
 		table_close(sysdatabase_rel, RowExclusiveLock);
 
@@ -714,45 +735,47 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 }
 
 PG_FUNCTION_INFO_V1(create_builtin_dbs);
-Datum create_builtin_dbs(PG_FUNCTION_ARGS)
-{	
-	const char  *sql_dialect_value_old;
-	const char  *tsql_dialect = "tsql";
-	const char  *sa_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+Datum
+create_builtin_dbs(PG_FUNCTION_ARGS)
+{
+	const char *sql_dialect_value_old;
+	const char *tsql_dialect = "tsql";
+	const char *sa_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		do_create_bbf_db("master", NULL, sa_name);
 		do_create_bbf_db("tempdb", NULL, sa_name);
 		do_create_bbf_db("msdb", NULL, sa_name);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	}
 	PG_END_TRY();
 	PG_RETURN_INT32(0);
 }
 
-// This function is only being used for the purposes of the upgrade script to add the msdb database
-// It was first added in babelfishpg_tsql--1.2.0--1.3.0.sql
+/*  This function is only being used for the purposes of the upgrade script to add the msdb database */
+/*  It was first added in babelfishpg_tsql--1.2.0--1.3.0.sql */
 PG_FUNCTION_INFO_V1(create_msdb_if_not_exists);
-Datum create_msdb_if_not_exists(PG_FUNCTION_ARGS)
-{	
-	const char  *sql_dialect_value_old;
-	const char  *tsql_dialect = "tsql";
-	const char  *sa_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+Datum
+create_msdb_if_not_exists(PG_FUNCTION_ARGS)
+{
+	const char *sql_dialect_value_old;
+	const char *tsql_dialect = "tsql";
+	const char *sa_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	if (get_db_name(4) != NULL || DbidIsValid(get_db_id("msdb")))
 		PG_RETURN_INT32(0);
@@ -762,18 +785,18 @@ Datum create_msdb_if_not_exists(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-				  			(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		create_bbf_db_internal("msdb", NULL, sa_name, 4);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-				  			(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-				  			(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	}
 	PG_END_TRY();
@@ -782,24 +805,25 @@ Datum create_msdb_if_not_exists(PG_FUNCTION_ARGS)
 
 #define DROP_DB_BATCH_SIZE 32
 PG_FUNCTION_INFO_V1(drop_all_dbs);
-Datum drop_all_dbs(PG_FUNCTION_ARGS)
+Datum
+drop_all_dbs(PG_FUNCTION_ARGS)
 {
-	Relation		sysdatabase_rel;
-	TableScanDesc 	scan;
-	HeapTuple 		tuple;
-	char*          	dbnames[DROP_DB_BATCH_SIZE];
-	bool			is_null;
-	bool            all_db_dropped = false;
-	const char  *sql_dialect_value_old;
-	const char  *tsql_dialect = "tsql";
+	Relation	sysdatabase_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	char	   *dbnames[DROP_DB_BATCH_SIZE];
+	bool		is_null;
+	bool		all_db_dropped = false;
+	const char *sql_dialect_value_old;
+	const char *tsql_dialect = "tsql";
 
 	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		/* drop built-in DBs */
 		drop_bbf_db("master", false, true);
 		drop_bbf_db("tempdb", false, true);
@@ -808,16 +832,18 @@ Datum drop_all_dbs(PG_FUNCTION_ARGS)
 		/* drop user created DBs */
 		while (!all_db_dropped)
 		{
-			int i = 0, j;
+			int			i = 0,
+						j;
 
 			sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
 			scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
 			tuple = heap_getnext(scan, ForwardScanDirection);
 
-			while (HeapTupleIsValid(tuple) && i < DROP_DB_BATCH_SIZE) 
+			while (HeapTupleIsValid(tuple) && i < DROP_DB_BATCH_SIZE)
 			{
-				Datum name = heap_getattr(tuple, Anum_sysdatabaese_name,
-										  sysdatabase_rel->rd_att, &is_null);
+				Datum		name = heap_getattr(tuple, Anum_sysdatabaese_name,
+												sysdatabase_rel->rd_att, &is_null);
+
 				dbnames[i] = TextDatumGetCString(name);
 				i++;
 
@@ -825,7 +851,7 @@ Datum drop_all_dbs(PG_FUNCTION_ARGS)
 			}
 			table_endscan(scan);
 			table_close(sysdatabase_rel, RowExclusiveLock);
-			
+
 			for (j = 0; j < i; j++)
 				drop_bbf_db(dbnames[j], false, true);
 
@@ -833,14 +859,14 @@ Datum drop_all_dbs(PG_FUNCTION_ARGS)
 				all_db_dropped = true;
 		}
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_CATCH();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		PG_RE_THROW();
 	}
@@ -852,11 +878,11 @@ Datum drop_all_dbs(PG_FUNCTION_ARGS)
 List *
 grant_guest_to_logins(StringInfoData *query)
 {
-	Relation		login_rel;
-	TableScanDesc	scan;
-	HeapTuple		tuple;
-	bool			is_null;
-	List			*logins = NIL;
+	Relation	login_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+	List	   *logins = NIL;
 
 	login_rel = table_open(get_authid_login_ext_oid(), AccessShareLock);
 	scan = table_beginscan_catalog(login_rel, 0, NULL);
@@ -864,16 +890,17 @@ grant_guest_to_logins(StringInfoData *query)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum rolname = heap_getattr(tuple,
-									 LOGIN_EXT_ROLNAME+1,
-									 login_rel->rd_att,
-									 &is_null);
+		Datum		rolname = heap_getattr(tuple,
+										   LOGIN_EXT_ROLNAME + 1,
+										   login_rel->rd_att,
+										   &is_null);
 		const char *name = NameStr(*(DatumGetName(rolname)));
-		Oid roleid = get_role_oid(name, false);
+		Oid			roleid = get_role_oid(name, false);
 
 		if (!role_is_sa(roleid))
 		{
-			RoleSpec *tmp = makeNode(RoleSpec);
+			RoleSpec   *tmp = makeNode(RoleSpec);
+
 			tmp->roletype = ROLESPEC_CSTRING;
 			tmp->location = -1;
 			tmp->rolename = pstrdup(name);
@@ -893,21 +920,21 @@ grant_guest_to_logins(StringInfoData *query)
 static void
 drop_related_bbf_namespace_entries(int16 dbid)
 {
-	Relation		namespace_rel;
-	AttrNumber		attnum;
-	TableScanDesc	scan;
-	ScanKeyData		key[1];
-	HeapTuple		tuple;
+	Relation	namespace_rel;
+	AttrNumber	attnum;
+	TableScanDesc scan;
+	ScanKeyData key[1];
+	HeapTuple	tuple;
 
 	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
 	attnum = (AttrNumber) attnameAttNum(namespace_rel, "dbid", false);
 	if (attnum == InvalidAttrNumber)
-		ereport(ERROR, 
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("column \"dbid\" of relation \"%s\" does not exist",
 						RelationGetRelationName(namespace_rel))));
 
-	ScanKeyInit(&key[0], 
+	ScanKeyInit(&key[0],
 				attnum,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
@@ -924,23 +951,23 @@ drop_related_bbf_namespace_entries(int16 dbid)
 	table_close(namespace_rel, RowExclusiveLock);
 }
 
-/* 
+/*
  * Helper function to get the owner from a given database name
  * Caller is responsible for validating that the given database exists
  */
 const char *
 get_owner_of_db(const char *dbname)
 {
-	char				*owner = NULL;
-	HeapTuple 			tuple;
-	Form_sysdatabases 	sysdb;
+	char	   *owner = NULL;
+	HeapTuple	tuple;
+	Form_sysdatabases sysdb;
 
 	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
 
 	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR, 
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				errmsg("database \"%s\" does not exist", dbname)));
+				 errmsg("database \"%s\" does not exist", dbname)));
 
 	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
 	owner = NameStr(sysdb->owner);
@@ -956,40 +983,43 @@ create_schema_if_not_exists(const uint16 dbid,
 							const char *schemaname,
 							const char *owner_role)
 {
-	StringInfoData  query;
-	List			*parsetree_list;
-	Oid				datdba;
-	const char  	*prev_current_user;
-	uint16			old_dbid;
-	const char		*old_dbname, *phys_schema_name, *phys_role;
+	StringInfoData query;
+	List	   *parsetree_list;
+	Oid			datdba;
+	const char *prev_current_user;
+	uint16		old_dbid;
+	const char *old_dbname,
+			   *phys_schema_name,
+			   *phys_role;
 
 	/*
-	* During upgrade, the migration mode is reset to single-db so
-	* we cannot call get_physical_user_name() directly.
-	* Detect whether the original migration was single-db or multi-db.
-	*/
+	 * During upgrade, the migration mode is reset to single-db so we cannot
+	 * call get_physical_user_name() directly. Detect whether the original
+	 * migration was single-db or multi-db.
+	 */
 	MigrationMode baseline_mode = is_user_database_singledb(dbname) ? SINGLE_DB : MULTI_DB;
+
 	phys_schema_name = get_physical_schema_name_by_mode((char *) dbname, schemaname, baseline_mode);
 
 	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(phys_schema_name)))
 	{
 		ereport(LOG,
-			(errcode(ERRCODE_DUPLICATE_SCHEMA),
-					errmsg("schema \"%s\" already exists, skipping", phys_schema_name)));
+				(errcode(ERRCODE_DUPLICATE_SCHEMA),
+				 errmsg("schema \"%s\" already exists, skipping", phys_schema_name)));
 		return;
 	}
 
 	/*
-	* guest role prepends dbname regardless if single-db or multi-db.
-	* If for some reason guest role does not exist, then that is a bigger problem.
-	* We skip creating the guest schema entirely instead of crashing though.
-	*/
+	 * guest role prepends dbname regardless if single-db or multi-db. If for
+	 * some reason guest role does not exist, then that is a bigger problem.
+	 * We skip creating the guest schema entirely instead of crashing though.
+	 */
 	phys_role = get_physical_user_name((char *) dbname, (char *) owner_role);
 	if (!OidIsValid(get_role_oid(phys_role, true)))
 	{
 		ereport(LOG,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("role \"%s\" does not exist", phys_role)));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("role \"%s\" does not exist", phys_role)));
 		return;
 	}
 
@@ -1013,7 +1043,8 @@ create_schema_if_not_exists(const uint16 dbid,
 	PG_TRY();
 	{
 		PlannedStmt *wrapper;
-		Node *stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
+		Node	   *stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
+
 		update_CreateSchemaStmt(stmt, phys_schema_name, phys_role);
 
 		wrapper = makeNode(PlannedStmt);
@@ -1024,13 +1055,13 @@ create_schema_if_not_exists(const uint16 dbid,
 		wrapper->stmt_len = 0;
 
 		ProcessUtility(wrapper,
-					query.data,
-					false,
-					PROCESS_UTILITY_SUBCOMMAND,
-					NULL,
-					NULL,
-					None_Receiver,
-					NULL);
+					   query.data,
+					   false,
+					   PROCESS_UTILITY_SUBCOMMAND,
+					   NULL,
+					   NULL,
+					   None_Receiver,
+					   NULL);
 
 		/* make sure later steps can see the object created here */
 		CommandCounterIncrement();
@@ -1052,38 +1083,39 @@ create_schema_if_not_exists(const uint16 dbid,
 * the guest schema for each database if the database does not have the guest schema yet.
 */
 PG_FUNCTION_INFO_V1(create_guest_schema_for_all_dbs);
-Datum create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
+Datum
+create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 {
-	Relation		sysdatabase_rel;
-	TableScanDesc 	scan;
-	HeapTuple 		tuple;
-	const char		*sql_dialect_value_old;
-	const char		*tsql_dialect = "tsql";
-	Form_sysdatabases   bbf_db;
-	const char		*dbname;
-	bool creating_extension_backup = creating_extension;
+	Relation	sysdatabase_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	const char *sql_dialect_value_old;
+	const char *tsql_dialect = "tsql";
+	Form_sysdatabases bbf_db;
+	const char *dbname;
+	bool		creating_extension_backup = creating_extension;
 
 	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		/*
-		* Since this is part of upgrade script, PG assumes we would like to set
-		* the babelfish extension depend on this new schema. This is not true
-		* so we tell PG not to set any dependency for us.
-		* Check recordDependencyOnCurrentExtension() for more information.
-		*/
+		 * Since this is part of upgrade script, PG assumes we would like to
+		 * set the babelfish extension depend on this new schema. This is not
+		 * true so we tell PG not to set any dependency for us. Check
+		 * recordDependencyOnCurrentExtension() for more information.
+		 */
 		creating_extension = false;
 
 		sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
 		scan = table_beginscan_catalog(sysdatabase_rel, 0, NULL);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 
-		while (HeapTupleIsValid(tuple)) 
+		while (HeapTupleIsValid(tuple))
 		{
 			bbf_db = (Form_sysdatabases) GETSTRUCT(tuple);
 			dbname = text_to_cstring(&(bbf_db->name));
@@ -1097,15 +1129,15 @@ Datum create_guest_schema_for_all_dbs(PG_FUNCTION_ARGS)
 
 		creating_extension = creating_extension_backup;
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_FINALLY();
 	{
 		creating_extension = creating_extension_backup;
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-							(superuser() ? PGC_SUSET : PGC_USERSET),
-				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
 

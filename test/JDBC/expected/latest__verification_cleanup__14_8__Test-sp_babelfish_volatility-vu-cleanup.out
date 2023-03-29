@@ -1,0 +1,65 @@
+drop function test_sp_babelfish_volatility_f1
+go
+
+drop function test_sp_babelfish_volatility_schema1.test_sp_babelfish_volatility_f1
+go
+
+drop schema test_sp_babelfish_volatility_schema1
+go
+
+drop function [test_sp_babelfish_volatility_schema1 with .dot and spaces].test_sp_babelfish_volatility_f1
+go
+
+drop schema [test_sp_babelfish_volatility_schema1 with .dot and spaces]
+go
+
+use test_sp_babelfish_volatility_db1
+go
+
+drop function test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1
+go
+
+drop function test_sp_babelfish_volatility_f2
+go
+
+drop function test_sp_babelfish_volatility_duplicate()
+go
+
+drop function test_sp_babelfish_volatility_duplicate(@b int)
+go
+
+drop schema test_sp_babelfish_volatility_schema2
+go
+
+drop function test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa;
+go
+
+drop function test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa.test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa;
+go
+
+drop schema test_sp_babelfish_volatility_schema_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaaaa;
+go
+
+drop user test_sp_babelfish_volatility_user
+go
+
+drop login test_sp_babelfish_volatility_login_2
+go
+
+use master
+go
+
+drop database test_sp_babelfish_volatility_db1
+go
+
+drop login test_sp_babelfish_volatility_login
+go
+
+drop table test_bbf_vol_t1
+go
+
+drop function test_bbf_vol_f1
+go
+
+drop function [test_bbf_vol_f1;drop table test_bbf_vol_t1;]
+go
