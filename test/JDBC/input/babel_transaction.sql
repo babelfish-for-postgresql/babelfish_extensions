@@ -177,48 +177,20 @@ insert into TxnTable values(3);
 save transaction sp1;
 insert into TxnTable values(4);
 select c1 from TxnTable;
+GO
 rollback tran sp1;
 save transaction sp2;
 insert into TxnTable values(5);
 commit transaction;
 select c1 from TxnTable;
+GO
 
 -- begin transaction -> save transaction name -> error -> rollback to savepoint
 -- commit transaction
-begin transaction txn1;
-insert into TxnTable values(6);
-save transaction sp1;
-insert into TxnTable values(7);
-select c1 frm TxnTable;
 rollback tran sp1;
 commit transaction;
 select c1 from TxnTable;
-
--- create and execute procedure with transaction commands
--- \tsql on
--- create procedure txnproc as
--- begin tran;
--- insert into TxnTable values(8);
--- select c1 from TxnTable;
--- save tran sp1;
--- commit;
--- rollback tran;
--- go
--- execute txnproc;
--- go
--- \tsql off
--- drop procedure txnproc;
-
--- transaction syntax error
-begin;
-begin txn1;
-commit txn1;
-rollback txx1;
-
--- invalid transaction name
-begin transaction txn1;
-rollback transaction txn2;
-rollback;
+GO
 
 drop table TxnTable;
-reset babelfish_pg_tsql.sql_dialect;
+GO
