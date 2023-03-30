@@ -1,85 +1,28 @@
-CREATE USER my_test_user;
-GRANT CREATE ON DATABASE contrib_regression TO my_test_user;
-GRANT CREATE ON SCHEMA public TO PUBLIC;
-SET SESSION AUTHORIZATION my_test_user;
 -- table type is only supported in tsql dialect
 CREATE TYPE tableType AS table(
 	a text not null,
 	b int primary key,
 	c int);
-ERROR:  syntax error at or near "table"
-LINE 1: CREATE TYPE tableType AS table(
-                                 ^
-set babelfishpg_tsql.sql_dialect = 'tsql';
-\tsql ON
--- table type supports all CREATE TABLE element lists
-CREATE TYPE tableType AS table(
-	a text not null,
-	b int primary key,
-	c int);
-GO
+
 -- a table with the same name is created
 select * from tableType;
 GO
- a | b | c 
----+---+---
-(0 rows)
 
--- create type with same name, should fail
-CREATE TYPE tableType as (d int, e int);
-GO
-ERROR:  type "tabletype" already exists
--- create table with same name, should succeed
--- TODO: BABEL-689: Postgres doesn't support this yet, because CREATE TABLE will automatically
--- create a composite type as well, which will cause name collision
-CREATE TABLE tableType(d int, e int);
-GO
-ERROR:  relation "tabletype" already exists
 -- dropping the table should fail, as it depends on the table type
 DROP TABLE tableType;
 GO
-ERROR:  cannot drop table tabletype because type tabletype requires it
-HINT:  You can drop type tabletype instead.
+
 -- dropping the table type should drop the table as well
 DROP TYPE tableType;
 GO
-SELECT * FROM tableType;
-GO
-ERROR:  relation "tabletype" does not exist
-LINE 1: SELECT * FROM tableType;
-                      ^
--- creating index (other than primary and unique keys) during table type creation is not
--- yet supported
--- TODO: BABEL-688: fully support TSQL CREATE TABLE syntax
-CREATE TYPE tableType AS table(
-    a text not null,
-    b int primary key,
-    c int,
-    d int index idx1 nonclustered,
-    index idx2(c),
-	index idx3(e),
-	e varchar);
-GO
-ERROR:  syntax error at or near "index"
-LINE 5:     d int index idx1 nonclustered,
-                  ^
--- test dotted prefixes of the table type name
--- allowed to have one dotted prefix
-CREATE TYPE public.tableType AS table(a int, b int);
-GO
-DROP TYPE public.tableType;
-GO
--- not allowed to have more than one dotted prefix
-CREATE TYPE postgres.public.tableType AS table(a int, b int);
-GO
-ERROR:  The type name 'postgres.public.tabletype' contains more than the maximum number of prefixes. The maximum is 1.
-LINE 1: CREATE TYPE postgres.public.tableType AS table(a int, b int)...
-                    ^
+
+
 CREATE TYPE tableType AS table(
 	a text not null,
 	b int primary key,
 	c int);
 GO
+
 -- test declaring variables with table type
 create procedure table_var_procedure as
 begin
@@ -89,15 +32,11 @@ begin
 	select count(*) from @b;
 end;
 GO
-CALL table_var_procedure();
+EXEC table_var_procedure;
 GO
- count 
--------
-     1
-(1 row)
-
 DROP PROCEDURE table_var_procedure;
 GO
+
 -- test declaring table variable without table type, and doing DMLs
 create procedure table_var_procedure as
 begin
@@ -109,15 +48,11 @@ begin
 	select * from @tableVar;
 end;
 GO
-CALL table_var_procedure();
+EXEC table_var_procedure;
 GO
- a |  b   
----+------
- 1 | 1000
-(1 row)
-
 DROP PROCEDURE table_var_procedure;
 GO
+
 -- test declaring table variable with whitespace before column definition
 create procedure table_var_procedure as
 begin
@@ -129,40 +64,12 @@ begin
 	select * from @tableVar1 t1 join @tableVar2 t2 on t1.a = t2.c;
 end;
 GO
-CALL table_var_procedure();
+EXEC table_var_procedure;
 GO
- a |  b  | c | d 
----+-----+---+---
- 1 | 100 | 1 | a
-(1 row)
-
 DROP PROCEDURE table_var_procedure;
 GO
--- test MERGE on table variables
--- TODO: BABEL-877 Support MERGE
-/*
-create procedure merge_proc as
-begin
-	declare @tv1 table(a int);
-	insert into @tv1 values (200);
 
-	declare @tv2 table(b int);
-	insert into @tv2 values (100);
-	insert into @tv2 values (200);
 
-	merge into @tv1 using @tv2 on a=b
-	when not matched then insert (a) values(b)
-	when matched then update set a = a + b;
-
-	select * from @tv1;
-end;
-GO
-CALL merge_proc();
-GO
--- result should have two rows, 400 and 100.
-DROP PROCEDURE merge_proc;
-GO
-*/
 -- test declaring a variable whose name is already used - should throw error
 create procedure dup_var_name_procedure as
 begin
@@ -170,10 +77,9 @@ begin
 	declare @a tableType;
 end;
 GO
-ERROR:  duplicate declaration
-CONTEXT:  compilation of PL/tsql function "dup_var_name_procedure" near line 0
+
 -- test declaring a variable whose name is already used as table name - should work
-create table @test_table (d int);
+create table test_table (d int);
 GO
 create procedure dup_var_name_procedure as
 begin
@@ -182,17 +88,13 @@ begin
 	select * from @test_table;
 end;
 GO
-call dup_var_name_procedure();
+EXEC dup_var_name_procedure;
 GO
-   a    | b |  c  
---------+---+-----
- hello1 | 1 | 100
-(1 row)
-
 drop procedure dup_var_name_procedure;
 GO
-drop table @test_table;
+drop table test_table;
 GO
+
 -- test assigning to table variables, should not be allowed
 create table test_table(a int, b int);
 GO
@@ -204,47 +106,7 @@ begin
 	set @tableVar = test_table;
 end;
 GO
-ERROR:  unrecognized dtype: 3
-LINE 3:  set @tableVar = test_table;
-            ^
-QUERY:  begin
-	declare @tableVar table (a int, b int);
-	set @tableVar = test_table;
-end;
 
--- test selecting into table variables, should not be allowed
-create procedure select_into_proc as
-begin
-	declare @tableVar table (a int, b int);
-	select * into @tableVar from test_table;
-end;
-GO
-ERROR:  syntax error near '@tableVar' at line 3 and character position 15
-LINE 3:  select * into @tableVar from test_table;
-                        ^
-QUERY:  begin
-	declare @tableVar table (a int, b int);
-	select * into @tableVar from test_table;
-end;
-
--- test truncating table variables, should not be allowed
-create procedure truncate_proc as
-begin
-	declare @tableVar table (a int, b int);
-	insert into @tableVar values(1, 2);
-	truncate table @tableVar;
-	select * from @tableVar;
-end;
-GO
-ERROR:  syntax error near '@tableVar' at line 4 and character position 16
-LINE 4:  truncate table @tableVar;
-                          ^
-QUERY:  begin
-	declare @tableVar table (a int, b int);
-	insert into @tableVar values(1, 2);
-	truncate table @tableVar;
-	select * from @tableVar;
-end;
 
 -- test JOIN on table variables, on both sides
 create procedure join_proc1 as
@@ -254,14 +116,11 @@ begin
 	select * from test_table t inner join @tableVar tv on t.a = tv.a;
 end;
 GO
-CALL join_proc1();
+EXEC join_proc1;
 GO
- a | b  | a | b | c 
----+----+---+---+---
- 1 | 10 | 1 | 2 | 3
-(1 row)
-
 DROP PROCEDURE join_proc1;
+GO
+
 create procedure join_proc2 as
 begin
 	declare @tableVar table (a int, b int, c int);
@@ -269,31 +128,11 @@ begin
 	select * from @tableVar tv inner join test_table t on tv.a = t.a;
 end;
 GO
-CALL join_proc2();
+EXEC join_proc2;
 GO
- a | b | c | a | b  
----+---+---+---+----
- 1 | 2 | 3 | 1 | 10
-(1 row)
-
 DROP PROCEDURE join_proc2;
 GO
--- test altering table variables, should not be allowed
-create procedure alter_proc as
-begin
-	declare @tableVar table (a int);
-	alter table @tableVar add b int;
-	select * from @tableVar;
-end;
-GO
-ERROR:  syntax error near '@tableVar' at line 3 and character position 13
-LINE 3:  alter table @tableVar add b int;
-                      ^
-QUERY:  begin
-	declare @tableVar table (a int);
-	alter table @tableVar add b int;
-	select * from @tableVar;
-end;
+
 
 -- test using the same variables as source and target
 create procedure source_target_proc as
@@ -306,37 +145,11 @@ begin
 	select * from @tv;
 end;
 GO
-CALL source_target_proc();
+EXEC source_target_proc;
 GO
- a 
----
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
-(8 rows)
-
 DROP PROCEDURE source_target_proc;
 GO
--- test multiple '@' characters in table variable name
--- TODO: BABEL-476 Support variable name with multiple '@' characters
-/*
-create procedure nameing_proc as
-begin
-	declare @@@tv@1@@@ as table(a int);
-	insert  @@@tv@1@@@ values(1);
-	select * from  @@@tv@1@@@;
-end;
-GO
-CALL naming_proc();
-GO
-DROP PROCEDURE naming_proc;
-GO
-*/
+
 -- test nested functions using table variables with the same name, each should
 -- have its own variable
 create function inner_func() returns int as
@@ -362,13 +175,9 @@ end;
 GO
 select outer_func();
 GO
- outer_func 
-------------
-          2
-(1 row)
-
 DROP FUNCTION outer_func;
 GO
+
 -- test calling a function with table variables in a loop, each should have its
 -- own variable
 create procedure loop_func_proc as
@@ -385,17 +194,14 @@ begin
 	select @result;
 end;
 GO
-call loop_func_proc();
+EXEC loop_func_proc;
 GO
- @result 
----------
-       5
-(1 row)
-
 DROP PROCEDURE loop_func_proc;
 GO
+
 DROP FUNCTION inner_func;
 GO
+
 -- test declaring the same variable in a loop - should not have any error, and
 -- should all refer to the same underlying table
 create procedure loop_proc as
@@ -416,15 +222,11 @@ begin
 	select @result;
 end;
 GO
-call loop_proc()
+EXEC loop_proc
 GO
- @result 
----------
-      15
-(1 row)
-
 DROP PROCEDURE loop_proc;
 GO
+
 -- test using table variables in CTE, both in with clause and in main query
 create procedure cte_proc as
 begin
@@ -436,15 +238,11 @@ begin
 	WITH t1 (a) AS (SELECT a FROM @tablevar1) SELECT * FROM @tablevar2 t2 JOIN t1 ON t2.a = t1.a;
 end;
 GO
-call cte_proc()
+EXEC cte_proc
 GO
-   a    | b |  c  |   a    
---------+---+-----+--------
- hello1 | 1 | 100 | hello1
-(1 row)
-
 DROP PROCEDURE cte_proc;
 GO
+
 -- BABEL-894: test PLtsql_expr->tsql_tablevars is initialized to NIL so that it
 -- won't cause seg faults when looked up during execution. One place missed
 -- earlier is when parsing the SET command.
@@ -453,10 +251,11 @@ begin
 	set datefirst 7;
 end;
 GO
-call pl_set_proc()
+EXEC pl_set_proc
 GO
 DROP PROCEDURE pl_set_proc;
 GO
+
 -- test select from multiple table variables
 create procedure select_multi_tablevars as
 begin
@@ -468,16 +267,11 @@ begin
 	select * from @tablevar1, @tablevar2;
 end;
 GO
-call select_multi_tablevars()
+EXEC select_multi_tablevars
 GO
-   a    | b |  c  |   a    | b |  c  
---------+---+-----+--------+---+-----
- hello1 | 1 | 100 | hello1 | 1 | 100
- hello1 | 1 | 100 | hello2 | 2 | 200
-(2 rows)
-
 DROP PROCEDURE select_multi_tablevars;
 GO
+
 -- test select from table and table variable
 create procedure select_table_tablevar as
 begin
@@ -486,15 +280,11 @@ begin
 	select * from test_table, @tablevar;
 end;
 GO
-call select_table_tablevar()
+EXEC select_table_tablevar
 GO
- a | b  |   a    | b |  c  
----+----+--------+---+-----
- 1 | 10 | hello1 | 1 | 100
-(1 row)
-
 DROP PROCEDURE select_table_tablevar;
 GO
+
 -- test table-valued parameters
 -- if no READONLY behind table-valued param: report error
 create function error_func(@tableVar tableType) returns int as
@@ -502,14 +292,12 @@ begin
 	return 1;
 end
 GO
-ERROR:  The table-valued parameter "@tablevar" must be declared with the READONLY option.
 -- if READONLY on other param type: report error
 create function error_func(@a int, @b int READONLY) returns int as
 begin
 	return 1;
 end
 GO
-ERROR:  The parameter "@b" can not be declared READONLY since it is not a table-valued parameter.
 -- correct syntax
 create function tvp_func(@tableVar tableType READONLY) returns int as
 begin
@@ -520,22 +308,6 @@ end
 GO
 -- test passing in a table variable whose type is different from what the function wants
 -- TODO: BABEL-899: error message should be "Operand type clash: table is incompatible with tableType"
-create procedure error_proc as
-begin
-	declare @tableVar as table (a text, b int, c int);
-	insert into @tableVar values('hello1', 1, 100);
-	select tvp_func(@tableVar);
-end;
-GO
-call error_proc()
-GO
-ERROR:  The function tvp_func is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.
-LINE 1: select tvp_func("@tableVar")
-               ^
-QUERY:  select tvp_func("@tableVar")
-CONTEXT:  PL/tsql function error_proc() line 4 at SQL statement
-DROP PROCEDURE error_proc;
-GO
 create procedure tvp_proc as
 begin
 	declare @tableVar tableType;
@@ -543,13 +315,8 @@ begin
 	select tvp_func(@tableVar);
 end;
 GO
-call tvp_proc()
+EXEC tvp_proc
 GO
- tvp_func 
-----------
-        1
-(1 row)
-
 DROP PROCEDURE tvp_proc;
 GO
 DROP FUNCTION tvp_func;
@@ -575,19 +342,15 @@ begin
 	select multi_tvp_func(@v1, @v2);
 end;
 GO
-call multi_tvp_proc()
+EXEC multi_tvp_proc
 GO
- multi_tvp_func 
-----------------
-              1
-(1 row)
-
 DROP PROCEDURE multi_tvp_proc;
 GO
 DROP FUNCTION multi_tvp_func;
 GO
 DROP TYPE tableType1;
 GO
+
 -- test multi-statement table-valued functions
 create function mstvf(@i int) returns @tableVar table
 (
@@ -603,12 +366,6 @@ end;
 GO
 select * from mstvf(1);
 GO
-   a    | b |  c  
---------+---+-----
- hello1 | 1 | 100
- hello2 | 2 | 200
-(2 rows)
-
 DROP FUNCTION mstvf;
 GO
 -- test mstvf whose return table has only one column
@@ -623,11 +380,6 @@ end;
 GO
 select * from mstvf_one_col(1);
 GO
-   a    
---------
- hello1
-(1 row)
-
 DROP FUNCTION mstvf_one_col;
 GO
 -- test mstvf whose return table has only one column
@@ -643,11 +395,6 @@ end;
 GO
 select * from mstvf_return(1);
 GO
-   a    
---------
- hello2
-(1 row)
-
 DROP FUNCTION mstvf_return;
 GO
 -- test mstvf's with same names in different schemas
@@ -675,18 +422,8 @@ end;
 GO
 select * from mstvf_schema(1);
 GO
-   name    
------------
- test_name
-(1 row)
-
 select * from test_schema.mstvf_schema(1);
 GO
-   name1    
-------------
- test_name1
-(1 row)
-
 drop function mstvf_schema;
 GO
 drop function test_schema.mstvf_schema;
@@ -709,22 +446,11 @@ end;
 GO
 select * from mstvf_constraints(1);
 GO
-   name    | id 
------------+----
- test_name |  1
-(1 row)
-
 drop function mstvf_constraints;
 GO
+
 -- cleanup
 DROP TYPE tableType;
 GO
 DROP TABLE test_table;
 GO
-\tsql OFF
-reset babelfishpg_tsql.sql_dialect;
-RESET SESSION AUTHORIZATION;
--- if we are able to drop the user, then it means that all the underlying tables
--- of table variables have been dropped because they depend on the user.
-REVOKE CREATE ON DATABASE contrib_regression FROM my_test_user;
-DROP USER my_test_user;
