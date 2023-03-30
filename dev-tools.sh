@@ -51,6 +51,15 @@ if [ ! $1 ]; then
     echo ""
     echo "  dumprestore SOURCE_WS [TARGET_WS]"
     echo "      dump SOURCE_WS using pg_dump and restore it on TARGET_WS"
+    echo ""
+    echo "  initpg_coverage [TARGET_WS]"
+    echo "      same as initpg but with --enable-coverage flag to generate code coverage"
+    echo ""
+    echo "  build_coverage [TARGET_WS]"
+    echo "      generate code coverage HTML report for all extensions"
+    echo ""
+    echo "  sum_coverage [TARGET_WS]"
+    echo "      summarize code coverage"
     exit 0
 fi
 
@@ -213,6 +222,60 @@ restore() {
     fi
 }
 
+init_lcov(){
+    cd $1
+    if [ ! -d "./lcov" ]; then
+        git clone --depth 1 --branch v1.16 https://github.com/linux-test-project/lcov.git
+    fi
+    cd lcov
+    sudo make PREFIX=/usr install
+    export PATH=$PATH:/usr/bin/lcov
+    export PATH=$PATH:/usr/bin/gcov
+    export PATH=$PATH:/usr/bin/genhtml
+}
+
+init_pg_coverage(){
+    init_lcov $1
+    cd $1/postgresql_modified_for_babelfish
+    ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-coverage --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+    make -j 4
+    make install
+    cd contrib && make && sudo make install
+    sudo cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" $2/postgres/lib/
+    init_pghint $1 $2
+}
+
+build_extension_coverage(){
+    cd $1/babelfish_extensions/contrib/$2
+    lcov --gcov-tool gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
+    lcov --gcov-tool gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+    rm -rf coverage
+    genhtml -q --legend -o coverage --title=${2} --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
+    touch coverage-html-stamp
+
+}
+
+build_coverage(){
+    build_extension_coverage $1 'babelfishpg_money'
+    build_extension_coverage $1 'babelfishpg_common'
+    build_extension_coverage $1 'babelfishpg_tds'
+    build_extension_coverage $1 'babelfishpg_tsql'
+    echo ""
+    echo "  code coverage report generation completed"
+    echo "  run './dev-tools.sh sum_coverage' to generate summarized code coverage for all extensions"
+    echo "  HTML code coverage report for each extension is located as follows -"
+    echo "      babelfishpg_money:  $TARGET_WS/babelfish_extensions/contrib/babelfishpg_money/coverage/index.html"
+    echo "      babelfishpg_common: $TARGET_WS/babelfish_extensions/contrib/babelfishpg_common/coverage/index.html"
+    echo "      babelfishpg_tds:    $TARGET_WS/babelfish_extensions/contrib/babelfishpg_tds/coverage/index.html"
+    echo "      babelfishpg_tsql:   $TARGET_WS/babelfish_extensions/contrib/babelfishpg_tsql/coverage/index.html"
+}
+
+sum_coverage(){
+    cd $1/babelfish_extensions/contrib
+    lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o lcov.info
+    lcov --list lcov.info
+}
+
 if [ "$1" == "initdb" ]; then
     init_db $TARGET_WS
     exit 0
@@ -351,5 +414,14 @@ elif [ "$1" == "dumprestore" ]; then
 
     restore $SOURCE_WS $TARGET_WS
     echo "Restored on target workspace ($TARGET_WS)!"
+    exit 0
+elif [ "$1" == "initpg_coverage" ]; then
+    init_pg_coverage $TARGET_WS $TARGET_WS
+    exit 0
+elif [ "$1" == "build_coverage" ]; then
+    build_coverage $TARGET_WS
+    exit 0
+elif [ "$1" == "sum_coverage" ]; then
+    sum_coverage $TARGET_WS
     exit 0
 fi
