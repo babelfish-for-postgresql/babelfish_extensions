@@ -40,6 +40,9 @@ if [ ! $1 ]; then
     echo ""
     echo "  minor_version_upgrade SOURCE_WS [TARGET_WS]"
     echo "      upgrade minor version using ALTER EXTENSION ... UPDATE"
+    echo ""
+    echo "  run_pgindent [TARGET_WS]"
+    echo "      run pgindent"
     exit 0
 fi
 
@@ -168,6 +171,68 @@ init_pg() {
     init_pghint $1 $2
 }
 
+run_pgindent() {
+    cd $1/postgres/lib
+
+    echo "dumping typedefs for babelfishpg_mpney to /tmp/babelfishpg_money.typedefs.."
+    objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_money.typedefs
+
+    echo "dumping typedefs for babelfishpg_common to /tmp/babelfishpg_common.typedefs.."
+    objdump -W babelfishpg_common.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_common.typedefs
+
+    echo "dumping typedefs for babelfishpg_tds to /tmp/babelfishpg_tds.typedefs.."
+    objdump -W babelfishpg_tds.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tds.typedefs
+
+    echo "dumping typedefs for babelfishpg_tsql to /tmp/babelfishpg_tsql.typedefs.."
+    objdump -W babelfishpg_tsql.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tsql.typedefs
+
+    cd $1
+    echo "Clone and build pg_bsd_indent which is required by pgindent..."
+    git clone https://git.postgresql.org/git/pg_bsd_indent.git
+    cd pg_bsd_indent/
+    make PG_CONFIG=$1/postgres/bin/pg_config
+    sudo cp pg_bsd_indent /usr/local/bin
+
+    cd $1/babelfish_extensions
+
+    echo ""
+    echo "Running pgindent on babelfishpg_money..."
+    cd contrib/babelfishpg_money
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_money.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_common..."
+    cd ../babelfishpg_common
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_common.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_tds..."
+    cd ../babelfishpg_tds
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tds.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_tsql..."
+    cd ../babelfishpg_tsql
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="exclude_file_from_pgindent"
+
+    echo ""
+    echo "pgindent is ran successfully against $1."
+    echo "Please re-build all the extensions to make sure that there is no compilation error."
+    echo ""
+}
+
 if [ "$1" == "initdb" ]; then
     init_db $TARGET_WS
     exit 0
@@ -281,5 +346,10 @@ elif [ "$1" == "minor_version_upgrade" ]; then
     cd $TARGET_WS/postgres
     bin/psql -d $TEST_DB -U $USER -c \
         "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
+    exit 0
+elif [ "$1" == "run_pgindent" ]; then
+    init_pg $TARGET_WS $TARGET_WS
+    build_bbf $TARGET_WS $TARGET_WS
+    run_pgindent $TARGET_WS
     exit 0
 fi
