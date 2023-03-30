@@ -264,10 +264,10 @@ build_coverage(){
     echo "  code coverage report generation completed"
     echo "  run './dev-tools.sh sum_coverage' to generate summarized code coverage for all extensions"
     echo "  HTML code coverage report for each extension is located as follows -"
-    echo "      babelfishpg_money:  TARGET_WS/babelfish_extensions/contrib/babelfishpg_money/coverage/index.html"
-    echo "      babelfishpg_common: TARGET_WS/babelfish_extensions/contrib/babelfishpg_common/coverage/index.html"
-    echo "      babelfishpg_tds:    TARGET_WS/babelfish_extensions/contrib/babelfishpg_tds/coverage/index.html"
-    echo "      babelfishpg_tsql:   TARGET_WS/babelfish_extensions/contrib/babelfishpg_tsql/coverage/index.html"
+    echo "      babelfishpg_money:  $TARGET_WS/babelfish_extensions/contrib/babelfishpg_money/coverage/index.html"
+    echo "      babelfishpg_common: $TARGET_WS/babelfish_extensions/contrib/babelfishpg_common/coverage/index.html"
+    echo "      babelfishpg_tds:    $TARGET_WS/babelfish_extensions/contrib/babelfishpg_tds/coverage/index.html"
+    echo "      babelfishpg_tsql:   $TARGET_WS/babelfish_extensions/contrib/babelfishpg_tsql/coverage/index.html"
 }
 
 sum_coverage(){
