@@ -1,0 +1,52 @@
+select relname from pg_class where relname like NULL;
+GO
+~~START~~
+varchar
+~~END~~
+
+select relname from pg_class where relname like '';
+GO
+~~START~~
+varchar
+~~END~~
+
+select relname from pg_class where relname like 'pg\[1:9\]class';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select relname from pg_class where relname like NULL;
+GO
+~~START~~
+varchar
+~~END~~
+
+select relname from pg_class where relname like '';
+GO
+~~START~~
+varchar
+~~END~~
+
+select relname from pg_class where relname like 'pg\[1:9\]class';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+
+select relname from pg_class where relname like 'pg*[1:9*]class' escape '*';
+GO
+~~START~~
+varchar
+~~END~~
+
