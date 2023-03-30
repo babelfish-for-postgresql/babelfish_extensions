@@ -3,6 +3,13 @@
 *.DS_Store
 *.o
 *.so
+*.gcno
+*.gcda
+*.gcov
+*.gcov.out
+lcov*.info
+coverage/
+coverage-html-stamp
 test/JDBC/Info/
 test/JDBC/output/*
 test/JDBC/target/classes/*
