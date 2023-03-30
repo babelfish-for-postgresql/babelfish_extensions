@@ -1,0 +1,184 @@
+-- Test SYS.NCHAR, SYS.NVARCHAR and SYS.VARCHAR
+-- nchar is already available in postgres dialect
+select CAST('£' AS nchar(1));
+GO
+~~START~~
+nchar
+£
+~~END~~
+
+-- nvarchar is not available in postgres dialect
+select CAST('£' AS nvarchar);
+GO
+~~START~~
+nvarchar
+£
+~~END~~
+
+
+-- both are available in tsql dialect
+select CAST('£' AS nchar(2));
+GO
+~~START~~
+nchar
+£ 
+~~END~~
+
+select CAST('£' AS nvarchar(2));
+GO
+~~START~~
+nvarchar
+£
+~~END~~
+
+
+-- multi-byte character doesn't fit in nchar(1) in tsql if it
+-- would require a UTF16-surrogate-pair on output
+select CAST('£' AS char(1));			-- allowed
+GO
+~~START~~
+char
+£
+~~END~~
+
+select CAST('£' AS sys.nchar(1));		-- allowed
+GO
+~~START~~
+nchar
+£
+~~END~~
+
+select CAST('£' AS sys.nvarchar(1));	-- allowed
+GO
+~~START~~
+nvarchar
+£
+~~END~~
+
+select CAST('£' AS sys.varchar(1));		-- allowed
+GO
+~~START~~
+varchar
+£
+~~END~~
+
+
+select CAST('😀' AS char(1));			-- not allowed  TODO: fix BABEL-3543
+GO
+~~START~~
+char
+?
+~~END~~
+
+select CAST('😀' AS sys.varchar(1));	-- not allowed  TODO: fix BABEL-3543 
+GO
+~~START~~
+varchar
+?
+~~END~~
+
+
+-- Check that things work the same in postgres dialect
+select CAST('£' AS char(1));
+GO
+~~START~~
+char
+£
+~~END~~
+
+select CAST('£' AS sys.nchar(1));
+GO
+~~START~~
+nchar
+£
+~~END~~
+
+select CAST('£' AS sys.nvarchar(1));
+GO
+~~START~~
+nvarchar
+£
+~~END~~
+
+select CAST('£' AS sys.varchar(1));
+GO
+~~START~~
+varchar
+£
+~~END~~
+
+select CAST('😀' AS char(1));
+GO
+~~START~~
+char
+?
+~~END~~
+
+
+
+-- test normal create domain works when apg_enable_domain_typmod is enabled
+-- set apg_enable_domain_typmod true;
+create TYPE varchar3 FROM varchar(3);
+select CAST('ab£' AS varchar3);
+GO
+~~START~~
+varchar
+ab£
+~~END~~
+
+select CAST('ab😀' AS varchar3); --not allowed  TODO: fix BABEL-3543 
+GO
+~~START~~
+varchar
+ab?
+~~END~~
+
+
+-- don't allow surrogate pairs to exceed max length
+select CAST('😀b' AS char(1));  -- not allowed TODO: fix BABEL-3543 
+GO
+~~START~~
+char
+?
+~~END~~
+
+select CAST('😀b' AS sys.varchar(1)); -- not allowed TODO: fix BABEL-3543 
+GO
+~~START~~
+varchar
+?
+~~END~~
+
+
+-- default length of nchar/char is 1 in tsql (and pg)
+create table testing_1(col nchar);
+GO
+
+SELECT * FROM information_schema.columns WHERE table_name = 'testing_1'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#testing_1#!#col#!#1#!#<NULL>#!#YES#!#nchar#!#1#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- default length of varchar in tsql is 1
+create table testing_4(col sys.varchar);
+insert into testing_4 (col) select '😀'; -- not allowed TODO: fix BABEL-3543 
+GO
+~~ROW COUNT: 1~~
+
+
+select * from testing_4;
+GO
+~~START~~
+varchar
+?
+~~END~~
+
+
+
+drop table testing_1;
+GO
+drop table testing_4;
+GO
