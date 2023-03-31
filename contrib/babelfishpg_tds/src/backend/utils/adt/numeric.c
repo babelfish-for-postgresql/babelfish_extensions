@@ -276,7 +276,7 @@ typedef struct NumericVar
 	int			dscale;			/* display scale */
 	NumericDigit *buf;			/* start of palloc'd space for digits[] */
 	NumericDigit *digits;		/* base-NBASE digits */
-} NumericVar;
+}			NumericVar;
 
 
 /* ----------
@@ -371,7 +371,7 @@ typedef struct NumericSumAccum
 
 #ifdef NUMERIC_DEBUG
 static void dump_numeric(const char *str, Numeric num);
-static void dump_var(const char *str, NumericVar *var);
+static void dump_var(const char *str, NumericVar * var);
 #else
 #define dump_numeric(s,n)
 #define dump_var(s,v)
@@ -396,12 +396,12 @@ static void dump_var(const char *str, NumericVar *var);
 	(weight) <= NUMERIC_SHORT_WEIGHT_MAX && \
 	(weight) >= NUMERIC_SHORT_WEIGHT_MIN)
 
-static void alloc_var(NumericVar *var, int ndigits);
-static void free_var(NumericVar *var);
+static void alloc_var(NumericVar * var, int ndigits);
+static void free_var(NumericVar * var);
 static const char *set_var_from_str(const char *str, const char *cp,
-									NumericVar *dest);
-static Numeric make_result(const NumericVar *var);
-static void strip_var(NumericVar *var);
+									NumericVar * dest);
+static Numeric make_result(const NumericVar * var);
+static void strip_var(NumericVar * var);
 
 /* ----------------------------------------------------------------------
  *
@@ -420,7 +420,7 @@ static void strip_var(NumericVar *var);
  *	Allocate a digit buffer of ndigits digits (plus a spare digit for rounding)
  */
 static void
-alloc_var(NumericVar *var, int ndigits)
+alloc_var(NumericVar * var, int ndigits)
 {
 	digitbuf_free(var->buf);
 	var->buf = digitbuf_alloc(ndigits + 1);
@@ -436,7 +436,7 @@ alloc_var(NumericVar *var, int ndigits)
  *	Return the digit buffer of a variable to the free pool
  */
 static void
-free_var(NumericVar *var)
+free_var(NumericVar * var)
 {
 	digitbuf_free(var->buf);
 	var->buf = NULL;
@@ -457,7 +457,7 @@ free_var(NumericVar *var)
  * reports.  (Typically cp would be the same except advanced over spaces.)
  */
 static const char *
-set_var_from_str(const char *str, const char *cp, NumericVar *dest)
+set_var_from_str(const char *str, const char *cp, NumericVar * dest)
 {
 	bool		have_dp = false;
 	int			i;
@@ -619,9 +619,9 @@ set_var_from_str(const char *str, const char *cp, NumericVar *dest)
  *	a variable.
  */
 static Numeric
-make_result(const NumericVar *var)
+make_result(const NumericVar * var)
 {
-	Numeric		result;
+	Numeric result;
 	NumericDigit *digits = var->digits;
 	int			weight = var->weight;
 	int			sign = var->sign;
@@ -633,7 +633,8 @@ make_result(const NumericVar *var)
 		result = (Numeric) palloc(NUMERIC_HDRSZ_SHORT);
 
 		SET_VARSIZE(result, NUMERIC_HDRSZ_SHORT);
-		result->choice.n_header = NUMERIC_NAN;
+		result	  ->choice.n_header = NUMERIC_NAN;
+
 		/* the header word is all we need */
 
 		dump_numeric("make_result()", result);
@@ -665,22 +666,24 @@ make_result(const NumericVar *var)
 	{
 		len = NUMERIC_HDRSZ_SHORT + n * sizeof(NumericDigit);
 		result = (Numeric) palloc(len);
+
 		SET_VARSIZE(result, len);
-		result->choice.n_short.n_header =
-			(sign == NUMERIC_NEG ? (NUMERIC_SHORT | NUMERIC_SHORT_SIGN_MASK)
-			 : NUMERIC_SHORT)
-			| (var->dscale << NUMERIC_SHORT_DSCALE_SHIFT)
-			| (weight < 0 ? NUMERIC_SHORT_WEIGHT_SIGN_MASK : 0)
-			| (weight & NUMERIC_SHORT_WEIGHT_MASK);
+		result	  ->choice.n_short.n_header =
+		(sign == NUMERIC_NEG ? (NUMERIC_SHORT | NUMERIC_SHORT_SIGN_MASK)
+		 : NUMERIC_SHORT)
+		| (var->dscale << NUMERIC_SHORT_DSCALE_SHIFT)
+		| (weight < 0 ? NUMERIC_SHORT_WEIGHT_SIGN_MASK : 0)
+		| (weight & NUMERIC_SHORT_WEIGHT_MASK);
 	}
 	else
 	{
 		len = NUMERIC_HDRSZ + n * sizeof(NumericDigit);
 		result = (Numeric) palloc(len);
+
 		SET_VARSIZE(result, len);
-		result->choice.n_long.n_sign_dscale =
-			sign | (var->dscale & NUMERIC_DSCALE_MASK);
-		result->choice.n_long.n_weight = weight;
+		result	  ->choice.n_long.n_sign_dscale =
+		sign | (var->dscale & NUMERIC_DSCALE_MASK);
+		result	  ->choice.n_long.n_weight = weight;
 	}
 
 	Assert(NUMERIC_NDIGITS(result) == n);
@@ -704,7 +707,7 @@ make_result(const NumericVar *var)
  * Strip any leading and trailing zeroes from a numeric variable
  */
 static void
-strip_var(NumericVar *var)
+strip_var(NumericVar * var)
 {
 	NumericDigit *digits = var->digits;
 	int			ndigits = var->ndigits;

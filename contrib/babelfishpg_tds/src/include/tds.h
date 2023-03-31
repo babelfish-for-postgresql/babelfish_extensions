@@ -23,9 +23,9 @@ typedef struct TdsInstrPlugin
 {
 	/* Function pointers set up by the plugin */
 	void		(*tds_instr_increment_metric) (int metric);
-} TdsInstrPlugin;
+}			TdsInstrPlugin;
 
-extern TdsInstrPlugin **tds_instr_plugin_ptr;
+extern TdsInstrPlugin * *tds_instr_plugin_ptr;
 
 #define TDSInstrumentation(metric)												\
 ({	if ((tds_instr_plugin_ptr && (*tds_instr_plugin_ptr) && (*tds_instr_plugin_ptr)->tds_instr_increment_metric))	\

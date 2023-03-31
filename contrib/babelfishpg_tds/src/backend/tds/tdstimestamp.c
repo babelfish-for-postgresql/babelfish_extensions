@@ -105,7 +105,7 @@ GetDateFromDatum(Datum date, struct pg_tm *tm)
 }
 
 static inline void
-GetDatetimeFromDatum(Datum value, fsec_t *fsec, struct pg_tm *tm)
+GetDatetimeFromDatum(Datum value, fsec_t * fsec, struct pg_tm *tm)
 {
 	Timestamp	timestamp = (Timestamp) value;
 
@@ -369,7 +369,7 @@ TdsTimeGetDatumFromDays(uint32 numDays, uint64 *val)
 static inline
 void
 GetDatetimeFromDaysTicks(uint32 numDays, uint32 numTicks,
-						 struct pg_tm *tm, fsec_t *fsec)
+						 struct pg_tm *tm, fsec_t * fsec)
 {
 	int			y1 = 1900;
 	int			d2 = 0,
@@ -435,7 +435,7 @@ TdsTimeGetDatumFromDatetime(uint32 numDays, uint32 numTicks,
 static inline
 void
 GetDatetimeFromDaysMins(uint16 numDays, uint16 numMins,
-						struct pg_tm *tm, fsec_t *fsec)
+						struct pg_tm *tm, fsec_t * fsec)
 {
 	int			y1 = 1900;
 	int			d2 = 0,
@@ -518,21 +518,22 @@ TdsGetTimestampFromDayTime(uint32 numDays, uint64 numMicro, int tz,
 				min,
 				hour,
 				sec;
-	double		result;
+	double result;
 
 	CalculateTargetDate(y1, &d2, &m2, &y2, numDays);
 
 	result = (double) numMicro;
+
 	while (scale--)
-		result /= 10;
-	result *= 1000000;
+		result	  /=10;
+	result	   *= 1000000;
 
 	/*
 	 * Casting result to unint64_t will always round it down to the nearest
 	 * integer (similar to what floor() does). Instead, we should round it to
 	 * the nearest integer.
 	 */
-	numMicro = (result - (uint64_t) result <= 0.5) ? (uint64_t) result : (uint64_t) result + 1;
+	numMicro = (result -(uint64_t) result <=0.5) ? (uint64_t) result : (uint64_t) result +1;
 
 	fsec = numMicro % 1000000;
 	numMicro /= 1000000;

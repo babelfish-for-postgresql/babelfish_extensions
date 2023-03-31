@@ -75,7 +75,7 @@ FaultInjectionInitialize()
 
 	do
 	{
-		const FaultInjectorEntry_s *entry = &Faults[i];
+		const		FaultInjectorEntry_s *entry = &Faults[i];
 		FaultInjectorEntry_s *new_entry;
 
 		if (entry->type == InvalidType)
@@ -131,7 +131,7 @@ FaultInjectionLookupHashEntry(const char *faultName)
 }
 
 static void
-FaultInjectionEnableTest(FaultInjectorEntry_s *entry)
+FaultInjectionEnableTest(FaultInjectorEntry_s * entry)
 {
 	List	   *list = FaultInjectionTypes[entry->type].injected_entries;
 	ListCell   *lc;
@@ -152,7 +152,7 @@ FaultInjectionEnableTest(FaultInjectorEntry_s *entry)
 }
 
 static inline void
-FaultInjectionDisableTest(FaultInjectorEntry_s *entry)
+FaultInjectionDisableTest(FaultInjectorEntry_s * entry)
 {
 	ListCell   *lc;
 	List	   *list = FaultInjectionTypes[entry->type].injected_entries;
@@ -326,7 +326,7 @@ InjectFaultAll(bool enable)
 	do
 	{
 		char	   *ret;
-		const FaultInjectorEntry_s *entry = &Faults[i];
+		const		FaultInjectorEntry_s *entry = &Faults[i];
 
 		if (entry->type == InvalidType)
 			break;

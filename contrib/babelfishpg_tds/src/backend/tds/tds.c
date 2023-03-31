@@ -120,7 +120,7 @@ typedef struct TdsStatus
 	int			encrypt_option;
 
 	int16		database_id;
-} TdsStatus;
+}			TdsStatus;
 
 typedef struct LocalTdsStatus
 {
@@ -140,11 +140,11 @@ typedef struct LocalTdsStatus
 	 * not.
 	 */
 	TransactionId backend_xmin;
-} LocalTdsStatus;
+}			LocalTdsStatus;
 
-static TdsStatus *TdsStatusArray = NULL;
-static TdsStatus *MyTdsStatusEntry;
-static LocalTdsStatus *localTdsStatusTable = NULL;
+static TdsStatus * TdsStatusArray = NULL;
+static TdsStatus * MyTdsStatusEntry;
+static LocalTdsStatus * localTdsStatusTable = NULL;
 
 uint32_t	MyTdsClientVersion = 0;
 uint32_t	MyTdsClientPid = -1;
@@ -186,7 +186,7 @@ static void tds_status_shmem_startup(void);
 static void tds_stats_shmem_shutdown(int code, Datum arg);
 
 static void tdsstat_read_current_status(void);
-static LocalTdsStatus *tdsstat_fetch_stat_local_tdsentry(int beid);
+static LocalTdsStatus * tdsstat_fetch_stat_local_tdsentry(int beid);
 
 /*
  * Module initialization function
@@ -207,7 +207,7 @@ _PG_init(void)
 
 	TdsDefineGucs();
 
-	tds_instr_plugin_ptr = (TdsInstrPlugin **) find_rendezvous_variable("TdsInstrPlugin");
+	tds_instr_plugin_ptr = (TdsInstrPlugin * *) find_rendezvous_variable("TdsInstrPlugin");
 
 	pe_init();
 
@@ -460,7 +460,7 @@ tdsstat_initialize(void)
 void
 tdsstat_bestart(void)
 {
-	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
+	volatile	TdsStatus *vtdsentry = MyTdsStatusEntry;
 	TdsStatus	ltdsentry;
 
 	int			len;
@@ -592,7 +592,7 @@ tdsstat_fetch_stat_local_tdsentry(int beid)
 static void
 tdsstat_read_current_status(void)
 {
-	volatile TdsStatus *tdsentry;
+	volatile	TdsStatus *tdsentry;
 	LocalTdsStatus *localtable;
 	LocalTdsStatus *localentry;
 	int			i;
@@ -853,7 +853,7 @@ tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_bac
 void
 TdsSetGucStatVariable(const char *guc, bool boolVal, const char *strVal, int intVal)
 {
-	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
+	volatile	TdsStatus *vtdsentry = MyTdsStatusEntry;
 	int			len;
 
 	PGSTAT_BEGIN_WRITE_ACTIVITY(vtdsentry);
@@ -895,7 +895,7 @@ TdsSetGucStatVariable(const char *guc, bool boolVal, const char *strVal, int int
 void
 TdsSetAtAtStatVariable(const char *at_at_var, int intVal, uint64 bigintVal)
 {
-	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
+	volatile	TdsStatus *vtdsentry = MyTdsStatusEntry;
 
 	PGSTAT_BEGIN_WRITE_ACTIVITY(vtdsentry);
 
@@ -912,7 +912,7 @@ TdsSetAtAtStatVariable(const char *at_at_var, int intVal, uint64 bigintVal)
 void
 TdsSetDatabaseStatVariable(int16 db_id)
 {
-	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
+	volatile	TdsStatus *vtdsentry = MyTdsStatusEntry;
 
 	PGSTAT_BEGIN_WRITE_ACTIVITY(vtdsentry);
 
@@ -983,7 +983,7 @@ set_tds_context_info(bytea *context_info)
 	int32		len;
 	char	   *data;
 
-	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
+	volatile	TdsStatus *vtdsentry = MyTdsStatusEntry;
 
 	PGSTAT_BEGIN_WRITE_ACTIVITY(vtdsentry);
 

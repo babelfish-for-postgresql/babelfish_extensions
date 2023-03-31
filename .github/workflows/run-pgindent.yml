@@ -1,0 +1,126 @@
+name: Run pgindent
+on: [push, pull_request]
+
+jobs:
+  run-pgindent-on-babelfish-extensions:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+      
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+      
+      - name: Run pgindent
+        id: run-pgindent
+        if: always() && steps.build-extensions.outcome == 'success'
+        run: |
+          cd ~/psql/lib/postgresql
+
+          ls
+
+          echo "dumping typedefs for babelfishpg_money to /tmp/babelfishpg_money.typedefs.."
+          objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+            next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+            next if $flds[-1] =~ /^DW_FORM_str/;\
+            print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_money.typedefs
+
+          echo "dumping typedefs for babelfishpg_common to /tmp/babelfishpg_common.typedefs.."
+          objdump -W babelfishpg_common.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+            next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+            next if $flds[-1] =~ /^DW_FORM_str/;\
+            print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_common.typedefs
+
+          echo "dumping typedefs for babelfishpg_tds to /tmp/babelfishpg_tds.typedefs.."
+          objdump -W babelfishpg_tds.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+            next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+            next if $flds[-1] =~ /^DW_FORM_str/;\
+            print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tds.typedefs
+
+          echo "dumping typedefs for babelfishpg_tsql to /tmp/babelfishpg_tsql.typedefs.."
+          objdump -W babelfishpg_tsql.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+            next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+            next if $flds[-1] =~ /^DW_FORM_str/;\
+            print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tsql.typedefs
+
+          cd /tmp/
+          echo "Clone and build pg_bsd_indent which is required by pgindent..."
+          git clone https://git.postgresql.org/git/pg_bsd_indent.git
+          cd pg_bsd_indent/
+          make PG_CONFIG=~/psql/bin/pg_config
+          sudo cp pg_bsd_indent /usr/local/bin
+
+          cd ~/work/babelfish_extensions/babelfish_extensions/
+          echo ""
+          echo "Running pgindent on babelfishpg_money..."
+          cd contrib/babelfishpg_money
+          ~/work/babelfish_extensions/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_money.typedefs
+
+          echo ""
+          echo "Running pgindent on babelfishpg_common..."
+          cd ../babelfishpg_common
+          ~/work/babelfish_extensions/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_common.typedefs
+
+          echo ""
+          echo "Running pgindent on babelfishpg_tds..."
+          cd ../babelfishpg_tds
+          ~/work/babelfish_extensions/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tds.typedefs
+
+          echo ""
+          echo "Running pgindent on babelfishpg_tsql..."
+          cd ../babelfishpg_tsql
+          ~/work/babelfish_extensions/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="exclude_file_from_pgindent"
+
+          git diff > /tmp/indent.diff
+
+          if [ -s /tmp/indent.diff ]; then
+            echo "Formatting is not correct. Run sh ./dev-tools.sh run_pgindent [TARGET_WS] to fix the indent."
+            #exit 1
+          else
+            echo "Formatting is correct."
+          fi
+
+      - name: Upload indent diff
+        #iif: always() && steps..outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: pgindent_diff
+          path: /tmp/indent.diff
+
+      - name: Upload /tmp/babelfishpg_tds.typedefs
+        #iif: always() && steps..outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: babelfishpg_tds.typedefs
+          path: /tmp/babelfishpg_tds.typedefs
+
+      - name: Upload /tmp/babelfishpg_tsql.typedefs
+        #iif: always() && steps..outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: babelfishpg_tsql.typedefs
+          path: /tmp/babelfishpg_tsql.typedefs
+
+      - name: Upload /tmp/babelfishpg_common.typedefs
+        #iif: always() && steps..outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: babelfishpg_common.typedefs
+          path: /tmp/babelfishpg_common.typedefs

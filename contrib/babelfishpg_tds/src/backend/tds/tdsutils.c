@@ -176,7 +176,7 @@ GetUTF16CodePoint(const unsigned char *in, int len, int *consumed)
 {
 	uint16_t	code1;
 	uint16_t	code2;
-	int32_t		result;
+	int32_t result;
 
 	/* Get the first 16 bits */
 	code1 = in[1] << 8 | in[0];
@@ -362,7 +362,7 @@ int
 TdsUTF8LengthInUTF16(const void *vin, int len)
 {
 	const unsigned char *in = vin;
-	int			result = 0;
+	int result = 0;
 	int			i;
 	int			consumed;
 	int32_t		code;
@@ -379,10 +379,11 @@ TdsUTF8LengthInUTF16(const void *vin, int len)
 
 		if (code <= 0xFFFF)
 			/* This code point would result in a single 16-bit output */
-			result += 1;
+			result	  +=1;
+
 		else
 			/* This code point would result in a 16-bit surrogate pair */
-			result += 2;
+			result	  +=2;
 
 		i += consumed;
 	}
@@ -498,6 +499,7 @@ TransformParamRef(ParseState *pstate, ParamRef *pref)
 	 */
 	if (pstate->p_paramref_hook != NULL)
 		result = pstate->p_paramref_hook(pstate, pref);
+
 	else
 		result = NULL;
 
@@ -997,7 +999,7 @@ check_babelfish_renamerole_restrictions(char *role)
 static bool
 have_createdb_privilege(void)
 {
-	bool		result = false;
+	bool result = false;
 	HeapTuple	utup;
 
 	/* Superusers can always do everything */
@@ -1008,6 +1010,7 @@ have_createdb_privilege(void)
 	if (HeapTupleIsValid(utup))
 	{
 		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
+
 		ReleaseSysCache(utup);
 	}
 	return result;

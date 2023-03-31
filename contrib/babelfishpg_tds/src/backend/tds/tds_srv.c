@@ -416,7 +416,7 @@ pe_read_command(StringInfo inBuf)
 static int
 pe_process_command()
 {
-	int			result;
+	int result;
 
 	/* Push the error context */
 	tdserrcontext.callback = TdsErrorContextCallback;

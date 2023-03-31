@@ -64,8 +64,8 @@ typedef struct ResetConnectionData
 	StringInfo	message;
 	uint8_t		messageType;
 	uint8_t		status;
-} ResetConnectionData;
-typedef ResetConnectionData *ResetConnection;
+}			ResetConnectionData;
+typedef ResetConnectionData * ResetConnection;
 
 /*
  * Local structures

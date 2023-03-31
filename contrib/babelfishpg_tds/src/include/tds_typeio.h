@@ -41,7 +41,7 @@ typedef int (*TdsSendTypeFunction) (FmgrInfo *finfo, Datum value,
 
 /* COLMETADATA entry for types like INTEGER and SMALLINT */
 typedef struct __attribute__ ((packed))
-ColMetaEntry1
+			ColMetaEntry1
 {
 	uint16_t	flags;
 	uint8_t		tdsTypeId;
@@ -50,7 +50,7 @@ ColMetaEntry1
 
 /* COLMETADATA entry for types like NVARCHAR */
 typedef struct __attribute__ ((packed))
-ColMetaEntry2
+			ColMetaEntry2
 {
 	uint16_t	flags;
 	uint8_t		tdsTypeId;
@@ -67,7 +67,7 @@ ColMetaEntry2
 
 /* COLMETADATA entry for types like TEXT */
 typedef struct __attribute__ ((packed))
-ColMetaEntry3
+			ColMetaEntry3
 {
 	uint16_t	flags;
 	uint8_t		tdsTypeId;
@@ -83,7 +83,7 @@ ColMetaEntry3
 
 /* COLMETADATA entry for type like DATE */
 typedef struct __attribute__ ((packed))
-ColMetaEntry4
+			ColMetaEntry4
 {
 	uint16_t	flags;
 	uint8_t		tdsTypeId;
@@ -91,7 +91,7 @@ ColMetaEntry4
 
 /* COLMETADATA entry for type NUMERIC */
 typedef struct __attribute__ ((packed))
-ColMetaEntry5
+			ColMetaEntry5
 {
 	uint16_t	flags;
 	uint8_t		tdsTypeId;
@@ -102,7 +102,7 @@ ColMetaEntry5
 
 /* COLMETADATA entry for type like TIME, DATETIME2, DATETIMEOFFSET */
 typedef struct __attribute__ ((packed))
-ColMetaEntry6
+			ColMetaEntry6
 {
 	uint16_t	flags;
 	uint8_t		tdsTypeId;
@@ -111,7 +111,7 @@ ColMetaEntry6
 
 /* COLMETADATA entry for types like BINARY VARBINARY */
 typedef struct __attribute__ ((packed))
-ColMetaEntry7
+			ColMetaEntry7
 {
 	uint16_t	flags;
 	uint8_t		tdsTypeId;
@@ -120,7 +120,7 @@ ColMetaEntry7
 
 /* COLMETADATA entry for type like IMAGE */
 typedef struct __attribute__ ((packed))
-ColMetaEntry8
+			ColMetaEntry8
 {
 	uint16_t	flags;
 	uint8_t		tdsTypeId;
@@ -137,7 +137,7 @@ typedef union ColMetaEntry
 	ColMetaEntry6 type6;
 	ColMetaEntry7 type7;
 	ColMetaEntry8 type8;
-} ColMetaEntry;
+}			ColMetaEntry;
 
 /*
  * It stores the relation related information corresponding to
@@ -164,9 +164,9 @@ typedef struct TdsRelationMetaData
 	 * COLINFO token.
 	 */
 	uint8		tableNum;
-} TdsRelationMetaDataInfoData;
+}			TdsRelationMetaDataInfoData;
 
-typedef TdsRelationMetaDataInfoData *TdsRelationMetaDataInfo;
+typedef TdsRelationMetaDataInfoData * TdsRelationMetaDataInfo;
 
 typedef struct TdsColumnMetaData
 {
@@ -191,7 +191,7 @@ typedef struct TdsColumnMetaData
 	bool		attNotNull;		/* true if the column has not null constraint */
 	bool		attidentity;	/* true if it is an identity column */
 	bool		attgenerated;	/* true if it is a computed column */
-} TdsColumnMetaData;
+}			TdsColumnMetaData;
 
 /* Partial Length Prefixed-bytes */
 typedef struct PlpData
@@ -199,8 +199,8 @@ typedef struct PlpData
 	unsigned long offset;
 	unsigned long len;
 	struct PlpData *next;
-} PlpData;
-typedef PlpData *Plp;
+}			PlpData;
+typedef PlpData * Plp;
 
 typedef struct TvpColMetaData
 {
@@ -216,7 +216,7 @@ typedef struct TvpColMetaData
 	pg_enc		encoding;
 
 	uint32_t	maxLen;
-} TvpColMetaData;
+}			TvpColMetaData;
 
 typedef struct TvpRowData
 {
@@ -225,7 +225,7 @@ typedef struct TvpRowData
 
 	char	   *isNull;
 	struct TvpRowData *nextRow;
-} TvpRowData;
+}			TvpRowData;
 
 typedef struct TvpData
 {
@@ -237,7 +237,7 @@ typedef struct TvpData
 
 	TvpColMetaData *colMetaData;	/* Array of each column's metadata. */
 	TvpRowData *rowData;		/* Linked List holding each row. */
-} TvpData;
+}			TvpData;
 
 typedef struct BulkLoadColMetaData
 {
@@ -259,7 +259,7 @@ typedef struct BulkLoadColMetaData
 	char	   *colName;
 
 	bool		variantType;
-} BulkLoadColMetaData;
+}			BulkLoadColMetaData;
 
 typedef struct BulkLoadRowData
 {
@@ -267,7 +267,7 @@ typedef struct BulkLoadRowData
 	Datum	   *columnValues;
 
 	bool	   *isNull;
-} BulkLoadRowData;
+}			BulkLoadRowData;
 
 /* Map TVP to its underlying table, either by relid or by table name. */
 typedef struct TvpLookupItem
@@ -275,7 +275,7 @@ typedef struct TvpLookupItem
 	char	   *name;
 	Oid			tableRelid;
 	char	   *tableName;
-} TvpLookupItem;
+}			TvpLookupItem;
 
 /* parameter token in RPC */
 typedef struct ParameterTokenData
@@ -321,9 +321,9 @@ typedef struct ParameterTokenData
 
 	TvpData    *tvpInfo;
 	struct ParameterTokenData *next;
-} ParameterTokenData;
+}			ParameterTokenData;
 
-typedef ParameterTokenData *ParameterToken;
+typedef ParameterTokenData * ParameterToken;
 
 
 typedef Datum (*TdsRecvTypeFunction) (const char *, const ParameterToken);
@@ -350,9 +350,9 @@ typedef struct TdsLCIDToEncodingMap
 {
 	int			lcid;
 	int			enc;
-} TdsLCIDToEncodingMap;
+}			TdsLCIDToEncodingMap;
 
-typedef TdsLCIDToEncodingMap *TdsLCIDToEncodingMapInfo;
+typedef TdsLCIDToEncodingMap * TdsLCIDToEncodingMapInfo;
 
 /*
  * TdsIoFunctionData - hash table entry for IO function cache
@@ -368,7 +368,7 @@ typedef struct TdsIoFunctionRawData
 	int32_t		ttmtdslenbytes;
 	int32_t		ttmsendfunc;
 	int32_t		ttmrecvfunc;
-} TdsIoFunctionRawData;
+}			TdsIoFunctionRawData;
 
 typedef struct TdsIoFunctionData
 {
@@ -381,7 +381,7 @@ typedef struct TdsIoFunctionData
 	int32_t		recvFuncId;
 	TdsSendTypeFunction sendFuncPtr;
 	TdsRecvTypeFunction recvFuncPtr;
-} TdsIoFunctionData;
+}			TdsIoFunctionData;
 
 typedef struct TdsIoFunctionData *TdsIoFunctionInfo;
 

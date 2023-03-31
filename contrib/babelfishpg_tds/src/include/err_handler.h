@@ -7,7 +7,7 @@ typedef struct error_map_details
 	int			tsql_error_code;
 	int			tsql_error_severity;
 	char	   *error_msg_keywords;
-} error_map_details;
+}			error_map_details;
 
 /* Function in err_handler.c */
 extern void emit_tds_log(ErrorData *edata);
@@ -29,7 +29,7 @@ typedef struct error_map_key
 {
 	uint32		message_hash;	/* Hash of error message */
 	int			sqlerrcode;		/* encoded ERRSTATE of error code */
-} error_map_key;
+}			error_map_key;
 
 /*
  * This linked list will be used during second level of lookup.
@@ -43,7 +43,7 @@ typedef struct error_map_node
 	int			tsql_error_code;	/* TSQL error code */
 	int			tsql_error_severity;	/* TSQL error severity */
 	struct error_map_node *next;
-} error_map_node;
+}			error_map_node;
 
 /*
  * Structure to store list of tsql error details for given key.
@@ -52,6 +52,6 @@ typedef struct error_map
 {
 	error_map_key key;
 	error_map_node *head;
-} error_map;
+}			error_map;
 
-typedef error_map *error_map_info;
+typedef error_map * error_map_info;

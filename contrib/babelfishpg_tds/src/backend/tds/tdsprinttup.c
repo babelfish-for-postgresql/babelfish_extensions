@@ -40,7 +40,7 @@ typedef struct
 	bool		typisvarlena;	/* is it varlena (ie possibly toastable)? */
 	int16		format;			/* format code for this column */
 	FmgrInfo	finfo;			/* Precomputed call info for output fn */
-} PrinttupAttrInfo;
+}			PrinttupAttrInfo;
 
 typedef struct
 {
@@ -52,7 +52,7 @@ typedef struct
 	PrinttupAttrInfo *myinfo;	/* Cached info about each attr */
 	StringInfoData buf;			/* output buffer (*not* in tmpcontext) */
 	MemoryContext tmpcontext;	/* Memory context for per-row workspace */
-} DR_printtup;
+}			DR_printtup;
 
 
 static void

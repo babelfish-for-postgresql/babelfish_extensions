@@ -199,9 +199,9 @@ typedef struct TdsParamNameData
 								 * upperlimit, we can use fixed size array) */
 	uint8		type;			/* 0: IN parameter 1: OUT parameter (TODO:
 								 * INOUT parameters?) */
-} TdsParamNameData;
+}			TdsParamNameData;
 
-typedef TdsParamNameData *TdsParamName;
+typedef TdsParamNameData * TdsParamName;
 
 extern PGDLLIMPORT uint32_t MyTdsClientVersion;
 extern PGDLLIMPORT char *MyTdsLibraryName;
@@ -221,7 +221,7 @@ typedef struct TdsMessageWrapper
 	StringInfo	message;
 	uint8_t		messageType;
 	uint64_t	offset;
-} TdsMessageWrapper;
+}			TdsMessageWrapper;
 
 /*
  * We store the required TDS information to gain more context if we
@@ -235,9 +235,9 @@ typedef struct
 	char	   *txnType;
 	char	   *err_text;		/* additional errorstate info */
 
-} TdsErrorContextData;
+}			TdsErrorContextData;
 
-extern TdsErrorContextData *TdsErrorContext;
+extern TdsErrorContextData * TdsErrorContext;
 
 
 /* Socket functions */
@@ -363,8 +363,8 @@ extern void *tds_varchar_input(const char *s, size_t len, int32 atttypmod);
 extern void tds_xmlFreeDoc(void *doc);
 extern void *tds_xml_parse(text *data, int xmloption_arg, bool preserve_whitespace,
 						   int encoding);
-extern int	tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
-							   xmlChar **version, xmlChar **encoding, int *standalone);
+extern int	tds_parse_xml_decl(const xmlChar * str, size_t *lenp,
+							   xmlChar * *version, xmlChar * *encoding, int *standalone);
 
 /* Functions in tdstypeio.c */
 extern char *TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen);
