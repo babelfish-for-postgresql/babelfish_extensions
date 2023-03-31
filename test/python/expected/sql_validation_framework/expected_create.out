@@ -41,6 +41,8 @@ Could not find tests for function sys.sp_special_columns_precision_helper
 Could not find tests for function sys.sp_special_columns_scale_helper
 Could not find tests for function sys.sp_statistics_internal
 Could not find tests for function sys.sp_tables_internal
+Could not find tests for function sys.space
+Could not find tests for function sys.stuff
 Could not find tests for function sys.suser_id_internal
 Could not find tests for function sys.suser_name_internal
 Could not find tests for function sys.sysdatetime
