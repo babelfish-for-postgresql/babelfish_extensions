@@ -25,7 +25,3 @@ CREATE VIEW sys_all_views_select_vu_prepare AS
 SELECT * FROM sys_all_views_table_vu_prepare
 GO
 
-GO
-
-GO
-
