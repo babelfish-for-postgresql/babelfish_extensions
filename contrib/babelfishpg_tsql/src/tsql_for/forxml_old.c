@@ -219,7 +219,7 @@ tsql_query_to_xml_internal(const char *query, int mode,
 	uint64		i;
 
 	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
+					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	result = makeStringInfo();
 
