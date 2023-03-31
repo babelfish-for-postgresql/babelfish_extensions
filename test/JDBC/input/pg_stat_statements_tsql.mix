@@ -1,0 +1,164 @@
+-- psql
+CREATE EXTENSION pg_stat_statements WITH SCHEMA sys;
+go
+
+-- psql
+SET sys.pg_stat_statements.track = 'none';
+SELECT sys.pg_stat_statements_reset();
+go
+
+--
+-- simple and compound statements
+--
+
+-- tsql
+SELECT 1 AS "int";
+go
+
+
+SELECT 'hello'
+  -- multiline
+  AS "text";
+go
+
+SELECT 'world' AS "text";
+go
+
+-- transaction
+BEGIN TRANSACTION;
+SELECT 1 AS "int";
+SELECT 'hello' AS "text";
+COMMIT TRANSACTION;
+go
+
+SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+go
+
+-- psql
+SELECT sys.pg_stat_statements_reset();
+go
+
+-- tsql
+-- CRUD: INSERT SELECT UPDATE DELETE on test table
+
+-- utility "create table" should not be shown
+CREATE TABLE test (a int, b char(20));
+go
+
+-- tsql
+CREATE TRIGGER trigger1 on [dbo].[test] for insert as
+PRINT 'after insert trigger called'
+go
+
+INSERT INTO test VALUES(generate_series(1, 10), 'aaa');
+go
+UPDATE test SET b = 'bbb' WHERE a > 7;
+DELETE FROM test WHERE a > 9;
+go
+
+-- explicit transaction
+BEGIN TRANSACTION;
+UPDATE test SET b = '111' WHERE a = 1 ;
+COMMIT TRANSACTION;
+go
+
+-- SELECT without constants
+SELECT * FROM test ORDER BY a;
+
+-- SELECT with IN clause
+SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5);
+go
+
+SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+go
+
+-- psql
+SELECT sys.pg_stat_statements_reset();
+go
+
+-- tsql
+
+DROP TRIGGER trigger1
+DROP TABLE test;
+go
+
+-- tsql
+create table customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
+create table orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))
+insert into customers values(1, 'ABC', 18),(2,'XYZ', 21), (3, 'LMN', 29),(4, 'PQR', 52),(5, 'STU', 23)
+insert into orders values(10, 5, 'London'), (11, 3, 'India'), (12, 2, 'USA'), (13, 4, 'Pakistan'),(14, 5, 'Germany'),(15, 1, 'India')
+go
+
+select count(*) from orders where country ='India'
+go
+
+create view [India customers] as select customerid from orders where country = 'India'
+go
+
+select * from [India customers]
+go
+
+select * from customers
+go
+
+select avg(age) from customers
+go
+
+select reverse(name) from customers
+go
+
+
+-- tsql function
+CREATE FUNCTION f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
+go
+
+create sequence [dbo].[newCounter] as int start with 5 increment by 5 
+go
+
+select next value for [dbo].[newCounter]
+go
+
+drop sequence [dbo].[newCounter]
+go
+
+-- Inline table-valued function
+create function [dbo].[getCustomers](@age int) returns table as return 
+(select customers.customerid, customers.name, customers.age from customers
+where age >= @age)
+go
+select * from [dbo].[getCustomers](20)
+go
+
+-- Temp table
+create table #demo(age int)
+go
+
+DROP VIEW  [India customers]
+go
+DROP FUNCTION [dbo].[getCustomers]
+go
+DROP TABLE orders
+go
+DROP TABLE customers
+go
+DROP FUNCTION f1
+go
+
+-- tsql
+CREATE PROC p1 @a INT, @b FLOAT AS SELECT @a, @b; 
+go
+
+
+DROP PROCEDURE p1;
+go
+
+
+-- tsql
+SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+go
+
+-- psql
+DROP EXTENSION pg_stat_statements;
+go
+
+
