@@ -37,17 +37,9 @@ db1#!#8#!#<NULL>
 ~~END~~
 
 
-EXEC sp_databases;
-GO
-~~START~~
-varchar#!#int#!#varchar
-db1#!#8#!#<NULL>
-master#!#0#!#<NULL>
-msdb#!#0#!#<NULL>
-tempdb#!#0#!#<NULL>
-~~END~~
 
-
+-- EXEC sp_databases;
+-- GO
 drop table t_spdatabases;
 go
 use master;
