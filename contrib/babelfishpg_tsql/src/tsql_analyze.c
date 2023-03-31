@@ -23,6 +23,9 @@
 
 static RangeVar *find_matching_table(RangeVar *target, Node *tblref);
 
+List *sv_setop_targetlist = NIL;
+NamespaceStack *set_op_ns_stack = NULL;
+
 /*
  * If a table alias is used when specifying the target table, we need to refer to the
  * FROM clause for table reference.
@@ -299,4 +302,47 @@ rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
 		default:
 			return;
 	}
+}
+
+void
+push_namespace_stack(void)
+{
+	NamespaceStack *ns_stack_item = palloc(sizeof(ns_stack_item));
+	ns_stack_item->prev = set_op_ns_stack;
+	set_op_ns_stack = ns_stack_item;
+}
+
+void
+pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
+{
+	NamespaceStack *old_ns_stack_item = set_op_ns_stack;
+
+	sv_setop_targetlist = qry->targetList;
+
+	qry->targetList = leftmostQuery->targetList;
+	pstate->p_namespace = set_op_ns_stack->namespace;
+
+	set_op_ns_stack = set_op_ns_stack->prev;
+	pfree(old_ns_stack_item);
+}
+
+void 
+post_transform_sort_clause(Query *qry)
+{
+	ListCell *lc_q, *lc_sv;
+	/* Copy the ressortgroupref from the leftmost target list to the previous tl */
+	forboth(lc_q, qry->targetList, lc_sv, sv_setop_targetlist)
+	{
+		TargetEntry *tle_q= (TargetEntry *) lfirst(lc_q);
+		TargetEntry *tle_sv = (TargetEntry *) lfirst(lc_sv);
+		tle_sv->ressortgroupref = tle_q->ressortgroupref;
+	}
+	qry->targetList = sv_setop_targetlist;
+}
+
+void 
+post_transform_from_clause(ParseState *pstate)
+{
+	if (set_op_ns_stack)
+		set_op_ns_stack->namespace = pstate->p_namespace;
 }
