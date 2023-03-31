@@ -1745,7 +1745,7 @@ AS
 $$
 BEGIN
     -- If user_name is NULL, return the result of USER_ID()
-    IF user_name IS NULL THEN
+    IF user_name IS NULL OR user_name = 'NULL' THEN
         RETURN NULL;
     END IF;
     -- Trim the trailing spaces from user_name
