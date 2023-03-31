@@ -36,5 +36,6 @@ runs:
         cd ../babelfishpg_tds
         make -j 4 && make install
         cd ../babelfishpg_tsql
-        make && make install
+        PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make
+        PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
       shell: bash
