@@ -33,7 +33,10 @@ def batch_run(bbl_cnxn, file_handler, file, logger):
                         f_obj = open(dest, 'a')
                         work_dir = Path.cwd().joinpath("sqltoolsservice")
                         script_path = Path.cwd().joinpath("SMO_script.ps1")
-                        params="?".join([cfg["fileGenerator_URL"],cfg["fileGenerator_port"],cfg["fileGenerator_databaseName"],cfg["fileGenerator_user"],cfg["fileGenerator_password"]])
+                        script_flag = "0"
+                        if len(filename.split(".")[0]) >= 7 and filename.split(".")[0][:7] == 'ddl_all':
+                            script_flag = "1"
+                        params="?".join([cfg["fileGenerator_URL"],cfg["fileGenerator_port"],cfg["fileGenerator_databaseName"],cfg["fileGenerator_user"],cfg["fileGenerator_password"],script_flag])
                         args = []
                         args.append("pwsh -WorkingDirectory {} -File {} {}".format(work_dir,script_path,params))
                         p=subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,shell=True,text=True)
