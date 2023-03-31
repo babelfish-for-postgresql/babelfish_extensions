@@ -21,8 +21,6 @@ extern void post_transform_from_clause(ParseState *pstate);
 typedef struct namespace_stack {
 	struct namespace_stack *prev;
 	List *namespace;
-} NamespaceStack;
-
-extern NamespaceStack *set_op_ns_stack;
+} namespace_stack_t;
 
 #endif							/* TSQL_ANALYZE_H */
