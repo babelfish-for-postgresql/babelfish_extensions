@@ -2358,15 +2358,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					EventTriggerEndCompleteQuery();
 				return;
 			}
-		// case T_TransactionStmt:
-		// 	{
-				// if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
-				// {
-				// 	PLTsqlProcessTransaction(parsetree, params, qc);
-				// 	return;
-				// }
-				// break;
-		// 	}
 		case T_TruncateStmt:
 			{
 				if (sql_dialect == SQL_DIALECT_TSQL)
