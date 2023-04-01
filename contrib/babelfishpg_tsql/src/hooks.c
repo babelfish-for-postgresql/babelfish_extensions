@@ -105,6 +105,7 @@ static inline bool is_identifier_char(char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
+static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
 
 /*****************************************
  * 			Commands Hooks
@@ -188,6 +189,7 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
+static sort_nulls_first_hook_type prev_sort_nulls_first_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -298,6 +300,9 @@ InstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
+
+	prev_sort_nulls_first_hook = sort_nulls_first_hook;
+	sort_nulls_first_hook = sort_nulls_first;
 }
 
 void
@@ -342,6 +347,7 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
+	sort_nulls_first_hook = prev_sort_nulls_first_hook;
 }
 
 /*****************************************
@@ -3629,4 +3635,14 @@ bbf_check_rowcount_hook(int es_processed)
 		return true;
 	else
 		return false;
+}
+
+static void 
+sort_nulls_first(SortGroupClause * sortcl, bool reverse)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		/* Tsql NULLS FIRST is default for ASC; other way for DESC */
+		sortcl->nulls_first = !reverse;
+	}
 }
