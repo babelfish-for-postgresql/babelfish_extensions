@@ -365,17 +365,6 @@ pltsql_transactionStmt(PlannedStmt *pstmt, ParamListInfo params, QueryCompletion
 }
 
 static void
-pltsql_transactionStmt(PlannedStmt *pstmt, ParamListInfo params, QueryCompletion *qc)
-{
-	Node	   *parsetree = pstmt->utilityStmt;
-	if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
-	{
-		PLTsqlProcessTransaction(parsetree, params, qc);
-		return;
-	}
-}
-
-static void
 pltsql_GetNewObjectId(VariableCache variableCache)
 {
 	Oid			minOid;
