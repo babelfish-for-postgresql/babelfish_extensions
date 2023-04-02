@@ -360,7 +360,6 @@ pltsql_transactionStmt(PlannedStmt *pstmt, ParamListInfo params, QueryCompletion
 	if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
 	{
 		PLTsqlProcessTransaction(parsetree, params, qc);
-		return;
 	}
 }
 
