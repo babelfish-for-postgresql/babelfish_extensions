@@ -1,0 +1,430 @@
+create table TxnTable(c1 int);
+GO
+
+
+-- Begin transaction -> commit transaction
+begin transaction;
+select @@trancount;
+GO
+~~START~~
+int
+1
+~~END~~
+
+begin transaction;
+select @@trancount;
+GO
+~~START~~
+int
+2
+~~END~~
+
+insert into TxnTable values(1);
+commit transaction;
+select @@trancount;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+commit transaction;
+select @@trancount;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Begin transaction -> rollback transaction
+begin transaction;
+insert into TxnTable values(2);
+rollback transaction;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- Begin tran -> commit tran
+begin tran;
+insert into TxnTable values(2);
+commit tran;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+
+-- Begin tran -> rollback tran
+begin tran;
+select @@trancount;
+begin tran;
+set transaction isolation level read uncommitted;
+insert into TxnTable values(3);
+select @@trancount;
+rollback tran;
+select @@trancount;
+select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+
+
+-- Begin transaction -> commit
+begin transaction;
+insert into TxnTable values(4);
+commit;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+~~END~~
+
+
+-- Begin transaction -> commit work
+begin transaction;
+insert into TxnTable values(5);
+commit work;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
+
+-- Begin transaction -> rollback
+begin transaction;
+insert into TxnTable values(6);
+rollback;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
+
+-- Begin transaction -> rollback work
+begin transaction;
+insert into TxnTable values(7);
+rollback work;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
+
+-- Begin transaction name -> commit transaction name
+begin transaction txn1;
+insert into TxnTable values(8);
+commit transaction txn1;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+8
+~~END~~
+
+
+-- Begin transaction name -> rollback transaction name
+begin transaction txn1;
+insert into TxnTable values(9);
+rollback transaction txn1;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+8
+~~END~~
+
+
+-- Begin tran name -> commit tran name
+begin tran txn1;
+insert into TxnTable values(10);
+commit tran txn1;
+select c1 from TxnTable;
+Go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+8
+10
+~~END~~
+
+
+-- Begin tran name -> rollback tran name
+begin tran txn1;
+insert into TxnTable values(10);
+rollback tran txn1;
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+4
+5
+8
+10
+~~END~~
+
+truncate table TxnTable;
+GO
+
+-- save tran name -> rollback tran name
+begin transaction txn1;
+insert into TxnTable values(1);
+save transaction sp1;
+select @@trancount;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+insert into TxnTable values(2);
+save tran sp2;
+insert into TxnTable values(3);
+save tran sp2;
+select @@trancount;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+insert into TxnTable values(4);
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+3
+4
+~~END~~
+
+rollback tran sp2;
+select @@trancount;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+rollback tran sp2;
+select @@trancount;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+rollback tran sp1;
+select @@trancount;
+GO
+~~START~~
+int
+1
+~~END~~
+
+select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+~~END~~
+
+rollback tran txn1;
+select @@trancount;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select c1 from TxnTable;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- begin transaction name -> save transaction name -> rollback tran name
+-- Rollback whole transaction
+begin transaction txn1;
+insert into TxnTable values(1);
+save transaction sp1;
+begin transaction txn1;
+insert into TxnTable values(2);
+save transaction sp1;
+insert into TxnTable values(3);
+select @@trancount;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+rollback tran txn1;
+select @@trancount;
+GO
+~~START~~
+int
+0
+~~END~~
+
+select c1 from TxnTable;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- begin transaction -> save transaction name -> rollback to savepoint
+-- commit transaction
+begin transaction txn1;
+insert into TxnTable values(1);
+save transaction sp1;
+insert into TxnTable values(2);
+select c1 from TxnTable;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+rollback tran sp1;
+commit transaction;
+select c1 from TxnTable;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+
+
+
+
+
