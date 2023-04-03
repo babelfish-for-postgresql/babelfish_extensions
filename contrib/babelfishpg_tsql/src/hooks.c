@@ -189,7 +189,7 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
-static sort_nulls_first_hook_type prev_sort_nulls_first_hook = NULL;
+static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -301,8 +301,8 @@ InstallExtendedHooks(void)
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
 
-	prev_sort_nulls_first_hook = sort_nulls_first_hook;
-	sort_nulls_first_hook = sort_nulls_first;
+	prev_sortby_nulls_hook = sortby_nulls_hook;
+	sortby_nulls_hook = sort_nulls_first;
 }
 
 void
@@ -347,7 +347,7 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
-	sort_nulls_first_hook = prev_sort_nulls_first_hook;
+	sortby_nulls_hook = prev_sortby_nulls_hook;
 }
 
 /*****************************************
