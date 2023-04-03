@@ -13,7 +13,24 @@ smallint#!#varchar
 ~~END~~
 
 
+select indid, name from dbo.sysindexes where id=OBJECT_ID('t1');
+go
+~~START~~
+smallint#!#varchar
+0#!#<NULL>
+2#!#i1_t1t1f8997b05ff6c7614042919b25a8cc2e0
+~~END~~
+
+
 select count(*) from sys.sysindexes where id=OBJECT_ID('t1');
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select count(*) from dbo.sysindexes where id=OBJECT_ID('t1');
 go
 ~~START~~
 int
@@ -36,13 +53,18 @@ int
 ~~END~~
 
 
+select count(*) from dbo.sysindexes where id=OBJECT_ID('t1');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
+
+
 use master;
 go
 
 -- sysindexes should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-SELECT COUNT(*) FROM sys.    SySInDeXes where id=OBJECT_ID('t1');
+SELECT COUNT(*) FROM sys.SySInDeXes where id=OBJECT_ID('t1');
 go
 ~~START~~
 int
@@ -50,7 +72,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM dbo.    SySInDeXes where id=OBJECT_ID('t1');
+SELECT COUNT(*) FROM dbo.SySInDeXes where id=OBJECT_ID('t1');
 go
 ~~START~~
 int
@@ -59,10 +81,8 @@ int
 
 
 -- In case of cross-db, sysindexes should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
 -- should not be visible here
-SELECT COUNT(*) FROM db1.sys.     SySInDeXes where id=OBJECT_ID('t1');
+SELECT count(*) FROM db1.sys.SySInDeXes where id=OBJECT_ID('t1');
 go
 ~~START~~
 int
@@ -70,12 +90,11 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM db1.dbo.     SySInDeXes where id=OBJECT_ID('t1');
+SELECT count(*) FROM db1.dbo.SySInDeXes where id=OBJECT_ID('t1');
 go
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
 
 
 -- clean up

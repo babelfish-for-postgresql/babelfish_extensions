@@ -151,6 +151,7 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char* name);
+static void set_schemaname_dbo_to_sys(SelectStmt *selectStmt);
 
 extern bool  pltsql_ansi_defaults;
 extern bool  pltsql_quoted_identifier;
@@ -489,17 +490,36 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if(parseTree->stmt->type == T_SelectStmt)
 	{
 		SelectStmt *selectStmt = (SelectStmt *) parseTree->stmt;
-		char* list_of_dbo_catalog[10]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages", "syscolumns", "sysforeignkeys", "sysindexes", "sysobjects"};
-		ListCell *cell;
-		foreach (cell, selectStmt->fromClause)
+		set_schemaname_dbo_to_sys(selectStmt);
+		/* Replace the dbo schemaname to sys if present in the targetList*/
+		if(selectStmt->targetList)
 		{
-			RangeVar *rv = (RangeVar *) lfirst(cell);
-			if (rv-> schemaname && strcmp(rv-> schemaname, "dbo") == 0)
+			ListCell *cell;
+			foreach (cell, selectStmt->targetList)
 			{
-				for(int i =0; i<9;i++)
+				ResTarget *resTarget = (ResTarget*) lfirst(cell);
+				if(resTarget->val)
 				{
-					if(rv-> relname && strcmp(rv-> relname, list_of_dbo_catalog[i]) == 0)
-						rv->schemaname = "sys";
+					SubLink *subLink = (SubLink*)resTarget->val;
+					if (subLink->xpr.type == T_SubLink && subLink->subselect)
+					{
+						SelectStmt *subSelectStmt= (SelectStmt*)subLink->subselect;
+						set_schemaname_dbo_to_sys(subSelectStmt);
+					}
+				}
+			}
+		}
+		/* Replace the dbo schemaname to sys if present in the whereClause*/
+		if(selectStmt->whereClause)
+		{
+			A_Expr *a_Expr = (A_Expr*)selectStmt->whereClause;
+			if(a_Expr->type == T_A_Expr)
+			{
+				SubLink *subLink = (SubLink*)a_Expr->rexpr;
+				if (subLink->xpr.type == T_SubLink && subLink->subselect)
+				{
+					SelectStmt *subSelectStmt= (SelectStmt*)subLink->subselect;
+					set_schemaname_dbo_to_sys(subSelectStmt);
 				}
 			}
 		}
@@ -662,6 +682,45 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		}
 		default:
 			break;
+	}
+}
+
+static void set_schemaname_dbo_to_sys(SelectStmt *selectStmt)
+{
+	char* list_of_dbo_catalog[5]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages"};
+	char* list_of_dbo_catalog_not_supported_for_cross_db[4]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects"};
+	ListCell *cell;
+	foreach (cell, selectStmt->fromClause)
+	{
+		RangeVar *rv = (RangeVar *) lfirst(cell);
+		if (rv-> schemaname && strcmp(rv-> schemaname, "dbo") == 0)
+		{
+			for(int i =0; i<5;i++)
+			{
+				if(rv-> relname && strcmp(rv-> relname, list_of_dbo_catalog[i]) == 0)
+				{
+					rv-> schemaname = "sys";
+					break;
+				}
+			}
+			for(int i =0; i<4;i++)
+			{
+				if(rv-> relname && strcmp(rv-> relname, list_of_dbo_catalog_not_supported_for_cross_db[i]) == 0)
+				{
+					if (rv->catalogname || strcmp(get_cur_db_name(), "master") != 0) /* cross-db lookup */
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							errmsg("Cross-DB view query is not supported yet in Babelfish.")));
+					}
+					else
+					{
+						rv-> schemaname = "sys";
+						break;
+					}
+				}
+			}
+		}
 	}
 }
 

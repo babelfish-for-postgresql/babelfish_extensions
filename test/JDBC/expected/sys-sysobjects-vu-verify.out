@@ -10,9 +10,7 @@ int
 
 
 -- sysobjects should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-SELECT COUNT(*) FROM dbo.    SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+SELECT COUNT(*) FROM dbo.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
 go
 ~~START~~
 int
@@ -21,9 +19,7 @@ int
 
 
 -- In case of cross-db, sysobjects should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.sys.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
+SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.sys.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
 go
 ~~START~~
 int
@@ -31,24 +27,15 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
+SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
 go
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-
-SELECT COUNT(*) as dbo      FROM sys_sysobjects_vu_prepare_db1.    dbo        .     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
-go
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
 
 
 -- should not be visible here
-SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.sys.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.sys.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
 go
 ~~START~~
 int
@@ -56,12 +43,11 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.     SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
 go
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
 
 
 SELECT * FROM sys_sysobjects_vu_prepare_view

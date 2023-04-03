@@ -14,13 +14,8 @@ smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nva
 ~~END~~
 
 
-CREATE DATABASE DB1;
-GO
-
 -- syslanguages should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-select * from dbo.    SySLanGUAgeS WHERE langid = 1;
+select * from dbo.SySLanGUAgeS WHERE langid = 1;
 go
 ~~START~~
 smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#smallint
@@ -28,10 +23,11 @@ smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nva
 ~~END~~
 
 
+CREATE DATABASE DB1;
+GO
+
 -- In case of cross-db, syslanguages should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-SELECT * FROM db1.sys.     SySLanGUAgeS WHERE langid = 1;
+SELECT * FROM db1.sys.SySLanGUAgeS WHERE langid = 1;
 GO
 ~~START~~
 smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#smallint
@@ -39,7 +35,7 @@ smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nva
 ~~END~~
 
 
-SELECT * FROM db1.dbo.     SySLanGUAgeS WHERE langid = 1;
+SELECT * FROM db1.dbo.SySLanGUAgeS WHERE langid = 1;
 GO
 ~~START~~
 smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#smallint

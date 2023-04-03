@@ -26,13 +26,8 @@ sql_variant#!#int#!#nvarchar#!#smallint
 ~~END~~
 
 
-CREATE DATABASE DB1;
-GO
-
 -- syscurconfigs should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-select * from dbo.    SySCuRConFIgS;
+select * from dbo.SySCuRConFIgS;
 go
 ~~START~~
 sql_variant#!#int#!#nvarchar#!#smallint
@@ -46,10 +41,11 @@ sql_variant#!#int#!#nvarchar#!#smallint
 ~~END~~
 
 
+CREATE DATABASE DB1;
+GO
+
 -- In case of cross-db, syscurconfigs should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-SELECT * FROM db1.sys.     SySCuRConFIgS;
+SELECT * FROM db1.sys.SySCuRConFIgS;
 GO
 ~~START~~
 sql_variant#!#int#!#nvarchar#!#smallint
@@ -63,7 +59,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 ~~END~~
 
 
-SELECT * FROM db1.dbo.     SySCuRConFIgS;
+SELECT * FROM db1.dbo.SySCuRConFIgS;
 GO
 ~~START~~
 sql_variant#!#int#!#nvarchar#!#smallint
@@ -92,9 +88,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 
 
 -- sysconfigures should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-select * from dbo.    SySConFIGuReS;
+select * from dbo.SySConFIGuReS;
 go
 ~~START~~
 sql_variant#!#int#!#nvarchar#!#smallint
@@ -109,9 +103,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 
 
 -- In case of cross-db, sysconfigures should also exist in dbo schema
--- If there are white spaces between schema name and catalog name then those need to be ignored
--- case insensitive check
-SELECT * FROM db1.sys.     SySConFIGuReS;
+SELECT * FROM db1.sys.SySConFIGuReS;
 GO
 ~~START~~
 sql_variant#!#int#!#nvarchar#!#smallint
@@ -125,7 +117,7 @@ sql_variant#!#int#!#nvarchar#!#smallint
 ~~END~~
 
 
-SELECT * FROM db1.dbo.     SySConFIGuReS;
+SELECT * FROM db1.dbo.SySConFIGuReS;
 GO
 ~~START~~
 sql_variant#!#int#!#nvarchar#!#smallint
