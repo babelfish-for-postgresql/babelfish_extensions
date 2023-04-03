@@ -1,0 +1,323 @@
+create table t1 (a uniqueidentifier, b uniqueidentifier, c uniqueidentifier, primary key(a));
+GO
+
+insert into t1(a) values ('6F9619FF-8B86-D011-B42D-00C04FC964FF');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t1(a) values ('6F9619FF-8B86-D011-B42D-00C04FC964FF');  -- trigger error
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "t1_pkey")~~
+
+
+select * from t1;
+GO
+~~START~~
+uniqueidentifier#!#uniqueidentifier#!#uniqueidentifier
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#<NULL>#!#<NULL>
+~~END~~
+
+
+insert into t1 values ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', newid(), newid());
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t1 where a = '6F9619FF-8B86-D011-B42D-00C04FC964FF'; -- test PK
+GO
+~~START~~
+uniqueidentifier#!#uniqueidentifier#!#uniqueidentifier
+6F9619FF-8B86-D011-B42D-00C04FC964FF#!#<NULL>#!#<NULL>
+~~END~~
+
+
+select count(*) from t1 where a = '6F9619FF-8B86-D011-B42D-00C04FC964FF';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from t1 where a > '6F9619FF-8B86-D011-B42D-00C04FC964FF';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from t1 where a >= '6F9619FF-8B86-D011-B42D-00C04FC964FF';
+GO
+~~START~~
+int
+2
+~~END~~
+
+select count(*) from t1 where a < 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+GO
+~~START~~
+int
+1
+~~END~~
+
+select count(*) from t1 where a <= 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+GO
+~~START~~
+int
+2
+~~END~~
+
+select count(*) from t1 where a <> 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- newid's value could not be verified
+insert into t1 values (newid(), newid(), newid());
+insert into t1 values (newid(), newid(), newid());
+insert into t1 values (newid(), newid(), newid());
+select count(a) from t1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+5
+~~END~~
+
+
+create table t2 (a uniqueidentifier, b uniqueidentifier, c uniqueidentifier, primary key(a));
+insert into t2 select * from t1 order by a;
+select count(distinct a) from t2;
+GO
+~~ROW COUNT: 5~~
+
+~~START~~
+int
+5
+~~END~~
+
+
+-- test index (need more data)
+create table t3 ( a uniqueidentifier, b uniqueidentifier);
+GO
+-- create inital distinct values
+insert into t3 values (newid(), newid());
+insert into t3 values (newid(), newid());
+insert into t3 values (newid(), newid());
+insert into t3 values (newid(), newid());
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+create index t3_a on t3 (a);
+GO
+
+create index t3_b on t3 (b);
+GO
+
+-- test truncate feature of uniqueidentifier_in
+create table t4 ( a uniqueidentifier);
+GO
+
+insert into t4 values ('6F9619FF-8B86-D011-B42D-00C04FC964FF');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t4 values ('6F9619FF-8B86-D011-B42D-00C04FC964FFwrong'); -- characters exceeding are truncated
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t4 values ('{6F9619FF-8B86-D011-B42D-00C04FC964FF}'); -- with braces
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t4 values ('{6F9619FF-8B86-D011-B42D-00C04FC964FFwrong'); -- error due to no matching brace
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type uuid: "{6F9619FF-8B86-D011-B42D-00C04FC964FFwrong")~~
+
+
+insert into t4 values ('6F9619FF-8B86-D011-B42D-00C04FC964FF}'); -- single brace at the end are truncated
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t4;
+GO
+~~START~~
+uniqueidentifier
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+select set_config('enable_seqscan','off','false');
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('enable_bitmapscan','off','false');
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('search_path','sys, public','true');
+GO
+~~START~~
+text
+sys, public
+~~END~~
+
+
+select name, setting from pg_settings where name in ('enable_seqscan', 'enable_bitmapscan');
+GO
+~~START~~
+text#!#text
+enable_bitmapscan#!#off
+enable_seqscan#!#off
+~~END~~
+
+select * from t3 where a = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; -- test btree index
+GO
+~~START~~
+uniqueidentifier#!#uniqueidentifier
+~~END~~
+
+select * from t3 where b = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'; -- test hash index
+GO
+~~START~~
+uniqueidentifier#!#uniqueidentifier
+~~END~~
+
+
+-- assignment cast, should have same behavior as normal insert
+create table t5 ( a uniqueidentifier);
+insert into t5 values (cast('6F9619FF-8B86-D011-B42D-00C04FC964FF' as varchar(50)));
+GO
+~~ROW COUNT: 1~~
+
+insert into t5 values (cast('6F9619FF-8B86-D011-B42D-00C04FC964FFwrong' as varchar(50))); -- characters exceeding are truncated
+GO
+~~ROW COUNT: 1~~
+
+insert into t5 values (cast('{6F9619FF-8B86-D011-B42D-00C04FC964FF}' as varchar(50))); -- with braces
+GO
+~~ROW COUNT: 1~~
+
+insert into t5 values (cast('{6F9619FF-8B86-D011-B42D-00C04FC964FFwrong' as varchar(50))); -- error due to no matching brace
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type uuid: "{6F9619FF-8B86-D011-B42D-00C04FC964FFwrong")~~
+
+insert into t5 values (cast('6F9619FF-8B86-D011-B42D-00C04FC964FF}' as varchar(50))); -- single brace at the end are truncated
+GO
+~~ROW COUNT: 1~~
+
+insert into t5 values (cast('6F9619FF-8B86-D011-B42D-00C04FC964FF' as nvarchar(50)));
+GO
+~~ROW COUNT: 1~~
+
+insert into t5 values (cast('6F9619FF-8B86-D011-B42D-00C04FC964FFwrong' as nvarchar(50))); -- characters exceeding are truncated
+GO
+~~ROW COUNT: 1~~
+
+insert into t5 values (cast('{6F9619FF-8B86-D011-B42D-00C04FC964FF}' as nvarchar(50))); -- with braces
+GO
+~~ROW COUNT: 1~~
+
+insert into t5 values (cast('{6F9619FF-8B86-D011-B42D-00C04FC964FFwrong' as nvarchar(50))); -- error due to no matching brace
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type uuid: "{6F9619FF-8B86-D011-B42D-00C04FC964FFwrong")~~
+
+insert into t5 values (cast('6F9619FF-8B86-D011-B42D-00C04FC964FF}' as nvarchar(50))); -- single brace at the end are truncated
+GO
+~~ROW COUNT: 1~~
+
+
+-- error cases, implicit cast not supported
+select * from t5 where a = cast('6F9619FF-8B86-D011-B42D-00C04FC964FF' as varchar(50));
+GO
+~~START~~
+uniqueidentifier
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+select * from t5 where a = cast('6F9619FF-8B86-D011-B42D-00C04FC964FF' as nvarchar(50));
+GO
+~~START~~
+uniqueidentifier
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+
+select set_config('enable_seqscan','on','false');
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+select set_config('enable_bitmapscan','on','false');
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+drop table t1;
+GO
+drop table t2;
+GO
+drop table t3;
+GO
+drop table t4;
+GO
+drop table t5;
+GO

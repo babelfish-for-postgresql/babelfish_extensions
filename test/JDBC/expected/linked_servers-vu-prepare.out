@@ -41,9 +41,17 @@ GO
 EXEC sp_addlinkedserver  @server = N'hello.world.com', @srvproduct=N'SQL Server'
 GO
 
--- Create linked server with a non-null provider string (Will throw warning internally)
-EXEC sp_addlinkedserver  @server = N'mssql_server2', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @provstr='blahblahblah', @catalog=N'master'
+-- Create linked server with a non-null provider string and NULL @srvproduct (Will throw warning internally)
+EXEC sp_addlinkedserver  @server = N'mssql_server2', @provider=N'tds_fdw', @datasrc=N'localhost', @provstr='blahblahblah', @catalog=N'master'
 GO
+
+-- Try to create linked server with NULL @provider (Should throw error)
+EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=NULL, @datasrc=N'localhost', @catalog=N'master'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported provider '(null)'. Supported provider is 'tds_fdw')~~
+
 
 -- Try to create linked server with same server name (Should throw error)
 EXEC sp_addlinkedserver  @server = N'mssql_server', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'

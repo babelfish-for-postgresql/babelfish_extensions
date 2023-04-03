@@ -1029,7 +1029,7 @@ select
   , null::varchar(12) as net_address
   , null::varchar(12) as net_library
   , a.usename as loginname
-  , null::bytea as context_info
+  , t.context_info::bytea as context_info
   , null::bytea as sql_handle
   , 0 as stmt_start
   , 0 as stmt_end
@@ -1527,7 +1527,10 @@ SELECT
   , CAST('VIEW'as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
-  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(case when (c.relnamespace::regnamespace::text = 'sys') then 1
+	when c.relname in (select name from sys.shipped_objects_not_in_sys nis
+		where nis.name = c.relname and nis.schemaid = c.relnamespace and nis.type = 'V') then 1
+	else 0 end as sys.bit) AS is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(0 as sys.BIT) AS is_replicated
@@ -2093,7 +2096,7 @@ create or replace view sys.dm_exec_sessions
     , (select sys.default_domain())::sys.nvarchar(128) as nt_domain
     , null::sys.nvarchar(128) as nt_user_name
     , a.state::sys.nvarchar(30) as status
-    , null::sys.nvarchar(128) as context_info
+    , d.context_info::sys.varbinary(128) as context_info
     , null::integer as cpu_time
     , null::integer as memory_usage
     , null::integer as total_scheduled_time

@@ -29,7 +29,7 @@
 static void
 test_fault1(void *arg, int *num_occurrences)
 {
-	StringInfo buf = (StringInfo) arg;
+	StringInfo	buf = (StringInfo) arg;
 
 	(*num_occurrences) -= 1;
 
@@ -42,7 +42,7 @@ test_fault1(void *arg, int *num_occurrences)
 static void
 test_fault2(void *arg, int *num_occurrences)
 {
-	StringInfo buf = (StringInfo) arg;
+	StringInfo	buf = (StringInfo) arg;
 
 	(*num_occurrences) -= 1;
 
@@ -61,13 +61,13 @@ static void
 tamper_request_sequential(void *arg, char tamper_byte)
 {
 	StringInfo	buf,
-			tmp;
-	MemoryContext	oldcontext;
-	int		i;
+				tmp;
+	MemoryContext oldcontext;
+	int			i;
 
-	struct TdsMessageWrapper	*wrapper = (struct TdsMessageWrapper *) arg;
-	uint64_t			offset = 0;
-	uint32_t			tdsVersion = GetClientTDSVersion();
+	struct TdsMessageWrapper *wrapper = (struct TdsMessageWrapper *) arg;
+	uint64_t	offset = 0;
+	uint32_t	tdsVersion = GetClientTDSVersion();
 
 	/* Skip if its an Attention Request. */
 	if (wrapper->messageType == TDS_ATTENTION)
@@ -81,9 +81,10 @@ tamper_request_sequential(void *arg, char tamper_byte)
 	 * Skip the offset part, otherwise, we'll throw FATAL error and terminate
 	 * the connection
 	 *
-	 * Note: In the ALL_HEADERS rule, the Query Notifications header and the Transaction
-	 * Descriptor header were introduced in TDS 7.2. We need to to Process them only
-	 * for TDS versions more than or equal to 7.2, otherwise we do not increment the offset.
+	 * Note: In the ALL_HEADERS rule, the Query Notifications header and the
+	 * Transaction Descriptor header were introduced in TDS 7.2. We need to to
+	 * Process them only for TDS versions more than or equal to 7.2, otherwise
+	 * we do not increment the offset.
 	 */
 	if (tdsVersion > TDS_VERSION_7_1_1)
 		offset = ProcessStreamHeaders(buf);
@@ -97,12 +98,12 @@ tamper_request_sequential(void *arg, char tamper_byte)
 
 			switch (wrapper->messageType)
 			{
-				case TDS_QUERY:		/* Simple SQL BATCH */
+				case TDS_QUERY: /* Simple SQL BATCH */
 					{
 						(void) GetSQLBatchRequest(tmp);
 					}
 					break;
-				case TDS_RPC:		/* Remote procedure call */
+				case TDS_RPC:	/* Remote procedure call */
 					{
 						(void) GetRPCRequest(tmp);
 					}
@@ -152,7 +153,7 @@ static void
 tamper_rpc_request(void *arg, uint64_t offset, int tamper_byte)
 {
 	struct TdsMessageWrapper *wrapper = (struct TdsMessageWrapper *) arg;
-	MemoryContext	oldcontext = MemoryContextSwitchTo(MessageContext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(MessageContext);
 
 	StringInfo	buf = wrapper->message;
 	StringInfo	tmp = makeStringInfo();
@@ -182,7 +183,7 @@ tamper_rpc_request(void *arg, uint64_t offset, int tamper_byte)
 static void
 pre_parsing_tamper_rpc_request_sptype(void *arg, int *num_occurrences)
 {
-	uint64_t 		offset = 0;
+	uint64_t	offset = 0;
 	struct TdsMessageWrapper *wrapper = (struct TdsMessageWrapper *) arg;
 
 	if (wrapper->messageType != TDS_RPC)
@@ -193,7 +194,7 @@ pre_parsing_tamper_rpc_request_sptype(void *arg, int *num_occurrences)
 	if (GetClientTDSVersion() > TDS_VERSION_7_1_1)
 		offset = ProcessStreamHeaders(wrapper->message);
 
-	offset += 2; 	/* Skip length. */
+	offset += 2;				/* Skip length. */
 
 	if (tamperByte != INVALID_TAMPER_BYTE)
 		tamper_rpc_request(arg, offset, tamperByte);
@@ -233,37 +234,49 @@ throw_error_comm(void *arg, int *num_occurrences)
 }
 
 static void
-throw_error_buffer(void *arg ,int *num_occurrences)
+throw_error_buffer(void *arg, int *num_occurrences)
 {
-	char buffer[3] = {'\0'};
-	int  can = 0;
-	char tem[10] = "aaaaaaaaaa";
+	char		buffer[3] = {'\0'};
+	int			can = 0;
+	char		tem[10] = "aaaaaaaaaa";
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
-	memcpy(buffer,tem,10);
+	memcpy(buffer, tem, 10);
 #pragma GCC diagnostic pop
-	if (can !=0)
-		elog(LOG,"Buffer overflowed \n");
+	if (can != 0)
+		elog(LOG, "Buffer overflowed \n");
 	else
-		elog(LOG,"Did not Overflow \n");
+		elog(LOG, "Did not Overflow \n");
 }
+
 /*
  * Type declarations
  *
  * Format: {Enum type, Type name, Callback list}
  *
- * Enum type: type from FaultInjectorType_e 
+ * Enum type: type from FaultInjectorType_e
  * Type name: user visible name for this type
  * Callback list: fault callback list for this type; set it to NIL
  */
-TEST_TYPE_LIST = {
-	{TestType, "Test", NIL},
-	{ParseHeaderType, "TDS request header", NIL},
-	{PreParsingType, "TDS pre-parsing", NIL},
-	{PostParsingType, "TDS post-parsing", NIL},
-	{ParseRpcType, "TDS RPC Parsing", NIL}
+TEST_TYPE_LIST =
+{
+	{
+		TestType, "Test", NIL
+	},
+	{
+		ParseHeaderType, "TDS request header", NIL
+	},
+	{
+		PreParsingType, "TDS pre-parsing", NIL
+	},
+	{
+		PostParsingType, "TDS post-parsing", NIL
+	},
+	{
+		ParseRpcType, "TDS RPC Parsing", NIL
+	}
 };
 
 /*
@@ -275,15 +288,36 @@ TEST_TYPE_LIST = {
  * Type name: type of the test
  * Callback function: callback function executed when this test is triggered
  */
-TEST_LIST = {
-	{"test_fault1", TestType, 0, &test_fault1},
-	{"test_fault2", TestType, 0, &test_fault2},
-	{"tds_comm_throw_error", ParseHeaderType, 0, &throw_error_comm},
-	{"pre_parsing_tamper_request", PreParsingType, 0, &pre_parsing_tamper_request},
-	{"pre_parsing_tamper_rpc_request_sptype", PreParsingType, 0, &pre_parsing_tamper_rpc_request_sptype},
-	{"parsing_tamper_rpc_parameter_datatype", ParseRpcType, 0, &parsing_tamper_rpc_parameter_datatype},
-	{"pre_parsing_throw_error", PreParsingType, 0, &throw_error},
-	{"post_parsing_throw_error", PostParsingType, 0, &throw_error},
-	{"buffer_overflow_test",PreParsingType,0, &throw_error_buffer},
-	{"", InvalidType, 0, NULL} /* keep this as last */
+TEST_LIST =
+{
+	{
+		"test_fault1", TestType, 0, &test_fault1
+	},
+	{
+		"test_fault2", TestType, 0, &test_fault2
+	},
+	{
+		"tds_comm_throw_error", ParseHeaderType, 0, &throw_error_comm
+	},
+	{
+		"pre_parsing_tamper_request", PreParsingType, 0, &pre_parsing_tamper_request
+	},
+	{
+		"pre_parsing_tamper_rpc_request_sptype", PreParsingType, 0, &pre_parsing_tamper_rpc_request_sptype
+	},
+	{
+		"parsing_tamper_rpc_parameter_datatype", ParseRpcType, 0, &parsing_tamper_rpc_parameter_datatype
+	},
+	{
+		"pre_parsing_throw_error", PreParsingType, 0, &throw_error
+	},
+	{
+		"post_parsing_throw_error", PostParsingType, 0, &throw_error
+	},
+	{
+		"buffer_overflow_test", PreParsingType, 0, &throw_error_buffer
+	},
+	{
+		"", InvalidType, 0, NULL
+	}							/* keep this as last */
 };

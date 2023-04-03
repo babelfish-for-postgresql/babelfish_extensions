@@ -108,6 +108,4 @@ do \
 	pfree(s.data); \
 } while(0)
 
-#endif	/* TDS_DEBUG_H */
-
-
+#endif							/* TDS_DEBUG_H */

@@ -32,20 +32,37 @@ if [ ! $1 ]; then
     echo "  pg_upgrade SOURCE_WS [TARGET_WS]"
     echo "      run pg_upgrade from SOURCE_WS to TARGET_WS"
     echo ""
-    echo "  test INPUT_DIR [MIGRATION_MODE]"
-    echo "      run JDBC test, default migration_mode is single-db"
+    echo "  test normal [MIGRATION_MODE] [TEST_BASE_DIR]"
+    echo "      run a normal JDBC test, default migration mode and test dir are single-db and input, respectively"
+    echo ""
+    echo "  test TEST_MODE MIGRATION_MODE TEST_BASE_DIR"
+    echo "      run a prepare/verify JDBC test using a schedule file in TEST_BASE_DIR"
     echo ""
     echo "  minor_version_upgrade SOURCE_WS [TARGET_WS]"
     echo "      upgrade minor version using ALTER EXTENSION ... UPDATE"
     echo ""
-    echo "  pg_dump [TARGET_WS]"
+    echo "  pg_dump [TARGET_WS] LOGICAL_DATBABSE_NAME"
     echo "      dump [TARGET_WS using pg_dump"
+    echo "      LOGICAL_DATBABSE_NAME is optional if provided then only that bbf database will be dumped."
     echo ""
-    echo "  restore SOURCE_WS [TARGET_WS]"
+    echo "  restore SOURCE_WS [TARGET_WS] LOGICAL_DATBABSE_NAME"
     echo "      restore dump files from SOURCE_WS on [TARGET_WS]"
+    echo "      LOGICAL_DATBABSE_NAME is optional if provided then only that bbf database will be restored."
     echo ""
     echo "  dumprestore SOURCE_WS [TARGET_WS]"
     echo "      dump SOURCE_WS using pg_dump and restore it on TARGET_WS"
+    echo ""
+    echo "  initpg_coverage [TARGET_WS]"
+    echo "      same as initpg but with --enable-coverage flag to generate code coverage"
+    echo ""
+    echo "  build_coverage [TARGET_WS]"
+    echo "      generate code coverage HTML report for all extensions"
+    echo ""
+    echo "  sum_coverage [TARGET_WS]"
+    echo "      summarize code coverage"
+    echo ""
+    echo "  run_pgindent [TARGET_WS]"
+    echo "      run pgindent"
     exit 0
 fi
 
@@ -60,9 +77,32 @@ if [ "$1" == "pg_upgrade" ] || [ "$1" == "minor_version_upgrade" ] || [ "$1" == 
     TARGET_WS=$3
 elif [ "$1" == "test" ]; then
     TARGET_WS=$CUR_WS
+    TEST_MODE=$2
+    if [ ! $TEST_MODE ]; then
+        echo "Error: TEST_MODE should be specified, normal, prepare or verify" 1>&2
+        exit 1
+    elif [ "${TEST_MODE}" != "normal" ] && [ "${TEST_MODE}" != "prepare" ] && [ "${TEST_MODE}" != "verify" ]; then
+        echo "Error: TEST_MODE should be one of: normal, prepare or verify" 1>&2
+        exit 1
+    fi
+
     MIGRATION_MODE=$3
-    if [ ! $MIGRATION_MODE ]; then
-        MIGRATION_MODE="single-db"
+    if [ ! ${MIGRATION_MODE} ]; then
+        if [ "${TEST_MODE?}" == "normal" ]; then
+            MIGRATION_MODE="single-db"
+        else
+            echo "Error: MIGRATION_MODE should be specified, single-db or multi-db" 1>&2
+            exit 1
+        fi
+    fi
+
+    TEST_BASE_DIR=$4
+    if [ ! $TEST_BASE_DIR ]; then
+        if [ "${TEST_MODE?}" == "normal" ]; then
+            TEST_BASE_DIR="input"
+        else
+            echo "Error: TEST_BASE_DIR should be specified" 1>&2
+        fi
     fi
 fi
 if [ ! $TARGET_WS ]; then
@@ -155,8 +195,14 @@ pg_dump() {
     echo "Runinng pg_dumpall and pg_dump on ($1)"
     cd $1/postgres
     rm -f pg_dump_globals.sql pg_dump.sql error.log
-    $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>error.log
-    $1/postgres/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+
+    if [[ ! $2 ]];then
+        $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>error.log
+        $1/postgres/bin/pg_dump --create --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+    else
+        $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose --bbf-database-name=$2 -f pg_dump_globals.sql 2>error.log
+        $1/postgres/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --bbf-database-name=$2 --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+    fi
     stop $1
 }
 
@@ -170,12 +216,129 @@ restore() {
     $2/postgres/bin/psql -d postgres -U $USER -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
 
     echo "Restoring from pg_dump"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE jdbc_testdb TO sysadmin WITH GRANT OPTION;"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER USER jdbc_user CREATEDB;"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-    $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT pg_reload_conf();"
+    if [[ ! $3 ]];then
+        $2/postgres/bin/psql -d postgres -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT pg_reload_conf();"
+    else
+        $2/postgres/bin/psql -d jdbc_testdb -U jdbc_user -f $1/postgres/pg_dump.sql 2>>error.log
+    fi
+}
+
+run_pgindent() {
+    cd $1/postgres/lib
+
+    echo "dumping typedefs for babelfishpg_mpney to /tmp/babelfishpg_money.typedefs.."
+    objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_money.typedefs
+
+    echo "dumping typedefs for babelfishpg_common to /tmp/babelfishpg_common.typedefs.."
+    objdump -W babelfishpg_common.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_common.typedefs
+
+    echo "dumping typedefs for babelfishpg_tds to /tmp/babelfishpg_tds.typedefs.."
+    objdump -W babelfishpg_tds.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tds.typedefs
+
+    echo "dumping typedefs for babelfishpg_tsql to /tmp/babelfishpg_tsql.typedefs.."
+    objdump -W babelfishpg_tsql.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tsql.typedefs
+
+    cd $1
+    echo "Clone and build pg_bsd_indent which is required by pgindent..."
+    git clone https://git.postgresql.org/git/pg_bsd_indent.git
+    cd pg_bsd_indent/
+    make PG_CONFIG=$1/postgres/bin/pg_config
+    sudo cp pg_bsd_indent /usr/local/bin
+
+    cd $1/babelfish_extensions
+
+    echo ""
+    echo "Running pgindent on babelfishpg_money..."
+    cd contrib/babelfishpg_money
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_money.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_common..."
+    cd ../babelfishpg_common
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_common.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_tds..."
+    cd ../babelfishpg_tds
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tds.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_tsql..."
+    cd ../babelfishpg_tsql
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="exclude_file_from_pgindent"
+
+    echo ""
+    echo "pgindent is ran successfully against $1."
+    echo "Please re-build all the extensions to make sure that there is no compilation error."
+    echo ""
+}
+
+init_lcov(){
+    cd $1
+    if [ ! -d "./lcov" ]; then
+        git clone --depth 1 --branch v1.16 https://github.com/linux-test-project/lcov.git
+    fi
+    cd lcov
+    sudo make PREFIX=/usr install
+    export PATH=$PATH:/usr/bin/lcov
+    export PATH=$PATH:/usr/bin/gcov
+    export PATH=$PATH:/usr/bin/genhtml
+}
+
+init_pg_coverage(){
+    init_lcov $1
+    cd $1/postgresql_modified_for_babelfish
+    ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-coverage --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+    make -j 4
+    make install
+    cd contrib && make && sudo make install
+    sudo cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" $2/postgres/lib/
+    init_pghint $1 $2
+}
+
+build_extension_coverage(){
+    cd $1/babelfish_extensions/contrib/$2
+    lcov --gcov-tool gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
+    lcov --gcov-tool gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+    rm -rf coverage
+    genhtml -q --legend -o coverage --title=${2} --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
+    touch coverage-html-stamp
+
+}
+
+build_coverage(){
+    build_extension_coverage $1 'babelfishpg_money'
+    build_extension_coverage $1 'babelfishpg_common'
+    build_extension_coverage $1 'babelfishpg_tds'
+    build_extension_coverage $1 'babelfishpg_tsql'
+    echo ""
+    echo "  code coverage report generation completed"
+    echo "  run './dev-tools.sh sum_coverage' to generate summarized code coverage for all extensions"
+    echo "  HTML code coverage report for each extension is located as follows -"
+    echo "      babelfishpg_money:  $TARGET_WS/babelfish_extensions/contrib/babelfishpg_money/coverage/index.html"
+    echo "      babelfishpg_common: $TARGET_WS/babelfish_extensions/contrib/babelfishpg_common/coverage/index.html"
+    echo "      babelfishpg_tds:    $TARGET_WS/babelfish_extensions/contrib/babelfishpg_tds/coverage/index.html"
+    echo "      babelfishpg_tsql:   $TARGET_WS/babelfish_extensions/contrib/babelfishpg_tsql/coverage/index.html"
+}
+
+sum_coverage(){
+    cd $1/babelfish_extensions/contrib
+    lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o lcov.info
+    lcov --list lcov.info
 }
 
 if [ "$1" == "initdb" ]; then
@@ -211,8 +374,6 @@ elif [ "$1" == "pg_upgrade" ]; then
     cd $TARGET_WS
     if [ ! -d "./upgrade" ]; then
         mkdir upgrade
-    else
-        rm upgrade/*
     fi
     cd upgrade
     ../postgres/bin/pg_upgrade -U $USER \
@@ -235,18 +396,44 @@ elif [ "$1" == "pg_upgrade" ]; then
         "SELECT pg_reload_conf();"
     exit 0
 elif [ "$1" == "test" ]; then
-    INPUT_DIR=$2
-    cd $TARGET_WS/postgres
 
+    # Set migration_mode
+    cd $TARGET_WS/postgres
     bin/psql -d $TEST_DB -U $USER -c \
         "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '$MIGRATION_MODE';"
     bin/psql -d $TEST_DB -U $USER -c \
         "SELECT pg_reload_conf();"
 
+    # Remove output directory
     cd $CUR_WS/babelfish_extensions/test/JDBC
-    rm -rf output
-    export inputFilesPath=$INPUT_DIR
+    rm -rf output temp_schedule
+
+    export inputFilesPath=input
+    if [ "$TEST_MODE" == "normal" ]; then
+        export inputFilesPath=${TEST_BASE_DIR?}
+    elif [ "$TEST_MODE" == "prepare" ]; then
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" $TEST_BASE_DIR/schedule); do
+          if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 
+            printf '%s\n' "ERROR: Cannot find Test file "$filename"-vu-prepare or "$filename"-vu-verify in input directory !!" >&2
+            exit 1
+          fi
+        done
+        cat $TEST_BASE_DIR/schedule > temp_schedule
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" temp_schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" temp_schedule
+        done
+        export scheduleFile=temp_schedule
+    elif [ "$TEST_MODE" == "verify" ]; then
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" $TEST_BASE_DIR/schedule); do
+          trimmed=$(awk '{$1=$1;print}' <<< "$filename")
+          echo $trimmed-vu-verify >> temp_schedule;
+          echo $trimmed-vu-cleanup >> temp_schedule;
+        done
+        export scheduleFile=temp_schedule
+    fi
+
     mvn test
+    rm -rf temp_schedule
     exit 0
 elif [ "$1" == "minor_version_upgrade" ]; then
     echo "Building from $SOURCE_WS..."
@@ -270,14 +457,14 @@ elif [ "$1" == "minor_version_upgrade" ]; then
     exit 0
 elif [ "$1" == "pg_dump" ]; then
     restart $TARGET_WS || true
-    pg_dump $TARGET_WS
+    pg_dump $TARGET_WS $3
     exit 0
 elif [ "$1" == "restore" ]; then
     SOURCE_WS=$2
     init_db $TARGET_WS
     echo "Init target workspace ($TARGET_WS) done!"
 
-    restore $SOURCE_WS $TARGET_WS
+    restore $SOURCE_WS $TARGET_WS $4
     echo "Restored on target workspace ($TARGET_WS)!"
     exit 0
 elif [ "$1" == "dumprestore" ]; then
@@ -292,5 +479,18 @@ elif [ "$1" == "dumprestore" ]; then
 
     restore $SOURCE_WS $TARGET_WS
     echo "Restored on target workspace ($TARGET_WS)!"
+    exit 0
+elif [ "$1" == "run_pgindent" ]; then
+    init_pg $TARGET_WS $TARGET_WS
+    build_bbf $TARGET_WS $TARGET_WS
+    run_pgindent $TARGET_WS
+elif [ "$1" == "initpg_coverage" ]; then
+    init_pg_coverage $TARGET_WS $TARGET_WS
+    exit 0
+elif [ "$1" == "build_coverage" ]; then
+    build_coverage $TARGET_WS
+    exit 0
+elif [ "$1" == "sum_coverage" ]; then
+    sum_coverage $TARGET_WS
     exit 0
 fi

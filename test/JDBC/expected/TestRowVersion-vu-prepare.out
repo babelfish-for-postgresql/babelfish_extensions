@@ -128,6 +128,9 @@ go
 create table babel_3139_t(c1 int, rv rowversion, dbts_after_insert binary(8));
 go
 
+CREATE TABLE babel_3819_t(col1 int, timestamp);
+GO
+
 
 
 begin tran;
@@ -145,6 +148,19 @@ go
 
 ~~ROW COUNT: 1~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+begin tran;
+insert into babel_3819_t(col1) values(1);
+insert into babel_3819_t(col1) values(2);
+insert into babel_3819_t(col1) values(3);
+commit;
+go
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~

@@ -5,7 +5,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
-#include "parser/parser.h"      /* only needed for GUC variables */
+#include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/parse_type.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -27,14 +27,15 @@
 
 common_utility_plugin *common_utility_plugin_ptr = NULL;
 
-bool suppress_string_truncation_error = false;
+bool		suppress_string_truncation_error = false;
 
-bool pltsql_suppress_string_truncation_error(void);
+bool		pltsql_suppress_string_truncation_error(void);
 
-bool is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar / sys.varchar / sys.nvarchar */
-bool is_tsql_text_ntext_or_image_datatype(Oid oid);
+bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
+												 * sys.varchar / sys.nvarchar */
+bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
-/* 
+/*
  * Following the rule for locktag fields of advisory locks:
  *	field1: MyDatabaseId ... ensures locks are local to each database
  *	field2: high-order half of an int8 key
@@ -66,8 +67,8 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
  * Also, length should be restricted to 8000 for sys.varchar and sys.char datatypes.
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
-void 
-pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_cast)
+void
+pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
 {
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
 
@@ -79,9 +80,9 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
 	else
 	{
 		/* Normal reference to a type name */
-		char *schemaname;
-		char *typname;
-		bool	is_sys_schema = false;
+		char	   *schemaname;
+		char	   *typname;
+		bool		is_sys_schema = false;
 
 		/* deconstruct the name list */
 		DeconstructQualifiedName(typeName->names, &schemaname, &typname);
@@ -89,8 +90,8 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
 			is_sys_schema = strcmp("sys", schemaname) == 0;
 		else
 		{
-			Oid schema_oid;
-			Oid sys_oid = InvalidOid;
+			Oid			schema_oid;
+			Oid			sys_oid = InvalidOid;
 
 			/* Unqualified type name, search the search path */
 			schema_oid = typenameGetSchemaOID(typname, true);
@@ -100,9 +101,13 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
 		}
 		if (is_sys_schema)
 		{
-			int max_allowed_varchar_length = 8000;
-			int max_allowed_nvarchar_length = 4000;
-			/* sys types/domains without typmod specification, set the default accordingly */
+			int			max_allowed_varchar_length = 8000;
+			int			max_allowed_nvarchar_length = 4000;
+
+			/*
+			 * sys types/domains without typmod specification, set the default
+			 * accordingly
+			 */
 			if (*typmod == -1)
 			{
 				if (strcmp(typname, "varchar") == 0 ||
@@ -114,7 +119,11 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
 				{
 					/* Default length is 30 in cast and convert statement */
 					if (is_cast)
-						/* atttypmod is the declared length of the type plus VARHDRSZ. */
+
+						/*
+						 * atttypmod is the declared length of the type plus
+						 * VARHDRSZ.
+						 */
 						*typmod = 30 + VARHDRSZ;
 					else
 						/* Default length is 1 in the general case */
@@ -123,7 +132,7 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
 				else if (strcmp(typname, "smalldatetime") == 0)
 					*typmod = 0;
 				else if (strcmp(typname, "decimal") == 0)
-					*typmod = 1179652;  /* decimal(18,0) */
+					*typmod = 1179652;	/* decimal(18,0) */
 			}
 			/* for sys.varchar/nvarchar/varbinary(MAX), set typmod back to -1 */
 			else if (*typmod == TSQLMaxTypmod)
@@ -135,25 +144,26 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							errmsg("Incorrect syntax near the keyword '%s'.", typname)));
+							 errmsg("Incorrect syntax near the keyword '%s'.", typname)));
 			}
 			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
-							*typmod - VARHDRSZ, max_allowed_varchar_length, typname)));
+						 errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
+								*typmod - VARHDRSZ, max_allowed_varchar_length, typname)));
 			}
 			else if (*typmod > (max_allowed_nvarchar_length + VARHDRSZ) && (strcmp(typname, "nvarchar") == 0 || strcmp(typname, "nchar") == 0))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
-							*typmod - VARHDRSZ, max_allowed_nvarchar_length, typname)));
+						 errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
+								*typmod - VARHDRSZ, max_allowed_nvarchar_length, typname)));
 			}
 		}
 	}
 }
+
 /*
  * Declare variable API
  *
@@ -163,7 +173,7 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
  * InlineCodeBlockAgs built here.
  *
  * Sample code for calling this function:
- * 
+ *
  * InlineCodeBlock *codeblock = ...;
  * InlineCodeBlockArgs *args = ...;
  * LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
@@ -181,15 +191,16 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
  * fcinfo->args[1].isnull = false;
  * fcinfo->nargs++;
  */
-void pltsql_declare_variable(Oid type, int32 typmod, char *name, char mode, Datum value, 
-			     bool isnull, int index, InlineCodeBlockArgs **args, 
-			     FunctionCallInfo *fcinfo)
+void
+pltsql_declare_variable(Oid type, int32 typmod, char *name, char mode, Datum value,
+						bool isnull, int index, InlineCodeBlockArgs **args,
+						FunctionCallInfo *fcinfo)
 {
 	/*
 	 * In case of sp_execute, we don't need the following info.  Hence, skip
 	 * filling InlineCodeBlockArgs if it's not provided.
 	 */
-	if(args)
+	if (args)
 	{
 		(*args)->argtypes[index] = type;
 		(*args)->argtypmods[index] = typmod;
@@ -204,12 +215,12 @@ void pltsql_declare_variable(Oid type, int32 typmod, char *name, char mode, Datu
 
 	(*fcinfo)->args[index + 2].isnull = isnull;
 	(*fcinfo)->nargs++;
-	
+
 	/* Safety check */
 	if ((*fcinfo)->nargs - 2 > PREPARE_STMT_MAX_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				errmsg("cannot pass more than %d arguments to a procedure",
-				       PREPARE_STMT_MAX_ARGS)));
+						errmsg("cannot pass more than %d arguments to a procedure",
+							   PREPARE_STMT_MAX_ARGS)));
 }
 
 /*
@@ -218,12 +229,13 @@ void pltsql_declare_variable(Oid type, int32 typmod, char *name, char mode, Datu
  * This function deconstruct the input composite Datum comp_value, and store the
  * info in values and nulls.
  */
-void pltsql_read_composite_out_param(Datum comp_value, Datum **values, bool **nulls)
+void
+pltsql_read_composite_out_param(Datum comp_value, Datum **values, bool **nulls)
 {
-	HeapTupleData	tmptup;
+	HeapTupleData tmptup;
 	TupleDesc	tupdesc;
 	HeapTupleHeader td;
-	Oid		tupType;
+	Oid			tupType;
 	int32		tupTypmod;
 
 	/* Get tuple body (note this could involve detoasting) */
@@ -243,7 +255,7 @@ void pltsql_read_composite_out_param(Datum comp_value, Datum **values, bool **nu
 
 	if (tupdesc && HeapTupleIsValid(&tmptup))
 	{
-		int	td_natts = tupdesc->natts;
+		int			td_natts = tupdesc->natts;
 
 		*values = (Datum *) palloc(sizeof(Datum) * td_natts);
 		*nulls = (bool *) palloc(sizeof(bool) * td_natts);
@@ -258,30 +270,32 @@ void pltsql_read_composite_out_param(Datum comp_value, Datum **values, bool **nu
 	ReleaseTupleDesc(tupdesc);
 }
 
-bool pltsql_suppress_string_truncation_error()
+bool
+pltsql_suppress_string_truncation_error()
 {
 	return suppress_string_truncation_error;
 }
 
-void pltsql_read_procedure_info(StringInfo inout_str,
-								bool *is_proc,
-								Oid *typid,
-								Oid *typmod,
-								int *collation)
+void
+pltsql_read_procedure_info(StringInfo inout_str,
+						   bool *is_proc,
+						   Oid *typid,
+						   Oid *typmod,
+						   int *collation)
 {
-	Oid						func_oid = InvalidOid;
-	Oid						atttypid;
-	Oid						atttypmod;
-	int						attcollation;
-	bool					isStoredProcedure = true;
-	HeapTuple				proctup = NULL;
-	Form_pg_proc			proc = NULL;
-	List	    *parsetree;
-	CallStmt *cstmt;
-	FuncCall *funccall;
+	Oid			func_oid = InvalidOid;
+	Oid			atttypid;
+	Oid			atttypmod;
+	int			attcollation;
+	bool		isStoredProcedure = true;
+	HeapTuple	proctup = NULL;
+	Form_pg_proc proc = NULL;
+	List	   *parsetree;
+	CallStmt   *cstmt;
+	FuncCall   *funccall;
 	FuncCandidateList clist;
-	const char  *str1 = "EXECUTE ";
-	StringInfoData	    proc_stmt;
+	const char *str1 = "EXECUTE ";
+	StringInfoData proc_stmt;
 
 	/*
 	 * Create a fake EXECUTE statement to get the function name
@@ -290,7 +304,7 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	appendStringInfoString(&proc_stmt, str1);
 	appendStringInfoString(&proc_stmt, inout_str->data);
 	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
-	cstmt  = (CallStmt *) ((RawStmt *) linitial(parsetree))->stmt;
+	cstmt = (CallStmt *) ((RawStmt *) linitial(parsetree))->stmt;
 	Assert(cstmt);
 
 	if (enable_schema_mapping())
@@ -299,29 +313,29 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	funccall = cstmt->funccall;
 
 	/*
-	 * Parse the name into components and see if it matches any
-	 * pg_proc entries in the current search path.
+	 * Parse the name into components and see if it matches any pg_proc
+	 * entries in the current search path.
 	 */
 	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false, false);
 
 	if (clist == NULL)
 	{
 		/*
-		 * We don't store some system procedures in the catalog, ex: sp_executesql,
-		 * sp_prepare etc.  We can add a check for them here.  But, let's skip
-		 * the check from here because when we're going to execute the procedure,
-		 * if it doesn't exist or it's not a system procedure, then anywaay
-		 * we're going to throw an error.
+		 * We don't store some system procedures in the catalog, ex:
+		 * sp_executesql, sp_prepare etc.  We can add a check for them here.
+		 * But, let's skip the check from here because when we're going to
+		 * execute the procedure, if it doesn't exist or it's not a system
+		 * procedure, then anywaay we're going to throw an error.
 		 */
 		isStoredProcedure = true;
 	}
 	else
 	{
 		if (clist->next != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-				 errmsg("more than one function named \"%s\"",
-						NameListToString(funccall->funcname))));
+			ereport(ERROR,
+					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+					 errmsg("more than one function named \"%s\"",
+							NameListToString(funccall->funcname))));
 
 		func_oid = clist->oid;
 		Assert(func_oid != InvalidOid);
@@ -347,22 +361,22 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	}
 	else
 	{
-		Type        retType;
+		Type		retType;
 		Form_pg_type typtup;
 
 		if (proc->proretset)
 			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("The request for procedure \"%s\" failed because \"%s\" is"
-					   "a SET-returning function", NameStr(proc->proname),
-					   NameStr(proc->proname))));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("The request for procedure \"%s\" failed because \"%s\" is"
+							"a SET-returning function", NameStr(proc->proname),
+							NameStr(proc->proname))));
 
 		if (proc->prorettype == RECORDOID || proc->prorettype == VOIDOID)
 			ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("The request for procedure \"%s\" failed because \"%s\" is"
-					   "not a scalar-valued function", NameStr(proc->proname),
-					   NameStr(proc->proname))));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("The request for procedure \"%s\" failed because \"%s\" is"
+							"not a scalar-valued function", NameStr(proc->proname),
+							NameStr(proc->proname))));
 
 		retType = typeidType(proc->prorettype);
 		typtup = (Form_pg_type) GETSTRUCT(retType);
@@ -403,10 +417,10 @@ PLTsqlStartTransaction(char *txnName)
 	{
 		Assert(NestedTranCount == 0);
 		BeginTransactionBlock();
+
 		/*
-		 * set transaction name in savepoint field.
-		 * It is needed to distinguish rollback vs
-		 * rollback to savepoint requests.
+		 * set transaction name in savepoint field. It is needed to
+		 * distinguish rollback vs rollback to savepoint requests.
 		 */
 		if (txnName != NULL)
 			SetTopTransactionName(txnName);
@@ -414,7 +428,7 @@ PLTsqlStartTransaction(char *txnName)
 	++NestedTranCount;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("trancount", NestedTranCount, 0);
+		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("trancount", NestedTranCount, 0);
 }
 
 void
@@ -438,7 +452,7 @@ PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 	}
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("trancount", NestedTranCount, 0);
+		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("trancount", NestedTranCount, 0);
 }
 
 void
@@ -462,7 +476,7 @@ PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool chain)
 		RollbackToSavepoint(txnName);
 		RollbackAndReleaseSavepoint(txnName);
 		if (qc)
-			//			strncpy(completionTag, "ROLLBACK TO SAVEPOINT");
+			/* strncpy(completionTag, "ROLLBACK TO SAVEPOINT"); */
 			/* PG 13 merge: double check this line */
 			qc->commandTag = CMDTAG_SAVEPOINT;
 	}
@@ -516,12 +530,13 @@ is_sysname_column(ColumnDef *coldef)
 bool
 have_null_constr(List *constr_list)
 {
-	ListCell *lc;
-	bool isnull = false;
+	ListCell   *lc;
+	bool		isnull = false;
 
 	foreach(lc, constr_list)
 	{
 		Constraint *c = lfirst_node(Constraint, lc);
+
 		if (c->contype == CONSTR_NULL)
 		{
 			isnull = true;
@@ -537,14 +552,15 @@ parsetree_nth_stmt(List *parsetree, int n)
 	return ((RawStmt *) list_nth(parsetree, n))->stmt;
 }
 
-/* 
- * Functions to update parsed dummy statements with real values 
+/*
+ * Functions to update parsed dummy statements with real values
  */
 void
 update_AlterTableStmt(Node *n, const char *tbl_schema, const char *newowner)
 {
 	AlterTableStmt *stmt = (AlterTableStmt *) n;
-	ListCell *lc;
+	ListCell   *lc;
+
 	if (!IsA(stmt, AlterTableStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
 
@@ -557,13 +573,14 @@ update_AlterTableStmt(Node *n, const char *tbl_schema, const char *newowner)
 	foreach(lc, stmt->cmds)
 	{
 		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lc);
+
 		switch (cmd->subtype)
 		{
 			case AT_ChangeOwner:
-			{
-				cmd->newowner->rolename = pstrdup(newowner);
-				break;
-			}
+				{
+					cmd->newowner->rolename = pstrdup(newowner);
+					break;
+				}
 			default:
 				break;
 		}
@@ -574,7 +591,8 @@ void
 update_CreateRoleStmt(Node *n, const char *role, const char *member, const char *addto)
 {
 	CreateRoleStmt *stmt = (CreateRoleStmt *) n;
-	ListCell *option;
+	ListCell   *option;
+
 	if (!IsA(stmt, CreateRoleStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
 
@@ -586,16 +604,18 @@ update_CreateRoleStmt(Node *n, const char *role, const char *member, const char 
 
 	foreach(option, stmt->options)
 	{
-		DefElem *defel = (DefElem *) lfirst(option);
+		DefElem    *defel = (DefElem *) lfirst(option);
 
 		if (member && defel->arg && strcmp(defel->defname, "rolemembers") == 0)
 		{
-			RoleSpec *tmp = (RoleSpec *) llast((List *) defel->arg);
+			RoleSpec   *tmp = (RoleSpec *) llast((List *) defel->arg);
+
 			tmp->rolename = pstrdup(member);
 		}
 		else if (addto && defel->arg && strcmp(defel->defname, "addroleto") == 0)
 		{
-			RoleSpec *tmp = (RoleSpec *) llast((List *) defel->arg);
+			RoleSpec   *tmp = (RoleSpec *) llast((List *) defel->arg);
+
 			tmp->rolename = pstrdup(addto);
 		}
 	}
@@ -605,6 +625,7 @@ void
 update_AlterRoleStmt(Node *n, RoleSpec *role)
 {
 	AlterRoleStmt *stmt = (AlterRoleStmt *) n;
+
 	if (!IsA(stmt, AlterRoleStmt))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -617,6 +638,7 @@ void
 update_CreateSchemaStmt(Node *n, const char *schemaname, const char *authrole)
 {
 	CreateSchemaStmt *stmt = (CreateSchemaStmt *) n;
+
 	if (!IsA(stmt, CreateSchemaStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateSchemaStmt")));
 
@@ -630,19 +652,19 @@ update_CreateSchemaStmt(Node *n, const char *schemaname, const char *authrole)
 void
 update_DropOwnedStmt(Node *n, List *role_list)
 {
-	DropOwnedStmt	*stmt = (DropOwnedStmt *) n;
-	List			*rolespec_list = NIL;
-	ListCell		*elem;
+	DropOwnedStmt *stmt = (DropOwnedStmt *) n;
+	List	   *rolespec_list = NIL;
+	ListCell   *elem;
 
 	if (!IsA(stmt, DropOwnedStmt))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("query is not a DropOwnedStmt")));
 
-	foreach (elem, role_list)
+	foreach(elem, role_list)
 	{
-		char *name = (char *) lfirst(elem);
-		RoleSpec *tmp = makeNode(RoleSpec);
+		char	   *name = (char *) lfirst(elem);
+		RoleSpec   *tmp = makeNode(RoleSpec);
 
 		tmp->roletype = ROLESPEC_CSTRING;
 		tmp->location = -1;
@@ -656,16 +678,17 @@ void
 update_DropRoleStmt(Node *n, const char *role)
 {
 	DropRoleStmt *stmt = (DropRoleStmt *) n;
+
 	if (!IsA(stmt, DropRoleStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a DropRoleStmt")));
 
 	if (role && stmt->roles)
 	{
-		/* 
+		/*
 		 * Delete the first element if it's is_role flag, in this way we won't
 		 * need to rewrite the role names during internal call.
 		 */
-		RoleSpec *tmp = (RoleSpec *) linitial(stmt->roles);
+		RoleSpec   *tmp = (RoleSpec *) linitial(stmt->roles);
 
 		if (strcmp(tmp->rolename, "is_role") == 0)
 			stmt->roles = list_delete_cell(stmt->roles, list_head(stmt->roles));
@@ -684,7 +707,8 @@ update_DropRoleStmt(Node *n, const char *role)
 void
 update_DropStmt(Node *n, const char *object)
 {
-	DropStmt *stmt = (DropStmt *) n;
+	DropStmt   *stmt = (DropStmt *) n;
+
 	if (!IsA(stmt, DropStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a DropStmt")));
 
@@ -696,6 +720,7 @@ void
 update_GrantRoleStmt(Node *n, List *privs, List *roles)
 {
 	GrantRoleStmt *stmt = (GrantRoleStmt *) n;
+
 	if (!IsA(stmt, GrantRoleStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a GrantRoleStmt")));
 
@@ -706,7 +731,8 @@ update_GrantRoleStmt(Node *n, List *privs, List *roles)
 void
 update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee)
 {
-	GrantStmt *stmt = (GrantStmt *) n;
+	GrantStmt  *stmt = (GrantStmt *) n;
+
 	if (!IsA(stmt, GrantStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a GrantStmt")));
 
@@ -714,13 +740,15 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 		llast(stmt->objects) = makeString(pstrdup(object));
 	else if (obj_schema && stmt->objects)
 	{
-		RangeVar *tmp = (RangeVar *) llast(stmt->objects);
+		RangeVar   *tmp = (RangeVar *) llast(stmt->objects);
+
 		tmp->schemaname = pstrdup(obj_schema);
 	}
 
 	if (grantee && stmt->grantees)
 	{
-		RoleSpec *tmp = (RoleSpec *) llast(stmt->grantees);
+		RoleSpec   *tmp = (RoleSpec *) llast(stmt->grantees);
+
 		tmp->rolename = pstrdup(grantee);
 	}
 }
@@ -729,6 +757,7 @@ void
 update_RenameStmt(Node *n, const char *old_name, const char *new_name)
 {
 	RenameStmt *stmt = (RenameStmt *) n;
+
 	if (!IsA(stmt, RenameStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
 
@@ -739,7 +768,8 @@ update_RenameStmt(Node *n, const char *old_name, const char *new_name)
 void
 update_ViewStmt(Node *n, const char *view_schema)
 {
-	ViewStmt *stmt = (ViewStmt *) n;
+	ViewStmt   *stmt = (ViewStmt *) n;
+
 	if (!IsA(stmt, ViewStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a ViewStmt")));
 
@@ -747,19 +777,21 @@ update_ViewStmt(Node *n, const char *view_schema)
 		stmt->view->schemaname = pstrdup(view_schema);
 }
 
-bool is_tsql_any_char_datatype(Oid oid)
+bool
+is_tsql_any_char_datatype(Oid oid)
 {
-	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(oid) ||
-		(*common_utility_plugin_ptr->is_tsql_nchar_datatype)(oid) ||
-		(*common_utility_plugin_ptr->is_tsql_varchar_datatype)(oid) ||
-		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(oid);
+	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
 }
 
-bool is_tsql_text_ntext_or_image_datatype(Oid oid)
+bool
+is_tsql_text_ntext_or_image_datatype(Oid oid)
 {
-	return (*common_utility_plugin_ptr->is_tsql_text_datatype)(oid) ||
-		(*common_utility_plugin_ptr->is_tsql_ntext_datatype)(oid) ||
-		(*common_utility_plugin_ptr->is_tsql_image_datatype)(oid);
+	return (*common_utility_plugin_ptr->is_tsql_text_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_ntext_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_image_datatype) (oid);
 }
 
 /*
@@ -768,9 +800,9 @@ bool is_tsql_text_ntext_or_image_datatype(Oid oid)
 bool
 TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode)
 {
-	LOCKTAG tag;
+	LOCKTAG		tag;
 
-	SET_LOCKTAG_INT16(tag, dbid); 
+	SET_LOCKTAG_INT16(tag, dbid);
 
 	return LockAcquire(&tag, lockmode, true, true) != LOCKACQUIRE_NOT_AVAIL;
 }
@@ -781,7 +813,7 @@ TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode)
 void
 UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force)
 {
-	LOCKTAG tag;
+	LOCKTAG		tag;
 
 	SET_LOCKTAG_INT16(tag, dbid);
 
@@ -798,11 +830,12 @@ char *
 bpchar_to_cstring(const BpChar *bpchar)
 {
 	const char *bp_data = VARDATA_ANY(bpchar);
-	int len = VARSIZE_ANY_EXHDR(bpchar);
+	int			len = VARSIZE_ANY_EXHDR(bpchar);
 
-	char *result = (char *) palloc(len + 1);
+	char	   *result = (char *) palloc(len + 1);
+
 	memcpy(result, bp_data, len);
-	result[len] = '\0';
+	result[		len] = '\0';
 
 	return result;
 }
@@ -814,11 +847,12 @@ char *
 varchar_to_cstring(const VarChar *varchar)
 {
 	const char *vc_data = VARDATA_ANY(varchar);
-	int len = VARSIZE_ANY_EXHDR(varchar);
+	int			len = VARSIZE_ANY_EXHDR(varchar);
 
-	char *result = (char *) palloc(len + 1);
+	char	   *result = (char *) palloc(len + 1);
+
 	memcpy(result, vc_data, len);
-	result[len] = '\0';
+	result[		len] = '\0';
 
 	return result;
 }
@@ -839,6 +873,7 @@ flatten_search_path(List *oid_list)
 	{
 		Oid			schema_oid = lfirst_oid(lc);
 		char	   *schema_name = get_namespace_name(schema_oid);
+
 		appendStringInfo(&pathbuf, " %s,", quote_identifier(schema_name));
 	}
 	pathbuf.data[strlen(pathbuf.data) - 1] = '\0';
@@ -847,7 +882,7 @@ flatten_search_path(List *oid_list)
 
 const char *
 get_pltsql_function_signature_internal(const char *funcname,
-							  int nargs, const Oid *argtypes)
+									   int nargs, const Oid *argtypes)
 {
 	StringInfoData argbuf;
 	int			i;
@@ -857,10 +892,13 @@ get_pltsql_function_signature_internal(const char *funcname,
 
 	PG_TRY();
 	{
-		/* Temporarily set quote_all_identifiers to TRUE to generate quoted string */
+		/*
+		 * Temporarily set quote_all_identifiers to TRUE to generate quoted
+		 * string
+		 */
 		set_config_option("quote_all_identifiers", "true",
-								(superuser() ? PGC_SUSET : PGC_USERSET),
-								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		appendStringInfo(&argbuf, "%s(", funcname);
 		for (i = 0; i < nargs; i++)
@@ -874,8 +912,8 @@ get_pltsql_function_signature_internal(const char *funcname,
 	PG_FINALLY();
 	{
 		set_config_option("quote_all_identifiers", prev_quote_ident,
-								(superuser() ? PGC_SUSET : PGC_USERSET),
-								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	}
 	PG_END_TRY();
 
@@ -890,23 +928,24 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	proctup;
 	Form_pg_proc form_proctup;
-	const char	*func_signature;
+	const char *func_signature;
 
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup failed for function %u", funcoid);
-	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+	if (HeapTupleIsValid(proctup))
+	{
+		form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+		func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+																		 form_proctup->pronargs,
+																		 form_proctup->proargtypes.values);
 
-	func_signature = (char *) get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
-															form_proctup->pronargs,
-															form_proctup->proargtypes.values);
-
-	ReleaseSysCache(proctup);
-	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
+		ReleaseSysCache(proctup);
+		PG_RETURN_TEXT_P(cstring_to_text(func_signature));
+	}
+	PG_RETURN_NULL();
 }
 
 void
-report_info_or_warning(int elevel, char* message)
+report_info_or_warning(int elevel, char *message)
 {
 	ereport(elevel, errmsg("%s", message));
 
@@ -914,19 +953,21 @@ report_info_or_warning(int elevel, char* message)
 		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
 }
 
-void init_and_check_common_utility(void)
+void
+init_and_check_common_utility(void)
 {
 	if (!common_utility_plugin_ptr)
 	{
 		common_utility_plugin **utility_plugin;
-		utility_plugin = (common_utility_plugin **) find_rendezvous_variable("common_utility_plugin"); 
+
+		utility_plugin = (common_utility_plugin **) find_rendezvous_variable("common_utility_plugin");
 		common_utility_plugin_ptr = *utility_plugin;
 
 		/* common_utility_plugin_ptr is still not initialised */
 		if (!common_utility_plugin_ptr)
 			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Failed to find common utility plugin.")));
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Failed to find common utility plugin.")));
 	}
 }
 
@@ -940,36 +981,37 @@ void init_and_check_common_utility(void)
 Oid
 tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id)
 {
-	Relation		tgrel;
-	ScanKeyData		skey[2];
-	SysScanDesc		tgscan;
-	HeapTuple		tuple;
-	Oid			result = InvalidOid;
+	Relation	tgrel;
+	ScanKeyData skey[2];
+	SysScanDesc tgscan;
+	HeapTuple	tuple;
+	Oid result = InvalidOid;
 
 	/* search in pg_constraint by name and namespace */
 	tgrel = table_open(ConstraintRelationId, AccessShareLock);
 	ScanKeyInit(&skey[0],
-			Anum_pg_constraint_conname,
-			BTEqualStrategyNumber, F_NAMEEQ,
-			CStringGetDatum(conname));
+				Anum_pg_constraint_conname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(conname));
 
 	ScanKeyInit(&skey[1],
-			Anum_pg_constraint_connamespace,
-			BTEqualStrategyNumber, F_OIDEQ,
-			ObjectIdGetDatum(connamespace));
+				Anum_pg_constraint_connamespace,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(connamespace));
 
 	tgscan = systable_beginscan(tgrel, ConstraintNameNspIndexId,
-					true, NULL, 2, skey);
+								true, NULL, 2, skey);
 
 	/* we are interested in the first row only */
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
 		if (OidIsValid(con->oid))
 		{
 			if (OidIsValid(con->conrelid))
 			{
-				if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+				if (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 					result = con->oid;
 			}
 			else
@@ -990,34 +1032,36 @@ tsql_get_constraint_oid(char *conname, Oid connamespace, Oid user_id)
 Oid
 tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id)
 {
-	Relation		tgrel;
-	ScanKeyData 		key;
-	SysScanDesc		tgscan;
-	HeapTuple 		tuple;
-	Oid			result = InvalidOid;
+	Relation	tgrel;
+	ScanKeyData key;
+	SysScanDesc tgscan;
+	HeapTuple	tuple;
+	Oid result = InvalidOid;
 
 	/* first search in pg_trigger by name */
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&key,
-			Anum_pg_trigger_tgname,
-			BTEqualStrategyNumber, F_NAMEEQ,
-			CStringGetDatum(tgname));
+				Anum_pg_trigger_tgname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(tgname));
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
-					true, NULL, 1, &key);
-	
+								true, NULL, 1, &key);
+
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		if(!OidIsValid(pg_trigger->tgrelid))
+
+		if (!OidIsValid(pg_trigger->tgrelid))
 		{
 			break;
 		}
 		/* then consider only trigger in specified namespace */
-		if (get_rel_namespace(pg_trigger->tgrelid) == tgnamespace && 
+		if (get_rel_namespace(pg_trigger->tgrelid) == tgnamespace &&
 			pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			result = pg_trigger->oid;
+
 			break;
 		}
 	}
@@ -1035,15 +1079,16 @@ tsql_get_trigger_oid(char *tgname, Oid tgnamespace, Oid user_id)
 Oid
 tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id)
 {
-	HeapTuple		tuple;
-	CatCList		*catlist;
-	Oid			result = InvalidOid;
+	HeapTuple	tuple;
+	CatCList   *catlist;
+	Oid result = InvalidOid;
 
 	/* first search in pg_proc by name */
 	catlist = SearchSysCacheList1(PROCNAMEARGSNSP, CStringGetDatum(proname));
 	for (int i = 0; i < catlist->n_members; i++)
 	{
 		Form_pg_proc procform;
+
 		tuple = &catlist->members[i]->tuple;
 		procform = (Form_pg_proc) GETSTRUCT(tuple);
 		/* then consider only procs in specified namespace */
@@ -1051,6 +1096,7 @@ tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id)
 			pg_proc_aclcheck(procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 		{
 			result = procform->oid;
+
 			break;
 		}
 	}
@@ -1060,8 +1106,9 @@ tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id)
 
 static int
 babelfish_get_delimiter_pos(char *str)
-{	
-	char *ptr;
+{
+	char	   *ptr;
+
 	if (strlen(str) <= 2 && (strchr(str, '"') || strchr(str, '[') || strchr(str, ']')))
 		return -1;
 	else if (str[0] == '[')
@@ -1081,26 +1128,26 @@ babelfish_get_delimiter_pos(char *str)
 			return (int) (ptr - str) + 1;
 	}
 	else
-	{	
+	{
 		ptr = strstr(str, ".");
 		if (ptr == NULL)
 			return -1;
 		else
 			return (int) (ptr - str);
 	}
-	
+
 	return -1;
 }
 
-/* 
+/*
  * Extract string from input of given length and remove delimited identifiers.
  */
-static char*
+static char *
 remove_delimited_identifiers(char *str, int len)
-{	
-	
+{
+
 	if (len >= 2 && ((str[0] == '[' && str[len - 1] == ']') || (str[0] == '"' && str[len - 1] == '"')))
-	{	
+	{
 		if (len > 2)
 			return pnstrdup(&str[1], len - 2);
 		else
@@ -1111,16 +1158,17 @@ remove_delimited_identifiers(char *str, int len)
 }
 
 /*
- * Split multiple-part object-name into array of pointers, it also remove the delimited identifiers. 
+ * Split multiple-part object-name into array of pointers, it also remove the delimited identifiers.
  */
-char**
+char	  **
 split_object_name(char *name)
-{	
-	char		**res = palloc(4 * sizeof(char *));
-	char		*temp[4];
-	char		*str;
-	int		cur_pos, next_pos;
-	int		count = 0;
+{
+	char	  **res = palloc(4 * sizeof(char *));
+	char	   *temp[4];
+	char	   *str;
+	int			cur_pos,
+				next_pos;
+	int			count = 0;
 
 	/* extract and remove the delimited identifiers from input into temp array */
 	cur_pos = 0;
@@ -1136,7 +1184,7 @@ split_object_name(char *name)
 	temp[count++] = str;
 
 	/* fill unspecified parts with empty strings */
-	for(int i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		if (i < 4 - count)
 			res[i] = pstrdup("");
@@ -1152,11 +1200,13 @@ split_object_name(char *name)
  * is_schema_from_db
  *		Given schema_oid and db_id, check if schema belongs to provided database id.
  */
-bool is_schema_from_db(Oid schema_oid, Oid db_id)
+bool
+is_schema_from_db(Oid schema_oid, Oid db_id)
 {
-	Oid db_id_from_schema;
-	char *schema_name = get_namespace_name(schema_oid);
-	if(!schema_name)
+	Oid			db_id_from_schema;
+	char	   *schema_name = get_namespace_name(schema_oid);
+
+	if (!schema_name)
 		return false;
 
 	db_id_from_schema = get_dbid_from_physical_schema_name(schema_name, true);
@@ -1168,9 +1218,11 @@ bool is_schema_from_db(Oid schema_oid, Oid db_id)
  * remove_trailing_spaces
  * 		Remove trailing spaces from a string
  */
-void remove_trailing_spaces(char *name)
+void
+remove_trailing_spaces(char *name)
 {
-	int len = strlen(name);
+	int			len = strlen(name);
+
 	while (len > 0 && isspace((unsigned char) name[len - 1]))
 		name[--len] = '\0';
 }
@@ -1180,12 +1232,12 @@ void remove_trailing_spaces(char *name)
  * Given Oid of pg_proc entry return namespace_oid
  * Returns InvalidOid if Oid is not found
  */
-Oid 
+Oid
 tsql_get_proc_nsp_oid(Oid object_id)
 {
-	Oid namespace_oid = InvalidOid;
-	HeapTuple tuple;
-	bool isnull;
+	Oid			namespace_oid = InvalidOid;
+	HeapTuple	tuple;
+	bool		isnull;
 
 	/* retrieve pronamespace in pg_proc by oid */
 	tuple = SearchSysCache1(PROCOID, CStringGetDatum(object_id));
@@ -1193,11 +1245,12 @@ tsql_get_proc_nsp_oid(Oid object_id)
 	if (HeapTupleIsValid(tuple))
 	{
 		(void) SysCacheGetAttr(PROCOID, tuple,
-								Anum_pg_proc_pronamespace,
-								&isnull);		
-		if(!isnull)
+							   Anum_pg_proc_pronamespace,
+							   &isnull);
+		if (!isnull)
 		{
 			Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(tuple);
+
 			namespace_oid = proc->pronamespace;
 		}
 		ReleaseSysCache(tuple);
@@ -1210,12 +1263,13 @@ tsql_get_proc_nsp_oid(Oid object_id)
  * Given Oid of pg_constraint entry return namespace_oid
  * Returns InvalidOid if Oid is not found
  */
-Oid 
-tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
+Oid
+tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id)
+{
 
-	Oid namespace_oid = InvalidOid;
-	HeapTuple tuple;
-	bool isnull;
+	Oid			namespace_oid = InvalidOid;
+	HeapTuple	tuple;
+	bool		isnull;
 
 	/* retrieve connamespace in pg_constraint by oid */
 	tuple = SearchSysCache1(CONSTROID, CStringGetDatum(object_id));
@@ -1223,17 +1277,21 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
 	if (HeapTupleIsValid(tuple))
 	{
 		(void) SysCacheGetAttr(CONSTROID, tuple,
-								Anum_pg_constraint_connamespace,
-								&isnull);
-		if(!isnull)
+							   Anum_pg_constraint_connamespace,
+							   &isnull);
+		if (!isnull)
 		{
 			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+
 			if (OidIsValid(con->oid))
 			{
-				/* user should have permission of table associated with constraint */
+				/*
+				 * user should have permission of table associated with
+				 * constraint
+				 */
 				if (OidIsValid(con->conrelid))
 				{
-					if(pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+					if (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 						namespace_oid = con->connamespace;
 				}
 			}
@@ -1242,6 +1300,7 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
 	}
 	return namespace_oid;
 }
+
 /*
  * tsql_get_trigger_rel_oid
  * Given Oid of pg_trigger entry return Oid of table
@@ -1249,13 +1308,14 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id){
  * Returns InvalidOid if Oid is not found
  */
 Oid
-tsql_get_trigger_rel_oid(Oid object_id){
+tsql_get_trigger_rel_oid(Oid object_id)
+{
 
-	Relation		tgrel;
-	ScanKeyData 	key[1];
-	SysScanDesc 	tgscan;
-	HeapTuple		tuple;
-	Oid tgrelid = InvalidOid;
+	Relation	tgrel;
+	ScanKeyData key[1];
+	SysScanDesc tgscan;
+	HeapTuple	tuple;
+	Oid			tgrelid = InvalidOid;
 
 	/* retrieve tgrelid in pg_trigger by oid */
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
@@ -1270,6 +1330,7 @@ tsql_get_trigger_rel_oid(Oid object_id){
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger trig = (Form_pg_trigger) GETSTRUCT(tuple);
+
 		tgrelid = trig->tgrelid;
 	}
 	systable_endscan(tgscan);
