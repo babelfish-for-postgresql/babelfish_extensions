@@ -133,7 +133,6 @@ static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type ty
 static void pltsql_CreateFunctionStmt(ParseState *pstate,
 									  PlannedStmt *pstmt,
 									  const char *queryString,
-									  bool readOnlyTree,
 									  ProcessUtilityContext context,
 									  ParamListInfo params);
 
@@ -367,7 +366,6 @@ static void
 pltsql_CreateFunctionStmt(ParseState *pstate,
 							   PlannedStmt *pstmt,
 							   const char *queryString,
-							   bool readOnlyTree,
 							   ProcessUtilityContext context,
 							   ParamListInfo params)
 {
@@ -475,7 +473,7 @@ pltsql_CreateFunctionStmt(ParseState *pstate,
 
 				ProcessUtility(wrapper,
 							queryString,
-							readOnlyTree,
+							false,
 							PROCESS_UTILITY_SUBCOMMAND,
 							params,
 							NULL,
