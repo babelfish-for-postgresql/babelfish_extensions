@@ -84,7 +84,7 @@ Query Text: EXEC table_variable_vu_prepareouter_proc @a, @b
             InitPlan 1 (returns $0)
               ->  Limit  (cost=49.55..49.55 rows=1 width=8)
                     ->  Sort  (cost=49.55..55.20 rows=2260 width=8)
-                          Sort Key: table_variable_vu_preparet1.b
+                          Sort Key: table_variable_vu_preparet1.b NULLS FIRST
                           ->  Seq Scan on table_variable_vu_preparet1  (cost=0.00..38.25 rows=2260 width=8)
     Query Text: insert into table_variable_vu_preparet1 values ("@b", "@b");
     ->  Insert on table_variable_vu_preparet1  (cost=0.00..0.01 rows=0 width=0)

@@ -743,51 +743,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	}
 }
 
-/* Unlike PG, T-SQL treats null values as the lowest possible values.
- * So we need to set nulls_first for ASC order and nulls_last for DESC order.
- */
-static inline void
-pltsql_set_nulls_first(Query *query)
-{
-	ListCell   *lc = NULL;
-	Node	   *node = NULL;
-	SortGroupClause *sgc = NULL;
-	char	   *opname = NULL;
-	RangeTblEntry *rte = NULL;
-
-	/* check subqueries */
-	foreach(lc, query->rtable)
-	{
-		node = lfirst(lc);
-		if (node->type != T_RangeTblEntry)
-			continue;
-
-		rte = (RangeTblEntry *) node;
-		if (rte->rtekind == RTE_SUBQUERY && rte->subquery && rte->subquery->commandType == CMD_SELECT)
-			pltsql_set_nulls_first(rte->subquery);
-	}
-
-	if (!query->sortClause)
-		return;
-
-	foreach(lc, query->sortClause)
-	{
-		node = lfirst(lc);
-		if (node->type != T_SortGroupClause)
-			continue;
-
-		sgc = (SortGroupClause *) node;
-		opname = get_opname(sgc->sortop);
-
-		if (!opname)
-			continue;
-		else if (strcmp(opname, ">") == 0)
-			sgc->nulls_first = false;
-		else if (strcmp(opname, "<") == 0)
-			sgc->nulls_first = true;
-	}
-}
-
 static void
 pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 {
@@ -1173,7 +1128,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 								}
 							}
 
-							pltsql_set_nulls_first(q);
 						}
 					}
 				}
@@ -1203,10 +1157,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						 errmsg("Cannot update a timestamp column.")));
 			}
 		}
-	}
-	else if (query->commandType == CMD_SELECT)
-	{
-		pltsql_set_nulls_first(query);
 	}
 }
 
