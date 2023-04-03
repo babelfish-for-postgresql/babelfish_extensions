@@ -10,6 +10,12 @@ admin@PNQ
 ~~END~~
 
 
+create login [CORP\logina4038] from windows;
+GO
+
+create login [corp\loginb4038] from windows;
+GO
+
 select rolname from sys.babelfish_authid_login_ext where rolname like '%4038%';
 GO
 ~~START~~
