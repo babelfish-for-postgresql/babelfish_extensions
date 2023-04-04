@@ -308,14 +308,11 @@ void
 push_namespace_stack(void)
 {
 	namespace_stack_t *ns_stack_item;
-	MemoryContext old_context;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	old_context = MemoryContextSwitchTo(TopMemoryContext);
 	ns_stack_item = palloc(sizeof(namespace_stack_t));
-	MemoryContextSwitchTo(old_context);
 	ns_stack_item->prev = set_op_ns_stack;
 	ns_stack_item->namespace = NIL;
 	set_op_ns_stack = ns_stack_item;
