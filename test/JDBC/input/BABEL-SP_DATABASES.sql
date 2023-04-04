@@ -19,8 +19,8 @@ go
 select database_name, remarks from sys.sp_databases_view where database_name='DB1';
 go
 
-EXEC sp_databases;
-GO
+-- EXEC sp_databases;
+-- GO
 
 drop table t_spdatabases;
 go
