@@ -314,7 +314,7 @@ push_namespace_stack(void)
 		return;
 
 	old_context = MemoryContextSwitchTo(TopMemoryContext);
-	ns_stack_item = palloc(sizeof(ns_stack_item));
+	ns_stack_item = palloc(sizeof(namespace_stack_t));
 	MemoryContextSwitchTo(old_context);
 	ns_stack_item->prev = set_op_ns_stack;
 	ns_stack_item->namespace = NIL;
