@@ -1093,7 +1093,7 @@ CREATE VIEW sys.sp_databases_view AS
 		sys.babelfish_namespace_ext EXT
 		JOIN sys.babelfish_sysdatabases INT ON EXT.dbid = INT.dbid
 		JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.nspname = EXT.nspname
-		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid
+		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid where pg_catalog.pg_class.relkind = 'r'
 	) t
 	GROUP BY database_name
 	ORDER BY database_name;
