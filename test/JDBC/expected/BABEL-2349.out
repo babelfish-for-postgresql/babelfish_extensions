@@ -55,9 +55,10 @@ int
 
 select count(*) from dbo.sysindexes where id=OBJECT_ID('t1');
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
+~~START~~
+int
+0
+~~END~~
 
 
 use master;

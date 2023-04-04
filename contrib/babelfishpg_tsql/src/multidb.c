@@ -924,6 +924,41 @@ rewrite_column_refs(ColumnRef *cref)
 static void
 rewrite_rangevar(RangeVar *rv)
 {
+	/*
+	 * For the list of catalog names if the schema name
+	 * specified is 'dbo' then replace with 'sys'.
+	 */
+	char* list_of_dbo_catalog[5]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages"};
+	char* list_of_dbo_catalog_not_supported_for_cross_db[4]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects"};
+	if (rv->schemaname && strcmp(rv->schemaname, "dbo") == 0)
+	{
+		for (int i = 0; i < 5; i++)
+		{
+			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog[i]) == 0)
+			{
+				rv->schemaname = pstrdup("sys");
+				break;
+			}
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog_not_supported_for_cross_db[i]) == 0)
+			{
+				/* Throw error for dbo catalog which does not support cross-db */
+				if (rv->catalogname && strcmp(get_cur_db_name(), rv->catalogname) != 0) 
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("Cross-DB view query is not supported yet in Babelfish.")));
+				}
+				else
+				{
+					rv->schemaname = pstrdup("sys");
+					break;
+				}
+			}
+		}
+	}
 	if (rv->catalogname)
 	{
 		if (is_shared_schema(rv->schemaname))
