@@ -18,7 +18,7 @@ SELECT * FROM view_db_owner_principal_id;
 GO
 ~~START~~
 nvarchar
-db_owner
+dbo
 ~~END~~
 
 
@@ -26,7 +26,7 @@ EXEC proc_db_owner_principal_id;
 GO
 ~~START~~
 nvarchar
-db_owner
+dbo
 ~~END~~
 
 
@@ -43,7 +43,7 @@ SELECT user_name(DATABASE_PRINCIPAL_ID('db_owner'));
 GO
 ~~START~~
 nvarchar
-db_owner
+dbo
 ~~END~~
 
 
@@ -59,7 +59,7 @@ SELECT user_name(DATABASE_PRINCIPAL_ID('guest'));
 GO
 ~~START~~
 nvarchar
-guest
+dbo
 ~~END~~
 
 
@@ -67,7 +67,7 @@ SELECT user_name(DATABASE_PRINCIPAL_ID('testuser'));
 GO
 ~~START~~
 nvarchar
-testuser
+<NULL>
 ~~END~~
 
 
@@ -75,7 +75,7 @@ SELECT user_name(DATABASE_PRINCIPAL_ID('roletest'));
 GO
 ~~START~~
 nvarchar
-roletest
+dbo
 ~~END~~
 
 
@@ -91,11 +91,35 @@ SELECT user_name(DATABASE_PRINCIPAL_ID('db_owner '));
 GO
 ~~START~~
 nvarchar
-db_owner
+dbo
 ~~END~~
 
 
 SELECT DATABASE_PRINCIPAL_ID('NULL')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT DATABASE_PRINCIPAL_ID('test_me')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATABASE_PRINCIPAL_ID(NULL)
 GO
 ~~START~~
 int
