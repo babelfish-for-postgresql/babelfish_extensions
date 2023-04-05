@@ -712,18 +712,19 @@ PG_FUNCTION_INFO_V1(user_id);
 Datum
 user_id(PG_FUNCTION_ARGS)
 {
-		char	   *user_input;
-		char	   *user_name;
-		char	   *db_name;
-		HeapTuple	auth_tuple;
-		Form_pg_authid authform;
-		Oid			ret;
+	char	   *user_input;
+	char	   *user_name;
+	char	   *db_name;
+	HeapTuple	auth_tuple;
+	Form_pg_authid authform;
+	Oid			ret;
+	size_t  	len;
 
-		user_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
-		db_name = get_cur_db_name();
+	user_input = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	db_name = get_cur_db_name();
 
-		if (!db_name)
-			PG_RETURN_NULL();
+	if (!db_name)
+		PG_RETURN_NULL();
 
         user_name = get_physical_user_name(db_name, user_input);
 
@@ -744,7 +745,7 @@ user_id(PG_FUNCTION_ARGS)
     auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
 
     if (!HeapTupleIsValid(auth_tuple))
-        PG_RETURN_NULL();
+	    PG_RETURN_NULL();
     authform = (Form_pg_authid) GETSTRUCT(auth_tuple);
     ret = authform->oid;
 
