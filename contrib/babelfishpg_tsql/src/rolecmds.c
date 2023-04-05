@@ -712,28 +712,27 @@ PG_FUNCTION_INFO_V1(user_id);
 Datum
 user_id(PG_FUNCTION_ARGS)
 {
-    char *user_input;
-    char *user_name;
-    HeapTuple auth_tuple;
-    Form_pg_authid authform;
-    Oid ret;
-    size_t len;
+    char	*user_input;
+    char 	*user_name;
+	char 	*db_name;
+    HeapTuple	 auth_tuple;
+    Form_pg_authid	 authform;
+    Oid		ret;
+    size_t 	len;
 
-    if (PG_ARGISNULL(0))
-    {
-        // Return NULL if user_name is not provided
-        PG_RETURN_NULL();
-    }
+  	user_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	db_name = get_cur_db_name();
 
-    user_input = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	if (!db_name)
+		PG_RETURN_NULL();
 
-    if (!user_input)
-    {
-        // Return NULL if user_name is not provided
-        PG_RETURN_NULL();
-    }
+	if (!user_input)
+		PG_RETURN_OID(GetUserId());
 
-    user_name = user_input;
+	user_name = get_physical_user_name(db_name, user_input);
+
+	if (!user_name)
+		PG_RETURN_NULL();
 
     len = strlen(user_name);
     while (len > 0 && isspace(user_name[len-1]))
@@ -777,7 +776,6 @@ user_id_noarg(PG_FUNCTION_ARGS)
     
     PG_RETURN_OID(ret);
 }
-
 
 /*
  * get_original_login_name - returns original login name corresponding to
