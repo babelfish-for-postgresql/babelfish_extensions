@@ -1,0 +1,9 @@
+select * from orderby_vu_view;
+GO
+~~START~~
+int
+<NULL>
+1
+3
+~~END~~
+
