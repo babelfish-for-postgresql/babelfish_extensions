@@ -116,7 +116,7 @@ SELECT COUNT(*) FROM db1.dbo.SySFoReIGNkeYs where fkeyid = object_id('fk_4');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
 
 
 select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_4');

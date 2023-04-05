@@ -150,19 +150,19 @@ static Constraint *get_rowversion_default_constraint(TypeName *typname);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
-static void validateUserAndRole(char* name);
+static void validateUserAndRole(char *name);
 
-extern bool  pltsql_ansi_defaults;
-extern bool  pltsql_quoted_identifier;
-extern bool  pltsql_concat_null_yields_null;
-extern bool  pltsql_ansi_nulls;
-extern bool  pltsql_ansi_null_dflt_on;
-extern bool  pltsql_ansi_padding;
-extern bool  pltsql_ansi_warnings;
-extern bool  pltsql_arithabort;
-extern int   pltsql_datefirst;
-extern char* pltsql_language;
-extern int pltsql_lock_timeout;
+extern bool pltsql_ansi_defaults;
+extern bool pltsql_quoted_identifier;
+extern bool pltsql_concat_null_yields_null;
+extern bool pltsql_ansi_nulls;
+extern bool pltsql_ansi_null_dflt_on;
+extern bool pltsql_ansi_padding;
+extern bool pltsql_ansi_warnings;
+extern bool pltsql_arithabort;
+extern int	pltsql_datefirst;
+extern char *pltsql_language;
+extern int	pltsql_lock_timeout;
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 

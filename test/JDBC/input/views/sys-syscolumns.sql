@@ -102,7 +102,7 @@ SELECT COUNT(*) FROM db1.sys.SySCOluMNs where name = '@firstparam' or name = '@s
 go
 
 -- In case of cross-db, syscolumns should also exist in dbo schema
--- Cross-DB view query is not supported yet in Babelfish.
+-- Cross-DB system view query is not currently supported in Babelfish.
 SELECT COUNT(*) FROM db1.DbO.SySCOluMNs where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
 go
 

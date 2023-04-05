@@ -214,12 +214,12 @@ int
 
 
 -- In case of cross-db, syscolumns should also exist in dbo schema
--- Cross-DB view query is not supported yet in Babelfish.
+-- Cross-DB system view query is not currently supported in Babelfish.
 SELECT COUNT(*) FROM db1.DbO.SySCOluMNs where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
 
 
 -- should not be visible here
@@ -235,7 +235,7 @@ SELECT COUNT(*) FROM db1.dbo.SySCOluMNs where name = '@thirdparam';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
 
 
 -- should not be visible here

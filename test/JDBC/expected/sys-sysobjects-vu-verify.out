@@ -31,7 +31,7 @@ SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.SySObJEctS s where s.name
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
 
 
 -- should not be visible here
@@ -47,7 +47,7 @@ SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.SySObJEctS s where s.name
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cross-DB view query is not supported yet in Babelfish.)~~
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
 
 
 SELECT * FROM sys_sysobjects_vu_prepare_view
