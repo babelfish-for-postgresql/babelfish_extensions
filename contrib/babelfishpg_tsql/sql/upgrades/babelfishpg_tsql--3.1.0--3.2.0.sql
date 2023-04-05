@@ -451,6 +451,16 @@ RETURNS OID
 AS 'babelfishpg_tsql', 'user_id_noarg'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.user_id(IN user_name sys.sysname)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.user_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 /*
  * JSON MODIFY
  * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
