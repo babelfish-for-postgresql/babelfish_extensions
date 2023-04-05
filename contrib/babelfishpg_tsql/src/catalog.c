@@ -2419,6 +2419,10 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			break;
 		case OBJECT_SEQUENCE:
 			break;
+		case OBJECT_TRIGGER:
+			break;
+		case OBJECT_TYPE:
+			break;
 		default:
 			break;
 	}
@@ -2551,9 +2555,9 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	objname_data = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(objname_data->data, NAMEDATALEN, "%s", stmt->subname);
 	ScanKeyInit(&key[1],
-				Anum_bbf_function_ext_funcname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(objname_data));
+			Anum_bbf_function_ext_funcname,
+			BTEqualStrategyNumber, F_NAMEEQ,
+			NameGetDatum(objname_data));
 
 	/* scan */
 	tblscan = table_beginscan_catalog(bbf_func_ext_rel, 2, key);

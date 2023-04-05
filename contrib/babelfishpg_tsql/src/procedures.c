@@ -75,7 +75,7 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
-static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype);
+static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
 static void exec_utility_cmd_helper(char *query_str);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
@@ -2864,15 +2864,12 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 Datum
 sp_rename_internal(PG_FUNCTION_ARGS)
 {
-	char	   *obj_name,
-			   *new_name,
-			   *schema_name,
-			   *objtype,
-			   *process_util_querystr;
-	ObjectType	objtype_code;
-	size_t		len;
-	List	   *parsetree_list;
-	ListCell   *parsetree_item;
+	char *obj_name, *new_name, *schema_name, *objtype, *curr_relname, *process_util_querystr;
+	ObjectType objtype_code;
+	size_t len;
+	List *parsetree_list;
+	ListCell *parsetree_item;
+
 	const char *saved_dialect = GetConfigOption("babelfish_tsql.sql_dialect", true, true);
 
 	PG_TRY();
@@ -2887,9 +2884,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		new_name = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 		schema_name = PG_ARGISNULL(2) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(2));
 		objtype = PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
+		curr_relname =  PG_ARGISNULL(4) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(4));
 
-		/* 3. check if the input arguments are valid, and parse the objname */
-		/* objname can have at most 3 parts */
+		//3. check if the input arguments are valid, and parse the objname
+		// objname can have at most 3 parts;
+
 		if (obj_name == NULL)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 							errmsg("Procedure or function 'sp_rename' expects parameter '@objname', which was not supplied.")));
@@ -2912,6 +2911,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		len = strlen(objtype);
 		while (isspace(objtype[len - 1]))
 			objtype[--len] = 0;
+		if (curr_relname != NULL) {
+			len = strlen(curr_relname);
+			while(isspace(curr_relname[len - 1]))
+				curr_relname[--len] = 0;
+		}
 
 		/* check if inputs are empty after removing trailing spaces */
 		if (obj_name == NULL)
@@ -2950,28 +2954,20 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		{
 			objtype_code = OBJECT_SEQUENCE;
 			process_util_querystr = "(ALTER SEQUENCE )";
-		}
-		else if (strcmp(objtype, "TA") == 0 || strcmp(objtype, "TR") == 0)
-		{
-			/* TRIGGER */
+		} else if (strcmp(objtype, "TA") == 0 || strcmp(objtype, "TR") == 0) { 
+			objtype_code = OBJECT_TRIGGER;
+			process_util_querystr = "(ALTER TRIGGER )";
+		} else if (strcmp(objtype, "C") == 0 || strcmp(objtype, "D") == 0 || strcmp(objtype, "PK") == 0 || 
+					strcmp(objtype, "UQ") == 0 || strcmp(objtype, "EC") == 0) {
+			// CONSTRAINT
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Feature not supported: renaming object type Trigger")));
-		}
-		else if (strcmp(objtype, "C") == 0 || strcmp(objtype, "D") == 0 || strcmp(objtype, "PK") == 0 ||
-				 strcmp(objtype, "UQ") == 0 || strcmp(objtype, "EC") == 0)
-		{
-			/* CONSTRAINT */
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Feature not supported: renaming object type Constraint")));
-		}
-		else if (strcmp(objtype, "TT") == 0)
-		{
-			/* TABLE TYPE */
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Feature not supported: renaming object type Table-Type")));
-		}
-		else
-		{
+				errmsg("Feature not supported: renaming object type Constraint")));
+		} else if (strcmp(objtype, "TT") == 0) {
+			// TABLE TYPE
+			objtype_code = OBJECT_TYPE;
+			// process_util_querystr = "(ALTER TYPE )";
+			process_util_querystr = "(ALTER TABLE )";
+		} else {
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("Provided '@objtype' is currently not supported in Babelfish.")));
 		}
@@ -2980,11 +2976,7 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		/*
-		 * parsetree_list = gen_sp_rename_subcmds(obj_name, new_name,
-		 * schema_name, objtype);
-		 */
-		parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype_code);
+		parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype_code, curr_relname);
 
 		/* 5. run all commands */
 		foreach(parsetree_item, parsetree_list)
@@ -3002,14 +2994,13 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 
 			/* do this step */
 			ProcessUtility(wrapper,
-						   pstrdup(process_util_querystr),
-			/* "(ALTER TABLE )", */
-						   false,
-						   PROCESS_UTILITY_SUBCOMMAND,
-						   NULL,
-						   NULL,
-						   None_Receiver,
-						   NULL);
+				pstrdup(process_util_querystr),
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
 
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
@@ -3030,7 +3021,7 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 }
 
 static List *
-gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype)
+gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname)
 {
 	StringInfoData query;
 	List	   *res;
@@ -3057,16 +3048,20 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	else if (objtype == OBJECT_SEQUENCE)
 	{
 		appendStringInfo(&query, "ALTER SEQUENCE dummy RENAME TO dummy; ");
-	}
-	else
-	{
+	} else if (objtype == OBJECT_TRIGGER) {
+		appendStringInfo(&query, "ALTER TRIGGER dummy ON dummy RENAME TO dummy; ");
+		appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
+	} else if (objtype == OBJECT_TYPE) {
+		// appendStringInfo(&query, "ALTER TYPE dummy RENAME TO dummy; ");
+		appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
+	} else {
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Provided objtype is not supported for sp_rename")));
 	}
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-	if (list_length(res) != 1)
+	if ((objtype != OBJECT_TRIGGER) && (list_length(res) != 1))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
@@ -3084,13 +3079,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		renamestmt->newname = pstrdup(lowerstr(newname));
 		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
 		renamestmt->relation->relname = pstrdup(lowerstr(objname));
-	}
-	else
-	{
-		/*
-		 * } else if ((objtype == OBJECT_PROCEDURE) || (objtype ==
-		 * OBJECT_FUNCTION)) {
-		 */
+	} else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION)) {
 		ObjectWithArgs *objwargs = (ObjectWithArgs *) renamestmt->object;
 
 		renamestmt->renameType = objtype;
@@ -3098,6 +3087,33 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		orig_proc_funcname = pstrdup(newname);
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
+	} else if ((objtype == OBJECT_TRIGGER)) {
+		ObjectWithArgs *objwargs;
+		renamestmt->renameType = objtype;
+		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->relname = pstrdup(lowerstr(curr_relname));
+		orig_proc_funcname = pstrdup(newname);
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+		rewrite_object_refs(stmt);
+
+		// extra query nodes for ALTER FUNCTION
+		stmt = parsetree_nth_stmt(res, 1);
+		renamestmt = (RenameStmt *) stmt;
+		if (!IsA(renamestmt, RenameStmt))
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
+		objwargs = (ObjectWithArgs *) renamestmt->object;
+		renamestmt->renameType = OBJECT_FUNCTION;
+		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
+		orig_proc_funcname = pstrdup(newname);
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+	} else {
+		renamestmt->renameType = OBJECT_TABLE;
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->relname = pstrdup(lowerstr(objname));
 	}
 	/* name mapping */
 	rewrite_object_refs(stmt);
