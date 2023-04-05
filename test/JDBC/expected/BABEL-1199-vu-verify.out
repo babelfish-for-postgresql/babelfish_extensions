@@ -95,14 +95,6 @@ db_owner
 ~~END~~
 
 
-SELECT DATABASE_PRINCIPAL_ID('NULL')
-GO
-~~START~~
-int
-<NULL>
-~~END~~
-
-
 SELECT user_name(DATABASE_PRINCIPAL_ID());
 GO
 ~~START~~

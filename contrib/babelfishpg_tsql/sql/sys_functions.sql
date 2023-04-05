@@ -144,9 +144,14 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'tsql_get_returnTypmodValue'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.user_id(IN user_name TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.user_id(IN user_name sys.sysname)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.user_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
@@ -1741,19 +1746,9 @@ CREATE OR REPLACE FUNCTION sys.servicename()
 CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
-LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT; -- strict means if input is null, return null
-
-CREATE OR REPLACE FUNCTION sys.database_principal_id()
-RETURNS OID
-AS 'babelfishpg_tsql', 'user_id_noarg' -- implement a function return current user OID
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.current_user_id(IN user_name sys.sysname)
-RETURNS OID
-AS 'babelfishpg_tsql', 'user_id'
 LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.current_user_id()
+CREATE OR REPLACE FUNCTION sys.database_principal_id()
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id_noarg'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
