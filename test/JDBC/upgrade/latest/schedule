@@ -18,7 +18,7 @@ TestChar
 TestDatetime2
 TestDatetime
 TestDatetime-numeric-representation
-TestDatetime-numeric-representation-dateaddfunction
+TestDatetime-numeric-dateaddfunction
 TestDate
 TestDecimal
 TestFloat
