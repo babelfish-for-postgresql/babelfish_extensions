@@ -1,0 +1,40 @@
+SELECT * FROM sys_syslogins_dep_vu_prepare_view
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+~~END~~
+
+
+EXEC sys_syslogins_dep_vu_prepare_proc
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+~~END~~
+
+
+SELECT sys_syslogins_dep_vu_prepare_func()
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT name,dbname,default_language_name,status,totcpu,totio,spacelimit,timelimit,
+resultlimit,loginname,password,denylogin,hasaccess,isntname,isntgroup,isntuser,sysadmin,securityadmin,serveradmin,setupadmin,
+processadmin,diskadmin,dbcreator,bulkadmin 
+FROM sys.syslogins
+WHERE name LIKE 'sys_syslogins_dep_vu_prepare_login%'
+ORDER BY name
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+~~END~~
+
+

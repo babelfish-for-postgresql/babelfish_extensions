@@ -727,6 +727,51 @@ FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dumm
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_principals_deprecated_3_2_0');
 
+-- SYSLOGINS
+CREATE OR REPLACE VIEW sys.syslogins
+AS SELECT
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(0 AS SYS.TINYINT) as status,
+CAST(Ext.create_date AS SYS.DATETIME) AS createdate,
+CAST(Ext.modify_date AS SYS.DATETIME) AS updatedate,
+CAST(Ext.create_date AS SYS.DATETIME) AS accdate,
+CAST(0 AS INT) as totcpu,
+CAST(0 AS INT) as totio,
+CAST(0 AS INT) as spacelimit,
+CAST(0 AS INT) as timelimit,
+CAST(0 AS INT) as resultlimit,
+CAST(Base.rolname AS sys.SYSNAME) AS name,
+CAST(
+  CASE 
+    WHEN Ext.type = 'R' THEN NULL 
+    ELSE Ext.default_database_name 
+  END 
+  AS SYS.SYSNAME) AS dbname,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Base.rolname AS SYS.NVARCHAR(128)) AS loginname,
+CAST(NULL AS SYS.NVARCHAR(128)) AS password,
+CAST(0 AS INT) as denylogin,
+CAST(1 AS INT) as hasaccess,
+CAST(0 AS INT) as isntname,
+CAST(0 AS INT) as isntgroup,
+CAST(0 AS INT) as isntuser,
+CAST(
+  CASE
+      WHEN pg_has_role('sysadmin', Base.rolname, 'MEMBER') = true THEN 1
+      ELSE 0
+  END
+  AS INT) AS sysadmin,
+CAST(0 AS INT) as securityadmin,
+CAST(0 AS INT) as serveradmin,
+CAST(0 AS INT) as setupadmin,
+CAST(0 AS INT) as processadmin,
+CAST(0 AS INT) as diskadmin,
+CAST(0 AS INT) as dbcreator,
+CAST(0 AS INT) as bulkadmin
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+
+GRANT SELECT ON sys.syslogins TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
         o.object_id         AS object_id,
