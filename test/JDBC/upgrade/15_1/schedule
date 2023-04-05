@@ -259,6 +259,7 @@ BABEL-SP_SPROC_COLUMNS_100-dep
 BABEL-3000-dep
 Test-sp_helprole-dep
 Test-sp_helprolemember-dep
+TestDatetime-sql-before-15-3
 format
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
