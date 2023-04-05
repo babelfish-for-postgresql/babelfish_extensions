@@ -144,9 +144,14 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'tsql_get_returnTypmodValue'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.user_id(IN user_name TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.user_id(IN user_name sys.sysname)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.user_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
