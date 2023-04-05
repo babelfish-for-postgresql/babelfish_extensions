@@ -441,26 +441,15 @@ ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_2_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_2_0');
 
-CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
 RETURNS OID
-AS
-$$
-BEGIN
-    -- If user_name is NULL, return the result of USER_ID()
-    IF user_name IS NULL OR user_name = 'NULL' THEN
-        RETURN NULL;
-    END IF;
-    -- Trim the trailing spaces from user_name
-    user_name := rtrim(user_name);
-    -- If user_name is an empty string or contains only spaces, return NULL
-    IF user_name = '' THEN
-        RETURN NULL;
-    END IF;
-    -- Return the principal_id of the specified user_name
-    RETURN (SELECT principal_id FROM sys.database_principals WHERE name = user_name);
-END;
-$$
-LANGUAGE PLPGSQL IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.database_principal_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 /*
  * JSON MODIFY

@@ -102,3 +102,27 @@ int
 <NULL>
 ~~END~~
 
+
+SELECT user_name(DATABASE_PRINCIPAL_ID());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT DATABASE_PRINCIPAL_ID('test_me')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATABASE_PRINCIPAL_ID(NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
