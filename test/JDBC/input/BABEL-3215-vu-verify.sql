@@ -1,14 +1,7 @@
-use master
+SELECT * FROM babel_3215_unionorder_view
 go
 
-create table dbo.unionorder1 (c1 int );
-create table dbo.unionorder2 (c2 int );
-create table dbo.unionorder1b (c1 int );
-go
-
-insert into unionorder1 VALUES (1), (2), (3);
-insert into unionorder2 VALUES (2), (3), (4);
-insert into unionorder1b VALUES (2), (3), (4);
+EXEC babel_3215_unionorder_proc
 go
 
 SELECT u.c1 FROM unionorder1 u
@@ -179,6 +172,8 @@ SELECT t.a, t.b FROM t1 t
 ORDER BY t.b;
 go
 
+drop view babel_3215_unionorder_view;
+drop procedure babel_3215_unionorder_proc;
 drop table dbo.t1
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;

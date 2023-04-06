@@ -370,6 +370,7 @@ app_name
 atn2
 str
 case_insensitive_collation
+BABEL-3215
 # linked_servers
 ISC-sequences
 jira-BABEL-3504-upgrade
