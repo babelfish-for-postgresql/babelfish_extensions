@@ -305,9 +305,6 @@ BABEL-3938
 rowcount
 BABEL-1625
 BABEL-3474
-<<<<<<< HEAD
 datetime2fromparts
 timefromparts
-=======
-orderby
->>>>>>> ff3933ab6 (add mvu test cases for orderby null first with CTE)
+orderby-before-14_7-or-15_2
