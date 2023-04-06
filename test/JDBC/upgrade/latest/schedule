@@ -421,4 +421,5 @@ BABEL-3474
 dateadd_internal_df
 datetime2fromparts-after-15-2
 timefromparts
+orderby
 BABEL-3215
