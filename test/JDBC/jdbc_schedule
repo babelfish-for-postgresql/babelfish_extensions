@@ -77,6 +77,17 @@ ignore#!#bbf_view_def-before-14_5-vu-prepare
 ignore#!#bbf_view_def-before-14_5-vu-verify
 ignore#!#bbf_view_def-before-14_7-or-15_2-vu-prepare
 ignore#!#bbf_view_def-before-14_7-or-15_2-vu-verify
+ignore#!#routines_definition_before-14_7-or-15_2-vu-prepare
+ignore#!#routines_definition_before-14_7-or-15_2-vu-verify
+ignore#!#sys-all_sql_modules_before-14_5-vu-prepare
+ignore#!#sys-all_sql_modules_before-14_5-vu-verify
+ignore#!#sys-all_sql_modules_before-14_5-vu-cleanup
+ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-prepare
+ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-verify
+ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-cleanup
+ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-prepare
+ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-verify
+ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-cleanup
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
@@ -113,3 +124,6 @@ ignore#!#Test-Identity-before-14_7-or-15_2-vu-cleanup
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-verify
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-cleanup
+ignore#!#orderby-before-15_3-vu-prepare
+ignore#!#orderby-before-15_3-vu-verify
+ignore#!#orderby-before-15_3-vu-cleanup
