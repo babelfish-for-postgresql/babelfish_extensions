@@ -337,3 +337,5 @@ binary-index
 rowcount
 BABEL-1625
 BABEL-3474
+datetime2fromparts
+timefromparts

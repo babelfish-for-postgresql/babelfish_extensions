@@ -1,0 +1,69 @@
+-- [BABEL-2826] Support TIMEFROMPARTS Transact-SQL function
+select TIMEFROMPARTS(24, 23, 54, 35, 2 );
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type time, some of the arguments have values which are not valid.)~~
+
+
+select TIMEFROMPARTS(18, 63, 49, 75, 5 );
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type time, some of the arguments have values which are not valid.)~~
+
+
+select TIMEFROMPARTS(08, 39, 84, 589, 3 );
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type time, some of the arguments have values which are not valid.)~~
+
+
+SELECT * FROM timefromparts_vu_prepare_v1
+GO
+~~START~~
+time
+23:59:59.0000000
+~~END~~
+
+DROP VIEW timefromparts_vu_prepare_v1
+GO
+
+SELECT * FROM timefromparts_vu_prepare_v2
+GO
+~~START~~
+time
+23:59:59.0045600
+~~END~~
+
+DROP VIEW timefromparts_vu_prepare_v2
+GO
+
+EXEC timefromparts_vu_prepare_p1
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type time, some of the arguments have values which are not valid.)~~
+
+DROP PROCEDURE timefromparts_vu_prepare_p1
+GO
+
+SELECT timefromparts_vu_prepare_f1()
+GO
+~~START~~
+time
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error while trying to cast to NUMERIC_VALUE_OUT_OF_RANGE data type.)~~
+
+DROP FUNCTION timefromparts_vu_prepare_f1()
+GO
