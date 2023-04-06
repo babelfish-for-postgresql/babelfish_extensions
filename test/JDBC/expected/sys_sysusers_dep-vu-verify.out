@@ -1,0 +1,37 @@
+SELECT * FROM sysusers_dep_vu_prepare_view
+GO
+~~START~~
+varchar#!#varbinary#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+sysusers_dep_vu_prepare_user1#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#1#!#0#!#0#!#0
+sysusers_dep_vu_prepare_user2#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#1#!#0#!#0#!#0
+~~END~~
+
+
+EXEC sysusers_dep_vu_prepare_proc
+GO
+~~START~~
+varchar#!#varbinary#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+sysusers_dep_vu_prepare_user1#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#1#!#0#!#0#!#0
+sysusers_dep_vu_prepare_user2#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#1#!#0#!#0#!#0
+~~END~~
+
+
+SELECT sysusers_dep_vu_prepare_func()
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT name FROM sys.sysusers
+WHERE name LIKE '%sysusers_dep_vu_prepare_%'
+ORDER BY name
+GO
+~~START~~
+varchar
+sysusers_dep_vu_prepare_user1
+sysusers_dep_vu_prepare_user2
+~~END~~
+
+

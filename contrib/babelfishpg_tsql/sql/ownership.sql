@@ -392,6 +392,51 @@ FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dumm
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 
+-- SYSUSERS
+CREATE OR REPLACE VIEW sys.sysusers AS SELECT
+Dbp.principal_id AS uid,
+CAST(0 AS INT) AS status,
+Dbp.name AS name,
+Dbp.sid AS sid,
+CAST(NULL AS SYS.VARBINARY(2048)) AS roles,
+Dbp.create_date AS createdate,
+Dbp.modify_date AS updatedate,
+CAST(0 AS INT) AS altuid,
+CAST(NULL AS SYS.VARBINARY(256)) AS password,
+CAST(0 AS INT) AS gid,
+CAST(NULL AS SYS.VARCHAR(85)) AS environ,
+CASE
+  WHEN Dbp.name = 'INFORMATION_SCHEMA'
+    OR Dbp.name = 'sys'
+    OR Dbp.type_desc = 'DATABASE_ROLE'
+    THEN 0
+  WHEN Dbp.name = 'guest' AND Ext.user_can_connect = 1 THEN 1
+  WHEN Dbp.type_desc = 'WINDOWS_USER' OR Dbp.name = 'dbo' THEN 1
+  ELSE 0
+END AS hasdbaccess,
+CASE
+  WHEN Dbp.name = 'INFORMATION_SCHEMA'
+    OR Dbp.name = 'sys'
+    OR Dbp.name = 'guest'
+    OR Dbp.name = 'dbo' 
+    THEN 1
+  WHEN Dbp.type_desc = 'WINDOWS_USER' THEN 1
+  ELSE 0
+END AS islogin,
+CASE WHEN Dbp.type_desc = 'WINDOWS_USER' THEN 1 ELSE 0 END AS isntname,
+CAST(0 AS INT) AS isntgroup,
+CASE WHEN Dbp.type_desc = 'WINDOWS_USER' THEN 1 ELSE 0 END AS isntuser,
+CASE WHEN Dbp.type_desc = 'SQL_USER' THEN 1 ELSE 0 END AS issqluser,
+CAST(0 AS INT) AS isaliased,
+CASE WHEN Dbp.type_desc = 'DATABASE_ROLE' THEN 1 ELSE 0 END AS issqlrole,
+CAST(0 AS INT) AS isapprole
+FROM sys.database_principals AS Dbp LEFT JOIN 
+  (SELECT orig_username, user_can_connect FROM sys.babelfish_authid_user_ext 
+    WHERE database_name = DB_NAME()) AS Ext
+ON Dbp.name = Ext.orig_username;
+ 
+GRANT SELECT ON sys.sysusers TO PUBLIC;
+
 -- DATABASE_ROLE_MEMBERS
 CREATE OR REPLACE VIEW sys.database_role_members AS
 SELECT
