@@ -274,7 +274,7 @@ CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
                                                                 IN p_seconds NUMERIC,
                                                                 IN p_fractions NUMERIC,
                                                                 IN p_precision NUMERIC)
-RETURNS TIMESTAMP WITHOUT TIME ZONE
+RETURNS sys.DATETIME2
 AS
 $BODY$
 DECLARE
@@ -282,6 +282,8 @@ DECLARE
    v_precision SMALLINT;
    v_err_message VARCHAR;
    v_calc_seconds NUMERIC;
+   v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+   v_string pg_catalog.text;
 BEGIN
    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
    v_precision := p_precision::SMALLINT;
@@ -295,7 +297,7 @@ BEGIN
        (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
        (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
        (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
-       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > v_precision))
    THEN
       RAISE invalid_datetime_format;
    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
@@ -304,14 +306,18 @@ BEGIN
 
    v_calc_seconds := pg_catalog.format('%s.%s',
                             floor(p_seconds)::SMALLINT,
-                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
 
-   RETURN make_timestamp(floor(p_year)::SMALLINT,
+   v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
                          floor(p_month)::SMALLINT,
                          floor(p_day)::SMALLINT,
                          floor(p_hour)::SMALLINT,
                          floor(p_minute)::SMALLINT,
                          v_calc_seconds);
+
+   v_string := v_resdatetime::pg_catalog.text;
+
+   RETURN CAST(v_string AS sys.DATETIME2);
 EXCEPTION
    WHEN most_specific_type_mismatch THEN
       RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
@@ -579,7 +585,7 @@ BEGIN
            (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
            (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
            (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
-           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > v_precision))
     THEN
         RAISE invalid_datetime_format;
     ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
@@ -588,7 +594,7 @@ BEGIN
 
     v_calc_seconds := pg_catalog.format('%s.%s',
                              floor(p_seconds)::SMALLINT,
-                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
 
     RETURN make_time(floor(p_hour)::SMALLINT,
                      floor(p_minute)::SMALLINT,
