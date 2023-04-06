@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '3.1.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '3.2.0'" to load this file. \quit
 
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
@@ -443,8 +443,24 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprec
 
 CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
 RETURNS OID
-AS 'babelfishpg_tsql', 'user_id'
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS
+$$
+BEGIN
+    -- If user_name is NULL, return the result of USER_ID()
+    IF user_name IS NULL OR user_name = 'NULL' THEN
+        RETURN NULL;
+    END IF;
+    -- Trim the trailing spaces from user_name
+    user_name := rtrim(user_name);
+    -- If user_name is an empty string or contains only spaces, return NULL
+    IF user_name = '' THEN
+        RETURN NULL;
+    END IF;
+    -- Return the principal_id of the specified user_name
+    RETURN (SELECT principal_id FROM sys.database_principals WHERE name = user_name);
+END;
+$$
+LANGUAGE PLPGSQL IMMUTABLE PARALLEL SAFE;
 
 /*
  * JSON MODIFY
@@ -730,6 +746,26 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
     WHERE
         c.is_sparse = 0 AND p.attnum >= 0;
+
+CREATE OR REPLACE VIEW sys.sp_databases_view AS
+	SELECT CAST(database_name AS sys.SYSNAME),
+	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
+	CASE WHEN (sum(table_size)/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
+		ELSE CAST((sum(table_size)/1024.0) AS int) END as database_size,
+	CAST(NULL AS sys.VARCHAR(254)) as remarks
+	FROM (
+		SELECT pg_catalog.pg_namespace.oid as schema_oid,
+		pg_catalog.pg_namespace.nspname as schema_name,
+		INT.name AS database_name,
+		coalesce(pg_relation_size(pg_catalog.pg_class.oid), 0) as table_size
+		FROM
+		sys.babelfish_namespace_ext EXT
+		JOIN sys.babelfish_sysdatabases INT ON EXT.dbid = INT.dbid
+		JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.nspname = EXT.nspname
+		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid where pg_catalog.pg_class.relkind = 'r'
+	) t
+	GROUP BY database_name
+	ORDER BY database_name;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
