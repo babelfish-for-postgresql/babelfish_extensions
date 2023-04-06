@@ -108,6 +108,31 @@ CREATE AGGREGATE sys.VARP(float8) (
 CREATE OR REPLACE FUNCTION sys.rowcount_big()
 RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.database_principal_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+ALTER FUNCTION sys.user_id RENAME TO babelfish_sys_user_id_deprecated_in_3_2_0;
+
+CREATE OR REPLACE FUNCTION sys.user_id(IN user_name sys.sysname)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.user_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sys_user_id_deprecated_in_3_2_0');
+
+
 ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_in_3_2_0;
 CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_in_3_2_0(
   IN view_name text,
@@ -441,25 +466,6 @@ ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_2_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_2_0');
 
-CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
-RETURNS OID
-AS 'babelfishpg_tsql', 'user_id'
-LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT; -- strict means if input is null, return null
-
-CREATE OR REPLACE FUNCTION sys.database_principal_id()
-RETURNS OID
-AS 'babelfishpg_tsql', 'user_id_noarg' -- implement a function return current user OID
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.current_user_id(IN user_name sys.sysname)
-RETURNS OID
-AS 'babelfishpg_tsql', 'user_id'
-LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
-
-CREATE OR REPLACE FUNCTION sys.current_user_id()
-RETURNS OID
-AS 'babelfishpg_tsql', 'user_id_noarg'
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 /*
  * JSON MODIFY
