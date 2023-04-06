@@ -139,7 +139,20 @@ TEST_F(PSQL_DataTypes_Time, Insertion_Fail) {
     "00:60:0",    // Minute over range
     // "00:00:60",   // Second over range
     "00-00-00",   // Format hh-mm-ss
-
+    "December 31, 1900 CE",
+    "2080-01-01 00:00:00",        // Year
+    "1899-12-31 00:00:00",
+    "0000-01-01 00:00:00",
+    "1900-32-01 00:00:00",        // Month
+    "1900-00-01 00:00:00",
+    "1900-01-32 00:00:00",        // Day
+    "1900-01-00 00:00:00",
+    "1900-02-31 00:00:00",        // Feb 31st
+    "0001-01-01 24:00:00",            // Hour
+    "0001-01-01 00:60:00",        // Minutes
+    "0001-01-01 00:00:60",            // Seconds
+    "0001-01-01 00:00:60000",     // Milliseconds
+    "2079-06-06 23:59:39",         // Rounding up over range
     // ODBC API format for Time is hh:mm:ss
     // Below are valid in SQL Server
     "00:00:00.00 AM"

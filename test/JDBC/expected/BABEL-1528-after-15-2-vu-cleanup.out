@@ -1,0 +1,11 @@
+DROP TABLE BABEL_1528_vu_prepare_t1
+GO
+
+DROP VIEW BABEL_1528_vu_prepare_v1
+GO
+
+DROP PROCEDURE BABEL_1528_vu_prepare_p1
+GO
+
+DROP FUNCTION BABEL_1528_vu_prepare_f1
+GO
