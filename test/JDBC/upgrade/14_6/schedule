@@ -365,4 +365,4 @@ BABEL-3474
 dateadd_internal_df
 datetime2fromparts
 timefromparts
-BABEL-3215
+BABEL-3215-before-15_2-vu-verify
