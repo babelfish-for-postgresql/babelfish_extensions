@@ -1,0 +1,37 @@
+select CAST('2012-02-23' AS time)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+select * from BABEL_1528_vu_prepare_t1
+GO
+~~START~~
+time
+~~END~~
+
+
+select BABEL_1528_vu_prepare_f1()
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+exec BABEL_1528_vu_prepare_p1
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+select * FROM BABEL_1528_vu_prepare_v1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_1528_vu_prepare_v1" does not exist)~~
+
