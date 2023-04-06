@@ -1,0 +1,117 @@
+-- [BABEL-1627, 2827] Support DATETIME2FROMPARTS Transact-SQL function
+select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 0 );
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type DATETIME2, some of the arguments have values which are not valid.)~~
+
+
+select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 7 );
+GO
+~~START~~
+datetime2
+2011-08-15 14:23:44.0000000
+~~END~~
+
+
+select DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 8 );
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Specified scale 8 is invalid.)~~
+
+
+SELECT DATETIME2FROMPARTS ( 2010, 12, 31, 23, 59, 59, 0, 0 ) AS Result;
+GO
+~~START~~
+datetime2
+2010-12-31 23:59:59.0000000
+~~END~~
+
+
+SELECT * FROM datetime2fromparts_vu_prepare_v1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: integer > numeric)~~
+
+DROP VIEW datetime2fromparts_vu_prepare_v1
+GO
+
+SELECT * FROM datetime2fromparts_vu_prepare_v2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: integer > numeric)~~
+
+DROP VIEW datetime2fromparts_vu_prepare_v2
+GO
+
+SELECT * FROM datetime2fromparts_vu_prepare_v3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: integer > numeric)~~
+
+DROP VIEW datetime2fromparts_vu_prepare_v3
+GO
+
+EXEC datetime2fromparts_vu_prepare_p1
+GO
+~~START~~
+datetime2
+2011-08-15 14:23:44.5000000
+~~END~~
+
+DROP PROCEDURE datetime2fromparts_vu_prepare_p1
+GO
+
+EXEC datetime2fromparts_vu_prepare_p2
+GO
+~~START~~
+datetime2
+2011-08-15 14:23:44.0500000
+~~END~~
+
+DROP PROCEDURE datetime2fromparts_vu_prepare_p2
+GO
+
+EXEC datetime2fromparts_vu_prepare_p3
+GO
+~~START~~
+datetime2
+2011-08-15 14:23:44.0050000
+~~END~~
+
+DROP PROCEDURE datetime2fromparts_vu_prepare_p3
+GO
+
+EXEC datetime2fromparts_vu_prepare_p4
+GO
+~~START~~
+datetime2
+2011-08-15 14:23:44.0005000
+~~END~~
+
+DROP PROCEDURE datetime2fromparts_vu_prepare_p4
+GO
+
+SELECT datetime2fromparts_vu_prepare_f1()
+GO
+~~START~~
+datetime2
+2011-08-15 14:23:44.0000500
+~~END~~
+
+DROP FUNCTION datetime2fromparts_vu_prepare_f1()
+GO
+
+SELECT datetime2fromparts_vu_prepare_f2()
+GO
+~~START~~
+datetime2
+2011-08-15 14:23:44.0000050
+~~END~~
+
+DROP FUNCTION datetime2fromparts_vu_prepare_f2()
+GO

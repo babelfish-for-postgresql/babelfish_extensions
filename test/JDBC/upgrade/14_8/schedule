@@ -392,3 +392,5 @@ rowcount
 BABEL-1625
 BABEL-3474
 dateadd_internal_df
+datetime2fromparts
+timefromparts
