@@ -163,14 +163,26 @@ insert into unionorder_numeric values (4, 16);
 insert into unionorder_numeric values (NULL, 101.123);
 go
 
+create table dbo.unionorder_char (a CHAR(5), b CHAR(10));
+insert into unionorder_char values ('aaa', 'bbbbbbbb');
+insert into unionorder_char values (NULL, '5');
+go
+
 SELECT t.a, t.b FROM unionorder_numeric t
 UNION ALL
 SELECT t.a, t.b FROM unionorder_numeric t
 ORDER BY t.b;
 go
 
+SELECT t.a, t.b FROM unionorder_char t
+UNION ALL
+SELECT t.a, t.b FROM unionorder_char t
+ORDER BY t.b;
+go
+
 drop procedure babel_3215_unionorder_proc;
 drop table dbo.unionorder_numeric;
+drop table dbo.unionorder_char;
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 drop table dbo.unionorder1b;

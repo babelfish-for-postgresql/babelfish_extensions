@@ -308,6 +308,15 @@ go
 ~~ROW COUNT: 1~~
 
 
+create table dbo.unionorder_char (a CHAR(5), b CHAR(10));
+insert into unionorder_char values ('aaa', 'bbbbbbbb');
+insert into unionorder_char values (NULL, '5');
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
 SELECT t.a, t.b FROM unionorder_numeric t
 UNION ALL
 SELECT t.a, t.b FROM unionorder_numeric t
@@ -322,8 +331,23 @@ numeric#!#numeric
 ~~END~~
 
 
+SELECT t.a, t.b FROM unionorder_char t
+UNION ALL
+SELECT t.a, t.b FROM unionorder_char t
+ORDER BY t.b;
+go
+~~START~~
+char#!#char
+<NULL>#!#5         
+<NULL>#!#5         
+aaa  #!#bbbbbbbb  
+aaa  #!#bbbbbbbb  
+~~END~~
+
+
 drop procedure babel_3215_unionorder_proc;
 drop table dbo.unionorder_numeric;
+drop table dbo.unionorder_char;
 drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 drop table dbo.unionorder1b;
