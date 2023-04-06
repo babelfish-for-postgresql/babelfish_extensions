@@ -7,5 +7,5 @@ GO
 drop view orderby_vu_view_3;
 GO
 
-drop table t1;
+drop table t2;
 GO
