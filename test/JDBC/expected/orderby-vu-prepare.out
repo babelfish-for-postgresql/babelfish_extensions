@@ -15,9 +15,16 @@ GO
 ~~ROW COUNT: 1~~
 
 
-create view orderby_vu_view as with t1cte AS (
+create view orderby_vu_view_1 as with t1cte AS (
 select top(3) a from t1 order by 1
 )
 select * from t1cte; 
 GO
 
+create view orderby_vu_view_2 as 
+select top(3) a from t1 order by 1; 
+GO
+
+create view orderby_vu_view_3 as
+select * from (select top(3) a from t1 order by 1) as b;
+GO

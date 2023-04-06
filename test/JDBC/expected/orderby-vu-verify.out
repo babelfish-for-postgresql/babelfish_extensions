@@ -1,4 +1,24 @@
-select * from orderby_vu_view;
+select * from orderby_vu_view_1;
+GO
+~~START~~
+int
+<NULL>
+1
+3
+~~END~~
+
+
+select * from orderby_vu_view_2;
+GO
+~~START~~
+int
+<NULL>
+1
+3
+~~END~~
+
+
+select * from orderby_vu_view_3;
 GO
 ~~START~~
 int
