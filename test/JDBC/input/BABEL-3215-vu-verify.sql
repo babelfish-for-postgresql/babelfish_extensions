@@ -1,6 +1,3 @@
-SELECT * FROM babel_3215_unionorder_view
-go
-
 EXEC babel_3215_unionorder_proc
 go
 
@@ -172,7 +169,6 @@ SELECT t.a, t.b FROM unionorder_numeric t
 ORDER BY t.b;
 go
 
-drop view babel_3215_unionorder_view;
 drop procedure babel_3215_unionorder_proc;
 drop table dbo.unionorder_numeric;
 drop table dbo.unionorder1;

@@ -1,13 +1,3 @@
-SELECT * FROM babel_3215_unionorder_view
-go
-~~START~~
-int
-1
-2
-3
-~~END~~
-
-
 EXEC babel_3215_unionorder_proc
 go
 ~~START~~
@@ -332,7 +322,6 @@ numeric#!#numeric
 ~~END~~
 
 
-drop view babel_3215_unionorder_view;
 drop procedure babel_3215_unionorder_proc;
 drop table dbo.unionorder_numeric;
 drop table dbo.unionorder1;

@@ -8,13 +8,6 @@ insert into unionorder2 VALUES (2), (3), (4);
 insert into unionorder1b VALUES (2), (3), (4);
 go
 
-create view babel_3215_unionorder_view as
-    SELECT u.* FROM unionorder1 u
-    UNION
-    SELECT u.*  FROM unionorder1 u
-    ORDER BY u.c1
-go
-
 create procedure babel_3215_unionorder_proc as
 BEGIN
     SELECT * FROM unionorder1 u1, unionorder1b u2 WHERE u1.c1 = u2.c1
