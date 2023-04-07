@@ -7,8 +7,8 @@ jobs:
       env:
       OLD_INSTALL_DIR: psql_source
       NEW_INSTALL_DIR: psql_target
-      ENGINE_BRANCH_FROM: BABEL_2_X_DEV__PG_14_X
-      EXTENSION_BRANCH_FROM: BABEL_2_X_DEV
+      ENGINE_BRANCH_FROM: BABEL_2_4_STABLE__PG_14_7
+      EXTENSION_BRANCH_FROM: BABEL_2_4_STABLE
 
     runs-on: ubuntu-20.04
     steps:
