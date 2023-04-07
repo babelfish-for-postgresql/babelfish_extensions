@@ -87,5 +87,75 @@ varchar
 ~~END~~
 
 
+
+create table babel_1940_t2( a varchar(20) collate japanese_cs_as);
+GO
+
+insert into babel_1940_t2 values ('ｳ'), ('C'), ('ﾊﾟ'), ('３'), ('c'), ('ｲ'), ('Ｃ'),('ﾊ'),
+('1'), ('ｱ'),('パ'), ('b'), ('2'), ('B'),('１'), ('Ａ'),('ア'),('A'), ('a'),('AbC'), ('aBc');
+GO
+~~ROW COUNT: 21~~
+
+
+
+SELECT CONVERT(varbinary(MAX), a) FROM babel_1940_t2
+GO
+~~START~~
+varbinary
+EFBDB3
+43
+EFBE8AEFBE9F
+EFBC93
+63
+EFBDB2
+EFBCA3
+EFBE8A
+31
+EFBDB1
+E38391
+62
+32
+42
+EFBC91
+EFBCA1
+E382A2
+41
+61
+416243
+614263
+~~END~~
+
+
+SELECT CONVERT(varchar(MAX), CONVERT(varbinary(MAX), a)) FROM babel_1940_t2
+GO
+~~START~~
+varchar
+ï½³
+C
+ï¾Šï¾Ÿ
+ï¼“
+c
+ï½²
+ï¼£
+ï¾Š
+1
+ï½±
+ãƒ‘
+b
+2
+B
+ï¼‘
+ï¼¡
+ã‚¢
+A
+a
+AbC
+aBc
+~~END~~
+
+
+DROP TABLE babel_1940_t2
+GO
+
 DROP TABLE babel_1940_t1
 GO
