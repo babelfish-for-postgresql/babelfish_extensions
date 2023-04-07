@@ -1,0 +1,113 @@
+
+-- [BABEL-879] Money Casts are not rounded correctly
+-- Expected:1.1112
+select cast(1.11119 as money);
+GO
+~~START~~
+money
+1.1112
+~~END~~
+
+
+-- Expected:1.1111
+select cast(1.11114 as money);
+GO
+~~START~~
+money
+1.1111
+~~END~~
+
+
+
+-- [BABEL-926] Incorrect TRY_CAST behavior from various numeric types to tinyint
+-- Expected:1
+select try_cast(cast(1.23 as real) as tinyint);
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+-- Expected:1
+select try_cast(cast(1.23 as money) as tinyint);
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+-- Expected:1
+select try_cast(cast(1.23 as float(53)) as tinyint);
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+-- Expected:1
+select try_cast(cast(1.23 as smallmoney) as tinyint);
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+-- Expected:1
+select try_cast(cast(1.23 as numeric) as tinyint);
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+-- Expected:1
+select try_cast(cast(1.23 as double precision) as tinyint);
+GO
+~~START~~
+tinyint
+1
+~~END~~
+
+
+
+-- [BABEL-2643] Money type not working with choose() function in MSSQL
+-- Expected:3.14
+select choose (2.6, cast('$123.123' as money), cast(3.14 as float));
+GO
+~~START~~
+float
+3.14
+~~END~~
+
+
+-- Expected:1.0000
+select choose ('2', cast('$123.123' as money), cast(1 as int));
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+
+-- Expected:123.123
+select choose (1.6, cast('$123.123' as money), cast(3.14 as float));
+GO
+~~START~~
+float
+123.123
+~~END~~
+
+
+-- Expected:123.1230
+select choose ('1', cast('$123.123' as money), cast(1 as int));
+GO
+~~START~~
+money
+123.1230
+~~END~~
+
