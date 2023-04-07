@@ -1477,16 +1477,6 @@ nchar
 
 
 
--- [BABEL-257] test varchar defaults to sys.varchar in new
--- database and new schema
-SELECT current_database();
-GO
-~~START~~
-varchar
-jdbc_testdb
-~~END~~
-
-
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 ~~START~~
