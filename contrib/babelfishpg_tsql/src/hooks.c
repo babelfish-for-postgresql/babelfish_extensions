@@ -304,7 +304,7 @@ InstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc;
 
 	prev_CreateDbStmt_hook = CreateDbStmt_hook;
-    CreateDbStmt_hook = pltsql_CreateDbStmt;
+	CreateDbStmt_hook = pltsql_CreateDbStmt;
     
 	prev_fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom_hook;
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
@@ -381,8 +381,8 @@ static void
 pltsql_DropDbStmt(PlannedStmt *pstmt)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
- 	DropdbStmt *stmt = (DropdbStmt *) parsetree;
-    drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
+	DropdbStmt *stmt = (DropdbStmt *) parsetree;
+	drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
 	return;
 }
 
