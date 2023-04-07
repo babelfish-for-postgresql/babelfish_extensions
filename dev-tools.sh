@@ -51,6 +51,18 @@ if [ ! $1 ]; then
     echo ""
     echo "  dumprestore SOURCE_WS [TARGET_WS]"
     echo "      dump SOURCE_WS using pg_dump and restore it on TARGET_WS"
+    echo ""
+    echo "  initpg_coverage [TARGET_WS]"
+    echo "      same as initpg but with --enable-coverage flag to generate code coverage"
+    echo ""
+    echo "  build_coverage [TARGET_WS]"
+    echo "      generate code coverage HTML report for all extensions"
+    echo ""
+    echo "  sum_coverage [TARGET_WS]"
+    echo "      summarize code coverage"
+    echo ""
+    echo "  run_pgindent [TARGET_WS]"
+    echo "      run pgindent"
     exit 0
 fi
 
@@ -213,6 +225,122 @@ restore() {
     fi
 }
 
+run_pgindent() {
+    cd $1/postgres/lib
+
+    echo "dumping typedefs for babelfishpg_mpney to /tmp/babelfishpg_money.typedefs.."
+    objdump -W babelfishpg_money.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_money.typedefs
+
+    echo "dumping typedefs for babelfishpg_common to /tmp/babelfishpg_common.typedefs.."
+    objdump -W babelfishpg_common.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_common.typedefs
+
+    echo "dumping typedefs for babelfishpg_tds to /tmp/babelfishpg_tds.typedefs.."
+    objdump -W babelfishpg_tds.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tds.typedefs
+
+    echo "dumping typedefs for babelfishpg_tsql to /tmp/babelfishpg_tsql.typedefs.."
+    objdump -W babelfishpg_tsql.so | egrep -A3 DW_TAG_typedef | perl -e ' while (<>) { chomp; @flds = split;next unless (1 < @flds);\
+     next if $flds[0]  ne "DW_AT_name" && $flds[1] ne "DW_AT_name";\
+     next if $flds[-1] =~ /^DW_FORM_str/;\
+     print $flds[-1],"\n"; }'  | sort | uniq > /tmp/babelfishpg_tsql.typedefs
+
+    cd $1
+    echo "Clone and build pg_bsd_indent which is required by pgindent..."
+    git clone https://git.postgresql.org/git/pg_bsd_indent.git
+    cd pg_bsd_indent/
+    make PG_CONFIG=$1/postgres/bin/pg_config
+    sudo cp pg_bsd_indent /usr/local/bin
+
+    cd $1/babelfish_extensions
+
+    echo ""
+    echo "Running pgindent on babelfishpg_money..."
+    cd contrib/babelfishpg_money
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_money.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_common..."
+    cd ../babelfishpg_common
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_common.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_tds..."
+    cd ../babelfishpg_tds
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tds.typedefs
+
+    echo ""
+    echo "Running pgindent on babelfishpg_tsql..."
+    cd ../babelfishpg_tsql
+    $1/postgresql_modified_for_babelfish/src/tools/pgindent/pgindent --typedefs=/tmp/babelfishpg_tsql.typedefs --exclude="exclude_file_from_pgindent"
+
+    echo ""
+    echo "pgindent is ran successfully against $1."
+    echo "Please re-build all the extensions to make sure that there is no compilation error."
+    echo ""
+}
+
+init_lcov(){
+    cd $1
+    if [ ! -d "./lcov" ]; then
+        git clone --depth 1 --branch v1.16 https://github.com/linux-test-project/lcov.git
+    fi
+    cd lcov
+    sudo make PREFIX=/usr install
+    export PATH=$PATH:/usr/bin/lcov
+    export PATH=$PATH:/usr/bin/gcov
+    export PATH=$PATH:/usr/bin/genhtml
+}
+
+init_pg_coverage(){
+    init_lcov $1
+    cd $1/postgresql_modified_for_babelfish
+    ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-coverage --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+    make -j 4
+    make install
+    cd contrib && make && sudo make install
+    sudo cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" $2/postgres/lib/
+    init_pghint $1 $2
+}
+
+build_extension_coverage(){
+    cd $1/babelfish_extensions/contrib/$2
+    lcov --gcov-tool gcov -q --no-external -c -i -d . -d ./ -o lcov_base.info
+    lcov --gcov-tool gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+    rm -rf coverage
+    genhtml -q --legend -o coverage --title=${2} --ignore-errors source --num-spaces=4  lcov_base.info lcov_test.info
+    touch coverage-html-stamp
+
+}
+
+build_coverage(){
+    build_extension_coverage $1 'babelfishpg_money'
+    build_extension_coverage $1 'babelfishpg_common'
+    build_extension_coverage $1 'babelfishpg_tds'
+    build_extension_coverage $1 'babelfishpg_tsql'
+    echo ""
+    echo "  code coverage report generation completed"
+    echo "  run './dev-tools.sh sum_coverage' to generate summarized code coverage for all extensions"
+    echo "  HTML code coverage report for each extension is located as follows -"
+    echo "      babelfishpg_money:  $TARGET_WS/babelfish_extensions/contrib/babelfishpg_money/coverage/index.html"
+    echo "      babelfishpg_common: $TARGET_WS/babelfish_extensions/contrib/babelfishpg_common/coverage/index.html"
+    echo "      babelfishpg_tds:    $TARGET_WS/babelfish_extensions/contrib/babelfishpg_tds/coverage/index.html"
+    echo "      babelfishpg_tsql:   $TARGET_WS/babelfish_extensions/contrib/babelfishpg_tsql/coverage/index.html"
+}
+
+sum_coverage(){
+    cd $1/babelfish_extensions/contrib
+    lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o lcov.info
+    lcov --list lcov.info
+}
+
 if [ "$1" == "initdb" ]; then
     init_db $TARGET_WS
     exit 0
@@ -351,5 +479,18 @@ elif [ "$1" == "dumprestore" ]; then
 
     restore $SOURCE_WS $TARGET_WS
     echo "Restored on target workspace ($TARGET_WS)!"
+    exit 0
+elif [ "$1" == "run_pgindent" ]; then
+    init_pg $TARGET_WS $TARGET_WS
+    build_bbf $TARGET_WS $TARGET_WS
+    run_pgindent $TARGET_WS
+elif [ "$1" == "initpg_coverage" ]; then
+    init_pg_coverage $TARGET_WS $TARGET_WS
+    exit 0
+elif [ "$1" == "build_coverage" ]; then
+    build_coverage $TARGET_WS
+    exit 0
+elif [ "$1" == "sum_coverage" ]; then
+    sum_coverage $TARGET_WS
     exit 0
 fi

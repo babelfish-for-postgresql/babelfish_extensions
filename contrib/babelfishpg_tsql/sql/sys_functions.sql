@@ -274,7 +274,7 @@ CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
                                                                 IN p_seconds NUMERIC,
                                                                 IN p_fractions NUMERIC,
                                                                 IN p_precision NUMERIC)
-RETURNS TIMESTAMP WITHOUT TIME ZONE
+RETURNS sys.DATETIME2
 AS
 $BODY$
 DECLARE
@@ -282,6 +282,8 @@ DECLARE
    v_precision SMALLINT;
    v_err_message VARCHAR;
    v_calc_seconds NUMERIC;
+   v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+   v_string pg_catalog.text;
 BEGIN
    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
    v_precision := p_precision::SMALLINT;
@@ -295,7 +297,7 @@ BEGIN
        (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
        (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
        (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
-       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > v_precision))
    THEN
       RAISE invalid_datetime_format;
    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
@@ -304,14 +306,18 @@ BEGIN
 
    v_calc_seconds := pg_catalog.format('%s.%s',
                             floor(p_seconds)::SMALLINT,
-                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
 
-   RETURN make_timestamp(floor(p_year)::SMALLINT,
+   v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
                          floor(p_month)::SMALLINT,
                          floor(p_day)::SMALLINT,
                          floor(p_hour)::SMALLINT,
                          floor(p_minute)::SMALLINT,
                          v_calc_seconds);
+
+   v_string := v_resdatetime::pg_catalog.text;
+
+   RETURN CAST(v_string AS sys.DATETIME2);
 EXCEPTION
    WHEN most_specific_type_mismatch THEN
       RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
@@ -579,7 +585,7 @@ BEGIN
            (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
            (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
            (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
-           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > v_precision))
     THEN
         RAISE invalid_datetime_format;
     ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
@@ -588,7 +594,7 @@ BEGIN
 
     v_calc_seconds := pg_catalog.format('%s.%s',
                              floor(p_seconds)::SMALLINT,
-                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
 
     RETURN make_time(floor(p_hour)::SMALLINT,
                      floor(p_minute)::SMALLINT,
@@ -1738,10 +1744,27 @@ CREATE OR REPLACE FUNCTION sys.servername()
 CREATE OR REPLACE FUNCTION sys.servicename()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
+
 CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
 RETURNS OID
-AS 'babelfishpg_tsql', 'user_id'
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS
+$$
+BEGIN
+    -- If user_name is NULL, return the result of USER_ID()
+    IF user_name IS NULL OR user_name = 'NULL' THEN
+        RETURN NULL;
+    END IF;
+    -- Trim the trailing spaces from user_name
+    user_name := rtrim(user_name);
+    -- If user_name is an empty string or contains only spaces, return NULL
+    IF user_name = '' THEN
+        RETURN NULL;
+    END IF;
+    -- Return the principal_id of the specified user_name
+    RETURN (SELECT principal_id FROM sys.database_principals WHERE name = user_name);
+END;
+$$
+LANGUAGE PLPGSQL IMMUTABLE PARALLEL SAFE;
 
 -- In tsql @@max_precision represents max precision that server supports
 -- As of now, we do not support change in max_precision. So, returning default value
@@ -3328,9 +3351,6 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.context_info()
-RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;

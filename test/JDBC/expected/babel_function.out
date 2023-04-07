@@ -1,0 +1,2861 @@
+CREATE FUNCTION test_func()
+RETURNS INT
+AS
+BEGIN
+    DECLARE @a int = 1;
+    RETURN @a;
+END;
+GO
+
+-- should be able execute a pltsql function in postgres dialect
+select test_func();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+
+-- test executing pltsql trigger in postgres dialect
+CREATE TABLE employees(
+   id SERIAL PRIMARY KEY,
+   first_name VARCHAR(40) NOT NULL,
+   last_name VARCHAR(40) NOT NULL
+);
+GO
+
+CREATE TABLE employee_audits (
+   id SERIAL PRIMARY KEY,
+   employee_id INT NOT NULL,
+   last_name VARCHAR(40) NOT NULL
+);
+GO
+
+
+INSERT INTO employees (first_name, last_name) VALUES ('A', 'B');
+INSERT INTO employees (first_name, last_name) VALUES ('C', 'D');
+SELECT * FROM employees;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#varchar
+1#!#A#!#B
+2#!#C#!#D
+~~END~~
+
+
+UPDATE employees SET last_name = 'E' WHERE ID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM employees;
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#A#!#B
+2#!#C#!#E
+~~END~~
+
+SELECT * FROM employee_audits;
+GO
+~~START~~
+int#!#int#!#varchar
+~~END~~
+
+
+-- cleanup
+drop function test_func;
+GO
+drop table employees;
+GO
+drop table employee_audits;
+GO
+
+
+
+select OBJECT_NAME(1);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+
+-- test CONVERT function
+-- Conversion between varchar and date/time/datetime
+select CONVERT(varchar(30), CAST('2017-08-25' AS date), 102);
+GO
+~~START~~
+varchar
+2017.08.25
+~~END~~
+
+select CONVERT(varchar(30), CAST('13:01:59' AS time), 8);
+GO
+~~START~~
+varchar
+13:01:59
+~~END~~
+
+select CONVERT(varchar(30), CAST('13:01:59' AS time), 22);
+GO
+~~START~~
+varchar
+ 1:01:59 PM
+~~END~~
+
+select CONVERT(varchar(30), CAST('13:01:59' AS time), 22);
+GO
+~~START~~
+varchar
+ 1:01:59 PM
+~~END~~
+
+select CONVERT(varchar(30), CAST('2017-08-25 13:01:59' AS datetime), 100);
+GO
+~~START~~
+varchar
+Aug 25 2017  1:01PM
+~~END~~
+
+select CONVERT(varchar(30), CAST('2017-08-25 13:01:59' AS datetime), 109);
+GO
+~~START~~
+varchar
+Aug 25 2017  1:01:59:000PM
+~~END~~
+
+select CONVERT(date, '08/25/2017', 101);
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+select CONVERT(time, '12:01:59', 101);
+GO
+~~START~~
+time
+12:01:59.0000000
+~~END~~
+
+select CONVERT(datetime, '2017-08-25 01:01:59PM', 120);
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+select CONVERT(varchar, CONVERT(datetime2(7), '9999-12-31 23:59:59.9999999'));
+GO
+~~START~~
+varchar
+9999-12-31 23:59:59.999999
+~~END~~
+
+
+-- Conversion from float to varchar
+select CONVERT(varchar(30), CAST(11234561231231.234 AS float), 1);
+GO
+~~START~~
+varchar
+ 1.1234561e+13                
+~~END~~
+
+select CONVERT(varchar(30), CAST(11234561231231.234 AS float), 2);
+GO
+~~START~~
+varchar
+ 1.123456123123123e+13        
+~~END~~
+
+select CONVERT(varchar(30), CAST(11234561231231.234 AS float), 3);
+GO
+~~START~~
+varchar
+ 1.1234561231231234e+13       
+~~END~~
+
+
+-- Conversion from money to varchar
+select CONVERT(varchar(10), CAST(4936.56 AS MONEY), 0);
+GO
+~~START~~
+varchar
+ 4936.56  
+~~END~~
+
+select CONVERT(varchar(10), CAST(4936.56 AS MONEY), 1);
+GO
+~~START~~
+varchar
+4,936.56  
+~~END~~
+
+select CONVERT(varchar(10), CAST(4936.56 AS MONEY), 2);
+GO
+~~START~~
+varchar
+ 4936.5600
+~~END~~
+
+
+select CONVERT(varchar(10), CAST(-4936.56 AS MONEY), 0);
+-- Floor conversion to smallint, int, bigint
+SELECT CONVERT(int, 99.9);
+GO
+~~START~~
+varchar
+-4936.56  
+~~END~~
+
+~~START~~
+int
+99
+~~END~~
+
+SELECT CONVERT(smallint, 99.9);
+GO
+~~START~~
+smallint
+99
+~~END~~
+
+SELECT CONVERT(bigint, 99.9);
+GO
+~~START~~
+bigint
+99
+~~END~~
+
+SELECT CONVERT(int, -99.9);
+GO
+~~START~~
+int
+-99
+~~END~~
+
+SELECT CONVERT(int, '99');
+GO
+~~START~~
+int
+99
+~~END~~
+
+SELECT CONVERT(int, CAST(99.9 AS double precision));
+GO
+~~START~~
+int
+99
+~~END~~
+
+SELECT CONVERT(int, CAST(99.9 AS real));
+GO
+~~START~~
+int
+99
+~~END~~
+
+
+-- test TRY_CONVERT function
+-- Conversion between different types and varchar
+select TRY_CONVERT(varchar(30), CAST('2017-08-25' AS date), 102);
+GO
+~~START~~
+varchar
+2017.08.25
+~~END~~
+
+select TRY_CONVERT(varchar(30), CAST('13:01:59' AS time), 8);
+GO
+~~START~~
+varchar
+13:01:59
+~~END~~
+
+select TRY_CONVERT(varchar(30), CAST('13:01:59' AS time), 22);
+GO
+~~START~~
+varchar
+ 1:01:59 PM
+~~END~~
+
+select TRY_CONVERT(varchar(30), CAST('2017-08-25 13:01:59' AS datetime), 109);
+GO
+~~START~~
+varchar
+Aug 25 2017  1:01:59:000PM
+~~END~~
+
+select TRY_CONVERT(varchar(30), CAST('11234561231231.234' AS float), 0);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+select TRY_CONVERT(varchar(30), CAST('11234561231231.234'AS float), 1);
+GO
+~~START~~
+varchar
+ 1.1234561e+13                
+~~END~~
+
+select TRY_CONVERT(varchar(10), CAST(4936.56 AS MONEY), 0);
+GO
+~~START~~
+varchar
+ 4936.56  
+~~END~~
+
+
+-- Wrong conversions that return NULL
+select TRY_CONVERT(date, 123);
+GO
+~~START~~
+date
+<NULL>
+~~END~~
+
+select TRY_CONVERT(time, 123);
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+select TRY_CONVERT(datetime, 123);
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+select TRY_CONVERT(money, 'asdf');
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+-- test TRY_PARSE function
+-- Expect null return on error
+-- Conversion from string to date/time/datetime
+select TRY_PARSE('2017-08-25' AS date);
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+
+select TRY_PARSE('2017-08-25 13:01:59' AS datetime);
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+
+-- Wrong conversions that return NULL
+select TRY_PARSE('asdf' AS numeric(3,2));
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+select TRY_PARSE('123' AS datetime2);
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+select TRY_PARSE('asdf' AS MONEY);
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+
+-- test serverproperty() function
+-- invalid property name, should reutnr NULL
+select serverproperty(N'invalid property');
+GO
+~~START~~
+sql_variant
+
+~~END~~
+
+-- valid supported properties
+select serverproperty(N'collation');
+GO
+~~START~~
+sql_variant
+sql_latin1_general_cp1_ci_as
+~~END~~
+
+select serverproperty(N'IsSingleUser');
+GO
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+-- test ISDATE function
+-- test valid argument
+SELECT ISDATE('12/26/2016');
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT ISDATE('12-26-2016');
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT ISDATE('12.26.2016');
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT ISDATE('2016-12-26 23:30:05.523456');
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- test invalid argument
+SELECT ISDATE('02/30/2016');
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT ISDATE('12/32/2016');
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT ISDATE('1995-10-1a');
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT ISDATE(NULL);
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- test DATEFROMPARTS function
+-- test valid arguments
+select datefromparts(2020,12,31);
+GO
+~~START~~
+date
+2020-12-31
+~~END~~
+
+-- test invalid arguments, should fail
+select datefromparts(2020, 2, 30);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date field value out of range: 2020-02-30)~~
+
+select datefromparts(2020, 13, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date field value out of range: 2020-13-01)~~
+
+select datefromparts(-4, 3, 150);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date field value out of range: -3-03-150)~~
+
+select datefromparts(10, 55, 10.1);
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date field value out of range: 10-55-10)~~
+
+select datefromparts('2020', 55, 100.1);
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date field value out of range: 2020-55-100)~~
+
+
+-- test DATETIMEFROMPARTS function
+-- test valid arguments
+select datetimefromparts(2016, 12, 26, 23, 30, 5, 32);
+GO
+~~START~~
+datetime
+2016-12-26 23:30:05.033
+~~END~~
+
+select datetimefromparts(2016.0, 12, 26, 23, 30, 5, 32);
+GO
+~~START~~
+datetime
+2016-12-26 23:30:05.033
+~~END~~
+
+select datetimefromparts(2016.1, 12, 26, 23, 30, 5, 32);
+GO
+~~START~~
+datetime
+2016-12-26 23:30:05.033
+~~END~~
+
+select datetimefromparts(2016, 12, 26.99, 23, 30, 5, 32);
+GO
+~~START~~
+datetime
+2016-12-26 23:30:05.033
+~~END~~
+
+select datetimefromparts(2016, 12.90, 26, 23, 30, 5, 32);
+GO
+~~START~~
+datetime
+2016-12-26 23:30:05.033
+~~END~~
+
+-- test invalid arguments
+select datetimefromparts(2016, 2, 30, 23, 30, 5, 32);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date field value out of range: 2016-02-30)~~
+
+select datetimefromparts(2016, 12, 26, 23, 30, 5);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datetimefromparts function requires 7 arguments)~~
+
+select datetimefromparts(2016, 12, 26, 23, 30, 5, NULL);
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+
+-- test DATEPART function
+-- test all valid datepart arguments
+SELECT DATEPART(YEAR, CAST('2016-12-26 23:30:05.523456 -08:00' AS DATETIMEOFFSET));
+GO
+~~START~~
+int
+2016
+~~END~~
+
+select datepart(yyyy, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+2016
+~~END~~
+
+select datepart(yy, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+2016
+~~END~~
+
+select datepart(quarter, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+4
+~~END~~
+
+select datepart(qq, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+4
+~~END~~
+
+select datepart(qq, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+4
+~~END~~
+
+select datepart(q, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+4
+~~END~~
+
+select datepart(month, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+12
+~~END~~
+
+select datepart(mm, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+12
+~~END~~
+
+select datepart(m, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+12
+~~END~~
+
+select datepart(dayofyear, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+361
+~~END~~
+
+select datepart(dy, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+361
+~~END~~
+
+select datepart(day, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+26
+~~END~~
+
+select datepart(dd, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+26
+~~END~~
+
+select datepart(d,CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+26
+~~END~~
+
+select datepart(week, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+53
+~~END~~
+
+select datepart(wk, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+53
+~~END~~
+
+select datepart(ww, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+53
+~~END~~
+
+select datepart(weekday, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+2
+~~END~~
+
+select datepart(dw, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+2
+~~END~~
+
+select datepart(hour, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+15
+~~END~~
+
+select datepart(hh, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+15
+~~END~~
+
+select datepart(minute, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+30
+~~END~~
+
+select datepart(n, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+30
+~~END~~
+
+select datepart(second, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+5
+~~END~~
+
+select datepart(ss, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+5
+~~END~~
+
+select datepart(s, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+5
+~~END~~
+
+select datepart(millisecond, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+456
+~~END~~
+
+select datepart(ms, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+456
+~~END~~
+
+select datepart(microsecond, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+523456
+~~END~~
+
+select datepart(mcs,CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+523456
+~~END~~
+
+select datepart(nanosecond, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+523456000
+~~END~~
+
+select datepart(ns, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+523456000
+~~END~~
+
+select datepart(tzoffset, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+480
+~~END~~
+
+select datepart(tz, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+480
+~~END~~
+
+select datepart(iso_week, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+52
+~~END~~
+
+select datepart(isowk, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+52
+~~END~~
+
+select datepart(isoww, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+52
+~~END~~
+
+-- test different types of date/time arguments
+select datepart(month, CAST('2016-12-26 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+12
+~~END~~
+
+select datepart(quarter, CAST('2016-12-26 23:30:05.523456'AS datetime2));
+GO
+~~START~~
+int
+4
+~~END~~
+
+select datepart(hour, CAST('2016-12-26 23:30:05'AS smalldatetime));
+GO
+~~START~~
+int
+23
+~~END~~
+
+select datepart(dayofyear,CAST('2016-12-26'AS date));
+GO
+~~START~~
+int
+361
+~~END~~
+
+select datepart(second,CAST ('04:12:34.876543'AS time));
+GO
+~~START~~
+int
+34
+~~END~~
+
+-- test edge cases: try to get datepart that does not exist in the argument
+select datepart(year, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1900
+~~END~~
+
+select datepart(yyyy, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1900
+~~END~~
+
+select datepart(yy, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1900
+~~END~~
+
+select datepart(quarter, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(qq, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(q, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(month, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(mm, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(m, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(dayofyear, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(dy, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(y, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(day, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(dd, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(d, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(week, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(wk, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(ww, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(weekday, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+2
+~~END~~
+
+select datepart(dw, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+2
+~~END~~
+
+select datepart(tzoffset, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(tz, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(iso_week, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(isowk, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(isoww, cast('12:10:30.123' as time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select datepart(hour, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(hh, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(minute, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(n, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(second, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(ss, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(s, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(millisecond, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(ms, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(microsecond, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(mcs, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(nanosecond, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select datepart(ns, cast('2016-12-26' as date));
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- test invalid interval, expect error
+select datepart(invalid_interval, cast('2016-12-26 23:30:05.523456' as date));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'invalid_interval' is not a recognized datepart option)~~
+
+select datepart(invalidinterval, cast('12:10:30.123' as time));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'invalidinterval' is not a recognized datepart option)~~
+
+
+-- test DATENAME function
+SELECT DATENAME(year, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
+GO
+~~START~~
+text
+2016
+~~END~~
+
+select datename(dd, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
+GO
+~~START~~
+text
+26
+~~END~~
+
+select datename(weekday, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
+GO
+~~START~~
+text
+Monday
+~~END~~
+
+select datename(dw, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
+GO
+~~START~~
+text
+Monday
+~~END~~
+
+select datename(month, CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
+GO
+~~START~~
+text
+December
+~~END~~
+
+select datename(mm, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+text
+December
+~~END~~
+
+select datename(m, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+text
+December
+~~END~~
+
+select datename(isowk, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+text
+52
+~~END~~
+
+-- test invalid argument, expect error
+select datename(invalid_interval, cast('2016-12-26 23:30:05.523456' as date));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'invalid_interval' is not a recognized datepart option)~~
+
+
+-- test DATEFIRST option, together DATEPART function
+-- This shows the return value for the week and weekday datepart for '2007-04-21' for each SET DATEFIRST argument.
+-- January 1, 2007 falls on a Monday. April 21, 2007 falls on a Saturday.
+-- DATEFIRST week weekday
+-- 1	16	6
+-- 2	17	5
+-- 3	17	4
+-- 4	17	3
+-- 5	17	2
+-- 6	17	1
+-- 7	16	7
+select @@datefirst;
+GO
+~~START~~
+int
+7
+~~END~~
+
+set datefirst 1;
+select datepart(week, CAST('2007-04-21'AS date)), datepart(weekday, CAST('2007-04-21'AS date));
+GO
+~~START~~
+int#!#int
+16#!#6
+~~END~~
+
+
+set datefirst 2;
+select datepart(week, CAST('2007-04-21'AS date)), datepart(weekday, CAST('2007-04-21'AS date));
+GO
+~~START~~
+int#!#int
+17#!#5
+~~END~~
+
+set datefirst 3;
+select datepart(week, CAST('2007-04-21'AS date)), datepart(weekday, CAST('2007-04-21'AS date));
+GO
+~~START~~
+int#!#int
+17#!#4
+~~END~~
+
+set datefirst 4;
+select datepart(week, CAST('2007-04-21'AS date)), datepart(weekday, CAST('2007-04-21'AS date));
+GO
+~~START~~
+int#!#int
+17#!#3
+~~END~~
+
+set datefirst 5;
+select datepart(week, CAST('2007-04-21'AS date)), datepart(weekday, CAST('2007-04-21'AS date));
+GO
+~~START~~
+int#!#int
+17#!#2
+~~END~~
+
+set datefirst 6;
+select datepart(week, CAST('2007-04-21'AS date)), datepart(weekday, CAST('2007-04-21'AS date));
+GO
+~~START~~
+int#!#int
+17#!#1
+~~END~~
+
+set datefirst 7;
+select datepart(week, CAST('2007-04-21'AS date)), datepart(weekday, CAST('2007-04-21'AS date));
+GO
+~~START~~
+int#!#int
+16#!#7
+~~END~~
+
+-- test edge case: date within the week of Jan. 1st
+select datepart(week, CAST('2007-01-01'AS date)), datepart(weekday, CAST('2007-01-01'AS date));
+GO
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+select datepart(week, CAST('2007-01-02'AS date)), datepart(weekday, CAST('2007-01-02'AS date));
+GO
+~~START~~
+int#!#int
+1#!#3
+~~END~~
+
+select datepart(week, CAST('2007-01-03'AS date)), datepart(weekday, CAST('2007-01-03'AS date));
+GO
+~~START~~
+int#!#int
+1#!#4
+~~END~~
+
+select datepart(week, CAST('2007-01-04'AS date)), datepart(weekday, CAST('2007-01-04'AS date));
+GO
+~~START~~
+int#!#int
+1#!#5
+~~END~~
+
+select datepart(week, CAST('2007-01-05'AS date)), datepart(weekday, CAST('2007-01-05'AS date));
+GO
+~~START~~
+int#!#int
+1#!#6
+~~END~~
+
+select datepart(week, CAST('2007-01-06'AS date)), datepart(weekday, CAST('2007-01-06'AS date));
+GO
+~~START~~
+int#!#int
+1#!#7
+~~END~~
+
+-- test edge case: date just outside the week of Jan. 1st
+select datepart(week, CAST('2007-01-07'AS date)), datepart(weekday, CAST('2007-01-07'AS date));
+GO
+~~START~~
+int#!#int
+2#!#1
+~~END~~
+
+
+-- test DATEDIFF function
+select datediff(year, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-1
+~~END~~
+
+select datediff(quarter, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-4
+~~END~~
+
+select datediff(month, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-13
+~~END~~
+
+select datediff(dayofyear, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-367
+~~END~~
+
+select datediff(day, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-367
+~~END~~
+
+select datediff(week,CAST('2037-03-01 23:30:05.523'AS sys.datetime),CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-52
+~~END~~
+
+select datediff(hour, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-8808
+~~END~~
+
+select datediff(minute,CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-528480
+~~END~~
+
+select datediff(second, CAST('2037-03-01 23:30:05.523'AS sys.datetime), CAST('2036-02-28 23:30:05.523'AS sys.datetime));
+GO
+~~START~~
+int
+-31708800
+~~END~~
+
+select datediff(millisecond, CAST('2036-02-28 01:23:45.234'AS sys.datetime), CAST('2036-02-28 01:23:45.123'AS sys.datetime));
+GO
+~~START~~
+int
+-111
+~~END~~
+
+select datediff(microsecond, CAST('2036-02-28 01:23:45.234'AS sys.datetime), CAST('2036-02-28 01:23:45.123'AS sys.datetime));
+GO
+~~START~~
+int
+-111000
+~~END~~
+
+select datediff(nanosecond, CAST('2036-02-28 01:23:45.234'AS sys.datetime), CAST('2036-02-28 01:23:45.123'AS sys.datetime));
+GO
+~~START~~
+int
+-111000000
+~~END~~
+
+-- test different types of date/time arguments
+select datediff(minute, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset), CAST('2016-12-31 23:30:05.523456+8'AS datetimeoffset));
+GO
+~~START~~
+int
+7200
+~~END~~
+
+select datediff(quarter,CAST('2016-12-26 23:30:05.523456'AS datetime2), CAST('2018-08-31 23:30:05.523456'AS datetime2));
+GO
+~~START~~
+int
+6
+~~END~~
+
+select datediff(hour, CAST('2016-12-26 23:30:05'AS smalldatetime), CAST('2016-12-28 21:29:05'AS smalldatetime));
+GO
+~~START~~
+int
+46
+~~END~~
+
+select datediff(year, CAST('2037-03-01'AS date), CAST('2036-02-28'AS date));
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+-- test DATEADD function
+select dateadd(year, 2, '20060830');
+GO
+~~START~~
+datetime
+2008-08-30 00:00:00.0
+~~END~~
+
+select dateadd(quarter, 2, '20060830');
+GO
+~~START~~
+datetime
+2007-02-28 00:00:00.0
+~~END~~
+
+select dateadd(month, 1, '20060831');
+GO
+~~START~~
+datetime
+2006-09-30 00:00:00.0
+~~END~~
+
+select dateadd(dayofyear, 2, '20060830');
+GO
+~~START~~
+datetime
+2006-09-01 00:00:00.0
+~~END~~
+
+select dateadd(day, 2, '20060830');
+GO
+~~START~~
+datetime
+2006-09-01 00:00:00.0
+~~END~~
+
+select dateadd(week, 2, '20060830');
+GO
+~~START~~
+datetime
+2006-09-13 00:00:00.0
+~~END~~
+
+select dateadd(weekday, 2, '20060830');
+GO
+~~START~~
+datetime
+2006-09-01 00:00:00.0
+~~END~~
+
+select dateadd(hour, 2, '20060830');
+GO
+~~START~~
+datetime
+2006-08-30 02:00:00.0
+~~END~~
+
+select dateadd(minute, 2, '20060830');
+GO
+~~START~~
+datetime
+2006-08-30 00:02:00.0
+~~END~~
+
+select dateadd(second, 2, '20060830');
+GO
+~~START~~
+datetime
+2006-08-30 00:00:02.0
+~~END~~
+
+select dateadd(millisecond, 123, '20060830');
+GO
+~~START~~
+datetime
+2006-08-30 00:00:00.12
+~~END~~
+
+-- test different types of date/time arguments
+select dateadd(quarter, 3, '2037-03-01');
+GO
+~~START~~
+datetime
+2037-12-01 00:00:00.0
+~~END~~
+
+select dateadd(second, 56, '2016-12-26 23:30:05');
+GO
+~~START~~
+datetime
+2016-12-26 23:31:01.0
+~~END~~
+
+-- test negative argument
+select dateadd(year, -2, CAST('20060830'AS datetime));
+GO
+~~START~~
+datetime
+2004-08-30 00:00:00.0
+~~END~~
+
+select dateadd(month, -20, CAST('2016-12-26 23:30:05.523456' AS datetime2));
+GO
+~~START~~
+datetime2
+2015-04-26 23:30:05.5234560
+~~END~~
+
+select dateadd(hour, -2, CAST('01:12:34.876543' AS time));
+GO
+~~START~~
+time
+23:12:34.8765430
+~~END~~
+
+select dateadd(minute, -70, CAST('2016-12-26 00:30:05.523456+8' AS datetimeoffset));
+GO
+~~START~~
+datetimeoffset
+2016-12-25 23:20:05.5234560 +08:00
+~~END~~
+
+
+-- test using variables, instead of constants, for the second parameter
+create table dateadd_table(a int, b datetime);
+GO
+insert into dateadd_table values(1, CAST('2020-10-29' AS datetime));
+select * from dateadd_table;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#datetime
+1#!#2020-10-29 00:00:00.0
+~~END~~
+
+update dateadd_table set b = dateadd(dd, a, CAST('2020-10-30' AS datetime));
+GO
+~~ROW COUNT: 1~~
+
+select * from dateadd_table;
+GO
+~~START~~
+int#!#datetime
+1#!#2020-10-31 00:00:00.0
+~~END~~
+
+select * from dateadd_table;
+GO
+~~START~~
+int#!#datetime
+1#!#2020-10-31 00:00:00.0
+~~END~~
+
+
+-- test CHARINDEX function
+select CHARINDEX('hello', 'hello world');
+GO
+~~START~~
+int
+1
+~~END~~
+
+select CHARINDEX('hello  ', 'hello world');
+GO
+~~START~~
+int
+0
+~~END~~
+
+select CHARINDEX('hello world', 'hello');
+GO
+~~START~~
+int
+0
+~~END~~
+
+-- test NULL input
+select CHARINDEX(NULL, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select CHARINDEX(NULL, 'string');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select CHARINDEX('pattern', NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select CHARINDEX('pattern', 'string', NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+-- test start_location parameter
+select CHARINDEX('hello', 'hello world', -1);
+GO
+~~START~~
+int
+1
+~~END~~
+
+select CHARINDEX('hello', 'hello world', 0);
+GO
+~~START~~
+int
+1
+~~END~~
+
+select CHARINDEX('hello', 'hello world', 1);
+GO
+~~START~~
+int
+1
+~~END~~
+
+select CHARINDEX('hello', 'hello world', 2);
+GO
+~~START~~
+int
+0
+~~END~~
+
+select CHARINDEX('world', 'hello world', 6);
+GO
+~~START~~
+int
+7
+~~END~~
+
+select CHARINDEX('world', 'hello world', 7);
+GO
+~~START~~
+int
+7
+~~END~~
+
+select CHARINDEX('world', 'hello world', 8);
+GO
+~~START~~
+int
+0
+~~END~~
+
+select CHARINDEX('is', 'This is a string');
+GO
+~~START~~
+int
+3
+~~END~~
+
+select CHARINDEX('is', 'This is a string', 4);
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- test STUFF function
+select STUFF(N'abcdef', 2, 3, N'ijklmn');  
+GO
+~~START~~
+nvarchar
+aijklmnef
+~~END~~
+
+select STUFF(N' abcdef', 2, 3, N'ijklmn ');
+GO
+~~START~~
+nvarchar
+ ijklmn def
+~~END~~
+
+select STUFF(N'abcdef', 2, 3, N' ijklmn ');
+GO
+~~START~~
+nvarchar
+a ijklmn ef
+~~END~~
+
+select STUFF(N'abcdef', 2, 3, N'ijklmn  ');
+GO
+~~START~~
+nvarchar
+aijklmn  ef
+~~END~~
+
+-- test corner cases
+-- when start is negative or zero or longer than expr, return NULL
+select STUFF(N'abcdef', -1, 3, N'ijklmn');  
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+select STUFF(N'abcdef', 0, 3, N'ijklmn');  
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+select STUFF(N'abcdef', 7, 3, N'ijklmn');  
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+-- when length is negative, return NULL
+select STUFF(N'abcdef', 2, -3, N'ijklmn');  
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+-- when length is zero, just insert without deleting
+select STUFF(N'abcdef', 2, 0, N'ijklmn');  
+GO
+~~START~~
+nvarchar
+aijklmnbcdef
+~~END~~
+
+-- when length is longer than expr, delete up to the last character in expr
+select STUFF(N'abcdef', 2, 7, N'ijklmn');
+GO
+~~START~~
+nvarchar
+aijklmn
+~~END~~
+
+-- when replace_expr is NULL, just delete without inserting
+select STUFF(N'abcdef', 2, 3, NULL);
+GO
+~~START~~
+text
+aef
+~~END~~
+
+-- when argument are type unknown
+select STUFF('abcdef', 2, 3, 'ijklmn');
+GO
+~~START~~
+text
+aijklmnef
+~~END~~
+
+select STUFF('abcdef', 2, 3, N'ijklmn');
+GO
+~~START~~
+text
+aijklmnef
+~~END~~
+
+select STUFF(N'abcdef', 2, 3, 'ijklmn');
+GO
+~~START~~
+text
+aijklmnef
+~~END~~
+
+-- when argument are type text
+SELECT STUFF(CAST('abcdef' as text), 2, 3, CAST('ijklmn' as text));
+GO
+~~START~~
+text
+aijklmnef
+~~END~~
+
+SELECT STUFF(CAST('abcdef' as text), 2, 3, 'ijklmn');
+GO
+~~START~~
+text
+aijklmnef
+~~END~~
+
+SELECT STUFF('abcdef', 2, 3, CAST('ijklmn' as text));
+GO
+~~START~~
+text
+aijklmnef
+~~END~~
+
+-- when argument are type sys.varchar
+SELECT STUFF(CAST('abcdef' as sys.varchar), 2, 3, CAST('ijklmn' as sys.varchar));
+GO
+~~START~~
+varchar
+aijklmnef
+~~END~~
+
+SELECT STUFF('abcdef', 2, 3, CAST('ijklmn' as sys.varchar));
+GO
+~~START~~
+text
+aijklmnef
+~~END~~
+
+SELECT STUFF(CAST('abcdef' as sys.varchar), 2, 3, 'ijklmn');
+GO
+~~START~~
+text
+aijklmnef
+~~END~~
+
+
+-- test ROUND function
+-- test rounding to the left of decimal point
+select ROUND(748.58, -1);
+GO
+~~START~~
+numeric
+750
+~~END~~
+
+select ROUND(748.58, -2);
+GO
+~~START~~
+numeric
+700
+~~END~~
+
+select ROUND(748.58, -3);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+select ROUND(748.58, -4);
+GO
+~~START~~
+numeric
+0
+~~END~~
+
+select ROUND(-648.1234, -2);
+GO
+~~START~~
+numeric
+-600
+~~END~~
+
+select ROUND(-648.1234, -3);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+select ROUND(-1548.1234, -3);
+GO
+~~START~~
+numeric
+-2000
+~~END~~
+
+select ROUND(-1548.1234, -4);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+-- test NULL input
+select ROUND(NULL, -3);
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+select ROUND(748.58, NULL);
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+-- test rounding
+SELECT ROUND(123.9994, 3);
+GO
+~~START~~
+numeric
+123.999
+~~END~~
+
+SELECT ROUND(123.9995, 3);
+GO
+~~START~~
+numeric
+124.000
+~~END~~
+
+SELECT ROUND(123.4545, 2);
+GO
+~~START~~
+numeric
+123.45
+~~END~~
+
+SELECT ROUND(123.45, -2);
+GO
+~~START~~
+numeric
+100
+~~END~~
+
+-- test function parameter, i.e. truncation when not NULL or 0
+SELECT ROUND(150.75, 0);
+GO
+~~START~~
+numeric
+151
+~~END~~
+
+SELECT ROUND(150.75, 0, 0);
+GO
+~~START~~
+numeric
+151
+~~END~~
+
+SELECT ROUND(150.75, 0, NULL);
+GO
+~~START~~
+numeric
+151
+~~END~~
+
+SELECT ROUND(150.75, 0, 1);
+GO
+~~START~~
+numeric
+150
+~~END~~
+
+-- test negative numbers
+SELECT ROUND(-150.49, 0);
+GO
+~~START~~
+numeric
+-150
+~~END~~
+
+SELECT ROUND(-150.75, 0);
+GO
+~~START~~
+numeric
+-151
+~~END~~
+
+SELECT ROUND(-150.49, 0, 1);
+GO
+~~START~~
+numeric
+-150
+~~END~~
+
+SELECT ROUND(-150.75, 0, 1);
+GO
+~~START~~
+numeric
+-150
+~~END~~
+
+
+-- test SELECT ROUND(col, )
+create table t1 (col numeric(4,2));
+GO
+insert into t1 values (64.24);
+insert into t1 values (79.65);
+insert into t1 values (NULL);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select ROUND(col, 3) from t1;
+GO
+~~START~~
+numeric
+64.24000000
+79.65000000
+<NULL>
+~~END~~
+
+select ROUND(col, 2) from t1;
+GO
+~~START~~
+numeric
+64.24000000
+79.65000000
+<NULL>
+~~END~~
+
+select ROUND(col, 1) from t1;
+GO
+~~START~~
+numeric
+64.20000000
+79.70000000
+<NULL>
+~~END~~
+
+select ROUND(col, 0) from t1;
+GO
+~~START~~
+numeric
+64.00000000
+80.00000000
+<NULL>
+~~END~~
+
+select ROUND(col, -1) from t1;
+GO
+~~START~~
+numeric
+60.00000000
+80.00000000
+<NULL>
+~~END~~
+
+select ROUND(col, -2) from t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value overflows for numeric format)~~
+
+select ROUND(col, -3) from t1;
+GO
+~~START~~
+numeric
+0E-8
+0E-8
+<NULL>
+~~END~~
+
+select ROUND(col, 1, 1) from t1;
+GO
+~~START~~
+numeric
+64.20000000
+79.60000000
+<NULL>
+~~END~~
+
+drop table t1;
+GO
+
+-- test DAY function
+select DAY(CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
+GO
+~~START~~
+int
+26
+~~END~~
+
+select DAY(CAST('2016-12-26 23:30:05.523456' AS datetime2));
+GO
+~~START~~
+int
+26
+~~END~~
+
+select DAY(CAST('2016-12-26 23:30:05' AS smalldatetime));
+GO
+~~START~~
+int
+26
+~~END~~
+
+select DAY(CAST('04:12:34.876543' AS time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select DAY(CAST('2037-03-01' AS date));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select DAY(CAST('2037-03-01 23:30:05.523' AS sys.datetime));
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- test MONTH function
+SELECT MONTH(CAST('2016-12-26 23:30:05.523456-08:00' AS datetimeoffset));
+GO
+~~START~~
+int
+12
+~~END~~
+
+select MONTH(CAST('2016-12-26 23:30:05.523456' AS datetime2));
+GO
+~~START~~
+int
+12
+~~END~~
+
+select MONTH(CAST('2016-12-26 23:30:05'AS smalldatetime));
+GO
+~~START~~
+int
+12
+~~END~~
+
+select MONTH(CAST('04:12:34.876543' AS time));
+GO
+~~START~~
+int
+1
+~~END~~
+
+select MONTH(CAST('2037-03-01' AS date));
+GO
+~~START~~
+int
+3
+~~END~~
+
+select MONTH(CAST('2037-03-01 23:30:05.523' AS sys.datetime));
+GO
+~~START~~
+int
+3
+~~END~~
+
+-- test YEAR function
+select YEAR(CAST('2016-12-26 23:30:05.523456+8' AS datetimeoffset));
+GO
+~~START~~
+int
+2016
+~~END~~
+
+select YEAR(CAST('2016-12-26 23:30:05.523456' AS datetime2));
+GO
+~~START~~
+int
+2016
+~~END~~
+
+select YEAR(CAST('2016-12-26 23:30:05' AS smalldatetime));
+GO
+~~START~~
+int
+2016
+~~END~~
+
+select YEAR(CAST('04:12:34.876543' AS time));
+GO
+~~START~~
+int
+1900
+~~END~~
+
+select YEAR(CAST('2037-03-01' AS date));
+GO
+~~START~~
+int
+2037
+~~END~~
+
+select YEAR(CAST('2037-03-01 23:30:05.523' AS sys.datetime));
+GO
+~~START~~
+int
+2037
+~~END~~
+
+
+-- test SPACE function
+select SPACE(NULL);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+select SPACE(2);
+GO
+~~START~~
+varchar
+  
+~~END~~
+
+select LEN(SPACE(5));
+GO
+~~START~~
+int
+0
+~~END~~
+
+select DATALENGTH(SPACE(5));
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+-- test COUNT and COUNT_BIG aggregate function
+CREATE TABLE t2(a int, b int);
+GO
+INSERT INTO t2 VALUES(1, 100);
+INSERT INTO t2 VALUES(2, 200);
+INSERT INTO t2 VALUES(NULL, 300);
+INSERT INTO t2 VALUES(2, 400);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+CREATE TABLE t3(a varchar(255), b varchar(255),c int);
+GO
+INSERT INTO t3 VALUES('xyz', 'a',1);
+INSERT INTO t3 VALUES('xyz', 'b',1);
+INSERT INTO t3 VALUES('abc', 'a',2);
+INSERT INTO t3 VALUES('abc', 'b',2);
+INSERT INTO t3 VALUES('efg', 'a',3);
+INSERT INTO t3 VALUES('efg', 'b',3);
+INSERT INTO t3 VALUES(NULL, NULL, 1);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Aggregation Function Syntax
+-- COUNT[_BIG] ( { [ [ ALL | DISTINCT ] expression ] | * } )
+-- should return all rows - 4
+SELECT COUNT(*) from t2;
+GO
+~~START~~
+int
+4
+~~END~~
+
+SELECT COUNT_BIG(*) from t2;
+GO
+~~START~~
+bigint
+4
+~~END~~
+
+-- should return all rows where a is not NULL - 3
+SELECT COUNT(a) from t2;
+GO
+~~START~~
+int
+3
+~~END~~
+
+SELECT COUNT_BIG(a) from t2;
+GO
+~~START~~
+bigint
+3
+~~END~~
+
+-- should return all rows where a is not NULL - 3
+SELECT COUNT(ALL a) from t2;
+GO
+~~START~~
+int
+3
+~~END~~
+
+SELECT COUNT_BIG(ALL a) from t2;
+GO
+~~START~~
+bigint
+3
+~~END~~
+
+-- should return all rows where a is distinct - 2
+SELECT COUNT(DISTINCT a) from t2;
+GO
+~~START~~
+int
+2
+~~END~~
+
+SELECT COUNT_BIG(DISTINCT a) from t2;
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+
+-- Analytic Function Syntax
+-- COUNT[_BIG] ( [ ALL ]  { expression | * } ) OVER ( [ <partition_by_clause> ] )
+SELECT COUNT(*) from t3;
+GO
+~~START~~
+int
+7
+~~END~~
+
+SELECT a, b, COUNT(*) OVER () from t3;
+GO
+~~START~~
+varchar#!#varchar#!#int
+xyz#!#a#!#7
+xyz#!#b#!#7
+abc#!#a#!#7
+abc#!#b#!#7
+efg#!#a#!#7
+efg#!#b#!#7
+<NULL>#!#<NULL>#!#7
+~~END~~
+
+-- The result for order by is different in sql server because we have
+-- an ordering issue for null type (JIRA: BABEL-788)
+SELECT a, b, COUNT(*) OVER (ORDER BY a) from t3;
+GO
+~~START~~
+varchar#!#varchar#!#int
+<NULL>#!#<NULL>#!#1
+abc#!#a#!#3
+abc#!#b#!#3
+efg#!#a#!#5
+efg#!#b#!#5
+xyz#!#a#!#7
+xyz#!#b#!#7
+~~END~~
+
+SELECT a, b, COUNT(*) OVER (ORDER BY a DESC) from t3;
+GO
+~~START~~
+varchar#!#varchar#!#int
+xyz#!#b#!#2
+xyz#!#a#!#2
+efg#!#a#!#4
+efg#!#b#!#4
+abc#!#b#!#6
+abc#!#a#!#6
+<NULL>#!#<NULL>#!#7
+~~END~~
+
+SELECT a, b, COUNT(*) OVER(PARTITION BY a) from t3;
+GO
+~~START~~
+varchar#!#varchar#!#int
+abc#!#b#!#2
+abc#!#a#!#2
+efg#!#a#!#2
+efg#!#b#!#2
+xyz#!#a#!#2
+xyz#!#b#!#2
+<NULL>#!#<NULL>#!#1
+~~END~~
+
+SELECT a, b, COUNT(*) OVER(PARTITION BY a ORDER BY b) from t3;
+GO
+~~START~~
+varchar#!#varchar#!#int
+abc#!#a#!#1
+abc#!#b#!#2
+efg#!#a#!#1
+efg#!#b#!#2
+xyz#!#a#!#1
+xyz#!#b#!#2
+<NULL>#!#<NULL>#!#1
+~~END~~
+
+SELECT a, b, COUNT(*) OVER(PARTITION BY a ORDER BY b ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING)  from t3;
+GO
+~~START~~
+varchar#!#varchar#!#int
+abc#!#a#!#2
+abc#!#b#!#1
+efg#!#a#!#2
+efg#!#b#!#1
+xyz#!#a#!#2
+xyz#!#b#!#1
+<NULL>#!#<NULL>#!#1
+~~END~~
+
+SELECT COUNT_BIG(*) from t3;
+GO
+~~START~~
+bigint
+7
+~~END~~
+
+SELECT a, b, COUNT_BIG(*) OVER () from t3;
+GO
+~~START~~
+varchar#!#varchar#!#bigint
+xyz#!#a#!#7
+xyz#!#b#!#7
+abc#!#a#!#7
+abc#!#b#!#7
+efg#!#a#!#7
+efg#!#b#!#7
+<NULL>#!#<NULL>#!#7
+~~END~~
+
+SELECT a, b, COUNT_BIG(*) OVER (ORDER BY a) from t3;
+GO
+~~START~~
+varchar#!#varchar#!#bigint
+<NULL>#!#<NULL>#!#1
+abc#!#a#!#3
+abc#!#b#!#3
+efg#!#a#!#5
+efg#!#b#!#5
+xyz#!#a#!#7
+xyz#!#b#!#7
+~~END~~
+
+SELECT a, b, COUNT_BIG(*) OVER (ORDER BY a DESC) from t3;
+GO
+~~START~~
+varchar#!#varchar#!#bigint
+xyz#!#b#!#2
+xyz#!#a#!#2
+efg#!#a#!#4
+efg#!#b#!#4
+abc#!#b#!#6
+abc#!#a#!#6
+<NULL>#!#<NULL>#!#7
+~~END~~
+
+SELECT a, b, COUNT_BIG(*) OVER(PARTITION BY a) from t3;
+GO
+~~START~~
+varchar#!#varchar#!#bigint
+abc#!#b#!#2
+abc#!#a#!#2
+efg#!#a#!#2
+efg#!#b#!#2
+xyz#!#a#!#2
+xyz#!#b#!#2
+<NULL>#!#<NULL>#!#1
+~~END~~
+
+SELECT a, b, COUNT_BIG(*) OVER(PARTITION BY a ORDER BY b) from t3;
+GO
+~~START~~
+varchar#!#varchar#!#bigint
+abc#!#a#!#1
+abc#!#b#!#2
+efg#!#a#!#1
+efg#!#b#!#2
+xyz#!#a#!#1
+xyz#!#b#!#2
+<NULL>#!#<NULL>#!#1
+~~END~~
+
+SELECT a, b, COUNT_BIG(*) OVER(PARTITION BY a ORDER BY b ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING)  from t3;
+GO
+~~START~~
+varchar#!#varchar#!#bigint
+abc#!#a#!#2
+abc#!#b#!#1
+efg#!#a#!#2
+efg#!#b#!#1
+xyz#!#a#!#2
+xyz#!#b#!#1
+<NULL>#!#<NULL>#!#1
+~~END~~
+
+
+-- COUNT(*) takes no parameters and does not support the use of DISTINC, expect error
+DROP TABLE t2;
+GO
+DROP TABLE t3;
+GO
+
+-- clean up
+drop table dateadd_table;
+GO
+
+-- test inline table-valued functions
+-- simple case
+create function itvf1 (@number int) returns table as return (select 1 as a, 2 as b);
+GO
+select * from itvf1(5);
+GO
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+-- should fail because column names are not specified
+create function itvf2 (@number int) returns table as return (select 1, 2);
+GO
+~~ERROR (Code: 4514)~~
+
+~~ERROR (Message: CREATE FUNCTION failed because a column name is not specified for column 1)~~
+
+
+-- select from a table
+create table example_table(name text, age int);
+GO
+insert into example_table values('hello', 3);
+GO
+~~ROW COUNT: 1~~
+
+-- should have 'a' and 'b' as result column names
+create function itvf3 (@number int) returns table as return (select name as a, age as b from example_table);
+GO
+select * from itvf3(5);
+GO
+~~START~~
+text#!#int
+hello#!#3
+~~END~~
+
+-- test returning multiple rows
+insert into example_table values('hello1', 4);
+insert into example_table values('hello2', 5);
+insert into example_table values('hello3', 6);
+select * from itvf3(5);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text#!#int
+hello#!#3
+hello1#!#4
+hello2#!#5
+hello3#!#6
+~~END~~
+
+
+
+-- complex queries with use of function parameter
+create table id_name(id int, name text);
+GO
+insert into id_name values(1001, 'adam');
+insert into id_name values(1002, 'bob');
+insert into id_name values(1003, 'chaz');
+insert into id_name values(1004, 'dave');
+insert into id_name values(1005, 'ed');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+create table id_score(id int, score int);
+GO
+insert into id_score values(1001, 90);
+insert into id_score values(1001, 70);
+insert into id_score values(1002, 90);
+insert into id_score values(1002, 80);
+insert into id_score values(1003, 80);
+insert into id_score values(1003, 70);
+insert into id_score values(1004, 80);
+insert into id_score values(1004, 60);
+insert into id_score values(1005, 80);
+insert into id_score values(1005, 100);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+
+-- test inline table-valued function with table-valued parameter
+create type tableType as table(
+	a text not null,
+	b int primary key,
+	c int);
+GO
+
+create function itvf8 (@number int, @tableVar tableType READONLY) returns table as return (
+select n.id, n.name as first_name, sum(s.score) as total_score
+from id_name as n
+join id_score as s
+on n.id = s.id
+where s.id <= @number and s.id in (select c from @tableVar)
+group by n.id, n.name
+order by n.id
+);
+GO
+
+create procedure itvf8_proc as
+begin
+	declare @tableVariable tableType
+	insert into @tableVariable values('hello1', 1, 1001)
+	insert into @tableVariable values('hello2', 2, 1002)
+	select * from itvf8(1004, @tableVariable)
+end;
+GO
+
+EXEC itvf8_proc;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#text#!#int
+1001#!#adam#!#160
+1002#!#bob#!#170
+~~END~~
+
+
+-- test using parameter in projection list
+create function itvf9(@number int) returns table as return (
+select @number as a from id_name
+);
+GO
+
+select * from itvf9(1);
+GO
+~~START~~
+int
+1
+1
+1
+1
+1
+~~END~~
+
+
+-- clean up
+drop function itvf1;
+GO
+drop table example_table;
+GO
+drop function itvf3;
+GO
+drop table id_name;
+GO
+drop table id_score;
+GO
+drop procedure itvf8_proc;
+GO
+drop function itvf8;
+GO
+drop type tableType;
+GO
+drop function itvf9;
+GO
+
+
+-- test RETURN not followed by a semicolon
+create function test_return1(@stringToSplit VARCHAR(MAX))
+RETURNS @returnList TABLE([Name] [nvarchar] (500))
+AS
+BEGIN
+	RETURN
+END
+GO
+select * from test_return1('test');
+GO
+~~START~~
+nvarchar
+~~END~~
+
+drop function test_return1;
+GO
+create function test_return2(@stringToSplit VARCHAR(MAX))
+RETURNS @returnList TABLE([Name] [nvarchar] (500))
+AS
+BEGIN
+	RETURN;
+END
+GO
+select * from test_return2('test');
+GO
+~~START~~
+nvarchar
+~~END~~
+
+drop function test_return2;
+GO
+create function test_return3(@a int)
+RETURNS @returnList TABLE([Name] [nvarchar] (500))
+AS
+BEGIN
+	IF @a = 1
+		RETURN
+	SELECT @a = 2
+	INSERT into @returnList values('abc')
+	RETURN
+END
+GO
+select * from test_return3(1);
+GO
+~~START~~
+nvarchar
+~~END~~
+
+select * from test_return3(2);
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+drop function test_return3;
+GO
+create function test_return4(@a int)
+RETURNS @returnList TABLE([Name] [nvarchar] (500))
+AS
+BEGIN
+	IF @a = 1
+		RETURN
+	ELSE
+		SELECT @a = 2
+		INSERT into @returnList values('abc')
+		RETURN
+END
+GO
+select * from test_return4(1);
+GO
+~~START~~
+nvarchar
+~~END~~
+
+select * from test_return4(2);
+GO
+~~START~~
+nvarchar
+abc
+~~END~~
+
+drop function test_return4;
+GO
