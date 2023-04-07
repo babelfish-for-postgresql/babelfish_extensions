@@ -11,6 +11,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
@@ -69,6 +70,12 @@ Oid			bbf_authid_user_ext_idx_oid;
  *****************************************/
 Oid			bbf_view_def_oid;
 Oid			bbf_view_def_idx_oid;
+
+/*****************************************
+ *			LINKED_SERVERS_DEF
+ *****************************************/
+Oid			bbf_servers_def_oid;
+Oid			bbf_servers_def_idx_oid;
 
 /*****************************************
  *			FUNCTION_EXT
@@ -171,6 +178,10 @@ init_catalog(PG_FUNCTION_ARGS)
 	/* bbf_view_def */
 	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
 	bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME, sys_schema_oid);
+
+	/* bbf_servers_def */
+	bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME, sys_schema_oid);
+	bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME, sys_schema_oid);
 
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
@@ -1160,6 +1171,78 @@ clean_up_bbf_view_def(int16 dbid)
 
 	systable_endscan(scan);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
+}
+
+/*****************************************
+ *			LINKED_SERVERS_DEF
+ *****************************************/
+
+Oid
+get_bbf_servers_def_oid()
+{
+	if (!OidIsValid(bbf_servers_def_oid))
+		bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME,
+											 get_namespace_oid("sys", false));
+
+	return bbf_servers_def_oid;
+}
+
+int 
+get_server_id_from_server_name(char *servername)
+{
+	HeapTuple 	reltup;
+	Oid 		srvId;
+	Form_pg_foreign_server srvForm;
+	int 		server_id;
+
+	reltup = SearchSysCacheCopy1(FOREIGNSERVERNAME,
+						 CStringGetDatum(servername));
+	
+	if (!HeapTupleIsValid(reltup))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("server \"%s\" does not exist", servername)));
+
+	srvForm = (Form_pg_foreign_server) GETSTRUCT(reltup);
+	srvId = srvForm->oid;
+	server_id = srvId;
+
+	heap_freetuple(reltup);
+
+	return server_id;
+}
+
+int 
+get_query_timeout_from_server_name(char *servername)
+{
+	Relation	bbf_servers_def_rel;
+	HeapTuple	tuple;
+	ScanKeyData		key;
+	TableScanDesc		scan;
+	int query_timeout;
+	int server_id;
+
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
+										 RowExclusiveLock);
+
+	server_id = get_server_id_from_server_name(servername);
+	ScanKeyInit(&key,
+				Anum_bbf_servers_def_server_id,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(server_id));
+
+	scan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple))
+		{
+			Form_bbf_servers_def serverform = (Form_bbf_servers_def) GETSTRUCT(tuple);
+			query_timeout = serverform->query_timeout;
+		}
+
+	table_endscan(scan);
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
+	return query_timeout;
 }
 
 /*****************************************

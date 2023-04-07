@@ -2940,7 +2940,7 @@ SELECT
                   end, ',')
           from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
   CAST(0 as int) AS connect_timeout,
-  CAST(0 as int) AS query_timeout,
+  CAST(s.query_timeout as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,
   CAST(0 as sys.bit) AS is_remote_login_enabled,
   CAST(0 as sys.bit) AS is_rpc_out_enabled,
@@ -2959,6 +2959,7 @@ SELECT
   CAST(0 as sys.bit) AS is_rda_server
 FROM pg_foreign_server AS f
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
+LEFT JOIN sys.babelfish_server_options AS s on f.oid = s.server_id
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
 

@@ -11,9 +11,13 @@
 #include "access/tupdesc.h"
 #include "access/printtup.h"
 #include "access/relation.h"
+#include "access/table.h"
 #include "access/xact.h"
+#include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_foreign_server.h"
+#include "catalog/indexing.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "common/string.h"
@@ -29,6 +33,7 @@
 #include "utils/guc.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/fmgroids.h"
 #include "pltsql_instr.h"
 #include "parser/parser.h"
 #include "parser/parse_relation.h"
@@ -63,6 +68,7 @@ PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_dropserver_internal);
+PG_FUNCTION_INFO_V1(sp_serveroption_internal);
 PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 
@@ -77,6 +83,8 @@ static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype);
 static void exec_utility_cmd_helper(char *query_str);
+static void update_bbf_server_options(char *servername, int query_timeout, bool isInsert);
+static void clean_up_bbf_server_option(char *servername);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -2246,6 +2254,111 @@ exec_utility_cmd_helper(char *query_str)
 	CommandCounterIncrement();
 }
 
+// static int 
+// get_server_id_from_server_name(char *servername)
+// {
+// 	HeapTuple 	reltup;
+// 	Oid 		srvId;
+// 	Form_pg_foreign_server srvForm;
+// 	int 		server_id;
+
+// 	reltup = SearchSysCacheCopy1(FOREIGNSERVERNAME,
+// 						 CStringGetDatum(servername));
+	
+// 	if (!HeapTupleIsValid(reltup))
+// 		ereport(ERROR,
+// 			(errcode(ERRCODE_UNDEFINED_OBJECT),
+// 			 errmsg("server \"%s\" does not exist", servername)));
+
+// 	srvForm = (Form_pg_foreign_server) GETSTRUCT(reltup);
+// 	srvId = srvForm->oid;
+// 	server_id = srvId;
+
+// 	heap_freetuple(reltup);
+
+// 	return server_id;
+// }
+
+static void 
+update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
+{
+	Relation	bbf_servers_def_rel;
+	TupleDesc	bbf_servers_def_rel_dsc;
+	Datum		new_record[BBF_SERVERS_DEF_NUM_COLS];
+	bool		new_record_nulls[BBF_SERVERS_DEF_NUM_COLS];
+	bool		new_record_repl[BBF_SERVERS_DEF_NUM_COLS];
+	ScanKeyData		key;
+	HeapTuple	tuple, old_tuple;
+	TableScanDesc		tblscan;
+	int32		server_id;
+
+	// fetch the server_id from servername from pg_foreign_server
+	server_id = get_server_id_from_server_name(servername);
+
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
+									 RowExclusiveLock);
+	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	MemSet(new_record_repl, false, sizeof(new_record_repl));
+
+	new_record[0] = Int32GetDatum(server_id);
+	new_record[1] = Int32GetDatum(query_timeout);
+
+	if(isInsert)
+	{
+		tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
+								new_record, new_record_nulls);
+		CatalogTupleInsert(bbf_servers_def_rel, tuple);
+	}
+	else
+	{
+		/* Search and obtain the tuple based on the server_id */	
+		ScanKeyInit(&key,
+				Anum_bbf_servers_def_server_id,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(server_id));
+		tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
+		new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
+		tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
+								new_record, new_record_nulls, new_record_repl);
+			
+		CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
+	}
+
+	heap_freetuple(tuple);
+
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
+}
+
+static void 
+clean_up_bbf_server_option(char *servername)
+{
+	Relation		bbf_servers_def_rel;
+	HeapTuple		scantup;
+	ScanKeyData		key;
+	int32		server_id;
+	TableScanDesc	tblscan;
+
+	server_id = get_server_id_from_server_name(servername);
+
+	/* Fetch the relation */
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
+
+	/* Search and drop the definition */
+	ScanKeyInit(&key,
+				Anum_bbf_servers_def_server_id,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(server_id));
+
+	tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+	scantup = heap_getnext(tblscan, ForwardScanDirection);
+	CatalogTupleDelete(bbf_servers_def_rel, &scantup->t_self);
+
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
+}
+
 Datum
 sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 {
@@ -2340,6 +2453,8 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	}
 
 	exec_utility_cmd_helper(query.data);
+
+	update_bbf_server_options(linked_server, 0, true);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
@@ -2536,6 +2651,8 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	 */
 	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
 	{
+		// Remove the server entry from sys.babelfish_server_options catalog
+		clean_up_bbf_server_option(linked_srv);
 		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
 
 		exec_utility_cmd_helper(query.data);
@@ -2562,6 +2679,39 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FDW_ERROR),
 				 errmsg("Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.")));
 	}
+
+	return (Datum) 0;
+}
+
+Datum
+sp_serveroption_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
+	char *optionname = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
+	char *optionvalue = PG_ARGISNULL(2) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(2)));
+
+	if(!pltsql_enable_linked_servers)
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("'sp_serveroption' is not currently supported in Babelfish")));
+
+	if(optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
+	{
+		update_bbf_server_options(servername, atoi(optionvalue), false);
+	}
+	else
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Invalid option")));
+
+	if(servername)
+		pfree(servername);
+
+	if(optionname)
+		pfree(optionname);
+
+	if(optionvalue)
+		pfree(optionvalue);
 
 	return (Datum) 0;
 }
