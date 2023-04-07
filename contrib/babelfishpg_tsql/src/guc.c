@@ -42,8 +42,8 @@ int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
 int pltsql_lock_timeout = -1;
-bool pltsql_enable_linked_servers = false;
-bool pltsql_allow_windows_login = false;
+bool pltsql_enable_linked_servers = true;
+bool pltsql_allow_windows_login = true;
 
 bool	pltsql_xact_abort = false;
 bool	pltsql_implicit_transactions = false;
@@ -1109,7 +1109,7 @@ define_custom_variables(void)
 				 gettext_noop("Enables linked servers"),
 				 NULL,
 				 &pltsql_enable_linked_servers,
-				 false,
+				 true,
 				 PGC_SUSET,
 				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);

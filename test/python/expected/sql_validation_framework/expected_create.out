@@ -144,7 +144,6 @@ Could not find upgrade tests for function sys.openjson_array
 Could not find upgrade tests for function sys.openjson_object
 Could not find upgrade tests for function sys.openjson_simple
 Could not find upgrade tests for function sys.openjson_with
-Could not find upgrade tests for function sys.openquery
 Could not find upgrade tests for function sys.options
 Could not find upgrade tests for function sys.parsename
 Could not find upgrade tests for function sys.pgerror
@@ -197,17 +196,11 @@ Could not find upgrade tests for procedure sys.babel_drop_all_dbs
 Could not find upgrade tests for procedure sys.babel_drop_all_logins
 Could not find upgrade tests for procedure sys.babel_initialize_logins
 Could not find upgrade tests for procedure sys.printarg
-Could not find upgrade tests for procedure sys.sp_addlinkedserver
-Could not find upgrade tests for procedure sys.sp_addlinkedsrvlogin
 Could not find upgrade tests for procedure sys.sp_column_privileges
 Could not find upgrade tests for procedure sys.sp_cursor_list
 Could not find upgrade tests for procedure sys.sp_databases
 Could not find upgrade tests for procedure sys.sp_describe_cursor
 Could not find upgrade tests for procedure sys.sp_describe_undeclared_parameters
-Could not find upgrade tests for procedure sys.sp_droplinkedsrvlogin
-Could not find upgrade tests for procedure sys.sp_dropserver
-Could not find upgrade tests for procedure sys.sp_helplinkedsrvlogin
-Could not find upgrade tests for procedure sys.sp_linkedservers
 Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
 Could not find upgrade tests for procedure sys.sp_unprepare
@@ -224,9 +217,7 @@ Could not find upgrade tests for table sys.versions
 Could not find upgrade tests for type sys.bpchar
 Could not find upgrade tests for view babelfish_has_perms_by_name_permissions
 Could not find upgrade tests for view sys.all_sql_modules_internal
-Could not find upgrade tests for view sys.linked_logins
 Could not find upgrade tests for view sys.pg_namespace_ext
-Could not find upgrade tests for view sys.servers
 Could not find upgrade tests for view sys.shipped_objects_not_in_sys
 Could not find upgrade tests for view sys.sp_column_privileges_view
 Could not find upgrade tests for view sys.sp_columns_100_view
