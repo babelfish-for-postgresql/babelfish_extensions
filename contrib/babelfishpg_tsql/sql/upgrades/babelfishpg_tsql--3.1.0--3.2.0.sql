@@ -118,7 +118,7 @@ RETURNS OID
 AS 'babelfishpg_tsql', 'user_id_noarg'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-ALTER FUNCTION sys.user_id(IN user_name TEXT) RENAME TO babelfish_sys_user_id_deprecated_in_3_2_0;
+ALTER FUNCTION sys.user_id(TEXT) RENAME TO user_id_deprecated_in_3_2_0;
 
 CREATE OR REPLACE FUNCTION sys.user_id(IN user_name sys.sysname)
 RETURNS OID
@@ -130,7 +130,7 @@ RETURNS OID
 AS 'babelfishpg_tsql', 'user_id_noarg'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_sys_user_id_deprecated_in_3_2_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'user_id_deprecated_in_3_2_0');s
 
 ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_in_3_2_0;
 CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_in_3_2_0(
