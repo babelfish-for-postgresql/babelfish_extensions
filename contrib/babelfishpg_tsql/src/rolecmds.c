@@ -749,9 +749,9 @@ user_id(PG_FUNCTION_ARGS)
     authform = (Form_pg_authid) GETSTRUCT(auth_tuple);
     ret = authform->oid;
 
-		ReleaseSysCache(auth_tuple);
+	ReleaseSysCache(auth_tuple);
 
-		PG_RETURN_OID(ret);
+	PG_RETURN_OID(ret);
 }
 
 PG_FUNCTION_INFO_V1(user_id_noarg);
