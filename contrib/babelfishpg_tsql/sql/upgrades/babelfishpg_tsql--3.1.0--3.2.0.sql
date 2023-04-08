@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '3.1.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '3.2.0'" to load this file. \quit
 
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
@@ -443,8 +443,24 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprec
 
 CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
 RETURNS OID
-AS 'babelfishpg_tsql', 'user_id'
-LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS
+$$
+BEGIN
+    -- If user_name is NULL, return the result of USER_ID()
+    IF user_name IS NULL OR user_name = 'NULL' THEN
+        RETURN NULL;
+    END IF;
+    -- Trim the trailing spaces from user_name
+    user_name := rtrim(user_name);
+    -- If user_name is an empty string or contains only spaces, return NULL
+    IF user_name = '' THEN
+        RETURN NULL;
+    END IF;
+    -- Return the principal_id of the specified user_name
+    RETURN (SELECT principal_id FROM sys.database_principals WHERE name = user_name);
+END;
+$$
+LANGUAGE PLPGSQL IMMUTABLE PARALLEL SAFE;
 
 /*
  * JSON MODIFY
@@ -730,6 +746,178 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
     WHERE
         c.is_sparse = 0 AND p.attnum >= 0;
+
+CREATE OR REPLACE VIEW sys.sp_databases_view AS
+	SELECT CAST(database_name AS sys.SYSNAME),
+	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
+	CASE WHEN (sum(table_size)/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
+		ELSE CAST((sum(table_size)/1024.0) AS int) END as database_size,
+	CAST(NULL AS sys.VARCHAR(254)) as remarks
+	FROM (
+		SELECT pg_catalog.pg_namespace.oid as schema_oid,
+		pg_catalog.pg_namespace.nspname as schema_name,
+		INT.name AS database_name,
+		coalesce(pg_relation_size(pg_catalog.pg_class.oid), 0) as table_size
+		FROM
+		sys.babelfish_namespace_ext EXT
+		JOIN sys.babelfish_sysdatabases INT ON EXT.dbid = INT.dbid
+		JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.nspname = EXT.nspname
+		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid where pg_catalog.pg_class.relkind = 'r'
+	) t
+	GROUP BY database_name
+	ORDER BY database_name;
+
+ALTER FUNCTION sys.datetime2fromparts(NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) RENAME TO datetime2fromparts_deprecated_3_2;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_deprecated_3_2');
+
+CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
+                                                                IN p_month NUMERIC,
+                                                                IN p_day NUMERIC,
+                                                                IN p_hour NUMERIC,
+                                                                IN p_minute NUMERIC,
+                                                                IN p_seconds NUMERIC,
+                                                                IN p_fractions NUMERIC,
+                                                                IN p_precision NUMERIC)
+RETURNS sys.DATETIME2
+AS
+$BODY$
+DECLARE
+   v_fractions VARCHAR;
+   v_precision SMALLINT;
+   v_err_message VARCHAR;
+   v_calc_seconds NUMERIC;
+   v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+   v_string pg_catalog.text;
+BEGIN
+   v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+   v_precision := p_precision::SMALLINT;
+
+   IF (scale(p_precision) > 0) THEN
+      RAISE most_specific_type_mismatch;
+   ELSIF ((p_year::SMALLINT NOT BETWEEN 1 AND 9999) OR
+       (p_month::SMALLINT NOT BETWEEN 1 AND 12) OR
+       (p_day::SMALLINT NOT BETWEEN 1 AND 31) OR
+       (p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
+       (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
+       (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+       (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
+       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > v_precision))
+   THEN
+      RAISE invalid_datetime_format;
+   ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+      RAISE invalid_parameter_value;
+   END IF;
+
+   v_calc_seconds := pg_catalog.format('%s.%s',
+                            floor(p_seconds)::SMALLINT,
+                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
+
+   v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
+                         floor(p_month)::SMALLINT,
+                         floor(p_day)::SMALLINT,
+                         floor(p_hour)::SMALLINT,
+                         floor(p_minute)::SMALLINT,
+                         v_calc_seconds);
+
+   v_string := v_resdatetime::pg_catalog.text;
+
+   RETURN CAST(v_string AS sys.DATETIME2);
+EXCEPTION
+   WHEN most_specific_type_mismatch THEN
+      RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
+                  DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                  HINT := 'Change "precision" parameter to the proper value and try again.';
+
+   WHEN invalid_parameter_value THEN
+      RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+                  DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                  HINT := 'Change "precision" parameter to the proper value and try again.';
+
+   WHEN invalid_datetime_format THEN
+      RAISE USING MESSAGE := 'Cannot construct data type DATETIME2, some of the arguments have values which are not valid.',
+                  DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                  HINT := 'Check each input argument belongs to the valid range and try again.';
+
+   WHEN numeric_value_out_of_range THEN
+      GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+      v_err_message := upper(split_part(v_err_message, ' ', 1));
+
+      RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                  DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                  HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                 v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
+                                                           IN p_minute NUMERIC,
+                                                           IN p_seconds NUMERIC,
+                                                           IN p_fractions NUMERIC,
+                                                           IN p_precision NUMERIC)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_fractions VARCHAR;
+    v_precision SMALLINT;
+    v_err_message VARCHAR;
+    v_calc_seconds NUMERIC;
+BEGIN
+    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+    v_precision := p_precision::SMALLINT;
+
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF ((p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
+           (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
+           (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+           (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
+           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > v_precision))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+
+    v_calc_seconds := pg_catalog.format('%s.%s',
+                             floor(p_seconds)::SMALLINT,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, v_precision))::NUMERIC;
+
+    RETURN make_time(floor(p_hour)::SMALLINT,
+                     floor(p_minute)::SMALLINT,
+                     v_calc_seconds);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type time, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := upper(split_part(v_err_message, ' ', 1));
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

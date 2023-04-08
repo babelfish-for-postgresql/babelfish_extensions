@@ -370,6 +370,7 @@ app_name
 atn2
 str
 case_insensitive_collation
+BABEL-3215
 # linked_servers
 ISC-sequences
 jira-BABEL-3504-upgrade
@@ -410,3 +411,6 @@ rowcount
 BABEL-1625
 BABEL-3474
 dateadd_internal_df
+datetime2fromparts
+timefromparts
+orderby-before-15_3
