@@ -1,0 +1,11 @@
+drop view orderby_vu_view_1;
+GO
+
+drop view orderby_vu_view_2;
+GO
+
+drop view orderby_vu_view_3;
+GO
+
+drop table t1;
+GO
