@@ -105,6 +105,7 @@ static inline bool is_identifier_char(char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
+static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
 
 /*****************************************
  * 			Commands Hooks
@@ -163,6 +164,10 @@ static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
 static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
+static push_namespace_stack_hook_type prev_push_namespace_stack_hook = NULL;
+static pre_transform_sort_clause_hook_type prev_pre_transform_sort_clause_hook = NULL;
+static post_transform_sort_clause_hook_type prev_post_transform_sort_clause_hook = NULL;
+static post_transform_from_clause_hook_type  prev_post_transform_from_clause_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
@@ -190,6 +195,7 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 static transactionStmt_hook_type prev_transactionStmt_hook = NULL;
+static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -219,6 +225,15 @@ InstallExtendedHooks(void)
 
 	prev_post_transform_insert_row_hook = post_transform_insert_row_hook;
 	post_transform_insert_row_hook = check_insert_row;
+
+	prev_push_namespace_stack_hook = push_namespace_stack_hook;
+	push_namespace_stack_hook = push_namespace_stack;
+	prev_pre_transform_sort_clause_hook = pre_transform_sort_clause_hook;
+	pre_transform_sort_clause_hook = pre_transform_sort_clause;
+	prev_post_transform_sort_clause_hook = post_transform_sort_clause_hook;
+	post_transform_sort_clause_hook = post_transform_sort_clause;
+	prev_post_transform_from_clause_hook = post_transform_from_clause_hook;
+	post_transform_from_clause_hook = post_transform_from_clause;
 
 	post_transform_column_definition_hook = pltsql_post_transform_column_definition;
 
@@ -303,6 +318,9 @@ InstallExtendedHooks(void)
 
 	prev_transactionStmt_hook = transactionStmt_hook;
 	transactionStmt_hook = pltsql_transactionStmt;
+
+	prev_sortby_nulls_hook = sortby_nulls_hook;
+	sortby_nulls_hook = sort_nulls_first;
 }
 
 void
@@ -319,6 +337,10 @@ UninstallExtendedHooks(void)
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
+	push_namespace_stack_hook = prev_push_namespace_stack_hook;
+	pre_transform_sort_clause_hook = prev_pre_transform_sort_clause_hook;
+	post_transform_sort_clause_hook = prev_post_transform_sort_clause_hook;
+	post_transform_from_clause_hook = prev_post_transform_from_clause_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
@@ -348,6 +370,7 @@ UninstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
 	transactionStmt_hook = prev_transactionStmt_hook;
+	sortby_nulls_hook = prev_sortby_nulls_hook;
 }
 
 /*****************************************
@@ -3644,4 +3667,14 @@ bbf_check_rowcount_hook(int es_processed)
 		return true;
 	else
 		return false;
+}
+
+static void 
+sort_nulls_first(SortGroupClause * sortcl, bool reverse)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		/* Tsql NULLS FIRST is default for ASC; other way for DESC */
+		sortcl->nulls_first = !reverse;
+	}
 }

@@ -1508,7 +1508,7 @@ public:
 		{
 			/* select without destination should be blocked. We can use already information about desitnation, which is already processed. */
 			if (ctx->select_statement_standalone() && stmt->need_to_push_result)
-				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "select statement returing result to a client cannot be used in a function", getLineAndPos(ctx->select_statement_standalone()));
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "SELECT statement returning result to a client cannot be used in a function", getLineAndPos(ctx->select_statement_standalone()));
 
 			/* T-SQL doens't allow side-effecting operations in CREATE FUNCTION */
 			if (ctx->insert_statement())
