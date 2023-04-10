@@ -114,6 +114,9 @@ ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-cleanup
 ignore#!#datetime2fromparts-vu-prepare
 ignore#!#datetime2fromparts-vu-verify
 ignore#!#datetime2fromparts-vu-cleanup
+ignore#!#BABEL-1528-vu-prepare
+ignore#!#BABEL-1528-vu-verify
+ignore#!#BABEL-1528-vu-cleanup
 
 # These tests are meant for only upgrade
 ignore#!#openquery_upgrd-vu-prepare
