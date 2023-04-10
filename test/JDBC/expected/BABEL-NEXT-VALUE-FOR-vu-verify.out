@@ -1,6 +1,3 @@
-use master;
-go
-
 SELECT * FROM table_949 ORDER BY table_key;
 GO
 ~~START~~
