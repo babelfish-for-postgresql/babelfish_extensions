@@ -2941,7 +2941,8 @@ CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
 	IN "@objname" sys.nvarchar(776),
 	IN "@newname" sys.SYSNAME,
 	IN "@schemaname" sys.nvarchar(776),
-	IN "@objtype" char(2) DEFAULT NULL
+	IN "@objtype" char(2) DEFAULT NULL,
+	IN "@curr_relname" sys.nvarchar(776) DEFAULT NULL
 ) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_internal TO PUBLIC;
 
@@ -2957,10 +2958,6 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
 		END
-	IF @objtype = 'COLUMN'
-		BEGIN
-			THROW 33557097, N'Feature not supported: renaming object type Column', 1;
-		END
 	IF @objtype = 'INDEX'
 		BEGIN
 			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
@@ -2973,71 +2970,149 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'Feature not supported: renaming object type User-defined Data Type alias', 1;
 		END
-	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
-		BEGIN
-			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
-		END
+
 	DECLARE @name_count INT;
 	DECLARE @subname sys.nvarchar(776) = '';
 	DECLARE @schemaname sys.nvarchar(776) = '';
 	DECLARE @dbname sys.nvarchar(776) = '';
+	DECLARE @curr_relname sys.nvarchar(776) = NULL;
+	DECLARE @currtype char(2);
 	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
-	IF @name_count > 3
+
+	IF @objtype = 'COLUMN'
 		BEGIN
-			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
-		END
-	IF @name_count = 3
-		BEGIN
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
-			IF @dbname != sys.db_name()
+			IF @name_count > 4
 				BEGIN
 					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 				END
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+			
+			IF @name_count = 4
+				BEGIN
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @dbname = value FROM parseTable WHERE row = 1;
+					IF @dbname != sys.db_name()
+						BEGIN
+							THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+						END
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @schemaname = value FROM parseTable WHERE row = 2;
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @curr_relname = value FROM parseTable WHERE row = 3;
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM parseTable WHERE row = 4;
+				END
+			IF @name_count = 3
+				BEGIN
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @schemaname = value FROM parseTable WHERE row = 1;
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @curr_relname = value FROM parseTable WHERE row = 2;
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM parseTable WHERE row = 3;
+				END
+			IF @name_count = 2
+				BEGIN
+					SET @schemaname = sys.schema_name();
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @curr_relname = value FROM parseTable WHERE row = 1;
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM parseTable WHERE row = 2;
+				END
+			IF @name_count = 1
+				BEGIN
+					THROW 33557097, N'Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.', 1;
+				END
+			
+			DECLARE @col_count INT;
+			SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @curr_relname and COLUMN_NAME = @subname;
+			IF @col_count < 0
+				BEGIN
+					THROW 33557097, N'There is no object with the given @objname.', 1;
+				END
+			SET @currtype = 'CO';
+			EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
+			PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
 		END
-	IF @name_count = 2
+	ELSE IF @objtype = 'OBJECT'
 		BEGIN
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
+				IF @name_count > 3
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			IF @name_count = 3
+				BEGIN
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @dbname = value FROM parseTable WHERE row = 1;
+					IF @dbname != sys.db_name()
+						BEGIN
+							THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+						END
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @schemaname = value FROM parseTable WHERE row = 2;
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM parseTable WHERE row = 3;
+				END
+			IF @name_count = 2
+				BEGIN
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @schemaname = value FROM parseTable WHERE row = 1;
+					WITH parseTable AS (
+						SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
+						FROM STRING_SPLIT(@objname, '.'))
+					SELECT @subname = value FROM parseTable WHERE row = 2;
+				END
+			IF @name_count = 1
+				BEGIN
+					SET @schemaname = sys.schema_name();
+					SET @subname = @objname;
+				END
+			
+			DECLARE @count INT;
+			SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+			WHERE s1.name = @schemaname AND o1.name = @subname;
+			IF @count > 1
+				BEGIN
+					THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+				END
+			IF @count < 1
+				BEGIN
+					THROW 33557097, N'There is no object with the given @objname.', 1;
+				END
+			SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+			WHERE s1.name = @schemaname AND o1.name = @subname;
+			EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
+			PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
 		END
-	IF @name_count = 1
+	ELSE
 		BEGIN
-			SET @schemaname = sys.schema_name();
-			SET @subname = @objname;
+			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
 		END
-	
-	DECLARE @count INT;
-	DECLARE @currtype char(2);
-	SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-	WHERE s1.name = @schemaname AND o1.name = @subname;
-	IF @count > 1
-		BEGIN
-			THROW 33557097, N'There are multiple objects with the given @objname.', 1;
-		END
-	IF @count < 1
-		BEGIN
-			THROW 33557097, N'There is no object with the given @objname.', 1;
-		END
-	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-	WHERE s1.name = @schemaname AND o1.name = @subname;
-	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
-	PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
 END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
