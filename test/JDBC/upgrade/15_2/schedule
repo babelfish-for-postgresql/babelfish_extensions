@@ -396,6 +396,7 @@ sys-systypes
 openjson
 BABEL-3702
 BABEL_OBJECT_DEFINITION
+BABEL-3818
 Test-sp_rename
 Test-sp_rename-dep
 # openquery_upgrd
