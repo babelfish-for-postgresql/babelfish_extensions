@@ -58,3 +58,6 @@ bigint
 ~~END~~
 
 
+use master;
+go
+

@@ -22,3 +22,6 @@ GO
 SELECT NEXT VALUE FOR seq3
 GO
 
+use master;
+go
+
