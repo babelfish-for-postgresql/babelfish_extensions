@@ -13,7 +13,9 @@ import java.sql.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -130,7 +132,10 @@ public class JDBCPreparedStatement {
                     pstmt.setTime(j - 1, Time.valueOf(LocalTime.parse(parameter[2])));
                 } else if (parameter[0].equalsIgnoreCase("datetimeoffset")) {
                     SQLServerPreparedStatement ssPstmt = (SQLServerPreparedStatement) pstmt;
-                    ssPstmt.setDateTimeOffset(j - 1, DateTimeOffset.valueOf(Timestamp.valueOf(parameter[2]), 0));
+                    Timestamp tsLocal = Timestamp.valueOf(parameter[2]);
+                    long millis = tsLocal.toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli();
+                    Timestamp ts = new Timestamp(millis);
+                    ssPstmt.setDateTimeOffset(j - 1, DateTimeOffset.valueOf(ts, 0));
                     pstmt = ssPstmt;
                 } else if (parameter[0].equalsIgnoreCase("text")
                         || parameter[0].equalsIgnoreCase("ntext")) {
