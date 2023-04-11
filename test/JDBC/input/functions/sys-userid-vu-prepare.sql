@@ -9,6 +9,17 @@ BEGIN
 END;
 GO
 
+CREATE VIEW dbo.view_NULL_principal_id AS
+SELECT (DATABASE_PRINCIPAL_ID(NULL));
+GO
+
+CREATE PROCEDURE dbo.proc_NULL_principal_id
+AS
+BEGIN
+    SELECT (DATABASE_PRINCIPAL_ID(NULL));
+END;
+GO
+
 CREATE VIEW dbo.view_db_owner_principal_id AS
 SELECT user_name(DATABASE_PRINCIPAL_ID('db_owner'));
 GO

@@ -14,6 +14,22 @@ dbo
 ~~END~~
 
 
+SELECT * FROM view_NULL_principal_id;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+EXEC proc_NULL_principal_id;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
 SELECT * FROM view_db_owner_principal_id;
 GO
 ~~START~~

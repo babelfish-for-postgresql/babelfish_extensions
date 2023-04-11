@@ -4,6 +4,12 @@ GO
 EXEC proc_current_principal_id;
 GO
 
+SELECT * FROM view_NULL_principal_id;
+GO
+
+EXEC proc_NULL_principal_id;
+GO
+
 SELECT * FROM view_db_owner_principal_id;
 GO
 

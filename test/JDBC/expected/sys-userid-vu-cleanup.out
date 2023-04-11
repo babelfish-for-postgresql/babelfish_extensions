@@ -4,6 +4,12 @@ GO
 DROP PROCEDURE proc_current_principal_id;
 GO
 
+DROP VIEW view_NULL_principal_id;
+GO
+
+DROP PROCEDURE proc_NULL_principal_id;
+GO
+
 DROP VIEW view_db_owner_principal_id;
 GO
 
