@@ -17,6 +17,8 @@ TestBIT
 TestChar
 TestDatetime2
 TestDatetime
+TestDatetime-numeric-representation
+TestDatetime-numeric-dateaddfunction
 TestDate
 TestDecimal
 TestFloat

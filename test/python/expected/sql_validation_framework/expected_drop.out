@@ -2,6 +2,7 @@ Unexpected drop found for cast  in file babelfishpg_common--1.0.0--1.1.0.sql
 Unexpected drop found for cast  in file babelfishpg_common--1.0.0--1.1.0.sql
 Unexpected drop found for cast  in file babelfishpg_common--1.0.0--1.1.0.sql
 Unexpected drop found for cast  in file babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for cast  in file babelfishpg_common--3.1.0--3.2.0.sql
 Unexpected drop found for function get_bbf_binary_ops_count in file babelfishpg_common--2.3.0--2.4.0.sql
 Unexpected drop found for function get_bbf_binary_ops_count in file babelfishpg_common--3.0.0--3.1.0.sql
 Unexpected drop found for function sys.babelfish_update_server_collation_name in file babelfishpg_common--2.0.0--2.1.0.sql
