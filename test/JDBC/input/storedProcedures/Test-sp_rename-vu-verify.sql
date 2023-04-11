@@ -209,7 +209,43 @@ GO
 
 -- ****Given objtype is valid but not supported yet****
 -- Column
-EXEC sp_rename 'sp_rename_vu_table2.sp_rename_vu_t2_col1', 'sp_rename_vu_t2_col1_new', 'COLUMN';
+EXEC sp_rename 'sp_rename_vu_table1_case_insensitive2', 'sp_rename_vu_table1', 'OBJECT';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table1' 
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+
+EXEC sp_rename 'sp_rename_vu_table1.sp_rename_vu_t1_col1', 'sp_rename_vu_t1_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table1' 
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+
+INSERT INTO sp_rename_vu_table1(sp_rename_vu_t1_col1_new) VALUES (10);
+GO
+
+SELECT sp_rename_vu_t1_col1_new from sp_rename_vu_table1;
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table2_new'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table2_new'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+
+-- COLUMN: error-case
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_wrong_col', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
 GO
 
 -- Index
