@@ -1,3 +1,12 @@
+CREATE DATABASE sys_sysobjects_vu_prepare_db1;
+GO
+
+USE sys_sysobjects_vu_prepare_db1;
+GO
+
+CREATE TABLE sys_sysobjects_vu_prepare_table_t1(c1 int)
+GO
+
 USE master;
 GO
 

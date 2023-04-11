@@ -19,12 +19,3 @@ BEGIN
 RETURN (SELECT COUNT(*) FROM sys.sysobjects s where s.name = 'sys_sysobjects_vu_prepare_table')
 END
 GO
-
-CREATE DATABASE sys_sysobjects_vu_prepare_db1;
-GO
-
-USE sys_sysobjects_vu_prepare_db1;
-GO
-
-CREATE TABLE sys_sysobjects_vu_prepare_table_t1(c1 int)
-GO

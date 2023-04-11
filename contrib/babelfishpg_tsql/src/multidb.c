@@ -32,6 +32,7 @@ static void rewrite_type_name_list(List *typenames);	/* list of type names */
 static void rewrite_role_list(List *rolespecs); /* list of RoleSpecs */
 
 static bool rewrite_relation_walker(Node *node, void *context);
+static bool rewrite_select_relation_walker(Node *node, void *context);
 
 static bool is_select_for_json(SelectStmt *stmt);
 static void select_json_modify(SelectStmt *stmt);
@@ -82,7 +83,7 @@ rewrite_object_refs(Node *stmt)
 				select_json_modify(selectStmt);
 				/* walker supported stmts */
 				raw_expression_tree_walker(stmt,
-										   rewrite_relation_walker,
+										   rewrite_select_relation_walker,
 										   (void *) NULL);
 				break;
 			}
@@ -722,6 +723,55 @@ rewrite_relation_walker(Node *node, void *context)
 }
 
 /*
+ * rewrite_select_relation_walker is similar to rewrite_relation_walker
+ * but an additional condition check has been added to rewrite
+ * the dbo schema name with sys for the list of sys% catalogs
+ */
+static bool
+rewrite_select_relation_walker(Node *node, void *context)
+{
+	if (!node)
+		return false;
+
+	if (IsA(node, RangeVar))
+	{
+		RangeVar   *rv = (RangeVar *) node;
+
+		/*
+		 * For the list of catalog names if the schema name
+		 * specified is 'dbo' then replace with 'sys'.
+		 */
+		set_schemaname_dbo_to_sys(rv);
+
+		rewrite_rangevar(rv);
+		return false;
+	}
+	if (IsA(node, ColumnRef))
+	{
+		ColumnRef  *ref = (ColumnRef *) node;
+
+		rewrite_column_refs(ref);
+		return false;
+	}
+	if (IsA(node, FuncCall))
+	{
+		FuncCall   *func = (FuncCall *) node;
+
+		rewrite_plain_name(func->funcname);
+		return raw_expression_tree_walker(node, rewrite_select_relation_walker, context);
+	}
+	if (IsA(node, TypeName))
+	{
+		TypeName   *typename = (TypeName *) node;
+
+		rewrite_plain_name(typename->names);
+		return false;
+	}
+	else
+		return raw_expression_tree_walker(node, rewrite_select_relation_walker, context);
+}
+
+/*
  * select_json_modify takes in a select statement
  * If the target is json_modify and the from clause is for json we set the escape
  * parameter to true
@@ -925,12 +975,6 @@ rewrite_column_refs(ColumnRef *cref)
 static void
 rewrite_rangevar(RangeVar *rv)
 {
-	/*
-	 * For the list of catalog names if the schema name
-	 * specified is 'dbo' then replace with 'sys'.
-	 */
-	set_schemaname_dbo_to_sys(rv);
-
 	if (rv->catalogname)
 	{
 		if (is_shared_schema(rv->schemaname))
