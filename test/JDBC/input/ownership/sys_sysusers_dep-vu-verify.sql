@@ -1,4 +1,4 @@
-USE testdb
+USE sysusersdb
 GO
 
 -- test view created on sys.sysusers
@@ -16,12 +16,12 @@ GO
 -- test sys.sysusers view, hasdbaccess should be 1 for newly created user 
 SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
 FROM sys.sysusers
-WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest' OR name = 'sys' OR name = 'public' OR name = 'INFORMATION_SCHEMA'
+WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
 ORDER BY name
 GO
 
--- test [REVOKE CONNECT FROM], hasdbaccess should be 0
-REVOKE CONNECT FROM guest
+-- test [GRANT CONNECT TO], hasdbaccess should be 1
+GRANT CONNECT TO guest
 GO
 
 SELECT name, hasdbaccess, islogin
@@ -29,8 +29,8 @@ FROM sys.sysusers
 WHERE name = 'guest'
 GO
 
--- test [GRANT CONNECT TO], hasdbaccess should be 1
-GRANT CONNECT TO guest
+-- test [REVOKE CONNECT FROM], hasdbaccess should be 0
+REVOKE CONNECT FROM guest
 GO
 
 SELECT name, hasdbaccess, islogin

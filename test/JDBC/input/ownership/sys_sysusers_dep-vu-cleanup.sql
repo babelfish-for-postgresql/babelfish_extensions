@@ -1,4 +1,4 @@
-USE testdb
+USE sysusersdb
 GO
 
 DROP VIEW sysusers_dep_vu_prepare_view
@@ -25,5 +25,5 @@ GO
 USE master
 GO
 
-DROP DATABASE testdb
+DROP DATABASE sysusersdb
 GO

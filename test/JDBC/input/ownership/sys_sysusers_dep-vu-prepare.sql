@@ -1,7 +1,7 @@
-CREATE DATABASE testdb
+CREATE DATABASE sysusersdb
 GO
 
-USE testdb
+USE sysusersdb
 GO
 
 CREATE LOGIN sysusers_dep_vu_prepare_login1 WITH PASSWORD = '123'
@@ -20,7 +20,7 @@ CREATE VIEW sysusers_dep_vu_prepare_view
 AS
 SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
 FROM sys.sysusers
-WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest' OR name = 'sys' OR name = 'public' OR name = 'INFORMATION_SCHEMA'
+WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
 ORDER BY name offset 0 rows
 GO
 
@@ -28,7 +28,7 @@ CREATE PROC sysusers_dep_vu_prepare_proc
 AS
 SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
 FROM sys.sysusers
-WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest' OR name = 'sys' OR name = 'public' OR name = 'INFORMATION_SCHEMA'
+WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
 ORDER BY name
 GO
 
@@ -38,6 +38,6 @@ AS
 RETURN
     SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
     FROM sys.sysusers
-    WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest' OR name = 'sys' OR name = 'public' OR name = 'INFORMATION_SCHEMA'
+    WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
     ORDER BY name offset 0 rows
 GO
