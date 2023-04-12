@@ -17,6 +17,7 @@ TestBIT
 TestChar
 TestDatetime2
 TestDatetime
+TestDatetime-numeric-representation
 TestDate
 TestDecimal
 TestFloat
@@ -240,7 +241,6 @@ sys-sql_modules-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
-BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
@@ -371,6 +371,7 @@ app_name
 atn2
 str
 case_insensitive_collation
+BABEL-3215
 # linked_servers
 ISC-sequences
 jira-BABEL-3504-upgrade
@@ -396,7 +397,6 @@ BABEL-3748
 sys-systypes
 openjson
 BABEL-3702
-Test-sp_babelfish_volatility
 BABEL_OBJECT_DEFINITION
 Test-sp_rename
 Test-sp_rename-dep
@@ -412,3 +412,6 @@ rowcount
 BABEL-1625
 BABEL-3474
 dateadd_internal_df
+datetime2fromparts
+timefromparts
+orderby-before-15_3

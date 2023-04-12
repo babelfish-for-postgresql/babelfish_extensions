@@ -708,7 +708,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         o.object_id         AS object_id,
         o.schema_id         AS schema_id,
         c.column_id         AS colid,
-        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN CAST(split_part(p.attoptions[1], '=', 2) AS sys.SYSNAME)
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN CAST(split_part(p.attoptions[1], '=', 2) AS sys.VARCHAR)
 			ELSE c.name COLLATE sys.database_default END AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
@@ -1093,7 +1093,7 @@ CREATE VIEW sys.sp_databases_view AS
 		sys.babelfish_namespace_ext EXT
 		JOIN sys.babelfish_sysdatabases INT ON EXT.dbid = INT.dbid
 		JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.nspname = EXT.nspname
-		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid
+		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid where pg_catalog.pg_class.relkind = 'r'
 	) t
 	GROUP BY database_name
 	ORDER BY database_name;
@@ -3093,3 +3093,12 @@ END;
 $$ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.context_info()
+RETURNS sys.VARBINARY(128)
+AS '{"version_num": "1", "typmod_array": ["128"], "original_probin": ""}',
+$$
+BEGIN
+    return sys.bbf_get_context_info()
+END;
+$$
+LANGUAGE pltsql STABLE;

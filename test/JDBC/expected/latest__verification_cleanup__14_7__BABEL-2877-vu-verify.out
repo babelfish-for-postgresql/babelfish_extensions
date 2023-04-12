@@ -1,0 +1,229 @@
+SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func1' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func1("@a" integer, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+~~END~~
+
+
+SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func2' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func2("@a" integer DEFAULT 10, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money DEFAULT 5, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+~~END~~
+
+
+SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func3' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func3("@a" integer, "@b" "varchar", "@c" money, "@d" double precision)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+~~END~~
+
+
+SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc1' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc1(IN "@a" integer, IN "@b" "varchar" DEFAULT 'abc'::"varchar", IN "@c" money DEFAULT 5, IN "@d" double precision)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
+~~END~~
+
+
+SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc2' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc2(IN "@a" integer DEFAULT 10, IN "@b" "varchar" DEFAULT 'abc'::"varchar", IN "@c" money DEFAULT 5, IN "@d" double precision DEFAULT 1.2)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
+~~END~~
+
+
+SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc3' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc3(IN "@a" integer, IN "@b" "varchar", IN "@c" money, IN "@d" double precision)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
+~~END~~
+
+
+SELECT * FROM babel_2877_vu_prepare_func1(10); -- should fail, required argument @c not supplied
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function babel_2877_vu_prepare_func1 expects parameter "@c", which was not supplied.)~~
+
+
+SELECT * FROM babel_2877_vu_prepare_func1(10, 'abc', $5);
+GO
+~~START~~
+varchar
+10abc5.00001.2
+~~END~~
+
+
+SELECT * FROM babel_2877_vu_prepare_func2();
+GO
+~~START~~
+varchar
+10abc5.00001.2
+~~END~~
+
+
+SELECT * FROM babel_2877_vu_prepare_func3(); -- should fail, all parameters are required
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function babel_2877_vu_prepare_func3 expects parameter "@a", which was not supplied.)~~
+
+
+SELECT * FROM babel_2877_vu_prepare_func3(10, 'abc', $5, 1.2);
+GO
+~~START~~
+varchar
+10abc5.00001.2
+~~END~~
+
+
+SELECT * FROM babel_2877_vu_prepare_view1;
+GO
+~~START~~
+varchar
+20def5.00001.2
+~~END~~
+
+
+SELECT * FROM babel_2877_vu_prepare_view2;
+GO
+~~START~~
+varchar
+10abc5.00001.2
+~~END~~
+
+
+SELECT * FROM babel_2877_vu_prepare_view3;
+GO
+~~START~~
+varchar
+20def10.00001.8
+~~END~~
+
+
+EXEC babel_2877_vu_prepare_proc1; -- should fail, required arguments @a and @d not supplied
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@a", which was not supplied.)~~
+
+
+EXEC babel_2877_vu_prepare_proc1 10; -- should fail, required argument @d not supplied
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@d", which was not supplied.)~~
+
+
+EXEC babel_2877_vu_prepare_proc1 @d=40; -- should fail, required argument @a not supplied
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@a", which was not supplied.)~~
+
+
+EXEC babel_2877_vu_prepare_proc1 @a = 10, @d = 1.8;
+GO
+~~START~~
+int#!#varchar#!#money#!#float
+10#!#abc#!#5.0000#!#1.8
+~~END~~
+
+
+EXEC babel_2877_vu_prepare_proc1 @a = 10, @b = 20, @c = 30, @d = 40;
+GO
+~~START~~
+int#!#varchar#!#money#!#float
+10#!#20#!#30.0000#!#40.0
+~~END~~
+
+
+EXEC babel_2877_vu_prepare_proc2;
+GO
+~~START~~
+int#!#varchar#!#money#!#float
+10#!#abc#!#5.0000#!#1.2
+~~END~~
+
+
+EXEC babel_2877_vu_prepare_proc2 @d = 1.5;
+GO
+~~START~~
+int#!#varchar#!#money#!#float
+10#!#abc#!#5.0000#!#1.5
+~~END~~
+
+
+EXEC babel_2877_vu_prepare_proc3; -- should fail, all parameters are required
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure babel_2877_vu_prepare_proc3 expects parameter "@a", which was not supplied.)~~
+
+
+EXEC babel_2877_vu_prepare_proc3 10, 'def', $10, 1.8; -- should fail, all parameters are required
+GO
+~~START~~
+int#!#varchar#!#money#!#float
+10#!#def#!#10.0000#!#1.8
+~~END~~
+
+
+-- babelfish_function_ext table should have entry for all the above functions and procedures
+SELECT nspname,
+		funcname,
+		funcsignature,
+		default_positions
+FROM sys.babelfish_function_ext
+	WHERE funcname LIKE 'babel_2877_vu_prepare%'
+	AND funcname NOT LIKE '%ansi%' ORDER BY funcname;
+GO
+~~START~~
+varchar#!#varchar#!#text#!#text
+master_dbo#!#babel_2877_vu_prepare_func1#!#babel_2877_vu_prepare_func1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 3)
+master_dbo#!#babel_2877_vu_prepare_func2#!#babel_2877_vu_prepare_func2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
+master_dbo#!#babel_2877_vu_prepare_func3#!#babel_2877_vu_prepare_func3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
+master_dbo#!#babel_2877_vu_prepare_proc1#!#babel_2877_vu_prepare_proc1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 2)
+master_dbo#!#babel_2877_vu_prepare_proc2#!#babel_2877_vu_prepare_proc2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
+master_dbo#!#babel_2877_vu_prepare_proc3#!#babel_2877_vu_prepare_proc3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
+~~END~~
+
+
+SELECT orig_name,
+	CASE flag_validity & 1
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 1
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS ansi_null,
+	CASE flag_validity & 2
+		WHEN 0
+			THEN NULL
+		ELSE
+			CASE flag_values & 2
+				WHEN 0
+					THEN 0
+				ELSE 1
+			END
+	END AS quoted_identifier
+FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel-2877-vu-prepare%' ORDER BY funcname;
+GO
+~~START~~
+nvarchar#!#int#!#int
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDOFF#!#0#!#0
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLOFF_QIDON#!#0#!#1
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDOFF#!#1#!#0
+BABEL-2877-vu-prepare_FUNC_ANSI_NULLON_QIDON#!#1#!#1
+~~END~~
+

@@ -15,6 +15,7 @@ TestBIT
 TestChar
 TestDatetime2
 TestDatetime
+TestDatetime-numeric-representation
 TestDate
 TestDecimal
 TestFloat
@@ -231,7 +232,6 @@ sys-all_sql_modules-dep
 sys-sql_modules-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
-BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
@@ -356,7 +356,6 @@ BABEL_OBJECT_ID
 test_windows_login_before_15_2
 datediff_internal_date-before-14_7-or-15_2
 BABEL_OBJECT_NAME
-Test-sp_babelfish_volatility
 BABEL_SCHEMATA
 BABEL-3657
 BABEL-3938
@@ -365,3 +364,6 @@ rowcount
 BABEL-1625
 BABEL-3474
 dateadd_internal_df
+datetime2fromparts
+timefromparts
+BABEL-3215

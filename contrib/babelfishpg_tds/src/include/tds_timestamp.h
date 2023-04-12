@@ -17,21 +17,21 @@
 #define DATETIMEOFFSETMAXSCALE 7
 
 extern void TdsGetTimestampFromDayTime(uint32 numDays, uint64 numMicro, int tz,
-							Timestamp *timestamp, int scale);
+									   Timestamp *timestamp, int scale);
 extern void TdsGetDayTimeFromTimestamp(Timestamp value, uint32 *numDays,
-							uint64 *numSec, int scale);
+									   uint64 *numSec, int scale);
 
 extern void TdsTimeDifferenceSmalldatetime(Datum value, uint16 *numDays,
-								uint16 *numMins);
+										   uint16 *numMins);
 extern void TdsTimeGetDatumFromSmalldatetime(uint16 numDays, uint16 numMins,
-								Timestamp *timestamp);
+											 Timestamp *timestamp);
 extern uint32 TdsDayDifference(Datum value);
 extern void TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
-								uint32 *numTicks);
+									  uint32 *numTicks);
 extern void TdsCheckDateValidity(DateADT result);
 extern void TdsTimeGetDatumFromDays(uint32 numDays, uint64 *val);
 extern void TdsTimeGetDatumFromDatetime(uint32 numDays, uint32 numTicks,
-								Timestamp *timestamp);
+										Timestamp *timestamp);
 extern uint32 TdsGetDayDifferenceHelper(int day, int mon, int year, bool isDateType);
 
 /*
@@ -39,8 +39,8 @@ extern uint32 TdsGetDayDifferenceHelper(int day, int mon, int year, bool isDateT
  */
 typedef struct tsql_datetimeoffset
 {
-	int64 tsql_ts;
-	int16 tsql_tz;
+	int64		tsql_ts;
+	int16		tsql_tz;
 } tsql_datetimeoffset;
 
 /* datetimeoffset macros */

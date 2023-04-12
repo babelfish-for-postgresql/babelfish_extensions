@@ -299,10 +299,12 @@ sys-all_sql_modules_before-14_5
 BABEL_OBJECT_ID
 test_windows_login_before_15_2
 BABEL_OBJECT_NAME
-Test-sp_babelfish_volatility
 BABEL_SCHEMATA
 BABEL-3657
 BABEL-3938
 rowcount
 BABEL-1625
 BABEL-3474
+datetime2fromparts
+timefromparts
+BABEL-3215

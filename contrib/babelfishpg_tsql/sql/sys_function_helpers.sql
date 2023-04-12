@@ -1233,6 +1233,7 @@ DECLARE
     TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,2}\s*';
     FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,9}\s*';
     DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+    DIGITREPRESENT_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\-?\d+\.?(?:\d+)?$';
     HHMMSSFS_PART_REGEXP CONSTANT VARCHAR COLLATE "C" := concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, AMPM_REGEXP, '?|',
@@ -1650,6 +1651,10 @@ BEGIN
         v_day := '01';
         v_month := '01';
         v_year := '1900';
+    ELSIF (v_datetimestring ~* DIGITREPRESENT_REGEXP)
+    THEN
+        v_resdatetime = CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + v_datetimestring::NUMERIC;
+        RETURN v_resdatetime;
     ELSE
         RAISE invalid_datetime_format;
     END IF;
@@ -10352,3 +10357,6 @@ CREATE OR REPLACE FUNCTION sys.bbf_is_shared_schema(IN schemaname TEXT)
 RETURNS BOOL
 AS 'babelfishpg_tsql', 'is_shared_schema_wrapper'
 LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.bbf_get_context_info()
+RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql', 'bbf_get_context_info' LANGUAGE C STABLE;
