@@ -2,6 +2,17 @@ CREATE VIEW dbo.view_current_principal_id AS
 SELECT user_name(DATABASE_PRINCIPAL_ID());
 GO
 
+CREATE VIEW dbo.current_user_id_v1 AS
+SELECT user_name(user_id());
+GO
+
+CREATE PROCEDURE dbo.current_user_id_p1
+AS
+BEGIN
+    SELECT user_name(user_id());
+END;
+GO
+
 CREATE PROCEDURE dbo.proc_current_principal_id
 AS
 BEGIN

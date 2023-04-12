@@ -14,6 +14,22 @@ dbo
 ~~END~~
 
 
+SELECT * FROM current_user_id_v1;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+EXEC current_user_id_p1;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
 SELECT * FROM view_NULL_principal_id;
 GO
 ~~START~~
@@ -132,5 +148,13 @@ GO
 ~~START~~
 int
 <NULL>
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
 ~~END~~
 

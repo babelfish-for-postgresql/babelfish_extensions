@@ -4,6 +4,12 @@ GO
 EXEC proc_current_principal_id;
 GO
 
+SELECT * FROM current_user_id_v1;
+GO
+
+EXEC current_user_id_p1;
+GO
+
 SELECT * FROM view_NULL_principal_id;
 GO
 
@@ -48,4 +54,7 @@ SELECT DATABASE_PRINCIPAL_ID('test_me')
 GO
 
 SELECT DATABASE_PRINCIPAL_ID(NULL)
+GO
+
+SELECT user_name(user_id());
 GO
