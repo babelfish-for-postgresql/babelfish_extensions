@@ -780,6 +780,30 @@ CREATE AGGREGATE sys.VARP(float8) (
 CREATE OR REPLACE FUNCTION sys.rowcount_big()
 RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.database_principal_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+ALTER FUNCTION sys.user_id(TEXT) RENAME TO user_id_deprecated_in_3_2_0;
+
+CREATE OR REPLACE FUNCTION sys.user_id(IN user_name sys.sysname)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.user_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'user_id_deprecated_in_3_2_0');
+
 ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_in_3_2_0;
 CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_in_3_2_0(
   IN view_name text,
@@ -1112,27 +1136,6 @@ AS 'babelfishpg_tsql' LANGUAGE C;
 ALTER FUNCTION sys.json_modify RENAME TO json_modify_deprecated_in_3_2_0;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'json_modify_deprecated_in_3_2_0');
-
-CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
-RETURNS OID
-AS
-$$
-BEGIN
-    -- If user_name is NULL, return the result of USER_ID()
-    IF user_name IS NULL OR user_name = 'NULL' THEN
-        RETURN NULL;
-    END IF;
-    -- Trim the trailing spaces from user_name
-    user_name := rtrim(user_name);
-    -- If user_name is an empty string or contains only spaces, return NULL
-    IF user_name = '' THEN
-        RETURN NULL;
-    END IF;
-    -- Return the principal_id of the specified user_name
-    RETURN (SELECT principal_id FROM sys.database_principals WHERE name = user_name);
-END;
-$$
-LANGUAGE PLPGSQL IMMUTABLE PARALLEL SAFE;
 
 /*
  * JSON MODIFY

@@ -411,7 +411,7 @@ test_windows_alter_user
 BABEL-733
 BABEL-745
 BABEL-3938
-BABEL-1199
+sys-userid
 BABEL-NEXT-VALUE-FOR
 babel_context_info
 binary-index
