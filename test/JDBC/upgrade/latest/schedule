@@ -425,4 +425,5 @@ dateadd_internal_df
 datetime2fromparts-after-15-2
 timefromparts
 orderby
+sys_sysusers_dep
 BABEL-3215
