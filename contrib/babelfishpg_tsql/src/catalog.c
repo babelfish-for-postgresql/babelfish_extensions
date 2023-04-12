@@ -2593,6 +2593,8 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 								  new_record_nulls_func_ext,
 								  new_record_repl_func_ext);
 
+	CatalogTupleUpdate(bbf_func_ext_rel, &new_tuple->t_self, new_tuple);
+
 	/* if there is more than 1 match, throw error */
 	sec_tuple = heap_getnext(tblscan, ForwardScanDirection);
 	if (HeapTupleIsValid(sec_tuple))
@@ -2604,7 +2606,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 				 errmsg("There are multiple objects with the given name \"%s\".", stmt->subname)));
 	}
 
-	CatalogTupleUpdate(bbf_func_ext_rel, &new_tuple->t_self, new_tuple);
+	//CatalogTupleUpdate(bbf_func_ext_rel, &new_tuple->t_self, new_tuple);
 
 	heap_freetuple(new_tuple);
 
