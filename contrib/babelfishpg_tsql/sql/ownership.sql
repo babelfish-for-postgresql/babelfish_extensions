@@ -410,8 +410,7 @@ CASE
     OR Dbp.name = 'sys'
     OR Dbp.type_desc = 'DATABASE_ROLE'
     THEN 0
-  WHEN Dbp.name = 'guest' AND Ext.user_can_connect = 1 THEN 1
-  WHEN Dbp.type_desc = 'WINDOWS_USER' OR Dbp.name = 'dbo' THEN 1
+  WHEN (Dbp.type_desc = 'WINDOWS_USER' OR Dbp.type_desc = 'SQL_USER') AND Ext.user_can_connect = 1 THEN 1
   ELSE 0
 END AS hasdbaccess,
 CASE
@@ -420,7 +419,7 @@ CASE
     OR Dbp.name = 'guest'
     OR Dbp.name = 'dbo' 
     THEN 1
-  WHEN Dbp.type_desc = 'WINDOWS_USER' THEN 1
+  WHEN Dbp.type_desc = 'WINDOWS_USER' OR Dbp.type_desc = 'SQL_USER' THEN 1
   ELSE 0
 END AS islogin,
 CASE WHEN Dbp.type_desc = 'WINDOWS_USER' THEN 1 ELSE 0 END AS isntname,

@@ -1,3 +1,6 @@
+USE testdb
+GO
+
 DROP VIEW sysusers_dep_vu_prepare_view
 GO
 
@@ -19,3 +22,8 @@ GO
 DROP LOGIN sysusers_dep_vu_prepare_login2
 GO
 
+USE master
+GO
+
+DROP DATABASE testdb
+GO

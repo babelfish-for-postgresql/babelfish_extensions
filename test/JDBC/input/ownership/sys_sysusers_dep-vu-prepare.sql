@@ -1,3 +1,9 @@
+CREATE DATABASE testdb
+GO
+
+USE testdb
+GO
+
 CREATE LOGIN sysusers_dep_vu_prepare_login1 WITH PASSWORD = '123'
 GO
 
@@ -7,29 +13,31 @@ GO
 CREATE LOGIN sysusers_dep_vu_prepare_login2 WITH PASSWORD = '123'
 GO
 
-CREATE USER sysusers_dep_vu_prepare_user2 FOR LOGIN sysusers_dep_vu_prepare_login2
+CREATE USER sysusers_dep_vu_prepare_user2 FOR LOGIN sysusers_dep_vu_prepare_login2;
 GO
 
 CREATE VIEW sysusers_dep_vu_prepare_view
 AS
-SELECT name, roles, islogin, hasdbaccess, isntname, isntgroup, isntuser, issqluser, isaliased, issqlrole, isapprole
+SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
 FROM sys.sysusers
-WHERE name LIKE '%sysusers_dep_vu_prepare_%'
-ORDER BY name
+WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest' OR name = 'sys' OR name = 'public' OR name = 'INFORMATION_SCHEMA'
+ORDER BY name offset 0 rows
 GO
 
 CREATE PROC sysusers_dep_vu_prepare_proc
 AS
-SELECT name, roles, islogin, hasdbaccess, isntname, isntgroup, isntuser, issqluser, isaliased, issqlrole, isapprole
+SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
 FROM sys.sysusers
-WHERE name LIKE '%sysusers_dep_vu_prepare_%'
+WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest' OR name = 'sys' OR name = 'public' OR name = 'INFORMATION_SCHEMA'
 ORDER BY name
 GO
 
 CREATE FUNCTION sysusers_dep_vu_prepare_func()
-RETURNS INT
+RETURNS TABLE
 AS
-BEGIN
-RETURN (SELECT COUNT(*) FROM sys.sysusers WHERE name LIKE '%sysusers_dep_vu_prepare_%')
-END
+RETURN
+    SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
+    FROM sys.sysusers
+    WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest' OR name = 'sys' OR name = 'public' OR name = 'INFORMATION_SCHEMA'
+    ORDER BY name offset 0 rows
 GO
