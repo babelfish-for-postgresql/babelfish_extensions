@@ -2,8 +2,8 @@ SELECT * FROM sys_syslogins_dep_vu_prepare_view
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
-sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#9#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#9#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -11,8 +11,8 @@ EXEC sys_syslogins_dep_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
-sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#9#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#9#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -33,7 +33,7 @@ ORDER BY name
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
-sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#0#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login1#!#master#!#English#!#9#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login1#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_syslogins_dep_vu_prepare_login2#!#master#!#English#!#9#!#0#!#0#!#0#!#0#!#0#!#sys_syslogins_dep_vu_prepare_login2#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
