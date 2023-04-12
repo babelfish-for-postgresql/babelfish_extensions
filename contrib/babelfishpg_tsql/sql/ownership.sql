@@ -308,7 +308,7 @@ GRANT SELECT ON sys.server_principals TO PUBLIC;
 CREATE OR REPLACE VIEW sys.syslogins
 AS SELECT 
 Base.sid AS sid,
-CAST(0 AS SYS.TINYINT) AS status,
+CAST(9 AS SYS.TINYINT) AS status,
 Base.create_date AS createdate,
 Base.modify_date AS updatedate,
 Base.create_date AS accdate,
