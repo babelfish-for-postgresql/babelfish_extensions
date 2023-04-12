@@ -10,6 +10,12 @@ GO
 EXEC current_user_id_p1;
 GO
 
+SELECT * FROM current_user_id_v2;
+GO
+
+EXEC current_user_id_p2;
+GO
+
 SELECT * FROM view_NULL_principal_id;
 GO
 

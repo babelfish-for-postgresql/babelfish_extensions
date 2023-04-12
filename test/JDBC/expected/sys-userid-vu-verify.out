@@ -30,6 +30,22 @@ dbo
 ~~END~~
 
 
+SELECT * FROM current_user_id_v2;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+EXEC current_user_id_p2;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
 SELECT * FROM view_NULL_principal_id;
 GO
 ~~START~~
