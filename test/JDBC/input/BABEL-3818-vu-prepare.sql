@@ -1,0 +1,8 @@
+Create Table cities (name varchar(250));
+GO
+
+alter table cities add region varchar(50) constraint defRegion default 'NEW ENGLAND';
+GO
+
+insert into cities (name) VALUES ('Boston');
+GO
