@@ -539,3 +539,17 @@ GO
 
 ~~ERROR (Message: Feature not supported: renaming object type Trigger)~~
 
+
+-- Helper Function
+DECLARE @sp_rename_helperfunc_out1 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out2 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out3 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out4 nvarchar(776);
+EXEC sys.babelfish_sp_rename_word_parse 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1_new', 'COLUMN', @sp_rename_helperfunc_out1 OUT, @sp_rename_helperfunc_out2 OUT, @sp_rename_helperfunc_out3 OUT, @sp_rename_helperfunc_out4 OUT;
+SELECT @sp_rename_helperfunc_out1, @sp_rename_helperfunc_out2, @sp_rename_helperfunc_out3, @sp_rename_helperfunc_out4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t2_col1_new#!#sp_rename_vu_table2_new#!#sp_rename_vu_schema1#!#<NULL>
+~~END~~
+
