@@ -2419,6 +2419,10 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			break;
 		case OBJECT_SEQUENCE:
 			break;
+		case OBJECT_TRIGGER:
+			break;
+		case OBJECT_TYPE:
+			break;
 		default:
 			break;
 	}
@@ -2520,12 +2524,12 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	NameData   *objname_data;
 	NameData   *schemaname_data;
 	bool		is_null;
-	char	   *funcsign,
-			   *new_funcsign;
+	char	   *funcsign;
 	Datum		funcsign_datum;
 	Node	   *schema;
 	char	   *schemaname;
 	ObjectWithArgs *objwargs = (ObjectWithArgs *) stmt->object;
+	char		new_funcsign[NAMEDATALEN] = {0};
 
 	/* build the tuple to insert */
 	MemSet(new_record_func_ext, 0, sizeof(new_record_func_ext));
@@ -2574,7 +2578,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	funcsign_datum = heap_getattr(usertuple, Anum_bbf_function_ext_funcsignature,
 								  bbf_func_ext_rel->rd_att, &is_null);
 	funcsign = pstrdup(TextDatumGetCString(funcsign_datum));
-	new_funcsign = strcat(pstrdup(stmt->newname), strrchr(funcsign, '('));
+	snprintf(new_funcsign, sizeof(new_funcsign), "%s%s", stmt->newname, strrchr(funcsign, '('));
 
 	new_record_func_ext[Anum_bbf_function_ext_funcname - 1] = CStringGetDatum(stmt->newname);
 	new_record_func_ext[Anum_bbf_function_ext_orig_name - 1] = CStringGetTextDatum(orig_proc_funcname);
@@ -2593,6 +2597,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	sec_tuple = heap_getnext(tblscan, ForwardScanDirection);
 	if (HeapTupleIsValid(sec_tuple))
 	{
+		orig_proc_funcname = NULL;
 		table_endscan(tblscan);
 		table_close(bbf_func_ext_rel, RowExclusiveLock);
 		ereport(ERROR,
@@ -2602,6 +2607,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 
 	CatalogTupleUpdate(bbf_func_ext_rel, &new_tuple->t_self, new_tuple);
 
+	orig_proc_funcname = NULL;
 	heap_freetuple(new_tuple);
 
 	table_endscan(tblscan);
