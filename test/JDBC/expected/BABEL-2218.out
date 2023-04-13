@@ -19,7 +19,7 @@ END
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: select statement returing result to a client cannot be used in a function)~~
+~~ERROR (Message: SELECT statement returning result to a client cannot be used in a function)~~
 
 
 -- if select statement has a destination, no error

@@ -71,6 +71,9 @@ ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-cleanup
 ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-prepare
 ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-verify
 ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-cleanup
+ignore#!#orderby-before-15_3-vu-prepare
+ignore#!#orderby-before-15_3-vu-verify
+ignore#!#orderby-before-15_3-vu-cleanup
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
@@ -108,6 +111,9 @@ ignore#!#test_windows_login_before_15_2-vu-cleanup
 ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-prepare
 ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-verify
 ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-cleanup
+ignore#!#datetime2fromparts-vu-prepare
+ignore#!#datetime2fromparts-vu-verify
+ignore#!#datetime2fromparts-vu-cleanup
 
 # These tests are meant for only upgrade
 ignore#!#openquery_upgrd-vu-prepare
