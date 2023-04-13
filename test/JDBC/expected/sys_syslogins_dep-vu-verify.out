@@ -42,11 +42,11 @@ SELECT name,dbname,default_language_name,status,totcpu,totio,spacelimit,timelimi
 resultlimit,loginname,password,denylogin,hasaccess,isntname,isntgroup,isntuser,sysadmin,securityadmin,serveradmin,setupadmin,
 processadmin,diskadmin,dbcreator,bulkadmin 
 FROM sys.syslogins 
-WHERE name = 'xyz\domain_login1'
+WHERE name = 'sysloginsxyz\domain_login1'
 ORDER BY name
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-xyz\domain_login1#!#master#!#English#!#9#!#0#!#0#!#0#!#0#!#0#!#xyz\domain_login1#!#<NULL>#!#0#!#1#!#1#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sysloginsxyz\domain_login1#!#master#!#English#!#9#!#0#!#0#!#0#!#0#!#0#!#sysloginsxyz\domain_login1#!#<NULL>#!#0#!#1#!#1#!#0#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 

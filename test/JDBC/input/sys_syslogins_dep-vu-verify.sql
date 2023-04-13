@@ -19,6 +19,6 @@ SELECT name,dbname,default_language_name,status,totcpu,totio,spacelimit,timelimi
 resultlimit,loginname,password,denylogin,hasaccess,isntname,isntgroup,isntuser,sysadmin,securityadmin,serveradmin,setupadmin,
 processadmin,diskadmin,dbcreator,bulkadmin 
 FROM sys.syslogins 
-WHERE name = 'xyz\domain_login1'
+WHERE name = 'sysloginsxyz\domain_login1'
 ORDER BY name
 GO

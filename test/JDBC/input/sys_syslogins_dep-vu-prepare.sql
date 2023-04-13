@@ -31,8 +31,8 @@ BEGIN
 END
 GO
 
-EXEC sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+EXEC sys.babelfish_add_domain_mapping_entry 'sysloginsxyz', 'sysloginsxyz.babel';
 GO
 
-CREATE LOGIN [xyz\domain_login1] FROM WINDOWS;
+CREATE LOGIN [sysloginsxyz\domain_login1] FROM WINDOWS;
 GO

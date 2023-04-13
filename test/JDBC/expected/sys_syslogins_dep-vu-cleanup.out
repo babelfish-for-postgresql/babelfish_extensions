@@ -13,8 +13,8 @@ GO
 DROP LOGIN sys_syslogins_dep_vu_prepare_login2
 GO
 
-DROP LOGIN [xyz\domain_login1]
+DROP LOGIN [sysloginsxyz\domain_login1]
 GO
 
-EXEC babelfish_remove_domain_mapping_entry 'xyz'
+EXEC babelfish_remove_domain_mapping_entry 'sysloginsxyz'
 GO
