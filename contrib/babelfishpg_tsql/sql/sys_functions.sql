@@ -546,10 +546,10 @@ LANGUAGE plpgsql
 STABLE CALLED ON NULL INPUT;
 
 -- Return the object ID given the object name. Can specify optional type.
--- CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
--- RETURNS INTEGER AS
--- 'babelfishpg_tsql', 'object_id'
--- LANGUAGE C STABLE;
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
+RETURNS INTEGER AS
+'babelfishpg_tsql', 'object_id'
+LANGUAGE C STABLE;
 
 -- CREATE OR REPLACE FUNCTION sys.parsename (
 -- 	object_name VARCHAR
@@ -566,11 +566,6 @@ STABLE CALLED ON NULL INPUT;
 -- 			THEN reverse(split_part(reverse($1), '.', $2))
 -- 		ELSE NULL
 -- 		END $$ immutable LANGUAGE 'sql';
-
--- CREATE OR REPLACE FUNCTION sys.parsename(object_name text, object_piece int)
--- RETURNS text
--- AS 'babelfishpg_tsql', 'parsename'
--- LANGUAGE C IMMUTABLE STRICT;
 
 
 CREATE OR REPLACE FUNCTION sys.parsename(object_name text, object_piece int)
