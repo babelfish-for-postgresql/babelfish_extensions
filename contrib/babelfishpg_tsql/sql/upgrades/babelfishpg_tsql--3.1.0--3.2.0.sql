@@ -31,6 +31,14 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE TABLE sys.babelfish_server_options (
+	server_id INT NOT NULL PRIMARY KEY,
+	query_timeout INT
+);
+GRANT SELECT ON sys.babelfish_server_options TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_server_options', '');
+
 -- please add your SQL here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
@@ -773,8 +781,6 @@ RETURNS NULL ON NULL INPUT;
 
 -- Mark babelfish_authid_user_ext as configuration table
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
-
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_server_options', '');
 
 -- Function to unmark a configuration table.
 -- Currently PG has not exposed this as a function so we have implemented
