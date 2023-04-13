@@ -2083,6 +2083,64 @@ numeric_radians(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(result);
 }
 
+PG_FUNCTION_INFO_V1(parsename);
+Datum parsename(PG_FUNCTION_ARGS)
+{
+    text *object_name = PG_GETARG_TEXT_P(0);
+    int object_piece = PG_GETARG_INT32(1);
+    char *delim = ".";
+    char *token;
+    char *save_ptr;
+    char *database_name = NULL;
+    char *schema_name = NULL;
+    char *table_name = NULL;
+    int count = 0;
+    // Copy the object name from text to a C string
+    char *object_name_str = text_to_cstring(object_name);
+    // Tokenize the object name using the period delimiter
+    token = strtok_r(object_name_str, delim, &save_ptr);
+
+    while (token != NULL) {
+        count++;
+        if (count == 1) {
+            // Store the database name
+            // database_name = token;
+			schema_name = token;
+        }
+        else if (count == 2) {
+            // Store the schema name
+            // schema_name = token;
+			table_name = token;
+        }
+        else if (count == 3) {
+            // Store the table name
+            // table_name = token;
+			database_name = token;
+        }
+        else if (count > 3) {
+            // We don't care about any further pieces, so break out of the loop
+            break;
+        }
+        token = strtok_r(NULL, delim, &save_ptr);
+    }
+    if (object_piece == 1) {
+        // Return the specified object piece as a text value
+        PG_RETURN_TEXT_P(cstring_to_text(database_name));
+    }
+    else if (object_piece == 2) {
+        // Return the specified object piece as a text value
+        PG_RETURN_TEXT_P(cstring_to_text(table_name));
+    }
+    else if (object_piece == 3) {
+        // Return the specified object piece as a text value
+        PG_RETURN_TEXT_P(cstring_to_text(schema_name));
+    }
+    else {
+        // Invalid object piece, so return NULL
+        PG_RETURN_NULL();
+    }
+}
+
 /* Returns the database schema name for schema-scoped objects. */
 Datum
 object_schema_name(PG_FUNCTION_ARGS)
