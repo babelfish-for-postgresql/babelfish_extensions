@@ -43,5 +43,14 @@ smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nva
 ~~END~~
 
 
+-- These below test cases are just to validate the schema rewrite from dbo to sys in different scenarios.
+select * from DbO.SySLanGUAgeS where langid = (SELECT count(*) FROM DbO.syslanguages WHERE langid = 1);
+go
+~~START~~
+smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#smallint
+1#!#dmy#!#1#!#<NULL>#!#ENGLISH#!#ENGLISH (AUSTRALIA)#!#January,February,March,April,May,June,July,August,September,October,November,December#!#Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec#!#Mon,Tue,Wed,Thu,Fri,Sat,Sun#!#<NULL>#!#<NULL>
+~~END~~
+
+
 DROP DATABASE DB1;
 GO

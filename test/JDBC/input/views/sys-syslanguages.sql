@@ -18,5 +18,9 @@ GO
 SELECT * FROM db1.dbo.SySLanGUAgeS WHERE langid = 1;
 GO
 
+-- These below test cases are just to validate the schema rewrite from dbo to sys in different scenarios.
+select * from DbO.SySLanGUAgeS where langid = (SELECT count(*) FROM DbO.syslanguages WHERE langid = 1);
+go
+
 DROP DATABASE DB1;
 GO

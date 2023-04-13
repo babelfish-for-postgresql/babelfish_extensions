@@ -50,5 +50,12 @@ INSERT INTO sys.babelfish_configurations
              );
 GO
 
+-- These below test cases are just to validate the schema rewrite from dbo to sys in different scenarios.
+select (select count(*) from DbO.SySConFIGuReS) as x, (select count(*) from [DbO].SySCuRConFIgS) as y;
+go
+
+select count(*) from DbO.SySConFIGuReS x inner join [DbO].SySCuRConFIgS y on x.value=y.value;
+go
+
 DROP DATABASE DB1;
 GO
