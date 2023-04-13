@@ -1047,7 +1047,24 @@ ReverseString(char *res)
 }
 
 static inline void
-Integer2String(uint128 num, char *str)
+Integer128_2_String(uint128 num, char *str)
+{
+	int			i = 0,
+				rem = 0;
+
+	while (num)
+	{
+		rem = num % 10;
+		str[i++] = rem + '0';
+		num = num / 10;
+	}
+	str[i++] = '-';
+	ReverseString(str);
+}
+
+
+static inline void
+Integer2String(uint64 num, char *str)
 {
 	int			i = 0,
 				rem = 0;
@@ -1964,11 +1981,29 @@ TdsRecvTypeDatetime2(const char *message, const ParameterToken token)
 }
 
 static inline uint128
-StringToInteger(char *str)
+StringToInteger128(char *str)
 {
 	int			i = 0,
 				len = 0;
 	uint128		num = 0;
+
+	if (!str)
+		return 0;
+
+	len = strlen(str);
+
+	for (; i < len; i++)
+		num = num * 10 + (str[i] - '0');
+
+	return num;
+}
+
+static inline uint64
+StringToInteger(char *str)
+{
+	int			i = 0,
+				len = 0;
+	uint64		num = 0;
 
 	if (!str)
 		return 0;
@@ -1993,22 +2028,27 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	Numeric		res;
 	int			scale,
 				len,
-				sign;
+				sign,
+				precision;
 	char	   *decString,
 			   *wholeString;
 	int			temp1,
 				temp2;
-	uint128		num = 0;
 	TdsColumnMetaData col = token->paramMeta;
 
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	/* scale and precision are part of the type info */
 	scale = col.metaEntry.type5.scale;
+	precision = col.metaEntry.type5.precision;
 
 	/* fetch the sign from the actual data which is the first byte */
 	sign = (uint8_t) GetMsgInt(buf, 1);
 
+	/* use 128-bit integer only when data can't be accommodated in 64-bit integer */
+	if (precision >= 20)
+	{
+	uint128         num = 0;
 	/* fetch the data but ignore the sign byte now */
 	{
 		uint128		n128 = 0;
@@ -2028,10 +2068,9 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	decString = (char *) palloc0(sizeof(char) * 40);
 
 	if (num != 0)
-		Integer2String(num, decString);
+		Integer128_2_String(num, decString);
 	else
 		decString[0] = '0';
-
 
 	len = strlen(decString);
 	temp1 = '.';
@@ -2089,6 +2128,90 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 
 	if (sign == 1 && num != 0)
 		decString++;
+	}
+	else
+	{
+	uint64         num = 0;
+	/* fetch the data but ignore the sign byte now */
+	{
+		uint64		n64 = 0;
+
+		if ((token->len - 1) > sizeof(n64))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("Data length %d is invalid for NUMERIC/DECIMAL data types.",
+							token->len)));
+
+		memcpy(&n64, &buf->data[buf->cursor], token->len - 1);
+		buf->cursor += token->len - 1;
+
+		num = LEtoh64(n64);
+	}
+
+	decString = (char *) palloc0(sizeof(char) * 40);
+
+	if (num != 0)
+		Integer2String(num, decString);
+	else
+		decString[0] = '0';
+
+	len = strlen(decString);
+	temp1 = '.';
+
+	/*
+	 * If scale is more than length then we need to append zeros at the start;
+	 * Since there is a '-' at the start of decString, we should ignore it
+	 * before appending and then add it later.
+	 */
+	if (num != 0 && scale >= len)
+	{
+		int			diff = scale - len + 1;
+		char	   *zeros = palloc0(sizeof(char) * diff + 1);
+		char	   *tempString = decString;
+
+		while (diff)
+		{
+			zeros[--diff] = '0';
+		}
+
+		/*
+		 * Add extra '.' character in psprintf; Later we make use of this
+		 * index during shifting the scale part of the string.
+		 */
+		decString = psprintf("-%s%s.", zeros, tempString + 1);
+		len = strlen(decString) - 1;
+		pfree(tempString);
+	}
+	if (num != 0)
+	{
+		while (scale)
+		{
+			temp2 = decString[len - scale];
+			decString[len - scale] = temp1;
+			temp1 = temp2;
+			scale--;
+		}
+		decString[len++] = temp1;
+	}
+	else
+	{
+		decString[len++] = temp1;
+		while (scale)
+		{
+			decString[len++] = '0';
+			scale--;
+		}
+	}
+
+	/*
+	 * We use wholeString just to free the address at decString later, since
+	 * it gets updated later.
+	 */
+	wholeString = decString;
+
+	if (sign == 1 && num != 0)
+		decString++;
+	}
 
 	res = TdsSetVarFromStrWrapper(decString);
 
@@ -3039,7 +3162,6 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 				length = 0;
 	char	   *out,
 			   *decString;
-	uint128		num = 0;
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 	uint8_t		max_scale = col->metaEntry.type5.scale;
 	uint8_t		max_precision = col->metaEntry.type5.precision;
@@ -3105,9 +3227,21 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 	else if (precision < 39)
 		length = 16;
 
-	num = StringToInteger(decString);
-	if (TdsPutInt8(length + 1) == 0 && TdsPutInt8(sign) == 0)
-		rc = TdsPutbytes(&num, length);
+	/* use 128-bit integer only when data can't be accommodated in 64-bit integer */
+	if (length >= 12)
+	{
+		uint128         num = 0;
+		num = StringToInteger128(decString);
+		if (TdsPutInt8(length + 1) == 0 && TdsPutInt8(sign) == 0)
+			rc = TdsPutbytes(&num, length);
+	}
+	else
+	{
+		uint64		num = 0;
+		num = StringToInteger(decString);
+		if (TdsPutInt8(length + 1) == 0 && TdsPutInt8(sign) == 0)
+			rc = TdsPutbytes(&num, length);
+	}
 
 	pfree(decString);
 	return rc;
