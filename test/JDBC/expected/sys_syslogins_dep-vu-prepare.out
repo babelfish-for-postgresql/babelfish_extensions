@@ -25,9 +25,14 @@ ORDER BY name
 GO
 
 CREATE FUNCTION sys_syslogins_dep_vu_prepare_func()
-RETURNS INT
-AS
+RETURNS INT AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.syslogins WHERE name LIKE '%sys_syslogins_dep_vu_prepare%')
+    RETURN (SELECT COUNT(*) FROM sys.syslogins WHERE name LIKE '%sys_syslogins_dep_vu_prepare%')
 END
+GO
+
+EXEC sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+CREATE LOGIN [xyz\domain_login1] FROM WINDOWS;
 GO

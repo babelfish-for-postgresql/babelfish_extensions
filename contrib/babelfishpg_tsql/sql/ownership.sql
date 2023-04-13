@@ -324,12 +324,27 @@ CAST(Base.name AS SYS.NVARCHAR(128)) AS loginname,
 CAST(NULL AS SYS.NVARCHAR(128)) AS password,
 CAST(0 AS INT) AS denylogin,
 CAST(1 AS INT) AS hasaccess,
-CAST(0 AS INT) AS isntname,
-CAST(0 AS INT) AS isntgroup,
-CAST(0 AS INT) AS isntuser,
+CAST( 
+  CASE 
+    WHEN BASE.type_desc = 'WINDOWS_LOGIN' OR BASE.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntname,
+CAST(
+   CASE 
+    WHEN BASE.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+  AS INT) AS isntgroup,
+CAST(
+  CASE 
+    WHEN BASE.type_desc = 'WINDOWS_LOGIN' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntuser,
 CAST(
     CASE
-        WHEN pg_has_role(CAST('sysadmin' AS TEXT), CAST(Base.name AS TEXT), 'MEMBER') = true THEN 1
+        WHEN pg_has_role(CAST('sysadmin' AS TEXT), Base.principal_id , 'MEMBER') = true THEN 1
         ELSE 0
     END
 AS INT) AS sysadmin,
