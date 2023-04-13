@@ -10,6 +10,30 @@ master#!#jdbc_user
 ~~END~~
 
 
+SELECT DISTINCT db_name(dbid), loginname FROM dbo.sysprocesses WHERE spid = @@SPID
+GO
+~~START~~
+nvarchar#!#varchar
+master#!#jdbc_user
+~~END~~
+
+
+SELECT DISTINCT db_name(dbid), loginname FROM [sys].[sysprocesses] WHERE spid = @@SPID
+GO
+~~START~~
+nvarchar#!#varchar
+master#!#jdbc_user
+~~END~~
+
+
+SELECT DISTINCT db_name(dbid), loginname FROM [DbO].[SySProcESSeS] WHERE spid = @@SPID
+GO
+~~START~~
+nvarchar#!#varchar
+master#!#jdbc_user
+~~END~~
+
+
 CREATE DATABASE db_2829
 GO
 USE db_2829
@@ -21,7 +45,77 @@ nvarchar#!#varchar
 db_2829#!#jdbc_user
 ~~END~~
 
+SELECT DISTINCT db_name(dbid), loginname FROM dbo.sysprocesses WHERE spid = @@SPID
+GO
+~~START~~
+nvarchar#!#varchar
+db_2829#!#jdbc_user
+~~END~~
+
 USE master
 GO
+
+SELECT DISTINCT db_name(dbid), loginname FROM db_2829.sys.sysprocesses WHERE spid = @@SPID
+GO
+~~START~~
+nvarchar#!#varchar
+db_2829#!#jdbc_user
+~~END~~
+
+SELECT DISTINCT db_name(dbid), loginname FROM db_2829.dbo.sysprocesses WHERE spid = @@SPID
+GO
+~~START~~
+nvarchar#!#varchar
+master#!#jdbc_user
+~~END~~
+
+
+-- These below test cases are just to validate the schema rewrite from dbo to sys in different scenarios.
+select (select DISTINCT db_name(dbid) from dbo.sysprocesses WHERE spid = @@SPID) as a, count(*) from (select * from (select DISTINCT * from [DbO].[SySProcESSeS] WHERE spid = @@SPID) as a) as b;
+go
+~~START~~
+nvarchar#!#int
+master#!#1
+~~END~~
+
+
+create procedure procedure_2829 as select DISTINCT db_name(dbid), loginname from [DbO].[SySProcESSeS] WHERE spid = @@SPID;
+go
+
+exec procedure_2829
+go
+~~START~~
+nvarchar#!#varchar
+master#!#jdbc_user
+~~END~~
+
+
+create table table_2829 ( a int,  b int);
+go
+
+insert into table_2829 select 1,2;
+go
+~~ROW COUNT: 1~~
+
+
+select * from table_2829;
+go
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+
+insert into table_2829 select DISTINCT spid, kpid from sys.sysprocesses WHERE spid = @@SPID;
+go
+~~ROW COUNT: 1~~
+
+
+DROP PROCEDURE procedure_2829
+GO
+
+DROP TABLE table_2829
+GO
+
 DROP DATABASE db_2829
 GO

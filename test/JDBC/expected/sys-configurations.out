@@ -26,7 +26,98 @@ sql_variant#!#int#!#nvarchar#!#smallint
 ~~END~~
 
 
+-- syscurconfigs should also exist in dbo schema
+select * from dbo.SySCuRConFIgS;
+go
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+CREATE DATABASE DB1;
+GO
+
+-- In case of cross-db, syscurconfigs should also exist in dbo schema
+SELECT * FROM db1.sys.SySCuRConFIgS;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+SELECT * FROM db1.dbo.SySCuRConFIgS;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
 SELECT * FROM sys.sysconfigures;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+-- sysconfigures should also exist in dbo schema
+select * from dbo.SySConFIGuReS;
+go
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+-- In case of cross-db, sysconfigures should also exist in dbo schema
+SELECT * FROM db1.sys.SySConFIGuReS;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+SELECT * FROM db1.dbo.SySConFIGuReS;
 GO
 ~~START~~
 sql_variant#!#int#!#nvarchar#!#smallint
@@ -65,3 +156,23 @@ GO
 
 ~~ERROR (Message: permission denied for table babelfish_configurations)~~
 
+
+-- These below test cases are just to validate the schema rewrite from dbo to sys in different scenarios.
+select (select count(*) from DbO.SySConFIGuReS) as x, (select count(*) from [DbO].SySCuRConFIgS) as y;
+go
+~~START~~
+int#!#int
+7#!#7
+~~END~~
+
+
+select count(*) from DbO.SySConFIGuReS x inner join [DbO].SySCuRConFIgS y on x.value=y.value;
+go
+~~START~~
+int
+15
+~~END~~
+
+
+DROP DATABASE DB1;
+GO

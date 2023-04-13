@@ -18,6 +18,32 @@ int
 ~~END~~
 
 
+-- sysforeignkeys should also exist in dbo schema
+SELECT COUNT(*) FROM dbo.SySFoReIGNkeYs where fkeyid = object_id('fk_2');
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM db1.sys.SySFoReIGNkeYs where fkeyid = object_id('fk_2');
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- In case of cross-db, sysforeignkeys should also exist in dbo schema
+SELECT COUNT(*) FROM db1.dbo.SySFoReIGNkeYs where fkeyid = object_id('fk_2');
+go
+~~START~~
+int
+1
+~~END~~
+
+
 select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2');
 GO
 ~~START~~
@@ -30,6 +56,14 @@ USE master
 GO
 
 select count(*) from sys.sysforeignkeys where fkeyid = object_id('fk_2');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from dbo.sysforeignkeys where fkeyid = object_id('fk_2');
 GO
 ~~START~~
 int
@@ -59,6 +93,32 @@ int
 ~~END~~
 
 
+-- sysforeignkeys should also exist in dbo schema
+SELECT COUNT(*) FROM dbo.SySFoReIGNkeYs where fkeyid = object_id('fk_4');
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- In case of cross-db, sysforeignkeys should also exist in dbo schema
+-- should not be visible here
+SELECT COUNT(*) FROM db1.sys.SySFoReIGNkeYs where fkeyid = object_id('fk_4');
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM db1.dbo.SySFoReIGNkeYs where fkeyid = object_id('fk_4');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+
+
 select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_4');
 GO
 ~~START~~
@@ -71,6 +131,14 @@ USE db1
 GO
 
 select count(*) from sys.sysforeignkeys where fkeyid = object_id('fk_4');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from dbo.sysforeignkeys where fkeyid = object_id('fk_4');
 GO
 ~~START~~
 int
