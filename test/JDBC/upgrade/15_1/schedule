@@ -201,6 +201,7 @@ sys-hash_indexes
 sys-plan_guides
 sp_tablecollations
 sys-assemblies
+sys-userid-dep
 BABEL-LOGIN-USER-EXT
 bitwise_not-operator
 BABEL-1683
