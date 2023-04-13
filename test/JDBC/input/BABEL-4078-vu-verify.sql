@@ -13,13 +13,25 @@ GO
 EXEC babel_4078_vu_prepare_proc1
 GO
 
+EXEC babel_4078_vu_prepare_proc11
+GO
+
 EXEC babel_4078_vu_prepare_proc2
+GO
+
+EXEC babel_4078_vu_prepare_proc22
 GO
 
 SELECT * FROM babel_4078_vu_prepare_func1()
 GO
 
+SELECT * FROM babel_4078_vu_prepare_func11()
+GO
+
 SELECT * FROM babel_4078_vu_prepare_func2()
+GO
+
+SELECT * FROM babel_4078_vu_prepare_func22()
 GO
 
 SELECT * FROM babel_4078_vu_prepare_view3

@@ -26,7 +26,7 @@ SELECT * FROM babel_4078_vu_prepare_view22
 GO
 ~~START~~
 nvarchar
-03-02-2023
+19:08:35
 ~~END~~
 
 
@@ -38,11 +38,27 @@ nvarchar
 ~~END~~
 
 
+EXEC babel_4078_vu_prepare_proc11
+GO
+~~START~~
+nvarchar
+03-02-2023
+~~END~~
+
+
 EXEC babel_4078_vu_prepare_proc2
 GO
 ~~START~~
 nvarchar
 19:08:35.5
+~~END~~
+
+
+EXEC babel_4078_vu_prepare_proc22
+GO
+~~START~~
+nvarchar
+19:08:35
 ~~END~~
 
 
@@ -54,11 +70,27 @@ nvarchar
 ~~END~~
 
 
+SELECT * FROM babel_4078_vu_prepare_func11()
+GO
+~~START~~
+nvarchar
+03-02-2023
+~~END~~
+
+
 SELECT * FROM babel_4078_vu_prepare_func2()
 GO
 ~~START~~
 nvarchar
 19:08:35.5
+~~END~~
+
+
+SELECT * FROM babel_4078_vu_prepare_func22()
+GO
+~~START~~
+nvarchar
+19:08:35
 ~~END~~
 
 
