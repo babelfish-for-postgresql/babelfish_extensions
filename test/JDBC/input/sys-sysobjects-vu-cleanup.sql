@@ -9,3 +9,15 @@ GO
 
 DROP FUNCTION sys_sysobjects_vu_prepare_func
 GO
+
+USE sys_sysobjects_vu_prepare_db1;
+GO
+
+DROP TABLE sys_sysobjects_vu_prepare_table_t1
+GO
+
+USE MASTER;
+GO
+
+DROP DATABASE sys_sysobjects_vu_prepare_db1;
+GO
