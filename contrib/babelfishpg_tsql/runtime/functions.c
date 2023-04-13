@@ -1870,6 +1870,11 @@ bbf_get_context_info(PG_FUNCTION_ARGS)
 Datum
 bbf_set_context_info(PG_FUNCTION_ARGS)
 {
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("SET CONTEXT_INFO option requires varbinary (128) NOT NULL parameter.")));
+
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_context_info)
 		(*pltsql_protocol_plugin_ptr)->set_context_info(PG_GETARG_BYTEA_P(0));
 
