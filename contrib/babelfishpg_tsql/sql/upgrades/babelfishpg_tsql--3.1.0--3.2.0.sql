@@ -774,6 +774,8 @@ RETURNS NULL ON NULL INPUT;
 -- Mark babelfish_authid_user_ext as configuration table
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
 
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_server_options', '');
+
 -- Function to unmark a configuration table.
 -- Currently PG has not exposed this as a function so we have implemented
 -- the following function as a wrapper over original PG function.
