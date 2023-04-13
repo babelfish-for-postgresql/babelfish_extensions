@@ -551,23 +551,6 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
--- CREATE OR REPLACE FUNCTION sys.parsename (
--- 	object_name VARCHAR
--- 	,object_piece INT
--- 	)
--- RETURNS VARCHAR AS $$
--- /***************************************************************
--- EXTENSION PACK function PARSENAME(x)
--- ***************************************************************/
--- SELECT CASE
--- 		WHEN char_length($1) < char_length(pg_catalog.replace($1, '.', '')) + 4
--- 			AND $2 BETWEEN 1
--- 				AND 4
--- 			THEN reverse(split_part(reverse($1), '.', $2))
--- 		ELSE NULL
--- 		END $$ immutable LANGUAGE 'sql';
-
-
 CREATE OR REPLACE FUNCTION sys.parsename(object_name text, object_piece int)
 RETURNS text
 AS 'babelfishpg_tsql', 'parsename'
