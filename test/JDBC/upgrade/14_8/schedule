@@ -17,6 +17,7 @@ TestBIT
 TestChar
 TestDatetime2
 TestDatetime
+TestDatetime-numeric-representation
 TestDate
 TestDecimal
 TestFloat
@@ -388,7 +389,12 @@ BABEL-3657
 BABEL-733
 BABEL-3938
 binary-index
+BABEL-3818
 rowcount
 BABEL-1625
 BABEL-3474
 dateadd_internal_df
+datetime2fromparts
+timefromparts
+orderby-before-15_3
+BABEL-3215

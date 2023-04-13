@@ -17,6 +17,7 @@ TestBIT
 TestChar
 TestDatetime2
 TestDatetime
+TestDatetime-numeric-representation
 TestDate
 TestDecimal
 TestFloat
@@ -370,6 +371,7 @@ app_name
 atn2
 str
 case_insensitive_collation
+BABEL-3215
 # linked_servers
 ISC-sequences
 jira-BABEL-3504-upgrade
@@ -396,6 +398,7 @@ sys-systypes
 openjson
 BABEL-3702
 BABEL_OBJECT_DEFINITION
+BABEL-3818
 Test-sp_rename
 Test-sp_rename-dep
 # openquery_upgrd
@@ -410,3 +413,6 @@ rowcount
 BABEL-1625
 BABEL-3474
 dateadd_internal_df
+datetime2fromparts
+timefromparts
+orderby-before-15_3

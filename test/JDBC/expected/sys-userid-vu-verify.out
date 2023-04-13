@@ -1,0 +1,176 @@
+SELECT * FROM view_current_principal_id;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+EXEC proc_current_principal_id;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT * FROM current_user_id_v1;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+EXEC current_user_id_p1;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT * FROM current_user_id_v2;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+EXEC current_user_id_p2;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT * FROM view_NULL_principal_id;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+EXEC proc_NULL_principal_id;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT * FROM view_db_owner_principal_id;
+GO
+~~START~~
+nvarchar
+db_owner
+~~END~~
+
+
+EXEC proc_db_owner_principal_id;
+GO
+~~START~~
+nvarchar
+db_owner
+~~END~~
+
+
+SELECT * FROM view_db_owner_principal_id_v1;
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('db_owner'));
+GO
+~~START~~
+nvarchar
+db_owner
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('dbo'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('testuser'));
+GO
+~~START~~
+nvarchar
+testuser
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('roletest'));
+GO
+~~START~~
+nvarchar
+roletest
+~~END~~
+
+
+SELECT (DATABASE_PRINCIPAL_ID(NULL));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID('db_owner '));
+GO
+~~START~~
+nvarchar
+db_owner
+~~END~~
+
+
+SELECT user_name(DATABASE_PRINCIPAL_ID());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT DATABASE_PRINCIPAL_ID('test_me')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATABASE_PRINCIPAL_ID(NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+

@@ -17,6 +17,8 @@ TestBIT
 TestChar
 TestDatetime2
 TestDatetime
+TestDatetime-numeric-representation
+TestDatetime-numeric-dateaddfunction
 TestDate
 TestDecimal
 TestFloat
@@ -409,7 +411,7 @@ test_windows_alter_user
 BABEL-733
 BABEL-745
 BABEL-3938
-BABEL-1199
+sys-userid
 BABEL-NEXT-VALUE-FOR
 babel_context_info
 binary-index
@@ -418,4 +420,10 @@ BABEL-3478
 rowcount
 BABEL-1625
 BABEL-3474
+BABEL-3818
 dateadd_internal_df
+datetime2fromparts-after-15-2
+timefromparts
+orderby
+sys_sysusers_dep
+BABEL-3215

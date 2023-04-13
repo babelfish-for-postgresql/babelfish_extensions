@@ -336,4 +336,8 @@ BABEL-3938
 binary-index
 rowcount
 BABEL-1625
+BABEL-3818
 BABEL-3474
+datetime2fromparts
+timefromparts
+BABEL-3215
