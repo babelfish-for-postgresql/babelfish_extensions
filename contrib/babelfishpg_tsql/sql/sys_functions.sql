@@ -144,9 +144,14 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'tsql_get_returnTypmodValue'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.user_id(IN user_name TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.user_id(IN user_name sys.sysname)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.user_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
@@ -1132,6 +1137,43 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate sys.bit) RETURNS DATETIME
+AS
+$body$
+BEGIN
+        RAISE EXCEPTION 'Argument data type bit is invalid for argument 2 of dateadd function.';
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate numeric) RETURNS DATETIME
+AS
+$body$
+BEGIN
+        return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate real) RETURNS DATETIME
+AS
+$body$
+BEGIN
+        return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate double precision) RETURNS DATETIME
+AS
+$body$
+BEGIN
+        return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT
 AS
 $body$
@@ -1145,6 +1187,46 @@ BEGIN
     END IF;
 END;
 $body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_numeric_representation_helper(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS DATETIME AS $$
+DECLARE
+    digit_to_startdate DATETIME;
+BEGIN
+    IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype) THEN
+        digit_to_startdate := CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(startdate as sys.DATETIME);
+    END IF;
+
+    CASE datepart
+	WHEN 'year' THEN
+		RETURN digit_to_startdate + make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN digit_to_startdate + make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN digit_to_startdate + make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN digit_to_startdate + make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN digit_to_startdate + make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN digit_to_startdate + make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN digit_to_startdate + make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN digit_to_startdate + make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN digit_to_startdate + make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN digit_to_startdate + make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN digit_to_startdate + make_interval(secs => (num::numeric) * 0.001);
+	ELSE
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+	END CASE;
+END;
+$$
+STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.datepart_internal(IN datepart PG_CATALOG.TEXT, IN arg anyelement,IN df_tz INTEGER DEFAULT 0) RETURNS INTEGER AS $$
@@ -1745,26 +1827,15 @@ CREATE OR REPLACE FUNCTION sys.servicename()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 
-CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
 RETURNS OID
-AS
-$$
-BEGIN
-    -- If user_name is NULL, return the result of USER_ID()
-    IF user_name IS NULL OR user_name = 'NULL' THEN
-        RETURN NULL;
-    END IF;
-    -- Trim the trailing spaces from user_name
-    user_name := rtrim(user_name);
-    -- If user_name is an empty string or contains only spaces, return NULL
-    IF user_name = '' THEN
-        RETURN NULL;
-    END IF;
-    -- Return the principal_id of the specified user_name
-    RETURN (SELECT principal_id FROM sys.database_principals WHERE name = user_name);
-END;
-$$
-LANGUAGE PLPGSQL IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.database_principal_id()
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id_noarg'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- In tsql @@max_precision represents max precision that server supports
 -- As of now, we do not support change in max_precision. So, returning default value
