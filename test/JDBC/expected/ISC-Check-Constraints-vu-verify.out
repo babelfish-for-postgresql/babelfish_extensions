@@ -33,7 +33,7 @@ isc_check_constraints_db1#!#dbo#!#test_datetime_c_time_check#!#(((c_time < '09:0
 isc_check_constraints_db1#!#dbo#!#test_functioncall_col1_check#!#((isjson(col1) > 0))
 isc_check_constraints_db1#!#dbo#!#test_functioncall_col1_check1#!#(("right"(col1, 1) <> ','))
 isc_check_constraints_db1#!#dbo#!#test_functioncall_col1_check2#!#((ltrim(col1) <> ''))
-isc_check_constraints_db1#!#dbo#!#test_functioncall_col1_check3#!#((CAST((getutcdate() AT TIME ZONE col1) AS nvarchar(128)) <> ''))
+isc_check_constraints_db1#!#dbo#!#test_functioncall_col1_check3#!#((CAST((babelfish_conv_helper_to_varchar('character varying(128)', getutcdate() AT TIME ZONE col1, false)) AS nvarchar(128)) <> ''))
 isc_check_constraints_db1#!#dbo#!#test_null_a_check#!#((a IS NOT NULL))
 isc_check_constraints_db1#!#dbo#!#test_null1_a_check#!#((a <> CAST(NULL AS int)))
 isc_check_constraints_db1#!#dbo#!#test_null1_b_check#!#((b = CAST(NULL AS int)))
