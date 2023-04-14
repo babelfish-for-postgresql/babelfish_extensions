@@ -1501,12 +1501,15 @@ is_nullable_constraint(Constraint *cst, Oid rel_oid)
 		const char *col_name = NULL;
 		AttrNumber	attnum = InvalidAttrNumber;
 
-		Assert(nodeTag(value) == T_String);
-		if (nodeTag(value) == T_String)
+		if (nodeTag(value) == T_IndexElem){
+			col_name = ((IndexElem *)value)->name;
+		}
+		else
 		{
 			col_name = strVal(value);
-			attnum = get_attnum(rel_oid, col_name);
 		}
+
+		attnum = get_attnum(rel_oid, col_name);
 
 		if (get_attnotnull(rel_oid, attnum))
 		{
