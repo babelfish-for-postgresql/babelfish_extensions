@@ -430,11 +430,82 @@ master#!#sp_rename_vu_schema1#!#sp_rename_vu_seq1_new2
 
 -- ****Given objtype is valid but not supported yet****
 -- Column
-EXEC sp_rename 'sp_rename_vu_table2.sp_rename_vu_t2_col1', 'sp_rename_vu_t2_col1_new', 'COLUMN';
+EXEC sp_rename 'sp_rename_vu_table1_case_insensitive2', 'sp_rename_vu_table1', 'OBJECT';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table1' 
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t1_col1#!#sp_rename_vu_schema1#!#sp_rename_vu_table1
+sp_rename_vu_s1_t1_col2#!#sp_rename_vu_schema1#!#sp_rename_vu_table1
+sp_rename_vu_t1_col1#!#dbo#!#sp_rename_vu_table1
+sp_rename_vu_t1_col2#!#dbo#!#sp_rename_vu_table1
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_table1.sp_rename_vu_t1_col1', 'sp_rename_vu_t1_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table1' 
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t1_col1#!#sp_rename_vu_schema1#!#sp_rename_vu_table1
+sp_rename_vu_s1_t1_col2#!#sp_rename_vu_schema1#!#sp_rename_vu_table1
+sp_rename_vu_t1_col1_new#!#dbo#!#sp_rename_vu_table1
+sp_rename_vu_t1_col2#!#dbo#!#sp_rename_vu_table1
+~~END~~
+
+
+INSERT INTO sp_rename_vu_table1(sp_rename_vu_t1_col1_new) VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT sp_rename_vu_t1_col1_new from sp_rename_vu_table1;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table2_new'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t2_col1#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new
+sp_rename_vu_s1_t2_col2#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table2_new'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t2_col1_new#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new
+sp_rename_vu_s1_t2_col2#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new
+~~END~~
+
+
+-- COLUMN: error-case
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_wrong_col', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Feature not supported: renaming object type Column)~~
+~~ERROR (Message: column "sp_rename_vu_s1_t2_wrong_col" does not exist)~~
 
 
 -- Index
@@ -467,4 +538,18 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Feature not supported: renaming object type Trigger)~~
+
+
+-- Helper Function
+DECLARE @sp_rename_helperfunc_out1 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out2 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out3 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out4 nvarchar(776);
+EXEC sys.babelfish_sp_rename_word_parse 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1_new', 'COLUMN', @sp_rename_helperfunc_out1 OUT, @sp_rename_helperfunc_out2 OUT, @sp_rename_helperfunc_out3 OUT, @sp_rename_helperfunc_out4 OUT;
+SELECT @sp_rename_helperfunc_out1, @sp_rename_helperfunc_out2, @sp_rename_helperfunc_out3, @sp_rename_helperfunc_out4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t2_col1_new#!#sp_rename_vu_table2_new#!#sp_rename_vu_schema1#!#<NULL>
+~~END~~
 
