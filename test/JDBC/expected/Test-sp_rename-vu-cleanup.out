@@ -11,7 +11,7 @@ GO
 DROP VIEW sp_rename_vu_schema1.sp_rename_vu_view1_new;
 GO
 
-DROP TABLE sp_rename_vu_table1_case_insensitive2;
+DROP TABLE sp_rename_vu_table1;
 GO
 
 DROP TABLE sp_rename_vu_schema1.sp_rename_vu_table1;

@@ -1,0 +1,40 @@
+SELECT * FROM current_user_id_v1;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+EXEC current_user_id_p1;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+
+SELECT * FROM current_user_id_v2;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+EXEC current_user_id_p2;
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
