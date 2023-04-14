@@ -410,6 +410,7 @@ BABEL-3657
 test_windows_alter_user
 BABEL-733
 BABEL-745
+BABEL-808
 BABEL-3938
 sys-userid
 BABEL-NEXT-VALUE-FOR

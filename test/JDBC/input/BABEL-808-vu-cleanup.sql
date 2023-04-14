@@ -1,0 +1,20 @@
+DROP VIEW IF EXISTS EmployeeDatabaseView1;
+GO
+
+DROP PROCEDURE IF EXISTS GetEmployeeDatabaseName1;
+GO
+
+DROP VIEW IF EXISTS EmployeeDatabaseView2;
+GO
+
+DROP PROCEDURE IF EXISTS GetEmployeeDatabaseName2;
+GO
+
+DROP VIEW IF EXISTS EmployeeDatabaseView3;
+GO
+
+DROP PROCEDURE IF EXISTS GetEmployeeDatabaseName3;
+GO
+
+DROP TABLE IF EXISTS Employee;
+GO

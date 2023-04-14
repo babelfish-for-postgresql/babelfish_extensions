@@ -103,6 +103,7 @@ PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
 PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
+PG_FUNCTION_INFO_V1(parsename);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -2082,6 +2083,54 @@ numeric_radians(PG_FUNCTION_ARGS)
 
 	PG_RETURN_NUMERIC(result);
 }
+
+Datum 
+parsename(PG_FUNCTION_ARGS)
+{
+    text *object_name = PG_GETARG_TEXT_P(0);
+    int object_piece = PG_GETARG_INT32(1);
+    char *delim = ".";
+    char *token;
+    char *save_ptr;
+    char *database_name = NULL;
+    char *schema_name = NULL;
+    char *table_name = NULL;
+    int count = 0;
+
+    char *object_name_str = text_to_cstring(object_name);
+    token = strtok_r(object_name_str, delim, &save_ptr);
+
+    while (token != NULL) {
+        count++;
+        if (count == 1) {
+            schema_name = token;
+        }
+        else if (count == 2) {
+            table_name = token;
+        }
+        else if (count == 3) {
+            database_name = token;
+        }
+        else if (count > 3) {
+            break;
+        }
+        token = strtok_r(NULL, delim, &save_ptr);
+    }
+    if (object_piece == 1) {
+        PG_RETURN_TEXT_P(cstring_to_text(database_name));
+    }
+    else if (object_piece == 2) {
+        PG_RETURN_TEXT_P(cstring_to_text(table_name));
+    }
+    else if (object_piece == 3) {
+        PG_RETURN_TEXT_P(cstring_to_text(schema_name));
+    }
+    else {
+        PG_RETURN_NULL();
+    }
+}
+
+
 
 /* Returns the database schema name for schema-scoped objects. */
 Datum
