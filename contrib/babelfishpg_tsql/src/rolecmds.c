@@ -2245,7 +2245,7 @@ windows_login_contains_invalid_chars(char *input)
 
 /**
  * Domain name checks, doesnot allow characters like <>&*|' aong with list 
- * https://learn.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou#netbios-domain-names
+ * https://github.com/MicrosoftDocs/SupportArticles-docs/blob/main/support/windows-se[…]rver/identity/naming-conventions-for-computer-domain-site-ou.md 
 */
 bool
 windows_domain_contains_invalid_chars(char *input)
