@@ -165,3 +165,52 @@ GO
 -- test for windows login with password --> should throw error
 CREATE LOGIN [babel\adbabel] from windows with password='1234';
 GO
+
+CREATE LOGIN [ba,bel\username] from windows;
+GO
+CREATE LOGIN [ba~el\username] from windows;
+GO
+CREATE LOGIN [ba:bel\username] from windows;
+GO
+CREATE LOGIN [ba!bel\username] from windows;
+GO
+CREATE LOGIN [ba@bel\username] from windows;
+GO
+CREATE LOGIN [ba#bel\username] from windows;
+GO
+CREATE LOGIN [ba$bel\username] from windows;
+GO
+CREATE LOGIN [ba%bel\username] from windows;
+GO
+CREATE LOGIN [ba_bel\username] from windows;
+GO
+CREATE LOGIN [ba^bel\username] from windows;
+GO
+CREATE LOGIN [ba"bel\username] from windows;
+GO
+CREATE LOGIN [ba'bel\username] from windows;
+GO
+CREATE LOGIN [ba(bel\username] from windows;
+GO
+CREATE LOGIN [ba)bel\username] from windows;
+GO
+CREATE LOGIN [ba{bel\username] from windows;
+GO
+CREATE LOGIN [ba}bel\username] from windows;
+GO
+CREATE LOGIN [ba bel\username] from windows;
+GO
+CREATE LOGIN [ba\bel\username] from windows;
+GO
+CREATE LOGIN [ba/bel\username] from windows;
+GO
+CREATE LOGIN [ba<bel\username] from windows;
+GO
+CREATE LOGIN [ba>bel\username] from windows;
+GO
+CREATE LOGIN [ba&bel\username] from windows;
+GO
+CREATE LOGIN [ba*bel\username] from windows;
+GO
+CREATE LOGIN [ba|bel\username] from windows;
+GO

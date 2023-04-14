@@ -2448,6 +2448,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+								
+								/*
+								 * Check whether the domain name contains invalid characters or not.
+								 */
+								if (windows_domain_contains_invalid_chars(orig_loginname))
+									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+													errmsg("'%s' is not a valid domain because it contains invalid characters.", orig_loginname)));
 
 								pfree(stmt->role);
 								stmt->role = convertToUPN(orig_loginname);

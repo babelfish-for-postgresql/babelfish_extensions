@@ -2243,6 +2243,38 @@ windows_login_contains_invalid_chars(char *input)
 	return false;
 }
 
+/**
+ * Domain name checks, doesnot allow characters like <>&*|' aong with list 
+ * https://learn.microsoft.com/en-us/troubleshoot/windows-server/identity/naming-conventions-for-computer-domain-site-ou#netbios-domain-names
+*/
+bool
+windows_domain_contains_invalid_chars(char *input)
+{
+	int total_length = strlen(input);
+	char *pos_slash = strchr(input, '\\');
+	int	domain_len = total_length - strlen(pos_slash);
+	int	i = 0;
+	while (i < domain_len)
+	{
+		if (input[i] == ',' || input[i] == '~' ||
+		input[i] == ':' || input[i] == '!' ||
+		input[i] == '@' || input[i] == '#' ||
+		input[i] == '$' || input[i] == '%' || 
+		input[i] == '_' || input[i] == '^' || 
+		input[i] == '\"' || input[i] == '\'' ||
+		input[i] == '(' || input[i] == ')' || 
+		input[i] == '{' || input[i] == '}' || 
+		input[i] == '\\' || input[i] == '/'||
+		input[i] == '<' || input[i] == '>'||
+		input[i] == ' ' || input[i] == '*'||
+		input[i] == '|' || input[i] == '&' )
+			return true;
+		
+		i++;
+	}
+	return false;
+}
+
 /*
  * Check whether the logon_name has a valid length or not.
  */
