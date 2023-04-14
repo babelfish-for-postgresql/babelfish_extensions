@@ -2084,7 +2084,7 @@ numeric_radians(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(result);
 }
 
-Datum 
+Datum
 parsename(PG_FUNCTION_ARGS)
 {
     text *object_name = PG_GETARG_TEXT_P(0);
@@ -2096,10 +2096,18 @@ parsename(PG_FUNCTION_ARGS)
     char *schema_name = NULL;
     char *table_name = NULL;
     int count = 0;
+    char *object_name_str;
+	char *dummy_prefix = "NULL";
+    object_name_str = text_to_cstring(object_name);
+	
+    if (strlen(object_name_str) > 512) {
+        PG_RETURN_NULL();
+    }
 
-    char *object_name_str = text_to_cstring(object_name);
+    if (object_name_str[0] == '.') {
+        object_name_str = psprintf("%s%s", dummy_prefix, object_name_str);
+    }
     token = strtok_r(object_name_str, delim, &save_ptr);
-
     while (token != NULL) {
         count++;
         if (count == 1) {
@@ -2116,21 +2124,32 @@ parsename(PG_FUNCTION_ARGS)
         }
         token = strtok_r(NULL, delim, &save_ptr);
     }
+
+    if (count != 3) {
+        PG_RETURN_NULL();
+    }
     if (object_piece == 1) {
+		if(database_name == NULL){
+			PG_RETURN_NULL();
+		}
         PG_RETURN_TEXT_P(cstring_to_text(database_name));
     }
     else if (object_piece == 2) {
+		if(table_name == NULL){
+			PG_RETURN_NULL();
+		}
         PG_RETURN_TEXT_P(cstring_to_text(table_name));
     }
     else if (object_piece == 3) {
+		if(schema_name == NULL){
+			PG_RETURN_NULL();
+		}
         PG_RETURN_TEXT_P(cstring_to_text(schema_name));
     }
     else {
         PG_RETURN_NULL();
     }
 }
-
-
 
 /* Returns the database schema name for schema-scoped objects. */
 Datum
