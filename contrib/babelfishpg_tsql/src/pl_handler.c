@@ -1517,11 +1517,20 @@ is_nullable_constraint(Constraint *cst, Oid rel_oid)
 	/* Loop through the constraint keys */
 	foreach(lc, cst->keys)
 	{
-		String	   *strval = (String *) lfirst(lc);
+		Node       *node = (Node *) lfirst(lc);
+		String	   *strval;
 		const char *col_name = NULL;
 		AttrNumber	attnum = InvalidAttrNumber;
 
-		col_name = strVal(strval);
+		if (nodeTag(node) == T_IndexElem){
+			col_name = ((IndexElem *)node)->name;
+		}
+		else
+		{
+			strval = (String *)node;
+			col_name = strVal(strval);
+		}
+
 		attnum = get_attnum(rel_oid, col_name);
 
 		if (get_attnotnull(rel_oid, attnum))
