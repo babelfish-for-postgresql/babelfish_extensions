@@ -42,7 +42,7 @@ EXEC babel_4078_before_14_8_or_15_3_vu_prepare_proc11
 GO
 ~~START~~
 nvarchar
-2023-02-03
+03-02-2023
 ~~END~~
 
 
@@ -58,7 +58,7 @@ EXEC babel_4078_before_14_8_or_15_3_vu_prepare_proc22
 GO
 ~~START~~
 nvarchar
-19:08:35.5
+19:08:35
 ~~END~~
 
 
@@ -74,7 +74,7 @@ SELECT * FROM babel_4078_before_14_8_or_15_3_vu_prepare_func11()
 GO
 ~~START~~
 nvarchar
-2023-02-03
+03-02-2023
 ~~END~~
 
 
@@ -90,7 +90,7 @@ SELECT * FROM babel_4078_before_14_8_or_15_3_vu_prepare_func22()
 GO
 ~~START~~
 nvarchar
-19:08:35.5
+19:08:35
 ~~END~~
 
 
