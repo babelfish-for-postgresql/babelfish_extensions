@@ -1247,20 +1247,10 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relation = $4;
-					tsql_update_delete_stmt_from_clause_alias(n->relation, $8);
+					n->limitCount = $3;
 					n->targetList = $7;
-					if ($8 != NULL && IsA(linitial($8), JoinExpr))
-					{
-						n = (UpdateStmt*)tsql_update_delete_stmt_with_join(
-											(Node*)n, $8, $9, $3, $4,
-											yyscanner);
-					}
-					else
-					{
-						n->fromClause = $8;
-						n->whereClause = tsql_update_delete_stmt_with_top($3,
-											$4, $9, yyscanner);
-					}
+					n->fromClause = $8;
+					n->whereClause = $9;
 					n->returningList = $10;
 					n->withClause = $1;
 					$$ = (Node *)n;
@@ -3125,28 +3115,10 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			tsql_opt_table_hint_expr from_clause where_or_current_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
+					n->limitCount = $3;
 					n->relation = $5;
-					if ($3 != NULL)
-					{
-						tsql_update_delete_stmt_from_clause_alias(n->relation, $7);
-						if ($7 != NULL && IsA(linitial($7), JoinExpr))
-						{
-							n = (DeleteStmt*)tsql_update_delete_stmt_with_join(
-												(Node*)n, $7, $8, $3, $5,
-												yyscanner);
-						}
-						else
-						{
-							n->usingClause = $7;
-							n->whereClause = tsql_update_delete_stmt_with_top($3,
-												$5, $8, yyscanner);
-						}
-					}
-					else
-					{
-						n->usingClause = $7;
-						n->whereClause = $8;
-					}
+					n->usingClause = $7;
+					n->whereClause = $8;
 					n->returningList = NULL;
 					n->withClause = $1;
 					$$ = (Node *)n;
