@@ -405,7 +405,6 @@ pltsql_miscProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *qu
 			Node *trigStmt = NULL;
 			ObjectAddress tbltyp;
 			int origname_location = -1;
-			*flag = true;
 
 			foreach(option, stmt->options)
 					{
@@ -427,7 +426,7 @@ pltsql_miscProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *qu
 
 			if((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL)
 			{
-
+				*flag = true;
 				/* All event trigger calls are done only when isCompleteQuery is true */
 				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
@@ -569,18 +568,13 @@ pltsql_miscProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *qu
 				return;
 
 			}
-			else
-			{
-				address = CreateFunction(pstate, (CreateFunctionStmt *) parsetree);
-				break;
-			}
 			break;
 		}
 		case T_CreatedbStmt:
 		{
-			*flag = true;
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
+				*flag = true;
 				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
 				return;
 			}
@@ -588,10 +582,10 @@ pltsql_miscProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *qu
 		}
 		case T_DropdbStmt:
 		{
-			*flag = true;
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
+				*flag = true;
 				drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
 				return;
 			}
@@ -599,14 +593,16 @@ pltsql_miscProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *qu
 		}
 		case T_TransactionStmt:
 		{
-			*flag = true;
 			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
 			{
+
+				*flag = true;
 				PLTsqlProcessTransaction(parsetree, params, qc);
 			}
 			break;
 		}
 		default:
+			*flag = false;
 			break;
 	}
 }									  
