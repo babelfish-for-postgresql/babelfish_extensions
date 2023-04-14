@@ -720,7 +720,7 @@ user_id(PG_FUNCTION_ARGS)
 	Oid			ret;
 	size_t  	len;
 
-	user_input = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	user_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	db_name = get_cur_db_name();
 
 	if (!db_name)
