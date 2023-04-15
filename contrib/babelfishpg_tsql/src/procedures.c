@@ -2326,7 +2326,6 @@ clean_up_bbf_server_option(char *servername)
 	if (HeapTupleIsValid(scantup))
 	{
 		CatalogTupleDelete(bbf_servers_def_rel, &scantup->t_self);
-		heap_freetuple(scantup);
 	}
 	table_endscan(tblscan);
 	table_close(bbf_servers_def_rel, RowExclusiveLock);
