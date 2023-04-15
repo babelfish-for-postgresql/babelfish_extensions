@@ -1,3 +1,12 @@
+CREATE DATABASE sys_sysobjects_vu_prepare_db1;
+GO
+
+USE sys_sysobjects_vu_prepare_db1;
+GO
+
+CREATE TABLE sys_sysobjects_vu_prepare_table_t1(c1 int)
+GO
+
 USE master;
 GO
 
@@ -7,6 +16,47 @@ GO
 int
 1
 ~~END~~
+
+
+-- sysobjects should also exist in dbo schema
+SELECT COUNT(*) FROM dbo.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- In case of cross-db, sysobjects should also exist in dbo schema
+SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.sys.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table_t1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+
+
+-- should not be visible here
+SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.sys.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM sys_sysobjects_vu_prepare_db1.dbo.SySObJEctS s where s.name = 'sys_sysobjects_vu_prepare_table';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
 
 
 SELECT * FROM sys_sysobjects_vu_prepare_view

@@ -81,7 +81,7 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
-static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype);
+static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
 static void exec_utility_cmd_helper(char *query_str);
 static void update_bbf_server_options(char *servername, int query_timeout, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
@@ -2991,6 +2991,7 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			   *new_name,
 			   *schema_name,
 			   *objtype,
+			   *curr_relname,
 			   *process_util_querystr;
 	ObjectType	objtype_code;
 	size_t		len;
@@ -3010,6 +3011,7 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		new_name = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
 		schema_name = PG_ARGISNULL(2) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(2));
 		objtype = PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
+		curr_relname = PG_ARGISNULL(4) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(4));
 
 		/* 3. check if the input arguments are valid, and parse the objname */
 		/* objname can have at most 3 parts */
@@ -3035,6 +3037,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		len = strlen(objtype);
 		while (isspace(objtype[len - 1]))
 			objtype[--len] = 0;
+		if (curr_relname != NULL) {
+			len = strlen(curr_relname);
+			while(isspace(curr_relname[len - 1]))
+				curr_relname[--len] = 0;
+		}
 
 		/* check if inputs are empty after removing trailing spaces */
 		if (obj_name == NULL)
@@ -3093,6 +3100,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("Feature not supported: renaming object type Table-Type")));
 		}
+		else if (strcmp(objtype, "CO") == 0)
+		{
+			objtype_code = OBJECT_COLUMN;
+			process_util_querystr = "(ALTER TABLE )";
+		}
 		else
 		{
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -3107,7 +3119,7 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		 * parsetree_list = gen_sp_rename_subcmds(obj_name, new_name,
 		 * schema_name, objtype);
 		 */
-		parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype_code);
+		parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype_code, curr_relname);
 
 		/* 5. run all commands */
 		foreach(parsetree_item, parsetree_list)
@@ -3152,8 +3164,10 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
+
 static List *
-gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype)
+gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname)
 {
 	StringInfoData query;
 	List	   *res;
@@ -3161,35 +3175,36 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	RenameStmt *renamestmt;
 
 	initStringInfo(&query);
-	if (objtype == OBJECT_TABLE)
+	switch (objtype)
 	{
-		appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
-	}
-	else if (objtype == OBJECT_VIEW)
-	{
-		appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
-	}
-	else if (objtype == OBJECT_PROCEDURE)
-	{
-		appendStringInfo(&query, "ALTER PROCEDURE dummy RENAME TO dummy; ");
-	}
-	else if (objtype == OBJECT_FUNCTION)
-	{
-		appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
-	}
-	else if (objtype == OBJECT_SEQUENCE)
-	{
-		appendStringInfo(&query, "ALTER SEQUENCE dummy RENAME TO dummy; ");
-	}
-	else
-	{
-		ereport(ERROR,
+		case OBJECT_TABLE:
+			appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
+			break;
+		case OBJECT_VIEW:
+			appendStringInfo(&query, "ALTER VIEW dummy RENAME TO dummy; ");
+			break;
+		case OBJECT_PROCEDURE:
+			appendStringInfo(&query, "ALTER PROCEDURE dummy RENAME TO dummy; ");
+			break;
+		case OBJECT_FUNCTION:
+			appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
+			break;
+		case OBJECT_SEQUENCE:
+			appendStringInfo(&query, "ALTER SEQUENCE dummy RENAME TO dummy; ");
+			break;
+		case OBJECT_COLUMN:
+			appendStringInfo(&query, "ALTER TABLE dummy RENAME COLUMN dummy TO dummy; ");
+			appendStringInfo(&query, "ALTER TABLE dummy ALTER COLUMN dummy SET (dummy = 'dummy'); ");
+			break;
+		default:
+			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Provided objtype is not supported for sp_rename")));
+			break;
 	}
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-	if (list_length(res) != 1)
+	if ((objtype != OBJECT_COLUMN) && (list_length(res) != 1))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
@@ -3208,12 +3223,8 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
 		renamestmt->relation->relname = pstrdup(lowerstr(objname));
 	}
-	else
+	else if ((objtype == OBJECT_PROCEDURE) || (objtype == OBJECT_FUNCTION))
 	{
-		/*
-		 * } else if ((objtype == OBJECT_PROCEDURE) || (objtype ==
-		 * OBJECT_FUNCTION)) {
-		 */
 		ObjectWithArgs *objwargs = (ObjectWithArgs *) renamestmt->object;
 
 		renamestmt->renameType = objtype;
@@ -3221,6 +3232,37 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		orig_proc_funcname = pstrdup(newname);
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
+	}
+	else
+	{
+		/* COLUMN */
+		AlterTableStmt *altertablestmt;
+		AlterTableCmd *cmd;
+		ListCell *lc = NULL;
+
+		renamestmt->renameType = objtype;
+		renamestmt->relationType = OBJECT_TABLE;
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->relname = pstrdup(lowerstr(curr_relname));
+		rewrite_object_refs(stmt);
+
+		/* extra query nodes for modifying attoption column */
+		stmt = parsetree_nth_stmt(res, 1);
+		altertablestmt = (AlterTableStmt *) stmt;
+		if (!IsA(altertablestmt, AlterTableStmt))
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterTableStmt")));
+
+		altertablestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		altertablestmt->relation->relname = pstrdup(lowerstr(curr_relname));
+		altertablestmt->objtype = OBJECT_TABLE;
+		/* get data of the first node */
+		lc = list_head(altertablestmt->cmds);
+		cmd = (AlterTableCmd *) lfirst(lc);
+		cmd->subtype = AT_SetOptions;
+		cmd->name = pstrdup(lowerstr(newname));
+		cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(newname)), -1)); //column->location));
 	}
 	/* name mapping */
 	rewrite_object_refs(stmt);

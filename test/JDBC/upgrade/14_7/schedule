@@ -328,6 +328,7 @@ sys-xml_indexes
 sys-xml_schema_collections
 sys_all_objects
 sys_babelfish_configurations_view
+sys-userid-dep
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR
@@ -399,3 +400,4 @@ dateadd_internal_df
 datetime2fromparts
 timefromparts
 BABEL-3215
+BABEL-4078-before-14_8-or-15_3

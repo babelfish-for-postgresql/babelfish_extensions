@@ -2516,6 +2516,8 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			break;
 		case OBJECT_SEQUENCE:
 			break;
+		case OBJECT_COLUMN:
+			break;
 		default:
 			break;
 	}

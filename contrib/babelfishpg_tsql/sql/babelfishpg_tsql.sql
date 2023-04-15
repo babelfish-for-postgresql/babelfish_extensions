@@ -2941,13 +2941,101 @@ CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_internal(
 	IN "@objname" sys.nvarchar(776),
 	IN "@newname" sys.SYSNAME,
 	IN "@schemaname" sys.nvarchar(776),
-	IN "@objtype" char(2) DEFAULT NULL
+	IN "@objtype" char(2) DEFAULT NULL,
+	IN "@curr_relname" sys.nvarchar(776) DEFAULT NULL
 ) AS 'babelfishpg_tsql', 'sp_rename_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_internal TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_word_parse(
+	IN "@input" sys.nvarchar(776),
+	IN "@objtype" sys.varchar(13),
+	INOUT "@subname" sys.nvarchar(776),
+	INOUT "@curr_relname" sys.nvarchar(776),
+	INOUT "@schemaname" sys.nvarchar(776),
+	INOUT "@dbname" sys.nvarchar(776)
+)
+AS $$
+BEGIN
+	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row, * 
+	INTO #sp_rename_temptable 
+	FROM STRING_SPLIT(@input, '.') ORDER BY row DESC;
+
+	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as id, * 
+	INTO #sp_rename_temptable2 
+	FROM #sp_rename_temptable;
+	
+	DECLARE @row_count INT;
+	SELECT @row_count = COUNT(*) FROM #sp_rename_temptable2;
+
+	IF @objtype = 'COLUMN'
+		BEGIN
+			IF @row_count = 1
+				BEGIN
+					THROW 33557097, N'Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.', 1;
+				END
+			ELSE IF @row_count > 4
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			ELSE
+				BEGIN
+					IF @row_count > 1
+						BEGIN
+							SELECT @subname = value FROM #sp_rename_temptable2 WHERE id = 1;
+							SELECT @curr_relname = value FROM #sp_rename_temptable2 WHERE id = 2;
+							SET @schemaname = sys.schema_name();
+
+						END
+					IF @row_count > 2
+						BEGIN
+							SELECT @schemaname = value FROM #sp_rename_temptable2 WHERE id = 3;
+						END
+					IF @row_count > 3
+						BEGIN
+							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 4;
+							IF @dbname != sys.db_name()
+								BEGIN
+									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+								END
+						END
+				END
+		END
+	ELSE
+		BEGIN
+			IF @row_count > 3
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			ELSE
+				BEGIN
+					SET @curr_relname = NULL;
+					IF @row_count > 0
+						BEGIN
+							SELECT @subname = value FROM #sp_rename_temptable2 WHERE id = 1;
+							SET @schemaname = sys.schema_name();
+						END
+					IF @row_count > 1
+						BEGIN
+							SELECT @schemaname = value FROM #sp_rename_temptable2 WHERE id = 2;
+						END
+					IF @row_count > 2
+						BEGIN
+							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 3;
+							IF @dbname != sys.db_name()
+								BEGIN
+									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+								END
+						END
+				END
+		END
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_word_parse(IN sys.nvarchar(776), IN sys.varchar(13), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776)) TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_rename(
-	IN "@objname" sys.nvarchar(776),
-	IN "@newname" sys.SYSNAME,
+	IN "@objname" sys.nvarchar(776) = NULL,
+	IN "@newname" sys.SYSNAME = NULL,
 	IN "@objtype" sys.varchar(13) DEFAULT NULL
 )
 LANGUAGE 'pltsql'
@@ -2957,87 +3045,62 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
 		END
-	IF @objtype = 'COLUMN'
-		BEGIN
-			THROW 33557097, N'Feature not supported: renaming object type Column', 1;
-		END
-	IF @objtype = 'INDEX'
+	ELSE IF @objtype = 'INDEX'
 		BEGIN
 			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
 		END
-	IF @objtype = 'STATISTICS'
+	ELSE IF @objtype = 'STATISTICS'
 		BEGIN
 			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
 		END
-	IF @objtype = 'USERDATATYPE'
+	ELSE IF @objtype = 'USERDATATYPE'
 		BEGIN
 			THROW 33557097, N'Feature not supported: renaming object type User-defined Data Type alias', 1;
 		END
-	IF @objtype IS NOT NULL AND (@objtype != 'OBJECT')
+	ELSE
 		BEGIN
-			THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
-		END
-	DECLARE @name_count INT;
-	DECLARE @subname sys.nvarchar(776) = '';
-	DECLARE @schemaname sys.nvarchar(776) = '';
-	DECLARE @dbname sys.nvarchar(776) = '';
-	SELECT @name_count = COUNT(*) FROM STRING_SPLIT(@objname, '.');
-	IF @name_count > 3
-		BEGIN
-			THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
-		END
-	IF @name_count = 3
-		BEGIN
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @dbname = value FROM myTableWithRows WHERE row = 1;
-			IF @dbname != sys.db_name()
+			DECLARE @subname sys.nvarchar(776);
+			DECLARE @schemaname sys.nvarchar(776);
+			DECLARE @dbname sys.nvarchar(776);
+			DECLARE @curr_relname sys.nvarchar(776);
+			
+			EXEC sys.babelfish_sp_rename_word_parse @objname, @objtype, @subname OUT, @curr_relname OUT, @schemaname OUT, @dbname OUT;
+
+			DECLARE @currtype char(2);
+
+			IF @objtype = 'COLUMN'
 				BEGIN
-					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+					DECLARE @col_count INT;
+					SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @curr_relname and COLUMN_NAME = @subname;
+					IF @col_count < 0
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'CO';
 				END
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @schemaname = value FROM myTableWithRows WHERE row = 2;
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @subname = value FROM myTableWithRows WHERE row = 3;
+			ELSE IF @objtype = 'OBJECT'
+				BEGIN
+					DECLARE @count INT;
+					SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND o1.name = @subname;
+					IF @count > 1
+						BEGIN
+							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+						END
+					IF @count < 1
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND o1.name = @subname;
+				END
+			ELSE
+				BEGIN
+					THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+				END
+			EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
+			PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
 		END
-	IF @name_count = 2
-		BEGIN
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @schemaname = value FROM myTableWithRows WHERE row = 1;
-			WITH myTableWithRows AS (
-				SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row,*
-				FROM STRING_SPLIT(@objname, '.'))
-			SELECT @subname = value FROM myTableWithRows WHERE row = 2;
-		END
-	IF @name_count = 1
-		BEGIN
-			SET @schemaname = sys.schema_name();
-			SET @subname = @objname;
-		END
-	
-	DECLARE @count INT;
-	DECLARE @currtype char(2);
-	SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-	WHERE s1.name = @schemaname AND o1.name = @subname;
-	IF @count > 1
-		BEGIN
-			THROW 33557097, N'There are multiple objects with the given @objname.', 1;
-		END
-	IF @count < 1
-		BEGIN
-			THROW 33557097, N'There is no object with the given @objname.', 1;
-		END
-	SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-	WHERE s1.name = @schemaname AND o1.name = @subname;
-	EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype;
-	PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
 END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;

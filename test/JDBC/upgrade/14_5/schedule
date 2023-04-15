@@ -290,6 +290,7 @@ sys-views
 sys-xml_indexes
 sys-xml_schema_collections
 sys_all_objects
+sys-userid-dep
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR
@@ -341,3 +342,4 @@ BABEL-3474
 datetime2fromparts
 timefromparts
 BABEL-3215
+BABEL-4078-before-14_8-or-15_3
