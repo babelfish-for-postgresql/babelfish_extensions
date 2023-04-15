@@ -1,0 +1,15 @@
+DROP TABLE BABEL_1528_vu_prepare_t1
+GO
+
+DROP VIEW BABEL_1528_vu_prepare_v1
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: view "babel_1528_vu_prepare_v1" does not exist)~~
+
+
+DROP PROCEDURE BABEL_1528_vu_prepare_p1
+GO
+
+DROP FUNCTION BABEL_1528_vu_prepare_f1
+GO
