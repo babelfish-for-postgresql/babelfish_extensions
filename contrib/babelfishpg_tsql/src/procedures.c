@@ -2254,31 +2254,6 @@ exec_utility_cmd_helper(char *query_str)
 	CommandCounterIncrement();
 }
 
-// static int 
-// get_server_id_from_server_name(char *servername)
-// {
-// 	HeapTuple 	reltup;
-// 	Oid 		srvId;
-// 	Form_pg_foreign_server srvForm;
-// 	int 		server_id;
-
-// 	reltup = SearchSysCacheCopy1(FOREIGNSERVERNAME,
-// 						 CStringGetDatum(servername));
-	
-// 	if (!HeapTupleIsValid(reltup))
-// 		ereport(ERROR,
-// 			(errcode(ERRCODE_UNDEFINED_OBJECT),
-// 			 errmsg("server \"%s\" does not exist", servername)));
-
-// 	srvForm = (Form_pg_foreign_server) GETSTRUCT(reltup);
-// 	srvId = srvForm->oid;
-// 	server_id = srvId;
-
-// 	heap_freetuple(reltup);
-
-// 	return server_id;
-// }
-
 static void 
 update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
 {
@@ -2290,10 +2265,6 @@ update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
 	ScanKeyData		key;
 	HeapTuple	tuple, old_tuple;
 	TableScanDesc		tblscan;
-	int32		server_id;
-
-	// fetch the server_id from servername from pg_foreign_server
-	server_id = get_server_id_from_server_name(servername);
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
 									 RowExclusiveLock);
@@ -2302,7 +2273,7 @@ update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
-	new_record[0] = Int32GetDatum(server_id);
+	new_record[0] = CStringGetTextDatum(servername);
 	new_record[1] = Int32GetDatum(query_timeout);
 
 	if(isInsert)
@@ -2315,9 +2286,9 @@ update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
 	{
 		/* Search and obtain the tuple based on the server_id */	
 		ScanKeyInit(&key,
-				Anum_bbf_servers_def_server_id,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(server_id));
+				Anum_bbf_servers_def_servername,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(servername));
 		tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
 		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
 		new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
@@ -2325,6 +2296,7 @@ update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
 								new_record, new_record_nulls, new_record_repl);
 			
 		CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
+		table_endscan(tblscan);
 	}
 
 	heap_freetuple(tuple);
@@ -2338,24 +2310,25 @@ clean_up_bbf_server_option(char *servername)
 	Relation		bbf_servers_def_rel;
 	HeapTuple		scantup;
 	ScanKeyData		key;
-	int32		server_id;
 	TableScanDesc	tblscan;
-
-	server_id = get_server_id_from_server_name(servername);
 
 	/* Fetch the relation */
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
 
 	/* Search and drop the definition */
 	ScanKeyInit(&key,
-				Anum_bbf_servers_def_server_id,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(server_id));
+				Anum_bbf_servers_def_servername,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(servername));
 
 	tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
 	scantup = heap_getnext(tblscan, ForwardScanDirection);
-	CatalogTupleDelete(bbf_servers_def_rel, &scantup->t_self);
-
+	if (HeapTupleIsValid(scantup))
+	{
+		CatalogTupleDelete(bbf_servers_def_rel, &scantup->t_self);
+		heap_freetuple(scantup);
+	}
+	table_endscan(tblscan);
 	table_close(bbf_servers_def_rel, RowExclusiveLock);
 }
 
@@ -2652,10 +2625,10 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
 	{
 		// Remove the server entry from sys.babelfish_server_options catalog
-		clean_up_bbf_server_option(linked_srv);
 		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
 
 		exec_utility_cmd_helper(query.data);
+		clean_up_bbf_server_option(linked_srv);
 		pfree(query.data);
 
 		if (linked_srv)

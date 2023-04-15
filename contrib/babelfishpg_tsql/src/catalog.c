@@ -1187,29 +1187,14 @@ get_bbf_servers_def_oid()
 	return bbf_servers_def_oid;
 }
 
-int 
-get_server_id_from_server_name(char *servername)
+Oid 
+get_bbf_servers_def_idx_oid()
 {
-	HeapTuple 	reltup;
-	Oid 		srvId;
-	Form_pg_foreign_server srvForm;
-	int 		server_id;
+	if (!OidIsValid(bbf_servers_def_idx_oid))
+		bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME,
+											 get_namespace_oid("sys", false));
 
-	reltup = SearchSysCacheCopy1(FOREIGNSERVERNAME,
-						 CStringGetDatum(servername));
-	
-	if (!HeapTupleIsValid(reltup))
-		ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			 errmsg("server \"%s\" does not exist", servername)));
-
-	srvForm = (Form_pg_foreign_server) GETSTRUCT(reltup);
-	srvId = srvForm->oid;
-	server_id = srvId;
-
-	heap_freetuple(reltup);
-
-	return server_id;
+	return bbf_servers_def_idx_oid;
 }
 
 int 
@@ -1220,16 +1205,14 @@ get_query_timeout_from_server_name(char *servername)
 	ScanKeyData		key;
 	TableScanDesc		scan;
 	int query_timeout;
-	int server_id;
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
 										 RowExclusiveLock);
 
-	server_id = get_server_id_from_server_name(servername);
 	ScanKeyInit(&key,
-				Anum_bbf_servers_def_server_id,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(server_id));
+				Anum_bbf_servers_def_servername,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(servername));
 
 	scan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
 
@@ -1243,6 +1226,37 @@ get_query_timeout_from_server_name(char *servername)
 	table_endscan(scan);
 	table_close(bbf_servers_def_rel, RowExclusiveLock);
 	return query_timeout;
+}
+
+void
+clean_up_bbf_server_def()
+{
+	Relation	bbf_servers_def_rel;
+	HeapTuple	tuple;
+	ScanKeyData		key;
+	TableScanDesc		scan;
+
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
+										 RowExclusiveLock);
+
+	ScanKeyInit(&key,
+				Anum_bbf_servers_def_query_timeout,
+				BTGreaterEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(0));
+
+	scan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		CatalogTupleDelete(bbf_servers_def_rel,
+							&tuple->t_self);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+
+	table_endscan(scan);
+
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
 }
 
 /*****************************************
