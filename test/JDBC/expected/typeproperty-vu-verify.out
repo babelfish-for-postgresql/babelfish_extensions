@@ -249,7 +249,7 @@ Select typeproperty('test1.null_check1','ownerid')
 GO
 ~~START~~
 int
-19255
+19254
 ~~END~~
 
 
@@ -257,7 +257,7 @@ Select typeproperty('test1.null_check2','ownerid')
 GO
 ~~START~~
 int
-19255
+19254
 ~~END~~
 
 
@@ -265,7 +265,7 @@ Select typeproperty('test2.null_check1','ownerid')
 GO
 ~~START~~
 int
-19255
+19254
 ~~END~~
 
 
@@ -273,6 +273,6 @@ Select typeproperty('test2.null_check2','ownerid')
 GO
 ~~START~~
 int
-19255
+19254
 ~~END~~
 

@@ -3454,7 +3454,7 @@ BEGIN
     ELSEIF property = 'ownerid'
     THEN
         IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
-        RETURN(SELECT CAST(dc.typowner AS INT) FROM  pg_catalog.pg_type dc WHERE dc.typnamespace = schemaid AND dc.typname = type_name COLLATE sys.database_default);
+        RETURN(SELECT CAST(dc.nspowner AS INT) FROM  pg_catalog.pg_namespace dc WHERE dc.oid = schemaid);
         ELSE
         RETURN 10;
         END IF;
