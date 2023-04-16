@@ -1,0 +1,278 @@
+-- =============== AllowsNull ===============
+Select typeproperty('sys.int','allowsnull')
+Go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('pg_catalog.int','allowsnull')
+Go
+~~START~~
+int
+1
+~~END~~
+
+
+Select typeproperty('pg_catalog.int','allowsnul')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('pg_catalog.int',' allowsnull   ')
+Go
+~~START~~
+int
+1
+~~END~~
+
+
+Select typeproperty('test1.null_check1','allowsnull')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+Select typeproperty('test1.null_check2','allowsnull')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+Select typeproperty('test2.null_check1','allowsnull')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+Select typeproperty('test2.null_check2','allowsnull')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- =============== Precision ===============
+Select typeproperty('sys.int','precision')
+Go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('pg_catalog.int','precision')
+Go
+~~START~~
+int
+10
+~~END~~
+
+
+Select typeproperty('pg_catalog.int','precisusn')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('pg_catalog.int',' precision   ')
+Go
+~~START~~
+int
+10
+~~END~~
+
+
+Select typeproperty('test1.null_check1','precision')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+Select typeproperty('test1.null_check2','precision')
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+Select typeproperty('test2.null_check1','precision')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+Select typeproperty('test2.null_check2','precision')
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+
+-- ===============Scale===============
+Select typeproperty('sys.int','scale')
+Go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('pg_catalog.int','scale')
+Go
+~~START~~
+int
+0
+~~END~~
+
+
+Select typeproperty('pg_catalog.int','scael')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('pg_catalog.int',' scale   ')
+Go
+~~START~~
+int
+0
+~~END~~
+
+
+Select typeproperty('sys.char',' scale   ')
+Go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('sys.money',' scale   ')
+Go
+~~START~~
+int
+4
+~~END~~
+
+
+Select typeproperty('test1.null_check1','scale')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('test1.null_check2','scale')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+Select typeproperty('test2.null_check1','scale')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('test2.null_check2','scale')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- ===============OwnerId===============
+Select typeproperty('sys.int','ownerid')
+Go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('pg_catalog.int','ownerid')
+Go
+~~START~~
+int
+10
+~~END~~
+
+
+Select typeproperty('pg_catalog.int','ownerdi')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+Select typeproperty('pg_catalog.int',' ownerid   ')
+Go
+~~START~~
+int
+10
+~~END~~
+
+
+Select typeproperty('test1.null_check1','ownerid')
+GO
+~~START~~
+int
+19255
+~~END~~
+
+
+Select typeproperty('test1.null_check2','ownerid')
+GO
+~~START~~
+int
+19255
+~~END~~
+
+
+Select typeproperty('test2.null_check1','ownerid')
+GO
+~~START~~
+int
+19255
+~~END~~
+
+
+Select typeproperty('test2.null_check2','ownerid')
+GO
+~~START~~
+int
+19255
+~~END~~
+
