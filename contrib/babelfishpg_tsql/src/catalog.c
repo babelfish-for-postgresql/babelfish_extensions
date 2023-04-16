@@ -1200,11 +1200,11 @@ get_bbf_servers_def_idx_oid()
 int 
 get_query_timeout_from_server_name(char *servername)
 {
-	Relation	bbf_servers_def_rel;
-	HeapTuple	tuple;
+	Relation		bbf_servers_def_rel;
+	HeapTuple		tuple;
 	ScanKeyData		key;
-	TableScanDesc		scan;
-	int query_timeout;
+	TableScanDesc	scan;
+	int 			query_timeout;
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
 										 RowExclusiveLock);
@@ -1218,10 +1218,10 @@ get_query_timeout_from_server_name(char *servername)
 
 	tuple = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple))
-		{
-			Form_bbf_servers_def serverform = (Form_bbf_servers_def) GETSTRUCT(tuple);
-			query_timeout = serverform->query_timeout;
-		}
+	{
+		Form_bbf_servers_def serverform = (Form_bbf_servers_def) GETSTRUCT(tuple);
+		query_timeout = serverform->query_timeout;
+	}
 
 	table_endscan(scan);
 	table_close(bbf_servers_def_rel, RowExclusiveLock);
@@ -1231,32 +1231,44 @@ get_query_timeout_from_server_name(char *servername)
 void
 clean_up_bbf_server_def()
 {
-	Relation	bbf_servers_def_rel;
-	HeapTuple	tuple;
-	ScanKeyData		key;
-	TableScanDesc		scan;
+	List	   		*parsetree_list;
+	Node	   		*stmt;
+	PlannedStmt 	*wrapper;
+	char 			*query_str;
+	StringInfoData 	query;
 
-	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
-										 RowExclusiveLock);
+	initStringInfo(&query);
 
-	ScanKeyInit(&key,
-				Anum_bbf_servers_def_query_timeout,
-				BTGreaterEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(0));
+	appendStringInfo(&query, "TRUNCATE TABLE sys.babelfish_server_options CASCADE");
 
-	scan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
-	tuple = heap_getnext(scan, ForwardScanDirection);
+	query_str = query.data;
 
-	while (HeapTupleIsValid(tuple))
-	{
-		CatalogTupleDelete(bbf_servers_def_rel,
-							&tuple->t_self);
-		tuple = heap_getnext(scan, ForwardScanDirection);
-	}
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
 
-	table_endscan(scan);
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
 
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				   query_str,
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
 }
 
 /*****************************************

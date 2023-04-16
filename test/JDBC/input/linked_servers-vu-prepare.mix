@@ -110,3 +110,27 @@ GO
 -- This will change once T-SQL ALTER ANY LINKED SERVER permission is implemented in babelfish
 EXEC sp_addlinkedserver  @server = N'mssql_server4', @srvproduct=N'', @provider=N'tds_fdw', @datasrc=N'localhost', @catalog=N'master'
 GO
+
+-- sp_serveroption with invalid server name. Should throw error
+EXEC sp_serveroption @server='invalid_server', @optname='query timeout', @optvalue='1'
+GO
+
+-- sp_serveroption with invalid server option. Should throw error
+EXEC sp_serveroption @server='mssql_server', @optname='invalid option', @optvalue='1'
+GO
+
+-- sp_serveroption with server as NULL. Should throw error
+EXEC sp_serveroption @server=NULL, @optname='query timeout', @optvalue='1'
+GO
+
+-- sp_serveroption with optname as NULL. Should throw error
+EXEC sp_serveroption @server='mssql_server', @optname=NULL, @optvalue='1'
+GO
+
+-- sp_serveroption with optvalue as NULL. Should throw error
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue=NULL
+GO
+
+-- sp_serveroption with valid server, optname and optvalue
+EXEC sp_serveroption @server='mssql_server', @optname='query timeout', @optvalue='5'
+GO

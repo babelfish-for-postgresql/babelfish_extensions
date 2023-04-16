@@ -2263,8 +2263,8 @@ update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
 	bool		new_record_nulls[BBF_SERVERS_DEF_NUM_COLS];
 	bool		new_record_repl[BBF_SERVERS_DEF_NUM_COLS];
 	ScanKeyData		key;
-	HeapTuple	tuple, old_tuple;
-	TableScanDesc		tblscan;
+	HeapTuple		tuple, old_tuple;
+	TableScanDesc	tblscan;
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
 									 RowExclusiveLock);
@@ -2286,11 +2286,16 @@ update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
 	{
 		/* Search and obtain the tuple based on the server_id */	
 		ScanKeyInit(&key,
-				Anum_bbf_servers_def_servername,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(servername));
+					Anum_bbf_servers_def_servername,
+					BTEqualStrategyNumber, F_TEXTEQ,
+					CStringGetTextDatum(servername));
 		tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
 		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
+		if (!old_tuple)
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("server \"%s\" does not exist", servername)));
+
 		new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
 		tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
 								new_record, new_record_nulls, new_record_repl);
@@ -2667,10 +2672,23 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 			(errcode(ERRCODE_FDW_ERROR),
 				errmsg("'sp_serveroption' is not currently supported in Babelfish")));
 
+	if (servername == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("@server parameter cannot be NULL")));
+
+	if (optionname == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("@optname parameter cannot be NULL")));
+
+	if (optionvalue == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("@optvalue parameter cannot be NULL")));
+
 	if(optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
-	{
 		update_bbf_server_options(servername, atoi(optionvalue), false);
-	}
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
