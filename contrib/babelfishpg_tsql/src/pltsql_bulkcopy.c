@@ -102,6 +102,8 @@ BulkCopy(BulkCopyStmt *stmt, uint64 *processed)
 	{
 		if (!stmt->cstate)
 			stmt->cstate = BeginBulkCopy(rel, attnums);
+		else
+			stmt->cstate->rel = rel;
 
 		*processed = ExecuteBulkCopy(stmt->cstate, stmt->nrow, stmt->ncol, stmt->Values, stmt->Nulls);
 		stmt->rows_processed += *processed;
