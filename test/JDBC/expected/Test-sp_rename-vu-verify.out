@@ -428,7 +428,6 @@ master#!#sp_rename_vu_schema1#!#sp_rename_vu_seq1_new2
 ~~END~~
 
 
--- ****Given objtype is valid but not supported yet****
 -- Column
 EXEC sp_rename 'sp_rename_vu_table1_case_insensitive2', 'sp_rename_vu_table1', 'OBJECT';
 GO
@@ -508,6 +507,38 @@ GO
 ~~ERROR (Message: column "sp_rename_vu_s1_t2_wrong_col" does not exist)~~
 
 
+-- USERDATATYPE
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1
+ORDER BY t1.name, s1.name;
+GO
+~~START~~
+text#!#varchar
+sp_rename_vu_alias1#!#dbo
+sp_rename_vu_alias1#!#sp_rename_vu_schema1
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1
+ORDER BY t1.name, s1.name;
+GO
+~~START~~
+text#!#varchar
+sp_rename_vu_alias2#!#dbo
+sp_rename_vu_alias2#!#sp_rename_vu_schema1
+~~END~~
+
+
+-- ****Given objtype is valid but not supported yet****
 -- Index
 EXEC sp_rename N'sp_rename_vu_index1', N'sp_rename_vu_index2', N'INDEX';
 GO
@@ -522,14 +553,6 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Feature not supported: renaming object type Statistics)~~
-
-
--- USERDATATYPE
-EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Feature not supported: renaming object type User-defined Data Type alias)~~
 
 
 -- Trigger

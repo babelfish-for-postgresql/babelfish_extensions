@@ -207,7 +207,6 @@ FROM information_schema.sequences WHERE SEQUENCE_NAME LIKE '%sp_rename_vu%'
 ORDER BY SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
 GO
 
--- ****Given objtype is valid but not supported yet****
 -- Column
 EXEC sp_rename 'sp_rename_vu_table1_case_insensitive2', 'sp_rename_vu_table1', 'OBJECT';
 GO
@@ -248,16 +247,32 @@ GO
 EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_wrong_col', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
 GO
 
+-- USERDATATYPE
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1
+ORDER BY t1.name, s1.name;
+GO
+
+EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1
+ORDER BY t1.name, s1.name;
+GO
+
+-- ****Given objtype is valid but not supported yet****
 -- Index
 EXEC sp_rename N'sp_rename_vu_index1', N'sp_rename_vu_index2', N'INDEX';
 GO
 
 -- Statistics
 EXEC sp_rename 'sp_rename_vu_stat1', 'sp_rename_vu_stat2', 'STATISTICS';
-GO
-
--- USERDATATYPE
-EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
 GO
 
 -- Trigger

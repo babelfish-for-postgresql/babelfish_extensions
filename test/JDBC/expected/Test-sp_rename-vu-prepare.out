@@ -76,3 +76,9 @@ CREATE TRIGGER sp_rename_vu_trig1 ON sp_rename_vu_table2
 AFTER INSERT, UPDATE AS 
 RAISERROR ('Testing sp_rename', 16, 10);
 GO
+
+CREATE TYPE sp_rename_vu_alias1 FROM VARCHAR(11) NOT NULL;
+GO
+
+CREATE TYPE sp_rename_vu_schema1.sp_rename_vu_alias1 FROM VARCHAR(11) NOT NULL;
+GO

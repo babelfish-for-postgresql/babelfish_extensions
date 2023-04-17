@@ -2977,6 +2977,12 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("Feature not supported: renaming object type Table-Type")));
 		}
+		else if (strcmp(objtype, "AL") == 0)
+		{
+			/* USER DEFINED TYPES ALIAS*/
+			objtype_code = OBJECT_TYPE;
+			process_util_querystr = "(ALTER TYPE )";
+		}
 		else if (strcmp(objtype, "CO") == 0)
 		{
 			objtype_code = OBJECT_COLUMN;
@@ -2992,10 +2998,6 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		/*
-		 * parsetree_list = gen_sp_rename_subcmds(obj_name, new_name,
-		 * schema_name, objtype);
-		 */
 		parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype_code, curr_relname);
 
 		/* 5. run all commands */
@@ -3015,7 +3017,6 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			/* do this step */
 			ProcessUtility(wrapper,
 						   pstrdup(process_util_querystr),
-			/* "(ALTER TABLE )", */
 						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
@@ -3073,6 +3074,9 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			appendStringInfo(&query, "ALTER TABLE dummy RENAME COLUMN dummy TO dummy; ");
 			appendStringInfo(&query, "ALTER TABLE dummy ALTER COLUMN dummy SET (dummy = 'dummy'); ");
 			break;
+		case OBJECT_TYPE:
+			appendStringInfo(&query, "ALTER TYPE dummy RENAME TO dummy; ");
+			break;
 		default:
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -3107,6 +3111,13 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		renamestmt->renameType = objtype;
 		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
 		orig_proc_funcname = pstrdup(newname);
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+	}
+	else if (objtype == OBJECT_TYPE)
+	{
+		renamestmt->renameType = objtype;
+		renamestmt->object = (Node *)list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
 	}

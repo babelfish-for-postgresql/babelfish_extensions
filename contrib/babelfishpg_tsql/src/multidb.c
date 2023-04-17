@@ -504,9 +504,13 @@ rewrite_object_refs(Node *stmt)
 				{
 					case OBJECT_FUNCTION:
 					case OBJECT_PROCEDURE:
-					case OBJECT_TYPE:
 						{
 							rewrite_objectwithargs((ObjectWithArgs *) rename->object);
+							break;
+						}
+					case OBJECT_TYPE:
+						{
+							rewrite_plain_name((List *) rename->object);
 							break;
 						}
 					case OBJECT_SCHEMA:

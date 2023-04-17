@@ -3053,10 +3053,6 @@ BEGIN
 		BEGIN
 			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
 		END
-	ELSE IF @objtype = 'USERDATATYPE'
-		BEGIN
-			THROW 33557097, N'Feature not supported: renaming object type User-defined Data Type alias', 1;
-		END
 	ELSE
 		BEGIN
 			DECLARE @subname sys.nvarchar(776);
@@ -3077,6 +3073,23 @@ BEGIN
 							THROW 33557097, N'There is no object with the given @objname.', 1;
 						END
 					SET @currtype = 'CO';
+				END
+			ELSE IF @objtype = 'USERDATATYPE'
+				BEGIN
+					DECLARE @alias_count INT;
+					-- SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+					-- WHERE s1.name = @schemaname AND o1.name = @subname;
+					SELECT @alias_count = COUNT(*) FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND t1.name = @subname;
+					IF @alias_count > 1
+						BEGIN
+							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+						END
+					IF @alias_count < 1
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'AL';				
 				END
 			ELSE IF @objtype = 'OBJECT'
 				BEGIN
