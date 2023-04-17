@@ -11,16 +11,16 @@ GO
 Select typeproperty('pg_catalog.int',' allowsnull   ')
 Go
 
-Select typeproperty('test1.null_check1','allowsnull')
+Select typeproperty('typeproperty_test1.null_check1','allowsnull')
 GO
 
-Select typeproperty('test1.null_check2','allowsnull')
+Select typeproperty('typeproperty_test1.null_check2','allowsnull')
 GO
 
-Select typeproperty('test2.null_check1','allowsnull')
+Select typeproperty('typeproperty_test2.null_check1','allowsnull')
 GO
 
-Select typeproperty('test2.null_check2','allowsnull')
+Select typeproperty('typeproperty_test2.null_check2','allowsnull')
 GO
 
 -- =============== Precision ===============
@@ -37,16 +37,16 @@ GO
 Select typeproperty('pg_catalog.int',' precision   ')
 Go
 
-Select typeproperty('test1.null_check1','precision')
+Select typeproperty('typeproperty_test1.null_check1','precision')
 GO
 
-Select typeproperty('test1.null_check2','precision')
+Select typeproperty('typeproperty_test1.null_check2','precision')
 GO
 
-Select typeproperty('test2.null_check1','precision')
+Select typeproperty('typeproperty_test2.null_check1','precision')
 GO
 
-Select typeproperty('test2.null_check2','precision')
+Select typeproperty('typeproperty_test2.null_check2','precision')
 GO
 
 -- ===============Scale===============
@@ -69,16 +69,16 @@ Go
 Select typeproperty('sys.money',' scale   ')
 Go
 
-Select typeproperty('test1.null_check1','scale')
+Select typeproperty('typeproperty_test1.null_check1','scale')
 GO
 
-Select typeproperty('test1.null_check2','scale')
+Select typeproperty('typeproperty_test1.null_check2','scale')
 GO
 
-Select typeproperty('test2.null_check1','scale')
+Select typeproperty('typeproperty_test2.null_check1','scale')
 GO
 
-Select typeproperty('test2.null_check2','scale')
+Select typeproperty('typeproperty_test2.null_check2','scale')
 GO
 
 -- ===============OwnerId===============
@@ -116,7 +116,7 @@ END
 GO
 
 SELECT CASE
-    WHEN typeproperty('test1.null_check1','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test1.null_check1','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -124,7 +124,7 @@ END
 GO
 
 SELECT CASE
-    WHEN typeproperty('test1.null_check2','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test1.null_check2','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -132,7 +132,7 @@ END
 GO
 
 SELECT CASE
-    WHEN typeproperty('test2.null_check1','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test2.null_check1','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -140,7 +140,7 @@ END
 GO
 
 SELECT CASE
-    WHEN typeproperty('test2.null_check2','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test2.null_check2','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'

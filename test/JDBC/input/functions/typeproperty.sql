@@ -1,39 +1,20 @@
---Cleanup
-DROP TYPE IF EXISTS test1.null_check1
-Go
-
-DROP TYPE IF EXISTS test1.null_check2
-Go
-
-DROP TYPE IF EXISTS test2.null_check1
-Go
-
-DROP TYPE IF EXISTS test2.null_check2
-Go
-
-DROP SCHEMA IF EXISTS test1
-GO
-
-DROP SCHEMA IF EXISTS test2
-GO
-
 --Setup
-Create schema test1
+Create schema typeproperty_test1
 Go
 
-Create schema test2
+Create schema typeproperty_test2
 Go
 
-Create type test1.null_check1 FROM varchar(11) NOT NULL ;
+Create type typeproperty_test1.null_check1 FROM varchar(11) NOT NULL ;
 GO
 
-Create type test1.null_check2 FROM int  NULL ;
+Create type typeproperty_test1.null_check2 FROM int  NULL ;
 GO
 
-Create type test2.null_check1 FROM varchar(11)  NULL ;
+Create type typeproperty_test2.null_check1 FROM varchar(11)  NULL ;
 GO
 
-Create type test2.null_check2 FROM int  NOT NULL ;
+Create type typeproperty_test2.null_check2 FROM int  NOT NULL ;
 GO
 
 -- =============== AllowsNull ===============
@@ -49,16 +30,16 @@ GO
 Select typeproperty('pg_catalog.int',' allowsnull   ')
 Go
 
-Select typeproperty('test1.null_check1','allowsnull')
+Select typeproperty('typeproperty_test1.null_check1','allowsnull')
 GO
 
-Select typeproperty('test1.null_check2','allowsnull')
+Select typeproperty('typeproperty_test1.null_check2','allowsnull')
 GO
 
-Select typeproperty('test2.null_check1','allowsnull')
+Select typeproperty('typeproperty_test2.null_check1','allowsnull')
 GO
 
-Select typeproperty('test2.null_check2','allowsnull')
+Select typeproperty('typeproperty_test2.null_check2','allowsnull')
 GO
 
 -- =============== Precision ===============
@@ -75,16 +56,16 @@ GO
 Select typeproperty('pg_catalog.int',' precision   ')
 Go
 
-Select typeproperty('test1.null_check1','precision')
+Select typeproperty('typeproperty_test1.null_check1','precision')
 GO
 
-Select typeproperty('test1.null_check2','precision')
+Select typeproperty('typeproperty_test1.null_check2','precision')
 GO
 
-Select typeproperty('test2.null_check1','precision')
+Select typeproperty('typeproperty_test2.null_check1','precision')
 GO
 
-Select typeproperty('test2.null_check2','precision')
+Select typeproperty('typeproperty_test2.null_check2','precision')
 GO
 
 -- ===============Scale===============
@@ -107,16 +88,16 @@ Go
 Select typeproperty('sys.money',' scale   ')
 Go
 
-Select typeproperty('test1.null_check1','scale')
+Select typeproperty('typeproperty_test1.null_check1','scale')
 GO
 
-Select typeproperty('test1.null_check2','scale')
+Select typeproperty('typeproperty_test1.null_check2','scale')
 GO
 
-Select typeproperty('test2.null_check1','scale')
+Select typeproperty('typeproperty_test2.null_check1','scale')
 GO
 
-Select typeproperty('test2.null_check2','scale')
+Select typeproperty('typeproperty_test2.null_check2','scale')
 GO
 
 -- ===============OwnerId===============
@@ -154,7 +135,7 @@ END
 GO
 
 SELECT CASE
-    WHEN typeproperty('test1.null_check1','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test1.null_check1','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -162,7 +143,7 @@ END
 GO
 
 SELECT CASE
-    WHEN typeproperty('test1.null_check2','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test1.null_check2','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -170,7 +151,7 @@ END
 GO
 
 SELECT CASE
-    WHEN typeproperty('test2.null_check1','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test2.null_check1','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -178,7 +159,7 @@ END
 GO
 
 SELECT CASE
-    WHEN typeproperty('test2.null_check2','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test2.null_check2','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -187,20 +168,20 @@ GO
 
 
 --Cleanup
-DROP TYPE test1.null_check1
+DROP TYPE typeproperty_test1.null_check1
 Go
 
-DROP TYPE test1.null_check2
+DROP TYPE typeproperty_test1.null_check2
 Go
 
-DROP TYPE test2.null_check1
+DROP TYPE typeproperty_test2.null_check1
 Go
 
-DROP TYPE test2.null_check2
+DROP TYPE typeproperty_test2.null_check2
 Go
 
-DROP SCHEMA test1
+DROP SCHEMA typeproperty_test1
 GO
 
-DROP SCHEMA test2
+DROP SCHEMA typeproperty_test2
 GO

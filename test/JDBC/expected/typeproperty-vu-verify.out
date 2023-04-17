@@ -31,7 +31,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test1.null_check1','allowsnull')
+Select typeproperty('typeproperty_test1.null_check1','allowsnull')
 GO
 ~~START~~
 int
@@ -39,7 +39,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test1.null_check2','allowsnull')
+Select typeproperty('typeproperty_test1.null_check2','allowsnull')
 GO
 ~~START~~
 int
@@ -47,7 +47,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test2.null_check1','allowsnull')
+Select typeproperty('typeproperty_test2.null_check1','allowsnull')
 GO
 ~~START~~
 int
@@ -55,7 +55,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test2.null_check2','allowsnull')
+Select typeproperty('typeproperty_test2.null_check2','allowsnull')
 GO
 ~~START~~
 int
@@ -97,7 +97,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test1.null_check1','precision')
+Select typeproperty('typeproperty_test1.null_check1','precision')
 GO
 ~~START~~
 int
@@ -105,7 +105,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test1.null_check2','precision')
+Select typeproperty('typeproperty_test1.null_check2','precision')
 GO
 ~~START~~
 int
@@ -113,7 +113,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test2.null_check1','precision')
+Select typeproperty('typeproperty_test2.null_check1','precision')
 GO
 ~~START~~
 int
@@ -121,7 +121,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test2.null_check2','precision')
+Select typeproperty('typeproperty_test2.null_check2','precision')
 GO
 ~~START~~
 int
@@ -179,7 +179,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test1.null_check1','scale')
+Select typeproperty('typeproperty_test1.null_check1','scale')
 GO
 ~~START~~
 int
@@ -187,7 +187,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test1.null_check2','scale')
+Select typeproperty('typeproperty_test1.null_check2','scale')
 GO
 ~~START~~
 int
@@ -195,7 +195,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test2.null_check1','scale')
+Select typeproperty('typeproperty_test2.null_check1','scale')
 GO
 ~~START~~
 int
@@ -203,7 +203,7 @@ int
 ~~END~~
 
 
-Select typeproperty('test2.null_check2','scale')
+Select typeproperty('typeproperty_test2.null_check2','scale')
 GO
 ~~START~~
 int
@@ -266,7 +266,7 @@ SUCCESS
 
 
 SELECT CASE
-    WHEN typeproperty('test1.null_check1','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test1.null_check1','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -279,7 +279,7 @@ SUCCESS
 
 
 SELECT CASE
-    WHEN typeproperty('test1.null_check2','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test1.null_check2','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -292,7 +292,7 @@ SUCCESS
 
 
 SELECT CASE
-    WHEN typeproperty('test2.null_check1','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test2.null_check1','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'
@@ -305,7 +305,7 @@ SUCCESS
 
 
 SELECT CASE
-    WHEN typeproperty('test2.null_check2','ownerid') IS NOT NULL
+    WHEN typeproperty('typeproperty_test2.null_check2','ownerid') IS NOT NULL
         Then 'SUCCESS'
     ELSE
         'FAILED'

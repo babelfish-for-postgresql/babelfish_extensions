@@ -136,6 +136,101 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION typeproperty(
+    typename sys.VARCHAR,
+    property sys.VARCHAR
+    )
+RETURNS INT
+AS $$
+DECLARE
+    var_sc int;
+    schemaid int;
+    schema_name VARCHAR;
+    type_name VARCHAR;
+    sys_id int;
+    testt VARCHAR;
+BEGIN
+
+    property := TRIM(LOWER(COALESCE(property,'')));
+
+    IF typename LIKE '%.%'  THEN
+    schema_name :=  lower(split_part(typename COLLATE "C", '.', 1));
+    type_name :=  lower(split_part(typename COLLATE "C",'.', 2));
+    ELSE
+    schema_name := 'dbo';
+    type_name := typename;
+    END IF;
+
+
+    IF NOT EXISTS (SELECT ao.name FROM sys.types ao WHERE ao.name = type_name COLLATE sys.database_default)
+    THEN
+        RETURN NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT ao.name FROM sys.schemas ao WHERE ao.name = schema_name COLLATE sys.database_default OR schema_name = 'sys' OR schema_name = 'pg_catalog')
+    THEN
+        RETURN NULL ;
+    END IF;
+
+    IF NOT EXISTS (SELECT ty.is_user_defined FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+    schemaid := (SELECT sc.schema_id FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default);
+    ELSE
+    schemaid := (SELECT sc.schema_id FROM sys.types sc WHERE sc.name = type_name COLLATE sys.database_default);
+    END IF;
+
+
+    if (SELECT schema_id(schema_name)) <> schemaid THEN
+    RETURN NULL;
+    END IF;
+
+    IF property = 'allowsnull'
+    THEN
+        RETURN (
+            SELECT CAST( t1.is_nullable AS INT)
+            FROM sys.types t1
+            WHERE t1.name = type_name COLLATE sys.database_default AND t1.schema_id = schemaid );
+
+    ELSEIF property = 'precision'
+    THEN
+        RETURN (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+
+    ELSEIF property = 'scale'
+    THEN
+        sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+        type_name := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
+        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
+            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
+        THEN
+            RETURN(SELECT CAST(dc.scale AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default);
+        ELSE
+            RETURN NULL;
+        END IF;
+    ELSEIF property = 'ownerid'
+    THEN
+        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+        RETURN(SELECT CAST(dc.nspowner AS INT) FROM  pg_catalog.pg_namespace dc WHERE dc.oid = schemaid);
+        ELSE
+        RETURN 10;
+        END IF;
+
+    ELSEIF property = 'usesansitrim'
+    THEN
+        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
+            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
+        THEN
+            RETURN NULL;
+        ELSE
+            RETURN 1;
+        END IF;
+
+    END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+
 CREATE OR REPLACE FUNCTION sys.dateadd_numeric_representation_helper(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS DATETIME AS $$
 DECLARE
     digit_to_startdate DATETIME;
