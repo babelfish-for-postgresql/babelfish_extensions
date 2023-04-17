@@ -274,6 +274,7 @@ sys-sql_modules-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
 sys-proc_param_helper-dep
+sys-userid-dep
 BABEL-1756-dep
 BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
