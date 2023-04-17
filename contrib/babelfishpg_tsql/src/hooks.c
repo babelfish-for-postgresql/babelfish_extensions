@@ -158,12 +158,6 @@ static char *gen_func_arg_list(Oid objectId);
  *****************************************/
 static PlannedStmt *pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, ParamListInfo boundParams);
 
-/*****************************************
- * 			dropExtensionTdsFdw
- *****************************************/
-
-static void pltsql_dropExtensionTdsFdw(void);
-
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
@@ -200,7 +194,6 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
-static drop_extension_tds_fdw_hook_type prev_drop_extension_tds_fdw_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -323,9 +316,6 @@ InstallExtendedHooks(void)
 
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
-
-	prev_drop_extension_tds_fdw_hook = drop_extension_tds_fdw_hook;
-	drop_extension_tds_fdw_hook = pltsql_dropExtensionTdsFdw;
 }
 
 void
@@ -375,7 +365,6 @@ UninstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
-	drop_extension_tds_fdw_hook = prev_drop_extension_tds_fdw_hook;
 }
 
 /*****************************************
@@ -442,12 +431,6 @@ pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
 		MemoryContextSwitchTo(oldcxt);
 	}
-}
-
-static void
-pltsql_dropExtensionTdsFdw(void)
-{
-	clean_up_bbf_server_def();
 }
 
 static void

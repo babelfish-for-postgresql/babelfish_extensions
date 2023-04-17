@@ -3243,10 +3243,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				DropStmt   *drop_stmt = (DropStmt *) parsetree;
 
-				if (drop_stmt->removeType != OBJECT_SCHEMA)
-					break;
+				// if (drop_stmt->removeType != OBJECT_SCHEMA)
+				// 	break;
 
-				if (sql_dialect == SQL_DIALECT_TSQL)
+				if (sql_dialect == SQL_DIALECT_TSQL && drop_stmt->removeType == OBJECT_SCHEMA)
 				{
 					/*
 					 * Prevent dropping guest schema unless it is part of drop
@@ -3285,7 +3285,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					else
 						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 												queryEnv, dest, qc);
-					check_extra_schema_restrictions(parsetree);
+
+					if (drop_stmt->removeType == OBJECT_EXTENSION)
+					{
+						char *ext_name = strVal(lfirst(list_head(drop_stmt->objects)));
+						if ((strcmp(ext_name, "tds_fdw") == 0) && drop_stmt->behavior == DROP_CASCADE)
+						{
+							clean_up_bbf_server_def();
+						}
+					}
+					if (drop_stmt->removeType == OBJECT_EXTENSION)
+						check_extra_schema_restrictions(parsetree);
 					return;
 				}
 			}
