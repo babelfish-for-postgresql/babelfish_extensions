@@ -12,3 +12,4 @@ GO
 
 SELECT NEXT VALUE FOR not_a_seq;
 GO
+

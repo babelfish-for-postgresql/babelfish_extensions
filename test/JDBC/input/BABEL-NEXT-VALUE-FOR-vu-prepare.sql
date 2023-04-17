@@ -13,3 +13,4 @@ INSERT INTO table_949 (str) VALUES
 ('c'),
 ('d');
 GO
+
