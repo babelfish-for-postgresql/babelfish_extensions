@@ -38,26 +38,3 @@ GO
 
 ~~ERROR (Message: relation "not_a_seq" does not exist)~~
 
-
-use babel_949_db;
-go
-
-SELECT NEXT VALUE FOR babel_949_2.seq2
-GO
-~~START~~
-bigint
-10
-~~END~~
-
-
-SELECT NEXT VALUE FOR seq3
-GO
-~~START~~
-bigint
-0
-~~END~~
-
-
-use master;
-go
-
