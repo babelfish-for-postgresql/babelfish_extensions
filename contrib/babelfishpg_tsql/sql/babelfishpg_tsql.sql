@@ -3041,7 +3041,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_rename(
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
-	--trying ssh
 	If @objtype IS NULL
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;

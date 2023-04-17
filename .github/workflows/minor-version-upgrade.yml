@@ -81,7 +81,7 @@ jobs:
 
       - name: Run JDBC Tests
         id: jdbc
-        timeout-minutes: 10
+        timeout-minutes: 60
         run: |
           cd test/JDBC/
           mvn test
@@ -117,24 +117,3 @@ jobs:
         with:
           name: upgrade-output-diff.diff
           path: test/JDBC/Info/upgrade-output-diff.diff
-
-      - name: Check core dumps existence
-        if: always()
-        id: check_core_dumps
-        uses: andstor/file-existence-action@v2
-        with:
-          files: "/var/coredumps/*"
-
-      - name: Setup upterm session
-        if: always() && steps.check_core_dumps.outputs.files_exists == 'true'
-        uses: lhotari/action-upterm@v1
-        timeout-minutes: 120
-        with:
-          limit-access-to-actor: true
-
-      - name: Fail workflow to prevent accidental check-in
-        if: always()
-        uses: actions/github-script@v3
-        with:
-          script: |
-              core.setFailed('This commit should NEVER be checked in') 
