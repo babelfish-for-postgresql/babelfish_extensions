@@ -3246,16 +3246,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				// if (drop_stmt->removeType != OBJECT_SCHEMA)
 				// 	break;
 
-				if (sql_dialect == SQL_DIALECT_TSQL)
+				if (sql_dialect == SQL_DIALECT_TSQL && drop_stmt->removeType == OBJECT_SCHEMA)
 				{
 					/*
 					 * Prevent dropping guest schema unless it is part of drop
 					 * database command.
 					 */
 					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
-
-					if (drop_stmt->removeType != OBJECT_SCHEMA)
-						break;
 
 					if (strcmp(queryString, "(DROP DATABASE )") != 0)
 					{
@@ -3280,7 +3277,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 												queryEnv, dest, qc);
 					return;
 				}
-				else
+				else if (sql_dialect != SQL_DIALECT_TSQL)
 				{
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3301,6 +3298,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						check_extra_schema_restrictions(parsetree);
 					return;
 				}
+				return;
 			}
 		case T_CreatedbStmt:
 			if (sql_dialect == SQL_DIALECT_TSQL)
