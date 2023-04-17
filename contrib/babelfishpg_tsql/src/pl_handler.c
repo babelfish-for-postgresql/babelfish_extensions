@@ -3243,10 +3243,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				DropStmt   *drop_stmt = (DropStmt *) parsetree;
 
-				// if (drop_stmt->removeType != OBJECT_SCHEMA)
-				// 	break;
+				if (drop_stmt->removeType != OBJECT_SCHEMA)
+					break;
 
-				if (sql_dialect == SQL_DIALECT_TSQL && drop_stmt->removeType == OBJECT_SCHEMA)
+				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
 					/*
 					 * Prevent dropping guest schema unless it is part of drop
@@ -3277,7 +3277,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 												queryEnv, dest, qc);
 					return;
 				}
-				else if (sql_dialect != SQL_DIALECT_TSQL)
+				else
 				{
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3286,19 +3286,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 												queryEnv, dest, qc);
 
-					if (drop_stmt->removeType == OBJECT_EXTENSION)
-					{
-						char *ext_name = strVal(lfirst(list_head(drop_stmt->objects)));
-						if ((strcmp(ext_name, "tds_fdw") == 0) && drop_stmt->behavior == DROP_CASCADE)
-						{
-							clean_up_bbf_server_def();
-						}
-					}
-					if (drop_stmt->removeType == OBJECT_SCHEMA)
-						check_extra_schema_restrictions(parsetree);
+					check_extra_schema_restrictions(parsetree);
 					return;
 				}
-				return;
 			}
 		case T_CreatedbStmt:
 			if (sql_dialect == SQL_DIALECT_TSQL)
@@ -3520,6 +3510,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 								queryEnv, dest, qc);
+
+	if (sql_dialect == SQL_DIALECT_PG && nodeTag(parsetree) == T_DropStmt)
+	{
+		DropStmt   *drop_stmt = (DropStmt *) parsetree;
+		if (drop_stmt->removeType == OBJECT_EXTENSION)
+		{
+			char *ext_name = strVal(lfirst(list_head(drop_stmt->objects)));
+			if ((strcmp(ext_name, "tds_fdw") == 0) && drop_stmt->behavior == DROP_CASCADE)
+			{
+				clean_up_bbf_server_def();
+			}
+		}
+	}
 }
 
 /*
