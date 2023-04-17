@@ -3294,7 +3294,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							clean_up_bbf_server_def();
 						}
 					}
-					if (drop_stmt->removeType == OBJECT_EXTENSION)
+					if (drop_stmt->removeType == OBJECT_SCHEMA)
 						check_extra_schema_restrictions(parsetree);
 					return;
 				}
