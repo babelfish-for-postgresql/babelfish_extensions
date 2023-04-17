@@ -121,28 +121,68 @@ GO
 
 -- ===============OwnerId===============
 
-Select typeproperty('sys.int','ownerid')
-Go
-
-Select typeproperty('pg_catalog.int','ownerid')
-Go
-
-Select typeproperty('pg_catalog.int','ownerdi')
+SELECT CASE
+    WHEN typeproperty('sys.int','ownerid') IS NOT NULL
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
 GO
 
-Select typeproperty('pg_catalog.int',' ownerid   ')
-Go
-
-Select typeproperty('test1.null_check1','ownerid')
+SELECT CASE
+    WHEN typeproperty('pg_catalog.int','ownerid') IS NOT  NULL
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
 GO
 
-Select typeproperty('test1.null_check2','ownerid')
+SELECT CASE
+    WHEN typeproperty('pg_catalog.int','ownerdi') IS NOT NULL
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
 GO
 
-Select typeproperty('test2.null_check1','ownerid')
+SELECT CASE
+    WHEN typeproperty('pg_catalog.int',' ownerid   ') IS NOT NULL
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
 GO
 
-Select typeproperty('test2.null_check2','ownerid')
+SELECT CASE
+    WHEN typeproperty('test1.null_check1','ownerid') IS NOT NULL
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
+GO
+
+SELECT CASE
+    WHEN typeproperty('test1.null_check2','ownerid') IS NOT NULL
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
+GO
+
+SELECT CASE
+    WHEN typeproperty('test2.null_check1','ownerid') IS NOT NULL
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
+GO
+
+SELECT CASE
+    WHEN typeproperty('test2.null_check2','ownerid') IS NOT NULL
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
 GO
 
 
