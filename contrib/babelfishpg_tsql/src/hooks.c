@@ -53,6 +53,7 @@
 #include "utils/numeric.h"
 #include <math.h>
 #include "executor/nodeFunctionscan.h"
+#include "nodes/parsenodes.h"
 
 #include "backend_parser/scanner.h"
 #include "hooks.h"
@@ -64,6 +65,7 @@
 #include "session.h"
 #include "multidb.h"
 #include "tsql_analyze.h"
+#include "dbcmds.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -128,6 +130,8 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
+static void pltsql_CreateDbStmt(ParseState *pstate, PlannedStmt *pstmt);
+static void pltsql_DropDbStmt(PlannedStmt *pstmt);
 
 /*****************************************
  * 			Executor Hooks
@@ -191,9 +195,12 @@ static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
+static CreateDbStmt_hook_type prev_CreateDbStmt_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
+static DropDbStmt_hook_type prev_DropDbStmt_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
+
 
 /*****************************************
  * 			Install / Uninstall
@@ -309,10 +316,16 @@ InstallExtendedHooks(void)
 	prev_modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc_hook;
 	modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc;
 
+	prev_CreateDbStmt_hook = CreateDbStmt_hook;
+	CreateDbStmt_hook = pltsql_CreateDbStmt;
+    
 	prev_fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom_hook;
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
+
+	prev_DropDbStmt_hook = DropDbStmt_hook;
+	DropDbStmt_hook = pltsql_DropDbStmt;
 
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
@@ -362,14 +375,33 @@ UninstallExtendedHooks(void)
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
+	CreateDbStmt_hook = prev_CreateDbStmt_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
+	DropDbStmt_hook = prev_DropDbStmt_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
 }
 
 /*****************************************
  * 			Hook Functions
  *****************************************/
+
+static void
+pltsql_CreateDbStmt(ParseState *pstate, PlannedStmt *pstmt)
+{
+    Node                    *parsetree = pstmt->utilityStmt;
+    create_bbf_db(pstate, (CreatedbStmt *) parsetree);
+    return;
+}
+
+static void
+pltsql_DropDbStmt(PlannedStmt *pstmt)
+{
+	Node	   *parsetree = pstmt->utilityStmt;
+	DropdbStmt *stmt = (DropdbStmt *) parsetree;
+	drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
+	return;
+}
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
