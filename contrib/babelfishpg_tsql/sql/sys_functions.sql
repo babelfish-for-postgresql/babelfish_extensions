@@ -557,9 +557,9 @@ LANGUAGE C STABLE;
 -- LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.parsename (
-    object_name VARCHAR,
-    object_piece INT
-)
+        object_name VARCHAR
+        ,object_piece INT
+        )
 RETURNS VARCHAR AS $$
 /***************************************************************
 EXTENSION PACK function PARSENAME(x)
