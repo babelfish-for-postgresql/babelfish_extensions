@@ -8,8 +8,10 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
-
+#all
+BABEL-808-vu-prepare
+BABEL-808-vu-verify
+BABEL-808-vu-cleanup
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.

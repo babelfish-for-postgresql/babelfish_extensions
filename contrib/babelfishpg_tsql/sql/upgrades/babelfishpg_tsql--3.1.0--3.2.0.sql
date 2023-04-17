@@ -780,10 +780,30 @@ CREATE AGGREGATE sys.VARP(float8) (
 CREATE OR REPLACE FUNCTION sys.rowcount_big()
 RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION sys.parsename(object_name text, object_piece int)
-RETURNS text
-AS 'babelfishpg_tsql', 'parsename'
-LANGUAGE C IMMUTABLE STRICT;
+-- CREATE OR REPLACE FUNCTION sys.parsename(object_name text, object_piece int)
+-- RETURNS text
+-- AS 'babelfishpg_tsql', 'parsename'
+-- LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.parsename (
+    object_name VARCHAR,
+    object_piece INT
+)
+RETURNS VARCHAR AS $$
+/***************************************************************
+EXTENSION PACK function PARSENAME(x)
+****************************************************************/
+SELECT CASE
+    WHEN object_name IS NULL OR object_piece IS NULL THEN NULL
+    WHEN object_piece < 1 OR object_piece > 4 THEN NULL
+    WHEN char_length(object_name) > 1024 THEN NULL
+    WHEN char_length(object_name) - length(replace(object_name, '.', '')) < object_piece - 1 THEN NULL
+    WHEN object_piece = 1 THEN reverse(substring(reverse(object_name) from '[^.]*'))
+    WHEN object_piece = 2 THEN reverse(substring(reverse(substring((object_name) from '[^.]*\.[^.]*')) from '[^.]*'))
+    WHEN object_piece = 3 THEN (substring(reverse(substring(reverse(CASE WHEN substring(object_name from 1 for 1) = '.' THEN 'NULL'||object_name ELSE object_name END) from '[^.]*\.[^.]*\.[^.]*')) from '[^.]*'))
+    WHEN object_piece = 4 THEN reverse(substring(reverse(CASE WHEN substring(object_name from 1 for 1) = '.' THEN 'NULL'||object_name ELSE object_name END) from '^[^.]*\.[^.]*\.[^.]*\.(.*)'))
+    ELSE NULL
+    END $$ immutable LANGUAGE 'sql';
 
 CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
 RETURNS OID

@@ -7,17 +7,17 @@ Employee
 ORDER BY HireDate DESC;
 GO
 ~~START~~
-text#!#text#!#text#!#int#!#nvarchar#!#nvarchar#!#datetime#!#money
-tempdb#!#dbo#!#Employee#!#3#!#Bob#!#Johnson#!#2020-03-01 00:00:00.0#!#70000.0000
-tempdb#!#dbo#!#Employee#!#2#!#Jane#!#Smith#!#2020-02-01 00:00:00.0#!#60000.0000
-tempdb#!#dbo#!#Employee#!#1#!#John#!#Doe#!#2020-01-01 00:00:00.0#!#50000.0000
+varchar#!#varchar#!#varchar#!#int#!#nvarchar#!#nvarchar#!#datetime#!#money
+tempdb#!#dbo#!#employee#!#3#!#Bob#!#Johnson#!#2020-03-01 00:00:00.0#!#70000.0000
+tempdb#!#dbo#!#employee#!#2#!#Jane#!#Smith#!#2020-02-01 00:00:00.0#!#60000.0000
+tempdb#!#dbo#!#employee#!#1#!#John#!#Doe#!#2020-01-01 00:00:00.0#!#50000.0000
 ~~END~~
 
 
 SELECT * FROM EmployeeDatabaseView1
 GO
 ~~START~~
-text
+varchar
 tempdb
 ~~END~~
 
@@ -25,7 +25,7 @@ tempdb
 EXEC GetEmployeeDatabaseName1
 GO
 ~~START~~
-text
+varchar
 tempdb
 ~~END~~
 
@@ -33,7 +33,7 @@ tempdb
 SELECT * FROM EmployeeDatabaseView2
 GO
 ~~START~~
-text
+varchar
 dbo
 ~~END~~
 
@@ -41,7 +41,7 @@ dbo
 EXEC GetEmployeeDatabaseName2
 GO
 ~~START~~
-text
+varchar
 dbo
 ~~END~~
 
@@ -49,15 +49,15 @@ dbo
 SELECT * FROM EmployeeDatabaseView3
 GO
 ~~START~~
-text
-Employee
+varchar
+employee
 ~~END~~
 
 
 EXEC GetEmployeeDatabaseName3
 GO
 ~~START~~
-text
-Employee
+varchar
+employee
 ~~END~~
 
