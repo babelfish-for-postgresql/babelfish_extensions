@@ -3246,13 +3246,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				// if (drop_stmt->removeType != OBJECT_SCHEMA)
 				// 	break;
 
-				if (sql_dialect == SQL_DIALECT_TSQL && drop_stmt->removeType == OBJECT_SCHEMA)
+				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
 					/*
 					 * Prevent dropping guest schema unless it is part of drop
 					 * database command.
 					 */
 					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
+
+					if (drop_stmt->removeType != OBJECT_SCHEMA)
+						break;
 
 					if (strcmp(queryString, "(DROP DATABASE )") != 0)
 					{
