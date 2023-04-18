@@ -1,0 +1,41 @@
+USE nextleveldb
+GO
+
+-- should expect print out of 1, 2, 3, 4, 3, 2, 1
+EXEC p1
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+

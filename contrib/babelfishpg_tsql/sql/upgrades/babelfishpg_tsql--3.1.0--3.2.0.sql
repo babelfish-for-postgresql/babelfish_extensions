@@ -37,7 +37,23 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
- 
+CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
+$$
+DECLARE
+    stack text;
+    result integer;
+BEGIN
+    GET DIAGNOSTICS stack = PG_CONTEXT;
+    result := array_length(string_to_array(stack, 'function'), 1) - 3; 
+    IF result < -1 THEN
+        RAISE EXCEPTION 'Invalid output, check stack trace %', stack;
+    ELSE
+        RETURN result;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
 -- SYSUSERS
 CREATE OR REPLACE VIEW sys.sysusers AS SELECT
 Dbp.principal_id AS uid,

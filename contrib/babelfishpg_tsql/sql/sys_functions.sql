@@ -1887,8 +1887,8 @@ DECLARE
     result integer;
 BEGIN
     GET DIAGNOSTICS stack = PG_CONTEXT;
-    result := array_length(string_to_array(stack, 'function'), 1) - 2;
-    IF result < 0 THEN
+    result := array_length(string_to_array(stack, 'function'), 1) - 3; 
+    IF result < -1 THEN
         RAISE EXCEPTION 'Invalid output, check stack trace %', stack;
     ELSE
         RETURN result;
