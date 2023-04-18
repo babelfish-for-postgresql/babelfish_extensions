@@ -15,6 +15,7 @@ TestBIT
 TestChar
 TestDatetime2
 TestDatetime
+TestDatetime-numeric-representation
 TestDate
 TestDecimal
 TestFloat
@@ -233,6 +234,7 @@ sys-system_sql_modules-dep
 sys-triggers-dep
 sys-sp_pkeys
 sys-sp_statistics
+sys-userid-dep
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO
@@ -362,9 +364,11 @@ binary-index
 rowcount
 BABEL-1625
 BABEL-3474
+BABEL-3818
 dateadd_internal_df
 datetime2fromparts
 timefromparts
 BABEL-3215
 BABEL-NEXT-VALUE-FOR
 BABEL-4098
+BABEL-4078-before-14_8-or-15_3

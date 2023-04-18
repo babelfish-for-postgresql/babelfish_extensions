@@ -334,7 +334,7 @@ select TRY_CONVERT(datetime, 123);
 GO
 ~~START~~
 datetime
-<NULL>
+1900-05-04 00:00:00.0
 ~~END~~
 
 select TRY_CONVERT(money, 'asdf');

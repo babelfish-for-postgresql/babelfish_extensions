@@ -718,6 +718,7 @@ user_id(PG_FUNCTION_ARGS)
 	HeapTuple	auth_tuple;
 	Form_pg_authid authform;
 	Oid			ret;
+	size_t  	len;
 
 	user_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	db_name = get_cur_db_name();
@@ -725,30 +726,43 @@ user_id(PG_FUNCTION_ARGS)
 	if (!db_name)
 		PG_RETURN_NULL();
 
-	if (!user_input)
-		PG_RETURN_OID(GetUserId());
+        user_name = get_physical_user_name(db_name, user_input);
 
-	user_name = get_physical_user_name(db_name, user_input);
+        if (!user_name)
+            PG_RETURN_NULL();
 
-	if (!user_name)
-		PG_RETURN_NULL();
+        len = strlen(user_name);
+        while (len > 0 && isspace(user_name[len-1]))
+        user_name[--len] = '\0';
 
-	if (pltsql_case_insensitive_identifiers)
-		/* Lowercase the entry, if needed */
-		for (char *p = user_name; *p; ++p)
-			*p = tolower(*p);
+    if (pltsql_case_insensitive_identifiers)
+    {
+        /* Lowercase the entry, if needed */
+        for (char *p = user_name; *p; ++p)
+            *p = tolower(*p);
+    }
 
-	auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
-	if (!HeapTupleIsValid(auth_tuple))
-		PG_RETURN_NULL();
+    auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
 
-	authform = (Form_pg_authid) GETSTRUCT(auth_tuple);
-	ret = authform->oid;
+    if (!HeapTupleIsValid(auth_tuple))
+	    PG_RETURN_NULL();
+    authform = (Form_pg_authid) GETSTRUCT(auth_tuple);
+    ret = authform->oid;
 
 	ReleaseSysCache(auth_tuple);
 
 	PG_RETURN_OID(ret);
 }
+
+PG_FUNCTION_INFO_V1(user_id_noarg);
+Datum
+user_id_noarg(PG_FUNCTION_ARGS)
+{
+
+    PG_RETURN_OID(GetUserId());
+    
+}
+
 
 /*
  * get_original_login_name - returns original login name corresponding to
