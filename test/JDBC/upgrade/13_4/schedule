@@ -139,6 +139,7 @@ sys-key_constraints
 sys-key_constraints-dep
 sys-lock_timeout
 sys-max_connections
+sys-nestlevel-dep
 sys-objects
 sys-original_login
 sys-procedures
