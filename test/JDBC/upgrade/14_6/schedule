@@ -366,3 +366,5 @@ dateadd_internal_df
 datetime2fromparts
 timefromparts
 BABEL-3215
+BABEL-NEXT-VALUE-FOR
+BABEL-4098

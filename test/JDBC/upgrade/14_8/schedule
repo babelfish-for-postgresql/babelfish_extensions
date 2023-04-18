@@ -396,3 +396,5 @@ datetime2fromparts
 timefromparts
 orderby-before-15_3
 BABEL-3215
+BABEL-NEXT-VALUE-FOR
+BABEL-4098
