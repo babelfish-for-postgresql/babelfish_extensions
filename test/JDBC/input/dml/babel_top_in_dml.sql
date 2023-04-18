@@ -282,9 +282,9 @@ exec babel_2020_update_ct;
 update top(1) babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x;
 go
 
--- JOIN clause
+-- JOIN clause, and top value > than # matching rows
 exec babel_2020_update_ct;
-update top(1) babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x join babel_2020_update_t2 y on 1 = 1;
+update top(5) babel_2020_update_t1 set a = 100 from babel_2020_update_t1 x join babel_2020_update_t2 y on 1 = 1;
 go
 
 exec babel_2020_update_ct;
@@ -471,9 +471,9 @@ exec babel_2020_delete_ct;
 delete top(2) babel_2020_delete_t1 from babel_2020_delete_t1 x;
 go
 
--- JOIN clause
+-- JOIN clause, and top value > than # matching rows
 exec babel_2020_delete_ct;
-delete top(1) babel_2020_delete_t1 from babel_2020_delete_t1 x join babel_2020_delete_t2 y on 1 = 1;
+delete top(5) babel_2020_delete_t1 from babel_2020_delete_t1 x join babel_2020_delete_t2 y on 1 = 1;
 go
 
 exec babel_2020_delete_ct;
@@ -647,3 +647,97 @@ DROP TABLE babel_delete_schema.babel_delete_tbl1
 go
 DROP SCHEMA babel_delete_schema
 go
+
+-------------------------------------------------------------
+-- UPDATE, INSERT w/ error
+-------------------------------------------------------------
+create table babel_update_error(a int primary key)
+go
+
+insert into babel_update_error values (1), (2), (3)
+go
+
+insert top(2) into babel_update_error values (4), (1), (2)
+go
+
+select * from babel_update_error order by a
+go
+
+update top(2) babel_update_error set a = 5 where babel_update_error.a < 3
+go
+
+select * from babel_update_error order by a
+go
+
+drop table babel_update_error
+go
+
+-------------------------------------------------------------
+-- BABEL-1139: INSERT TOP INTO
+-------------------------------------------------------------
+CREATE TABLE babel_1139_t1(a INT);
+CREATE TABLE babel_1139_t2(a INT);
+GO
+
+INSERT TOP(3) INTO babel_1139_t1 (a) values (1), (2), (3), (NULL)
+GO
+
+INSERT TOP(2) INTO babel_1139_t2 SELECT a FROM babel_1139_t1;
+GO
+
+INSERT TOP(1) INTO babel_1139_t1 DEFAULT VALUES;
+GO
+
+INSERT TOP(4) INTO babel_1139_t2 DEFAULT VALUES;
+GO
+
+TRUNCATE TABLE babel_1139_t1;
+TRUNCATE TABLE babel_1139_t2;
+GO
+
+INSERT TOP(5) INTO babel_1139_t1 (a) OUTPUT inserted.* VALUES (1), (1), (1), (1), (1), (1);
+GO
+
+INSERT TOP(4) INTO babel_1139_t2 OUTPUT inserted.* SELECT a FROM babel_1139_t1;
+GO
+
+INSERT TOP(1) INTO babel_1139_t1 OUTPUT inserted.a DEFAULT VALUES;
+GO
+
+TRUNCATE TABLE babel_1139_t1;
+TRUNCATE TABLE babel_1139_t2;
+GO
+
+INSERT TOP(5) INTO babel_1139_t1 (a) OUTPUT inserted.a INTO babel_1139_t2 (a) VALUES (1), (1), (1), (1), (1), (1);
+GO
+
+INSERT TOP(4) INTO babel_1139_t1 OUTPUT inserted.a INTO babel_1139_t2 (a) SELECT a FROM babel_1139_t1;
+GO
+
+INSERT TOP(1) INTO babel_1139_t1 OUTPUT inserted.a INTO babel_1139_t2 (a) DEFAULT VALUES;
+GO
+
+SELECT COUNT(*) FROM babel_1139_t1;
+SELECT COUNT(*) FROM babel_1139_t2;
+GO
+
+TRUNCATE TABLE babel_1139_t1;
+TRUNCATE TABLE babel_1139_t2;
+GO
+
+INSERT TOP(5) INTO babel_1139_t1 (a) OUTPUT inserted.a INTO babel_1139_t2 VALUES (1), (1), (1), (1), (1), (1);
+GO
+
+INSERT TOP(4) INTO babel_1139_t1 OUTPUT inserted.a INTO babel_1139_t2 SELECT a FROM babel_1139_t1;
+GO
+
+INSERT TOP(1) INTO babel_1139_t1 OUTPUT inserted.a INTO babel_1139_t2 DEFAULT VALUES;
+GO
+
+SELECT COUNT(*) FROM babel_1139_t1;
+SELECT COUNT(*) FROM babel_1139_t2;
+GO
+
+DROP TABLE babel_1139_t1;
+DROP TABLE babel_1139_t2;
+GO
