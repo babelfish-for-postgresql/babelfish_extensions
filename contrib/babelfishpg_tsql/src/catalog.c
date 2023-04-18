@@ -2419,6 +2419,8 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 			break;
 		case OBJECT_SEQUENCE:
 			break;
+		case OBJECT_TRIGGER:
+			break;
 		case OBJECT_TYPE:
 			break;
 		case OBJECT_COLUMN:
@@ -2438,16 +2440,11 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 	HeapTuple	usertuple;
 	HeapTuple	new_tuple;
 	TableScanDesc tblscan;
-	Datum		new_record_view_def[BBF_VIEW_DEF_NUM_COLS];
-	bool		new_record_nulls_view_def[BBF_VIEW_DEF_NUM_COLS];
-	bool		new_record_repl_view_def[BBF_VIEW_DEF_NUM_COLS];
+	Datum		new_record_view_def[BBF_VIEW_DEF_NUM_COLS] = {0};
+	bool		new_record_nulls_view_def[BBF_VIEW_DEF_NUM_COLS] = {false};
+	bool		new_record_repl_view_def[BBF_VIEW_DEF_NUM_COLS] = {false};
 	int16		dbid;
 	const char *logical_schema_name;
-
-	/* build the tuple to insert */
-	MemSet(new_record_view_def, 0, sizeof(new_record_view_def));
-	MemSet(new_record_nulls_view_def, false, sizeof(new_record_nulls_view_def));
-	MemSet(new_record_repl_view_def, false, sizeof(new_record_repl_view_def));
 
 	/* open the catalog table */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
@@ -2518,23 +2515,18 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	HeapTuple	sec_tuple;
 	HeapTuple	new_tuple;
 	TableScanDesc tblscan;
-	Datum		new_record_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
-	bool		new_record_nulls_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
-	bool		new_record_repl_func_ext[BBF_FUNCTION_EXT_NUM_COLS];
+	Datum		new_record_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {0};
+	bool		new_record_nulls_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
+	bool		new_record_repl_func_ext[BBF_FUNCTION_EXT_NUM_COLS] = {false};
 	NameData   *objname_data;
 	NameData   *schemaname_data;
 	bool		is_null;
-	char	   *funcsign,
-			   *new_funcsign;
+	char	   *funcsign;
+	StringInfoData new_funcsign;
 	Datum		funcsign_datum;
 	Node	   *schema;
 	char	   *schemaname;
 	ObjectWithArgs *objwargs = (ObjectWithArgs *) stmt->object;
-
-	/* build the tuple to insert */
-	MemSet(new_record_func_ext, 0, sizeof(new_record_func_ext));
-	MemSet(new_record_nulls_func_ext, false, sizeof(new_record_nulls_func_ext));
-	MemSet(new_record_repl_func_ext, false, sizeof(new_record_repl_func_ext));
 
 	/* open the catalog table */
 	bbf_func_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
@@ -2578,14 +2570,20 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	funcsign_datum = heap_getattr(usertuple, Anum_bbf_function_ext_funcsignature,
 								  bbf_func_ext_rel->rd_att, &is_null);
 	funcsign = pstrdup(TextDatumGetCString(funcsign_datum));
-	new_funcsign = strcat(pstrdup(stmt->newname), strrchr(funcsign, '('));
+	/* get new funcsignature */
+	initStringInfo(&new_funcsign);
+	appendStringInfoString(&new_funcsign, stmt->newname);
+	appendStringInfoString(&new_funcsign, strrchr(funcsign, '('));
 
 	new_record_func_ext[Anum_bbf_function_ext_funcname - 1] = CStringGetDatum(stmt->newname);
-	new_record_func_ext[Anum_bbf_function_ext_orig_name - 1] = CStringGetTextDatum(orig_proc_funcname);
-	new_record_func_ext[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(new_funcsign);
+	new_record_func_ext[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(new_funcsign.data);
 	new_record_repl_func_ext[Anum_bbf_function_ext_funcname - 1] = true;
-	new_record_repl_func_ext[Anum_bbf_function_ext_orig_name - 1] = true;
 	new_record_repl_func_ext[Anum_bbf_function_ext_funcsignature - 1] = true;
+	if (orig_proc_funcname != NULL)
+	{
+		new_record_func_ext[Anum_bbf_function_ext_orig_name - 1] = CStringGetTextDatum(orig_proc_funcname);
+		new_record_repl_func_ext[Anum_bbf_function_ext_orig_name - 1] = true;
+	}
 
 	new_tuple = heap_modify_tuple(usertuple,
 								  bbf_func_ext_dsc,
@@ -2597,6 +2595,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	sec_tuple = heap_getnext(tblscan, ForwardScanDirection);
 	if (HeapTupleIsValid(sec_tuple))
 	{
+		orig_proc_funcname = NULL;
 		table_endscan(tblscan);
 		table_close(bbf_func_ext_rel, RowExclusiveLock);
 		ereport(ERROR,
@@ -2606,6 +2605,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 
 	CatalogTupleUpdate(bbf_func_ext_rel, &new_tuple->t_self, new_tuple);
 
+	orig_proc_funcname = NULL;
 	heap_freetuple(new_tuple);
 
 	table_endscan(tblscan);
