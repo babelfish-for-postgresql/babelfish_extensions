@@ -1,0 +1,2 @@
+drop table cities;
+go
