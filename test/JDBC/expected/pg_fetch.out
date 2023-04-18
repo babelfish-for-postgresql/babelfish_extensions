@@ -1,0 +1,40 @@
+-- psql
+
+create table t1( a int);
+GO
+
+insert into t1 select generate_series(1,5); 
+GO
+~~ROW COUNT: 5~~
+
+
+begin;
+GO
+
+DECLARE _test_cursor CURSOR FOR SELECT a from only t1;
+GO
+
+FETCH 2 from _test_cursor; 
+GO
+~~START~~
+int4
+1
+2
+~~END~~
+
+
+FETCH 2 from _test_cursor; 
+GO
+~~START~~
+int4
+3
+4
+~~END~~
+
+
+commit;
+GO
+
+drop table t1;
+GO
+
