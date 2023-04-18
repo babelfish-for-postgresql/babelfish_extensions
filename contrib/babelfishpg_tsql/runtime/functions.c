@@ -2089,62 +2089,102 @@ parsename(PG_FUNCTION_ARGS)
 {
     text *object_name = PG_GETARG_TEXT_P(0);
     int object_piece = PG_GETARG_INT32(1);
-    char *delim = ".";
-    char *token;
-    char *save_ptr;
+    char *object_name_str = text_to_cstring(object_name);
+    char *server_name = NULL;
     char *database_name = NULL;
     char *schema_name = NULL;
-    char *table_name = NULL;
-    int count = 0;
-    char *object_name_str;
-	char *dummy_prefix = "NULL";
-    object_name_str = text_to_cstring(object_name);
-	
-    if (strlen(object_name_str) > 512) {
+    char *object_name_part = NULL;
+    char *dot_pos = NULL;
+    char *dot_pos2 = NULL;
+    int dot_count = 0;
+
+    int object_name_len = strlen(object_name_str);
+    if (object_name_len == 0 || object_name_str == NULL) {
         PG_RETURN_NULL();
     }
 
-    if (object_name_str[0] == '.') {
-        object_name_str = psprintf("%s%s", dummy_prefix, object_name_str);
+    for (int i = 0; i < object_name_len; i++) {
+        if (object_name_str[i] == '.') {
+            dot_count++;
+            if (dot_count > 2) {
+                PG_RETURN_NULL();
+            }
+        } else if (!isalnum(object_name_str[i]) && object_name_str[i] != '_') {
+            PG_RETURN_NULL();
+        }
     }
-    token = strtok_r(object_name_str, delim, &save_ptr);
-    while (token != NULL) {
-        count++;
-        if (count == 1) {
-            schema_name = token;
+    dot_pos = strchr(object_name_str, '.');
+    if (dot_pos != NULL) {
+        int server_name_len = dot_pos - object_name_str;
+        if (server_name_len > 128) {
+            PG_RETURN_NULL();
         }
-        else if (count == 2) {
-            table_name = token;
+        dot_count++;
+        server_name = object_name_str;
+        *dot_pos = '\0';
+        object_name_part = dot_pos + 1;
+        dot_pos2 = strchr(object_name_part, '.');
+        if (dot_pos2 != NULL) {
+            int schema_name_len = dot_pos2 - object_name_part;
+            if (schema_name_len > 128) {
+                PG_RETURN_NULL();
+            }
+            dot_count++;
+            schema_name = object_name_part;
+            *dot_pos2 = '\0';
+            database_name = server_name;
+            server_name = NULL;
+            object_name_part = dot_pos2 + 1;
+            }
+        else {
+            int database_name_len = strlen(object_name_part);
+            if (database_name_len > 128) {
+                PG_RETURN_NULL();
+            }
+            database_name = object_name_part;
+            schema_name = server_name;
+            server_name = NULL;
         }
-        else if (count == 3) {
-            database_name = token;
+    }
+    else {
+        int object_name_part_len = strlen(object_name_str);
+        if (object_name_part_len > 128) {
+            PG_RETURN_NULL();
         }
-        else if (count > 3) {
-            break;
-        }
-        token = strtok_r(NULL, delim, &save_ptr);
+        object_name_part = object_name_str;
     }
 
-    if (count != 3) {
-        PG_RETURN_NULL();
-    }
     if (object_piece == 1) {
-		if(database_name == NULL){
-			PG_RETURN_NULL();
-		}
-        PG_RETURN_TEXT_P(cstring_to_text(database_name));
+        if (object_name_part[0] == '\0') {
+            PG_RETURN_NULL();
+        }
+        else {
+            PG_RETURN_TEXT_P(cstring_to_text(object_name_part));
+        }
     }
     else if (object_piece == 2) {
-		if(table_name == NULL){
-			PG_RETURN_NULL();
-		}
-        PG_RETURN_TEXT_P(cstring_to_text(table_name));
+        if (schema_name == NULL || schema_name[0] == '\0') {
+            PG_RETURN_NULL();
+        }
+        else {
+            PG_RETURN_TEXT_P(cstring_to_text(schema_name));
+        }
     }
     else if (object_piece == 3) {
-		if(schema_name == NULL){
-			PG_RETURN_NULL();
-		}
-        PG_RETURN_TEXT_P(cstring_to_text(schema_name));
+        if (database_name == NULL || database_name[0] == '\0') {
+            PG_RETURN_NULL();
+        }
+        else {
+            PG_RETURN_TEXT_P(cstring_to_text(database_name));
+        }
+    }
+    else if (object_piece == 4) {
+        if (server_name != NULL) {
+            PG_RETURN_TEXT_P(cstring_to_text(server_name));
+        }
+        else {
+            PG_RETURN_NULL();
+        }
     }
     else {
         PG_RETURN_NULL();
