@@ -1,0 +1,8 @@
+use babel_4098_db;
+go
+
+SELECT NEXT VALUE FOR babel_4098.seq1
+GO
+
+SELECT NEXT VALUE FOR seq2
+GO
