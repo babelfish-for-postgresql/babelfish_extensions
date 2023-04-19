@@ -1219,13 +1219,9 @@ get_query_timeout_from_server_name(char *servername)
 	tuple = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple))
 	{
-		// Form_bbf_servers_def serverform = ((Form_bbf_servers_def) GETSTRUCT(tuple));
-		// query_timeout = serverform->query_timeout;
-		// tuple = heap_getnext(scan, ForwardScanDirection);
 		bool		isNull;
-		servername = TextDatumGetCString(heap_getattr(tuple, Anum_bbf_servers_def_servername,
+		query_timeout = DatumGetInt32(heap_getattr(tuple, Anum_bbf_servers_def_query_timeout,
 														 RelationGetDescr(bbf_servers_def_rel), &isNull));
-		query_timeout = 1;
 	}
 
 	table_endscan(scan);
