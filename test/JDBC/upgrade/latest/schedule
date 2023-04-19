@@ -336,7 +336,6 @@ BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
-BABEL-808
 BABEL-889
 babel_417
 babel_datatype_sqlvariant
@@ -413,6 +412,7 @@ BABEL-733
 BABEL-745
 BABEL-3938
 sys-userid
+sys-parsename
 BABEL-NEXT-VALUE-FOR
 BABEL-4098
 babel_context_info

@@ -291,6 +291,7 @@ sys-xml_indexes
 sys-xml_schema_collections
 sys_all_objects
 sys-userid-dep
+sys-parsename
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR

@@ -3,26 +3,26 @@ PARSENAME('tempdb.dbo.Employee', 2) AS [Schema Name],
 PARSENAME('tempdb.dbo.Employee', 1) AS [Table Name],
 *
 FROM
-Employee
+parsename_Employee
 ORDER BY HireDate DESC;
 GO
 
-SELECT * FROM EmployeeDatabaseView1
+SELECT * FROM parsename_EmployeeDatabaseView1
 GO
 
-EXEC GetEmployeeDatabaseName1
+EXEC parsename_GetEmployeeDatabaseName1
 GO
 
-SELECT * FROM EmployeeDatabaseView2
+SELECT * FROM parsename_EmployeeDatabaseView2
 GO
 
-EXEC GetEmployeeDatabaseName2
+EXEC parsename_GetEmployeeDatabaseName2
 GO
 
-SELECT * FROM EmployeeDatabaseView3
+SELECT * FROM parsename_EmployeeDatabaseView3
 GO
 
-EXEC GetEmployeeDatabaseName3
+EXEC parsename_GetEmployeeDatabaseName3
 GO
 
 SELECT PARSENAME('tempdb.dbo.Employee',1)
@@ -76,7 +76,7 @@ GO
 SELECT PARSENAME('tempdb.dbopdbvdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.Employee',1)
 GO
 
-SELECT PARSENAME('tempdb.dbo.Employeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',1)
+SELECT PARSENAME('tempdb.dbo.Employeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',1)
 GO
 
 SELECT PARSENAME('[tempdb].[dbo].[Employee]',1)
@@ -95,4 +95,13 @@ SELECT PARSENAME('tempdb..Employee',3)
 GO
 
 SELECT PARSENAME('.dbo.Employee',3)
+GO
+
+SELECT PARSENAME('.dbo.Employee.table',3)
+GO
+
+SELECT PARSENAME('.dbo.Employee.table',4)
+GO
+
+SELECT PARSENAME('.dbo.Employee',5)
 GO

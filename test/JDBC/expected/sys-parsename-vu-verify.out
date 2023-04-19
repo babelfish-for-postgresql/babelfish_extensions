@@ -3,7 +3,7 @@ PARSENAME('tempdb.dbo.Employee', 2) AS [Schema Name],
 PARSENAME('tempdb.dbo.Employee', 1) AS [Table Name],
 *
 FROM
-Employee
+parsename_Employee
 ORDER BY HireDate DESC;
 GO
 ~~START~~
@@ -14,7 +14,7 @@ tempdb#!#dbo#!#Employee#!#1#!#John#!#Doe#!#2020-01-01 00:00:00.0#!#50000.0000
 ~~END~~
 
 
-SELECT * FROM EmployeeDatabaseView1
+SELECT * FROM parsename_EmployeeDatabaseView1
 GO
 ~~START~~
 varchar
@@ -22,7 +22,7 @@ tempdb
 ~~END~~
 
 
-EXEC GetEmployeeDatabaseName1
+EXEC parsename_GetEmployeeDatabaseName1
 GO
 ~~START~~
 varchar
@@ -30,7 +30,7 @@ tempdb
 ~~END~~
 
 
-SELECT * FROM EmployeeDatabaseView2
+SELECT * FROM parsename_EmployeeDatabaseView2
 GO
 ~~START~~
 varchar
@@ -38,7 +38,7 @@ dbo
 ~~END~~
 
 
-EXEC GetEmployeeDatabaseName2
+EXEC parsename_GetEmployeeDatabaseName2
 GO
 ~~START~~
 varchar
@@ -46,7 +46,7 @@ dbo
 ~~END~~
 
 
-SELECT * FROM EmployeeDatabaseView3
+SELECT * FROM parsename_EmployeeDatabaseView3
 GO
 ~~START~~
 varchar
@@ -54,11 +54,11 @@ Employee
 ~~END~~
 
 
-EXEC GetEmployeeDatabaseName3
+EXEC parsename_GetEmployeeDatabaseName3
 GO
 ~~START~~
 varchar
-Employee
+<NULL>
 ~~END~~
 
 
@@ -185,7 +185,7 @@ SELECT PARSENAME('tempdbvddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 GO
 ~~START~~
 varchar
-dbo
+<NULL>
 ~~END~~
 
 
@@ -197,11 +197,11 @@ varchar
 ~~END~~
 
 
-SELECT PARSENAME('tempdb.dbo.Employeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',1)
+SELECT PARSENAME('tempdb.dbo.Employeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',1)
 GO
 ~~START~~
 varchar
-Employeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+<NULL>
 ~~END~~
 
 
@@ -246,6 +246,30 @@ tempdb
 
 
 SELECT PARSENAME('.dbo.Employee',3)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee.table',3)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee.table',4)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee',5)
 GO
 ~~START~~
 varchar

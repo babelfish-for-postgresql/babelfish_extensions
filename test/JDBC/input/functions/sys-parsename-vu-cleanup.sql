@@ -1,0 +1,20 @@
+DROP VIEW IF EXISTS parsename_EmployeeDatabaseView1;
+GO
+
+DROP PROCEDURE IF EXISTS parsename_GetEmployeeDatabaseName1;
+GO
+
+DROP VIEW IF EXISTS parsename_EmployeeDatabaseView2;
+GO
+
+DROP PROCEDURE IF EXISTS parsename_GetEmployeeDatabaseName2;
+GO
+
+DROP VIEW IF EXISTS parsename_EmployeeDatabaseView3;
+GO
+
+DROP PROCEDURE IF EXISTS parsename_GetEmployeeDatabaseName3;
+GO
+
+DROP TABLE IF EXISTS parsename_Employee;
+GO
