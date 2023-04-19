@@ -1804,18 +1804,43 @@ BEGIN
 			ELSE IF @objtype = 'OBJECT'
 				BEGIN
 					DECLARE @count INT;
-					SELECT @count = COUNT(*) FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+					SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
 					WHERE s1.name = @schemaname AND o1.name = @subname;
+					SELECT @count = COUNT(*) FROM #tempTable;
+
 					IF @count > 1
 						BEGIN
 							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
 						END
 					IF @count < 1
 						BEGIN
-							THROW 33557097, N'There is no object with the given @objname.', 1;
+							-- TABLE TYPE: check if there is a match in sys.table_types (if we cannot alter sys.objects table_type naming)
+							SELECT @count = COUNT(*) FROM sys.table_types tt1 INNER JOIN sys.schemas s1 ON tt1.schema_id = s1.schema_id 
+							WHERE s1.name = @schemaname AND tt1.name = @subname;
+							IF @count > 1
+								BEGIN
+									THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+								END
+							ELSE IF @count < 1
+								BEGIN
+									THROW 33557097, N'There is no object with the given @objname.', 1;
+								END
+							ELSE
+								BEGIN
+									SET @currtype = 'TT'
+								END
 						END
-					SELECT @currtype = type FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
-					WHERE s1.name = @schemaname AND o1.name = @subname;
+					IF @currtype IS NULL
+						BEGIN
+							SELECT @currtype = type from #tempTable;
+						END
+					IF @currtype = 'TR' OR @currtype = 'TA'
+						BEGIN
+							DECLARE @physical_schema_name sys.nvarchar(776) = '';
+							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = cast(sys.db_id() as oid) AND orig_name = @schemaname;
+							SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
+							WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
+						END
 				END
 			ELSE
 				BEGIN

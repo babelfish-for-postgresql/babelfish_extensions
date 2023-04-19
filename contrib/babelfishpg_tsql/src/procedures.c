@@ -3101,8 +3101,8 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		else if (strcmp(objtype, "TA") == 0 || strcmp(objtype, "TR") == 0)
 		{
 			/* TRIGGER */
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Feature not supported: renaming object type Trigger")));
+			objtype_code = OBJECT_TRIGGER;
+			process_util_querystr = "(ALTER TRIGGER )";
 		}
 		else if (strcmp(objtype, "C") == 0 || strcmp(objtype, "D") == 0 || strcmp(objtype, "PK") == 0 ||
 				 strcmp(objtype, "UQ") == 0 || strcmp(objtype, "EC") == 0)
@@ -3114,8 +3114,8 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		else if (strcmp(objtype, "TT") == 0)
 		{
 			/* TABLE TYPE */
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Feature not supported: renaming object type Table-Type")));
+			objtype_code = OBJECT_TYPE;
+			process_util_querystr = "(ALTER TABLE )";
 		}
 		else if (strcmp(objtype, "CO") == 0)
 		{
@@ -3209,6 +3209,13 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		case OBJECT_SEQUENCE:
 			appendStringInfo(&query, "ALTER SEQUENCE dummy RENAME TO dummy; ");
 			break;
+		case OBJECT_TRIGGER:
+			appendStringInfo(&query, "ALTER TRIGGER dummy ON dummy RENAME TO dummy; ");
+			appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
+			break;
+		case OBJECT_TYPE:
+			appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
+			break;
 		case OBJECT_COLUMN:
 			appendStringInfo(&query, "ALTER TABLE dummy RENAME COLUMN dummy TO dummy; ");
 			appendStringInfo(&query, "ALTER TABLE dummy ALTER COLUMN dummy SET (dummy = 'dummy'); ");
@@ -3221,7 +3228,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	}
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
-	if ((objtype != OBJECT_COLUMN) && (list_length(res) != 1))
+	if ((objtype != OBJECT_COLUMN) && (objtype != OBJECT_TRIGGER) && (list_length(res) != 1))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Expected 1 statement but get %d statements after parsing", list_length(res))));
@@ -3249,6 +3256,35 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		orig_proc_funcname = pstrdup(newname);
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
+	}
+	else if ((objtype == OBJECT_TRIGGER))
+	{
+		ObjectWithArgs *objwargs;
+		renamestmt->renameType = objtype;
+		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->relname = pstrdup(lowerstr(curr_relname));
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+		rewrite_object_refs(stmt);
+
+		// extra query nodes for ALTER FUNCTION
+		stmt = parsetree_nth_stmt(res, 1);
+		renamestmt = (RenameStmt *) stmt;
+		if (!IsA(renamestmt, RenameStmt))
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
+		objwargs = (ObjectWithArgs *) renamestmt->object;
+		renamestmt->renameType = OBJECT_FUNCTION;
+		objwargs->objname = list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+	}
+	else if ((objtype == OBJECT_TYPE))
+	{
+		renamestmt->renameType = OBJECT_TABLE;
+		renamestmt->subname = pstrdup(lowerstr(objname));
+		renamestmt->newname = pstrdup(lowerstr(newname));
+		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
+		renamestmt->relation->relname = pstrdup(lowerstr(objname));
 	}
 	else
 	{
