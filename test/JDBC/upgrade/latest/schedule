@@ -429,3 +429,5 @@ orderby
 sys_sysusers_dep
 BABEL-3215
 BABEL-4078
+identity_function
+sys-suser_sname

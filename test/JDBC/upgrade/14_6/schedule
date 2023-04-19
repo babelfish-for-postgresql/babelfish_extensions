@@ -370,3 +370,13 @@ datetime2fromparts
 timefromparts
 BABEL-3215
 BABEL-4078-before-14_8-or-15_3
+babelfish_cast_floor
+BABEL-SP_COLUMNS_MANAGED-dep
+BABEL-SP_SPECIAL_COLUMNS_100-dep
+BABEL-SP_SPROC_COLUMNS_100-dep
+babel_try_parse
+identity_function
+sys-proc_param_helper-dep
+sys-suser_sname
+Test-sp_helprole-dep
+Test-sp_helprolemember-dep

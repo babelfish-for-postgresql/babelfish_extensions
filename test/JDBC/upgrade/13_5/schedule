@@ -256,3 +256,11 @@ datetime2fromparts
 timefromparts
 BABEL-3215
 BABEL-4078-before-14_8-or-15_3
+BABEL-2701
+BABEL-LOGIN-USER-EXT
+sp_tablecollations
+sys-assemblies
+sys-dm_exec_connections-dep
+sys-dm_exec_sessions-dep
+sys-system_sql_modules
+sys-table_types-dep
