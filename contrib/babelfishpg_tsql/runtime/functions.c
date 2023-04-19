@@ -2105,11 +2105,11 @@ parsename(PG_FUNCTION_ARGS)
     bool in_bracket = false;
     int object_name_len = strlen(object_name_str);
     
-	if (object_name_len == 0 || object_name_str == NULL) 
+	if (object_name_len == 0 || object_name_str == NULL)
 	{
-        PG_RETURN_NULL();
-    }
-    
+		PG_RETURN_NULL();
+	}
+
 	if (object_name_len > 128)
 	{
 		PG_RETURN_NULL();
@@ -2117,142 +2117,142 @@ parsename(PG_FUNCTION_ARGS)
 
 	for (int i = 0; i < object_name_len; i++) 
 	{
-        if (object_name_str[i] == '[') 
+		if (object_name_str[i] == '[')
 		{
-            in_bracket = true;
-            continue;
-        }
-        else if (object_name_str[i] == ']') 
+			in_bracket = true;
+			continue;
+		}
+		else if (object_name_str[i] == ']')
 		{
-            in_bracket = false;
-            continue;
-        }
-        if (in_bracket) 
+			in_bracket = false;
+			continue;
+		}
+		if (in_bracket)
 		{
-            continue;
-        }
-        if (object_name_str[i] == '.') 
+			continue;
+		}
+		if (object_name_str[i] == '.')
 		{
-            dot_count++;
-            if (dot_count > 2) 
-			{
-                PG_RETURN_NULL();
-            }
-        }
-        else if (!isalnum(object_name_str[i]) && object_name_str[i] != ':') 
-		{
-            PG_RETURN_NULL();
-        }
-    }
-    dot_pos = strchr(object_name_str, '.');
-    if (dot_pos != NULL) 
-	{
-        int server_name_len = dot_pos - object_name_str;
-        if (server_name_len > 128) 
-		{
-            PG_RETURN_NULL();
-        }
-        dot_count++;
-        server_name = object_name_str;
-        *dot_pos = '\0';
-        object_name_part = dot_pos + 1;
-        dot_pos2 = strchr(object_name_part, '.');
-        if (dot_pos2 != NULL) 
-		{
-            int schema_name_len = dot_pos2 - object_name_part;
-            if (schema_name_len > 128)
-			{
-                PG_RETURN_NULL();
-            }
-        	
 			dot_count++;
-            schema_name = object_name_part;
-            *dot_pos2 = '\0';
-            database_name = server_name;
-            server_name = NULL;
-            object_name_part = dot_pos2 + 1;
-        }
-        else 
-		{
-            int database_name_len = strlen(object_name_part);
-            if (database_name_len > 128) 
+			if (dot_count > 2)
 			{
-                PG_RETURN_NULL();
-            }
-            database_name = object_name_part;
-            schema_name = server_name;
-            server_name = NULL;
-        }
-    }
-    else 
+				PG_RETURN_NULL();
+			}
+		}
+		else if (!isalnum(object_name_str[i]) && object_name_str[i] != ':')
+		{
+			PG_RETURN_NULL();
+		}
+	}
+	dot_pos = strchr(object_name_str, '.');
+	if (dot_pos != NULL)
 	{
-        int object_name_part_len = strlen(object_name_str);
-        if (object_name_part_len > 128) 
+		int server_name_len = dot_pos - object_name_str;
+		if (server_name_len > 128)
 		{
-            PG_RETURN_NULL();
-        }
-        object_name_part = object_name_str;
-    }
-    
-	if (object_piece == 1) 
-	{
-    	if (object_name_part[0] == '\0') 
+			PG_RETURN_NULL();
+		}
+		dot_count++;
+		server_name = object_name_str;
+		*dot_pos = '\0';
+		object_name_part = dot_pos + 1;
+		dot_pos2 = strchr(object_name_part, '.');
+		if (dot_pos2 != NULL)
 		{
-        	PG_RETURN_NULL();
-    	}
-    	else 
-		{
-    		// Remove square brackets from object name
-        	int object_name_part_len = strlen(object_name_part);
-    		if (object_name_part[0] == '[' && object_name_part[object_name_part_len - 1] == ']') 
+			int schema_name_len = dot_pos2 - object_name_part;
+			if (schema_name_len > 128)
 			{
-            	object_name_part[object_name_part_len - 1] = '\0';
-            	PG_RETURN_TEXT_P(cstring_to_text(&object_name_part[1]));
-    		}
-        	else 
+				PG_RETURN_NULL();
+			}
+			
+			dot_count++;
+			schema_name = object_name_part;
+			*dot_pos2 = '\0';
+			database_name = server_name;
+			server_name = NULL;
+			object_name_part = dot_pos2 + 1;
+		}
+		else
+		{
+			int database_name_len = strlen(object_name_part);
+			if (database_name_len > 128)
 			{
-            	PG_RETURN_TEXT_P(cstring_to_text(object_name_part));
-        	}
-        }
-    }
-    else if (object_piece == 2) 
+				PG_RETURN_NULL();
+			}
+			database_name = object_name_part;
+			schema_name = server_name;
+			server_name = NULL;
+		}
+	}
+	else
 	{
-        if (schema_name == NULL || schema_name[0] == '\0') 
+		int object_name_part_len = strlen(object_name_str);
+		if (object_name_part_len > 128)
 		{
-            PG_RETURN_NULL();
-        }
-        else 
+			PG_RETURN_NULL();
+		}
+		object_name_part = object_name_str;
+	}
+	
+	if (object_piece == 1)
+	{
+		if (object_name_part[0] == '\0')
 		{
-            char *schema_name_str = schema_name;
-            if (schema_name_str[0] == '[' && schema_name_str[strlen(schema_name_str) - 1] == ']') 
+			PG_RETURN_NULL();
+		}
+		else
+		{
+			// Remove square brackets from object name
+			int object_name_part_len = strlen(object_name_part);
+			if (object_name_part[0] == '[' && object_name_part[object_name_part_len - 1] == ']') 
+			{
+				object_name_part[object_name_part_len - 1] = '\0';
+				PG_RETURN_TEXT_P(cstring_to_text(&object_name_part[1]));
+			}
+			else
+			{
+				PG_RETURN_TEXT_P(cstring_to_text(object_name_part));
+			}
+		}
+	}
+	else if (object_piece == 2)
+	{
+		if (schema_name == NULL || schema_name[0] == '\0')
+		{
+			PG_RETURN_NULL();
+		}
+		else
+		{
+			char *schema_name_str = schema_name;
+			if (schema_name_str[0] == '[' && schema_name_str[strlen(schema_name_str) - 1] == ']')
 			{
 				schema_name_str[strlen(schema_name_str) - 1] = '\0';
 				schema_name_str++;
-    		}
+			}
 			PG_RETURN_TEXT_P(cstring_to_text(schema_name_str));
-        }
-    }
-    else if (object_piece == 3) 
+		}
+	}
+	else if (object_piece == 3)
 	{
-        if (database_name == NULL || database_name[0] == '\0') 
+		if (database_name == NULL || database_name[0] == '\0')
 		{
-        	PG_RETURN_NULL();
-        }
-		else 
+			PG_RETURN_NULL();
+		}
+		else
 		{
-            char *schema_name_str = database_name;
-            if (schema_name_str[0] == '[' && schema_name_str[strlen(schema_name_str) - 1] == ']') 
+			char *schema_name_str = database_name;
+			if (schema_name_str[0] == '[' && schema_name_str[strlen(schema_name_str) - 1] == ']')
 			{
 				schema_name_str[strlen(schema_name_str) - 1] = '\0';
 				schema_name_str++;
-    		}
-            PG_RETURN_TEXT_P(cstring_to_text(schema_name_str));
-        }
-    } 
-	else 
+			}
+			PG_RETURN_TEXT_P(cstring_to_text(schema_name_str));
+		}
+	}
+	else
 	{
-        PG_RETURN_NULL();
-    }
+		PG_RETURN_NULL();
+	}
 }
 
 /* Returns the database schema name for schema-scoped objects. */
