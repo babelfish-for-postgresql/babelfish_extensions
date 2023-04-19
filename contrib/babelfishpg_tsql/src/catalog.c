@@ -1219,8 +1219,13 @@ get_query_timeout_from_server_name(char *servername)
 	tuple = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple))
 	{
-		Form_bbf_servers_def serverform = (Form_bbf_servers_def) GETSTRUCT(tuple);
-		query_timeout = serverform->query_timeout;
+		Datum 	query_timeout_datum;
+		bool	isNull;
+		query_timeout_datum = heap_getattr(tuple,
+									 Anum_bbf_servers_def_query_timeout,
+									 RelationGetDescr(bbf_servers_def_rel),
+									 &isNull);
+		query_timeout = DatumGetInt32(query_timeout_datum);
 	}
 
 	table_endscan(scan);

@@ -170,19 +170,6 @@ varchar#!#varchar
 ~~END~~
 
 
--- check if the linked servers are added in babelfish_server_options catalog
-SELECT servername, query_timeout FROM babelfish_server_options
-GO
-~~START~~
-varchar#!#int
-mssql_server1#!#0
-hello.world.com#!#0
-mssql_server2#!#0
-mssql_server3#!#0
-mssql_server#!#5
-~~END~~
-
-
 -- Trying to drop a server that does not exist (Should throw error)
 EXEC sp_dropserver @server = 'mssql_server_that_does_not_exist', @droplogins = NULL
 GO
@@ -225,17 +212,6 @@ SELECT * FROM sys.servers WHERE name = 'mssql_server'
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#int#!#int#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#datetime#!#bit
-~~END~~
-
-
--- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
-SELECT servername, query_timeout FROM babelfish_server_options
-GO
-~~START~~
-varchar#!#int
-mssql_server1#!#0
-hello.world.com#!#0
-mssql_server3#!#0
 ~~END~~
 
 

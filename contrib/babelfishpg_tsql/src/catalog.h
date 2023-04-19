@@ -219,7 +219,6 @@ extern Oid			bbf_servers_def_idx_oid;
 
 extern Oid get_bbf_servers_def_oid(void);
 extern Oid get_bbf_servers_def_idx_oid(void);
-extern HeapTuple search_bbf_servers_def(Relation bbf_servers_def_rel, int32 server_id);
 extern int get_query_timeout_from_server_name(char *servername);
 extern int get_server_id_from_server_name(char *servername);
 extern void clean_up_bbf_server_def(void);

@@ -75,10 +75,6 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
 GO
 
--- check if the linked servers are added in babelfish_server_options catalog
-SELECT servername, query_timeout FROM babelfish_server_options
-GO
-
 -- Trying to drop a server that does not exist (Should throw error)
 EXEC sp_dropserver @server = 'mssql_server_that_does_not_exist', @droplogins = NULL
 GO
@@ -102,10 +98,6 @@ EXEC master.dbo.sp_dropserver @server = 'mssql_server2', @droplogins = 'droplogi
 GO
 
 SELECT * FROM sys.servers WHERE name = 'mssql_server'
-GO
-
--- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
-SELECT servername, query_timeout FROM babelfish_server_options
 GO
 
 SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name = 'mssql_server2'
