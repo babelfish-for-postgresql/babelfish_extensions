@@ -699,7 +699,9 @@ pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, 
 		return;
 	}
 
-	if ((count == 0 || count > pltsql_rowcount) && queryDesc->operation == CMD_SELECT)
+	if ((count == 0 || (count > pltsql_rowcount && pltsql_rowcount != 0))
+		 && queryDesc->operation == CMD_SELECT
+		 && sql_dialect == SQL_DIALECT_TSQL)
 		count = pltsql_rowcount;
 
 	if (prev_ExecutorRun)
