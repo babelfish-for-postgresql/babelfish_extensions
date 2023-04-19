@@ -115,7 +115,7 @@ GO
 SET NOCOUNT ON
 DECLARE @sp_linkedservers_var table(a sysname, b nvarchar(128), c nvarchar(128), d nvarchar(4000), e nvarchar(4000), f nvarchar(4000), g sysname NULL)
 INSERT INTO @sp_linkedservers_var EXEC sp_linkedservers
-SELECT * FROM @sp_linkedservers_var WHERE a <> 'bbf_server'
+SELECT * FROM @sp_linkedservers_var WHERE a <> 'bbf_server' ORDER BY a
 SET NOCOUNT OFF
 GO
 ~~START~~

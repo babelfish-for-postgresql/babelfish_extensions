@@ -322,6 +322,7 @@ go
 
 ~~ERROR (Message: INSERT on a 4-part object name is not yet supported in Babelfish)~~
 
+
 -- function call with servername (not supported)
 select yourserver.master.dbo.f1(1);
 go

@@ -18,7 +18,7 @@ GO
 SET NOCOUNT ON
 DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname NULL, c smallint, d sysname NULL)
 INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
-SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a <> 'bbf_server'
+SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a <> 'bbf_server' ORDER BY a
 SET NOCOUNT OFF
 GO
 

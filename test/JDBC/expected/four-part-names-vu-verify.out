@@ -113,7 +113,7 @@ EXEC bbf_fpn_server.master.dbo.sp_linkedserver
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote procedure reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
 
 
 -- INSERT should not work with four-part object name
