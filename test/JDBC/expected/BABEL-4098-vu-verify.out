@@ -1,0 +1,18 @@
+use babel_4098_db;
+go
+
+SELECT NEXT VALUE FOR babel_4098.seq1
+GO
+~~START~~
+bigint
+10
+~~END~~
+
+
+SELECT NEXT VALUE FOR seq2
+GO
+~~START~~
+bigint
+0
+~~END~~
+
