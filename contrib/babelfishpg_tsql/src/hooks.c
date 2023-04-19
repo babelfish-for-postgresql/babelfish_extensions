@@ -129,7 +129,7 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
-static void pltsql_miscProcessUtility(ParseState *pstate,
+static void pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
 									  const char *queryString,
 									  ProcessUtilityContext context,
@@ -199,7 +199,7 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
-static miscProcessUtility_hook_type prev_miscProcessUtility_hook = NULL;
+static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 
 /*****************************************
@@ -321,8 +321,8 @@ InstallExtendedHooks(void)
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
 
-	prev_miscProcessUtility_hook = miscProcessUtility_hook;
-	miscProcessUtility_hook = pltsql_miscProcessUtility;
+	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
+	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
 
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
@@ -374,7 +374,7 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
-	miscProcessUtility_hook = prev_miscProcessUtility_hook;
+	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
 }
 
@@ -382,7 +382,7 @@ UninstallExtendedHooks(void)
  * 			Hook Functions
  *****************************************/
 static void
-pltsql_miscProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
+pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
 						  ParamListInfo params, QueryCompletion *qc, int *flag)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
