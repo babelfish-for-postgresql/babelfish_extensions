@@ -660,6 +660,80 @@ GO
 ~~ERROR (Message: column "sp_rename_vu_s1_t2_wrong_col" does not exist)~~
 
 
+-- USERDATATYPE
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
+ORDER BY t1.name, s1.name;
+GO
+~~START~~
+text#!#varchar
+sp_rename_vu_alias1#!#dbo
+sp_rename_vu_alias1#!#sp_rename_vu_schema1
+sp_rename_vu_tabletype1_new#!#dbo
+sp_rename_vu_tabletype1_schema1_new#!#sp_rename_vu_schema1
+~~END~~
+
+
+CREATE TABLE sp_rename_vu_alias1_table1(col1 sp_rename_vu_alias1);
+GO
+
+EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
+ORDER BY t1.name, s1.name;
+GO
+~~START~~
+text#!#varchar
+sp_rename_vu_alias2#!#dbo
+sp_rename_vu_alias2#!#sp_rename_vu_schema1
+sp_rename_vu_tabletype1_new#!#dbo
+sp_rename_vu_tabletype1_schema1_new#!#sp_rename_vu_schema1
+~~END~~
+
+
+CREATE TABLE sp_rename_vu_alias1_table2(col1 sp_rename_vu_alias1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "sp_rename_vu_alias1" does not exist)~~
+
+
+CREATE TABLE sp_rename_vu_alias1_table2(col1 sp_rename_vu_alias2);
+GO
+
+INSERT INTO sp_rename_vu_alias1_table1(col1) VALUES ('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO sp_rename_vu_alias1_table2(col1) VALUES ('abcd');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM sp_rename_vu_alias1_table1;
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT * FROM sp_rename_vu_alias1_table2;
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
 -- Helper Function
 DECLARE @sp_rename_helperfunc_out1 nvarchar(776);
 DECLARE @sp_rename_helperfunc_out2 nvarchar(776);
@@ -689,12 +763,4 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Feature not supported: renaming object type Statistics)~~
-
-
--- USERDATATYPE
-EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Feature not supported: renaming object type User-defined Data Type alias)~~
 
