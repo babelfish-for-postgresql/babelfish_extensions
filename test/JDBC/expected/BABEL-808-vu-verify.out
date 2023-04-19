@@ -1,0 +1,254 @@
+SELECT PARSENAME('tempdb.dbo.Employee', 3) AS [Database Name],
+PARSENAME('tempdb.dbo.Employee', 2) AS [Schema Name],
+PARSENAME('tempdb.dbo.Employee', 1) AS [Table Name],
+*
+FROM
+Employee
+ORDER BY HireDate DESC;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#int#!#nvarchar#!#nvarchar#!#datetime#!#money
+tempdb#!#dbo#!#Employee#!#3#!#Bob#!#Johnson#!#2020-03-01 00:00:00.0#!#70000.0000
+tempdb#!#dbo#!#Employee#!#2#!#Jane#!#Smith#!#2020-02-01 00:00:00.0#!#60000.0000
+tempdb#!#dbo#!#Employee#!#1#!#John#!#Doe#!#2020-01-01 00:00:00.0#!#50000.0000
+~~END~~
+
+
+SELECT * FROM EmployeeDatabaseView1
+GO
+~~START~~
+varchar
+tempdb
+~~END~~
+
+
+EXEC GetEmployeeDatabaseName1
+GO
+~~START~~
+varchar
+tempdb
+~~END~~
+
+
+SELECT * FROM EmployeeDatabaseView2
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+EXEC GetEmployeeDatabaseName2
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT * FROM EmployeeDatabaseView3
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+EXEC GetEmployeeDatabaseName3
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee',1)
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee',2)
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee',3)
+GO
+~~START~~
+varchar
+tempdb
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee',5)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee',5)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee',1)
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee',2)
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee',3)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('..Employee',1)
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+SELECT PARSENAME('..Employee',2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('..Employee',3)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('..',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee.', 1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee', 1,2)
+GO
+~~ERROR (Code: 8144)~~
+
+~~ERROR (Message: function parsename has too many arguments specified.)~~
+
+
+SELECT PARSENAME('tempdbvdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.dbo.Employee',2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdbvddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.dbo.Employee',2)
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbopdbvdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.Employee',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',1)
+GO
+~~START~~
+varchar
+Employeeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+~~END~~
+
+
+SELECT PARSENAME('[tempdb].[dbo].[Employee]',1)
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+SELECT PARSENAME('[tempdb].[d[[bo].[Employee]',1)
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+SELECT PARSENAME('[tempdb].[dbo].[Employee]',3)
+GO
+~~START~~
+varchar
+tempdb
+~~END~~
+
+
+SELECT PARSENAME('tempdb..Employee',2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb..Employee',3)
+GO
+~~START~~
+varchar
+tempdb
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee',3)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
