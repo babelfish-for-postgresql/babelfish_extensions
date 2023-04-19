@@ -83,7 +83,7 @@ static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
 static void exec_utility_cmd_helper(char *query_str);
-static void update_bbf_server_options(char *servername, int query_timeout, bool isInsert);
+static void update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
@@ -2255,7 +2255,7 @@ exec_utility_cmd_helper(char *query_str)
 }
 
 static void 
-update_bbf_server_options(char *servername, int query_timeout, bool isInsert)
+update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert)
 {
 	Relation	bbf_servers_def_rel;
 	TupleDesc	bbf_servers_def_rel_dsc;
