@@ -2931,7 +2931,7 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		/* 4. for each obj type, generate the corresponding RenameStmt */
 		/* update variables based on the target objtype */
 		if (strcmp(objtype, "U") == 0 || strcmp(objtype, "IT") == 0 || strcmp(objtype, "S") == 0 ||
-			strcmp(objtype, "ET") == 0)
+			strcmp(objtype, "ET") == 0 || strcmp(objtype, "TT") == 0)
 		{
 			objtype_code = OBJECT_TABLE;
 			process_util_querystr = "(ALTER TABLE )";
@@ -2971,11 +2971,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("Feature not supported: renaming object type Constraint")));
 		}
-		else if (strcmp(objtype, "TT") == 0)
+		else if (strcmp(objtype, "AL") == 0)
 		{
-			/* TABLE TYPE */
+			/* USER DEFINED TYPES ALIAS*/
 			objtype_code = OBJECT_TYPE;
-			process_util_querystr = "(ALTER TABLE )";
+			process_util_querystr = "(ALTER TYPE )";
 		}
 		else if (strcmp(objtype, "CO") == 0)
 		{
@@ -2992,10 +2992,6 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
 
-		/*
-		 * parsetree_list = gen_sp_rename_subcmds(obj_name, new_name,
-		 * schema_name, objtype);
-		 */
 		parsetree_list = gen_sp_rename_subcmds(obj_name, new_name, schema_name, objtype_code, curr_relname);
 
 		/* 5. run all commands */
@@ -3015,7 +3011,6 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			/* do this step */
 			ProcessUtility(wrapper,
 						   pstrdup(process_util_querystr),
-			/* "(ALTER TABLE )", */
 						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
@@ -3073,12 +3068,12 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 			appendStringInfo(&query, "ALTER TRIGGER dummy ON dummy RENAME TO dummy; ");
 			appendStringInfo(&query, "ALTER FUNCTION dummy RENAME TO dummy; ");
 			break;
-		case OBJECT_TYPE:
-			appendStringInfo(&query, "ALTER TABLE dummy RENAME TO dummy; ");
-			break;
 		case OBJECT_COLUMN:
 			appendStringInfo(&query, "ALTER TABLE dummy RENAME COLUMN dummy TO dummy; ");
 			appendStringInfo(&query, "ALTER TABLE dummy ALTER COLUMN dummy SET (dummy = 'dummy'); ");
+			break;
+		case OBJECT_TYPE:
+			appendStringInfo(&query, "ALTER TYPE dummy RENAME TO dummy; ");
 			break;
 		default:
 			ereport(ERROR,
@@ -3138,13 +3133,12 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
 	}
-	else if ((objtype == OBJECT_TYPE))
+	else if (objtype == OBJECT_TYPE)
 	{
-		renamestmt->renameType = OBJECT_TABLE;
+		renamestmt->renameType = objtype;
+		renamestmt->object = (Node *)list_make2(makeString(pstrdup(lowerstr(schemaname))), makeString(pstrdup(lowerstr(objname))));
 		renamestmt->subname = pstrdup(lowerstr(objname));
 		renamestmt->newname = pstrdup(lowerstr(newname));
-		renamestmt->relation->schemaname = pstrdup(lowerstr(schemaname));
-		renamestmt->relation->relname = pstrdup(lowerstr(objname));
 	}
 	else
 	{

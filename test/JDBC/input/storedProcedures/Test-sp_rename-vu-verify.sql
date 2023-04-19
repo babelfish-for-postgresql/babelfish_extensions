@@ -305,6 +305,46 @@ GO
 EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_wrong_col', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
 GO
 
+-- USERDATATYPE
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
+ORDER BY t1.name, s1.name;
+GO
+
+CREATE TABLE sp_rename_vu_alias1_table1(col1 sp_rename_vu_alias1);
+GO
+
+EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
+ORDER BY t1.name, s1.name;
+GO
+
+CREATE TABLE sp_rename_vu_alias1_table2(col1 sp_rename_vu_alias1);
+GO
+
+CREATE TABLE sp_rename_vu_alias1_table2(col1 sp_rename_vu_alias2);
+GO
+
+INSERT INTO sp_rename_vu_alias1_table1(col1) VALUES ('abc');
+GO
+
+INSERT INTO sp_rename_vu_alias1_table2(col1) VALUES ('abcd');
+GO
+
+SELECT * FROM sp_rename_vu_alias1_table1;
+GO
+
+SELECT * FROM sp_rename_vu_alias1_table2;
+GO
+
 -- Helper Function
 DECLARE @sp_rename_helperfunc_out1 nvarchar(776);
 DECLARE @sp_rename_helperfunc_out2 nvarchar(776);
@@ -321,8 +361,4 @@ GO
 
 -- Statistics
 EXEC sp_rename 'sp_rename_vu_stat1', 'sp_rename_vu_stat2', 'STATISTICS';
-GO
-
--- USERDATATYPE
-EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
 GO
