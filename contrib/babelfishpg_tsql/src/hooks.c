@@ -129,11 +129,11 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
-static void pltsql_bbfCustomProcessUtility(ParseState *pstate,
+static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
 									  const char *queryString,
 									  ProcessUtilityContext context,
-									  ParamListInfo params, QueryCompletion *qc, int *flag);
+									  ParamListInfo params, QueryCompletion *qc);
 
 /*****************************************
  * 			Executor Hooks
@@ -381,9 +381,9 @@ UninstallExtendedHooks(void)
 /*****************************************
  * 			Hook Functions
  *****************************************/
-static void
+static bool
 pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
-						  ParamListInfo params, QueryCompletion *qc, int *flag)
+						  ParamListInfo params, QueryCompletion *qc)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
 
@@ -426,7 +426,6 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 
 			if((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL)
 			{
-				*flag = true;
 				/* All event trigger calls are done only when isCompleteQuery is true */
 				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
@@ -565,7 +564,7 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 
 				if (needCleanup)
 					EventTriggerEndCompleteQuery();
-				return;
+				return true;
 
 			}
 			break;
@@ -574,9 +573,8 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		{
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				*flag = true;
 				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
-				return;
+				return true;
 			}
 			break;
 		}
@@ -585,9 +583,8 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
-				*flag = true;
 				drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
-				return;
+				return true;
 			}
 			break;
 		}
@@ -595,16 +592,16 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		{
 			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
 			{
-
-				*flag = true;
 				PLTsqlProcessTransaction(parsetree, params, qc);
+				return false;
 			}
 			break;
 		}
 		default:
-			*flag = false;
+			return false;
 			break;
 	}
+	return false;
 }									  
 								
 
