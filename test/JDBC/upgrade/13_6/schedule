@@ -271,6 +271,7 @@ sys-sp_pkeys-dep
 sys-sp_statistics-dep
 sys-proc_param_helper-dep
 sys-userid-dep
+sys-parsname-dep
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
