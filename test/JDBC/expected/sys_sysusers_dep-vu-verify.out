@@ -1,0 +1,110 @@
+USE sysusersdb
+GO
+
+-- test view created on sys.sysusers
+SELECT * FROM sysusers_dep_vu_prepare_view
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#int
+dbo#!#1#!#1#!#0#!#1#!#0
+guest#!#0#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user1#!#1#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user2#!#1#!#1#!#0#!#1#!#0
+~~END~~
+
+
+-- test procedure created on sys.sysusers
+EXEC sysusers_dep_vu_prepare_proc
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#int
+dbo#!#1#!#1#!#0#!#1#!#0
+guest#!#0#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user1#!#1#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user2#!#1#!#1#!#0#!#1#!#0
+~~END~~
+
+
+-- test function created on sys.sysusers
+SELECT * FROM sysusers_dep_vu_prepare_func()
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#int
+dbo#!#1#!#1#!#0#!#1#!#0
+guest#!#0#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user1#!#1#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user2#!#1#!#1#!#0#!#1#!#0
+~~END~~
+
+
+-- test sys.sysusers view, hasdbaccess should be 1 for newly created user 
+SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
+FROM sys.sysusers
+WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
+ORDER BY name
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#int
+dbo#!#1#!#1#!#0#!#1#!#0
+guest#!#0#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user1#!#1#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user2#!#1#!#1#!#0#!#1#!#0
+~~END~~
+
+
+-- test [GRANT CONNECT TO], hasdbaccess should be 1
+GRANT CONNECT TO guest
+GO
+
+SELECT name, hasdbaccess, islogin
+FROM sys.sysusers
+WHERE name = 'guest'
+GO
+~~START~~
+varchar#!#int#!#int
+guest#!#1#!#1
+~~END~~
+
+
+-- test [REVOKE CONNECT FROM], hasdbaccess should be 0
+REVOKE CONNECT FROM guest
+GO
+
+SELECT name, hasdbaccess, islogin
+FROM sys.sysusers
+WHERE name = 'guest'
+GO
+~~START~~
+varchar#!#int#!#int
+guest#!#0#!#1
+~~END~~
+
+
+-- test [REVOKE CONNECT FROM], hasdbaccess should be 0
+REVOKE CONNECT FROM sysusers_dep_vu_prepare_user1
+GO
+
+SELECT name, hasdbaccess, islogin
+FROM sys.sysusers
+WHERE name = 'sysusers_dep_vu_prepare_user1'
+GO
+~~START~~
+varchar#!#int#!#int
+sysusers_dep_vu_prepare_user1#!#0#!#1
+~~END~~
+
+
+-- test [GRANT CONNECT TO], hasdbaccess should be 1
+GRANT CONNECT TO sysusers_dep_vu_prepare_user1
+GO
+
+SELECT name, hasdbaccess, islogin
+FROM sys.sysusers
+WHERE name = 'sysusers_dep_vu_prepare_user1'
+GO
+~~START~~
+varchar#!#int#!#int
+sysusers_dep_vu_prepare_user1#!#1#!#1
+~~END~~
+
+

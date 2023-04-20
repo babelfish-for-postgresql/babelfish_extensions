@@ -37,6 +37,7 @@ static bool is_select_for_json(SelectStmt *stmt);
 static void select_json_modify(SelectStmt *stmt);
 static bool is_for_json(FuncCall *fc);
 static bool get_array_wrapper(List *for_json_args);
+static void set_schemaname_dbo_to_sys(RangeVar *rv);
 
 
 
@@ -503,9 +504,13 @@ rewrite_object_refs(Node *stmt)
 				{
 					case OBJECT_FUNCTION:
 					case OBJECT_PROCEDURE:
-					case OBJECT_TYPE:
 						{
 							rewrite_objectwithargs((ObjectWithArgs *) rename->object);
+							break;
+						}
+					case OBJECT_TYPE:
+						{
+							rewrite_plain_name((List *) rename->object);
 							break;
 						}
 					case OBJECT_SCHEMA:
@@ -691,6 +696,12 @@ rewrite_relation_walker(Node *node, void *context)
 	if (IsA(node, RangeVar))
 	{
 		RangeVar   *rv = (RangeVar *) node;
+
+		/*
+		 * For the list of catalog names if the schema name
+		 * specified is 'dbo' then replace with 'sys'.
+		 */
+		set_schemaname_dbo_to_sys(rv);
 
 		rewrite_rangevar(rv);
 		return false;
@@ -947,6 +958,41 @@ rewrite_rangevar(RangeVar *rv)
 	}
 }
 
+static void
+set_schemaname_dbo_to_sys(RangeVar *rv)
+{
+	char* list_of_dbo_catalog[5]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages"};
+	char* list_of_dbo_catalog_not_supported_for_cross_db[4]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects"};
+	if (rv->schemaname && strcmp(rv->schemaname, "dbo") == 0)
+	{
+		for (int i = 0; i < 5; i++)
+		{
+			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog[i]) == 0)
+			{
+				rv->schemaname = pstrdup("sys");
+				break;
+			}
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog_not_supported_for_cross_db[i]) == 0)
+			{
+				/* Throw error for dbo catalog which does not support cross-db */
+				if (rv->catalogname && strcmp(get_cur_db_name(), rv->catalogname) != 0) 
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("Cross-DB system view query is not currently supported in Babelfish.")));
+				}
+				else
+				{
+					rv->schemaname = pstrdup("sys");
+					break;
+				}
+			}
+		}
+	}
+}
 static void
 rewrite_objectwithargs(ObjectWithArgs *obj)
 {

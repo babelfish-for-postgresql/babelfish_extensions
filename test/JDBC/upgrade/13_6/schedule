@@ -270,6 +270,7 @@ sys-table_types-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
 sys-proc_param_helper-dep
+sys-userid-dep
 BABEL-SPCOLUMNS-dep
 BABEL-SP_COLUMNS_MANAGED-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
@@ -312,3 +313,5 @@ BABEL-1625
 BABEL-3474
 datetime2fromparts
 timefromparts
+BABEL-3215
+BABEL-4078-before-14_8-or-15_3

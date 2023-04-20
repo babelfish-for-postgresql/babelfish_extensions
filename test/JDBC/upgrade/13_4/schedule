@@ -158,6 +158,7 @@ sys-indexes
 sys-table_types
 sys_all_objects
 sys-system_objects-for-13-x
+sys-userid-dep
 BABEL-1683
 schema_resolution_trigger
 sys-sp_pkeys
@@ -202,3 +203,5 @@ BABEL-1625
 BABEL-3474
 datetime2fromparts
 timefromparts
+BABEL-3215
+BABEL-4078-before-14_8-or-15_3

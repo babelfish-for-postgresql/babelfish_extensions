@@ -589,11 +589,6 @@ drop table test_nchar;
 GO
 
 
--- [BABEL-257] test varchar defaults to sys.varchar in new
--- database and new schema
-SELECT current_database();
-GO
-
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 
