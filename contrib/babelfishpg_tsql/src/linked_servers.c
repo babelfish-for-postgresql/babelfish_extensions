@@ -832,10 +832,6 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 
 		if(query_timeout > 0)
 		{
-			ereport(ERROR,
-						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
-						 errmsg("query timeout \"%d\"", query_timeout)
-						 ));
 			LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
 		}
 
