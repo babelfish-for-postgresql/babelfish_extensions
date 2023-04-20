@@ -827,7 +827,7 @@ RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 --ALTER FUNCTION sys.parsename(character,integer) RENAME TO parsename_deprecated_in_3_2_0;
 
 CREATE OR REPLACE FUNCTION sys.parsename(object_name character varying, object_piece int)
-RETURNS character varying
+RETURNS sys.SYSNAME
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
 
