@@ -159,6 +159,7 @@ sys-table_types
 sys_all_objects
 sys-system_objects-for-13-x
 sys-userid-dep
+sys-parsname-dep
 BABEL-1683
 schema_resolution_trigger
 sys-sp_pkeys
