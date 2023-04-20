@@ -37,6 +37,8 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+ALTER FUNCTION sys.nestlevel() RENAME TO nestlevel_deprecated_in_3_2_0;
+
 CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
 $$
 DECLARE
@@ -53,6 +55,8 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STABLE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'nestlevel_deprecated_in_3_2_0');
 
 -- SYSUSERS
 CREATE OR REPLACE VIEW sys.sysusers AS SELECT
