@@ -329,6 +329,7 @@ sys-xml_schema_collections
 sys_all_objects
 sys_babelfish_configurations_view
 sys-userid-dep
+sys-parsename-dep
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR

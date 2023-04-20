@@ -235,6 +235,7 @@ sys-triggers-dep
 sys-sp_pkeys
 sys-sp_statistics
 sys-userid-dep
+sys-parsename-dep
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO

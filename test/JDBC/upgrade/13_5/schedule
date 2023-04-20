@@ -159,6 +159,7 @@ BABEL-1466
 BABEL-1715
 BABEL-2086
 sys-userid-dep
+sys-parsename-dep
 BABEL-3314
 BABEL-TABLEOPTIONS
 temp-tables
