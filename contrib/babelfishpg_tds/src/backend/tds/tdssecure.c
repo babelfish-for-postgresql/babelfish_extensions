@@ -41,6 +41,26 @@
 int			tds_ssl_min_protocol_version;
 int			tds_ssl_max_protocol_version;
 #ifdef USE_SSL
+
+/*
+ * The SSL packets is packed in a TDS prelogin packet.  The following
+ * structure is used to store the TDS prelogin header.  It's not safe
+ * to access inidividual union members until we read the entire header
+ * in the buf.
+ */
+typedef union TDSPacketHeader {
+	struct header {
+		uint8_t		pkt_type;
+		uint8_t		status;
+		uint16_t	length;
+	} header;
+	char buf[TDS_PACKET_HEADER_SIZE];
+} TDSPacketHeader;
+
+/* tracks how much packet data we've read */
+static int	pkt_bytes_read = 0;
+static TDSPacketHeader pkt_data = {0};
+
 /*
  * SslRead - TDS secure read function, similar to my_sock_read
  */
@@ -69,71 +89,69 @@ SslRead(BIO * h, char *buf, int size)
 /*
  * my_tds_sock_read - TDS secure read function, similar to my_sock_read
  * During the initial handshake, strip off the inital 8 bytes header, when
- * filling in the data in buf called from openssl library
+ * filling in the data in buf called from openssl library.
+ *
+ * The function can handle the scenario if it returns while reading the
+ * header.  In that case, it resumes reading the header from where it left.
  */
+
 static int
 SslHandShakeRead(BIO * h, char *buf, int size)
 {
-	int			res = 0;
+	int res = 0;
+
+	/*
+	 * Read the TDS header if not read.  It's possible that we're reading
+	 * the header in multiple iteration.
+	 */
+	if (pkt_bytes_read < TDS_PACKET_HEADER_SIZE)
+	{
+		/* only read the bytes left in header */
+		int header_left = TDS_PACKET_HEADER_SIZE - pkt_bytes_read;
+
+		/* read untill we get the header at least */
+		while (header_left > 0)
+		{
+			char *cur_loc;
+
+			if ((res = SslRead(h, buf, header_left)) <= 0)
+				return res;
+
+			/* copy the header data read */
+			cur_loc = &(pkt_data.buf[pkt_bytes_read]);
+			memcpy(cur_loc, buf, res);
+			pkt_bytes_read += res;
+
+			header_left -= res;
+		}
+
+		if (unlikely(pkt_data.header.pkt_type != TDS_PRELOGIN))
+			ereport(FATAL,
+					(errcode(ERRCODE_ADMIN_SHUTDOWN),
+					 errmsg("terminating connection due to unexpected ssl packet header")));
+
+		/* endian conversion is required for length */
+		pkt_data.header.length = pg_bswap16(pkt_data.header.length);
+
+	}
+
+	/* At this point, we must have read the TDS header */
+	Assert(pkt_bytes_read >= TDS_PACKET_HEADER_SIZE);
 
 	if ((res = SslRead(h, buf, size)) <= 0)
 		return res;
 
-	/* very first packet of prelogin SSL handshake */
-	if (size > 0 && res > 0 && buf[0] == TDS_PRELOGIN)
-	{
+	pkt_bytes_read += res;
 
-		if (res < TDS_PACKET_HEADER_SIZE)
-		{
-			int			remainingRead = TDS_PACKET_HEADER_SIZE - res;
-			char		tempBuf[TDS_PACKET_HEADER_SIZE];
+	/* shouldn't read more than prelogin->length */
+	if (unlikely(pkt_bytes_read > pkt_data.header.length))
+		ereport(FATAL,
+				(errcode(ERRCODE_ADMIN_SHUTDOWN),
+				 errmsg("terminating connection due to unexpected ssl packet length")));
 
-			res = 0;
-
-			/*
-			 * Read the complete remaining of the header and throw away the
-			 * bytes
-			 */
-			while (res < remainingRead)
-			{
-				int			tmp_res = 0;
-
-				if ((tmp_res = SslRead(h, tempBuf, remainingRead - res)) <= 0)
-				{
-					return tmp_res;
-				}
-				res += tmp_res;
-			}
-
-			/*
-			 * Read the actual data and return the res of the actual data read
-			 * Don't worry if complete read, Openssl library will take care
-			 */
-			if ((res = SslRead(h, buf, size)) <= 0)
-				return res;
-		}
-		else
-		{
-			int			tmp_res = 0;
-			int			i = TDS_PACKET_HEADER_SIZE;
-
-			for (i = TDS_PACKET_HEADER_SIZE; i < res; i++)
-			{
-				buf[i - TDS_PACKET_HEADER_SIZE] = buf[i];
-			}
-			res -= TDS_PACKET_HEADER_SIZE;
-
-			/*
-			 * Read remaining of the data. Even if the read is less than
-			 * requested size due to whatever reasons, we are good, since we
-			 * are returning the correct res value, so caller will take care
-			 * of reading the remaining data
-			 */
-			if ((tmp_res = SslRead(h, &buf[res], TDS_PACKET_HEADER_SIZE)) <= 0)
-				return tmp_res;
-			res += tmp_res;
-		}
-	}
+	/* if we're done reading the packet, reset packet data state */
+	if (pkt_bytes_read == pkt_data.header.length)
+		pkt_bytes_read = 0;
 
 	return res;
 }
@@ -228,6 +246,9 @@ SslHandShakeWrite(BIO * h, const char *buf, int size)
 BIO_METHOD *
 TdsBioSecureSocket(BIO_METHOD * my_bio_methods)
 {
+	/* reset the tds packet data state*/
+	pkt_bytes_read = 0;
+
 	if (my_bio_methods == NULL)
 	{
 		BIO_METHOD *biom = (BIO_METHOD *) BIO_s_socket();
