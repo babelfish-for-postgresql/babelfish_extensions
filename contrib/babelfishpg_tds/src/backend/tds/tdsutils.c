@@ -48,7 +48,7 @@ void		tdsutils_ProcessUtility(PlannedStmt *pstmt, const char *queryString, bool 
 ProcessUtility_hook_type next_ProcessUtility = NULL;
 static void call_next_ProcessUtility(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
 static void check_babelfish_droprole_restrictions(char *role);
-static void check_babelfish_renamerole_restrictions(char *role);
+static void check_babelfish_alterrole_restictions(bool allow_alter_role_operation);
 static void check_babelfish_renamedb_restrictions(Oid target_db_id);
 static void check_babelfish_dropdb_restrictions(Oid target_db_id);
 static bool is_babelfish_ownership_enabled(ArrayType *array);
@@ -57,6 +57,8 @@ static bool is_babelfish_role(const char *role);
 /* Role specific handlers */
 static bool handle_drop_role(DropRoleStmt *drop_role_stmt);
 static bool handle_rename(RenameStmt *rename_stmt);
+static bool handle_alter_role(AlterRoleStmt* alter_role_stmt);
+static bool handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt);
 
 /* Drop database handler */
 static bool handle_dropdb(DropdbStmt *dropdb_stmt);
@@ -705,6 +707,12 @@ tdsutils_ProcessUtility(PlannedStmt *pstmt,
 		case T_DropdbStmt:
 			handle_result = handle_dropdb((DropdbStmt *) parsetree);
 			break;
+		case T_AlterRoleStmt:
+			handle_result = handle_alter_role((AlterRoleStmt*)parsetree);
+			break;
+		case T_AlterRoleSetStmt:
+			handle_result = handle_alter_role_set((AlterRoleSetStmt*)parsetree);
+			break;
 		default:
 			break;
 	}
@@ -888,14 +896,14 @@ check_babelfish_droprole_restrictions(char *role)
 		pfree(role);			/* avoid mem leak */
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session")));
+				 errmsg("Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session")));
 	}
 }
 
 /*
  * is_babelfish_role
  *
- * Helper function to check if a given role is babelfish user or role
+ * Helper function to check if a given role is babelfish user or role or login
  *
  * Notes:
  * 	Direct evidence of babelfish membership is stored in babelfish catalog,
@@ -911,6 +919,9 @@ is_babelfish_role(const char *role)
 {
 	Oid			sysadmin_oid;
 	Oid			role_oid;
+	Oid			bbf_master_guest_oid;
+	Oid			bbf_tempdb_guest_oid;
+	Oid			bbf_msdb_guest_oid;
 
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
@@ -919,6 +930,17 @@ is_babelfish_role(const char *role)
 		return false;
 
 	if (is_member_of_role(sysadmin_oid, role_oid))
+		return true;
+
+	bbf_master_guest_oid = get_role_oid("master_guest", true);
+	bbf_tempdb_guest_oid = get_role_oid("tempdb_guest", true);
+	bbf_msdb_guest_oid = get_role_oid("msdb_guest", true);
+	if (OidIsValid(bbf_master_guest_oid)
+		&& OidIsValid(bbf_tempdb_guest_oid)
+		&& OidIsValid(bbf_msdb_guest_oid)
+		&& is_member_of_role(role_oid, bbf_master_guest_oid)
+		&& is_member_of_role(role_oid, bbf_tempdb_guest_oid)
+		&& is_member_of_role(role_oid, bbf_msdb_guest_oid))
 		return true;
 
 	return false;
@@ -944,7 +966,17 @@ handle_rename(RenameStmt *rename_stmt)
 	 * triggers, so we need to ignore those.
 	 */
 	if (OBJECT_ROLE == rename_stmt->renameType)
-		check_babelfish_renamerole_restrictions(rename_stmt->subname);
+	{
+		if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(rename_stmt->subname))
+		{
+			/*
+			 * Renaming of an babelfish role/user/login
+			 * shouldn't be allowed for an any pg user
+			 * other than superuser
+			 */
+			check_babelfish_alterrole_restictions(false);
+		}
+	}
 
 	else if (OBJECT_DATABASE == rename_stmt->renameType)
 	{
@@ -972,23 +1004,152 @@ handle_rename(RenameStmt *rename_stmt)
 }
 
 /*
- * check_babelfish_renamerole_restrictions
+ * check_babelfish_alterrole_restictions
  *
- * Implements following one additional limitation to drop role stmt
- * block renaming an active babelfish role/user
+ * Implements following one additional limitation to alter role stmt
+ *
+ * Will throw a error when any pg user other than superuser tried to alter an active
+ * babelfish role/user/login and which is not an allowed alter role operation
  */
 static void
-check_babelfish_renamerole_restrictions(char *role)
+check_babelfish_alterrole_restictions(bool allow_alter_role_operation)
 {
-	if (sql_dialect == SQL_DIALECT_TSQL)
-		return;
-	if (is_babelfish_role(role))
-	{
-		pfree(role);			/* avoid mem leak */
+	if(!allow_alter_role_operation)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session")));
-	}
+				 errmsg("Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session")));
+}
+
+/*
+ * handle_alter_role
+ *
+ * Description: This function handles dealing with ALTER ROLE <role> WITH.
+ *
+ * Returns: true - We're not attempting to modify something we shouldn't have access to. Normal security checks.
+ *          false - We've reported an error and should not continue executing this call.
+ */
+static bool
+handle_alter_role(AlterRoleStmt* alter_role_stmt)
+{
+    char *name = get_role_name(alter_role_stmt->role);
+    const char *babelfish_db_name = NULL;
+    bool allow_alter_role_operation;
+    bool master_user = false;
+    List *options = alter_role_stmt->options;
+    ListCell *opt;
+    Oid role_oid;
+    Oid	babelfish_db_oid;
+
+    /* If the role does not exist, just let the normal Postgres checks happen. */
+    if (name == NULL)
+    {
+	    return true;
+    }
+
+    if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
+    {
+	    babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
+	    babelfish_db_oid = get_database_oid(babelfish_db_name, true);
+	    role_oid = get_role_oid(name, true);
+
+	    /* Permission checks */
+	    if (OidIsValid(role_oid) && OidIsValid(babelfish_db_oid) && pg_database_ownercheck(babelfish_db_oid, role_oid))
+		    master_user = true;
+
+	    /*
+	     * For any pg user, there are only few operations which need to be allowed for
+	     * ALTER ROLE <role> WITH. The allowed operations to alter master user is password change
+		 * and the allowed operations to alter babelfish created logins/users/roles are
+		 * password change, connection limit and valid until.
+	     *
+	     * If any non-allowed option is given among the options of alter role then disallow the operation.
+	     *
+	     * In fututre, if need to allow more operations then add those options into the list.
+	     */
+	    foreach(opt, options)
+	    {
+		    DefElem *defel = (DefElem *) lfirst(opt);
+		    if(master_user)
+		    {
+			    if (strcmp(defel->defname, "password") == 0)
+				    allow_alter_role_operation = true;
+			    else
+			    {
+				    allow_alter_role_operation = false;
+				    break;
+			    }
+		    }
+		    else
+		    {
+			    if (strcmp(defel->defname, "password") == 0 ||
+					    strcmp(defel->defname, "connectionlimit") == 0 ||
+					    strcmp(defel->defname, "validUntil") == 0)
+				    allow_alter_role_operation = true;
+			    else
+			    {
+				    allow_alter_role_operation = false;
+				    break;
+			    }
+		    }
+	    }
+	    check_babelfish_alterrole_restictions(allow_alter_role_operation);
+    }
+    pfree(name);
+    return true;
+}
+
+/* handle_alter_role_set
+ *
+ * Description: This function handles dealing with ALTER ROLE <role> SET.
+ *
+ * Returns: true - We're not attempting to modify something we shouldn't have access to, continue on.
+ *          false - We've reported an error and should not continue executing this call.
+ */
+static bool
+handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
+{
+    char *name;
+
+    /*
+     * If this is an ALTER ROLE ALL [ IN DATABASE ] SET statement,
+     * alter_role_set_stmt->role will be NULL.  While we don't want users
+     * altering our "protected" roles, we can pass through here because
+     * PostgreSQL already handles those situations correctly.
+     *
+     * The ALTER ROLE ALL SET variant of this command can only be run by
+     * superusers, and the ALTER ROLE ALL IN DATABASE SET variant is the same as
+     * ALTER DATABASE SET, which is handled via the regular database ownership
+     * checks.  (Customers should not be able to obtain ownership of our
+     * "protected" databases thanks to handle_alter_owner().)
+     */
+    if (alter_role_set_stmt->role == NULL)
+    {
+	    const char *babelfish_db_name = NULL;
+	    babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
+	    if(babelfish_db_name && alter_role_set_stmt->database && strcmp(alter_role_set_stmt->database, babelfish_db_name) == 0)
+		    check_babelfish_alterrole_restictions(false);
+	    return true;
+    }
+
+    name = get_role_name(alter_role_set_stmt->role);
+
+    /* If the role does not exist, just let the normal Postgres checks happen.*/
+    if (name == NULL)
+    {
+	    return true;
+    }
+
+    if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
+    {
+	    check_babelfish_alterrole_restictions(false);
+    }
+
+    /*
+     * Reaching here does not mean that this user has permission to modify the role.
+     * Those permissions checks are done through normal handling.
+     */
+    pfree(name);
+    return true;
 }
 
 /*
