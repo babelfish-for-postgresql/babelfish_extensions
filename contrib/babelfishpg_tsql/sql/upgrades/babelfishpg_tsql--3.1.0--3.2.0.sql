@@ -824,14 +824,14 @@ CREATE AGGREGATE sys.VARP(float8) (
 CREATE OR REPLACE FUNCTION sys.rowcount_big()
 RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
---ALTER FUNCTION sys.parsename(character,integer) RENAME TO parsename_deprecated_in_3_2_0;
+ALTER FUNCTION sys.parsename() RENAME TO parsename_deprecated_in_3_2_0;
 
 CREATE OR REPLACE FUNCTION sys.parsename(object_name character varying, object_piece int)
 RETURNS sys.SYSNAME
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
 
---CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_2_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_2_0');
 
 CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
 RETURNS OID
