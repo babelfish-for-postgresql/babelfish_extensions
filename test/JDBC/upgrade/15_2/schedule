@@ -208,6 +208,7 @@ sys-hash_indexes
 sys-plan_guides
 sp_tablecollations
 sys-assemblies
+sys-userid-dep
 BABEL-LOGIN-USER-EXT
 bitwise_not-operator
 BABEL-1683
@@ -398,6 +399,7 @@ sys-systypes
 openjson
 BABEL-3702
 BABEL_OBJECT_DEFINITION
+BABEL-3818
 Test-sp_rename
 Test-sp_rename-dep
 # openquery_upgrd
@@ -406,6 +408,7 @@ BABEL-3657
 BABEL-733
 BABEL-3938
 BABEL-NEXT-VALUE-FOR
+BABEL-4098
 binary-index
 rowcount
 # test_windows_sp_helpuser
@@ -415,3 +418,4 @@ dateadd_internal_df
 datetime2fromparts
 timefromparts
 orderby-before-15_3
+BABEL-4078-before-14_8-or-15_3

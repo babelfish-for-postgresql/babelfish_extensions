@@ -244,6 +244,7 @@ sys-triggers-dep
 sys-proc_param_helper-dep
 sys-sp_pkeys
 sys-sp_statistics
+sys-userid-dep
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO
@@ -389,6 +390,7 @@ BABEL-3657
 BABEL-733
 BABEL-3938
 binary-index
+BABEL-3818
 rowcount
 BABEL-1625
 BABEL-3474
@@ -397,3 +399,6 @@ datetime2fromparts
 timefromparts
 orderby-before-15_3
 BABEL-3215
+BABEL-NEXT-VALUE-FOR
+BABEL-4098
+BABEL-4078

@@ -201,6 +201,7 @@ sys-hash_indexes
 sys-plan_guides
 sp_tablecollations
 sys-assemblies
+sys-userid-dep
 BABEL-LOGIN-USER-EXT
 bitwise_not-operator
 BABEL-1683
@@ -372,8 +373,10 @@ binary-index
 rowcount
 BABEL-1625
 BABEL-3474
+BABEL-3818
 dateadd_internal_df
 datetime2fromparts
 timefromparts
 orderby-before-15_3
 BABEL-3215
+BABEL-4078-before-14_8-or-15_3

@@ -414,6 +414,7 @@ sys-parsname
 BABEL-3938
 sys-userid
 BABEL-NEXT-VALUE-FOR
+BABEL-4098
 babel_context_info
 binary-index
 test_windows_sp_helpuser
@@ -421,8 +422,11 @@ BABEL-3478
 rowcount
 BABEL-1625
 BABEL-3474
+BABEL-3818
 dateadd_internal_df
 datetime2fromparts-after-15-2
 timefromparts
 orderby
+sys_sysusers_dep
 BABEL-3215
+BABEL-4078

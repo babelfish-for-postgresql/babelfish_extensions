@@ -11,9 +11,11 @@ GO
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1#!#VIEW
 ~~END~~
 
@@ -48,9 +50,11 @@ GO
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table1_new#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1_new#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new2#!#VIEW
 ~~END~~
 
@@ -76,9 +80,11 @@ GO
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table1_new#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1_new#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -120,6 +126,7 @@ master_dbo#!#sp_rename_vu_proc1#!#sp_rename_vu_proc1#!#sp_rename_vu_proc1()
 master_dbo#!#sp_rename_vu_trig1#!#<NULL>#!#sp_rename_vu_trig1()
 master_sp_rename_vu_schema1#!#sp_rename_vu_func3#!#sp_rename_vu_func3#!#sp_rename_vu_func3(integer)
 master_sp_rename_vu_schema1#!#sp_rename_vu_proc2#!#sp_rename_vu_proc2#!#sp_rename_vu_proc2()
+master_sp_rename_vu_schema1#!#sp_rename_vu_trig1#!#<NULL>#!#sp_rename_vu_trig1()
 ~~END~~
 
 
@@ -161,6 +168,7 @@ master_dbo#!#sp_rename_vu_proc1_new#!#sp_rename_vu_proc1_new#!#sp_rename_vu_proc
 master_dbo#!#sp_rename_vu_trig1#!#<NULL>#!#sp_rename_vu_trig1()
 master_sp_rename_vu_schema1#!#sp_rename_vu_func3_new#!#sp_rename_vu_func3_new#!#sp_rename_vu_func3_new(integer)
 master_sp_rename_vu_schema1#!#sp_rename_vu_proc2_new#!#sp_rename_vu_proc2_new#!#sp_rename_vu_proc2_new()
+master_sp_rename_vu_schema1#!#sp_rename_vu_trig1#!#<NULL>#!#sp_rename_vu_trig1()
 ~~END~~
 
 
@@ -278,9 +286,11 @@ GO
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -295,9 +305,11 @@ GO
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -312,9 +324,11 @@ GO
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1_case_insensitive1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -349,9 +363,11 @@ GO
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -394,6 +410,7 @@ master_dbo#!#sp_rename_vu_proc1_new2#!#sp_rename_vu_PRoc1_new2#!#sp_rename_vu_pr
 master_dbo#!#sp_rename_vu_trig1#!#<NULL>#!#sp_rename_vu_trig1()
 master_sp_rename_vu_schema1#!#sp_rename_vu_func3_new#!#sp_rename_vu_func3_new#!#sp_rename_vu_func3_new(integer)
 master_sp_rename_vu_schema1#!#sp_rename_vu_proc2_new#!#sp_rename_vu_proc2_new#!#sp_rename_vu_proc2_new()
+master_sp_rename_vu_schema1#!#sp_rename_vu_trig1#!#<NULL>#!#sp_rename_vu_trig1()
 ~~END~~
 
 
@@ -428,15 +445,310 @@ master#!#sp_rename_vu_schema1#!#sp_rename_vu_seq1_new2
 ~~END~~
 
 
--- ****Given objtype is valid but not supported yet****
+-- Trigger
+SELECT name, parent_class
+FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
+ORDER BY parent_class, name
+GO
+~~START~~
+varchar#!#tinyint
+sp_rename_vu_trig1#!#1
+sp_rename_vu_trig1#!#1
+~~END~~
+
+
+SELECT nspname, funcname, orig_name, funcsignature 
+FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
+ORDER BY nspname, funcname, orig_name, funcsignature
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#text
+master_dbo#!#sp_rename_vu_func1_new#!#sp_rename_vu_func1_new#!#sp_rename_vu_func1_new()
+master_dbo#!#sp_rename_vu_func2_new#!#sp_rename_vu_FUNC2_neW#!#sp_rename_vu_func2_new(integer)
+master_dbo#!#sp_rename_vu_proc1_new2#!#sp_rename_vu_PRoc1_new2#!#sp_rename_vu_proc1_new2()
+master_dbo#!#sp_rename_vu_trig1#!#<NULL>#!#sp_rename_vu_trig1()
+master_sp_rename_vu_schema1#!#sp_rename_vu_func3_new#!#sp_rename_vu_func3_new#!#sp_rename_vu_func3_new(integer)
+master_sp_rename_vu_schema1#!#sp_rename_vu_proc2_new#!#sp_rename_vu_proc2_new#!#sp_rename_vu_proc2_new()
+master_sp_rename_vu_schema1#!#sp_rename_vu_trig1#!#<NULL>#!#sp_rename_vu_trig1()
+~~END~~
+
+
+INSERT INTO sp_rename_vu_table2(sp_rename_vu_t2_col1, sp_rename_vu_t2_col2) VALUES (1, 2);
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Testing sp_rename trigger)~~
+
+
+EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig1_new', 'OBJECT';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_trig1', 'sp_rename_vu_trig1_schema1_new', 'OBJECT';
+GO
+
+SELECT name, parent_class
+FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
+ORDER BY parent_class, name
+GO
+~~START~~
+varchar#!#tinyint
+sp_rename_vu_trig1_new#!#1
+sp_rename_vu_trig1_schema1_new#!#1
+~~END~~
+
+
+SELECT nspname, funcname, orig_name, funcsignature 
+FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
+ORDER BY nspname, funcname, orig_name, funcsignature
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#text
+master_dbo#!#sp_rename_vu_func1_new#!#sp_rename_vu_func1_new#!#sp_rename_vu_func1_new()
+master_dbo#!#sp_rename_vu_func2_new#!#sp_rename_vu_FUNC2_neW#!#sp_rename_vu_func2_new(integer)
+master_dbo#!#sp_rename_vu_proc1_new2#!#sp_rename_vu_PRoc1_new2#!#sp_rename_vu_proc1_new2()
+master_dbo#!#sp_rename_vu_trig1_new#!#<NULL>#!#sp_rename_vu_trig1_new()
+master_sp_rename_vu_schema1#!#sp_rename_vu_func3_new#!#sp_rename_vu_func3_new#!#sp_rename_vu_func3_new(integer)
+master_sp_rename_vu_schema1#!#sp_rename_vu_proc2_new#!#sp_rename_vu_proc2_new#!#sp_rename_vu_proc2_new()
+master_sp_rename_vu_schema1#!#sp_rename_vu_trig1_schema1_new#!#<NULL>#!#sp_rename_vu_trig1_schema1_new()
+~~END~~
+
+
+INSERT INTO sp_rename_vu_table2(sp_rename_vu_t2_col1, sp_rename_vu_t2_col2) VALUES (1, 2);
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Testing sp_rename trigger)~~
+
+
+-- Table Type
+SELECT name FROM sys.table_types
+WHERE name LIKE '%sp_rename_vu%' 
+ORDER BY schema_id, type_table_object_id, name;
+GO
+~~START~~
+text
+sp_rename_vu_tabletype1
+sp_rename_vu_tabletype1
+~~END~~
+
+
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
+ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_view1#!#VIEW
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_tabletype1', 'sp_rename_vu_tabletype1_new', 'OBJECT';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_tabletype1', 'sp_rename_vu_tabletype1_schema1_new', 'OBJECT';
+GO
+
+SELECT name FROM sys.table_types
+WHERE name LIKE '%sp_rename_vu%' 
+ORDER BY schema_id, type_table_object_id, name;
+GO
+~~START~~
+text
+sp_rename_vu_tabletype1_new
+sp_rename_vu_tabletype1_schema1_new
+~~END~~
+
+
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
+ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_tabletype1_new#!#BASE TABLE
+master#!#dbo#!#sp_rename_vu_view1#!#VIEW
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1_schema1_new#!#BASE TABLE
+master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
+~~END~~
+
+
 -- Column
-EXEC sp_rename 'sp_rename_vu_table2.sp_rename_vu_t2_col1', 'sp_rename_vu_t2_col1_new', 'COLUMN';
+EXEC sp_rename 'sp_rename_vu_table1_case_insensitive2', 'sp_rename_vu_table1', 'OBJECT';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table1' 
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t1_col1#!#sp_rename_vu_schema1#!#sp_rename_vu_table1
+sp_rename_vu_s1_t1_col2#!#sp_rename_vu_schema1#!#sp_rename_vu_table1
+sp_rename_vu_t1_col1#!#dbo#!#sp_rename_vu_table1
+sp_rename_vu_t1_col2#!#dbo#!#sp_rename_vu_table1
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_table1.sp_rename_vu_t1_col1', 'sp_rename_vu_t1_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table1' 
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t1_col1#!#sp_rename_vu_schema1#!#sp_rename_vu_table1
+sp_rename_vu_s1_t1_col2#!#sp_rename_vu_schema1#!#sp_rename_vu_table1
+sp_rename_vu_t1_col1_new#!#dbo#!#sp_rename_vu_table1
+sp_rename_vu_t1_col2#!#dbo#!#sp_rename_vu_table1
+~~END~~
+
+
+INSERT INTO sp_rename_vu_table1(sp_rename_vu_t1_col1_new) VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT sp_rename_vu_t1_col1_new from sp_rename_vu_table1;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table2_new'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t2_col1#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new
+sp_rename_vu_s1_t2_col2#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table2_new'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t2_col1_new#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new
+sp_rename_vu_s1_t2_col2#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new
+~~END~~
+
+
+-- COLUMN: error-case
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_wrong_col', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Feature not supported: renaming object type Column)~~
+~~ERROR (Message: column "sp_rename_vu_s1_t2_wrong_col" does not exist)~~
 
 
+-- USERDATATYPE
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
+ORDER BY t1.name, s1.name;
+GO
+~~START~~
+text#!#varchar
+sp_rename_vu_alias1#!#dbo
+sp_rename_vu_alias1#!#sp_rename_vu_schema1
+sp_rename_vu_tabletype1_new#!#dbo
+sp_rename_vu_tabletype1_schema1_new#!#sp_rename_vu_schema1
+~~END~~
+
+
+CREATE TABLE sp_rename_vu_alias1_table1(col1 sp_rename_vu_alias1);
+GO
+
+EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
+ORDER BY t1.name, s1.name;
+GO
+~~START~~
+text#!#varchar
+sp_rename_vu_alias2#!#dbo
+sp_rename_vu_alias2#!#sp_rename_vu_schema1
+sp_rename_vu_tabletype1_new#!#dbo
+sp_rename_vu_tabletype1_schema1_new#!#sp_rename_vu_schema1
+~~END~~
+
+
+CREATE TABLE sp_rename_vu_alias1_table2(col1 sp_rename_vu_alias1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "sp_rename_vu_alias1" does not exist)~~
+
+
+CREATE TABLE sp_rename_vu_alias1_table2(col1 sp_rename_vu_alias2);
+GO
+
+INSERT INTO sp_rename_vu_alias1_table1(col1) VALUES ('abc');
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO sp_rename_vu_alias1_table2(col1) VALUES ('abcd');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM sp_rename_vu_alias1_table1;
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT * FROM sp_rename_vu_alias1_table2;
+GO
+~~START~~
+varchar
+abcd
+~~END~~
+
+
+-- Helper Function
+DECLARE @sp_rename_helperfunc_out1 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out2 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out3 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out4 nvarchar(776);
+EXEC sys.babelfish_sp_rename_word_parse 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1_new', 'COLUMN', @sp_rename_helperfunc_out1 OUT, @sp_rename_helperfunc_out2 OUT, @sp_rename_helperfunc_out3 OUT, @sp_rename_helperfunc_out4 OUT;
+SELECT @sp_rename_helperfunc_out1, @sp_rename_helperfunc_out2, @sp_rename_helperfunc_out3, @sp_rename_helperfunc_out4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t2_col1_new#!#sp_rename_vu_table2_new#!#sp_rename_vu_schema1#!#<NULL>
+~~END~~
+
+
+-- ****Given objtype is valid but not supported yet****
 -- Index
 EXEC sp_rename N'sp_rename_vu_index1', N'sp_rename_vu_index2', N'INDEX';
 GO
@@ -451,20 +763,4 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Feature not supported: renaming object type Statistics)~~
-
-
--- USERDATATYPE
-EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Feature not supported: renaming object type User-defined Data Type alias)~~
-
-
--- Trigger
-EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig2', 'OBJECT';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Feature not supported: renaming object type Trigger)~~
 
