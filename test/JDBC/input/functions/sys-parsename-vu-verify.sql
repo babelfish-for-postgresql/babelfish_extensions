@@ -100,8 +100,14 @@ GO
 SELECT PARSENAME('.dbo.Employee.table',3)
 GO
 
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',4)
+GO
+
 SELECT PARSENAME('.dbo.Employee.table',4)
 GO
 
 SELECT PARSENAME('.dbo.Employee',5)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
 GO

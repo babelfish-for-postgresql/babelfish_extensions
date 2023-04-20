@@ -261,6 +261,14 @@ varchar
 ~~END~~
 
 
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',4)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 SELECT PARSENAME('.dbo.Employee.table',4)
 GO
 ~~START~~
@@ -270,6 +278,14 @@ varchar
 
 
 SELECT PARSENAME('.dbo.Employee',5)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
 GO
 ~~START~~
 varchar
