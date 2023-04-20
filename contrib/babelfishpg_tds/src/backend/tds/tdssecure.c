@@ -138,16 +138,23 @@ SslHandShakeRead(BIO * h, char *buf, int size)
 	/* At this point, we must have read the TDS header */
 	Assert(pkt_bytes_read >= TDS_PACKET_HEADER_SIZE);
 
+	/*
+	 * If SSL packet expands the current TDS prelogin packet, we need to
+	 * read some data in next iteration.  For now, just read till end of the
+	 * packet.  The caller will try to read the remaining data in the next
+	 * iteration.
+	 * XXX: We've not really seen this scenario.
+	 */
+	if (pkt_bytes_read + size > pkt_data.header.length)
+	{
+		TDS_DEBUG(TDS_DEBUG1, "SSL packet expand more than one TDS packet");
+		size = pkt_data.header.length - pkt_bytes_read;
+	}
+
 	if ((res = SslRead(h, buf, size)) <= 0)
 		return res;
 
 	pkt_bytes_read += res;
-
-	/* shouldn't read more than prelogin->length */
-	if (unlikely(pkt_bytes_read > pkt_data.header.length))
-		ereport(FATAL,
-				(errcode(ERRCODE_ADMIN_SHUTDOWN),
-				 errmsg("terminating connection due to unexpected ssl packet length")));
 
 	/* if we're done reading the packet, reset packet data state */
 	if (pkt_bytes_read == pkt_data.header.length)
