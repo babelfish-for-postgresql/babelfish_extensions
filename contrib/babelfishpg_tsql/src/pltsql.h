@@ -31,6 +31,7 @@
 #include "utils/plancache.h"
 #include "utils/portal.h"
 #include "utils/typcache.h"
+#include "tcop/utility.h"
 
 #include "dynavec.h"
 #include "dynastack.h"
@@ -2016,6 +2017,8 @@ extern void remove_trailing_spaces(char *name);
 extern Oid	tsql_get_proc_nsp_oid(Oid object_id);
 extern Oid	tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id);
 extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
+extern void pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
+                          ParamListInfo params);
 
 typedef struct
 {
