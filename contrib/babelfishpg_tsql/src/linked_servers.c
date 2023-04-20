@@ -832,7 +832,13 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 
 		if(query_timeout > 0)
 		{
+			int timeout = -1;
 			LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
+			timeout = dbgettime();
+			ereport(ERROR,
+						(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+						 errmsg("query timeout \"%d\"", timeout)
+						 ));
 		}
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
