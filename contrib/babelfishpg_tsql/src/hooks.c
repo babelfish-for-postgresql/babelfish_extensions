@@ -390,11 +390,7 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 	{
 		case T_CreateFunctionStmt:
 	 	{
-			if (sql_dialect == SQL_DIALECT_TSQL)
-			{
-				pltsql_createFunction(pstate, pstmt, queryString, context, params);
-				return true;
-			} 
+			return pltsql_createFunction(pstate, pstmt, queryString, context, params);
 			break;
 		}
 		case T_CreatedbStmt:

@@ -37,7 +37,7 @@ bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
 												 * sys.varchar / sys.nvarchar */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
-void
+bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
 
@@ -75,7 +75,7 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
  * Also, length should be restricted to 8000 for sys.varchar and sys.char datatypes.
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
-void
+bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params)
 {
@@ -112,8 +112,13 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			if (language_item)
 				language = strVal(language_item->arg);
 
-			if((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL)
+			if(!((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL))
 			{
+				return false;
+			}
+
+			else
+			{	
 				/* All event trigger calls are done only when isCompleteQuery is true */
 				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
@@ -252,6 +257,9 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 
 				if (needCleanup)
 					EventTriggerEndCompleteQuery();
+
+				return true;
+
 			}
 }
 
