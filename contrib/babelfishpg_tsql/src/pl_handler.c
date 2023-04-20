@@ -1954,20 +1954,6 @@ PLTsqlProcessTransaction(Node *parsetree,
 							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
 
-				/*
-				 * Table variables should be immune to ROLLBACK, but we
-				 * haven't implemented this yet so we throw an error if
-				 * ROLLBACK is used with table variables.
-				 */
-/*
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->func &&
-					list_length(exec_state_call_stack->estate->func->table_varnos) > 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("ROLLBACK statement with active table variables is not yet supported.")));
-*/
 				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
 			}
 			break;

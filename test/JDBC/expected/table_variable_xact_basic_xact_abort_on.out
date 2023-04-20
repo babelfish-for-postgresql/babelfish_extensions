@@ -209,6 +209,7 @@ INSERT INTO @tv2 VALUES(1, 2);
 BEGIN TRANSACTION
     INSERT INTO @tv2 VALUES(2, 3);
     SELECT * FROM @tv2                          -- should see 2 rows
+    SELECT * FROM @tv2                          -- repeat when hint bits are set
 ROLLBACK
 SELECT * FROM @tv2                              -- should still see 2 rows
 GO
@@ -228,18 +229,31 @@ int#!#int
 2#!#3
 ~~END~~
 
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+~~END~~
+
 
 DECLARE @tv2 TABLE(c1 INT, c2 INT);
 INSERT INTO @tv2 VALUES(1, 2);
 BEGIN TRANSACTION
     INSERT INTO @tv2 VALUES(2, 3);
     SELECT * FROM @tv2                          -- should see 2 rows
+    SELECT * FROM @tv2                          -- repeat when hint bits are set
 COMMIT
 SELECT * FROM @tv2                              -- should still see 2 rows
 GO
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+~~END~~
 
 ~~START~~
 int#!#int
@@ -603,6 +617,109 @@ int#!#varchar
 10#!#updated: this is the first recor
 ~~END~~
 
+
+
+
+
+
+
+-------------------------------------------------------------------------------
+-- Test 12: Table Variable used with OUTPUT clause
+-------------------------------------------------------------------------------
+CREATE TABLE TestTable (ID INT, TEXTVal VARCHAR(100))
+INSERT TestTable (ID, TEXTVal) VALUES (1,'FirstVal'), (2, 'SecondVal')
+BEGIN TRANSACTION
+DECLARE @TmpTable TABLE (ID_New INT, TEXTVal_New VARCHAR(100),ID_Old INT, TEXTVal_Old VARCHAR(100))
+UPDATE TestTable SET TEXTVal = 'NewValue'
+OUTPUT Inserted.ID, Inserted.TEXTVal, Deleted.ID, Deleted.TEXTVal INTO @TmpTable
+WHERE ID IN (1,2)
+SELECT * FROM @TmpTable
+SELECT * FROM TestTable
+ROLLBACK
+-- Table Variable should keep values after rollback
+SELECT * FROM @TmpTable
+SELECT * FROM TestTable
+GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+int#!#varchar#!#int#!#varchar
+1#!#NewValue#!#1#!#FirstVal
+2#!#NewValue#!#2#!#SecondVal
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#NewValue
+2#!#NewValue
+~~END~~
+
+~~START~~
+int#!#varchar#!#int#!#varchar
+1#!#NewValue#!#1#!#FirstVal
+2#!#NewValue#!#2#!#SecondVal
+~~END~~
+
+~~START~~
+int#!#varchar
+1#!#FirstVal
+2#!#SecondVal
+~~END~~
+
+
+DROP TABLE TestTable
+GO
+
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------------
+-- Test 12: Table Variable used with CURSOR
+-------------------------------------------------------------------------------
+DECLARE @source TABLE(c1 INT, c2 INT)
+INSERT INTO @source VALUES(1, 2), (2,3), (4,5), (6,7), (8,9)
+DECLARE @target INT
+DECLARE cur CURSOR
+FOR SELECT c1 FROM @source
+FOR UPDATE OF c1
+OPEN cur
+FETCH NEXT FROM cur INTO @target
+WHILE @@FETCH_STATUS = 0 BEGIN
+    UPDATE @source set c1 = c1 * 10 WHERE c1 = @target
+    FETCH NEXT FROM cur INTO @target -- next item
+End
+-- housekeeping
+CLOSE cur
+DEALLOCATE cur
+SELECT * FROM @source
+GO
+~~ROW COUNT: 5~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+10#!#2
+20#!#3
+40#!#5
+60#!#7
+80#!#9
+~~END~~
 
 -------------------------------------------------------------------------------
 -- Cleanup

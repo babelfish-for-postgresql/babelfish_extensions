@@ -143,6 +143,7 @@ INSERT INTO @tv2 VALUES(1, 2);
 BEGIN TRANSACTION
     INSERT INTO @tv2 VALUES(2, 3);
     SELECT * FROM @tv2                          -- should see 2 rows
+    SELECT * FROM @tv2                          -- repeat when hint bits are set
 ROLLBACK
 SELECT * FROM @tv2                              -- should still see 2 rows
 GO
@@ -152,6 +153,7 @@ INSERT INTO @tv2 VALUES(1, 2);
 BEGIN TRANSACTION
     INSERT INTO @tv2 VALUES(2, 3);
     SELECT * FROM @tv2                          -- should see 2 rows
+    SELECT * FROM @tv2                          -- repeat when hint bits are set
 COMMIT
 SELECT * FROM @tv2                              -- should still see 2 rows
 GO
@@ -334,6 +336,60 @@ ROLLBACK
     SELECT a, SUBSTRING(c, 1, 32) FROM @tv_toast
 GO
 
+-------------------------------------------------------------------------------
+-- Test 12: Table Variable used with OUTPUT clause
+-------------------------------------------------------------------------------
+
+CREATE TABLE TestTable (ID INT, TEXTVal VARCHAR(100))
+INSERT TestTable (ID, TEXTVal) VALUES (1,'FirstVal'), (2, 'SecondVal')
+
+BEGIN TRANSACTION
+DECLARE @TmpTable TABLE (ID_New INT, TEXTVal_New VARCHAR(100),ID_Old INT, TEXTVal_Old VARCHAR(100))
+
+UPDATE TestTable SET TEXTVal = 'NewValue'
+OUTPUT Inserted.ID, Inserted.TEXTVal, Deleted.ID, Deleted.TEXTVal INTO @TmpTable
+WHERE ID IN (1,2)
+
+SELECT * FROM @TmpTable
+SELECT * FROM TestTable
+ROLLBACK
+
+-- Table Variable should keep values after rollback
+SELECT * FROM @TmpTable
+SELECT * FROM TestTable
+GO
+
+DROP TABLE TestTable
+GO
+
+-------------------------------------------------------------------------------
+-- Test 12: Table Variable used with CURSOR
+-------------------------------------------------------------------------------
+
+DECLARE @source TABLE(c1 INT, c2 INT)
+INSERT INTO @source VALUES(1, 2), (2,3), (4,5), (6,7), (8,9)
+
+DECLARE @target INT
+
+DECLARE cur CURSOR
+FOR SELECT c1 FROM @source
+FOR UPDATE OF c1
+
+OPEN cur
+FETCH NEXT FROM cur INTO @target
+WHILE @@FETCH_STATUS = 0 BEGIN
+
+    UPDATE @source set c1 = c1 * 10 WHERE c1 = @target
+    FETCH NEXT FROM cur INTO @target -- next item
+End
+
+-- housekeeping
+CLOSE cur
+DEALLOCATE cur
+
+SELECT * FROM @source
+
+GO
 -------------------------------------------------------------------------------
 -- Cleanup
 -------------------------------------------------------------------------------
