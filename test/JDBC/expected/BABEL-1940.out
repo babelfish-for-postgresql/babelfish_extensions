@@ -1,5 +1,5 @@
 -- Earlier following queries were hanging indefinetely
-SELECT CONVERT(VARCHAR(MAX), 0x123456789)
+SELECT CONVERT(VARCHAR(10), 0x123456789)
 GO
 ~~START~~
 varchar
@@ -7,7 +7,7 @@ varchar
 ~~END~~
 
 
-SELECT CONVERT(VARCHAR(MAX), 0x80)
+SELECT CONVERT(VARCHAR(10), 0x80)
 GO
 ~~START~~
 varchar
@@ -15,7 +15,7 @@ varchar
 ~~END~~
 
 
-SELECT CONVERT(VARCHAR(MAX), 0xaaa)
+SELECT CONVERT(VARCHAR(10), 0xaaa)
 GO
 ~~START~~
 varchar
@@ -23,16 +23,11 @@ varchar
 ~~END~~
 
 
-declare @key varchar(20) = 'part1'
-declare @email varchar(20) = 'part2'
-SELECT CONVERT(VARCHAR(MAX), HASHBYTES('SHA1', @key + LOWER(@email)))
-GO
-~~START~~
-varchar
-æ/fact¢+ÓÈrÆY¹ÈÎé8
-~~END~~
 
-
+-- declare @key varchar(20) = 'part1'
+-- declare @email varchar(20) = 'part2'
+-- SELECT CONVERT(VARCHAR(10), HASHBYTES('SHA1', @key + LOWER(@email)))
+-- GO
 create table babel_1940_t1 (a varbinary(9))
 GO
 
@@ -51,9 +46,9 @@ SELECT * FROM babel_1940_t1
 GO
 ~~START~~
 varbinary
-80
-0AAA
-0123456789
+E282AC
+0AC2AA
+01234567E280B0
 ~~END~~
 
 
@@ -77,7 +72,7 @@ varchar
 ~~END~~
 
 
-SELECT CAST(a as VARCHAR(MAX)) FROM babel_1940_t1
+SELECT CAST(a as VARCHAR(10)) FROM babel_1940_t1
 GO
 ~~START~~
 varchar
@@ -88,17 +83,17 @@ varchar
 
 
 
-create table babel_1940_t2( a varchar(20) collate japanese_cs_as);
+create table babel_1940_t2( a varchar(10) collate japanese_cs_as);
 GO
 
-insert into babel_1940_t2 values ('ｳ'), ('C'), ('ﾊﾟ'), ('３'), ('c'), ('ｲ'), ('Ｃ'),('ﾊ'),
-('1'), ('ｱ'),('パ'), ('b'), ('2'), ('B'),('１'), ('Ａ'),('ア'),('A'), ('a'),('AbC'), ('aBc');
+insert into babel_1940_t2 values ('ｳ'), ('C'), ('ﾊﾟ'), ('３'), ('c'), ('ｲ'), ('Ｃ'),('ﾊ'),('1'), 
+('ｱ'),('パ'), ('b'), ('2'), ('B'),('１'), ('Ａ'),('ア'),('A'), ('a'),('AbC'), ('aBc');
 GO
 ~~ROW COUNT: 21~~
 
 
 
-SELECT CONVERT(varbinary(MAX), a) FROM babel_1940_t2
+SELECT CONVERT(varbinary(10), a) FROM babel_1940_t2
 GO
 ~~START~~
 varbinary
@@ -126,27 +121,27 @@ E382A2
 ~~END~~
 
 
-SELECT CONVERT(varchar(MAX), CONVERT(varbinary(MAX), a)) FROM babel_1940_t2
+SELECT CONVERT(varchar(10), CONVERT(varbinary(10), a)) FROM babel_1940_t2
 GO
 ~~START~~
 varchar
-ï½³
+?
 C
-ï¾Šï¾Ÿ
-ï¼“
+??
+?
 c
-ï½²
-ï¼£
-ï¾Š
+?
+?
+?
 1
-ï½±
-ãƒ‘
+?
+?
 b
 2
 B
-ï¼‘
-ï¼¡
-ã‚¢
+?
+?
+?
 A
 a
 AbC

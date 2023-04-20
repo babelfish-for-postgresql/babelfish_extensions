@@ -164,42 +164,58 @@ Datum
 varbinaryin(PG_FUNCTION_ARGS)
 {
 	char	   *inputText = PG_GETARG_CSTRING(0);
+	char       *r_data;
 	char	   *rp;
-	char	   *tp;
+	char         *tp;
 	int			len;
 	bytea	   *result;
-	int32		typmod = PG_GETARG_INT32(2);
+	int32 typmod = PG_GETARG_INT32(2);
 	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+	int		encodedByteLen;
+	coll_info	collInfo;
+	int 		byteLen;
 
+	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 	len = strlen(inputText);
 
 	if (typmod == TSQLHexConstTypmod ||
-		(dump_restore && strcmp(dump_restore, "on") == 0))	/* Treat input string as
-															 * T-SQL hex constant
-															 * during restore */
+		(dump_restore && strcmp(dump_restore, "on") == 0)) /* Treat input string as T-SQL hex constant during restore */
 	{
 		/*
-		 * calculate length of the binary code e.g. 0xFF should be 1 byte
-		 * (plus VARHDRSZ) and 0xF should also be 1 byte (plus VARHDRSZ).
+		 * calculate length of the binary code
+		 * e.g. 0xFF should be 1 byte (plus VARHDRSZ)
+		 * and 0xF should also be 1 byte (plus VARHDRSZ).
 		 */
-		int			bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
-
+		int bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
 		result = palloc(bc);
 		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
-		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
+		len = bc + VARHDRSZ; /* actual length */
+		SET_VARSIZE(result, len); /* actual length */
+
+		byteLen = VARSIZE_ANY_EXHDR(result);
+		r_data = VARDATA_ANY(result);
+
+		/* Encode the input string encoding to UTF8(server) encoding */
+		rp = encoding_conv_util(r_data, byteLen, collInfo.enc, PG_UTF8, &encodedByteLen);
+		SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
+
+		r_data = VARDATA(result);
+		memcpy(r_data, rp, len);
 
 		PG_RETURN_BYTEA_P(result);
 	}
+	else
+	{
+		tp = inputText;
 
-	tp = inputText;
+		result = (bytea *) palloc(len + VARHDRSZ);
+		SET_VARSIZE(result, len + VARHDRSZ);
 
-	result = (bytea *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
+		rp = VARDATA(result);
+		memcpy(rp, tp, len);
 
-	rp = VARDATA(result);
-	memcpy(rp, tp, len);
-
-	PG_RETURN_BYTEA_P(result);
+		PG_RETURN_BYTEA_P(result);
+	}
 }
 
 /*
@@ -702,35 +718,18 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = PG_GETARG_INT32(1);
 	int32		maxlen = typmod - VARHDRSZ;
-	char 		*result;
-	coll_info	collInfo;
-	int		encodedByteLen;
+	VarChar    *result;
 
-	/* 
-	 * Try to find the lcid corresponding to the collation of the target column.
+	/*
+	 * Cast the entire input binary data if maxlen is invalid or supplied data
+	 * fits it
 	 */
-	if (fcinfo->flinfo->fn_expr)
-	{
-		collInfo = lookup_collation_table(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
-	}
-	else
-	{
-		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
-	}
-
-	/* Encode the input string encoding to UTF8(server) encoding */
 	if (maxlen < 0 || len <= maxlen)
-	{
-		/*
-		 * Cast the entire input binary data if maxlen is invalid or supplied data
-		 * fits it
-		 */
-		result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
-	}
+		result = (VarChar *) cstring_to_text_with_len(data, len);
+	/* Else truncate it */
 	else
-		result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
-
-	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(result, encodedByteLen));
+		result = (VarChar *) cstring_to_text_with_len(data, maxlen);
+	PG_RETURN_VARCHAR_P(result);
 }
 
 Datum
