@@ -86,7 +86,6 @@ sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc
 typeproperty
-typeproperty-dep
 BABEL-404
 BABEL-493
 BABEL-621

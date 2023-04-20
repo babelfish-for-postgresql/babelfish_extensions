@@ -39,6 +39,7 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
+typeproperty-dep
 sys-assembly_types
 sys-database_mirroring
 sys-databases
