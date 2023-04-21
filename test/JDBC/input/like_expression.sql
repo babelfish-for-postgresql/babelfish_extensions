@@ -1,7 +1,16 @@
 create table t ( a varchar(30))
 GO
 
-insert into t values ('abc'),('bbc'),('cbc')
+insert into t values ('abc'),('bbc'),('cbc'),('=bc'),('Abc');
+GO
+
+select * from t where a like '[c-a]bc'
+GO
+
+select * from t where a like '[<->]bc'
+GO
+
+select * from t where a like '[0-a]bc';
 GO
 
 select * from t where a like '[abc]bc';
@@ -61,7 +70,7 @@ GO
 create table t2 ( b varchar(30) collate BBF_Unicode_General_CS_AS)
 GO
 
-insert into t2 values ('[abc]bc'),('[abc]_c'),('[]]bc'),('[[]bc'),('%[abc]c'),('[^ a-b][a-z]c'),('[0-9][0-9].[0-9][0-9]')
+insert into t2 values ('[abc]bc'),('[abc]_c'),('[]]bc'),('[[]bc'),('%[abc]c'),('[^ a-b][a-z]c'),('[0-9][0-9].[0-9][0-9]'),('[<->]bc')
 GO
 
 select * from t2 join t on a like b;

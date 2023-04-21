@@ -1,9 +1,35 @@
 create table t ( a varchar(30))
 GO
 
-insert into t values ('abc'),('bbc'),('cbc')
+insert into t values ('abc'),('bbc'),('cbc'),('=bc'),('Abc');
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 5~~
+
+
+select * from t where a like '[c-a]bc'
+GO
+~~START~~
+varchar
+cbc
+~~END~~
+
+
+select * from t where a like '[<->]bc'
+GO
+~~START~~
+varchar
+=bc
+~~END~~
+
+
+select * from t where a like '[0-a]bc';
+GO
+~~START~~
+varchar
+abc
+=bc
+Abc
+~~END~~
 
 
 select * from t where a like '[abc]bc';
@@ -13,6 +39,7 @@ varchar
 abc
 bbc
 cbc
+Abc
 ~~END~~
 
 
@@ -23,6 +50,7 @@ varchar
 abc
 bbc
 cbc
+Abc
 ~~END~~
 
 
@@ -33,6 +61,7 @@ varchar
 abc
 bbc
 cbc
+Abc
 ~~END~~
 
 
@@ -41,6 +70,7 @@ GO
 ~~START~~
 varchar
 abc
+Abc
 ~~END~~
 
 
@@ -51,6 +81,8 @@ varchar
 abc
 bbc
 cbc
+=bc
+Abc
 ~~END~~
 
 
@@ -73,6 +105,7 @@ GO
 ~~START~~
 varchar
 abc
+Abc
 ~~END~~
 
 
@@ -83,6 +116,7 @@ varchar
 abc
 bbc
 cbc
+Abc
 ~~END~~
 
 
@@ -92,6 +126,7 @@ GO
 varchar
 bbc
 cbc
+=bc
 ~~END~~
 
 
@@ -100,6 +135,7 @@ GO
 ~~START~~
 varchar
 cbc
+=bc
 ~~END~~
 
 
@@ -110,6 +146,7 @@ varchar
 abc
 bbc
 cbc
+Abc
 ~~END~~
 
 
@@ -154,9 +191,9 @@ varchar
 create table t2 ( b varchar(30) collate BBF_Unicode_General_CS_AS)
 GO
 
-insert into t2 values ('[abc]bc'),('[abc]_c'),('[]]bc'),('[[]bc'),('%[abc]c'),('[^ a-b][a-z]c'),('[0-9][0-9].[0-9][0-9]')
+insert into t2 values ('[abc]bc'),('[abc]_c'),('[]]bc'),('[[]bc'),('%[abc]c'),('[^ a-b][a-z]c'),('[0-9][0-9].[0-9][0-9]'),('[<->]bc')
 GO
-~~ROW COUNT: 7~~
+~~ROW COUNT: 8~~
 
 
 select * from t2 join t on a like b;
@@ -173,12 +210,17 @@ varchar#!#varchar
 %[abc]c#!#abc
 %[abc]c#!#bbc
 %[abc]c#!#cbc
+%[abc]c#!#=bc
+%[abc]c#!#Abc
 %[abc]c#!#]bc
 %[abc]c#!#[bc
 [^ a-b][a-z]c#!#cbc
+[^ a-b][a-z]c#!#=bc
+[^ a-b][a-z]c#!#Abc
 [^ a-b][a-z]c#!#]bc
 [^ a-b][a-z]c#!#[bc
 [0-9][0-9].[0-9][0-9]#!#11.22
+[<->]bc#!#=bc
 ~~END~~
 
 
