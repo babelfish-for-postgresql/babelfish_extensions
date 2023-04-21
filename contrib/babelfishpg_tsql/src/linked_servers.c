@@ -838,18 +838,17 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("Unable to connect to \"%s\"", data_src)));
 
+		LINKED_SERVER_FREELOGIN(login);
+
 		if(query_timeout > 0)
 		{
+			char timeout[32];
 			int curr_timeout = dbisopt(*lsproc, 34, 0);
+			sprintf(timeout, "%d", query_timeout);
 			elog(LOG, "Current query timeout: %d", curr_timeout);
-			if (curr_timeout > 0)
-			{
-				dbsetopt(*lsproc, 34, 0, 0);
-			}
+			dbsetopt(*lsproc, 34, timeout, query_timeout);
 			LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
 		}
-
-		LINKED_SERVER_FREELOGIN(login);
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
 	}
