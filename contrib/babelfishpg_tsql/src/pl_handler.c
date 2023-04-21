@@ -2848,6 +2848,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							stmt->role->rolename = temp_login_name;
 						}
 
+						if (!has_privs_of_role(GetSessionUserId(), datdba))
+							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+								errmsg("Current login %s does not have permission to Alter login", 
+								GetUserNameFromId(GetSessionUserId(), true))));
+
+
+
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
 											errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
@@ -2962,12 +2969,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					DropRoleStmt *stmt = (DropRoleStmt *) parsetree;
 					bool		drop_user = false;
 					bool		drop_role = false;
+					bool drop_login = false;
 					bool		all_logins = false;
 					bool		all_users = false;
 					bool		all_roles = false;
 					char	   *role_name = NULL;
 					bool		other = false;
 					ListCell   *item;
+
 
 					/* Check if roles are users that need role name mapping */
 					if (stmt->roles != NIL)
@@ -2978,7 +2987,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
 							drop_role = true;
-
+						else 
+							drop_login = true;
+						
 						if (drop_user || drop_role)
 						{
 							char	   *db_name = NULL;
@@ -3104,6 +3115,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							all_roles = true;
 						else
 							other = true;
+
+						if (drop_login && is_login(roleform->oid)){
+							if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+							{
+								ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								errmsg("Current login %s does not have permission to Drop login",
+									GetUserNameFromId(GetSessionUserId(), true))));
+							}
+						}
 
 						ReleaseSysCache(tuple);
 
