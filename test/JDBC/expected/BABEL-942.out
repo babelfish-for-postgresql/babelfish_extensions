@@ -76,20 +76,18 @@ if CAST(0x0001 AS binary(2)) <= CAST(0x0001 AS binary(2))
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(0x0001 AS binary(2)) > CAST(0x0002 AS binary(2))
 	SELECT 1
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(0x0101 AS binary(2)) >= CAST(0x0102 AS binary(2))
 	SELECT 1
@@ -158,20 +156,18 @@ if CAST(0x0001 AS varbinary) <= CAST(0x0001 AS varbinary)
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(0x0001 AS varbinary) > CAST(0x0002 AS varbinary)
 	SELECT 1
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(0x0101 AS varbinary) >= CAST(0x0102 AS varbinary)
 	SELECT 1
@@ -324,40 +320,36 @@ if CAST(0x0100 AS varbinary) = CAST(0x01 AS varbinary)
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(0x0001 AS varbinary) = CAST(0x01 AS varbinary)
 	SELECT 1
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(CAST(0x0100 AS varbinary) AS sql_variant) <> CAST(CAST(0x01 AS varbinary) AS sql_variant)
 	SELECT 1
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(CAST(0x0001 AS varbinary) AS sql_variant) <> CAST(CAST(0x01 AS varbinary) AS sql_variant)
 	SELECT 1
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(0x0101 AS varbinary) > CAST(0x01 AS varbinary)
 	SELECT 1
@@ -374,10 +366,9 @@ if CAST(0x0100 AS varbinary) > CAST(0x01 AS varbinary)
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 if CAST(CAST(0x01 AS varbinary) AS sql_variant) < CAST(CAST(0x0101 AS varbinary) AS sql_variant)
 	SELECT 1
@@ -394,8 +385,7 @@ if CAST(CAST(0x01 AS varbinary) AS sql_variant) < CAST(CAST(0x0100 AS varbinary)
 ELSE 
 	SELECT 0
 GO
-~~START~~
-int
-0
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
