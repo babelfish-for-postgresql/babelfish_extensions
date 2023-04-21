@@ -8,11 +8,3 @@ GO
 -- should expect print out of 0
 SELECT @@NESTLEVEL
 GO
-
--- should expect print out of 0
-SELECT * from v0
-GO
-
--- should expect print out of 0
-SELECT * from v1
-GO

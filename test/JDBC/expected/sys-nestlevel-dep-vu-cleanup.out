@@ -13,12 +13,6 @@ GO
 DROP PROC p1
 GO
 
-DROP VIEW v1
-GO
-
-DROP VIEW v0
-GO
-
 USE master
 GO
 
