@@ -753,3 +753,62 @@ insert into babel_datatype_sqlvariant_vu_prepare_t9 values (cast('$200' as money
 go
 ~~ROW COUNT: 1~~
 
+
+create table babel_4036_t1( a int, b sql_variant, c varchar(50), d sql_variant, e sql_variant);
+go
+
+insert into babel_4036_t1(a,c,e) values (1, 'String 1', cast('Varchar String' as varchar(50)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (2, cast('😊😋😎😍😅😆' as nchar(24)), 'String 2', cast('😊😋😎😍😅😆' as nchar(26)),cast('😊  😋 😎dsfsd😍 😅ds😆' as nchar(24)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (3, cast('12-21-16' as date), 'String 3', cast('12-21-16' as datetime), cast('12-21-16' as datetime2));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (4, cast('12:10:16.1234567' as time(7)), 'String 4', cast(cast('12:10:16.1234567' as time(7)) as datetime2), cast(cast('12:10:16.1234567' as time(7)) as datetime2(7)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (5, cast('12-01-16 12:32' as smalldatetime), 'String 5', cast('12-01-16 12:32' as datetime2), cast('12-01-16 12:32' as datetime2(5)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (6, cast('2016-10-23 12:45:37.1234567+10:0' as datetime2), 'String 6', cast('2016-10-23 12:45:37.1234567 +10:0' as datetime2(5)), cast('2016-10-23 12:45:37.1234567 +10:0' as datetime2(7)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (8, cast(1234.56789 as numeric(7,2)), 'String 8', cast(1234.56789 as numeric(9,3)), cast(cast(1234.56789 as numeric(9,5))));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ")")~~
+
+
+insert into babel_4036_t1 values (8, cast(1234.56789 as decimal(7,2)), 'String 8', cast(1234.56789 as decimal(9,3)), cast(cast(1234.56789 as decimal(9,5))));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ")")~~
+
+
+insert into babel_4036_t1 values (10, cast(-0.5678900 as numeric(5,4)), 'String 10', cast(-0.5678900 as numeric(6,5)), cast(-0.5678900 as numeric(7,6)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (10, cast(-0.5678900 as decimal(5,4)), 'String 10', cast(-0.5678900 as decimal(6,5)), cast(-0.5678900 as decimal(7,6)));
+go
+~~ROW COUNT: 1~~
+
+
+
