@@ -1,0 +1,48 @@
+create table t1(a int);
+insert t1 values (1), (1), (3), (null);
+GO
+~~ROW COUNT: 4~~
+
+
+create table t2(a int);
+insert into t2 select top(3) a from t1 order by 1;
+GO
+~~ROW COUNT: 3~~
+
+
+select * from t2 order by 1;
+GO
+~~START~~
+int
+<NULL>
+1
+1
+~~END~~
+
+
+truncate table t1;
+truncate table t2;
+GO
+
+insert t1 values (1), (1), (1), (1), (2);
+GO
+~~ROW COUNT: 5~~
+
+
+insert into t2 select distinct top(2) a from t1 order by 1;
+GO
+~~ROW COUNT: 2~~
+
+
+select * from t2 order by 1;
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+
+drop table t1;
+drop table t2;
+GO
