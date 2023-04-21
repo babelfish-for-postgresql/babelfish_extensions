@@ -39,3 +39,30 @@ int
 1
 ~~END~~
 
+
+-- should expect print out of 0
+SELECT @@NESTLEVEL
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- should expect print out of 0
+SELECT * from v0
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- should expect print out of 0
+SELECT * from v1
+GO
+~~START~~
+int
+0
+~~END~~
+
