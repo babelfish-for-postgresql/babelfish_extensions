@@ -178,11 +178,11 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 
 	buf = construct_err_string(severity, db_error, os_error, db_err_str, os_err_str);
 
-	if (db_error == SYBETIME)
-	{
-		isQueryTimeout = true;
-		return LS_INT_CONTINUE;
-	} 
+	// if (db_error == SYBETIME)
+	// {
+	// 	isQueryTimeout = true;
+	// 	return LS_INT_CONTINUE;
+	// } 
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
