@@ -740,7 +740,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	ListCell   *option;
 	char	   *data_src = NULL;
 	char	   *database = NULL;
-	// int query_timeout = 0;
+	int query_timeout = 0;
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -800,7 +800,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		}
 
 		/* fetch query timeout from the servername */
-		// query_timeout = get_query_timeout_from_server_name(servername);
+		query_timeout = get_query_timeout_from_server_name(servername);
 
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
@@ -830,10 +830,10 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_DBNAME(login, database);
 		}
 
-		// if(query_timeout > 0)
-		// {
-		// 	LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
-		// }
+		if(query_timeout > 0)
+		{
+			LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
+		}
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
 
@@ -863,7 +863,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 static void
 getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tupdesc)
 {
-	LinkedServerProcess lsproc;
+	LinkedServerProcess lsproc = NULL;
 
 	PG_TRY();
 	{
@@ -1106,8 +1106,11 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 	}
 	PG_FINALLY();
 	{
-		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connections to remote server");
-		LINKED_SERVER_EXIT();
+		if (lsproc)
+		{
+			LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connections to remote server");
+			LINKED_SERVER_EXIT();
+		}
 	}
 	PG_END_TRY();
 }
@@ -1122,7 +1125,6 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 	int			colcount = 0;
 	int			rowcount = 0;
-	// int 		query_timeout = 0;
 
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
@@ -1147,8 +1149,6 @@ openquery_imp(PG_FUNCTION_ARGS)
 					 ));
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Executing query against remote server");
-		// query_timeout = get_query_timeout_from_server_name()
-		LINKED_SERVER_SET_QUERY_TIMEOUT(1);
 
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
