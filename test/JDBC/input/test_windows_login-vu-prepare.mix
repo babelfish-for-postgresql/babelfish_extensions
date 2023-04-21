@@ -166,51 +166,56 @@ GO
 CREATE LOGIN [babel\adbabel] from windows with password='1234';
 GO
 
-CREATE LOGIN [ba,bel\username] from windows;
+-- test for when the domain name contains invalid characters
+CREATE LOGIN [<script>!@#$%^&*()\idontexist2] FROM WINDOWS;
 GO
-CREATE LOGIN [ba~el\username] from windows;
+CREATE LOGIN [ba,bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba:bel\username] from windows;
+CREATE LOGIN [ba~el\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba!bel\username] from windows;
+CREATE LOGIN [ba:bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba@bel\username] from windows;
+CREATE LOGIN [ba!bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba#bel\username] from windows;
+CREATE LOGIN [ba@bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba$bel\username] from windows;
+CREATE LOGIN [ba#bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba%bel\username] from windows;
+CREATE LOGIN [ba$bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba_bel\username] from windows;
+CREATE LOGIN [ba%bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba^bel\username] from windows;
+CREATE LOGIN [ba_bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba"bel\username] from windows;
+CREATE LOGIN [ba^bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba'bel\username] from windows;
+CREATE LOGIN [ba"bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba(bel\username] from windows;
+CREATE LOGIN [ba'bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba)bel\username] from windows;
+CREATE LOGIN [ba(bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba{bel\username] from windows;
+CREATE LOGIN [ba)bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba}bel\username] from windows;
+CREATE LOGIN [ba{bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba bel\username] from windows;
+CREATE LOGIN [ba}bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba\bel\username] from windows;
+CREATE LOGIN [ba bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba/bel\username] from windows;
+CREATE LOGIN [ba\bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba<bel\username] from windows;
+CREATE LOGIN [ba/bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba>bel\username] from windows;
+CREATE LOGIN [ba<bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba&bel\username] from windows;
+CREATE LOGIN [ba>bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba*bel\username] from windows;
+CREATE LOGIN [ba&bel\username] FROM WINDOWS;
 GO
-CREATE LOGIN [ba|bel\username] from windows;
+CREATE LOGIN [ba*bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba|bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba.bel\username] FROM WINDOWS;
 GO

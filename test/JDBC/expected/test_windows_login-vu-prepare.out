@@ -342,147 +342,156 @@ GO
 ~~ERROR (Message: syntax error near '=' at line 2 and character position 55)~~
 
 
-CREATE LOGIN [ba,bel\username] from windows;
+-- test for when the domain name contains invalid characters
+CREATE LOGIN [<script>!@#$%^&*()\idontexist2] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba,bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: '<script>!@#$%^&*()\idontexist2' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba~el\username] from windows;
+CREATE LOGIN [ba,bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba~el\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba,bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba:bel\username] from windows;
+CREATE LOGIN [ba~el\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba:bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba~el\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba!bel\username] from windows;
+CREATE LOGIN [ba:bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba!bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba:bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba@bel\username] from windows;
+CREATE LOGIN [ba!bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba@bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba!bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba#bel\username] from windows;
+CREATE LOGIN [ba@bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba#bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba@bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba$bel\username] from windows;
+CREATE LOGIN [ba#bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba$bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba#bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba%bel\username] from windows;
+CREATE LOGIN [ba$bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba%bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba$bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba_bel\username] from windows;
+CREATE LOGIN [ba%bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba_bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba%bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba^bel\username] from windows;
+CREATE LOGIN [ba_bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba^bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba_bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba"bel\username] from windows;
+CREATE LOGIN [ba^bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba"bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba^bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba'bel\username] from windows;
+CREATE LOGIN [ba"bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba'bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba"bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba(bel\username] from windows;
+CREATE LOGIN [ba'bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba(bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba'bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba)bel\username] from windows;
+CREATE LOGIN [ba(bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba)bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba(bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba{bel\username] from windows;
+CREATE LOGIN [ba)bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba{bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba)bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba}bel\username] from windows;
+CREATE LOGIN [ba{bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba}bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba{bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba bel\username] from windows;
+CREATE LOGIN [ba}bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba}bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba\bel\username] from windows;
+CREATE LOGIN [ba bel\username] FROM WINDOWS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ba bel\username' is not valid because the domain name contains invalid characters.)~~
+
+CREATE LOGIN [ba\bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'ba\bel\username' is not a valid name because it contains invalid characters.)~~
 
-CREATE LOGIN [ba/bel\username] from windows;
+CREATE LOGIN [ba/bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba/bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba/bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba<bel\username] from windows;
+CREATE LOGIN [ba<bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba<bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba<bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba>bel\username] from windows;
+CREATE LOGIN [ba>bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba>bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba>bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba&bel\username] from windows;
+CREATE LOGIN [ba&bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba&bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba&bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba*bel\username] from windows;
+CREATE LOGIN [ba*bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba*bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba*bel\username' is not valid because the domain name contains invalid characters.)~~
 
-CREATE LOGIN [ba|bel\username] from windows;
+CREATE LOGIN [ba|bel\username] FROM WINDOWS;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ba|bel\username' is not a valid domain because it contains invalid characters.)~~
+~~ERROR (Message: 'ba|bel\username' is not valid because the domain name contains invalid characters.)~~
 
+CREATE LOGIN [ba.bel\username] FROM WINDOWS;
+GO
