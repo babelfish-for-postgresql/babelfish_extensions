@@ -14,7 +14,6 @@ linked_servers-vu-cleanup
 openquery-vu-prepare
 openquery-vu-verify
 openquery-vu-cleanup
-# TestRowVersion-vu-prepare
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
