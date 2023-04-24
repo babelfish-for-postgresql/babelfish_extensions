@@ -207,23 +207,158 @@ FROM information_schema.sequences WHERE SEQUENCE_NAME LIKE '%sp_rename_vu%'
 ORDER BY SEQUENCE_CATALOG, SEQUENCE_SCHEMA, SEQUENCE_NAME
 GO
 
--- ****Given objtype is valid but not supported yet****
--- Column
-EXEC sp_rename 'sp_rename_vu_table2.sp_rename_vu_t2_col1', 'sp_rename_vu_t2_col1_new', 'COLUMN';
+-- Trigger
+SELECT name, parent_class
+FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
+ORDER BY parent_class, name
 GO
 
+SELECT nspname, funcname, orig_name, funcsignature 
+FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
+ORDER BY nspname, funcname, orig_name, funcsignature
+GO
+
+INSERT INTO sp_rename_vu_table2(sp_rename_vu_t2_col1, sp_rename_vu_t2_col2) VALUES (1, 2);
+GO
+
+EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig1_new', 'OBJECT';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_trig1', 'sp_rename_vu_trig1_schema1_new', 'OBJECT';
+GO
+
+SELECT name, parent_class
+FROM sys.triggers WHERE name LIKE '%sp_rename_vu%' 
+ORDER BY parent_class, name
+GO
+
+SELECT nspname, funcname, orig_name, funcsignature 
+FROM sys.babelfish_function_ext WHERE funcname LIKE '%sp_rename_vu%' 
+ORDER BY nspname, funcname, orig_name, funcsignature
+GO
+
+INSERT INTO sp_rename_vu_table2(sp_rename_vu_t2_col1, sp_rename_vu_t2_col2) VALUES (1, 2);
+GO
+
+-- Table Type
+SELECT name FROM sys.table_types
+WHERE name LIKE '%sp_rename_vu%' 
+ORDER BY schema_id, type_table_object_id, name;
+GO
+
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
+ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
+GO
+
+EXEC sp_rename 'sp_rename_vu_tabletype1', 'sp_rename_vu_tabletype1_new', 'OBJECT';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_tabletype1', 'sp_rename_vu_tabletype1_schema1_new', 'OBJECT';
+GO
+
+SELECT name FROM sys.table_types
+WHERE name LIKE '%sp_rename_vu%' 
+ORDER BY schema_id, type_table_object_id, name;
+GO
+
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
+ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
+GO
+
+-- Column
+EXEC sp_rename 'sp_rename_vu_table1_case_insensitive2', 'sp_rename_vu_table1', 'OBJECT';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table1' 
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+
+EXEC sp_rename 'sp_rename_vu_table1.sp_rename_vu_t1_col1', 'sp_rename_vu_t1_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table1' 
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+
+INSERT INTO sp_rename_vu_table1(sp_rename_vu_t1_col1_new) VALUES (10);
+GO
+
+SELECT sp_rename_vu_t1_col1_new from sp_rename_vu_table1;
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table2_new'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table2_new'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+
+-- COLUMN: error-case
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_wrong_col', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
+GO
+
+-- USERDATATYPE
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
+ORDER BY t1.name, s1.name;
+GO
+
+CREATE TABLE sp_rename_vu_alias1_table1(col1 sp_rename_vu_alias1);
+GO
+
+EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
+GO
+
+SELECT t1.name, s1.name
+FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
+ORDER BY t1.name, s1.name;
+GO
+
+CREATE TABLE sp_rename_vu_alias1_table2(col1 sp_rename_vu_alias1);
+GO
+
+CREATE TABLE sp_rename_vu_alias1_table2(col1 sp_rename_vu_alias2);
+GO
+
+INSERT INTO sp_rename_vu_alias1_table1(col1) VALUES ('abc');
+GO
+
+INSERT INTO sp_rename_vu_alias1_table2(col1) VALUES ('abcd');
+GO
+
+SELECT * FROM sp_rename_vu_alias1_table1;
+GO
+
+SELECT * FROM sp_rename_vu_alias1_table2;
+GO
+
+-- Helper Function
+DECLARE @sp_rename_helperfunc_out1 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out2 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out3 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out4 nvarchar(776);
+EXEC sys.babelfish_sp_rename_word_parse 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1_new', 'COLUMN', @sp_rename_helperfunc_out1 OUT, @sp_rename_helperfunc_out2 OUT, @sp_rename_helperfunc_out3 OUT, @sp_rename_helperfunc_out4 OUT;
+SELECT @sp_rename_helperfunc_out1, @sp_rename_helperfunc_out2, @sp_rename_helperfunc_out3, @sp_rename_helperfunc_out4;
+GO
+
+-- ****Given objtype is valid but not supported yet****
 -- Index
 EXEC sp_rename N'sp_rename_vu_index1', N'sp_rename_vu_index2', N'INDEX';
 GO
 
 -- Statistics
 EXEC sp_rename 'sp_rename_vu_stat1', 'sp_rename_vu_stat2', 'STATISTICS';
-GO
-
--- USERDATATYPE
-EXEC sp_rename 'sp_rename_vu_alias1', 'sp_rename_vu_alias2', 'USERDATATYPE';
-GO
-
--- Trigger
-EXEC sp_rename 'sp_rename_vu_trig1', 'sp_rename_vu_trig2', 'OBJECT';
 GO

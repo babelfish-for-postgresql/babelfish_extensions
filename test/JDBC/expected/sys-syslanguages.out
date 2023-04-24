@@ -13,3 +13,44 @@ smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nva
 1#!#dmy#!#1#!#<NULL>#!#ENGLISH#!#ENGLISH (AUSTRALIA)#!#January,February,March,April,May,June,July,August,September,October,November,December#!#Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec#!#Mon,Tue,Wed,Thu,Fri,Sat,Sun#!#<NULL>#!#<NULL>
 ~~END~~
 
+
+-- syslanguages should also exist in dbo schema
+select * from dbo.SySLanGUAgeS WHERE langid = 1;
+go
+~~START~~
+smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#smallint
+1#!#dmy#!#1#!#<NULL>#!#ENGLISH#!#ENGLISH (AUSTRALIA)#!#January,February,March,April,May,June,July,August,September,October,November,December#!#Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec#!#Mon,Tue,Wed,Thu,Fri,Sat,Sun#!#<NULL>#!#<NULL>
+~~END~~
+
+
+CREATE DATABASE DB1;
+GO
+
+-- In case of cross-db, syslanguages should also exist in dbo schema
+SELECT * FROM db1.sys.SySLanGUAgeS WHERE langid = 1;
+GO
+~~START~~
+smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#smallint
+1#!#dmy#!#1#!#<NULL>#!#ENGLISH#!#ENGLISH (AUSTRALIA)#!#January,February,March,April,May,June,July,August,September,October,November,December#!#Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec#!#Mon,Tue,Wed,Thu,Fri,Sat,Sun#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT * FROM db1.dbo.SySLanGUAgeS WHERE langid = 1;
+GO
+~~START~~
+smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#smallint
+1#!#dmy#!#1#!#<NULL>#!#ENGLISH#!#ENGLISH (AUSTRALIA)#!#January,February,March,April,May,June,July,August,September,October,November,December#!#Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec#!#Mon,Tue,Wed,Thu,Fri,Sat,Sun#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- These below test cases are just to validate the schema rewrite from dbo to sys in different scenarios.
+select * from DbO.SySLanGUAgeS where langid = (SELECT count(*) FROM DbO.syslanguages WHERE langid = 1);
+go
+~~START~~
+smallint#!#nchar#!#tinyint#!#int#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#smallint
+1#!#dmy#!#1#!#<NULL>#!#ENGLISH#!#ENGLISH (AUSTRALIA)#!#January,February,March,April,May,June,July,August,September,October,November,December#!#Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec#!#Mon,Tue,Wed,Thu,Fri,Sat,Sun#!#<NULL>#!#<NULL>
+~~END~~
+
+
+DROP DATABASE DB1;
+GO

@@ -1247,20 +1247,10 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relation = $4;
-					tsql_update_delete_stmt_from_clause_alias(n->relation, $8);
+					n->limitCount = $3;
 					n->targetList = $7;
-					if ($8 != NULL && IsA(linitial($8), JoinExpr))
-					{
-						n = (UpdateStmt*)tsql_update_delete_stmt_with_join(
-											(Node*)n, $8, $9, $3, $4,
-											yyscanner);
-					}
-					else
-					{
-						n->fromClause = $8;
-						n->whereClause = tsql_update_delete_stmt_with_top($3,
-											$4, $9, yyscanner);
-					}
+					n->fromClause = $8;
+					n->whereClause = $9;
 					n->returningList = $10;
 					n->withClause = $1;
 					$$ = (Node *)n;
@@ -2319,29 +2309,32 @@ tsql_opt_INTO:
 		;
 
 tsql_InsertStmt:
-			opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
+			opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_insert_rest
 				{
-					$9->relation = $4;
-					$9->onConflictClause = NULL;
-					$9->returningList = NULL;
-					$9->withClause = $1;
-					$9->cols = $7;
-					$$ = (Node *) $9;
+					$10->limitCount = $3;
+					$10->relation = $5;
+					$10->onConflictClause = NULL;
+					$10->returningList = NULL;
+					$10->withClause = $1;
+					$10->cols = $8;
+					$$ = (Node *) $10;
 				}
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_insert_rest
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_insert_rest
 				{
-					$6->relation = $4;
-					$6->onConflictClause = NULL;
-					$6->returningList = NULL;
-					$6->withClause = $1;
-					$6->cols = NIL;
-					$$ = (Node *) $6;
+					$7->limitCount = $3;
+					$7->relation = $5;
+					$7->onConflictClause = NULL;
+					$7->returningList = NULL;
+					$7->withClause = $1;
+					$7->cols = NIL;
+					$$ = (Node *) $7;
 				}
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr DEFAULT TSQL_VALUES
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr DEFAULT TSQL_VALUES
 				{
 					InsertStmt *i = makeNode(InsertStmt);
-					i->relation = $4;
+					i->limitCount = $3;
+					i->relation = $5;
 					i->onConflictClause = NULL;
 					i->returningList = NULL;
 					i->withClause = $1;
@@ -2351,42 +2344,45 @@ tsql_InsertStmt:
 					$$ = (Node *) i;
 				}
 			/* OUTPUT syntax */
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			 tsql_output_clause tsql_output_insert_rest_no_paren 
 				{
-					if ($10->execStmt)
+					if ($11->execStmt)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@10)));
-					$10->relation = $4;
-					$10->onConflictClause = NULL;
-					$10->returningList = $9;
-					$10->withClause = $1;
-					$10->cols = $7;
-					$$ = (Node *) $10;
+					$11->limitCount = $3;
+					$11->relation = $5;
+					$11->onConflictClause = NULL;
+					$11->returningList = $10;
+					$11->withClause = $1;
+					$11->cols = $8;
+					$$ = (Node *) $11;
 				}
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause tsql_output_insert_rest_no_paren 
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause tsql_output_insert_rest_no_paren 
 				{
-					if ($7->execStmt)
+					if ($8->execStmt)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@7)));
-					$7->relation = $4;
-					$7->onConflictClause = NULL;
-					$7->returningList = $6;
-					$7->withClause = $1;
-					$7->cols = NIL;
-					$$ = (Node *) $7;
+					$8->limitCount = $3;
+					$8->relation = $5;
+					$8->onConflictClause = NULL;
+					$8->returningList = $7;
+					$8->withClause = $1;
+					$8->cols = NIL;
+					$$ = (Node *) $8;
 				}
 			/* conflict on DEFAULT (DEFAULT is allowed as a_expr in tsql_output_clause
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause DEFAULT VALUES
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause DEFAULT VALUES
 				{
 					InsertStmt *i = makeNode(InsertStmt);
-					i->relation = $4;
+					i->limitCount = $3;
+					i->relation = $5;
 					i->onConflictClause = NULL;
-					i->returningList = $6;
+					i->returningList = $7;
 					i->withClause = $1;
 					i->cols = NIL;
 					i->selectStmt = NULL;
@@ -2395,27 +2391,27 @@ tsql_InsertStmt:
 				}
 			*/
 			/* OUTPUT INTO syntax with OUTPUT target column list */
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_clause INTO insert_target tsql_output_into_target_columns tsql_output_insert_rest
 				{
-					if ($13->execStmt)
+					if ($14->execStmt)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
-								 parser_errposition(@13)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $4, $7, $9, $11, $12, $13, 4);
+								 parser_errposition(@14)));
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, $13, $14, 5);
 				}
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns tsql_output_insert_rest
 				{
-					if ($10->execStmt)
+					if ($11->execStmt)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@10)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $4, NULL, $6, $8, $9, $10, 4);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, $11, 5);
 				}
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_into_target_columns DEFAULT VALUES
 				{
 					InsertStmt *i = makeNode(InsertStmt);
@@ -2426,31 +2422,31 @@ tsql_InsertStmt:
 					i->cols = NIL;
 					i->selectStmt = NULL;
 					i->execStmt = NULL;
-					$$ = tsql_insert_output_into_cte_transformation($1, $4, NULL, $6, $8, $9, i, 4);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, $10, i, 5);
 				}
 			/* Without OUTPUT target column list */
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr '(' insert_column_list ')'
 			tsql_output_clause INTO insert_target tsql_output_insert_rest_no_paren
 				{
-					if ($12->execStmt)
+					if ($13->execStmt)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
-								 parser_errposition(@12)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $4, $7, $9, $11, NIL, $12, 4);
+								 parser_errposition(@13)));
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, $8, $10, $12, NIL, $13, 5);
 				}
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target tsql_output_insert_rest_no_paren
 				{
-					if ($9->execStmt)
+					if ($10->execStmt)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("The OUTPUT clause cannot be used in an INSERT...EXEC statement."),
 								 parser_errposition(@9)));
-					$$ = tsql_insert_output_into_cte_transformation($1, $4, NULL, $6, $8, NIL, $9, 4);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, $10, 5);
 				}
 			/*
-			| opt_with_clause INSERT tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
+			| opt_with_clause INSERT opt_top_clause tsql_opt_INTO insert_target tsql_opt_table_hint_expr tsql_output_clause 
 			INTO insert_target DEFAULT VALUES
 				{
 					InsertStmt *i = makeNode(InsertStmt);
@@ -2461,7 +2457,7 @@ tsql_InsertStmt:
 					i->cols = NIL;
 					i->selectStmt = NULL;
 					i->execStmt = NULL;
-					$$ = tsql_insert_output_into_cte_transformation($1, $4, NULL, $6, $8, NIL, i, 4);
+					$$ = tsql_insert_output_into_cte_transformation($1, $3, $5, NULL, $7, $9, NIL, i, 5);
 				}
 			*/
 		;
@@ -3125,28 +3121,10 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			tsql_opt_table_hint_expr from_clause where_or_current_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
+					n->limitCount = $3;
 					n->relation = $5;
-					if ($3 != NULL)
-					{
-						tsql_update_delete_stmt_from_clause_alias(n->relation, $7);
-						if ($7 != NULL && IsA(linitial($7), JoinExpr))
-						{
-							n = (DeleteStmt*)tsql_update_delete_stmt_with_join(
-												(Node*)n, $7, $8, $3, $5,
-												yyscanner);
-						}
-						else
-						{
-							n->usingClause = $7;
-							n->whereClause = tsql_update_delete_stmt_with_top($3,
-												$5, $8, yyscanner);
-						}
-					}
-					else
-					{
-						n->usingClause = $7;
-						n->whereClause = $8;
-					}
+					n->usingClause = $7;
+					n->whereClause = $8;
 					n->returningList = NULL;
 					n->withClause = $1;
 					$$ = (Node *)n;
