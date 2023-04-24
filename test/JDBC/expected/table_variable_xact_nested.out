@@ -70,7 +70,7 @@ GO
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@table2_1_pkey")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@table2_0_pkey")~~
 
 ~~ROW COUNT: 1~~
 
@@ -110,14 +110,14 @@ savepoint_t3
 
 ~~START~~
 text
-@table2_1
+@table2_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
-@table2_1_pkey
-@tv3_1
+@table2_0_pkey
+@tv3_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
-@tv1_1
+@tv1_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
 ~~END~~
@@ -155,7 +155,7 @@ GO
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_pkey")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_0_pkey")~~
 
 ~~START~~
 int#!#int
@@ -166,8 +166,8 @@ int#!#int
 
 ~~START~~
 text
-@tv_1
-@tv_1_pkey
+@tv_0
+@tv_0_pkey
 ~~END~~
 
 
@@ -213,7 +213,7 @@ GO
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tvf_1_pkey")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@tvf_0_pkey")~~
 
 ~~START~~
 int#!#char
@@ -223,10 +223,10 @@ int#!#char
 
 ~~START~~
 text
-@tvf_1
+@tvf_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
-@tvf_1_pkey
+@tvf_0_pkey
 ~~END~~
 
 
@@ -355,19 +355,19 @@ SELECT * FROM TableVariableTracker
 GO
 ~~START~~
 int#!#text
-4#!#inserted
-4#!#deleted
-4#!#@table_variable_in_trigger_4
-4#!#@pg_toast_#oid_masked#
-4#!#@pg_toast_#oid_masked#_index
 3#!#inserted
 3#!#deleted
 3#!#@table_variable_in_trigger_3
 3#!#@pg_toast_#oid_masked#
 3#!#@pg_toast_#oid_masked#_index
-2#!#@tv_2
+2#!#inserted
+2#!#deleted
+2#!#@table_variable_in_trigger_2
 2#!#@pg_toast_#oid_masked#
 2#!#@pg_toast_#oid_masked#_index
+1#!#@tv_1
+1#!#@pg_toast_#oid_masked#
+1#!#@pg_toast_#oid_masked#_index
 ~~END~~
 
 
@@ -442,7 +442,7 @@ GO
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@table2_1_pkey")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@table2_0_pkey")~~
 
 ~~ROW COUNT: 2~~
 
@@ -507,17 +507,17 @@ savepoint_t3
 
 ~~START~~
 text
-@accumulator_1
+@accumulator_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
-@table2_1
+@table2_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
-@table2_1_pkey
-@tv3_1
+@table2_0_pkey
+@tv3_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
-@tv1_1
+@tv1_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
 ~~END~~

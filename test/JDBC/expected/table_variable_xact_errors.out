@@ -43,7 +43,7 @@ int#!#int
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_pkey")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_0_pkey")~~
 
 ~~START~~
 int#!#int
