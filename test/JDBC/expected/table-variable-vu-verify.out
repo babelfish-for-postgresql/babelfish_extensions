@@ -70,7 +70,7 @@ Query Text: ASSIGN @b = SELECT 5
   ->  Result  (cost=0.00..0.01 rows=1 width=4)
 Query Text: EXEC table_variable_vu_prepareouter_proc @a, @b
   Query Text: DECLARE TABLE @t
-    Query Text: CREATE TEMPORARY TABLE IF NOT EXISTS @t_2 (a int, b int)
+    Query Text: CREATE TEMPORARY TABLE IF NOT EXISTS @t_1 (a int, b int)
   Query Text: ASSIGN @a = SELECT 3
     Query Text: SELECT 3
     ->  Result  (cost=0.00..0.01 rows=1 width=4)
@@ -90,11 +90,11 @@ Query Text: EXEC table_variable_vu_prepareouter_proc @a, @b
     ->  Insert on table_variable_vu_preparet1  (cost=0.00..0.01 rows=0 width=0)
           ->  Result  (cost=0.00..0.01 rows=1 width=8)
   Query Text: insert into "@t" select * from table_variable_vu_preparet1;
-  ->  Insert on "@t_2"  (cost=0.00..32.60 rows=0 width=0)
+  ->  Insert on "@t_1"  (cost=0.00..32.60 rows=0 width=0)
         ->  Seq Scan on table_variable_vu_preparet1  (cost=0.00..32.60 rows=2260 width=8)
   Query Text: select * from "@t"
-  ->  Seq Scan on "@t_2"  (cost=0.00..32.60 rows=2260 width=8)
-  Query Text: DROP TABLE @t_2
+  ->  Seq Scan on "@t_1"  (cost=0.00..32.60 rows=2260 width=8)
+  Query Text: DROP TABLE @t_1
 Query Text: select "@a", "@b"
 Result  (cost=0.00..0.01 rows=1 width=8)
 ~~END~~

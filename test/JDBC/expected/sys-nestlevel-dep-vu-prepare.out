@@ -1,0 +1,31 @@
+CREATE DATABASE nextleveldb
+GO
+
+USE nextleveldb
+GO
+
+CREATE PROC p1
+AS
+SELECT @@NESTLEVEL AS p1BeforeShouldBe1
+EXEC p2
+SELECT @@NESTLEVEL AS p1AfterShouldBe1
+GO
+
+CREATE PROC p2
+    AS
+        SELECT @@NESTLEVEL AS p2BeforeShouldBe2
+        EXEC p3
+        SELECT @@NESTLEVEL AS p2AfterShouldBe2
+GO
+
+CREATE PROC p3
+AS
+SELECT @@NESTLEVEL AS p3BeforeShouldBe3
+EXEC p4
+SELECT @@NESTLEVEL AS p3AfterShouldBe3
+GO
+
+CREATE PROC p4
+AS
+SELECT @@NESTLEVEL AS p4ShouldBe4
+GO
