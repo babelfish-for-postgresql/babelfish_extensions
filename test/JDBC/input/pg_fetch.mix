@@ -1,0 +1,26 @@
+-- psql
+
+create table t1( a int);
+GO
+
+insert into t1 select generate_series(1,5); 
+GO
+
+begin;
+GO
+
+DECLARE _test_cursor CURSOR FOR SELECT a from only t1;
+GO
+
+FETCH 2 from _test_cursor; 
+GO
+
+FETCH 2 from _test_cursor; 
+GO
+
+commit;
+GO
+
+drop table t1;
+GO
+

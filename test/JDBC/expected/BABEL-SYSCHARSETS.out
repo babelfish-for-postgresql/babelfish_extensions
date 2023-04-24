@@ -8,3 +8,34 @@ int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#varbinary#!#image
 1001#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
+
+select * from dbo.SySChaRSets;
+go
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#varbinary#!#image
+1001#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+CREATE DATABASE DB1;
+GO
+
+-- In case of cross-db, syscharsets should also exist in dbo schema
+SELECT * FROM db1.sys.SySChaRSets;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#varbinary#!#image
+1001#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT * FROM db1.dbo.SySChaRSets;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#varbinary#!#image
+1001#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+DROP DATABASE DB1;
+GO

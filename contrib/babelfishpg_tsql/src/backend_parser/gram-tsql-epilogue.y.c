@@ -201,7 +201,7 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime")))
 		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime"), args, COERCE_EXPLICIT_CALL, location);
 
-	else if (strcmp(typename_string, "varchar") == 0)
+	else if ((strcmp(typename_string, "varchar") == 0) || (strcmp(typename_string, "nvarchar") == 0))
 	{
 		Node	   *helperFuncCall;
 
@@ -966,7 +966,7 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 }
 
 static Node *
-tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, RangeVar *insert_target,
+tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *opt_top_clause, RangeVar *insert_target,
 										   List *insert_column_list, List *tsql_output_clause, RangeVar *output_target, List *tsql_output_into_target_columns,
 										   InsertStmt *tsql_output_insert_rest, int select_location)
 {
@@ -992,6 +992,7 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, RangeVar
 	/* PreparableStmt inside CTE */
 	i->cols = insert_column_list;
 	i->selectStmt = tsql_output_insert_rest->selectStmt;
+	i->limitCount = opt_top_clause;
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
 	i->returningList = get_transformed_output_list(tsql_output_clause);

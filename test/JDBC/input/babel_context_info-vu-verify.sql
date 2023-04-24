@@ -155,8 +155,15 @@ go
 SELECT CONTEXT_INFO()
 GO
 
--- set NULL
+-- set NULL, which should return error
 SET CONTEXT_INFO NULL
+GO
+
+SELECT CONTEXT_INFO()
+GO
+
+DECLARE @context int
+SET CONTEXT_INFO @context
 GO
 
 SELECT CONTEXT_INFO()

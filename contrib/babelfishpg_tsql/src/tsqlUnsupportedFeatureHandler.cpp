@@ -737,16 +737,18 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_table(TSqlParser::Al
 
 	if (ctx->COLUMN()) // ALTER TABLE ... ALTER COLUMN
 	{
-		Assert(ctx->column_definition());
 		auto cdctx = ctx->column_definition();
-		if (!cdctx->collation().empty())
-			handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_COLLATE, "COLLATE in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-		if (!cdctx->null_notnull().empty())
+		if(cdctx)
 		{
-			if (cdctx->null_notnull()[0]->NOT())
-				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NOT_NULL, "NOT NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
-			else
-				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NULL, "NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
+			if (!cdctx->collation().empty())
+				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_COLLATE, "COLLATE in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
+			if (!cdctx->null_notnull().empty())
+			{
+				if (cdctx->null_notnull()[0]->NOT())
+					handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NOT_NULL, "NOT NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
+				else
+					handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NULL, "NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
+			}
 		}
 	}
 
