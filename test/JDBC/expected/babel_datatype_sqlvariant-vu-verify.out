@@ -713,5 +713,9 @@ int#!#sql_variant#!#varchar#!#sql_variant#!#sql_variant
 6#!#2016-10-23 12:45:37.123457#!#String 6#!#2016-10-23 12:45:37.12346#!#2016-10-23 12:45:37.123457
 10#!#-0.5679#!#String 10#!#-0.56789#!#-0.567890
 10#!#-0.5679#!#String 10#!#-0.56789#!#-0.567890
-~~END~~
+11#!#<NULL>#!#String 11#!#0#!#0.0000
+11#!#<NULL>#!#String 11#!#0#!#0.0000
+11#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
 

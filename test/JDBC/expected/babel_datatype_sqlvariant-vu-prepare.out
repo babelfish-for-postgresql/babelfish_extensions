@@ -811,4 +811,23 @@ go
 ~~ROW COUNT: 1~~
 
 
+insert into babel_4036_t1 values (11, cast(NULL as decimal), 'String 11', cast(0.0 as decimal), cast(0 as decimal(5,4)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (11, cast(NULL as numeric), 'String 11', cast(0.0 as numeric), cast(0 as numeric(5,4)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (11, cast('2020-10-05 09:00:00.123456+8:00' as datetimeoffset(3)), 'String 11', cast('2020-10-05 09:00:00.123456+8:00' as datetimeoffset(3)), cast('2020-10-05 09:00:00.123456+8:00' as datetimeoffset(3)));
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t1 values (12, CAST('2079-06-06 23:59:29.123456 -9:30' AS datetimeoffset(0)), 'String 11', CAST('2079-06-06 23:59:29.123456 -9:30' AS datetimeoffset(1)), CAST('2079-06-06 23:59:29.123456 -9:30' AS datetimeoffset(2)));
+go
+~~ROW COUNT: 1~~
+
 

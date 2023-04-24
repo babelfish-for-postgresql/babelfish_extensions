@@ -477,4 +477,18 @@ go
 insert into babel_4036_t1 values (10, cast(-0.5678900 as decimal(5,4)), 'String 10', cast(-0.5678900 as decimal(6,5)), cast(-0.5678900 as decimal(7,6)));
 go
 
+insert into babel_4036_t1 values (11, cast(NULL as decimal), 'String 11', cast(0.0 as decimal), cast(0 as decimal(5,4)));
+go
+
+insert into babel_4036_t1 values (11, cast(NULL as numeric), 'String 11', cast(0.0 as numeric), cast(0 as numeric(5,4)));
+go
+
+insert into babel_4036_t1 values (12, CAST('2079-06-06 23:59:29.123456' AS datetime2(0)), 'String 11', CAST('2079-06-06 23:59:29.123456' AS datetime2(1)), CAST('2079-06-06 23:59:29.123456' AS datetime2(2)));
+go
+
+insert into babel_4036_t1 values (12, CAST('2079-06-06 23:59:29.123456' AS datetime2(3)), 'String 11', CAST('2079-06-06 23:59:29.123456' AS datetime2(4)), CAST('2079-06-06 23:59:29.123456' AS datetime2(5)));
+go
+
+insert into babel_4036_t1 values (12, CAST('2079-06-06 23:59:29.123456' AS datetime2(6)), 'String 11', CAST('2079-06-06 23:59:29.123456' AS datetime2(7)), CAST('2079-06-06 23:59:29.123456' AS datetime2));
+go
 
