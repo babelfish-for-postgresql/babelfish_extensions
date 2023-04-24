@@ -68,7 +68,6 @@ typedef struct
 
 #define LS_TDS_NUMERIC	DBNUMERIC
 #define LS_INT_CANCEL	INT_CANCEL
-#define LS_INT_CONTINUE	INT_CONTINUE
 
 typedef int LINKED_SERVER_RETCODE;
 

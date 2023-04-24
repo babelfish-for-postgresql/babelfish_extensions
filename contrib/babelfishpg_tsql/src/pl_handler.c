@@ -3285,7 +3285,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					else
 						standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 												queryEnv, dest, qc);
-
 					check_extra_schema_restrictions(parsetree);
 					return;
 				}

@@ -214,8 +214,8 @@ typedef FormData_bbf_view_def * Form_bbf_view_def;
 #define Anum_bbf_servers_def_servername 1
 #define Anum_bbf_servers_def_query_timeout 2
 #define BBF_SERVERS_DEF_NUM_COLS 2
-extern Oid			bbf_servers_def_oid;
-extern Oid			bbf_servers_def_idx_oid;
+extern Oid	bbf_servers_def_oid;
+extern Oid	bbf_servers_def_idx_oid;
 
 extern Oid get_bbf_servers_def_oid(void);
 extern Oid get_bbf_servers_def_idx_oid(void);

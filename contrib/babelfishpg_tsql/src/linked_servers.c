@@ -1171,8 +1171,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("error executing query \"%s\" against remote server", query)
 					 ));
-		}
-			
+		}		
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Begin fetching results from remote server");
 
@@ -1292,8 +1291,6 @@ openquery_imp(PG_FUNCTION_ARGS)
 	}
 	PG_FINALLY();
 	{
-		// LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connections to remote server");
-
 		if (query)
 			pfree(query);
 	}
