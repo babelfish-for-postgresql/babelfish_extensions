@@ -206,25 +206,14 @@ varbinaryin(PG_FUNCTION_ARGS)
 	else if (dump_restore && strcmp(dump_restore, "on") == 0) /* Treat input string as T-SQL hex constant during restore */
 	{
 		/*
-		 * calculate length of the binary code
-		 * e.g. 0xFF should be 1 byte (plus VARHDRSZ)
-		 * and 0xF should also be 1 byte (plus VARHDRSZ).
+		 * calculate length of the binary code e.g. 0xFF should be 1 byte
+		 * (plus VARHDRSZ) and 0xF should also be 1 byte (plus VARHDRSZ).
 		 */
 		int bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
+
 		result = palloc(bc);
 		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
-		len = bc + VARHDRSZ; /* actual length */
-		SET_VARSIZE(result, len); /* actual length */
-
-		byteLen = VARSIZE_ANY_EXHDR(result);
-		r_data = VARDATA_ANY(result);
-
-		/* Encode the input string encoding to UTF8(server) encoding */
-		rp = encoding_conv_util(r_data, byteLen, PG_UTF8, collInfo.enc, &encodedByteLen);
-		SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
-
-		r_data = VARDATA(result);
-		memcpy(r_data, rp, len);
+		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
 
 		PG_RETURN_BYTEA_P(result);
 	}
