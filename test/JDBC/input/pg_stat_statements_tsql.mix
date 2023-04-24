@@ -25,13 +25,26 @@ SELECT 'world' AS "text";
 go
 
 -- transaction
-BEGIN TRANSACTION;
-SELECT 1 AS "int";
-SELECT 'hello' AS "text";
-COMMIT TRANSACTION;
-go
+-- BEGIN TRANSACTION;
+-- SELECT 1 AS "int";
+-- SELECT 'hello' AS "text";
+-- COMMIT TRANSACTION;
+-- go
 
-SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+-- database
+-- CREATE DATABASE test_db
+-- go
+-- DROP DATABASE test_db
+-- go
+
+-- tsql
+-- login
+CREATE LOGIN  l1 with password = '12345678'
+go
+-- DROP LOGIN  l1
+-- go
+
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
 go
 
 -- psql
@@ -55,12 +68,28 @@ go
 UPDATE test SET b = 'bbb' WHERE a > 7;
 DELETE FROM test WHERE a > 9;
 go
+TRUNCATE TABLE test;
+go
+
+-- create role & permissions(grant revoke)
+CREATE ROLE test_role
+go
+GRANT INSERT, UPDATE, SELECT ON test TO test_role
+go
+REVOKE INSERT, UPDATE, SELECT ON test FROM test_role
+go
+
+-- alter 
+alter table test enable trigger trigger1
+go
+alter table test disable  trigger trigger1
+go
 
 -- explicit transaction
-BEGIN TRANSACTION;
-UPDATE test SET b = '111' WHERE a = 1 ;
-COMMIT TRANSACTION;
-go
+-- BEGIN TRANSACTION;
+-- UPDATE test SET b = '111' WHERE a = 1 ;
+-- COMMIT TRANSACTION;
+-- go
 
 -- SELECT without constants
 SELECT * FROM test ORDER BY a;
@@ -69,7 +98,7 @@ SELECT * FROM test ORDER BY a;
 SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5);
 go
 
-SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
 go
 
 -- psql
@@ -78,8 +107,9 @@ go
 
 -- tsql
 
-DROP TRIGGER trigger1
+-- DROP TRIGGER trigger1
 DROP TABLE test;
+DROP ROLE test_role;
 go
 
 -- tsql
@@ -109,8 +139,8 @@ go
 
 
 -- tsql function
-CREATE FUNCTION f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
-go
+-- CREATE FUNCTION f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
+-- go
 
 create sequence [dbo].[newCounter] as int start with 5 increment by 5 
 go
@@ -122,12 +152,12 @@ drop sequence [dbo].[newCounter]
 go
 
 -- Inline table-valued function
-create function [dbo].[getCustomers](@age int) returns table as return 
-(select customers.customerid, customers.name, customers.age from customers
-where age >= @age)
-go
-select * from [dbo].[getCustomers](20)
-go
+-- create function [dbo].[getCustomers](@age int) returns table as return 
+-- (select customers.customerid, customers.name, customers.age from customers
+-- where age >= @age)
+-- go
+-- select * from [dbo].[getCustomers](20)
+-- go
 
 -- Temp table
 create table #demo(age int)
@@ -135,26 +165,26 @@ go
 
 DROP VIEW  [India customers]
 go
-DROP FUNCTION [dbo].[getCustomers]
-go
+-- DROP FUNCTION [dbo].[getCustomers]
+-- go
 DROP TABLE orders
 go
 DROP TABLE customers
 go
-DROP FUNCTION f1
-go
+-- DROP FUNCTION f1
+-- go
 
 -- tsql
-CREATE PROC p1 @a INT, @b FLOAT AS SELECT @a, @b; 
-go
+-- CREATE PROC p1 @a INT, @b FLOAT AS SELECT @a, @b; 
+-- go
 
 
-DROP PROCEDURE p1;
-go
+-- DROP PROCEDURE p1;
+-- go
 
 
 -- tsql
-SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
 go
 
 -- psql

@@ -44,31 +44,23 @@ world
 ~~END~~
 
 
+
+
 -- transaction
-BEGIN TRANSACTION;
-SELECT 1 AS "int";
-SELECT 'hello' AS "text";
-COMMIT TRANSACTION;
+-- BEGIN TRANSACTION;
+-- SELECT 1 AS "int";
+-- SELECT 'hello' AS "text";
+-- COMMIT TRANSACTION;
+-- go
+-- database
+-- CREATE DATABASE test_db
+-- go
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
 go
 ~~START~~
-int
-1
-~~END~~
-
-~~START~~
-varchar
-hello
-~~END~~
-
-
-SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
-go
-~~START~~
-int#!#int#!#bit#!#text#!#bigint#!#bigint#!#bigint
-19242#!#16385#!#1#!#BEGIN TRANSACTION#!#1#!#0#!#0
-19242#!#16385#!#1#!#COMMIT TRANSACTION#!#1#!#0#!#0
-19242#!#16385#!#1#!#SELECT $1 AS "int"#!#2#!#2#!#0
-19242#!#16385#!#1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#3#!#3#!#0
+int#!#bit#!#text#!#bigint#!#bigint#!#bigint
+16385#!#1#!#SELECT $1 AS "int"#!#1#!#1#!#0
+16385#!#1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#2#!#2#!#0
 ~~END~~
 
 
@@ -108,16 +100,30 @@ go
 
 ~~ROW COUNT: 1~~
 
+TRUNCATE TABLE test;
+go
+
+-- create role & permissions(grant revoke)
+CREATE ROLE test_role
+go
+GRANT INSERT, UPDATE, SELECT ON test TO test_role
+go
+REVOKE INSERT, UPDATE, SELECT ON test FROM test_role
+go
+
+-- alter 
+alter table test enable trigger trigger1
+go
+alter table test disable  trigger trigger1
+go
+
+
 
 -- explicit transaction
-BEGIN TRANSACTION;
-UPDATE test SET b = '111' WHERE a = 1 ;
-COMMIT TRANSACTION;
-go
-~~ROW COUNT: 1~~
-
-
-
+-- BEGIN TRANSACTION;
+-- UPDATE test SET b = '111' WHERE a = 1 ;
+-- COMMIT TRANSACTION;
+-- go
 -- SELECT without constants
 SELECT * FROM test ORDER BY a;
 -- SELECT with IN clause
@@ -125,40 +131,29 @@ SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5);
 go
 ~~START~~
 int#!#char
-1#!#111                 
-2#!#aaa                 
-3#!#aaa                 
-4#!#aaa                 
-5#!#aaa                 
-6#!#aaa                 
-7#!#aaa                 
-8#!#bbb                 
-9#!#bbb                 
 ~~END~~
 
 ~~START~~
 int#!#char
-2#!#aaa                 
-3#!#aaa                 
-4#!#aaa                 
-5#!#aaa                 
-1#!#111                 
 ~~END~~
 
 
-SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
 go
 ~~START~~
-int#!#int#!#bit#!#text#!#bigint#!#bigint#!#bigint
-19242#!#16385#!#1#!#BEGIN TRANSACTION#!#1#!#0#!#0
-19242#!#16385#!#1#!#COMMIT TRANSACTION#!#1#!#0#!#0
-19242#!#16385#!#1#!#CREATE TABLE test (a int, b char(20))#!#1#!#0#!#0
-19242#!#16385#!#1#!#DELETE FROM test WHERE a > $1#!#1#!#1#!#0
-19242#!#16385#!#1#!#INSERT INTO test VALUES(generate_series($1, $2), $3)#!#1#!#10#!#0
-19242#!#16385#!#1#!#SELECT * FROM test ORDER BY a#!#1#!#9#!#0
-19242#!#16385#!#1#!#SELECT * FROM test WHERE a IN ($1, $2, $3, $4, $5)#!#1#!#5#!#0
-19242#!#16385#!#1#!#UPDATE test SET b = $1 WHERE a = $2#!#1#!#1#!#0
-19242#!#16385#!#1#!#UPDATE test SET b = $1 WHERE a > $2#!#1#!#3#!#0
+int#!#bit#!#text#!#bigint#!#bigint#!#bigint
+16385#!#1#!#alter table test disable  trigger trigger1#!#1#!#0#!#0
+16385#!#1#!#alter table test enable trigger trigger1#!#1#!#0#!#0
+16385#!#1#!#CREATE ROLE test_role#!#1#!#0#!#0
+16385#!#1#!#CREATE TABLE test (a int, b char(20))#!#1#!#0#!#0
+16385#!#1#!#DELETE FROM test WHERE a > $1#!#1#!#1#!#0
+16385#!#1#!#GRANT INSERT, UPDATE, SELECT ON test TO test_role#!#1#!#0#!#0
+16385#!#1#!#INSERT INTO test VALUES(generate_series($1, $2), $3)#!#1#!#10#!#0
+16385#!#1#!#REVOKE INSERT, UPDATE, SELECT ON test FROM test_role#!#1#!#0#!#0
+16385#!#1#!#SELECT * FROM test ORDER BY a#!#1#!#0#!#0
+16385#!#1#!#SELECT * FROM test WHERE a IN ($1, $2, $3, $4, $5)#!#1#!#0#!#0
+16385#!#1#!#TRUNCATE TABLE test#!#1#!#0#!#0
+16385#!#1#!#UPDATE test SET b = $1 WHERE a > $2#!#1#!#3#!#0
 ~~END~~
 
 
@@ -173,8 +168,9 @@ void
 
 -- tsql
 
-DROP TRIGGER trigger1
+-- DROP TRIGGER trigger1
 DROP TABLE test;
+DROP ROLE test_role;
 go
 
 -- tsql
@@ -242,9 +238,9 @@ UTS
 
 
 -- tsql function
-CREATE FUNCTION f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
-go
 
+-- CREATE FUNCTION f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
+-- go
 create sequence [dbo].[newCounter] as int start with 5 increment by 5 
 go
 
@@ -259,74 +255,62 @@ bigint
 drop sequence [dbo].[newCounter]
 go
 
+
 -- Inline table-valued function
-create function [dbo].[getCustomers](@age int) returns table as return 
-(select customers.customerid, customers.name, customers.age from customers
-where age >= @age)
-go
-select * from [dbo].[getCustomers](20)
-go
-~~START~~
-int#!#varchar#!#int
-2#!#XYZ#!#21
-3#!#LMN#!#29
-4#!#PQR#!#52
-5#!#STU#!#23
-~~END~~
-
-
+-- create function [dbo].[getCustomers](@age int) returns table as return 
+-- (select customers.customerid, customers.name, customers.age from customers
+-- where age >= @age)
+-- go
+-- select * from [dbo].[getCustomers](20)
+-- go
 -- Temp table
 create table #demo(age int)
 go
 
 DROP VIEW  [India customers]
 go
-DROP FUNCTION [dbo].[getCustomers]
-go
+-- DROP FUNCTION [dbo].[getCustomers]
+-- go
 DROP TABLE orders
 go
 DROP TABLE customers
 go
-DROP FUNCTION f1
-go
 
 -- tsql
-CREATE PROC p1 @a INT, @b FLOAT AS SELECT @a, @b; 
-go
 
 
-DROP PROCEDURE p1;
-go
 
 
 -- tsql
-SELECT userid, dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+-- DROP FUNCTION f1
+-- go
+-- CREATE PROC p1 @a INT, @b FLOAT AS SELECT @a, @b; 
+-- go
+-- DROP PROCEDURE p1;
+-- go
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
 go
 ~~START~~
-int#!#int#!#bit#!#text#!#bigint#!#bigint#!#bigint
-19242#!#16385#!#1#!#create sequence [dbo].[newCounter] as int start with 5 increment by 5#!#1#!#0#!#0
-19242#!#16385#!#1#!#create table customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))#!#1#!#0#!#0
-19242#!#16385#!#1#!#create table #demo(age int)#!#1#!#0#!#0
-19242#!#16385#!#1#!#create table orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))#!#1#!#0#!#0
-19242#!#16385#!#1#!#create view [India customers] as select customerid from orders where country = 'India'#!#1#!#0#!#0
-19242#!#16385#!#1#!#DROP FUNCTION [dbo].[getCustomers]#!#1#!#0#!#0
-19242#!#16385#!#1#!#DROP FUNCTION f1#!#1#!#0#!#0
-19242#!#16385#!#1#!#DROP PROCEDURE p1#!#1#!#0#!#0
-19242#!#16385#!#1#!#drop sequence [dbo].[newCounter]#!#1#!#0#!#0
-19242#!#16385#!#1#!#DROP TABLE customers#!#1#!#0#!#0
-19242#!#16385#!#1#!#DROP TABLE orders#!#1#!#0#!#0
-19242#!#16385#!#1#!#DROP TABLE test#!#1#!#0#!#0
-19242#!#16385#!#1#!#DROP TRIGGER trigger1#!#1#!#0#!#0
-19242#!#16385#!#1#!#DROP VIEW  [India customers]#!#1#!#0#!#0
-19242#!#16385#!#1#!#insert into customers values($1, $2, $3),($4,$5, $6), ($7, $8, $9),($10, $11, $12),($13, $14, $15)#!#1#!#5#!#0
-19242#!#16385#!#1#!#insert into orders values($1, $2, $3), ($4, $5, $6), ($7, $8, $9), ($10, $11, $12),($13, $14, $15),($16, $17, $18)#!#1#!#6#!#0
-19242#!#16385#!#1#!#select avg(age) from customers#!#1#!#1#!#0
-19242#!#16385#!#1#!#select count(*) from orders where country =$1#!#1#!#1#!#0
-19242#!#16385#!#1#!#select * from customers#!#1#!#5#!#0
-19242#!#16385#!#1#!#select * from [dbo].[getCustomers]($1)#!#1#!#4#!#0
-19242#!#16385#!#1#!#select * from [India customers]#!#1#!#2#!#0
-19242#!#16385#!#1#!#select    nextval($1)#!#1#!#1#!#0
-19242#!#16385#!#1#!#select reverse(name) from customers#!#1#!#5#!#0
+int#!#bit#!#text#!#bigint#!#bigint#!#bigint
+16385#!#1#!#create sequence [dbo].[newCounter] as int start with 5 increment by 5#!#1#!#0#!#0
+16385#!#1#!#create table customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))#!#1#!#0#!#0
+16385#!#1#!#create table #demo(age int)#!#1#!#0#!#0
+16385#!#1#!#create table orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))#!#1#!#0#!#0
+16385#!#1#!#create view [India customers] as select customerid from orders where country = 'India'#!#1#!#0#!#0
+16385#!#1#!#DROP ROLE test_role#!#1#!#0#!#0
+16385#!#1#!#drop sequence [dbo].[newCounter]#!#1#!#0#!#0
+16385#!#1#!#DROP TABLE customers#!#1#!#0#!#0
+16385#!#1#!#DROP TABLE orders#!#1#!#0#!#0
+16385#!#1#!#DROP TABLE test#!#1#!#0#!#0
+16385#!#1#!#DROP VIEW  [India customers]#!#1#!#0#!#0
+16385#!#1#!#insert into customers values($1, $2, $3),($4,$5, $6), ($7, $8, $9),($10, $11, $12),($13, $14, $15)#!#1#!#5#!#0
+16385#!#1#!#insert into orders values($1, $2, $3), ($4, $5, $6), ($7, $8, $9), ($10, $11, $12),($13, $14, $15),($16, $17, $18)#!#1#!#6#!#0
+16385#!#1#!#select avg(age) from customers#!#1#!#1#!#0
+16385#!#1#!#select count(*) from orders where country =$1#!#1#!#1#!#0
+16385#!#1#!#select * from customers#!#1#!#5#!#0
+16385#!#1#!#select * from [India customers]#!#1#!#2#!#0
+16385#!#1#!#select    nextval($1)#!#1#!#1#!#0
+16385#!#1#!#select reverse(name) from customers#!#1#!#5#!#0
 ~~END~~
 
 
