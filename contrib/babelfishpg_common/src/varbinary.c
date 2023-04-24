@@ -178,8 +178,7 @@ varbinaryin(PG_FUNCTION_ARGS)
 	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 	len = strlen(inputText);
 
-	if (typmod == TSQLHexConstTypmod ||
-		(dump_restore && strcmp(dump_restore, "on") == 0)) /* Treat input string as T-SQL hex constant during restore */
+	if (typmod == TSQLHexConstTypmod)
 	{
 		/*
 		 * calculate length of the binary code
@@ -201,6 +200,20 @@ varbinaryin(PG_FUNCTION_ARGS)
 
 		r_data = VARDATA(result);
 		memcpy(r_data, rp, len);
+
+		PG_RETURN_BYTEA_P(result);
+	}
+	else if (dump_restore && strcmp(dump_restore, "on") == 0) /* Treat input string as T-SQL hex constant during restore */
+	{
+		/*
+		 * calculate length of the binary code e.g. 0xFF should be 1 byte
+		 * (plus VARHDRSZ) and 0xF should also be 1 byte (plus VARHDRSZ).
+		 */
+		int bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
+
+		result = palloc(bc);
+		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
+		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
 
 		PG_RETURN_BYTEA_P(result);
 	}
