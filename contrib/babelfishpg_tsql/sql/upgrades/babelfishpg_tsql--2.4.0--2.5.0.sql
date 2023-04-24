@@ -4,6 +4,27 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+ALTER FUNCTION sys.nestlevel() RENAME TO nestlevel_deprecated_in_2_5_0;
+
+CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
+$$
+DECLARE
+    stack text;
+    result integer;
+BEGIN
+    GET DIAGNOSTICS stack = PG_CONTEXT;
+    result := array_length(string_to_array(stack, 'function'), 1) - 3; 
+    IF result < -1 THEN
+        RAISE EXCEPTION 'Invalid output, check stack trace %', stack;
+    ELSE
+        RETURN result;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'nestlevel_deprecated_in_2_5_0');
+
 CREATE OR REPLACE VIEW sys.sp_databases_view AS
 	SELECT CAST(database_name AS sys.SYSNAME),
 	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
