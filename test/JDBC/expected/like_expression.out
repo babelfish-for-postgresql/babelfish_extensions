@@ -1,9 +1,9 @@
 create table t ( a varchar(30))
 GO
 
-insert into t values ('abc'),('bbc'),('cbc'),('=bc'),('Abc');
+insert into t values ('abc'),('bbc'),('cbc'),('=bc'),('Abc'),('a[bc'),('a]bc');
 GO
-~~ROW COUNT: 5~~
+~~ROW COUNT: 7~~
 
 
 select * from t where a like '[c-a]bc'
@@ -71,6 +71,8 @@ GO
 varchar
 abc
 Abc
+a[bc
+a]bc
 ~~END~~
 
 
@@ -83,6 +85,8 @@ bbc
 cbc
 =bc
 Abc
+a[bc
+a]bc
 ~~END~~
 
 
@@ -139,6 +143,20 @@ cbc
 ~~END~~
 
 
+select * from t where a like '%bc';
+GO
+~~START~~
+varchar
+abc
+bbc
+cbc
+=bc
+Abc
+a[bc
+a]bc
+~~END~~
+
+
 select * from t where a like '[0-9a-f][0-9a-f][0-9a-f]';
 GO
 ~~START~~
@@ -172,6 +190,14 @@ GO
 ~~START~~
 varchar
 [bc
+~~END~~
+
+
+select * from t where a like ']bc';
+GO
+~~START~~
+varchar
+]bc
 ~~END~~
 
 
@@ -212,6 +238,8 @@ varchar#!#varchar
 %[abc]c#!#cbc
 %[abc]c#!#=bc
 %[abc]c#!#Abc
+%[abc]c#!#a[bc
+%[abc]c#!#a]bc
 %[abc]c#!#]bc
 %[abc]c#!#[bc
 [^ a-b][a-z]c#!#cbc
