@@ -154,6 +154,11 @@ GO
 SELECT * FROM fpn_table_select_into WHERE b IN (SELECT b FROM bbf_fpn_server.master.dbo.fpn_table)
 GO
 
+-- In Subquery as a column
+SELECT a, (SELECT b from bbf_fpn_server.master.dbo.fpn_table where b = t.b) as c
+FROM fpn_table_insert_into t
+GO
+
 -- In Correlated subquery
 SELECT * FROM fpn_table_insert_into WHERE EXISTS (SELECT * FROM bbf_fpn_server.master.dbo.fpn_table as fpn_table_alias WHERE fpn_table_alias.a = fpn_table_insert_into.a)
 GO

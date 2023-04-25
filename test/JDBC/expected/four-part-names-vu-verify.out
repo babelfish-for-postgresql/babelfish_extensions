@@ -314,6 +314,18 @@ int#!#varchar
 ~~END~~
 
 
+-- In Subquery as a column
+SELECT a, (SELECT b from bbf_fpn_server.master.dbo.fpn_table where b = t.b) as c
+FROM fpn_table_insert_into t
+GO
+~~START~~
+int#!#varchar
+3#!#three
+101#!#<NULL>
+102#!#<NULL>
+~~END~~
+
+
 -- In Correlated subquery
 SELECT * FROM fpn_table_insert_into WHERE EXISTS (SELECT * FROM bbf_fpn_server.master.dbo.fpn_table as fpn_table_alias WHERE fpn_table_alias.a = fpn_table_insert_into.a)
 GO
