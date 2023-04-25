@@ -85,9 +85,33 @@ int
 ~~END~~
 
 
+-- systypes should also exist in schema "dbo"
+SELECT count(*) FROM dbo.systypes WHERE name = 'sys_systypes_type';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Cross-db
+SELECT count(*) FROM sys_systypes_db.sys.systypes WHERE name = 'sys_systypes_type';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) FROM sys_systypes_db.dbo.systypes WHERE name = 'sys_systypes_type';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+
+
 CREATE TYPE sys_systypes_type FROM int;
 GO
-
 
 SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys.systypes WHERE name = 'sys_systypes_type';
 GO
@@ -96,6 +120,29 @@ varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
 sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 ~~END~~
 
+
+SELECT name, status, length, variable, allownulls, printfmt, collation FROM dbo.systypes WHERE name = 'sys_systypes_type';
+GO
+~~START~~
+varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
+sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Cross-db
+SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys_systypes_db.sys.systypes WHERE name = 'sys_systypes_type';
+GO
+~~START~~
+varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
+sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys_systypes_db.dbo.systypes WHERE name = 'sys_systypes_type';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
 
 
 DROP TYPE sys_systypes_type;
