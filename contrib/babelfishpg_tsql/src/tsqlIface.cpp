@@ -37,6 +37,7 @@ extern "C" {
 #include "pltsql-2.h"
 #include "pl_explain.h"
 #include "session.h"
+#include "multidb.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
@@ -1721,10 +1722,26 @@ public:
 			std::string nextval_string = "nextval('" + seq_name + "')";
 			if (fctx->schema)
 			{
+				TSqlParser::IdContext *dctx = fctx->database;
 				TSqlParser::IdContext *sctx = fctx->schema;
 				TSqlParser::IdContext *octx = fctx->object_name;
-				// Need to directly use the backend schema name since nextval is a postgres function
-				nextval_string = "nextval('master_" + ::stripQuoteFromId(sctx) + '.' + ::stripQuoteFromId(octx) + "')";
+				char *database;
+				char *schema;
+
+				if(dctx)
+					database = pstrdup(stripQuoteFromId(dctx).c_str());
+				else
+					database = get_cur_db_name();
+
+				schema = get_physical_schema_name(database, stripQuoteFromId(sctx).c_str());
+
+				if(strcmp(schema, "") == 0)
+					nextval_string = "nextval('" + ::stripQuoteFromId(octx) + "')";
+				else
+					// Need to directly use the backend schema name since nextval is a postgres function
+					nextval_string = "nextval('" + std::string(schema) + '.' + ::stripQuoteFromId(octx) + "')";
+
+				pfree(database);
 			}
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->NEXT()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->NEXT()), "")));
