@@ -1141,7 +1141,7 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-        RAISE EXCEPTION 'Argument data type bit is invalid for argument 2 of dateadd function.';
+        return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1194,7 +1194,7 @@ DECLARE
     digit_to_startdate DATETIME;
 BEGIN
     IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
-    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype) THEN
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
         digit_to_startdate := CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(startdate as sys.DATETIME);
     END IF;
 
@@ -1236,6 +1236,9 @@ DECLARE
 	first_week_end INTEGER;
 	day INTEGER;
 BEGIN
+    IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
+        arg = CAST(arg AS sys.DATETIME);
 	CASE datepart
 	WHEN 'dow' THEN
 		result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
@@ -1693,10 +1696,10 @@ $BODY$
 SELECT
     CASE
     WHEN dp = 'month'::text THEN
-        to_char(arg::date, 'TMMonth')
+        to_char(arg::datetime, 'TMMonth')
     -- '1969-12-28' is a Sunday
     WHEN dp = 'dow'::text THEN
-        to_char(arg::date, 'TMDay')
+        to_char(arg::datetime, 'TMDay')
     ELSE
         sys.datepart(dp, arg)::TEXT
     END 
