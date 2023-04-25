@@ -124,10 +124,10 @@ $BODY$
 SELECT
     CASE
     WHEN dp = 'month'::text THEN
-        to_char(arg::datetime, 'TMMonth')
+        to_char(arg::sys.DATETIME, 'TMMonth')
     -- '1969-12-28' is a Sunday
     WHEN dp = 'dow'::text THEN
-        to_char(arg::datetime, 'TMDay')
+        to_char(arg::sys.DATETIME, 'TMDay')
     ELSE
         sys.datepart(dp, arg)::TEXT
     END 
