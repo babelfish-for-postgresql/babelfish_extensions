@@ -125,36 +125,40 @@ DECLARE
 	first_day DATE;
 	first_week_end INTEGER;
 	day INTEGER;
+    datapart_date DATETIME;
 BEGIN
     IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
     'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
-        arg = CAST(arg AS sys.DATETIME);
+        datapart_date = CAST(arg AS sys.DATETIME);
+    ELSE
+        datapart_date = arg;
+    END IF;
 	CASE datepart
 	WHEN 'dow' THEN
-		result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
+		result = (date_part(datepart, datapart_date)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
 	WHEN 'tsql_week' THEN
-		first_day = make_date(date_part('year', arg)::INTEGER, 1, 1);
+		first_day = make_date(date_part('year', datapart_date)::INTEGER, 1, 1);
 		first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
-		day = date_part('doy', arg)::INTEGER;
+		day = date_part('doy', datapart_date)::INTEGER;
 		IF day <= first_week_end THEN
 			result = 1;
 		ELSE
 			result = 2 + (day - first_week_end - 1) / 7;
 		END IF;
 	WHEN 'second' THEN
-		result = TRUNC(date_part(datepart, arg))::INTEGER;
+		result = TRUNC(date_part(datepart, datapart_date))::INTEGER;
 	WHEN 'millisecond' THEN
-		result = right(date_part(datepart, arg)::TEXT, 3)::INTEGER;
+		result = right(date_part(datepart, datapart_date)::TEXT, 3)::INTEGER;
 	WHEN 'microsecond' THEN
-		result = right(date_part(datepart, arg)::TEXT, 6)::INTEGER;
+		result = right(date_part(datepart, datapart_date)::TEXT, 6)::INTEGER;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
-		result = right(date_part('microsecond', arg)::TEXT, 6)::INTEGER * 1000;
+		result = right(date_part('microsecond', datapart_date)::TEXT, 6)::INTEGER * 1000;
 	WHEN 'tzoffset' THEN
 		-- timezone for datetimeoffset
 		result = df_tz;
 	ELSE
-		result = date_part(datepart, arg)::INTEGER;
+		result = date_part(datepart, datapart_date)::INTEGER;
 	END CASE;
 	RETURN result;
 EXCEPTION WHEN invalid_parameter_value or feature_not_supported THEN
