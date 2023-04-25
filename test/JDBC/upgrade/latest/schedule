@@ -424,15 +424,7 @@ TestVarChar
 TestVariableDataLength
 test_windows_alter_login
 test_windows_alter_user
-BABEL-733
-BABEL-745
-BABEL-3938
-sys-userid
-sys-parsename
-BABEL-NEXT-VALUE-FOR
-BABEL-4098
-babel_context_info
-binary-index
+sys-parsename-dep
 test_windows_login
 test_windows_sp_helpuser
 TestXML
