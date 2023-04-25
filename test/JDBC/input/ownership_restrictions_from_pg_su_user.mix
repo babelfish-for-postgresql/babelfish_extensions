@@ -1,0 +1,89 @@
+-- tsql
+CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '12345678';
+GO
+
+CREATE ROLE ownership_restrictions_from_pg_role1;
+GO
+
+DECLARE @ownership_restrictions_from_pg_test_variable  int = 100;
+GO
+
+-- psql
+CREATE USER ownership_restrictions_from_pg_test_user WITH PASSWORD '12345678' inherit;
+go
+
+CREATE USER ownership_restrictions_from_pg_test_su_user WITH SUPERUSER LOGIN PASSWORD '12345678';
+GO
+
+-- psql user=ownership_restrictions_from_pg_login1 password=12345678
+-- If tsql login connected through psql Alter ROLE of an bbf created logins/user/roles for password,
+-- connection limit and valid until should be working fine
+-- and the rest of alter role operations should throw an error.
+ALTER ROLE ALL IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE CURRENT_ROLE IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE CURRENT_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE SESSION_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+-- psql user=ownership_restrictions_from_pg_test_user password=12345678
+-- For plain psql user Alter ROLE of an bbf created logins/user/roles for password,
+-- connection limit and valid until should be working fine
+-- and the rest of alter role operations should throw an error.
+ALTER ROLE ALL IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE CURRENT_ROLE IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE CURRENT_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE SESSION_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+
+-- psql user=ownership_restrictions_from_pg_test_su_user password=12345678
+-- Altering of babelfish created logins/roles should suceeded for superuser
+ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
+GO
+
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTION LIMIT 1  password '12345678';
+GO
+
+-- psql
+SET enable_drop_babelfish_role = true;
+go
+DROP USER ownership_restrictions_from_pg_test_su_user;
+go
+SET enable_drop_babelfish_role = false;
+go
+
+DROP USER ownership_restrictions_from_pg_test_user;
+GO
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'ownership_restrictions_from_pg_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
+DROP ROLE ownership_restrictions_from_pg_role1;
+DROP LOGIN ownership_restrictions_from_pg_login1;
+GO
