@@ -173,7 +173,6 @@ varbinaryin(PG_FUNCTION_ARGS)
 	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 	int		encodedByteLen;
 	coll_info	collInfo;
-	int 		byteLen;
 
 	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 	len = strlen(inputText);
@@ -186,20 +185,18 @@ varbinaryin(PG_FUNCTION_ARGS)
 		 * and 0xF should also be 1 byte (plus VARHDRSZ).
 		 */
 		int bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
-		result = palloc(bc);
-		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
-		len = bc + VARHDRSZ; /* actual length */
-		SET_VARSIZE(result, len); /* actual length */
-
-		byteLen = VARSIZE_ANY_EXHDR(result);
-		r_data = VARDATA_ANY(result);
+		
+		/* decode the hex */
+		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, inputText);
 
 		/* Encode the input string encoding to UTF8(server) encoding */
-		rp = encoding_conv_util(r_data, byteLen, collInfo.enc, PG_UTF8, &encodedByteLen);
+		rp = encoding_conv_util(inputText, bc, collInfo.enc, PG_UTF8, &encodedByteLen);
+
+		result = palloc(encodedByteLen + VARHDRSZ);
 		SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
 
 		r_data = VARDATA(result);
-		memcpy(r_data, rp, len);
+		memcpy(r_data, rp, encodedByteLen);
 
 		PG_RETURN_BYTEA_P(result);
 	}

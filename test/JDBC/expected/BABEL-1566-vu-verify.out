@@ -281,7 +281,7 @@ select cast(cast(0xfe as binary) as text);
 go
 ~~START~~
 text
-0xfe
+0xc3be
 ~~END~~
 
 
@@ -289,7 +289,7 @@ select cast(cast(0xfe as bbf_binary) as text);
 go
 ~~START~~
 text
-0xfe
+0xc3be
 ~~END~~
 
 
@@ -297,7 +297,7 @@ select cast(cast(0xfe as bytea) as text);
 go
 ~~START~~
 text
-\xfe
+\xc3be
 ~~END~~
 
 
