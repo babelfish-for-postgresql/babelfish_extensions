@@ -133,10 +133,6 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
-static TM_Result pltsql_tuple_satisfies_update(Relation relation, HeapTuple stup, CommandId curcid, Buffer buffer);
-static bool pltsql_tuple_satisfies_visibility (Relation relation, HeapTuple stup, Snapshot snapshot, Buffer buffer);
-static HTSV_Result pltsql_tuple_satisfies_vacuum(Relation relation, HeapTuple stup, TransactionId OldestXmin, Buffer buffer);
-static HTSV_Result pltsql_tuple_satisfies_vacuum_horizon(Relation relation, HeapTuple stup, Buffer buffer, TransactionId *dead_after);
 
 /*****************************************
  * 			Executor Hooks
@@ -203,10 +199,10 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
-static table_tuple_satisfies_visibility_hook_type prev_table_tuple_satisfies_visibility = NULL;
-static table_tuple_satisfies_update_hook_type prev_table_tuple_satisfies_update = NULL;
-static table_tuple_satisfies_vacuum_hook_type prev_table_tuple_satisfies_vacuum = NULL;
-static table_tuple_satisfies_vacuum_horizon_hook_type prev_table_tuple_satisfies_vacuum_horizon = NULL;
+static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfies_visibility = NULL;
+static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
+static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
+static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -332,17 +328,17 @@ InstallExtendedHooks(void)
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
 
-	prev_table_tuple_satisfies_update = table_tuple_satisfies_update_hook;
-	table_tuple_satisfies_update_hook = pltsql_tuple_satisfies_update;
+	prev_table_variable_satisfies_update = table_variable_satisfies_update_hook;
+	table_variable_satisfies_update_hook = TVHeapTupleSatisfiesUpdate;
 
-	prev_table_tuple_satisfies_visibility = table_tuple_satisfies_visibility_hook;
-	table_tuple_satisfies_visibility_hook = pltsql_tuple_satisfies_visibility;
+	prev_table_variable_satisfies_visibility = table_variable_satisfies_visibility_hook;
+	table_variable_satisfies_visibility_hook = TVHeapTupleSatisfiesVisibility;
 
-	prev_table_tuple_satisfies_vacuum = table_tuple_satisfies_vacuum_hook;
-	table_tuple_satisfies_vacuum_hook = pltsql_tuple_satisfies_vacuum;
+	prev_table_variable_satisfies_vacuum = table_variable_satisfies_vacuum_hook;
+	table_variable_satisfies_vacuum_hook = TVHeapTupleSatisfiesVacuum;
 
-	prev_table_tuple_satisfies_vacuum_horizon = table_tuple_satisfies_vacuum_horizon_hook;
-	table_tuple_satisfies_vacuum_horizon_hook = pltsql_tuple_satisfies_vacuum_horizon;
+	prev_table_variable_satisfies_vacuum_horizon = table_variable_satisfies_vacuum_horizon_hook;
+	table_variable_satisfies_vacuum_horizon_hook = TVHeapTupleSatisfiesVacuumHorizon;
 
 	PrevIsToastRelationHook = IsToastRelationHook;
 	IsToastRelationHook = IsPltsqlToastRelationHook;
@@ -399,10 +395,10 @@ UninstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
-	table_tuple_satisfies_visibility_hook = prev_table_tuple_satisfies_visibility;
-	table_tuple_satisfies_update_hook = prev_table_tuple_satisfies_update;
-	table_tuple_satisfies_vacuum_hook = prev_table_tuple_satisfies_vacuum;
-	table_tuple_satisfies_vacuum_horizon_hook = prev_table_tuple_satisfies_vacuum_horizon;
+	table_variable_satisfies_visibility_hook = prev_table_variable_satisfies_visibility;
+	table_variable_satisfies_update_hook = prev_table_variable_satisfies_update;
+	table_variable_satisfies_vacuum_hook = prev_table_variable_satisfies_vacuum;
+	table_variable_satisfies_vacuum_horizon_hook = prev_table_variable_satisfies_vacuum_horizon;
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 }
@@ -3727,7 +3723,7 @@ bbf_check_rowcount_hook(int es_processed)
 		return false;
 }
 
-static void 
+static void
 sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
@@ -3737,39 +3733,4 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 	}
 }
 
-static TM_Result
-pltsql_tuple_satisfies_update(Relation relation, HeapTuple tuple, CommandId curcid, Buffer buffer)
-{
-	if (unlikely(RelationIsBBFTableVariable(relation)))
-			return TVHeapTupleSatisfiesUpdate(tuple, curcid, buffer);
-
-	return HeapTupleSatisfiesUpdate(tuple, curcid, buffer);
-}
-
-static bool
-pltsql_tuple_satisfies_visibility (Relation relation, HeapTuple tuple, Snapshot snapshot, Buffer buffer)
-{
-	if (unlikely(RelationIsBBFTableVariable(relation)))
-		return TVHeapTupleSatisfiesVisibility(tuple, snapshot, buffer);
-
-	return HeapTupleSatisfiesVisibility(tuple, snapshot, buffer);
-}
-
-static HTSV_Result
-pltsql_tuple_satisfies_vacuum (Relation relation, HeapTuple tuple, TransactionId oldestxmin, Buffer buffer)
-{
-	if (unlikely(RelationIsBBFTableVariable(relation)))
-		return TVHeapTupleSatisfiesVacuum(tuple, oldestxmin, buffer);
-
-	return HeapTupleSatisfiesVacuum(tuple, oldestxmin, buffer);
-}
-
-static HTSV_Result
-pltsql_tuple_satisfies_vacuum_horizon (Relation relation, HeapTuple tuple, Buffer buffer, TransactionId *dead_after)
-{
-	if (unlikely(RelationIsBBFTableVariable(relation)))
-		return TVHeapTupleSatisfiesVacuumHorizon(tuple, buffer, dead_after);
-
-	return HeapTupleSatisfiesVacuumHorizon(tuple, buffer, dead_after);
-}
 
