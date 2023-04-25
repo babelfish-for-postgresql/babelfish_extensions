@@ -125,7 +125,7 @@ DECLARE
 	first_day DATE;
 	first_week_end INTEGER;
 	day INTEGER;
-    datapart_date DATETIME;
+	datapart_date sys.DATETIME;
 BEGIN
     IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
      'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
