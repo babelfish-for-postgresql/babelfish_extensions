@@ -119,13 +119,29 @@ SELECT
 FROM sys.babelfish_syslanguages;
 GRANT SELECT ON sys.syslanguages TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg anyelement) RETURNS TEXT AS 
+$BODY$
+SELECT
+    CASE
+    WHEN dp = 'month'::text THEN
+        to_char(arg::datetime, 'TMMonth')
+    -- '1969-12-28' is a Sunday
+    WHEN dp = 'dow'::text THEN
+        to_char(arg::datetime, 'TMDay')
+    ELSE
+        sys.datepart(dp, arg)::TEXT
+    END 
+$BODY$
+STRICT
+LANGUAGE sql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.datepart_internal(IN datepart PG_CATALOG.TEXT, IN arg anyelement,IN df_tz INTEGER DEFAULT 0) RETURNS INTEGER AS $$
 DECLARE
 	result INTEGER;
 	first_day DATE;
 	first_week_end INTEGER;
 	day INTEGER;
-	datapart_date sys.DATETIME;
+    datapart_date sys.DATETIME;
 BEGIN
     IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
      'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
