@@ -2102,6 +2102,7 @@ parsename(PG_FUNCTION_ARGS)
     char *dot_pos = NULL;
     char *dot_pos2 = NULL;
     int dot_count = 0;
+	// int closing_quote_count = 0;
     bool in_bracket = false;
     int object_name_len = strlen(object_name_str);
     
@@ -2117,12 +2118,12 @@ parsename(PG_FUNCTION_ARGS)
 
 	for (int i = 0; i < object_name_len; i++) 
 	{
-		if (object_name_str[i] == '[')
+		if (object_name_str[i] == '[' || object_name_str[i] == '"')
 		{
 			in_bracket = true;
 			continue;
 		}
-		else if (object_name_str[i] == ']')
+		else if (object_name_str[i] == ']' || object_name_str[i] == '"')
 		{
 			in_bracket = false;
 			continue;
@@ -2193,7 +2194,6 @@ parsename(PG_FUNCTION_ARGS)
 		}
 		object_name_part = object_name_str;
 	}
-	
 	if (object_piece == 1)
 	{
 		if (object_name_part[0] == '\0')
@@ -2202,17 +2202,48 @@ parsename(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			// Remove square brackets from object name
 			int object_name_part_len = strlen(object_name_part);
-			if (object_name_part[0] == '[' && object_name_part[object_name_part_len - 1] == ']') 
+			int closing_quote_count = 0; 
+			if (object_name_part[0] == '[')
 			{
-				object_name_part[object_name_part_len - 1] = '\0';
-				PG_RETURN_TEXT_P(cstring_to_text(&object_name_part[1]));
+				int closing_bracket_count = 0;
+				for (int i = 0; i < object_name_part_len; i++) 
+				{
+					if (object_name_part[i] == ']') 
+					{
+					closing_bracket_count++;
+					}
+				}
+				if (closing_bracket_count != 1)
+				{
+					PG_RETURN_NULL();
+				}
+				if (object_name_part[object_name_part_len - 1] == ']')
+				{	
+					object_name_part[object_name_part_len - 1] = '\0';
+					PG_RETURN_TEXT_P(cstring_to_text(&object_name_part[1]));
+				}
 			}
-			else
+			else if (object_name_part[0] == '"')
 			{
-				PG_RETURN_TEXT_P(cstring_to_text(object_name_part));
+				for (int i = 0; i < object_name_part_len; i++) 
+				{
+					if (object_name_part[i] == '"') 
+					{
+						closing_quote_count++;
+					}
+				}
+				if (closing_quote_count % 2 != 0) 
+				{
+					PG_RETURN_NULL();
+				}
+				if (object_name_part[object_name_part_len - 1] == '"')
+				{
+					object_name_part[object_name_part_len - 1] = '\0';
+					PG_RETURN_TEXT_P(cstring_to_text(&object_name_part[1]));
+				}
 			}
+			PG_RETURN_TEXT_P(cstring_to_text(object_name_part));
 		}
 	}
 	else if (object_piece == 2)
@@ -2224,12 +2255,42 @@ parsename(PG_FUNCTION_ARGS)
 		else
 		{
 			char *schema_name_str = schema_name;
-			if (schema_name_str[0] == '[' && schema_name_str[strlen(schema_name_str) - 1] == ']')
+			int schema_name_len = strlen(schema_name_str);
+			if (schema_name_str[0] == '[')
 			{
-				schema_name_str[strlen(schema_name_str) - 1] = '\0';
+				int closing_bracket_count = 0;
+				for (int i = 0; i < schema_name_len; i++)
+				{
+					if (schema_name_str[i] == ']')
+					{
+						closing_bracket_count++;
+					}
+				}
+				if (closing_bracket_count != 1)
+				{
+					PG_RETURN_NULL();
+				}
 				schema_name_str++;
+				schema_name_len -= 2; 
 			}
-			PG_RETURN_TEXT_P(cstring_to_text(schema_name_str));
+			if (schema_name_str[0] == '"')
+			{
+				int closing_quote_count = 0;
+				for (int i = 0; i < schema_name_len; i++)
+				{
+					if (schema_name_str[i] == '"')
+					{
+						closing_quote_count++;
+					}
+				}
+				if (closing_quote_count % 2 != 0)
+				{
+					PG_RETURN_NULL();
+				}
+				schema_name_str++;
+				schema_name_len -= 2; 
+			}
+			PG_RETURN_TEXT_P(cstring_to_text_with_len(schema_name_str, schema_name_len));
 		}
 	}
 	else if (object_piece == 3)
@@ -2241,12 +2302,42 @@ parsename(PG_FUNCTION_ARGS)
 		else
 		{
 			char *schema_name_str = database_name;
-			if (schema_name_str[0] == '[' && schema_name_str[strlen(schema_name_str) - 1] == ']')
+			int schema_name_len = strlen(schema_name_str);
+			if (schema_name_str[0] == '[')
 			{
-				schema_name_str[strlen(schema_name_str) - 1] = '\0';
+				int closing_bracket_count = 0;
+				for (int i = 0; i < schema_name_len; i++)
+				{
+					if (schema_name_str[i] == ']')
+					{	
+						closing_bracket_count++;
+					}
+				}
+				if (closing_bracket_count != 1)
+				{
+					PG_RETURN_NULL();
+				}
 				schema_name_str++;
+				schema_name_len -= 2; 
 			}
-			PG_RETURN_TEXT_P(cstring_to_text(schema_name_str));
+			if (schema_name_str[0] == '"')
+			{
+				int closing_quote_count = 0;
+				for (int i = 0; i < schema_name_len; i++)
+				{
+					if (schema_name_str[i] == '"')
+					{
+						closing_quote_count++;
+					}
+				}
+				if (closing_quote_count % 2 != 0)
+				{
+					PG_RETURN_NULL();
+				}
+				schema_name_str++;
+				schema_name_len -= 2; 
+			}
+			PG_RETURN_TEXT_P(cstring_to_text_with_len(schema_name_str, schema_name_len));
 		}
 	}
 	else
@@ -2339,6 +2430,7 @@ object_schema_name(PG_FUNCTION_ARGS)
 	else
 		PG_RETURN_NULL();
 }
+
 
 Datum
 pg_extension_config_remove(PG_FUNCTION_ARGS)
