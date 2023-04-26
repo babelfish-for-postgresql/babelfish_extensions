@@ -243,6 +243,16 @@ exec sp_table_privileges @table_name = 'fo[ol]bar1'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#foobar1#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#foobar1#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#foobar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#foobar1#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#foobar1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 
@@ -250,6 +260,11 @@ exec sp_table_privileges @table_name = 'fo[^o]bar1'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 
@@ -257,6 +272,11 @@ exec sp_table_privileges @table_name = 'fo[a-l]bar1'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#folbar1#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 

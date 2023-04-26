@@ -263,11 +263,18 @@ db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 
--- NOTE: Incorrect output with [] wildcards, see BABEL-2452
 EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t[ea]stcolumn'
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 
@@ -275,6 +282,10 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 
@@ -282,6 +293,14 @@ EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 

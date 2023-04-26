@@ -176,6 +176,8 @@ EXEC sp_stored_procedures @sp_name='sel[eu]ct_all'
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+db1#!#dbo#!#select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+db1#!#dbo#!#seluct_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 
 
@@ -183,6 +185,7 @@ EXEC sp_stored_procedures @sp_name='sel[^u]ct_all'
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+db1#!#dbo#!#select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 
 
@@ -190,6 +193,8 @@ EXEC sp_stored_procedures @sp_name='sel[a-u]ct_all'
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+db1#!#dbo#!#select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+db1#!#dbo#!#seluct_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 
 

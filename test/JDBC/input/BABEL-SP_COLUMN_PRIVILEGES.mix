@@ -108,7 +108,6 @@ GO
 EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t_stcolumn'
 GO
 
--- NOTE: Incorrect output with [] wildcards, see BABEL-2452
 EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t[ea]stcolumn'
 GO
 
