@@ -2852,8 +2852,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								errmsg("Current login %s does not have permission to Alter login", 
 								GetUserNameFromId(GetSessionUserId(), true))));
 
-
-
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
 											errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
