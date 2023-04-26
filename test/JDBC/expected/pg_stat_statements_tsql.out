@@ -46,6 +46,8 @@ world
 
 
 
+-- tsql
+
 -- transaction
 -- BEGIN TRANSACTION;
 -- SELECT 1 AS "int";
@@ -54,6 +56,13 @@ world
 -- go
 -- database
 -- CREATE DATABASE test_db
+-- go
+-- DROP DATABASE test_db
+-- go
+-- login
+-- CREATE LOGIN  l1 with password = '12345678'
+-- go
+-- DROP LOGIN  l1
 -- go
 SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
 go
@@ -236,6 +245,15 @@ UTS
 ~~END~~
 
 
+select * from information_schema.views;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#india customers#!#create view [India customers] as select customerid from orders where country = 'India'#!#NONE#!#NO
+master#!#dbo#!#sysdatabases#!#<NULL>#!#NONE#!#NO
+~~END~~
+
+
 
 -- tsql function
 
@@ -309,6 +327,7 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#select count(*) from orders where country =$1#!#1#!#1#!#0
 16385#!#1#!#select * from customers#!#1#!#5#!#0
 16385#!#1#!#select * from [India customers]#!#1#!#2#!#0
+16385#!#1#!#select * from information_schema_tsql.views#!#1#!#2#!#0
 16385#!#1#!#select    nextval($1)#!#1#!#1#!#0
 16385#!#1#!#select reverse(name) from customers#!#1#!#5#!#0
 ~~END~~

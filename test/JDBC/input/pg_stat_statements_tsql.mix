@@ -39,8 +39,8 @@ go
 
 -- tsql
 -- login
-CREATE LOGIN  l1 with password = '12345678'
-go
+-- CREATE LOGIN  l1 with password = '12345678'
+-- go
 -- DROP LOGIN  l1
 -- go
 
@@ -135,6 +135,9 @@ select avg(age) from customers
 go
 
 select reverse(name) from customers
+go
+
+select * from information_schema.views;
 go
 
 
