@@ -2089,7 +2089,7 @@ numeric_radians(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(result);
 }
 
-Datum
+Datum 
 parsename(PG_FUNCTION_ARGS)
 {
     text *object_name = PG_GETARG_TEXT_PP(0);
@@ -2098,8 +2098,8 @@ parsename(PG_FUNCTION_ARGS)
     int len = strlen(object_name_str);
     char object_parts[5][129] = {0};
     int current_part = 0;
-    bool in_quote = false;
-    bool in_bracket = false;
+    int bracket_count = 0;
+    int quote_count = 0;
     if (object_piece < 1 || object_piece > 4)
     {
         PG_RETURN_NULL();
@@ -2107,7 +2107,7 @@ parsename(PG_FUNCTION_ARGS)
     for (int i = 0; i < len; i++)
     {
         char c = object_name_str[i];
-        if (c == '.' && !in_quote && !in_bracket)
+        if (c == '.' && bracket_count == 0 && quote_count == 0)
         {
             current_part++;
             if (current_part > 4)
@@ -2116,23 +2116,23 @@ parsename(PG_FUNCTION_ARGS)
                 PG_RETURN_NULL();
             }
         }
-        else if (c == '[' && !in_quote && !in_bracket)
+        else if (c == '[' && bracket_count == 0 && quote_count == 0)
         {
-            in_bracket = true;
+            bracket_count++;
         }
-        else if (c == ']' && in_bracket)
+        else if (c == ']' && bracket_count == 1)
         {
-            in_bracket = false;
+            bracket_count--;
         }
-        else if (c == '"' && !in_quote && !in_bracket)
+        else if (c == '"' && quote_count == 0 && bracket_count == 0)
         {
-            in_quote = true;
+            quote_count++;
         }
-        else if (c == '"' && in_quote)
+        else if (c == '"' && quote_count == 1)
         {
-            in_quote = false;
+            quote_count--;
         }
-        else if ((c == '[' || c == ']' || c == '"') && !in_quote && !in_bracket)
+        else if ((c == '[' || c == ']' || c == '"') && bracket_count == 0 && quote_count == 0)
         {
             pfree(object_name_str);
             PG_RETURN_NULL();
@@ -2151,7 +2151,7 @@ parsename(PG_FUNCTION_ARGS)
             }
         }
     }
-    if (in_bracket || in_quote)
+    if (bracket_count != 0 || quote_count != 0)
     {
         pfree(object_name_str);
         PG_RETURN_NULL();
@@ -2253,7 +2253,6 @@ object_schema_name(PG_FUNCTION_ARGS)
 	else
 		PG_RETURN_NULL();
 }
-
 
 Datum
 pg_extension_config_remove(PG_FUNCTION_ARGS)
