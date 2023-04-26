@@ -58,6 +58,6 @@ EXEC parsename_GetEmployeeDatabaseName3
 GO
 ~~START~~
 varchar
-<NULL>
+Employee_parsename
 ~~END~~
 
