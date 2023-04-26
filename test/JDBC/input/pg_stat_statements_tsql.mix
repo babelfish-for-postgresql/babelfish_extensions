@@ -80,9 +80,9 @@ REVOKE INSERT, UPDATE, SELECT ON test FROM test_role
 go
 
 -- alter 
-alter table test enable trigger trigger1
+ALTER TABLE test ENABLE TRIGGER trigger1
 go
-alter table test disable  trigger trigger1
+ALTER TABLE test DISABLE  TRIGGER trigger1
 go
 
 -- explicit transaction
@@ -113,31 +113,31 @@ DROP ROLE test_role;
 go
 
 -- tsql
-create table customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
-create table orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))
-insert into customers values(1, 'ABC', 18),(2,'XYZ', 21), (3, 'LMN', 29),(4, 'PQR', 52),(5, 'STU', 23)
-insert into orders values(10, 5, 'London'), (11, 3, 'India'), (12, 2, 'USA'), (13, 4, 'Pakistan'),(14, 5, 'Germany'),(15, 1, 'India')
+CREATE TABLE customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
+CREATE TABLE orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))
+INSERT INTO customers values(1, 'ABC', 18),(2,'XYZ', 21), (3, 'LMN', 29),(4, 'PQR', 52),(5, 'STU', 23)
+INSERT INTO orders values(10, 5, 'London'), (11, 3, 'India'), (12, 2, 'USA'), (13, 4, 'Pakistan'),(14, 5, 'Germany'),(15, 1, 'India')
 go
 
-select count(*) from orders where country ='India'
+SELECT COUNT(*) from orders where country ='India'
 go
 
-create view [India customers] as select customerid from orders where country = 'India'
+CREATE VIEW [India customers] as select customerid from orders where country = 'India'
 go
 
-select * from [India customers]
+SELECT * FROM [India customers]
 go
 
-select * from customers
+SELECT * FROM customers
 go
 
-select avg(age) from customers
+SELECT AVG(age) FROM customers
 go
 
-select reverse(name) from customers
+SELECT REVERSE(name) FROM customers
 go
 
-select * from information_schema.views;
+SELECT * FROM information_schema.views;
 go
 
 
@@ -145,13 +145,13 @@ go
 -- CREATE FUNCTION f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
 -- go
 
-create sequence [dbo].[newCounter] as int start with 5 increment by 5 
+CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5 
 go
 
-select next value for [dbo].[newCounter]
+SELECT NEXT VALUE FOR [dbo].[newCounter]
 go
 
-drop sequence [dbo].[newCounter]
+DROP SEQUENCE [dbo].[newCounter]
 go
 
 -- Inline table-valued function
@@ -163,7 +163,7 @@ go
 -- go
 
 -- Temp table
-create table #demo(age int)
+CREATE TABLE #demo(age int)
 go
 
 DROP VIEW  [India customers]

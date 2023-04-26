@@ -121,9 +121,9 @@ REVOKE INSERT, UPDATE, SELECT ON test FROM test_role
 go
 
 -- alter 
-alter table test enable trigger trigger1
+ALTER TABLE test ENABLE TRIGGER trigger1
 go
-alter table test disable  trigger trigger1
+ALTER TABLE test DISABLE  TRIGGER trigger1
 go
 
 
@@ -151,8 +151,8 @@ SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where q
 go
 ~~START~~
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
-16385#!#1#!#alter table test disable  trigger trigger1#!#1#!#0#!#0
-16385#!#1#!#alter table test enable trigger trigger1#!#1#!#0#!#0
+16385#!#1#!#ALTER TABLE test DISABLE  TRIGGER trigger1#!#1#!#0#!#0
+16385#!#1#!#ALTER TABLE test ENABLE TRIGGER trigger1#!#1#!#0#!#0
 16385#!#1#!#CREATE ROLE test_role#!#1#!#0#!#0
 16385#!#1#!#CREATE TABLE test (a int, b char(20))#!#1#!#0#!#0
 16385#!#1#!#DELETE FROM test WHERE a > $1#!#1#!#1#!#0
@@ -183,17 +183,17 @@ DROP ROLE test_role;
 go
 
 -- tsql
-create table customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
-create table orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))
-insert into customers values(1, 'ABC', 18),(2,'XYZ', 21), (3, 'LMN', 29),(4, 'PQR', 52),(5, 'STU', 23)
-insert into orders values(10, 5, 'London'), (11, 3, 'India'), (12, 2, 'USA'), (13, 4, 'Pakistan'),(14, 5, 'Germany'),(15, 1, 'India')
+CREATE TABLE customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
+CREATE TABLE orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))
+INSERT INTO customers values(1, 'ABC', 18),(2,'XYZ', 21), (3, 'LMN', 29),(4, 'PQR', 52),(5, 'STU', 23)
+INSERT INTO orders values(10, 5, 'London'), (11, 3, 'India'), (12, 2, 'USA'), (13, 4, 'Pakistan'),(14, 5, 'Germany'),(15, 1, 'India')
 go
 ~~ROW COUNT: 5~~
 
 ~~ROW COUNT: 6~~
 
 
-select count(*) from orders where country ='India'
+SELECT COUNT(*) from orders where country ='India'
 go
 ~~START~~
 int
@@ -201,10 +201,10 @@ int
 ~~END~~
 
 
-create view [India customers] as select customerid from orders where country = 'India'
+CREATE VIEW [India customers] as select customerid from orders where country = 'India'
 go
 
-select * from [India customers]
+SELECT * FROM [India customers]
 go
 ~~START~~
 int
@@ -213,7 +213,7 @@ int
 ~~END~~
 
 
-select * from customers
+SELECT * FROM customers
 go
 ~~START~~
 int#!#varchar#!#int
@@ -225,7 +225,7 @@ int#!#varchar#!#int
 ~~END~~
 
 
-select avg(age) from customers
+SELECT AVG(age) FROM customers
 go
 ~~START~~
 int
@@ -233,7 +233,7 @@ int
 ~~END~~
 
 
-select reverse(name) from customers
+SELECT REVERSE(name) FROM customers
 go
 ~~START~~
 text
@@ -245,11 +245,11 @@ UTS
 ~~END~~
 
 
-select * from information_schema.views;
+SELECT * FROM information_schema.views;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#dbo#!#india customers#!#create view [India customers] as select customerid from orders where country = 'India'#!#NONE#!#NO
+master#!#dbo#!#india customers#!#CREATE VIEW [India customers] as select customerid from orders where country = 'India'#!#NONE#!#NO
 master#!#dbo#!#sysdatabases#!#<NULL>#!#NONE#!#NO
 ~~END~~
 
@@ -259,10 +259,10 @@ master#!#dbo#!#sysdatabases#!#<NULL>#!#NONE#!#NO
 
 -- CREATE FUNCTION f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
 -- go
-create sequence [dbo].[newCounter] as int start with 5 increment by 5 
+CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5 
 go
 
-select next value for [dbo].[newCounter]
+SELECT NEXT VALUE FOR [dbo].[newCounter]
 go
 ~~START~~
 bigint
@@ -270,7 +270,7 @@ bigint
 ~~END~~
 
 
-drop sequence [dbo].[newCounter]
+DROP SEQUENCE [dbo].[newCounter]
 go
 
 
@@ -282,7 +282,7 @@ go
 -- select * from [dbo].[getCustomers](20)
 -- go
 -- Temp table
-create table #demo(age int)
+CREATE TABLE #demo(age int)
 go
 
 DROP VIEW  [India customers]
@@ -310,26 +310,26 @@ SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where q
 go
 ~~START~~
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
-16385#!#1#!#create sequence [dbo].[newCounter] as int start with 5 increment by 5#!#1#!#0#!#0
-16385#!#1#!#create table customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))#!#1#!#0#!#0
-16385#!#1#!#create table #demo(age int)#!#1#!#0#!#0
-16385#!#1#!#create table orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))#!#1#!#0#!#0
-16385#!#1#!#create view [India customers] as select customerid from orders where country = 'India'#!#1#!#0#!#0
+16385#!#1#!#CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5#!#1#!#0#!#0
+16385#!#1#!#CREATE TABLE customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))#!#1#!#0#!#0
+16385#!#1#!#CREATE TABLE #demo(age int)#!#1#!#0#!#0
+16385#!#1#!#CREATE TABLE orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))#!#1#!#0#!#0
+16385#!#1#!#CREATE VIEW [India customers] as select customerid from orders where country = 'India'#!#1#!#0#!#0
 16385#!#1#!#DROP ROLE test_role#!#1#!#0#!#0
-16385#!#1#!#drop sequence [dbo].[newCounter]#!#1#!#0#!#0
+16385#!#1#!#DROP SEQUENCE [dbo].[newCounter]#!#1#!#0#!#0
 16385#!#1#!#DROP TABLE customers#!#1#!#0#!#0
 16385#!#1#!#DROP TABLE orders#!#1#!#0#!#0
 16385#!#1#!#DROP TABLE test#!#1#!#0#!#0
 16385#!#1#!#DROP VIEW  [India customers]#!#1#!#0#!#0
-16385#!#1#!#insert into customers values($1, $2, $3),($4,$5, $6), ($7, $8, $9),($10, $11, $12),($13, $14, $15)#!#1#!#5#!#0
-16385#!#1#!#insert into orders values($1, $2, $3), ($4, $5, $6), ($7, $8, $9), ($10, $11, $12),($13, $14, $15),($16, $17, $18)#!#1#!#6#!#0
-16385#!#1#!#select avg(age) from customers#!#1#!#1#!#0
-16385#!#1#!#select count(*) from orders where country =$1#!#1#!#1#!#0
-16385#!#1#!#select * from customers#!#1#!#5#!#0
-16385#!#1#!#select * from [India customers]#!#1#!#2#!#0
-16385#!#1#!#select * from information_schema_tsql.views#!#1#!#2#!#0
-16385#!#1#!#select    nextval($1)#!#1#!#1#!#0
-16385#!#1#!#select reverse(name) from customers#!#1#!#5#!#0
+16385#!#1#!#INSERT INTO customers values($1, $2, $3),($4,$5, $6), ($7, $8, $9),($10, $11, $12),($13, $14, $15)#!#1#!#5#!#0
+16385#!#1#!#INSERT INTO orders values($1, $2, $3), ($4, $5, $6), ($7, $8, $9), ($10, $11, $12),($13, $14, $15),($16, $17, $18)#!#1#!#6#!#0
+16385#!#1#!#SELECT AVG(age) FROM customers#!#1#!#1#!#0
+16385#!#1#!#SELECT COUNT(*) from orders where country =$1#!#1#!#1#!#0
+16385#!#1#!#SELECT * FROM customers#!#1#!#5#!#0
+16385#!#1#!#SELECT * FROM [India customers]#!#1#!#2#!#0
+16385#!#1#!#SELECT * FROM information_schema_tsql.views#!#1#!#2#!#0
+16385#!#1#!#SELECT    nextval($1)#!#1#!#1#!#0
+16385#!#1#!#SELECT REVERSE(name) FROM customers#!#1#!#5#!#0
 ~~END~~
 
 
