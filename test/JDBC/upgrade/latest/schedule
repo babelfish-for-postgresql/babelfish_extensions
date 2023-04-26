@@ -263,6 +263,7 @@ sys-database_files
 sys-database_filestream_options
 sys-database_mirroring
 sys_database_principals_dep
+sys_syslogins_dep
 sys-database_recovery_status
 sys-databases
 sys-databases-dep
