@@ -2090,260 +2090,83 @@ numeric_radians(PG_FUNCTION_ARGS)
 }
 
 Datum
-parsename(PG_FUNCTION_ARGS) 
+parsename(PG_FUNCTION_ARGS)
 {
-    text *object_name = PG_GETARG_TEXT_P(0);
+    text *object_name = PG_GETARG_TEXT_PP(0);
     int object_piece = PG_GETARG_INT32(1);
     char *object_name_str = text_to_cstring(object_name);
-    char *server_name = NULL;
-    char *database_name = NULL;
-    char *schema_name = NULL;
-    char *object_name_part = NULL;
-    char *dot_pos = NULL;
-    char *dot_pos2 = NULL;
-    int dot_count = 0;
-	// int closing_quote_count = 0;
+    int len = strlen(object_name_str);
+    char object_parts[5][129] = {0};
+    int current_part = 0;
+    bool in_quote = false;
     bool in_bracket = false;
-    int object_name_len = strlen(object_name_str);
-    
-	if (object_name_len == 0 || object_name_str == NULL)
-	{
-		PG_RETURN_NULL();
-	}
-
-	if (object_name_len > 128)
-	{
-		PG_RETURN_NULL();
-	}
-
-	for (int i = 0; i < object_name_len; i++) 
-	{
-		if (object_name_str[i] == '[' || object_name_str[i] == '"')
-		{
-			in_bracket = true;
-			continue;
-		}
-		else if (object_name_str[i] == ']' || object_name_str[i] == '"')
-		{
-			in_bracket = false;
-			continue;
-		}
-		if (in_bracket)
-		{
-			continue;
-		}
-		if (object_name_str[i] == '.')
-		{
-			dot_count++;
-			if (dot_count > 2)
-			{
-				PG_RETURN_NULL();
-			}
-		}
-		else if (!isalnum(object_name_str[i]) && object_name_str[i] != ':')
-		{
-			PG_RETURN_NULL();
-		}
-	}
-	dot_pos = strchr(object_name_str, '.');
-	if (dot_pos != NULL)
-	{
-		int server_name_len = dot_pos - object_name_str;
-		if (server_name_len > 128)
-		{
-			PG_RETURN_NULL();
-		}
-		dot_count++;
-		server_name = object_name_str;
-		*dot_pos = '\0';
-		object_name_part = dot_pos + 1;
-		dot_pos2 = strchr(object_name_part, '.');
-		if (dot_pos2 != NULL)
-		{
-			int schema_name_len = dot_pos2 - object_name_part;
-			if (schema_name_len > 128)
-			{
-				PG_RETURN_NULL();
-			}
-			
-			dot_count++;
-			schema_name = object_name_part;
-			*dot_pos2 = '\0';
-			database_name = server_name;
-			server_name = NULL;
-			object_name_part = dot_pos2 + 1;
-		}
-		else
-		{
-			int database_name_len = strlen(object_name_part);
-			if (database_name_len > 128)
-			{
-				PG_RETURN_NULL();
-			}
-			database_name = object_name_part;
-			schema_name = server_name;
-			server_name = NULL;
-		}
-	}
-	else
-	{
-		int object_name_part_len = strlen(object_name_str);
-		if (object_name_part_len > 128)
-		{
-			PG_RETURN_NULL();
-		}
-		object_name_part = object_name_str;
-	}
-	if (object_piece == 1)
-	{
-		if (object_name_part[0] == '\0')
-		{
-			PG_RETURN_NULL();
-		}
-		else
-		{
-			int object_name_part_len = strlen(object_name_part);
-			int closing_quote_count = 0; 
-			if (object_name_part[0] == '[')
-			{
-				int closing_bracket_count = 0;
-				for (int i = 0; i < object_name_part_len; i++) 
-				{
-					if (object_name_part[i] == ']') 
-					{
-					closing_bracket_count++;
-					}
-				}
-				if (closing_bracket_count != 1)
-				{
-					PG_RETURN_NULL();
-				}
-				if (object_name_part[object_name_part_len - 1] == ']')
-				{	
-					object_name_part[object_name_part_len - 1] = '\0';
-					PG_RETURN_TEXT_P(cstring_to_text(&object_name_part[1]));
-				}
-			}
-			else if (object_name_part[0] == '"')
-			{
-				for (int i = 0; i < object_name_part_len; i++) 
-				{
-					if (object_name_part[i] == '"') 
-					{
-						closing_quote_count++;
-					}
-				}
-				if (closing_quote_count % 2 != 0) 
-				{
-					PG_RETURN_NULL();
-				}
-				if (object_name_part[object_name_part_len - 1] == '"')
-				{
-					object_name_part[object_name_part_len - 1] = '\0';
-					PG_RETURN_TEXT_P(cstring_to_text(&object_name_part[1]));
-				}
-			}
-			PG_RETURN_TEXT_P(cstring_to_text(object_name_part));
-		}
-	}
-	else if (object_piece == 2)
-	{
-		if (schema_name == NULL || schema_name[0] == '\0')
-		{
-			PG_RETURN_NULL();
-		}
-		else
-		{
-			char *schema_name_str = schema_name;
-			int schema_name_len = strlen(schema_name_str);
-			if (schema_name_str[0] == '[')
-			{
-				int closing_bracket_count = 0;
-				for (int i = 0; i < schema_name_len; i++)
-				{
-					if (schema_name_str[i] == ']')
-					{
-						closing_bracket_count++;
-					}
-				}
-				if (closing_bracket_count != 1)
-				{
-					PG_RETURN_NULL();
-				}
-				schema_name_str++;
-				schema_name_len -= 2; 
-			}
-			if (schema_name_str[0] == '"')
-			{
-				int closing_quote_count = 0;
-				for (int i = 0; i < schema_name_len; i++)
-				{
-					if (schema_name_str[i] == '"')
-					{
-						closing_quote_count++;
-					}
-				}
-				if (closing_quote_count % 2 != 0)
-				{
-					PG_RETURN_NULL();
-				}
-				schema_name_str++;
-				schema_name_len -= 2; 
-			}
-			PG_RETURN_TEXT_P(cstring_to_text_with_len(schema_name_str, schema_name_len));
-		}
-	}
-	else if (object_piece == 3)
-	{
-		if (database_name == NULL || database_name[0] == '\0')
-		{
-			PG_RETURN_NULL();
-		}
-		else
-		{
-			char *schema_name_str = database_name;
-			int schema_name_len = strlen(schema_name_str);
-			if (schema_name_str[0] == '[')
-			{
-				int closing_bracket_count = 0;
-				for (int i = 0; i < schema_name_len; i++)
-				{
-					if (schema_name_str[i] == ']')
-					{	
-						closing_bracket_count++;
-					}
-				}
-				if (closing_bracket_count != 1)
-				{
-					PG_RETURN_NULL();
-				}
-				schema_name_str++;
-				schema_name_len -= 2; 
-			}
-			if (schema_name_str[0] == '"')
-			{
-				int closing_quote_count = 0;
-				for (int i = 0; i < schema_name_len; i++)
-				{
-					if (schema_name_str[i] == '"')
-					{
-						closing_quote_count++;
-					}
-				}
-				if (closing_quote_count % 2 != 0)
-				{
-					PG_RETURN_NULL();
-				}
-				schema_name_str++;
-				schema_name_len -= 2; 
-			}
-			PG_RETURN_TEXT_P(cstring_to_text_with_len(schema_name_str, schema_name_len));
-		}
-	}
-	else
-	{
-		PG_RETURN_NULL();
-	}
+    if (object_piece < 1 || object_piece > 4)
+    {
+        PG_RETURN_NULL();
+    }
+    for (int i = 0; i < len; i++)
+    {
+        char c = object_name_str[i];
+        if (c == '.' && !in_quote && !in_bracket)
+        {
+            current_part++;
+            if (current_part > 4)
+            {
+                pfree(object_name_str);
+                PG_RETURN_NULL();
+            }
+        }
+        else if (c == '[' && !in_quote && !in_bracket)
+        {
+            in_bracket = true;
+        }
+        else if (c == ']' && in_bracket)
+        {
+            in_bracket = false;
+        }
+        else if (c == '"' && !in_quote && !in_bracket)
+        {
+            in_quote = true;
+        }
+        else if (c == '"' && in_quote)
+        {
+            in_quote = false;
+        }
+        else if ((c == '[' || c == ']' || c == '"') && !in_quote && !in_bracket)
+        {
+            pfree(object_name_str);
+            PG_RETURN_NULL();
+        }
+        else
+        {
+            int part_len = strlen(object_parts[current_part]);
+            if (part_len < 128)
+            {
+                snprintf(object_parts[current_part] + part_len, 2, "%c", c);
+            }
+            else
+            {
+                pfree(object_name_str);
+                PG_RETURN_NULL();
+            }
+        }
+    }
+    if (in_bracket || in_quote)
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
+    if (strlen(object_parts[current_part - object_piece + 1]) > 0)
+    {
+        text *result = cstring_to_text(object_parts[current_part - object_piece + 1]);
+        pfree(object_name_str);
+        PG_RETURN_TEXT_P(result);
+    }
+    else
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
 }
 
 /* Returns the database schema name for schema-scoped objects. */

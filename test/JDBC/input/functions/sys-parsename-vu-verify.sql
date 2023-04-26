@@ -111,3 +111,24 @@ GO
 
 SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
 GO
+
+SELECT PARSENAME('tempdb.dbo.Employee.table.mytable',3)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Em"ployee',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Em]ployee',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.[Empl]oyee]',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.[Empl[oyee]',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo."Emp"loyee"',1)
+GO

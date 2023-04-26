@@ -58,7 +58,7 @@ EXEC parsename_GetEmployeeDatabaseName3
 GO
 ~~START~~
 varchar
-<NULL>
+Employee_parsename
 ~~END~~
 
 
@@ -185,7 +185,7 @@ SELECT PARSENAME('tempdbvddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 GO
 ~~START~~
 varchar
-<NULL>
+dbo
 ~~END~~
 
 
@@ -257,7 +257,7 @@ SELECT PARSENAME('.dbo.Employee.table',3)
 GO
 ~~START~~
 varchar
-<NULL>
+dbo
 ~~END~~
 
 
@@ -265,7 +265,7 @@ SELECT PARSENAME('tempdb.dbo.Employee.mytable',4)
 GO
 ~~START~~
 varchar
-<NULL>
+tempdb
 ~~END~~
 
 
@@ -286,6 +286,62 @@ varchar
 
 
 SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee.table.mytable',3)
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Em"ployee',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Em]ployee',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.[Empl]oyee]',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.[Empl[oyee]',1)
+GO
+~~START~~
+varchar
+Empl[oyee
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo."Emp"loyee"',1)
 GO
 ~~START~~
 varchar
