@@ -262,7 +262,11 @@ go
 DROP LOGIN babel_login_vu_prepare_r4;
 go
 
--- babel-4080 tests start here
+-- babel_4080 tests start here
+-- tsql
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_4080_sysadmin1;
+GO
+
 -- tsql user=babel_4080_nonsysadmin1 password=1234
 
 SELECT name, type, type_desc FROM sys.server_principals where name like 'babel_4080%' order by name;
