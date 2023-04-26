@@ -1141,7 +1141,7 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-        RAISE EXCEPTION 'Argument data type bit is invalid for argument 2 of dateadd function.';
+        return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1193,8 +1193,8 @@ CREATE OR REPLACE FUNCTION sys.dateadd_numeric_representation_helper(IN datepart
 DECLARE
     digit_to_startdate DATETIME;
 BEGIN
-    IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
-    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype) THEN
+    IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
         digit_to_startdate := CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(startdate as sys.DATETIME);
     END IF;
 
@@ -1235,7 +1235,37 @@ DECLARE
 	first_day DATE;
 	first_week_end INTEGER;
 	day INTEGER;
+    datapart_date sys.DATETIME;
 BEGIN
+    IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
+     'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
+        datapart_date = CAST(arg AS sys.DATETIME);
+        CASE datepart
+        WHEN 'dow' THEN
+            result = (date_part(datepart, datapart_date)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
+        WHEN 'tsql_week' THEN
+            first_day = make_date(date_part('year', datapart_date)::INTEGER, 1, 1);
+            first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
+            day = date_part('doy', datapart_date)::INTEGER;
+            IF day <= first_week_end THEN
+                result = 1;
+            ELSE
+                result = 2 + (day - first_week_end - 1) / 7;
+            END IF;
+        WHEN 'second' THEN
+            result = TRUNC(date_part(datepart, datapart_date))::INTEGER;
+        WHEN 'millisecond' THEN
+            result = right(date_part(datepart, datapart_date)::TEXT, 3)::INTEGER;
+        WHEN 'microsecond' THEN
+            result = right(date_part(datepart, datapart_date)::TEXT, 6)::INTEGER;
+        WHEN 'nanosecond' THEN
+            -- Best we can do - Postgres does not support nanosecond precision
+            result = right(date_part('microsecond', datapart_date)::TEXT, 6)::INTEGER * 1000;
+        ELSE
+            result = date_part(datepart, datapart_date)::INTEGER;
+        END CASE;
+        RETURN result;
+    END IF;
 	CASE datepart
 	WHEN 'dow' THEN
 		result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
@@ -1693,10 +1723,10 @@ $BODY$
 SELECT
     CASE
     WHEN dp = 'month'::text THEN
-        to_char(arg::date, 'TMMonth')
+        to_char(arg::sys.DATETIME, 'TMMonth')
     -- '1969-12-28' is a Sunday
     WHEN dp = 'dow'::text THEN
-        to_char(arg::date, 'TMDay')
+        to_char(arg::sys.DATETIME, 'TMDay')
     ELSE
         sys.datepart(dp, arg)::TEXT
     END 
