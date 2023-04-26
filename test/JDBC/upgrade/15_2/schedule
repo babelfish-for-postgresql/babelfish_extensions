@@ -407,3 +407,4 @@ TestVariableDataLength
 TestXML
 timefromparts
 triggers_with_transaction
+typeproperty

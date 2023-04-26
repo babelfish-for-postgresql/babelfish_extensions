@@ -429,3 +429,5 @@ test_windows_sp_helpuser
 TestXML
 timefromparts
 triggers_with_transaction
+typeproperty
+typeproperty-dep
