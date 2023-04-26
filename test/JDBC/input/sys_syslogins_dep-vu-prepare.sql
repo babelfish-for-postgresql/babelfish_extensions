@@ -30,9 +30,3 @@ BEGIN
     RETURN (SELECT COUNT(*) FROM sys.syslogins WHERE name LIKE '%sys_syslogins_dep_vu_prepare%')
 END
 GO
-
-EXEC sys.babelfish_add_domain_mapping_entry 'sysloginsxyz', 'sysloginsxyz.babel';
-GO
-
-CREATE LOGIN [sysloginsxyz\domain_login1] FROM WINDOWS;
-GO
