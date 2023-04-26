@@ -28,20 +28,17 @@ END
 go
 
 -- tsql
-CREATE LOGIN babel_4080_nonsysadmin1 with PASSWORD = '12345678';
+CREATE LOGIN babel_4080_nonsysadmin1 with PASSWORD = '1234';
 GO
 
-CREATE LOGIN babel_4080_sysadmin1 with PASSWORD = '12345678';
+CREATE LOGIN babel_4080_sysadmin1 with PASSWORD = '1234';
 GO
 
 ALTER SERVER ROLE sysadmin ADD MEMBER babel_4080_sysadmin1;
 GO
 
-CREATE LOGIN babel_4080_testlogin1 with PASSWORD = '12345678';
+CREATE LOGIN babel_4080_testlogin1 with PASSWORD = '1234';
 GO
 
-CREATE LOGIN babel_4080_testlogin2 with PASSWORD = '12345678';
-GO
-
-SELECT name, type, type_desc FROM sys.server_principals where name like 'babel_4080%' order by name;
+CREATE LOGIN babel_4080_testlogin2 with PASSWORD = '1234';
 GO

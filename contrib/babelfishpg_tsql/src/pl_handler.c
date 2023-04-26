@@ -2812,9 +2812,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "password") == 0)
 							{
-								if (!is_member_of_role(GetSessionUserId(), datdba))
-									ereport(ERROR,
-											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && !is_member_of_role(GetSessionUserId(), datdba))
+									ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current login does not have privileges to alter password")));
 
 								has_password = true;
@@ -2848,7 +2847,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							stmt->role->rolename = temp_login_name;
 						}
 
-						if (!has_privs_of_role(GetSessionUserId(), datdba))
+						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
 							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
 								errmsg("Current login %s does not have permission to Alter login", 
 								GetUserNameFromId(GetSessionUserId(), true))));

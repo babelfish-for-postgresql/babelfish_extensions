@@ -461,17 +461,21 @@ go
 DROP LOGIN babel_login_vu_prepare_r4;
 go
 
+-- tsql user=babel_4080_nonsysadmin1 password=1234
 
--- tsql user=babel_4080_nonsysadmin1 password=12345678
+-- babel-4080 tests start here
+SELECT name, type, type_desc FROM sys.server_principals where name like 'babel_4080%' order by name;
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+babel_4080_nonsysadmin1#!#S#!#SQL_LOGIN
+babel_4080_sysadmin1#!#S#!#SQL_LOGIN
+babel_4080_testlogin1#!#S#!#SQL_LOGIN
+babel_4080_testlogin2#!#S#!#SQL_LOGIN
+~~END~~
+
 
 ALTER LOGIN babel_4080_testlogin1 DISABLE;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current login babel_4080_nonsysadmin1 does not have permission to Alter login)~~
-
-
-ALTER LOGIN babel_4080_testlogin1 ENABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -485,49 +489,59 @@ GO
 ~~ERROR (Message: Current login babel_4080_nonsysadmin1 does not have permission to Drop login)~~
 
 
-SELECT name, type, type_desc FROM sys.server_principals where name like 'babel_4080%' order by name;
+-- tsql user=babel_4080_sysadmin1 password=1234
+ALTER LOGIN babel_4080_sysadmin1 WITH PASSWORD = 'abcd';
 GO
-~~START~~
-varchar#!#char#!#nvarchar
-babel_4080_nonsysadmin1#!#S#!#SQL_LOGIN
-babel_4080_sysadmin1#!#S#!#SQL_LOGIN
-babel_4080_testlogin1#!#S#!#SQL_LOGIN
-babel_4080_testlogin2#!#S#!#SQL_LOGIN
-~~END~~
 
-
--- tsql user=babel_4080_sysadmin1 password=12345678
-SELECT SUSER_NAME();
-GO
-~~START~~
-nvarchar
-babel_4080_sysadmin1
-~~END~~
-
-
-ALTER LOGIN babel_4080_testlogin1 WITH PASSWORD = 'abcdefgh' OLD_PASSWORD = '12345678';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'OLD_PASSWORD' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_login_old_password to ignore)~~
-
-
-ALTER LOGIN babel_4080_testlogin1 WITH PASSWORD = '12345678';
+ALTER LOGIN babel_4080_testlogin1 WITH PASSWORD = 'abcd';
 GO
 
 ALTER LOGIN babel_4080_testlogin1 DISABLE;
 GO
 
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_4080_testlogin1';
+GO
+~~START~~
+varchar#!#bit
+babel_4080_testlogin1#!#0
+~~END~~
+
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_4080_testlogin1';
+GO
+~~START~~
+varchar#!#int
+babel_4080_testlogin1#!#1
+~~END~~
+
+
 ALTER LOGIN babel_4080_testlogin1 ENABLE;
 GO
+
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_4080_testlogin1';
+GO
+~~START~~
+varchar#!#bit
+babel_4080_testlogin1#!#1
+~~END~~
+
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_4080_testlogin1';
+GO
+~~START~~
+varchar#!#int
+babel_4080_testlogin1#!#0
+~~END~~
+
 
 DROP LOGIN babel_4080_testlogin1;
 GO
 
-DROP LOGIN babel_4080_testlogin2;
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_4080_sysadmin1;
 GO
 
-ALTER SERVER ROLE sysadmin DROP MEMBER babel_4080_sysadmin1;
+-- tsql user=babel_4080_testlogin2 password=1234
+ALTER LOGIN babel_4080_testlogin2 WITH PASSWORD = 'abcd';
 GO
 
 -- psql
@@ -540,7 +554,6 @@ t
 ~~END~~
 
 
--- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
 ~~START~~
@@ -549,7 +562,6 @@ void
 ~~END~~
 
 
--- psql
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'babel_4080_nonsysadmin1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
@@ -559,7 +571,6 @@ t
 ~~END~~
 
 
--- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
 ~~START~~
@@ -567,10 +578,3 @@ void
 
 ~~END~~
 
-
--- tsql
-DROP LOGIN babel_4080_sysadmin1;
-GO
-
-DROP LOGIN babel_4080_nonsysadmin1;
-GO
