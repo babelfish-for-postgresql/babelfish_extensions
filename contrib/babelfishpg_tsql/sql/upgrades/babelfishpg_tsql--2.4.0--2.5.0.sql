@@ -7,8 +7,8 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 CREATE OR REPLACE VIEW sys.sp_databases_view AS
 	SELECT CAST(database_name AS sys.SYSNAME),
 	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
-	CASE WHEN (sum(table_size)/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
-		ELSE CAST((sum(table_size)/1024.0) AS int) END as database_size,
+	CASE WHEN (sum(table_size)::NUMERIC/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
+		ELSE CAST((sum(table_size)::NUMERIC/1024.0) AS int) END as database_size,
 	CAST(NULL AS sys.VARCHAR(254)) as remarks
 	FROM (
 		SELECT pg_catalog.pg_namespace.oid as schema_oid,
