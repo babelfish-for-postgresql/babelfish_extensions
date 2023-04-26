@@ -65,28 +65,161 @@ GO
 SELECT CONVERT(SMALLDATETIME, CAST(-2.5 as SMALLMONEY))
 GO
 
+-- Should all fail
+SELECT CONVERT(DATETIME2, CAST(-2.5 as DECIMAL))
+GO
+SELECT CONVERT(DATETIME2, CAST(-2.5 as NUMERIC(30,8)))
+GO
+SELECT CONVERT(DATETIME2, CAST(-2.5 as FLOAT))
+GO
+SELECT CONVERT(DATETIME2, CAST(-2.5 as REAL))
+GO
+SELECT CONVERT(DATETIME2, CAST(-2.5 as INT))
+GO
+SELECT CONVERT(DATETIME2, CAST(-2.5 as BIGINT))
+GO
+SELECT CONVERT(DATETIME2, CAST(-2.5 as SMALLINT))
+GO
+SELECT CONVERT(DATETIME2, CAST(-2.5 as MONEY))
+GO
+SELECT CONVERT(DATETIME2, CAST(-2.5 as SMALLMONEY))
+GO
+
+-- Should all fail
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as DECIMAL))
+GO
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as NUMERIC(30,8)))
+GO
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as FLOAT))
+GO
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as REAL))
+GO
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as INT))
+GO
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as BIGINT))
+GO
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as SMALLINT))
+GO
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as MONEY))
+GO
+SELECT CONVERT(DATETIMEOFFSET, CAST(-2.5 as SMALLMONEY))
+GO
+
+-- Should all fail
+SELECT CONVERT(DATE, CAST(-2.5 as DECIMAL))
+GO
+SELECT CONVERT(DATE, CAST(-2.5 as NUMERIC(30,8)))
+GO
+SELECT CONVERT(DATE, CAST(-2.5 as FLOAT))
+GO
+SELECT CONVERT(DATE, CAST(-2.5 as REAL))
+GO
+SELECT CONVERT(DATE, CAST(-2.5 as INT))
+GO
+SELECT CONVERT(DATE, CAST(-2.5 as BIGINT))
+GO
+SELECT CONVERT(DATE, CAST(-2.5 as SMALLINT))
+GO
+SELECT CONVERT(DATE, CAST(-2.5 as MONEY))
+GO
+SELECT CONVERT(DATE, CAST(-2.5 as SMALLMONEY))
+GO
+
+-- Should all fail
+SELECT CONVERT(TIME, CAST(-2.5 as DECIMAL))
+GO
+SELECT CONVERT(TIME, CAST(-2.5 as NUMERIC(30,8)))
+GO
+SELECT CONVERT(TIME, CAST(-2.5 as FLOAT))
+GO
+SELECT CONVERT(TIME, CAST(-2.5 as REAL))
+GO
+SELECT CONVERT(TIME, CAST(-2.5 as INT))
+GO
+SELECT CONVERT(TIME, CAST(-2.5 as BIGINT))
+GO
+SELECT CONVERT(TIME, CAST(-2.5 as SMALLINT))
+GO
+SELECT CONVERT(TIME, CAST(-2.5 as MONEY))
+GO
+SELECT CONVERT(TIME, CAST(-2.5 as SMALLMONEY))
+GO
 
 CREATE VIEW Datetime_view5 as (
     SELECT 
-        DATEADD(minute, CAST(1 as DECIMAL), CAST(2.5 as DECIMAL)) as re1,
-        DATEADD(minute, CAST(1 as NUMERIC(30,8)), CAST(2.5 as NUMERIC(30,8))) as re2,
-        DATEADD(minute, CAST(1 as FLOAT), CAST(2.5 as FLOAT)) as re3,
-        DATEADD(minute, CAST(1 as REAL), CAST(2.5 as REAL)) as re4,
-        DATEADD(minute, CAST(1 as INT), CAST(2.5 as INT)) as re5,
-        DATEADD(minute, CAST(1 as BIGINT), CAST(2.5 as BIGINT)) as re6,
-        DATEADD(minute, CAST(1 as SMALLINT), CAST(2.5 as SMALLINT)) as re7,
-        DATEADD(minute, CAST(1 as TINYINT), CAST(2.5 as TINYINT)) as re8,
-        DATEADD(minute, CAST(1 as MONEY), CAST(2.5 as MONEY)) as re9,
-        DATEADD(minute, CAST(1 as SMALLMONEY), CAST(2.5 as SMALLMONEY)) as re10,
-        DATEADD(minute, CAST(-1 as DECIMAL), CAST(-2.5 as DECIMAL)) as re11,
-        DATEADD(minute, CAST(-1 as NUMERIC(30,8)), CAST(-2.5 as NUMERIC(30,8))) as re12,
-        DATEADD(minute, CAST(-1 as FLOAT), CAST(-2.5 as FLOAT)) as re13,
-        DATEADD(minute, CAST(-1 as REAL), CAST(-2.5 as REAL)) as re14,
-        DATEADD(minute, CAST(-1 as INT), CAST(-2.5 as INT)) as re15,
-        DATEADD(minute, CAST(-1 as BIGINT), CAST(-2.5 as BIGINT)) as re16,
-        DATEADD(minute, CAST(-1 as SMALLINT), CAST(-2.5 as SMALLINT)) as re17,
-        DATEADD(minute, CAST(-1 as MONEY), CAST(-2.5 as MONEY)) as re18,
-        DATEADD(minute, CAST(-1 as SMALLMONEY), CAST(-2.5 as SMALLMONEY)) as re19
+        DATEADD(minute, 1, CAST(2.5 as DECIMAL)) as re1,
+        DATEADD(minute, 1, CAST(2.5 as NUMERIC(30,8))) as re2,
+        DATEADD(minute, 1, CAST(2.5 as FLOAT)) as re3,
+        DATEADD(minute, 1, CAST(2.5 as REAL)) as re4,
+        DATEADD(minute, 1, CAST(2.5 as INT)) as re5,
+        DATEADD(minute, 1, CAST(2.5 as BIGINT)) as re6,
+        DATEADD(minute, 1, CAST(2.5 as SMALLINT)) as re7,
+        DATEADD(minute, 1, CAST(2.5 as TINYINT)) as re8,
+        DATEADD(minute, 1, CAST(2.5 as MONEY)) as re9,
+        DATEADD(minute, 1, CAST(2.5 as SMALLMONEY)) as re10,
+        DATEADD(minute, 1, CAST(-2.5 as BIT)) as re11,
+        DATEADD(minute, 1, CAST(-2.5 as DECIMAL)) as re12,
+        DATEADD(minute, 1, CAST(-2.5 as NUMERIC(30,8))) as re13,
+        DATEADD(minute, 1, CAST(-2.5 as FLOAT)) as re14,
+        DATEADD(minute, 1, CAST(-2.5 as REAL)) as re15,
+        DATEADD(minute, 1, CAST(-2.5 as INT)) as re16,
+        DATEADD(minute, 1, CAST(-2.5 as BIGINT)) as re17,
+        DATEADD(minute, 1, CAST(-2.5 as SMALLINT)) as re18,
+        DATEADD(minute, 1, CAST(-2.5 as MONEY)) as re19,
+        DATEADD(minute, 1, CAST(-2.5 as SMALLMONEY)) as re20,
+        DATEADD(minute, 1, CAST(-2.5 as BIT)) as re21
+);
+GO
+
+CREATE VIEW Datetime_view7 as (
+    SELECT 
+        DATENAME(day, CAST(2.5 as DECIMAL)) as re1,
+        DATENAME(day, CAST(2.5 as NUMERIC(30,8))) as re2,
+        DATENAME(day, CAST(2.5 as FLOAT)) as re3,
+        DATENAME(day, CAST(2.5 as REAL)) as re4,
+        DATENAME(day, CAST(2.5 as INT)) as re5,
+        DATENAME(day, CAST(2.5 as BIGINT)) as re6,
+        DATENAME(day, CAST(2.5 as SMALLINT)) as re7,
+        DATENAME(day, CAST(2.5 as TINYINT)) as re8,
+        DATENAME(day, CAST(2.5 as MONEY)) as re9,
+        DATENAME(day, CAST(2.5 as SMALLMONEY)) as re10,
+        DATENAME(day, CAST(2.5 as BIT)) as re11,
+        DATENAME(day, CAST(-2.5 as DECIMAL)) as re12,
+        DATENAME(day, CAST(-2.5 as NUMERIC(30,8))) as re13,
+        DATENAME(day, CAST(-2.5 as FLOAT)) as re14,
+        DATENAME(day, CAST(-2.5 as REAL)) as re15,
+        DATENAME(day, CAST(-2.5 as INT)) as re16,
+        DATENAME(day, CAST(-2.5 as BIGINT)) as re17,
+        DATENAME(day, CAST(-2.5 as SMALLINT)) as re18,
+        DATENAME(day, CAST(-2.5 as MONEY)) as re19,
+        DATENAME(day, CAST(-2.5 as SMALLMONEY)) as re20,
+        DATENAME(day, CAST(-2.5 as BIT)) as re21
+);
+GO
+
+CREATE VIEW Datetime_view8 as (
+    SELECT 
+        DATEPART(day, CAST(2.5 as DECIMAL)) as re1,
+        DATEPART(day, CAST(2.5 as NUMERIC(30,8))) as re2,
+        DATEPART(day, CAST(2.5 as FLOAT)) as re3,
+        DATEPART(day, CAST(2.5 as REAL)) as re4,
+        DATEPART(day, CAST(2.5 as INT)) as re5,
+        DATEPART(day, CAST(2.5 as BIGINT)) as re6,
+        DATEPART(day, CAST(2.5 as SMALLINT)) as re7,
+        DATEPART(day, CAST(2.5 as TINYINT)) as re8,
+        DATEPART(day, CAST(2.5 as MONEY)) as re9,
+        DATEPART(day, CAST(2.5 as SMALLMONEY)) as re10,
+        DATEPART(day, CAST(2.5 as BIT)) as re11,
+        DATEPART(day, CAST(-2.5 as DECIMAL)) as re12,
+        DATEPART(day, CAST(-2.5 as NUMERIC(30,8))) as re13,
+        DATEPART(day, CAST(-2.5 as FLOAT)) as re14,
+        DATEPART(day, CAST(-2.5 as REAL)) as re15,
+        DATEPART(day, CAST(-2.5 as INT)) as re16,
+        DATEPART(day, CAST(-2.5 as BIGINT)) as re17,
+        DATEPART(day, CAST(-2.5 as SMALLINT)) as re18,
+        DATEPART(day, CAST(-2.5 as MONEY)) as re19,
+        DATEPART(day, CAST(-2.5 as SMALLMONEY)) as re20,
+        DATEPART(day, CAST(-2.5 as BIT)) as re21
 );
 GO
 

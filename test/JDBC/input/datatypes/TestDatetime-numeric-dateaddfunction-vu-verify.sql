@@ -12,15 +12,25 @@ GO
 DROP VIEW Datetime_view4
 GO
 
--- Should throw ERROR : Argument data type bit is invalid for argument 2 of dateadd function.
-SELECT DATEADD(minute, CAST(1 as BIT), CAST(2.5 as BIT))
-GO
-
 -- output from SQL Server :
 -- 1900-01-04 00:01:00.000	1900-01-03 12:01:00.000	1900-01-03 12:01:00.000	1900-01-03 12:01:00.000	1900-01-03 00:01:00.000	1900-01-03 00:01:00.000	1900-01-03 00:01:00.000	1900-01-03 00:01:00.000	1900-01-03 12:01:00.000	1900-01-03 12:01:00.000	1899-12-28 23:59:00.000	1899-12-29 11:59:00.000	1899-12-29 11:59:00.000	1899-12-29 11:59:00.000	1899-12-29 23:59:00.000	1899-12-29 23:59:00.000	1899-12-29 23:59:00.000	1899-12-29 11:59:00.000	1899-12-29 11:59:00.000
 SELECT * FROM Datetime_view5
 GO
 DROP VIEW Datetime_view5
+GO
+
+-- output from SQL Server :
+-- 4	3	3	3	3	3	3	3	3	3	2	29	29	29	29	30	30	30	29	29	2
+SELECT * FROM Datetime_view7
+GO
+DROP VIEW Datetime_view7
+GO
+
+-- output from SQL Server :
+-- 4	3	3	3	3	3	3	3	3	3	2	29	29	29	29	30	30	30	29	29	2
+SELECT * FROM Datetime_view8
+GO
+DROP VIEW Datetime_view8
 GO
 
 -- Procedures
