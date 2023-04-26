@@ -52,6 +52,7 @@ sysusers_dep_vu_prepare_user2#!#1#!#1#!#0#!#1#!#0
 ~~END~~
 
 
+-- sysusers should also exist in schema "dbo"
 SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
 FROM dbo.sysusers
 WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
@@ -178,7 +179,6 @@ guest#!#1#!#1#!#0#!#1#!#0
 ~~END~~
 
 
--- sysusers should also exist in schema "dbo"
 SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
 FROM dbo.sysusers
 WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
