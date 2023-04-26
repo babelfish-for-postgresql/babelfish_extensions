@@ -2245,31 +2245,25 @@ windows_login_contains_invalid_chars(char *input)
 
 /**
  * Domain name checks, doesnot allow characters like "<>&*|quotes spaces" along with list 
- * https://github.com/MicrosoftDocs/SupportArticles-docs/blob/main/support/windows-se[…]rver/identity/naming-conventions-for-computer-domain-site-ou.md 
+ * https://github.com/MicrosoftDocs/SupportArticles-docs/blob/main/support/windows-server/identity/naming-conventions-for-computer-domain-site-ou.md#netbios-domain-names
 */
 bool
 windows_domain_contains_invalid_chars(char *input)
 {
-	int total_length = strlen(input);
 	char *pos_slash = strchr(input, '\\');
-	int	domain_len = total_length - strlen(pos_slash);
+	int domain_len = pos_slash - input;
 	int i = 0;
+	if (input == NULL)
+		return true;
 	while (i < domain_len)
 	{
-		if (input[i] == ',' || input[i] == '~' ||
-			input[i] == ':' || input[i] == '!' ||
-			input[i] == '@' || input[i] == '#' ||
-			input[i] == '$' || input[i] == '%' || 
-			input[i] == '_' || input[i] == '^' || 
-			input[i] == '\"' || input[i] == '\'' ||
-			input[i] == '(' || input[i] == ')' || 
-			input[i] == '{' || input[i] == '}' || 
-			input[i] == '\\' || input[i] == '/'||
-			input[i] == '<' || input[i] == '>'||
-			input[i] == ' ' || input[i] == '*'||
-			input[i] == '|' || input[i] == '&' )
+		if (input[i] == ',' || input[i] == '~' || input[i] == ':' || input[i] == '!' ||
+			input[i] == '@' || input[i] == '#' || input[i] == '$' || input[i] == '%' || 
+			input[i] == '_' || input[i] == '^' || input[i] == '\"' || input[i] == '\'' ||
+			input[i] == '(' || input[i] == ')' || input[i] == '{' || input[i] == '}' || 
+			input[i] == '\\' || input[i] == '/'|| input[i] == '<' || input[i] == '>'||
+			input[i] == ' ' || input[i] == '*'|| input[i] == '|' || input[i] == '&' )
 			return true;
-		
 		i++;
 	}
 	return false;
