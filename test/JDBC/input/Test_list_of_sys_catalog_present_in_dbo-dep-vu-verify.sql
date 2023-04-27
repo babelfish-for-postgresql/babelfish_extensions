@@ -5,7 +5,8 @@
 -- To pass this test, follow the steps:
 -- 1. Go to function set_schemaname_dbo_to_sys present in (babelfish_extensions/contrib/babelfish_tsql/src/multidb.c)
 -- 2. After checking the behaviour, Add the sys% catalog view name to the list present in function
-CREATE FUNCTION testing_sys_in_dbo()
+-- 3. Finally remove the sys% view name in the sys.list_of_view_should_be_present_in_dbo_schema(make sure to remove everywhere)
+CREATE FUNCTION test_list_of_sys_catalog_present_in_dbo()
 RETURNS @tab TABLE (name varchar(1024))
 AS
 BEGIN
@@ -23,12 +24,8 @@ DEALLOCATE cur;
 END
 GO
 
-select * from testing_sys_in_dbo();
+select * from test_list_of_sys_catalog_present_in_dbo();
 go
-~~START~~
-varchar
-~~END~~
 
-
-DROP FUNCTION testing_sys_in_dbo;
+DROP FUNCTION test_list_of_sys_catalog_present_in_dbo;
 GO

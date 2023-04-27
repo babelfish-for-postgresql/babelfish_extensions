@@ -419,6 +419,7 @@ TestTime
 TestTinyInt
 TestUDD
 TestUniqueIdentifier
+Test_list_of_sys_catalog_present_in_dbo-dep
 Test_user_from_win_login
 TestVarChar
 TestVariableDataLength
