@@ -261,3 +261,69 @@ DROP USER babel_login_vu_prepare_r4
 go
 DROP LOGIN babel_login_vu_prepare_r4;
 go
+
+-- babel_4080 tests start here
+-- tsql
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_4080_sysadmin1;
+GO
+
+-- tsql user=babel_4080_nonsysadmin1 password=1234
+
+SELECT name, type, type_desc FROM sys.server_principals where name like 'babel_4080%' order by name;
+GO
+
+ALTER LOGIN babel_4080_testlogin1 DISABLE;
+GO
+
+DROP LOGIN babel_4080_testlogin1;
+GO
+
+-- tsql user=babel_4080_sysadmin1 password=1234
+ALTER LOGIN babel_4080_sysadmin1 WITH PASSWORD = 'abcd';
+GO
+
+ALTER LOGIN babel_4080_testlogin1 WITH PASSWORD = 'abcd';
+GO
+
+ALTER LOGIN babel_4080_testlogin1 DISABLE;
+GO
+
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_4080_testlogin1';
+GO
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_4080_testlogin1';
+GO
+
+ALTER LOGIN babel_4080_testlogin1 ENABLE;
+GO
+
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_4080_testlogin1';
+GO
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_4080_testlogin1';
+GO
+
+DROP LOGIN babel_4080_testlogin1;
+GO
+
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_4080_sysadmin1;
+GO
+
+-- tsql user=babel_4080_testlogin2 password=1234
+ALTER LOGIN babel_4080_testlogin2 WITH PASSWORD = 'abcd';
+GO
+
+-- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4080_sysadmin1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+SELECT pg_sleep(1);
+GO
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4080_nonsysadmin1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+SELECT pg_sleep(1);
+GO

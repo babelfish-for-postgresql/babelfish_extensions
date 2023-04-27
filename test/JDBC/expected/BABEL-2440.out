@@ -21,10 +21,6 @@ guest#!#guest#!#master
 
 ALTER LOGIN r1 WITH PASSWORD = 'abc';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current login does not have privileges to alter password)~~
-
 
 SELECT session_user, current_user, db_name();
 GO
@@ -51,10 +47,6 @@ ignore
 
 ALTER LOGIN r1 WITH PASSWORD = '123abc' OLD_PASSWORD = 'abc';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Current login does not have privileges to alter password)~~
-
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_login_old_password', 'strict', 'false')
 GO
