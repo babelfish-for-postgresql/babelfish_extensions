@@ -978,7 +978,7 @@ set_schemaname_dbo_to_sys(RangeVar *rv)
 	char* list_of_dbo_catalog_not_supported_for_cross_db[6]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects", "systypes", "sysusers"};
 	if (rv->schemaname && strcmp(rv->schemaname, "dbo") == 0)
 	{
-		for (int i = 0; i < sizeof(list_of_dbo_catalog); i++)
+		for (int i = 0; i < (sizeof(list_of_dbo_catalog)/sizeof(list_of_dbo_catalog[0])); i++)
 		{
 			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog[i]) == 0)
 			{
@@ -986,7 +986,7 @@ set_schemaname_dbo_to_sys(RangeVar *rv)
 				break;
 			}
 		}
-		for (int i = 0; i < sizeof(list_of_dbo_catalog_not_supported_for_cross_db); i++)
+		for (int i = 0; i < (sizeof(list_of_dbo_catalog_not_supported_for_cross_db)/sizeof(list_of_dbo_catalog_not_supported_for_cross_db[0])); i++)
 		{
 			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog_not_supported_for_cross_db[i]) == 0)
 			{
