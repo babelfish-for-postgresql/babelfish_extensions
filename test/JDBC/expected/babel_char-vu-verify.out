@@ -42,7 +42,7 @@ nvarchar
 
 ~~START~~
 nvarchar
-􏿿
+<NULL>
 ~~END~~
 
 
@@ -56,18 +56,7 @@ nvarchar
 <NULL>
 ~~END~~
 
-~~START~~
-nvarchar
-<NULL>
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-nvarchar
-<NULL>
-~~END~~
-
-~~START~~
-nvarchar
-<NULL>
-~~END~~
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
