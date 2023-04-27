@@ -263,6 +263,7 @@ sys-database_files
 sys-database_filestream_options
 sys-database_mirroring
 sys_database_principals_dep
+sys_syslogins_dep
 sys-database_recovery_status
 sys-databases
 sys-databases-dep
@@ -307,6 +308,7 @@ sys-key_constraints-dep
 sys-lock_timeout
 sys-master_files
 sys-max_connections
+sys-nestlevel-dep
 sys-numbered_procedures
 sys-objects
 sys-original_login
@@ -428,3 +430,5 @@ test_windows_sp_helpuser
 TestXML
 timefromparts
 triggers_with_transaction
+typeproperty
+typeproperty-dep

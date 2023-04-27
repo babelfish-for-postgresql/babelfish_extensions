@@ -1141,7 +1141,7 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-        RAISE EXCEPTION 'Argument data type bit is invalid for argument 2 of dateadd function.';
+        return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1193,8 +1193,8 @@ CREATE OR REPLACE FUNCTION sys.dateadd_numeric_representation_helper(IN datepart
 DECLARE
     digit_to_startdate DATETIME;
 BEGIN
-    IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
-    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype) THEN
+    IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
         digit_to_startdate := CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(startdate as sys.DATETIME);
     END IF;
 
@@ -1235,7 +1235,37 @@ DECLARE
 	first_day DATE;
 	first_week_end INTEGER;
 	day INTEGER;
+    datapart_date sys.DATETIME;
 BEGIN
+    IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
+     'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
+        datapart_date = CAST(arg AS sys.DATETIME);
+        CASE datepart
+        WHEN 'dow' THEN
+            result = (date_part(datepart, datapart_date)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
+        WHEN 'tsql_week' THEN
+            first_day = make_date(date_part('year', datapart_date)::INTEGER, 1, 1);
+            first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
+            day = date_part('doy', datapart_date)::INTEGER;
+            IF day <= first_week_end THEN
+                result = 1;
+            ELSE
+                result = 2 + (day - first_week_end - 1) / 7;
+            END IF;
+        WHEN 'second' THEN
+            result = TRUNC(date_part(datepart, datapart_date))::INTEGER;
+        WHEN 'millisecond' THEN
+            result = right(date_part(datepart, datapart_date)::TEXT, 3)::INTEGER;
+        WHEN 'microsecond' THEN
+            result = right(date_part(datepart, datapart_date)::TEXT, 6)::INTEGER;
+        WHEN 'nanosecond' THEN
+            -- Best we can do - Postgres does not support nanosecond precision
+            result = right(date_part('microsecond', datapart_date)::TEXT, 6)::INTEGER * 1000;
+        ELSE
+            result = date_part(datepart, datapart_date)::INTEGER;
+        END CASE;
+        RETURN result;
+    END IF;
 	CASE datepart
 	WHEN 'dow' THEN
 		result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
@@ -1693,10 +1723,10 @@ $BODY$
 SELECT
     CASE
     WHEN dp = 'month'::text THEN
-        to_char(arg::date, 'TMMonth')
+        to_char(arg::sys.DATETIME, 'TMMonth')
     -- '1969-12-28' is a Sunday
     WHEN dp = 'dow'::text THEN
-        to_char(arg::date, 'TMDay')
+        to_char(arg::sys.DATETIME, 'TMDay')
     ELSE
         sys.datepart(dp, arg)::TEXT
     END 
@@ -1887,8 +1917,8 @@ DECLARE
     result integer;
 BEGIN
     GET DIAGNOSTICS stack = PG_CONTEXT;
-    result := array_length(string_to_array(stack, 'function'), 1) - 2;
-    IF result < 0 THEN
+    result := array_length(string_to_array(stack, 'function'), 1) - 3; 
+    IF result < -1 THEN
         RAISE EXCEPTION 'Invalid output, check stack trace %', stack;
     ELSE
         RETURN result;
@@ -3381,6 +3411,101 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION typeproperty(
+    typename sys.VARCHAR,
+    property sys.VARCHAR
+    )
+RETURNS INT
+AS $$
+DECLARE
+    var_sc int;
+    schemaid int;
+    schema_name VARCHAR;
+    type_name VARCHAR;
+    sys_id int;
+    testt VARCHAR;
+BEGIN
+
+    property := TRIM(LOWER(COALESCE(property,'')));
+
+    IF typename LIKE '%.%'  THEN
+    schema_name :=  lower(split_part(typename COLLATE "C", '.', 1));
+    type_name :=  lower(split_part(typename COLLATE "C",'.', 2));
+    ELSE
+    schema_name := 'dbo';
+    type_name := typename;
+    END IF;
+
+
+    IF NOT EXISTS (SELECT ao.name FROM sys.types ao WHERE ao.name = type_name COLLATE sys.database_default)
+    THEN
+        RETURN NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT ao.name FROM sys.schemas ao WHERE ao.name = schema_name COLLATE sys.database_default OR schema_name = 'sys' OR schema_name = 'pg_catalog')
+    THEN
+        RETURN NULL ;
+    END IF;
+
+    IF NOT EXISTS (SELECT ty.is_user_defined FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+    schemaid := (SELECT sc.schema_id FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default);
+    ELSE
+    schemaid := (SELECT sc.schema_id FROM sys.types sc WHERE sc.name = type_name COLLATE sys.database_default);
+    END IF;
+
+
+    if (SELECT schema_id(schema_name)) <> schemaid THEN
+    RETURN NULL;
+    END IF;
+
+    IF property = 'allowsnull'
+    THEN
+        RETURN (
+            SELECT CAST( t1.is_nullable AS INT)
+            FROM sys.types t1
+            WHERE t1.name = type_name COLLATE sys.database_default AND t1.schema_id = schemaid );
+
+    ELSEIF property = 'precision'
+    THEN
+        RETURN (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+
+    ELSEIF property = 'scale'
+    THEN
+        sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+        type_name := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
+        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
+            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
+        THEN
+            RETURN(SELECT CAST(dc.scale AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default);
+        ELSE
+            RETURN NULL;
+        END IF;
+    ELSEIF property = 'ownerid'
+    THEN
+        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+        RETURN(SELECT CAST(dc.nspowner AS INT) FROM  pg_catalog.pg_namespace dc WHERE dc.oid = schemaid);
+        ELSE
+        RETURN 10;
+        END IF;
+
+    ELSEIF property = 'usesansitrim'
+    THEN
+        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
+            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
+        THEN
+            RETURN NULL;
+        ELSE
+            RETURN 1;
+        END IF;
+
+    END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,

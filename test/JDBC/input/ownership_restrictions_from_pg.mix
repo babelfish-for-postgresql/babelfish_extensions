@@ -1,5 +1,5 @@
 -- tsql
-CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '123';
+CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '12345678';
 GO
 
 CREATE ROLE ownership_restrictions_from_pg_role1;
@@ -15,9 +15,6 @@ GO
 CREATE USER ownership_restrictions_from_pg_test_user WITH PASSWORD '12345678' inherit;
 go
 
-CREATE USER ownership_restrictions_from_pg_test_su_user WITH SUPERUSER LOGIN PASSWORD 'abc';
-GO
-
 -- psql user=ownership_restrictions_from_pg_login1 password=12345678
 -- If tsql login connected through psql Alter ROLE of an bbf created logins/user/roles for password,
 -- connection limit and valid until should be working fine
@@ -31,10 +28,10 @@ GO
 ALTER ROLE master_ownership_restrictions_from_pg_role1 rename to master_ownership_restrictions_from_pg_role5;
 GO
 
-ALTER ROLE master_ownership_restrictions_from_pg_role1 with ENCRYPTED password '123';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 with ENCRYPTED password '12345678';
 GO
 
-ALTER ROLE master_ownership_restrictions_from_pg_role1 with password '123';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 with password '12345678';
 GO
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 with password NULL;
@@ -88,9 +85,6 @@ GO
 ALTER ROLE ALL IN DATABASE ownership_restrictions_from_pg_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
-ALTER ROLE ALL IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
 ALTER ROLE master_ownership_restrictions_from_pg_role1 set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
@@ -106,38 +100,23 @@ GO
 ALTER ROLE SESSION_USER IN DATABASE ownership_restrictions_from_pg_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
-ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
-ALTER ROLE CURRENT_ROLE IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
-ALTER ROLE CURRENT_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
-ALTER ROLE SESSION_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
 ALTER ROLE ownership_restrictions_from_pg_login1 RENAME TO ownership_restrictions_from_pg_role2;
 GO
 
 ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
 GO
 
-alter role ownership_restrictions_from_pg_login1 with password '123';
+alter role ownership_restrictions_from_pg_login1 with password '12345678';
 GO
 
 ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE ownership_restrictions_from_pg_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
-ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
 -- If the stmt contains a non-allowed option then altering of role not allowed
-ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTION LIMIT 1  password '123';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTION LIMIT 1  password '12345678';
 GO
 
-ALTER ROLE ownership_restrictions_from_pg_login1 WITH NOCREATEDB CONNECTION LIMIT 1  password '123';
+ALTER ROLE ownership_restrictions_from_pg_login1 WITH NOCREATEDB CONNECTION LIMIT 1  password '12345678';
 GO
 
 -- psql user=ownership_restrictions_from_pg_test_user password=12345678
@@ -153,10 +132,10 @@ GO
 ALTER ROLE master_ownership_restrictions_from_pg_role1 rename to master_ownership_restrictions_from_pg_role5;
 GO
 
-ALTER ROLE master_ownership_restrictions_from_pg_role1 with ENCRYPTED password '123';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 with ENCRYPTED password '12345678';
 GO
 
-ALTER ROLE master_ownership_restrictions_from_pg_role1 with password '123';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 with password '12345678';
 GO
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 with password NULL;
@@ -210,9 +189,6 @@ GO
 ALTER ROLE ALL IN DATABASE ownership_restrictions_from_pg_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
-ALTER ROLE ALL IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
 ALTER ROLE master_ownership_restrictions_from_pg_role1 set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
@@ -228,46 +204,23 @@ GO
 ALTER ROLE SESSION_USER IN DATABASE ownership_restrictions_from_pg_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
-ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
-ALTER ROLE CURRENT_ROLE IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
-ALTER ROLE CURRENT_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
-ALTER ROLE SESSION_USER IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
 ALTER ROLE ownership_restrictions_from_pg_login1 RENAME TO ownership_restrictions_from_pg_role2;
 GO
 
 ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
 GO
 
-alter role ownership_restrictions_from_pg_login1 with password '123';
+alter role ownership_restrictions_from_pg_login1 with password '12345678';
 GO
 
 ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE ownership_restrictions_from_pg_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
-ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE jdbc_testdb set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
-GO
-
 -- If the stmt contains a non-allowed option then altering of role not allowed
-ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTION LIMIT 1  password '123';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTION LIMIT 1  password '12345678';
 GO
 
-ALTER ROLE ownership_restrictions_from_pg_login1 WITH NOCREATEDB CONNECTION LIMIT 1  password '123';
-GO
-
--- psql user=ownership_restrictions_from_pg_test_su_user password=abc
--- Altering of babelfish created logins/roles should suceeded for superuser
-ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
-GO
-
-ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTION LIMIT 1  password '123';
+ALTER ROLE ownership_restrictions_from_pg_login1 WITH NOCREATEDB CONNECTION LIMIT 1  password '12345678';
 GO
 
 -- psql
@@ -319,13 +272,6 @@ GO
 
 DROP ROLE ownership_restrictions_from_pg_role4;
 GO
-
-SET enable_drop_babelfish_role = true;
-go
-DROP USER ownership_restrictions_from_pg_test_su_user;
-go
-SET enable_drop_babelfish_role = false;
-go
 
 DROP USER ownership_restrictions_from_pg_test_user;
 GO
