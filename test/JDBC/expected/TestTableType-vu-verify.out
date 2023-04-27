@@ -36,7 +36,7 @@ int#!#varchar
 
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "@tv_1" violates check constraint "testtabletype_vu_prepare_t2_c1_check")~~
+~~ERROR (Message: new row for relation "@tv_0" violates check constraint "testtabletype_vu_prepare_t2_c1_check")~~
 
 
 declare @tv TestTableType_vu_prepare_t3;
@@ -66,7 +66,7 @@ go
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_a_key")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_0_a_key")~~
 
 ~~START~~
 varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
