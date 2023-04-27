@@ -1581,6 +1581,151 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 }
 
 Datum
+sp_babelfish_createExtension(PG_FUNCTION_ARGS)
+{
+	List	   *parsetree_list;
+	ListCell   *parsetree_item;
+	char	   *extensionStmt;
+	Node	   *stmt;
+
+	SetCurrentRoleId(GetSessionUserId(), false);
+
+	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+					  GUC_CONTEXT_CONFIG,
+					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	extensionStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+
+	if (extensionStmt == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							errmsg("Name cannot be NULL.")));
+
+	parsetree_list = raw_parser(extensionStmt, RAW_PARSE_DEFAULT);
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+	rewrite_object_refs(stmt);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing", list_length(parsetree_list))));
+
+
+	foreach(parsetree_item, parsetree_list)
+		{
+			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			Node	   *parsetree;
+			PlannedStmt *wrapper;
+			
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			parsetree = wrapper->utilityStmt;
+
+			switch (nodeTag(parsetree))
+			{
+				case T_CreateExtensionStmt:
+				{
+					CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
+
+					if(strcmp(crstmt->extname, "pg_stat_statements"))
+					{
+						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'%s' is not a valid name", crstmt->extname)));
+					}
+					/* do this step */
+					ProcessUtility(wrapper,
+								extensionStmt,
+								false,
+								PROCESS_UTILITY_SUBCOMMAND,
+								NULL,
+								NULL,
+								None_Receiver,
+								NULL);
+
+					/* make sure later steps can see the object created here */
+					 CommandCounterIncrement();
+					break;
+				}
+				case T_DropStmt:
+				{
+					DropStmt *drstmt = (DropStmt *) parsetree;
+
+					if (drstmt->removeType == OBJECT_EXTENSION)
+					{
+						/* do this step */
+						ProcessUtility(wrapper,
+									extensionStmt,
+									false,
+									PROCESS_UTILITY_SUBCOMMAND,
+									NULL,
+									NULL,
+									None_Receiver,
+									NULL);
+
+						/* make sure later steps can see the object created here */
+						CommandCounterIncrement();
+					}
+					break;
+				}
+				case T_AlterExtensionStmt:
+				{
+					AlterExtensionStmt *alstmt = (AlterExtensionStmt *) parsetree;
+
+					if(strcmp(alstmt->extname, "pg_stat_statements"))
+					{
+						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'%s' is not a valid name", alstmt->extname)));
+
+					}
+
+					/* do this step */
+					ProcessUtility(wrapper,
+								extensionStmt,
+								false,
+								PROCESS_UTILITY_SUBCOMMAND,
+								NULL,
+								NULL,
+								None_Receiver,
+								NULL);
+
+					/* make sure later steps can see the object created here */
+					 CommandCounterIncrement();
+					break;
+				} 
+				case T_AlterObjectSchemaStmt:
+				{
+					AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parsetree;
+					
+					if (altschstmt->objectType == OBJECT_EXTENSION)
+					{
+						ProcessUtility(wrapper,
+									extensionStmt,
+									false,
+									PROCESS_UTILITY_SUBCOMMAND,
+									NULL,
+									NULL,
+									None_Receiver,
+									NULL);
+						/* make sure later steps can see the object created here */
+						CommandCounterIncrement();
+					}
+					break;
+				}
+				default:
+				elog(ERROR, "unrecognized node type: %d",
+					 (int) nodeTag(parsetree));
+				break;
+			}
+		}
+		PG_RETURN_VOID();
+}
+
+Datum
 sp_addrole(PG_FUNCTION_ARGS)
 {
 	char	   *rolname,
