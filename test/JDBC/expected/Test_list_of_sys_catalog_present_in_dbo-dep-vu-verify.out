@@ -7,17 +7,17 @@
 -- 2. After checking the behaviour, Add the sys% catalog view name to the list present in function
 -- 3. Finally remove the sys% view name in the sys.list_of_view_should_be_present_in_dbo_schema(make sure to remove everywhere)
 CREATE FUNCTION test_list_of_sys_catalog_present_in_dbo()
-RETURNS @tab TABLE (name varchar(1024))
+RETURNS @tab TABLE (name varchar(100))
 AS
 BEGIN
-DECLARE @a varchar(1020);
+DECLARE @a varchar(100);
 DECLARE cur CURSOR FOR SELECT * FROM sys.list_of_view_should_be_present_in_dbo_schema;
 OPEN cur;
 WHILE @@FETCH_STATUS = 0
 	  BEGIN
 			FETCH NEXT FROM cur INTO @a;
             IF OBJECT_ID(('sys.' + @a ), 'V') IS NOT NULL
-                INSERT INTO @tab VALUES (cast(@a));
+                INSERT INTO @tab VALUES (cast(@a as varchar(100)));
 	  END
 CLOSE cur;
 DEALLOCATE cur;
