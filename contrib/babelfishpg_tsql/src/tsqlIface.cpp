@@ -834,18 +834,49 @@ public:
 
 	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
 	{
-		GetCtxFunc<TSqlParser::Full_object_nameContext *> getDatabase = [](TSqlParser::Full_object_nameContext *o) { return o->database; };
-		GetCtxFunc<TSqlParser::Full_object_nameContext *> getSchema = [](TSqlParser::Full_object_nameContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
-		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
-		if (!rewritten_name.empty())
-			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
-		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
-			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
+		if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.objname */
+		{
+			TSqlParser::IdContext *obj_server = ctx->server;
+			TSqlParser::IdContext *obj_database = ctx->database;
+			TSqlParser::IdContext *obj_schema = ctx->schema;
+			TSqlParser::IdContext *obj_name = ctx->object_name;
 
-		// qualified identifier doesn't need delimiter
-		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->object_name))
-			rewritten_query_fragment.emplace(std::make_pair(ctx->object_name->start->getStartIndex(), std::make_pair(::getFullText(ctx->object_name), delimit_identifier(ctx->object_name))));
+			std::string full_object_name = ::getFullText(ctx);
+
+			std::string server_name_str = getIDName(obj_server->DOUBLE_QUOTE_ID(), obj_server->SQUARE_BRACKET_ID(), obj_server->ID());
+			std::string quoted_server_str = std::string("'") + server_name_str + std::string("'");
+
+			std::string three_part_name = ::getFullText(obj_database) + std::string(".") + ::getFullText(obj_schema) + std::string(".") + ::getFullText(obj_name);
+
+			/*
+			 * When we come across a four-part object name, we will replace it with OPENQUERY(). Currently,
+			 * we only support four-part object names in read-only context. So, a call like:
+			 *
+			 *	SELECT col_a, col_b FROM server_name.db_name.schema_name.obj_name
+			 *
+			 * will be re-written as:
+			 *
+			 *	SELECT col_a, col_b FROM OPENQUERY('server_name', 'SELECT * FROM db_name.schema_name.obj_name')
+			 */
+			std::string str = std::string("OPENQUERY(") + quoted_server_str + std::string(", 'SELECT * FROM ") + three_part_name + std::string("')");
+
+			rewritten_query_fragment.emplace(std::make_pair(obj_server->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
+		}
+		else
+		{
+			GetCtxFunc<TSqlParser::Full_object_nameContext *> getDatabase = [](TSqlParser::Full_object_nameContext *o) { return o->database; };
+			GetCtxFunc<TSqlParser::Full_object_nameContext *> getSchema = [](TSqlParser::Full_object_nameContext *o) { return o->schema; };
+			std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+			std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
+			if (!rewritten_name.empty())
+				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+			if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
+				rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
+
+			// qualified identifier doesn't need delimiter
+			if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->object_name))
+				rewritten_query_fragment.emplace(std::make_pair(ctx->object_name->start->getStartIndex(), std::make_pair(::getFullText(ctx->object_name), delimit_identifier(ctx->object_name))));
+		}
 	}
 
 	void exitTable_name(TSqlParser::Table_nameContext *ctx) override
@@ -1783,7 +1814,7 @@ public:
 
 	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
 	{
-		if (ctx && ctx->schema)
+		if (ctx && (ctx->DOT().size() <= 2) && ctx->schema)
 		{
 			schema_name = stripQuoteFromId(ctx->schema);
 			is_schema_specified = true;
@@ -1791,7 +1822,7 @@ public:
 		else
 			is_schema_specified = false;
 		tsqlCommonMutator::exitFull_object_name(ctx);
-		if (ctx && ctx->database)
+		if (ctx && (ctx->DOT().size() <= 2) && ctx->database)
 		{
 			db_name = stripQuoteFromId(ctx->database);
 

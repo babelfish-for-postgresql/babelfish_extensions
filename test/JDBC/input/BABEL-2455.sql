@@ -152,10 +152,11 @@ go
 DROP TRIGGER .s2455.tr2455;
 go
 
--- servername (not supported)
+-- insert into with servername (not supported)
 insert into yourserver.master.dbo.t1 values (1);
 go
 
+-- function call with servername (not supported)
 select yourserver.master.dbo.f1(1);
 go
 

@@ -127,6 +127,7 @@ protected:
 		antlrcpp::Any visitInsert_statement(TSqlParser::Insert_statementContext *ctx) override;
 		antlrcpp::Any visitUpdate_statement(TSqlParser::Update_statementContext *ctx) override;
 		antlrcpp::Any visitDelete_statement(TSqlParser::Delete_statementContext *ctx) override;
+		antlrcpp::Any visitDelete_statement_from(TSqlParser::Delete_statement_fromContext *ctx) override;
 		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override;
 
@@ -199,7 +200,6 @@ protected:
 		antlrcpp::Any visitFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override;
 		antlrcpp::Any visitFunc_proc_name_database_schema(TSqlParser::Func_proc_name_database_schemaContext *ctx) override;
 		antlrcpp::Any visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override;
-		antlrcpp::Any visitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override;
 
 		antlrcpp::Any visitId(TSqlParser::IdContext *ctx) override;
 
@@ -1094,6 +1094,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitInsert_statement(TSqlParse
 {
 	if (ctx->insert_statement_value() && ctx->insert_statement_value()->DEFAULT() && ctx->output_clause())
 		handle(INSTR_UNSUPPORTED_TSQL_INSERT_STMT_DEFAULT_VALUE, "DEFAULT VALUES with OUTPUT clause", getLineAndPos(ctx->output_clause())); /* backend parser can't handle DEFAULT VALUES with output clause yet */
+
+	if (ctx->ddl_object() && ctx->ddl_object()->full_object_name() && ctx->ddl_object()->full_object_name()->DOT().size() >= 3 && ctx->ddl_object()->full_object_name()->server)
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "INSERT on a 4-part object name is not yet supported in Babelfish", getLineAndPos(ctx));
+
 	return visitChildren(ctx);
 }
 
@@ -1101,6 +1105,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitUpdate_statement(TSqlParse
 {
 	if (ctx->CURRENT()) // CURRENT OF
 		handle(INSTR_UNSUPPORTED_TSQL_UPDATE_WHERE_CURRENT_OF, "CURRENT OF", getLineAndPos(ctx->CURRENT()));
+
+	if (ctx->ddl_object() && ctx->ddl_object()->full_object_name() && ctx->ddl_object()->full_object_name()->DOT().size() >= 3 && ctx->ddl_object()->full_object_name()->server)
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "UPDATE on a 4-part object name is not yet supported in Babelfish", getLineAndPos(ctx));
 
 	for (auto elem : ctx->update_elem())
 	{
@@ -1115,7 +1122,17 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDelete_statement(TSqlParse
 {
 	if (ctx->CURRENT()) // CURRENT OF
 		handle(INSTR_UNSUPPORTED_TSQL_DELETE_WHERE_CURRENT_OF, "CURRENT OF", getLineAndPos(ctx->CURRENT()));
+
 	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl:: visitDelete_statement_from(TSqlParser::Delete_statement_fromContext *ctx)
+{
+	if (ctx->ddl_object() && ctx->ddl_object()->full_object_name() && ctx->ddl_object()->full_object_name()->DOT().size() >= 3 && ctx->ddl_object()->full_object_name()->server)
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "DELETE on a 4-part object name is not yet supported in Babelfish", getLineAndPos(ctx));
+
+	return visitChildren(ctx);
+
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx)
@@ -1358,21 +1375,13 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_database_sc
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote object reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 
 	if (ctx->DOT().empty())
 	{
 		// check some built-in functions/procedures
 		checkUnsupportedSystemProcedure(ctx->procedure);
 	}
-
-	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFull_object_name(TSqlParser::Full_object_nameContext *ctx)
-{
-	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote object reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 
 	return visitChildren(ctx);
 }

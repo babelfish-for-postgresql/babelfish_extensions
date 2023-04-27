@@ -315,19 +315,20 @@ go
 ~~ERROR (Message: trigger "s2455.tr2455" does not exist)~~
 
 
--- servername (not supported)
+-- insert into with servername (not supported)
 insert into yourserver.master.dbo.t1 values (1);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote object reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: INSERT on a 4-part object name is not yet supported in Babelfish)~~
 
 
+-- function call with servername (not supported)
 select yourserver.master.dbo.f1(1);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Remote object reference with 4-part object name is not currently supported in Babelfish)~~
+~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
 
 
 -- cleanup

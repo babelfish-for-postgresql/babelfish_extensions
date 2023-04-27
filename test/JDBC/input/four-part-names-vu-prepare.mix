@@ -1,0 +1,10 @@
+-- psql
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+-- tsql
+EXEC sp_addlinkedserver  @server = N'bbf_fpn_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master';
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_fpn_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678';
+GO
