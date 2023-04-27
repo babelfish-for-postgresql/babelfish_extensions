@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS test_null
 GO
 DROP TABLE IF EXISTS test_upper
 GO
-Create table table_unique (a int NOT NULL UNIQUE , b int NOT NULL,c int )
+Create table table_unique (a int NOT NULL UNIQUE)
 GO
 Create table table_primary (a int NOT NULL , b int NOT NULL,c int, PRIMARY KEY(a) )
 GO
@@ -64,7 +64,7 @@ Create table test_upper(a char, check (upper(a) in ('A','B')));
 GO
 Create index test_index on test_upper(a)
 GO
-Create index test_comp_index on table_unique(a,b)
+Create index test_comp_index on table_unique(a)
 GO
 --DROP
 
