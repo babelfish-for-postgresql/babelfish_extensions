@@ -165,3 +165,57 @@ GO
 -- test for windows login with password --> should throw error
 CREATE LOGIN [babel\adbabel] from windows with password='1234';
 GO
+
+-- test for when the domain name contains invalid characters
+CREATE LOGIN [<script>!@#$%^&*()\idontexist2] FROM WINDOWS;
+GO
+CREATE LOGIN [ba,bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba~el\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba:bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba!bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba@bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba#bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba$bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba%bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba_bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba^bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba"bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba'bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba(bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba)bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba{bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba}bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba\bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba/bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba<bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba>bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba&bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba*bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba|bel\username] FROM WINDOWS;
+GO
+CREATE LOGIN [ba.bel\username] FROM WINDOWS;
+GO

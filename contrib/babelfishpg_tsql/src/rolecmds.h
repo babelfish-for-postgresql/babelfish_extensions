@@ -77,6 +77,8 @@ extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
 extern bool is_active_login(Oid role_oid);
 extern char *convertToUPN(char *input);
 extern bool windows_login_contains_invalid_chars(char *input);
+extern bool windows_domain_contains_invalid_chars(char *input);
 extern bool check_windows_logon_length(char *input);
+
 
 #endif
