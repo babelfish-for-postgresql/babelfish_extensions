@@ -22,7 +22,7 @@ SELECT babel_3166_func(1.2, 'abc', 'abcd', 'abcdefgh', 0x12bcfe);
 go
 ~~START~~
 varbinary
-12C2BCC3BE
+12BCFE
 ~~END~~
 
 
@@ -44,6 +44,6 @@ EXEC babel_3166_proc 1.2, 'abc', 'abcd', 'abcdefgh', 0x12bcfe;
 go
 ~~START~~
 binary
-12C2BCC3BE00
+12BCFE000000
 ~~END~~
 
