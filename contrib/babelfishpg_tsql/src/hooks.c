@@ -94,6 +94,7 @@ static int	pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, C
 static void set_output_clause_transformation_info(bool enabled);
 static bool get_output_clause_transformation_info(void);
 static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Query *query);
+static void post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query);
 static void handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstate);
 static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar *relation, ColumnDef *column, List **alist);
@@ -103,7 +104,7 @@ static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
-static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
+static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
 static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
 
@@ -221,11 +222,13 @@ InstallExtendedHooks(void)
 	get_output_clause_status_hook = get_output_clause_transformation_info;
 	pre_output_clause_transformation_hook = output_update_self_join_transformation;
 
+	post_transform_delete_hook = post_transform_delete;
+
 	prev_pre_transform_returning_hook = pre_transform_returning_hook;
 	pre_transform_returning_hook = handle_returning_qualifiers;
 
 	prev_pre_transform_insert_hook = pre_transform_insert_hook;
-	pre_transform_insert_hook = modify_insert_stmt;
+	pre_transform_insert_hook = pre_transform_insert;
 
 	prev_post_transform_insert_row_hook = post_transform_insert_row_hook;
 	post_transform_insert_row_hook = check_insert_row;
@@ -337,6 +340,7 @@ UninstallExtendedHooks(void)
 	core_yylex_hook = prev_core_yylex_hook;
 	set_target_table_alternative_hook = NULL;
 	get_output_clause_status_hook = NULL;
+	post_transform_delete_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
@@ -630,6 +634,12 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return pre_transform_qual;
 
+	/* Support Update w/ TOP */
+	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
+								EXPR_KIND_LIMIT, "LIMIT",
+								LIMIT_OPTION_COUNT);
+	query->limitOption = LIMIT_OPTION_COUNT;
+
 	if (get_output_clause_transformation_info())
 	{
 		/*
@@ -693,6 +703,19 @@ output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, Que
 
 	handle_returning_qualifiers(query, stmt->returningList, pstate);
 	return qual;
+}
+
+static void
+post_transform_delete(ParseState *pstate, DeleteStmt *stmt, Query *query)
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	/* Handle DELETE TOP */
+	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
+										EXPR_KIND_LIMIT, "LIMIT",
+										LIMIT_OPTION_COUNT);
+	query->limitOption = LIMIT_OPTION_COUNT;
 }
 
 static void
@@ -2250,12 +2273,6 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	List	   *insert_col_list = NIL,
 			   *temp_col_list;
 
-	if (prev_pre_transform_insert_hook)
-		(*prev_pre_transform_insert_hook) (stmt, relid);
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
 	if (!output_into_insert_transformation)
 		return;
 
@@ -2295,6 +2312,24 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	systable_endscan(scan);
 	table_close(pg_attribute, AccessShareLock);
 
+}
+
+static void
+pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query)
+{
+	if (prev_pre_transform_insert_hook)
+		(*prev_pre_transform_insert_hook) (pstate, stmt, query);
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	query->limitCount = transformLimitClause(pstate, stmt->limitCount,
+											EXPR_KIND_LIMIT, "LIMIT",
+											LIMIT_OPTION_COUNT);
+	query->limitOption = LIMIT_OPTION_COUNT;
+
+	if (stmt->withClause)
+		modify_insert_stmt(stmt, RelationGetRelid(pstate->p_target_relation));
 }
 
 /*
