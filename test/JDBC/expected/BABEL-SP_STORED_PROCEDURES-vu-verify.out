@@ -125,6 +125,8 @@ EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_sel[eu
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_seluct_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 
 
@@ -132,6 +134,7 @@ EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_sel[^u
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 
 
@@ -139,5 +142,7 @@ EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_sel[a-
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_seluct_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 

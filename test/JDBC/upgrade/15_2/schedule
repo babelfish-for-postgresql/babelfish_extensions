@@ -295,6 +295,7 @@ sys-key_constraints-dep
 sys-lock_timeout
 sys-master_files
 sys-max_connections
+sys-nestlevel-dep
 sys-numbered_procedures
 sys-objects
 sys-original_login
@@ -406,3 +407,4 @@ TestVariableDataLength
 TestXML
 timefromparts
 triggers_with_transaction
+typeproperty
