@@ -118,6 +118,9 @@ GO
 SELECT PARSENAME('tempdb.dbo.Em"ployee',1)
 GO
 
+SELECT PARSENAME('tempdb.dbo.[Empl[oyee]',1)
+GO
+
 SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
 GO
 
@@ -127,8 +130,8 @@ GO
 SELECT PARSENAME('tempdb.dbo.[Empl]oyee]',1)
 GO
 
-SELECT PARSENAME('tempdb.dbo.[Empl[oyee]',1)
+SELECT PARSENAME('tempdb.dbo."Emp"loyee"',1)
 GO
 
-SELECT PARSENAME('tempdb.dbo."Emp"loyee"',1)
+SELECT PARSENAME('tempdb.dbo."Emp""loyee"',1)
 GO

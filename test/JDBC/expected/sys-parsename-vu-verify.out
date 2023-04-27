@@ -309,6 +309,14 @@ varchar
 ~~END~~
 
 
+SELECT PARSENAME('tempdb.dbo.[Empl[oyee]',1)
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
 SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
 GO
 ~~START~~
@@ -333,18 +341,18 @@ varchar
 ~~END~~
 
 
-SELECT PARSENAME('tempdb.dbo.[Empl[oyee]',1)
-GO
-~~START~~
-varchar
-Empl[oyee
-~~END~~
-
-
 SELECT PARSENAME('tempdb.dbo."Emp"loyee"',1)
 GO
 ~~START~~
 varchar
 <NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo."Emp""loyee"',1)
+GO
+~~START~~
+varchar
+Emp"loyee
 ~~END~~
 

@@ -2089,7 +2089,7 @@ numeric_radians(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(result);
 }
 
-Datum 
+Datum
 parsename(PG_FUNCTION_ARGS)
 {
     text *object_name = PG_GETARG_TEXT_PP(0);
@@ -2098,8 +2098,9 @@ parsename(PG_FUNCTION_ARGS)
     int len = strlen(object_name_str);
     char object_parts[5][129] = {0};
     int current_part = 0;
-    int bracket_count = 0;
-    int quote_count = 0;
+    int inside_quotes = 0;
+    int inside_brackets = 0;
+    int unmatched_bracket = 0;
     if (object_piece < 1 || object_piece > 4)
     {
         PG_RETURN_NULL();
@@ -2107,7 +2108,44 @@ parsename(PG_FUNCTION_ARGS)
     for (int i = 0; i < len; i++)
     {
         char c = object_name_str[i];
-        if (c == '.' && bracket_count == 0 && quote_count == 0)
+        if (c == '[' && !inside_quotes)
+        {
+            inside_brackets = 1;
+        }
+        else if (c == ']' && !inside_quotes)
+        {
+            if (inside_brackets)
+            {
+                inside_brackets = 0;
+            }
+            else
+            {
+                unmatched_bracket = 1;
+            }
+        }
+        else if (c == '"' && !inside_brackets)
+        {
+            if (i + 1 < len && object_name_str[i + 1] == '"')
+            {
+                // Handle double quotes
+                int part_len = strlen(object_parts[current_part]);
+                if (part_len < 128)
+                {
+                    snprintf(object_parts[current_part] + part_len, 2, "%c", c);
+                }
+                else
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+                i++;
+            }
+            else
+            {
+                inside_quotes = !inside_quotes;
+            }
+        }
+        else if (c == '.' && !inside_quotes && !inside_brackets)
         {
             current_part++;
             if (current_part > 4)
@@ -2116,23 +2154,7 @@ parsename(PG_FUNCTION_ARGS)
                 PG_RETURN_NULL();
             }
         }
-        else if (c == '[' && bracket_count == 0 && quote_count == 0)
-        {
-            bracket_count++;
-        }
-        else if (c == ']' && bracket_count == 1)
-        {
-            bracket_count--;
-        }
-        else if (c == '"' && quote_count == 0 && bracket_count == 0)
-        {
-            quote_count++;
-        }
-        else if (c == '"' && quote_count == 1)
-        {
-            quote_count--;
-        }
-        else if ((c == '[' || c == ']' || c == '"') && bracket_count == 0 && quote_count == 0)
+		else if ((c == '[' || c == ']' || c == '"') && inside_quotes == 0 && inside_brackets == 0)
         {
             pfree(object_name_str);
             PG_RETURN_NULL();
@@ -2151,12 +2173,13 @@ parsename(PG_FUNCTION_ARGS)
             }
         }
     }
-    if (bracket_count != 0 || quote_count != 0)
+	if (inside_quotes != 0 || inside_brackets != 0 || unmatched_bracket != 0)
     {
         pfree(object_name_str);
         PG_RETURN_NULL();
     }
     if (strlen(object_parts[current_part - object_piece + 1]) > 0)
+
     {
         text *result = cstring_to_text(object_parts[current_part - object_piece + 1]);
         pfree(object_name_str);
