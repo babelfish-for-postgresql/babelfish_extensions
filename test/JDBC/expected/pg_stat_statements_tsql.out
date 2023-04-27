@@ -64,12 +64,12 @@ world
 -- go
 -- DROP LOGIN  l1
 -- go
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 ~~START~~
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
-16385#!#1#!#SELECT $1 AS "int"#!#1#!#1#!#0
 16385#!#1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#2#!#2#!#0
+16385#!#1#!#SELECT $1 AS "int"#!#1#!#1#!#0
 ~~END~~
 
 
@@ -147,7 +147,7 @@ int#!#char
 ~~END~~
 
 
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 ~~START~~
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
@@ -306,13 +306,13 @@ go
 -- go
 -- DROP PROCEDURE p1;
 -- go
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 ~~START~~
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5#!#1#!#0#!#0
-16385#!#1#!#CREATE TABLE customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))#!#1#!#0#!#0
 16385#!#1#!#CREATE TABLE #demo(age int)#!#1#!#0#!#0
+16385#!#1#!#CREATE TABLE customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))#!#1#!#0#!#0
 16385#!#1#!#CREATE TABLE orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))#!#1#!#0#!#0
 16385#!#1#!#CREATE VIEW [India customers] as select customerid from orders where country = 'India'#!#1#!#0#!#0
 16385#!#1#!#DROP ROLE test_role#!#1#!#0#!#0
@@ -323,12 +323,12 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#DROP VIEW  [India customers]#!#1#!#0#!#0
 16385#!#1#!#INSERT INTO customers values($1, $2, $3),($4,$5, $6), ($7, $8, $9),($10, $11, $12),($13, $14, $15)#!#1#!#5#!#0
 16385#!#1#!#INSERT INTO orders values($1, $2, $3), ($4, $5, $6), ($7, $8, $9), ($10, $11, $12),($13, $14, $15),($16, $17, $18)#!#1#!#6#!#0
+16385#!#1#!#SELECT    nextval($1)#!#1#!#1#!#0
+16385#!#1#!#SELECT * FROM [India customers]#!#1#!#2#!#0
+16385#!#1#!#SELECT * FROM customers#!#1#!#5#!#0
+16385#!#1#!#SELECT * FROM information_schema_tsql.views#!#1#!#2#!#0
 16385#!#1#!#SELECT AVG(age) FROM customers#!#1#!#1#!#0
 16385#!#1#!#SELECT COUNT(*) from orders where country =$1#!#1#!#1#!#0
-16385#!#1#!#SELECT * FROM customers#!#1#!#5#!#0
-16385#!#1#!#SELECT * FROM [India customers]#!#1#!#2#!#0
-16385#!#1#!#SELECT * FROM information_schema_tsql.views#!#1#!#2#!#0
-16385#!#1#!#SELECT    nextval($1)#!#1#!#1#!#0
 16385#!#1#!#SELECT REVERSE(name) FROM customers#!#1#!#5#!#0
 ~~END~~
 
