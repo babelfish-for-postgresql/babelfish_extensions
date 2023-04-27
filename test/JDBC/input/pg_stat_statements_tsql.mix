@@ -44,7 +44,7 @@ go
 -- DROP LOGIN  l1
 -- go
 
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 
 -- psql
@@ -98,7 +98,7 @@ SELECT * FROM test ORDER BY a;
 SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5);
 go
 
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 
 -- psql
@@ -187,7 +187,7 @@ go
 
 
 -- tsql
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query;
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 
 -- psql
