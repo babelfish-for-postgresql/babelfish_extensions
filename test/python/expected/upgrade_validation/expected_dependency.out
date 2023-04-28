@@ -957,7 +957,6 @@ View sys.fulltext_catalogs
 View sys.fulltext_index_columns
 View sys.fulltext_languages
 View sys.fulltext_stoplists
-View sys.list_of_view_should_be_present_in_dbo_schema
 View sys.master_files
 View sys.pg_namespace_ext
 View sys.registered_search_property_lists

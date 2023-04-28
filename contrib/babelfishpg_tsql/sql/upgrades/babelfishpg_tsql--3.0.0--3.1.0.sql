@@ -2923,32 +2923,6 @@ RETURNS sys.SYSNAME AS
 'babelfishpg_tsql', 'object_schema_name'
 LANGUAGE C STABLE;
 
-create or replace view sys.list_of_view_should_be_present_in_dbo_schema AS
-select t.view_name from
-(
-  values
-    ('syscacheobjects'),
-    ('syscomments'),
-    ('sysconstraints'),
-    ('sysdepends'),
-    ('sysdevices'),
-    ('sysfilegroups'),
-    ('sysfiles'),
-    ('sysfulltextcatalogs'),
-    ('sysindexkeys'),
-    ('syslockinfo'),
-    ('sysmembers'),
-    ('sysmessages'),
-    ('sysoledbusers'),
-    ('sysperfinfo'),
-    ('syspermissions'),
-    ('sysprotects'),
-    ('sysreferences'),
-    ('sysremotelogins'),
-    ('sysservers')
-) t(view_name);
-GRANT SELECT ON sys.list_of_view_should_be_present_in_dbo_schema TO PUBLIC;
-
 create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.
 -- For example, 'master_dbo' schema can only exist in the 'master' database.
