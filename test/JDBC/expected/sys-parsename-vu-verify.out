@@ -389,3 +389,35 @@ varchar
 <NULL>
 ~~END~~
 
+
+SELECT PARSENAME('AdventureWorksPDW2012.dbo.DimCustomer', 1) AS 'Object Name';
+GO
+~~START~~
+varchar
+DimCustomer
+~~END~~
+
+
+SELECT PARSENAME('AdventureWorksPDW2012.dbo.DimCustomer', 2) AS 'Schema Name';
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT PARSENAME('AdventureWorksPDW2012.dbo.DimCustomer', 3) AS 'Database Name';
+GO
+~~START~~
+varchar
+AdventureWorksPDW2012
+~~END~~
+
+
+SELECT PARSENAME('AdventureWorksPDW2012.dbo.DimCustomer', 4) AS 'Server Name';  
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
