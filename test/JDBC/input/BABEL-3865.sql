@@ -16,7 +16,10 @@ CREATE TABLE #temp_2(
 	c datetime2,
 	d nchar,
 	e nvarchar,
-	f varbinary
+	f varbinary,
+	g numeric,
+	h smallmoney, 
+	i money
 )
 GO
 
