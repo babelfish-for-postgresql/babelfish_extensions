@@ -41,6 +41,7 @@ char	   *pltsql_version = NULL;
 int			pltsql_datefirst = 7;
 int			pltsql_rowcount = 0;
 char	   *pltsql_language = NULL;
+char	   *pltsql_psql_logical_babelfish_db_name = NULL;
 int			pltsql_lock_timeout = -1;
 bool		pltsql_enable_linked_servers = true;
 bool		pltsql_allow_windows_login = true;
@@ -767,6 +768,15 @@ define_custom_variables(void)
 							   NULL,
 							   &pltsql_database_name,
 							   "babelfish_db",
+							   PGC_SUSET,
+							   GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL,
+							   NULL, NULL, NULL);
+
+	DefineCustomStringVariable("babelfishpg_tsql.psql_logical_babelfish_db_name",
+							   gettext_noop("Sets a Babelfish database name"),
+							   NULL,
+							   &pltsql_psql_logical_babelfish_db_name,
+							   NULL,
 							   PGC_SUSET,
 							   GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL,
 							   NULL, NULL, NULL);
