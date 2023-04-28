@@ -1,0 +1,3 @@
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+
+include#!#input/table_variables/table_variable_xact_basic.sql

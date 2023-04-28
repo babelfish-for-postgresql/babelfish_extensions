@@ -5,6 +5,8 @@
 #include "parser/analyze.h"
 
 extern IsExtendedCatalogHookType PrevIsExtendedCatalogHook;
+extern IsToastRelationHookType PrevIsToastRelationHook;
+extern IsToastClassHookType PrevIsToastClassHook;
 
 extern void InstallExtendedHooks(void);
 extern void UninstallExtendedHooks(void);

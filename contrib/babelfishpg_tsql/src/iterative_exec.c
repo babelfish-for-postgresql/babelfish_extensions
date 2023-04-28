@@ -5,6 +5,7 @@
 #include "pl_explain.h"
 #include "iterative_exec.h"
 #include "dynastack.h"
+#include "table_variable_mvcc.h"
 
 /***************************************************************************************
  *                         Execution Actions
@@ -1242,6 +1243,10 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		/* Close trigger nesting in engine */
 		if (estate->tsql_trigger_flags & TSQL_TRIGGER_STARTED)
 			EndCompositeTriggers(true);
+
+		/* Add current xid to a list of failed xids. */
+		if (TransactionIdIsValid(GetCurrentTransactionIdIfAny()))
+			add_failed_transaction(GetCurrentTransactionIdIfAny());
 
 		/*
 		 * Non TDS clients will just throw the error in all cases

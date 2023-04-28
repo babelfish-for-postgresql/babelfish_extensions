@@ -1,0 +1,3 @@
+SET xact_abort ON
+
+include#!#input/table_variables/table_variable_xact_basic.sql
