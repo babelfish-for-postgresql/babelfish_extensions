@@ -334,7 +334,7 @@ bool
 is_tsql_binary_datatype(Oid oid)
 {
 	if (tsql_binary_oid == InvalidOid)
-		tsql_binary_oid = lookup_tsql_datatype_oid("bbf_binary");
+		tsql_binary_oid = lookup_tsql_datatype_oid("binary");
 	return tsql_binary_oid == oid;
 }
 

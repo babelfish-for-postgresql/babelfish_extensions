@@ -14,6 +14,8 @@
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_coerce.h"
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -337,6 +339,80 @@ post_transform_from_clause(ParseState *pstate)
 		ns->namespace = pstate->p_namespace;
 }
 
+static void
+fix_setop_typmods(ParseState *pstate, Query *qry)
+{
+	List 		*setOpTreeStack = list_make1(qry->setOperations);
+	List 		*tlist_list = NIL;
+	List		*colTypes = ((SetOperationStmt*) qry->setOperations)->colTypes;
+	ListCell	*tlistl;
+	int32		*max_typmods;
+	int			colindex;
+
+	while (setOpTreeStack)
+	{
+		Node *setOp = llast(setOpTreeStack);
+		setOpTreeStack = list_delete_last(setOpTreeStack);
+
+		if (IsA(setOp, SetOperationStmt))
+		{
+			SetOperationStmt *op = (SetOperationStmt *) setOp;
+			// TODO Do we need the same check as in prepunion::903?
+			setOpTreeStack = lcons(op->rarg, setOpTreeStack);
+			setOpTreeStack = lcons(op->larg, setOpTreeStack);
+		} else if (IsA(setOp, RangeTblRef))
+		{
+			RangeTblEntry *rte = rt_fetch(((RangeTblRef*)setOp)->rtindex, pstate->p_rtable);
+			tlist_list = lcons(rte->subquery->targetList, tlist_list);
+		}
+	}
+
+	max_typmods = (int32 *) palloc(list_length((List *) linitial(tlist_list)) * sizeof(int32));
+	
+	foreach(tlistl, tlist_list)
+	{
+		List		*subtlist = (List *) lfirst(tlistl);
+		ListCell	*subtlistl;
+		colindex = 0;
+		foreach(subtlistl, subtlist)
+		{
+			TargetEntry *subtle = (TargetEntry *) lfirst(subtlistl);
+			Node		*expr = (Node*) subtle->expr;
+			
+			if (tlistl == list_head(tlist_list))
+				max_typmods[colindex] = exprTypmod(expr);
+			else
+				max_typmods[colindex] = Max(max_typmods[colindex], exprTypmod(expr));
+			colindex++;
+		}
+	}
+	foreach(tlistl, tlist_list)
+	{
+		List		*subtlist = (List *) lfirst(tlistl);
+		ListCell	*subtlistl, *coltypl;
+		colindex = 0;
+		forboth(subtlistl, subtlist, coltypl, colTypes)
+		{
+			TargetEntry *subtle = (TargetEntry *) lfirst(subtlistl);
+			Node		*expr = (Node*) subtle->expr;
+			Oid			expr_typ = exprType(expr);
+			Oid			col_typ = lfirst_oid(coltypl);
+			if (common_utility_plugin_ptr->is_tsql_bpchar_datatype(expr_typ) || 
+				common_utility_plugin_ptr->is_tsql_nchar_datatype(expr_typ)  || 
+				common_utility_plugin_ptr->is_tsql_binary_datatype(expr_typ))
+			{
+				subtle->expr = (Expr *) coerce_to_target_type(pstate, expr, expr_typ, 
+									col_typ, max_typmods[colindex], COERCION_IMPLICIT, 
+									COERCE_IMPLICIT_CAST, -1);
+			}
+			colindex++;
+		}
+	}
+	// Need to put this in a finally block?
+	pfree(max_typmods);
+	list_free(tlist_list);
+}
+
 /* 
  * Prior to handling a UNION or othe SetOp's ORDER BY clause, this hook:
  * 1. Modifies the query's top-level target list, so that we can match columns
@@ -348,9 +424,9 @@ post_transform_from_clause(ParseState *pstate)
 void
 pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
 {
+	/* Pop from namespace stack and set the current namespace prior to sort */
 	namespace_stack_t *old_ns_stack_item = set_op_ns_stack;
 	ListCell *lc, *lc_l;
-
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
@@ -370,6 +446,9 @@ pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
 
 	set_op_ns_stack = set_op_ns_stack->prev;
 	pfree(old_ns_stack_item);
+
+	/* Fix target typmods for fixed-len tsql types */
+	fix_setop_typmods(pstate, qry);
 }
 
 /* 
