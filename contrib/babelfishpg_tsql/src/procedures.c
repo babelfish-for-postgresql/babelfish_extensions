@@ -77,6 +77,7 @@ static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
 static void exec_utility_cmd_helper(char *query_str);
+static void remove_delimited_identifer(char *str);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -2861,6 +2862,9 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
+
+extern bool pltsql_quoted_identifier;
+
 Datum
 sp_rename_internal(PG_FUNCTION_ARGS)
 {
@@ -2918,6 +2922,16 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			len = strlen(curr_relname);
 			while(isspace(curr_relname[len - 1]))
 				curr_relname[--len] = 0;
+		}
+
+		/* remove delimited identifiers if quoted_identifier is on */
+		if (pltsql_quoted_identifier)
+		{
+			remove_delimited_identifer(obj_name);
+			remove_delimited_identifer(schema_name);
+			if (curr_relname != NULL) {
+				remove_delimited_identifer(curr_relname);
+			}
 		}
 
 		/* check if inputs are empty after removing trailing spaces */
@@ -3175,4 +3189,21 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	rewrite_object_refs(stmt);
 
 	return res;
+}
+
+static void 
+remove_delimited_identifer(char *str)
+{
+	size_t len = strlen(str);
+	if ((str[0] == '"' && str[len - 1] == '"') || (str[0] == '[' && str[len - 1] == ']'))
+	{
+		memmove(str, &str[1], len - 1);
+		str[len - 2] = '\0';
+	}
+	if isspace(str[0])
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						errmsg("Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.")));
+	len = strlen(str);
+	while (isspace(str[len - 1]))
+		str[--len] = 0;
 }

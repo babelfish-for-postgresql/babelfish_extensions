@@ -9,6 +9,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
@@ -48,6 +49,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_new#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
@@ -78,6 +80,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_new#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
@@ -284,6 +287,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
@@ -303,6 +307,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
@@ -322,6 +327,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
@@ -361,6 +367,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
@@ -537,6 +544,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
@@ -570,6 +578,7 @@ ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_tabletype1_new#!#BASE TABLE
@@ -659,6 +668,77 @@ GO
 
 ~~ERROR (Message: column "sp_rename_vu_s1_t2_wrong_col" does not exist)~~
 
+
+-- COLUMN: delimited identifer
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table_delim'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_td1_col1#!#dbo#!#sp_rename_vu_table_delim
+sp_rename_vu_td1_col2#!#dbo#!#sp_rename_vu_table_delim
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_table_delim."sp_rename_vu_td1_col1"', 'sp_rename_vu_td1_col1_new', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table_delim'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_td1_col1_new#!#dbo#!#sp_rename_vu_table_delim
+sp_rename_vu_td1_col2#!#dbo#!#sp_rename_vu_table_delim
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_table_delim.[sp_rename_vu_td1_col1_new]', '[sp_rename_vu_td1_col1_new]', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table_delim'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+[sp_rename_vu_td1_col1_new]#!#dbo#!#sp_rename_vu_table_delim
+sp_rename_vu_td1_col2#!#dbo#!#sp_rename_vu_table_delim
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_table_delim."[sp_rename_vu_td1_col1_new]"', '[SP_rename_vu_td1_col1_MIXED]', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table_delim'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+[sp_rename_vu_td1_col1_mixed]#!#dbo#!#sp_rename_vu_table_delim
+sp_rename_vu_td1_col2#!#dbo#!#sp_rename_vu_table_delim
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_table_delim."[SP_rename_vu_td1_col1_MIXED]"', '[  SP_rename_vu_td1_col1_MIXED_spaces   ]', 'COLUMN';
+GO
+
+SELECT COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'sp_rename_vu_table_delim'
+ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+[  sp_rename_vu_td1_col1_mixed_spaces   ]#!#dbo#!#sp_rename_vu_table_delim
+sp_rename_vu_td1_col2#!#dbo#!#sp_rename_vu_table_delim
+~~END~~
+
+
+SET quoted_identifier OFF
+GO
 
 -- USERDATATYPE
 SELECT t1.name, s1.name

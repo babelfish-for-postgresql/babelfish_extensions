@@ -14,6 +14,9 @@ GO
 DROP TABLE sp_rename_vu_table1;
 GO
 
+DROP TABLE sp_rename_vu_table_delim;
+GO
+
 DROP TABLE sp_rename_vu_schema1.sp_rename_vu_table1;
 GO
 
