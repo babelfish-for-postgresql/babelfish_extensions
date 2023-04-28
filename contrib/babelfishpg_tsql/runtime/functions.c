@@ -2092,167 +2092,172 @@ numeric_radians(PG_FUNCTION_ARGS)
 Datum
 parsename(PG_FUNCTION_ARGS)
 {
-	text *object_name = PG_GETARG_TEXT_PP(0);
-	int object_piece = PG_GETARG_INT32(1);
-	char *object_name_str = text_to_cstring(object_name);
-	int len = strlen(object_name_str);
-	char object_parts[129 * 5] = {0};
-	int current_part = 0;
-	int state = 0; // 0: outside quotes and brackets, 1: inside quotes, 2: inside brackets
-	int dot_count = 0;
-	int improperly_enclosed = 0;
-	int improper_close_bracket = 0;
-	
-	if (object_piece < 1 || object_piece > 4)
-	{
-		PG_RETURN_NULL();
-	}
-	for (int i = 0; i < len; i++)
-	{
-		char c = object_name_str[i];
-		int part_len = strlen(&object_parts[current_part * 129]);
-		if (state == 0) // Outside quotes and brackets
-		{
-			if (c == '"')
-			{
-				state = 1;
-			}
-			else if (c == '[')
-			{
-				state = 2;
-			}
-			else if(c == ']')
-			{
-				improper_close_bracket = 1;
-			}
-			else if (c == '.')
-			{
-				current_part++;
-				dot_count++;
-				if (current_part > 4)
-				{
-					pfree(object_name_str);
-					PG_RETURN_NULL();
-				}
-			}
-			else
-			{
-				if (part_len < 128)
-				{
-					snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
-				}
-				else
-				{
-					pfree(object_name_str);
-					PG_RETURN_NULL();
-				}
-			}
-		}
-		else if (state == 1) // Inside quotes
-		{
-			if (c == '"')
-			{
-				if (i + 1 < len && object_name_str[i + 1] == '"')
-				{
-					if (part_len < 128)
-					{
-						snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
-					}
-					else
-					{
-						pfree(object_name_str);
-						PG_RETURN_NULL();
-					}
-					i++;
-				}
-				else
-				{
-					state = 0;
-					if (i + 1 < len && object_name_str[i + 1] != '.')
-					{
-						improperly_enclosed = 1;
-					}
-				}
-			}
-			else
-			{
-				if (part_len < 128)
-				{
-					snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
-				}
-				else
-				{
-					pfree(object_name_str);
-					PG_RETURN_NULL();
-				}
-			}
-		}
-		else if (state == 2) // Inside brackets
-		{
-			if (c == ']')
-			{
-				if (i + 1 < len && object_name_str[i + 1] == ']')
-				{
-					if (part_len < 128)
-					{
-						snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
-					}
-					else
-					{
-						pfree(object_name_str);
-						PG_RETURN_NULL();
-					}
-					i++;
-				}
-				else
-				{
-					state = 0;
-					if (i + 1 < len && object_name_str[i + 1] != '.')
-					{
-						improperly_enclosed = 1;
-					}
-				}
-			}
-			else
-			{
-				if (part_len < 128)
-				{
-					snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
-				}
-				else
-				{
-					pfree(object_name_str);
-					PG_RETURN_NULL();
-				}
-			}
-		}
-	}
-	if (improperly_enclosed || improper_close_bracket)
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	if (state != 0)
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	if (dot_count > 3)
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	if (strlen(&object_parts[(current_part - object_piece + 1) * 129]) > 0)
-	{
-		text *result = cstring_to_text(&object_parts[(current_part - object_piece + 1) * 129]);
-		pfree(object_name_str);
-		PG_RETURN_TEXT_P(result);
-	}
-	else
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
+    text *object_name = PG_GETARG_TEXT_PP(0);
+    int object_piece = PG_GETARG_INT32(1);
+    char *object_name_str = text_to_cstring(object_name);
+    int len = strlen(object_name_str);
+    char object_parts[129 * 5] = {0};
+    int current_part = 0;
+    int state = 0; // 0: outside quotes and brackets, 1: inside quotes, 2: inside brackets
+    int dot_count = 0;
+    int improperly_enclosed = 0;
+
+    if (object_piece < 1 || object_piece > 4)
+    {
+        PG_RETURN_NULL();
+    }
+    for (int i = 0; i < len; i++)
+    {
+        char c = object_name_str[i];
+        int part_len = strlen(&object_parts[current_part * 129]);
+        if (state == 0) // Outside quotes and brackets
+        {
+            if (c == '"')
+            {
+                state = 1;
+            }
+            else if (c == '[')
+            {
+                state = 2;
+            }
+            else if(c == ']')
+            {
+                pfree(object_name_str);
+                PG_RETURN_NULL();
+            }
+            else if (c == '.')
+            {
+                current_part++;
+                dot_count++;
+                if (current_part > 4)
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+            }
+            else
+            {
+                if (part_len < 128)
+                {
+                    object_parts[current_part * 129 + part_len] = c;
+                    object_parts[current_part * 129 + part_len + 1] = '\0';
+                }
+                else
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+            }
+        }
+        else if (state == 1) // Inside quotes
+        {
+            if (c == '"')
+            {
+                if (i + 1 < len && object_name_str[i + 1] == '"')
+                {
+                    if (part_len < 128)
+                    {
+                        object_parts[current_part * 129 + part_len] = c;
+                        object_parts[current_part * 129 + part_len + 1] = '\0';
+                    }
+                    else
+                    {
+                        pfree(object_name_str);
+                        PG_RETURN_NULL();
+                    }
+                    i++;
+                }
+                else
+                {
+                    state = 0;
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        improperly_enclosed = 1;
+                    }
+                }
+            }
+            else
+            {
+                if (part_len < 128)
+                {
+                    object_parts[current_part * 129 + part_len] = c;
+                    object_parts[current_part * 129 + part_len + 1] = '\0';
+                }
+                else
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+            }
+        }
+        else if (state == 2) // Inside brackets
+        {
+            if (c == ']')
+            {
+                if (i + 1 < len && object_name_str[i + 1] == ']')
+                {
+                    if (part_len < 128)
+                    {
+                        object_parts[current_part * 129 + part_len] = c;
+						object_parts[current_part * 129 + part_len + 1] = '\0';
+                    }
+                    else
+                    {
+                        pfree(object_name_str);
+                        PG_RETURN_NULL();
+                    }
+                    i++;
+                }
+                else
+                {
+                    state = 0;
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        improperly_enclosed = 1;
+                    }
+                }
+            }
+            else
+            {
+                if (part_len < 128)
+                {
+                    object_parts[current_part * 129 + part_len] = c;
+                    object_parts[current_part * 129 + part_len + 1] = '\0';
+                }
+                else
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+            }
+        }
+    }
+    if (improperly_enclosed)
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
+    if (state != 0)
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
+    if (dot_count > 3)
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
+    if (strlen(&object_parts[(current_part - object_piece + 1) * 129]) > 0)
+    {
+        text *result = cstring_to_text(&object_parts[(current_part - object_piece + 1) * 129]);
+        pfree(object_name_str);
+        PG_RETURN_TEXT_P(result);
+    }
+    else
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
 }
 
 /* Returns the database schema name for schema-scoped objects. */
