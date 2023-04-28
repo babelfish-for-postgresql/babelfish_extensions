@@ -18,7 +18,7 @@ GO
 SET NOCOUNT ON
 DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname NULL, c smallint, d sysname NULL)
 INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
-SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a NOT LIKE 'bbf_server%'
+SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a NOT LIKE 'bbf_server%' ORDER BY a
 SET NOCOUNT OFF
 GO
 
@@ -45,7 +45,7 @@ GO
 SET NOCOUNT ON
 DECLARE @sp_linkedservers_var table(a sysname, b nvarchar(128), c nvarchar(128), d nvarchar(4000), e nvarchar(4000), f nvarchar(4000), g sysname NULL)
 INSERT INTO @sp_linkedservers_var EXEC sp_linkedservers
-SELECT * FROM @sp_linkedservers_var WHERE a NOT LIKE 'bbf_server%'
+SELECT * FROM @sp_linkedservers_var WHERE a NOT LIKE 'bbf_server%' ORDER BY a
 SET NOCOUNT OFF
 GO
 

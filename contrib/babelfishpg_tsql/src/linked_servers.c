@@ -1291,6 +1291,12 @@ openquery_imp(PG_FUNCTION_ARGS)
 	}
 	PG_FINALLY();
 	{
+		if (lsproc)
+		{
+			LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connections to remote server");
+			LINKED_SERVER_EXIT();
+		}
+
 		if (query)
 			pfree(query);
 	}

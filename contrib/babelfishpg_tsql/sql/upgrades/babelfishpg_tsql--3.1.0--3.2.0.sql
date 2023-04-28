@@ -45,7 +45,27 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_server_options', '');
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
- 
+ALTER FUNCTION sys.nestlevel() RENAME TO nestlevel_deprecated_in_3_2_0;
+
+CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
+$$
+DECLARE
+    stack text;
+    result integer;
+BEGIN
+    GET DIAGNOSTICS stack = PG_CONTEXT;
+    result := array_length(string_to_array(stack, 'function'), 1) - 3; 
+    IF result < -1 THEN
+        RAISE EXCEPTION 'Invalid output, check stack trace %', stack;
+    ELSE
+        RETURN result;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'nestlevel_deprecated_in_3_2_0');
+
 -- SYSUSERS
 CREATE OR REPLACE VIEW sys.sysusers AS SELECT
 Dbp.principal_id AS uid,
@@ -107,11 +127,130 @@ SELECT
 FROM sys.babelfish_syslanguages;
 GRANT SELECT ON sys.syslanguages TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg anyelement) RETURNS TEXT AS 
+$BODY$
+SELECT
+    CASE
+    WHEN dp = 'month'::text THEN
+        to_char(arg::sys.DATETIME, 'TMMonth')
+    -- '1969-12-28' is a Sunday
+    WHEN dp = 'dow'::text THEN
+        to_char(arg::sys.DATETIME, 'TMDay')
+    ELSE
+        sys.datepart(dp, arg)::TEXT
+    END 
+$BODY$
+STRICT
+LANGUAGE sql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(IN datepart PG_CATALOG.TEXT, IN arg anyelement,IN df_tz INTEGER DEFAULT 0) RETURNS INTEGER AS $$
+DECLARE
+	result INTEGER;
+	first_day DATE;
+	first_week_end INTEGER;
+	day INTEGER;
+    datapart_date sys.DATETIME;
+BEGIN
+    IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
+     'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
+        datapart_date = CAST(arg AS sys.DATETIME);
+        CASE datepart
+        WHEN 'dow' THEN
+            result = (date_part(datepart, datapart_date)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
+        WHEN 'tsql_week' THEN
+            first_day = make_date(date_part('year', datapart_date)::INTEGER, 1, 1);
+            first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
+            day = date_part('doy', datapart_date)::INTEGER;
+            IF day <= first_week_end THEN
+                result = 1;
+            ELSE
+                result = 2 + (day - first_week_end - 1) / 7;
+            END IF;
+        WHEN 'second' THEN
+            result = TRUNC(date_part(datepart, datapart_date))::INTEGER;
+        WHEN 'millisecond' THEN
+            result = right(date_part(datepart, datapart_date)::TEXT, 3)::INTEGER;
+        WHEN 'microsecond' THEN
+            result = right(date_part(datepart, datapart_date)::TEXT, 6)::INTEGER;
+        WHEN 'nanosecond' THEN
+            -- Best we can do - Postgres does not support nanosecond precision
+            result = right(date_part('microsecond', datapart_date)::TEXT, 6)::INTEGER * 1000;
+        ELSE
+            result = date_part(datepart, datapart_date)::INTEGER;
+        END CASE;
+        RETURN result;
+    END IF;
+	CASE datepart
+	WHEN 'dow' THEN
+		result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
+	WHEN 'tsql_week' THEN
+		first_day = make_date(date_part('year', arg)::INTEGER, 1, 1);
+		first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
+		day = date_part('doy', arg)::INTEGER;
+		IF day <= first_week_end THEN
+			result = 1;
+		ELSE
+			result = 2 + (day - first_week_end - 1) / 7;
+		END IF;
+	WHEN 'second' THEN
+		result = TRUNC(date_part(datepart, arg))::INTEGER;
+	WHEN 'millisecond' THEN
+		result = right(date_part(datepart, arg)::TEXT, 3)::INTEGER;
+	WHEN 'microsecond' THEN
+		result = right(date_part(datepart, arg)::TEXT, 6)::INTEGER;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		result = right(date_part('microsecond', arg)::TEXT, 6)::INTEGER * 1000;
+	WHEN 'tzoffset' THEN
+		-- timezone for datetimeoffset
+		result = df_tz;
+	ELSE
+		result = date_part(datepart, arg)::INTEGER;
+	END CASE;
+	RETURN result;
+EXCEPTION WHEN invalid_parameter_value or feature_not_supported THEN
+    -- date_part() throws an exception when trying to get day/month/year etc. from
+	-- TIME, so we just need to catch the exception in this case
+	-- date_part() returns 0 when trying to get hour/minute/second etc. from
+	-- DATE, which is the desirable behavior for datepart() as well.
+    -- If the date argument data type does not have the specified datepart,
+    -- date_part() will return the default value for that datepart.
+    CASE datepart
+	-- Case for datepart is year, yy and yyyy, all mappings are defined in gram.y.
+    WHEN 'year' THEN RETURN 1900;
+    -- Case for datepart is quater, qq and q
+    WHEN 'quarter' THEN RETURN 1;
+    -- Case for datepart is month, mm and m
+    WHEN 'month' THEN RETURN 1;
+    -- Case for datepart is day, dd and d
+    WHEN 'day' THEN RETURN 1;
+    -- Case for datepart is dayofyear, dy
+    WHEN 'doy' THEN RETURN 1;
+    -- Case for datepart is y(also refers to dayofyear)
+    WHEN 'y' THEN RETURN 1;
+    -- Case for datepart is week, wk and ww
+    WHEN 'tsql_week' THEN RETURN 1;
+    -- Case for datepart is iso_week, isowk and isoww
+    WHEN 'week' THEN RETURN 1;
+    -- Case for datepart is tzoffset and tz
+    WHEN 'tzoffset' THEN RETURN 0;
+    -- Case for datepart is weekday and dw, return dow according to datefirst
+    WHEN 'dow' THEN
+        RETURN (1 - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1 ;
+	ELSE
+        RAISE EXCEPTION '''%'' is not a recognized datepart option', datepart;
+        RETURN -1;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate sys.bit) RETURNS DATETIME
 AS
 $body$
 BEGIN
-        RAISE EXCEPTION 'Argument data type bit is invalid for argument 2 of dateadd function.';
+        return sys.dateadd_numeric_representation_helper(datepart, num, startdate);
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -144,11 +283,106 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION typeproperty(
+    typename sys.VARCHAR,
+    property sys.VARCHAR
+    )
+RETURNS INT
+AS $$
+DECLARE
+    var_sc int;
+    schemaid int;
+    schema_name VARCHAR;
+    type_name VARCHAR;
+    sys_id int;
+    testt VARCHAR;
+BEGIN
+
+    property := TRIM(LOWER(COALESCE(property,'')));
+
+    IF typename LIKE '%.%'  THEN
+    schema_name :=  lower(split_part(typename COLLATE "C", '.', 1));
+    type_name :=  lower(split_part(typename COLLATE "C",'.', 2));
+    ELSE
+    schema_name := 'dbo';
+    type_name := typename;
+    END IF;
+
+
+    IF NOT EXISTS (SELECT ao.name FROM sys.types ao WHERE ao.name = type_name COLLATE sys.database_default)
+    THEN
+        RETURN NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT ao.name FROM sys.schemas ao WHERE ao.name = schema_name COLLATE sys.database_default OR schema_name = 'sys' OR schema_name = 'pg_catalog')
+    THEN
+        RETURN NULL ;
+    END IF;
+
+    IF NOT EXISTS (SELECT ty.is_user_defined FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+    schemaid := (SELECT sc.schema_id FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default);
+    ELSE
+    schemaid := (SELECT sc.schema_id FROM sys.types sc WHERE sc.name = type_name COLLATE sys.database_default);
+    END IF;
+
+
+    if (SELECT schema_id(schema_name)) <> schemaid THEN
+    RETURN NULL;
+    END IF;
+
+    IF property = 'allowsnull'
+    THEN
+        RETURN (
+            SELECT CAST( t1.is_nullable AS INT)
+            FROM sys.types t1
+            WHERE t1.name = type_name COLLATE sys.database_default AND t1.schema_id = schemaid );
+
+    ELSEIF property = 'precision'
+    THEN
+        RETURN (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+
+    ELSEIF property = 'scale'
+    THEN
+        sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+        type_name := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
+        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
+            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
+        THEN
+            RETURN(SELECT CAST(dc.scale AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default);
+        ELSE
+            RETURN NULL;
+        END IF;
+    ELSEIF property = 'ownerid'
+    THEN
+        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+        RETURN(SELECT CAST(dc.nspowner AS INT) FROM  pg_catalog.pg_namespace dc WHERE dc.oid = schemaid);
+        ELSE
+        RETURN 10;
+        END IF;
+
+    ELSEIF property = 'usesansitrim'
+    THEN
+        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
+            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
+        THEN
+            RETURN NULL;
+        ELSE
+            RETURN 1;
+        END IF;
+
+    END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
+
 CREATE OR REPLACE FUNCTION sys.dateadd_numeric_representation_helper(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS DATETIME AS $$
 DECLARE
     digit_to_startdate DATETIME;
 BEGIN
-    IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
+    IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
     'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
         digit_to_startdate := CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(startdate as sys.DATETIME);
     END IF;
@@ -1454,6 +1688,61 @@ FROM (VALUES ('public', 'R'), ('sys', 'S'), ('INFORMATION_SCHEMA', 'S')) as dumm
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_principals_deprecated_3_2_0');
 
+-- SYSLOGINS
+CREATE OR REPLACE VIEW sys.syslogins
+AS SELECT 
+Base.sid AS sid,
+CAST(9 AS SYS.TINYINT) AS status,
+Base.create_date AS createdate,
+Base.modify_date AS updatedate,
+Base.create_date AS accdate,
+CAST(0 AS INT) AS totcpu,
+CAST(0 AS INT) AS totio,
+CAST(0 AS INT) AS spacelimit,
+CAST(0 AS INT) AS timelimit,
+CAST(0 AS INT) AS resultlimit,
+Base.name AS name,
+Base.default_database_name AS dbname,
+Base.default_language_name AS default_language_name,
+CAST(Base.name AS SYS.NVARCHAR(128)) AS loginname,
+CAST(NULL AS SYS.NVARCHAR(128)) AS password,
+CAST(0 AS INT) AS denylogin,
+CAST(1 AS INT) AS hasaccess,
+CAST( 
+  CASE 
+    WHEN BASE.type_desc = 'WINDOWS_LOGIN' OR BASE.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntname,
+CAST(
+   CASE 
+    WHEN BASE.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+  AS INT) AS isntgroup,
+CAST(
+  CASE 
+    WHEN BASE.type_desc = 'WINDOWS_LOGIN' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntuser,
+CAST(
+    CASE
+        WHEN pg_has_role(CAST('sysadmin' AS TEXT), Base.principal_id , 'MEMBER') = true THEN 1
+        ELSE 0
+    END
+AS INT) AS sysadmin,
+CAST(0 AS INT) AS securityadmin,
+CAST(0 AS INT) AS serveradmin,
+CAST(0 AS INT) AS setupadmin,
+CAST(0 AS INT) AS processadmin,
+CAST(0 AS INT) AS diskadmin,
+CAST(0 AS INT) AS dbcreator,
+CAST(0 AS INT) AS bulkadmin
+FROM sys.server_principals AS Base;
+
+GRANT SELECT ON sys.syslogins TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
         o.object_id         AS object_id,
@@ -1477,8 +1766,8 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
 CREATE OR REPLACE VIEW sys.sp_databases_view AS
 	SELECT CAST(database_name AS sys.SYSNAME),
 	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
-	CASE WHEN (sum(table_size)/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
-		ELSE CAST((sum(table_size)/1024.0) AS int) END as database_size,
+	CASE WHEN (sum(table_size)::NUMERIC/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
+		ELSE CAST((sum(table_size)::NUMERIC/1024.0) AS int) END as database_size,
 	CAST(NULL AS sys.VARCHAR(254)) as remarks
 	FROM (
 		SELECT pg_catalog.pg_namespace.oid as schema_oid,

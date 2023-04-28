@@ -27,6 +27,9 @@ GO
 DROP LOGIN [babel\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
 GO
 
+DROP LOGIN [ba.bel\username];
+GO
+
 -- test for non-existent login
 DROP LOGIN [babel\non_existent_login]
 GO
