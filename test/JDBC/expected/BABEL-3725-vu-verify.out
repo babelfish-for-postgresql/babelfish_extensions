@@ -1,4 +1,4 @@
-
+-- tsql
 exec babel_3725_dml_top_proc
 go
 ~~ROW COUNT: 2~~
@@ -9,4 +9,62 @@ go
 drop procedure babel_3725_dml_top_proc
 go
 drop table dbo.babel_3725
+go
+
+-- psql
+create table psql_limit_dml(a INT);
+-- Is allowed with insert
+insert into psql_limit_dml values (1), (2), (3) limit 2;
+select * from psql_limit_dml;
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+int4
+1
+2
+~~END~~
+
+
+-- Not allowed with update / delete
+update psql_limit_dml set a = 100 limit 1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: syntax error at or near "limit"
+  Position: 71
+    Server SQLState: 42601)~~
+
+update psql_limit_dml set a = 100 where a = 1;
+select * from psql_limit_dml;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int4
+2
+100
+~~END~~
+
+
+delete from psql_limit_dml where psql_limit_dml.a = 2 limit 1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: syntax error at or near "limit"
+  Position: 55
+    Server SQLState: 42601)~~
+
+delete from psql_limit_dml where psql_limit_dml.a = 2;
+select * from psql_limit_dml
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int4
+100
+~~END~~
+
+
+drop table psql_limit_dml;
 go
