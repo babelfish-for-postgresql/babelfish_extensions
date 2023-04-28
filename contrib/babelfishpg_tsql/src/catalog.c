@@ -1232,9 +1232,6 @@ get_query_timeout_from_server_name(char *servername)
 void
 clean_up_bbf_server_def()
 {
-	List	   		*parsetree_list;
-	Node	   		*stmt;
-	PlannedStmt 	*wrapper;
 	char 			*query_str;
 	StringInfoData 	query;
 
@@ -1244,32 +1241,9 @@ clean_up_bbf_server_def()
 
 	query_str = query.data;
 
-	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+	exec_utility_cmd_helper(query_str);
 
-	/* Update the dummy statement with real values */
-	stmt = parsetree_nth_stmt(parsetree_list, 0);
-
-	/* Run the built query */
-	/* need to make a wrapper PlannedStmt */
-	wrapper = makeNode(PlannedStmt);
-	wrapper->commandType = CMD_UTILITY;
-	wrapper->canSetTag = false;
-	wrapper->utilityStmt = stmt;
-	wrapper->stmt_location = 0;
-	wrapper->stmt_len = strlen(query_str);
-
-	/* do this step */
-	ProcessUtility(wrapper,
-				   query_str,
-				   false,
-				   PROCESS_UTILITY_SUBCOMMAND,
-				   NULL,
-				   NULL,
-				   None_Receiver,
-				   NULL);
-
-	/* make sure later steps can see the object created here */
-	CommandCounterIncrement();
+	pfree(query.data);
 }
 
 /*****************************************

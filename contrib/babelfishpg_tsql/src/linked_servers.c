@@ -842,11 +842,6 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 
 		if(query_timeout > 0)
 		{
-			char timeout[32];
-			int curr_timeout = dbisopt(*lsproc, 34, 0);
-			sprintf(timeout, "%d", query_timeout);
-			elog(LOG, "Current query timeout: %d", curr_timeout);
-			dbsetopt(*lsproc, 34, timeout, query_timeout);
 			LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
 		}
 
@@ -1287,7 +1282,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 				tuplestore_donestoring(tupstore);
 			}
 		}
-		LINKED_SERVER_EXIT();
+		// LINKED_SERVER_EXIT();
 	}
 	PG_FINALLY();
 	{

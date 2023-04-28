@@ -2095,5 +2095,6 @@ extern int64 last_scope_identity_value(void);
  * Functions in linked_servers.c
  */
 void		GetOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tupdesc);
+extern void exec_utility_cmd_helper(char *query_str);
 
 #endif							/* PLTSQL_H */

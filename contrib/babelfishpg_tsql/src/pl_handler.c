@@ -3530,10 +3530,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 								queryEnv, dest, qc);
 
+	/* Cleanup babelfish_server_options catalog when tds_fdw extension is dropped */
 	if (sql_dialect == SQL_DIALECT_PG && nodeTag(parsetree) == T_DropStmt)
 	{
 		DropStmt   *drop_stmt = (DropStmt *) parsetree;
-		if (drop_stmt->removeType == OBJECT_EXTENSION)
+		if (drop_stmt != NULL && drop_stmt->removeType == OBJECT_EXTENSION)
 		{
 			char *ext_name = strVal(lfirst(list_head(drop_stmt->objects)));
 			if ((strcmp(ext_name, "tds_fdw") == 0) && drop_stmt->behavior == DROP_CASCADE)

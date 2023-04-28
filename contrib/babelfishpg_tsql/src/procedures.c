@@ -35,6 +35,7 @@
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
 #include "pltsql_instr.h"
+#include "pltsql.h"
 #include "parser/parser.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -82,7 +83,6 @@ static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
-static void exec_utility_cmd_helper(char *query_str);
 static void update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
 
@@ -2208,52 +2208,6 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
-/*
- * Helper function to execute a utility command using
- * ProcessUtility(). Caller should make sure their
- * inputs are sanitized to prevent unexpected behaviour.
- */
-static void
-exec_utility_cmd_helper(char *query_str)
-{
-	List	   *parsetree_list;
-	Node	   *stmt;
-	PlannedStmt *wrapper;
-
-	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
-
-	if (list_length(parsetree_list) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(parsetree_list))));
-
-	/* Update the dummy statement with real values */
-	stmt = parsetree_nth_stmt(parsetree_list, 0);
-
-	/* Run the built query */
-	/* need to make a wrapper PlannedStmt */
-	wrapper = makeNode(PlannedStmt);
-	wrapper->commandType = CMD_UTILITY;
-	wrapper->canSetTag = false;
-	wrapper->utilityStmt = stmt;
-	wrapper->stmt_location = 0;
-	wrapper->stmt_len = strlen(query_str);
-
-	/* do this step */
-	ProcessUtility(wrapper,
-				   query_str,
-				   false,
-				   PROCESS_UTILITY_SUBCOMMAND,
-				   NULL,
-				   NULL,
-				   None_Receiver,
-				   NULL);
-
-	/* make sure later steps can see the object created here */
-	CommandCounterIncrement();
-}
-
 static void 
 update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert)
 {
@@ -2273,8 +2227,8 @@ update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert)
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
-	new_record[0] = CStringGetTextDatum(servername);
-	new_record[1] = Int32GetDatum(query_timeout);
+	new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
+	new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(query_timeout);
 
 	if(isInsert)
 	{
@@ -2291,6 +2245,7 @@ update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert)
 					CStringGetTextDatum(servername));
 		tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
 		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
+
 		if (!old_tuple)
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
@@ -2628,7 +2583,7 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	 */
 	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
 	{
-		// Remove the server entry from sys.babelfish_server_options catalog
+		/* Remove the server entry from sys.babelfish_server_options catalog */
 		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
 
 		exec_utility_cmd_helper(query.data);
@@ -2664,7 +2619,7 @@ Datum
 sp_serveroption_internal(PG_FUNCTION_ARGS)
 {
 	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
-	char *optionname = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_VARCHAR_PP(1));
+	char *optionname = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
 	char *optionvalue = PG_ARGISNULL(2) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(2)));
 
 	if(!pltsql_enable_linked_servers)
@@ -2687,7 +2642,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FDW_ERROR),
 				 errmsg("@optvalue parameter cannot be NULL")));
 
-	if(optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
+	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
 		update_bbf_server_options(servername, atoi(optionvalue), false);
 	else
 		ereport(ERROR,

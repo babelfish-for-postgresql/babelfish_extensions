@@ -68,7 +68,11 @@ GO
 
 
 -- sp_serveroption with valid server, optname and optvalue
-EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
+GO
+
+-- optname is case insensitive
+EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
 GO
 
 -- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
