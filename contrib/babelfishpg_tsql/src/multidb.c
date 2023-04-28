@@ -968,10 +968,7 @@ set_schemaname_dbo_to_sys(RangeVar *rv)
 	 * list_of_dbo_catalog_not_supported_for_cross_db
 	 * 		Contains the list of sys% views which are database specific
 	 *
-	 * NOTE:
-	 * 1. If view is an database specific check the behaviour in case of cross-db, if not working
-	 * 	  similar to the behaviour of sys.sys% then add view to list list_of_dbo_catalog_not_supported_for_cross_db
-	 * 2. While adding the sys% views to list check whether view is an database specific or not.
+	 * NOTE: While adding the sys% views to list check whether view is an database specific or not.
 	 *
 	 */
 	char* list_of_dbo_catalog[6]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages", "syslogins"};

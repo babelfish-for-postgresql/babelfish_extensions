@@ -1,6 +1,6 @@
 -- This test file fails only in case of new implementation of sys.sys% catalog view
 -- which was present only in 'sys' schema but not in 'dbo' schema.
--- If observed the SQLServer behaviour these sys.sys% catalog views are present in
+-- If observed the T-SQL behaviour these sys.sys% catalog views are present in
 -- both 'sys' and 'dbo' schema.
 -- To pass this test, follow the steps:
 -- 1. Go to function set_schemaname_dbo_to_sys present in (babelfish_extensions/contrib/babelfish_tsql/src/multidb.c)
