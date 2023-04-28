@@ -173,7 +173,10 @@ INSERT INTO t453_varbin VALUES (0xabcd1234);
 GO
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.
+The statement has been terminated.)~~
 
 
 INSERT INTO t453_bin VALUES (1);
@@ -206,7 +209,7 @@ SELECT count(*) FROM t453_varbin;
 GO
 ~~START~~
 int
-5
+4
 ~~END~~
 
 

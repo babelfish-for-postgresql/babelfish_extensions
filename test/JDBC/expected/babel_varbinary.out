@@ -37,16 +37,15 @@ varbinary
 
 select 0x0;
 go
-~~START~~
-varbinary
-00
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 select 0x1F1;
 go
 ~~START~~
 varbinary
-01F1
+01C3B1
 ~~END~~
 
 
@@ -159,9 +158,9 @@ go
 
 select 10 / 0x00;
 go
-~~ERROR (Code: 8134)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: division by zero)~~
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 
 -- test hex string in procedure

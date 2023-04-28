@@ -114,7 +114,7 @@ EXEC p_babel_1381_binary 0x1;
 GO
 ~~START~~
 binary
-AB
+C2
 ~~END~~
 
 
@@ -129,7 +129,7 @@ EXEC p_babel_1381_varbinary 0x1;
 GO
 ~~START~~
 varbinary
-AB
+C2
 ~~END~~
 
 
@@ -144,7 +144,7 @@ EXEC p_babel_1381_varbinary_10 0x1;
 GO
 ~~START~~
 varbinary
-ABCDEF
+C2ABC38DC3AF
 ~~END~~
 
 

@@ -1524,9 +1524,17 @@ GO
 -- Test varchar is mapped to sys.varchar in a new schema and a new table
 CREATE SCHEMA s1;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "master_s1" already exists)~~
+
 
 create table s1.test1 (col varchar);
 GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "test1" already exists)~~
+
 -- Test sys.varchar is created for test1.col, expect an error
 -- because sys.varchar defaults to sys.varchar(1)
 insert into s1.test1 values('abc');
@@ -1539,6 +1547,7 @@ GO
 
 ~~START~~
 varchar
+a
 a
 ~~END~~
 
@@ -2157,9 +2166,10 @@ binary
 -- BABEL-1030
 select cast(cast(cast('a' AS varchar(10)) as binary(2)) as varchar(2));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
+~~START~~
+varchar
+a
+~~END~~
 
 select cast(cast('ab' AS varchar(10)) as binary(2));
 GO
@@ -2203,7 +2213,7 @@ select cast(cast(cast('a' AS nvarchar(10)) as binary(2)) as nvarchar(2));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
+~~ERROR (Message: invalid Unicode code point 0x0)~~
 
 select cast(cast('ab' AS nvarchar(10)) as binary(2));
 GO
