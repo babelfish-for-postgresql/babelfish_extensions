@@ -2927,7 +2927,6 @@ create or replace view sys.list_of_view_should_be_present_in_dbo_schema AS
 select t.view_name from
 (
   values
-    ('syslogins'),
     ('syscacheobjects'),
     ('syscomments'),
     ('sysconstraints'),

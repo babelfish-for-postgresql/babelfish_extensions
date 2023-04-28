@@ -974,7 +974,7 @@ set_schemaname_dbo_to_sys(RangeVar *rv)
 	 * 2. While adding the sys% views to list check whether view is an database specific or not.
 	 *
 	 */
-	char* list_of_dbo_catalog[5]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages"};
+	char* list_of_dbo_catalog[6]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages", "syslogins"};
 	char* list_of_dbo_catalog_not_supported_for_cross_db[6]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects", "systypes", "sysusers"};
 	if (rv->schemaname && strcmp(rv->schemaname, "dbo") == 0)
 	{

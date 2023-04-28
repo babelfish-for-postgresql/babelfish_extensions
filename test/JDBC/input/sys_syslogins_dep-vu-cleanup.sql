@@ -1,3 +1,6 @@
+DROP DATABASE sys_syslogins_dep_vu_prepare_db
+GO
+
 DROP VIEW sys_syslogins_dep_vu_prepare_view
 GO
 
