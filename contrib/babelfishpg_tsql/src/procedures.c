@@ -2270,7 +2270,7 @@ clean_up_bbf_server_option(char *servername)
 	Relation		bbf_servers_def_rel;
 	HeapTuple		scantup;
 	ScanKeyData		key;
-	TableScanDesc	tblscan;
+	TableScanDesc		tblscan;
 
 	/* Fetch the relation */
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);

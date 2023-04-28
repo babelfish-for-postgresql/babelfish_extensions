@@ -40,11 +40,11 @@ const int	tds_numeric_bytes_per_prec[TDS_NUMERIC_MAX_PRECISION + 1] = {
 	14, 14, 15, 15, 16, 16, 16, 17, 17
 };
 
-int			tdsTypeStrToTypeId(char *datatype);
-Oid			tdsTypeToOid(int datatype);
-int			tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
+int		tdsTypeStrToTypeId(char *datatype);
+Oid		tdsTypeToOid(int datatype);
+int		tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
 Datum		getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
-static bool isQueryTimeout;
+static bool 	isQueryTimeout;
 
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
@@ -737,10 +737,10 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	UserMapping *mapping = NULL;
 
 	LinkedServerLogin login;
-	ListCell   *option;
-	char	   *data_src = NULL;
-	char	   *database = NULL;
-	int query_timeout = 0;
+	ListCell	*option;
+	char	*data_src = NULL;
+	char	*database = NULL;
+	int 	query_timeout = 0;
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -1282,7 +1282,6 @@ openquery_imp(PG_FUNCTION_ARGS)
 				tuplestore_donestoring(tupstore);
 			}
 		}
-		// LINKED_SERVER_EXIT();
 	}
 	PG_FINALLY();
 	{

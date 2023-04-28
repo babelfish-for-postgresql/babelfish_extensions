@@ -1200,11 +1200,11 @@ get_bbf_servers_def_idx_oid()
 int 
 get_query_timeout_from_server_name(char *servername)
 {
-	Relation		bbf_servers_def_rel;
-	HeapTuple		tuple;
-	ScanKeyData		key;
+	Relation	bbf_servers_def_rel;
+	HeapTuple	tuple;
+	ScanKeyData	key;
 	TableScanDesc	scan;
-	int				query_timeout;
+	int		query_timeout;
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
 										 RowExclusiveLock);
