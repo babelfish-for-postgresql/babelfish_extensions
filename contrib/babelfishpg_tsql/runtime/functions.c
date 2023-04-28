@@ -2096,13 +2096,12 @@ parsename(PG_FUNCTION_ARGS)
 	int object_piece = PG_GETARG_INT32(1);
 	char *object_name_str = text_to_cstring(object_name);
 	int len = strlen(object_name_str);
-	char object_parts[5][129] = {0};
+	char object_parts[129 * 5] = {0};
 	int current_part = 0;
-	int inside_quotes = 0;
-	int inside_brackets = 0;
-	int unmatched_bracket = 0;
+	int state = 0; // 0: outside quotes and brackets, 1: inside quotes, 2: inside brackets
 	int dot_count = 0;
 	int improperly_enclosed = 0;
+	int improper_close_bracket = 0;
 	
 	if (object_piece < 1 || object_piece > 4)
 	{
@@ -2111,15 +2110,36 @@ parsename(PG_FUNCTION_ARGS)
 	for (int i = 0; i < len; i++)
 	{
 		char c = object_name_str[i];
-		if (c == '[' && !inside_quotes)
+		int part_len = strlen(&object_parts[current_part * 129]);
+		if (state == 0) // Outside quotes and brackets
 		{
-			inside_brackets = 1;
-			if (strlen(object_parts[current_part]) > 0)
+			if (c == '"')
 			{
-				int part_len = strlen(object_parts[current_part]);
+				state = 1;
+			}
+			else if (c == '[')
+			{
+				state = 2;
+			}
+			else if(c == ']')
+			{
+				improper_close_bracket = 1;
+			}
+			else if (c == '.')
+			{
+				current_part++;
+				dot_count++;
+				if (current_part > 4)
+				{
+					pfree(object_name_str);
+					PG_RETURN_NULL();
+				}
+			}
+			else
+			{
 				if (part_len < 128)
 				{
-					snprintf(object_parts[current_part] + part_len, 2, "%c", c);
+					snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
 				}
 				else
 				{
@@ -2128,17 +2148,15 @@ parsename(PG_FUNCTION_ARGS)
 				}
 			}
 		}
-		else if (c == ']' && !inside_quotes)
+		else if (state == 1) // Inside quotes
 		{
-			if (inside_brackets)
+			if (c == '"')
 			{
-				if (i + 1 < len && object_name_str[i + 1] == ']')
+				if (i + 1 < len && object_name_str[i + 1] == '"')
 				{
-					// Handle close bracket inside open and close brackets
-					int part_len = strlen(object_parts[current_part]);
 					if (part_len < 128)
 					{
-						snprintf(object_parts[current_part] + part_len, 2, "%c", c);
+						snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
 					}
 					else
 					{
@@ -2149,71 +2167,72 @@ parsename(PG_FUNCTION_ARGS)
 				}
 				else
 				{
-					inside_brackets = 0;
+					state = 0;
+					if (i + 1 < len && object_name_str[i + 1] != '.')
+					{
+						improperly_enclosed = 1;
+					}
 				}
 			}
 			else
 			{
-				unmatched_bracket = 1;
-			}
-		}
-		else if (c == '"' && !inside_brackets)
-		{
-			if (i + 1 < len && object_name_str[i + 1] == '"')
-			{
-				// Handle double quotes
-				int part_len = strlen(object_parts[current_part]);
 				if (part_len < 128)
 				{
-					snprintf(object_parts[current_part] + part_len, 2, "%c", c);
+					snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
 				}
 				else
 				{
 					pfree(object_name_str);
 					PG_RETURN_NULL();
 				}
-				i++;
+			}
+		}
+		else if (state == 2) // Inside brackets
+		{
+			if (c == ']')
+			{
+				if (i + 1 < len && object_name_str[i + 1] == ']')
+				{
+					if (part_len < 128)
+					{
+						snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
+					}
+					else
+					{
+						pfree(object_name_str);
+						PG_RETURN_NULL();
+					}
+					i++;
+				}
+				else
+				{
+					state = 0;
+					if (i + 1 < len && object_name_str[i + 1] != '.')
+					{
+						improperly_enclosed = 1;
+					}
+				}
 			}
 			else
 			{
-				inside_quotes = !inside_quotes;
+				if (part_len < 128)
+				{
+					snprintf(&object_parts[current_part * 129] + part_len, 2, "%c", c);
+				}
+				else
+				{
+					pfree(object_name_str);
+					PG_RETURN_NULL();
+				}
 			}
-		}
-		else if (c == '.' && !inside_quotes && !inside_brackets)
-		{
-			current_part++;
-			dot_count++;
-			if (current_part > 4)
-			{
-				pfree(object_name_str);
-				PG_RETURN_NULL();
-			}
-		}
-		else if ((c == '[' || c == ']' || c == '"') && inside_quotes == 0 && inside_brackets == 0)
-		{
-			pfree(object_name_str);
-		}
-		else
-		{
-			int part_len = strlen(object_parts[current_part]);
-			if (part_len < 128)
-			{
-				snprintf(object_parts[current_part] + part_len, 2, "%c", c);
-			}
-			else
-			{
-				pfree(object_name_str);
-				PG_RETURN_NULL();
-			}
-		}
-		// Check for improperly enclosed object names
-		if ((c == ']' || c == '"') && !inside_quotes && !inside_brackets && i + 1 < len && object_name_str[i + 1] != '.')
-		{
-			improperly_enclosed = 1;
 		}
 	}
-	// Return NULL if there is an improperly enclosed object name
-	if (improperly_enclosed != 0)
+	if (improperly_enclosed || improper_close_bracket)
+	{
+		pfree(object_name_str);
+		PG_RETURN_NULL();
+	}
+	if (state != 0)
 	{
 		pfree(object_name_str);
 		PG_RETURN_NULL();
@@ -2223,14 +2242,9 @@ parsename(PG_FUNCTION_ARGS)
 		pfree(object_name_str);
 		PG_RETURN_NULL();
 	}
-	if (inside_quotes != 0 || inside_brackets != 0 || unmatched_bracket != 0)
+	if (strlen(&object_parts[(current_part - object_piece + 1) * 129]) > 0)
 	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	if (strlen(object_parts[current_part - object_piece + 1]) > 0)
-	{
-		text *result = cstring_to_text(object_parts[current_part - object_piece + 1]);
+		text *result = cstring_to_text(&object_parts[(current_part - object_piece + 1) * 129]);
 		pfree(object_name_str);
 		PG_RETURN_TEXT_P(result);
 	}
