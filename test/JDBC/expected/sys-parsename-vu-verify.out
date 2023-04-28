@@ -62,6 +62,46 @@ Employee_parsename
 ~~END~~
 
 
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',1)
+GO
+~~START~~
+varchar
+mytable
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',2)
+GO
+~~START~~
+varchar
+Employee
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',3)
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',4)
+GO
+~~START~~
+varchar
+tempdb
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',5)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 SELECT PARSENAME('tempdb.dbo.Employee',1)
 GO
 ~~START~~
@@ -83,14 +123,6 @@ GO
 ~~START~~
 varchar
 tempdb
-~~END~~
-
-
-SELECT PARSENAME('tempdb.dbo.Employee',5)
-GO
-~~START~~
-varchar
-<NULL>
 ~~END~~
 
 
@@ -158,6 +190,38 @@ varchar
 ~~END~~
 
 
+SELECT PARSENAME('tempdb..Employee',2)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb..Employee',3)
+GO
+~~START~~
+varchar
+tempdb
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee',3)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('.dbo.Employee.table',3)
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
 SELECT PARSENAME('tempdb.dbo.Employee.', 1)
 GO
 ~~START~~
@@ -166,11 +230,12 @@ varchar
 ~~END~~
 
 
-SELECT PARSENAME('tempdb.dbo.Employee', 1,2)
+SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
 GO
-~~ERROR (Code: 8144)~~
-
-~~ERROR (Message: function parsename has too many arguments specified.)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 SELECT PARSENAME('tempdbvdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.dbo.Employee',2)
@@ -213,11 +278,11 @@ Employee
 ~~END~~
 
 
-SELECT PARSENAME('[tempdb].[d[[bo].[Employee]',1)
+SELECT PARSENAME('[tempdb].[dbo].[Employee]',2)
 GO
 ~~START~~
 varchar
-Employee
+dbo
 ~~END~~
 
 
@@ -229,107 +294,11 @@ tempdb
 ~~END~~
 
 
-SELECT PARSENAME('tempdb..Employee',2)
-GO
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-
-SELECT PARSENAME('tempdb..Employee',3)
-GO
-~~START~~
-varchar
-tempdb
-~~END~~
-
-
-SELECT PARSENAME('.dbo.Employee',3)
-GO
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-
-SELECT PARSENAME('.dbo.Employee.table',3)
-GO
-~~START~~
-varchar
-dbo
-~~END~~
-
-
-SELECT PARSENAME('tempdb.dbo.Employee.mytable',4)
-GO
-~~START~~
-varchar
-tempdb
-~~END~~
-
-
-SELECT PARSENAME('.dbo.Employee.table',4)
-GO
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-
-SELECT PARSENAME('.dbo.Employee',5)
-GO
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-
-SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
-GO
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-
-SELECT PARSENAME('tempdb.dbo.Employee.table.mytable',3)
-GO
-~~START~~
-varchar
-Employee
-~~END~~
-
-
-SELECT PARSENAME('tempdb.dbo.Em"ployee',1)
-GO
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-
 SELECT PARSENAME('tempdb.dbo.[Empl[oyee]',1)
 GO
 ~~START~~
 varchar
-Employee
-~~END~~
-
-
-SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
-GO
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-
-SELECT PARSENAME('tempdb.dbo.Em]ployee',1)
-GO
-~~START~~
-varchar
-<NULL>
+Empl[oyee
 ~~END~~
 
 
@@ -338,6 +307,22 @@ GO
 ~~START~~
 varchar
 <NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.[Empl]]oyee]',1)
+GO
+~~START~~
+varchar
+Empl]oyee
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.[Empl]]oy]]ee]',1)
+GO
+~~START~~
+varchar
+Empl]oy]ee
 ~~END~~
 
 
@@ -354,5 +339,53 @@ GO
 ~~START~~
 varchar
 Emp"loyee
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo."Emp""loy""ee"',1)
+GO
+~~START~~
+varchar
+Emp"loy"ee
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.[Employe]e',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo."Employe"e',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Em"ployee',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Em]ployee',1)
+GO
+~~START~~
+varchar
+<NULL>
 ~~END~~
 

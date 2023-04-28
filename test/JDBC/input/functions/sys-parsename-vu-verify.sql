@@ -25,6 +25,21 @@ GO
 EXEC parsename_GetEmployeeDatabaseName3
 GO
 
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',2)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',3)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',4)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Employee.mytable',5)
+GO
+
 SELECT PARSENAME('tempdb.dbo.Employee',1)
 GO
 
@@ -32,9 +47,6 @@ SELECT PARSENAME('tempdb.dbo.Employee',2)
 GO
 
 SELECT PARSENAME('tempdb.dbo.Employee',3)
-GO
-
-SELECT PARSENAME('tempdb.dbo.Employee',5)
 GO
 
 SELECT PARSENAME('tempdb.dbo.Employee',5)
@@ -61,10 +73,22 @@ GO
 SELECT PARSENAME('..',1)
 GO
 
+SELECT PARSENAME('tempdb..Employee',2)
+GO
+
+SELECT PARSENAME('tempdb..Employee',3)
+GO
+
+SELECT PARSENAME('.dbo.Employee',3)
+GO
+
+SELECT PARSENAME('.dbo.Employee.table',3)
+GO
+
 SELECT PARSENAME('tempdb.dbo.Employee.', 1)
 GO
 
-SELECT PARSENAME('tempdb.dbo.Employee', 1,2)
+SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
 GO
 
 SELECT PARSENAME('tempdbvdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.dbo.Employee',2)
@@ -82,56 +106,44 @@ GO
 SELECT PARSENAME('[tempdb].[dbo].[Employee]',1)
 GO
 
-SELECT PARSENAME('[tempdb].[d[[bo].[Employee]',1)
+SELECT PARSENAME('[tempdb].[dbo].[Employee]',2)
 GO
 
 SELECT PARSENAME('[tempdb].[dbo].[Employee]',3)
 GO
 
-SELECT PARSENAME('tempdb..Employee',2)
-GO
-
-SELECT PARSENAME('tempdb..Employee',3)
-GO
-
-SELECT PARSENAME('.dbo.Employee',3)
-GO
-
-SELECT PARSENAME('.dbo.Employee.table',3)
-GO
-
-SELECT PARSENAME('tempdb.dbo.Employee.mytable',4)
-GO
-
-SELECT PARSENAME('.dbo.Employee.table',4)
-GO
-
-SELECT PARSENAME('.dbo.Employee',5)
-GO
-
-SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
-GO
-
-SELECT PARSENAME('tempdb.dbo.Employee.table.mytable',3)
-GO
-
-SELECT PARSENAME('tempdb.dbo.Em"ployee',1)
-GO
-
 SELECT PARSENAME('tempdb.dbo.[Empl[oyee]',1)
 GO
 
-SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
-GO
-
-SELECT PARSENAME('tempdb.dbo.Em]ployee',1)
-GO
-
 SELECT PARSENAME('tempdb.dbo.[Empl]oyee]',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.[Empl]]oyee]',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.[Empl]]oy]]ee]',1)
 GO
 
 SELECT PARSENAME('tempdb.dbo."Emp"loyee"',1)
 GO
 
 SELECT PARSENAME('tempdb.dbo."Emp""loyee"',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo."Emp""loy""ee"',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.[Employe]e',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo."Employe"e',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Em"ployee',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Em]ployee',1)
 GO
