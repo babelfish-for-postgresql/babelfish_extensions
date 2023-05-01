@@ -10095,7 +10095,7 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	int			rc;
 	PLtsql_tbl *tbl;
 	bool		old_pltsql_explain_only = pltsql_explain_only;
-	const char *query_fmt = "DROP TABLE %s";
+	const char *query_fmt = "DELETE FROM %s";
 	const char *query;
 
 	PG_TRY();
@@ -10115,7 +10115,7 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 											 * EXPLAIN ONLY mode */
 
 			rc = SPI_execute(query, false, 0);
-			if (rc != SPI_OK_UTILITY)
+			if (rc != SPI_OK_DELETE)
 				elog(ERROR, "Failed to drop the underlying table %s of table variable %s",
 					 tbl->tblname, tbl->refname);
 

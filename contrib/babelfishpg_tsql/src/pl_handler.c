@@ -5303,7 +5303,6 @@ set_current_query_is_create_tbl_check_constraint(Node *expr)
 void
 pltsql_remove_current_query_env(void)
 {
-	ENRDropTempTables(currentQueryEnv);
 	remove_queryEnv();
 
 	if (!currentQueryEnv ||
