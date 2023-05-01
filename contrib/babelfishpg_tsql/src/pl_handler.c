@@ -2637,33 +2637,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							}
 						}
 
-						/*
-						 * Leveraging the fact that convertToUPN API returns
-						 * the login name in UPN format if login name contains
-						 * '\' i,e,. windows login. For windows login '\' must
-						 * be present and for password based login '\' is not
-						 * acceptable. So, combining these, if the login is of
-						 * windows then it will be converted to UPN format or
-						 * else it will be as it was
-						 */
-						temp_login_name = convertToUPN(stmt->role->rolename);
-
-						/*
-						 * If the previous rolname is same as current, then it
-						 * is password based login else, it is windows based
-						 * login. If, user is trying to alter password for
-						 * windows login, throw error
-						 */
-						if (temp_login_name != stmt->role->rolename)
-						{
-							if (has_password)
-								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-												errmsg("Cannot use parameter PASSWORD for a windows login")));
-
-							pfree(stmt->role->rolename);
-							stmt->role->rolename = temp_login_name;
-						}
-
 						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
 							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
 								errmsg("Current login %s does not have permission to Alter login", 
