@@ -1587,9 +1587,11 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 	ListCell   *parsetree_item;
 	char	   *extensionStmt;
 	Node	   *stmt;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
+	PG_TRY();
+	{
 	SetCurrentRoleId(GetSessionUserId(), false);
-
 	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -1597,6 +1599,10 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 	extensionStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 	if (extensionStmt == NULL)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							errmsg("Name cannot be NULL.")));
+
+	if (strlen(extensionStmt) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 							errmsg("Name cannot be NULL.")));
 
@@ -1722,7 +1728,20 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				break;
 			}
 		}
-		PG_RETURN_VOID();
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();	
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+					  GUC_CONTEXT_CONFIG,
+					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
+	
 }
 
 Datum
