@@ -61,6 +61,7 @@
 #include "session.h"
 #include "multidb.h"
 #include "tsql_analyze.h"
+#include "table_variable_mvcc.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -72,6 +73,9 @@ extern bool pltsql_ansi_nulls;
  * 			Catalog Hooks
  *****************************************/
 IsExtendedCatalogHookType PrevIsExtendedCatalogHook = NULL;
+IsToastRelationHookType PrevIsToastRelationHook = NULL;
+IsToastClassHookType PrevIsToastClassHook = NULL;
+
 static bool PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 								 bool include_out_arguments, int pronargs,
 								 int **argnumbers, List **defaults);
@@ -183,6 +187,10 @@ static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_argu
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
+static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfies_visibility = NULL;
+static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
+static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
+static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -294,6 +302,24 @@ InstallExtendedHooks(void)
 
 	prev_validate_var_datatype_scale_hook = validate_var_datatype_scale_hook;
 	validate_var_datatype_scale_hook = pltsql_validate_var_datatype_scale;
+
+	prev_table_variable_satisfies_update = table_variable_satisfies_update_hook;
+	table_variable_satisfies_update_hook = TVHeapTupleSatisfiesUpdate;
+
+	prev_table_variable_satisfies_visibility = table_variable_satisfies_visibility_hook;
+	table_variable_satisfies_visibility_hook = TVHeapTupleSatisfiesVisibility;
+
+	prev_table_variable_satisfies_vacuum = table_variable_satisfies_vacuum_hook;
+	table_variable_satisfies_vacuum_hook = TVHeapTupleSatisfiesVacuum;
+
+	prev_table_variable_satisfies_vacuum_horizon = table_variable_satisfies_vacuum_horizon_hook;
+	table_variable_satisfies_vacuum_horizon_hook = TVHeapTupleSatisfiesVacuumHorizon;
+
+	PrevIsToastRelationHook = IsToastRelationHook;
+	IsToastRelationHook = IsPltsqlToastRelationHook;
+
+	PrevIsToastClassHook = IsToastClassHook;
+	IsToastClassHook = IsPltsqlToastClassHook;
 }
 
 void
@@ -339,6 +365,12 @@ UninstallExtendedHooks(void)
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
+	table_variable_satisfies_visibility_hook = prev_table_variable_satisfies_visibility;
+	table_variable_satisfies_update_hook = prev_table_variable_satisfies_update;
+	table_variable_satisfies_vacuum_hook = prev_table_variable_satisfies_vacuum;
+	table_variable_satisfies_vacuum_horizon_hook = prev_table_variable_satisfies_vacuum_horizon;
+	IsToastRelationHook = PrevIsToastRelationHook;
+	IsToastClassHook = PrevIsToastClassHook;
 }
 
 /*****************************************
@@ -3536,3 +3568,5 @@ pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 							scale[1], dataTypeName, scale[0])));
 	}
 }
+
+

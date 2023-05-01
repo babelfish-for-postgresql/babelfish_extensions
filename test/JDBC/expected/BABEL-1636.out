@@ -14,9 +14,10 @@ exec p1
 go
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: ROLLBACK statement with active table variables is not yet supported.)~~
+~~START~~
+int#!#int
+1#!#2
+~~END~~
 
 
 -- ROLLBACK should get unsupported error message
@@ -35,9 +36,10 @@ int
 1
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: ROLLBACK statement with active table variables is not yet supported.)~~
+~~START~~
+int
+1
+~~END~~
 
 
 declare @tv1 tableType;
@@ -79,9 +81,11 @@ int#!#int
 4#!#3
 ~~END~~
 
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: ROLLBACK statement with active table variables is not yet supported.)~~
+~~START~~
+int#!#int
+3#!#4
+4#!#3
+~~END~~
 
 
 -- cleanup

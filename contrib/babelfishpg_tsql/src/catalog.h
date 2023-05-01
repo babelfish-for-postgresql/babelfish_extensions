@@ -18,6 +18,8 @@ extern void rename_update_bbf_catalog(RenameStmt *stmt);
  * 			Catalog Hooks
  *****************************************/
 extern bool IsPLtsqlExtendedCatalog(Oid relationId);
+extern bool IsPltsqlToastRelationHook(Relation relation);
+extern bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup);
 
 /*****************************************
  *			SYS schema
