@@ -313,7 +313,6 @@ sys-objects
 sys-original_login
 sys-partitions
 sys-partitions-dep
-sys-parsename
 sys-parsename-dep
 sys-plan_guides
 sys-procedures
