@@ -19,3 +19,12 @@ go
 
 DROP DATABASE babel_login_vu_prepare_db1
 go
+
+DROP LOGIN babel_4080_testlogin2;
+GO
+
+DROP LOGIN babel_4080_sysadmin1;
+GO
+
+DROP LOGIN babel_4080_nonsysadmin1;
+GO
