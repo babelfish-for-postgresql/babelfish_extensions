@@ -313,6 +313,8 @@ sys-objects
 sys-original_login
 sys-partitions
 sys-partitions-dep
+sys-parsename
+sys-parsename-dep
 sys-plan_guides
 sys-procedures
 sys-proc_param_helper-dep
@@ -424,7 +426,6 @@ TestVarChar
 TestVariableDataLength
 test_windows_alter_login
 test_windows_alter_user
-sys-parsename-dep
 test_windows_login
 test_windows_sp_helpuser
 TestXML

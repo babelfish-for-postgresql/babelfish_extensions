@@ -278,6 +278,7 @@ sys-numbered_procedures
 sys-objects
 sys-original_login
 sys-partitions
+sys-parsename-dep
 sys-plan_guides
 sys-procedures
 sys-proc_param_helper-dep
@@ -375,7 +376,6 @@ TestTinyInt
 TestUDD
 TestUniqueIdentifier
 TestVarChar
-sys-parsename-dep
 TestVariableDataLength
 test_windows_login_before_15_2
 TestXML

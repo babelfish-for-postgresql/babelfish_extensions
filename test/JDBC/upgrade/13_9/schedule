@@ -219,6 +219,7 @@ sys-max_connections
 sys-nestlevel-dep
 sys-objects
 sys-original_login
+sys-parsename-dep
 sys-procedures
 sys-proc_param_helper-dep
 sys-registered_search_property_lists
@@ -304,7 +305,6 @@ Test-sp_helpsrvrolemember
 Test-sp_helpuser
 TestSQLVariant
 TestTableType
-sys-parsename-dep
 TestText
 TestTime
 TestTinyInt

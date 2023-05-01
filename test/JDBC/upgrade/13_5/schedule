@@ -175,6 +175,7 @@ sys-max_connections
 sys-nestlevel-dep
 sys-objects
 sys-original_login
+sys-parsename-dep
 sys-procedures
 sys-proc_param_helper-dep
 sys-registered_search_property_lists
@@ -253,7 +254,6 @@ Test-sp_droprole
 Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
-sys-parsename-dep
 TestSQLVariant
 TestTableType
 TestText
