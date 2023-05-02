@@ -30,8 +30,6 @@
 #include "utils/queryenvironment.h"
 #include "utils/float.h"
 #include "utils/xid8.h"
-#include "unicode/ustring.h"
-#include "unicode/uchar.h"
 #include <math.h>
 
 #include "../src/babelfish_version.h"
@@ -2275,48 +2273,6 @@ parsename(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* Returns the database schema name for schema-scoped objects. */
 Datum
