@@ -175,6 +175,7 @@ PLTsqlProcessTransaction(Node *parsetree,
 					 errmsg("Unsupported transaction command : %d", stmt->kind)));
 			break;
 	}
+	return true;
 }
 
 bool
