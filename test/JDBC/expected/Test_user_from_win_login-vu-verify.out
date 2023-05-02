@@ -10,6 +10,9 @@ admin@PNQ
 ~~END~~
 
 
+exec babelfish_add_domain_mapping_entry 'CORP', 'CORP.EXAMPLE.COM';
+GO
+
 create login [CORP\logina4038] from windows;
 GO
 
@@ -43,10 +46,12 @@ GO
 drop login [corp\loginb4038];
 GO
 
+exec babelfish_remove_domain_mapping_entry 'CORP';
+GO
+
 drop user win_admin;
 GO
 
 drop login [pnq\admin];
 GO
-
 

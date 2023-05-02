@@ -10,6 +10,3 @@ GO
 -- tsql
 create login [pnq\admin] from windows;
 GO
-
-exec babelfish_add_domain_mapping_entry 'CORP', 'CORP.EXAMPLE.COM';
-GO
