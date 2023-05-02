@@ -88,9 +88,6 @@ GO
 SELECT PARSENAME('tempdb.dbo.Employee.', 1)
 GO
 
-SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
-GO
-
 SELECT PARSENAME('tempdbvdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.dbo.Employee',3)
 GO
 

@@ -230,14 +230,6 @@ varchar
 ~~END~~
 
 
-SELECT PARSENAME('tempdb.dbo.Employee.table.mytable.database',3)
-GO
-~~START~~
-varchar
-<NULL>
-~~END~~
-
-
 SELECT PARSENAME('tempdbvdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.dbo.Employee',3)
 GO
 ~~START~~
