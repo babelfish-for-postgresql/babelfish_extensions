@@ -26,3 +26,16 @@ WHERE rolname LIKE 'babel_login_vu_prepare%'
 ORDER BY rolname
 END
 go
+
+-- tsql
+CREATE LOGIN babel_4080_nonsysadmin1 with PASSWORD = '1234';
+GO
+
+CREATE LOGIN babel_4080_sysadmin1 with PASSWORD = '1234';
+GO
+
+CREATE LOGIN babel_4080_testlogin1 with PASSWORD = '1234';
+GO
+
+CREATE LOGIN babel_4080_testlogin2 with PASSWORD = '1234';
+GO

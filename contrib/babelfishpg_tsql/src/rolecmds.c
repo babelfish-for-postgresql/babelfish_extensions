@@ -2243,6 +2243,31 @@ windows_login_contains_invalid_chars(char *input)
 	return false;
 }
 
+/**
+ * Domain name checks, doesnot allow characters like "<>&*|quotes spaces"
+ * */
+bool
+windows_domain_contains_invalid_chars(char *input)
+{
+	char *pos_slash = strchr(input, '\\');
+	int domain_len = pos_slash - input;
+	int i = 0;
+	if (input == NULL)
+		return true;
+	while (i < domain_len)
+	{
+		if (input[i] == ',' || input[i] == '~' || input[i] == ':' || input[i] == '!' ||
+			input[i] == '@' || input[i] == '#' || input[i] == '$' || input[i] == '%' || 
+			input[i] == '_' || input[i] == '^' || input[i] == '\"' || input[i] == '\'' ||
+			input[i] == '(' || input[i] == ')' || input[i] == '{' || input[i] == '}' || 
+			input[i] == '\\' || input[i] == '/'|| input[i] == '<' || input[i] == '>'||
+			input[i] == ' ' || input[i] == '*'|| input[i] == '|' || input[i] == '&' )
+			return true;
+		i++;
+	}
+	return false;
+}
+
 /*
  * Check whether the logon_name has a valid length or not.
  */

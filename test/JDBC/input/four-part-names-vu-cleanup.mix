@@ -1,0 +1,6 @@
+EXEC sp_dropserver 'bbf_fpn_server', 'droplogins'
+GO
+
+-- psql
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+GO

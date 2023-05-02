@@ -80,6 +80,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "table_variable_mvcc.h"
 
 #include "access/xact.h"
 
@@ -2173,6 +2174,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
+								
+								/*
+								 * Check whether the domain name contains invalid characters or not.
+								 */
+								if (windows_domain_contains_invalid_chars(orig_loginname))
+									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+													errmsg("'%s' is not valid because the domain name contains invalid characters.", orig_loginname)));
 
 								pfree(stmt->role);
 								stmt->role = convertToUPN(orig_loginname);
@@ -2537,9 +2545,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "password") == 0)
 							{
-								if (!is_member_of_role(GetSessionUserId(), datdba))
-									ereport(ERROR,
-											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && !is_member_of_role(GetSessionUserId(), datdba))
+									ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current login does not have privileges to alter password")));
 
 								has_password = true;
@@ -2572,6 +2579,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							pfree(stmt->role->rolename);
 							stmt->role->rolename = temp_login_name;
 						}
+
+						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
+							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+								errmsg("Current login %s does not have permission to Alter login", 
+								GetUserNameFromId(GetSessionUserId(), true))));
 
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -2687,6 +2699,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					DropRoleStmt *stmt = (DropRoleStmt *) parsetree;
 					bool		drop_user = false;
 					bool		drop_role = false;
+					bool        drop_login = false;
 					bool		all_logins = false;
 					bool		all_users = false;
 					bool		all_roles = false;
@@ -2703,7 +2716,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
 							drop_role = true;
-
+						else 
+							drop_login = true;
+						
 						if (drop_user || drop_role)
 						{
 							char	   *db_name = NULL;
@@ -2829,6 +2844,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							all_roles = true;
 						else
 							other = true;
+
+						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))){
+							ereport(ERROR, 
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+									errmsg("Current login %s does not have permission to Drop login", GetUserNameFromId(GetSessionUserId(), true))));
+						}
 
 						ReleaseSysCache(tuple);
 
@@ -3950,8 +3971,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
 			func->use_count--;
 			func->cur_estate = save_cur_estate;
-			ENRDropTempTables(currentQueryEnv);
-			remove_queryEnv();
+			pltsql_remove_current_query_env();
 			pltsql_revert_guc(save_nestlevel);
 			pltsql_revert_last_scope_identity(scope_level);
 			terminate_batch(true /* send_error */ , false /* compile_error */ );
@@ -3970,8 +3990,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 
 	func->cur_estate = save_cur_estate;
 
-	ENRDropTempTables(currentQueryEnv);
-	remove_queryEnv();
+	pltsql_remove_current_query_env();
 	pltsql_revert_guc(save_nestlevel);
 	pltsql_revert_last_scope_identity(scope_level);
 
@@ -5000,4 +5019,17 @@ set_current_query_is_create_tbl_check_constraint(Node *expr)
 			}
 		}
 	}
+}
+
+void
+pltsql_remove_current_query_env(void)
+{
+	ENRDropTempTables(currentQueryEnv);
+	remove_queryEnv();
+
+	if (!currentQueryEnv ||
+		(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
+	{
+		destroy_failed_transactions_map();
+	} 
 }

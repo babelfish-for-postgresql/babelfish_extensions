@@ -204,6 +204,31 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 	return false;
 }
 
+bool
+IsPltsqlToastRelationHook(Relation relation)
+{
+	/*
+	* If relname is pg_toast and exists in ENR then it is a local toast relation.
+	* Match IsToastRelation() such that return true for locally owned toast relation only.
+	*/
+	if (strstr(RelationGetRelationName(relation), "@pg_toast"))
+		return get_ENR(currentQueryEnv, RelationGetRelationName(relation));
+
+	return IsToastNamespace(RelationGetNamespace(relation));
+}
+
+bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup)
+{
+	/*
+	* Similar as above but different input parameter
+	*/
+	char *relname = NameStr((pg_class_tup)->relname);
+	if (strstr(relname, "@pg_toast"))
+		return get_ENR(currentQueryEnv, relname);
+
+	return IsToastNamespace(pg_class_tup->relnamespace);
+}
+
 /*****************************************
  *			SYSDATABASES
  *****************************************/
