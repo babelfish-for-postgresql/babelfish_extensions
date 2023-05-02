@@ -105,6 +105,7 @@ static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
+static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
 
 /*****************************************
  * 			Commands Hooks
@@ -191,6 +192,7 @@ static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfi
 static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
+static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -320,6 +322,8 @@ InstallExtendedHooks(void)
 
 	PrevIsToastClassHook = IsToastClassHook;
 	IsToastClassHook = IsPltsqlToastClassHook;
+	prev_sortby_nulls_hook = sortby_nulls_hook;
+	sortby_nulls_hook = sort_nulls_first;
 }
 
 void
@@ -371,6 +375,7 @@ UninstallExtendedHooks(void)
 	table_variable_satisfies_vacuum_horizon_hook = prev_table_variable_satisfies_vacuum_horizon;
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
+	sortby_nulls_hook = prev_sortby_nulls_hook;
 }
 
 /*****************************************
@@ -3569,4 +3574,12 @@ pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 	}
 }
 
-
+static void 
+sort_nulls_first(SortGroupClause * sortcl, bool reverse)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+	{
+		/* Tsql NULLS FIRST is default for ASC; other way for DESC */
+		sortcl->nulls_first = !reverse;
+	}
+}
