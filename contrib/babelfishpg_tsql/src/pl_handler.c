@@ -2618,6 +2618,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (islogin)
 					{
 						Oid			datdba;
+						bool		has_password = false;
 
 						datdba = get_role_oid("sysadmin", false);
 
@@ -2631,12 +2632,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "password") == 0)
 							{
-								if (!is_member_of_role(GetSessionUserId(), datdba))
-									ereport(ERROR,
-											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && !is_member_of_role(GetSessionUserId(), datdba))
+									ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current login does not have privileges to alter password")));
+								
+								has_password = true;
 							}
 						}
+
+						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
+							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+								errmsg("Current login %s does not have permission to Alter login", 
+								GetUserNameFromId(GetSessionUserId(), true))));
 
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -2752,6 +2759,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					DropRoleStmt *stmt = (DropRoleStmt *) parsetree;
 					bool		drop_user = false;
 					bool		drop_role = false;
+					bool        drop_login = false;
 					bool		all_logins = false;
 					bool		all_users = false;
 					bool		all_roles = false;
@@ -2768,7 +2776,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
 							drop_role = true;
-
+						else 
+							drop_login = true;
+						
 						if (drop_user || drop_role)
 						{
 							char	   *db_name = NULL;
@@ -2864,6 +2874,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							all_roles = true;
 						else
 							other = true;
+
+						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))){
+							ereport(ERROR, 
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+									errmsg("Current login %s does not have permission to Drop login", GetUserNameFromId(GetSessionUserId(), true))));
+						}
 
 						ReleaseSysCache(tuple);
 
