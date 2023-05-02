@@ -889,8 +889,6 @@ update_DropRoleStmt(Node *n, const char *role)
 		if (strcmp(tmp->rolename, "is_role") == 0)
 			stmt->roles = list_delete_cell(stmt->roles, list_head(stmt->roles));
 
-		pfree(tmp);
-
 		if (!stmt->roles)
 			return;
 
