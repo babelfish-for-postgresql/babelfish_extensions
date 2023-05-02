@@ -452,8 +452,8 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		{
 			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
 			{
-				return PLTsqlProcessTransaction(parsetree, params, qc);
-				//return true;
+				PLTsqlProcessTransaction(parsetree, params, qc);
+				return true;
 			}
 			break;
 		}
