@@ -1885,7 +1885,7 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 /*
  * Transaction processing using tsql semantics
  */
-static void
+extern void
 PLTsqlProcessTransaction(Node *parsetree,
 						 ParamListInfo params,
 						 QueryCompletion *qc)
@@ -2305,15 +2305,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (needCleanup)
 					EventTriggerEndCompleteQuery();
 				return;
-			}
-		case T_TransactionStmt:
-			{
-				if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
-				{
-					PLTsqlProcessTransaction(parsetree, params, qc);
-					return;
-				}
-				break;
 			}
 		case T_TruncateStmt:
 			{
