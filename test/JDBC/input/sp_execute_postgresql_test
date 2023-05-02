@@ -1,0 +1,5 @@
+-- tsql
+exec sp_babelfish_createExtension 'create extension pg_stat_statements with schema sys';
+go
+exec sp_babelfish_createExtension 'drop extension pg_stat_statements';
+gof
