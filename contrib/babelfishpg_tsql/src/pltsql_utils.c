@@ -75,192 +75,293 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
  * Also, length should be restricted to 8000 for sys.varchar and sys.char datatypes.
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
+
+/*
+ * Transaction processing using tsql semantics
+ */
+extern void
+PLTsqlProcessTransaction(Node *parsetree,
+						 ParamListInfo params,
+						 QueryCompletion *qc)
+{
+	char	   *txnName = NULL;
+	TransactionStmt *stmt = (TransactionStmt *) parsetree;
+
+	if (params != NULL && params->numParams > 0 && !params->params[0].isnull)
+	{
+		Oid			typOutput;
+		bool		typIsVarlena;
+		FmgrInfo	finfo;
+
+		Assert(params->numParams == 1);
+		getTypeOutputInfo(params->params[0].ptype, &typOutput, &typIsVarlena);
+		fmgr_info(typOutput, &finfo);
+		txnName = OutputFunctionCall(&finfo, params->params[0].value);
+	}
+	else
+		txnName = stmt->savepoint_name;
+
+	if (txnName != NULL && strlen(txnName) > TSQL_TXN_NAME_LIMIT / 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("Transaction name length %zu above limit %u",
+						strlen(txnName), TSQL_TXN_NAME_LIMIT / 2)));
+
+	if (AbortCurTransaction)
+	{
+		if (stmt->kind == TRANS_STMT_BEGIN ||
+			stmt->kind == TRANS_STMT_COMMIT ||
+			stmt->kind == TRANS_STMT_SAVEPOINT)
+			ereport(ERROR,
+					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+					 errmsg("The current transaction cannot be committed and cannot support operations that write to the log file. Roll back the transaction.")));
+	}
+
+	switch (stmt->kind)
+	{
+		case TRANS_STMT_BEGIN:
+			{
+				PLTsqlStartTransaction(txnName);
+			}
+			break;
+
+		case TRANS_STMT_COMMIT:
+			{
+				if (exec_state_call_stack &&
+					exec_state_call_stack->estate &&
+					exec_state_call_stack->estate->insert_exec &&
+					NestedTranCount <= 1)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+
+				PLTsqlCommitTransaction(qc, stmt->chain);
+			}
+			break;
+
+		case TRANS_STMT_ROLLBACK:
+			{
+				if (exec_state_call_stack &&
+					exec_state_call_stack->estate &&
+					exec_state_call_stack->estate->insert_exec)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+
+				/*
+				 * Table variables should be immune to ROLLBACK, but we
+				 * haven't implemented this yet so we throw an error if
+				 * ROLLBACK is used with table variables.
+				 */
+				if (exec_state_call_stack &&
+					exec_state_call_stack->estate &&
+					exec_state_call_stack->estate->func &&
+					list_length(exec_state_call_stack->estate->func->table_varnos) > 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("ROLLBACK statement with active table variables is not yet supported.")));
+				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
+			}
+			break;
+
+		case TRANS_STMT_SAVEPOINT:
+			RequireTransactionBlock(true, "SAVEPOINT");
+			DefineSavepoint(txnName);
+			break;
+
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TRANSACTION_INITIATION),
+					 errmsg("Unsupported transaction command : %d", stmt->kind)));
+			break;
+	}
+}
+
 bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
     CreateFunctionStmt *stmt = (CreateFunctionStmt *)parsetree;
-			ListCell *option, *location_cell = NULL;
-			DefElem    *language_item = NULL;
-			char *language = NULL;
-			ObjectAddress address;
-			bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
-			bool needCleanup;
-			Node *tbltypStmt = NULL;
-			Node *trigStmt = NULL;
-			ObjectAddress tbltyp;
-			int origname_location = -1;
+	ListCell *option, *location_cell = NULL;
+	DefElem    *language_item = NULL;
+	char *language = NULL;
+	ObjectAddress address;
+	bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+	bool needCleanup;
+	Node *tbltypStmt = NULL;
+	Node *trigStmt = NULL;
+	ObjectAddress tbltyp;
+	int origname_location = -1;
+					
+	pstate->p_sourcetext = queryString;
 
-			pstate->p_sourcetext = queryString;
-
-			foreach(option, stmt->options)
-					{
-						DefElem *defel = (DefElem *)lfirst(option); 
-
-						if (strcmp(defel->defname, "language") == 0)
-						{
-							if (language_item)
-								ereport(ERROR,
-										(errcode(ERRCODE_SYNTAX_ERROR),
-										errmsg("conflicting or redundant options"),
-										parser_errposition(pstate, defel->location)));
-							language_item = defel;
-						}
-					}
-
-			if (language_item)
-				language = strVal(language_item->arg);
-
-			if(!((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL))
+	foreach(option, stmt->options)
 			{
-				return false;
+				DefElem *defel = (DefElem *)lfirst(option); 
+
+				if (strcmp(defel->defname, "language") == 0)
+				{
+					if (language_item)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								errmsg("conflicting or redundant options"),
+								parser_errposition(pstate, defel->location)));
+					language_item = defel;
+				}
 			}
 
-			else
-			{	
-				/* All event trigger calls are done only when isCompleteQuery is true */
-				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+	if (language_item)
+		language = strVal(language_item->arg);
 
-				/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
-				PG_TRY();
+	if(!((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL))
+	{
+		return false;
+	}
+
+	else
+	{	
+		/* All event trigger calls are done only when isCompleteQuery is true */
+		needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+
+		/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
+		PG_TRY();
+		{
+
+			if (isCompleteQuery)
+				EventTriggerDDLCommandStart(parsetree);
+
+			foreach (option, stmt->options)
+			{
+				DefElem *defel = (DefElem *)lfirst(option);
+				if (strcmp(defel->defname, "tbltypStmt") == 0)
 				{
-
-					if (isCompleteQuery)
-						EventTriggerDDLCommandStart(parsetree);
-
-					foreach (option, stmt->options)
-					{
-						DefElem *defel = (DefElem *)lfirst(option);
-						if (strcmp(defel->defname, "tbltypStmt") == 0)
-						{
-							/*
-							* tbltypStmt is an implicit option in tsql dialect,
-							* we use this mechanism to create tsql style
-							* multi-statement table-valued function and its
-							* return (table) type in one statement.
-							*/
-							tbltypStmt = defel->arg;
-						}
-						else if (strcmp(defel->defname, "trigStmt") == 0)
-						{
-							/*
-							* trigStmt is an implicit option in tsql dialect,
-							* we use this mechanism to create tsql style function
-							* and trigger in one statement.
-							*/
-							trigStmt = defel->arg;
-						}
-						else if (strcmp(defel->defname, "location") == 0)
-						{
-							/*
-							* location is an implicit option in tsql dialect,
-							* we use this mechanism to store location of function
-							* name so that we can extract original input function
-							* name from queryString.
-							*/
-							origname_location = intVal((Node *)defel->arg);
-							location_cell = option;
-							pfree(defel);
-						}
-					}
-
-					/* delete location cell if it exists as it is for internal use only */
-					if (location_cell)
-						stmt->options = list_delete_cell(stmt->options, location_cell);
-
 					/*
-					* For tbltypStmt, we need to first process the CreateStmt
-					* to create the type that will be used as the function's
-					* return type. Then, after the function is created, add a
-					* dependency between the type and the function.
+					* tbltypStmt is an implicit option in tsql dialect,
+					* we use this mechanism to create tsql style
+					* multi-statement table-valued function and its
+					* return (table) type in one statement.
 					*/
-					if (tbltypStmt)
-					{
-						/* Handle tbltypStmt, which is a CreateStmt */
-						PlannedStmt *wrapper;
-
-						wrapper = makeNode(PlannedStmt);
-						wrapper->commandType = CMD_UTILITY;
-						wrapper->canSetTag = false;
-						wrapper->utilityStmt = tbltypStmt;
-						wrapper->stmt_location = pstmt->stmt_location;
-						wrapper->stmt_len = pstmt->stmt_len;
-
-						ProcessUtility(wrapper,
-									queryString,
-									false,
-									PROCESS_UTILITY_SUBCOMMAND,
-									params,
-									NULL,
-									None_Receiver,
-									NULL);
-
-						/* Need CCI between commands */
-						CommandCounterIncrement();
-					}
-
-					address = CreateFunction(pstate, stmt);
-
-					/* Store function/procedure related metadata in babelfish catalog */
-					pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
-
-					if (tbltypStmt || restore_tsql_tabletype)
-					{
-						/*
-						* Add internal dependency between the table type and
-						* the function.
-						*/
-						tbltyp.classId = TypeRelationId;
-						tbltyp.objectId = typenameTypeId(pstate,
-														stmt->returnType);
-						tbltyp.objectSubId = 0;
-						recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
-					}
-
-					/*
-					* For trigStmt, we need to process the CreateTrigStmt after
-					* the function is created, and record bidirectional
-					* dependency so that Drop Trigger CASCADE will drop the
-					* implicit trigger function.
-					* Create trigger takes care of dependency addition.
-					*/
-					if (trigStmt)
-					{
-						(void)CreateTrigger((CreateTrigStmt *)trigStmt,
-											pstate->p_sourcetext, InvalidOid, InvalidOid,
-											InvalidOid, InvalidOid, address.objectId,
-											InvalidOid, NULL, false, false);
-					}
-
-					/*
-					* Remember the object so that ddl_command_end event triggers have
-					* access to it.
-					*/
-					EventTriggerCollectSimpleCommand(address, InvalidObjectAddress,
-													parsetree);
-
-					if (isCompleteQuery)
-					{
-						EventTriggerSQLDrop(parsetree);
-						EventTriggerDDLCommandEnd(parsetree);
-					}
+					tbltypStmt = defel->arg;
 				}
-
-				PG_CATCH();
+				else if (strcmp(defel->defname, "trigStmt") == 0)
 				{
-					if (needCleanup)
-						EventTriggerEndCompleteQuery();
-					PG_RE_THROW();
+					/*
+					* trigStmt is an implicit option in tsql dialect,
+					* we use this mechanism to create tsql style function
+					* and trigger in one statement.
+					*/
+					trigStmt = defel->arg;
 				}
-				PG_END_TRY();
-
-				if (needCleanup)
-					EventTriggerEndCompleteQuery();
-
-				return true;
-
+				else if (strcmp(defel->defname, "location") == 0)
+				{
+					/*
+					* location is an implicit option in tsql dialect,
+					* we use this mechanism to store location of function
+					* name so that we can extract original input function
+					* name from queryString.
+					*/
+					origname_location = intVal((Node *)defel->arg);
+					location_cell = option;
+					pfree(defel);
+				}
 			}
+
+			/* delete location cell if it exists as it is for internal use only */
+			if (location_cell)
+				stmt->options = list_delete_cell(stmt->options, location_cell);
+
+			/*
+			* For tbltypStmt, we need to first process the CreateStmt
+			* to create the type that will be used as the function's
+			* return type. Then, after the function is created, add a
+			* dependency between the type and the function.
+			*/
+			if (tbltypStmt)
+			{
+				/* Handle tbltypStmt, which is a CreateStmt */
+				PlannedStmt *wrapper;
+
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = tbltypStmt;
+				wrapper->stmt_location = pstmt->stmt_location;
+				wrapper->stmt_len = pstmt->stmt_len;
+
+				ProcessUtility(wrapper,
+							queryString,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							params,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				/* Need CCI between commands */
+				CommandCounterIncrement();
+			}
+
+			address = CreateFunction(pstate, stmt);
+
+			/* Store function/procedure related metadata in babelfish catalog */
+			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
+
+			if (tbltypStmt || restore_tsql_tabletype)
+			{
+				/*
+				* Add internal dependency between the table type and
+				* the function.
+				*/
+				tbltyp.classId = TypeRelationId;
+				tbltyp.objectId = typenameTypeId(pstate,
+												stmt->returnType);
+				tbltyp.objectSubId = 0;
+				recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
+			}
+
+			/*
+			* For trigStmt, we need to process the CreateTrigStmt after
+			* the function is created, and record bidirectional
+			* dependency so that Drop Trigger CASCADE will drop the
+			* implicit trigger function.
+			* Create trigger takes care of dependency addition.
+			*/
+			if (trigStmt)
+			{
+				(void)CreateTrigger((CreateTrigStmt *)trigStmt,
+									pstate->p_sourcetext, InvalidOid, InvalidOid,
+									InvalidOid, InvalidOid, address.objectId,
+									InvalidOid, NULL, false, false);
+			}
+
+			/*
+			* Remember the object so that ddl_command_end event triggers have
+			* access to it.
+			*/
+			EventTriggerCollectSimpleCommand(address, InvalidObjectAddress,
+											parsetree);
+
+			if (isCompleteQuery)
+			{
+				EventTriggerSQLDrop(parsetree);
+				EventTriggerDDLCommandEnd(parsetree);
+			}
+		}
+
+		PG_CATCH();
+		{
+			if (needCleanup)
+				EventTriggerEndCompleteQuery();
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+
+		if (needCleanup)
+			EventTriggerEndCompleteQuery();
+
+		return true;
+	}
 }
 
 void
