@@ -961,11 +961,21 @@ rewrite_rangevar(RangeVar *rv)
 static void
 set_schemaname_dbo_to_sys(RangeVar *rv)
 {
-	char* list_of_dbo_catalog[5]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages"};
-	char* list_of_dbo_catalog_not_supported_for_cross_db[4]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects"};
+	/*
+	 * list_of_dbo_catalog
+	 * 		Contains the list of sys% views which are not database specific
+	 *
+	 * list_of_dbo_catalog_not_supported_for_cross_db
+	 * 		Contains the list of sys% views which are database specific
+	 *
+	 * NOTE: While adding the sys% views to list check whether view is an database specific or not.
+	 *
+	 */
+	char* list_of_dbo_catalog[6]= {"sysprocesses", "syscharsets", "sysconfigures", "syscurconfigs", "syslanguages", "syslogins"};
+	char* list_of_dbo_catalog_not_supported_for_cross_db[6]= {"syscolumns", "sysforeignkeys", "sysindexes", "sysobjects", "systypes", "sysusers"};
 	if (rv->schemaname && strcmp(rv->schemaname, "dbo") == 0)
 	{
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < (sizeof(list_of_dbo_catalog)/sizeof(list_of_dbo_catalog[0])); i++)
 		{
 			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog[i]) == 0)
 			{
@@ -973,7 +983,7 @@ set_schemaname_dbo_to_sys(RangeVar *rv)
 				break;
 			}
 		}
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < (sizeof(list_of_dbo_catalog_not_supported_for_cross_db)/sizeof(list_of_dbo_catalog_not_supported_for_cross_db[0])); i++)
 		{
 			if(rv->relname && strcmp(rv->relname, list_of_dbo_catalog_not_supported_for_cross_db[i]) == 0)
 			{

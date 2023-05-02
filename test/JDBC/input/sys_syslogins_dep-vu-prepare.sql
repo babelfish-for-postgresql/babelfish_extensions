@@ -30,3 +30,6 @@ BEGIN
     RETURN (SELECT COUNT(*) FROM sys.syslogins WHERE name LIKE '%sys_syslogins_dep_vu_prepare%')
 END
 GO
+
+CREATE DATABASE sys_syslogins_dep_vu_prepare_db
+GO
