@@ -23,13 +23,32 @@ GO
 SELECT count(*) FROM sys.systypes WHERE name = 'sys_systypes_type';
 GO
 
-CREATE TYPE sys_systypes_type FROM int;
+-- systypes should also exist in schema "dbo"
+SELECT count(*) FROM dbo.systypes WHERE name = 'sys_systypes_type';
 GO
 
+-- Cross-db
+SELECT count(*) FROM sys_systypes_db.sys.systypes WHERE name = 'sys_systypes_type';
+GO
+
+SELECT count(*) FROM sys_systypes_db.dbo.systypes WHERE name = 'sys_systypes_type';
+GO
+
+CREATE TYPE sys_systypes_type FROM int;
+GO
 
 SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys.systypes WHERE name = 'sys_systypes_type';
 GO
 
+SELECT name, status, length, variable, allownulls, printfmt, collation FROM dbo.systypes WHERE name = 'sys_systypes_type';
+GO
+
+-- Cross-db
+SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys_systypes_db.sys.systypes WHERE name = 'sys_systypes_type';
+GO
+
+SELECT name, status, length, variable, allownulls, printfmt, collation FROM sys_systypes_db.dbo.systypes WHERE name = 'sys_systypes_type';
+GO
 
 DROP TYPE sys_systypes_type;
 GO
