@@ -51,7 +51,7 @@ int#!#int
 
 ~~START~~
 text
-@tv1_1
+@tv1_0
 ~~END~~
 
 
@@ -95,7 +95,7 @@ int#!#int
 
 ~~START~~
 text
-@tv1_1
+@tv1_0
 ~~END~~
 
 
@@ -186,7 +186,7 @@ int
 
 ~~START~~
 text
-@tvp2_1
+@tvp2_0
 ~~END~~
 
 
@@ -445,7 +445,7 @@ GO
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tv1_1_pkey")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@tv1_0_pkey")~~
 
 ~~START~~
 int#!#int#!#char
@@ -468,7 +468,7 @@ GO
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tv1_1_pkey")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@tv1_0_pkey")~~
 
 ~~START~~
 int#!#int#!#char
@@ -498,7 +498,7 @@ GO
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tv1_1_a_key")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@tv1_0_a_key")~~
 
 ~~START~~
 varchar#!#int#!#char
@@ -508,10 +508,10 @@ varchar#!#int#!#char
 
 ~~START~~
 text
-@tv1_1
+@tv1_0
 @pg_toast_#oid_masked#
 @pg_toast_#oid_masked#_index
-@tv1_1_a_key
+@tv1_0_a_key
 ~~END~~
 
 
@@ -533,7 +533,7 @@ GO
 
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tv1_1_a_key")~~
+~~ERROR (Message: duplicate key value violates unique constraint "@tv1_0_a_key")~~
 
 ~~START~~
 varchar#!#int#!#char
