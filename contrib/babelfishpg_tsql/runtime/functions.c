@@ -2094,232 +2094,177 @@ numeric_radians(PG_FUNCTION_ARGS)
 Datum
 parsename(PG_FUNCTION_ARGS)
 {
-	text *object_name = PG_GETARG_TEXT_PP(0);
-	int object_piece = PG_GETARG_INT32(1);
-	char *object_name_str = text_to_cstring(object_name);
-	UErrorCode errorCode = U_ZERO_ERROR;
-	UChar unicode_object_name_str[256] = {0};
-	int len;
-	UChar requested_object_part[256] = {0};
-	int current_part = 1;
-	int state = 0; // 0: outside quotes and brackets, 1: inside quotes, 2: inside brackets
-	int improperly_enclosed = 0;
-	int max_parts = 1;
-	int max_length;
-	int part_lengths[256] = {0};
-	
-	// Calculate max_parts based on the number of dots in the input string
-	for (char *dot = strchr(object_name_str, '.'); dot != NULL; dot = strchr(dot + 1, '.'))
-	{
-		max_parts++;
-	}
-    // Convert the input string to Unicode using ICU
-	u_strFromUTF8(unicode_object_name_str, sizeof(unicode_object_name_str) / sizeof(UChar), NULL, object_name_str, -1, &errorCode);
-	if (U_FAILURE(errorCode))
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	len = u_strlen(unicode_object_name_str);
-	if (object_piece < 1 || object_piece > max_parts)
-	{
-		PG_RETURN_NULL();
-	}
-	// Change the requested object_piece to reverse the order
-	object_piece = max_parts - object_piece + 1;
-	// Determine the maximum allowed length based on whether the input is Unicode or not
-	max_length = (len != strlen(object_name_str)) ? 255 : 128;
-	// Parsing loop to calculate part_lengths
-	for (int i = 0; i < len; i++)
-	{
-		UChar c = unicode_object_name_str[i];
-		if (state == 0) // Outside quotes and brackets
-		{
-			if (c == '"')
-			{
-				state = 1;
-			}
-			else if (c == '[')
-			{
-				state = 2;
-			}
-			else if(c == ']')
-			{
-				pfree(object_name_str);
-				PG_RETURN_NULL();
-			}
-			else if (c == '.')
-			{
-				current_part++;
-			}
-			else
-			{
-				part_lengths[current_part]++;
-			}
-		}
-		else if (state == 1) // Inside quotes
-		{
-			if (c == '"')
-			{
-				if (i + 1 < len && unicode_object_name_str[i + 1] == '"')
-				{
-					part_lengths[current_part]++;
-					i++;
-				}
+    text *object_name = PG_GETARG_TEXT_PP(0);
+    int object_piece = PG_GETARG_INT32(1);
+    char *object_name_str = text_to_cstring(object_name);
+    int len = strlen(object_name_str);
+    char object_parts[256] = {0};
+    char *part_ptrs[4] = {object_parts, NULL, NULL, NULL};
+    int current_part = 0;
+    int state = 0; // 0: outside quotes and brackets, 1: inside quotes, 2: inside brackets
+    int dot_count = 0;
+    int improperly_enclosed = 0;
+    int improper_close_bracket = 0;
+    if (object_piece < 1 || object_piece > 4)
+    {
+        PG_RETURN_NULL();
+    }
+    for (int i = 0; i < len; i++)
+    {
+        char c = object_name_str[i];
+        int part_len = strlen(part_ptrs[current_part]);
+        if (state == 0) // Outside quotes and brackets
+        {
+            if (c == '"')
+            {
+                state = 1;
+            }
+            else if (c == '[')
+            {
+                state = 2;
+            }
+            else if(c == ']')
+            {
+                improper_close_bracket = 1;
+            }
+            else if (c == '.')
+            {
+                current_part++;
+                dot_count++;
+                if (current_part > 3)
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+                part_ptrs[current_part] = part_ptrs[current_part - 1] + part_len + 1;
+            }
+            else
+            {
+                if (part_len < 128)
+                {
+                    part_ptrs[current_part][part_len] = c;
+                }
+                else
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+            }
+        }
+        else if (state == 1) // Inside quotes
+        {
+            if (c == '"')
+            {
+                if (i + 1 < len && object_name_str[i + 1] == '"')
+                {
+                    if (part_len < 128)
+                    {
+                        part_ptrs[current_part][part_len] = c;
+                    }
+                    else
+                    {
+                        pfree(object_name_str);
+                        PG_RETURN_NULL();
+                    }
+                    i++;
+                }
+                else
+                {
+                    state = 0;
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        improperly_enclosed = 1;
+                    }
+                }
+            }
+            else
+            {
+                if (part_len < 128)
+                {
+                    part_ptrs[current_part][part_len] = c;
+                }
+                else
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+            }
+        }
+        else if (state == 2) // Inside brackets
+        {
+            if (c == ']')
+            {
+                if (i + 1 < len && object_name_str[i + 1] == ']')
+                {
+                    if (part_len < 128)
+                    {
+                        part_ptrs[current_part][part_len] = c;
+                    }
+                    else
+                    {
+                        pfree(object_name_str);
+                        PG_RETURN_NULL();
+                    }
+                    i++;
+                }
 				else
-				{
-					state = 0;
-					if (i + 1 < len && unicode_object_name_str[i + 1] != '.')
-					{
-						improperly_enclosed = 1;
-					}
-				}
-			}
-			else
-			{
-				part_lengths[current_part]++;
-			}
-		}
-		else if (state == 2) // Inside brackets
-		{
-			if (c == ']')
-			{
-				if (i + 1 < len && unicode_object_name_str[i + 1] == ']')
-				{
-					part_lengths[current_part]++;
-					i++;
-				}
-				else
-				{
-					state = 0;
-					if (i + 1 < len && unicode_object_name_str[i + 1] != '.')
-					{
-						improperly_enclosed = 1;
-					}
-				}
-			}
-			else
-			{
-				part_lengths[current_part]++;
-			}
-		}
-	}
-	//Check if any part_lengths exceed the maximum allowed length
-	for (int i = 1; i <= max_parts; i++)
-	{
-		if (part_lengths[i] > max_length)
-		{
-			pfree(object_name_str);
-			PG_RETURN_NULL();
-		}
-	}
-	if (improperly_enclosed)
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	// Reset state and current_part for the parsing loop
-	state = 0;
-	current_part = 1;
-	// Parsing loop
-	for (int i = 0; i < len; i++)
-	{
-		UChar c = unicode_object_name_str[i];
-		int part_len = u_strlen(requested_object_part);
-		if (state == 0) // Outside quotes and brackets
-		{
-			if (c == '"')
-			{
-				state = 1;
-			}
-			else if (c == '[')
-			{
-				state = 2;
-			}
-			else if (c == '.')
-			{
-				current_part++;
-			}
-			else if (current_part == object_piece)
-			{
-				requested_object_part[part_len] = c;
-				requested_object_part[part_len + 1] = '\0';
-			}
-		}
-		else if (state == 1) // Inside quotes
-		{
-			if (c == '"')
-			{
-				if (i + 1 < len && unicode_object_name_str[i + 1] == '"')
-				{
-					if (current_part == object_piece)
-					{
-						requested_object_part[part_len] = c;
-						requested_object_part[part_len + 1] = '\0';
-					}
-					i++;
-				}
-				else
-				{
-					state = 0;
-				}
-			}
-			else if (current_part == object_piece)
-			{
-				requested_object_part[part_len] = c;
-				requested_object_part[part_len + 1] = '\0';
-			}
-		}
-		else if (state == 2) // Inside brackets
-		{
-			if (c == ']')
-			{
-				if (i + 1 < len && unicode_object_name_str[i + 1] == ']')
-				{
-					if (current_part == object_piece)
-					{
-						requested_object_part[part_len] = c;
-						requested_object_part[part_len + 1] = '\0';
-					}
-					i++;
-				}
-				else
-				{
-					state = 0;
-				}
-			}
-			else if (current_part == object_piece)
-			{
-				requested_object_part[part_len] = c;
-				requested_object_part[part_len + 1] = '\0';
-			}
-		}
-	}
-	if (state != 0)
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	if (u_strlen(requested_object_part) > 0)
-	{
-		// Convert the result from Unicode to UTF-8
-		char utf8_result[256] = {0};
-		text *result;
-		u_strToUTF8(utf8_result, sizeof(utf8_result), NULL, requested_object_part, -1, &errorCode);
-		if (U_FAILURE(errorCode))
-		{
-			pfree(object_name_str);
-			PG_RETURN_NULL();
-		}
-		result = cstring_to_text(utf8_result);
-		pfree(object_name_str);
-		PG_RETURN_TEXT_P(result);
-	}
-	else
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
+                {
+                    state = 0;
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        improperly_enclosed = 1;
+                    }
+                }
+            }
+            else
+            {
+                if (part_len < 128)
+                {
+                    part_ptrs[current_part][part_len] = c;
+                }
+                else
+                {
+                    pfree(object_name_str);
+                    PG_RETURN_NULL();
+                }
+            }
+        }
+    }
+    if (improperly_enclosed || improper_close_bracket)
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
+    if (state != 0)
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
+    if (dot_count > 3)
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
+	if (object_piece - 1 <= current_part)
+    {
+        //if (strlen(part_ptrs[object_piece - 1]) > 0 || dot_count == 0)
+		if (strlen(part_ptrs[(current_part - object_piece +1)])>0)
+        {
+            text *result = cstring_to_text(part_ptrs[current_part - object_piece + 1]);
+            pfree(object_name_str);
+            PG_RETURN_TEXT_P(result);
+        }
+        else
+        {
+            pfree(object_name_str);
+            PG_RETURN_NULL();
+        }
+    }
+    else
+    {
+        pfree(object_name_str);
+        PG_RETURN_NULL();
+    }
 }
 
 /* Returns the database schema name for schema-scoped objects. */
