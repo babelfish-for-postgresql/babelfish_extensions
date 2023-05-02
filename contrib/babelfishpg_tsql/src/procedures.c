@@ -2253,10 +2253,13 @@ update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert)
 		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
 
 		if (!old_tuple)
+		{
+			table_endscan(tblscan);
+			table_close(bbf_servers_def_rel, RowExclusiveLock);
 			ereport(ERROR,
-				(errcode(ERRCODE_FDW_ERROR),
-				 errmsg("server \"%s\" does not exist", servername)));
-
+					(errcode(ERRCODE_FDW_ERROR),
+				 	errmsg("server \"%s\" does not exist", servername)));
+		}
 		new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
 		tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
 								new_record, new_record_nulls, new_record_repl);
