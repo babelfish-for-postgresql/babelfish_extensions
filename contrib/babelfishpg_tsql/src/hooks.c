@@ -64,6 +64,7 @@
 #include "session.h"
 #include "multidb.h"
 #include "tsql_analyze.h"
+#include "table_variable_mvcc.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -75,6 +76,9 @@ extern bool pltsql_ansi_nulls;
  * 			Catalog Hooks
  *****************************************/
 IsExtendedCatalogHookType PrevIsExtendedCatalogHook = NULL;
+IsToastRelationHookType PrevIsToastRelationHook = NULL;
+IsToastClassHookType PrevIsToastClassHook = NULL;
+
 static bool PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 								 bool include_out_arguments, int pronargs,
 								 int **argnumbers, List **defaults);
@@ -195,6 +199,10 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
+static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfies_visibility = NULL;
+static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
+static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
+static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -319,6 +327,24 @@ InstallExtendedHooks(void)
 
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
+
+	prev_table_variable_satisfies_update = table_variable_satisfies_update_hook;
+	table_variable_satisfies_update_hook = TVHeapTupleSatisfiesUpdate;
+
+	prev_table_variable_satisfies_visibility = table_variable_satisfies_visibility_hook;
+	table_variable_satisfies_visibility_hook = TVHeapTupleSatisfiesVisibility;
+
+	prev_table_variable_satisfies_vacuum = table_variable_satisfies_vacuum_hook;
+	table_variable_satisfies_vacuum_hook = TVHeapTupleSatisfiesVacuum;
+
+	prev_table_variable_satisfies_vacuum_horizon = table_variable_satisfies_vacuum_horizon_hook;
+	table_variable_satisfies_vacuum_horizon_hook = TVHeapTupleSatisfiesVacuumHorizon;
+
+	PrevIsToastRelationHook = IsToastRelationHook;
+	IsToastRelationHook = IsPltsqlToastRelationHook;
+
+	PrevIsToastClassHook = IsToastClassHook;
+	IsToastClassHook = IsPltsqlToastClassHook;
 }
 
 void
@@ -369,6 +395,12 @@ UninstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
+	table_variable_satisfies_visibility_hook = prev_table_variable_satisfies_visibility;
+	table_variable_satisfies_update_hook = prev_table_variable_satisfies_update;
+	table_variable_satisfies_vacuum_hook = prev_table_variable_satisfies_vacuum;
+	table_variable_satisfies_vacuum_horizon_hook = prev_table_variable_satisfies_vacuum_horizon;
+	IsToastRelationHook = PrevIsToastRelationHook;
+	IsToastClassHook = PrevIsToastClassHook;
 }
 
 /*****************************************
@@ -3691,7 +3723,7 @@ bbf_check_rowcount_hook(int es_processed)
 		return false;
 }
 
-static void 
+static void
 sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 {
 	if (sql_dialect == SQL_DIALECT_TSQL)
@@ -3700,3 +3732,5 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 		sortcl->nulls_first = !reverse;
 	}
 }
+
+
