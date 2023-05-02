@@ -54,8 +54,6 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[table_unique](
 	[a] [int] NOT NULL,
-	[b] [int] NOT NULL,
-	[c] [int] NULL,
  CONSTRAINT [table_unique_a_key] UNIQUE NONCLUSTERED 
 (
 	[a]

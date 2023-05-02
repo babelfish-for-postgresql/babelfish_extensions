@@ -11,6 +11,7 @@
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
 #include "pltsql_bulkcopy.h"
+#include "table_variable_mvcc.h"
 
 #include "catalog.h"
 #include "dbcmds.h"
@@ -1222,6 +1223,8 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 		if (var->tbltypeid == InvalidOid)
 			var->tbltypeid = TypenameGetTypid(tblname);
 		var->need_drop = true;
+
+		init_failed_transactions_map();
 	}
 	PG_CATCH();
 	{
@@ -1448,15 +1451,14 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	PG_CATCH();
 	{
 		/* Delete temporary tables as ENR */
-		ENRDropTempTables(currentQueryEnv);
-		remove_queryEnv();
+		pltsql_remove_current_query_env();
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	/* Delete temporary tables as ENR */
-	ENRDropTempTables(currentQueryEnv);
-	remove_queryEnv();
+	pltsql_remove_current_query_env();
 
 	after_lxid = MyProc->lxid;
 

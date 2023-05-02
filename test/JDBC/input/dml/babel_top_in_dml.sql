@@ -327,7 +327,7 @@ INSERT INTO babel_update_tbl1 VALUES (1, 'left'), (2, 'inner');
 INSERT INTO babel_update_tbl2 VALUES (10, 'inner'), (30, 'right');
 INSERT INTO babel_update_tbl3 VALUES (1, 10), (3, 10);
 go
-CREATE VIEW babel_update_view AS SELECT * FROM babel_update_tbl1 WHERE babel_update_tbl1.a > 1;
+CREATE VIEW babel_update_top_view AS SELECT * FROM babel_update_tbl1 WHERE babel_update_tbl1.a > 1;
 go
 CREATE SCHEMA babel_update_schema
 go
@@ -427,7 +427,7 @@ go
 BEGIN TRAN
 INSERT INTO babel_update_tbl1 VALUES (3, 'extra')
 UPDATE top(1) v1 SET a = 100
-FROM babel_update_view v1
+FROM babel_update_top_view v1
 WHERE a = 2
 ROLLBACK
 go
@@ -439,7 +439,7 @@ FROM babel_update_schema.babel_update_tbl1 t1
 ROLLBACK
 GO
 
-DROP VIEW babel_update_view
+DROP VIEW babel_update_top_view
 go
 DROP TABLE babel_update_tbl1
 DROP TABLE babel_update_tbl2
@@ -518,7 +518,7 @@ INSERT INTO babel_delete_tbl2 VALUES (10, 'inner'), (30, 'right');
 INSERT INTO babel_delete_tbl3 VALUES (1, 10), (3, 10);
 go
 
-CREATE VIEW babel_delete_view AS SELECT * FROM babel_delete_tbl1 WHERE babel_delete_tbl1.a > 1;
+CREATE VIEW babel_delete_top_view AS SELECT * FROM babel_delete_tbl1 WHERE babel_delete_tbl1.a > 1;
 go
 CREATE SCHEMA babel_delete_schema
 go
@@ -609,7 +609,7 @@ go
 BEGIN TRAN
 INSERT INTO babel_delete_tbl1 VALUES (3, 'extra')
 DELETE top(1) v1
-FROM babel_delete_view v1
+FROM babel_delete_top_view v1
 WHERE a = 2
 ROLLBACK
 go
@@ -638,7 +638,7 @@ FROM babel_delete_tbl2 AS babel_delete_tbl1
 GO
 
 
-DROP VIEW babel_delete_view
+DROP VIEW babel_delete_top_view
 go
 DROP TABLE babel_delete_tbl1
 DROP TABLE babel_delete_tbl2

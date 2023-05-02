@@ -836,7 +836,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 static void
 getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tupdesc)
 {
-	LinkedServerProcess lsproc;
+	LinkedServerProcess lsproc = NULL;
 
 	PG_TRY();
 	{
@@ -1079,8 +1079,11 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 	}
 	PG_FINALLY();
 	{
-		LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connections to remote server");
-		LINKED_SERVER_EXIT();
+		if (lsproc)
+		{
+			LINKED_SERVER_DEBUG("LINKED SERVER: (Metadata) - Closing connections to remote server");
+			LINKED_SERVER_EXIT();
+		}
 	}
 	PG_END_TRY();
 }
@@ -1243,8 +1246,11 @@ openquery_imp(PG_FUNCTION_ARGS)
 	}
 	PG_FINALLY();
 	{
-		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connections to remote server");
-		LINKED_SERVER_EXIT();
+		if (lsproc)
+		{
+			LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Closing connections to remote server");
+			LINKED_SERVER_EXIT();
+		}
 
 		if (query)
 			pfree(query);
