@@ -67,6 +67,14 @@ GO
 ~~ERROR (Message: @optvalue parameter cannot be NULL)~~
 
 
+-- sp_serveroption with negative optvalue
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='-5'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for query timeout.)~~
+
+
 -- sp_serveroption with valid server, optname and optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
 GO

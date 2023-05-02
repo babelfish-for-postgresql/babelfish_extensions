@@ -47,6 +47,10 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue=NULL
 GO
 
+-- sp_serveroption with negative optvalue
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='-5'
+GO
+
 -- sp_serveroption with valid server, optname and optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
 GO

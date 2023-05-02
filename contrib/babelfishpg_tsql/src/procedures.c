@@ -2220,6 +2220,11 @@ update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert)
 	HeapTuple		tuple, old_tuple;
 	TableScanDesc	tblscan;
 
+	if (query_timeout < 0)
+		ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					 errmsg("Invalid option value for query timeout.")));
+
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
 									 RowExclusiveLock);
 	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
