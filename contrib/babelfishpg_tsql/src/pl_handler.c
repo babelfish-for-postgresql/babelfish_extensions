@@ -2618,6 +2618,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (islogin)
 					{
 						Oid			datdba;
+						bool		has_password = false;
 
 						datdba = get_role_oid("sysadmin", false);
 
@@ -2634,6 +2635,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && !is_member_of_role(GetSessionUserId(), datdba))
 									ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current login does not have privileges to alter password")));
+								
+								has_password = true;
 							}
 						}
 
