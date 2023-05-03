@@ -78,7 +78,7 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
 /*
  * Transaction processing using tsql semantics
  */
-extern void
+void
 PLTsqlProcessTransaction(Node *parsetree,
 						 ParamListInfo params,
 						 QueryCompletion *qc)
