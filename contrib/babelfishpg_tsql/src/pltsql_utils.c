@@ -75,6 +75,94 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
  * Also, length should be restricted to 8000 for sys.varchar and sys.char datatypes.
  * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
  */
+/*
+ * Transaction processing using tsql semantics
+ */
+extern void
+PLTsqlProcessTransaction(Node *parsetree,
+						 ParamListInfo params,
+						 QueryCompletion *qc)
+{
+	char	   *txnName = NULL;
+	TransactionStmt *stmt = (TransactionStmt *) parsetree;
+
+	if (params != NULL && params->numParams > 0 && !params->params[0].isnull)
+	{
+		Oid			typOutput;
+		bool		typIsVarlena;
+		FmgrInfo	finfo;
+
+		Assert(params->numParams == 1);
+		getTypeOutputInfo(params->params[0].ptype, &typOutput, &typIsVarlena);
+		fmgr_info(typOutput, &finfo);
+		txnName = OutputFunctionCall(&finfo, params->params[0].value);
+	}
+	else
+		txnName = stmt->savepoint_name;
+
+	if (txnName != NULL && strlen(txnName) > TSQL_TXN_NAME_LIMIT / 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_NAME_TOO_LONG),
+				 errmsg("Transaction name length %zu above limit %u",
+						strlen(txnName), TSQL_TXN_NAME_LIMIT / 2)));
+
+	if (AbortCurTransaction)
+	{
+		if (stmt->kind == TRANS_STMT_BEGIN ||
+			stmt->kind == TRANS_STMT_COMMIT ||
+			stmt->kind == TRANS_STMT_SAVEPOINT)
+			ereport(ERROR,
+					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+					 errmsg("The current transaction cannot be committed and cannot support operations that write to the log file. Roll back the transaction.")));
+	}
+
+	switch (stmt->kind)
+	{
+		case TRANS_STMT_BEGIN:
+			{
+				PLTsqlStartTransaction(txnName);
+			}
+			break;
+
+		case TRANS_STMT_COMMIT:
+			{
+				if (exec_state_call_stack &&
+					exec_state_call_stack->estate &&
+					exec_state_call_stack->estate->insert_exec &&
+					NestedTranCount <= 1)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
+
+				PLTsqlCommitTransaction(qc, stmt->chain);
+			}
+			break;
+
+		case TRANS_STMT_ROLLBACK:
+			{
+				if (exec_state_call_stack &&
+					exec_state_call_stack->estate &&
+					exec_state_call_stack->estate->insert_exec)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
+							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
+				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
+			}
+			break;
+
+		case TRANS_STMT_SAVEPOINT:
+			RequireTransactionBlock(true, "SAVEPOINT");
+			DefineSavepoint(txnName);
+			break;
+
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TRANSACTION_INITIATION),
+					 errmsg("Unsupported transaction command : %d", stmt->kind)));
+			break;
+	}
+}
+
 
 bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
