@@ -137,7 +137,6 @@ Could not find upgrade tests for function sys.is_rolemember_internal
 Could not find upgrade tests for function sys.language
 Could not find upgrade tests for function sys.max_precision
 Could not find upgrade tests for function sys.microsoftversion
-Could not find upgrade tests for function sys.nestlevel
 Could not find upgrade tests for function sys.openjson_array
 Could not find upgrade tests for function sys.openjson_object
 Could not find upgrade tests for function sys.openjson_simple
