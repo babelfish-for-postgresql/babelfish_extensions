@@ -1,0 +1,69 @@
+-- psql
+select * from information_schema_tsql.columns;
+go
+
+show babelfishpg_tsql.psql_logical_babelfish_db_name;
+go
+
+set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master';
+go
+
+show babelfishpg_tsql.psql_logical_babelfish_db_name;
+go
+
+select * from information_schema_tsql.columns;
+go
+
+set babelfishpg_tsql.psql_logical_babelfish_db_name = 'invalid_db'
+go
+
+select * from information_schema_tsql.columns;
+go
+
+-- tsql
+select * from information_schema_tsql.columns
+go
+
+create database logical_database_db1
+go
+
+-- try to set GUC from TSQL endpoint. Should throw error
+select set_config('babelfishpg_tsql.psql_logical_babelfish_db_name', 'logical_database_db1', false)
+go
+
+use logical_database_db1
+go
+
+select * from information_schema_tsql.columns
+go
+
+create login logical_database_l1 with password = '12345678'
+go
+
+-- psql user=logical_database_l1 password='12345678'
+select * from information_schema_tsql.columns;
+go
+
+set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master'
+go
+
+-- psql
+-- Cleanup
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'logical_database_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+use master
+go
+
+drop login logical_database_l1
+go
+
+drop database logical_database_db1
+go

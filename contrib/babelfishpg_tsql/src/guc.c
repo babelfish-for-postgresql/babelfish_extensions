@@ -113,6 +113,7 @@ static void assign_lock_timeout(int newval, void *extra);
 static void assign_datefirst(int newval, void *extra);
 static bool check_no_browsetable(bool *newval, void **extra, GucSource source);
 static void assign_enable_pg_hint(bool newval, void *extra);
+// static void check_endpoint(char **newval, void **extra, GucSource source);
 int			escape_hatch_session_settings;	/* forward declaration */
 
 static const struct config_enum_entry migration_mode_options[] = {
@@ -385,6 +386,17 @@ check_tsql_version(char **newval, void **extra, GucSource source)
 	if (pg_strcasecmp(*newval, "default") != 0)
 		ereport(WARNING,
 				(errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
+
+	return true;
+}
+
+static bool
+check_endpoint(char **newval, void **extra, GucSource source)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+			 	errmsg("babelfishpg_tsql.psql_logical_babelfish_db_name can not be set from TSQL endpoint")));
 
 	return true;
 }
@@ -779,7 +791,7 @@ define_custom_variables(void)
 							   NULL,
 							   PGC_SUSET,
 							   GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL,
-							   NULL, NULL, NULL);
+							   check_endpoint, NULL, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.datefirst",
 							gettext_noop("Sets the first day of the week to a number from 1 through 7."),

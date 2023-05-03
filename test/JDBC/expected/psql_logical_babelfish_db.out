@@ -1,0 +1,160 @@
+-- psql
+select * from information_schema_tsql.columns;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+~~END~~
+
+
+show babelfishpg_tsql.psql_logical_babelfish_db_name;
+go
+~~START~~
+text
+
+~~END~~
+
+
+set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master';
+go
+
+show babelfishpg_tsql.psql_logical_babelfish_db_name;
+go
+~~START~~
+text
+master
+~~END~~
+
+
+select * from information_schema_tsql.columns;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#status#!#5#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#status2#!#6#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#crdate#!#7#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#reserved#!#8#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#category#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#cmptlevel#!#10#!#<NULL>#!#YES#!#tinyint#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#filename#!#11#!#<NULL>#!#YES#!#nvarchar#!#260#!#520#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+set babelfishpg_tsql.psql_logical_babelfish_db_name = 'invalid_db'
+go
+
+select * from information_schema_tsql.columns;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+~~END~~
+
+
+-- tsql
+select * from information_schema_tsql.columns
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#status#!#5#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#status2#!#6#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#crdate#!#7#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#reserved#!#8#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#category#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#cmptlevel#!#10#!#<NULL>#!#YES#!#tinyint#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#filename#!#11#!#<NULL>#!#YES#!#nvarchar#!#260#!#520#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+create database logical_database_db1
+go
+
+-- try to set GUC from TSQL endpoint. Should throw error
+select set_config('babelfishpg_tsql.psql_logical_babelfish_db_name', 'logical_database_db1', false)
+go
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to set parameter "babelfishpg_tsql.psql_logical_babelfish_db_name")~~
+
+
+use logical_database_db1
+go
+
+select * from information_schema_tsql.columns
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+logical_database_db1#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#status#!#5#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#status2#!#6#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#crdate#!#7#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#reserved#!#8#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#category#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#cmptlevel#!#10#!#<NULL>#!#YES#!#tinyint#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#filename#!#11#!#<NULL>#!#YES#!#nvarchar#!#260#!#520#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+create login logical_database_l1 with password = '12345678'
+go
+
+-- psql user=logical_database_l1 password='12345678'
+select * from information_schema_tsql.columns;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+~~END~~
+
+
+set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master'
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set parameter "babelfishpg_tsql.psql_logical_babelfish_db_name"
+    Server SQLState: 42501)~~
+
+
+-- psql
+-- Cleanup
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'logical_database_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+use master
+go
+
+drop login logical_database_l1
+go
+
+drop database logical_database_db1
+go
