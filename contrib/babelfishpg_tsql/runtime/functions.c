@@ -2205,6 +2205,7 @@ parsename(PG_FUNCTION_ARGS)
 					state = 0;
 					if (i + 1 < len && object_name_str[i + 1] != '.')
 					{
+						pfree(object_name_str);
 						PG_RETURN_NULL();
 					}
 				}
@@ -2256,8 +2257,8 @@ parsename(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-	pfree(object_name_str);
-	PG_RETURN_NULL();
+		pfree(object_name_str);
+		PG_RETURN_NULL();
 	}
 }
 

@@ -210,7 +210,6 @@ nested_trigger_inside_proc
 nested_trigger_with_dml
 objectpropertyex
 openjson
-orderby-before-15_3
 routines_definition
 rowcount
 schema_resolution_func
