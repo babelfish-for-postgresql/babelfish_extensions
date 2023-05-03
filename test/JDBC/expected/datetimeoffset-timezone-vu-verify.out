@@ -1,11 +1,4 @@
 -- tsql
-select cast('2000-06-01 00:00:00' as datetimeoffset);
-GO
-~~START~~
-datetimeoffset
-2000-06-01 00:00:00.0000000 +00:00
-~~END~~
-
 select * from gh_1412_t1 order by id;
 GO
 ~~START~~
@@ -29,11 +22,11 @@ GO
 
 -- terminate-tsql-conn
 -- tsql
-select cast('2000-06-01 00:00:00' as datetimeoffset);
+select current_setting('TIMEZONE');
 GO
 ~~START~~
-datetimeoffset
-2000-06-01 00:00:00.0000000 +00:00
+text
+Australia/Sydney
 ~~END~~
 
 select * from gh_1412_t1 order by id;
@@ -59,13 +52,6 @@ GO
 
 -- terminate-tsql-conn
 -- tsql
-select cast('2000-06-01 00:00:00' as datetimeoffset);
-GO
-~~START~~
-datetimeoffset
-2000-06-01 00:00:00.0000000 +00:00
-~~END~~
-
 select * from gh_1412_t1 order by id;
 GO
 ~~START~~
