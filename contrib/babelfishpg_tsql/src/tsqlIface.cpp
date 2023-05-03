@@ -1551,9 +1551,11 @@ public:
 				else if (ddl_object && !ddl_object->local_id()) /* insert into non-local object */
 					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT' cannot be used within a function", getLineAndPos(ddl_object));
 			}
-			else if (ctx->update_statement() && ctx->update_statement()->ddl_object() && !ctx->update_statement()->ddl_object()->local_id()) /* update non-local object */
+			else if (ctx->update_statement() && ctx->update_statement()->ddl_object() && !ctx->update_statement()->ddl_object()->local_id() && 
+					(ctx->update_statement()->table_sources() ? ::getFullText(ctx->update_statement()->table_sources()).c_str()[0] != '@' : true)) /* update non-local object, table variables are allowed */
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'UPDATE' cannot be used within a function", getLineAndPos(ctx->update_statement()->ddl_object()));
-			else if (ctx->delete_statement() && ctx->delete_statement()->delete_statement_from()->ddl_object() && !ctx->delete_statement()->delete_statement_from()->ddl_object()->local_id()) /* delete from non-local object */
+			else if (ctx->delete_statement() && ctx->delete_statement()->delete_statement_from()->ddl_object() && !ctx->delete_statement()->delete_statement_from()->ddl_object()->local_id()  &&
+					(ctx->delete_statement()->table_sources() ? ::getFullText(ctx->delete_statement()->table_sources()).c_str()[0] != '@' : true)) /* delete non-local object, table variables are allowed */
 				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", getLineAndPos(ctx->delete_statement()->delete_statement_from()->ddl_object()));
 		}
 
