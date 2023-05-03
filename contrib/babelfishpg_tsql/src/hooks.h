@@ -24,5 +24,4 @@ extern Oid	get_tsql_trigger_oid(List *object,
 
 extern char *update_delete_target_alias;
 extern bool sp_describe_first_result_set_inprogress;
-
 #endif
