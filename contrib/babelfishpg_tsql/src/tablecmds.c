@@ -33,6 +33,7 @@
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
 #include "utils/builtins.h"
+#include "catalog/pg_trigger_d.h"
 
 #include "../src/multidb.h"
 #include "../src/session.h"
@@ -114,9 +115,6 @@ lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
 	HeapTuple	tuple;
 	DropBehavior behavior = DROP_CASCADE;
 	ObjectAddress trigAddress;
-	Relation	trigRelation;
-	List	   *trigobjlist;
-	char	   *trig_physical_schema;
 
 	/* Call previous hook if exists */
 	if (prev_object_access_hook)
@@ -156,12 +154,10 @@ lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
 
 		if (pg_trigger->tgrelid == relOid && !pg_trigger->tgisinternal)
 		{
-			trigRelation = RelationIdGetRelation(relOid);
-			trig_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-			trigobjlist = list_make2(makeString(trig_physical_schema), makeString(NameStr(pg_trigger->tgname)));
-			trigAddress = (*get_trigger_object_address_hook) (trigobjlist, &trigRelation, true, false);
+			trigAddress.classId = TriggerRelationId;
+			trigAddress.objectId = pg_trigger->oid;
+			trigAddress.objectSubId = 0;
 			performDeletion(&trigAddress, behavior, PERFORM_DELETION_INTERNAL);
-			RelationClose(trigRelation);
 		}
 	}
 
