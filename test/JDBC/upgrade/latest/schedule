@@ -432,3 +432,4 @@ timefromparts
 triggers_with_transaction
 typeproperty
 typeproperty-dep
+datetimeoffset-timezone

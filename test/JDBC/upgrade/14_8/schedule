@@ -400,3 +400,4 @@ test_windows_login_before_15_2
 TestXML
 timefromparts
 triggers_with_transaction
+datetimeoffset-timezone-before-15_3
