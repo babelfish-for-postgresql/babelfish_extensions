@@ -224,7 +224,7 @@ sys-nestlevel-dep
 sys-objects
 sys-original_login
 sys-procedures
-sys-parsename-dep
+sys-parsename
 sys-proc_param_helper-dep
 sys-registered_search_property_lists
 sys-schema-name
