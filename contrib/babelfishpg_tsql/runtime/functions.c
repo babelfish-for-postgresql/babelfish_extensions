@@ -2091,7 +2091,7 @@ numeric_radians(PG_FUNCTION_ARGS)
 
 Datum
 parsename(PG_FUNCTION_ARGS)
-{
+{	
 	text *object_name = PG_GETARG_TEXT_PP(0);
 	int object_piece = PG_GETARG_INT32(1);
 	char *object_name_str = text_to_cstring(object_name);
@@ -2101,10 +2101,7 @@ parsename(PG_FUNCTION_ARGS)
 	char *part_current = part_start;
 	int current_part = 0;
 	int state = 0; // 0: outside quotes and brackets, 1: inside quotes, 2: inside brackets
-	int dot_count = 0;
-	int improper_close_bracket = 0;
 	text *result;
-	
 	if (object_piece < 1 || object_piece > 4)
 	{
 		PG_RETURN_NULL();
@@ -2130,7 +2127,6 @@ parsename(PG_FUNCTION_ARGS)
 			else if (c == '.')
 			{
 				current_part++;
-				dot_count++;
 				if (current_part > 3)
 				{
 					PG_RETURN_NULL();
@@ -2140,7 +2136,7 @@ parsename(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				if(part_len < 128)
+				if(part_len < 128 && (part_current - object_parts) * sizeof(char) < 256)
 				{
 					*part_current++ = c;
 				}
@@ -2157,7 +2153,7 @@ parsename(PG_FUNCTION_ARGS)
 			{
 				if (i + 1 < len && object_name_str[i + 1] == '"')
 				{
-					if (part_len < 128)
+					if (part_len < 128 && (part_current - object_parts) * sizeof(char) < 256)
 					{
 						*part_current++ = c;
 					}
@@ -2180,7 +2176,7 @@ parsename(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				if (part_len < 128)
+				if (part_len < 128 && (part_current - object_parts) * sizeof(char) < 256)
 				{
 					*part_current++ = c;
 				}
@@ -2192,7 +2188,7 @@ parsename(PG_FUNCTION_ARGS)
 			{
 				if (i + 1 < len && object_name_str[i + 1] == ']')
 				{
-					if (part_len < 128)
+					if (part_len < 128 && (part_current - object_parts) * sizeof(char) < 256)
 					{
 						*part_current++ = c;
 					}
@@ -2214,7 +2210,7 @@ parsename(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				if (part_len < 128)
+				if (part_len < 128 && (part_current - object_parts) * sizeof(char) < 256)
 				{
 					*part_current++ = c;
 				}
@@ -2225,21 +2221,6 @@ parsename(PG_FUNCTION_ARGS)
 				}
 			}
 		}
-	}
-	if (improper_close_bracket)
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	if (state != 0)
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
-	}
-	if (dot_count > 3)
-	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
 	}
 	if (object_piece - 1 <= current_part)
 	{
@@ -2269,8 +2250,8 @@ parsename(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		pfree(object_name_str);
-		PG_RETURN_NULL();
+	pfree(object_name_str);
+	PG_RETURN_NULL();
 	}
 }
 
