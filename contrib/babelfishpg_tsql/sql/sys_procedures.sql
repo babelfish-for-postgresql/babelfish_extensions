@@ -271,3 +271,44 @@ GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.va
 
 CREATE OR REPLACE PROCEDURE sys.bbf_set_context_info(IN context_info sys.VARBINARY(128))
 AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addextendedproperty
+(
+  "@name" sys.sysname,
+  "@value" sys.sql_variant = NULL,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_addextendedproperty TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_updateextendedproperty
+(
+  "@name" sys.sysname,
+  "@value" sys.sql_variant = NULL,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_updateextendedproperty TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_dropextendedproperty
+(
+  "@name" sys.sysname,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_dropextendedproperty TO PUBLIC;

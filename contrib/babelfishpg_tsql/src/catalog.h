@@ -293,6 +293,42 @@ extern Oid	get_bbf_domain_mapping_oid(void);
 extern Oid	get_bbf_domain_mapping_idx_oid(void);
 
 /*****************************************
+ *			EXTENDED_PROPERTIES
+ *****************************************/
+#define BBF_EXTENDED_PROPERTIES_TABLE_NAME "babelfish_extended_properties"
+#define BBF_EXTENDED_PROPERTIES_IDX_NAME "babelfish_extended_properties_pkey"
+
+#define Anum_bbf_extended_properties_dbid 1
+#define Anum_bbf_extended_properties_schema_name 2
+#define Anum_bbf_extended_properties_major_name 3
+#define Anum_bbf_extended_properties_minor_name 4
+#define Anum_bbf_extended_properties_type 5
+#define Anum_bbf_extended_properties_name 6
+#define Anum_bbf_extended_properties_orig_name 7
+#define Anum_bbf_extended_properties_value 8
+#define BBF_EXTENDED_PROPERTIES_NUM_COLS 8
+
+extern Oid	bbf_extended_properties_oid;
+extern Oid	bbf_extended_properties_idx_oid;
+
+extern Oid	get_bbf_extended_properties_oid(void);
+extern Oid	get_bbf_extended_properties_idx_oid(void);
+
+typedef struct FormData_bbf_extended_properties
+{
+	int16		dbid;
+	NameData	schema_name;
+	NameData	major_name;
+	NameData	minor_name;
+	VarChar		type;
+	VarChar		name;
+	VarChar		orig_name;
+	bytea		value;
+} FormData_bbf_extended_properties;
+
+typedef FormData_bbf_extended_properties *Form_bbf_extended_properties;
+
+/*****************************************
  *			Metadata Check Rule
  *****************************************/
 

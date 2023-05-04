@@ -1472,7 +1472,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_add_data_file_recover_suspect_db",
 	"sp_add_log_file_recover_suspect_db",
 	"sp_addextendedproc",
-	"sp_addextendedproperty",
 	"sp_addmessage",
 	"sp_addtype",
 	"sp_addumpdevice",
@@ -1508,7 +1507,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_detach_db",
 	"sp_dropdevice",
 	"sp_dropextendedproc",
-	"sp_dropextendedproperty",
 	"sp_dropmessage",
 	"sp_droptype",
 	"sp_getbindtoken",
@@ -1542,7 +1540,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_tableoption",
 	"sp_unbindefault",
 	"sp_unbindrule",
-	"sp_updateextendedproperty",
 	"sp_validname",
 	"sp_who",
 
