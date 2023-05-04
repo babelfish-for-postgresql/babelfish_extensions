@@ -1,5 +1,5 @@
 -- psql
-select * from information_schema_tsql.columns;
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
@@ -25,7 +25,7 @@ master
 ~~END~~
 
 
-select * from information_schema_tsql.columns;
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
@@ -47,7 +47,7 @@ master#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#
 set babelfishpg_tsql.psql_logical_babelfish_db_name = 'invalid_db'
 go
 
-select * from information_schema_tsql.columns;
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
@@ -55,7 +55,7 @@ go
 
 
 -- tsql
-select * from information_schema_tsql.columns
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
@@ -90,7 +90,7 @@ text
 use logical_database_db1
 go
 
-select * from information_schema_tsql.columns
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
@@ -113,7 +113,7 @@ create login logical_database_l1 with password = '12345678'
 go
 
 -- psql user=logical_database_l1 password='12345678'
-select * from information_schema_tsql.columns;
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"

@@ -1,5 +1,5 @@
 -- psql
-select * from information_schema_tsql.columns;
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
 show babelfishpg_tsql.psql_logical_babelfish_db_name;
@@ -11,17 +11,17 @@ go
 show babelfishpg_tsql.psql_logical_babelfish_db_name;
 go
 
-select * from information_schema_tsql.columns;
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
 set babelfishpg_tsql.psql_logical_babelfish_db_name = 'invalid_db'
 go
 
-select * from information_schema_tsql.columns;
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
 -- tsql
-select * from information_schema_tsql.columns
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
 go
 
 create database logical_database_db1
@@ -34,14 +34,14 @@ go
 use logical_database_db1
 go
 
-select * from information_schema_tsql.columns
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
 go
 
 create login logical_database_l1 with password = '12345678'
 go
 
 -- psql user=logical_database_l1 password='12345678'
-select * from information_schema_tsql.columns;
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
 set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master'
