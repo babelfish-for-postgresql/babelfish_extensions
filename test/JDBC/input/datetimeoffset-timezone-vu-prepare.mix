@@ -5,10 +5,11 @@ create table gh_1412_t1
 (
 id int,
 dto datetimeoffset,
+dto_default datetimeoffset default '2000-06-01 00:00:00',
 comment varchar(100)
 );
 GO
-insert gh_1412_t1 values (1, '2000-06-01 00:00:00', 'default time zone');
+insert gh_1412_t1 values (1, '2000-06-01 00:00:00', default, 'default time zone');
 GO
 drop view if exists gh_1412_v1;
 GO
@@ -23,7 +24,7 @@ GO
 -- tsql
 select current_setting('TIMEZONE');
 GO
-insert gh_1412_t1 values (2, '2000-06-01 00:00:00', 'custom time zone');
+insert gh_1412_t1 values (2, '2000-06-01 00:00:00', default, 'custom time zone');
 GO
 
 -- psql
@@ -32,5 +33,5 @@ GO
 
 -- terminate-tsql-conn
 -- tsql
-insert gh_1412_t1 values (3, '2000-06-01 00:00:00', 'default time zone after reset');
+insert gh_1412_t1 values (3, '2000-06-01 00:00:00', default, 'default time zone after reset');
 GO
