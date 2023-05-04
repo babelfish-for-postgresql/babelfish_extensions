@@ -836,3 +836,86 @@ go
 ~~ROW COUNT: 1~~
 
 
+-- test generated column for sql_variant column
+create table babel_4036_t2 (a int, b as a * a, c sql_variant, d as c, e varchar(50));
+go
+
+insert into babel_4036_t2 (a, c, e) values(1, CAST('-0.9999999999999996' as numeric(18,17)) ,'String 1');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2 (a, c, e) values(2, CAST(1234567890123.1234567891234567891234567 as numeric(38, 25)) ,'String 2');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(3, cast(0.1234567890123456789012345678901234567 as numeric(38, 37)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(4, cast(99999999999999999999999999999999999999 as numeric(38,0)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(5, cast(0.00000000000000000000000000 as numeric(27,26)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2 (a, c, e) values(6, CAST('-0.9999999999999996' as numeric(18,17)) ,'String 3');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2 (a, c, e) values(7, CAST(1234567890123.1234567891234567891234567 as decimal(38, 25)) ,'String 4');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(8, cast(0.1234567890123456789012345678901234567 as decimal(38, 37)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(9, cast(99999999999999999999999999999999999999 as decimal(38,0)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(10, cast(-0.00000000000000000000000000 as decimal(27,26)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2 (a, c, e) values(2, CAST(-1234567890123.1234567891234567891234567 as numeric(38, 25)) ,'String 2');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(3, cast(-0.1234567890123456789012345678901234567 as numeric(38, 37)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(4, cast(-99999999999999999999999999999999999999 as numeric(38,0)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2 (a, c, e) values(2, CAST(-1234567890123.1234567891234567891234567 as decimal(38, 25)) ,'String 2');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(3, cast(-0.1234567890123456789012345678901234567 as decimal(38, 37)), 'abc');
+go
+~~ROW COUNT: 1~~
+
+
+insert into babel_4036_t2(a, c, e) values(4, cast(-99999999999999999999999999999999999999 as decimal(38,0)), 'abc');
+go
+~~ROW COUNT: 1~~
+

@@ -237,3 +237,6 @@ go
 
 select * from babel_4036_t1 order by a;
 go
+
+select * from babel_4036_t2 order by a;
+go
