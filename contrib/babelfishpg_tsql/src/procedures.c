@@ -83,7 +83,7 @@ static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
-static void update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert);
+static void update_bbf_server_options(char *servername, char *query_timeout, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
 static void remove_delimited_identifer(char *str);
 
@@ -2210,7 +2210,7 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 }
 
 static void 
-update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert)
+update_bbf_server_options(char *servername, char *querytimeout, bool isInsert)
 {
 	Relation	bbf_servers_def_rel;
 	TupleDesc	bbf_servers_def_rel_dsc;
@@ -2220,8 +2220,14 @@ update_bbf_server_options(char *servername, int32 query_timeout, bool isInsert)
 	ScanKeyData		key;
 	HeapTuple		tuple, old_tuple;
 	TableScanDesc	tblscan;
+	int32		query_timeout;
 
-	if (query_timeout < 0)
+	if (querytimeout == NULL)
+		query_timeout = 0;
+	else
+		query_timeout = atoi(querytimeout);
+
+	if (query_timeout < 0 || strspn(querytimeout, "0123456789") != strlen(querytimeout))
 		ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
 					 errmsg("Invalid option value for query timeout.")));
@@ -2395,7 +2401,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	exec_utility_cmd_helper(query.data);
 
-	update_bbf_server_options(linked_server, 0, true);
+	update_bbf_server_options(linked_server, "0", true);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
@@ -2652,11 +2658,11 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 				 errmsg("@optvalue parameter cannot be NULL")));
 
 	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
-		update_bbf_server_options(servername, atoi(optionvalue), false);
+		update_bbf_server_options(servername, optionvalue, false);
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option")));
+				errmsg("Invalid option provided for sp_serveroption")));
 
 	if(servername)
 		pfree(servername);

@@ -40,7 +40,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='invalid option', @optvalu
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option)~~
+~~ERROR (Message: Invalid option provided for sp_serveroption)~~
 
 
 -- sp_serveroption with server as NULL. Should throw error
@@ -74,6 +74,38 @@ GO
 
 ~~ERROR (Message: Invalid option value for query timeout.)~~
 
+
+-- sp_serveroption with float optvalue. should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='1.0001'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for query timeout.)~~
+
+
+-- sp_serveroption with optvalue greater than INT_MAX. should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483650'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for query timeout.)~~
+
+
+-- sp_serveroption with optvalue containing characters other than 0-9. should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0abdejc'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for query timeout.)~~
+
+
+-- sp_serveroption with optvalue = INT_MAX
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483647'
+GO
+
+-- sp_serveroption with optvalue containing leading zeroes
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0000002'
+GO
 
 -- sp_serveroption with valid server, optname and optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'

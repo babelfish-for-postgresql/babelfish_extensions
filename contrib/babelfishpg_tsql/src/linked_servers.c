@@ -178,6 +178,7 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 
 	buf = construct_err_string(severity, db_error, os_error, db_err_str, os_err_str);
 
+	/* when the query times out we need to return INT_CANCEL */
 	if (db_error == SYBETIME)
 	{
 		isQueryTimeout = true;
@@ -1157,7 +1158,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 			{
 				StringInfoData buf;
 				isQueryTimeout = false;
-				buf = construct_err_string(6, 20003, 0, "Adaptive Server connection timed out", "Success");
+				buf = construct_err_string(6, 20003, 0, "server connection timed out", "Success");
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 			 		errmsg("%s", buf.data)));
