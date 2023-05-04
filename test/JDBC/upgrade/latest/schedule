@@ -133,6 +133,7 @@ babel_datetime
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
+BABEL-EXTENDEDPROPERTY-v2
 babel_int4_varbinary_div
 babelfish_authid_login_ext
 babelfish_authid_user_ext
