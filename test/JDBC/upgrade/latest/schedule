@@ -42,6 +42,7 @@ BABEL-2208
 BABEL-2257
 BABEL-2449
 BABEL-2535
+BABEL-2688
 BABEL-2765
 BABEL-2787
 BABEL-2787-2
@@ -314,6 +315,7 @@ sys-objects
 sys-original_login
 sys-partitions
 sys-partitions-dep
+sys-parsename
 sys-plan_guides
 sys-procedures
 sys-proc_param_helper-dep
