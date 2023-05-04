@@ -66,7 +66,7 @@ runs:
           sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U jdbc_user -f ~/upgrade/pg_dump.sql 2>> ~/upgrade/error.log
         else
           # Create and initialise Babelfish extensions in the new server if we are restoring a logical database.
-          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
+          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode='single-db' -f .github/scripts/create_extension.sql
           echo 'Restoring from pg_dumpall'
           sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
           echo 'Restoring from pg_dump'
