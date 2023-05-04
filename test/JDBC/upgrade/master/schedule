@@ -114,6 +114,7 @@ babelfish_migration_mode
 babelfish_namespace_ext
 babel_function_string
 babel_isnumeric
+babel_datatype_sqlvariant
 BABEL-NEXT-VALUE-FOR
 BABEL-PG-SYSTEM-FUNCTIONS
 BABEL-PROCID

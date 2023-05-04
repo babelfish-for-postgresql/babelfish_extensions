@@ -15,6 +15,10 @@ drop table babel_datatype_sqlvariant_vu_prepare_t8;
 go
 drop table babel_datatype_sqlvariant_vu_prepare_t9;
 go
+drop table babel_4036_t1;
+go
+drop table babel_4036_t2;
+go
 drop sequence babel_datatype_sqlvariant_vu_prepare_t1_sec;
 go
 drop sequence babel_datatype_sqlvariant_vu_prepare_t2_sec;
