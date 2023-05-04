@@ -102,7 +102,6 @@ PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
 PG_FUNCTION_INFO_V1(object_schema_name);
-PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 
 void	   *string_to_tsql_varchar(const char *input_str);
