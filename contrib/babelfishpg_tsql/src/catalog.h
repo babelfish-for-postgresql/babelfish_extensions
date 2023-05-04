@@ -227,7 +227,7 @@ extern void clean_up_bbf_server_def(void);
 
 typedef struct FormData_bbf_servers_def
 {
-	char		*servername;
+	text		servername;
 	int32		query_timeout;
 } FormData_bbf_servers_def;
 

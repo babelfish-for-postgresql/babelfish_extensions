@@ -1483,6 +1483,7 @@ static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_server_name(HeapTuple tuple, TupleDesc dsc);
 
 /* Condition function declaration */
 static bool is_multidb(void);
@@ -1520,7 +1521,8 @@ RelData		catalog_data[] =
 	{"babelfish_authid_user_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_bbf_authid_user_ext_rolname, F_NAMEEQ},
 	{"pg_namespace", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_namespace_nspname, F_NAMEEQ},
 	{"pg_authid", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ},
-	{"pg_proc", InvalidOid, InvalidOid, false, InvalidOid, Anum_pg_proc_proname, F_NAMEEQ}
+	{"pg_proc", InvalidOid, InvalidOid, false, InvalidOid, Anum_pg_proc_proname, F_NAMEEQ},
+	{"pg_foreign_server", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_foreign_server_srvname, F_NAMEEQ}
 };
 
 /*****************************************
@@ -1622,6 +1624,14 @@ Rule		must_match_rules_function[] =
 	"pg_proc", "proname", NULL, get_function_name, NULL, check_exist, NULL}
 };
 
+
+/* babelfish_server_options */
+Rule		must_match_rules_srv_options[] =
+{
+	{"<servername> in babelfish_server_options must also exist in pg_foreign_server",
+	"pg_foreign_server", "srvname", NULL, get_server_name, NULL, check_exist, NULL}
+};
+
 /*****************************************
  * 			Core function
  *****************************************/
@@ -1711,6 +1721,7 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t		num_must_match_rules_login = sizeof(must_match_rules_login) / sizeof(must_match_rules_login[0]);
 	size_t		num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
 	size_t		num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
+	size_t		num_must_match_rules_srv_options = sizeof(must_match_rules_srv_options) / sizeof(must_match_rules_srv_options[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
 	init_catalog_data();
@@ -1739,6 +1750,9 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_function, num_must_match_rules_function,
 								 bbf_function_ext_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_srv_options, num_must_match_rules_srv_options,
+								 bbf_servers_def_oid, res_tupstore, res_tupdesc))
 		)
 		return;
 }
@@ -2024,6 +2038,16 @@ get_function_name(HeapTuple tuple, TupleDesc dsc)
 	return NameGetDatum(&(func->funcname));
 }
 
+static Datum
+get_server_name(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_bbf_servers_def	srv_def = ((Form_bbf_servers_def) GETSTRUCT(tuple));
+	const text 		*srv_name = &(srv_def->servername);
+	char 			*servername = text_to_cstring(srv_name);
+
+	return CStringGetDatum(servername);
+}
+
 /*****************************************
  * 			Condition check funcs
  *****************************************/
@@ -2173,6 +2197,12 @@ init_catalog_data(void)
 			catalog_data[i].tbl_oid = ProcedureRelationId;
 			catalog_data[i].idx_oid = InvalidOid;
 			catalog_data[i].atttype = get_atttype(ProcedureRelationId, Anum_pg_proc_proname);
+		}
+		else if (strcmp(catalog_data[i].tblname, "pg_foreign_server") == 0)
+		{
+			catalog_data[i].tbl_oid = ForeignServerRelationId;
+			catalog_data[i].idx_oid = ForeignServerNameIndexId;
+			catalog_data[i].atttype = get_atttype(ForeignServerRelationId, Anum_pg_foreign_server_srvname);
 		}
 		else
 			ereport(ERROR,

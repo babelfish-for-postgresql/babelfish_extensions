@@ -79,6 +79,13 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
 GO
 
+SELECT * FROM sys.babelfish_inconsistent_metadata();
+GO
+
+-- Output passed rules
+SELECT * FROM sys.babelfish_inconsistent_metadata(true);
+GO
+
 -- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
 SELECT servername, query_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
 GO
