@@ -113,7 +113,6 @@ static void assign_lock_timeout(int newval, void *extra);
 static void assign_datefirst(int newval, void *extra);
 static bool check_no_browsetable(bool *newval, void **extra, GucSource source);
 static void assign_enable_pg_hint(bool newval, void *extra);
-// static void check_endpoint(char **newval, void **extra, GucSource source);
 int			escape_hatch_session_settings;	/* forward declaration */
 
 static const struct config_enum_entry migration_mode_options[] = {
