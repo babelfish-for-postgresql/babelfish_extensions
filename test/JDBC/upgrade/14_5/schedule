@@ -246,7 +246,6 @@ sys-nestlevel-dep
 sys-numbered_procedures
 sys-objects
 sys-original_login
-sys-parsename
 sys-plan_guides
 sys-procedures
 sys-proc_param_helper-dep
