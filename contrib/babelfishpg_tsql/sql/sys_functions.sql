@@ -545,16 +545,27 @@ $BODY$
 LANGUAGE plpgsql
 STABLE CALLED ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.parsename (
+	object_name VARCHAR
+	,object_piece INT
+	)
+RETURNS VARCHAR AS $$
+/***************************************************************
+EXTENSION PACK function PARSENAME(x)
+***************************************************************/
+SELECT CASE
+		WHEN char_length($1) < char_length(pg_catalog.replace($1, '.', '')) + 4
+			AND $2 BETWEEN 1
+				AND 4
+			THEN reverse(split_part(reverse($1), '.', $2))
+		ELSE NULL
+		END $$ immutable LANGUAGE 'sql';
+        
 -- Return the object ID given the object name. Can specify optional type.
 CREATE OR REPLACE FUNCTION sys.object_id(IN object_name sys.VARCHAR, IN object_type sys.VARCHAR DEFAULT NULL)
 RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
-
-CREATE OR REPLACE FUNCTION sys.parsename(object_name character varying, object_piece int)
-RETURNS sys.SYSNAME
-AS 'babelfishpg_tsql', 'parsename'
-LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
                                                            IN p_minute NUMERIC,
