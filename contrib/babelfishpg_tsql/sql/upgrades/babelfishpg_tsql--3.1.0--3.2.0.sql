@@ -1058,6 +1058,11 @@ CREATE AGGREGATE sys.VARP(float8) (
 CREATE OR REPLACE FUNCTION sys.rowcount_big()
 RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
+CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
+RETURNS OID
+AS 'babelfishpg_tsql', 'user_id'
+LANGUAGE C IMMUTABLE PARALLEL SAFE STRICT;
+
 CREATE OR REPLACE FUNCTION sys.database_principal_id()
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id_noarg'
