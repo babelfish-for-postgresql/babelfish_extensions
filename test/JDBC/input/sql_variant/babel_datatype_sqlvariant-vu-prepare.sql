@@ -495,7 +495,7 @@ go
 -- test generated column for sql_variant column
 create table babel_4036_t2 (a int, b as a * a, c sql_variant, d as c, e varchar(50));
 go
-
+-- some corner cases for numeric and decimal datatype
 insert into babel_4036_t2 (a, c, e) values(1, CAST('-0.9999999999999996' as numeric(18,17)) ,'String 1');
 go
 
@@ -523,6 +523,7 @@ go
 insert into babel_4036_t2(a, c, e) values(9, cast(99999999999999999999999999999999999999 as decimal(38,0)), 'abc');
 go
 
+-- negative test scenarios for numeric and decimal
 insert into babel_4036_t2(a, c, e) values(10, cast(-0.00000000000000000000000000 as decimal(27,26)), 'abc');
 go
 
