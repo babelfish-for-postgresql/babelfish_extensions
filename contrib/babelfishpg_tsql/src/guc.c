@@ -395,7 +395,7 @@ check_endpoint(char **newval, void **extra, GucSource source)
 	if (*newval && IS_TDS_CLIENT())
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
-			 	errmsg("babelfishpg_tsql.psql_logical_babelfish_db_name can not be set from TSQL endpoint")));
+			 	errmsg("babelfishpg_tsql.psql_logical_babelfish_db_name can not be set from TDS endpoint")));
 
 	return true;
 }
@@ -789,7 +789,7 @@ define_custom_variables(void)
 							   &pltsql_psql_logical_babelfish_db_name,
 							   NULL,
 							   PGC_SUSET,
-							   GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							   GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   check_endpoint, NULL, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.datefirst",
