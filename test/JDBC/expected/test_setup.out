@@ -345,31 +345,19 @@ CREATE TABLE stud_emp (
 	salary 		int,
 	manager 	name,
 	gpa 		float,
-	percent 	int
+	[percent] 	int
 ) ;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'percent' at line 8 and character position 1)~~
-
 
 -- psql 
 -- \set filename :abs_srcdir '/data/stud_emp.data'
 COPY master_dbo.stud_emp FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/stud_emp.data';
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: relation "master_dbo.stud_emp" does not exist
-    Server SQLState: 42P01)~~
+~~ROW COUNT: 3~~
 
 
 VACUUM ANALYZE master_dbo.stud_emp;
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: relation "master_dbo.stud_emp" does not exist
-    Server SQLState: 42P01)~~
-
 
 -- tsql
 CREATE TABLE aggtest (

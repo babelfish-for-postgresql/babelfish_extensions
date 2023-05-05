@@ -315,7 +315,7 @@ CREATE TABLE stud_emp (
 	salary 		int,
 	manager 	name,
 	gpa 		float,
-	percent 	int
+	[percent] 	int
 ) ;
 GO
 

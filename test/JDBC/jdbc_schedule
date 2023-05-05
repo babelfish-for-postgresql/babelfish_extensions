@@ -130,3 +130,10 @@ ignore#!#datetimeoffset-timezone-before-15_3-vu-cleanup
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-verify
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-cleanup
+
+# These tests are meant for postgres regress test under JDBC framework
+ignore#!#test_setup
+ignore#!#select_distinct
+ignore#!#select_distinct_on
+ignore#!#select_having
+ignore#!#clean_up

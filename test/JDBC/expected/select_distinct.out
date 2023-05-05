@@ -1,0 +1,606 @@
+
+
+--
+-- SELECT_DISTINCT
+--
+--
+-- awk '{print $3;}' onek.data | sort -n | uniq
+--
+SELECT DISTINCT two FROM onek ORDER BY 1;
+GO
+~~START~~
+int
+0
+1
+~~END~~
+
+
+--
+-- awk '{print $5;}' onek.data | sort -n | uniq
+--
+SELECT DISTINCT ten FROM onek ORDER BY 1;
+GO
+~~START~~
+int
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+~~END~~
+
+
+--
+-- awk '{print $16;}' onek.data | sort -d | uniq
+--
+SELECT DISTINCT string4 FROM onek ORDER BY 1;
+GO
+~~START~~
+varchar
+AAAAxx
+HHHHxx
+OOOOxx
+VVVVxx
+~~END~~
+
+
+--
+-- awk '{print $3,$16,$5;}' onek.data | sort -d | uniq |
+-- sort +0n -1 +1d -2 +2n -3
+--
+SELECT DISTINCT two, string4, ten
+   FROM onek
+   ORDER BY two asc, string4 asc, ten asc;
+GO
+~~START~~
+int#!#varchar#!#int
+0#!#AAAAxx#!#0
+0#!#AAAAxx#!#2
+0#!#AAAAxx#!#4
+0#!#AAAAxx#!#6
+0#!#AAAAxx#!#8
+0#!#HHHHxx#!#0
+0#!#HHHHxx#!#2
+0#!#HHHHxx#!#4
+0#!#HHHHxx#!#6
+0#!#HHHHxx#!#8
+0#!#OOOOxx#!#0
+0#!#OOOOxx#!#2
+0#!#OOOOxx#!#4
+0#!#OOOOxx#!#6
+0#!#OOOOxx#!#8
+0#!#VVVVxx#!#0
+0#!#VVVVxx#!#2
+0#!#VVVVxx#!#4
+0#!#VVVVxx#!#6
+0#!#VVVVxx#!#8
+1#!#AAAAxx#!#1
+1#!#AAAAxx#!#3
+1#!#AAAAxx#!#5
+1#!#AAAAxx#!#7
+1#!#AAAAxx#!#9
+1#!#HHHHxx#!#1
+1#!#HHHHxx#!#3
+1#!#HHHHxx#!#5
+1#!#HHHHxx#!#7
+1#!#HHHHxx#!#9
+1#!#OOOOxx#!#1
+1#!#OOOOxx#!#3
+1#!#OOOOxx#!#5
+1#!#OOOOxx#!#7
+1#!#OOOOxx#!#9
+1#!#VVVVxx#!#1
+1#!#VVVVxx#!#3
+1#!#VVVVxx#!#5
+1#!#VVVVxx#!#7
+1#!#VVVVxx#!#9
+~~END~~
+
+
+
+
+
+--
+-- awk '{print $2;}' person.data |
+-- awk '{if(NF!=1){print $2;}else{print;}}' - emp.data |
+-- awk '{if(NF!=1){print $2;}else{print;}}' - student.data |
+-- awk 'BEGIN{FS="      ";}{if(NF!=1){print $5;}else{print;}}' - stud_emp.data |
+-- sort -n -r | uniq
+--
+-- SELECT DISTINCT p.age FROM person* p ORDER BY age using desc;
+-- GO
+--
+-- Check mentioning same column more than once
+--
+select set_config('babelfishpg_tsql.explain_verbose', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT count(*) FROM (SELECT DISTINCT two, four, two FROM tenk1) ss;
+GO
+~~START~~
+text
+Query Text: SELECT count(*) FROM (SELECT DISTINCT two, four, two FROM tenk1) ss
+Aggregate
+  Output: count(*)
+  ->  HashAggregate
+        Output: tenk1.two, tenk1.four, tenk1.two
+        Group Key: tenk1.two, tenk1.four, tenk1.two
+        ->  Seq Scan on master_dbo.tenk1
+              Output: tenk1.two, tenk1.four, tenk1.two
+~~END~~
+
+
+SELECT count(*) FROM
+  (SELECT DISTINCT two, four, two FROM tenk1) ss;
+GO
+~~START~~
+text
+Query Text: SELECT count(*) FROM
+  (SELECT DISTINCT two, four, two FROM tenk1) ss
+Aggregate
+  Output: count(*)
+  ->  HashAggregate
+        Output: tenk1.two, tenk1.four, tenk1.two
+        Group Key: tenk1.two, tenk1.four, tenk1.two
+        ->  Seq Scan on master_dbo.tenk1
+              Output: tenk1.two, tenk1.four, tenk1.two
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+
+--
+-- Compare results between plans using sorting and plans using hash
+-- aggregation. Force spilling in both cases by setting work_mem low.
+--
+select set_config('work_mem', '64kB', false);
+GO
+~~START~~
+text
+64kB
+~~END~~
+
+
+-- Produce results with sorting.
+select set_config('enable_hashagg', 'FALSE', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+
+-- select set_config('jit_above_cost', '0', false);
+-- GO
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
+GO
+~~START~~
+text
+Query Text: SELECT DISTINCT g%1000 FROM generate_series(0,9999) g
+Unique
+  Output: ((g % 1000))
+  ->  Sort
+        Output: ((g % 1000))
+        Sort Key: ((g.g % 1000))
+        ->  Function Scan on pg_catalog.generate_series g
+              Output: (g % 1000)
+              Function Call: generate_series(0, 9999)
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+SELECT DISTINCT g%1000 INTO distinct_group_1 FROM generate_series(0,9999) g;
+GO
+
+
+-- -- SET jit_above_cost TO DEFAULT;
+-- select set_config('jit_above_cost', 'DEFAULT', false);
+-- GO
+SELECT DISTINCT cast((g%1000) as varchar(max)) INTO distinct_group_2 FROM generate_series(0,9999) g;
+GO
+
+select set_config('enable_hashagg', 'TRUE', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+
+-- Produce results with hash aggregation.
+select set_config('enable_sort', 'FALSE', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+
+-- select set_config('jit_above_cost', '0', false);
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
+GO
+~~START~~
+text
+Query Text: SELECT DISTINCT g%1000 FROM generate_series(0,9999) g
+HashAggregate
+  Output: ((g % 1000))
+  Group Key: (g.g % 1000)
+  ->  Function Scan on pg_catalog.generate_series g
+        Output: (g % 1000)
+        Function Call: generate_series(0, 9999)
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+SELECT DISTINCT g%1000 INTO distinct_hash_1 FROM generate_series(0,9999) g;
+GO
+
+
+
+-- select set_config('jit_above_cost', 'DEFAULT', false);
+-- GO
+SELECT DISTINCT cast((g%1000) as varchar(max)) INTO distinct_hash_2 FROM generate_series(0,9999) g;
+GO
+
+select set_config('enable_sort', 'TRUE', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- psql
+SET work_mem TO DEFAULT;
+GO
+
+
+-- tsql
+
+-- Compare results
+(SELECT * FROM distinct_hash_1 EXCEPT SELECT * FROM distinct_group_1)
+  UNION ALL
+(SELECT * FROM distinct_group_1 EXCEPT SELECT * FROM distinct_hash_1);
+GO
+~~START~~
+int
+~~END~~
+
+
+(SELECT * FROM distinct_hash_1 EXCEPT SELECT * FROM distinct_group_1)
+  UNION ALL
+(SELECT * FROM distinct_group_1 EXCEPT SELECT * FROM distinct_hash_1);
+GO
+~~START~~
+int
+~~END~~
+
+
+DROP TABLE distinct_hash_1;
+GO
+DROP TABLE distinct_hash_2;
+GO
+DROP TABLE distinct_group_1;
+GO
+DROP TABLE distinct_group_2;
+GO
+
+
+-- Test parallel DISTINCT
+select set_config('parallel_tuple_cost', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+select set_config('parallel_setup_cost', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+select set_config('min_parallel_table_scan_size', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+select set_config('max_parallel_workers_per_gather', '2', false);
+GO
+~~START~~
+text
+2
+~~END~~
+
+
+
+
+-- Ensure we get a parallel plan
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT DISTINCT four FROM tenk1;
+GO
+~~START~~
+text
+Query Text: SELECT DISTINCT four FROM tenk1
+Unique
+  ->  Sort
+        Sort Key: four
+        ->  Gather
+              Workers Planned: 2
+              ->  HashAggregate
+                    Group Key: four
+                    ->  Parallel Seq Scan on tenk1
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- Ensure the parallel plan produces the correct results
+SELECT DISTINCT four FROM tenk1;
+GO
+~~START~~
+int
+0
+1
+2
+3
+~~END~~
+
+
+
+-- psql
+-- Since Tsql function does not support specify parallel safe mode, we execute the following tests in psql
+-- Ensure the parallel plan produces the correct results
+SELECT DISTINCT four FROM master_dbo.tenk1;
+GO
+~~START~~
+int4
+0
+1
+3
+2
+~~END~~
+
+
+CREATE OR REPLACE FUNCTION distinct_func(a INT) RETURNS INT AS $$
+  BEGIN
+    RETURN a;
+  END;
+$$ LANGUAGE plpgsql PARALLEL UNSAFE;
+GO
+
+-- Ensure we don't do parallel distinct with a parallel unsafe function
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT distinct_func(1) FROM master_dbo.tenk1;
+GO
+~~START~~
+text
+Unique
+  ->  Sort
+        Sort Key: (distinct_func(1))
+        ->  Seq Scan on tenk1
+~~END~~
+
+
+-- make the function parallel safe
+CREATE OR REPLACE FUNCTION distinct_func(a INT) RETURNS INT AS $$
+  BEGIN
+    RETURN a;
+  END;
+$$ LANGUAGE plpgsql PARALLEL SAFE;
+GO
+
+-- Ensure we do parallel distinct now that the function is parallel safe
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT distinct_func(1) FROM master_dbo.tenk1;
+GO
+~~START~~
+text
+Unique
+  ->  Sort
+        Sort Key: (distinct_func(1))
+        ->  Seq Scan on tenk1
+~~END~~
+
+
+RESET max_parallel_workers_per_gather;
+GO
+RESET min_parallel_table_scan_size;
+GO
+RESET parallel_setup_cost;
+GO
+RESET parallel_tuple_cost;
+GO
+
+
+--
+-- Also, some tests of IS DISTINCT FROM, which doesn't quite deserve its
+-- very own regression file.
+--
+CREATE TEMP TABLE disttable (f1 integer);
+GO
+INSERT INTO DISTTABLE VALUES(1);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO DISTTABLE VALUES(2);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO DISTTABLE VALUES(3);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO DISTTABLE VALUES(NULL);
+GO
+~~ROW COUNT: 1~~
+
+
+-- basic cases
+SELECT f1, f1 IS DISTINCT FROM 2 as "not 2" FROM disttable;
+GO
+~~START~~
+int4#!#bool
+1#!#t
+2#!#f
+3#!#t
+<NULL>#!#t
+~~END~~
+
+SELECT f1, f1 IS DISTINCT FROM NULL as "not null" FROM disttable;
+GO
+~~START~~
+int4#!#bool
+1#!#t
+2#!#t
+3#!#t
+<NULL>#!#f
+~~END~~
+
+SELECT f1, f1 IS DISTINCT FROM f1 as "false" FROM disttable;
+GO
+~~START~~
+int4#!#bool
+1#!#f
+2#!#f
+3#!#f
+<NULL>#!#f
+~~END~~
+
+SELECT f1, f1 IS DISTINCT FROM f1+1 as "not null" FROM disttable;
+GO
+~~START~~
+int4#!#bool
+1#!#t
+2#!#t
+3#!#t
+<NULL>#!#f
+~~END~~
+
+
+-- check that optimizer constant-folds it properly
+SELECT 1 IS DISTINCT FROM 2 as "yes";
+GO
+~~START~~
+bool
+t
+~~END~~
+
+SELECT 2 IS DISTINCT FROM 2 as "no";
+GO
+~~START~~
+bool
+f
+~~END~~
+
+SELECT 2 IS DISTINCT FROM null as "yes";
+GO
+~~START~~
+bool
+t
+~~END~~
+
+SELECT null IS DISTINCT FROM null as "no";
+GO
+~~START~~
+bool
+f
+~~END~~
+
+
+-- negated form
+SELECT 1 IS NOT DISTINCT FROM 2 as "no";
+GO
+~~START~~
+bool
+f
+~~END~~
+
+SELECT 2 IS NOT DISTINCT FROM 2 as "yes";
+GO
+~~START~~
+bool
+t
+~~END~~
+
+SELECT 2 IS NOT DISTINCT FROM null as "no";
+GO
+~~START~~
+bool
+f
+~~END~~
+
+SELECT null IS NOT DISTINCT FROM null as "yes";
+GO
+~~START~~
+bool
+t
+~~END~~
+
