@@ -49,7 +49,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 
 -- sp_serveroption with optvalue greater than INT_MAX. should throw error
-EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483650'
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483648'
 GO
 
 -- sp_serveroption with optvalue containing characters other than 0-9. should throw error

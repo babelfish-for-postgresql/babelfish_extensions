@@ -77,7 +77,7 @@ GO
 
 
 -- sp_serveroption with optvalue greater than INT_MAX. should throw error
-EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483650'
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483648'
 GO
 ~~ERROR (Code: 33557097)~~
 
