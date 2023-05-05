@@ -2221,9 +2221,10 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 	HeapTuple		tuple, old_tuple;
 	TableScanDesc	tblscan;
 
-	if (optname != NULL && strncmp(optname, "query timeout", 13) == 0)
+	if (optname != NULL && strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0)
 	{
 		int32		query_timeout;
+		
 		if (optvalue == NULL || strspn(optvalue, "0123456789") != strlen(optvalue))
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
@@ -2663,7 +2664,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 				 errmsg("@optvalue parameter cannot be NULL")));
 
 	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
-		update_bbf_server_options(servername, optionname,optionvalue, false);
+		update_bbf_server_options(servername, optionname, optionvalue, false);
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
