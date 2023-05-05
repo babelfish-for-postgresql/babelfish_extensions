@@ -234,3 +234,9 @@ select * from babel_datatype_sqlvariant_vu_prepare_t9 where a >= b order by 1,2;
 go
 select * from babel_datatype_sqlvariant_vu_prepare_t9 where a <= b order by 1,2;
 go
+
+select * from babel_4036_t1 order by a;
+go
+
+select * from babel_4036_t2 order by a;
+go
