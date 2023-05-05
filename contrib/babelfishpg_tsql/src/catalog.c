@@ -1247,6 +1247,8 @@ get_query_timeout_from_server_name(char *servername)
 		bool	isNull;
 		query_timeout = DatumGetInt32(heap_getattr(tuple, Anum_bbf_servers_def_query_timeout,
 														 RelationGetDescr(bbf_servers_def_rel), &isNull));
+		if (isNull)
+			query_timeout = 0;
 	}
 
 	table_endscan(scan);
