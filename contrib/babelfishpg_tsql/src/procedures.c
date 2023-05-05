@@ -2225,7 +2225,13 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 	{
 		int32		query_timeout;
 
-		if (optvalue != NULL && strlen(optvalue) > 0 && optvalue[0] == '+')
+		/* we throw error when optvalue == NULL or empty */
+		if (optvalue == NULL || strlen(optvalue) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					 errmsg("Invalid option value for query timeout")));
+
+		if (optvalue[0] == '+')
 			optvalue++;
 
 		if (optvalue == NULL || strspn(optvalue, "0123456789") != strlen(optvalue))

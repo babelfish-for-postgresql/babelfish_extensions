@@ -116,7 +116,7 @@ bbf_server_1#!#2
 ~~END~~
 
 
--- sp_serveroption with optvalue containing leading zeroes
+-- sp_serveroption with optvalue containing + at the beginning
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+9'
 GO
 
@@ -129,8 +129,16 @@ bbf_server_1#!#9
 ~~END~~
 
 
--- sp_serveroption with optvalue containing leading zeroes
+-- more than one + . Should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='++7'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for query timeout)~~
+
+
+-- sp_serveroption with optvalue empty. should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue=''
 GO
 ~~ERROR (Code: 33557097)~~
 
