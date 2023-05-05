@@ -30,20 +30,5 @@ WHERE objid = CAST('@tab_babel_3192_mstvf' AS pg_catalog.regclass)  -- will get 
 AND refobjid = CAST('@tab_babel_3192_mstvf' AS pg_catalog.regtype); -- will get converted to pg_type oid
 go
 
-DROP FUNCTION babel_3192_mstvf;
-go
-
-DROP TABLE babel_3192_table;
-go
-
-DROP PROCEDURE babel_3192_proc;
-go
-
-DROP TYPE babel_3192_type;
-go
-
 USE master;
-go
-
-DROP DATABASE db_babel_3192;
 go
