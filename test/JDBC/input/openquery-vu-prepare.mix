@@ -75,6 +75,22 @@ GO
 select name, query_timeout from sys.servers where name = 'bbf_server_1'
 GO
 
+-- sp_serveroption with optvalue containing leading zeroes
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+9'
+GO
+
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+
+-- sp_serveroption with optvalue containing leading zeroes
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='++7'
+GO
+
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+
 -- sp_serveroption with valid server, optname and optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
 GO
