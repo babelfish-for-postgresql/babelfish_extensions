@@ -784,7 +784,7 @@ define_custom_variables(void)
 							   NULL, NULL, NULL);
 
 	DefineCustomStringVariable("babelfishpg_tsql.psql_logical_babelfish_db_name",
-							   gettext_noop("Sets a Babelfish database name"),
+							   gettext_noop("Sets a Babelfish database name from PG endpoint"),
 							   NULL,
 							   &pltsql_psql_logical_babelfish_db_name,
 							   NULL,
