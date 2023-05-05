@@ -124,7 +124,16 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	if (dterr != 0)
 		DateTimeParseError(dterr, str, "timestamp with time zone");
 
-	datetimeoffset->tsql_tz = (int16) (tz / 60);
+	/*
+	 * When time zone offset it not specified in input string
+	 * DecodeDateTime sets it to the session time zone.
+	 * In T-SQL it must default to '+00:00', not to session time zone.
+	 */
+	if (nf > 0 && ftype[nf - 1] == DTK_TZ)
+		datetimeoffset->tsql_tz = (int16) (tz / 60);
+	else
+		datetimeoffset->tsql_tz = 0;
+
 	tz = 0;
 	switch (dtype)
 	{

@@ -408,3 +408,4 @@ TestXML
 timefromparts
 triggers_with_transaction
 typeproperty
+datetimeoffset-timezone-before-15_3
