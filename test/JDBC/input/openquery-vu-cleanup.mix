@@ -4,6 +4,9 @@ GO
 EXEC sp_dropserver 'bbf_server_unreachable', 'droplogins'
 GO
 
+EXEC sp_dropserver 'bbf_server_1', 'droplogins'
+GO
+
 -- psql
 DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO

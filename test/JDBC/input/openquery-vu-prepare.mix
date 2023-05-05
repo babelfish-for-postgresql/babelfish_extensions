@@ -84,11 +84,11 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue
 GO
 
 -- psql
-SELECT * FROM sys.babelfish_inconsistent_metadata();
+SELECT * FROM sys.babelfish_inconsistent_metadata() where schema_name='pg_catalog' AND object_name='srvname';
 GO
 
 -- Output passed rules
-SELECT * FROM sys.babelfish_inconsistent_metadata(true);
+SELECT * FROM sys.babelfish_inconsistent_metadata(true) where schema_name='pg_catalog' AND object_name='srvname';
 GO
 
 -- tsql

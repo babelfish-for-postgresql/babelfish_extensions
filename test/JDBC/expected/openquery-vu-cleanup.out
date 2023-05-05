@@ -4,13 +4,12 @@ GO
 EXEC sp_dropserver 'bbf_server_unreachable', 'droplogins'
 GO
 
+EXEC sp_dropserver 'bbf_server_1', 'droplogins'
+GO
+
 -- psql
 DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO
-~~WARNING (Code: 0)~~
-
-~~WARNING (Message: drop cascades to 2 other objects  Server SQLState: 00000)~~
-
 
 -- tsql
 -- check if all the linked servers are dropped after dropping tds_fdw

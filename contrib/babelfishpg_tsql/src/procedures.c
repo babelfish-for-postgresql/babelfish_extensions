@@ -2224,7 +2224,7 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 	if (optname != NULL && strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0)
 	{
 		int32		query_timeout;
-		
+
 		if (optvalue == NULL || strspn(optvalue, "0123456789") != strlen(optvalue))
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
@@ -2282,6 +2282,12 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 		heap_freetuple(tuple);
 
 		table_close(bbf_servers_def_rel, RowExclusiveLock);
+	}
+	else
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Invalid option provided for sp_serveroption")));
 	}
 }
 
