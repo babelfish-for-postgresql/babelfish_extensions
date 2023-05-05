@@ -56,7 +56,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 
 -- sp_serveroption with optvalue greater than INT_MAX. should throw error
-EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483650'
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483648'
 GO
 
 -- sp_serveroption with optvalue containing characters other than 0-9. should throw error
@@ -71,6 +71,10 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0000002'
 GO
 
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+
 -- sp_serveroption with valid server, optname and optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
 GO
@@ -79,6 +83,7 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
 GO
 
+-- psql
 SELECT * FROM sys.babelfish_inconsistent_metadata();
 GO
 
@@ -86,6 +91,7 @@ GO
 SELECT * FROM sys.babelfish_inconsistent_metadata(true);
 GO
 
+-- tsql
 -- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
 SELECT servername, query_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
 GO

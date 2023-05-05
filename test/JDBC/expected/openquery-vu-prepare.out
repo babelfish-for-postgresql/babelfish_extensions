@@ -72,7 +72,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout.)~~
+~~ERROR (Message: Invalid option value for query timeout)~~
 
 
 -- sp_serveroption with float optvalue. should throw error
@@ -80,15 +80,15 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout.)~~
+~~ERROR (Message: Invalid option value for query timeout)~~
 
 
 -- sp_serveroption with optvalue greater than INT_MAX. should throw error
-EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483650'
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483648'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout.)~~
+~~ERROR (Message: Query timeout value provided is out of range)~~
 
 
 -- sp_serveroption with optvalue containing characters other than 0-9. should throw error
@@ -96,7 +96,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option value for query timeout.)~~
+~~ERROR (Message: Invalid option value for query timeout)~~
 
 
 -- sp_serveroption with optvalue = INT_MAX
@@ -107,6 +107,15 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0000002'
 GO
 
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+~~START~~
+varchar#!#int
+bbf_server_1#!#2
+~~END~~
+
+
 -- sp_serveroption with valid server, optname and optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
 GO
@@ -115,6 +124,75 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
 GO
 
+-- psql
+SELECT * FROM sys.babelfish_inconsistent_metadata();
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#jsonb
+~~END~~
+
+
+-- Output passed rules
+SELECT * FROM sys.babelfish_inconsistent_metadata(true);
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#jsonb
+text#!#sys#!#name#!#{"Rule": "master must exist in babelfish_sysdatabases"}
+text#!#sys#!#name#!#{"Rule": "tempdb must exist in babelfish_sysdatabases"}
+text#!#sys#!#name#!#{"Rule": "msdb must exist in babelfish_sysdatabases"}
+name#!#sys#!#rolname#!#{"Rule": "Current role name must exist in babelfish_authid_login_ext"}
+name#!#sys#!#nspname#!#{"Rule": "master_dbo must exist in babelfish_namespace_ext"}
+name#!#sys#!#nspname#!#{"Rule": "tempdb_dbo must exist in babelfish_namespace_ext"}
+name#!#sys#!#nspname#!#{"Rule": "msdb_dbo must exist in babelfish_namespace_ext"}
+name#!#sys#!#rolname#!#{"Rule": "master_db_owner must exist in babelfish_authid_user_ext"}
+name#!#sys#!#rolname#!#{"Rule": "master_dbo must exist in babelfish_authid_user_ext"}
+name#!#sys#!#rolname#!#{"Rule": "tempdb_db_owner must exist in babelfish_authid_user_ext"}
+name#!#sys#!#rolname#!#{"Rule": "tempdb_dbo must exist in babelfish_authid_user_ext"}
+name#!#sys#!#rolname#!#{"Rule": "msdb_db_owner must exist in babelfish_authid_user_ext"}
+name#!#sys#!#rolname#!#{"Rule": "msdb_dbo must exist in babelfish_authid_user_ext"}
+name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
+name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
+name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
+text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext"}
+name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
+name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext"}
+name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
+name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
+name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
+name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
+~~END~~
+
+
+-- tsql
 -- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
 SELECT servername, query_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
 GO

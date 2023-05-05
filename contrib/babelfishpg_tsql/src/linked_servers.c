@@ -178,7 +178,7 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 
 	buf = construct_err_string(severity, db_error, os_error, db_err_str, os_err_str);
 
-	/* when the query times out we need to return INT_CANCEL */
+	/* when the query times out we need to return LS_INT_CANCEL */
 	if (db_error == SYBETIME)
 	{
 		isQueryTimeout = true;

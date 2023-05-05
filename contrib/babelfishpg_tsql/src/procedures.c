@@ -83,7 +83,7 @@ static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
-static void update_bbf_server_options(char *servername, char *query_timeout, bool isInsert);
+static void update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
 static void remove_delimited_identifer(char *str);
 
@@ -2210,7 +2210,7 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 }
 
 static void 
-update_bbf_server_options(char *servername, char *querytimeout, bool isInsert)
+update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert)
 {
 	Relation	bbf_servers_def_rel;
 	TupleDesc	bbf_servers_def_rel_dsc;
@@ -2220,63 +2220,68 @@ update_bbf_server_options(char *servername, char *querytimeout, bool isInsert)
 	ScanKeyData		key;
 	HeapTuple		tuple, old_tuple;
 	TableScanDesc	tblscan;
-	int32		query_timeout;
 
-	if (querytimeout == NULL)
-		query_timeout = 0;
-	else
-		query_timeout = atoi(querytimeout);
-
-	if (query_timeout < 0 || strspn(querytimeout, "0123456789") != strlen(querytimeout))
-		ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					 errmsg("Invalid option value for query timeout.")));
-
-	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
-									 RowExclusiveLock);
-	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
-
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_repl, false, sizeof(new_record_repl));
-
-	new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
-	new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(query_timeout);
-
-	if(isInsert)
+	if (optname != NULL && strncmp(optname, "query timeout", 13) == 0)
 	{
-		tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
-								new_record, new_record_nulls);
-		CatalogTupleInsert(bbf_servers_def_rel, tuple);
-	}
-	else
-	{
-		/* Search and obtain the tuple based on the server_id */	
-		ScanKeyInit(&key,
-					Anum_bbf_servers_def_servername,
-					BTEqualStrategyNumber, F_TEXTEQ,
-					CStringGetTextDatum(servername));
-		tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
-		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
-
-		if (!old_tuple)
-		{
-			table_endscan(tblscan);
-			table_close(bbf_servers_def_rel, RowExclusiveLock);
+		int32		query_timeout;
+		if (optvalue == NULL || strspn(optvalue, "0123456789") != strlen(optvalue))
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
-				 	errmsg("server \"%s\" does not exist", servername)));
+					 errmsg("Invalid option value for query timeout")));
+		else
+			query_timeout = atoi(optvalue);
+
+		if (query_timeout < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					 errmsg("Query timeout value provided is out of range")));
+
+		bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
+									 	RowExclusiveLock);
+		bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
+
+		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+		MemSet(new_record_repl, false, sizeof(new_record_repl));
+
+		new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
+		new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(query_timeout);
+
+		if(isInsert)
+		{
+			tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
+									new_record, new_record_nulls);
+			CatalogTupleInsert(bbf_servers_def_rel, tuple);
 		}
-		new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
-		tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
-								new_record, new_record_nulls, new_record_repl);
+		else
+		{
+			/* Search and obtain the tuple based on the server_id */	
+			ScanKeyInit(&key,
+						Anum_bbf_servers_def_servername,
+						BTEqualStrategyNumber, F_TEXTEQ,
+						CStringGetTextDatum(servername));
+			tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+			old_tuple = heap_getnext(tblscan, ForwardScanDirection);
+
+			if (!old_tuple)
+			{
+				table_endscan(tblscan);
+				table_close(bbf_servers_def_rel, RowExclusiveLock);
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_ERROR),
+				 		errmsg("server \"%s\" does not exist", servername)));
+			}
+			new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
+			tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
+									new_record, new_record_nulls, new_record_repl);
 			
-		CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
-		table_endscan(tblscan);
+			CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
+			table_endscan(tblscan);
+		}
+
+		heap_freetuple(tuple);
+
+		table_close(bbf_servers_def_rel, RowExclusiveLock);
 	}
-
-	heap_freetuple(tuple);
-
-	table_close(bbf_servers_def_rel, RowExclusiveLock);
 }
 
 static void 
@@ -2401,7 +2406,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	exec_utility_cmd_helper(query.data);
 
-	update_bbf_server_options(linked_server, "0", true);
+	update_bbf_server_options(linked_server, "query timeout", "0", true);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
@@ -2658,7 +2663,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 				 errmsg("@optvalue parameter cannot be NULL")));
 
 	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
-		update_bbf_server_options(servername, optionvalue, false);
+		update_bbf_server_options(servername, optionname,optionvalue, false);
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
