@@ -4,15 +4,15 @@ select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
 -- GUC should be NULL as it is not set yet
-show babelfishpg_tsql.psql_logical_babelfish_db_name;
+show psql_logical_babelfish_db_name;
 go
 
 -- set the GUC to master
-set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master';
+set psql_logical_babelfish_db_name = 'master';
 go
 
 -- check whether the GUC has been set to master
-show babelfishpg_tsql.psql_logical_babelfish_db_name;
+show psql_logical_babelfish_db_name;
 go
 
 -- query system views. Should return metadata of master database
@@ -20,7 +20,7 @@ select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
 -- set the GUC to an invalid database
-set babelfishpg_tsql.psql_logical_babelfish_db_name = 'invalid_db'
+set psql_logical_babelfish_db_name = 'invalid_db'
 go
 
 -- should return zero rows as the database set does not exist
@@ -36,7 +36,7 @@ create database logical_database_db1
 go
 
 -- try to set GUC from TSQL endpoint. Should throw error
-select set_config('babelfishpg_tsql.psql_logical_babelfish_db_name', 'logical_database_db1', false)
+select set_config('psql_logical_babelfish_db_name', 'logical_database_db1', false)
 go
 
 use logical_database_db1
@@ -54,7 +54,7 @@ select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
 -- should throws error as we need super user privileges to set this GUC
-set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master'
+set psql_logical_babelfish_db_name = 'master'
 go
 
 -- psql

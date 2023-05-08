@@ -8,7 +8,7 @@ go
 
 
 -- GUC should be NULL as it is not set yet
-show babelfishpg_tsql.psql_logical_babelfish_db_name;
+show psql_logical_babelfish_db_name;
 go
 ~~START~~
 text
@@ -17,11 +17,11 @@ text
 
 
 -- set the GUC to master
-set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master';
+set psql_logical_babelfish_db_name = 'master';
 go
 
 -- check whether the GUC has been set to master
-show babelfishpg_tsql.psql_logical_babelfish_db_name;
+show psql_logical_babelfish_db_name;
 go
 ~~START~~
 text
@@ -50,7 +50,7 @@ master#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#
 
 
 -- set the GUC to an invalid database
-set babelfishpg_tsql.psql_logical_babelfish_db_name = 'invalid_db'
+set psql_logical_babelfish_db_name = 'invalid_db'
 go
 
 -- should return zero rows as the database set does not exist
@@ -86,13 +86,13 @@ create database logical_database_db1
 go
 
 -- try to set GUC from TSQL endpoint. Should throw error
-select set_config('babelfishpg_tsql.psql_logical_babelfish_db_name', 'logical_database_db1', false)
+select set_config('psql_logical_babelfish_db_name', 'logical_database_db1', false)
 go
 ~~START~~
 text
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied to set parameter "babelfishpg_tsql.psql_logical_babelfish_db_name")~~
+~~ERROR (Message: permission denied to set parameter "psql_logical_babelfish_db_name")~~
 
 
 use logical_database_db1
@@ -130,11 +130,11 @@ go
 
 
 -- should throws error as we need super user privileges to set this GUC
-set babelfishpg_tsql.psql_logical_babelfish_db_name = 'master'
+set psql_logical_babelfish_db_name = 'master'
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set parameter "babelfishpg_tsql.psql_logical_babelfish_db_name"
+~~ERROR (Message: ERROR: permission denied to set parameter "psql_logical_babelfish_db_name"
     Server SQLState: 42501)~~
 
 
