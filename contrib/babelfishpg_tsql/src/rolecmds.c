@@ -1885,10 +1885,14 @@ get_fully_qualified_domain_name(char *netbios_domain)
 
 	dsc = RelationGetDescr(bbf_domain_mapping_rel);
 
-	ScanKeyInit(&scanKey,
-				Anum_bbf_domain_mapping_netbios_domain_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(netbios_domain));
+	ScanKeyEntryInitialize(&scanKey,
+						   0,
+						   Anum_bbf_domain_mapping_netbios_domain_name,
+						   BTEqualStrategyNumber,
+						   InvalidOid,
+						   tsql_get_server_collation_oid_internal(false),
+						   F_TEXTEQ,
+						   CStringGetTextDatum(netbios_domain));
 
 	scan = systable_beginscan(bbf_domain_mapping_rel,
 							  get_bbf_domain_mapping_idx_oid(),
