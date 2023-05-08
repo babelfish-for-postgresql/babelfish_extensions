@@ -24,3 +24,13 @@ varchar#!#varchar
 sys_sp_databases_dep_vu_prepare_db1#!#<NULL>
 ~~END~~
 
+
+EXEC sp_databases_dep_vu_prepare_PROC1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#int#!#varchar
+sys_sp_databases_dep_vu_prepare_db1#!#1#!#<NULL>
+~~END~~
+
