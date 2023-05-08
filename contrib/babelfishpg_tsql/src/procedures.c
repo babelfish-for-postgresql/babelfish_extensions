@@ -65,6 +65,7 @@ PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_dropserver_internal);
 PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
+PG_FUNCTION_INFO_V1(sp_babelfish_createExtension);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -1587,6 +1588,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 	ListCell   *parsetree_item;
 	char	   *extensionStmt;
 	Node	   *stmt;
+	size_t		len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 
 	PG_TRY();
@@ -1602,9 +1604,15 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 							errmsg("Name cannot be NULL.")));
 
-	if (strlen(extensionStmt) == 0)
+	/* Remove trailing whitespaces */
+		len = strlen(extensionStmt);
+		while (isspace(extensionStmt[len - 1]))
+			extensionStmt[--len] = 0;
+
+	/* check if role name is empty after removing trailing spaces */
+		if (strlen(extensionStmt) == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							errmsg("Name cannot be NULL.")));
+										errmsg("Name cannot be NULL.")));
 
 	parsetree_list = raw_parser(extensionStmt, RAW_PARSE_DEFAULT);
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
@@ -1621,7 +1629,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 			Node	   *parsetree;
 			PlannedStmt *wrapper;
-			
+
 			/* need to make a wrapper PlannedStmt */
 			wrapper = makeNode(PlannedStmt);
 			wrapper->commandType = CMD_UTILITY;
@@ -1637,7 +1645,6 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				case T_CreateExtensionStmt:
 				{
 					CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
-
 					if(strcmp(crstmt->extname, "pg_stat_statements"))
 					{
 						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
