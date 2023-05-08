@@ -35,6 +35,7 @@ babelfish_db_seq
 babelfish_domain_mapping
 babelfish_function_ext
 babelfish_namespace_ext
+babelfish_server_options
 babelfish_sysdatabases
 babelfish_view_def
 ~~END~~
