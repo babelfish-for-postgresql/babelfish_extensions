@@ -95,7 +95,7 @@ GO
 select name, query_timeout from sys.servers where name = 'bbf_server_1'
 GO
 
--- sp_serveroption with optvalue '+'. should throw error
+-- sp_serveroption with optvalue '+'.
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+'
 GO
 
@@ -103,7 +103,7 @@ GO
 select name, query_timeout from sys.servers where name = 'bbf_server_1'
 GO
 
--- sp_serveroption with optvalue '+0'. should throw error
+-- sp_serveroption with optvalue '+0'.
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+0'
 GO
 

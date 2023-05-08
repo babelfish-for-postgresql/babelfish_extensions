@@ -154,7 +154,7 @@ bbf_server_1#!#9
 ~~END~~
 
 
--- sp_serveroption with optvalue '+'. should throw error
+-- sp_serveroption with optvalue '+'.
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+'
 GO
 
@@ -167,7 +167,7 @@ bbf_server_1#!#0
 ~~END~~
 
 
--- sp_serveroption with optvalue '+0'. should throw error
+-- sp_serveroption with optvalue '+0'.
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+0'
 GO
 
