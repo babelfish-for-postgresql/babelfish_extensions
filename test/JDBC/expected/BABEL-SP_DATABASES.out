@@ -49,11 +49,12 @@ GO
 
 exec sp_databases_PROC1;
 GO
-~~ROW COUNT: 1~~
+~~ROW COUNT: 2~~
 
 ~~START~~
 varchar#!#int#!#varchar
 db1#!#1#!#<NULL>
+master#!#1#!#<NULL>
 ~~END~~
 
 
