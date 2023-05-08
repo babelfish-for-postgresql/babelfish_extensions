@@ -1040,7 +1040,7 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
     Oid role_oid;
     Oid	babelfish_db_oid;
     HeapTuple tp;
-    Form_pg_authid authForm;
+    Form_pg_authid authForm = NULL;
 
     /* If the role does not exist, just let the normal Postgres checks happen. */
     if (name == NULL)

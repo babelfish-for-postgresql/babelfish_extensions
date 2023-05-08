@@ -164,6 +164,7 @@ GO
 
 -- tsql user=ownership_restrictions_from_pg_login1 password=12345678
 
+-- psql user=ownership_restrictions_from_pg_login1 password=12345678
 ALTER ROLE ownership_restrictions_from_pg_login1 set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 
