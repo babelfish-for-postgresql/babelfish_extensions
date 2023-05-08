@@ -2959,7 +2959,7 @@ SELECT
   CAST(0 as sys.bit) AS is_rda_server
 FROM pg_foreign_server AS f
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
-LEFT JOIN sys.babelfish_server_options AS s on f.srvname = s.servername COLLATE "C"
+LEFT JOIN sys.babelfish_server_options AS s on f.srvname = s.servername
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
 
