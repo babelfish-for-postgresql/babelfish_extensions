@@ -1976,6 +1976,10 @@ extern void pltsql_read_procedure_info(StringInfo inout_str,
 									   Oid *atttypid,
 									   Oid *atttypmod,
 									   int *attcollation);
+void PLTsqlProcessTransaction(Node *parsetree,
+						            ParamListInfo params,
+						 			QueryCompletion *qc);
+
 
 extern void PLTsqlStartTransaction(char *txnName);
 extern void PLTsqlCommitTransaction(QueryCompletion *qc, bool chain);
