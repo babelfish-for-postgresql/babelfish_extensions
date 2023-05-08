@@ -19,6 +19,119 @@ GO
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_unreachable', @useself = 'FALSE', @rmtuser = 'dummy_usr', @rmtpassword = 'dummy_pwd'
 GO
 
+-- Test sp_serveroption procedure
+EXEC sp_addlinkedserver  @server = N'bbf_server_1', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Add jdbc_user as linked server login
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_1', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+-- sp_serveroption with invalid server name. Should throw error
+EXEC sp_serveroption @server='invalid_server', @optname='query timeout', @optvalue='1'
+GO
+
+-- sp_serveroption with invalid server option. Should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='invalid option', @optvalue='1'
+GO
+
+-- sp_serveroption with server as NULL. Should throw error
+EXEC sp_serveroption @server=NULL, @optname='query timeout', @optvalue='1'
+GO
+
+-- sp_serveroption with optname as NULL. Should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname=NULL, @optvalue='1'
+GO
+
+-- sp_serveroption with optvalue as NULL. Should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue=NULL
+GO
+
+-- sp_serveroption with negative optvalue
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='-5'
+GO
+
+-- sp_serveroption with float optvalue. should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='1.0001'
+GO
+
+-- sp_serveroption with optvalue greater than INT_MAX. should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483648'
+GO
+
+-- sp_serveroption with optvalue containing characters other than 0-9. should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0abdejc'
+GO
+
+-- sp_serveroption with optvalue = INT_MAX
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483647'
+GO
+
+-- sp_serveroption with optvalue containing leading zeroes
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0000002'
+GO
+
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+
+-- sp_serveroption with optvalue containing + at the beginning
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+9'
+GO
+
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+
+-- more than one + . Should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='++7'
+GO
+
+-- sp_serveroption with optvalue empty. should throw error
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue=''
+GO
+
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+
+-- sp_serveroption with optvalue '+'.
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+'
+GO
+
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+
+-- sp_serveroption with optvalue '+0'.
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+0'
+GO
+
+-- check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+GO
+
+-- sp_serveroption with valid server, optname and optvalue
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
+GO
+
+-- optname is case insensitive
+EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
+GO
+
+-- psql
+SELECT * FROM sys.babelfish_inconsistent_metadata() where schema_name='pg_catalog' AND object_name='srvname';
+GO
+
+-- Output passed rules
+SELECT * FROM sys.babelfish_inconsistent_metadata(true) where schema_name='pg_catalog' AND object_name='srvname';
+GO
+
+-- tsql
+-- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
+SELECT servername, query_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
+GO
+
 -- Create a view dependent on OPENQUERY
 CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
 GO

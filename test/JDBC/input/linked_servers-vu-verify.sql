@@ -1,5 +1,5 @@
 -- Check if the linked server added is reflected in the system view
-SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name NOT LIKE 'bbf_server%' ORDER BY name
 GO
 
 SELECT * FROM sys_linked_servers_vu_prepare__sys_servers_func()
@@ -8,7 +8,7 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_servers_view
 GO
 
-SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name <> 'bbf_server' ORDER BY linked_srv_name
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name NOT LIKE 'bbf_server%' ORDER BY linked_srv_name
 GO
 
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
@@ -18,7 +18,7 @@ GO
 SET NOCOUNT ON
 DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname NULL, c smallint, d sysname NULL)
 INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
-SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a <> 'bbf_server' ORDER BY a
+SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a NOT LIKE 'bbf_server%' ORDER BY a
 SET NOCOUNT OFF
 GO
 
@@ -45,7 +45,7 @@ GO
 SET NOCOUNT ON
 DECLARE @sp_linkedservers_var table(a sysname, b nvarchar(128), c nvarchar(128), d nvarchar(4000), e nvarchar(4000), f nvarchar(4000), g sysname NULL)
 INSERT INTO @sp_linkedservers_var EXEC sp_linkedservers
-SELECT * FROM @sp_linkedservers_var WHERE a <> 'bbf_server' ORDER BY a
+SELECT * FROM @sp_linkedservers_var WHERE a NOT LIKE 'bbf_server%' ORDER BY a
 SET NOCOUNT OFF
 GO
 

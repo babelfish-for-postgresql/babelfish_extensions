@@ -6,5 +6,24 @@ int
 ~~END~~
 
 
+-- check whether query timeout value is getting persisted after the upgrade
+SELECT name, query_timeout FROM sys.servers WHERE name = 'bbf_server_1'
+GO
+~~START~~
+varchar#!#int
+bbf_server_1#!#1
+~~END~~
+
+
+-- should throw error as it takes more than 5 seconds to run
+SELECT * FROM OPENQUERY(bbf_server_1, 'select CAST(pg_sleep(5) AS text)')
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: DB #: 20003, DB Msg: server connection timed out, OS #: 0, OS Msg: Success, Level: 6)~~
+
+
 -- SELECT * FROM openquery_vu_prepare__openquery_view
 GO

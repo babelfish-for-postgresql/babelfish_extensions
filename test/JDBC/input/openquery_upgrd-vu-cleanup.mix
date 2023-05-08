@@ -6,5 +6,9 @@ DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO
 
 -- tsql
+-- check if all the linked servers are dropped after dropping tds_fdw
+SELECT servername, query_timeout FROM babelfish_server_options
+GO
+
 -- DROP VIEW openquery_vu_prepare__openquery_view
 GO

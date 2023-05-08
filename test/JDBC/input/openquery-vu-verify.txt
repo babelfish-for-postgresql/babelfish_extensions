@@ -246,3 +246,10 @@ SELECT * FROM OPENQUERY(bbf_server_unreachable, 'select 1')
 
 #Test OPENQUERY where argument has quotes
 SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Query having both ''''single'''' and "double" quotes''')
+
+# Test query timeout behaviour in OPENQUERY
+# check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+
+# execute a query which takes more time than the timeout set
+SELECT * FROM OPENQUERY(bbf_server_1, 'select CAST(pg_sleep(5) AS text)')

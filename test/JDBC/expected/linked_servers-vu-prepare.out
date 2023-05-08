@@ -133,19 +133,19 @@ GO
 CREATE FUNCTION sys_linked_servers_vu_prepare__sys_servers_func()
 RETURNS TABLE
 AS
-RETURN (SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name);
+RETURN (SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name NOT LIKE 'bbf_server%' ORDER BY name);
 GO
 
 -- Create a view dependent on sys.servers view
 CREATE VIEW sys_linked_servers_vu_prepare__sys_servers_view
 AS
-SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name <> 'bbf_server' ORDER BY name
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name NOT LIKE 'bbf_server%' ORDER BY name
 GO
 
 -- Create a view dependent on sys.linked_logins view
 CREATE VIEW sys_linked_servers_vu_prepare__sys_linked_logins_view
 AS
-SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE name <> 'bbf_server' ORDER BY linked_srv_name
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE name NOT LIKE 'bbf_server%' ORDER BY linked_srv_name
 GO
 
 -- tsql    user=linked_server_login_861    password=password_861
