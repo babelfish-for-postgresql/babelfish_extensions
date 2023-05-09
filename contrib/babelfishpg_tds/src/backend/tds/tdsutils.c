@@ -1039,6 +1039,8 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
     ListCell *opt;
     Oid role_oid;
     Oid	babelfish_db_oid;
+    HeapTuple tp;
+    Form_pg_authid authForm;
 
     /* If the role does not exist, just let the normal Postgres checks happen. */
     if (name == NULL)
@@ -1048,6 +1050,11 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 
     if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
     {
+	    tp = SearchSysCache1(AUTHNAME, CStringGetDatum(name));
+	    if (HeapTupleIsValid(tp))
+	    {
+		    authForm = (Form_pg_authid) GETSTRUCT(tp);
+	    }
 	    babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
 	    babelfish_db_oid = get_database_oid(babelfish_db_name, true);
 	    role_oid = get_role_oid(name, true);
@@ -1081,9 +1088,9 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 		    }
 		    else
 		    {
-			    if (strcmp(defel->defname, "password") == 0 ||
+			    if ((authForm && authForm->rolcanlogin) && (strcmp(defel->defname, "password") == 0 ||
 					    strcmp(defel->defname, "connectionlimit") == 0 ||
-					    strcmp(defel->defname, "validUntil") == 0)
+					    strcmp(defel->defname, "validUntil") == 0))
 				    allow_alter_role_operation = true;
 			    else
 			    {
@@ -1092,6 +1099,8 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 			    }
 		    }
 	    }
+	    if (authForm)
+		    ReleaseSysCache(tp);
 	    check_babelfish_alterrole_restictions(allow_alter_role_operation);
     }
     pfree(name);

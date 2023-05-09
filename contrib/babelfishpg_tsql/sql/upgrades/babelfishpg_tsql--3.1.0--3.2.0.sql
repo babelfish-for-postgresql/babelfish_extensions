@@ -31,6 +31,14 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE TABLE sys.babelfish_server_options (
+	servername sys.SYSNAME NOT NULL PRIMARY KEY COLLATE "C",
+	query_timeout INT
+);
+GRANT SELECT ON sys.babelfish_server_options TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_server_options', '');
+
 -- please add your SQL here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
@@ -1058,15 +1066,6 @@ CREATE AGGREGATE sys.VARP(float8) (
 CREATE OR REPLACE FUNCTION sys.rowcount_big()
 RETURNS BIGINT AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
-ALTER FUNCTION sys.parsename(VARCHAR,INT) RENAME TO parsename_deprecated_in_3_2_0;
-
-CREATE OR REPLACE FUNCTION sys.parsename(object_name character varying, object_piece int)
-RETURNS sys.SYSNAME
-AS 'babelfishpg_tsql', 'parsename'
-LANGUAGE C IMMUTABLE STRICT;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_2_0');
-
 CREATE OR REPLACE FUNCTION sys.database_principal_id(IN user_name sys.sysname)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
@@ -1784,6 +1783,17 @@ CREATE OR REPLACE VIEW sys.sp_databases_view AS
 	GROUP BY database_name
 	ORDER BY database_name;
 
+CREATE OR REPLACE PROCEDURE sys.sp_serveroption( IN "@server" sys.sysname,
+                                                    IN "@optname" sys.varchar(35),
+                                                    IN "@optvalue" sys.varchar(10))
+AS 'babelfishpg_tsql', 'sp_serveroption_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_serveroption( IN "@server" sys.sysname,
+                                                    IN "@optname" sys.varchar(35),
+                                                    IN "@optvalue" sys.varchar(10))
+TO PUBLIC;
+
 ALTER FUNCTION sys.datetime2fromparts(NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) RENAME TO datetime2fromparts_deprecated_3_2;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_deprecated_3_2');
 
@@ -2142,6 +2152,51 @@ BEGIN
 END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.servers
+AS
+SELECT
+  CAST(f.oid as int) AS server_id,
+  CAST(f.srvname as sys.sysname) AS name,
+  CAST('' as sys.sysname) AS product,
+  CAST('tds_fdw' as sys.sysname) AS provider,
+  CAST((select string_agg(
+                  case
+                  when option like 'servername=%%' then substring(option, 12)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
+  CAST(NULL as sys.nvarchar(4000)) AS location,
+  CAST(NULL as sys.nvarchar(4000)) AS provider_string,
+  CAST((select string_agg(
+                  case
+                  when option like 'database=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
+  CAST(0 as int) AS connect_timeout,
+  CAST(s.query_timeout as int) AS query_timeout,
+  CAST(1 as sys.bit) AS is_linked,
+  CAST(0 as sys.bit) AS is_remote_login_enabled,
+  CAST(0 as sys.bit) AS is_rpc_out_enabled,
+  CAST(1 as sys.bit) AS is_data_access_enabled,
+  CAST(0 as sys.bit) AS is_collation_compatible,
+  CAST(1 as sys.bit) AS uses_remote_collation,
+  CAST(NULL as sys.sysname) AS collation_name,
+  CAST(0 as sys.bit) AS lazy_schema_validation,
+  CAST(0 as sys.bit) AS is_system,
+  CAST(0 as sys.bit) AS is_publisher,
+  CAST(0 as sys.bit) AS is_subscriber,
+  CAST(0 as sys.bit) AS is_distributor,
+  CAST(0 as sys.bit) AS is_nonsql_subscriber,
+  CAST(1 as sys.bit) AS is_remote_proc_transaction_promotion_enabled,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_rda_server
+FROM pg_foreign_server AS f
+LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
+LEFT JOIN sys.babelfish_server_options AS s on f.srvname = s.servername
+WHERE w.fdwname = 'tds_fdw';
+GRANT SELECT ON sys.servers TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'babelfish_sp_rename_internal_deprecated_in_3_2_0');
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_rename_deprecated_in_3_2_0');

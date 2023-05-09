@@ -254,6 +254,17 @@ GRANT EXECUTE ON PROCEDURE sys.sp_dropserver( IN "@server" sys.sysname,
                                                     IN "@droplogins" sys.bpchar(10))
 TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_serveroption( IN "@server" sys.sysname,
+                                                    IN "@optname" sys.varchar(35),
+                                                    IN "@optvalue" sys.varchar(10))
+AS 'babelfishpg_tsql', 'sp_serveroption_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_serveroption( IN "@server" sys.sysname,
+                                                    IN "@optname" sys.varchar(35),
+                                                    IN "@optvalue" sys.varchar(10))
+TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_volatility(IN "@function_name" sys.varchar DEFAULT NULL, IN "@volatility" sys.varchar DEFAULT NULL)
 AS 'babelfishpg_tsql', 'sp_babelfish_volatility' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.varchar) TO PUBLIC;

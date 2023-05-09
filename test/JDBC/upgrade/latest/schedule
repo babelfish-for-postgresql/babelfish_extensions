@@ -315,7 +315,6 @@ sys-objects
 sys-original_login
 sys-partitions
 sys-partitions-dep
-sys-parsename
 sys-plan_guides
 sys-procedures
 sys-proc_param_helper-dep
@@ -434,3 +433,4 @@ timefromparts
 triggers_with_transaction
 typeproperty
 typeproperty-dep
+datetimeoffset-timezone

@@ -295,7 +295,6 @@ sys-objects
 sys-original_login
 sys-partitions
 sys-partitions-dep
-sys-parsename
 sys-plan_guides
 sys-procedures
 sys-proc_param_helper-dep
@@ -400,3 +399,4 @@ test_windows_login_before_15_2
 TestXML
 timefromparts
 triggers_with_transaction
+datetimeoffset-timezone-before-15_3
