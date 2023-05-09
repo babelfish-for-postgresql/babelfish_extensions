@@ -1694,7 +1694,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid			tsqlSeqTypOid;
 	TypeName   *type_def;
 	List	   *type_names;
-	List	   *new_type_names;
+	List	   *new_type_names = NIL;
 	AclResult	aclresult;
 	Oid			base_type;
 	int			list_len;
@@ -2437,7 +2437,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
-								
+
 								/*
 								 * Check whether the domain name contains invalid characters or not.
 								 */
@@ -2844,8 +2844,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 
 						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
-							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
-								errmsg("Current login %s does not have permission to Alter login", 
+							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								errmsg("Current login %s does not have permission to Alter login",
 								GetUserNameFromId(GetSessionUserId(), true))));
 
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
@@ -2979,9 +2979,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
 							drop_role = true;
-						else 
+						else
 							drop_login = true;
-						
+
 						if (drop_user || drop_role)
 						{
 							char	   *db_name = NULL;
@@ -3109,8 +3109,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							other = true;
 
 						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))){
-							ereport(ERROR, 
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									errmsg("Current login %s does not have permission to Drop login", GetUserNameFromId(GetSessionUserId(), true))));
 						}
 
@@ -4577,7 +4577,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	bool 		is_itvf;
 	char		*prosrc = NULL;
 	bool		is_mstvf = false;
-	
+
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
 	int			saved_dialect = sql_dialect;
 
@@ -4725,9 +4725,9 @@ pltsql_validator(PG_FUNCTION_ARGS)
 				func = pltsql_compile(fake_fcinfo, true);
 
 			if(func && func->table_varnos)
-			{	
+			{
 				is_mstvf = func->is_mstvf;
-				/* 
+				/*
 				 * if a function has tvp declared or as argument in the function
 				 * or it is a TVF has_table_var will be true
 				 */
@@ -4742,10 +4742,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		}
 
 		ReleaseSysCache(tuple);
-		
-		/* 
-		 * If the function has TVP in its arguments or function body 
-		 * it should be declared as VOLATILE by default 
+
+		/*
+		 * If the function has TVP in its arguments or function body
+		 * it should be declared as VOLATILE by default
 		 * TVF are VOLATILE by default so we donot need to update tuple for it
 		 */
 		if(prokind == PROKIND_FUNCTION && (has_table_var && !is_itvf && !is_mstvf))
@@ -5324,5 +5324,5 @@ pltsql_remove_current_query_env(void)
 		(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
 	{
 		destroy_failed_transactions_map();
-	} 
+	}
 }

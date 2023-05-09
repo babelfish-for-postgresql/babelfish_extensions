@@ -798,6 +798,7 @@ void
 pltsql_free_function_memory(PLtsql_function *func)
 {
 	int			i;
+	MemoryContext fn_cxt = NULL;
 
 	/* Better not call this on an in-use function */
 	Assert(func->use_count == 0);
@@ -862,10 +863,14 @@ pltsql_free_function_memory(PLtsql_function *func)
 	 * And finally, release all memory except the PLtsql_function struct
 	 * itself (which has to be kept around because there may be multiple
 	 * fn_extra pointers to it).
+	 * Be careful though, because pltsql_inline_handler does palloc the
+	 * PLtsql_function struct in fn_cxt memory context itself.
 	 */
-	if (func->fn_cxt)
-		MemoryContextDelete(func->fn_cxt);
+	fn_cxt = func->fn_cxt;
 	func->fn_cxt = NULL;
+
+	if (fn_cxt)
+		MemoryContextDelete(fn_cxt);
 }
 
 

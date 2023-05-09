@@ -509,10 +509,10 @@ schema_name(PG_FUNCTION_ARGS)
 Datum
 schema_id(PG_FUNCTION_ARGS)
 {
-	char	   *name;
 	char	   *input_name;
 	char	   *physical_name;
 	int			id;
+	char	   *name = NULL;
 
 	/* when no argument is passed, then ID of default schema of the caller */
 	if (PG_NARGS() == 0)

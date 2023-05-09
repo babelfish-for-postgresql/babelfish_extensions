@@ -1545,8 +1545,7 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 	Datum	   *optiondatums;
 	int			noptions,
 				i;
-	char	   *optstr,
-			   *bbf_original_name;
+	char	   *optstr;
 
 	foreach(li, l)
 	{
@@ -1596,12 +1595,8 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 			optstr = VARDATA(optiondatums[i]);
 			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
 			{
-				/*
-				 * We found the original name; rewrite it as bbf_original_name
-				 */
-				bbf_original_name = &optstr[18];
-				bbf_original_name[strlen(te->resname)] = '\0';
-				te->resname = pstrdup(bbf_original_name);
+				/* preserve the case */
+				te->resname = pnstrdup((char *) &optstr[18], strlen(te->resname));
 				break;
 			}
 		}
