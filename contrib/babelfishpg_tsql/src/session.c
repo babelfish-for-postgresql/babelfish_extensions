@@ -7,7 +7,6 @@
 #include "utils/formatting.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
-#include "parser/parser.h"
 #include "catalog.h"
 
 #include <ctype.h>

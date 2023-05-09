@@ -389,17 +389,6 @@ check_tsql_version(char **newval, void **extra, GucSource source)
 	return true;
 }
 
-static bool
-check_endpoint(char **newval, void **extra, GucSource source)
-{
-	if (*newval && IS_TDS_CLIENT())
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION),
-			 	errmsg("psql_logical_babelfish_db_name can not be set from TDS endpoint")));
-
-	return true;
-}
-
 static void
 assign_enable_pg_hint(bool newval, void *extra)
 {
@@ -790,7 +779,7 @@ define_custom_variables(void)
 							   NULL,
 							   PGC_SUSET,
 							   GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							   check_endpoint, NULL, NULL);
+							   NULL, NULL, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.datefirst",
 							gettext_noop("Sets the first day of the week to a number from 1 through 7."),
