@@ -61,6 +61,7 @@ binary
 SELECT NULL AS Col1
 UNION
 SELECT CAST(1 AS BINARY(10)) AS Col1
+ORDER BY 1
 GO
 ~~START~~
 binary
@@ -72,28 +73,31 @@ binary
 SELECT CAST(1 AS CHAR(1)) AS Col1
 UNION
 SELECT NULL AS Col1
+ORDER BY 1
 GO
 ~~START~~
 char
-1
 <NULL>
+1
 ~~END~~
 
 
 SELECT CAST('1' AS CHAR(255)) AS Col1
 UNION
 SELECT NULL AS Col1
+ORDER BY 1
 GO
 ~~START~~
 char
-1                                                                                                                                                                                                                                                              
 <NULL>
+1                                                                                                                                                                                                                                                              
 ~~END~~
 
 
 SELECT CAST('1' AS CHAR(15)) AS Col1
 UNION
 SELECT CAST('2' AS CHAR(10)) AS Col1
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -105,6 +109,7 @@ char
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION
 SELECT CAST('2' AS CHAR(15)) AS Col1
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -116,6 +121,7 @@ char
 SELECT CAST('1' AS NCHAR(15)) AS Col1
 UNION
 SELECT CAST('2' AS NCHAR(10)) AS Col1
+ORDER BY 1
 GO
 ~~START~~
 nchar
@@ -127,6 +133,7 @@ nchar
 SELECT CAST('1' AS NCHAR(10)) AS Col1
 UNION
 SELECT CAST('2' AS NCHAR(15)) AS Col1
+ORDER BY 1
 GO
 ~~START~~
 nchar
@@ -135,53 +142,82 @@ nchar
 ~~END~~
 
 
-SELECT CAST(15 AS BINARY(4)) AS Col1
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(10)) AS Col1
 UNION
-SELECT CAST(12 AS BINARY(8)) AS Col1
+SELECT NULL AS Col1
+ORDER BY 1
 GO
 ~~START~~
-binary
-0000000100000000
-0000000000000002
+nchar
+<NULL>
+ΘЖऌฒ      
+~~END~~
+
+
+SELECT NULL AS Col1
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(10)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+nchar
+<NULL>
+ΘЖऌฒ      
 ~~END~~
 
 
 SELECT CAST(1 AS BINARY(4)) AS Col1
 UNION
 SELECT CAST(2 AS BINARY(8)) AS Col1
+ORDER BY 1
 GO
 ~~START~~
 binary
-0000000100000000
 0000000000000002
+0000000100000000
+~~END~~
+
+
+SELECT CAST(1 AS BINARY(4)) AS Col1
+UNION
+SELECT CAST(2 AS BINARY(8)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+binary
+0000000000000002
+0000000100000000
 ~~END~~
 
 
 SELECT CAST('1' AS CHAR(4)) AS Col1
 UNION
-SELECT CAST('2' AS NCHAR(8)) AS Col1
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8)) AS Col1
+ORDER BY 1
 GO
 ~~START~~
 nchar
 1       
-2       
+ΘЖऌฒ    
 ~~END~~
 
 
-SELECT CAST('2' AS NCHAR(8)) AS Col1
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8)) AS Col1
 UNION
 SELECT CAST('1' AS CHAR(4)) AS Col1
+ORDER BY 1
 GO
 ~~START~~
 nchar
-2       
 1       
+ΘЖऌฒ    
 ~~END~~
 
 
 SELECT CAST('1' AS CHAR(4))
 INTERSECT
 SELECT CAST('1' AS CHAR(8))
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -192,6 +228,7 @@ char
 SELECT CAST('1' AS CHAR(8))
 INTERSECT
 SELECT CAST('1' AS CHAR(4))
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -202,6 +239,7 @@ char
 SELECT CAST('1' AS CHAR(4))
 EXCEPT
 SELECT CAST('1' AS CHAR(8))
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -211,6 +249,7 @@ char
 SELECT CAST('1' AS CHAR(8))
 EXCEPT
 SELECT CAST('1' AS CHAR(4))
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -223,6 +262,7 @@ UNION
 SELECT NULL
 UNION
 SELECT NULL
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -236,6 +276,42 @@ UNION
 SELECT CAST('1' AS CHAR(8))
 UNION
 SELECT NULL
+ORDER BY 1
+GO
+~~START~~
+char
+<NULL>
+1       
+~~END~~
+
+
+SELECT NULL
+UNION
+SELECT NULL
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT NULL
+UNION ALL
+SELECT NULL
+GO
+~~START~~
+int
+<NULL>
+<NULL>
+~~END~~
+
+
+SELECT NULL
+UNION 
+SELECT NULL
+UNION
+SELECT CAST('1' AS CHAR(8))
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -248,12 +324,13 @@ SELECT NULL
 UNION 
 SELECT NULL
 UNION
-SELECT CAST('1' AS CHAR(8))
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8))
+ORDER BY 1
 GO
 ~~START~~
-char
+nchar
 <NULL>
-1       
+ΘЖऌฒ    
 ~~END~~
 
 
@@ -262,6 +339,7 @@ UNION
 SELECT CAST('1' AS CHAR(8))
 UNION
 SELECT NULL
+ORDER BY 1
 GO
 ~~START~~
 char
@@ -276,6 +354,7 @@ UNION
 SELECT CAST('1' AS NCHAR(8))
 UNION
 SELECT NULL
+ORDER BY 1
 GO
 ~~START~~
 nchar
@@ -290,6 +369,7 @@ UNION
 SELECT CAST('1' AS NCHAR(8))
 UNION
 SELECT NULL
+ORDER BY 1
 GO
 ~~START~~
 nchar
@@ -304,12 +384,13 @@ UNION ALL
 SELECT CAST('1' AS NCHAR(8))
 UNION ALL
 SELECT NULL
+ORDER BY 1
 GO
 ~~START~~
 nchar
-2               
-1               
 <NULL>
+1               
+2               
 ~~END~~
 
 
@@ -318,6 +399,7 @@ INTERSECT
 SELECT CAST('1' AS NCHAR(8))
 INTERSECT
 SELECT CAST('1' AS NCHAR(4))
+ORDER BY 1
 GO
 ~~START~~
 nchar
@@ -330,8 +412,102 @@ INTERSECT
 SELECT CAST('2' AS NCHAR(8))
 INTERSECT
 SELECT CAST('1' AS NCHAR(4))
+ORDER BY 1
 GO
 ~~START~~
 nchar
+~~END~~
+
+
+CREATE TABLE babel3392_nchar_tbl(a NCHAR(20))
+GO
+
+INSERT INTO babel3392_nchar_tbl (a)
+    SELECT CAST(N'ΘЖऌฒ' AS NCHAR(10)) AS Col1
+    UNION
+    SELECT NULL AS Col1
+    ORDER BY 1
+GO
+~~ROW COUNT: 2~~
+
+
+DROP TABLE babel3392_nchar_tbl
+GO
+
+-- Should error
+WITH babel3392_recursive_cte(a)
+AS (
+    SELECT NULL
+    UNION ALL
+    SELECT CAST(a + 'a' AS CHAR(10)) from babel3392_recursive_cte where a != 'aaaaa'
+)
+SELECT a from babel3392_recursive_cte order by a
+GO
+~~ERROR (Code: 240)~~
+
+~~ERROR (Message: Types don't match between the anchor and the recursive part in column "a" of recursive query "babel3392_recursive_cte".)~~
+
+
+-- CASE
+CREATE TABLE babel3392_case(a INT)
+GO
+
+INSERT INTO babel3392_case (a) VALUES (1), (2), (3)
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT CASE a
+    WHEN 1 THEN NULL
+    WHEN 2 THEN CAST('char' AS CHAR(10))
+END
+FROM babel3392_case
+GO
+~~START~~
+char
+<NULL>
+char      
+<NULL>
+~~END~~
+
+
+DROP TABLE babel3392_case;
+GO
+
+-- COALESCE / ISNULL
+SELECT ISNULL(null, cast(N'ΘЖऌฒ' as NCHAR(15)))
+GO
+~~START~~
+nchar
+ΘЖऌฒ           
+~~END~~
+
+
+-- BABEL-1874
+SELECT NULL
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DISTINCT NULL
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT CAST( 1 AS BIT) AS Col1
+UNION 
+SELECT DISTINCT NULL AS Col1
+ORDER BY 1
+GO
+~~START~~
+bit
+<NULL>
+1
 ~~END~~
 

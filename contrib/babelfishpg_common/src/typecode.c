@@ -333,9 +333,11 @@ is_tsql_image_datatype(Oid oid)
 bool
 is_tsql_binary_datatype(Oid oid)
 {
+	// TODO revert this temporary hack
+	Oid bbf_binary_oid = lookup_tsql_datatype_oid("bbf_binary");
 	if (tsql_binary_oid == InvalidOid)
 		tsql_binary_oid = lookup_tsql_datatype_oid("binary");
-	return tsql_binary_oid == oid;
+	return tsql_binary_oid == oid || bbf_binary_oid == oid;
 }
 
 bool

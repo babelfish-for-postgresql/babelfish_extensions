@@ -42,6 +42,7 @@ extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
+extern select_common_type_hook_type select_common_type_hook;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
@@ -1084,6 +1085,45 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 	return NULL;
 }
 
+static bool
+is_fixed_len_type(Oid type)
+{
+	return common_utility_plugin_ptr->is_tsql_bpchar_datatype(type) ||
+			common_utility_plugin_ptr->is_tsql_nchar_datatype(type);
+}
+
+static Oid
+tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
+				  				Node **which_expr)
+{
+	Node		*result_expr = (Node*) linitial(exprs);
+	Oid			result_type = exprType(result_expr);
+	ListCell	*lc = list_second_cell(exprs);
+
+	Assert(exprs != NIL);
+	for_each_cell(lc, exprs, lc)
+	{
+		Node	*expr = (Node *) lfirst(lc);
+		Oid		type = exprType(expr);
+
+		if (type == UNKNOWNOID)
+			continue;
+		else if(is_fixed_len_type(type))
+		{
+			if (tsql_has_higher_precedence(type, result_type) || result_type == UNKNOWNOID)
+			{
+				result_expr = expr;
+				result_type = type;
+			}
+		}
+		else
+			return InvalidOid;
+	}
+	if (which_expr)
+		*which_expr = result_expr;
+	return result_type == UNKNOWNOID ? InvalidOid : result_type;
+}
+
 Datum
 init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 {
@@ -1100,6 +1140,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
 	func_select_candidate_hook = tsql_func_select_candidate;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
+	select_common_type_hook = tsql_select_common_type_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);

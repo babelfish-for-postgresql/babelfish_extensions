@@ -378,22 +378,24 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		{
 			TargetEntry *subtle = (TargetEntry *) lfirst(subtlistl);
 			Node		*expr = (Node*) subtle->expr;
-			
+
 			if (tlistl == list_head(tlist_list))
 				max_typmods[colindex] = exprTypmod(expr);
 			else
 				max_typmods[colindex] = Max(max_typmods[colindex], exprTypmod(expr));
+
 			colindex++;
 		}
 	}
 	foreach(tlistl, tlist_list)
 	{
 		List		*subtlist = (List *) lfirst(tlistl);
-		ListCell	*subtlistl, *coltypl;
+		ListCell	*subtlistl, *coltypl, *qryTlistl;
 		colindex = 0;
-		forboth(subtlistl, subtlist, coltypl, colTypes)
+		forthree(subtlistl, subtlist, coltypl, colTypes, qryTlistl, qry->targetList)
 		{
 			TargetEntry *subtle = (TargetEntry *) lfirst(subtlistl);
+			TargetEntry *subqrytle = (TargetEntry *) lfirst(qryTlistl);
 			Node		*expr = (Node*) subtle->expr;
 			Oid			expr_typ = exprType(expr);
 			Oid			col_typ = lfirst_oid(coltypl);
@@ -404,6 +406,10 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 				subtle->expr = (Expr *) coerce_to_target_type(pstate, expr, expr_typ, 
 									col_typ, max_typmods[colindex], COERCION_IMPLICIT, 
 									COERCE_IMPLICIT_CAST, -1);
+				subqrytle->expr = (Expr *) coerce_to_target_type(pstate, (Node*) subqrytle->expr, expr_typ, 
+									col_typ, max_typmods[colindex], COERCION_IMPLICIT, 
+									COERCE_IMPLICIT_CAST, -1);
+				subqrytle->expr = subqrytle->expr;
 			}
 			colindex++;
 		}
@@ -430,6 +436,9 @@ pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	/* Fix target typmods for fixed-len tsql types */
+	fix_setop_typmods(pstate, qry);
+
 	sv_setop_exprs = NIL;
 	forboth(lc, qry->targetList, lc_l, leftmostQuery->targetList)
 	{
@@ -446,9 +455,6 @@ pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
 
 	set_op_ns_stack = set_op_ns_stack->prev;
 	pfree(old_ns_stack_item);
-
-	/* Fix target typmods for fixed-len tsql types */
-	fix_setop_typmods(pstate, qry);
 }
 
 /* 
