@@ -1,20 +1,11 @@
--- tsql
-insert gh_1412_t1 values (4, '2000-06-01 00:00:00', default, 'default time zone after update');
-GO
-select * from gh_1412_t1 order by id;
-GO
-select * from gh_1412_v1;
-GO
-
 -- psql
 alter database jdbc_testdb set timezone to 'Australia/Sydney';
 GO
 
--- terminate-tsql-conn
 -- tsql
 select current_setting('TIMEZONE');
 GO
-insert gh_1412_t1 values (5, '2000-06-01 00:00:00', default, 'custom time zone after update');
+insert gh_1412_t1 values (3, '2000-06-01 00:00:00', default, 'custom time zone after update');
 GO
 select * from gh_1412_t1 order by id;
 GO
@@ -27,6 +18,8 @@ GO
 
 -- terminate-tsql-conn
 -- tsql
+insert gh_1412_t1 values (4, '2000-06-01 00:00:00', default, 'default time zone after update');
+GO
 select * from gh_1412_t1 order by id;
 GO
 select * from gh_1412_v1;
