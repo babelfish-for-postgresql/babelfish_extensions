@@ -9,3 +9,6 @@ go
 
 select * from sys_sp_databases_dep_vu_prepare_v1
 go
+
+EXEC sp_databases_dep_vu_prepare_PROC1
+GO

@@ -19,8 +19,22 @@ go
 select database_name, remarks from sys.sp_databases_view where database_name='DB1';
 go
 
--- EXEC sp_databases;
--- GO
+CREATE PROCEDURE sp_databases_PROC1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @tmp_sp_addrole TABLE(database_name sys.SYSNAME, database_size int, remarks sys.VARCHAR(254));
+	INSERT INTO @tmp_sp_addrole (database_name, database_size, remarks) EXEC sp_databases;
+    SELECT database_name, (case when database_size >=0 then 1 else NULL end), remarks  FROM @tmp_sp_addrole where database_name='DB1';
+    SET NOCOUNT OFF;
+END
+GO
+
+exec sp_databases_PROC1;
+GO
+
+DROP PROCEDURE sp_databases_PROC1;
+GO
 
 drop table t_spdatabases;
 go
