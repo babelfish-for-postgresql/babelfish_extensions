@@ -26,9 +26,10 @@ go
 CREATE PROCEDURE sp_databases_dep_vu_prepare_PROC1
 AS
 BEGIN
-DECLARE
-    @tmp_sp_addrole TABLE(database_name sys.SYSNAME, database_size int, remarks sys.VARCHAR(254));
+    SET NOCOUNT ON;
+    DECLARE @tmp_sp_addrole TABLE(database_name sys.SYSNAME, database_size int, remarks sys.VARCHAR(254));
 	INSERT INTO @tmp_sp_addrole (database_name, database_size, remarks) EXEC sp_databases;
     SELECT database_name, (case when database_size >=0 then 1 else NULL end), remarks  FROM @tmp_sp_addrole where database_name='sys_sp_databases_dep_vu_prepare_db1';
+    SET NOCOUNT OFF;
 END
 GO
