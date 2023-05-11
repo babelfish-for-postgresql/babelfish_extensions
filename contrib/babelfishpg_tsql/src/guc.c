@@ -777,7 +777,7 @@ define_custom_variables(void)
 							   NULL,
 							   &pltsql_psql_logical_babelfish_db_name,
 							   NULL,
-							   PGC_SUSET,
+							   PGC_USERSET,
 							   GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   NULL, NULL, NULL);
 

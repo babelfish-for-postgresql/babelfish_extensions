@@ -35,8 +35,13 @@ go
 create database logical_database_db1
 go
 
--- try to set GUC from TSQL endpoint. Should throw error
+-- try to set GUC from TSQL endpoint. Should not effect information_schema_tsql.columns view 
+-- from TSQL endpoint it is a PG GUC
 select set_config('psql_logical_babelfish_db_name', 'logical_database_db1', false)
+go
+
+-- should return data of master as the current database is master
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
 go
 
 use logical_database_db1
@@ -49,12 +54,18 @@ go
 create login logical_database_l1 with password = '12345678'
 go
 
+alter server role sysadmin add member logical_database_l1
+go
+
 -- psql user=logical_database_l1 password='12345678'
 select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
--- should throws error as we need super user privileges to set this GUC
-set psql_logical_babelfish_db_name = 'master'
+-- any user can set the GUC
+set psql_logical_babelfish_db_name = 'logical_database_db1'
+go
+
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 
 -- psql

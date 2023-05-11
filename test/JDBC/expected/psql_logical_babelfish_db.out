@@ -85,14 +85,34 @@ master#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#
 create database logical_database_db1
 go
 
--- try to set GUC from TSQL endpoint. Should throw error
+-- try to set GUC from TSQL endpoint. Should not effect information_schema_tsql.columns view 
+-- from TSQL endpoint it is a PG GUC
 select set_config('psql_logical_babelfish_db_name', 'logical_database_db1', false)
 go
 ~~START~~
 text
-~~ERROR (Code: 33557097)~~
+logical_database_db1
+~~END~~
 
-~~ERROR (Message: permission denied to set parameter "psql_logical_babelfish_db_name")~~
+
+-- should return data of master as the current database is master
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#status#!#5#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#status2#!#6#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#crdate#!#7#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#reserved#!#8#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#category#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#cmptlevel#!#10#!#<NULL>#!#YES#!#tinyint#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#filename#!#11#!#<NULL>#!#YES#!#nvarchar#!#260#!#520#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 use logical_database_db1
@@ -121,6 +141,9 @@ logical_database_db1#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smalli
 create login logical_database_l1 with password = '12345678'
 go
 
+alter server role sysadmin add member logical_database_l1
+go
+
 -- psql user=logical_database_l1 password='12345678'
 select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
@@ -129,13 +152,27 @@ go
 ~~END~~
 
 
--- should throws error as we need super user privileges to set this GUC
-set psql_logical_babelfish_db_name = 'master'
+-- any user can set the GUC
+set psql_logical_babelfish_db_name = 'logical_database_db1'
 go
-~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied to set parameter "psql_logical_babelfish_db_name"
-    Server SQLState: 42501)~~
+select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
+logical_database_db1#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#status#!#5#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#status2#!#6#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#crdate#!#7#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#reserved#!#8#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#category#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#cmptlevel#!#10#!#<NULL>#!#YES#!#tinyint#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#filename#!#11#!#<NULL>#!#YES#!#nvarchar#!#260#!#520#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#version#!#12#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 
 
 -- psql
