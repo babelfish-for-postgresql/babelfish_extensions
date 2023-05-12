@@ -1710,25 +1710,25 @@ CAST(0 AS INT) AS denylogin,
 CAST(1 AS INT) AS hasaccess,
 CAST( 
   CASE 
-    WHEN BASE.type_desc = 'WINDOWS_LOGIN' OR BASE.type_desc = 'WINDOWS_GROUP' THEN 1 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' OR Base.type_desc = 'WINDOWS_GROUP' THEN 1 
     ELSE 0
   END
 AS INT) AS isntname,
 CAST(
    CASE 
-    WHEN BASE.type_desc = 'WINDOWS_GROUP' THEN 1 
+    WHEN Base.type_desc = 'WINDOWS_GROUP' THEN 1 
     ELSE 0
   END
   AS INT) AS isntgroup,
 CAST(
   CASE 
-    WHEN BASE.type_desc = 'WINDOWS_LOGIN' THEN 1 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' THEN 1 
     ELSE 0
   END
 AS INT) AS isntuser,
 CAST(
     CASE
-        WHEN pg_has_role(CAST('sysadmin' AS TEXT), Base.principal_id , 'MEMBER') = true THEN 1
+        WHEN is_srvrolemember('sysadmin', Base.name) = 1 THEN 1
         ELSE 0
     END
 AS INT) AS sysadmin,
@@ -1739,7 +1739,8 @@ CAST(0 AS INT) AS processadmin,
 CAST(0 AS INT) AS diskadmin,
 CAST(0 AS INT) AS dbcreator,
 CAST(0 AS INT) AS bulkadmin
-FROM sys.server_principals AS Base;
+FROM sys.server_principals AS Base
+WHERE Base.type not in ('R');
 
 GRANT SELECT ON sys.syslogins TO PUBLIC;
 

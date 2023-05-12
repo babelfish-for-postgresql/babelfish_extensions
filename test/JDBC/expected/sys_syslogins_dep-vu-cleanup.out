@@ -13,6 +13,9 @@ GO
 DROP LOGIN sys_syslogins_dep_vu_prepare_login1
 GO
 
+ALTER SERVER ROLE sysadmin DROP MEMBER sys_syslogins_dep_vu_prepare_login2
+GO
+
 DROP LOGIN sys_syslogins_dep_vu_prepare_login2
 GO
 
