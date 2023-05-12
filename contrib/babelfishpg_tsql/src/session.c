@@ -7,6 +7,7 @@
 #include "utils/formatting.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
+#include "catalog.h"
 
 #include <ctype.h>
 #include "catalog.h"
@@ -14,6 +15,7 @@
 #include "multidb.h"
 #include "session.h"
 #include "pltsql.h"
+#include "guc.h"
 
 /* Core Session Properties */
 
@@ -213,7 +215,13 @@ babelfish_db_id(PG_FUNCTION_ARGS)
 		dbid = get_db_id(str);
 	}
 	else
-		dbid = current_db_id;
+	{
+		if (!IS_TDS_CLIENT() && pltsql_psql_logical_babelfish_db_name)
+			dbid = get_db_id(pltsql_psql_logical_babelfish_db_name);
+		else 
+			dbid = current_db_id;
+	}
+		
 
 	if (!DbidIsValid(dbid))
 	{
