@@ -4,9 +4,6 @@ GO
 CREATE LOGIN sys_syslogins_dep_vu_prepare_login2 WITH PASSWORD = '12345'
 GO
 
-ALTER SERVER ROLE sysadmin ADD MEMBER sys_syslogins_dep_vu_prepare_login2
-GO
-
 CREATE VIEW sys_syslogins_dep_vu_prepare_view
 AS
 SELECT name,dbname,default_language_name,status,totcpu,totio,spacelimit,timelimit,
