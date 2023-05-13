@@ -161,11 +161,15 @@ CREATE TABLE onek (
 );
 GO
 
--- psql     
+-- bash   
 -- \set filename :abs_srcdir '/data/onek.data'
-COPY master_dbo.onek From '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/onek.data';
+psql -U "$USER" -d postgres -a << EOF
+\c jdbc_testdb
+COPY master_dbo.onek FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/onek.data';
+EOF
 GO
 
+-- psql
 VACUUM ANALYZE master_dbo.onek;
 GO
 
