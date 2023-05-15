@@ -483,14 +483,14 @@ ALTER LOGIN babel_4080_testlogin1 DISABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Current login babel_4080_nonsysadmin1 does not have permission to Alter login)~~
+~~ERROR (Message: Cannot drop the login 'babel_4080_testlogin1', because it does not exist or you do not have permission.)~~
 
 
 DROP LOGIN babel_4080_testlogin1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Current login babel_4080_nonsysadmin1 does not have permission to Drop login)~~
+~~ERROR (Message: Cannot drop the login 'babel_4080_testlogin1', because it does not exist or you do not have permission.)~~
 
 
 -- tsql user=babel_4080_sysadmin1 password=1234

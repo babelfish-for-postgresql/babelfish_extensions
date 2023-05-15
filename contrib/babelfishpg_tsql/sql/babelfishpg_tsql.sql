@@ -2598,7 +2598,7 @@ CAST(0 AS INT) AS diskadmin,
 CAST(0 AS INT) AS dbcreator,
 CAST(0 AS INT) AS bulkadmin
 FROM sys.server_principals AS Base
-WHERE Base.type not in ('R');
+WHERE Base.type in ('S', 'U');
 
 GRANT SELECT ON sys.syslogins TO PUBLIC;
 
