@@ -2546,6 +2546,61 @@ CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
 	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
+-- SYSLOGINS
+CREATE OR REPLACE VIEW sys.syslogins
+AS SELECT 
+Base.sid AS sid,
+CAST(9 AS SYS.TINYINT) AS status,
+Base.create_date AS createdate,
+Base.modify_date AS updatedate,
+Base.create_date AS accdate,
+CAST(0 AS INT) AS totcpu,
+CAST(0 AS INT) AS totio,
+CAST(0 AS INT) AS spacelimit,
+CAST(0 AS INT) AS timelimit,
+CAST(0 AS INT) AS resultlimit,
+Base.name AS name,
+Base.default_database_name AS dbname,
+Base.default_language_name AS default_language_name,
+CAST(Base.name AS SYS.NVARCHAR(128)) AS loginname,
+CAST(NULL AS SYS.NVARCHAR(128)) AS password,
+CAST(0 AS INT) AS denylogin,
+CAST(1 AS INT) AS hasaccess,
+CAST( 
+  CASE 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' OR Base.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntname,
+CAST(
+   CASE 
+    WHEN Base.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+  AS INT) AS isntgroup,
+CAST(
+  CASE 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntuser,
+CAST(
+    CASE
+        WHEN is_srvrolemember('sysadmin', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS sysadmin,
+CAST(0 AS INT) AS securityadmin,
+CAST(0 AS INT) AS serveradmin,
+CAST(0 AS INT) AS setupadmin,
+CAST(0 AS INT) AS processadmin,
+CAST(0 AS INT) AS diskadmin,
+CAST(0 AS INT) AS dbcreator,
+CAST(0 AS INT) AS bulkadmin
+FROM sys.server_principals AS Base
+WHERE Base.type in ('S', 'U');
+
+GRANT SELECT ON sys.syslogins TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
 AS
