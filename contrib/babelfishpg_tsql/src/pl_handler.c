@@ -2845,7 +2845,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
 							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
-								errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
+								errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),

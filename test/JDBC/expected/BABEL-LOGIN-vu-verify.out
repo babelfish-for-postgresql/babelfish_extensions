@@ -483,7 +483,7 @@ ALTER LOGIN babel_4080_testlogin1 DISABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot drop the login 'babel_4080_testlogin1', because it does not exist or you do not have permission.)~~
+~~ERROR (Message: Cannot alter the login 'babel_4080_testlogin1', because it does not exist or you do not have permission.)~~
 
 
 DROP LOGIN babel_4080_testlogin1;
