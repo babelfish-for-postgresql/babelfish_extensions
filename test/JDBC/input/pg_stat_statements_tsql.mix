@@ -32,16 +32,16 @@ go
 -- go
 
 -- database
--- CREATE DATABASE test_db
+-- CREATE DATABASE pgss_db
 -- go
--- DROP DATABASE test_db
+-- DROP DATABASE pgss_db
 -- go
 
 -- tsql
 -- login
--- CREATE LOGIN  l1 with password = '12345678'
+-- CREATE LOGIN  pgss_l1 with password = '12345678'
 -- go
--- DROP LOGIN  l1
+-- DROP LOGIN  pgss_l1
 -- go
 
 SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
@@ -55,47 +55,47 @@ go
 -- CRUD: INSERT SELECT UPDATE DELETE on test table
 
 -- utility "create table" should not be shown
-CREATE TABLE test (a int, b char(20));
+CREATE TABLE pgss_test (a int, b char(20));
 go
 
 -- tsql
-CREATE TRIGGER trigger1 on [dbo].[test] for insert as
+CREATE TRIGGER pgss_trigger1 on [dbo].[pgss_test] for insert as
 PRINT 'after insert trigger called'
 go
 
-INSERT INTO test VALUES(generate_series(1, 10), 'aaa');
+INSERT INTO pgss_test VALUES(generate_series(1, 10), 'aaa');
 go
-UPDATE test SET b = 'bbb' WHERE a > 7;
-DELETE FROM test WHERE a > 9;
+UPDATE pgss_test SET b = 'bbb' WHERE a > 7;
+DELETE FROM pgss_test WHERE a > 9;
 go
-TRUNCATE TABLE test;
+TRUNCATE TABLE pgss_test;
 go
 
 -- create role & permissions(grant revoke)
-CREATE ROLE test_role
+CREATE ROLE pgss_test_role
 go
-GRANT INSERT, UPDATE, SELECT ON test TO test_role
+GRANT INSERT, UPDATE, SELECT ON pgss_test TO pgss_test_role
 go
-REVOKE INSERT, UPDATE, SELECT ON test FROM test_role
+REVOKE INSERT, UPDATE, SELECT ON pgss_test FROM pgss_test_role
 go
 
 -- alter 
-ALTER TABLE test ENABLE TRIGGER trigger1
+ALTER TABLE pgss_test ENABLE TRIGGER pgss_trigger1
 go
-ALTER TABLE test DISABLE  TRIGGER trigger1
+ALTER TABLE pgss_test DISABLE  TRIGGER pgss_trigger1
 go
 
 -- explicit transaction
 -- BEGIN TRANSACTION;
--- UPDATE test SET b = '111' WHERE a = 1 ;
+-- UPDATE pgss_test SET b = '111' WHERE a = 1 ;
 -- COMMIT TRANSACTION;
 -- go
 
 -- SELECT without constants
-SELECT * FROM test ORDER BY a;
+SELECT * FROM pgss_test ORDER BY a;
 
 -- SELECT with IN clause
-SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5);
+SELECT * FROM pgss_test WHERE a IN (1, 2, 3, 4, 5);
 go
 
 SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
@@ -108,41 +108,41 @@ go
 -- tsql
 
 -- DROP TRIGGER trigger1
-DROP TABLE test;
-DROP ROLE test_role;
+DROP TABLE pgss_test;
+DROP ROLE pgss_test_role;
 go
 
 -- tsql
-CREATE TABLE customers(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
-CREATE TABLE orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references customers(customerid))
-INSERT INTO customers values(1, 'ABC', 18),(2,'XYZ', 21), (3, 'LMN', 29),(4, 'PQR', 52),(5, 'STU', 23)
-INSERT INTO orders values(10, 5, 'London'), (11, 3, 'India'), (12, 2, 'USA'), (13, 4, 'Pakistan'),(14, 5, 'Germany'),(15, 1, 'India')
+CREATE TABLE pgss_cust(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
+CREATE TABLE pgss_orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references pgss_cust(customerid))
+INSERT INTO pgss_cust values(1, 'ABC', 18),(2,'XYZ', 21), (3, 'LMN', 29),(4, 'PQR', 52),(5, 'STU', 23)
+INSERT INTO pgss_orders values(10, 5, 'London'), (11, 3, 'India'), (12, 2, 'USA'), (13, 4, 'Pakistan'),(14, 5, 'Germany'),(15, 1, 'India')
 go
 
-SELECT COUNT(*) from orders where country ='India'
+SELECT COUNT(*) from pgss_orders where country ='India'
 go
 
-CREATE VIEW [India customers] as select customerid from orders where country = 'India'
+CREATE VIEW [India customers] as select customerid from pgss_orders where country = 'India'
 go
 
 SELECT * FROM [India customers]
 go
 
-SELECT * FROM customers
+SELECT * FROM pgss_cust
 go
 
-SELECT AVG(age) FROM customers
+SELECT AVG(age) FROM pgss_cust
 go
 
-SELECT REVERSE(name) FROM customers
+SELECT REVERSE(name) FROM pgss_cust
 go
 
-SELECT * FROM information_schema.views;
+SELECT * FROM information_schema.views WHERE VIEW_DEFINITION LIKE 'CREATE VIEW%';
 go
 
 
 -- tsql function
--- CREATE FUNCTION f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
+-- CREATE FUNCTION pgss_f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
 -- go
 
 CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5 
@@ -163,26 +163,26 @@ go
 -- go
 
 -- Temp table
-CREATE TABLE #demo(age int)
+CREATE TABLE #pgss_demo(age int)
 go
 
 DROP VIEW  [India customers]
 go
 -- DROP FUNCTION [dbo].[getCustomers]
 -- go
-DROP TABLE orders
+DROP TABLE pgss_orders
 go
-DROP TABLE customers
+DROP TABLE pgss_cust
 go
--- DROP FUNCTION f1
+-- DROP FUNCTION pgss_f1
 -- go
 
 -- tsql
--- CREATE PROC p1 @a INT, @b FLOAT AS SELECT @a, @b; 
+-- CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
 -- go
 
 
--- DROP PROCEDURE p1;
+-- DROP PROCEDURE pgss_p1;
 -- go
 
 
