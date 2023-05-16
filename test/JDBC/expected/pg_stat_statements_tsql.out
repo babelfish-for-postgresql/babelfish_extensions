@@ -245,7 +245,7 @@ UTS
 ~~END~~
 
 
-SELECT * FROM information_schema.views WHERE VIEW_DEFINITION LIKE 'CREATE VIEW%';
+SELECT * FROM information_schema.views WHERE TABLE_NAME = 'india customers';
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
@@ -324,7 +324,7 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#INSERT INTO pgss_orders values($1, $2, $3), ($4, $5, $6), ($7, $8, $9), ($10, $11, $12),($13, $14, $15),($16, $17, $18)#!#1#!#6#!#0
 16385#!#1#!#SELECT    nextval($1)#!#1#!#1#!#0
 16385#!#1#!#SELECT * FROM [India customers]#!#1#!#2#!#0
-16385#!#1#!#SELECT * FROM information_schema_tsql.views WHERE VIEW_DEFINITION LIKE $1#!#1#!#1#!#0
+16385#!#1#!#SELECT * FROM information_schema_tsql.views WHERE TABLE_NAME = $1#!#1#!#1#!#0
 16385#!#1#!#SELECT * FROM pgss_cust#!#1#!#5#!#0
 16385#!#1#!#SELECT AVG(age) FROM pgss_cust#!#1#!#1#!#0
 16385#!#1#!#SELECT COUNT(*) from pgss_orders where country =$1#!#1#!#1#!#0

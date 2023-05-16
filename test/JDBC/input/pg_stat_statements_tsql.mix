@@ -137,7 +137,7 @@ go
 SELECT REVERSE(name) FROM pgss_cust
 go
 
-SELECT * FROM information_schema.views WHERE VIEW_DEFINITION LIKE 'CREATE VIEW%';
+SELECT * FROM information_schema.views WHERE TABLE_NAME = 'india customers';
 go
 
 
