@@ -1,4 +1,7 @@
 -- tsql
+-- This test file checks the changes which are ignored in the tod run
+-- As tod will not be able to create an SUPERUSER
+-- and testing on jdbc_testdb(where bbf is initialized) is not possible
 CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '12345678';
 GO
 

@@ -2582,8 +2582,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
 							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
-								errmsg("Current login %s does not have permission to Alter login", 
-								GetUserNameFromId(GetSessionUserId(), true))));
+								errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -2848,7 +2847,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))){
 							ereport(ERROR, 
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
-									errmsg("Current login %s does not have permission to Drop login", GetUserNameFromId(GetSessionUserId(), true))));
+									errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 						}
 
 						ReleaseSysCache(tuple);
@@ -3239,6 +3238,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 								queryEnv, dest, qc);
+
+	/* Cleanup babelfish_server_options catalog when tds_fdw extension is dropped */
+	if (sql_dialect == SQL_DIALECT_PG && nodeTag(parsetree) == T_DropStmt)
+	{
+		DropStmt   *drop_stmt = (DropStmt *) parsetree;
+		if (drop_stmt != NULL && drop_stmt->removeType == OBJECT_EXTENSION)
+		{
+			char *ext_name = strVal(lfirst(list_head(drop_stmt->objects)));
+			if ((strcmp(ext_name, "tds_fdw") == 0) && drop_stmt->behavior == DROP_CASCADE)
+			{
+				clean_up_bbf_server_def();
+			}
+		}
+	}
 }
 
 /*
