@@ -566,7 +566,7 @@ SELECT CASE
 			THEN reverse(split_part(reverse($1), '.', $2))
 		ELSE NULL
 		END $$ immutable LANGUAGE 'sql';
-
+        
 CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
                                                            IN p_minute NUMERIC,
                                                            IN p_seconds NUMERIC,

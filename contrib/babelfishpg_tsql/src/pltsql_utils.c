@@ -22,6 +22,7 @@
 #include "access/table.h"
 #include "access/genam.h"
 #include "catalog.h"
+#include "tcop/utility.h"
 
 #include "multidb.h"
 
@@ -693,8 +694,6 @@ update_DropRoleStmt(Node *n, const char *role)
 		if (strcmp(tmp->rolename, "is_role") == 0)
 			stmt->roles = list_delete_cell(stmt->roles, list_head(stmt->roles));
 
-		pfree(tmp);
-
 		if (!stmt->roles)
 			return;
 
@@ -1336,4 +1335,50 @@ tsql_get_trigger_rel_oid(Oid object_id)
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
 	return tgrelid;
+}
+
+/*
+ * Helper function to execute a utility command using
+ * ProcessUtility(). Caller should make sure their
+ * inputs are sanitized to prevent unexpected behaviour.
+ */
+void
+exec_utility_cmd_helper(char *query_str)
+{
+	List	   *parsetree_list;
+	Node	   *stmt;
+	PlannedStmt *wrapper;
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				   query_str,
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
 }

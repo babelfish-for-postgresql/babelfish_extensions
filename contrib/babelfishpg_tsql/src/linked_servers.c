@@ -10,6 +10,7 @@
 #include "pltsql.h"
 #include "linked_servers.h"
 #include "guc.h"
+#include "catalog.h"
 
 #define NO_CLIENT_LIB_ERROR() \
 	ereport(ERROR, \
@@ -39,10 +40,11 @@ const int	tds_numeric_bytes_per_prec[TDS_NUMERIC_MAX_PRECISION + 1] = {
 	14, 14, 15, 15, 16, 16, 16, 17, 17
 };
 
-int			tdsTypeStrToTypeId(char *datatype);
-Oid			tdsTypeToOid(int datatype);
-int			tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
+int		tdsTypeStrToTypeId(char *datatype);
+Oid		tdsTypeToOid(int datatype);
+int		tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int scale);
 Datum		getDatumFromBytePtr(LinkedServerProcess lsproc, void *val, int datatype, int len);
+static bool 	isQueryTimeout;
 
 static int
 linked_server_msg_handler(LinkedServerProcess lsproc, int error_code, int state, int severity, char *error_msg, char *svr_name, char *proc_name, int line)
@@ -127,11 +129,8 @@ remove_substr(char *src, const char *substr)
 	return src;
 }
 
-/*
- * Handle any error encountered in TDS client library itself
- */
-static int
-linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error, int os_error, char *db_err_str, char *os_err_str)
+static StringInfoData
+construct_err_string (int severity, int db_error, int os_error, char *db_err_str, char *os_err_str)
 {
 	StringInfoData buf;
 
@@ -165,6 +164,26 @@ linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error
 		appendStringInfo(&buf, "OS Msg: %s, ", os_err_str);
 
 	appendStringInfo(&buf, "Level: %i", severity);
+
+	return buf;
+}
+
+/*
+ * Handle any error encountered in TDS client library itself
+ */
+static int
+linked_server_err_handler(LinkedServerProcess lsproc, int severity, int db_error, int os_error, char *db_err_str, char *os_err_str)
+{
+	StringInfoData buf;
+
+	buf = construct_err_string(severity, db_error, os_error, db_err_str, os_err_str);
+
+	/* when the query times out we need to return LS_INT_CANCEL */
+	if (db_error == SYBETIME)
+	{
+		isQueryTimeout = true;
+		return LS_INT_CANCEL;
+	} 
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
@@ -719,9 +738,10 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	UserMapping *mapping = NULL;
 
 	LinkedServerLogin login;
-	ListCell   *option;
-	char	   *data_src = NULL;
-	char	   *database = NULL;
+	ListCell	*option;
+	char	*data_src = NULL;
+	char	*database = NULL;
+	int 	query_timeout = 0;
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -780,6 +800,9 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 						 ));
 		}
 
+		/* fetch query timeout from the servername */
+		query_timeout = get_query_timeout_from_server_name(servername);
+
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
 
@@ -817,6 +840,11 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 					 errmsg("Unable to connect to \"%s\"", data_src)));
 
 		LINKED_SERVER_FREELOGIN(login);
+
+		if(query_timeout > 0)
+		{
+			LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
+		}
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
 	}
@@ -1107,6 +1135,7 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
+		isQueryTimeout = false;
 		query = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 		linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc);
@@ -1124,10 +1153,21 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 		/* Execute the query on remote server */
 		if (LINKED_SERVER_EXEC_QUERY(lsproc) == FAIL)
+		{
+			if (isQueryTimeout)
+			{
+				StringInfoData buf;
+				isQueryTimeout = false;
+				buf = construct_err_string(6, 20003, 0, "server connection timed out", "Success");
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+			 		errmsg("%s", buf.data)));
+			}
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
 					 errmsg("error executing query \"%s\" against remote server", query)
 					 ));
+		}		
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Begin fetching results from remote server");
 

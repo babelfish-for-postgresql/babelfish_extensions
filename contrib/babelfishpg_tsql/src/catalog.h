@@ -209,6 +209,31 @@ typedef struct FormData_bbf_view_def
 typedef FormData_bbf_view_def * Form_bbf_view_def;
 
 /*****************************************
+ *			LINKED_SERVERS_DEF
+ *****************************************/
+#define BBF_SERVERS_DEF_TABLE_NAME "babelfish_server_options"
+#define BBF_SERVERS_DEF_IDX_NAME "babelfish_server_options_pkey"
+#define Anum_bbf_servers_def_servername 1
+#define Anum_bbf_servers_def_query_timeout 2
+#define BBF_SERVERS_DEF_NUM_COLS 2
+extern Oid	bbf_servers_def_oid;
+extern Oid	bbf_servers_def_idx_oid;
+
+extern Oid get_bbf_servers_def_oid(void);
+extern Oid get_bbf_servers_def_idx_oid(void);
+extern int get_query_timeout_from_server_name(char *servername);
+extern int get_server_id_from_server_name(char *servername);
+extern void clean_up_bbf_server_def(void);
+
+typedef struct FormData_bbf_servers_def
+{
+	text		servername;
+	int32		query_timeout;
+} FormData_bbf_servers_def;
+
+typedef FormData_bbf_servers_def *Form_bbf_servers_def;
+
+/*****************************************
  *			FUNCTION_EXT
  *****************************************/
 #define BBF_FUNCTION_EXT_TABLE_NAME "babelfish_function_ext"
