@@ -4,10 +4,7 @@
 
 
 
-
 -- tsql
--- \getenv abs_srcdir PG_ABS_SRCDIR
--- GO
 -- \getenv libdir PG_LIBDIR
 -- GO
 -- \getenv dlsuffix PG_DLSUFFIX
@@ -62,8 +59,7 @@ GO
 ~~ROW COUNT: 5~~
 
 
--- psql     
-
+-- psql
 VACUUM master_dbo.INT2_TBL;
 GO
 
@@ -81,8 +77,7 @@ GO
 ~~ROW COUNT: 5~~
 
 
--- psql     
-
+-- psql
 VACUUM master_dbo.INT4_TBL;
 GO
 
@@ -177,13 +172,17 @@ CREATE TABLE onek (
 );
 GO
 
--- psql     
--- \set filename :abs_srcdir '/data/onek.data'
-COPY master_dbo.onek From '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/onek.data';
-GO
-~~ROW COUNT: 1000~~
+-- bash   
+/bin/bash input/pg_regress/load_onek.sh
 
+-----copy onek table from /data/onek.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/onek.data'
+COPY master_dbo.onek FROM :'filename';
+COPY 1000
+----- done -----
 
+-- psql
 VACUUM ANALYZE master_dbo.onek;
 GO
 
@@ -214,12 +213,10 @@ GO
 
 
 -- psql     
-
 VACUUM ANALYZE master_dbo.onek2;
 GO
 
 -- tsql
-
 CREATE TABLE tenk1 (
 	unique1		int,
 	unique2		int,
@@ -240,12 +237,11 @@ CREATE TABLE tenk1 (
 );
 GO
 
--- psql     
--- \set filename :abs_srcdir '/data/tenk.data'
-COPY master_dbo.tenk1 FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/tenk.data';
-GO
-~~ROW COUNT: 10000~~
+-- bash   
+/bin/bash input/pg_regress/load_tenk1.sh
 
+
+-- psql
 VACUUM ANALYZE master_dbo.tenk1;
 GO
 
@@ -272,8 +268,6 @@ GO
 
 insert into tenk2 select * from tenk1;
 GO
-~~ROW COUNT: 10000~~
-
 
 -- psql     
 VACUUM ANALYZE master_dbo.tenk2;
@@ -287,13 +281,17 @@ CREATE TABLE person (
 );
 GO
 
--- psql     
--- \set filename :abs_srcdir '/data/person.data'
-COPY master_dbo.person FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/person.data';
-GO
-~~ROW COUNT: 50~~
+-- bash   
+/bin/bash input/pg_regress/load_person.sh
 
+-----copy person table from /data/person.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/person.data'
+COPY master_dbo.person FROM :'filename';
+COPY 50
+----- done -----
 
+-- psql
 VACUUM ANALYZE master_dbo.person;
 GO
 
@@ -307,13 +305,17 @@ CREATE TABLE emp (
 ) 
 GO
 
+-- bash   
+/bin/bash input/pg_regress/load_emp.sh
+
+-----copy emp table from /data/emp.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/emp.data'
+COPY master_dbo.emp FROM :'filename';
+COPY 3
+----- done -----
+
 -- psql
--- \set filename :abs_srcdir '/data/emp.data'
-COPY master_dbo.emp FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/emp.data';
-GO
-~~ROW COUNT: 3~~
-
-
 VACUUM ANALYZE master_dbo.emp;
 GO
 
@@ -326,13 +328,17 @@ CREATE TABLE student (
 );
 GO
 
+-- bash   
+/bin/bash input/pg_regress/load_student.sh
+
+-----copy student table from /data/student.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/student.data'
+COPY master_dbo.student FROM :'filename';
+COPY 2
+----- done -----
+
 -- psql
--- \set filename :abs_srcdir '/data/student.data'
-COPY master_dbo.student FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/student.data';
-GO
-~~ROW COUNT: 2~~
-
-
 VACUUM ANALYZE master_dbo.student;
 GO
 
@@ -349,13 +355,17 @@ CREATE TABLE stud_emp (
 ) ;
 GO
 
--- psql 
--- \set filename :abs_srcdir '/data/stud_emp.data'
-COPY master_dbo.stud_emp FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/stud_emp.data';
-GO
-~~ROW COUNT: 3~~
+-- bash   
+/bin/bash input/pg_regress/load_stud_emp.sh
 
+-----copy stud_emp table from /data/stud_emp.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/stud_emp.data'
+COPY master_dbo.stud_emp FROM :'filename';
+COPY 3
+----- done -----
 
+-- psql
 VACUUM ANALYZE master_dbo.stud_emp;
 GO
 
@@ -366,13 +376,17 @@ CREATE TABLE aggtest (
 );
 GO
 
+-- bash   
+/bin/bash input/pg_regress/load_aggtest.sh
+
+-----copy aggtest table from /data/agg.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/agg.data'
+COPY master_dbo.aggtest FROM :'filename';
+COPY 4
+----- done -----
+
 -- psql
--- \set filename :abs_srcdir '/data/agg.data'
-COPY master_dbo.aggtest FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/agg.data';
-GO
-~~ROW COUNT: 4~~
-
-
 VACUUM ANALYZE master_dbo.aggtest;
 GO
 
@@ -383,14 +397,17 @@ CREATE TABLE road (
 );
 GO
 
+-- bash   
+/bin/bash input/pg_regress/load_road.sh
+
+-----copy road table from /data/streets.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/streets.data'
+COPY master_dbo.road FROM :'filename';
+COPY 5124
+----- done -----
+
 -- psql
-
--- \set filename :abs_srcdir '/data/streets.data'
-COPY master_dbo.road FROM '/home/szh/workspace/babel14/src/RDSManfred/src/test/regress/data/streets.data';
-GO
-~~ROW COUNT: 5124~~
-
-
 VACUUM ANALYZE master_dbo.road;
 GO
 
