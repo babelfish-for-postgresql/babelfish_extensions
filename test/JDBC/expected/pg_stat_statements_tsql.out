@@ -329,6 +329,7 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#SELECT AVG(age) FROM pgss_cust#!#1#!#1#!#0
 16385#!#1#!#SELECT COUNT(*) from pgss_orders where country =$1#!#1#!#1#!#0
 16385#!#1#!#SELECT REVERSE(name) FROM pgss_cust#!#1#!#5#!#0
+16385#!#1#!#select CAST(pg_sleep(5) AS text)#!#1#!#1#!#0
 ~~END~~
 
 
