@@ -511,3 +511,25 @@ bit
 1
 ~~END~~
 
+
+-- BABEL-4157
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT 'string' AS babel4157_c1 
+    UNION
+    SELECT CAST('varchar' AS VARCHAR(40)) AS babel4157_c1
+) AS tbl
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+nvarchar#!#smallint
+babel4157_c1#!#40
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+

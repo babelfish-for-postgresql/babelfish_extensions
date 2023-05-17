@@ -367,6 +367,11 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		}
 	}
 
+	// Call select common type
+	// Call select common typmod
+
+	// Coerce all
+
 	max_typmods = (int32 *) palloc(list_length((List *) linitial(tlist_list)) * sizeof(int32));
 	
 	foreach(tlistl, tlist_list)

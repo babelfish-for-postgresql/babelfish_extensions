@@ -1086,10 +1086,17 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 }
 
 static bool
-is_fixed_len_type(Oid type)
+type_is_fixed_len(Oid type)
 {
 	return common_utility_plugin_ptr->is_tsql_bpchar_datatype(type) ||
 			common_utility_plugin_ptr->is_tsql_nchar_datatype(type);
+}
+
+static bool
+expr_is_null(Node *expr)
+{
+	Oid type = exprType(expr);
+	return type == UNKNOWNOID || (IsA(expr, Const) && ((Const *) expr)->constisnull);
 }
 
 static Oid
@@ -1106,11 +1113,11 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 		Node	*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
 
-		if (type == UNKNOWNOID)
+		if (expr_is_null(expr))
 			continue;
-		else if(is_fixed_len_type(type))
+		else if(type_is_fixed_len(type))
 		{
-			if (tsql_has_higher_precedence(type, result_type) || result_type == UNKNOWNOID)
+			if (tsql_has_higher_precedence(type, result_type) || expr_is_null(result_expr))
 			{
 				result_expr = expr;
 				result_type = type;

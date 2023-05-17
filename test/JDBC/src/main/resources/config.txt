@@ -7,6 +7,14 @@ physicalDatabaseName = jdbc_testdb
 user = jdbc_user
 password = 12345678
 
+# URL = sqlserver-test.cojrump0coq7.us-west-2.rds.amazonaws.com
+# tsql_port = 1433
+# psql_port = 5432
+# databaseName = mydb
+# physicalDatabaseName = mydb
+# user = admin
+# password = QC4qLZhU0pCxOvKCazZF
+
 # PATH TO INPUT TEST FILES FOLDER
 inputFilesPath = input
 

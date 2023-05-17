@@ -277,3 +277,22 @@ UNION
 SELECT DISTINCT NULL AS Col1
 ORDER BY 1
 GO
+
+-- BABEL-4157
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT 'string' AS babel4157_c1 
+    UNION
+    SELECT CAST('varchar' AS VARCHAR(40)) AS babel4157_c1
+) AS tbl
+GO
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT CAST(N'12345687890' AS NVARCHAR(2))
+UNION
+SELECT CAST('1234567890' AS CHAR(10))
+GO
