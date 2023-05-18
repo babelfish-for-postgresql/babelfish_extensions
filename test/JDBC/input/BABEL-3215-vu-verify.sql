@@ -187,3 +187,22 @@ drop table dbo.unionorder1;
 drop table dbo.unionorder2;
 drop table dbo.unionorder1b;
 go
+
+-- BABEL-4169 resjunk issue with sort key outside tl
+create table dbo.babel4169_t1 (a int, b int, c int); 
+create table dbo.babel4169_t2 (a int, b int, c int); 
+go
+
+insert into dbo.babel4169_t1 values (1, 2, 3), (10, 2, 3), (100, 2, 99);
+insert into dbo.babel4169_t2 values (4, 5, 6), (40, 5, 6), (400, 5, 99);
+go
+
+select sum(a) as sum, b from dbo.babel4169_t1 group by b, c
+union
+select sum(a), b from dbo.babel4169_t2 group by b, c
+order by sum
+go
+
+drop table dbo.babel4169_t1;
+drop table dbo.babel4169_t2;
+go

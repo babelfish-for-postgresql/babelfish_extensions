@@ -330,13 +330,21 @@ void
 pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
 {
 	namespace_stack_t *old_ns_stack_item = set_op_ns_stack;
+	ListCell *lc;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
 	sv_setop_targetlist = qry->targetList;
 
-	qry->targetList = leftmostQuery->targetList;
+	qry->targetList = list_copy(leftmostQuery->targetList);
+	/* Filter out all resjunk */
+	foreach(lc, qry->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		if (tle->resjunk)
+			foreach_delete_current(qry->targetList, lc);
+	}
 	pstate->p_namespace = set_op_ns_stack->namespace;
 
 	set_op_ns_stack = set_op_ns_stack->prev;
@@ -356,5 +364,6 @@ post_transform_sort_clause(Query *qry)
 		TargetEntry *tle_sv = (TargetEntry *) lfirst(lc_sv);
 		tle_sv->ressortgroupref = tle_q->ressortgroupref;
 	}
+	list_free(qry->targetList);
 	qry->targetList = sv_setop_targetlist;
 }
