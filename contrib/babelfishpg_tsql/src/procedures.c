@@ -1590,6 +1590,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 	Node	   *stmt;
 	size_t		len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	
 
 	PG_TRY();
 	{
@@ -1645,10 +1646,29 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				case T_CreateExtensionStmt:
 				{
 					CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
-					if(strcmp(crstmt->extname, "pg_stat_statements"))
+					char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "pg_visibility"};
+					int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
+					//char **allowed_extns_item;
+
+					//allowed_extns_item = allowed_extns;
+					for(int i = 0; i < allowed_extns_size; i++)
 					{
-						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						if((strcmp(crstmt->extname, allowed_extns[i])))
+						{
+							if(i == allowed_extns_size - 1)
+							{
+								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 									errmsg("'%s' is not a valid name", crstmt->extname)));
+							}
+							else
+							{
+								continue;
+							}
+						}
+						else
+						{
+							break;
+						}
 					}
 					/* do this step */
 					ProcessUtility(wrapper,
