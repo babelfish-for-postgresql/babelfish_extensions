@@ -2199,8 +2199,16 @@ LEFT JOIN sys.babelfish_server_options AS s on f.srvname = s.servername
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.servers TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.openquery_internal(
+IN linked_server text,
+IN query text)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'openquery_internal'
+LANGUAGE C VOLATILE;
+
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'babelfish_sp_rename_internal_deprecated_in_3_2_0');
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_rename_deprecated_in_3_2_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'openquery');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
