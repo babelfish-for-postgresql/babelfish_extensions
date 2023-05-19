@@ -3709,7 +3709,7 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION sys.openquery(
+CREATE OR REPLACE FUNCTION sys.openquery_internal(
 IN linked_server text,
 IN query text)
 RETURNS SETOF RECORD
