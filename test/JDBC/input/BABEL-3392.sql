@@ -205,6 +205,14 @@ SELECT NULL
 ORDER BY 1
 GO
 
+SELECT NULL
+UNION ALL
+SELECT NULL
+UNION ALL
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15))
+ORDER BY 1
+GO
+
 SELECT CAST('1' AS NCHAR(16))
 INTERSECT 
 SELECT CAST('1' AS NCHAR(8))
@@ -218,6 +226,14 @@ INTERSECT
 SELECT CAST('2' AS NCHAR(8))
 INTERSECT
 SELECT CAST('1' AS NCHAR(4))
+ORDER BY 1
+GO
+
+SELECT NULL
+INTERSECT 
+SELECT NULL
+INTERSECT
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15))
 ORDER BY 1
 GO
 
@@ -238,6 +254,15 @@ GO
 WITH babel3392_recursive_cte(a)
 AS (
     SELECT NULL
+    UNION ALL
+    SELECT CAST(a + 'a' AS CHAR(10)) from babel3392_recursive_cte where a != 'aaaaa'
+)
+SELECT a from babel3392_recursive_cte order by a
+GO
+
+WITH babel3392_recursive_cte(a)
+AS (
+    SELECT 'a'
     UNION ALL
     SELECT CAST(a + 'a' AS CHAR(10)) from babel3392_recursive_cte where a != 'aaaaa'
 )
@@ -292,7 +317,21 @@ GO
 DROP TABLE babel4157_tbl
 GO
 
-SELECT CAST(N'12345687890' AS NVARCHAR(2))
-UNION
-SELECT CAST('1234567890' AS CHAR(10))
+-- VALUES
+select tbl.babel3392_c1 into babel3392_vals from (
+    values (CAST('1' AS CHAR(10))), (CAST(N'ΘЖऌฒ' AS NCHAR(15))), (NULL)
+) as tbl(babel3392_c1)
 GO
+
+SELECT * FROM babel3392_vals;
+GO
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel3392_c1'
+GO
+
+DROP TABLE babel3392_vals;
+GO
+
+-- BABEL-707
+select 7859682000000000000000.1 union all select 3.780999999999
+go

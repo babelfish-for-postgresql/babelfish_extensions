@@ -394,6 +394,21 @@ nchar
 ~~END~~
 
 
+SELECT NULL
+UNION ALL
+SELECT NULL
+UNION ALL
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15))
+ORDER BY 1
+GO
+~~START~~
+nchar
+<NULL>
+<NULL>
+ΘЖऌฒ           
+~~END~~
+
+
 SELECT CAST('1' AS NCHAR(16))
 INTERSECT 
 SELECT CAST('1' AS NCHAR(8))
@@ -412,6 +427,18 @@ INTERSECT
 SELECT CAST('2' AS NCHAR(8))
 INTERSECT
 SELECT CAST('1' AS NCHAR(4))
+ORDER BY 1
+GO
+~~START~~
+nchar
+~~END~~
+
+
+SELECT NULL
+INTERSECT 
+SELECT NULL
+INTERSECT
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15))
 ORDER BY 1
 GO
 ~~START~~
@@ -525,7 +552,7 @@ GO
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
-nvarchar#!#smallint
+varchar#!#smallint
 babel4157_c1#!#40
 ~~END~~
 
@@ -533,3 +560,31 @@ babel4157_c1#!#40
 DROP TABLE babel4157_tbl
 GO
 
+-- VALUES
+select tbl.babel3392_c1 into babel3392_vals from (
+    values (CAST('1' AS CHAR(10))), (CAST(N'ΘЖऌฒ' AS NCHAR(15))), (NULL)
+) as tbl(babel3392_c1)
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT * FROM babel3392_vals;
+GO
+~~START~~
+nchar
+1              
+ΘЖऌฒ           
+<NULL>
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel3392_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel3392_c1#!#30
+~~END~~
+
+
+DROP TABLE babel3392_vals;
+GO

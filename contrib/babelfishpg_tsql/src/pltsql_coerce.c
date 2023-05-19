@@ -43,6 +43,7 @@ extern determine_datatype_precedence_hook_type determine_datatype_precedence_hoo
 extern func_select_candidate_hook_type func_select_candidate_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
+extern select_common_typmod_hook_type select_common_typmod_hook;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
@@ -1086,10 +1087,14 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 }
 
 static bool
-type_is_fixed_len(Oid type)
+type_has_len(Oid type)
 {
-	return common_utility_plugin_ptr->is_tsql_bpchar_datatype(type) ||
-			common_utility_plugin_ptr->is_tsql_nchar_datatype(type);
+	common_utility_plugin *utilptr = common_utility_plugin_ptr;
+	return utilptr->is_tsql_bpchar_datatype(type) ||
+			utilptr->is_tsql_nchar_datatype(type) ||
+			utilptr->is_tsql_binary_datatype(type) ||
+			utilptr->is_tsql_varchar_datatype(type) ||
+			utilptr->is_tsql_nvarchar_datatype(type);
 }
 
 static bool
@@ -1107,6 +1112,9 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	Oid			result_type = exprType(result_expr);
 	ListCell	*lc = list_second_cell(exprs);
 
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return InvalidOid;
+
 	Assert(exprs != NIL);
 	for_each_cell(lc, exprs, lc)
 	{
@@ -1115,7 +1123,7 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 		if (expr_is_null(expr))
 			continue;
-		else if(type_is_fixed_len(type))
+		else if(type_has_len(type))
 		{
 			if (tsql_has_higher_precedence(type, result_type) || expr_is_null(result_expr))
 			{
@@ -1129,6 +1137,39 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	if (which_expr)
 		*which_expr = result_expr;
 	return result_type == UNKNOWNOID ? InvalidOid : result_type;
+}
+
+static int32
+tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
+{
+	// Decls
+	int32		max_typmods;
+	ListCell	*lc;
+
+	// Check if T-SQL
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return -1;
+
+	// Check if these are coearce-able
+	if (common_type == InvalidOid)
+		return -1;
+
+	// Check what type of typmod conversion we need need to do
+	if (!type_has_len(common_type))
+		return -1;
+
+	// If resulting type is a length, need to be max of length types
+	foreach(lc, exprs)
+	{
+		Node *expr = (Node*) lfirst(lc);
+		if (lc == list_head(exprs))
+			max_typmods = exprTypmod(expr);
+		else
+			max_typmods = Max(max_typmods, exprTypmod(expr));
+	}
+
+	return max_typmods;
+	// Consider other typmod cases, dates, etc.
 }
 
 Datum
@@ -1148,6 +1189,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	func_select_candidate_hook = tsql_func_select_candidate;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 	select_common_type_hook = tsql_select_common_type_hook;
+	select_common_typmod_hook = tsql_select_common_typmod_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);

@@ -9,6 +9,7 @@
 #include "postgres.h"
 
 #include "catalog/namespace.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
@@ -343,11 +344,12 @@ static void
 fix_setop_typmods(ParseState *pstate, Query *qry)
 {
 	List 		*setOpTreeStack = list_make1(qry->setOperations);
-	List 		*tlist_list = NIL;
-	List		*colTypes = ((SetOperationStmt*) qry->setOperations)->colTypes;
-	ListCell	*tlistl;
-	int32		*max_typmods;
-	int			colindex;
+	List		*setOpNodes = NIL;
+	List 		*collist_list = NIL;
+	// List		*colTypes = ((SetOperationStmt*) qry->setOperations)->colTypes;
+	ListCell	*collistl, *setopsl, *toptlistl;
+	Oid common_type;
+	int32 common_typmod;
 
 	while (setOpTreeStack)
 	{
@@ -358,70 +360,89 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		{
 			SetOperationStmt *op = (SetOperationStmt *) setOp;
 			// TODO Do we need the same check as in prepunion::903?
+			setOpNodes = lappend(setOpNodes, op);
 			setOpTreeStack = lcons(op->rarg, setOpTreeStack);
 			setOpTreeStack = lcons(op->larg, setOpTreeStack);
 		} else if (IsA(setOp, RangeTblRef))
 		{
 			RangeTblEntry *rte = rt_fetch(((RangeTblRef*)setOp)->rtindex, pstate->p_rtable);
-			tlist_list = lcons(rte->subquery->targetList, tlist_list);
+			List *targetList = rte->subquery->targetList;
+			ListCell *tlistl, *collistl;
+
+			if(collist_list == NIL)
+			{
+				foreach(tlistl, targetList)
+				{
+					TargetEntry *tle = (TargetEntry*) lfirst(tlistl);
+					collist_list = lappend(collist_list, list_make1(tle));
+				}
+			} else
+			{
+				forboth(tlistl, targetList, collistl, collist_list)
+				{
+					List 		*collist = (List*) lfirst(collistl);
+					TargetEntry *tle = (TargetEntry*) lfirst(tlistl);
+					collist = lappend(collist, tle);
+				}
+			}
 		}
 	}
 
-	// Call select common type
+	// Call select common type (may have to strip coercions?) in case we need to strip out premature null conversions
 	// Call select common typmod
-
 	// Coerce all
 
-	max_typmods = (int32 *) palloc(list_length((List *) linitial(tlist_list)) * sizeof(int32));
-	
-	foreach(tlistl, tlist_list)
+	forboth(collistl, collist_list,
+			toptlistl, qry->targetList)
 	{
-		List		*subtlist = (List *) lfirst(tlistl);
-		ListCell	*subtlistl;
-		colindex = 0;
-		foreach(subtlistl, subtlist)
+		List *col_tles = lfirst(collistl);
+		List *col_exprs = NIL;
+		ListCell *lc;
+		TargetEntry *top_tle = (TargetEntry*) lfirst(toptlistl);
+		Var *top_expr = (Var*) top_tle->expr;
+
+
+		foreach(lc, col_tles)
 		{
-			TargetEntry *subtle = (TargetEntry *) lfirst(subtlistl);
-			Node		*expr = (Node*) subtle->expr;
+			TargetEntry *tle = (TargetEntry*) lfirst(lc);
+			col_exprs = lappend(col_exprs, (Node*)tle->expr);
+		}
 
-			if (tlistl == list_head(tlist_list))
-				max_typmods[colindex] = exprTypmod(expr);
-			else
-				max_typmods[colindex] = Max(max_typmods[colindex], exprTypmod(expr));
+		common_type = select_common_type(pstate, col_exprs, NULL, NULL);
+		common_typmod = select_common_typmod(pstate, col_exprs, common_type);
 
-			colindex++;
+		foreach(lc, col_tles)
+		{
+			TargetEntry *tle = (TargetEntry*) lfirst(lc);
+			Node		*expr = (Node*) tle->expr;
+			tle->expr = (Expr*) coerce_to_target_type(pstate, expr, exprType(expr), 
+									common_type, common_typmod, COERCION_IMPLICIT, 
+									COERCE_IMPLICIT_CAST, -1);
+		}
+		Assert(IsA(top_expr, Var));
+		top_tle->expr = (Expr*) makeVar(top_expr->varno,
+									top_expr->varattno,
+									common_type,
+									common_typmod,
+									top_expr->varcollid,
+									0);
+		list_free(col_exprs);
+		list_free(col_tles);
+	}
+
+	foreach(setopsl, setOpNodes)
+	{
+		SetOperationStmt *sostmt = (SetOperationStmt*) lfirst(setopsl);
+		ListCell *coltypl, *coltypmodl;
+
+		forboth(coltypl, sostmt->colTypes, coltypmodl, sostmt->colTypmods)
+		{
+			lfirst_oid(coltypl) = common_type;
+			lfirst_int(coltypmodl) = common_typmod;
 		}
 	}
-	foreach(tlistl, tlist_list)
-	{
-		List		*subtlist = (List *) lfirst(tlistl);
-		ListCell	*subtlistl, *coltypl, *qryTlistl;
-		colindex = 0;
-		forthree(subtlistl, subtlist, coltypl, colTypes, qryTlistl, qry->targetList)
-		{
-			TargetEntry *subtle = (TargetEntry *) lfirst(subtlistl);
-			TargetEntry *subqrytle = (TargetEntry *) lfirst(qryTlistl);
-			Node		*expr = (Node*) subtle->expr;
-			Oid			expr_typ = exprType(expr);
-			Oid			col_typ = lfirst_oid(coltypl);
-			if (common_utility_plugin_ptr->is_tsql_bpchar_datatype(expr_typ) || 
-				common_utility_plugin_ptr->is_tsql_nchar_datatype(expr_typ)  || 
-				common_utility_plugin_ptr->is_tsql_binary_datatype(expr_typ))
-			{
-				subtle->expr = (Expr *) coerce_to_target_type(pstate, expr, expr_typ, 
-									col_typ, max_typmods[colindex], COERCION_IMPLICIT, 
-									COERCE_IMPLICIT_CAST, -1);
-				subqrytle->expr = (Expr *) coerce_to_target_type(pstate, (Node*) subqrytle->expr, expr_typ, 
-									col_typ, max_typmods[colindex], COERCION_IMPLICIT, 
-									COERCE_IMPLICIT_CAST, -1);
-				subqrytle->expr = subqrytle->expr;
-			}
-			colindex++;
-		}
-	}
-	// Need to put this in a finally block?
-	pfree(max_typmods);
-	list_free(tlist_list);
+
+	list_free(collist_list);
 }
 
 /* 
