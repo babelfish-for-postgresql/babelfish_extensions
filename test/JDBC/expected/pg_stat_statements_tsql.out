@@ -163,6 +163,7 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#SELECT * FROM pgss_test WHERE a IN ($1, $2, $3, $4, $5)#!#1#!#0#!#0
 16385#!#1#!#TRUNCATE TABLE pgss_test#!#1#!#0#!#0
 16385#!#1#!#UPDATE pgss_test SET b = $1 WHERE a > $2#!#1#!#3#!#0
+16385#!#1#!#select CAST(pg_sleep(5) AS text)#!#1#!#1#!#0
 ~~END~~
 
 
@@ -329,7 +330,6 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#SELECT AVG(age) FROM pgss_cust#!#1#!#1#!#0
 16385#!#1#!#SELECT COUNT(*) from pgss_orders where country =$1#!#1#!#1#!#0
 16385#!#1#!#SELECT REVERSE(name) FROM pgss_cust#!#1#!#5#!#0
-16385#!#1#!#select CAST(pg_sleep(5) AS text)#!#1#!#1#!#0
 ~~END~~
 
 
