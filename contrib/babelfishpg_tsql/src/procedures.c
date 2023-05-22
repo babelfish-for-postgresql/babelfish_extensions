@@ -46,7 +46,6 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "tsearch/ts_locale.h"
-#include "rolecmds.h"
 
 #include "catalog.h"
 #include "extendedproperty.h"
@@ -54,6 +53,7 @@
 #include "pltsql.h"
 #include "session.h"
 #include "pltsql.h"
+#include "rolecmds.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
@@ -76,6 +76,7 @@ PG_FUNCTION_INFO_V1(sp_serveroption_internal);
 PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 PG_FUNCTION_INFO_V1(sp_execute_postgresql);
+PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -3745,4 +3746,65 @@ remove_delimited_identifer(char *str)
 	len = strlen(str);
 	while (isspace(str[len - 1]))
 		str[--len] = 0;
+}
+
+Datum
+sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
+{
+	int			rc;
+	MemoryContext savedPortalCxt;
+
+	/* SPI call input */
+	const char *query = "SELECT "
+							"CAST('TDS_FDW' AS sys.nvarchar(255)) AS \"Provider Name\", "
+							"CAST('{' || uuid_in(md5(subquery.provider_desc::text)::cstring) || '}' AS sys.nvarchar(255)) AS \"Parse Name\", "
+							"CAST(subquery.provider_desc AS sys.nvarchar(255)) AS \"Provider Description\" "
+						"FROM ("
+							"SELECT "
+							"extversion, 'A PostgreSQL foreign data wrapper to connect to TDS databases ' || extversion AS provider_desc "
+							"FROM pg_catalog.pg_extension "
+							"WHERE extname = 'tds_fdw'"
+						") subquery;";
+
+	SPIPlanPtr	plan;
+	Portal		portal;
+	DestReceiver *receiver;
+	const char* provider_name = "tds_fdw";
+
+	if(!role_is_sa(GetSessionUserId()))
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Only members of the sysadmin role can execute this stored procedure.")));
+
+	if(GetForeignDataWrapperByName(provider_name,true) == NULL){
+		PG_RETURN_VOID();
+	}
+
+	savedPortalCxt = PortalContext;
+	if (PortalContext == NULL)
+		PortalContext = MessageContext;
+	if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+	PortalContext = savedPortalCxt;
+
+	if ((plan = SPI_prepare(query, 0, NULL)) == NULL)
+		elog(ERROR, "SPI_prepare(\"%s\") failed", query);
+
+	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, true)) == NULL)
+		elog(ERROR, "SPI_cursor_open(\"%s\") failed", query);
+
+	receiver = CreateDestReceiver(DestRemote);
+	SetRemoteDestReceiverParams(receiver, portal);
+
+	/* fetch the result and return the result-set */
+	PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
+
+	receiver->rDestroy(receiver);
+
+	SPI_cursor_close(portal);
+
+	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+
+	PG_RETURN_VOID();
+
 }
