@@ -149,7 +149,7 @@ build_bbf() {
     cd ../babelfishpg_tds
     make clean && make && make install
     cd ../babelfishpg_tsql
-    make clean && make && make install
+    make clean && PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make && PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
 }
 
 init_db() {
