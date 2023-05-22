@@ -23,7 +23,7 @@
 
 static RangeVar *find_matching_table(RangeVar *target, Node *tblref);
 
-List *sv_setop_targetlist = NIL;
+List *sv_setop_exprs = NIL;
 namespace_stack_t *set_op_ns_stack = NULL;
 
 /*
@@ -304,6 +304,12 @@ rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
 	}
 }
 
+/* 
+ * Allocate an empty space to hold a parsing namespace
+ * This space will be filled by post_transform_from_clause, to save the
+ * leftmost select's namespace for processing UNION statements. This is needed 
+ * to resolve table aliases in the top-level of a UNION and other set ops.
+ */
 void
 push_namespace_stack(void)
 {
@@ -318,6 +324,11 @@ push_namespace_stack(void)
 	set_op_ns_stack = ns_stack_item;
 }
 
+/* 
+ * After tranforming a from clause, if we've allocated space on the stack in
+ * push_namespace_stack, save the namespace here for use in
+ * pre_transform_sort_clause.
+ */
 void 
 post_transform_from_clause(ParseState *pstate)
 {
@@ -326,44 +337,57 @@ post_transform_from_clause(ParseState *pstate)
 		ns->namespace = pstate->p_namespace;
 }
 
+/* 
+ * Prior to handling a UNION or othe SetOp's ORDER BY clause, this hook:
+ * 1. Modifies the query's top-level target list, so that we can match columns
+ * 		with those in the sort clause
+ * 2. Pop from the namespace stack and restore the leftmost select's namespace
+ * 		for table alias resolution. The caller is expected to save and restore
+ * 		the original top-level parse state
+ */
 void
 pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
 {
 	namespace_stack_t *old_ns_stack_item = set_op_ns_stack;
-	ListCell *lc;
+	ListCell *lc, *lc_l;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	sv_setop_targetlist = qry->targetList;
-
-	qry->targetList = list_copy(leftmostQuery->targetList);
-	/* Filter out all resjunk */
-	foreach(lc, qry->targetList)
+	sv_setop_exprs = NIL;
+	forboth(lc, qry->targetList, lc_l, leftmostQuery->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-		if (tle->resjunk)
-			foreach_delete_current(qry->targetList, lc);
+		TargetEntry *lefttle = (TargetEntry *) lfirst(lc_l);
+
+		Assert(!lefttle->resjunk);
+		sv_setop_exprs = lappend(sv_setop_exprs, tle->expr);
+		if (IsA(lefttle->expr, Var))
+			tle->expr = (Expr*) lefttle->expr;
 	}
+
 	pstate->p_namespace = set_op_ns_stack->namespace;
 
 	set_op_ns_stack = set_op_ns_stack->prev;
 	pfree(old_ns_stack_item);
 }
 
+/* 
+ * Reset the targetList back to it's original vars
+ * This is necessary in some cases, like UNION ALL and when the targetlist
+ * includes items from a joined table
+ */
 void 
 post_transform_sort_clause(Query *qry)
 {
 	ListCell *lc_q, *lc_sv;
-	if (sql_dialect != SQL_DIALECT_TSQL || sv_setop_targetlist == NIL)
+	if (sql_dialect != SQL_DIALECT_TSQL || sv_setop_exprs == NIL)
 		return;
-	/* Copy the ressortgroupref from the leftmost target list to the previous tl */
-	forboth(lc_q, qry->targetList, lc_sv, sv_setop_targetlist)
+	forboth(lc_q, qry->targetList, lc_sv, sv_setop_exprs)
 	{
-		TargetEntry *tle_q= (TargetEntry *) lfirst(lc_q);
-		TargetEntry *tle_sv = (TargetEntry *) lfirst(lc_sv);
-		tle_sv->ressortgroupref = tle_q->ressortgroupref;
+		TargetEntry *tle_q = (TargetEntry *) lfirst(lc_q);
+		Expr 		*expr_sv = (Expr *) lfirst(lc_sv);
+		tle_q->expr = expr_sv;
 	}
-	list_free(qry->targetList);
-	qry->targetList = sv_setop_targetlist;
+	sv_setop_exprs = NIL;
 }

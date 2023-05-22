@@ -37,6 +37,12 @@ SELECT c2 FROM unionorder2
 ORDER BY u.c1;
 go
 
+SELECT u.c1 FROM unionorder1 u
+UNION ALL
+SELECT u.c1 FROM unionorder1 u
+ORDER BY u.c1;
+go
+
 SELECT c1 FROM dbo.unionorder1
 UNION
 SELECT c2 FROM dbo.unionorder2
@@ -63,6 +69,12 @@ go
 
 SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
 UNION
+SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
+ORDER BY u2.c2
+go
+
+SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
+UNION ALL
 SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
 ORDER BY u2.c2
 go
@@ -157,6 +169,28 @@ SELECT c1 FROM unionorder1
 ORDER BY u.c2;
 go
 
+create view v1 as
+    select u1b.c1
+    from unionorder1 u1
+    inner join unionorder2 u2
+    on u1.c1 = u2.c2
+    inner join unionorder1b u1b
+    on u1.c1 = u1b.c1
+union 
+    select u1b.c1
+    from unionorder1 u1
+    inner join unionorder2 u2
+    on u1.c1 = u2.c2
+    inner join unionorder1b u1b
+    on u1.c1 = u1b.c1
+go
+
+select * from v1;
+go
+
+drop view v1;
+go
+
 -- Test babel_613 UNION ALL with numeric issue
 create table dbo.unionorder_numeric (a numeric(6,4), b numeric(6,3));
 insert into unionorder_numeric values (4, 16);
@@ -197,12 +231,39 @@ insert into dbo.babel4169_t1 values (1, 2, 3), (10, 2, 3), (100, 2, 99);
 insert into dbo.babel4169_t2 values (4, 5, 6), (40, 5, 6), (400, 5, 99);
 go
 
+select sum(a), b from dbo.babel4169_t1 group by b, c
+union
+select sum(a), b from dbo.babel4169_t2 group by b, c
+order by b
+go
+
 select sum(a) as sum, b from dbo.babel4169_t1 group by b, c
 union
 select sum(a), b from dbo.babel4169_t2 group by b, c
 order by sum
 go
 
+select sum(a), b from dbo.babel4169_t1 group by b, c
+union
+select sum(a), b from dbo.babel4169_t2 group by b, c
+order by c
+go
+
+create function babel4169_add_one (@x INT)
+RETURNS INT
+AS BEGIN
+    RETURN @x + 1;
+END;
+GO
+
+select babel4169_add_one(a) as added, b from dbo.babel4169_t1
+union
+select a, b from dbo.babel4169_t2
+order by added
+go
+
+drop function babel4169_add_one;
+go
 drop table dbo.babel4169_t1;
 drop table dbo.babel4169_t2;
 go
