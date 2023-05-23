@@ -40,7 +40,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='invalid option', @optvalu
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option provided for sp_serveroption. Only query timeout option is supported)~~
+~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' option is supported)~~
 
 
 -- sp_serveroption with server as NULL. Should throw error
@@ -205,7 +205,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='  query timeout', @optval
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option provided for sp_serveroption. Only query timeout option is supported)~~
+~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' option is supported)~~
 
 
 -- ignore leading spaces in @optvalue argument

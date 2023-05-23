@@ -2693,7 +2693,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption. Only query timeout option is supported")));
+				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' option is supported")));
 
 	if(servername)
 		pfree(servername);
