@@ -164,6 +164,27 @@ GO
 SELECT * FROM fpn_table_insert_into WHERE EXISTS (SELECT * FROM bbf_fpn_server.master.dbo.fpn_table as fpn_table_alias WHERE fpn_table_alias.a = fpn_table_insert_into.a)
 GO
 
+-- Create procedure whose body contains four-part object name
+CREATE PROCEDURE fpn_vu_prepare__fpn_proc AS SELECT * FROM bbf_fpn_server.master..fpn_table
+GO
+
+-- Create function whose body contains four-part object name
+CREATE FUNCTION fpn_vu_prepare__fpn_func()
+RETURNS INT
+AS
+BEGIN
+DECLARE @i int
+SELECT @i = COUNT(*) FROM bbf_fpn_server.master.dbo.fpn_table
+RETURN @i
+END
+GO
+
+EXEC fpn_vu_prepare__fpn_proc
+GO
+
+SELECT fpn_vu_prepare__fpn_func()
+GO
+
 -- Try SQL Injection
 -- We cannot directly inject SQL because it will break T-SQL database identifier rules
 -- We have to surround the SQL in double quotes ("") or square brackets ([]) if we want to even attempt that
@@ -217,4 +238,6 @@ DROP TABLE fpn_table_insert_into
 DROP TABLE fpn_table_select_into
 DROP TABLE fpn_table
 DROP VIEW four_part_names_vu_verify_view
+DROP PROCEDURE fpn_vu_prepare__fpn_proc
+DROP FUNCTION fpn_vu_prepare__fpn_func()
 GO

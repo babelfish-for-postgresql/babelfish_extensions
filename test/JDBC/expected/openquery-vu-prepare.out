@@ -221,3 +221,16 @@ bbf_server_1#!#1
 -- Create a view dependent on OPENQUERY
 CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
 GO
+
+CREATE PROCEDURE openquery_vu_prepare__openquery_proc AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 2')
+GO
+
+CREATE FUNCTION openquery_vu_prepare__openquery_func()
+RETURNS INT
+AS
+BEGIN
+DECLARE @i int
+SELECT @i = COUNT(*) FROM OPENQUERY(bbf_server, 'SELECT 2')
+RETURN @i
+END
+GO

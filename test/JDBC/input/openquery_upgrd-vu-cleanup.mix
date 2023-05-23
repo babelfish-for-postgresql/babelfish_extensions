@@ -12,3 +12,9 @@ GO
 
 -- DROP VIEW openquery_vu_prepare__openquery_view
 GO
+
+DROP PROCEDURE openquery_upgrd_vu_prepare__openquery_proc
+GO
+
+DROP FUNCTION openquery_upgrd_vu_prepare__openquery_func()
+GO
