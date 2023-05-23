@@ -2657,6 +2657,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 	char *optionname = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
 	char *optionvalue = PG_ARGISNULL(2) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(2)));
+	char *newoptionvalue = optionvalue;
 
 	if(!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -2678,12 +2679,21 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FDW_ERROR),
 				 errmsg("@optvalue parameter cannot be NULL")));
 
+	/* we need to ignore trailing spaces in all the arguments */
+	remove_trailing_spaces(servername);
+	remove_trailing_spaces(optionname);
+	remove_trailing_spaces(newoptionvalue);
+
+	/* we need to ignore leading spaces in optionvalue argument */
+	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
+		newoptionvalue++;
+
 	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
-		update_bbf_server_options(servername, optionname, optionvalue, false);
+		update_bbf_server_options(servername, optionname, newoptionvalue, false);
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption")));
+				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' option is supported")));
 
 	if(servername)
 		pfree(servername);
