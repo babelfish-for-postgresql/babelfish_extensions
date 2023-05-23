@@ -3578,8 +3578,9 @@ modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc)
 	/*
 	 * Only override tupdesc for T-SQL OPENQUERY
 	 */
-	if (!funcname || (strlen(funcname) != 9) || (strncasecmp(funcname, "openquery", 9) != 0))
-		return;
+	if (!funcname || ((strlen(funcname) != 9 || strncasecmp(funcname, "openquery", 9) != 0) &&
+		(strlen(funcname) != 18 || strncasecmp(funcname, "openquery_internal", 18) != 0)))
+			return;
 
 	funcexpr = (FuncExpr *) expr;
 	arg_list = funcexpr->args;

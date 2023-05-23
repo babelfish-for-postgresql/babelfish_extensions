@@ -856,9 +856,9 @@ public:
 			 *
 			 * will be re-written as:
 			 *
-			 *	SELECT col_a, col_b FROM OPENQUERY('server_name', 'SELECT * FROM db_name.schema_name.obj_name')
+			 *	SELECT col_a, col_b FROM openquery_internal('server_name', 'SELECT * FROM db_name.schema_name.obj_name')
 			 */
-			std::string str = std::string("OPENQUERY(") + quoted_server_str + std::string(", 'SELECT * FROM ") + three_part_name + std::string("')");
+			std::string str = std::string("openquery_internal(") + quoted_server_str + std::string(", 'SELECT * FROM ") + three_part_name + std::string("')");
 
 			rewritten_query_fragment.emplace(std::make_pair(obj_server->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
 		}
@@ -999,13 +999,14 @@ public:
 		 * 
 		 * Since we have implemented OPENQUERY as a PG function, the linked_server gets
 		 * interpreted as a column. To fix this, we enclose the linked_server in single
-		 * quotes, so that the function now gets called as OPENQUERY('linked_server', 'query')
+		 * quotes, so that the function now gets called as openquery_internal('linked_server', 'query')
 		 */
 		if (linked_srv)
 		{
 			std::string linked_srv_name = getIDName(linked_srv->DOUBLE_QUOTE_ID(), linked_srv->SQUARE_BRACKET_ID(), linked_srv->ID());
 			std::string str = std::string("'") + linked_srv_name + std::string("'");
 
+			rewritten_query_fragment.emplace(std::make_pair(ctx->OPENQUERY()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->OPENQUERY()), "openquery_internal")));
 			rewritten_query_fragment.emplace(std::make_pair(linked_srv->start->getStartIndex(), std::make_pair(linked_srv_name, str)));
 		}	
 	}
