@@ -1,0 +1,15 @@
+-- psql
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+-- tsql
+-- Add localhost as linked server
+EXEC sp_addlinkedserver  @server = N'babel_4168_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Add jdbc_user as linked server login
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'babel_4168_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+CREATE VIEW babel_4168_vu_prepare_view AS SELECT * FROM OPENQUERY(babel_4168_server, 'SELECT 1')
+GO
