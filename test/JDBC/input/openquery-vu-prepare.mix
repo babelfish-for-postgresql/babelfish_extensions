@@ -119,6 +119,22 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
 GO
 
+-- ignore trailing spaces in all the arguments
+EXEC sp_serveroption @server='bbf_server_1  ', @optname='query timeout   ', @optvalue='1    '
+GO
+
+-- do not ignore leading spaces in @server argument
+EXEC sp_serveroption @server='  bbf_server_1', @optname='query timeout', @optvalue='1'
+GO
+
+-- do not ignore leading spaces in @optname argument
+EXEC sp_serveroption @server='bbf_server_1', @optname='  query timeout', @optvalue='1'
+GO
+
+-- ignore leading spaces in @optvalue argument
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='  1'
+GO
+
 -- psql
 SELECT * FROM sys.babelfish_inconsistent_metadata() where schema_name='pg_catalog' AND object_name='srvname';
 GO
