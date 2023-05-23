@@ -2685,7 +2685,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	remove_trailing_spaces(newoptionvalue);
 
 	/* we need to ignore leading spaces in optionvalue argument */
-	while (isspace((unsigned char) *newoptionvalue))
+	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
 		newoptionvalue++;
 
 	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
