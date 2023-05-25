@@ -3510,3 +3510,19 @@ text
 
 ~~ERROR (Message: TDS client library error: DB #: 20003, DB Msg: server connection timed out, OS #: 0, OS Msg: Success, Level: 6)~~
 
+
+# Test procedure dependent on OPENQUERY
+EXEC openquery_vu_prepare__openquery_proc
+~~START~~
+int
+2
+~~END~~
+
+
+# Test function dependent on OPENQUERY
+SELECT openquery_vu_prepare__openquery_func()
+~~START~~
+int
+1
+~~END~~
+
