@@ -2454,25 +2454,25 @@ SELECT a, b, COUNT(*) OVER () from t3;
 SELECT a, b, COUNT(*) OVER (ORDER BY a) from t3;
   a  | b | count 
 -----+---+-------
- abc | b |     2
- abc | a |     2
- efg | a |     4
- efg | b |     4
- xyz | a |     6
- xyz | b |     6
-     |   |     7
+     |   |     1
+ abc | a |     3
+ abc | b |     3
+ efg | a |     5
+ efg | b |     5
+ xyz | a |     7
+ xyz | b |     7
 (7 rows)
 
 SELECT a, b, COUNT(*) OVER (ORDER BY a DESC) from t3;
   a  | b | count 
 -----+---+-------
-     |   |     1
- xyz | b |     3
- xyz | a |     3
- efg | b |     5
- efg | a |     5
- abc | b |     7
- abc | a |     7
+ xyz | b |     2
+ xyz | a |     2
+ efg | a |     4
+ efg | b |     4
+ abc | b |     6
+ abc | a |     6
+     |   |     7
 (7 rows)
 
 SELECT a, b, COUNT(*) OVER(PARTITION BY a) from t3;
@@ -2532,25 +2532,25 @@ SELECT a, b, COUNT_BIG(*) OVER () from t3;
 SELECT a, b, COUNT_BIG(*) OVER (ORDER BY a) from t3;
   a  | b | count_big 
 -----+---+-----------
- abc | b |         2
- abc | a |         2
- efg | a |         4
- efg | b |         4
- xyz | a |         6
- xyz | b |         6
-     |   |         7
+     |   |         1
+ abc | a |         3
+ abc | b |         3
+ efg | a |         5
+ efg | b |         5
+ xyz | a |         7
+ xyz | b |         7
 (7 rows)
 
 SELECT a, b, COUNT_BIG(*) OVER (ORDER BY a DESC) from t3;
   a  | b | count_big 
 -----+---+-----------
-     |   |         1
- xyz | b |         3
- xyz | a |         3
- efg | b |         5
- efg | a |         5
- abc | b |         7
- abc | a |         7
+ xyz | b |         2
+ xyz | a |         2
+ efg | a |         4
+ efg | b |         4
+ abc | b |         6
+ abc | a |         6
+     |   |         7
 (7 rows)
 
 SELECT a, b, COUNT_BIG(*) OVER(PARTITION BY a) from t3;
