@@ -7,6 +7,10 @@ SET sys.pg_stat_statements.track = 'none';
 SELECT sys.pg_stat_statements_reset();
 go
 
+-- tsql
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+go
+
 --
 -- simple and compound statements
 --

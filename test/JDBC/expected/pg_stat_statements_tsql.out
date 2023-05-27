@@ -12,6 +12,14 @@ void
 ~~END~~
 
 
+-- tsql
+SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+go
+~~START~~
+int#!#bit#!#text#!#bigint#!#bigint#!#bigint
+~~END~~
+
+
 
 -- tsql
 --
@@ -70,7 +78,7 @@ go
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#2#!#2#!#0
 16385#!#1#!#SELECT $1 AS "int"#!#1#!#1#!#0
-16385#!#1#!#select CAST(pg_sleep(5) AS text)#!#1#!#1#!#0
+16385#!#1#!#SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != $1 ORDER BY query COLLATE "C"#!#1#!#0#!#0
 ~~END~~
 
 
