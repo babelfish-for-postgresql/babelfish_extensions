@@ -292,20 +292,22 @@ AS $$
 DECLARE
     var_sc int;
     schemaid int;
+    preci int;
     schema_name VARCHAR;
     type_name VARCHAR;
+    type_namee VARCHAR;
     sys_id int;
     testt VARCHAR;
 BEGIN
 
-    property := TRIM(LOWER(COALESCE(property,'')));
+    property := RTRIM(LOWER(COALESCE(property COLLATE "C",'')));
 
     IF typename LIKE '%.%'  THEN
-    schema_name :=  lower(split_part(typename COLLATE "C", '.', 1));
-    type_name :=  lower(split_part(typename COLLATE "C",'.', 2));
+    schema_name := RTRIM(lower(split_part(typename COLLATE "C", '.', 1)));
+    type_name :=  RTRIM(lower((split_part(typename COLLATE "C",'.', 2))));
     ELSE
     schema_name := 'dbo';
-    type_name := typename;
+    type_name := RTRIM(LOWER(typename));
     END IF;
 
 
@@ -319,16 +321,24 @@ BEGIN
         RETURN NULL ;
     END IF;
 
-    IF NOT EXISTS (SELECT ty.is_user_defined FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+    IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
     schemaid := (SELECT sc.schema_id FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default);
     ELSE
-    schemaid := (SELECT sc.schema_id FROM sys.types sc WHERE sc.name = type_name COLLATE sys.database_default);
+        schemaid := (SELECT sc.schema_id FROM sys.types sc WHERE sc.name = type_name COLLATE sys.database_default);
+        IF schema_name = 'dbo'
+        THEN
+        schema_name := schema_name(schemaid);
+        END IF;
     END IF;
 
 
-    if (SELECT schema_id(schema_name)) <> schemaid THEN
+    if (SELECT schema_id(schema_name)) <> schemaid
+    THEN
     RETURN NULL;
     END IF;
+
+    sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+    type_namee := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
 
     IF property = 'allowsnull'
     THEN
@@ -339,18 +349,34 @@ BEGIN
 
     ELSEIF property = 'precision'
     THEN
-        RETURN (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+        preci := (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+        IF preci = 0
+        THEN
+            preci = (SELECT CAST(dc.prec AS INT) FROM sys.systypes dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.uid = schemaid);
+            IF preci IS NULL
+            THEN
+                IF type_namee = 'image' or type_namee = 'text'
+                THEN
+                RETURN 2147483647;
+                ELSEIF type_namee = 'ntext'
+                THEN
+                RETURN 1073741823;
+                END IF;
+            END IF;
+            RETURN preci;
+        ELSE
+            RETURN preci;
+        END IF;        
 
     ELSEIF property = 'scale'
     THEN
-        sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
-        type_name := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
-        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
-            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
+        preci := (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_namee COLLATE sys.database_default AND dc.system_type_id = sys_id);
+
+        IF preci = 0 or type_namee = 'float' or type_namee = 'real' or type_namee = 'bit'
         THEN
-            RETURN(SELECT CAST(dc.scale AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default);
-        ELSE
             RETURN NULL;
+        ELSE
+            RETURN(SELECT CAST(dc.scale AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
         END IF;
     ELSEIF property = 'ownerid'
     THEN
