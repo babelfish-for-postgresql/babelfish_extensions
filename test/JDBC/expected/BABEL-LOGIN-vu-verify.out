@@ -486,6 +486,13 @@ GO
 ~~ERROR (Message: Cannot alter the login 'babel_4080_testlogin1', because it does not exist or you do not have permission.)~~
 
 
+ALTER LOGIN babel_4080_testlogin1 WITH PASSWORD = 'newpassword';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the login 'babel_4080_testlogin1', because it does not exist or you do not have permission.)~~
+
+
 DROP LOGIN babel_4080_testlogin1;
 GO
 ~~ERROR (Code: 33557097)~~
