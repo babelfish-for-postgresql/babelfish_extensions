@@ -116,11 +116,48 @@ DROP TABLE pgss_test;
 DROP ROLE pgss_test_role;
 go
 
+--group by distinct
+SELECT a, b, c
+FROM (VALUES (1, 2, 3), (4, NULL, 6), (7, 8, 9)) AS t (a, b, c)
+GROUP BY ROLLUP(a, b), rollup(a, c)
+ORDER BY a, b, c;
+go
+
+SELECT COUNT(*) FROM pg_stat_statements WHERE query LIKE '%GROUP BY%ROLLUP%';
+go
+
+--
+-- INSERT, UPDATE, DELETE on test table to validate WAL generation metrics
+--
+-- psql
+SELECT sys.pg_stat_statements_reset();
+go
+
+-- utility "create table" should not be shown
+-- tsql
+CREATE TABLE pgss_test (a int, b char(20));
+
+INSERT INTO pgss_test VALUES(generate_series(1, 10), 'aaa');
+UPDATE pgss_test SET b = 'bbb' WHERE a > 7;
+DELETE FROM pgss_test WHERE a > 9;
+-- DROP test table
+DROP TABLE pgss_test;
+go
+
+-- Check WAL is generated for the above statements
+SELECT query, calls, rows
+FROM pg_stat_statements where wal_bytes != 0 and wal_records != 0 ORDER BY query COLLATE "C";
+go
+
 -- tsql
 CREATE TABLE pgss_cust(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
 CREATE TABLE pgss_orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references pgss_cust(customerid))
 INSERT INTO pgss_cust values(1, 'ABC', 18),(2,'XYZ', 21), (3, 'LMN', 29),(4, 'PQR', 52),(5, 'STU', 23)
 INSERT INTO pgss_orders values(10, 5, 'London'), (11, 3, 'India'), (12, 2, 'USA'), (13, 4, 'Pakistan'),(14, 5, 'Germany'),(15, 1, 'India')
+go
+
+-- join
+SELECT pgss_cust.name, pgss_orders.orderid, pgss_orders.country from pgss_orders inner join pgss_cust on pgss_cust.customerid = pgss_orders.customerid;
 go
 
 SELECT COUNT(*) from pgss_orders where country ='India'
