@@ -78,3 +78,4 @@ runs:
         export scheduleFile=upgrade/$base_dir/schedule
         mvn test
       shell: bash   
+      sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'pg_stat_statements'/g" postgresql.conf
