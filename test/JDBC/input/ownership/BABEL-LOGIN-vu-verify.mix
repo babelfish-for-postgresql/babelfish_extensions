@@ -275,6 +275,9 @@ GO
 ALTER LOGIN babel_4080_testlogin1 DISABLE;
 GO
 
+ALTER LOGIN babel_4080_testlogin1 WITH PASSWORD = 'newpassword';
+GO
+
 DROP LOGIN babel_4080_testlogin1;
 GO
 
