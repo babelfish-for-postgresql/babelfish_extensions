@@ -77,5 +77,4 @@ runs:
         done
         export scheduleFile=upgrade/$base_dir/schedule
         mvn test
-      shell: bash
-    
+      shell: bash   
