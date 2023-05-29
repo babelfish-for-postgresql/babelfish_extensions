@@ -78,5 +78,7 @@ runs:
         export scheduleFile=upgrade/$base_dir/schedule
         mvn test
       shell: bash
+      
+      sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds'/g" postgresql.conf
 
     
