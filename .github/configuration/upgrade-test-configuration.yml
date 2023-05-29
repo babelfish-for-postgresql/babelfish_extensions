@@ -30,16 +30,6 @@ upgrade-version: [[
 ],
 [
   {
-    version: 14.6,
-    upgrade-type: null
-  },
-  {
-    version: target.latest,
-    upgrade-type: minor
-  }
-],
-[
-  {
     version: 14.8,
     upgrade-type: null
   },
