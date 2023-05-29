@@ -1590,46 +1590,48 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 	Node	   *stmt;
 	size_t		len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	Oid			current_user_id = GetUserId();
 	
-
 	PG_TRY();
 	{
-	SetCurrentRoleId(GetSessionUserId(), false);
-	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		SetCurrentRoleId(GetSessionUserId(), false);
+		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+						GUC_CONTEXT_CONFIG,
+						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-	extensionStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		extensionStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
-	if (extensionStmt == NULL)
-			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							errmsg("Name cannot be NULL.")));
+		if (extensionStmt == NULL)
+				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+								errmsg("Name cannot be NULL.")));
 
-	/* Remove trailing whitespaces */
-		len = strlen(extensionStmt);
-		while (isspace(extensionStmt[len - 1]))
-			extensionStmt[--len] = 0;
+		/* Remove trailing whitespaces */
+			len = strlen(extensionStmt);
+			while (isspace(extensionStmt[len - 1]))
+				extensionStmt[--len] = 0;
 
-	/* check if role name is empty after removing trailing spaces */
-		if (strlen(extensionStmt) == 0)
-			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-										errmsg("Name cannot be NULL.")));
+		/* check if input statement is empty after removing trailing spaces */
+			if (strlen(extensionStmt) == 0)
+				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+											errmsg("Name cannot be NULL.")));
 
-	parsetree_list = raw_parser(extensionStmt, RAW_PARSE_DEFAULT);
-	stmt = parsetree_nth_stmt(parsetree_list, 0);
-	rewrite_object_refs(stmt);
+		parsetree_list = raw_parser(extensionStmt, RAW_PARSE_DEFAULT);
+		stmt = parsetree_nth_stmt(parsetree_list, 0);
+		rewrite_object_refs(stmt);
 
-	if (list_length(parsetree_list) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing", list_length(parsetree_list))));
+		if (list_length(parsetree_list) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("Expected 1 statement but got %d statements after parsing", list_length(parsetree_list))));
 
 
-	foreach(parsetree_item, parsetree_list)
+		foreach(parsetree_item, parsetree_list)
 		{
 			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 			Node	   *parsetree;
 			PlannedStmt *wrapper;
+			char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "pg_visibility"};
+			int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
 
 			/* need to make a wrapper PlannedStmt */
 			wrapper = makeNode(PlannedStmt);
@@ -1646,11 +1648,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				case T_CreateExtensionStmt:
 				{
 					CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
-					char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "pg_visibility"};
-					int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
-					//char **allowed_extns_item;
-
-					//allowed_extns_item = allowed_extns;
+					
 					for(int i = 0; i < allowed_extns_size; i++)
 					{
 						if((strcmp(crstmt->extname, allowed_extns[i])))
@@ -1709,13 +1707,6 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				{
 					AlterExtensionStmt *alstmt = (AlterExtensionStmt *) parsetree;
 
-					if(strcmp(alstmt->extname, "pg_stat_statements"))
-					{
-						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("'%s' is not a valid name", alstmt->extname)));
-
-					}
-
 					/* do this step */
 					ProcessUtility(wrapper,
 								extensionStmt,
@@ -1732,21 +1723,16 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				} 
 				case T_AlterObjectSchemaStmt:
 				{
-					AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parsetree;
-					
-					if (altschstmt->objectType == OBJECT_EXTENSION)
-					{
-						ProcessUtility(wrapper,
-									extensionStmt,
-									false,
-									PROCESS_UTILITY_SUBCOMMAND,
-									NULL,
-									NULL,
-									None_Receiver,
-									NULL);
-						/* make sure later steps can see the object created here */
-						CommandCounterIncrement();
-					}
+					ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Alter extension schema is not currently supported in Babelfish")));
+					break;
+				}
+				case  T_AlterExtensionContentsStmt:
+				{
+					ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Aletr extension to Add/Drop object in extension is not currently supported in Babelfish")));
 					break;
 				}
 				default:
@@ -1755,6 +1741,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				break;
 			}
 		}
+		SetCurrentRoleId(current_user_id, false);
 	}
 	PG_CATCH();
 	{
@@ -1764,10 +1751,10 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();	
-	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-					  GUC_CONTEXT_CONFIG,
-					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-	PG_RETURN_VOID();
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+						GUC_CONTEXT_CONFIG,
+						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RETURN_VOID();
 	
 }
 
