@@ -59,23 +59,6 @@ const uint64 PLTSQL_LOCKTAG_OFFSET = 0xABCDEF;
 						 (uint32) ((((int64) key16) + PLTSQL_LOCKTAG_OFFSET) >> 32), \
 						 (uint32) (((int64) key16) + PLTSQL_LOCKTAG_OFFSET), \
 						 3)
-
-/*
- * Setup default typmod for sys types/domains when typmod isn't specified
- * (that is, typmod = -1).
- * We only care to do this in TSQL dialect, this means sys.varchar
- * defaults to sys.varchar(1) only in TSQL dialect.
- *
- * is_cast indicates if it's a CAST/CONVERT statement, if it's true the default
- * length of string and binary type will be set to 30.
- *
- * If typmod is TSQLMaxTypmod (-8000), it means MAX is used in the
- * length field of VARCHAR, NVARCHAR or VARBINARY. Set typmod to -1,
- * by default -1 the engine will treat it as unlimited length.
- *
- * Also, length should be restricted to 8000 for sys.varchar and sys.char datatypes.
- * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
- */
 /*
  * Transaction processing using tsql semantics
  */
@@ -352,6 +335,22 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 	}
 }
 
+/*
+ * Setup default typmod for sys types/domains when typmod isn't specified
+ * (that is, typmod = -1).
+ * We only care to do this in TSQL dialect, this means sys.varchar
+ * defaults to sys.varchar(1) only in TSQL dialect.
+ *
+ * is_cast indicates if it's a CAST/CONVERT statement, if it's true the default
+ * length of string and binary type will be set to 30.
+ *
+ * If typmod is TSQLMaxTypmod (-8000), it means MAX is used in the
+ * length field of VARCHAR, NVARCHAR or VARBINARY. Set typmod to -1,
+ * by default -1 the engine will treat it as unlimited length.
+ *
+ * Also, length should be restricted to 8000 for sys.varchar and sys.char datatypes.
+ * And length should be restricted to 4000 for sys.varchar and sys.char datatypes
+ */
 void
 pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast)
 {
