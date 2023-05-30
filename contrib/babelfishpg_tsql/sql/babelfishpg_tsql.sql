@@ -376,7 +376,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      )
      , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
      , sys.spt_datatype_info_table AS t5
-  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)))
+  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR
+    (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
     AND ext.dbid = cast(sys.db_id() as oid);
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
