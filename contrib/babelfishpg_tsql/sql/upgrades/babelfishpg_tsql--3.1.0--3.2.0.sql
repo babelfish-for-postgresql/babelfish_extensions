@@ -4,6 +4,33 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Created to to fetch default collation Oid which is being used to set collation of system objects
+CREATE OR REPLACE FUNCTION sys.babelfishpg_tsql_get_babel_server_collation_oid() RETURNS OID
+LANGUAGE C
+AS 'babelfishpg_tsql', 'get_server_collation_oid';
+
+-- Set the collation of given schema_name.table_name.column_name column to default collation
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_collation_to_default(schema_name varchar, table_name varchar, column_name varchar) AS
+$$
+DECLARE
+    sys_schema oid;
+    table_oid oid;
+    att_coll oid;
+    default_coll_oid oid;
+    c_coll_oid oid;
+BEGIN
+    select oid into default_coll_oid from pg_collation where collname = 'default';
+    select oid into c_coll_oid from pg_collation where collname = 'C';
+    select oid into sys_schema from pg_namespace where nspname = schema_name collate sys.database_default;
+    select oid into table_oid from pg_class where relname = table_name collate sys.database_default and relnamespace = sys_schema;
+    select attcollation into att_coll from pg_attribute where attname = column_name collate sys.database_default and attrelid = table_oid;
+    if att_coll = default_coll_oid or att_coll = c_coll_oid then
+        update pg_attribute set attcollation = sys.babelfishpg_tsql_get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
+    end if;
+END
+$$
+LANGUAGE plpgsql;
+
 -- Drops an object if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
@@ -2320,6 +2347,8 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'openquery');
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 DROP FUNCTION sys.pg_extension_config_remove(REGCLASS);
+DROP PROCEDURE sys.babelfish_update_collation_to_default(varchar, varchar, varchar);
+DROP FUNCTION  sys.babelfishpg_tsql_get_babel_server_collation_oid();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
