@@ -51,3 +51,7 @@ GO
 
 EXEC sp_columns_100 'babel_sp_columns_vu_prepare_t_[a-z][a-z][a-z][a-z][^a-z]', 'dbo', NULL, NULL, 0, 2, 1
 GO
+
+-- test sp_columns_100 for bytea
+EXEC [sys].sp_columns_100 'babel_sp_columns_vu_prepare_bytea', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1;
+GO
