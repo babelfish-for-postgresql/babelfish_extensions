@@ -23,6 +23,5 @@ GO
 SELECT set_config('timezone', 'UTC', false)
 GO
 
--- terminate-tsql-conn
 insert gh_1412_t1 values (2, '2000-06-01 00:00:00', default, 'default time zone');
 GO
