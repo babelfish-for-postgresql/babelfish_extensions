@@ -1,3 +1,4 @@
+-- sla 60000
 drop table if exists t1;
 go
 
