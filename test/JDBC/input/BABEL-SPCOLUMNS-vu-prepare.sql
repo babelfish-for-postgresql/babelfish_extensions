@@ -15,3 +15,6 @@ GO
 
 CREATE table babel_sp_columns_vu_prepare_t_money(a money)
 GO
+
+CREATE table babel_sp_columns_vu_prepare_bytea(a bytea, b image)
+GO
