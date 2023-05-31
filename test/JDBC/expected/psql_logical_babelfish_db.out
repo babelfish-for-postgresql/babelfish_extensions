@@ -144,7 +144,7 @@ go
 alter server role sysadmin add member logical_database_l1
 go
 
--- psql user=logical_database_l1 password='12345678'
+-- psql user=logical_database_l1 password=12345678
 select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 ~~START~~
