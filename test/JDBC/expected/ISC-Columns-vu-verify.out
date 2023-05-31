@@ -23,15 +23,17 @@ SELECT * FROM information_schema.columns WHERE TABLE_NAME LIKE '%ISC_COLUMNS_VU_
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#isc_columns_vu_prepare_v1#!#IS_NULLABLE#!#7#!#<NULL>#!#YES#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#default#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#d#!#4#!#<NULL>#!#YES#!#bigint#!#<NULL>#!#<NULL>#!#19#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#h#!#8#!#<NULL>#!#YES#!#binary#!#9#!#9#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#e#!#5#!#<NULL>#!#YES#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_bytea#!#a#!#1#!#<NULL>#!#YES#!#bytea#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#a#!#1#!#<NULL>#!#YES#!#char#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_v1#!#IS_NULLABLE#!#7#!#<NULL>#!#YES#!#character varying#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#default#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#a#!#1#!#<NULL>#!#YES#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#c#!#3#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#d#!#4#!#<NULL>#!#YES#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#f#!#6#!#<NULL>#!#YES#!#float#!#<NULL>#!#<NULL>#!#53#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_bytea#!#b#!#2#!#<NULL>#!#YES#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#i#!#9#!#<NULL>#!#YES#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#a#!#1#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_v1#!#CHARACTER_MAXIMUM_LENGTH#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -76,15 +78,17 @@ master#!#dbo#!#isc_columns_vu_prepare_var#!#j#!#10#!#<NULL>#!#YES#!#xml#!#-1#!#-
 
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#isc_columns_vu_prepare_v1#!#IS_NULLABLE#!#7#!#<NULL>#!#YES#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#default#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#d#!#4#!#<NULL>#!#YES#!#bigint#!#<NULL>#!#<NULL>#!#19#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#h#!#8#!#<NULL>#!#YES#!#binary#!#9#!#9#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#e#!#5#!#<NULL>#!#YES#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_bytea#!#a#!#1#!#<NULL>#!#YES#!#bytea#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#a#!#1#!#<NULL>#!#YES#!#char#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_v1#!#IS_NULLABLE#!#7#!#<NULL>#!#YES#!#character varying#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#default#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#a#!#1#!#<NULL>#!#YES#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#c#!#3#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#d#!#4#!#<NULL>#!#YES#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#f#!#6#!#<NULL>#!#YES#!#float#!#<NULL>#!#<NULL>#!#53#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_bytea#!#b#!#2#!#<NULL>#!#YES#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#i#!#9#!#<NULL>#!#YES#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#a#!#1#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_v1#!#CHARACTER_MAXIMUM_LENGTH#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -141,20 +145,22 @@ EXEC isc_columns_vu_prepare_p1
 GO
 ~~START~~
 int
-49
+51
 ~~END~~
 
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#isc_columns_vu_prepare_v1#!#IS_NULLABLE#!#7#!#<NULL>#!#YES#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#default#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#d#!#4#!#<NULL>#!#YES#!#bigint#!#<NULL>#!#<NULL>#!#19#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#h#!#8#!#<NULL>#!#YES#!#binary#!#9#!#9#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#e#!#5#!#<NULL>#!#YES#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_bytea#!#a#!#1#!#<NULL>#!#YES#!#bytea#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#a#!#1#!#<NULL>#!#YES#!#char#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_v1#!#IS_NULLABLE#!#7#!#<NULL>#!#YES#!#character varying#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#default#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#a#!#1#!#<NULL>#!#YES#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#c#!#3#!#<NULL>#!#YES#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_dates#!#d#!#4#!#<NULL>#!#YES#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#f#!#6#!#<NULL>#!#YES#!#float#!#<NULL>#!#<NULL>#!#53#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_bytea#!#b#!#2#!#<NULL>#!#YES#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_var#!#i#!#9#!#<NULL>#!#YES#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_nums#!#a#!#1#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#isc_columns_vu_prepare_v1#!#CHARACTER_MAXIMUM_LENGTH#!#9#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -203,7 +209,7 @@ SELECT * FROM isc_columns_vu_prepare_f2()
 GO
 ~~START~~
 int
-49
+51
 ~~END~~
 
 ~~START~~
@@ -220,4 +226,12 @@ master#!#dbo#!#isc_columns_udt#!#a#!#1#!#<NULL>#!#YES#!#int#!#<NULL>#!#<NULL>#!#
 master#!#dbo#!#isc_columns_udt#!#b#!#2#!#<NULL>#!#YES#!#varchar#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#master#!#dbo#!#isc_columns_varchar
 ~~END~~
 
+
+SELECT * FROM isc_columns_bytea_v2
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#isc_columns_vu_prepare_bytea#!#a#!#1#!#<NULL>#!#YES#!#bytea#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#isc_columns_vu_prepare_bytea#!#b#!#2#!#<NULL>#!#YES#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
 

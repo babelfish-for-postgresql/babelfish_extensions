@@ -250,6 +250,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 
 			CAST(
 				CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype)
+				WHEN tsql_type_name.tsql_type_name IS NULL THEN format_type(t.oid, NULL::integer)
 				ELSE tsql_type_name END
 				AS sys.nvarchar(128))
 				AS "DATA_TYPE",
