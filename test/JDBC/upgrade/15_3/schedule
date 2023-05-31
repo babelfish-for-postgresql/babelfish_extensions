@@ -51,7 +51,6 @@ BABEL-2805
 BABEL-2812
 BABEL-2819
 BABEL-2845
-BABEL-2877
 BABEL-2884
 BABEL-2917
 BABEL-2944
@@ -402,7 +401,6 @@ TestSmallInt
 TestSmallMoney
 Test-sp_addrole
 Test-sp_addrolemember
-Test-sp_babelfish_volatility
 Test-sp_droprole
 Test-sp_droprolemember
 Test-sp_helpdbfixedrole
