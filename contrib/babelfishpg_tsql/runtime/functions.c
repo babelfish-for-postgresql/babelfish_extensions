@@ -2188,16 +2188,16 @@ parsename(PG_FUNCTION_ARGS)
     char c;
     char *start_positions[4] = {NULL};
     char *end_positions[4] = {NULL};
-	int initial_state[4] = {0};
+    int initial_state[4] = {0};
     int current_part = 0;
     text *result;
     start_positions[current_part] = object_name_str;
 	
-	// object_piece should only have maximum of 4 parts.
-	if (object_piece < 1 || object_piece > 4)
-	{
-		PG_RETURN_NULL();
-	}
+    // object_piece should only have maximum of 4 parts.
+    if (object_piece < 1 || object_piece > 4)
+    {
+        PG_RETURN_NULL();
+    }
 
     for (int i = 0; i < len;)
     {
@@ -2212,81 +2212,81 @@ parsename(PG_FUNCTION_ARGS)
         {
             if (c == '"')
             {
-				state = 1;
-				// save the initial state so that we can escape the correct characters at the end.
-				if (initial_state[current_part] == 0)
-				{
-					initial_state[current_part] = 1;
-				}
-				
-				start_positions[current_part] = &object_name_str[i + 1];
-				i += consumed;
-				continue;
-			}
-			else if(c == ']')
-			{
-				pfree(object_name_str);
-				PG_RETURN_NULL();
-			}
-			else if (c == '[')
-			{
-				state = 2;
-				if (initial_state[current_part] == 0)
-				{
-					initial_state[current_part] = 2;
-				}
-				
-				start_positions[current_part] = &object_name_str[i + 1];
-				i += consumed;
-				continue;
-			}
+                state = 1;
+                // save the initial state so that we can escape the correct characters at the end.
+                if (initial_state[current_part] == 0)
+                {
+                    initial_state[current_part] = 1;
+                }
+
+                start_positions[current_part] = &object_name_str[i + 1];
+                i += consumed;
+                continue;
+            }
+            else if(c == ']')
+            {
+                pfree(object_name_str);
+                PG_RETURN_NULL();
+            }
+            else if (c == '[')
+            {
+                state = 2;
+                if (initial_state[current_part] == 0)
+                {
+                    initial_state[current_part] = 2;
+                }
+
+                start_positions[current_part] = &object_name_str[i + 1];
+                i += consumed;
+                continue;
+            }
             else if (c == '.')
             {
-				// do not update the value of end_positions[current_part] if there is already a value in end_postions[current_part] & previous character is " or ].
-				if ( !((end_positions[current_part] != NULL) && (object_name_str[i - 1] == '"')) && !((end_positions[current_part] != NULL) && (object_name_str[i - 1] == ']')) )
-				{
-					end_positions[current_part] = &object_name_str[i - 1];
-				}
-				
-				current_part++;
-				if (current_part > 3)
-				{
-					PG_RETURN_NULL();
-				}
-				
-				start_positions[current_part] = &object_name_str[i + 1];
-				total_chars = 0;
-				total_length = 0;
-			}
-		}
-		else if (state == 1)
-		{
-			if (c == '"')
-			{
-				// is there a next character and is it double quotes?
-				if (i + consumed < len && object_name_str[i + consumed] == '"')
-				{
-					i += consumed;
-				}
-				else
-				{
-					state = 0;
-					end_positions[current_part] = &object_name_str[i - 1];
-					if (i + 1 < len && object_name_str[i + 1] != '.')
-					{
-						PG_RETURN_NULL();
-					}
-					i += consumed;
-					continue;
+                // do not update the value of end_positions[current_part] if there is already a value in end_postions[current_part] & previous character is " or ].
+                if ( !((end_positions[current_part] != NULL) && (object_name_str[i - 1] == '"')) && !((end_positions[current_part] != NULL) && (object_name_str[i - 1] == ']')) )
+                {
+                    end_positions[current_part] = &object_name_str[i - 1];
+                }
+
+                current_part++;
+                if (current_part > 3)
+                {
+                    PG_RETURN_NULL();
+                }
+
+                start_positions[current_part] = &object_name_str[i + 1];
+                total_chars = 0;
+                total_length = 0;
+            }
+        }
+        else if (state == 1)
+        {
+            if (c == '"')
+            {
+                // is there a next character and is it double quotes?
+                if (i + consumed < len && object_name_str[i + consumed] == '"')
+                {
+                    i += consumed;
+                }
+                else
+                {
+                    state = 0;
+                    end_positions[current_part] = &object_name_str[i - 1];
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        PG_RETURN_NULL();
+                    }
+                    i += consumed;
+                    continue;
                 }
             }
         }
         else if (state == 2)
         {
             if (c == ']')
-			{
-				// is there a next character and if it is there, is it closing brace?
-				if (i + consumed < len && object_name_str[i + consumed] == ']')
+            {
+                // is there a next character and if it is there, is it closing brace?
+                if (i + consumed < len && object_name_str[i + consumed] == ']')
                 {
                     i += consumed;
                 }
