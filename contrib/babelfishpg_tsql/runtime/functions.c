@@ -102,6 +102,7 @@ PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
 PG_FUNCTION_INFO_V1(object_schema_name);
+PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 
 void	   *string_to_tsql_varchar(const char *input_str);
@@ -2086,6 +2087,291 @@ numeric_radians(PG_FUNCTION_ARGS)
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
 
 	PG_RETURN_NUMERIC(result);
+}
+
+static inline int32_t
+GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
+{
+	int32_t		code;
+	int			consumed;
+
+	if (len == 0)
+		return EOF;
+
+	if ((in[0] & 0x80) == 0)
+	{
+		/* 1 byte - 0xxxxxxx */
+		code = in[0];
+		consumed = 1;
+	}
+	else if ((in[0] & 0xE0) == 0xC0)
+	{
+		/* 2 byte - 110xxxxx 10xxxxxx */
+		if (len < 2)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("truncated UTF8 byte sequence starting with 0x%02x",
+							in[0])));
+		if ((in[1] & 0xC0) != 0x80)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
+							in[0])));
+		code = ((in[0] & 0x1F) << 6) | (in[1] & 0x3F);
+		consumed = 2;
+	}
+	else if ((in[0] & 0xF0) == 0xE0)
+	{
+		/* 3 byte - 1110xxxx 10xxxxxx 10xxxxxx */
+		if (len < 3)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("truncated UTF8 byte sequence starting with 0x%02x",
+							in[0])));
+		if ((in[1] & 0xC0) != 0x80 || (in[2] & 0xC0) != 0x80)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
+							in[0])));
+		code = ((in[0] & 0x0F) << 12) | ((in[1] & 0x3F) << 6) | (in[2] & 0x3F);
+		consumed = 3;
+	}
+	else if ((in[0] & 0xF8) == 0xF0)
+	{
+		/* 4 byte - 1110xxxx 10xxxxxx 10xxxxxx 10xxxxxx */
+		if (len < 4)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("truncated UTF8 byte sequence starting with 0x%02x",
+							in[0])));
+		if ((in[1] & 0xC0) != 0x80 || (in[2] & 0xC0) != 0x80 ||
+			(in[3] & 0xC0) != 0x80)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
+							in[0])));
+		code = ((in[0] & 0x07) << 18) | ((in[1] & 0x3F) << 12) |
+			((in[2] & 0x3F) << 6) | (in[3] & 0x3F);
+		consumed = 4;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
+						in[0])));
+	}
+
+	if (code > 0x10FFFF || (code >= 0xD800 && code < 0xE000))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid UTF8 code point 0x%x", code)));
+
+	if (consumed_p)
+		*consumed_p = consumed;
+
+	return code;
+}
+
+Datum
+parsename(PG_FUNCTION_ARGS)
+{
+    text *object_name = PG_GETARG_TEXT_PP(0);
+    int object_piece = PG_GETARG_INT32(1);
+    char *object_name_str = text_to_cstring(object_name);
+    int len = strlen(object_name_str);
+    int state = 0;
+    int consumed;
+    int32_t code;
+    int total_chars = 0;
+    int total_length = 0;
+    char c;
+    char *start_positions[4] = {NULL};
+    char *end_positions[4] = {NULL};
+	int initial_state[4] = {0};
+    int current_part = 0;
+    text *result;
+    start_positions[current_part] = object_name_str;
+
+	// object_piece should only have maximum of 4 parts.
+    if (object_piece < 1 || object_piece > 4)
+    {
+        PG_RETURN_NULL();
+    }
+
+    for (int i = 0; i < len;)
+    {
+        code = GetUTF8CodePoint((const unsigned char *)&object_name_str[i], len - i, &consumed);
+        c = object_name_str[i];
+        if (total_chars > 128 || total_length > 256)
+        {
+            PG_RETURN_NULL();
+        }
+
+        if (state == 0)
+        {
+            if (c == '"')
+            {
+                state = 1;
+				// save the initial state so that we can escape the correct characters at the end.
+				if (initial_state[current_part] == 0)
+				{
+					initial_state[current_part] = 1;
+				}
+
+                start_positions[current_part] = &object_name_str[i + 1];
+                i += consumed;
+                continue;
+            }
+            else if(c == ']')
+            {
+                pfree(object_name_str);
+                PG_RETURN_NULL();
+            }
+            else if (c == '[')
+            {
+                state = 2;
+				if (initial_state[current_part] == 0)
+				{
+					initial_state[current_part] = 2;
+				}
+                start_positions[current_part] = &object_name_str[i + 1];
+                i += consumed;
+                continue;
+            }
+            else if (c == '.')
+            {
+                // do not update the value of end_positions[current_part] if there is already a value in end_postions[current_part] & previous character is " or ].
+                if ( !((end_positions[current_part] != NULL) && (object_name_str[i - 1] == '"')) && !((end_positions[current_part] != NULL) && (object_name_str[i - 1] == ']')) )
+                {
+                    end_positions[current_part] = &object_name_str[i - 1];
+                }
+                
+                current_part++;
+                if (current_part > 3)
+                {
+                    PG_RETURN_NULL();
+                }
+
+                start_positions[current_part] = &object_name_str[i + 1];
+                total_chars = 0;
+                total_length = 0;
+            }
+        }
+        else if (state == 1)
+        {
+            if (c == '"')
+            {
+                // is there a next character and is it double quotes?
+                if (i + consumed < len && object_name_str[i + consumed] == '"')
+                {
+                    i += consumed;
+                }
+                else
+                {
+                    state = 0;
+                    end_positions[current_part] = &object_name_str[i - 1];
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        PG_RETURN_NULL();
+                    }
+                    i += consumed;
+                    continue;
+                }
+            }
+        }
+        else if (state == 2)
+        {
+            if (c == ']')
+            {
+				// is there a next character and if it is there, is it closing brace?
+                if (i + consumed < len && object_name_str[i + consumed] == ']')
+                {
+                    i += consumed;
+                }
+                else
+                {
+                    state = 0;
+                    end_positions[current_part] = &object_name_str[i - 1];
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        PG_RETURN_NULL();
+                    }
+                    i += consumed;
+                    continue;
+                }
+            }
+        }
+
+        // just add the total characters and total length
+        if (state > 0 || (state == 0 && c != '.'))
+        {
+            if (code <= 0xFFFF)
+                total_chars += 1;
+            else
+                total_chars += 2;
+            total_length += (code <= 0xFFFF) ? 2 : 4;
+        }
+        i += consumed;
+    }
+
+    if (state != 0)
+    {
+        PG_RETURN_NULL();
+    }
+
+    if (total_chars > 128 || total_length > 256)
+    {
+        PG_RETURN_NULL();
+    }
+
+    // if there is only 1 part and no '.', set the end position to length-1.
+    if (end_positions[current_part] == NULL)
+    {
+        end_positions[current_part] = &object_name_str[len - 1];
+    }
+
+    // Reverse the object piece index
+    object_piece = current_part + 1 - object_piece;
+    if (object_piece < 0 || object_piece > current_part)
+    {
+        PG_RETURN_NULL();
+    }
+    
+    if (object_piece >= 0 && object_piece <= current_part)
+    {
+        int part_length = end_positions[object_piece] - start_positions[object_piece] + 1;
+        if (part_length > 0)
+        {
+            char *part = (char*) palloc(part_length + 1); // Allocate memory for part string
+            int part_index = 0;
+            for (int j = 0; j < part_length; j++)
+            {
+                // Copy part string with handling of escaped double quotes and closing brackets and checking initial state.
+                if ( (initial_state[object_piece] == 1 && start_positions[object_piece][j] == '"' && start_positions[object_piece][j + 1] == '"') ||
+					 (initial_state[object_piece] == 2 && start_positions[object_piece][j] == ']' && start_positions[object_piece][j + 1] == ']'))
+                {
+                    part[part_index++] = start_positions[object_piece][j++];
+                }
+                else
+                {
+                    part[part_index++] = start_positions[object_piece][j];
+                }
+            }
+            part[part_index] = '\0'; // Null-terminate part string
+            result = cstring_to_text(part);
+            pfree(part); // Free part string memory
+            PG_RETURN_TEXT_P(result);
+        }
+        else
+        {
+            PG_RETURN_NULL();
+        }
+    }
+    else
+    {
+        PG_RETURN_NULL();
+    }
 }
 
 /* Returns the database schema name for schema-scoped objects. */

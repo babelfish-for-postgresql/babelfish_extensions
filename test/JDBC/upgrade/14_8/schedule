@@ -293,6 +293,7 @@ sys-nestlevel-dep
 sys-numbered_procedures
 sys-objects
 sys-original_login
+sys-parsename
 sys-partitions
 sys-partitions-dep
 sys-plan_guides
