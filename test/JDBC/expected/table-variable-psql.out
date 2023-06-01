@@ -1,0 +1,28 @@
+-- psql
+set babelfishpg_tsql.sql_dialect = "tsql";
+GO
+
+create type tableType as table(
+    a text not null,
+    b int primary key,
+    c int);
+GO
+
+create procedure itvf8_proc as
+begin
+    declare @tableVariable tableType
+    insert into @tableVariable values('hello1', 1, 1001)
+    insert into @tableVariable values('hello2', 2, 1002)
+    update @tableVariable set a = 'hello1_v2' where b = 1
+end;
+GO
+
+-- should be clean and no error
+CALL itvf8_proc();
+GO
+
+DROP PROCEDURE itvf8_proc;
+GO
+
+DROP TYPE tableType;
+GO

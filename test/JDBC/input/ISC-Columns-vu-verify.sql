@@ -27,3 +27,5 @@ GO
 SELECT * FROM isc_columns_vu_prepare_v1
 GO
 
+SELECT * FROM isc_columns_bytea_v2
+GO

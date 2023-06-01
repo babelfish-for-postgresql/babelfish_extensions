@@ -124,3 +124,13 @@ GO
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~END~~
 
+
+-- test sp_columns_100 for bytea
+EXEC [sys].sp_columns_100 'babel_sp_columns_vu_prepare_bytea', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+babel_sp_columns_vu_prepare_mydb1#!#dbo#!#babel_sp_columns_vu_prepare_bytea#!#a#!#-4#!#bytea#!#0#!#-1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#34
+babel_sp_columns_vu_prepare_mydb1#!#dbo#!#babel_sp_columns_vu_prepare_bytea#!#b#!#-4#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#2147483647#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#34
+~~END~~
+

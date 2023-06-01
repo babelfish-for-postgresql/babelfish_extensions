@@ -11,9 +11,13 @@
 #include "access/tupdesc.h"
 #include "access/printtup.h"
 #include "access/relation.h"
+#include "access/table.h"
 #include "access/xact.h"
+#include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_foreign_server.h"
+#include "catalog/indexing.h"
 #include "commands/defrem.h"
 #include "commands/prepare.h"
 #include "common/string.h"
@@ -29,7 +33,9 @@
 #include "utils/guc.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/fmgroids.h"
 #include "pltsql_instr.h"
+#include "pltsql.h"
 #include "parser/parser.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -63,6 +69,7 @@ PG_FUNCTION_INFO_V1(sp_addlinkedserver_internal);
 PG_FUNCTION_INFO_V1(sp_addlinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_dropserver_internal);
+PG_FUNCTION_INFO_V1(sp_serveroption_internal);
 PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 
@@ -76,7 +83,8 @@ static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_rename_subcmds(const char *objname, const char *newname, const char *schemaname, ObjectType objtype, const char *curr_relname);
-static void exec_utility_cmd_helper(char *query_str);
+static void update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert);
+static void clean_up_bbf_server_option(char *servername);
 static void remove_delimited_identifer(char *str);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
@@ -2201,50 +2209,122 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
-/*
- * Helper function to execute a utility command using
- * ProcessUtility(). Caller should make sure their
- * inputs are sanitized to prevent unexpected behaviour.
- */
-static void
-exec_utility_cmd_helper(char *query_str)
+static void 
+update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert)
 {
-	List	   *parsetree_list;
-	Node	   *stmt;
-	PlannedStmt *wrapper;
+	Relation	bbf_servers_def_rel;
+	TupleDesc	bbf_servers_def_rel_dsc;
+	Datum		new_record[BBF_SERVERS_DEF_NUM_COLS];
+	bool		new_record_nulls[BBF_SERVERS_DEF_NUM_COLS];
+	bool		new_record_repl[BBF_SERVERS_DEF_NUM_COLS];
+	ScanKeyData		key;
+	HeapTuple		tuple, old_tuple;
+	TableScanDesc	tblscan;
 
-	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+	if (optname != NULL && strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0)
+	{
+		int32		query_timeout;
 
-	if (list_length(parsetree_list) != 1)
+		/* we throw error when optvalue == NULL or empty */
+		if (optvalue == NULL || strlen(optvalue) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					 errmsg("Invalid option value for query timeout")));
+
+		if (optvalue[0] == '+')
+			optvalue++;
+
+		if (optvalue == NULL || strspn(optvalue, "0123456789") != strlen(optvalue))
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					 errmsg("Invalid option value for query timeout")));
+		else
+			query_timeout = atoi(optvalue);
+
+		if (query_timeout < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					 errmsg("Query timeout value provided is out of range")));
+
+		bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
+									 	RowExclusiveLock);
+		bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
+
+		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+		MemSet(new_record_repl, false, sizeof(new_record_repl));
+
+		new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
+		new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(query_timeout);
+
+		if(isInsert)
+		{
+			tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
+									new_record, new_record_nulls);
+			CatalogTupleInsert(bbf_servers_def_rel, tuple);
+		}
+		else
+		{
+			/* Search and obtain the tuple based on the server_id */	
+			ScanKeyInit(&key,
+						Anum_bbf_servers_def_servername,
+						BTEqualStrategyNumber, F_TEXTEQ,
+						CStringGetTextDatum(servername));
+			tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+			old_tuple = heap_getnext(tblscan, ForwardScanDirection);
+
+			if (!old_tuple)
+			{
+				table_endscan(tblscan);
+				table_close(bbf_servers_def_rel, RowExclusiveLock);
+				ereport(ERROR,
+						(errcode(ERRCODE_FDW_ERROR),
+				 		errmsg("server \"%s\" does not exist", servername)));
+			}
+			new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
+			tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
+									new_record, new_record_nulls, new_record_repl);
+			
+			CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
+			table_endscan(tblscan);
+		}
+
+		heap_freetuple(tuple);
+
+		table_close(bbf_servers_def_rel, RowExclusiveLock);
+	}
+	else
+	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected 1 statement but get %d statements after parsing",
-						list_length(parsetree_list))));
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Invalid option provided for sp_serveroption")));
+	}
+}
 
-	/* Update the dummy statement with real values */
-	stmt = parsetree_nth_stmt(parsetree_list, 0);
+static void 
+clean_up_bbf_server_option(char *servername)
+{
+	Relation		bbf_servers_def_rel;
+	HeapTuple		scantup;
+	ScanKeyData		key;
+	TableScanDesc		tblscan;
 
-	/* Run the built query */
-	/* need to make a wrapper PlannedStmt */
-	wrapper = makeNode(PlannedStmt);
-	wrapper->commandType = CMD_UTILITY;
-	wrapper->canSetTag = false;
-	wrapper->utilityStmt = stmt;
-	wrapper->stmt_location = 0;
-	wrapper->stmt_len = strlen(query_str);
+	/* Fetch the relation */
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
 
-	/* do this step */
-	ProcessUtility(wrapper,
-				   query_str,
-				   false,
-				   PROCESS_UTILITY_SUBCOMMAND,
-				   NULL,
-				   NULL,
-				   None_Receiver,
-				   NULL);
+	/* Search and drop the definition */
+	ScanKeyInit(&key,
+				Anum_bbf_servers_def_servername,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(servername));
 
-	/* make sure later steps can see the object created here */
-	CommandCounterIncrement();
+	tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+	scantup = heap_getnext(tblscan, ForwardScanDirection);
+	if (HeapTupleIsValid(scantup))
+	{
+		CatalogTupleDelete(bbf_servers_def_rel, &scantup->t_self);
+	}
+	table_endscan(tblscan);
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
 }
 
 Datum
@@ -2341,6 +2421,8 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	}
 
 	exec_utility_cmd_helper(query.data);
+
+	update_bbf_server_options(linked_server, "query timeout", "0", true);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
@@ -2537,9 +2619,11 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 	 */
 	if ((droplogins == NULL) || ((strlen(droplogins) == 10) && (strncmp(droplogins, "droplogins", 10) == 0)))
 	{
+		/* Remove the server entry from sys.babelfish_server_options catalog */
 		appendStringInfo(&query, "DROP SERVER \"%s\" CASCADE", linked_srv);
 
 		exec_utility_cmd_helper(query.data);
+		clean_up_bbf_server_option(linked_srv);
 		pfree(query.data);
 
 		if (linked_srv)
@@ -2563,6 +2647,62 @@ sp_dropserver_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FDW_ERROR),
 				 errmsg("Invalid parameter value for @droplogins specified in procedure 'sys.sp_dropserver', acceptable values are 'droplogins' or NULL.")));
 	}
+
+	return (Datum) 0;
+}
+
+Datum
+sp_serveroption_internal(PG_FUNCTION_ARGS)
+{
+	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
+	char *optionname = PG_ARGISNULL(1) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(1)));
+	char *optionvalue = PG_ARGISNULL(2) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(2)));
+	char *newoptionvalue = optionvalue;
+
+	if(!pltsql_enable_linked_servers)
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("'sp_serveroption' is not currently supported in Babelfish")));
+
+	if (servername == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("@server parameter cannot be NULL")));
+
+	if (optionname == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("@optname parameter cannot be NULL")));
+
+	if (optionvalue == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("@optvalue parameter cannot be NULL")));
+
+	/* we need to ignore trailing spaces in all the arguments */
+	remove_trailing_spaces(servername);
+	remove_trailing_spaces(optionname);
+	remove_trailing_spaces(newoptionvalue);
+
+	/* we need to ignore leading spaces in optionvalue argument */
+	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
+		newoptionvalue++;
+
+	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
+		update_bbf_server_options(servername, optionname, newoptionvalue, false);
+	else
+		ereport(ERROR,
+			(errcode(ERRCODE_FDW_ERROR),
+				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' option is supported")));
+
+	if(servername)
+		pfree(servername);
+
+	if(optionname)
+		pfree(optionname);
+
+	if(optionvalue)
+		pfree(optionvalue);
 
 	return (Datum) 0;
 }

@@ -4,10 +4,27 @@ GO
 EXEC sp_dropserver 'bbf_server_unreachable', 'droplogins'
 GO
 
+EXEC sp_dropserver 'bbf_server_1', 'droplogins'
+GO
+
 -- psql
 DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO
 
 -- tsql
+-- check if all the linked servers are dropped after dropping tds_fdw
+SELECT servername, query_timeout FROM babelfish_server_options
+GO
+~~START~~
+varchar#!#int
+~~END~~
+
+
 DROP VIEW openquery_vu_prepare__openquery_view
+GO
+
+DROP PROCEDURE openquery_vu_prepare__openquery_proc
+GO
+
+DROP FUNCTION openquery_vu_prepare__openquery_func()
 GO

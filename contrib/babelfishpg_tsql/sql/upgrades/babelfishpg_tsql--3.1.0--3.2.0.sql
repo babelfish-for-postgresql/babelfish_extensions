@@ -31,6 +31,14 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE TABLE sys.babelfish_server_options (
+	servername sys.SYSNAME NOT NULL PRIMARY KEY COLLATE "C",
+	query_timeout INT
+);
+GRANT SELECT ON sys.babelfish_server_options TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_server_options', '');
+
 -- please add your SQL here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
@@ -118,6 +126,185 @@ SELECT
     CAST(NULL AS SMALLINT) AS msglangid
 FROM sys.babelfish_syslanguages;
 GRANT SELECT ON sys.syslanguages TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
+  SELECT 
+  CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+  CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+  CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+  CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+  CAST(t5.data_type AS smallint) AS DATA_TYPE,
+  CAST(coalesce(tsql_type_name, t.typname) AS sys.sysname) AS TYPE_NAME,
+
+  CASE WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
+    WHEN a.atttypmod != -1
+    THEN
+    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", a.atttypmod)) AS INT)
+    WHEN tsql_type_name = 'timestamp'
+    THEN 8
+    ELSE
+    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", t.typtypmod)) AS INT)
+  END AS PRECISION,
+
+  CASE WHEN a.atttypmod != -1
+    THEN
+    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, a.atttypmod) AS int)
+    ELSE
+    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, t.typtypmod) AS int)
+  END AS LENGTH,
+
+
+  CASE WHEN a.atttypmod != -1
+    THEN
+    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", a.atttypmod, true)) AS smallint)
+    ELSE
+    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", t.typtypmod, true)) AS smallint)
+  END AS SCALE,
+
+
+  CAST(coalesce(t4."NUMERIC_PRECISION_RADIX", sys.tsql_type_radix_for_sp_columns_helper(t4."DATA_TYPE")) AS smallint) AS RADIX,
+  case
+    when t4."IS_NULLABLE" = 'YES' then CAST(1 AS smallint)
+    else CAST(0 AS smallint)
+  end AS NULLABLE,
+
+  CAST(NULL AS varchar(254)) AS remarks,
+  CAST(t4."COLUMN_DEFAULT" AS sys.nvarchar(4000)) AS COLUMN_DEF,
+  CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
+  CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
+
+  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
+    WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
+    WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
+    ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
+  END AS CHAR_OCTET_LENGTH,
+
+  CAST(t4."ORDINAL_POSITION" AS int) AS ORDINAL_POSITION,
+  CAST(t4."IS_NULLABLE" AS varchar(254)) AS IS_NULLABLE,
+  CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
+  CAST(0 AS smallint) AS SS_IS_SPARSE,
+  CAST(0 AS smallint) AS SS_IS_COLUMN_SET,
+  CAST(t6.is_computed as smallint) AS SS_IS_COMPUTED,
+  CAST(t6.is_identity as smallint) AS SS_IS_IDENTITY,
+  CAST(NULL AS varchar(254)) SS_UDT_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_ASSEMBLY_TYPE_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
+
+  FROM pg_catalog.pg_class t1
+     JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+     JOIN information_schema_tsql.columns t4 ON (t1.relname::sys.nvarchar(128) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
+     LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
+     LEFT JOIN pg_type t ON t.oid = a.atttypid
+     LEFT JOIN sys.columns t6 ON
+     (
+      t1.oid = t6.object_id AND
+      t4."ORDINAL_POSITION" = t6.column_id
+     )
+     , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+     , sys.spt_datatype_info_table AS t5
+  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
+    AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.columns AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
+			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
+			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
+				AS varchar(3))
+				AS "IS_NULLABLE",
+
+			CAST(
+				CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype)
+				WHEN tsql_type_name.tsql_type_name IS NULL THEN format_type(t.oid, NULL::integer)
+				ELSE tsql_type_name END
+				AS sys.nvarchar(128))
+				AS "DATA_TYPE",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_MAXIMUM_LENGTH",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_OCTET_LENGTH",
+
+			CAST(
+				/* Handle Tinyint separately */
+				information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, true_typid, true_typmod)
+				AS sys.tinyint)
+				AS "NUMERIC_PRECISION",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, true_typid, true_typmod)
+				AS smallint)
+				AS "NUMERIC_PRECISION_RADIX",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, true_typid, true_typmod)
+				AS int)
+				AS "NUMERIC_SCALE",
+
+			CAST(
+				information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+				AS smallint)
+				AS "DATETIME_PRECISION",
+
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+			/*
+			 * TODO: We need to first create mapping of collation name to char-set name;
+			 * Until then return null.
+			 */
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_CATALOG",
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+
+			/* Returns Babelfish specific collation name. */
+			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
+
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN nc.dbname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN ext.orig_name ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN t.typname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
+
+	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+		LEFT JOIN pg_collation co on co.oid = a.attcollation
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
+		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
+		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
+
+	WHERE (NOT pg_is_other_temp_schema(nc.oid))
+		AND a.attnum > 0 AND NOT a.attisdropped
+		AND c.relkind IN ('r', 'v', 'p')
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_column_privilege(c.oid, a.attnum,
+									'SELECT, INSERT, UPDATE, REFERENCES'))
+		AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg anyelement) RETURNS TEXT AS 
 $BODY$
@@ -274,101 +461,6 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION typeproperty(
-    typename sys.VARCHAR,
-    property sys.VARCHAR
-    )
-RETURNS INT
-AS $$
-DECLARE
-    var_sc int;
-    schemaid int;
-    schema_name VARCHAR;
-    type_name VARCHAR;
-    sys_id int;
-    testt VARCHAR;
-BEGIN
-
-    property := TRIM(LOWER(COALESCE(property,'')));
-
-    IF typename LIKE '%.%'  THEN
-    schema_name :=  lower(split_part(typename COLLATE "C", '.', 1));
-    type_name :=  lower(split_part(typename COLLATE "C",'.', 2));
-    ELSE
-    schema_name := 'dbo';
-    type_name := typename;
-    END IF;
-
-
-    IF NOT EXISTS (SELECT ao.name FROM sys.types ao WHERE ao.name = type_name COLLATE sys.database_default)
-    THEN
-        RETURN NULL;
-    END IF;
-
-    IF NOT EXISTS (SELECT ao.name FROM sys.schemas ao WHERE ao.name = schema_name COLLATE sys.database_default OR schema_name = 'sys' OR schema_name = 'pg_catalog')
-    THEN
-        RETURN NULL ;
-    END IF;
-
-    IF NOT EXISTS (SELECT ty.is_user_defined FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
-    schemaid := (SELECT sc.schema_id FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default);
-    ELSE
-    schemaid := (SELECT sc.schema_id FROM sys.types sc WHERE sc.name = type_name COLLATE sys.database_default);
-    END IF;
-
-
-    if (SELECT schema_id(schema_name)) <> schemaid THEN
-    RETURN NULL;
-    END IF;
-
-    IF property = 'allowsnull'
-    THEN
-        RETURN (
-            SELECT CAST( t1.is_nullable AS INT)
-            FROM sys.types t1
-            WHERE t1.name = type_name COLLATE sys.database_default AND t1.schema_id = schemaid );
-
-    ELSEIF property = 'precision'
-    THEN
-        RETURN (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
-
-    ELSEIF property = 'scale'
-    THEN
-        sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
-        type_name := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
-        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
-            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
-        THEN
-            RETURN(SELECT CAST(dc.scale AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default);
-        ELSE
-            RETURN NULL;
-        END IF;
-    ELSEIF property = 'ownerid'
-    THEN
-        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
-        RETURN(SELECT CAST(dc.nspowner AS INT) FROM  pg_catalog.pg_namespace dc WHERE dc.oid = schemaid);
-        ELSE
-        RETURN 10;
-        END IF;
-
-    ELSEIF property = 'usesansitrim'
-    THEN
-        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
-            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
-        THEN
-            RETURN NULL;
-        ELSE
-            RETURN 1;
-        END IF;
-
-    END IF;
-
-    RETURN NULL;
-END;
-$$
-LANGUAGE plpgsql STABLE;
-
 
 CREATE OR REPLACE FUNCTION sys.dateadd_numeric_representation_helper(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS DATETIME AS $$
 DECLARE
@@ -1702,25 +1794,25 @@ CAST(0 AS INT) AS denylogin,
 CAST(1 AS INT) AS hasaccess,
 CAST( 
   CASE 
-    WHEN BASE.type_desc = 'WINDOWS_LOGIN' OR BASE.type_desc = 'WINDOWS_GROUP' THEN 1 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' OR Base.type_desc = 'WINDOWS_GROUP' THEN 1 
     ELSE 0
   END
 AS INT) AS isntname,
 CAST(
    CASE 
-    WHEN BASE.type_desc = 'WINDOWS_GROUP' THEN 1 
+    WHEN Base.type_desc = 'WINDOWS_GROUP' THEN 1 
     ELSE 0
   END
   AS INT) AS isntgroup,
 CAST(
   CASE 
-    WHEN BASE.type_desc = 'WINDOWS_LOGIN' THEN 1 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' THEN 1 
     ELSE 0
   END
 AS INT) AS isntuser,
 CAST(
     CASE
-        WHEN pg_has_role(CAST('sysadmin' AS TEXT), Base.principal_id , 'MEMBER') = true THEN 1
+        WHEN is_srvrolemember('sysadmin', Base.name) = 1 THEN 1
         ELSE 0
     END
 AS INT) AS sysadmin,
@@ -1731,7 +1823,8 @@ CAST(0 AS INT) AS processadmin,
 CAST(0 AS INT) AS diskadmin,
 CAST(0 AS INT) AS dbcreator,
 CAST(0 AS INT) AS bulkadmin
-FROM sys.server_principals AS Base;
+FROM sys.server_principals AS Base
+WHERE Base.type in ('S', 'U');
 
 GRANT SELECT ON sys.syslogins TO PUBLIC;
 
@@ -1774,6 +1867,17 @@ CREATE OR REPLACE VIEW sys.sp_databases_view AS
 	) t
 	GROUP BY database_name
 	ORDER BY database_name;
+
+CREATE OR REPLACE PROCEDURE sys.sp_serveroption( IN "@server" sys.sysname,
+                                                    IN "@optname" sys.varchar(35),
+                                                    IN "@optvalue" sys.varchar(10))
+AS 'babelfishpg_tsql', 'sp_serveroption_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_serveroption( IN "@server" sys.sysname,
+                                                    IN "@optname" sys.varchar(35),
+                                                    IN "@optvalue" sys.varchar(10))
+TO PUBLIC;
 
 ALTER FUNCTION sys.datetime2fromparts(NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC) RENAME TO datetime2fromparts_deprecated_3_2;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datetime2fromparts_deprecated_3_2');
@@ -2134,8 +2238,61 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.servers
+AS
+SELECT
+  CAST(f.oid as int) AS server_id,
+  CAST(f.srvname as sys.sysname) AS name,
+  CAST('' as sys.sysname) AS product,
+  CAST('tds_fdw' as sys.sysname) AS provider,
+  CAST((select string_agg(
+                  case
+                  when option like 'servername=%%' then substring(option, 12)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.nvarchar(4000)) AS data_source,
+  CAST(NULL as sys.nvarchar(4000)) AS location,
+  CAST(NULL as sys.nvarchar(4000)) AS provider_string,
+  CAST((select string_agg(
+                  case
+                  when option like 'database=%%' then substring(option, 10)
+                  else NULL
+                  end, ',')
+          from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
+  CAST(0 as int) AS connect_timeout,
+  CAST(s.query_timeout as int) AS query_timeout,
+  CAST(1 as sys.bit) AS is_linked,
+  CAST(0 as sys.bit) AS is_remote_login_enabled,
+  CAST(0 as sys.bit) AS is_rpc_out_enabled,
+  CAST(1 as sys.bit) AS is_data_access_enabled,
+  CAST(0 as sys.bit) AS is_collation_compatible,
+  CAST(1 as sys.bit) AS uses_remote_collation,
+  CAST(NULL as sys.sysname) AS collation_name,
+  CAST(0 as sys.bit) AS lazy_schema_validation,
+  CAST(0 as sys.bit) AS is_system,
+  CAST(0 as sys.bit) AS is_publisher,
+  CAST(0 as sys.bit) AS is_subscriber,
+  CAST(0 as sys.bit) AS is_distributor,
+  CAST(0 as sys.bit) AS is_nonsql_subscriber,
+  CAST(1 as sys.bit) AS is_remote_proc_transaction_promotion_enabled,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_rda_server
+FROM pg_foreign_server AS f
+LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
+LEFT JOIN sys.babelfish_server_options AS s on f.srvname = s.servername
+WHERE w.fdwname = 'tds_fdw';
+GRANT SELECT ON sys.servers TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.openquery_internal(
+IN linked_server text,
+IN query text)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'openquery_internal'
+LANGUAGE C VOLATILE;
+
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'babelfish_sp_rename_internal_deprecated_in_3_2_0');
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_rename_deprecated_in_3_2_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'openquery');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -3492,3 +3492,37 @@ varchar
 Query having both 'single' and "double" quotes
 ~~END~~
 
+
+# Test query timeout behaviour in OPENQUERY
+# check the value of query timeout from sys.servers
+select name, query_timeout from sys.servers where name = 'bbf_server_1'
+~~START~~
+varchar#!#int
+bbf_server_1#!#1
+~~END~~
+
+
+# execute a query which takes more time than the timeout set
+SELECT * FROM OPENQUERY(bbf_server_1, 'select CAST(pg_sleep(5) AS text)')
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: DB #: 20003, DB Msg: server connection timed out, OS #: 0, OS Msg: Success, Level: 6)~~
+
+
+# Test procedure dependent on OPENQUERY
+EXEC openquery_vu_prepare__openquery_proc
+~~START~~
+int
+2
+~~END~~
+
+
+# Test function dependent on OPENQUERY
+SELECT openquery_vu_prepare__openquery_func()
+~~START~~
+int
+1
+~~END~~
+

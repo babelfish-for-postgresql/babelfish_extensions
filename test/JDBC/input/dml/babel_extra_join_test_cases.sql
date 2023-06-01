@@ -1,3 +1,4 @@
+-- sla 300000
 -- Test cases from Tibor
 CREATE DATABASE babel_extra_join_test_cases_northwind
 GO

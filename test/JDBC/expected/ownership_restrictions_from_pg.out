@@ -378,6 +378,7 @@ GO
 ~~ERROR (Message: too many connections for role "ownership_restrictions_from_pg_login1" )~~
 
 
+-- psql user=ownership_restrictions_from_pg_login1 password=12345678
 ALTER ROLE ownership_restrictions_from_pg_login1 set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
 ~~ERROR (Code: 0)~~
@@ -826,70 +827,6 @@ GO
 
 
 -- psql
--- Dropping login from psql port should fail
-DROP ROLE ownership_restrictions_from_pg_login1;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
-    Server SQLState: 55006)~~
-
-
--- Create a non babelfish role that is a member of master_guest
--- and enable dropping
-CREATE ROLE ownership_restrictions_from_pg_role2 IN ROLE master_guest, tempdb_guest, msdb_guest;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role2;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
-    Server SQLState: 55006)~~
-
-
-SET enable_drop_babelfish_role = true;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role2;
-GO
-
-SET enable_drop_babelfish_role = false;
-GO
-
-
-CREATE ROLE ownership_restrictions_from_pg_role3;
-GO
-
-GRANT master_guest TO ownership_restrictions_from_pg_role3;
-GRANT tempdb_guest TO ownership_restrictions_from_pg_role3;
-GRANT msdb_guest TO ownership_restrictions_from_pg_role3;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role3;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
-    Server SQLState: 55006)~~
-
-
-SET enable_drop_babelfish_role = true;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role3;
-GO
-
-SET enable_drop_babelfish_role = false;
-GO
-
--- Test a regular role
-CREATE ROLE ownership_restrictions_from_pg_role4;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role4;
-GO
-
 DROP USER ownership_restrictions_from_pg_test_user;
 GO
 

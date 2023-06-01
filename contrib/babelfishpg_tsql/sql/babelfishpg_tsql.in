@@ -15,6 +15,7 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "sys_cast.sql"
 #include "coerce.sql"
 #include "object_definition_tsql.sql"
+#include "linked_servers_tsql.sql"
 #include "ownership.sql"
 #include "sys_views.sql"
 #include "information_schema_tsql.sql"
