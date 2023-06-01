@@ -1,3 +1,4 @@
+-- sla 70000
 -- unreserved keyword. should succeed
 create table t2730(ABORT int);
 drop table t2730;
