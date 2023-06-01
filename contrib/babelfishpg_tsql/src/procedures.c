@@ -1648,6 +1648,31 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				case T_CreateExtensionStmt:
 				{
 					CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
+					DefElem    *d_schema = NULL;
+					
+					ListCell   *lc;
+					char	   *schemaName = NULL;
+
+					foreach(lc, crstmt->options)
+					{            
+						DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
+                       	if (strcmp(defel->defname, "schema") == 0)                                                                                                                                               
+                       	{                                                                                                                                                                                                                                                                                                                        
+                           	  d_schema = defel;                                                                                                                                                                
+                              schemaName = defGetString(d_schema);                                                                                                                                             
+                       	}    
+					   	else
+					   	{
+							ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							  			errmsg("You must specify schema name")));
+					   	}
+					}
+
+					if(strcmp(schemaName, "sys"))
+					{
+						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'%s' is not a valid schema, only sys schema is allowed in Babelfish currently", schemaName)));
+					}
 					
 					for(int i = 0; i < allowed_extns_size; i++)
 					{
@@ -1705,8 +1730,6 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				}
 				case T_AlterExtensionStmt:
 				{
-					AlterExtensionStmt *alstmt = (AlterExtensionStmt *) parsetree;
-
 					/* do this step */
 					ProcessUtility(wrapper,
 								extensionStmt,
