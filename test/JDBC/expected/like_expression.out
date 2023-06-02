@@ -10,7 +10,6 @@ select * from t where a like '[c-a]bc'
 GO
 ~~START~~
 varchar
-cbc
 ~~END~~
 
 
@@ -27,7 +26,6 @@ GO
 ~~START~~
 varchar
 abc
-=bc
 Abc
 ~~END~~
 
@@ -244,7 +242,6 @@ varchar#!#varchar
 %[abc]c#!#[bc
 [^ a-b][a-z]c#!#cbc
 [^ a-b][a-z]c#!#=bc
-[^ a-b][a-z]c#!#Abc
 [^ a-b][a-z]c#!#]bc
 [^ a-b][a-z]c#!#[bc
 [0-9][0-9].[0-9][0-9]#!#11.22

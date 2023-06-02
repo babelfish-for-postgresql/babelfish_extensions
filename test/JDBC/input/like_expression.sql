@@ -4,6 +4,9 @@ GO
 insert into t values ('abc'),('bbc'),('cbc'),('=bc'),('Abc'),('a[bc'),('a]bc');
 GO
 
+select * from t where a like '[%' -- suppose not having any result
+GO
+
 select * from t where a like '[c-a]bc'
 GO
 
