@@ -11,3 +11,9 @@ GO
 
 -- SELECT * FROM openquery_vu_prepare__openquery_view
 GO
+
+EXEC openquery_upgrd_vu_prepare__openquery_proc
+GO
+
+SELECT openquery_upgrd_vu_prepare__openquery_func()
+GO
