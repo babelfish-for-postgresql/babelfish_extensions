@@ -6,6 +6,13 @@ GO
 ~~ROW COUNT: 7~~
 
 
+select * from t where a like '[%' -- suppose not having any result
+GO
+~~START~~
+varchar
+~~END~~
+
+
 select * from t where a like '[c-a]bc'
 GO
 ~~START~~
