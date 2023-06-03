@@ -310,6 +310,7 @@ Empl]oyee
 ~~END~~
 
 
+--If there is continuous double close brackets inside open and close bracket it should escape one bracket evertime if it encounter a continuous close bracket.
 SELECT PARSENAME('tempdb.dbo.[Empl]]oy]]ee]',1)
 GO
 ~~START~~
@@ -342,6 +343,14 @@ Empl""oyee
 ~~END~~
 
 
+SELECT PARSENAME('tempdb.dbo.Em[ployee]',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
 GO
 ~~START~~
@@ -355,6 +364,14 @@ GO
 ~~START~~
 varchar
 <NULL>
+~~END~~
+
+
+SELECT PARSENAME('[tempdb.dbo.Employee]',1)
+GO
+~~START~~
+varchar
+tempdb.dbo.Employee
 ~~END~~
 
 
@@ -411,6 +428,22 @@ GO
 ~~START~~
 varchar
 <NULL>
+~~END~~
+
+
+SELECT PARSENAME('tempdb.dbo.Em"ployee"',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT PARSENAME('"tempdb.dbo.Employee"',1)
+GO
+~~START~~
+varchar
+tempdb.dbo.Employee
 ~~END~~
 
 

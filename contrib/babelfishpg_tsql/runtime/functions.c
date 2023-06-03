@@ -2089,6 +2089,10 @@ numeric_radians(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(result);
 }
 
+/*
+ * GetUTF8CodePoint - extract the next Unicode code point from 1..4
+ *					  bytes at 'in' in UTF-8 encoding.
+ */
 static inline int32_t
 GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 {
@@ -2144,12 +2148,14 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 					(errcode(ERRCODE_DATA_EXCEPTION),
 					 errmsg("truncated UTF8 byte sequence starting with 0x%02x",
 							in[0])));
+		// This line is checking that the second, third, and fourth bytes in a 4-byte sequence are valid continuation bytes in a UTF-8 encoded character
 		if ((in[1] & 0xC0) != 0x80 || (in[2] & 0xC0) != 0x80 ||
 			(in[3] & 0xC0) != 0x80)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_EXCEPTION),
 					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
 							in[0])));
+		// This line is decoding a 4-byte UTF-8 sequence by extracting the bits that encode the Unicode code point and combining them into a single integer.
 		code = ((in[0] & 0x07) << 18) | ((in[1] & 0x3F) << 12) |
 			((in[2] & 0x3F) << 6) | (in[3] & 0x3F);
 		consumed = 4;
@@ -2161,7 +2167,7 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 				 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
 						in[0])));
 	}
-
+    // Check if the Unicode code point is within the valid range.
 	if (code > 0x10FFFF || (code >= 0xD800 && code < 0xE000))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
@@ -2172,6 +2178,12 @@ GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 
 	return code;
 }
+
+/* The PARSENAME() function in T-SQL is used to parse a string representing a four-part SQL Server object name, such as "database.schema.object.column".
+SELECT PARSENAME('tempdb.dbo.Employee', 1)
+2> go
+Employee
+*/
 
 Datum
 parsename(PG_FUNCTION_ARGS)
@@ -2212,6 +2224,11 @@ parsename(PG_FUNCTION_ARGS)
         {
             if (c == '"')
             {
+                if (total_chars > 0)
+                {
+                    PG_RETURN_NULL();
+                }
+
                 state = 1;
                 // save the initial state so that we can escape the correct characters at the end.
                 if (initial_state[current_part] == 0)
@@ -2225,11 +2242,15 @@ parsename(PG_FUNCTION_ARGS)
             }
             else if(c == ']')
             {
-                pfree(object_name_str);
                 PG_RETURN_NULL();
             }
             else if (c == '[')
             {
+				if (total_chars > 0)
+                {
+                    PG_RETURN_NULL();
+                }
+				
                 state = 2;
                 if (initial_state[current_part] == 0)
                 {
@@ -2364,15 +2385,9 @@ parsename(PG_FUNCTION_ARGS)
             pfree(part); // Free part string memory
             PG_RETURN_TEXT_P(result);
         }
-        else
-        {
-            PG_RETURN_NULL();
-        }
     }
-    else
-    {
-        PG_RETURN_NULL();
-    }
+
+    PG_RETURN_NULL();
 }
 
 /* Returns the database schema name for schema-scoped objects. */

@@ -118,6 +118,7 @@ GO
 SELECT PARSENAME('tempdb.dbo.[Empl]]oyee]',1)
 GO
 
+--If there is continuous double close brackets inside open and close bracket it should escape one bracket evertime if it encounter a continuous close bracket.
 SELECT PARSENAME('tempdb.dbo.[Empl]]oy]]ee]',1)
 GO
 
@@ -130,10 +131,16 @@ GO
 SELECT PARSENAME('[tempdb].[dbo].[Empl""oyee]',1)
 GO
 
+SELECT PARSENAME('tempdb.dbo.Em[ployee]',1)
+GO
+
 SELECT PARSENAME('tempdb.dbo.Em[ployee',1)
 GO
 
 SELECT PARSENAME('tempdb.dbo.Em]ployee',1)
+GO
+
+SELECT PARSENAME('[tempdb.dbo.Employee]',1)
 GO
 
 SELECT PARSENAME('tempdb.dbo."Emp"loyee"',1)
@@ -155,6 +162,12 @@ SELECT PARSENAME('tempdb.dbo."Employe"e',1)
 GO
 
 SELECT PARSENAME('tempdb.dbo.Em"ployee',1)
+GO
+
+SELECT PARSENAME('tempdb.dbo.Em"ployee"',1)
+GO
+
+SELECT PARSENAME('"tempdb.dbo.Employee"',1)
 GO
 
 SELECT PARSENAME('AdventureWorksPDW2012.dbo.DimCustomer', 1) AS 'Object Name';
