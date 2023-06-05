@@ -46,7 +46,6 @@
 #include "tcop/utility.h"
 #include "tsearch/ts_locale.h"
 #include "../src/rolecmds.h"
-#include "src/bin/psql/common.h"
 
 #include "catalog.h"
 #include "multidb.h"
