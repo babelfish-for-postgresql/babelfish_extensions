@@ -1600,6 +1600,8 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	size_t		len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
+	const char *saved_buffer = "%s, \"$user\", sys, pg_catalog";
+	const char *new_buffer = "public, %s, \"$user\", sys, pg_catalog";
 	
 	PG_TRY();
 	{
@@ -1614,6 +1616,11 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		
+		SetConfigOption("search_path",
+					new_buffer,
+					PGC_SUSET,
+					PGC_S_DATABASE_USER);
 		
 		extensionStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
@@ -1671,11 +1678,11 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					foreach(lc, crstmt->options)
 					{            
 						DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
-						if (strcmp(defel->defname, "schema") == 0)                                                                                                                                               
-                       	{                                                                                                                                                                                                                                                                                                                        
-                           	  d_schema = defel;                                                                                                                                                                
-                              schemaName = defGetString(d_schema);                                                                                                                                             
-                       	}
+						if (strcmp(defel->defname, "schema") == 0) 
+						{
+							d_schema = defel;
+							schemaName = defGetString(d_schema);
+						}
 						if (strcmp(defel->defname, "cascade") == 0)
 						{
 							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1792,6 +1799,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		SetConfigOption("search_path",
+					saved_buffer,
+					PGC_SUSET,
+					PGC_S_DATABASE_USER);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();	

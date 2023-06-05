@@ -136,7 +136,7 @@ static void
 set_search_path_for_user_schema(const char *db_name, const char *user)
 {
 	const char *path;
-	const char *buffer = "public, %s, \"$user\", sys, pg_catalog";
+	const char *buffer = "%s, \"$user\", sys, pg_catalog";
 	const char *physical_schema;
 	const char *dbo_role_name = get_dbo_role_name(db_name);
 	const char *guest_role_name = get_guest_role_name(db_name);
