@@ -2192,7 +2192,13 @@ parsename(PG_FUNCTION_ARGS)
     int object_piece = PG_GETARG_INT32(1);
     char *object_name_str = text_to_cstring(object_name);
     int len = strlen(object_name_str);
-    int state = 0;
+    typedef enum
+    {
+        STATE_DEFAULT,
+        STATE_IN_QUOTES,
+        STATE_IN_BRACKETS
+    } State;
+    State state = STATE_DEFAULT;
     int consumed;
     int32_t code;
     int total_chars = 0;
@@ -2204,7 +2210,7 @@ parsename(PG_FUNCTION_ARGS)
     int current_part = 0;
     text *result;
     start_positions[current_part] = object_name_str;
-	
+
     // object_piece should only have maximum of 4 parts.
     if (object_piece < 1 || object_piece > 4)
     {
@@ -2220,7 +2226,7 @@ parsename(PG_FUNCTION_ARGS)
             PG_RETURN_NULL();
         }
 
-        if (state == 0)
+        if (state == STATE_DEFAULT)
         {
             if (c == '"')
             {
@@ -2229,7 +2235,7 @@ parsename(PG_FUNCTION_ARGS)
                     PG_RETURN_NULL();
                 }
 
-                state = 1;
+                state = STATE_IN_QUOTES;
                 // save the initial state so that we can escape the correct characters at the end.
                 if (initial_state[current_part] == 0)
                 {
@@ -2246,12 +2252,12 @@ parsename(PG_FUNCTION_ARGS)
             }
             else if (c == '[')
             {
-				if (total_chars > 0)
+                if (total_chars > 0)
                 {
                     PG_RETURN_NULL();
                 }
-				
-                state = 2;
+
+                state = STATE_IN_BRACKETS;
                 if (initial_state[current_part] == 0)
                 {
                     initial_state[current_part] = 2;
@@ -2280,7 +2286,7 @@ parsename(PG_FUNCTION_ARGS)
                 total_length = 0;
             }
         }
-        else if (state == 1)
+        else if (state == STATE_IN_QUOTES)
         {
             if (c == '"')
             {
@@ -2302,7 +2308,7 @@ parsename(PG_FUNCTION_ARGS)
                 }
             }
         }
-        else if (state == 2)
+        else if (state == STATE_IN_BRACKETS)
         {
             if (c == ']')
             {
@@ -2325,7 +2331,7 @@ parsename(PG_FUNCTION_ARGS)
             }
         }
 
-        // just add the total characters and total length
+        // This line increments total_chars by 1 if the current character's Unicode code point is less than or equal to 0xFFFF (i.e., it can be represented in UTF-16), and by 2 otherwise.
         if (state > 0 || (state == 0 && c != '.'))
         {
             if (code <= 0xFFFF)
