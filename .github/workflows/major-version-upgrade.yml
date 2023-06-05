@@ -129,6 +129,8 @@ jobs:
         timeout-minutes: 60
         if: always() && steps.run-pg_upgrade.outcome == 'success'
         run: |
+          export PATH=~/${{env.NEW_INSTALL_DIR}}/bin:$PATH
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
           # temporarily ignore test BABEL-2086
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
