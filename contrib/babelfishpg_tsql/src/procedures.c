@@ -39,6 +39,8 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "tsearch/ts_locale.h"
+#include "../src/rolecmds.h"
+#include "src/bin/psql/common.h"
 
 #include "catalog.h"
 #include "multidb.h"
@@ -65,7 +67,7 @@ PG_FUNCTION_INFO_V1(sp_droplinkedsrvlogin_internal);
 PG_FUNCTION_INFO_V1(sp_dropserver_internal);
 PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
-PG_FUNCTION_INFO_V1(sp_babelfish_createExtension);
+PG_FUNCTION_INFO_V1(sp_execute_postgresql);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -1582,7 +1584,7 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 }
 
 Datum
-sp_babelfish_createExtension(PG_FUNCTION_ARGS)
+sp_execute_postgresql(PG_FUNCTION_ARGS)
 {
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
@@ -1595,15 +1597,22 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		SetCurrentRoleId(GetSessionUserId(), false);
+		if (!(superuser() || role_is_sa(GetSessionUserId())))
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to create extension")));
+		}
+	
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
+		
 		extensionStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 		if (extensionStmt == NULL)
 				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-								errmsg("Name cannot be NULL.")));
+								errmsg("Statement cannot be NULL.")));
 
 		/* Remove trailing whitespaces */
 			len = strlen(extensionStmt);
@@ -1613,7 +1622,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 		/* check if input statement is empty after removing trailing spaces */
 			if (strlen(extensionStmt) == 0)
 				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-											errmsg("Name cannot be NULL.")));
+											errmsg("Statement cannot be NULL.")));
 
 		parsetree_list = raw_parser(extensionStmt, RAW_PARSE_DEFAULT);
 		stmt = parsetree_nth_stmt(parsetree_list, 0);
@@ -1622,7 +1631,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 		if (list_length(parsetree_list) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("Expected 1 statement but got %d statements after parsing", list_length(parsetree_list))));
+					errmsg("Expected 1 statement but got %d statements after parsing.", list_length(parsetree_list))));
 
 
 		foreach(parsetree_item, parsetree_list)
@@ -1630,7 +1639,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 			Node	   *parsetree;
 			PlannedStmt *wrapper;
-			char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "pg_visibility"};
+			char *allowed_extns[] = {"pg_stat_statements", "tds_fdw"};
 			int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
 
 			/* need to make a wrapper PlannedStmt */
@@ -1649,29 +1658,28 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				{
 					CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
 					DefElem    *d_schema = NULL;
-					
 					ListCell   *lc;
 					char	   *schemaName = NULL;
 
 					foreach(lc, crstmt->options)
 					{            
 						DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
-                       	if (strcmp(defel->defname, "schema") == 0)                                                                                                                                               
+						if (strcmp(defel->defname, "schema") == 0)                                                                                                                                               
                        	{                                                                                                                                                                                                                                                                                                                        
                            	  d_schema = defel;                                                                                                                                                                
                               schemaName = defGetString(d_schema);                                                                                                                                             
-                       	}    
-					   	else
-					   	{
-							ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							  			errmsg("You must specify schema name")));
-					   	}
+                       	}
+						if (strcmp(defel->defname, "cascade") == 0)
+						{
+							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'cascade' is not yet supported in Babelfish.")));
+						}
 					}
 
-					if(strcmp(schemaName, "sys"))
+					if(schemaName != NULL && (strcmp(schemaName, "sys") && strcmp(schemaName, "public")))
 					{
 						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("'%s' is not a valid schema, only sys schema is allowed in Babelfish currently", schemaName)));
+									errmsg("'%s' is not a valid schema, only sys and public schema is allowed in Babelfish.", schemaName)));
 					}
 					
 					for(int i = 0; i < allowed_extns_size; i++)
@@ -1681,7 +1689,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 							if(i == allowed_extns_size - 1)
 							{
 								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("'%s' is not a valid name", crstmt->extname)));
+									errmsg("'%s' is not a valid name.", crstmt->extname)));
 							}
 							else
 							{
@@ -1710,6 +1718,12 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				case T_DropStmt:
 				{
 					DropStmt *drstmt = (DropStmt *) parsetree;
+
+					if(drstmt->behavior == DROP_CASCADE)
+					{
+						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+									errmsg("'cascade' is not yet supported in Babelfish.")));
+					}
 
 					if (drstmt->removeType == OBJECT_EXTENSION)
 					{
@@ -1755,7 +1769,7 @@ sp_babelfish_createExtension(PG_FUNCTION_ARGS)
 				{
 					ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Aletr extension to Add/Drop object in extension is not currently supported in Babelfish")));
+					 errmsg("Alter extension to Add/Drop object in extension is not currently supported in Babelfish")));
 					break;
 				}
 				default:

@@ -202,9 +202,9 @@ CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolename" sys.SYSNAME, IN
 AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_babelfish_createExtension(IN "@extensionStmt" sys.SYSNAME)
-AS 'babelfishpg_tsql', 'sp_babelfish_createExtension' LANGUAGE C;
-GRANT EXECUTE on PROCEDURE sys.sp_babelfish_createExtension(IN sys.SYSNAME) TO PUBLIC;
+CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@extensionStmt" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.SYSNAME) TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
                                                     IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
