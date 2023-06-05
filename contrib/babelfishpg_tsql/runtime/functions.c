@@ -2297,7 +2297,7 @@ parsename(PG_FUNCTION_ARGS)
                 }
                 else
                 {
-                    state = 0;
+                    state = STATE_DEFAULT;
                     end_positions[current_part] = &object_name_str[i - 1];
                     if (i + 1 < len && object_name_str[i + 1] != '.')
                     {
@@ -2319,7 +2319,7 @@ parsename(PG_FUNCTION_ARGS)
                 }
                 else
                 {
-                    state = 0;
+                    state = STATE_DEFAULT;
                     end_positions[current_part] = &object_name_str[i - 1];
                     if (i + 1 < len && object_name_str[i + 1] != '.')
                     {
@@ -2332,7 +2332,7 @@ parsename(PG_FUNCTION_ARGS)
         }
 
         // This line increments total_chars by 1 if the current character's Unicode code point is less than or equal to 0xFFFF (i.e., it can be represented in UTF-16), and by 2 otherwise.
-        if (state > 0 || (state == 0 && c != '.'))
+        if (state > STATE_DEFAULT || (state == STATE_DEFAULT && c != '.'))
         {
             if (code <= 0xFFFF)
                 total_chars += 1;
@@ -2343,7 +2343,7 @@ parsename(PG_FUNCTION_ARGS)
         i += consumed;
     }
 
-    if (state != 0)
+    if (state != STATE_DEFAULT)
     {
         PG_RETURN_NULL();
     }
