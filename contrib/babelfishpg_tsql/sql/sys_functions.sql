@@ -551,7 +551,7 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION sys.parsename(object_name character varying, object_piece int)
+CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.VARCHAR, object_piece int)
 RETURNS sys.SYSNAME
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
