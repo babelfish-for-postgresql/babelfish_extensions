@@ -443,3 +443,104 @@ insert into babel_datatype_sqlvariant_vu_prepare_t9 values (cast('$200' as money
 go
 insert into babel_datatype_sqlvariant_vu_prepare_t9 values (cast('$200' as money), cast(300 as bigint));
 go
+
+create table babel_4036_t1( a int, b sql_variant, c varchar(50), d sql_variant, e sql_variant);
+go
+
+insert into babel_4036_t1(a,c,e) values (1, 'String 1', cast('Varchar String' as varchar(50)));
+go
+
+insert into babel_4036_t1 values (2, cast('😊😋😎😍😅😆' as nchar(24)), 'String 2', cast('😊😋😎😍😅😆' as nchar(26)),cast('😊  😋 😎dsfsd😍 😅ds😆' as nchar(24)));
+go
+
+insert into babel_4036_t1 values (3, cast('12-21-16' as date), 'String 3', cast('12-21-16' as datetime), cast('12-21-16' as datetime2));
+go
+
+insert into babel_4036_t1 values (4, cast('12:10:16.1234567' as time(7)), 'String 4', cast(cast('12:10:16.1234567' as time(7)) as datetime2), cast(cast('12:10:16.1234567' as time(7)) as datetime2(7)));
+go
+
+insert into babel_4036_t1 values (5, cast('12-01-16 12:32' as smalldatetime), 'String 5', cast('12-01-16 12:32' as datetime2), cast('12-01-16 12:32' as datetime2(5)));
+go
+
+insert into babel_4036_t1 values (6, cast('2016-10-23 12:45:37.1234567+10:0' as datetime2), 'String 6', cast('2016-10-23 12:45:37.1234567 +10:0' as datetime2(5)), cast('2016-10-23 12:45:37.1234567 +10:0' as datetime2(7)));
+go
+
+insert into babel_4036_t1 values (8, cast(1234.56789 as numeric(7,2)), 'String 8', cast(1234.56789 as numeric(9,3)), cast(cast(1234.56789 as numeric(9,5))));
+go
+
+insert into babel_4036_t1 values (8, cast(1234.56789 as decimal(7,2)), 'String 8', cast(1234.56789 as decimal(9,3)), cast(cast(1234.56789 as decimal(9,5))));
+go
+
+insert into babel_4036_t1 values (10, cast(-0.5678900 as numeric(5,4)), 'String 10', cast(-0.5678900 as numeric(6,5)), cast(-0.5678900 as numeric(7,6)));
+go
+
+insert into babel_4036_t1 values (10, cast(-0.5678900 as decimal(5,4)), 'String 10', cast(-0.5678900 as decimal(6,5)), cast(-0.5678900 as decimal(7,6)));
+go
+
+insert into babel_4036_t1 values (11, cast(NULL as decimal), 'String 11', cast(0.0 as decimal), cast(0 as decimal(5,4)));
+go
+
+insert into babel_4036_t1 values (12, cast(NULL as numeric), 'String 11', cast(0.0 as numeric), cast(0 as numeric(5,4)));
+go
+
+insert into babel_4036_t1 values (13, CAST('2079-06-06 23:59:29.123456' AS datetime2(0)), 'String 11', CAST('2079-06-06 23:59:29.123456' AS datetime2(1)), CAST('2079-06-06 23:59:29.123456' AS datetime2(2)));
+go
+
+insert into babel_4036_t1 values (14, CAST('2079-06-06 23:59:29.123456' AS datetime2(3)), 'String 11', CAST('2079-06-06 23:59:29.123456' AS datetime2(4)), CAST('2079-06-06 23:59:29.123456' AS datetime2(5)));
+go
+
+insert into babel_4036_t1 values (15, CAST('2079-06-06 23:59:29.123456' AS datetime2(6)), 'String 11', CAST('2079-06-06 23:59:29.123456' AS datetime2(7)), CAST('2079-06-06 23:59:29.123456' AS datetime2));
+go
+
+-- test generated column for sql_variant column
+create table babel_4036_t2 (a int, b as a * a, c sql_variant, d as c, e varchar(50));
+go
+-- some corner cases for numeric and decimal datatype
+insert into babel_4036_t2 (a, c, e) values(1, CAST('-0.9999999999999996' as numeric(18,17)) ,'String 1');
+go
+
+insert into babel_4036_t2 (a, c, e) values(2, CAST(1234567890123.1234567891234567891234567 as numeric(38, 25)) ,'String 2');
+go
+
+insert into babel_4036_t2(a, c, e) values(3, cast(0.1234567890123456789012345678901234567 as numeric(38, 37)), 'abc');
+go
+
+insert into babel_4036_t2(a, c, e) values(4, cast(99999999999999999999999999999999999999 as numeric(38,0)), 'abc');
+go
+
+insert into babel_4036_t2(a, c, e) values(5, cast(0.00000000000000000000000000 as numeric(27,26)), 'abc');
+go
+
+insert into babel_4036_t2 (a, c, e) values(6, CAST('-0.9999999999999996' as numeric(18,17)) ,'String 3');
+go
+
+insert into babel_4036_t2 (a, c, e) values(7, CAST(1234567890123.1234567891234567891234567 as decimal(38, 25)) ,'String 4');
+go
+
+insert into babel_4036_t2(a, c, e) values(8, cast(0.1234567890123456789012345678901234567 as decimal(38, 37)), 'abc');
+go
+
+insert into babel_4036_t2(a, c, e) values(9, cast(99999999999999999999999999999999999999 as decimal(38,0)), 'abc');
+go
+
+-- negative test scenarios for numeric and decimal
+insert into babel_4036_t2(a, c, e) values(10, cast(-0.00000000000000000000000000 as decimal(27,26)), 'abc');
+go
+
+insert into babel_4036_t2 (a, c, e) values(2, CAST(-1234567890123.1234567891234567891234567 as numeric(38, 25)) ,'String 2');
+go
+
+insert into babel_4036_t2(a, c, e) values(3, cast(-0.1234567890123456789012345678901234567 as numeric(38, 37)), 'abc');
+go
+
+insert into babel_4036_t2(a, c, e) values(4, cast(-99999999999999999999999999999999999999 as numeric(38,0)), 'abc');
+go
+
+insert into babel_4036_t2 (a, c, e) values(2, CAST(-1234567890123.1234567891234567891234567 as decimal(38, 25)) ,'String 2');
+go
+
+insert into babel_4036_t2(a, c, e) values(3, cast(-0.1234567890123456789012345678901234567 as decimal(38, 37)), 'abc');
+go
+
+insert into babel_4036_t2(a, c, e) values(4, cast(-99999999999999999999999999999999999999 as decimal(38,0)), 'abc');
+go

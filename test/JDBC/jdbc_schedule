@@ -122,6 +122,9 @@ ignore#!#openquery_upgrd-vu-cleanup
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-prepare
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-verify
 ignore#!#Test-Identity-before-14_7-or-15_2-vu-cleanup
+ignore#!#datetimeoffset-timezone-before-15_3-vu-prepare
+ignore#!#datetimeoffset-timezone-before-15_3-vu-verify
+ignore#!#datetimeoffset-timezone-before-15_3-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare

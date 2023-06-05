@@ -16,9 +16,10 @@ CREATE USER ownership_restrictions_from_pg_test_user WITH PASSWORD '12345678' in
 go
 
 -- psql user=ownership_restrictions_from_pg_login1 password=12345678
--- If tsql login connected through psql Alter ROLE of an bbf created logins/user/roles for password,
+-- If tsql login connected through psql Alter ROLE of an bbf created logins for password,
 -- connection limit and valid until should be working fine
--- and the rest of alter role operations should throw an error.
+-- and the rest of alter role operations and all alter role operations for bbf created users/roles
+-- should throw an error.
 DROP ROLE master_ownership_restrictions_from_pg_role1;
 GO
 ~~ERROR (Code: 0)~~
@@ -29,6 +30,11 @@ GO
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 VALID UNTIL 'infinity';
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 rename to master_ownership_restrictions_from_pg_role5;
 GO
@@ -40,12 +46,27 @@ GO
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 with ENCRYPTED password '12345678';
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 with password '12345678';
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 with password NULL;
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 NOCREATEROLE;
 GO
@@ -161,6 +182,11 @@ GO
 
 ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH CONNECTION LIMIT 1;
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
 
 ALTER ROLE ALL IN DATABASE ownership_restrictions_from_pg_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
@@ -210,7 +236,10 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE ownership_restrictions_from_pg_login1 RENAME TO ownership_restrictions_from_pg_role2;
+ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
+GO
+
+ALTER ROLE ownership_restrictions_from_pg_login1 rename to master_ownership_restrictions_from_pg_role5;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -218,11 +247,145 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
+ALTER ROLE ownership_restrictions_from_pg_login1 with ENCRYPTED password '12345678';
 GO
 
-alter role ownership_restrictions_from_pg_login1 with password '12345678';
+ALTER ROLE ownership_restrictions_from_pg_login1 with password NULL;
 GO
+
+ALTER ROLE ownership_restrictions_from_pg_login1 with password '12345678';
+GO
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 CREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOCREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 CREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOLOGIN;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 LOGIN;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOSUPERUSER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 SUPERUSER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOINHERIT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 INHERIT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 REPLICATION;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOREPLICATION;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 BYPASSRLS;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOBYPASSRLS;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- after connection limit set to 1, shouldn't be able to connect to multiple sessions
+ALTER ROLE ownership_restrictions_from_pg_login1 WITH CONNECTION LIMIT 1;
+GO
+
+-- tsql user=ownership_restrictions_from_pg_login1 password=12345678
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: too many connections for role "ownership_restrictions_from_pg_login1" )~~
+
+
+-- psql user=ownership_restrictions_from_pg_login1 password=12345678
+ALTER ROLE ownership_restrictions_from_pg_login1 set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
 
 ALTER ROLE ownership_restrictions_from_pg_login1 IN DATABASE ownership_restrictions_from_pg_db set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
 GO
@@ -250,9 +413,10 @@ GO
 
 
 -- psql user=ownership_restrictions_from_pg_test_user password=12345678
--- For plain psql user Alter ROLE of an bbf created logins/user/roles for password,
+-- For plain psql user Alter ROLE of an bbf created logins for password,
 -- connection limit and valid until should be working fine
--- and the rest of alter role operations should throw an error.
+-- and the rest of alter role operations and all alter role operations for bbf created users/roles
+-- should throw an error.
 DROP ROLE master_ownership_restrictions_from_pg_role1;
 GO
 ~~ERROR (Code: 0)~~
@@ -265,7 +429,7 @@ ALTER ROLE master_ownership_restrictions_from_pg_role1 VALID UNTIL 'infinity';
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -281,7 +445,7 @@ ALTER ROLE master_ownership_restrictions_from_pg_role1 with ENCRYPTED password '
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -289,7 +453,7 @@ ALTER ROLE master_ownership_restrictions_from_pg_role1 with password '12345678';
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -297,7 +461,7 @@ ALTER ROLE master_ownership_restrictions_from_pg_role1 with password NULL;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -417,7 +581,7 @@ ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH CONNECTION LIMIT 1;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -469,14 +633,6 @@ GO
     Server SQLState: 3D000)~~
 
 
-ALTER ROLE ownership_restrictions_from_pg_login1 RENAME TO ownership_restrictions_from_pg_role2;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
-    Server SQLState: 42501)~~
-
-
 ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
 GO
 ~~ERROR (Code: 0)~~
@@ -485,11 +641,163 @@ GO
     Server SQLState: 42501)~~
 
 
-alter role ownership_restrictions_from_pg_login1 with password '12345678';
+ALTER ROLE ownership_restrictions_from_pg_login1 rename to master_ownership_restrictions_from_pg_role5;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 with ENCRYPTED password '12345678';
 GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 with password NULL;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 with password '12345678';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 CREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOCREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 CREATEDB;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOLOGIN;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 LOGIN;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOSUPERUSER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 SUPERUSER;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOINHERIT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 INHERIT;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 REPLICATION;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOREPLICATION;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 BYPASSRLS;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 NOBYPASSRLS;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE ownership_restrictions_from_pg_login1 set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
     Server SQLState: 42501)~~
 
 
@@ -519,70 +827,6 @@ GO
 
 
 -- psql
--- Dropping login from psql port should fail
-DROP ROLE ownership_restrictions_from_pg_login1;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
-    Server SQLState: 55006)~~
-
-
--- Create a non babelfish role that is a member of master_guest
--- and enable dropping
-CREATE ROLE ownership_restrictions_from_pg_role2 IN ROLE master_guest, tempdb_guest, msdb_guest;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role2;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
-    Server SQLState: 55006)~~
-
-
-SET enable_drop_babelfish_role = true;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role2;
-GO
-
-SET enable_drop_babelfish_role = false;
-GO
-
-
-CREATE ROLE ownership_restrictions_from_pg_role3;
-GO
-
-GRANT master_guest TO ownership_restrictions_from_pg_role3;
-GRANT tempdb_guest TO ownership_restrictions_from_pg_role3;
-GRANT msdb_guest TO ownership_restrictions_from_pg_role3;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role3;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
-    Server SQLState: 55006)~~
-
-
-SET enable_drop_babelfish_role = true;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role3;
-GO
-
-SET enable_drop_babelfish_role = false;
-GO
-
--- Test a regular role
-CREATE ROLE ownership_restrictions_from_pg_role4;
-GO
-
-DROP ROLE ownership_restrictions_from_pg_role4;
-GO
-
 DROP USER ownership_restrictions_from_pg_test_user;
 GO
 

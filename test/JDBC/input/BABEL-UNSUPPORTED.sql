@@ -1,3 +1,4 @@
+-- sla 50000
 -- default value was changed from 'strict' to 'ignore'.
 -- to minimize touching test, test 'strict' first.
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'strict';

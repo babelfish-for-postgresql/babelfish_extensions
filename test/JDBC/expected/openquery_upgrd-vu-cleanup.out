@@ -6,9 +6,23 @@ DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: drop cascades to 3 other objects  Server SQLState: 00000)~~
+~~WARNING (Message: drop cascades to 5 other objects  Server SQLState: 00000)~~
 
 
 -- tsql
+-- check if all the linked servers are dropped after dropping tds_fdw
+SELECT servername, query_timeout FROM babelfish_server_options
+GO
+~~START~~
+varchar#!#int
+~~END~~
+
+
 -- DROP VIEW openquery_vu_prepare__openquery_view
+GO
+
+DROP PROCEDURE openquery_upgrd_vu_prepare__openquery_proc
+GO
+
+DROP FUNCTION openquery_upgrd_vu_prepare__openquery_func()
 GO

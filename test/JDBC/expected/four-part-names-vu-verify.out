@@ -335,6 +335,40 @@ int#!#varchar
 ~~END~~
 
 
+-- Create procedure whose body contains four-part object name
+CREATE PROCEDURE fpn_vu_prepare__fpn_proc AS SELECT * FROM bbf_fpn_server.master..fpn_table
+GO
+
+-- Create function whose body contains four-part object name
+CREATE FUNCTION fpn_vu_prepare__fpn_func()
+RETURNS INT
+AS
+BEGIN
+DECLARE @i int
+SELECT @i = COUNT(*) FROM bbf_fpn_server.master.dbo.fpn_table
+RETURN @i
+END
+GO
+
+EXEC fpn_vu_prepare__fpn_proc
+GO
+~~START~~
+int#!#varchar
+1#!#one
+2#!#two
+3#!#three
+4#!#four
+~~END~~
+
+
+SELECT fpn_vu_prepare__fpn_func()
+GO
+~~START~~
+int
+4
+~~END~~
+
+
 
 -- Try SQL Injection
 -- We cannot directly inject SQL because it will break T-SQL database identifier rules
@@ -424,4 +458,6 @@ DROP TABLE fpn_table_insert_into
 DROP TABLE fpn_table_select_into
 DROP TABLE fpn_table
 DROP VIEW four_part_names_vu_verify_view
+DROP PROCEDURE fpn_vu_prepare__fpn_proc
+DROP FUNCTION fpn_vu_prepare__fpn_func()
 GO

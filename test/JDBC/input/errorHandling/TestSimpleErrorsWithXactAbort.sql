@@ -1,3 +1,4 @@
+-- sla 50000
 SET XACT_ABORT ON
 GO
 
