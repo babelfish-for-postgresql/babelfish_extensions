@@ -2104,10 +2104,12 @@ parsename(PG_FUNCTION_ARGS)
     int len = strlen(object_name_str);
     typedef enum
     {
+		STATE_INITIAL,
         STATE_DEFAULT,
         STATE_IN_QUOTES,
         STATE_IN_BRACKETS
     } State;
+	State initial_state[4] = {STATE_INITIAL};
     State state = STATE_DEFAULT;
     int consumed;
     int32_t code;
@@ -2116,7 +2118,7 @@ parsename(PG_FUNCTION_ARGS)
     char c;
     char *start_positions[4] = {NULL};
     char *end_positions[4] = {NULL};
-    int initial_state[4] = {0};
+    // int initial_state[4] = {0};
     int current_part = 0;
     text *result;
     start_positions[current_part] = object_name_str;
@@ -2147,9 +2149,9 @@ parsename(PG_FUNCTION_ARGS)
 
                 state = STATE_IN_QUOTES;
                 // save the initial state so that we can escape the correct characters at the end.
-                if (initial_state[current_part] == 0)
+                if (initial_state[current_part] == STATE_INITIAL)
                 {
-                    initial_state[current_part] = 1;
+                    initial_state[current_part] = STATE_IN_QUOTES;
                 }
 
                 start_positions[current_part] = &object_name_str[i + 1];
@@ -2168,9 +2170,9 @@ parsename(PG_FUNCTION_ARGS)
                 }
 
                 state = STATE_IN_BRACKETS;
-                if (initial_state[current_part] == 0)
+                if (initial_state[current_part] == STATE_INITIAL)
                 {
-                    initial_state[current_part] = 2;
+                    initial_state[current_part] = STATE_IN_BRACKETS;
                 }
 
                 start_positions[current_part] = &object_name_str[i + 1];
@@ -2286,8 +2288,8 @@ parsename(PG_FUNCTION_ARGS)
             for (int j = 0; j < part_length; j++)
             {
                 // Copy part string with handling of escaped double quotes and closing brackets and checking initial state.
-                if ( (initial_state[object_piece] == 1 && start_positions[object_piece][j] == '"' && start_positions[object_piece][j + 1] == '"') ||
-					 (initial_state[object_piece] == 2 && start_positions[object_piece][j] == ']' && start_positions[object_piece][j + 1] == ']'))
+                if ( (initial_state[object_piece] == STATE_IN_QUOTES && start_positions[object_piece][j] == '"' && start_positions[object_piece][j + 1] == '"') ||
+					 (initial_state[object_piece] == STATE_IN_BRACKETS && start_positions[object_piece][j] == ']' && start_positions[object_piece][j + 1] == ']'))
                 {
                     part[part_index++] = start_positions[object_piece][j++];
                 }
