@@ -1600,7 +1600,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	size_t		len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
-	const char *saved_buffer = "%s, \"$user\", sys, pg_catalog";
+	const char *saved_buffer = GetConfigOption("search_path", true, true);
 	const char *new_buffer = "public, %s, \"$user\", sys, pg_catalog";
 	
 	PG_TRY();
@@ -1625,8 +1625,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 			while (isspace(extensionStmt[len - 1]))
 				extensionStmt[--len] = 0;
 
+			len = strlen(extensionStmt);
+
 		/* check if input statement is empty after removing trailing spaces */
-			if (strlen(extensionStmt) == 0)
+			if (len == 0)
 				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 											errmsg("Statement cannot be NULL.")));
 
@@ -1654,7 +1656,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 16;
+			wrapper->stmt_len = len;
 
 			parsetree = wrapper->utilityStmt;
 
@@ -1794,8 +1796,9 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					break;
 				}
 				default:
-				elog(ERROR, "unrecognized node type: %d",
-					 (int) nodeTag(parsetree));
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Only Create/alter/drop extension statements are currently supported in Babelfish.")));
 				break;
 			}
 		}
@@ -1811,7 +1814,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					PGC_SUSET,
 					PGC_S_DATABASE_USER);
 		SetCurrentRoleId(current_user_id, false);
-		
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();	

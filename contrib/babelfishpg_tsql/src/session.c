@@ -118,7 +118,7 @@ check_session_db_access(const char *db_name)
 void
 set_cur_user_db_and_path(const char *db_name)
 {
-	const char *user = get_user_for_database(db_name);	
+	const char *user = get_user_for_database(db_name);
 	int16		db_id = get_db_id(db_name);
 
 	/* set current DB */
