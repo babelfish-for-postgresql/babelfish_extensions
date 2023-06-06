@@ -117,3 +117,5 @@ jobs:
         with:
           name: upgrade-output-diff.diff
           path: test/JDBC/Info/upgrade-output-diff.diff
+          
+      sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'pg_stat_statements'/g" postgresql.conf
