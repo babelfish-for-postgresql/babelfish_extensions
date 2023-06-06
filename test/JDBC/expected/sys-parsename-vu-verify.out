@@ -552,3 +552,12 @@ varchar
 <NULL>
 ~~END~~
 
+
+--Checking for 0 parts returns NULL
+SELECT PARSENAME('',1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+

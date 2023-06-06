@@ -2089,10 +2089,11 @@ numeric_radians(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(result);
 }
 
-/* The PARSENAME() function in T-SQL is used to parse a string representing a four-part SQL Server object name, such as "database.schema.object.column".
-SELECT PARSENAME('tempdb.dbo.Employee', 1)
-2> go
-Employee
+/* 
+* The PARSENAME() function in T-SQL is used to parse a string representing a four-part SQL Server object name, such as "database.schema.object.column".
+* If we have an a single '[' ,']' or '"' its a syntax error.
+* If object_name is inside brackets like [object_name] its should still return object_name without printing brackets.
+* If object_name is inside double quotes like "object_name" its should still return object_name without printing double quotes.
 */
 Datum
 parsename(PG_FUNCTION_ARGS)

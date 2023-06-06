@@ -240,3 +240,7 @@ GO
 --129 unicode characters
 SELECT PARSENAME('ちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちちち',1)
 GO
+
+--Checking for 0 parts returns NULL
+SELECT PARSENAME('',1)
+GO
