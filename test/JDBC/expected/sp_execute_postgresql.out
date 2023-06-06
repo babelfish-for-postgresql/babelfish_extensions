@@ -1,0 +1,173 @@
+-- tsql
+exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
+go
+select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+go
+~~START~~
+varchar#!#int#!#int#!#text
+pg_stat_statements#!#16384#!#2200#!#1.10
+~~END~~
+
+
+-- psql
+SET pg_stat_statements.track = 'none';
+SELECT pg_stat_statements_reset();
+go
+~~START~~
+void
+
+~~END~~
+
+-- tsql
+-- for accessing the extension we need to give schema qualifier i.e. [public].pg_stat_statements
+SELECT dbid, toplevel, query, calls, rows, plans from [public].pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+go
+~~START~~
+int#!#bit#!#text#!#bigint#!#bigint#!#bigint
+~~END~~
+
+
+-- create extension without using 'if not exists' option will throw error
+exec sp_execute_postgresql 'create extension pg_stat_statements';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: extension "pg_stat_statements" already exists)~~
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+
+-- throw an error if user creates anything other than allowed extensions
+exec sp_execute_postgresql 'create extension pg_visibility with schema sys';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'pg_visibility' is not a valid name.)~~
+
+
+-- create extension with schema sys, public or by default(public), else throw error
+exec sp_execute_postgresql 'create extension pg_stat_statements with schema sys';
+go
+select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+go
+~~START~~
+varchar#!#int#!#int#!#text
+pg_stat_statements#!#16384#!#16398#!#1.10
+~~END~~
+
+exec sp_execute_postgresql 'create extension pg_stat_statements with schema master_dbo';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'master_dbo' is not a valid schema, only sys and public schema is allowed in Babelfish.)~~
+
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+-- create extension with any previous version
+exec sp_execute_postgresql 'create extension pg_stat_statements with version "1.4"';
+go
+
+select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+go
+~~START~~
+varchar#!#int#!#int#!#text
+pg_stat_statements#!#16384#!#2200#!#1.4
+~~END~~
+
+
+-- cascade not supported yet, it will throw error
+exec sp_execute_postgresql 'create extension pg_stat_statements with cascade';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'cascade' is not yet supported in Babelfish.)~~
+
+
+-- throw an error if more than one statement is passed
+exec sp_execute_postgresql 'create extension pg_stat_statements with schema sys; create extension pg_stat_statements';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Expected 1 statement but got 2 statements after parsing.)~~
+
+
+--alter extension version
+exec sp_execute_postgresql 'alter extension pg_stat_statements update to "1.10"';
+go
+
+select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+go
+~~START~~
+varchar#!#int#!#int#!#text
+pg_stat_statements#!#16384#!#2200#!#1.10
+~~END~~
+
+
+-- throw an error if user tries to alter schema
+exec sp_execute_postgresql 'alter extension pg_stat_statements set schema sys'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Alter extension schema is not currently supported in Babelfish)~~
+
+
+-- throw an error if user tries to Add/Drop objects in extension
+create table demo(A int)
+go
+exec sp_execute_postgresql 'alter extension pg_stat_statements add table demo'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Alter extension to Add/Drop object in extension is not currently supported in Babelfish)~~
+
+drop table demo
+go
+
+-- cannot drop extension if other objects depend on it
+create view pg_view as select query, queryid from [public].pg_stat_statements;
+go
+-- select * from pg_view
+-- go
+exec sp_execute_postgresql 'drop extension pg_stat_statements'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot drop extension pg_stat_statements because other objects depend on it)~~
+
+drop view pg_view
+go
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+
+-- drop extension without using 'if exists' option will throw error
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: extension "pg_stat_statements" does not exist)~~
+
+-- drop extension using 'if exists' option
+exec sp_execute_postgresql 'drop extension if exists pg_stat_statements';
+go
+
+
+exec sp_execute_postgresql 'create extension pg_stat_statements'
+go
+
+
+-- Restrict option prevents the specified extensions from being dropped if other objects depend on table_schema
+create view pg_view as select query, queryid from [public].pg_stat_statements;
+go
+exec sp_execute_postgresql 'drop extension pg_stat_statements restrict'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot drop extension pg_stat_statements because other objects depend on it)~~
+
+drop view pg_view
+go
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go

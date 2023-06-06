@@ -1809,6 +1809,11 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		SetConfigOption("search_path",
+					saved_buffer,
+					PGC_SUSET,
+					PGC_S_DATABASE_USER);
 		PG_RETURN_VOID();
 	
 }
