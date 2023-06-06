@@ -1,4 +1,56 @@
 -- tsql
+-- Throws an error if the argument is empty
+exec sp_execute_postgresql NULL;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Statement cannot be NULL.)~~
+
+
+exec sp_execute_postgresql '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Statement cannot be NULL.)~~
+
+
+-- Throw error if extension statement is empty after removing trailing spaces
+exec sp_execute_postgresql '       ';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Statement cannot be NULL.)~~
+
+
+-- Throw error if no argument or more than 2 arguments are passed to sp_execute_postgresql procedure
+exec sp_execute_postgresql;
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure sp_execute_postgresql expects parameter "@extensionStmt", which was not supplied.)~~
+
+
+EXEC sp_execute_postgresql '', '','';
+go
+~~ERROR (Code: 8144)~~
+
+~~ERROR (Message: procedure sp_execute_postgresql has too many arguments specified.)~~
+
+
+
+-- Creates extension even if extension statement contains leading/trailing spaces by removing trailing spaces
+exec sp_execute_postgresql '     create extension pg_stat_statements      ';
+-- Create extension
+exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
+go
+select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+go
+~~START~~
+varchar#!#int#!#int#!#text
+pg_stat_statements#!#16384#!#2200#!#1.10
+~~END~~
+
+
 exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
 go
 select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'

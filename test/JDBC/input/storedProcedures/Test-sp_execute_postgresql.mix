@@ -1,4 +1,31 @@
 -- tsql
+-- Throws an error if the argument is empty
+exec sp_execute_postgresql NULL;
+go
+
+exec sp_execute_postgresql '';
+go
+
+-- Throw error if extension statement is empty after removing trailing spaces
+exec sp_execute_postgresql '       ';
+go
+
+-- Throw error if no argument or more than 2 arguments are passed to sp_execute_postgresql procedure
+exec sp_execute_postgresql;
+go
+
+EXEC sp_execute_postgresql '', '','';
+go
+
+-- Creates extension even if extension statement contains leading/trailing spaces by removing trailing spaces
+exec sp_execute_postgresql '     create extension pg_stat_statements      ';
+
+-- Create extension
+exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
+go
+select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+go
+
 exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
 go
 select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
