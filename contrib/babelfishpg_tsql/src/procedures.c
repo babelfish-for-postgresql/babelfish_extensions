@@ -1604,15 +1604,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	const char *new_buffer = "public, %s, \"$user\", sys, pg_catalog";
 	
 	PG_TRY();
-	{
-		SetCurrentRoleId(GetSessionUserId(), false);
-		if (!(superuser() || role_is_sa(GetSessionUserId())))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied to create extension")));
-		}
-	
+	{	
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -1675,6 +1667,15 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					ListCell   *lc;
 					char	   *schemaName = NULL;
 
+					if (!superuser_arg(GetSessionUserId()) || !role_is_sa(GetSessionUserId()))
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+		 					errmsg("permission denied to create extension")));
+					}
+
+					SetCurrentRoleId(GetSessionUserId(), false);
+
 					foreach(lc, crstmt->options)
 					{            
 						DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
@@ -1727,11 +1728,14 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 
 					/* make sure later steps can see the object created here */
 					 CommandCounterIncrement();
+					 SetCurrentRoleId(current_user_id, false);
 					break;
 				}
 				case T_DropStmt:
 				{
 					DropStmt *drstmt = (DropStmt *) parsetree;
+
+					SetCurrentRoleId(GetSessionUserId(), false);
 
 					if(drstmt->behavior == DROP_CASCADE)
 					{
@@ -1754,10 +1758,12 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 						/* make sure later steps can see the object created here */
 						CommandCounterIncrement();
 					}
+					SetCurrentRoleId(current_user_id, false);
 					break;
 				}
 				case T_AlterExtensionStmt:
 				{
+					SetCurrentRoleId(GetSessionUserId(), false);
 					/* do this step */
 					ProcessUtility(wrapper,
 								extensionStmt,
@@ -1770,6 +1776,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 
 					/* make sure later steps can see the object created here */
 					 CommandCounterIncrement();
+					 SetCurrentRoleId(current_user_id, false);
 					break;
 				} 
 				case T_AlterObjectSchemaStmt:
@@ -1792,7 +1799,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				break;
 			}
 		}
-		SetCurrentRoleId(current_user_id, false);
+		
 	}
 	PG_CATCH();
 	{
@@ -1803,6 +1810,8 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					saved_buffer,
 					PGC_SUSET,
 					PGC_S_DATABASE_USER);
+		SetCurrentRoleId(current_user_id, false);
+		
 		PG_RE_THROW();
 	}
 	PG_END_TRY();	
