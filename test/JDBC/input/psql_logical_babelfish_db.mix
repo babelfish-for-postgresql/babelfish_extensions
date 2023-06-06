@@ -1,0 +1,90 @@
+-- psql
+-- check whether we can query system views before setting the GUC. Should return zero rows
+select "TABLE_CATALOG", "COLUMN_NAME" from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' ORDER BY "COLUMN_NAME";
+go
+
+-- GUC should be NULL as it is not set yet
+show psql_logical_babelfish_db_name;
+go
+
+-- set the GUC to master
+set psql_logical_babelfish_db_name = 'master';
+go
+
+-- check whether the GUC has been set to master
+show psql_logical_babelfish_db_name;
+go
+
+-- query system views. Should return metadata of master database
+select "TABLE_CATALOG", "COLUMN_NAME" from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' ORDER BY "COLUMN_NAME";
+go
+
+-- set the GUC to an invalid database
+set psql_logical_babelfish_db_name = 'invalid_db'
+go
+
+-- should return zero rows as the database set does not exist
+select "TABLE_CATALOG", "COLUMN_NAME" from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' ORDER BY "COLUMN_NAME";
+go
+
+-- tsql
+-- should return data of master as the current database is master
+select TABLE_CATALOG, COLUMN_NAME from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' ORDER BY "COLUMN_NAME";
+go
+
+create database logical_database_db1
+go
+
+-- try to set GUC from TSQL endpoint. Should not effect information_schema_tsql.columns view 
+-- from TSQL endpoint it is a PG GUC
+select set_config('psql_logical_babelfish_db_name', 'logical_database_db1', false)
+go
+
+-- should return data of master as the current database is master
+select TABLE_CATALOG, COLUMN_NAME from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' ORDER BY "COLUMN_NAME";
+go
+
+use logical_database_db1
+go
+
+-- should return data of logical_database_db1 as the current database is logical_database_db1
+select TABLE_CATALOG, COLUMN_NAME from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' ORDER BY "COLUMN_NAME";
+go
+
+create login logical_database_l1 with password = '12345678'
+go
+
+alter server role sysadmin add member logical_database_l1
+go
+
+-- psql user=logical_database_l1 password=12345678
+select "TABLE_CATALOG", "COLUMN_NAME" from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' ORDER BY "COLUMN_NAME";
+go
+
+-- any user can set the GUC
+set psql_logical_babelfish_db_name = 'logical_database_db1'
+go
+
+select "TABLE_CATALOG", "COLUMN_NAME" from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases' ORDER BY "COLUMN_NAME";
+go
+
+-- psql
+-- Cleanup
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'logical_database_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+use master
+go
+
+drop login logical_database_l1
+go
+
+drop database logical_database_db1
+go
