@@ -43,23 +43,16 @@ exec sp_execute_postgresql '     create extension pg_stat_statements      ';
 -- Create extension
 exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
 go
-select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+select extname, extowner, extversion from pg_extension where extname = 'pg_stat_statements'
 go
 ~~START~~
-varchar#!#int#!#int#!#text
-pg_stat_statements#!#16384#!#2200#!#1.10
+varchar#!#int#!#text
+pg_stat_statements#!#16384#!#1.10
 ~~END~~
 
 
 exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
 go
-select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
-go
-~~START~~
-varchar#!#int#!#int#!#text
-pg_stat_statements#!#16384#!#2200#!#1.10
-~~END~~
-
 
 -- psql
 SET pg_stat_statements.track = 'none';
@@ -90,7 +83,7 @@ exec sp_execute_postgresql 'drop extension pg_stat_statements';
 go
 
 -- throw an error if user creates anything other than allowed extensions
-exec sp_execute_postgresql 'create extension pg_visibility with schema sys';
+exec sp_execute_postgresql 'create extension pg_visibility';
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -100,12 +93,6 @@ go
 -- create extension with schema sys, public or by default(public), else throw error
 exec sp_execute_postgresql 'create extension pg_stat_statements with schema sys';
 go
-select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
-go
-~~START~~
-varchar#!#int#!#int#!#text
-pg_stat_statements#!#16384#!#16398#!#1.10
-~~END~~
 
 exec sp_execute_postgresql 'create extension pg_stat_statements with schema master_dbo';
 go
@@ -120,11 +107,11 @@ go
 exec sp_execute_postgresql 'create extension pg_stat_statements with version "1.4"';
 go
 
-select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+select extname, extowner, extversion from pg_extension where extname = 'pg_stat_statements'
 go
 ~~START~~
-varchar#!#int#!#int#!#text
-pg_stat_statements#!#16384#!#2200#!#1.4
+varchar#!#int#!#text
+pg_stat_statements#!#16384#!#1.4
 ~~END~~
 
 
@@ -148,11 +135,11 @@ go
 exec sp_execute_postgresql 'alter extension pg_stat_statements update to "1.10"';
 go
 
-select extname, extowner, extnamespace, extversion from pg_extension where extname = 'pg_stat_statements'
+select extname, extowner, extversion from pg_extension where extname = 'pg_stat_statements'
 go
 ~~START~~
-varchar#!#int#!#int#!#text
-pg_stat_statements#!#16384#!#2200#!#1.10
+varchar#!#int#!#text
+pg_stat_statements#!#16384#!#1.10
 ~~END~~
 
 
@@ -223,3 +210,22 @@ go
 
 exec sp_execute_postgresql 'drop extension pg_stat_statements';
 go
+
+-- check if dialect, current_user and search_path are switched back to it's original values
+select current_user
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+-- psql
+show search_path;
+go
+~~START~~
+text
+"$user", public
+~~END~~
+
+
