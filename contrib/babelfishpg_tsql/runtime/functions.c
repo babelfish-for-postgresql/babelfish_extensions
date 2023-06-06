@@ -2089,102 +2089,11 @@ numeric_radians(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(result);
 }
 
-/*
- * GetUTF8CodePoint - extract the next Unicode code point from 1..4
- *					  bytes at 'in' in UTF-8 encoding.
- */
-static inline int32_t
-GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
-{
-	int32_t		code;
-	int		consumed;
-	
-	if (len == 0)
-		return EOF;
-	
-	if ((in[0] & 0x80) == 0)
-	{
-		/* 1 byte - 0xxxxxxx */
-		code = in[0];
-		consumed = 1;
-	}
-	else if ((in[0] & 0xE0) == 0xC0)
-	{
-		/* 2 byte - 110xxxxx 10xxxxxx */
-		if (len < 2)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATA_EXCEPTION),
-					 errmsg("truncated UTF8 byte sequence starting with 0x%02x",
-							in[0])));
-		if ((in[1] & 0xC0) != 0x80)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATA_EXCEPTION),
-					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
-							in[0])));
-		code = ((in[0] & 0x1F) << 6) | (in[1] & 0x3F);
-		consumed = 2;
-	}
-	else if ((in[0] & 0xF0) == 0xE0)
-	{
-		/* 3 byte - 1110xxxx 10xxxxxx 10xxxxxx */
-		if (len < 3)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATA_EXCEPTION),
-					 errmsg("truncated UTF8 byte sequence starting with 0x%02x",
-							in[0])));
-		if ((in[1] & 0xC0) != 0x80 || (in[2] & 0xC0) != 0x80)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATA_EXCEPTION),
-					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
-							in[0])));
-		code = ((in[0] & 0x0F) << 12) | ((in[1] & 0x3F) << 6) | (in[2] & 0x3F);
-		consumed = 3;
-	}
-	else if ((in[0] & 0xF8) == 0xF0)
-	{
-		/* 4 byte - 1110xxxx 10xxxxxx 10xxxxxx 10xxxxxx */
-		if (len < 4)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATA_EXCEPTION),
-					 errmsg("truncated UTF8 byte sequence starting with 0x%02x",
-							in[0])));
-		// This line is checking that the second, third, and fourth bytes in a 4-byte sequence are valid continuation bytes in a UTF-8 encoded character
-		if ((in[1] & 0xC0) != 0x80 || (in[2] & 0xC0) != 0x80 ||
-			(in[3] & 0xC0) != 0x80)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATA_EXCEPTION),
-					 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
-							in[0])));
-		// This line is decoding a 4-byte UTF-8 sequence by extracting the bits that encode the Unicode code point and combining them into a single integer.
-		code = ((in[0] & 0x07) << 18) | ((in[1] & 0x3F) << 12) |
-			((in[2] & 0x3F) << 6) | (in[3] & 0x3F);
-		consumed = 4;
-	}
-	else
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("invalid UTF8 byte sequence starting with 0x%02x",
-						in[0])));
-	}
-    // Check if the Unicode code point is within the valid range.
-	if (code > 0x10FFFF || (code >= 0xD800 && code < 0xE000))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("invalid UTF8 code point 0x%x", code)));
-
-	if (consumed_p)
-		*consumed_p = consumed;
-
-	return code;
-}
-
 /* The PARSENAME() function in T-SQL is used to parse a string representing a four-part SQL Server object name, such as "database.schema.object.column".
 SELECT PARSENAME('tempdb.dbo.Employee', 1)
 2> go
 Employee
 */
-
 Datum
 parsename(PG_FUNCTION_ARGS)
 {
@@ -2219,7 +2128,7 @@ parsename(PG_FUNCTION_ARGS)
 
     for (int i = 0; i < len;)
     {
-        code = GetUTF8CodePoint((const unsigned char *)&object_name_str[i], len - i, &consumed);
+        code = (*common_utility_plugin_ptr->GetUTF8CodePoint)((const unsigned char *)&object_name_str[i], len - i, &consumed);
         c = object_name_str[i];
         if (total_chars > 128 || total_length > 256)
         {

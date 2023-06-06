@@ -92,7 +92,7 @@ is_basetype_nchar_nvarchar(Oid typid)
  * GetUTF8CodePoint - extract the next Unicode code point from 1..4
  *					  bytes at 'in' in UTF-8 encoding.
  */
-static inline int32_t
+inline int32_t
 GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 {
 	int32_t		code;
