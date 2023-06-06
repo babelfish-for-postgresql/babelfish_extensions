@@ -7169,6 +7169,10 @@ CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolename" sys.SYSNAME, IN
 AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@extensionStmt" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.SYSNAME) TO PUBLIC;
+
 /*
  * JSON MODIFY
  * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
