@@ -2104,7 +2104,7 @@ parsename(PG_FUNCTION_ARGS)
     int len = strlen(object_name_str);
     typedef enum
     {
-		STATE_INITIAL,
+        STATE_INITIAL,
         STATE_DEFAULT,
         STATE_IN_QUOTES,
         STATE_IN_BRACKETS
