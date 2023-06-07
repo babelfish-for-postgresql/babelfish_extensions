@@ -112,6 +112,7 @@ sys-max_connections
 sys-nestlevel-dep
 sys-objects
 sys-original_login
+sys-parsename
 sys-procedures
 sys-schema-name
 sys-suser_sid

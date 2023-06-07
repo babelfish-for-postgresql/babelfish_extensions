@@ -111,6 +111,7 @@ sys-max_connections
 sys-nestlevel-dep
 sys-objects
 sys-original_login
+sys-parsename
 sys-schema-name
 identity_function
 sys-sysdatabases
