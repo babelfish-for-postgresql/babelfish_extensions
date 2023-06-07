@@ -1600,7 +1600,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	size_t		len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
-	const char *saved_buffer = "%s, \"$user\", sys, pg_catalog";
+	const char *saved_buffer = pstrdup(GetConfigOption("search_path", true, true));
 	const char *new_buffer = "public, %s, \"$user\", sys, pg_catalog";
 	
 	PG_TRY();
@@ -1608,11 +1608,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		
-		SetConfigOption("search_path",
-					new_buffer,
-					PGC_SUSET,
-					PGC_S_DATABASE_USER);
 		
 		extensionStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
@@ -1677,6 +1672,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					}
 
 					SetCurrentRoleId(GetSessionUserId(), false);
+					SetConfigOption("search_path",
+									new_buffer,
+									PGC_SUSET,
+									PGC_S_DATABASE_USER);
 
 					foreach(lc, crstmt->options)
 					{            
@@ -1731,6 +1730,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					/* make sure later steps can see the object created here */
 					 CommandCounterIncrement();
 					 SetCurrentRoleId(current_user_id, false);
+					 SetConfigOption("search_path",
+									saved_buffer,
+									PGC_SUSET,
+									PGC_S_DATABASE_USER);
 					break;
 				}
 				case T_DropStmt:
@@ -1822,10 +1825,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		SetConfigOption("search_path",
-					saved_buffer,
-					PGC_SUSET,
-					PGC_S_DATABASE_USER);
 		PG_RETURN_VOID();
 	
 }
