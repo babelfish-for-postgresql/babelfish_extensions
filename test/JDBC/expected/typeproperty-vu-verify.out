@@ -27,7 +27,7 @@ Select typeproperty('pg_catalog.int',' allowsnull   ')
 Go
 ~~START~~
 int
-1
+<NULL>
 ~~END~~
 
 
@@ -93,7 +93,7 @@ Select typeproperty('pg_catalog.int',' precision   ')
 Go
 ~~START~~
 int
-10
+<NULL>
 ~~END~~
 
 
@@ -101,7 +101,7 @@ Select typeproperty('typeproperty_test1.null_check1','precision')
 GO
 ~~START~~
 int
-0
+11
 ~~END~~
 
 
@@ -117,7 +117,7 @@ Select typeproperty('typeproperty_test2.null_check1','precision')
 GO
 ~~START~~
 int
-0
+11
 ~~END~~
 
 
@@ -159,7 +159,7 @@ Select typeproperty('pg_catalog.int',' scale   ')
 Go
 ~~START~~
 int
-0
+<NULL>
 ~~END~~
 
 
@@ -175,7 +175,7 @@ Select typeproperty('sys.money',' scale   ')
 Go
 ~~START~~
 int
-4
+<NULL>
 ~~END~~
 
 
@@ -261,7 +261,7 @@ END
 GO
 ~~START~~
 text
-SUCCESS
+FAILED
 ~~END~~
 
 

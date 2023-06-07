@@ -350,6 +350,11 @@ BEGIN
     ELSEIF property = 'precision'
     THEN
         preci := (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+        IF sys_id = 0
+        THEN
+            RETURN preci;
+        END IF;
+
         IF preci = 0
         THEN
             preci = (SELECT CAST(dc.prec AS INT) FROM sys.systypes dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.uid = schemaid);
@@ -371,7 +376,11 @@ BEGIN
     ELSEIF property = 'scale'
     THEN
         preci := (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_namee COLLATE sys.database_default AND dc.system_type_id = sys_id);
-
+        IF sys_id = 0
+        THEN
+            RETURN preci;
+        END IF;
+        
         IF preci = 0 or type_namee = 'float' or type_namee = 'real' or type_namee = 'bit'
         THEN
             RETURN NULL;
