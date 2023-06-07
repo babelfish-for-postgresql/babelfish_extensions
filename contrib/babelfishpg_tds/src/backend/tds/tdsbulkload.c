@@ -107,17 +107,29 @@ FetchMoreBcpData(StringInfo *message, int dataLenToRead)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("Trying to read more data than available in BCP request.")));
 
-	temp = makeStringInfo();
-	appendBinaryStringInfo(temp, (*message)->data + offset, (*message)->len - offset);
+	/*
+	 * If we are trying to read next packet during PROCESS phase then we can
+	 * afford to free the already read rows' data and if we are in FETCH
+	 * phase, we require to save the column-metadata and need to append the
+	 * new packet's data.
+	 */
+	if (CurrentMemoryContext == MessageContext)
+	{
+		temp = makeStringInfo();
+		appendBinaryStringInfo(temp, (*message)->data + offset, (*message)->len - offset);
 
-	if ((*message)->data)
-		pfree((*message)->data);
-	pfree((*message));
+		if ((*message)->data)
+			pfree((*message)->data);
+		pfree((*message));
+		offset = 0;
+	}
+	else
+		temp = *message;
 
 	/*
 	 * Keep fetching for additional packets until we have enough data to read.
 	 */
-	while (dataLenToRead > temp->len)
+	while (dataLenToRead + offset > temp->len)
 	{
 		/*
 		 * We should hold the interrupts until we read the next request frame.
@@ -139,7 +151,6 @@ FetchMoreBcpData(StringInfo *message, int dataLenToRead)
 		}
 	}
 
-	offset = 0;
 	(*message) = temp;
 }
 
