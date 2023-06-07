@@ -1600,7 +1600,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	size_t		len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
-	const char *saved_buffer = GetConfigOption("search_path", true, true);
+	const char *saved_buffer = "%s, \"$user\", sys, pg_catalog";
 	const char *new_buffer = "public, %s, \"$user\", sys, pg_catalog";
 	
 	PG_TRY();
