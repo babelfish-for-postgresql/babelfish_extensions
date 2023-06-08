@@ -202,7 +202,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolename" sys.SYSNAME, IN
 AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@extensionStmt" sys.nvarchar)
+CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@postgresStmt" sys.nvarchar)
 AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.nvarchar) TO PUBLIC;
 

@@ -31,7 +31,7 @@ end
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@extensionStmt" sys.nvarchar)
+CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@postgresStmt" sys.nvarchar)
 AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.nvarchar) TO PUBLIC;
 

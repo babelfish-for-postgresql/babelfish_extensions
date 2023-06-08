@@ -1595,7 +1595,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 {
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
-	char	   *extensionStmt;
+	char	   *postgresStmt;
 	Node	   *stmt;
 	size_t		len;
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
@@ -1604,30 +1604,30 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	const char *new_buffer = "public, %s, \"$user\", sys, pg_catalog";
 	
 	PG_TRY();
-	{	
+	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		
-		extensionStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		postgresStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
-		if (extensionStmt == NULL)
+		if (postgresStmt == NULL)
 				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 								errmsg("Statement cannot be NULL.")));
 
 		/* Remove trailing whitespaces */
-			len = strlen(extensionStmt);
-			while (isspace(extensionStmt[len - 1]))
-				extensionStmt[--len] = 0;
+		len = strlen(postgresStmt);
+		while (isspace(postgresStmt[len - 1]))
+			postgresStmt[--len] = 0;
 
-			len = strlen(extensionStmt);
+		len = strlen(postgresStmt);
 
 		/* check if input statement is empty after removing trailing spaces */
-			if (len == 0)
-				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-											errmsg("Statement cannot be NULL.")));
+		if (len == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							errmsg("Statement cannot be NULL.")));
 
-		parsetree_list = raw_parser(extensionStmt, RAW_PARSE_DEFAULT);
+		parsetree_list = raw_parser(postgresStmt, RAW_PARSE_DEFAULT);
 		stmt = parsetree_nth_stmt(parsetree_list, 0);
 		rewrite_object_refs(stmt);
 
@@ -1719,7 +1719,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					}
 					/* do this step */
 					ProcessUtility(wrapper,
-								extensionStmt,
+								postgresStmt,
 								false,
 								PROCESS_UTILITY_SUBCOMMAND,
 								NULL,
@@ -1752,7 +1752,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					{
 						/* do this step */
 						ProcessUtility(wrapper,
-									extensionStmt,
+									postgresStmt,
 									false,
 									PROCESS_UTILITY_SUBCOMMAND,
 									NULL,
@@ -1771,7 +1771,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					SetCurrentRoleId(GetSessionUserId(), false);
 					/* do this step */
 					ProcessUtility(wrapper,
-								extensionStmt,
+								postgresStmt,
 								false,
 								PROCESS_UTILITY_SUBCOMMAND,
 								NULL,
