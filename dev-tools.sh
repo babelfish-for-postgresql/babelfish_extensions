@@ -165,7 +165,7 @@ init_db() {
     bin/pg_ctl -D data/ -l logfile start
     cd data
     sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
-    sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds'/g" postgresql.conf
+    sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
     sudo echo "host    all             all             0.0.0.0/0            trust" >> pg_hba.conf
     restart $1
 }
