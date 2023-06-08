@@ -1594,10 +1594,13 @@ Datum
 sp_execute_postgresql(PG_FUNCTION_ARGS)
 {
 	List	   *parsetree_list;
-	ListCell   *parsetree_item;
 	char	   *postgresStmt;
 	Node	   *stmt;
+    Node	   *parsetree;
 	size_t		len;
+    PlannedStmt *wrapper;
+    char *allowed_extns[] = {"pg_stat_statements", "tds_fdw"};
+    int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
 	const char *saved_buffer = pstrdup(GetConfigOption("search_path", true, true));
@@ -1636,178 +1639,169 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("Expected 1 statement but got %d statements after parsing.", list_length(parsetree_list))));
 
+        stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
+			
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = len;
 
-		foreach(parsetree_item, parsetree_list)
+		parsetree = wrapper->utilityStmt;
+
+		switch (nodeTag(parsetree))
 		{
-			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-			Node	   *parsetree;
-			PlannedStmt *wrapper;
-			char *allowed_extns[] = {"pg_stat_statements", "tds_fdw"};
-			int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
-
-			/* need to make a wrapper PlannedStmt */
-			wrapper = makeNode(PlannedStmt);
-			wrapper->commandType = CMD_UTILITY;
-			wrapper->canSetTag = false;
-			wrapper->utilityStmt = stmt;
-			wrapper->stmt_location = 0;
-			wrapper->stmt_len = len;
-
-			parsetree = wrapper->utilityStmt;
-
-			switch (nodeTag(parsetree))
+			case T_CreateExtensionStmt:
 			{
-				case T_CreateExtensionStmt:
+				CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
+				DefElem    *d_schema = NULL;
+				ListCell   *lc;
+				char	   *schemaName = NULL;
+
+				if (!superuser_arg(GetSessionUserId()) || !role_is_sa(GetSessionUserId()))
 				{
-					CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
-					DefElem    *d_schema = NULL;
-					ListCell   *lc;
-					char	   *schemaName = NULL;
+					ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+	 					errmsg("permission denied to create extension")));
+				}
 
-					if (!superuser_arg(GetSessionUserId()) || !role_is_sa(GetSessionUserId()))
+				SetCurrentRoleId(GetSessionUserId(), false);
+				SetConfigOption("search_path",
+								new_buffer,
+								PGC_SUSET,
+								PGC_S_DATABASE_USER);
+
+				foreach(lc, crstmt->options)
+				{            
+					DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
+					if (strcmp(defel->defname, "schema") == 0) 
 					{
-						ereport(ERROR,
-							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		 					errmsg("permission denied to create extension")));
+						d_schema = defel;
+						schemaName = defGetString(d_schema);
 					}
-
-					SetCurrentRoleId(GetSessionUserId(), false);
-					SetConfigOption("search_path",
-									new_buffer,
-									PGC_SUSET,
-									PGC_S_DATABASE_USER);
-
-					foreach(lc, crstmt->options)
-					{            
-						DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
-						if (strcmp(defel->defname, "schema") == 0) 
-						{
-							d_schema = defel;
-							schemaName = defGetString(d_schema);
-						}
-						if (strcmp(defel->defname, "cascade") == 0)
-						{
-							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("'cascade' is not yet supported in Babelfish.")));
-						}
-					}
-
-					if(schemaName != NULL && (strcmp(schemaName, "sys") && strcmp(schemaName, "public")))
+					if (strcmp(defel->defname, "cascade") == 0)
 					{
 						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("'%s' is not a valid schema, only sys and public schema is allowed in Babelfish.", schemaName)));
+							errmsg("'cascade' is not yet supported in Babelfish.")));
 					}
-					
-					for(int i = 0; i < allowed_extns_size; i++)
+				}
+
+				if(schemaName != NULL && (strcmp(schemaName, "sys") && strcmp(schemaName, "public")))
+				{
+					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("'%s' is not a valid schema, only sys and public schema is allowed in Babelfish.", schemaName)));
+				}
+
+				for(int i = 0; i < allowed_extns_size; i++)
+				{
+					if((strcmp(crstmt->extname, allowed_extns[i])))
 					{
-						if((strcmp(crstmt->extname, allowed_extns[i])))
+						if(i == allowed_extns_size - 1)
 						{
-							if(i == allowed_extns_size - 1)
-							{
-								ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("'%s' is not a valid name.", crstmt->extname)));
-							}
-							else
-							{
-								continue;
-							}
+							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("'%s' is not a valid name.", crstmt->extname)));
 						}
 						else
 						{
-							break;
+							continue;
 						}
 					}
-					/* do this step */
-					ProcessUtility(wrapper,
-								postgresStmt,
-								false,
-								PROCESS_UTILITY_SUBCOMMAND,
-								NULL,
-								NULL,
-								None_Receiver,
-								NULL);
-
-					/* make sure later steps can see the object created here */
-					 CommandCounterIncrement();
-					 SetCurrentRoleId(current_user_id, false);
-					 SetConfigOption("search_path",
-									saved_buffer,
-									PGC_SUSET,
-									PGC_S_DATABASE_USER);
-					break;
-				}
-				case T_DropStmt:
-				{
-					DropStmt *drstmt = (DropStmt *) parsetree;
-
-					SetCurrentRoleId(GetSessionUserId(), false);
-
-					if(drstmt->behavior == DROP_CASCADE)
+					else
 					{
-						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-									errmsg("'cascade' is not yet supported in Babelfish.")));
+						break;
 					}
-
-					if (drstmt->removeType == OBJECT_EXTENSION)
-					{
-						/* do this step */
-						ProcessUtility(wrapper,
-									postgresStmt,
-									false,
-									PROCESS_UTILITY_SUBCOMMAND,
-									NULL,
-									NULL,
-									None_Receiver,
-									NULL);
-
-						/* make sure later steps can see the object created here */
-						CommandCounterIncrement();
-					}
-					SetCurrentRoleId(current_user_id, false);
-					break;
 				}
-				case T_AlterExtensionStmt:
-				{
-					SetCurrentRoleId(GetSessionUserId(), false);
-					/* do this step */
-					ProcessUtility(wrapper,
-								postgresStmt,
-								false,
-								PROCESS_UTILITY_SUBCOMMAND,
-								NULL,
-								NULL,
-								None_Receiver,
-								NULL);
+				/* do this step */
+                ProcessUtility(wrapper,
+                            postgresStmt,
+                            false,
+                            PROCESS_UTILITY_SUBCOMMAND,
+                            NULL,
+                            NULL,
+                            None_Receiver,
+                            NULL);
 
-					/* make sure later steps can see the object created here */
-					 CommandCounterIncrement();
-					 SetCurrentRoleId(current_user_id, false);
-					break;
-				} 
-				case T_AlterObjectSchemaStmt:
-				{
-					ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Alter extension schema is not currently supported in Babelfish")));
-					break;
-				}
-				case  T_AlterExtensionContentsStmt:
-				{
-					ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Alter extension to Add/Drop object in extension is not currently supported in Babelfish")));
-					break;
-				}
-				default:
-				ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Only Create/alter/drop extension statements are currently supported in Babelfish.")));
-				break;
-			}
-		}
-		
+                /* make sure later steps can see the object created here */
+                    CommandCounterIncrement();
+                    SetCurrentRoleId(current_user_id, false);
+                    SetConfigOption("search_path",
+                                saved_buffer,
+                                PGC_SUSET,
+                                PGC_S_DATABASE_USER);
+                break;
+            }
+            case T_DropStmt:
+            {
+                DropStmt *drstmt = (DropStmt *) parsetree;
+
+                SetCurrentRoleId(GetSessionUserId(), false);
+
+                if(drstmt->behavior == DROP_CASCADE)
+                {
+                    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                                errmsg("'cascade' is not yet supported in Babelfish.")));
+                }
+
+                if (drstmt->removeType == OBJECT_EXTENSION)
+                {
+                    /* do this step */
+                    ProcessUtility(wrapper,
+                                postgresStmt,
+                                false,
+                                PROCESS_UTILITY_SUBCOMMAND,
+                                NULL,
+                                NULL,
+                                None_Receiver,
+                                NULL);
+
+                    /* make sure later steps can see the object created here */
+                    CommandCounterIncrement();
+                }
+                SetCurrentRoleId(current_user_id, false);
+                break;
+            }
+            case T_AlterExtensionStmt:
+            {
+                SetCurrentRoleId(GetSessionUserId(), false);
+                /* do this step */
+                ProcessUtility(wrapper,
+                            postgresStmt,
+                            false,
+                            PROCESS_UTILITY_SUBCOMMAND,
+                            NULL,
+                            NULL,
+                            None_Receiver,
+                            NULL);
+
+                /* make sure later steps can see the object created here */
+                CommandCounterIncrement();
+                SetCurrentRoleId(current_user_id, false);
+                break;
+            } 
+            case T_AlterObjectSchemaStmt:
+            {
+                ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                    errmsg("Alter extension schema is not currently supported in Babelfish")));
+                break;
+            }
+            case  T_AlterExtensionContentsStmt:
+            {
+                ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                    errmsg("Alter extension to Add/Drop object in extension is not currently supported in Babelfish")));
+                break;
+            }
+            default:
+            ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                    errmsg("Only Create/alter/drop extension statements are currently supported in Babelfish.")));
+            break;
+        }
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 						  GUC_CONTEXT_CONFIG,
@@ -1818,15 +1812,9 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					PGC_S_DATABASE_USER);
 		SetCurrentRoleId(current_user_id, false);
 
-		PG_RE_THROW();
 	}
 	PG_END_TRY();	
-		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
-						GUC_CONTEXT_CONFIG,
-						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-		PG_RETURN_VOID();
-	
+	PG_RETURN_VOID();
 }
 
 Datum
