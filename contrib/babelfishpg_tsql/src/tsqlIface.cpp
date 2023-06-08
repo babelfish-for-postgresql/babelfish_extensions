@@ -1730,7 +1730,7 @@ public:
 		if (ctx->execute_statement())
 		{
 			PLtsql_stmt_exec *stmt = (PLtsql_stmt_exec *) getPLtsql_fragment(ctx);
-			if (stmt->cmd_type == PLTSQL_STMT_EXEC && stmt->proc_name && pg_strcasecmp("sp_tables", stmt->proc_name) == 0)
+			if (stmt->cmd_type == PLTSQL_STMT_EXEC && stmt->proc_name && (pg_strcasecmp("sp_tables", stmt->proc_name) == 0 || pg_strcasecmp("sp_testlinkedserver", stmt->proc_name) == 0))
 			{
 				PLtsql_expr_query_mutator mutator(stmt->expr, ctx);
 				add_rewritten_query_fragment_to_mutator(&mutator); // move information of rewritten_query_fragment to mutator.
@@ -1777,6 +1777,24 @@ public:
 					else 
 						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), newStr)));
 				}
+			}
+
+			// To support unquoted argument when executing sp_testlinkedserver procedure
+			// EXEC sp_testlinkedserver my_server           ->   ctx->id(my_server)
+			// mutate argument into single quoted string literal
+			if(ctx->id() && pg_strcasecmp(getProcNameFromExecParam(ctx).c_str(), "sp_testlinkedserver") == 0)
+			{
+				std::string argStr;
+				argStr = getFullText(ctx->id());
+
+				std::string newStr;
+				newStr = std::string("'") + argStr + std::string("'") ;
+
+				TSqlParser::Execute_bodyContext * exBodyCtx = dynamic_cast<TSqlParser::Execute_bodyContext *>(ctx->parent);
+
+				std::string bodyStr = getFullText(exBodyCtx);
+
+				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), newStr)));
 			}
 		}
 		parameterIndex++;
