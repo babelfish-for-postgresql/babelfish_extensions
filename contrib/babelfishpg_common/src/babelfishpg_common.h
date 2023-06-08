@@ -40,4 +40,6 @@ typedef struct common_utility_plugin
 										  bool *isBaseDec, bool *isBaseBin,
 										  bool *isBaseDate, int *variantHeaderLen);
 	Oid			(*lookup_tsql_datatype_oid) (const char *typestr);
+	int32_t		(*GetUTF8CodePoint) (const unsigned char *in, int len, int *consumed_p);
+
 } common_utility_plugin;
