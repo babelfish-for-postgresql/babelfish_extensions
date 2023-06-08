@@ -1596,15 +1596,15 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	List	   *parsetree_list;
 	char	   *postgresStmt;
 	Node	   *stmt;
-    Node	   *parsetree;
+	Node	   *parsetree;
 	size_t		len;
     PlannedStmt *wrapper;
-    char *allowed_extns[] = {"pg_stat_statements", "tds_fdw"};
+    const char *allowed_extns[] = {"pg_stat_statements", "tds_fdw"};
     int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
-	const char *saved_buffer = pstrdup(GetConfigOption("search_path", true, true));
-	const char *new_buffer = "public, %s, \"$user\", sys, pg_catalog";
+	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
+	const char *new_path = "public, %s, \"$user\", sys, pg_catalog";
 	
 	PG_TRY();
 	{
@@ -1614,17 +1614,19 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		
 		postgresStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
+		if (postgresStmt == NULL)
+				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+								errmsg("statement cannot be NULL")));
+
 		/* Remove trailing whitespaces */
 		len = strlen(postgresStmt);
 		while (isspace(postgresStmt[len - 1]))
 			postgresStmt[--len] = 0;
 
-		len = strlen(postgresStmt);
-
 		/* check if input statement is empty after removing trailing spaces */
 		if (len == 0)
 			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							errmsg("Statement cannot be NULL.")));
+							errmsg("statement cannot be NULL")));
 
 		parsetree_list = raw_parser(postgresStmt, RAW_PARSE_DEFAULT);
 		stmt = parsetree_nth_stmt(parsetree_list, 0);
@@ -1633,7 +1635,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		if (list_length(parsetree_list) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("Expected 1 statement but got %d statements after parsing.", list_length(parsetree_list))));
+					errmsg("expected 1 statement but got %d statements after parsing", list_length(parsetree_list))));
 
         stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
 			
@@ -1665,7 +1667,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 
 				SetCurrentRoleId(GetSessionUserId(), false);
 				SetConfigOption("search_path",
-								new_buffer,
+								new_path,
 								PGC_SUSET,
 								PGC_S_DATABASE_USER);
 
@@ -1680,14 +1682,14 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					if (strcmp(defel->defname, "cascade") == 0)
 					{
 						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							errmsg("'cascade' is not yet supported in Babelfish.")));
+							errmsg("'cascade' is not yet supported in Babelfish")));
 					}
 				}
 
 				if(schemaName != NULL && (strcmp(schemaName, "sys") && strcmp(schemaName, "public")))
 				{
 					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							errmsg("'%s' is not a valid schema, only sys and public schema is allowed in Babelfish.", schemaName)));
+							errmsg("'%s' is not a valid schema, only sys and public schema is allowed in Babelfish", schemaName)));
 				}
 
 				for(int i = 0; i < allowed_extns_size; i++)
@@ -1697,7 +1699,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 						if(i == allowed_extns_size - 1)
 						{
 							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								errmsg("'%s' is not a valid name.", crstmt->extname)));
+								errmsg("'%s' extension creation is not supported", crstmt->extname)));
 						}
 						else
 						{
@@ -1721,11 +1723,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 
                 /* make sure later steps can see the object created here */
                     CommandCounterIncrement();
-                    SetCurrentRoleId(current_user_id, false);
-                    SetConfigOption("search_path",
-                                saved_buffer,
-                                PGC_SUSET,
-                                PGC_S_DATABASE_USER);
                 break;
             }
             case T_DropStmt:
@@ -1737,7 +1734,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
                 if(drstmt->behavior == DROP_CASCADE)
                 {
                     ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                                errmsg("'cascade' is not yet supported in Babelfish.")));
+                                errmsg("'cascade' is not yet supported in Babelfish")));
                 }
 
                 if (drstmt->removeType == OBJECT_EXTENSION)
@@ -1755,7 +1752,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
                     /* make sure later steps can see the object created here */
                     CommandCounterIncrement();
                 }
-                SetCurrentRoleId(current_user_id, false);
                 break;
             }
             case T_AlterExtensionStmt:
@@ -1773,7 +1769,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 
                 /* make sure later steps can see the object created here */
                 CommandCounterIncrement();
-                SetCurrentRoleId(current_user_id, false);
                 break;
             } 
             case T_AlterObjectSchemaStmt:
@@ -1803,7 +1798,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		SetConfigOption("search_path",
-					saved_buffer,
+					saved_path,
 					PGC_SUSET,
 					PGC_S_DATABASE_USER);
 		SetCurrentRoleId(current_user_id, false);
