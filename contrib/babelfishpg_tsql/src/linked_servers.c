@@ -1347,7 +1347,7 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	{
 		if (lsproc)
 		{
-			LINKED_SERVER_DEBUG("LINKED SERVER: (TESTING CONNECTION) - Closing connections to remote server");
+			LINKED_SERVER_DEBUG("LINKED SERVER: (CONNECTION TEST) - Closing connections to remote server");
 			LINKED_SERVER_EXIT();
 		}
 	}
