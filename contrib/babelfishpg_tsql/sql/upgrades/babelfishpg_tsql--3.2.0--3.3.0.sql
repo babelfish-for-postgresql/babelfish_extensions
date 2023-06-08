@@ -35,6 +35,15 @@ CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@extensionStmt" sys.nv
 AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.nvarchar) TO PUBLIC;
 
+ALTER FUNCTION sys.parsename(VARCHAR,INT) RENAME TO parsename_deprecated_in_3_3_0;
+
+CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.VARCHAR, object_piece int)
+RETURNS sys.SYSNAME
+AS 'babelfishpg_tsql', 'parsename'
+LANGUAGE C IMMUTABLE STRICT;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_3_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

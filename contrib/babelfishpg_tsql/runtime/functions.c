@@ -102,6 +102,7 @@ PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
 PG_FUNCTION_INFO_V1(object_schema_name);
+PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 
 void	   *string_to_tsql_varchar(const char *input_str);
@@ -2086,6 +2087,225 @@ numeric_radians(PG_FUNCTION_ARGS)
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
 
 	PG_RETURN_NUMERIC(result);
+}
+
+/* 
+* The PARSENAME() function in T-SQL is used to parse a string representing a four-part SQL Server object name, such as "database.schema.object.column".
+* If we have an a single '[' ,']' or '"' its a syntax error.
+* If object_name is inside brackets like [object_name] its should still return object_name without printing brackets.
+* If object_name is inside double quotes like "object_name" its should still return object_name without printing double quotes.
+*/
+Datum
+parsename(PG_FUNCTION_ARGS)
+{
+    text *object_name = PG_GETARG_TEXT_PP(0);
+    int object_piece = PG_GETARG_INT32(1);
+    char *object_name_str = text_to_cstring(object_name);
+    int len = strlen(object_name_str);
+    typedef enum
+    {
+        STATE_INITIAL,
+        STATE_DEFAULT,
+        STATE_IN_QUOTES,
+        STATE_IN_BRACKETS
+    } State;
+	State initial_state[4] = {STATE_INITIAL};
+    State state = STATE_DEFAULT;
+    int consumed;
+    int32_t code;
+    int total_chars = 0;
+    int total_length = 0;
+    char c;
+    char *start_positions[4] = {NULL};
+    char *end_positions[4] = {NULL};
+    // int initial_state[4] = {0};
+    int current_part = 0;
+    text *result;
+    start_positions[current_part] = object_name_str;
+
+    // object_piece should only have maximum of 4 parts.
+    if (object_piece < 1 || object_piece > 4)
+    {
+        PG_RETURN_NULL();
+    }
+
+    for (int i = 0; i < len;)
+    {
+        code = (*common_utility_plugin_ptr->GetUTF8CodePoint)((const unsigned char *)&object_name_str[i], len - i, &consumed);
+        c = object_name_str[i];
+        if (total_chars > 128 || total_length > 256)
+        {
+            PG_RETURN_NULL();
+        }
+
+        if (state == STATE_DEFAULT)
+        {
+            if (c == '"')
+            {
+                if (total_chars > 0)
+                {
+                    PG_RETURN_NULL();
+                }
+
+                state = STATE_IN_QUOTES;
+                // save the initial state so that we can escape the correct characters at the end.
+                if (initial_state[current_part] == STATE_INITIAL)
+                {
+                    initial_state[current_part] = STATE_IN_QUOTES;
+                }
+
+                start_positions[current_part] = &object_name_str[i + 1];
+                i += consumed;
+                continue;
+            }
+            else if(c == ']')
+            {
+                PG_RETURN_NULL();
+            }
+            else if (c == '[')
+            {
+                if (total_chars > 0)
+                {
+                    PG_RETURN_NULL();
+                }
+
+                state = STATE_IN_BRACKETS;
+                if (initial_state[current_part] == STATE_INITIAL)
+                {
+                    initial_state[current_part] = STATE_IN_BRACKETS;
+                }
+
+                start_positions[current_part] = &object_name_str[i + 1];
+                i += consumed;
+                continue;
+            }
+            else if (c == '.')
+            {
+                // do not update the value of end_positions[current_part] if there is already a value in end_postions[current_part] & previous character is " or ].
+                if ( !((end_positions[current_part] != NULL) && (object_name_str[i - 1] == '"')) && !((end_positions[current_part] != NULL) && (object_name_str[i - 1] == ']')) )
+                {
+                    end_positions[current_part] = &object_name_str[i - 1];
+                }
+
+                current_part++;
+                if (current_part > 3)
+                {
+                    PG_RETURN_NULL();
+                }
+
+                start_positions[current_part] = &object_name_str[i + 1];
+                total_chars = 0;
+                total_length = 0;
+            }
+        }
+        else if (state == STATE_IN_QUOTES)
+        {
+            if (c == '"')
+            {
+                // is there a next character and is it double quotes?
+                if (i + consumed < len && object_name_str[i + consumed] == '"')
+                {
+                    i += consumed;
+                }
+                else
+                {
+                    state = STATE_DEFAULT;
+                    end_positions[current_part] = &object_name_str[i - 1];
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        PG_RETURN_NULL();
+                    }
+                    i += consumed;
+                    continue;
+                }
+            }
+        }
+        else if (state == STATE_IN_BRACKETS)
+        {
+            if (c == ']')
+            {
+                // is there a next character and if it is there, is it closing brace?
+                if (i + consumed < len && object_name_str[i + consumed] == ']')
+                {
+                    i += consumed;
+                }
+                else
+                {
+                    state = STATE_DEFAULT;
+                    end_positions[current_part] = &object_name_str[i - 1];
+                    if (i + 1 < len && object_name_str[i + 1] != '.')
+                    {
+                        PG_RETURN_NULL();
+                    }
+                    i += consumed;
+                    continue;
+                }
+            }
+        }
+
+        // This line increments total_chars by 1 if the current character's Unicode code point is less than or equal to 0xFFFF (i.e., it can be represented in UTF-16), and by 2 otherwise.
+        if (state > STATE_DEFAULT || (state == STATE_DEFAULT && c != '.'))
+        {
+            if (code <= 0xFFFF)
+                total_chars += 1;
+            else
+                total_chars += 2;
+            total_length += (code <= 0xFFFF) ? 2 : 4;
+        }
+        i += consumed;
+    }
+
+    if (state != STATE_DEFAULT)
+    {
+        PG_RETURN_NULL();
+    }
+
+    if (total_chars > 128 || total_length > 256)
+    {
+        PG_RETURN_NULL();
+    }
+
+    // if there is only 1 part and no '.', set the end position to length-1.
+    if (end_positions[current_part] == NULL)
+    {
+        end_positions[current_part] = &object_name_str[len - 1];
+    }
+
+    // Reverse the object piece index
+    object_piece = current_part + 1 - object_piece;
+    if (object_piece < 0 || object_piece > current_part)
+    {
+        PG_RETURN_NULL();
+    }
+    
+    if (object_piece >= 0 && object_piece <= current_part)
+    {
+        int part_length = end_positions[object_piece] - start_positions[object_piece] + 1;
+        if (part_length > 0)
+        {
+            char *part = (char*) palloc(part_length + 1); // Allocate memory for part string
+            int part_index = 0;
+            for (int j = 0; j < part_length; j++)
+            {
+                // Copy part string with handling of escaped double quotes and closing brackets and checking initial state.
+                if ( (initial_state[object_piece] == STATE_IN_QUOTES && start_positions[object_piece][j] == '"' && start_positions[object_piece][j + 1] == '"') ||
+					 (initial_state[object_piece] == STATE_IN_BRACKETS && start_positions[object_piece][j] == ']' && start_positions[object_piece][j + 1] == ']'))
+                {
+                    part[part_index++] = start_positions[object_piece][j++];
+                }
+                else
+                {
+                    part[part_index++] = start_positions[object_piece][j];
+                }
+            }
+            part[part_index] = '\0'; // Null-terminate part string
+            result = cstring_to_text(part);
+            pfree(part); // Free part string memory
+            PG_RETURN_TEXT_P(result);
+        }
+    }
+
+    PG_RETURN_NULL();
 }
 
 /* Returns the database schema name for schema-scoped objects. */
