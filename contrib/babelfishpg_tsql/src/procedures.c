@@ -1612,7 +1612,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		
-		postgresStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));q
+		postgresStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 		/* Remove trailing whitespaces */
 		len = strlen(postgresStmt);
