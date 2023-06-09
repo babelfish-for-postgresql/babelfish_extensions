@@ -4,14 +4,14 @@ exec sp_execute_postgresql NULL;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Statement cannot be NULL.)~~
+~~ERROR (Message: statement cannot be NULL)~~
 
 
 exec sp_execute_postgresql '';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Statement cannot be NULL.)~~
+~~ERROR (Message: statement cannot be NULL)~~
 
 
 -- Throw error if extension statement is empty after removing trailing spaces
@@ -19,7 +19,7 @@ exec sp_execute_postgresql '       ';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Statement cannot be NULL.)~~
+~~ERROR (Message: statement cannot be NULL)~~
 
 
 -- Throw error if no argument or more than 2 arguments are passed to sp_execute_postgresql procedure
@@ -87,7 +87,7 @@ exec sp_execute_postgresql 'create extension pg_visibility';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'pg_visibility' is not a valid name.)~~
+~~ERROR (Message: 'pg_visibility' extension creation is not supported)~~
 
 
 -- create extension with schema sys, public or by default(public), else throw error
@@ -98,7 +98,7 @@ exec sp_execute_postgresql 'create extension pg_stat_statements with schema mast
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'master_dbo' is not a valid schema, only sys and public schema is allowed in Babelfish.)~~
+~~ERROR (Message: 'master_dbo' is not a valid schema, only sys and public schema is allowed in Babelfish)~~
 
 
 exec sp_execute_postgresql 'drop extension pg_stat_statements';
@@ -120,7 +120,7 @@ exec sp_execute_postgresql 'create extension pg_stat_statements with cascade';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'cascade' is not yet supported in Babelfish.)~~
+~~ERROR (Message: 'cascade' is not yet supported in Babelfish)~~
 
 
 -- throw an error if more than one statement is passed
@@ -128,7 +128,7 @@ exec sp_execute_postgresql 'create extension pg_stat_statements with schema sys;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Expected 1 statement but got 2 statements after parsing.)~~
+~~ERROR (Message: expected 1 statement but got 2 statements after parsing)~~
 
 
 --alter extension version
