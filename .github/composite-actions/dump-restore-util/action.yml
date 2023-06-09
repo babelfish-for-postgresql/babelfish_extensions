@@ -45,7 +45,7 @@ runs:
         cd upgrade
         if [[ '${{ inputs.logical_database }}' == 'null' ]];then
           echo 'Starting to dump whole Babelfish physical database'
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --no-role-passwords -f pg_dump_globals.sql 2>>error.log
           ~/${{ inputs.pg_new_dir }}/bin/pg_dump --username jdbc_user --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
         else
           echo "Starting to dump Babelfish logical database ${{ inputs.logical_database }}"
@@ -90,7 +90,6 @@ runs:
           base_dir="${{ inputs.logical_database }}"
         fi
 
-        # Temporarily disable certain tests until fixed
       shell: bash
 
     - name: Run Verify Tests
