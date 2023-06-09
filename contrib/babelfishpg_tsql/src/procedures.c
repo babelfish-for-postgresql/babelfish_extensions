@@ -1598,9 +1598,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	Node	   *stmt;
 	Node	   *parsetree;
 	size_t		len;
-    PlannedStmt *wrapper;
-    const char *allowed_extns[] = {"pg_stat_statements", "tds_fdw"};
-    int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
+	PlannedStmt *wrapper;
+	bool flag = false;
+	const char *allowed_extns[] = {"pg_stat_statements", "tds_fdw"};
+	int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
 	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
@@ -1692,25 +1693,21 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 							errmsg("'%s' is not a valid schema, only sys and public schema is allowed in Babelfish", schemaName)));
 				}
 
+
 				for(int i = 0; i < allowed_extns_size; i++)
 				{
-					if((strcmp(crstmt->extname, allowed_extns[i])))
+					if(!(strcmp(crstmt->extname, allowed_extns[i])))
 					{
-						if(i == allowed_extns_size - 1)
-						{
-							ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								errmsg("'%s' extension creation is not supported", crstmt->extname)));
-						}
-						else
-						{
-							continue;
-						}
-					}
-					else
-					{
-						break;
+						flag = true;
 					}
 				}
+
+				if(!flag)
+				{
+					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 		errmsg("'%s' extension creation is not supported", crstmt->extname)));
+				}
+
 				/* do this step */
                 ProcessUtility(wrapper,
                             postgresStmt,
