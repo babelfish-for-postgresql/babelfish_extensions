@@ -42,6 +42,8 @@
 #include "parser/scansup.h"
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
+#include "tcop/cmdtag.h"
+#include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -71,6 +73,7 @@ extern bool babelfish_dump_restore;
 extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
+extern bool restore_tsql_tabletype;
 
 /*****************************************
  * 			Catalog Hooks
@@ -133,6 +136,11 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
+static void pltsql_CreateFunctionStmt(ParseState *pstate,
+									  PlannedStmt *pstmt,
+									  const char *queryString,
+									  ProcessUtilityContext context,
+									  ParamListInfo params);
 
 /*****************************************
  * 			Executor Hooks
@@ -196,6 +204,7 @@ static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
+static CreateFunctionStmt_hook_type prev_CreateFunctionStmt_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
@@ -320,8 +329,12 @@ InstallExtendedHooks(void)
 	prev_modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc_hook;
 	modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc;
 
+	prev_CreateFunctionStmt_hook = CreateFunctionStmt_hook;
+	CreateFunctionStmt_hook = pltsql_CreateFunctionStmt;
+
 	prev_fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom_hook;
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
+
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
 
@@ -392,6 +405,7 @@ UninstallExtendedHooks(void)
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
+	CreateFunctionStmt_hook = prev_CreateFunctionStmt_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
@@ -406,6 +420,195 @@ UninstallExtendedHooks(void)
 /*****************************************
  * 			Hook Functions
  *****************************************/
+
+static void
+pltsql_CreateFunctionStmt(ParseState *pstate,
+							   PlannedStmt *pstmt,
+							   const char *queryString,
+							   ProcessUtilityContext context,
+							   ParamListInfo params)
+{
+	Node *parsetree = pstmt->utilityStmt;
+	CreateFunctionStmt *stmt = (CreateFunctionStmt *)parsetree;
+	ListCell *option, *location_cell = NULL;
+	DefElem    *language_item = NULL;
+	char *language = NULL;
+	ObjectAddress address;
+	bool isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
+	bool needCleanup;
+	Node *tbltypStmt = NULL;
+	Node *trigStmt = NULL;
+	ObjectAddress tbltyp;
+	int origname_location = -1;
+
+	foreach(option, stmt->options)
+			{
+				DefElem *defel = (DefElem *)lfirst(option); 
+		
+				if (strcmp(defel->defname, "language") == 0)
+				{
+					if (language_item)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								errmsg("conflicting or redundant options"),
+								parser_errposition(pstate, defel->location)));
+					language_item = defel;
+				}
+			}
+
+	if (language_item)
+		language = strVal(language_item->arg);
+
+	if((language && !strcmp(language,"pltsql")) || sql_dialect == SQL_DIALECT_TSQL)
+	{
+		
+		/* All event trigger calls are done only when isCompleteQuery is true */
+		needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
+
+		/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
+		PG_TRY();
+		{
+
+			if (isCompleteQuery)
+				EventTriggerDDLCommandStart(parsetree);
+
+			foreach (option, stmt->options)
+			{
+				DefElem *defel = (DefElem *)lfirst(option);
+				if (strcmp(defel->defname, "tbltypStmt") == 0)
+				{
+					/*
+					* tbltypStmt is an implicit option in tsql dialect,
+					* we use this mechanism to create tsql style
+					* multi-statement table-valued function and its
+					* return (table) type in one statement.
+					*/
+					tbltypStmt = defel->arg;
+				}
+				else if (strcmp(defel->defname, "trigStmt") == 0)
+				{
+					/*
+					* trigStmt is an implicit option in tsql dialect,
+					* we use this mechanism to create tsql style function
+					* and trigger in one statement.
+					*/
+					trigStmt = defel->arg;
+				}
+				else if (strcmp(defel->defname, "location") == 0)
+				{
+					/*
+					* location is an implicit option in tsql dialect,
+					* we use this mechanism to store location of function
+					* name so that we can extract original input function
+					* name from queryString.
+					*/
+					origname_location = intVal((Node *)defel->arg);
+					location_cell = option;
+					pfree(defel);
+				}
+			}
+	
+			/* delete location cell if it exists as it is for internal use only */
+			if (location_cell)
+				stmt->options = list_delete_cell(stmt->options, location_cell);
+
+			/*
+			* For tbltypStmt, we need to first process the CreateStmt
+			* to create the type that will be used as the function's
+			* return type. Then, after the function is created, add a
+			* dependency between the type and the function.
+			*/
+			if (tbltypStmt)
+			{
+				/* Handle tbltypStmt, which is a CreateStmt */
+				PlannedStmt *wrapper;
+
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = tbltypStmt;
+				wrapper->stmt_location = pstmt->stmt_location;
+				wrapper->stmt_len = pstmt->stmt_len;
+
+				ProcessUtility(wrapper,
+							queryString,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							params,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				/* Need CCI between commands */
+				CommandCounterIncrement();
+			}
+
+			address = CreateFunction(pstate, stmt);
+
+			/* Store function/procedure related metadata in babelfish catalog */
+			pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
+
+			if (tbltypStmt || restore_tsql_tabletype)
+			{
+				/*
+				* Add internal dependency between the table type and
+				* the function.
+				*/
+				tbltyp.classId = TypeRelationId;
+				tbltyp.objectId = typenameTypeId(pstate,
+												stmt->returnType);
+				tbltyp.objectSubId = 0;
+				recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
+			}
+
+			/*
+			* For trigStmt, we need to process the CreateTrigStmt after
+			* the function is created, and record bidirectional
+			* dependency so that Drop Trigger CASCADE will drop the
+			* implicit trigger function.
+			* Create trigger takes care of dependency addition.
+			*/
+			if (trigStmt)
+			{
+				(void)CreateTrigger((CreateTrigStmt *)trigStmt,
+									pstate->p_sourcetext, InvalidOid, InvalidOid,
+									InvalidOid, InvalidOid, address.objectId,
+									InvalidOid, NULL, false, false);
+			}
+
+			/*
+			* Remember the object so that ddl_command_end event triggers have
+			* access to it.
+			*/
+			EventTriggerCollectSimpleCommand(address, InvalidObjectAddress,
+											parsetree);
+
+			if (isCompleteQuery)
+			{
+				EventTriggerSQLDrop(parsetree);
+				EventTriggerDDLCommandEnd(parsetree);
+			}
+		}
+
+		PG_CATCH();
+		{
+			if (needCleanup)
+				EventTriggerEndCompleteQuery();
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+
+		if (needCleanup)
+			EventTriggerEndCompleteQuery();
+		return;
+
+	}
+	else
+	{
+		address = CreateFunction(pstate, (CreateFunctionStmt *) parsetree);
+	}
+}
+
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
