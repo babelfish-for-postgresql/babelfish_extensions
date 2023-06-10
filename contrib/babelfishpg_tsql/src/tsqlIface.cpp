@@ -1790,10 +1790,6 @@ public:
 				std::string newStr;
 				newStr = std::string("'") + argStr + std::string("'") ;
 
-				TSqlParser::Execute_bodyContext * exBodyCtx = dynamic_cast<TSqlParser::Execute_bodyContext *>(ctx->parent);
-
-				std::string bodyStr = getFullText(exBodyCtx);
-
 				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), newStr)));
 			}
 		}
