@@ -3222,3 +3222,21 @@ BEGIN
 END;
 $$
 LANGUAGE pltsql STABLE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
+AS $$
+BEGIN
+	IF IS_SRVROLEMEMBER('sysadmin') = 0
+	BEGIN
+		RAISERROR('Permission was denied',16,1);
+	END;
+	IF EXISTS(SELECT 1 FROM pg_foreign_data_wrapper)
+	BEGIN
+		SELECT
+		CAST('TDS_FDW' AS NVARCHAR(255)) AS [Provider Name],
+		CAST('{alnvalfjal80u9y1e19}' AS NVARCHAR(255)) AS [Parse Name],
+		CAST('A PostgreSQL foreign data wrapper to connect to TDS databases (Sybase and Microsoft SQL Server)' AS NVARCHAR(255)) AS [Provider Description];
+	END;
+END;
+$$ LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_enum_oledb_providers() TO PUBLIC;
