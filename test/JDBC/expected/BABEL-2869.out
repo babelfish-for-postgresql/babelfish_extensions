@@ -64,7 +64,6 @@ sysname
 text
 time
 timestamp
-timestamp
 tinyint
 uniqueidentifier
 varbinary
