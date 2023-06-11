@@ -3416,6 +3416,7 @@ DECLARE
     type_namee VARCHAR;
     sys_id int;
     testt VARCHAR;
+    mx_ln int;
 BEGIN
 
     property := RTRIM(LOWER(COALESCE(property COLLATE "C",'')));
@@ -3457,7 +3458,7 @@ BEGIN
 
     sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
     type_namee := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
-
+    mx_ln := (SELECT CAST(dc.max_length AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
     IF property = 'allowsnull'
     THEN
         RETURN (
@@ -3475,18 +3476,20 @@ BEGIN
 
         IF preci = 0
         THEN
-            preci = (SELECT CAST(dc.prec AS INT) FROM sys.systypes dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.uid = schemaid);
-            IF preci IS NULL
+            IF type_namee = 'image' or type_namee = 'text'
             THEN
-                IF type_namee = 'image' or type_namee = 'text'
-                THEN
-                RETURN 2147483647;
-                ELSEIF type_namee = 'ntext'
-                THEN
-                RETURN 1073741823;
-                END IF;
+            RETURN 2147483647;
+            ELSEIF type_namee = 'ntext'
+            THEN
+            RETURN 1073741823;
+            ELSEIF type_namee = 'sql_variant'
+            THEN
+            RETURN 0;
+            ELSEIF type_namee::regtype IN ('nchar'::regtype, 'nvarchar'::regtype, 'sysname'::regtype)
+            THEN
+            RETURN mx_ln/2;
             END IF;
-            RETURN preci;
+            RETURN mx_ln;
         ELSE
             RETURN preci;
         END IF;        
