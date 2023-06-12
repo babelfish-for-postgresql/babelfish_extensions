@@ -153,7 +153,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
                           ParamListInfo params)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
-    CreateFunctionStmt *stmt = (CreateFunctionStmt *)parsetree;
+	CreateFunctionStmt *stmt = (CreateFunctionStmt *)parsetree;
 	ListCell *option, *location_cell = NULL;
 	DefElem    *language_item = NULL;
 	char *language = NULL;
@@ -168,19 +168,19 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 	pstate->p_sourcetext = queryString;
 
 	foreach(option, stmt->options)
-			{
-				DefElem *defel = (DefElem *)lfirst(option); 
+	{
+		DefElem *defel = (DefElem *)lfirst(option); 
 
-				if (strcmp(defel->defname, "language") == 0)
-				{
-					if (language_item)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								errmsg("conflicting or redundant options"),
-								parser_errposition(pstate, defel->location)));
-					language_item = defel;
-				}
-			}
+		if (strcmp(defel->defname, "language") == 0)
+		{
+			if (language_item)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("conflicting or redundant options"),
+						parser_errposition(pstate, defel->location)));
+			language_item = defel;
+		}
+	}
 
 	if (language_item)
 		language = strVal(language_item->arg);
@@ -189,7 +189,6 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 	{
 		return false;
 	}
-
 	else
 	{	
 		/* All event trigger calls are done only when isCompleteQuery is true */
@@ -198,7 +197,6 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 		/* PG_TRY block is to ensure we call EventTriggerEndCompleteQuery */
 		PG_TRY();
 		{
-
 			if (isCompleteQuery)
 				EventTriggerDDLCommandStart(parsetree);
 
