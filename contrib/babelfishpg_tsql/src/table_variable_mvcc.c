@@ -350,9 +350,6 @@ TVHeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot, Buffer buff
 bool
 TVHeapTupleSatisfiesVisibility(HeapTuple tup, Snapshot snapshot, Buffer buffer)
 {
-    if (!IS_TDS_CLIENT())
-        ereport(ERROR, (errmsg("Table Variables on non-TDS clients are unsupported")));
-
     switch (snapshot->snapshot_type)
     {
         case SNAPSHOT_MVCC:
@@ -395,9 +392,6 @@ TM_Result TVHeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid, Buffer bu
 
     Assert(ItemPointerIsValid(&htup->t_self));
     Assert(htup->t_tableOid != InvalidOid);
-
-    if (!IS_TDS_CLIENT())
-        ereport(ERROR, (errmsg("Table Variables on non-TDS clients are unsupported")));
 
     if (!HeapTupleHeaderXminCommitted(tuple))
     {
@@ -541,9 +535,6 @@ TVHeapTupleSatisfiesVacuumHorizon(HeapTuple htup, Buffer buffer, TransactionId *
     Assert(dead_after != NULL);
 
     *dead_after = InvalidTransactionId;
-
-    if (!IS_TDS_CLIENT())
-        ereport(ERROR, (errmsg("Table Variables on non-TDS clients are unsupported")));
 
     /*
     * Has inserting transaction committed?

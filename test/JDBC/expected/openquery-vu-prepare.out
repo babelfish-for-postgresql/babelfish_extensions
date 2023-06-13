@@ -32,7 +32,7 @@ EXEC sp_serveroption @server='invalid_server', @optname='query timeout', @optval
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: server "invalid_server" does not exist)~~
+~~ERROR (Message: The server 'invalid_server' does not exist. Use sp_linkedservers to show available servers.)~~
 
 
 -- sp_serveroption with invalid server option. Should throw error
@@ -40,7 +40,7 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='invalid option', @optvalu
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option provided for sp_serveroption)~~
+~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' is currently supported.)~~
 
 
 -- sp_serveroption with server as NULL. Should throw error
@@ -188,6 +188,30 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
 GO
 
+-- ignore trailing spaces in all the arguments
+EXEC sp_serveroption @server='bbf_server_1  ', @optname='query timeout   ', @optvalue='1    '
+GO
+
+-- do not ignore leading spaces in @server argument
+EXEC sp_serveroption @server='  bbf_server_1', @optname='query timeout', @optvalue='1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server '  bbf_server_1' does not exist. Use sp_linkedservers to show available servers.)~~
+
+
+-- do not ignore leading spaces in @optname argument
+EXEC sp_serveroption @server='bbf_server_1', @optname='  query timeout', @optvalue='1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' is currently supported.)~~
+
+
+-- ignore leading spaces in @optvalue argument
+EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='  1'
+GO
+
 -- psql
 SELECT * FROM sys.babelfish_inconsistent_metadata() where schema_name='pg_catalog' AND object_name='srvname';
 GO
@@ -220,4 +244,17 @@ bbf_server_1#!#1
 
 -- Create a view dependent on OPENQUERY
 CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
+GO
+
+CREATE PROCEDURE openquery_vu_prepare__openquery_proc AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 2')
+GO
+
+CREATE FUNCTION openquery_vu_prepare__openquery_func()
+RETURNS INT
+AS
+BEGIN
+DECLARE @i int
+SELECT @i = COUNT(*) FROM OPENQUERY(bbf_server, 'SELECT 2')
+RETURN @i
+END
 GO

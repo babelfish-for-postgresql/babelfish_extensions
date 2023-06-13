@@ -49,24 +49,20 @@ bool is_empty(std::ifstream& pFile)
 
 // Helper function that reads from a file and returns the contents as a string
 string readFromFile(string relativePath) {
-  int bufferLen = 1024;
-  char * buffer = new char [bufferLen];
-  char * fname;
-
   std::ifstream dataFile(relativePath);
   if (is_empty(dataFile)) {
     return "";
   }
-
-  std::filesystem::path fp{relativePath};
-  int fsize = std::filesystem::file_size(fp);
-  while (fsize > bufferLen){
-    dataFile.read(buffer, bufferLen);
-    fsize -= bufferLen;
+  
+  auto stream = std::ifstream(relativePath.data());
+  constexpr auto read_size = std::size_t(4096);
+  auto out = std::string();
+  auto buf = std::string(read_size,'\0');
+  while (stream.read(& buf[0], read_size)) {
+        out.append(buf, 0, stream.gcount());
   }
-  dataFile.read(buffer, fsize);
-  dataFile.close();
-  return string(buffer);
+  out.append(buf, 0, stream.gcount());
+  return out;
 }
 
 // Helper function that iterates over & fetches data, and compares retrieved value to expected value 

@@ -1,0 +1,10 @@
+EXEC sp_dropserver 'babel_4168_server', 'droplogins'
+GO
+
+-- psql
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+GO
+
+-- tsql
+DROP VIEW babel_4168_vu_prepare_view
+GO

@@ -1,8 +1,6 @@
--- psql
-alter database jdbc_testdb set timezone to 'Australia/Sydney';
+SELECT set_config('timezone', 'Australia/Sydney', false)
 GO
 
--- tsql
 select current_setting('TIMEZONE');
 GO
 drop table if exists gh_1412_t1;
@@ -22,11 +20,8 @@ GO
 create view gh_1412_v1 as select cast('2000-06-01 00:00:00' as datetimeoffset) as dto;
 GO
 
--- psql
-alter database jdbc_testdb reset timezone;
+SELECT set_config('timezone', 'UTC', false)
 GO
 
--- terminate-tsql-conn
--- tsql
 insert gh_1412_t1 values (2, '2000-06-01 00:00:00', default, 'default time zone');
 GO

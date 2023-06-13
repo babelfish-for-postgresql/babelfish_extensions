@@ -10,6 +10,10 @@ GO
 CREATE TABLE isc_columns_vu_prepare_nums(a INT, b SMALLINT, c TINYINT, d BIGINT, e BIT, f FLOAT, g REAL, h NUMERIC(5,3), i MONEY, j SMALLMONEY)
 GO
 
+-- test bytea datatype
+CREATE TABLE isc_columns_vu_prepare_bytea(a bytea, b image)
+GO
+
 -- test with different db
 CREATE DATABASE isc_columns_db1
 GO
@@ -48,4 +52,9 @@ GO
 -- Dep View
 CREATE VIEW isc_columns_vu_prepare_v1 AS
     SELECT * FROM information_schema.columns WHERE TABLE_NAME LIKE '%isc_columns_UDT%' ORDER BY DATA_TYPE,COLUMN_NAME
+GO
+
+-- dep view
+CREATE VIEW isc_columns_bytea_v2 AS
+    SELECT * FROM information_schema.columns WHERE TABLE_NAME = 'isc_columns_vu_prepare_bytea' ORDER BY DATA_TYPE,COLUMN_NAME
 GO
