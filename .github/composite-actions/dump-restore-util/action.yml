@@ -61,7 +61,6 @@ runs:
 
         # Create and initialise Babelfish extensions in the new server to perform restore.
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -c "ALTER ROLE jdbc_user NOSUPERUSER NOREPLICATION;"
         echo 'Restoring from pg_dumpall'
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
         echo 'Restoring from pg_dump'
