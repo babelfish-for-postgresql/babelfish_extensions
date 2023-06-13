@@ -59,70 +59,58 @@ go
 DROP TYPE pgss_type
 go
 
+
+
 -- transaction statements
-BEGIN TRANSACTION;
-SELECT 1 AS "int";
-SELECT 'hello' AS "text";
-COMMIT TRANSACTION;
+-- BEGIN TRANSACTION;
+-- SELECT 1 AS "int";
+-- SELECT 'hello' AS "text";
+-- COMMIT TRANSACTION;
+-- go
+-- CREATE TABLE pgss_transaction(age int)
+-- go
+-- INSERT INTO pgss_transaction values(22),(12),(32),(21)
+-- go
+-- BEGIN TRANSACTION;
+-- INSERT INTO pgss_transaction values(12)
+-- SAVE TRANSACTION insertstmt
+-- select * from pgss_transaction
+-- ROLLBACK TRANSACTION insertstmt
+-- COMMIT
+-- go
+-- DROP TABLE pgss_transaction
+-- go
+-- cursor(T-SQL only statement, not visible in the view)
+CREATE TABLE pgss_cursor(age int)
 go
-~~START~~
-int
-1
-~~END~~
-
-~~START~~
-varchar
-hello
-~~END~~
-
-
-CREATE TABLE pgss_transaction(age int)
+INSERT INTO pgss_cursor values(22),(12),(43)
 go
-insert into pgss_transaction values(22),(12),(32),(21)
-go
-~~ROW COUNT: 4~~
+~~ROW COUNT: 3~~
 
-BEGIN TRANSACTION;
-insert into pgss_transaction values(12)
-SAVE TRANSACTION insertstmt
-select * from pgss_transaction
-ROLLBACK TRANSACTION insertstmt
-COMMIT
-go
-~~ROW COUNT: 1~~
-
-~~START~~
-int
-22
-12
-32
-21
-12
-~~END~~
-
-DROP TABLE pgss_transaction
-go
-
--- cursor
-declare next2 cursor
-for select * from demo
-open next2
-fetch next from next2
+declare pgss_next cursor
+for select * from pgss_cursor
+open pgss_next
+fetch next from pgss_next
 go
 ~~START~~
 int
 22
 ~~END~~
 
+DROP TABLE pgss_cursor
+go
 
--- break/print (These are T-SQL only statements, not visible in the view)
+-- break/continue/raiserror/print (These are T-SQL only statements, not visible in the view)
 DECLARE @counter INT = 0;
 WHILE @counter <= 5
 BEGIN
 SET @counter = @counter + 1;
 IF @counter = 4
 break
-ELSE 
+ELSE IF @counter = 2
+continue
+ELSE
+RAISERROR('Oops error', 1, 1)
 PRINT @counter;
 end
 go
@@ -139,17 +127,15 @@ SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where q
 go
 ~~START~~
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
-16385#!#1#!#CREATE TABLE pgss_transaction(age int)#!#1#!#0#!#0
+16385#!#1#!#CREATE TABLE pgss_cursor(age int)#!#1#!#0#!#0
 16385#!#1#!#CREATE TYPE pgss_type from varchar(22)#!#1#!#0#!#0
-16385#!#1#!#DROP TABLE pgss_transaction#!#1#!#0#!#0
+16385#!#1#!#DROP TABLE pgss_cursor#!#1#!#0#!#0
 16385#!#1#!#DROP TYPE pgss_type#!#1#!#0#!#0
-16385#!#1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#3#!#3#!#0
-16385#!#1#!#SELECT $1 AS "int"#!#2#!#2#!#0
+16385#!#1#!#INSERT INTO pgss_cursor values($1),($2),($3)#!#1#!#3#!#0
+16385#!#1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#2#!#2#!#0
+16385#!#1#!#SELECT $1 AS "int"#!#1#!#1#!#0
 16385#!#1#!#SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != $1 ORDER BY query COLLATE "C"#!#1#!#0#!#0
-16385#!#1#!#insert into pgss_transaction values($1)#!#1#!#1#!#0
-16385#!#1#!#insert into pgss_transaction values($1),($2),($3),($4)#!#1#!#4#!#0
-16385#!#1#!#select * from demo#!#1#!#1#!#0
-16385#!#1#!#select * from pgss_transaction#!#1#!#5#!#0
+16385#!#1#!#select * from pgss_cursor#!#1#!#1#!#0
 ~~END~~
 
 
@@ -163,7 +149,7 @@ void
 
 
 -- tsql
--- for few statements like information_schema.views the name in the view will be shown as information_schema_tsql.views
+-- for information_schema.views the name in the view will be shown as information_schema_tsql.views
 SELECT * FROM information_schema.views WHERE TABLE_NAME = 'india customers';
 go
 ~~START~~
@@ -189,7 +175,7 @@ void
 
 
 -- tsql
--- for create/drop login user internally we use sysadmin privileges to execute hence query and queryid will not be shown for any statements if user executing the query and owner of extension is not same
+-- for create/drop/alter login internally we use sysadmin privileges to execute it. Query and queryid is not shown for any statement if user executing the query and owner of extension is not same.
 CREATE LOGIN  pgss_l1 with password = '12345678'
 go
 DROP LOGIN  pgss_l1
@@ -203,7 +189,6 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#<insufficient privilege>#!#1#!#0#!#0
 16385#!#1#!#<insufficient privilege>#!#1#!#0#!#0
 ~~END~~
-
 
 
 -- create insert select update delete trigger truncate on test table
@@ -465,7 +450,7 @@ UTS
 CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5 
 go
 
--- this will also show up as select nextval() in the view
+-- this will show up as select nextval() in the view
 SELECT NEXT VALUE FOR [dbo].[newCounter]
 go
 ~~START~~
@@ -489,6 +474,11 @@ go
 CREATE TABLE #pgss_demo(age int)
 go
 
+-- tsql procedure
+
+
+-- CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
+-- go
 DROP VIEW  [India customers]
 go
 DROP TABLE pgss_orders
@@ -496,16 +486,11 @@ go
 DROP TABLE pgss_cust
 go
 
--- tsql procedure
-
-
 
 -- tsql
 -- DROP FUNCTION [dbo].[getCustomers]
 -- go
 -- DROP FUNCTION pgss_f1
--- go
--- CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
 -- go
 -- DROP PROCEDURE pgss_p1;
 -- go

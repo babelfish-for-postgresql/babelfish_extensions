@@ -36,41 +36,50 @@ DROP TYPE pgss_type
 go
 
 -- transaction statements
-BEGIN TRANSACTION;
-SELECT 1 AS "int";
-SELECT 'hello' AS "text";
-COMMIT TRANSACTION;
+-- BEGIN TRANSACTION;
+-- SELECT 1 AS "int";
+-- SELECT 'hello' AS "text";
+-- COMMIT TRANSACTION;
+-- go
+
+-- CREATE TABLE pgss_transaction(age int)
+-- go
+-- INSERT INTO pgss_transaction values(22),(12),(32),(21)
+-- go
+-- BEGIN TRANSACTION;
+-- INSERT INTO pgss_transaction values(12)
+-- SAVE TRANSACTION insertstmt
+-- select * from pgss_transaction
+-- ROLLBACK TRANSACTION insertstmt
+-- COMMIT
+-- go
+-- DROP TABLE pgss_transaction
+-- go
+
+-- cursor(T-SQL only statement, not visible in the view)
+CREATE TABLE pgss_cursor(age int)
+go
+INSERT INTO pgss_cursor values(22),(12),(43)
+go
+declare pgss_next cursor
+for select * from pgss_cursor
+open pgss_next
+fetch next from pgss_next
+go
+DROP TABLE pgss_cursor
 go
 
-CREATE TABLE pgss_transaction(age int)
-go
-insert into pgss_transaction values(22),(12),(32),(21)
-go
-BEGIN TRANSACTION;
-insert into pgss_transaction values(12)
-SAVE TRANSACTION insertstmt
-select * from pgss_transaction
-ROLLBACK TRANSACTION insertstmt
-COMMIT
-go
-DROP TABLE pgss_transaction
-go
-
--- cursor
-declare next2 cursor
-for select * from demo
-open next2
-fetch next from next2
-go
-
--- break/print (These are T-SQL only statements, not visible in the view)
+-- break/continue/raiserror/print (These are T-SQL only statements, not visible in the view)
 DECLARE @counter INT = 0;
 WHILE @counter <= 5
 BEGIN
 SET @counter = @counter + 1;
 IF @counter = 4
 break
-ELSE 
+ELSE IF @counter = 2
+continue
+ELSE
+RAISERROR('Oops error', 1, 1)
 PRINT @counter;
 end
 go
@@ -91,7 +100,7 @@ SELECT sys.pg_stat_statements_reset();
 go
 
 -- tsql
--- for few statements like information_schema.views the name in the view will be shown as information_schema_tsql.views
+-- for information_schema.views the name in the view will be shown as information_schema_tsql.views
 SELECT * FROM information_schema.views WHERE TABLE_NAME = 'india customers';
 go
 
@@ -103,7 +112,7 @@ SELECT sys.pg_stat_statements_reset();
 go
 
 -- tsql
--- for create/drop login user internally we use sysadmin privileges to execute hence query and queryid will not be shown for any statements if user executing the query and owner of extension is not same
+-- for create/drop/alter login internally we use sysadmin privileges to execute it. Query and queryid is not shown for any statement if user executing the query and owner of extension is not same.
 CREATE LOGIN  pgss_l1 with password = '12345678'
 go
 DROP LOGIN  pgss_l1
@@ -113,7 +122,6 @@ SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements ORDER B
 go
 
 -- create insert select update delete trigger truncate on test table
-
 CREATE TABLE pgss_test (a int, b char(20));
 go
 
@@ -230,7 +238,7 @@ go
 CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5 
 go
 
--- this will also show up as select nextval() in the view
+-- this will show up as select nextval() in the view
 SELECT NEXT VALUE FOR [dbo].[newCounter]
 go
 
@@ -249,6 +257,11 @@ go
 CREATE TABLE #pgss_demo(age int)
 go
 
+-- tsql procedure
+-- CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
+-- go
+
+
 DROP VIEW  [India customers]
 go
 DROP TABLE pgss_orders
@@ -259,11 +272,6 @@ go
 -- go
 -- DROP FUNCTION pgss_f1
 -- go
-
--- tsql procedure
--- CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
--- go
-
 -- DROP PROCEDURE pgss_p1;
 -- go
 
