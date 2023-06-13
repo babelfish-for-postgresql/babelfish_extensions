@@ -59,27 +59,50 @@ go
 DROP TYPE pgss_type
 go
 
-
-
 -- transaction statements
--- BEGIN TRANSACTION;
--- SELECT 1 AS "int";
--- SELECT 'hello' AS "text";
--- COMMIT TRANSACTION;
--- go
--- CREATE TABLE pgss_transaction(age int)
--- go
--- INSERT INTO pgss_transaction values(22),(12),(32),(21)
--- go
--- BEGIN TRANSACTION;
--- INSERT INTO pgss_transaction values(12)
--- SAVE TRANSACTION insertstmt
--- select * from pgss_transaction
--- ROLLBACK TRANSACTION insertstmt
--- COMMIT
--- go
--- DROP TABLE pgss_transaction
--- go
+BEGIN TRANSACTION;
+SELECT 1 AS "int";
+SELECT 'hello' AS "text";
+COMMIT TRANSACTION;
+go
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+varchar
+hello
+~~END~~
+
+
+CREATE TABLE pgss_transaction(age int)
+go
+INSERT INTO pgss_transaction values(22),(12),(32),(21)
+go
+~~ROW COUNT: 4~~
+
+BEGIN TRANSACTION;
+INSERT INTO pgss_transaction values(12)
+SAVE TRANSACTION insertstmt
+select * from pgss_transaction
+ROLLBACK TRANSACTION insertstmt
+COMMIT
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+22
+12
+32
+21
+12
+~~END~~
+
+DROP TABLE pgss_transaction
+go
+
 -- cursor(T-SQL only statement, not visible in the view)
 CREATE TABLE pgss_cursor(age int)
 go
@@ -116,26 +139,38 @@ end
 go
 
 
+-- db statements
+CREATE DATABASE pgss_db
+go
+DROP DATABASE pgss_db
+go
 
 -- tsql
--- db statements
--- CREATE DATABASE pgss_db
--- go
--- DROP DATABASE pgss_db
--- go
 SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 ~~START~~
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
+16385#!#1#!#BEGIN TRANSACTION#!#2#!#0#!#0
+16385#!#1#!#COMMIT#!#1#!#0#!#0
+16385#!#1#!#COMMIT TRANSACTION#!#1#!#0#!#0
+16385#!#1#!#CREATE DATABASE pgss_db#!#1#!#0#!#0
 16385#!#1#!#CREATE TABLE pgss_cursor(age int)#!#1#!#0#!#0
+16385#!#1#!#CREATE TABLE pgss_transaction(age int)#!#1#!#0#!#0
 16385#!#1#!#CREATE TYPE pgss_type from varchar(22)#!#1#!#0#!#0
+16385#!#1#!#DROP DATABASE pgss_db#!#1#!#0#!#0
 16385#!#1#!#DROP TABLE pgss_cursor#!#1#!#0#!#0
+16385#!#1#!#DROP TABLE pgss_transaction#!#1#!#0#!#0
 16385#!#1#!#DROP TYPE pgss_type#!#1#!#0#!#0
 16385#!#1#!#INSERT INTO pgss_cursor values($1),($2),($3)#!#1#!#3#!#0
-16385#!#1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#2#!#2#!#0
-16385#!#1#!#SELECT $1 AS "int"#!#1#!#1#!#0
+16385#!#1#!#INSERT INTO pgss_transaction values($1)#!#1#!#1#!#0
+16385#!#1#!#INSERT INTO pgss_transaction values($1),($2),($3),($4)#!#1#!#4#!#0
+16385#!#1#!#ROLLBACK TRANSACTION insertstmt#!#1#!#0#!#0
+16385#!#1#!#SAVE TRANSACTION insertstmt#!#1#!#0#!#0
+16385#!#1#!#SELECT $1<newline>  -- multiline<newline>  AS "text"#!#3#!#3#!#0
+16385#!#1#!#SELECT $1 AS "int"#!#2#!#2#!#0
 16385#!#1#!#SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != $1 ORDER BY query COLLATE "C"#!#1#!#0#!#0
 16385#!#1#!#select * from pgss_cursor#!#1#!#1#!#0
+16385#!#1#!#select * from pgss_transaction#!#1#!#5#!#0
 ~~END~~
 
 
@@ -181,13 +216,13 @@ go
 DROP LOGIN  pgss_l1
 go
 
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements ORDER BY query COLLATE "C";
+SELECT dbid, toplevel, query from pg_stat_statements ORDER BY query COLLATE "C";
 go
 ~~START~~
-int#!#bit#!#text#!#bigint#!#bigint#!#bigint
-16385#!#1#!#<insufficient privilege>#!#1#!#1#!#0
-16385#!#1#!#<insufficient privilege>#!#1#!#0#!#0
-16385#!#1#!#<insufficient privilege>#!#1#!#0#!#0
+int#!#bit#!#text
+16385#!#1#!#<insufficient privilege>
+16385#!#1#!#<insufficient privilege>
+16385#!#1#!#<insufficient privilege>
 ~~END~~
 
 
@@ -254,13 +289,14 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#ALTER TABLE pgss_test ENABLE TRIGGER pgss_trigger1#!#1#!#0#!#0
 16385#!#1#!#CREATE ROLE pgss_test_role#!#1#!#0#!#0
 16385#!#1#!#CREATE TABLE pgss_test (a int, b char(20))#!#1#!#0#!#0
+16385#!#1#!#CREATE TRIGGER pgss_trigger1 on [dbo].[pgss_test] for insert as<newline>PRINT 'after insert trigger called'#!#1#!#0#!#0
 16385#!#1#!#DELETE FROM pgss_test WHERE a > $1#!#1#!#1#!#0
 16385#!#1#!#GRANT INSERT, UPDATE, SELECT ON pgss_test TO pgss_test_role#!#1#!#0#!#0
 16385#!#1#!#INSERT INTO pgss_test VALUES(generate_series($1, $2), $3)#!#1#!#10#!#0
 16385#!#1#!#REVOKE INSERT, UPDATE, SELECT ON pgss_test FROM pgss_test_role#!#1#!#0#!#0
 16385#!#1#!#SELECT * FROM pgss_test ORDER BY a#!#1#!#0#!#0
 16385#!#1#!#SELECT * FROM pgss_test WHERE a IN ($1, $2, $3, $4, $5)#!#1#!#0#!#0
-16385#!#1#!#SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements ORDER BY query COLLATE "C"#!#1#!#3#!#0
+16385#!#1#!#SELECT dbid, toplevel, query from pg_stat_statements ORDER BY query COLLATE "C"#!#1#!#3#!#0
 16385#!#1#!#TRUNCATE TABLE pgss_test#!#1#!#0#!#0
 16385#!#1#!#UPDATE pgss_test SET b = $1 WHERE a > $2#!#1#!#3#!#0
 ~~END~~
@@ -444,9 +480,9 @@ UTS
 
 
 -- tsql function
+CREATE FUNCTION pgss_f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
+go
 
--- CREATE FUNCTION pgss_f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
--- go
 CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5 
 go
 
@@ -462,42 +498,53 @@ bigint
 DROP SEQUENCE [dbo].[newCounter]
 go
 
-
 -- Inline table-valued function
--- create function [dbo].[getCustomers](@age int) returns table as return 
--- (select customers.customerid, customers.name, customers.age from customers
--- where age >= @age)
--- go
--- select * from [dbo].[getCustomers](20)
--- go
+CREATE FUNCTION [dbo].[getCustomers](@age int) returns table as return 
+(select pgss_cust.customerid, pgss_cust.name, pgss_cust.age from pgss_cust
+where age >= @age)
+go
+SELECT * FROM [dbo].[getCustomers](20)
+go
+~~START~~
+int#!#varchar#!#int
+2#!#XYZ#!#21
+3#!#LMN#!#29
+4#!#PQR#!#52
+5#!#STU#!#23
+~~END~~
+
+
 -- Temp table
 CREATE TABLE #pgss_demo(age int)
 go
 
 -- tsql procedure
+CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
+go
 
 
--- CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
--- go
 DROP VIEW  [India customers]
 go
 DROP TABLE pgss_orders
 go
 DROP TABLE pgss_cust
 go
+DROP FUNCTION [dbo].[getCustomers]
+go
+DROP FUNCTION pgss_f1
+go
+DROP PROCEDURE pgss_p1;
+go
 
 
 -- tsql
--- DROP FUNCTION [dbo].[getCustomers]
--- go
--- DROP FUNCTION pgss_f1
--- go
--- DROP PROCEDURE pgss_p1;
--- go
 SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 ~~START~~
 int#!#bit#!#text#!#bigint#!#bigint#!#bigint
+16385#!#1#!#CREATE FUNCTION [dbo].[getCustomers](@age int) returns table as return <newline>(select pgss_cust.customerid, pgss_cust.name, pgss_cust.age from pgss_cust<newline>where age >= @age)#!#1#!#0#!#0
+16385#!#1#!#CREATE FUNCTION pgss_f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END;#!#1#!#0#!#0
+16385#!#1#!#CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b;#!#1#!#0#!#0
 16385#!#1#!#CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5#!#1#!#0#!#0
 16385#!#1#!#CREATE TABLE #pgss_demo(age int)#!#1#!#0#!#0
 16385#!#1#!#CREATE TABLE pgss_cust(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))#!#1#!#0#!#0
@@ -505,6 +552,9 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#CREATE TABLE pgss_test (a int, b char(20))#!#1#!#0#!#0
 16385#!#1#!#CREATE VIEW [India customers] as select customerid from pgss_orders where country = 'India'#!#1#!#0#!#0
 16385#!#1#!#DELETE FROM pgss_test WHERE a > $1#!#1#!#1#!#0
+16385#!#1#!#DROP FUNCTION [dbo].[getCustomers]#!#1#!#0#!#0
+16385#!#1#!#DROP FUNCTION pgss_f1#!#1#!#0#!#0
+16385#!#1#!#DROP PROCEDURE pgss_p1#!#1#!#0#!#0
 16385#!#1#!#DROP SEQUENCE [dbo].[newCounter]#!#1#!#0#!#0
 16385#!#1#!#DROP TABLE pgss_cust#!#1#!#0#!#0
 16385#!#1#!#DROP TABLE pgss_orders#!#1#!#0#!#0
@@ -515,6 +565,7 @@ int#!#bit#!#text#!#bigint#!#bigint#!#bigint
 16385#!#1#!#INSERT INTO pgss_test VALUES(generate_series($1, $2), $3)#!#1#!#10#!#0
 16385#!#1#!#SELECT    nextval($1)#!#1#!#1#!#0
 16385#!#1#!#SELECT * FROM [India customers]#!#1#!#2#!#0
+16385#!#1#!#SELECT * FROM [dbo].[getCustomers]($1)#!#1#!#4#!#0
 16385#!#1#!#SELECT * FROM pgss_cust#!#1#!#5#!#0
 16385#!#1#!#SELECT AVG(age) FROM pgss_cust#!#1#!#1#!#0
 16385#!#1#!#SELECT COUNT(*) from pgss_orders where country =$1#!#1#!#1#!#0

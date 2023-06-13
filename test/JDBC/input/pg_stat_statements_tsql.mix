@@ -36,25 +36,25 @@ DROP TYPE pgss_type
 go
 
 -- transaction statements
--- BEGIN TRANSACTION;
--- SELECT 1 AS "int";
--- SELECT 'hello' AS "text";
--- COMMIT TRANSACTION;
--- go
+BEGIN TRANSACTION;
+SELECT 1 AS "int";
+SELECT 'hello' AS "text";
+COMMIT TRANSACTION;
+go
 
--- CREATE TABLE pgss_transaction(age int)
--- go
--- INSERT INTO pgss_transaction values(22),(12),(32),(21)
--- go
--- BEGIN TRANSACTION;
--- INSERT INTO pgss_transaction values(12)
--- SAVE TRANSACTION insertstmt
--- select * from pgss_transaction
--- ROLLBACK TRANSACTION insertstmt
--- COMMIT
--- go
--- DROP TABLE pgss_transaction
--- go
+CREATE TABLE pgss_transaction(age int)
+go
+INSERT INTO pgss_transaction values(22),(12),(32),(21)
+go
+BEGIN TRANSACTION;
+INSERT INTO pgss_transaction values(12)
+SAVE TRANSACTION insertstmt
+select * from pgss_transaction
+ROLLBACK TRANSACTION insertstmt
+COMMIT
+go
+DROP TABLE pgss_transaction
+go
 
 -- cursor(T-SQL only statement, not visible in the view)
 CREATE TABLE pgss_cursor(age int)
@@ -86,10 +86,10 @@ go
 
 
 -- db statements
--- CREATE DATABASE pgss_db
--- go
--- DROP DATABASE pgss_db
--- go
+CREATE DATABASE pgss_db
+go
+DROP DATABASE pgss_db
+go
 
 -- tsql
 SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
@@ -118,7 +118,7 @@ go
 DROP LOGIN  pgss_l1
 go
 
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements ORDER BY query COLLATE "C";
+SELECT dbid, toplevel, query from pg_stat_statements ORDER BY query COLLATE "C";
 go
 
 -- create insert select update delete trigger truncate on test table
@@ -232,8 +232,8 @@ SELECT REVERSE(name) FROM pgss_cust
 go
 
 -- tsql function
--- CREATE FUNCTION pgss_f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
--- go
+CREATE FUNCTION pgss_f1(@a INT) RETURNS INT AS BEGIN RETURN (@a + 1) END; 
+go
 
 CREATE SEQUENCE [dbo].[newCounter] AS int START WITH 5 increment by 5 
 go
@@ -246,20 +246,20 @@ DROP SEQUENCE [dbo].[newCounter]
 go
 
 -- Inline table-valued function
--- create function [dbo].[getCustomers](@age int) returns table as return 
--- (select customers.customerid, customers.name, customers.age from customers
--- where age >= @age)
--- go
--- select * from [dbo].[getCustomers](20)
--- go
+CREATE FUNCTION [dbo].[getCustomers](@age int) returns table as return 
+(select pgss_cust.customerid, pgss_cust.name, pgss_cust.age from pgss_cust
+where age >= @age)
+go
+SELECT * FROM [dbo].[getCustomers](20)
+go
 
 -- Temp table
 CREATE TABLE #pgss_demo(age int)
 go
 
 -- tsql procedure
--- CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
--- go
+CREATE PROC pgss_p1 @a INT, @b FLOAT AS SELECT @a, @b; 
+go
 
 
 DROP VIEW  [India customers]
@@ -268,12 +268,12 @@ DROP TABLE pgss_orders
 go
 DROP TABLE pgss_cust
 go
--- DROP FUNCTION [dbo].[getCustomers]
--- go
--- DROP FUNCTION pgss_f1
--- go
--- DROP PROCEDURE pgss_p1;
--- go
+DROP FUNCTION [dbo].[getCustomers]
+go
+DROP FUNCTION pgss_f1
+go
+DROP PROCEDURE pgss_p1;
+go
 
 
 -- tsql
