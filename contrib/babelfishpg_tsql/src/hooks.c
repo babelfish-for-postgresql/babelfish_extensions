@@ -133,6 +133,11 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
+static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
+									  PlannedStmt *pstmt,
+									  const char *queryString,
+									  ProcessUtilityContext context,
+									  ParamListInfo params, QueryCompletion *qc);
 
 /*****************************************
  * 			Executor Hooks
@@ -198,6 +203,7 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
+static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfies_visibility = NULL;
 static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
@@ -325,6 +331,9 @@ InstallExtendedHooks(void)
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
 
+	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
+	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
+
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
 
@@ -394,6 +403,7 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
+	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
 	table_variable_satisfies_visibility_hook = prev_table_variable_satisfies_visibility;
 	table_variable_satisfies_update_hook = prev_table_variable_satisfies_update;
@@ -406,6 +416,54 @@ UninstallExtendedHooks(void)
 /*****************************************
  * 			Hook Functions
  *****************************************/
+static bool
+pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
+						  ParamListInfo params, QueryCompletion *qc)
+{	
+	Node	   *parsetree = pstmt->utilityStmt;
+
+	switch (nodeTag(parsetree))
+	{
+		case T_CreateFunctionStmt:
+	 	{
+			return pltsql_createFunction(pstate, pstmt, queryString, context, params);
+			break;
+		}
+		case T_CreatedbStmt:
+		{
+			if (sql_dialect == SQL_DIALECT_TSQL)
+			{
+				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
+				return true;
+			}
+			break;
+		}
+		case T_DropdbStmt:
+		{
+			if (sql_dialect == SQL_DIALECT_TSQL)
+			{
+				DropdbStmt *stmt = (DropdbStmt *) parsetree;
+				drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
+				return true;
+			}
+			break;
+		}
+		case T_TransactionStmt:
+		{
+			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
+			{
+				PLTsqlProcessTransaction(parsetree, params, qc);
+				return true;
+			}
+			break;
+		}
+		default:
+			return false;
+			break;
+	}
+	return false;
+}									  
+								
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
