@@ -1,0 +1,322 @@
+SELECT * FROM EOMONTH_EndOfMonthView ORDER BY DateValue ASC;
+GO
+~~START~~
+int#!#date#!#date
+1#!#1996-01-24#!#1996-01-31
+2#!#2000-06-15#!#2000-06-30
+3#!#2022-04-30#!#2022-04-30
+~~END~~
+
+
+EXEC GetEndOfMonthDate_EOMONTH 1;
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+SELECT * FROM EOMONTH_EndOfNextMonthView ORDER BY DateValue ASC;
+GO
+~~START~~
+int#!#date#!#date
+1#!#1996-01-24#!#1996-02-29
+2#!#2000-06-15#!#2000-07-31
+3#!#2022-04-30#!#2022-05-31
+~~END~~
+
+
+EXEC GetEndOfNextMonthDate_EOMONTH 1;
+GO
+~~START~~
+date
+1996-02-29
+~~END~~
+
+
+--Edge case testing:
+--when offset is positive edge cases where yyyy can go upto 9999 after that it will throw an error.
+SELECT EOMONTH ('2023-05-10',95719)
+GO
+~~START~~
+date
+9999-12-31
+~~END~~
+
+
+--when offset is positive edge cases where yyyy can go upto 9999 after that it will throw an error.
+SELECT EOMONTH ('2023-05-10',95720)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Adding a value to a 'date' column caused an overflow.)~~
+
+
+--when offset is negative edge cases where yyyy can go upto 0000 after that it will throw an error.
+SELECT EOMONTH ('2023-05-10',-24268)
+GO
+~~START~~
+date
+0001-01-31
+~~END~~
+
+
+--when offset is negative edge cases where yyyy can go upto 0000 after that it will throw an error.
+SELECT EOMONTH ('2023-05-10',-24269)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Adding a value to a 'date' column caused an overflow.)~~
+
+
+--EOMONTH with explicit datetime type
+DECLARE @date DATETIME = '12/1/2011';  
+SELECT EOMONTH ( @date ) AS Result;  
+GO
+~~START~~
+date
+2011-12-31
+~~END~~
+
+
+--EOMONTH with explicit datetime type and offset
+DECLARE @date DATETIME = '12/1/2011';  
+SELECT EOMONTH ( @date , 2) AS Result;  
+GO
+~~START~~
+date
+2012-02-29
+~~END~~
+
+
+--EOMONTH with string parameter and implicit conversion
+DECLARE @date VARCHAR(255) = '12/1/2011';  
+SELECT EOMONTH ( @date ) AS Result;  
+GO
+~~START~~
+date
+2011-12-31
+~~END~~
+
+
+--EOMONTH with string parameter and implicit conversion and offsets
+DECLARE @date VARCHAR(255) = '12/1/2011';  
+SELECT EOMONTH ( @date , -2) AS Result;  
+GO
+~~START~~
+date
+2011-10-31
+~~END~~
+
+
+--Some of the date formats which are accepted by date datatype.
+--Checking when separator is ‘-’ 
+--Checking valid date format for ‘YYYY-MM-DD’.
+SELECT EOMONTH ('1996-01-20')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for YYYY-MON-DD’.
+SELECT EOMONTH ('1996-JAN-20')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘MM-DD-YYYY’.
+SELECT EOMONTH ('01-20-1996')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘MM-DD-YY’.
+SELECT EOMONTH ('1-20-96')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+
+--Checking when separator is ‘/’ 
+--Checking valid date format for ‘YYYY/MM/DD’.
+SELECT EOMONTH ('1996/01/20',30)
+GO
+~~START~~
+date
+1998-07-31
+~~END~~
+
+
+--Checking valid date format for YYYY/MON/DD’.
+SELECT EOMONTH ('1996/JAN/20',-30)
+GO
+~~START~~
+date
+1993-07-31
+~~END~~
+
+
+--Checking valid date format for ‘MM/DD/YYYY’.
+SELECT EOMONTH ('02/20/1996',100)
+GO
+~~START~~
+date
+2004-06-30
+~~END~~
+
+
+--Checking valid date format for ‘MM/DD/YY’.
+SELECT EOMONTH ('1/20/96',1200)
+GO
+~~START~~
+date
+2096-01-31
+~~END~~
+
+
+--Checking when separator is ‘.’
+--Checking valid date format for ‘YYYY.MM.DD’.
+SELECT EOMONTH ('1996.01.20',0)
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for YYYY.MON.DD’.
+SELECT EOMONTH ('1996.JAN.20',10)
+GO
+~~START~~
+date
+1996-11-30
+~~END~~
+
+
+--Checking valid date format for ‘MM.DD.YYYY’.
+SELECT EOMONTH ('02.20.1996')
+GO
+~~START~~
+date
+1996-02-29
+~~END~~
+
+
+--Checking valid date format for ‘MM.DD.YY’.
+SELECT EOMONTH ('1.20.96')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘Month DD YYYY’.
+SELECT EOMONTH ('JAN 20 1996')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘Month DD YY’.
+SELECT EOMONTH ('JAN 20 96')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘Month DD, YYYY’.
+SELECT EOMONTH ('JAN 20, 1996')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘Month DD, YY’.
+SELECT EOMONTH ('JAN 20, 96')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘DD Month YYYY’.
+SELECT EOMONTH ('20 JAN 1996')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘DD Month YY’.
+SELECT EOMONTH ('20 JAN 96')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘DD Month YYYY’.
+SELECT EOMONTH ('20 JAN, 1996')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘DD Month YY’.
+SELECT EOMONTH ('20 JAN, 96')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘YYYYMMDD’.
+SELECT EOMONTH ('19960120')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking valid date format for ‘YYMMDD’.
+SELECT EOMONTH ('960120')
+GO
+~~START~~
+date
+1996-01-31
+~~END~~
+
+
+--Checking for NULL it should return NULL
+SELECT EOMONTH (NULL)
+GO
+~~START~~
+date
+<NULL>
+~~END~~
+

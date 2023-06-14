@@ -19,6 +19,8 @@
 #include "tsearch/ts_locale.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -57,6 +59,7 @@ PG_FUNCTION_INFO_V1(version);
 PG_FUNCTION_INFO_V1(error);
 PG_FUNCTION_INFO_V1(pgerror);
 PG_FUNCTION_INFO_V1(datalength);
+PG_FUNCTION_INFO_V1(EOMONTH);
 PG_FUNCTION_INFO_V1(int_floor);
 PG_FUNCTION_INFO_V1(int_ceiling);
 PG_FUNCTION_INFO_V1(bit_floor);
@@ -2422,4 +2425,60 @@ pg_extension_config_remove(PG_FUNCTION_ARGS)
 	extension_config_remove_wrapper(CurrentExtensionObject, tableoid);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * The EOMONTH function is a Transact-SQL function in SQL Server that returns 
+ * the last day of the month of a specified date, with an optional offset.
+ */
+Datum
+EOMONTH(PG_FUNCTION_ARGS)
+{
+    int year, month, day;
+    DateADT date = PG_GETARG_DATEADT(0);
+    int offset = PG_GETARG_INT32(1);
+
+    /* Convert the date to year, month, day */
+    j2date(date + POSTGRES_EPOCH_JDATE, &year, &month, &day);
+
+    /* Adjust the month based on the offset */
+    month += offset;
+    // Check if the new month is greater than 0.
+    if(month > 0)
+    {
+        /* 
+         * If it is, calculate the new year by adding the number of full years in the offset to the current year.
+         * The number of full years in the offset is (month - 1) / 12. 
+         */
+        year += (month - 1) / 12;
+        /* The new month is the remainder of (month - 1) divided by 12, plus one. */
+        month = (month - 1) % 12 + 1; 
+    }
+    else
+    {
+        /* 
+         * If the new month is not greater than 0, calculate the new year by adding the number of full years 
+         * in the offset to the current year, subtracting one additional year because the offset is negative.
+         * The number of full years in the offset is month / 12.
+         */
+        year += month / 12 - 1;
+        /* The new month is the remainder of month divided by 12, plus twelve to make it a positive month number. */
+        month = month % 12 + 12;
+    }
+    /* Now move to the first day of the next month */
+    month++;
+    /* If the new year is less than 1 or greater than 9999, report an error that an overflow occurred. */
+    if (year < 1 || year > 9999) 
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+                 errmsg("Adding a value to a 'date' column caused an overflow.")));
+    }
+
+    /* 
+     * Convert the year, month, and day (1st day of the new month) back date format, then subtract one day 
+     * to get the last day of the "offset" month.
+     */
+    date = date2j(year, month, 1) - POSTGRES_EPOCH_JDATE - 1;
+    PG_RETURN_DATEADT(date);
 }

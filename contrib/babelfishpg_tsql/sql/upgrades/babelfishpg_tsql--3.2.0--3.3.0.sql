@@ -40,6 +40,11 @@ LANGUAGE C IMMUTABLE STRICT;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_3_0');
 
+CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
+RETURNS date
+AS 'babelfishpg_tsql', 'EOMONTH'
+LANGUAGE C IMMUTABLE STRICT;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

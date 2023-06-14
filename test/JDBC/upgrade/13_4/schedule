@@ -126,6 +126,7 @@ sys-default_constraints
 sys-dm_exec_connections
 sys-dm_exec_sessions
 sys-dm_os_host_info
+sys-eomonth
 sys-endpoints
 sys-extended_properties
 sys-foreign_key_columns
