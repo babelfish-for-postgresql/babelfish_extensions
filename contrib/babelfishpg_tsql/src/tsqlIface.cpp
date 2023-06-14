@@ -1730,7 +1730,7 @@ public:
 		if (ctx->execute_statement())
 		{
 			PLtsql_stmt_exec *stmt = (PLtsql_stmt_exec *) getPLtsql_fragment(ctx);
-			if (stmt->cmd_type == PLTSQL_STMT_EXEC && stmt->proc_name && (pg_strcasecmp("sp_tables", stmt->proc_name) == 0 || pg_strcasecmp("sp_testlinkedserver", stmt->proc_name) == 0))
+			if (stmt->cmd_type == PLTSQL_STMT_EXEC && stmt->proc_name && pg_strcasecmp("sp_tables", stmt->proc_name) == 0)
 			{
 				PLtsql_expr_query_mutator mutator(stmt->expr, ctx);
 				add_rewritten_query_fragment_to_mutator(&mutator); // move information of rewritten_query_fragment to mutator.
