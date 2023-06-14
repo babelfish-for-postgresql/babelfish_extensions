@@ -2443,26 +2443,38 @@ EOMONTH(PG_FUNCTION_ARGS)
 
     /* Adjust the month based on the offset */
     month += offset;
-    /* Check if the new month is greater than 0. */
+    /* 
+     * Check if the new month is greater than 0, which indicates a positive offset. 
+     * If its true it will go inside the if loop.
+     */
     if(month > 0)
     {
-        /* 
-         * If it is, calculate the new year by adding the number of full years in the offset to the current year.
-         * The number of full years in the offset is (month - 1) / 12. 
+        /*
+         * Checking how many full years we get from the month value (which now includes the offset).
+         * By subtracting 1 before the division, we ensure that we only count full years, and not the current year.
+         * This full year count is then added to the year.
          */
         year += (month - 1) / 12;
-        /* The new month is the remainder of (month - 1) divided by 12, plus one. */
+        /* 
+         * Checks if remaining month count after the full years are accounted for 
+         * The modulo operation % gives the remainder of the division by 12 (i.e., the number of months over the last full year), 
+         * subtracting 1 before and adding 1 after adjusts for 1-based counting (since month values are from 1 to 12, not 0 to 11).
+         */
         month = (month - 1) % 12 + 1; 
     }
     else
     {
         /* 
-         * If the new month is not greater than 0, calculate the new year by adding the number of full years 
-         * in the offset to the current year, subtracting one additional year because the offset is negative.
-         * The number of full years in the offset is month / 12.
+         * Check if the number of full years that we get from the month value (which now includes the negative offset).
+         * Unlike the previous case, we don't need to subtract 1 before the division here, because month is not greater than 12, 
+         * so we can't get an extra year. We do subtract 1 after the division, because we're moving backward in time and we need 
+         * to account for the year that we're currently in, which hasn't been fully passed yet. This is then added to the year.
          */
         year += month / 12 - 1;
-        /* The new month is the remainder of month divided by 12, plus twelve to make it a positive month number. */
+        /* 
+         * Check if the remainder of month divided by 12. Since month is less than or equal to 0, this will be a non-positive number.
+         * Adding 12 to the result ensures that the resulting month is a positive number in the range 1-12, which corresponds to a valid month
+         */
         month = month % 12 + 12;
     }
     /* Now move to the first day of the next month */
