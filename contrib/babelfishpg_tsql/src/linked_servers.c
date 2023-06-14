@@ -1335,6 +1335,11 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	LinkedServerProcess lsproc = NULL;
 
+	if (servername == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("@servername parameter cannot be NULL")));
+
 	PG_TRY();
 	{
 		bool isTesting = false;

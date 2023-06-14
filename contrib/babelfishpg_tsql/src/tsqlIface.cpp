@@ -1778,20 +1778,6 @@ public:
 						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), newStr)));
 				}
 			}
-
-			// To support unquoted argument when executing sp_testlinkedserver procedure
-			// EXEC sp_testlinkedserver my_server           ->   ctx->id(my_server)
-			// mutate argument into single quoted string literal
-			if(ctx->id() && pg_strcasecmp(getProcNameFromExecParam(ctx).c_str(), "sp_testlinkedserver") == 0)
-			{
-				std::string argStr;
-				argStr = getFullText(ctx->id());
-
-				std::string newStr;
-				newStr = std::string("'") + argStr + std::string("'") ;
-
-				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), newStr)));
-			}
 		}
 		parameterIndex++;
 	}
