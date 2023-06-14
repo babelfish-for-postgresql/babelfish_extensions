@@ -2443,7 +2443,7 @@ EOMONTH(PG_FUNCTION_ARGS)
 
     /* Adjust the month based on the offset */
     month += offset;
-    // Check if the new month is greater than 0.
+    /* Check if the new month is greater than 0. */
     if(month > 0)
     {
         /* 
