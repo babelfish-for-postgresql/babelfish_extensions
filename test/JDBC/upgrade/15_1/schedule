@@ -243,7 +243,6 @@ sys-dm_exec_sessions-dep
 sys-dm_hadr_cluster
 sys-dm_hadr_database_replica_states
 sys-dm_os_host_info
-sys-eomonth
 sys-endpoints
 sys-events
 sys-extended_properties
