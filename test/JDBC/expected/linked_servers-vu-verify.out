@@ -221,3 +221,30 @@ GO
 varchar#!#varchar
 ~~END~~
 
+
+-- Testing the stored procedure sp_enum_oledb_providers as a sysadmin user and with tds_fdw extension
+EXEC sp_enum_oledb_providers
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+TDS_FDW#!#{b984c7f3-9f1a-ba24-ab76-a599bebe3a66}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.3
+~~END~~
+
+
+-- Testing the stored procedure sp_enum_oledb_providers with master.dbo prefix
+EXEC master.dbo.sp_enum_oledb_providers
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+TDS_FDW#!#{b984c7f3-9f1a-ba24-ab76-a599bebe3a66}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.3
+~~END~~
+
+
+-- Testing the stored procedure sp_enum_oledb_providers with master.sys prefix
+EXEC master.sys.sp_enum_oledb_providers
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+TDS_FDW#!#{b984c7f3-9f1a-ba24-ab76-a599bebe3a66}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.3
+~~END~~
+
