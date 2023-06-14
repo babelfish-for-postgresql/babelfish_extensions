@@ -235,3 +235,11 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
     babelfish_db=> CREATE EXTENSION tds_fdw;
     CREATE EXTENSION
     ```
+
+
+# How to build the Babelfish server with Kerberos authentication enabled
+
+Please note that Kerberos authentication feature is available on Babelfish server with version 3.1.0 or higher. 
+
+1. To build the Babelfish server with Kerberos authentication enabled, you will need to install `build-essential` and `libkrb5-dev` packages. 
+2. Build the Babelfish server according to the instructions mentioned [here](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_3_X_DEV/contrib/README.md#build-the-postgres-engine) and use --with-gssapi flag to configure Babelfish in order to enable the GSSAPI APIs.

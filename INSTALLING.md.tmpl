@@ -35,6 +35,8 @@ sudo apt-get update && sudo apt install -y --no-install-recommends \
   gnupg unixodbc-dev net-tools unzip
 ```
 
+If you would like to work with Kerberos authentication then additional dependency is required on `libkrb5-dev` package.
+
 Many of the Babelfish prerequisites are part of a typical Linux distribution.  You may find that the packages on your distribution use a similar (but not identical) name.  
 
 To build Babelfish, you will need access to a user with root privileges, so you can convey privileges with `sudo`. You'll also need a non-root user to initialize the database; PostgreSQL does not allow a root user to own the `data` directory or start the server.
@@ -108,6 +110,7 @@ make DESTDIR=${BABELFISH_HOME}/ -j $JOBS 2>error.txt
           
 sudo make install
 ```
+> NOTE: To build Babelfish with Kerberos authentication support, use the option `--with-gssapi` during configuration. 
 
 > WARNING: Using the --with-extra-version option during the configuration phase can break the sys.get_host_os() output; we do not recommend including it.
 
