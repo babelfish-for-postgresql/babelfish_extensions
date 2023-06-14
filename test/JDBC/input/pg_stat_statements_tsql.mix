@@ -121,15 +121,18 @@ go
 SELECT dbid, toplevel, query from pg_stat_statements ORDER BY query COLLATE "C";
 go
 
--- create insert select update delete trigger truncate on test table
+-- create insert alter select update delete trigger truncate on test table
 CREATE TABLE pgss_test (a int, b char(20));
 go
-
+ALTER TABLE pgss_test add c varchar(22)
+go
+SELECT * FROM pgss_test
+go
 CREATE TRIGGER pgss_trigger1 on [dbo].[pgss_test] for insert as
 PRINT 'after insert trigger called'
 go
 
-INSERT INTO pgss_test VALUES(generate_series(1, 10), 'aaa');
+INSERT INTO pgss_test VALUES(generate_series(1, 10), 'aaa', 'bbb');
 go
 UPDATE pgss_test SET b = 'bbb' WHERE a > 7;
 DELETE FROM pgss_test WHERE a > 9;
