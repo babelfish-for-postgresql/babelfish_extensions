@@ -53,27 +53,89 @@ GO
 SELECT EOMONTH (NULL,-1)
 GO
 
---Checking for different month last date.
---Check if its leap year. If it is a leap year and the month is feb it will return 29 otherwise 28.
-SELECT EOMONTH('1996-02-20')
+--Checking for NULL it should return NULL with 2 arguments.
+SELECT EOMONTH (NULL,NULL)
 GO
 
---Check if its leap year. If it is a leap year and the month is feb it will return 29 otherwise 28.
-SELECT EOMONTH('1997-02-20')
-GO
 
---Checking for Jan last date it should return last date as 31.
+--Checking the last date for every month
+--Checking if it returns 31 as the last day for January.
 SELECT EOMONTH('1996-01-01')
 GO
 
---Checking for April last date it should return last date as 30.
+--Checking if it returns 29 as the last day for February for leap year. 
+SELECT EOMONTH('1996-02-20')
+GO
+
+--Checking if it returns 28 as the last date for February for non-leap year. 
+SELECT EOMONTH('1997-02-20')
+GO
+
+--Checking if it returns 31 as the last day for March.
+SELECT EOMONTH ('1996-03-20')
+GO
+
+--Checking if it returns 30 as the last day for April.
 SELECT EOMONTH('1996-04-01')
+GO
+
+--Checking if it returns 31 as the last day for May.
+SELECT EOMONTH ('1996-05-20')
+GO
+
+--Checking if it returns 30 as the last day for June.
+SELECT EOMONTH ('1996-06-20')
+GO
+
+--Checking if it returns 31 as the last day for July.
+SELECT EOMONTH ('1996-07-20')
+GO
+
+--Checking if it returns 31 as the last day for August.
+SELECT EOMONTH ('1996-08-20')
+GO
+
+--Checking if it returns 30 as the last day for September.
+SELECT EOMONTH ('1996-09-20')
+GO
+
+--Checking if it returns 31 as the last day for October.
+SELECT EOMONTH ('1996-10-20')
+GO
+
+--Checking if it returns 30 as the last day for November.
+SELECT EOMONTH ('1996-11-20')
+GO
+
+--Checking if it returns 31 as the last day for December.
+SELECT EOMONTH ('1996-12-20')
+GO
+
+
+--If the given offest is 12 and the month is 1, it should increase the year by 1 and month should be January.
+SELECT EOMONTH ('1996-01-01',12)
+GO
+
+--If the given offest is -12 and the month is 1, it should decrease the year by 1 and month should be January.
+SELECT EOMONTH ('1996-01-01',-12)
+GO
+
+--If the given offest is 0, it should just return that month last date.
+SELECT EOMONTH ('1996-01-01',0)
+GO
+
+--If the given is 11 and the month is 1, it should return last day of December.
+SELECT EOMONTH ('1996-01-01',11)
+GO
+
+--If the given offest is -1 and the month is 1, it should decrease the year by 1 and month should be December. 
+SELECT EOMONTH ('1996-01-01',-1)
 GO
 
 
 --EOMONTH with explicit datetime type
-DECLARE @date DATETIME = '12/1/2011';  
-SELECT EOMONTH ( @date ) AS Result;  
+DECLARE @date DATETIME = '12/1/2011'; 
+SELECT EOMONTH ( @date ) AS Result;
 GO
 
 --EOMONTH with explicit datetime type and offset
@@ -89,40 +151,4 @@ GO
 --EOMONTH with string parameter and implicit conversion and offsets
 DECLARE @date VARCHAR(255) = '12/1/2011';  
 SELECT EOMONTH ( @date , -2) AS Result;  
-GO
-
-
---Some of the date formats which are accepted by date datatype.
---Checking when separator is ‘-’ 
---Checking valid date format for ‘YYYY-MM-DD’.
-SELECT EOMONTH ('1996-01-20')
-GO
-
---Checking valid date format for YYYY-MON-DD’.
-SELECT EOMONTH ('1996-JAN-20')
-GO
-
---Checking valid date format for ‘MM-DD-YYYY’.
-SELECT EOMONTH ('01-20-1996')
-GO
-
---Checking valid date format for ‘MM-DD-YY’.
-SELECT EOMONTH ('1-20-96')
-GO
-
-
---Checking valid date format for ‘YYYY/MM/DD’ with offest.
-SELECT EOMONTH ('1996/01/20',30)
-GO
-
---Checking valid date format for YYYY/MON/DD’ with offest.
-SELECT EOMONTH ('1996/JAN/20',-30)
-GO
-
---Checking valid date format for ‘MM/DD/YYYY’ with offest.
-SELECT EOMONTH ('02/20/1996',100)
-GO
-
---Checking valid date format for ‘MM/DD/YY’ with offest.
-SELECT EOMONTH ('1/20/96',1200)
 GO

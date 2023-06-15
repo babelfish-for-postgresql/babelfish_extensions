@@ -2445,40 +2445,46 @@ EOMONTH(PG_FUNCTION_ARGS)
     month += offset;
     /* 
      * Check if the new month is greater than 0, which indicates a positive offset. 
-     * If its true it will go inside the if loop.
+     * If it is true, the months continue to increase one by one, until they reach 12. After this point, they revert back to 1 and 
+     * if the months exceed 12, it signifies that we must also increment the year.
+     * 
+     * If it is false, the months continue to decrease one by one, until they reach 1. After this point, they will reset to 12 and 
+     * if the months go below 1, it signifies that we must also decrement the year.
      */
     if(month > 0)
     {
-        /*
-         * Checking how many full years we get from the month value (which now includes the offset).
-         * By subtracting 1 before the division, we ensure that we only count full years, and not the current year.
-         * This full year count is then added to the year.
+        /* 
+         * The year value is incremented by how many full sets of 12 months fit into the 'month' value.
+         * Subtracting 1 from 'month' before dividing ensures we don't count an extra year when 'month' is exactly divisible by 12.
+         * We are considering 12 months as a full year, so if we have exactly 12 months, we should not increment the year yet.
          */
         year += (month - 1) / 12;
+		
         /* 
-         * Checks if remaining month count after the full years are accounted for 
-         * The modulo operation % gives the remainder of the division by 12 (i.e., the number of months over the last full year), 
-         * subtracting 1 before and adding 1 after adjusts for 1-based counting (since month values are from 1 to 12, not 0 to 11).
+         * The new month value is calculated based on the remainder when divided by 12.
+         * This makes sure the month value stays within the range of 1 to 12. The subtraction by 1 and addition by 1
+         * ensure that the month value starts from 1 (January) rather than 0.
          */
         month = (month - 1) % 12 + 1; 
     }
     else
     {
         /* 
-         * Check if the number of full years that we get from the month value (which now includes the negative offset).
-         * Unlike the previous case, we don't need to subtract 1 before the division here, because month is not greater than 12, 
-         * so we can't get an extra year. We do subtract 1 after the division, because we're moving backward in time and we need 
-         * to account for the year that we're currently in, which hasn't been fully passed yet. This is then added to the year.
+         * The year value is decremented based on how many full sets of 12 months fit into the 'month' value.
+         * This calculates how many years to decrement given the total number of negative months.
          */
         year += month / 12 - 1;
+
         /* 
-         * Check if the remainder of month divided by 12. Since month is less than or equal to 0, this will be a non-positive number.
-         * Adding 12 to the result ensures that the resulting month is a positive number in the range 1-12, which corresponds to a valid month
+         * The new month value is calculated based on the modulus operation when divided by 12.
+         * If the month value is negative, this operation makes sure the month value stays within the range of 1 to 12.
          */
         month = month % 12 + 12;
     }
+
     /* Now move to the first day of the next month */
     month++;
+
     /* If the new year is less than 1 or greater than 9999, report an error that an overflow occurred. */
     if (year < 1 || year > 9999) 
     {
