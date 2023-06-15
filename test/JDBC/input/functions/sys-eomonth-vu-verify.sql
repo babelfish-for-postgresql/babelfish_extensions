@@ -57,6 +57,9 @@ GO
 SELECT EOMONTH (NULL,NULL)
 GO
 
+--Checking if the 1st argument is date and 2nd argument is NULL it should still return the value for that month last date.
+SELECT EOMONTH ('1996-01-01',NULL)
+GO
 
 --Checking the last date for every month
 --Checking if it returns 31 as the last day for January.

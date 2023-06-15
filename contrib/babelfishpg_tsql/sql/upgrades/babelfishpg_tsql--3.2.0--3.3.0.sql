@@ -40,7 +40,20 @@ LANGUAGE C IMMUTABLE STRICT;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_3_0');
 
-CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.EOMONTH(date, int DEFAULT 0)
+RETURNS date AS 
+$$
+BEGIN
+  IF $2 IS NULL THEN
+    RETURN sys.EOMONTH_main($1, 0);
+  ELSE
+    RETURN sys.EOMONTH_main($1, $2);
+  END IF;
+END;
+$$ 
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.EOMONTH_main(date,int DEFAULT 0)
 RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
 LANGUAGE C STABLE STRICT PARALLEL SAFE;
