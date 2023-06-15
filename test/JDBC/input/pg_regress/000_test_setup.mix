@@ -214,7 +214,7 @@ CREATE TABLE tenk1 (
 GO
 
 -- bash   
-/bin/bash input/pg_regress/load_tenk1.sh
+/bin/bash input/pg_regress/load_tenk.sh
 GO
 
 -- psql

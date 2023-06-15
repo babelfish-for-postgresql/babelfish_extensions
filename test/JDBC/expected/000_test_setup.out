@@ -238,8 +238,14 @@ CREATE TABLE tenk1 (
 GO
 
 -- bash   
-/bin/bash input/pg_regress/load_tenk1.sh
+/bin/bash input/pg_regress/load_tenk.sh
 
+-----copy tenk1 table from /data/tenk.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/tenk.data'
+COPY master_dbo.tenk1 FROM :'filename';
+COPY 10000
+----- done -----
 
 -- psql
 VACUUM ANALYZE master_dbo.tenk1;
@@ -268,6 +274,8 @@ GO
 
 insert into tenk2 select * from tenk1;
 GO
+~~ROW COUNT: 10000~~
+
 
 -- psql     
 VACUUM ANALYZE master_dbo.tenk2;
