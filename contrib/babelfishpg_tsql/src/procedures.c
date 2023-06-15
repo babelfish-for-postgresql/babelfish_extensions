@@ -1659,6 +1659,20 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				ListCell   *lc;
 				char	   *schemaName = NULL;
 
+				for(int i = 0; i < allowed_extns_size; i++)
+				{
+					if(!(strcmp(crstmt->extname, allowed_extns[i])))
+					{
+						flag = true;
+					}
+				}
+
+				if(!flag)
+				{
+					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 		errmsg("'%s' extension creation is not supported", crstmt->extname)));
+				}
+
 				if (!superuser_arg(GetSessionUserId()) || !role_is_sa(GetSessionUserId()))
 				{
 					ereport(ERROR,
@@ -1687,25 +1701,10 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					}
 				}
 
-				if(schemaName != NULL && (strcmp(schemaName, "sys") && strcmp(schemaName, "public")))
+				if(schemaName != NULL && !(is_shared_schema(schemaName)))
 				{
 					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							errmsg("'%s' is not a valid schema, only sys and public schema is allowed in Babelfish", schemaName)));
-				}
-
-
-				for(int i = 0; i < allowed_extns_size; i++)
-				{
-					if(!(strcmp(crstmt->extname, allowed_extns[i])))
-					{
-						flag = true;
-					}
-				}
-
-				if(!flag)
-				{
-					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 		errmsg("'%s' extension creation is not supported", crstmt->extname)));
+							errmsg("'%s' is not a valid schema", schemaName)));
 				}
 
 				/* do this step */
