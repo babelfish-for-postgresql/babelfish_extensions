@@ -98,7 +98,7 @@ exec sp_execute_postgresql 'create extension pg_stat_statements with schema mast
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'master_dbo' is not a valid schema, only sys and public schema is allowed in Babelfish)~~
+~~ERROR (Message: 'master_dbo' is not a valid schema)~~
 
 
 exec sp_execute_postgresql 'drop extension pg_stat_statements';
