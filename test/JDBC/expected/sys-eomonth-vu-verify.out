@@ -47,6 +47,8 @@ date
 --when offset is positive edge cases where yyyy can go upto 9999 after that it will throw an error.
 SELECT EOMONTH ('2023-05-10',95720)
 GO
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Adding a value to a 'date' column caused an overflow.)~~
@@ -64,6 +66,8 @@ date
 --when offset is negative edge cases where yyyy can go upto 0000 after that it will throw an error.
 SELECT EOMONTH ('2023-05-10',-24269)
 GO
+~~START~~
+date
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Adding a value to a 'date' column caused an overflow.)~~
