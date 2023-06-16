@@ -1057,7 +1057,7 @@ create or replace view sys.types As
 with RECURSIVE type_code_list as
 (
     select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
-    from sys.babelfish_typecode_list()
+    from sys.babelfish_typecode_list() where pg_typname <> 'rowversion'
 ),
 tt_internal as MATERIALIZED
 (
@@ -1077,7 +1077,11 @@ select
     WHEN 'default' THEN default_collation_name
     ELSE  c.collname
     END as collation_name
-  , case when typnotnull then 0 else 1 end as is_nullable
+  , CASE ti.tsql_type_name
+    WHEN 'timestamp' THEN 0
+    WHEN 'sysname' THEN 0
+    ELSE case when typnotnull then 0 else 1 end
+    end as is_nullable
   , 0 as is_user_defined
   , 0 as is_assembly_type
   , 0 as default_object_id
@@ -1107,9 +1111,11 @@ select cast(t.typname as text) as name
     ELSE  c.collname 
     END as collation_name
   , case when tt.typrelid is not null then 0
-         else case when typnotnull then 0 else 1 end
-    end
-    as is_nullable
+         else CASE t.typbasetype
+              WHEN 18043 THEN 0
+              WHEN 17171 THEN 0
+              ELSE case when typnotnull then 0 else 1 end
+    end end as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
   , 1 as is_user_defined
   , 0 as is_assembly_type

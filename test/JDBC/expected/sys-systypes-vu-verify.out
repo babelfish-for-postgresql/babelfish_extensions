@@ -30,11 +30,10 @@ smallmoney#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 sql_variant#!#0#!#8016#!#0#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 sys_systypes_type2#!#0#!#1#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
-sysname#!#0#!#256#!#1#!#1#!#<NULL>#!#bbf_unicode_cp1_ci_as
+sysname#!#1#!#256#!#1#!#0#!#<NULL>#!#bbf_unicode_cp1_ci_as
 text#!#0#!#16#!#0#!#1#!#<NULL>#!#sql_latin1_general_cp1_ci_as
 time#!#0#!#5#!#0#!#1#!#<NULL>#!#<NULL>
-timestamp#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
-timestamp#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+timestamp#!#1#!#8#!#0#!#0#!#<NULL>#!#<NULL>
 tinyint#!#0#!#1#!#0#!#1#!#<NULL>#!#<NULL>
 uniqueidentifier#!#0#!#16#!#0#!#1#!#<NULL>#!#<NULL>
 varbinary#!#0#!#8000#!#1#!#1#!#<NULL>#!#<NULL>
