@@ -92,6 +92,15 @@ date
 ~~END~~
 
 
+--Checking if date exceeds T-SQL compatibility limits but remains within the bounds of PostgreSQL should throw an error.
+SELECT EOMONTH('4714-11-24 BC')
+GO
+~~START~~
+date
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The date exceeds T-SQL compatibility limits.)~~
+
 
 --Checking for NULL it should return NULL.
 SELECT EOMONTH (NULL)

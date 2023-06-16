@@ -36,6 +36,9 @@ GO
 SELECT EOMONTH ('9999-12-31')
 GO
 
+--Checking if date exceeds T-SQL compatibility limits but remains within the bounds of PostgreSQL should throw an error.
+SELECT EOMONTH('4714-11-24 BC')
+GO
 
 --Checking for NULL it should return NULL.
 SELECT EOMONTH (NULL)

@@ -2501,11 +2501,19 @@ EOMONTH(PG_FUNCTION_ARGS)
     /* If the new year is less than 1 or greater than 9999, report an error that an overflow occurred. */
     if (year < 1 || year > 9999) 
     {
+        if (year < -4173 || year > 5874897)
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+                 errmsg("The date exceeds T-SQL compatibility limits.")));
+        }
+        else
+        {
         ereport(ERROR,
                 (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
                  errmsg("Adding a value to a 'date' column caused an overflow.")));
+        }
     }
-
     /* 
      * Convert the year, month, and day (1st day of the new month) back date format, then subtract one day 
      * to get the last day of the "offset" month.
