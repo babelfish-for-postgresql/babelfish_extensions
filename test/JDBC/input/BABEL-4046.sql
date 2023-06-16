@@ -1,0 +1,119 @@
+create table options(name varchar(30) collate bbf_unicode_cp1_ci_as)
+insert options values('abc')
+go
+
+create table svc_defs(svc_name varchar(30) collate bbf_unicode_cp1_ci_as)
+insert svc_defs values('def')
+go
+
+select options.name
+  from options
+ inner join svc_defs
+    on options.name like 'UM\_%' + svc_defs.svc_name escape '\'
+go
+
+create table t (a varchar(30));
+go
+
+insert into t values ('aaa');
+go
+
+insert into t values ('AAA');
+go
+
+create table t1 (a varchar(30));
+go
+
+insert into t1 values ('a%');
+go
+
+insert into t1 values ('A%');
+go
+
+select * from t join t1 on t.a like t1.a;
+go
+
+select * from t join t1 on t.a like 'aa%';
+go
+
+drop table t;
+go
+
+drop table t1;
+go
+
+drop table svc_defs;
+go
+
+drop table options;
+go
+
+--Table and data
+CREATE TABLE [dbo].[t3](
+	[EMPNO] [int] NOT NULL,
+	[ENAME] [nvarchar](10) NULL,
+	[BASELOC] [nvarchar](13) NULL,
+	[DEPTNO] [int] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[EMPNO] ASC
+) ON [PRIMARY])
+GO
+
+CREATE TABLE [dbo].[t4](
+	[DEPTNO] [int] NOT NULL,
+	[DNAME] [nvarchar](14) NULL,
+	[LOC] [nvarchar](13) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[DEPTNO] ASC
+) ON [PRIMARY])
+GO
+
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (10, N'ACCOUNTING', N'NEW YORK')
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (20, N'RESEARCH', N'DALLAS')
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (30, N'SALES', N'CHICAGO')
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (40, N'SECURITY', N'BOSTON')
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (50, N'LEGAL', N'AUSTIN')
+GO
+
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7369, N'SMITH', N'BOSTON', 20)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7499, N'ALLEN', N'CHICAGO', 30)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7521, N'WARD', N'CHICAGO', 30)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7566, N'JONES', N'AUSTIN', 20)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7654, N'MARTIN', N'AUSTIN', 30)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7698, N'BLAKE', N'BOSTON', 30)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7782, N'CLARK', N'NEW YORK', 10)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7788, N'SCOTT', N'NEW YORK', 20)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7839, N'KING', N'AUSTIN', 100)
+GO
+
+;with EMP_T AS (
+                select empno,
+				ename,
+				CASE			            
+			            WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A')
+					    WHEN baseloc LIKE 'CHI%' THEN REPLACE(baseloc,'CHICAGO','C')
+						WHEN baseloc LIKE 'BOS%' THEN REPLACE(baseloc,'BOSTON','B')
+                ELSE
+		                baseloc
+                END AS baseloc,
+				deptno
+				from t3)
+				select
+				DM.empno,
+				DM.ename,
+				DM.baseloc
+				from EMP_T DM
+				INNER JOIN t4 SR ON DM.baseloc = SR.loc AND DM.deptno = SR.deptno
+GO
+
+;with EMP_T AS ( select empno, ename, CASE WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A') ELSE baseloc END AS baseloc, deptno from t3)
+	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc in (select baseloc from t4) 
+GO
+
+drop table [dbo].[t3];
+go
+
+drop table [dbo].[t4];
+GO
