@@ -8,7 +8,7 @@ create login linked_server_login_862 with password = 'password_862'
 GO
 
 -- tsql    user=linked_server_login_862    password=password_862
--- Executing sp_enum_oledb_providers stored procedure without system admin privilege
+-- Executing sp_enum_oledb_providers stored procedure without system admin privilege (should throw error)
 EXEC sp_enum_oledb_providers
 GO
 ~~ERROR (Code: 15003)~~
