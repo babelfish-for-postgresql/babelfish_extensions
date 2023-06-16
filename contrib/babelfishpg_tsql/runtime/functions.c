@@ -2509,7 +2509,7 @@ EOMONTH(PG_FUNCTION_ARGS)
         }
         else
         {
-        ereport(ERROR,
+            ereport(ERROR,
                 (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
                  errmsg("Adding a value to a 'date' column caused an overflow.")));
         }
