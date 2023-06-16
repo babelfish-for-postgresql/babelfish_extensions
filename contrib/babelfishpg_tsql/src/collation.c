@@ -526,6 +526,7 @@ pltsql_predicate_transformer(Node *expr)
 			}
 			else if (IsA(qual, OpExpr))
 			{
+				qual = transform_likenode(qual);
 				new_predicates = lappend(new_predicates,
 										 expression_tree_mutator(qual, pgtsql_expression_tree_mutator, NULL));
 			}
