@@ -2435,14 +2435,27 @@ Datum
 EOMONTH(PG_FUNCTION_ARGS)
 {
     int year, month, day;
-    DateADT date = PG_GETARG_DATEADT(0);
-    int offset = PG_GETARG_INT32(1);
+    int offset = 0;
+    DateADT date;
+
+    if (PG_ARGISNULL(0))
+    {
+        PG_RETURN_NULL();
+    }
+    else
+    {
+        date = PG_GETARG_DATEADT(0);
+    }
+
+    if (!PG_ARGISNULL(1))
+        offset = PG_GETARG_INT32(1);
 
     /* Convert the date to year, month, day */
     j2date(date + POSTGRES_EPOCH_JDATE, &year, &month, &day);
 
     /* Adjust the month based on the offset */
     month += offset;
+
     /* 
      * Check if the new month is greater than 0, which indicates a positive offset. 
      * If it is true, the months continue to increase one by one, until they reach 12. After this point, they revert back to 1 and 

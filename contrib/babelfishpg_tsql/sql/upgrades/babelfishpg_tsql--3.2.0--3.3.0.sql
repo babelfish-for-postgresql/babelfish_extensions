@@ -53,11 +53,10 @@ END;
 $$ 
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.EOMONTH_main(date,int DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
 RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
-LANGUAGE C STABLE STRICT PARALLEL SAFE;
-
+LANGUAGE C STABLE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
