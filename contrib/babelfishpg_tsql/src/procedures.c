@@ -3359,13 +3359,15 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 
 	/* SPI call input */
 	const char *query = "SELECT "
-                    		"CAST('TDS_FDW' AS sys.nvarchar(255)) AS \"Provider Name\", "
-                    		"CAST('{' || uuid_in(md5(('A PostgreSQL foreign data wrapper to TDS databases ' || subquery.extversion)::text)::cstring) || '}' AS sys.nvarchar(255)) AS \"Parse Name\", "
-                    		"CAST('A PostgreSQL foreign data wrapper to connect to TDS databases ' || subquery.extversion AS sys.nvarchar(255)) AS \"Provider Description\" "
-                    	"FROM "
-                    		"( "
-                    		" SELECT extversion FROM pg_catalog.pg_extension WHERE extname='tds_fdw' "
-                    	") subquery;";
+							"CAST('TDS_FDW' AS sys.nvarchar(255)) AS \"Provider Name\", "
+							"CAST('{' || uuid_in(md5(subquery.provider_desc::text)::cstring) || '}' AS sys.nvarchar(255)) AS \"Parse Name\", "
+							"CAST(subquery.provider_desc AS sys.nvarchar(255)) AS \"Provider Description\" "
+						"FROM ("
+							"SELECT "
+							"extversion, 'A PostgreSQL foreign data wrapper to connect to TDS databases ' || extversion AS provider_desc "
+							"FROM pg_catalog.pg_extension "
+							"WHERE extname = 'tds_fdw'"
+						") subquery;";
 
 	SPIPlanPtr	plan;
 	Portal		portal;
@@ -3374,7 +3376,7 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 
 	if(!role_is_sa(GetSessionUserId()))
 		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						errmsg("Only members of the %s role can execute this stored procedure.", "system admin")));
+						errmsg("Only members of the %s role can execute this stored procedure.", "sysadmin")));
 
 	if(GetForeignDataWrapperByName(provider_name,true) == NULL){
 		PG_RETURN_VOID();

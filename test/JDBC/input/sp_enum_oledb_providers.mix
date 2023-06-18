@@ -4,10 +4,10 @@ EXEC sp_enum_oledb_providers
 GO
 
 -- Creating a simple login which has lesser privilege than sysadmin role
-create login linked_server_login_862 with password = 'password_862'
+create login linked_server_login with password = 'password'
 GO
 
--- tsql    user=linked_server_login_862    password=password_862
+-- tsql    user=linked_server_login    password=password
 -- Executing sp_enum_oledb_providers stored procedure without system admin privilege (should throw error)
 EXEC sp_enum_oledb_providers
 GO
@@ -15,9 +15,9 @@ GO
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
-WHERE sys.suser_name(usesysid) = 'linked_server_login_862' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+WHERE sys.suser_name(usesysid) = 'linked_server_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 
 -- tsql
-DROP LOGIN linked_server_login_862
+DROP LOGIN linked_server_login
 GO
