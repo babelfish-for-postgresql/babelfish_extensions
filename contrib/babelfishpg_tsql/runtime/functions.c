@@ -2434,7 +2434,7 @@ pg_extension_config_remove(PG_FUNCTION_ARGS)
 Datum
 EOMONTH(PG_FUNCTION_ARGS)
 {
-    int year, month, day;
+    int year, month, day, original_year;
     int offset = 0;
     DateADT date;
 
@@ -2452,6 +2452,8 @@ EOMONTH(PG_FUNCTION_ARGS)
 
     /* Convert the date to year, month, day */
     j2date(date + POSTGRES_EPOCH_JDATE, &year, &month, &day);
+
+    original_year = year;
 
     /* Adjust the month based on the offset */
     month += offset;
@@ -2498,22 +2500,22 @@ EOMONTH(PG_FUNCTION_ARGS)
     /* Now move to the first day of the next month */
     month++;
 
+    /* Check if the year is a BC year and if yes, throw an error. BC year range is 4713 BC to 5874897 AD. */
+    if (original_year < 1 && year < 1)
+    {
+        ereport(ERROR,
+            (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+             errmsg("The date exceeds T-SQL compatibility limits.")));
+    }
+
     /* If the new year is less than 1 or greater than 9999, report an error that an overflow occurred. */
     if (year < 1 || year > 9999) 
     {
-        if (year < -4173 || year > 5874897)
-        {
-            ereport(ERROR,
-                (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
-                 errmsg("The date exceeds T-SQL compatibility limits.")));
-        }
-        else
-        {
-            ereport(ERROR,
-                (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
-                 errmsg("Adding a value to a 'date' column caused an overflow.")));
-        }
+        ereport(ERROR,
+            (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+             errmsg("Adding a value to a 'date' column caused an overflow.")));
     }
+
     /* 
      * Convert the year, month, and day (1st day of the new month) back date format, then subtract one day 
      * to get the last day of the "offset" month.

@@ -36,10 +36,6 @@ GO
 SELECT EOMONTH ('9999-12-31')
 GO
 
---Checking if date exceeds T-SQL compatibility limits but remains within the bounds of PostgreSQL should throw an error.
-SELECT EOMONTH('4714-11-24 BC')
-GO
-
 --Checking for NULL it should return NULL.
 SELECT EOMONTH (NULL)
 GO
@@ -62,6 +58,24 @@ GO
 
 --Checking if the 1st argument is date and 2nd argument is NULL it should still return the value for that month last date.
 SELECT EOMONTH ('1996-01-01',NULL)
+GO
+
+--BC test cases
+--In this test case we are checking if a year is a bc year it should throw an error for BC years.
+SELECT EOMONTH('4713-11-24 BC')
+GO
+
+--In this test case we are checking if it’s the last date of BC it should throw a BC error. After this date the date change to AD.
+SELECT EOMONTH('0001-12-31 BC')
+GO
+
+--In this test case we are checking if it’s the last date of BC. If we add an offset 1 it will give the value as its not a BC year anymore
+SELECT EOMONTH('0001-12-31 BC',1)
+GO
+
+--In this test case we are checking if it’s the last value of AD and if we add an offset of -1 it 
+--should return an error “Adding a value to a 'date' column caused an overflow.“ because the given input year was not in BC it was AD.
+SELECT EOMONTH('0001-01-01',-1)
 GO
 
 --Checking the last date for every month
