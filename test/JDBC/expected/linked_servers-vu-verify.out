@@ -314,7 +314,7 @@ GO
 EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
--- Testing the connection to a linked server with incorrect username/password (should throw error)
+-- Testing the connection to a linked server with incorrect username (should throw error)
 EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
 
@@ -325,7 +325,24 @@ EXEC sp_testlinkedserver 'test_server'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: role "jdbc_use" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: TDS client library error: Msg #: 18456, Msg state: 1, Msg: Login failed for user "jdbc_use", Server: BABELFISH, Process: , Line: 1, Level: 14)~~
+
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
+
+-- Testing the connection to a linked server with incorrect password (should throw error)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '1234567'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 18456, Msg state: 1, Msg: Login failed for user "jdbc_user", Server: BABELFISH, Process: , Line: 1, Level: 14)~~
 
 
 EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'

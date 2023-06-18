@@ -801,7 +801,10 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 						 ));
 		}
 
-		/* fetch query timeout from the servername */
+		/*
+		 * fetch query timeout from the servername
+		 * Don't fetch when testing connection as query timeout is not required
+		 */
 		if(!isTesting)
 			query_timeout = get_query_timeout_from_server_name(servername);
 
@@ -875,9 +878,7 @@ getOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tup
 		StringInfoData buf;
 		int			colcount;
 
-		bool isTesting = false;
-
-		linked_server_establish_connection(linked_server, &lsproc, isTesting);
+		linked_server_establish_connection(linked_server, &lsproc, false);
 
 		/*
 		 * prepare the query that will executed on remote server to get column
@@ -1139,11 +1140,10 @@ openquery_imp(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		bool isTesting = false;
 		isQueryTimeout = false;
 		query = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
-		linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc, isTesting);
+		linked_server_establish_connection(PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0)), &lsproc, false);
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: (OPENQUERY) - Writing the following query to LinkedServerProcess struct: %s", query);
 
@@ -1342,11 +1342,9 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		bool isTesting = false;
-
 		remove_trailing_spaces(servername);
 
-		linked_server_establish_connection(servername, &lsproc, isTesting);
+		linked_server_establish_connection(servername, &lsproc, true);
 	}
 	PG_FINALLY();
 	{
